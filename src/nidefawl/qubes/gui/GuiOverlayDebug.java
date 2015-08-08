@@ -55,7 +55,7 @@ public class GuiOverlayDebug extends Gui {
             Engine.fbDbg.setDrawAll();
         }
         glPushAttrib(-1);
-        Engine.checkGLError("fbDbg.bind");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.bind");
         glMatrixMode(5888);
         glPushMatrix();
         glLoadIdentity();
@@ -63,7 +63,7 @@ public class GuiOverlayDebug extends Gui {
         glPushMatrix();
         glLoadIdentity();
         glOrtho(0.0D, width, height, 0.0D, 0.0D, 1.0D);
-        Engine.checkGLError("fbDbg.ortho");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.ortho");
         glDisable(3008);
         glDepthFunc(519);
         glDepthMask(false);
@@ -85,15 +85,15 @@ public class GuiOverlayDebug extends Gui {
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
         glMatrixMode(5889);
-        Engine.checkGLError("fbDbg.glMatrixMode");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
         glPopMatrix();
-        Engine.checkGLError("fbDbg.glPopMatrix");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
         glMatrixMode(5888);
-        Engine.checkGLError("fbDbg.glMatrixMode");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
         glPopMatrix();
-        Engine.checkGLError("fbDbg.glPopMatrix");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
         glPopAttrib();
-        Engine.checkGLError("fbDbg.glPopAttrib");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopAttrib");
         Engine.fbDbg.unbindCurrentFrameBuffer();
     }
 

@@ -2,6 +2,8 @@ package nidefawl.qubes.gl;
 
 import java.nio.*;
 
+import nidefawl.game.Main;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
@@ -196,7 +198,7 @@ public class Tess {
             int offset = 0;
             floatBuffer.position(0);
             GL11.glVertexPointer(3, stride*4, floatBuffer);
-            Engine.checkGLError("vertexptr");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("vertexptr");
             offset+=3;
             if (useNormalPtr) {
                 GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
@@ -235,13 +237,13 @@ public class Tess {
                 offset+=1;
             }
             GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-            Engine.checkGLError("glEnableClientState");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glEnableClientState");
             buffer.position(0);
             buffer.limit(getIdx(vertexcount) * 4);
             GL11.glDrawArrays(mode, 0, vertexcount);
-            Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
             GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-            Engine.checkGLError("glDisableClientState");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDisableClientState");
             if (useColorPtr)
                 GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
             if (useTexturePtr)

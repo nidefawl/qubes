@@ -170,7 +170,6 @@ public class Main extends GLGame {
         if (Main.DO_TIMING) TimingHelper.start(6);
         Engine.getSceneFB().bind();
         Engine.getSceneFB().clearFrameBuffer();
-        Engine.checkGLError("drawDebug");
         //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         Engine.worldRenderer.renderWorld(fTime);
         if (this.handleClick) {

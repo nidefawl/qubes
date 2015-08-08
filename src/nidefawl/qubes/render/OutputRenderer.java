@@ -63,10 +63,10 @@ public class OutputRenderer {
         Shader.disable();
         Engine.fbComposite0.bind();
         Engine.fbComposite0.clearFrameBuffer();
-        Engine.checkGLError("bind fbo composite1");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("bind fbo composite1");
         if (enableShaders) {
             Shaders.composite1.enable();
-            Engine.checkGLError("enable shader composite1");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader composite1");
             Shaders.setUniforms(Shaders.composite1, fTime);
         }
         glActiveTexture(GL_TEXTURE5);
@@ -111,7 +111,7 @@ public class OutputRenderer {
         Engine.fbComposite1.clearFrameBuffer();
         if (enableShaders) {
             Shaders.composite2.enable();
-            Engine.checkGLError("enable shader composite2");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader composite2");
             Shaders.setUniforms(Shaders.composite2, fTime);
         }
         glActiveTexture(GL_TEXTURE5);
@@ -155,7 +155,7 @@ public class OutputRenderer {
         Engine.fbComposite2.clearFrameBuffer();
         if (enableShaders) {
             Shaders.composite3.enable();
-            Engine.checkGLError("enable shader composite3");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader composite3");
             Shaders.setUniforms(Shaders.composite3, fTime);
         }
         glActiveTexture(GL_TEXTURE5);
@@ -206,7 +206,7 @@ public class OutputRenderer {
         boolean enableShaders = true;
         if (enableShaders) {
             Shaders.compositeFinal.enable();
-            Engine.checkGLError("enable shader compositeF");
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader compositeF");
             Shaders.setUniforms(Shaders.compositeFinal, fTime);
         }
         glActiveTexture(GL_TEXTURE5);

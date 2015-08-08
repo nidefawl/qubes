@@ -69,7 +69,7 @@ public abstract class GLGame implements Runnable {
             }
             Display.create();
         }
-        Engine.checkGLError("Pre startup");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("Pre startup");
         Keyboard.create();
         Mouse.create();
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -138,7 +138,7 @@ public abstract class GLGame implements Runnable {
             this.tick();
             tick++;
         }
-        Engine.checkGLError("pre render");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("pre render");
         if (Main.DO_TIMING) TimingHelper.end(10);
         if (Main.DO_TIMING) TimingHelper.start(11);
         preRenderUpdate(renderTime);
@@ -154,7 +154,7 @@ public abstract class GLGame implements Runnable {
 //        GL11.glFlush();
 //        if (Main.DO_TIMING) TimingHelper.end(14);
         if (Main.DO_TIMING) TimingHelper.start(15);
-        Engine.checkGLError("render");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("render");
         Display.update();
         if (Main.DO_TIMING) TimingHelper.end(15);
         if (Main.DO_TIMING) TimingHelper.start(16);
@@ -162,7 +162,7 @@ public abstract class GLGame implements Runnable {
         float took = timer.el;
         avgFrameTime = avgFrameTime*0.95F+(took)*0.05F;
         prevFrameTime = now;
-        Engine.checkGLError("Post render");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("Post render");
         fpsCounter++;
         double dSec = 1.2;
         while (fpsCounter>0&&System.currentTimeMillis() >= lastTimeFpsCalculated) {
