@@ -17,24 +17,17 @@ public class Camera {
 
     private final static float PI_OVER_180      = 0.0174532925f;
 
-    private Vector3f           position         = new Vector3f();
 
-    private float              pitchAngle;
-    private float              bearingAngle;
-    private Quaternion         pitch;
-    private Quaternion         bearing;
-    private Quaternion         rotation;
-    Matrix4f                   viewMatrix           = new Matrix4f();
+    private float              pitchAngle = 0;
+    private float              bearingAngle = 0;
+    private final Vector3f     position    = new Vector3f();
+    private final Quaternion   pitch       = new Quaternion();
+    private final Quaternion   bearing     = new Quaternion();
+    private final Quaternion   rotation    = new Quaternion();
+    private final Matrix4f      viewMatrix  = new Matrix4f();
+    private final Vector4f     _tmp1       = new Vector4f();
 
     public boolean             changed          = true;
-
-    public Camera() {
-        pitch = new Quaternion();
-        bearing = new Quaternion();
-        rotation = new Quaternion();
-        bearingAngle = 0;
-        pitchAngle = 0;
-    }
 
     public float getYaw() {
         return bearingAngle;
@@ -43,10 +36,11 @@ public class Camera {
     public float getPitch() {
         return pitchAngle;
     }
-
     public void reorient() {
-        pitch.setFromAxisAngle(new Vector4f(1f, 0f, 0f, pitchAngle * PI_OVER_180));
-        bearing.setFromAxisAngle(new Vector4f(0f, 1f, 0f, bearingAngle * PI_OVER_180));
+        _tmp1.set(1f, 0f, 0f, pitchAngle * PI_OVER_180);
+        pitch.setFromAxisAngle(_tmp1);
+        _tmp1.set(0f, 1f, 0f, bearingAngle * PI_OVER_180);
+        bearing.setFromAxisAngle(_tmp1);
         Quaternion.mul(pitch, bearing, rotation);
         this.viewMatrix.setIdentity();
         convertQuaternionToMatrix4f();
