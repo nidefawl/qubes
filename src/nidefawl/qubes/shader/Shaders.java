@@ -1,7 +1,6 @@
 package nidefawl.qubes.shader;
 
 import nidefawl.game.Main;
-import nidefawl.qubes.GLGame;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.WorldRenderer;

@@ -1,6 +1,5 @@
 package nidefawl.qubes.entity;
 
-import nidefawl.game.Main;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.util.GameMath;
 

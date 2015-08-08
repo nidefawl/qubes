@@ -1,13 +1,6 @@
 package nidefawl.qubes.gl;
 
-import java.nio.FloatBuffer;
-
-import nidefawl.game.Main;
 import nidefawl.qubes.entity.PlayerSelf;
-import nidefawl.qubes.util.GameMath;
-
-import org.lwjgl.BufferUtils;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Quaternion;
 import org.lwjgl.util.vector.Vector3f;

@@ -1,6 +1,5 @@
 package nidefawl.qubes.entity;
 
-import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.vec.Vec3;
 
 public abstract class Entity {

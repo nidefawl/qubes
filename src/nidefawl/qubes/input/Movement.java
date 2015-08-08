@@ -1,7 +1,6 @@
 package nidefawl.qubes.input;
 
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 
 public class Movement {
     public float strafe, forward;
