@@ -54,7 +54,7 @@ public class GuiOverlay extends Gui {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: " + Main.instance.lastFPS + " (%.2f), %d ticks/s, Memory used: %.2fMb / %.2fMb", Main.instance.avgFrameTime, Main.instance.tick, memJVMUsed, memJVMTotal);
-        NewCamera cam = Engine.camera;
+        Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
         this.camStats = String.format("xRot: %.2f - yRot: %.2f - camX: %.2f, camY: %.2f, camZ: %.2f", 
                 cam.getYaw(), cam.getPitch(), v.x, v.y, v.z);

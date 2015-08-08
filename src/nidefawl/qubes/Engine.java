@@ -42,7 +42,7 @@ public class Engine {
     private static FloatBuffer    fog;
     //    private static Matrix4f    def    = new Matrix4f();
     //    private static Matrix4f    tmp    = new Matrix4f();
-    public static NewCamera       camera = new NewCamera();
+    public static Camera       camera = new Camera();
     public static FrameBuffer     fb;
     public static FrameBuffer     fbComposite0;
     public static FrameBuffer     fbComposite1;
