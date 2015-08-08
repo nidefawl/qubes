@@ -13,7 +13,7 @@ import nidefawl.qubes.util.GameError;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
-public class FrameBuffer2 implements IFrameBuffer {
+public class FrameBuffer implements IFrameBuffer {
     private static final int MAX_COLOR_ATT    = 8;
     private final int        renderWidth;
     private final int        renderHeight;
@@ -25,7 +25,7 @@ public class FrameBuffer2 implements IFrameBuffer {
     private final int[]      colorAttTextures = new int[MAX_COLOR_ATT];
     private final int[]      colorAttFormats  = new int[MAX_COLOR_ATT];
 
-    public FrameBuffer2(int renderWidth, int renderHeight) {
+    public FrameBuffer(int renderWidth, int renderHeight) {
         this.renderWidth = renderWidth;
         this.renderHeight = renderHeight;
     }
