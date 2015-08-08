@@ -1,43 +1,24 @@
 package nidefawl.game;
 
-import static nidefawl.qubes.GLGame.displayHeight;
-import static nidefawl.qubes.GLGame.displayWidth;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
-
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.util.Locale;
-
-import nidefawl.qubes.*;
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.assets.Textures;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
+import nidefawl.qubes.GLGame;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.gui.GuiOverlayStats;
 import nidefawl.qubes.input.Movement;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.world.World;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.*;
-import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.opengl.GL11;
 
 public class Main extends GLGame {
     static int               initWidth  = 1024;
