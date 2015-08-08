@@ -1,4 +1,4 @@
-package nidefawl.qubes;
+package nidefawl.qubes.gl;
 
 import java.nio.FloatBuffer;
 

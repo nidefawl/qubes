@@ -6,7 +6,10 @@ import static org.lwjgl.opengl.GL11.GL_PROJECTION;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glLoadIdentity;
 import static org.lwjgl.opengl.GL11.glMatrixMode;
+import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Timer;
 
@@ -32,7 +35,7 @@ public abstract class GLGame implements Runnable {
     private Thread             thread;
     protected volatile boolean running;
     public static int ticksran;
-    protected static float renderTime;
+    public static float renderTime;
     public int tick = 0;
     public GLGame(float tickLen) {
         this.timer = new Timer(20);

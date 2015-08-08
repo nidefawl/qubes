@@ -1,4 +1,4 @@
-package nidefawl.qubes;
+package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
+import nidefawl.qubes.GLGame;
 import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.BufferUtils;
@@ -169,5 +170,13 @@ public class FrameBuffer {
     }
     public void setDrawAll() {
         GL20.glDrawBuffers(this.drawBufAtt);
+    }
+    public void clearFrameBuffer() {
+        this.clear(0, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.clear(1, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.clear(2, 0F, 0F, 0F, 0F);
+        this.clear(3, 0F, 0F, 0F, 0F);
+        this.clearDepth();
+        this.setDrawAll();
     }
 }

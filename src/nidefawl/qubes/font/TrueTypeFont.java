@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
-import nidefawl.qubes.Tess;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
 
 import org.lwjgl.opengl.GL11;

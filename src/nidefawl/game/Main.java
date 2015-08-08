@@ -10,13 +10,19 @@ import java.util.Locale;
 import nidefawl.qubes.*;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.FrameBuffer;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.gui.GuiOverlay;
+import nidefawl.qubes.gui.GuiOverlayDebug;
+import nidefawl.qubes.gui.GuiOverlayStats;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.BlockPos;
@@ -45,35 +51,16 @@ public class Main extends GLGame {
     boolean              show      = true;
     long                 lastClickTime = System.currentTimeMillis() - 5000L;
 
-    private GuiOverlay   debugOverlay;
+    public GuiOverlayStats   statsOverlay;
+    public GuiOverlayDebug   debugOverlay;
     private Gui          gui;
 
-    private Shader       waterShader;
-    private Shader       waterShader2;
-    private Shader       composite1;
-    private Shader       composite2;
-    private Shader       composite3;
-    private Shader       compositeFinal;
-    private Shader       depthBufShader;
-    private Shader       testShader;
-    private Shader       sky;
-    private Shader       sky2;
     boolean              handleClick   = false;
     float                winX, winY;
-    float sunAngle = 0.30F;
-    Vector3f sun = new Vector3f(-0.31F, 0.95F, 0.00F);
-    Vector3f up = new Vector3f(0, 100, 0);
-    Vector3f skyColor = new Vector3f(0.43F, .69F, 1.F);
-    Vector3f fogColor = new Vector3f(0.7F, 0.8F, 1F);
-    Vector3f moonPosition = new Vector3f(-100, -300, -100);
 
      FontRenderer fontSmall;
     final PlayerSelf     entSelf       = new PlayerSelf(1);
     Movement             movement      = new Movement();
-    private int noise;
-    private AssetTexture texWater;
-    private AssetTexture texWater2;
-    private int texEmpty;
 
     public Main() {
         super(20);
@@ -83,52 +70,14 @@ public class Main extends GLGame {
 
     public void initGame() throws LWJGLException {
         super.initGame();
-        this.debugOverlay = new GuiOverlay();
+        this.statsOverlay = new GuiOverlayStats();
+        this.statsOverlay.setPos(0, 0);
+        this.statsOverlay.setSize(displayWidth, displayHeight);
+        this.debugOverlay = new GuiOverlayDebug();
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
-        this.fontSmall = FontRenderer.get("Arial", 12, 1, 14);
-        this.texWater = AssetManager.getInstance().loadPNGAsset("textures/water.png");
-        this.texWater.setupTexture();
-        this.texWater2 = AssetManager.getInstance().loadPNGAsset("textures/water_still.png");
-        this.texWater2.setupTexture();
         
-        this.texEmpty = TextureManager.getInstance().makeNewTexture(new byte[16*16*4], 16, 16, true, false);
-        initShaders();
-        genNoise();
         Engine.checkGLError("Post startup");
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        glActiveTexture(GL_TEXTURE1);
-        glMatrixMode(GL_TEXTURE);
-        glLoadIdentity();
-        glScalef(1/256F, 1/256F, 1/256F);
-        glTranslatef(8, 8, 8);
-        glMatrixMode(GL_MODELVIEW);
-        glActiveTexture(GL_TEXTURE0);
-    }
-
-
-    private void genNoise() {
-        int w = 64;
-        byte[] data = new byte[w*w*3];
-        for (int x = 0; x < w; x++)
-            for (int z = 0; z < w; z++)
-                for (int y = 0; y < 3; y++) {
-                    int seed = (GameMath.randomI(x*5)-79 + GameMath.randomI(y * 37)) * 1+GameMath.randomI((z-2) * 73);
-                    data[(x*64+z)*3+y]=(byte) (GameMath.randomI(seed)%128);
-                }
-        if (this.noise == 0) {
-            this.noise = glGenTextures();
-        }
-        glBindTexture(GL_TEXTURE_2D, this.noise);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        ByteBuffer buf = BufferUtils.createByteBuffer(data.length);
-        buf.put(data);
-        buf.position(0).limit(data.length);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, w, 0, GL_RGB, GL_UNSIGNED_BYTE, buf);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     public void input(float fTime) {
@@ -153,7 +102,7 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F5:
                     if (isDown) {
-                        genNoise();
+                        Engine.textures.genNoise();
                     }
                     break;
                 case Keyboard.KEY_F2:
@@ -202,236 +151,15 @@ public class Main extends GLGame {
         winY = (float) Mouse.getY();
     }
 
-    private void handleDoubleClick(int eventX, int eventY) {
-        float scaledX = (float) eventX / (float) displayWidth;
-        float scaledY = (float) eventY / (float) displayHeight;
-        float scale = 1200F;
-        scaledX -= 0.5F;
-        scaledY -= 0.5F;
-        if (this.debugOverlay != null) {
-            this.debugOverlay.setMessage("double click at " + scaledX + "/" + scaledY);
-        }
-
-    }
-
-    private void initShaders() {
-        try {
-            Shader new_waterShader = AssetManager.getInstance().loadShader("shaders/water");
-            if (this.waterShader != null)
-                this.waterShader.release();
-            this.waterShader = new_waterShader;
-            Shader new_waterShader2 = AssetManager.getInstance().loadShader("shaders/water2");
-            if (this.waterShader2 != null)
-                this.waterShader2.release();
-            this.waterShader2 = new_waterShader2;
-            Shader new_depthBufShader = AssetManager.getInstance().loadShader("shaders/renderdepth");
-            if (this.depthBufShader != null)
-                this.depthBufShader.release();
-            this.depthBufShader = new_depthBufShader;
-            Shader new_composite1 = AssetManager.getInstance().loadShader("shaders/composite");
-            if (this.composite1 != null)
-                this.composite1.release();
-            this.composite1 = new_composite1;
-            Shader new_composite2 = AssetManager.getInstance().loadShader("shaders/composite1");
-            if (this.composite2 != null)
-                this.composite2.release();
-            this.composite2 = new_composite2;
-            Shader new_composite3 = AssetManager.getInstance().loadShader("shaders/composite2");
-            if (this.composite3 != null)
-                this.composite3.release();
-            this.composite3 = new_composite3;
-            Shader new_compositeFinal = AssetManager.getInstance().loadShader("shaders/final");
-            if (this.compositeFinal != null)
-                this.compositeFinal.release();
-            this.compositeFinal = new_compositeFinal;
-            Shader new_testShader = AssetManager.getInstance().loadShader("shaders/test");
-            if (this.testShader != null)
-                this.testShader.release();
-            this.testShader = new_testShader;
-            Shader new_sky = AssetManager.getInstance().loadShader("shaders/sky");
-            if (this.sky != null)
-                this.sky.release();
-            this.sky = new_sky;
-            Shader new_sky2 = AssetManager.getInstance().loadShader("shaders/sky");
-            if (this.sky2 != null)
-                this.sky2.release();
-            this.sky2 = new_sky2;
-        } catch (ShaderCompileError e) {
-            if (this.debugOverlay != null) {
-                this.debugOverlay.setMessage("\0uff3333shader "+e.getName()+" failed to compile");
-            }
-            System.out.println("shader "+e.getName()+" failed to compile");
-            System.out.println(e.getLog());
-        }
-    }
     Vec3 mousePos = new Vec3();
-    public void renderDebugLightMap(float fTime) {
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glLoadIdentity();
-        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glLoadIdentity();
-        glDepthMask(true);
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
-        glClear(GL11.GL_COLOR_BUFFER_BIT|GL11.GL_DEPTH_BUFFER_BIT);
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(false);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        int brightness1 = 122;
-        this.testShader.enable();
-        glBegin(GL_QUADS);
-        {
-            int tw = displayWidth/2;
-            int th = displayHeight;
-            float x = displayWidth/2;
-            float y = 0;
-            glMultiTexCoord2f(GL_TEXTURE0, 1, 1);
-            glMultiTexCoord2f(GL_TEXTURE1, brightness1, brightness1);
-            glVertex3f(x + tw, y, 0);
-            glMultiTexCoord2f(GL_TEXTURE0, 0, 1);
-            glVertex3f(x, y, 0);
-            glMultiTexCoord2f(GL_TEXTURE0, 0, 0);
-            glVertex3f(x, y + th, 0);
-            glMultiTexCoord2f(GL_TEXTURE0, 1, 0);
-            glVertex3f(x + tw, y + th, 0);
-        }
-        glEnd();
-//        brightness1 = 90;
-        {
-            int tw = displayWidth/2;
-            int th = displayHeight;
-            float x = 0;
-            float y = 0;
-            Tess.instance.setColor(-1, 255);
-            Tess.instance.setBrightness(brightness1);
-            Tess.instance.add(x + tw, y, 0, 1, 1);
-            Tess.instance.add(x, y, 0, 0, 1);
-            Tess.instance.add(x, y + th, 0, 0, 0);
-            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-        }
-        Tess.instance.draw(GL_QUADS);
-        Shader.disable();
-        glEnable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
-        glEnable(GL_TEXTURE_2D);
-
-        if (this.debugOverlay != null) {
-            this.debugOverlay.render(fTime);
-        }
-
-    }
     
     public void render(float fTime) {
-        fogColor = new Vector3f(0.7F, 0.82F, 1F);
 //        fogColor.scale(0.4F);
-        skyColor = new Vector3f(0.43F, .69F, 1.F);
-        skyColor.scale(0.4F);
         Vec3 vUnproject = null;
         Engine.fb.bind();
-        clearFrameBuffer(Engine.fb);
+        Engine.fb.clearFrameBuffer();
         Engine.checkGLError("drawDebug");
-
-        //         glDisable(GL_CULL_FACE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_CULL_FACE); // Cull back facing polygons
-        //        glDisable(GL_CULL_FACE);
-        glActiveTexture(GL_TEXTURE0);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix());
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glLoadMatrix(Engine.getViewMatrix());
-        glDisable(GL_TEXTURE_2D);
-        glDepthMask(false);
-        glDisable(GL_ALPHA_TEST);
-//        Vector3f fogColor2 = new Vector3f(0.7F, 0,0);
-//        fogColor2.scale(0.4F);
-        Engine.setFog(fogColor, 1);
-        glNormal3f(0.0F, -1.0F, 0.0F);
-        glColor4f(1F, 1F, 1F, 1F);
-        glFogi(GL_FOG_MODE, GL_LINEAR);
-        glFogf(GL_FOG_START, 0);
-        glFogf(GL_FOG_END, Engine.zfar/1.41F);
-        glEnable(GL_FOG);
-        glEnable(GL_COLOR_MATERIAL);
-        glColorMaterial(GL_FRONT, GL_AMBIENT );
-        glDisable(GL_BLEND);
-        {
-            sky.enable();
-            drawSkybox();
-            Shader.disable();
-        }
-        glDisable(GL_FOG);
-        glDepthMask(true);
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        //        Engine.enableLighting();
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glLoadMatrix(Engine.getModelViewMatrix());
-
-        float w = 4F;
-        float v = 1F;
-        int num = 8;
-        Tess.instance.resetState();
-
-        this.waterShader2.enable();
-        setUniforms(this.waterShader2);
-        this.waterShader2.setProgramUniform1i("texture", 0);
-        this.waterShader2.setProgramUniform1i("normals", 2);
-        this.waterShader2.setProgramUniform1i("noisetex", 3);
-        this.waterShader2.setProgramUniform1i("specular", 5);
-        Tess.instance.setNormals(0, 1, 0);
-        int a = 0;
-        for (int x = -num; x <= num; x++)
-            for (int z = -num; z <= num; z++) {
-                Tess.instance.setOffset(x * w * 2, 0, z * w * 2);
-                Tess.instance.setBrightness(0xdd0000);
-                Tess.instance.setColor(-1, 255);
-                Tess.instance.add(-w, 0, w, 0, v/32F);
-                Tess.instance.add(w, 0, w, v, v/32F);
-                Tess.instance.add(w, 0, -w, v, 0);
-                Tess.instance.add(-w, 0, -w, 0, 0);
-            }
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texWater2.getGlid());
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, this.texEmpty);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, this.texEmpty);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, this.noise);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glActiveTexture(GL_TEXTURE0);
-        Tess.instance.draw(GL_QUADS);
-        Tess.instance.resetState();
-        {
-            int x = 10;
-            int y = 20;
-            int z = 1;
-            int tw = 22;
-            int th = 22;
-            Tess.instance.setNormals(0, 0, 1);
-            Tess.instance.setBrightness(0x1f0000);
-            Tess.instance.setColor(-1, 255);
-            Tess.instance.add(x + tw, y + th, z, 1, 0);
-            Tess.instance.add(x, y + th, z, 0, 0);
-            Tess.instance.add(x, y, z, 0, 1);
-            Tess.instance.add(x + tw, y, z, 1, 1);
-        }
-        Tess.instance.draw(GL_QUADS);
-        Shader.disable();
-        //            this.debugOverlay.setMessage(""+Engine.readDepth(0,0));
+        Engine.worldRenderer.renderWorld(fTime);
         if (this.handleClick) {
             this.handleClick = false;
             vUnproject = Engine.unproject(winX, winY);
@@ -443,232 +171,22 @@ public class Main extends GLGame {
 
         glPushMatrix();
         Engine.set2DMode(0, displayWidth, 0, displayHeight);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_COLOR_MATERIAL);
-        glDisable(GL_LIGHT0);
-        glDisable(GL_LIGHT1);
-//      glDisable(GL_CULL_FACE);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
-        preDbgFB(true);
-        drawDebug();
-        glActiveTexture(GL_TEXTURE0);
-        drawDbgTexture(0, 0, 6, this.texWater2.getGlid(), "Water");
-        drawDbgTexture(0, 0, 7, this.texEmpty, "Blank");
-        postDbgFB();
-
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(false);
-        glDisable(GL_LIGHTING);
-        Tess.instance.dontReset();
-        {
-            int tw = displayWidth;
-            int th = displayHeight;
-            float x = 0;
-            float y = 0;
-            Tess.instance.add(x + tw, y, 0, 1, 1);
-            Tess.instance.add(x, y, 0, 0, 1);
-            Tess.instance.add(x, y + th, 0, 0, 0);
-            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-        }
-
-        Shader.disable();
-
-        /*
-         * 
-        compositeShader.setProgramUniform1i("gcolor", 0);
-        compositeShader.setProgramUniform1i("gdepth", 1);
-        compositeShader.setProgramUniform1i("gnormal", 2);
-        compositeShader.setProgramUniform1i("shadow", 1);
-        compositeShader.setProgramUniform1i("composite", 3);
-        compositeShader.setProgramUniform1i("gdepthtex", 5);
-        compositeShader.setProgramUniform1i("noisetex", 4);
-         */
-        Engine.fbComposite0.bind();
-        clearFrameBuffer(Engine.fbComposite0);
-        Engine.checkGLError("bind fbo composite1");
-        this.composite1.enable();
-        Engine.checkGLError("enable shader composite1");
-        setUniforms(this.composite1);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getDepthTex());
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, this.noise);
-        for (int i = 0; i < 4; i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(i));
-        }
-        Tess.instance.draw(GL_QUADS);
-        Engine.fbComposite0.unbindCurrentFrameBuffer();
-
-        Shader.disable();
-        preDbgFB(false);
-        glActiveTexture(GL_TEXTURE0);
-        for (int i = 0; i < 4; i++) {
-            drawDbgTexture(0, 0, i, Engine.fb.getTexture(i), "TexUnit "+i);
-        }
-        drawDbgTexture(0, 0, 4, this.noise, "TexUnit "+4);
-        for (int i = 0; i < 4; i++) {
-            drawDbgTexture(0, 1, i, Engine.fbComposite0.getTexture(i), "ColAtt "+i);
-        }
-        postDbgFB();
-
-
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 9987);
-        GL30.glGenerateMipmap(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        GL13.glActiveTexture(GL13.GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(3));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 9987);
-        GL30.glGenerateMipmap(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        Engine.fbComposite1.bind();
-        clearFrameBuffer(Engine.fbComposite1);
-        this.composite2.enable();
-        Engine.checkGLError("enable shader composite2");
-        setUniforms(this.composite2);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(4));
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, this.noise);
-        for (int i = 0; i < 4; i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(i));
-        }
-        GL20.glDrawBuffers(GL30.GL_COLOR_ATTACHMENT2);
-        Tess.instance.draw(GL_QUADS);
-        for (int i = 0; i < 6; i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-        Engine.fbComposite1.unbindCurrentFrameBuffer();
-
-        Shader.disable();
-        preDbgFB(false);
-        glActiveTexture(GL_TEXTURE0);
-        for (int i = 0; i < 4; i++) {
-            drawDbgTexture(1, 0, i, Engine.fbComposite0.getTexture(i), "TexUnit "+i);
-        }
-        drawDbgTexture(1, 1, 2, Engine.fbComposite1.getTexture(2), "ColAtt "+2);
-        postDbgFB();
-
-        GL13.glActiveTexture(GL13.GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite1.getTexture(2));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 9987);
-        GL30.glGenerateMipmap(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        
-        Engine.fbComposite2.bind();
-        clearFrameBuffer(Engine.fbComposite2);
-        this.composite3.enable();
-        Engine.checkGLError("enable shader composite3");
-        setUniforms(this.composite3);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(4));
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, this.noise);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(1));
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite1.getTexture(2));
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(3));
-        GL20.glDrawBuffers(GL30.GL_COLOR_ATTACHMENT0);
-        Tess.instance.draw(GL_QUADS);
-        for (int i = 0; i < 6; i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-        Engine.fbComposite2.unbindCurrentFrameBuffer();
-
-        Shader.disable();
-        preDbgFB(false);
-        glActiveTexture(GL_TEXTURE0);
-        drawDbgTexture(2, 0, 0, Engine.fbComposite0.getTexture(0), "TexUnit "+0);
-        drawDbgTexture(2, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit "+1);
-        drawDbgTexture(2, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit "+2);
-        drawDbgTexture(2, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit "+3);
-        drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "ColAtt "+0);
-        glActiveTexture(GL_TEXTURE0);
-        drawDbgTexture(3, 0, 0, Engine.fbComposite2.getTexture(0), "TexUnit "+0);
-        drawDbgTexture(3, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit "+1);
-        drawDbgTexture(3, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit "+2);
-        drawDbgTexture(3, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit "+3);
-//        drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "GL_TEXTURE"+0);
-        postDbgFB();
-
-        
-        
-        glDepthMask(true);
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
-        glClear(GL11.GL_COLOR_BUFFER_BIT|GL11.GL_DEPTH_BUFFER_BIT);
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(false);
-//        
-        this.compositeFinal.enable();
-        Engine.checkGLError("enable shader compositeF");
-        setUniforms(this.compositeFinal);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(4));
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, this.noise);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite2.getTexture(0));
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(1));
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite1.getTexture(2));
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(3));
-//      FloatBuffer buff = BufferUtils.createFloatBuffer(16);
-//      buff.position(0).limit(16);
-//      GL11.glGetFloat(GL11.GL_FOG_COLOR, buff);
-//      System.out.println(String.format(Locale.US, GL11.glGetBoolean(GL11.GL_FOG)+" %.2fF, %.2fF, %.2fF, %.2fF", buff.get(0), buff.get(1), buff.get(2), buff.get(3)));
-
-        Tess.instance.draw(GL_QUADS);
-        Shader.disable();
-        for (int i = 0; i < 7; i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-        glActiveTexture(GL_TEXTURE0);
+        Engine.outRenderer.render(fTime);
         glEnable(GL_TEXTURE_2D);
 //        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
 //        Tess.instance.draw(GL_QUADS);
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
-        
-        if (show) {
-
-            glBindTexture(GL_TEXTURE_2D, Engine.fbDbg.getTexture(0));
-            glPushMatrix();
-//            glScalef(0.5F, 0.5F, 0F);
-//            glColor4f(1, 1, 1, 1);
-            Tess.instance.draw(GL_QUADS);
-            glPopMatrix();
-        }
-        Tess.instance.resetState();
-        
-        
         glDepthMask(true);
         glDisable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (show) {
+            if (this.debugOverlay != null) {
+                this.debugOverlay.render(fTime);
+            }
+        }
 
         if (vUnproject != null) {
 
@@ -686,265 +204,30 @@ public class Main extends GLGame {
             //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
             msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
 
-            if (this.debugOverlay != null) {
-                this.debugOverlay.setMessage(msg);
+            if (this.statsOverlay != null) {
+                this.statsOverlay.setMessage(msg);
             }
         }
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_TEXTURE_2D);
 
-        if (this.debugOverlay != null) {
-            this.debugOverlay.render(fTime);
+        if (this.statsOverlay != null) {
+            this.statsOverlay.render(fTime);
         }
 
         Engine.set3DMode();
         glPopMatrix();
     }
 
-
-    private void clearFrameBuffer(FrameBuffer fb) {
-        fb.clear(0, 1.0F, 1.0F, 1.0F, 1.0F);
-        fb.clear(1, 1.0F, 1.0F, 1.0F, 1.0F);
-        fb.clear(2, 0F, 0F, 0F, 0F);
-        fb.clear(3, 0F, 0F, 0F, 0F);
-        fb.clearDepth();
-        fb.setDrawAll();
-    }
-
-    private void preDbgFB(boolean clear) {
-        Engine.fbDbg.bind();
-        if (clear) {
-            Engine.fbDbg.clear(0, 0, 0, 0, 0F);
-            Engine.fbDbg.clearDepth();
-            Engine.fbDbg.setDrawAll();
-        }
-        glPushAttrib(-1);
-        Engine.checkGLError("fbDbg.bind");
-        glMatrixMode(5888);
-        glPushMatrix();
-        glLoadIdentity();
-        glMatrixMode(5889);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0.0D, displayWidth, displayHeight, 0.0D, 0.0D, 1.0D);
-        Engine.checkGLError("fbDbg.ortho");
-        glDisable(3008);
-        glDepthFunc(519);
-        glDepthMask(false);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_LIGHT0);
-        glDisable(GL_LIGHT1);
-        //          glDisable(GL_CULL_FACE);
-        glDisable(GL_COLOR_MATERIAL);
-        glDisable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glDisable(GL_ALPHA_TEST);
-    }
-
-    private void postDbgFB() {
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_ALPHA_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glDepthMask(true);
-        glMatrixMode(5889);
-        Engine.checkGLError("fbDbg.glMatrixMode");
-        glPopMatrix();
-        Engine.checkGLError("fbDbg.glPopMatrix");
-        glMatrixMode(5888);
-        Engine.checkGLError("fbDbg.glMatrixMode");
-        glPopMatrix();
-        Engine.checkGLError("fbDbg.glPopMatrix");
-        glPopAttrib();
-        Engine.checkGLError("fbDbg.glPopAttrib");
-        Engine.fbDbg.unbindCurrentFrameBuffer();
-    }
-
-    private void drawDbgTexture(int stage, int side, int num, int texture, String string) {
-        float aspect = displayHeight / (float) displayWidth;
-        int w1 = 120;
-        int gap = 24;
-        int wCol = w1 * 2 + gap;
-        int hCol = displayHeight - 180;
-        int xCol = 4;
-        int yCol = 160;
-        int h = (int) (w1 * 0.6);
-        int gapy = 4;
-        int b = 4;
-
-        glPushMatrix();
-        glTranslatef((wCol + gap)*stage, yCol+50, 0);
-        w1-=5;
-        glTranslatef(gap/2+(w1+gap/2)*side, 0, 0);
-        glTranslatef(0, gapy+(gapy+h)*num, 0);
-        glDisable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        Tess.instance2.add(0, 0 + h, 0, 0, 0);
-        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
-        Tess.instance2.add(w1, 0, 0, 1, 1);
-        Tess.instance2.add(0, 0, 0, 0, 1);
-        Tess.instance2.draw(7);
-        glEnable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
-        glDisable(GL_TEXTURE_2D);
-        Tess.instance2.setColorF(0, 0.5F);
-        Tess.instance2.add(0, 0 + h, 0, 0, 0);
-        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
-        Tess.instance2.add(w1, 0 + h-20, 0, 1, 1);
-        Tess.instance2.add(0, 0 + h-20, 0, 0, 1);
-        Tess.instance2.draw(7);
-        glEnable(GL_TEXTURE_2D);
-        fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
-        fontSmall.drawString(""+texture+"", w1-2, h-2, -1, true, 1.0F, 1);
-        glPopMatrix();
-    }
-    private void drawDebug() {
-        String[] names = {
-                "Composite0",
-                "Composite1",
-                "Composite2",
-                "Final",
-        };
-            float aspect = displayHeight / (float) displayWidth;
-            int w1 = 120;
-            int gap = 24;
-            int wCol = w1 * 2 + gap;
-            int hCol = Math.min(450, displayHeight - 20);
-            int xCol = 4;
-            int yCol = 160;
-            int h = (int) (w1 * 0.6);
-            int gapy = 4;
-            int b = 4;
-            Tess.instance2.dontReset();
-            Tess.instance2.add(0, yCol + hCol, 0);
-            Tess.instance2.add(wCol, yCol + hCol, 0);
-            Tess.instance2.add(wCol, yCol, 0);
-            Tess.instance2.add(0, yCol, 0);
-            glDisable(GL_TEXTURE_2D);
-            glPushMatrix();
-            for (int i = 0; i < names.length; i++) {
-                glColor4f(.8F, .8F, .8F, 0.6F);
-                Tess.instance2.draw(GL_QUADS);
-                glTranslatef(wCol + gap, 0, 0);
-            }
-            glPopMatrix();
-            Tess.instance2.resetState();
-            Tess.instance2.dontReset();
-            Tess.instance2.add(b, yCol + hCol - b, 0);
-            Tess.instance2.add(wCol - b, yCol + hCol - b, 0);
-            Tess.instance2.add(wCol - b, yCol + b, 0);
-            Tess.instance2.add(b, yCol + b, 0);
-            glPushMatrix();
-            for (int i = 0; i < names.length; i++) {
-                glColor4f(.4F, .4F, .4F, 0.8F);
-                Tess.instance2.draw(GL_QUADS);
-                glTranslatef(wCol + gap, 0, 0);
-            }
-            glPopMatrix();
-            Tess.instance2.resetState();
-            glColor4f(1F, 1F, 1F, 1.0F);
-            glEnable(GL_ALPHA_TEST);
-            glEnable(GL_BLEND);
-            glEnable(GL_TEXTURE_2D);
-            glPushMatrix();
-            for (int i = 0; i < names.length; i++) {
-                fontSmall.drawString(names[i], 8, yCol+20, -1, true, 1.0F);
-                fontSmall.drawString("INPUT", 12, yCol+50, -1, true, 1.0F);
-                fontSmall.drawString("OUTPUT", 8+w1+gap/2, yCol+50, -1, true, 1.0F);
-                glTranslatef(wCol + gap, 0, 0);
-            }
-            glPopMatrix();
-    }
-
-    private void setUniforms(Shader compositeShader) {
-        compositeShader.setProgramUniform1f("near", Engine.znear);
-        compositeShader.setProgramUniform1f("far", Engine.zfar);
-        compositeShader.setProgramUniform1f("viewWidth", displayWidth);
-        compositeShader.setProgramUniform1f("viewHeight", displayHeight);
-        compositeShader.setProgramUniform1f("rainStrength", 0F);
-        compositeShader.setProgramUniform1f("wetness", 0);
-        compositeShader.setProgramUniform1f("aspectRatio", displayWidth / (float) displayHeight);
-        compositeShader.setProgramUniform1f("sunAngle", sunAngle);
-        compositeShader.setProgramUniform1f("frameTimeCounter", (renderTime + ticksran)/20F);
-        compositeShader.setProgramUniform3f("cameraPosition", Engine.camera.getPosition());
-        compositeShader.setProgramUniform3f("upPosition", this.up);
-        compositeShader.setProgramUniform3f("sunPosition", this.sun);
-        compositeShader.setProgramUniform3f("moonPosition", this.moonPosition);
-        compositeShader.setProgramUniform3f("skyColor", this.skyColor);
-        compositeShader.setProgramUniform1i("isEyeInWater", 0);
-        compositeShader.setProgramUniform1i("heldBlockLightValue", 0);
-        compositeShader.setProgramUniform1i("worldTime", ticksran%24000);
-        compositeShader.setProgramUniform1i("gcolor", 0);
-        compositeShader.setProgramUniform1i("gdepth", 1);
-        compositeShader.setProgramUniform1i("gnormal", 2);
-        compositeShader.setProgramUniform1i("shadow", 1);
-        compositeShader.setProgramUniform1i("composite", 3);
-        compositeShader.setProgramUniform1i("gdepthtex", 5);
-        compositeShader.setProgramUniform1i("noisetex", 4);
-        compositeShader.setProgramUniform1i("eyeAltitude", 4);
-        compositeShader.setProgramUniform1i("fogMode", 1);
-        compositeShader.setProgramUniform2i("eyeBrightness", 0, 0);
-        compositeShader.setProgramUniform2i("eyeBrightnessSmooth", 0, 0);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferModelView", false, Engine.getModelViewMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferModelViewInverse", false, Engine.getModelViewMatrixInv(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferPreviousModelView", false, Engine.getModelViewMatrixPrev(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferProjection", false, Engine.getProjectionMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferProjectionInverse", false, Engine.getProjectionMatrixInv(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferPreviousProjection", false, Engine.getProjectionMatrixPrev(), false);
-        
-        compositeShader.setProgramUniformMatrix4ARB("shadowModelView", false, Engine.getShadowModelViewMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("shadowModelViewInverse", false, Engine.getShadowModelViewMatrixInv(), false);
-        compositeShader.setProgramUniformMatrix4ARB("shadowProjection", false, Engine.getShadowProjectionMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("shadowProjectionInverse", false, Engine.getShadowProjectionMatrixInv(), false);
-    }
-
-    private void drawSkybox() {
-        int scale = (int) (Engine.zfar/2F);
-        int x = -scale;
-        int y = -scale/16;
-        int z = -scale;
-        int x2 = scale;
-        int y2 = scale/16;
-        int z2 = scale;
-        Tess.instance.resetState();
-        int rgbai = ((int)(fogColor.x*255))<<16|((int)(fogColor.y*255))<<8|((int)(fogColor.z*255));
-        Tess.instance.setColor(rgbai, 255);
-        Tess.instance.add(x, y2, z);
-        Tess.instance.add(x, y, z);
-        Tess.instance.add(x2, y2, z);
-        Tess.instance.add(x2, y, z);
-        Tess.instance.add(x2, y2, z2);
-        Tess.instance.add(x2, y, z2);
-        Tess.instance.add(x, y2, z2);
-        Tess.instance.add(x, y, z2);
-        Tess.instance.add(x, y2, z);
-        Tess.instance.add(x, y, z);
-        Tess.instance.draw(GL_QUAD_STRIP);
-        rgbai = ((int)(skyColor.x*255))<<16|((int)(skyColor.y*255))<<8|((int)(skyColor.z*255));
-        Tess.instance.setColor(rgbai, 255);
-        Tess.instance.add(x, y, z2);
-        Tess.instance.add(x2, y, z2);
-        Tess.instance.add(x2, y, z);
-        Tess.instance.add(x, y, z);
-        Tess.instance.add(x, y2, z);
-        Tess.instance.add(x2, y2, z);
-        Tess.instance.add(x2, y2, z2);
-        Tess.instance.add(x, y2, z2);
-        Tess.instance.draw(GL_QUADS);
-    }
-
     long lastShaderLoadTime = 0L;
     @Override
     public void onStatsUpdated() {
-        if (this.debugOverlay != null) {
-            this.debugOverlay.update();
+        if (this.statsOverlay != null) {
+            this.statsOverlay.update();
         }
         if (System.currentTimeMillis()-lastShaderLoadTime > 2000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
-            initShaders();
+            Engine.shaders.reload();
         }
     }
 
@@ -960,13 +243,19 @@ public class Main extends GLGame {
 
     @Override
     public void onResize() {
-        if (this.debugOverlay != null) {
-            this.debugOverlay.setSize(displayWidth, displayHeight);
-            this.debugOverlay.setPos(0, 0);
+        if (this.statsOverlay != null) {
+            this.statsOverlay.setSize(displayWidth, displayHeight);
+            this.statsOverlay.setPos(0, 0);
         }
     }
     @Override
     public void tick() {
         this.entSelf.tickUpdate();
+    }
+
+    public void addDebugOnScreen(String string) {
+        if (this.statsOverlay != null) {
+            this.statsOverlay.setMessage(string);
+        }
     }
 }

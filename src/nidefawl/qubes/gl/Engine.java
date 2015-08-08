@@ -1,10 +1,20 @@
-package nidefawl.qubes;
+package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import nidefawl.qubes.*;
+import nidefawl.qubes.assets.Textures;
+import nidefawl.qubes.render.OutputRenderer;
+import nidefawl.qubes.render.RegionRenderer;
+import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3;
@@ -21,15 +31,6 @@ public class Engine {
     private static IntBuffer      viewport;
     private static FloatBuffer    winZ;
     private static FloatBuffer    position;
-    //    private static FloatBuffer projectionMatrix;
-    //    private static FloatBuffer projectionMatrixInv;
-    //    private static FloatBuffer modelViewMatrix;
-    //    private static FloatBuffer modelViewMatrixInv;
-    //
-    //    private static FloatBuffer shadowProjectionMatrix;
-    //    private static FloatBuffer shadowProjectionMatrixInv;
-    //    private static FloatBuffer shadowModelViewMatrix;
-    //    private static FloatBuffer shadowModelViewMatrixInv;
 
     private static BufferedMatrix projection;
     private static BufferedMatrix view;
@@ -37,12 +38,9 @@ public class Engine {
     private static BufferedMatrix shadowProjection;
     private static BufferedMatrix shadowModelView;
 
-    //    private static Matrix4f    projectionMat4f;
     private static FloatBuffer    depthRead;
     private static FloatBuffer    fog;
-    //    private static Matrix4f    def    = new Matrix4f();
-    //    private static Matrix4f    tmp    = new Matrix4f();
-    public static Camera       camera = new Camera();
+    
     public static FrameBuffer     fb;
     public static FrameBuffer     fbComposite0;
     public static FrameBuffer     fbComposite1;
@@ -51,6 +49,12 @@ public class Engine {
     public static float           znear;
     public static float           zfar;
     private static DisplayList[]      lists;
+    public static Camera       camera = new Camera();
+    public static WorldRenderer worldRenderer = new WorldRenderer();
+    public static RegionRenderer regionRenderer = new RegionRenderer();
+    public static OutputRenderer outRenderer = new OutputRenderer();
+    public static Shaders shaders = new Shaders();
+    public static Textures textures = new Textures();
 
     public static void generateLightMapTexture() {
 
@@ -78,6 +82,22 @@ public class Engine {
         depthRead = BufferUtils.createFloatBuffer(16);
         fog = BufferUtils.createFloatBuffer(16);
         allocateDisplayLists(MAX_DISPLAY_LISTS);
+        
+
+        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        glActiveTexture(GL_TEXTURE1);
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+        glScalef(1/256F, 1/256F, 1/256F);
+        glTranslatef(8, 8, 8);
+        glMatrixMode(GL_MODELVIEW);
+        glActiveTexture(GL_TEXTURE0);
+
+        textures.init();
+        shaders.init();
+        worldRenderer.init();
+        regionRenderer.init();
+        outRenderer.init();
     }
 
     public static void set2DMode(float x, float width, float y, float height) {
@@ -280,7 +300,7 @@ public class Engine {
         shadowProjection.update();
     }
 
-    public static DisplayList get() {
+    public static DisplayList nextFreeDisplayList() {
         for (int i = 0; i < lists.length; i++) {
             if (!lists[i].inUse) {
                 DisplayList alloc = lists[i];
@@ -312,4 +332,6 @@ public class Engine {
         }
         return false;
     }
+
+
 }

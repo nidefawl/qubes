@@ -13,12 +13,14 @@ import java.util.ArrayList;
 import nidefawl.game.Main;
 import nidefawl.qubes.*;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Camera;
+import nidefawl.qubes.gl.Engine;
 
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
 
-public class GuiOverlay extends Gui {
+public class GuiOverlayStats extends Gui {
 
 	final FontRenderer font;
 	final FontRenderer fontSmall;
@@ -30,7 +32,7 @@ public class GuiOverlay extends Gui {
 	long messageTime = System.currentTimeMillis() - 5000L;
 	String message = "";
 	
-	public GuiOverlay() {
+	public GuiOverlayStats() {
 	    this.font = FontRenderer.get("Arial", 18, 0, 20);
 	    this.fontSmall = FontRenderer.get("Arial", 12, 0, 14);
         boolean isWindows, is64bit;
