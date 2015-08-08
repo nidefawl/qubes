@@ -33,7 +33,6 @@ public class Main extends GLGame {
     }
     public static boolean GL_ERROR_CHECKS = false;
     public static boolean DO_TIMING = false;
-    boolean                limitFPS      = true;
     public static boolean  show          = true;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
 
@@ -80,6 +79,7 @@ public class Main extends GLGame {
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
         Engine.checkGLError("Post startup");
+        setFPSLimit(20); 
     }
 
     @Override
@@ -95,7 +95,11 @@ public class Main extends GLGame {
             switch (key) {
                 case Keyboard.KEY_F8:
                     if (isDown) {
-                        limitFPS = !limitFPS;
+                        if (fpsLimit > 0) {
+                            setFPSLimit(0);
+                        } else {
+                            setFPSLimit(20); 
+                        }
                     }
                     break;
                 case Keyboard.KEY_F3:
@@ -267,9 +271,9 @@ public class Main extends GLGame {
 
     long lastShaderLoadTime = 0L;
     @Override
-    public void onStatsUpdated() {
+    public void onStatsUpdated(float dTime) {
         if (this.statsOverlay != null) {
-            this.statsOverlay.update();
+            this.statsOverlay.update(dTime);
         }
         if (System.currentTimeMillis()-lastShaderLoadTime > 20200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
@@ -279,9 +283,6 @@ public class Main extends GLGame {
 
     @Override
     public void preRenderUpdate(float f) {
-        if (limitFPS) {
-            limitFpsTo(20);
-        }
         this.entSelf.updateInputDirect(movement);
         Engine.camera.set(this.entSelf, f);
     }

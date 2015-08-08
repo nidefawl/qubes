@@ -15,6 +15,8 @@ public class Timer {
     public float partialTick;
 
     public long el;
+
+    public long absTime;
     public Timer(int tickspersec) {
         this.tickspersec=tickspersec;
     }
@@ -82,9 +84,9 @@ public class Timer {
     }
 
     public void calculate() {
-        long n = getTime();
-        this.el = n-last;
-        last = n;
+        this.absTime = getTime();
+        this.el = absTime-last;
+        last = absTime;
         this.partialTick += this.el/1000.0D*tickspersec;
         this.ticks = (int) this.partialTick;
         this.partialTick -= this.ticks;

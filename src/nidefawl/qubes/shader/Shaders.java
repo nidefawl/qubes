@@ -1,11 +1,20 @@
 package nidefawl.qubes.shader;
 
+import java.util.Arrays;
+
 import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.WorldRenderer;
 
 public class Shaders {
+
+    public static Shader[] allShaders = new Shader[16];
+    public static int numShaders = 0;
+
+    public static void register(Shader shader) {
+        allShaders[numShaders++] = shader;
+    }
 
     public static Shader       waterShader;
     public static Shader       waterShader2;
@@ -20,6 +29,8 @@ public class Shaders {
 
     public void initShaders() {
         try {
+            numShaders = 0;
+            Arrays.fill(allShaders, null);
             Shader new_waterShader = AssetManager.getInstance().loadShader("shaders/water");
             if (Shaders.waterShader != null)
                 Shaders.waterShader.release();
@@ -120,4 +131,11 @@ public class Shaders {
         compositeShader.setProgramUniformMatrix4ARB("shadowProjectionInverse", false, Engine.getShadowProjectionMatrixInv(), false);
     }
 
+    public static int getAndResetNumCalls() {
+        int total = 0;
+        for (int i = 0; i < numShaders; i++) {
+            total += allShaders[i].getAndResetNumCalls();
+        }
+        return total;
+    }
 }

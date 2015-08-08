@@ -1,20 +1,15 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_BLEND;
-import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.glBlendFunc;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.*;
 
 import java.util.ArrayList;
 
 import nidefawl.game.Main;
-import nidefawl.qubes.*;
+import nidefawl.qubes.GLGame;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.shader.Shaders;
 
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
@@ -22,49 +17,55 @@ import org.lwjgl.util.vector.Vector3f;
 
 public class GuiOverlayStats extends Gui {
 
-	final FontRenderer font;
-	final FontRenderer fontSmall;
+    final FontRenderer font;
+    final FontRenderer fontSmall;
 
-    ArrayList<String>    info = new ArrayList<String>();
+    ArrayList<String>  info        = new ArrayList<String>();
 
-	private String camStats;
-	private String stats = "";
-	long messageTime = System.currentTimeMillis() - 5000L;
-	String message = "";
-	
-	public GuiOverlayStats() {
-	    this.font = FontRenderer.get("Arial", 18, 0, 20);
-	    this.fontSmall = FontRenderer.get("Arial", 12, 0, 14);
-        boolean isWindows, is64bit;
-        isWindows = System.getProperty("os.name").contains("Windows");
-        if (isWindows) {
-            is64bit = (System.getenv("ProgramFiles(x86)") != null);
-        } else {
-            is64bit = (System.getProperty("os.arch").indexOf("64") != -1);
-        }
-        info.add("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + " on " + (is64bit ? "x64 OS" : "x86 OS") + ") version " + System.getProperty("os.version"));
-        info.add(new StringBuilder("Java: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).toString());
+    private String     stats2;
+    private String     stats       = "";
+    private String     statsRight  = "";
+    long               messageTime = System.currentTimeMillis() - 5000L;
+    String             message     = "";
 
-        long mem = Runtime.getRuntime().maxMemory() / 1048576;
-        info.add("JVM Memory: " + mem + "MB");
-        info.add(new StringBuilder("VM: ").append(System.getProperty("java.vm.name")).append(" (").append(System.getProperty("java.vm.info")).append("), ").append(System.getProperty("java.vm.vendor")).toString());
-        info.add(new StringBuilder("LWJGL: ").append(Sys.getVersion()).toString());
-        info.add(new StringBuilder("OpenGL: ").append(GL11.glGetString(7937 /*GL_RENDERER*/)).append(" version ").append(GL11.glGetString(7938 /*GL_VERSION*/)).append(", ").append(GL11.glGetString(7936 /*GL_VENDOR*/)).toString());
-	}
+    public GuiOverlayStats() {
+        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
+        //        boolean isWindows, is64bit;
+        //        isWindows = System.getProperty("os.name").contains("Windows");
+        //        if (isWindows) {
+        //            is64bit = (System.getenv("ProgramFiles(x86)") != null);
+        //        } else {
+        //            is64bit = (System.getProperty("os.arch").indexOf("64") != -1);
+        //        }
+        //        info.add("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + " on " + (is64bit ? "x64 OS" : "x86 OS") + ") version " + System.getProperty("os.version"));
+        //        info.add(new StringBuilder("Java: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).toString());
+        //
+        //        long mem = Runtime.getRuntime().maxMemory() / 1048576;
+        //        info.add("JVM Memory: " + mem + "MB");
+        //        info.add(new StringBuilder("VM: ").append(System.getProperty("java.vm.name")).append(" (").append(System.getProperty("java.vm.info")).append("), ").append(System.getProperty("java.vm.vendor")).toString());
+        //        info.add(new StringBuilder("LWJGL: ").append(Sys.getVersion()).toString());
+        //        info.add(new StringBuilder("OpenGL: ").append(GL11.glGetString(7937 /*GL_RENDERER*/)).append(" version ").append(GL11.glGetString(7938 /*GL_VERSION*/)).append(", ").append(GL11.glGetString(7936 /*GL_VENDOR*/)).toString());
+    }
 
-	public void update() {
+    public void update(float dTime) {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
-        stats = String.format("FPS: " + Main.instance.lastFPS + " (%.2f), %d ticks/s, Memory used: %.2fMb / %.2fMb", Main.instance.avgFrameTime, Main.instance.tick, memJVMUsed, memJVMTotal);
+        stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Main.instance.lastFPS, Main.instance.fpsLimit > 0 ? (" (Limit " + Main.instance.fpsLimit + ")") : "",
+                Main.instance.avgFrameTime, Main.instance.tick);
+        statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
-        this.camStats = String.format("xRot: %.2f - yRot: %.2f - camX: %.2f, camY: %.2f, camZ: %.2f", 
-                cam.getYaw(), cam.getPitch(), v.x, v.y, v.z);
-        Main.instance.tick=0;
+        Main.instance.tick = 0;
+        this.stats2 = String.format("%d setUniform/frame ", Main.instance.uniformCalls);
+        info.clear();
+        info.add(String.format("yaw/pitch: %.2f", cam.getYaw(), cam.getPitch()));
+        info.add(String.format("x: %.2f", v.x));
+        info.add(String.format("y: %.2f", v.y));
+        info.add(String.format("z: %.2f", v.z));
+    }
 
-	}
-
-	public void render(float fTime) {
+    public void render(float fTime) {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         //            glBegin(GL_QUADS);
         //            glTexCoord2f(1, 1);
@@ -79,8 +80,9 @@ public class GuiOverlayStats extends Gui {
         glEnable(GL_TEXTURE_2D);
         int y = 20;
         font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
+        font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
         y += font.getLineHeight() * 1.2F;
-        font.drawString(camStats, 5, y, 0xFFFFFF, true, 1.0F);
+        font.drawString(stats2, 5, y, 0xFFFFFF, true, 1.0F);
         y += font.getLineHeight() * 1.2F;
         for (String st : info) {
             fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
@@ -104,7 +106,8 @@ public class GuiOverlayStats extends Gui {
         }
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
-	}
+    }
+
     public void setMessage(String message) {
         this.messageTime = System.currentTimeMillis();
         this.message = message;
