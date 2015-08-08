@@ -20,7 +20,7 @@ public class OutputRenderer {
     }
 
     public void render(float fTime) {
-        TimingHelper.start(0);
+        if (Main.DO_TIMING) TimingHelper.start(0);
         boolean enableShaders = true;
         GuiOverlayDebug dbg = Main.instance.debugOverlay;
         if (Main.show) {
@@ -58,8 +58,8 @@ public class OutputRenderer {
             Tess.instance.add(x + tw, y + th, 0, 1, 0);
         }
 
-        TimingHelper.end(0);
-        TimingHelper.start(1);
+        if (Main.DO_TIMING) TimingHelper.end(0);
+        if (Main.DO_TIMING) TimingHelper.start(1);
         Shader.disable();
         Engine.fbComposite0.bind();
         Engine.fbComposite0.clearFrameBuffer();
@@ -79,7 +79,7 @@ public class OutputRenderer {
         }
         Tess.instance.draw(GL_QUADS);
         Engine.fbComposite0.unbindCurrentFrameBuffer();
-        TimingHelper.end(1);
+        if (Main.DO_TIMING) TimingHelper.end(1);
 
         Shader.disable();
         if (Main.show) {
@@ -94,7 +94,7 @@ public class OutputRenderer {
             }
             dbg.postDbgFB();
         }
-        TimingHelper.start(2);
+        if (Main.DO_TIMING) TimingHelper.start(2);
 
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
@@ -129,7 +129,7 @@ public class OutputRenderer {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         Engine.fbComposite1.unbindCurrentFrameBuffer();
-        TimingHelper.end(2);
+        if (Main.DO_TIMING) TimingHelper.end(2);
 
         Shader.disable();
         if (Main.show) {
@@ -143,7 +143,7 @@ public class OutputRenderer {
             dbg.postDbgFB();
         }
 
-        TimingHelper.start(3);
+        if (Main.DO_TIMING) TimingHelper.start(3);
         GL13.glActiveTexture(GL13.GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite1.getTexture(2));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 9987);
@@ -177,8 +177,8 @@ public class OutputRenderer {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         Engine.fbComposite2.unbindCurrentFrameBuffer();
-        TimingHelper.end(3);
-        TimingHelper.start(4);
+        if (Main.DO_TIMING) TimingHelper.end(3);
+        if (Main.DO_TIMING) TimingHelper.start(4);
 
         Shader.disable();
         if (Main.show) {
@@ -197,12 +197,12 @@ public class OutputRenderer {
             //    drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "GL_TEXTURE"+0);
             dbg.postDbgFB();
         }
-        TimingHelper.end(4);
+        if (Main.DO_TIMING) TimingHelper.end(4);
 
     }
     public void renderFinal(float fTime) {
 
-        TimingHelper.start(5);
+        if (Main.DO_TIMING) TimingHelper.start(5);
         boolean enableShaders = true;
         if (enableShaders) {
             Shaders.compositeFinal.enable();
@@ -234,7 +234,7 @@ public class OutputRenderer {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         glActiveTexture(GL_TEXTURE0);
-        TimingHelper.end(5);
+        if (Main.DO_TIMING) TimingHelper.end(5);
     }
 
 }

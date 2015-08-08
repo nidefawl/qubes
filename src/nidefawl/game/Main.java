@@ -31,7 +31,8 @@ public class Main extends GLGame {
     public static void main(String[] args) {
         instance.startGame();
     }
-
+    public static boolean GL_ERROR_CHECKS = false;
+    public static boolean DO_TIMING = false;
     boolean                limitFPS      = true;
     public static boolean  show          = true;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
@@ -166,7 +167,7 @@ public class Main extends GLGame {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         Vec3 vUnproject = null;
-        TimingHelper.start(6);
+        if (Main.DO_TIMING) TimingHelper.start(6);
         Engine.getSceneFB().bind();
         Engine.getSceneFB().clearFrameBuffer();
         Engine.checkGLError("drawDebug");
@@ -177,8 +178,8 @@ public class Main extends GLGame {
             vUnproject = Engine.unproject(winX, winY);
         }
         Engine.getSceneFB().unbindCurrentFrameBuffer();
-        TimingHelper.end(6);
-        TimingHelper.start(7);
+        if (Main.DO_TIMING) TimingHelper.end(6);
+        if (Main.DO_TIMING) TimingHelper.start(7);
         glActiveTexture(GL_TEXTURE0);
         glDepthMask(true);
         glEnable(GL_DEPTH_TEST);
@@ -199,10 +200,10 @@ public class Main extends GLGame {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_ALWAYS);
         glDepthMask(false);
-        TimingHelper.end(7);
+        if (Main.DO_TIMING) TimingHelper.end(7);
         Engine.outRenderer.render(fTime);
         Engine.outRenderer.renderFinal(fTime);
-        TimingHelper.start(8);
+        if (Main.DO_TIMING) TimingHelper.start(8);
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
@@ -232,8 +233,8 @@ public class Main extends GLGame {
                 this.debugOverlay.render(fTime);
             }
         }
-        TimingHelper.end(8);
-        TimingHelper.start(9);
+        if (Main.DO_TIMING) TimingHelper.end(8);
+        if (Main.DO_TIMING) TimingHelper.start(9);
 
         if (vUnproject != null) {
 
@@ -261,7 +262,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.render(fTime);
         }
-        TimingHelper.end(9);
+        if (Main.DO_TIMING) TimingHelper.end(9);
 
     }
 

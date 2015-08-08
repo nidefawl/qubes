@@ -119,7 +119,7 @@ public abstract class GLGame implements Runnable {
             shutdown();
             return;
         }
-        TimingHelper.start(10);
+        if (Main.DO_TIMING) TimingHelper.start(10);
         if (Display.getWidth() != displayWidth || Display.getHeight() != displayHeight) {
             displayWidth = Display.getWidth();
             displayHeight = Display.getHeight();
@@ -139,25 +139,25 @@ public abstract class GLGame implements Runnable {
             tick++;
         }
         Engine.checkGLError("pre render");
-        TimingHelper.end(10);
-        TimingHelper.start(11);
+        if (Main.DO_TIMING) TimingHelper.end(10);
+        if (Main.DO_TIMING) TimingHelper.start(11);
         preRenderUpdate(renderTime);
-        TimingHelper.end(11);
-        TimingHelper.start(12);
+        if (Main.DO_TIMING) TimingHelper.end(11);
+        if (Main.DO_TIMING) TimingHelper.start(12);
         input(renderTime);
-        TimingHelper.end(12);
-        TimingHelper.start(13);
+        if (Main.DO_TIMING) TimingHelper.end(12);
+        if (Main.DO_TIMING) TimingHelper.start(13);
         Engine.update();
-        TimingHelper.end(13);
+        if (Main.DO_TIMING) TimingHelper.end(13);
         render(renderTime);
-//        TimingHelper.start(14);
+//        if (Main.DO_TIMING) TimingHelper.start(14);
 //        GL11.glFlush();
-//        TimingHelper.end(14);
-        TimingHelper.start(15);
+//        if (Main.DO_TIMING) TimingHelper.end(14);
+        if (Main.DO_TIMING) TimingHelper.start(15);
         Engine.checkGLError("render");
         Display.update();
-        TimingHelper.end(15);
-        TimingHelper.start(16);
+        if (Main.DO_TIMING) TimingHelper.end(15);
+        if (Main.DO_TIMING) TimingHelper.start(16);
         long now = System.nanoTime();
         float took = timer.el;
         avgFrameTime = avgFrameTime*0.95F+(took)*0.05F;
@@ -173,7 +173,7 @@ public abstract class GLGame implements Runnable {
             onStatsUpdated();
             tick = 0;
         }
-        TimingHelper.end(16);
+        if (Main.DO_TIMING) TimingHelper.end(16);
     }
     public float avgFrameTime = 0F;
 
