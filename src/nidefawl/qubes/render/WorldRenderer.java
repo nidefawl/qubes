@@ -61,6 +61,8 @@ public class WorldRenderer {
     }
 
     public void renderWorld(float fTime) {
+//        sunAngle = 0.45F;
+//        sun = new Vector3f(0.41F, 0.14F, 0.00F);
         //         glDisable(GL_CULL_FACE);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_CULL_FACE); // Cull back facing polygons
@@ -117,7 +119,7 @@ public class WorldRenderer {
         for (int x = -num; x <= num; x++)
             for (int z = -num; z <= num; z++) {
                 Tess.instance.setOffset(x * w * 2, 0, z * w * 2);
-                Tess.instance.setBrightness(0xdd0000);
+                Tess.instance.setBrightness(0xc00000);
                 Tess.instance.setColor(-1, 255);
                 Tess.instance.add(-w, 0, w, 0, v/32F);
                 Tess.instance.add(w, 0, w, v, v/32F);
@@ -145,12 +147,12 @@ public class WorldRenderer {
             int tw = 22;
             int th = 22;
             Tess.instance.setNormals(0, 0, 1);
-            Tess.instance.setBrightness(0x1f0000);
+            Tess.instance.setBrightness(0xc00000);
             Tess.instance.setColor(-1, 255);
-            Tess.instance.add(x + tw, y + th, z, 1, 0);
+            Tess.instance.add(x + tw, y + th, z, v, 0);
             Tess.instance.add(x, y + th, z, 0, 0);
-            Tess.instance.add(x, y, z, 0, 1);
-            Tess.instance.add(x + tw, y, z, 1, 1);
+            Tess.instance.add(x, y, z, 0, v/32F);
+            Tess.instance.add(x + tw, y, z, v, v/32F);
         }
         Tess.instance.draw(GL_QUADS);
         Shader.disable();

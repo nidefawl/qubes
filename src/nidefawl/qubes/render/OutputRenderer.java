@@ -21,6 +21,7 @@ public class OutputRenderer {
 
     public void render(float fTime) {
         TimingHelper.start(0);
+        boolean enableShaders = true;
         GuiOverlayDebug dbg = Main.instance.debugOverlay;
         if (Main.show) {
             dbg.preDbgFB(true);
@@ -63,16 +64,18 @@ public class OutputRenderer {
         Engine.fbComposite0.bind();
         Engine.fbComposite0.clearFrameBuffer();
         Engine.checkGLError("bind fbo composite1");
-        Shaders.composite1.enable();
-        Engine.checkGLError("enable shader composite1");
-        Shaders.setUniforms(Shaders.composite1, fTime);
+        if (enableShaders) {
+            Shaders.composite1.enable();
+            Engine.checkGLError("enable shader composite1");
+            Shaders.setUniforms(Shaders.composite1, fTime);
+        }
         glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getDepthTex());
+        glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
         for (int i = 0; i < 4; i++) {
             glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(i));
+            glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(i));
         }
         Tess.instance.draw(GL_QUADS);
         Engine.fbComposite0.unbindCurrentFrameBuffer();
@@ -83,7 +86,7 @@ public class OutputRenderer {
             dbg.preDbgFB(false);
             glActiveTexture(GL_TEXTURE0);
             for (int i = 0; i < 4; i++) {
-                dbg.drawDbgTexture(0, 0, i, Engine.fb.getTexture(i), "TexUnit " + i);
+                dbg.drawDbgTexture(0, 0, i, Engine.getSceneFB().getTexture(i), "TexUnit " + i);
             }
             dbg.drawDbgTexture(0, 0, 4, Textures.texNoise, "TexUnit " + 4);
             for (int i = 0; i < 4; i++) {
@@ -106,11 +109,13 @@ public class OutputRenderer {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         Engine.fbComposite1.bind();
         Engine.fbComposite1.clearFrameBuffer();
-        Shaders.composite2.enable();
-        Engine.checkGLError("enable shader composite2");
-        Shaders.setUniforms(Shaders.composite2, fTime);
+        if (enableShaders) {
+            Shaders.composite2.enable();
+            Engine.checkGLError("enable shader composite2");
+            Shaders.setUniforms(Shaders.composite2, fTime);
+        }
         glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(4));
+        glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
         for (int i = 0; i < 4; i++) {
@@ -148,11 +153,13 @@ public class OutputRenderer {
 
         Engine.fbComposite2.bind();
         Engine.fbComposite2.clearFrameBuffer();
-        Shaders.composite3.enable();
-        Engine.checkGLError("enable shader composite3");
-        Shaders.setUniforms(Shaders.composite3, fTime);
+        if (enableShaders) {
+            Shaders.composite3.enable();
+            Engine.checkGLError("enable shader composite3");
+            Shaders.setUniforms(Shaders.composite3, fTime);
+        }
         glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(4));
+        glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
         glActiveTexture(GL_TEXTURE0);
@@ -196,12 +203,14 @@ public class OutputRenderer {
     public void renderFinal(float fTime) {
 
         TimingHelper.start(5);
-        //    
-        Shaders.compositeFinal.enable();
-        Engine.checkGLError("enable shader compositeF");
-        Shaders.setUniforms(Shaders.compositeFinal, fTime);
+        boolean enableShaders = true;
+        if (enableShaders) {
+            Shaders.compositeFinal.enable();
+            Engine.checkGLError("enable shader compositeF");
+            Shaders.setUniforms(Shaders.compositeFinal, fTime);
+        }
         glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(4));
+        glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
         glActiveTexture(GL_TEXTURE0);

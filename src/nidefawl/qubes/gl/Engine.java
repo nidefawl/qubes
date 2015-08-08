@@ -1,14 +1,14 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import nidefawl.game.Main;
 import nidefawl.qubes.*;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.Textures;
@@ -43,11 +43,11 @@ public class Engine {
     private static FloatBuffer    depthRead;
     private static FloatBuffer    fog;
     
-    public static FrameBuffer     fb;
-    public static FrameBuffer     fbComposite0;
-    public static FrameBuffer     fbComposite1;
-    public static FrameBuffer     fbComposite2;
-    public static FrameBuffer     fbDbg;
+    public static FrameBuffer2     fb2;
+    public static FrameBuffer2     fbComposite0;
+    public static FrameBuffer2     fbComposite1;
+    public static FrameBuffer2     fbComposite2;
+    public static FrameBuffer2     fbDbg;
     public static float           znear;
     public static float           zfar;
     private static DisplayList[]      lists;
@@ -185,21 +185,39 @@ public class Engine {
         projection.m33 = 0;
         projection.update();
         projection.update();
-        if (fb != null)
-            fb.cleanUp();
-        fb = new FrameBuffer(true, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
+        if (fb2 != null)
+            fb2.cleanUp();
+        fb2 = new FrameBuffer2(displayWidth, displayHeight);
+        fb2.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
+        fb2.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB8);
+        fb2.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
+        fb2.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB8);
+        fb2.setHasDepthAttachment();
+        fb2.setup();
         if (fbComposite0 != null)
             fbComposite0.cleanUp();
-        fbComposite0 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
+        fbComposite0 = new FrameBuffer2(displayWidth, displayHeight);
+        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
+        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB8);
+        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
+        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB8);
+        fbComposite0.setup();
+//        fbComposite0 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
         if (fbComposite1 != null)
             fbComposite1.cleanUp();
-        fbComposite1 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
+        fbComposite1 = new FrameBuffer2(displayWidth, displayHeight);
+        fbComposite1.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
+        fbComposite1.setup();
         if (fbComposite2 != null)
             fbComposite2.cleanUp();
-        fbComposite2 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
+        fbComposite2 = new FrameBuffer2(displayWidth, displayHeight);
+        fbComposite2.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
+        fbComposite2.setup();
         if (fbDbg != null)
             fbDbg.cleanUp();
-        fbDbg = new FrameBuffer(false, new int[] { GL_RGBA8 });
+        fbDbg = new FrameBuffer2(displayWidth, displayHeight);
+        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
+        fbDbg.setup();
     }
 
     public static float readDepth(int x, int y) {
@@ -317,6 +335,10 @@ public class Engine {
             }
         }
         return false;
+    }
+
+    public static IFrameBuffer getSceneFB() {
+        return fb2;
     }
 
 

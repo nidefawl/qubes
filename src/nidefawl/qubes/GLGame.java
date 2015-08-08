@@ -150,6 +150,9 @@ public abstract class GLGame implements Runnable {
         Engine.update();
         TimingHelper.end(13);
         render(renderTime);
+//        TimingHelper.start(14);
+//        GL11.glFlush();
+//        TimingHelper.end(14);
         TimingHelper.start(15);
         Engine.checkGLError("render");
         Display.update();

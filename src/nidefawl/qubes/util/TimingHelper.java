@@ -1,6 +1,7 @@
 package nidefawl.qubes.util;
 
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class TimingHelper {
@@ -39,7 +40,7 @@ public class TimingHelper {
     public static void start(int i) {
         if (!init) {
             long jvmuptime = ManagementFactory.getRuntimeMXBean().getUptime();
-            if (jvmuptime < 700) {
+            if (jvmuptime < 2700) {
                 return;
             }
             init = true;
@@ -80,9 +81,14 @@ public class TimingHelper {
             }
         }
         
-        if (calls[i]++%300==0) {
+        if (calls[i]++%1000==0) {
             float perCall = (float) millis[i] / (float) calls[i];
-            System.out.println(String.format("%s: %d calls. %.5f millis per call, %d ms total", hasName(i) ? names[i] : ""+i, calls[i], perCall, millis[i]));
+            String n1=""+i;
+            if (hasName(i)) {
+                n1 = names[i];
+            }
+            n1 = String.format("%-20s",n1);
+            System.out.println(String.format("%s %d calls. %.5f millis per call, %d ms total", n1, calls[i], perCall, millis[i]));
         }
         return timeTaken;
     }
@@ -106,5 +112,11 @@ public class TimingHelper {
             millis[a] = 0;
             calls[a] = 0;
         }
+    }
+    public static void reset() {
+        Arrays.fill(calls, 0);
+        Arrays.fill(nanos, 0);
+        Arrays.fill(millis, 0);
+        init = false;
     }
 }

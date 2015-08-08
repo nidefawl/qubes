@@ -1,5 +1,7 @@
 package nidefawl.game;
 
+import static nidefawl.qubes.GLGame.displayHeight;
+import static nidefawl.qubes.GLGame.displayWidth;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
@@ -49,26 +51,42 @@ public class Main extends GLGame {
         instance.startGame();
     }
 
-    boolean              limitFPS      = true;
-    public static boolean              show      = true;
-    long                 lastClickTime = System.currentTimeMillis() - 5000L;
+    boolean                limitFPS      = true;
+    public static boolean  show          = true;
+    long                   lastClickTime = System.currentTimeMillis() - 5000L;
 
-    public GuiOverlayStats   statsOverlay;
-    public GuiOverlayDebug   debugOverlay;
-    private Gui          gui;
+    public GuiOverlayStats statsOverlay;
+    public GuiOverlayDebug debugOverlay;
+    private Gui            gui;
 
-    boolean              handleClick   = false;
-    float                winX, winY;
+    boolean                handleClick   = false;
+    float                  winX, winY;
 
-     FontRenderer fontSmall;
-    final PlayerSelf     entSelf       = new PlayerSelf(1);
-    Movement             movement      = new Movement();
-    World world = null;
+    FontRenderer           fontSmall;
+    final PlayerSelf       entSelf       = new PlayerSelf(1);
+    Movement               movement      = new Movement();
+    World                  world         = null;
 
     public Main() {
         super(20);
         GLGame.displayWidth = initWidth;
         GLGame.displayHeight = initHeight;
+        TimingHelper.setName(0, "Final_Prepare");
+        TimingHelper.setName(1, "Final_Stage0");
+        TimingHelper.setName(2, "Final_Stage1");
+        TimingHelper.setName(3, "Final_Stage2");
+        TimingHelper.setName(4, "Final_Stage3");
+        TimingHelper.setName(5, "Final_StageLast");
+        TimingHelper.setName(6, "RenderScene");
+        TimingHelper.setName(7, "PreFinalStage");
+        TimingHelper.setName(8, "PostFinalStage");
+        TimingHelper.setName(9, "GUIStats");
+        TimingHelper.setName(10, "UpdateTimer");
+        TimingHelper.setName(11, "PreRenderUpdate");
+        TimingHelper.setName(12, "Input");
+        TimingHelper.setName(13, "EngineUpdate");
+        TimingHelper.setName(15, "DisplayUpdate");
+        TimingHelper.setName(16, "CalcFPS");
     }
 
     @Override
@@ -111,6 +129,11 @@ public class Main extends GLGame {
                 case Keyboard.KEY_F2:
                     if (isDown) {
                         Engine.setShadow();
+                    }
+                    break;
+                case Keyboard.KEY_F4:
+                    if (isDown) {
+                        TimingHelper.reset();
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -163,8 +186,8 @@ public class Main extends GLGame {
         glDepthFunc(GL_LEQUAL);
         Vec3 vUnproject = null;
         TimingHelper.start(6);
-        Engine.fb.bind();
-        Engine.fb.clearFrameBuffer();
+        Engine.getSceneFB().bind();
+        Engine.getSceneFB().clearFrameBuffer();
         Engine.checkGLError("drawDebug");
         //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         Engine.worldRenderer.renderWorld(fTime);
@@ -172,7 +195,7 @@ public class Main extends GLGame {
             this.handleClick = false;
             vUnproject = Engine.unproject(winX, winY);
         }
-        Engine.fb.unbindCurrentFrameBuffer();
+        Engine.getSceneFB().unbindCurrentFrameBuffer();
         TimingHelper.end(6);
         TimingHelper.start(7);
         glActiveTexture(GL_TEXTURE0);
@@ -206,14 +229,23 @@ public class Main extends GLGame {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
-        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
-//      glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
-//      Tess.instance.draw(GL_QUADS);
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glLoadIdentity(); // Reset The Projection Matrix
         GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
+//        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
+//        {
+//            int tw = displayWidth;
+//            int th = displayHeight;
+//            float x = 0;
+//            float y = 0;
+//            Tess.instance.add(x + tw, y, 0, 1, 1);
+//            Tess.instance.add(x, y, 0, 0, 1);
+//            Tess.instance.add(x, y + th, 0, 0, 0);
+//            Tess.instance.add(x + tw, y + th, 0, 1, 0);
+//        }
+//        Tess.instance.draw(GL_QUADS);
         if (show) {
             if (this.debugOverlay != null) {
                 this.debugOverlay.render(fTime);
@@ -258,7 +290,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 2111000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 20200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Engine.shaders.reload();
         }
