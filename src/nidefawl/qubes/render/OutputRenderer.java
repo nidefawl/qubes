@@ -10,6 +10,7 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.TimingHelper;
 
 import org.lwjgl.opengl.*;
 
@@ -19,7 +20,17 @@ public class OutputRenderer {
     }
 
     public void render(float fTime) {
+        TimingHelper.start(0);
         GuiOverlayDebug dbg = Main.instance.debugOverlay;
+        if (Main.show) {
+            dbg.preDbgFB(true);
+            dbg.drawDebug();
+            glActiveTexture(GL_TEXTURE0);
+            dbg.drawDbgTexture(0, 0, 6, Textures.texWater2.getGlid(), "Water");
+            dbg.drawDbgTexture(0, 0, 7, Textures.texEmpty, "Blank");
+            dbg.postDbgFB();
+        }
+
         glDisable(GL_LIGHTING);
         glDisable(GL_COLOR_MATERIAL);
         glDisable(GL_LIGHT0);
@@ -27,13 +38,6 @@ public class OutputRenderer {
         //      glDisable(GL_CULL_FACE);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(770, 771);
-        dbg.preDbgFB(true);
-        dbg.drawDebug();
-        glActiveTexture(GL_TEXTURE0);
-        dbg.drawDbgTexture(0, 0, 6, Textures.texWater2.getGlid(), "Water");
-        dbg.drawDbgTexture(0, 0, 7, Textures.texEmpty, "Blank");
-        dbg.postDbgFB();
-
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
         glDisable(GL_BLEND);
@@ -53,8 +57,9 @@ public class OutputRenderer {
             Tess.instance.add(x + tw, y + th, 0, 1, 0);
         }
 
+        TimingHelper.end(0);
+        TimingHelper.start(1);
         Shader.disable();
-
         Engine.fbComposite0.bind();
         Engine.fbComposite0.clearFrameBuffer();
         Engine.checkGLError("bind fbo composite1");
@@ -71,18 +76,22 @@ public class OutputRenderer {
         }
         Tess.instance.draw(GL_QUADS);
         Engine.fbComposite0.unbindCurrentFrameBuffer();
+        TimingHelper.end(1);
 
         Shader.disable();
-        dbg.preDbgFB(false);
-        glActiveTexture(GL_TEXTURE0);
-        for (int i = 0; i < 4; i++) {
-            dbg.drawDbgTexture(0, 0, i, Engine.fb.getTexture(i), "TexUnit " + i);
+        if (Main.show) {
+            dbg.preDbgFB(false);
+            glActiveTexture(GL_TEXTURE0);
+            for (int i = 0; i < 4; i++) {
+                dbg.drawDbgTexture(0, 0, i, Engine.fb.getTexture(i), "TexUnit " + i);
+            }
+            dbg.drawDbgTexture(0, 0, 4, Textures.texNoise, "TexUnit " + 4);
+            for (int i = 0; i < 4; i++) {
+                dbg.drawDbgTexture(0, 1, i, Engine.fbComposite0.getTexture(i), "ColAtt " + i);
+            }
+            dbg.postDbgFB();
         }
-        dbg.drawDbgTexture(0, 0, 4, Textures.texNoise, "TexUnit " + 4);
-        for (int i = 0; i < 4; i++) {
-            dbg.drawDbgTexture(0, 1, i, Engine.fbComposite0.getTexture(i), "ColAtt " + i);
-        }
-        dbg.postDbgFB();
+        TimingHelper.start(2);
 
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
@@ -115,16 +124,21 @@ public class OutputRenderer {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         Engine.fbComposite1.unbindCurrentFrameBuffer();
+        TimingHelper.end(2);
 
         Shader.disable();
-        dbg.preDbgFB(false);
-        glActiveTexture(GL_TEXTURE0);
-        for (int i = 0; i < 4; i++) {
-            dbg.drawDbgTexture(1, 0, i, Engine.fbComposite0.getTexture(i), "TexUnit " + i);
-        }
-        dbg.drawDbgTexture(1, 1, 2, Engine.fbComposite1.getTexture(2), "ColAtt " + 2);
-        dbg.postDbgFB();
+        if (Main.show) {
 
+            dbg.preDbgFB(false);
+            glActiveTexture(GL_TEXTURE0);
+            for (int i = 0; i < 4; i++) {
+                dbg.drawDbgTexture(1, 0, i, Engine.fbComposite0.getTexture(i), "TexUnit " + i);
+            }
+            dbg.drawDbgTexture(1, 1, 2, Engine.fbComposite1.getTexture(2), "ColAtt " + 2);
+            dbg.postDbgFB();
+        }
+
+        TimingHelper.start(3);
         GL13.glActiveTexture(GL13.GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite1.getTexture(2));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 9987);
@@ -156,33 +170,32 @@ public class OutputRenderer {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         Engine.fbComposite2.unbindCurrentFrameBuffer();
+        TimingHelper.end(3);
+        TimingHelper.start(4);
 
         Shader.disable();
-        dbg.preDbgFB(false);
-        glActiveTexture(GL_TEXTURE0);
-        dbg.drawDbgTexture(2, 0, 0, Engine.fbComposite0.getTexture(0), "TexUnit " + 0);
-        dbg.drawDbgTexture(2, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit " + 1);
-        dbg.drawDbgTexture(2, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit " + 2);
-        dbg.drawDbgTexture(2, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit " + 3);
-        dbg.drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "ColAtt " + 0);
-        glActiveTexture(GL_TEXTURE0);
-        dbg.drawDbgTexture(3, 0, 0, Engine.fbComposite2.getTexture(0), "TexUnit " + 0);
-        dbg.drawDbgTexture(3, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit " + 1);
-        dbg.drawDbgTexture(3, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit " + 2);
-        dbg.drawDbgTexture(3, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit " + 3);
-        //    drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "GL_TEXTURE"+0);
-        dbg.postDbgFB();
+        if (Main.show) {
+            dbg.preDbgFB(false);
+            glActiveTexture(GL_TEXTURE0);
+            dbg.drawDbgTexture(2, 0, 0, Engine.fbComposite0.getTexture(0), "TexUnit " + 0);
+            dbg.drawDbgTexture(2, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit " + 1);
+            dbg.drawDbgTexture(2, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit " + 2);
+            dbg.drawDbgTexture(2, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit " + 3);
+            dbg.drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "ColAtt " + 0);
+            glActiveTexture(GL_TEXTURE0);
+            dbg.drawDbgTexture(3, 0, 0, Engine.fbComposite2.getTexture(0), "TexUnit " + 0);
+            dbg.drawDbgTexture(3, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit " + 1);
+            dbg.drawDbgTexture(3, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit " + 2);
+            dbg.drawDbgTexture(3, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit " + 3);
+            //    drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "GL_TEXTURE"+0);
+            dbg.postDbgFB();
+        }
+        TimingHelper.end(4);
 
-        glDepthMask(true);
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
-        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(false);
+    }
+    public void renderFinal(float fTime) {
+
+        TimingHelper.start(5);
         //    
         Shaders.compositeFinal.enable();
         Engine.checkGLError("enable shader compositeF");
@@ -212,6 +225,7 @@ public class OutputRenderer {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         glActiveTexture(GL_TEXTURE0);
+        TimingHelper.end(5);
     }
 
 }

@@ -25,6 +25,7 @@ import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.world.World;
@@ -49,7 +50,7 @@ public class Main extends GLGame {
     }
 
     boolean              limitFPS      = true;
-    boolean              show      = true;
+    public static boolean              show      = true;
     long                 lastClickTime = System.currentTimeMillis() - 5000L;
 
     public GuiOverlayStats   statsOverlay;
@@ -161,6 +162,7 @@ public class Main extends GLGame {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         Vec3 vUnproject = null;
+        TimingHelper.start(6);
         Engine.fb.bind();
         Engine.fb.clearFrameBuffer();
         Engine.checkGLError("drawDebug");
@@ -171,6 +173,8 @@ public class Main extends GLGame {
             vUnproject = Engine.unproject(winX, winY);
         }
         Engine.fb.unbindCurrentFrameBuffer();
+        TimingHelper.end(6);
+        TimingHelper.start(7);
         glActiveTexture(GL_TEXTURE0);
         glDepthMask(true);
         glEnable(GL_DEPTH_TEST);
@@ -181,7 +185,20 @@ public class Main extends GLGame {
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
         GL11.glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+        glDepthMask(true);
+        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_ALPHA_TEST);
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_ALWAYS);
+        glDepthMask(false);
+        TimingHelper.end(7);
         Engine.outRenderer.render(fTime);
+        Engine.outRenderer.renderFinal(fTime);
+        TimingHelper.start(8);
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
@@ -189,13 +206,21 @@ public class Main extends GLGame {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
+        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
 //      glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
 //      Tess.instance.draw(GL_QUADS);
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity(); // Reset The Projection Matrix
+        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
         if (show) {
             if (this.debugOverlay != null) {
                 this.debugOverlay.render(fTime);
             }
         }
+        TimingHelper.end(8);
+        TimingHelper.start(9);
 
         if (vUnproject != null) {
 
@@ -223,6 +248,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.render(fTime);
         }
+        TimingHelper.end(9);
 
     }
 
@@ -245,7 +271,6 @@ public class Main extends GLGame {
         }
         this.entSelf.updateInputDirect(movement);
         Engine.camera.set(this.entSelf, f);
-//        this.camera.
     }
 
     @Override
@@ -254,6 +279,8 @@ public class Main extends GLGame {
             this.statsOverlay.setSize(displayWidth, displayHeight);
             this.statsOverlay.setPos(0, 0);
         }
+        this.debugOverlay.setPos(0, 0);
+        this.debugOverlay.setSize(displayWidth, displayHeight);
     }
     @Override
     public void tick() {

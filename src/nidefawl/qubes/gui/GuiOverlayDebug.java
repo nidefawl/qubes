@@ -35,10 +35,11 @@ public class GuiOverlayDebug extends Gui {
 	public void render(float fTime) {
         glBindTexture(GL_TEXTURE_2D, Engine.fbDbg.getTexture(0));
         {
-            int tw = displayWidth;
-            int th = displayHeight;
-            float x = 0;
-            float y = 0;
+            int tw = width;
+            int th = height;
+            float x = this.posX;
+            float y = this.posY;
+            Tess.instance.resetState();
             Tess.instance.add(x + tw, y, 0, 1, 1);
             Tess.instance.add(x, y, 0, 0, 1);
             Tess.instance.add(x, y + th, 0, 0, 0);
@@ -61,7 +62,7 @@ public class GuiOverlayDebug extends Gui {
         glMatrixMode(5889);
         glPushMatrix();
         glLoadIdentity();
-        glOrtho(0.0D, displayWidth, displayHeight, 0.0D, 0.0D, 1.0D);
+        glOrtho(0.0D, width, height, 0.0D, 0.0D, 1.0D);
         Engine.checkGLError("fbDbg.ortho");
         glDisable(3008);
         glDepthFunc(519);
@@ -97,12 +98,9 @@ public class GuiOverlayDebug extends Gui {
     }
 
     public void drawDbgTexture(int stage, int side, int num, int texture, String string) {
-        float aspect = displayHeight / (float) displayWidth;
         int w1 = 120;
         int gap = 24;
         int wCol = w1 * 2 + gap;
-        int hCol = displayHeight - 180;
-        int xCol = 4;
         int yCol = 160;
         int h = (int) (w1 * 0.6);
         int gapy = 4;
@@ -143,11 +141,10 @@ public class GuiOverlayDebug extends Gui {
                 "Composite2",
                 "Final",
         };
-            float aspect = displayHeight / (float) displayWidth;
             int w1 = 120;
             int gap = 24;
             int wCol = w1 * 2 + gap;
-            int hCol = Math.min(450, displayHeight - 20);
+            int hCol = Math.min(450, height - 20);
             int xCol = 4;
             int yCol = 160;
             int h = (int) (w1 * 0.6);

@@ -12,6 +12,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Timer;
+import nidefawl.qubes.util.TimingHelper;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
@@ -118,6 +119,7 @@ public abstract class GLGame implements Runnable {
             shutdown();
             return;
         }
+        TimingHelper.start(10);
         if (Display.getWidth() != displayWidth || Display.getHeight() != displayHeight) {
             displayWidth = Display.getWidth();
             displayHeight = Display.getHeight();
@@ -137,19 +139,29 @@ public abstract class GLGame implements Runnable {
             tick++;
         }
         Engine.checkGLError("pre render");
+        TimingHelper.end(10);
+        TimingHelper.start(11);
         preRenderUpdate(renderTime);
+        TimingHelper.end(11);
+        TimingHelper.start(12);
         input(renderTime);
+        TimingHelper.end(12);
+        TimingHelper.start(13);
         Engine.update();
+        TimingHelper.end(13);
         render(renderTime);
+        TimingHelper.start(15);
         Engine.checkGLError("render");
         Display.update();
+        TimingHelper.end(15);
+        TimingHelper.start(16);
         long now = System.nanoTime();
         float took = timer.el;
         avgFrameTime = avgFrameTime*0.95F+(took)*0.05F;
         prevFrameTime = now;
         Engine.checkGLError("Post render");
         fpsCounter++;
-        double dSec = 0.2;
+        double dSec = 1.2;
         while (fpsCounter>0&&System.currentTimeMillis() >= lastTimeFpsCalculated) {
             lastFPS = (int) (fpsCounter / (double)dSec);
             lastTimeFpsCalculated += dSec*1000;
@@ -158,6 +170,7 @@ public abstract class GLGame implements Runnable {
             onStatsUpdated();
             tick = 0;
         }
+        TimingHelper.end(16);
     }
     public float avgFrameTime = 0F;
 
