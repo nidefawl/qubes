@@ -14,56 +14,58 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
 
 public class Engine {
-    private static FloatBuffer colorBuffer;
-    private static IntBuffer   viewport;
-    private static FloatBuffer winZ;
-    private static FloatBuffer position;
-//    private static FloatBuffer projectionMatrix;
-//    private static FloatBuffer projectionMatrixInv;
-//    private static FloatBuffer modelViewMatrix;
-//    private static FloatBuffer modelViewMatrixInv;
-//
-//    private static FloatBuffer shadowProjectionMatrix;
-//    private static FloatBuffer shadowProjectionMatrixInv;
-//    private static FloatBuffer shadowModelViewMatrix;
-//    private static FloatBuffer shadowModelViewMatrixInv;
+    public final static int MAX_DISPLAY_LISTS = 256;
+    private static FloatBuffer    colorBuffer;
+    private static IntBuffer      viewport;
+    private static FloatBuffer    winZ;
+    private static FloatBuffer    position;
+    //    private static FloatBuffer projectionMatrix;
+    //    private static FloatBuffer projectionMatrixInv;
+    //    private static FloatBuffer modelViewMatrix;
+    //    private static FloatBuffer modelViewMatrixInv;
+    //
+    //    private static FloatBuffer shadowProjectionMatrix;
+    //    private static FloatBuffer shadowProjectionMatrixInv;
+    //    private static FloatBuffer shadowModelViewMatrix;
+    //    private static FloatBuffer shadowModelViewMatrixInv;
 
     private static BufferedMatrix projection;
     private static BufferedMatrix view;
     private static BufferedMatrix modelview;
     private static BufferedMatrix shadowProjection;
     private static BufferedMatrix shadowModelView;
-    
-//    private static Matrix4f    projectionMat4f;
-    private static FloatBuffer   depthRead;
-    private static FloatBuffer   fog;
-//    private static Matrix4f    def    = new Matrix4f();
-//    private static Matrix4f    tmp    = new Matrix4f();
-    public static NewCamera    camera = new NewCamera();
-    public static FrameBuffer fb;
-    public static FrameBuffer fbComposite0;
-    public static FrameBuffer fbComposite1;
-    public static FrameBuffer fbComposite2;
-    public static FrameBuffer fbDbg;
-    public static float znear;
-    public static float zfar;
-    
+
+    //    private static Matrix4f    projectionMat4f;
+    private static FloatBuffer    depthRead;
+    private static FloatBuffer    fog;
+    //    private static Matrix4f    def    = new Matrix4f();
+    //    private static Matrix4f    tmp    = new Matrix4f();
+    public static NewCamera       camera = new NewCamera();
+    public static FrameBuffer     fb;
+    public static FrameBuffer     fbComposite0;
+    public static FrameBuffer     fbComposite1;
+    public static FrameBuffer     fbComposite2;
+    public static FrameBuffer     fbDbg;
+    public static float           znear;
+    public static float           zfar;
+    private static DisplayList[]      lists;
+
     public static void generateLightMapTexture() {
-        
+
     }
 
     public static boolean checkGLError(String s) {
         int i = GL11.glGetError();
         if (i != 0) {
             String s1 = GLU.gluErrorString(i);
-            throw new GameError("Error - "+s+": "+s1);
+            throw new GameError("Error - " + s + ": " + s1);
         }
         return false;
     }
-	public static void init() {
+
+    public static void init() {
         colorBuffer = BufferUtils.createFloatBuffer(16);
         viewport = BufferUtils.createIntBuffer(16);
         winZ = BufferUtils.createFloatBuffer(1);
@@ -74,8 +76,9 @@ public class Engine {
         shadowProjection = new BufferedMatrix();
         shadowModelView = new BufferedMatrix();
         depthRead = BufferUtils.createFloatBuffer(16);
-        fog = BufferUtils.createFloatBuffer(4);
-	}
+        fog = BufferUtils.createFloatBuffer(16);
+        allocateDisplayLists(MAX_DISPLAY_LISTS);
+    }
 
     public static void set2DMode(float x, float width, float y, float height) {
         //        GL11.glDisable(GL11.GL_DEPTH_TEST);
@@ -93,7 +96,7 @@ public class Engine {
         GL11.glPopMatrix(); // Restore The Old Projection Matrix
         GL11.glMatrixMode(GL11.GL_MODELVIEW); // Select The Modelview Matrix
         GL11.glPopMatrix(); // Restore The Old Projection Matrix
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
     /**
@@ -128,7 +131,6 @@ public class Engine {
         glLightModel(GL_LIGHT_MODEL_AMBIENT, setColorBuffer(0.4F, 0.4F, 0.4F, 1.0F));
     }
 
-
     private static FloatBuffer setColorBuffer(double d, double d1, double d2, double d3) {
         return setColorBuffer((float) d, (float) d1, (float) d2, (float) d3);
     }
@@ -139,8 +141,9 @@ public class Engine {
         colorBuffer.flip();
         return colorBuffer;
     }
-    
+
     static final Vec3 v = new Vec3();
+
     public static Vec3 unproject(float winX, float winY) {
         glReadPixels((int) winX, (int) winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, winZ);
         float depth = winZ.get(0);
@@ -154,20 +157,20 @@ public class Engine {
     public static void resize(int displayWidth, int displayHeight) {
         projection.setIdentity();
         float fieldOfView = 60;
-        float aspectRatio = (float)displayWidth / (float)displayHeight;
-        znear = 0.1f;
-        zfar = 1000f;
+        float aspectRatio = (float) displayWidth / (float) displayHeight;
+        znear = 0.04f;
+        zfar = 5000f;
         viewport.position(0);
         viewport.put(0);
         viewport.put(0);
         viewport.put(displayWidth);
         viewport.put(displayHeight);
         viewport.flip();
-         
+
         float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
         float x_scale = y_scale / aspectRatio;
         float frustum_length = zfar - znear;
-         
+
         projection.m00 = x_scale;
         projection.m11 = y_scale;
         projection.m22 = -((zfar + znear) / frustum_length);
@@ -198,18 +201,23 @@ public class Engine {
         GL11.glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depthRead);
         return depthRead.get(0);
     }
+
     public static FloatBuffer getProjectionMatrix() {
         return projection.get();
     }
+
     public static FloatBuffer getProjectionMatrixInv() {
         return projection.getInv();
     }
+
     public static FloatBuffer getViewMatrix() {
         return view.get();
     }
+
     public static FloatBuffer getModelViewMatrixInv() {
         return modelview.getInv();
     }
+
     public static FloatBuffer getModelViewMatrix() {
         return modelview.get();
     }
@@ -221,15 +229,19 @@ public class Engine {
     public static FloatBuffer getProjectionMatrixPrev() {
         return projection.getPrev();
     }
+
     public static FloatBuffer getShadowProjectionMatrixInv() {
         return shadowProjection.getInv();
     }
+
     public static FloatBuffer getShadowProjectionMatrix() {
         return shadowProjection.get();
     }
+
     public static FloatBuffer getShadowModelViewMatrixInv() {
         return shadowModelView.getInv();
     }
+
     public static FloatBuffer getShadowModelViewMatrix() {
         return shadowModelView.get();
     }
@@ -253,9 +265,10 @@ public class Engine {
         fog.put(fogColor.x);
         fog.put(fogColor.y);
         fog.put(fogColor.z);
-        fog.put(0);
+        fog.put(1);
         fog.flip();
         glFog(GL_FOG_COLOR, fog);
+
     }
 
     public static void setShadow() {
@@ -265,5 +278,38 @@ public class Engine {
         shadowModelView.update();
         shadowProjection.update();
         shadowProjection.update();
+    }
+
+    public static DisplayList get() {
+        for (int i = 0; i < lists.length; i++) {
+            if (!lists[i].inUse) {
+                DisplayList alloc = lists[i];
+                alloc.inUse = true;
+                return alloc;
+            }
+        }
+        return null;
+    }
+
+    public static void release(DisplayList displayList) {
+        displayList.inUse = false;
+    }
+
+    public static void allocateDisplayLists(int maxRegions) {
+        lists = new DisplayList[maxRegions];
+        int a = glGenLists(maxRegions * 2);
+        for (int i = 0; i < lists.length; i++) {
+            lists[i] = new DisplayList();
+            lists[i].list = a + i * 2;
+        }
+    }
+
+    public static boolean hasFree() {
+        for (int i = 0; i < lists.length; i++) {
+            if (!lists[i].inUse) {
+                return true;
+            }
+        }
+        return false;
     }
 }

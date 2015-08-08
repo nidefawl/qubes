@@ -1,22 +1,22 @@
 package nidefawl.game;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL14.*;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.util.Locale;
 
 import nidefawl.engine.*;
 import nidefawl.engine.assets.AssetManager;
 import nidefawl.engine.assets.AssetTexture;
 import nidefawl.engine.font.FontRenderer;
 import nidefawl.engine.shader.Shader;
+import nidefawl.engine.shader.ShaderCompileError;
 import nidefawl.engine.texture.TextureManager;
 import nidefawl.engine.util.GameMath;
 import nidefawl.engine.vec.BlockPos;
 import nidefawl.engine.vec.Vec3;
-import nidefawl.game.entity.Entity;
 import nidefawl.game.entity.PlayerSelf;
 import nidefawl.game.gui.Gui;
 import nidefawl.game.gui.GuiOverlay;
@@ -71,6 +71,9 @@ public class Main extends GLGame {
     final PlayerSelf     entSelf       = new PlayerSelf(1);
     Movement             movement      = new Movement();
     private int noise;
+    private AssetTexture texWater;
+    private AssetTexture texWater2;
+    private int texEmpty;
 
     public Main() {
         super(20);
@@ -84,10 +87,23 @@ public class Main extends GLGame {
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
         this.fontSmall = FontRenderer.get("Arial", 12, 1, 14);
+        this.texWater = AssetManager.getInstance().loadPNGAsset("textures/water.png");
+        this.texWater.setupTexture();
+        this.texWater2 = AssetManager.getInstance().loadPNGAsset("textures/water_still.png");
+        this.texWater2.setupTexture();
+        
+        this.texEmpty = TextureManager.getInstance().makeNewTexture(new byte[16*16*4], 16, 16, true, false);
         initShaders();
         genNoise();
         Engine.checkGLError("Post startup");
         glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        glActiveTexture(GL_TEXTURE1);
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+        glScalef(1/256F, 1/256F, 1/256F);
+        glTranslatef(8, 8, 8);
+        glMatrixMode(GL_MODELVIEW);
+        glActiveTexture(GL_TEXTURE0);
     }
 
 
@@ -199,54 +215,132 @@ public class Main extends GLGame {
     }
 
     private void initShaders() {
-
-        if (this.waterShader != null)
-            this.waterShader.release();
-        this.waterShader = AssetManager.getInstance().loadShader("shaders/water");
-        if (this.waterShader2 != null)
-            this.waterShader2.release();
-        this.waterShader2 = AssetManager.getInstance().loadShader("shaders/water2");
-        if (this.depthBufShader != null)
-            this.depthBufShader.release();
-        this.depthBufShader = AssetManager.getInstance().loadShader("shaders/renderdepth");
-        if (this.composite1 != null)
-            this.composite1.release();
-        this.composite1 = AssetManager.getInstance().loadShader("shaders/composite");
-        if (this.composite2 != null)
-            this.composite2.release();
-        this.composite2 = AssetManager.getInstance().loadShader("shaders/composite1");
-        if (this.composite3 != null)
-            this.composite3.release();
-        this.composite3 = AssetManager.getInstance().loadShader("shaders/composite2");
-        if (this.compositeFinal != null)
-            this.compositeFinal.release();
-        this.compositeFinal = AssetManager.getInstance().loadShader("shaders/final");
-        if (this.testShader != null)
-            this.testShader.release();
-        this.testShader = AssetManager.getInstance().loadShader("shaders/test");
-        if (this.sky != null)
-            this.sky.release();
-        this.sky = AssetManager.getInstance().loadShader("shaders/sky");
-        if (this.sky2 != null)
-            this.sky2.release();
-        this.sky2 = AssetManager.getInstance().loadShader("shaders/sky");
+        try {
+            Shader new_waterShader = AssetManager.getInstance().loadShader("shaders/water");
+            if (this.waterShader != null)
+                this.waterShader.release();
+            this.waterShader = new_waterShader;
+            Shader new_waterShader2 = AssetManager.getInstance().loadShader("shaders/water2");
+            if (this.waterShader2 != null)
+                this.waterShader2.release();
+            this.waterShader2 = new_waterShader2;
+            Shader new_depthBufShader = AssetManager.getInstance().loadShader("shaders/renderdepth");
+            if (this.depthBufShader != null)
+                this.depthBufShader.release();
+            this.depthBufShader = new_depthBufShader;
+            Shader new_composite1 = AssetManager.getInstance().loadShader("shaders/composite");
+            if (this.composite1 != null)
+                this.composite1.release();
+            this.composite1 = new_composite1;
+            Shader new_composite2 = AssetManager.getInstance().loadShader("shaders/composite1");
+            if (this.composite2 != null)
+                this.composite2.release();
+            this.composite2 = new_composite2;
+            Shader new_composite3 = AssetManager.getInstance().loadShader("shaders/composite2");
+            if (this.composite3 != null)
+                this.composite3.release();
+            this.composite3 = new_composite3;
+            Shader new_compositeFinal = AssetManager.getInstance().loadShader("shaders/final");
+            if (this.compositeFinal != null)
+                this.compositeFinal.release();
+            this.compositeFinal = new_compositeFinal;
+            Shader new_testShader = AssetManager.getInstance().loadShader("shaders/test");
+            if (this.testShader != null)
+                this.testShader.release();
+            this.testShader = new_testShader;
+            Shader new_sky = AssetManager.getInstance().loadShader("shaders/sky");
+            if (this.sky != null)
+                this.sky.release();
+            this.sky = new_sky;
+            Shader new_sky2 = AssetManager.getInstance().loadShader("shaders/sky");
+            if (this.sky2 != null)
+                this.sky2.release();
+            this.sky2 = new_sky2;
+        } catch (ShaderCompileError e) {
+            if (this.debugOverlay != null) {
+                this.debugOverlay.setMessage("\0uff3333shader "+e.getName()+" failed to compile");
+            }
+            System.out.println("shader "+e.getName()+" failed to compile");
+            System.out.println(e.getLog());
+        }
     }
     Vec3 mousePos = new Vec3();
+    public void renderDebugLightMap(float fTime) {
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
+        glDepthMask(true);
+        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClear(GL11.GL_COLOR_BUFFER_BIT|GL11.GL_DEPTH_BUFFER_BIT);
+        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_ALPHA_TEST);
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_ALWAYS);
+        glDepthMask(false);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        int brightness1 = 122;
+        this.testShader.enable();
+        glBegin(GL_QUADS);
+        {
+            int tw = displayWidth/2;
+            int th = displayHeight;
+            float x = displayWidth/2;
+            float y = 0;
+            glMultiTexCoord2f(GL_TEXTURE0, 1, 1);
+            glMultiTexCoord2f(GL_TEXTURE1, brightness1, brightness1);
+            glVertex3f(x + tw, y, 0);
+            glMultiTexCoord2f(GL_TEXTURE0, 0, 1);
+            glVertex3f(x, y, 0);
+            glMultiTexCoord2f(GL_TEXTURE0, 0, 0);
+            glVertex3f(x, y + th, 0);
+            glMultiTexCoord2f(GL_TEXTURE0, 1, 0);
+            glVertex3f(x + tw, y + th, 0);
+        }
+        glEnd();
+//        brightness1 = 90;
+        {
+            int tw = displayWidth/2;
+            int th = displayHeight;
+            float x = 0;
+            float y = 0;
+            Tess.instance.setColor(-1, 255);
+            Tess.instance.setBrightness(brightness1);
+            Tess.instance.add(x + tw, y, 0, 1, 1);
+            Tess.instance.add(x, y, 0, 0, 1);
+            Tess.instance.add(x, y + th, 0, 0, 0);
+            Tess.instance.add(x + tw, y + th, 0, 1, 0);
+        }
+        Tess.instance.draw(GL_QUADS);
+        Shader.disable();
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+
+        if (this.debugOverlay != null) {
+            this.debugOverlay.render(fTime);
+        }
+
+    }
     
     public void render(float fTime) {
-        fogColor = new Vector3f(0.7F, 0.82F, 0.9999F);
-        fogColor.scale(0.4F);
+        fogColor = new Vector3f(0.7F, 0.82F, 1F);
+//        fogColor.scale(0.4F);
         skyColor = new Vector3f(0.43F, .69F, 1.F);
         skyColor.scale(0.4F);
         Vec3 vUnproject = null;
         Engine.fb.bind();
+        clearFrameBuffer(Engine.fb);
         Engine.checkGLError("drawDebug");
 
         //         glDisable(GL_CULL_FACE);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_CULL_FACE); // Cull back facing polygons
         //        glDisable(GL_CULL_FACE);
-        clearFrameBuffer(Engine.fb);
         glActiveTexture(GL_TEXTURE0);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -257,12 +351,14 @@ public class Main extends GLGame {
         glDisable(GL_TEXTURE_2D);
         glDepthMask(false);
         glDisable(GL_ALPHA_TEST);
+//        Vector3f fogColor2 = new Vector3f(0.7F, 0,0);
+//        fogColor2.scale(0.4F);
         Engine.setFog(fogColor, 1);
         glNormal3f(0.0F, -1.0F, 0.0F);
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogf(GL_FOG_START, 0);
-        glFogf(GL_FOG_START, Engine.zfar/2F);
+        glFogf(GL_FOG_END, Engine.zfar/1.41F);
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT );
@@ -282,36 +378,43 @@ public class Main extends GLGame {
         glLoadIdentity();
         glLoadMatrix(Engine.getModelViewMatrix());
 
-        float w = 16F;
+        float w = 4F;
         float v = 1F;
-        int num = 4;
-        Tess.instance.setNormals(0, 1, 0);
-        for (int x = -num; x <= num; x++)
-            for (int z = -num; z <= num; z++) {
-                Tess.instance.setOffset(x * w * 2, 0, z * w * 2);
-                Tess.instance.add(-w, 0, w, 0, v);
-                Tess.instance.add(w, 0, w, v, v);
-                Tess.instance.add(w, 0, -w, v, 0);
-                Tess.instance.add(-w, 0, -w, 0, 0);
-            }
+        int num = 8;
+        Tess.instance.resetState();
 
         this.waterShader2.enable();
         setUniforms(this.waterShader2);
         this.waterShader2.setProgramUniform1i("texture", 0);
-        this.waterShader2.setProgramUniform1i("specular", 1);
         this.waterShader2.setProgramUniform1i("normals", 2);
         this.waterShader2.setProgramUniform1i("noisetex", 3);
+        this.waterShader2.setProgramUniform1i("specular", 5);
+        Tess.instance.setNormals(0, 1, 0);
+        int a = 0;
+        for (int x = -num; x <= num; x++)
+            for (int z = -num; z <= num; z++) {
+                Tess.instance.setOffset(x * w * 2, 0, z * w * 2);
+                Tess.instance.setBrightness(0xdd0000);
+                Tess.instance.setColor(-1, 255);
+                Tess.instance.add(-w, 0, w, 0, v/32F);
+                Tess.instance.add(w, 0, w, v, v/32F);
+                Tess.instance.add(w, 0, -w, v, 0);
+                Tess.instance.add(-w, 0, -w, 0, 0);
+            }
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D, texWater2.getGlid());
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D, this.texEmpty);
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D, this.texEmpty);
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, this.noise);
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, 0);
         glActiveTexture(GL_TEXTURE0);
         Tess.instance.draw(GL_QUADS);
+        Tess.instance.resetState();
         {
             int x = 10;
             int y = 20;
@@ -319,7 +422,8 @@ public class Main extends GLGame {
             int tw = 22;
             int th = 22;
             Tess.instance.setNormals(0, 0, 1);
-            Tess.instance.setColor(0xFFFFFF, 255);
+            Tess.instance.setBrightness(0x1f0000);
+            Tess.instance.setColor(-1, 255);
             Tess.instance.add(x + tw, y + th, z, 1, 0);
             Tess.instance.add(x, y + th, z, 0, 0);
             Tess.instance.add(x, y, z, 0, 1);
@@ -343,9 +447,14 @@ public class Main extends GLGame {
         glDisable(GL_COLOR_MATERIAL);
         glDisable(GL_LIGHT0);
         glDisable(GL_LIGHT1);
-        glDisable(GL_CULL_FACE);
+//      glDisable(GL_CULL_FACE);
+      GL11.glEnable(GL11.GL_BLEND);
+      GL11.glBlendFunc(770, 771);
         preDbgFB(true);
         drawDebug();
+        glActiveTexture(GL_TEXTURE0);
+        drawDbgTexture(0, 0, 6, this.texWater2.getGlid(), "Water");
+        drawDbgTexture(0, 0, 7, this.texEmpty, "Blank");
         postDbgFB();
 
         glEnable(GL_TEXTURE_2D);
@@ -361,10 +470,10 @@ public class Main extends GLGame {
             int th = displayHeight;
             float x = 0;
             float y = 0;
-            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-            Tess.instance.add(x, y + th, 0, 0, 0);
-            Tess.instance.add(x, y, 0, 0, 1);
             Tess.instance.add(x + tw, y, 0, 1, 1);
+            Tess.instance.add(x, y, 0, 0, 1);
+            Tess.instance.add(x, y + th, 0, 0, 0);
+            Tess.instance.add(x + tw, y + th, 0, 1, 0);
         }
 
         Shader.disable();
@@ -501,13 +610,13 @@ public class Main extends GLGame {
         
         
         glDepthMask(true);
-        glClearColor(0,0,0,0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClear(GL11.GL_COLOR_BUFFER_BIT|GL11.GL_DEPTH_BUFFER_BIT);
         glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
         glDisable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_ALWAYS);
         glDepthMask(false);
 //        
@@ -526,6 +635,11 @@ public class Main extends GLGame {
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite1.getTexture(2));
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(3));
+//      FloatBuffer buff = BufferUtils.createFloatBuffer(16);
+//      buff.position(0).limit(16);
+//      GL11.glGetFloat(GL11.GL_FOG_COLOR, buff);
+//      System.out.println(String.format(Locale.US, GL11.glGetBoolean(GL11.GL_FOG)+" %.2fF, %.2fF, %.2fF, %.2fF", buff.get(0), buff.get(1), buff.get(2), buff.get(3)));
+
         Tess.instance.draw(GL_QUADS);
         Shader.disable();
         for (int i = 0; i < 7; i++) {
@@ -591,8 +705,8 @@ public class Main extends GLGame {
     private void clearFrameBuffer(FrameBuffer fb) {
         fb.clear(0, 1.0F, 1.0F, 1.0F, 1.0F);
         fb.clear(1, 1.0F, 1.0F, 1.0F, 1.0F);
-        fb.clear(2, 1.0F, 1.0F, 1.0F, 1.0F);
-        fb.clear(3, 1.0F, 1.0F, 1.0F, 1.0F);
+        fb.clear(2, 0F, 0F, 0F, 0F);
+        fb.clear(3, 0F, 0F, 0F, 0F);
         fb.clearDepth();
         fb.setDrawAll();
     }
@@ -668,19 +782,19 @@ public class Main extends GLGame {
         glEnable(GL_BLEND);
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, texture);
-        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
         Tess.instance2.add(0, 0 + h, 0, 0, 0);
-        Tess.instance2.add(0, 0, 0, 0, 1);
+        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
         Tess.instance2.add(w1, 0, 0, 1, 1);
+        Tess.instance2.add(0, 0, 0, 0, 1);
         Tess.instance2.draw(7);
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
         Tess.instance2.setColorF(0, 0.5F);
-        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
         Tess.instance2.add(0, 0 + h, 0, 0, 0);
-        Tess.instance2.add(0, 0 + h-20, 0, 0, 1);
+        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
         Tess.instance2.add(w1, 0 + h-20, 0, 1, 1);
+        Tess.instance2.add(0, 0 + h-20, 0, 0, 1);
         Tess.instance2.draw(7);
         glEnable(GL_TEXTURE_2D);
         fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
@@ -705,10 +819,10 @@ public class Main extends GLGame {
             int gapy = 4;
             int b = 4;
             Tess.instance2.dontReset();
-            Tess.instance2.add(wCol, yCol + hCol, 0);
             Tess.instance2.add(0, yCol + hCol, 0);
-            Tess.instance2.add(0, yCol, 0);
+            Tess.instance2.add(wCol, yCol + hCol, 0);
             Tess.instance2.add(wCol, yCol, 0);
+            Tess.instance2.add(0, yCol, 0);
             glDisable(GL_TEXTURE_2D);
             glPushMatrix();
             for (int i = 0; i < names.length; i++) {
@@ -719,10 +833,10 @@ public class Main extends GLGame {
             glPopMatrix();
             Tess.instance2.resetState();
             Tess.instance2.dontReset();
-            Tess.instance2.add(wCol - b, yCol + hCol - b, 0);
             Tess.instance2.add(b, yCol + hCol - b, 0);
-            Tess.instance2.add(b, yCol + b, 0);
+            Tess.instance2.add(wCol - b, yCol + hCol - b, 0);
             Tess.instance2.add(wCol - b, yCol + b, 0);
+            Tess.instance2.add(b, yCol + b, 0);
             glPushMatrix();
             for (int i = 0; i < names.length; i++) {
                 glColor4f(.4F, .4F, .4F, 0.8F);
@@ -828,7 +942,7 @@ public class Main extends GLGame {
         if (this.debugOverlay != null) {
             this.debugOverlay.update();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 1000 && Keyboard.isKeyDown(Keyboard.KEY_F9)) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 2000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             initShaders();
         }

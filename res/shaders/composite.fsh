@@ -137,8 +137,7 @@ varying vec3 colorSkyTint;
 uniform int heldBlockLightValue;
 
 
-
-
+vec3 tmpV=vec3(0,0,0);
 
 /////////////////////////FUNCTIONS/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////FUNCTIONS/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,9 +192,8 @@ float   GetLightmapTorch(in vec2 coord) {                       //Function that 
 
 }
 
-float   GetLightmapSky(in vec2 coord) {                 //Function that retrieves the lightmap of light emitted by the sky. This is a raw value from 0 (fully dark) to 1 (fully lit) regardless of time of day
-        return pow(texture2D(gdepth, coord).b, 4.3f);
-        // return pow(0.78f, 4.3f);
+float 	GetLightmapSky(in vec2 coord) {			//Function that retrieves the lightmap of light emitted by the sky. This is a raw value from 0 (fully dark) to 1 (fully lit) regardless of time of day
+	return pow(texture2D(gdepth, coord).b, 4.3f);
 }
 
 float   GetUnderwaterLightmapSky(in vec2 coord) {
@@ -998,7 +996,6 @@ void    AddSkyGradient(inout SurfaceStruct surface) {
 
 
         vec3 linFogColor = pow(gl_Fog.color.rgb, vec3(2.2f));
-
         float fogLum = max(max(linFogColor.r, linFogColor.g), linFogColor.b);
 
 
@@ -1028,9 +1025,9 @@ void    AddSkyGradient(inout SurfaceStruct surface) {
                  horizonColor1 = mix(horizonColor1, vec3(1.5f, 1.95f, 1.5f) * 2.0f, vec3(timeSunrise + timeSunset));
         vec3 horizonColor2 = vec3(1.5f, 1.2f, 0.8f) * 1.0f;
                  horizonColor2 = mix(horizonColor2, vec3(1.9f, 0.6f, 0.4f) * 2.0f, vec3(timeSunrise + timeSunset));
-
         surface.sky.albedo *= mix(vec3(1.0f), horizonColor1, vec3(horizonGradient) * (1.0f - timeMidnight));
         surface.sky.albedo *= mix(vec3(1.0f), horizonColor2, vec3(pow(horizonGradient, 2.0f)) * (1.0f - timeMidnight));
+
 
         float grayscale = fogLum / 10.0f;
                   grayscale /= 3.0f;
@@ -2003,8 +2000,6 @@ void    Test(inout vec3 color, inout SurfaceStruct surface)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void main() {
-		vec3 dbgV = vec3(1,1,1);
-        vec3 finalComposite = vec3(1.,1.,1.);
         //Initialize surface properties required for lighting calculation for any surface that is not part of the sky
         surface.albedo                          = GetAlbedoLinear(texcoord.st);                                 //Gets the albedo texture
         surface.albedo                          = pow(surface.albedo, vec3(1.4f));
@@ -2040,7 +2035,6 @@ void main() {
 
         //Initialize sky surface properties
         surface.sky.albedo              = GetAlbedoLinear(texcoord.st) * (min(1.0f, float(surface.mask.sky) + float(surface.mask.sunspot)));                         //Gets the albedo texture for the sky
-
         surface.sky.tintColor   = vec3(1.0f);
         //surface.sky.tintColor         = mix(colorSunlight, vec3(colorSunlight.r), vec3(0.8f));                                                                     //Initializes the defualt tint color for the sky
         //surface.sky.tintColor         *= mix(1.0f, 500.0f, timeSkyDark);                                                                                           //Boost sky color at night                                                                                                                                            //Scale sunglow back to be less intense
@@ -2050,6 +2044,7 @@ void main() {
         surface.sky.sunSpot     *= 500.0f;
         surface.sky.sunSpot     *= 1.0f - rainStrength;
         //surface.sky.sunSpot     *= 1.0f - timeMidnight;
+
 
         AddSkyGradient(surface);
         AddSunglow(surface);
@@ -2222,7 +2217,7 @@ void main() {
         float sunlightMult = 1.2f;
 
         //Apply lightmaps to albedo and generate final shaded surface
-        finalComposite = 
+        vec3 finalComposite = 
 // 
 // ---
     							final.sunlight                    * 0.65f         * sunlightMult                          //Add direct sunlight
@@ -2240,9 +2235,8 @@ void main() {
                                                 ;
 
 
+// finalComposite=vec3(0,0,0);
 
-
-// dbgV = vec3(float(surface.mask.sunspot));
 
         //Apply sky to final composite
                  surface.sky.albedo *= 8.0f;
@@ -2271,9 +2265,9 @@ void main() {
         //finalComposite.rgb = vec3(AO) * 0.2f;
 
 
-        //Test(finalComposite.rgb, surface);
+        // Test(finalComposite.rgb, surface);
 
-        finalComposite *= 0.001f;                                                                                               //Scale image down for HDR
+        finalComposite *= 0.0002f;                                                                                               //Scale image down for HDR
         finalComposite.b *= 1.0f;
 
 
@@ -2298,25 +2292,9 @@ void main() {
                 finalComposite.b = 0.0f;
         }
 
-
-dbgV = vec3(finalComposite);
-// finalComposite = dbgV;
-
-/*
-
-varying vec3 colorSunlight;
-varying vec3 colorSkylight;
-varying vec3 colorSunglow;
-varying vec3 colorBouncedSunlight;
-varying vec3 colorScatteredSunlight;
-varying vec3 colorTorchlight;
-varying vec3 colorWaterMurk;
-varying vec3 colorWaterBlue;
-varying vec3 colorSkyTint;
-
-*/
-        gl_FragData[0] = vec4(dbgV, 1.0f);
+        gl_FragData[0] = vec4(finalComposite, 1.0f);
         gl_FragData[1] = vec4(surface.mask.matIDs, surface.shadow * surface.cloudShadow * pow(mcLightmap.sky, 0.2f), mcLightmap.sky, 1.0f);
+        // gl_FragData[1] = vec4(normalize(tmpV.xyz)*0.5f+0.5f, 1.0f);
         gl_FragData[2] = vec4(surface.normal.rgb * 0.5f + 0.5f, 1.0f);
         gl_FragData[3] = vec4(surface.specular.specularity, surface.cloudAlpha, surface.specular.glossiness, 1.0f);
         // gl_FragData[4] = vec4(surface.albedo, 1.0f);

@@ -1,6 +1,6 @@
 #version 120
 
-#define WAVE_HEIGHT 0.05f
+#define WAVE_HEIGHT 0.06f
 
 uniform sampler2D texture;
 uniform sampler2D specular;
@@ -33,7 +33,7 @@ varying float isice;
 #define ANIMATION_SPEED 1.0f
 
 //#define ANIMATE_USING_WORLDTIME
-
+vec4 texCoord;
 
 
 #ifdef ANIMATE_USING_WORLDTIME
@@ -124,13 +124,13 @@ float AlmostIdentity(in float x, in float m, in float n)
 }
 
 float GetWaves(vec3 position, in float scale) {
-	float speed = 0.9f;
+	float speed = 0.8f;
 
 	speed = mix(speed, 0.0f, isice);
 
-	vec2 p = position.xz / 20.0f;
+	vec2 p = position.xz / 50.0f;
 
-	p.xy -= position.y / 20.0f;
+	p.xy -= position.y / 50.0f;
 
 	p.x = -p.x;
 
@@ -144,100 +144,37 @@ float GetWaves(vec3 position, in float scale) {
 
 	//p += textureSmooth(noisetex, (position.xz / 200.0f) - vec2(FRAME_TIME / 100.0f, 0.0f)).xy / 15.0f;
 
-	float wave = textureSmooth(noisetex, (p * vec2(2.0f, 1.2f))  + vec2(0.0f,  p.x * 2.1f) ).x; 			p /= 2.1f; 	/*p *= pow(2.0f, 1.0f);*/ 	p.y -= (FRAME_TIME / 50.0f) * speed; p.x -= (FRAME_TIME / 30.0f) * speed;
+	float wave = textureSmooth(noisetex, (p * vec2(2.0f, 1.2f))  + vec2(0.0f,  p.x * 2.1f) ).x; 			
+	p /= 2.1f; 	
+	// p *= pow(2.0f, 1.0f);	
+	p.y -= (FRAME_TIME / 50.0f) * speed; 
+	p.x -= (FRAME_TIME / 30.0f) * speed;
 		  //wave = wave * wave * (3.0f - 2.0f * wave);
 	allwaves += wave;
 
-	weight = 2.1f;	
+	weight = 5.1f;	
 	weights += weight;
-		  wave = textureSmooth(noisetex, (p * vec2(2.0f, 1.4f))  + vec2(0.0f,  -p.x * 2.1f) ).x;	p /= 1.5f;/*p *= pow(2.0f, 2.0f);*/ 	p.x += (FRAME_TIME / 20.0f) * speed;
-		  //wave = wave * wave * (3.0f - 2.0f * wave);
+		  wave = textureSmooth(noisetex, (p * vec2(2.0f, 1.4f))  + vec2(0.0f,  -p.x * 1.1f) ).x;
+		  p /= 1.5f;
+		  p.x += (FRAME_TIME / 24.0f) * speed;
 		  wave *= weight;
 	allwaves += wave;
 
-	weight = 7.25f;	
+	weight = 11.25f;	
 	weights += weight;	
-		  wave = abs(textureSmooth(noisetex, (p * vec2(1.0f, 0.75f))  + vec2(0.0f,  p.x * 1.1f) ).x);		p /= 1.3f; 	p.x -= (FRAME_TIME / 25.0f) * speed;
-		  //wave = 1.0f - AlmostIdentity(wave, 0.2f, 0.1f);
-		  //wave = 1.0f - pow(wave, 1.15f);
-		 // wave = wave * wave * (3.0f - 2.0f * wave);
-		  //wave = pow(wave, 0.5f);
+		  wave = abs(textureSmooth(noisetex, (p * vec2(1.3f, 0.75f))  + vec2(0.0f,  p.x * 1.1f) ).x);
+		  p /= 1.3f; 	p.x -= (FRAME_TIME / 25.0f) * speed;
 		  wave *= weight;
 	allwaves += wave;
 
 	weight = 9.25f;	
 	weights += weight;	
 		  wave = abs(textureSmooth(noisetex, (p * vec2(1.0f, 0.75f))  + vec2(0.0f,  -p.x * 1.7f) ).x);		p /= 1.9f; 	p.x += (FRAME_TIME / 155.0f) * speed;
-		  //wave = 1.0f - AlmostIdentity(wave, 0.2f, 0.1f);
-		 // wave = 1.0f - pow(wave, 1.15f);
-		 // wave = wave * wave * (3.0f - 2.0f * wave);
-		  //wave = pow(wave, 0.5f);
 		  wave *= weight;
 	allwaves += wave;
 
-	// weight = 9.25f;	
-	// weights += weight;	
-	// 	  wave = abs(textureSmooth(noisetex, (p * vec2(1.0f, 0.8f))  + vec2(0.0f,  -p.x * 1.7f) ).x * 2.0f - 1.0f);		p /= 2.0f; 	p.x += (FRAME_TIME / 155.0f) * speed;
-	// 	  wave = 1.0f - AlmostIdentity(wave, 0.2f, 0.1f);
-	// 	 // wave = 1.0f - pow(wave, 1.15f);
-	// 	 // wave = wave * wave * (3.0f - 2.0f * wave);
-	// 	  //wave = pow(wave, 0.5f);
-	// 	  wave *= weight;
-	// allwaves += wave;
-
-	// weight = 15.25f;	
-	// weights += weight;	
-	// 	  wave = abs(textureSmooth(noisetex, (p * vec2(1.0f, 0.8f))  + vec2(0.0f,  p.x * 1.7f) ).x * 2.0f - 1.0f);
-	// 	  wave = 1.0f - AlmostIdentity(wave, 0.2f, 0.1f);
-	// 	 // wave = 1.0f - pow(wave, 1.15f);
-	// 	 // wave = wave * wave * (3.0f - 2.0f * wave);
-	// 	  //wave = pow(wave, 0.5f);
-	// 	  wave *= weight;
-	// allwaves += wave;
-
-	// weight = 12.25f;	
-	// weights += weight;	
-	// 	  wave = (textureSmooth(noisetex, (p * vec2(1.0f, 0.4f))  + vec2(0.0f,  p.x * 1.1f) ).x) * 0.5f;		p /= 1.2f; 	p.x += (FRAME_TIME / 55.0f) * speed;
-	// 	  wave += (textureSmooth(noisetex, (p * vec2(1.0f, 0.6f))  + vec2(0.0f,  -p.x * 0.7f) ).x) * 0.5f;
-	// 	  wave = abs(wave * 2.0f - 1.0f);
-	// 	  wave = 1.0f - pow(wave, 1.15f);
-	// 	 // wave = wave * wave * (3.0f - 2.0f * wave);
-	// 	  //wave = pow(wave, 0.5f);
-	// 	  wave *= weight;
-	// allwaves += wave;
 
 	allwaves /= weights;
-
-
-
-
-	//allwaves = 1.0f - abs(allwaves * 2.0f - 1.0f);
-
-	// vec2 p = position.xz * 10.0f;
-	// float t = FRAME_TIME;
-
-	// float allwaves = 0.0f;
-
-	// float weights = 0.0f;
-
-	// for (int i = 0; i < 3; i++)
-	// {
-	// 	float s = 3.0f;
-	// 	vec2 dir = texture2D(noisetex, vec2((i / 64.0f) + 0.5f)).xy * 2.0f - 1.0f;
-	// 		 dir = normalize(dir);
-
-	// 	float f = texture2D(noisetex, vec2(((i + 20.0f) / 64.0f) + 0.5f)).x;
-
-	// 	dir *= f;
-
-	// 	float a = texture2D(noisetex, vec2((i / 64.0f) + 0.5f)).z;
-	// 	a = 1.0f;
-	// 	allwaves += pow((sin(p.x * dir.x + p.y * dir.y + t * 3.0f) * 0.5f + 0.5f), 3.0f) * a;
-	// 	weights += a;
-	// }
-
-
-	// allwaves /= weights;
 
 
 	return allwaves;
@@ -260,7 +197,7 @@ vec3 GetWaterParallaxCoord(in vec3 position, in vec3 viewVector)
 
 		float sampleHeight = waveHeight;
 
-		for (int i = 0; sampleHeight < pCoord.z && i < 120; ++i)
+		for (int i = 0; sampleHeight < pCoord.z && i < 4; ++i)
 		{
 			pCoord.xy = mix(pCoord.xy, pCoord.xy + step.xy, clamp((pCoord.z - sampleHeight) / (stepSize.z * 0.2f * distAngleWeight / (-viewVector.z + 0.05f)), 0.0f, 1.0f));
 			pCoord.z += step.z;
@@ -304,7 +241,9 @@ vec3 GetWavesNormal(vec3 position, in float scale, in mat3 tbnMatrix) {
 
 		 wavesNormal.b = sqrt(1.0f - wavesNormal.r * wavesNormal.r - wavesNormal.g * wavesNormal.g);
 		 wavesNormal.rgb = normalize(wavesNormal.rgb);
-
+	texCoord.s -= wavesNormal.r*1.8f;
+	texCoord.t -= wavesNormal.g*3.0f*(1.0f/32.0f);
+	texCoord.t += (1/32.0f)*mod(((frameTimeCounter+wavesLeft*wavesUp*1.42f)/88.0f), 32.0f);
 
 
 	return wavesNormal.rgb;
@@ -312,15 +251,19 @@ vec3 GetWavesNormal(vec3 position, in float scale, in mat3 tbnMatrix) {
 
 void main() {
 
-	vec4 tex = texture2D(texture, texcoord.st);
+	
+	texCoord = texcoord; 
+	mat3 tbnMatrix = mat3 (tangent.x, binormal.x, normal.x,
+							tangent.y, binormal.y, normal.y,
+					     	tangent.z, binormal.z, normal.z);
+
+
+
+
+	vec3 wavesNormal = GetWavesNormal(worldPosition, 1.0f, tbnMatrix);
+	vec4 tex = texture2D(texture, texCoord.st);
 		 tex.a = 0.85f;
-	
-	float zero = 1.0f;
-	float transx = 0.0f;
-	float transy = 0.0f;
 	//float iswater = 0.0f;
-	
-	float texblock = 0.0625f;
 
 	bool backfacing = false;
 
@@ -332,7 +275,7 @@ void main() {
 
 	
 	if (iswater > 0.5f && !backfacing) {
-		vec4 albedo = texture2D(texture, texcoord.st).rgba;
+		vec4 albedo = texture2D(texture, texCoord.st).rgba;
 		float lum = albedo.r + albedo.g + albedo.b;
 			  lum /= 3.0f;
 
@@ -385,23 +328,16 @@ void main() {
 
 	matID += 0.1f;
 
-	gl_FragData[0] = vec4(tex.rgb, 0.9f);
+	// texcoord.y += (1/32.0f)*mod((frameTimeCounter/40.0f)*32.0f, 32.0f);
+
+		
+
+	//vec3 wavesNormal = vec3(0.0f, 0.0f, 1.0f);
+	gl_FragData[0] = vec4(tex.rgb, color.a);
 	gl_FragData[1] = vec4(matID / 255.0f, lightmap.r, lightmap.b, 1.0);
 
 
 
-
-		
-
-	mat3 tbnMatrix = mat3 (tangent.x, binormal.x, normal.x,
-							tangent.y, binormal.y, normal.y,
-					     	tangent.z, binormal.z, normal.z);
-
-
-
-
-	vec3 wavesNormal = GetWavesNormal(worldPosition, 1.0f, tbnMatrix);
-	//vec3 wavesNormal = vec3(0.0f, 0.0f, 1.0f);
 
 
 	vec3 waterNormal = wavesNormal * tbnMatrix;

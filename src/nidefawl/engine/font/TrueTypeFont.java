@@ -395,6 +395,7 @@ public class TrueTypeFont {
     public int getWidth(final String whatchars) {
         int totalwidth = 0;
         GlyphRect rect = null;
+        String toLower = null;
         for (int i = 0; i < whatchars.length(); i++) {
             final int charCurrent = whatchars.charAt(i);
 
@@ -414,6 +415,39 @@ public class TrueTypeFont {
                 }
                 i++;
                 continue;
+            }
+            if (charCurrent == 0 && i + 1 < whatchars.length()) {
+                if (toLower == null) {
+                    toLower = whatchars.toLowerCase();
+                }
+                char chr = toLower.charAt(i + 1);
+                if (chr == 'u' && i + 2 + 6 < whatchars.length()) {
+                    String hex = whatchars.substring(i + 2, i + 2 + 6);
+                    int rgb = 0xFFFFFFFF;
+                    try {
+                        rgb = Integer.parseInt(hex, 16);//SLOW :(
+                    } catch (NumberFormatException ignored) {
+                    }
+                    if (rgb >= 0 && rgb <= 0xFFFFFF) {
+                    }
+                    i += 7;
+                    continue;
+                } else if (chr == 'z') {
+//                    ctrl = 1;
+                    i += 1;
+                } else if (chr == 's') {
+                    final int spaceWidth = Math.min(this.fontMetrics.charWidth(charCurrent) + this.correctL, (int) (this.fontMetrics.getHeight() * 0.2D));
+                    totalwidth += spaceWidth;
+                    i += 1;
+                } else {
+                    int j = getControlChar(chr);
+                    if (j == 16) {
+                        totalwidth += this.spaceWidth;
+                    } else if (j >= 0 && j <= 15) {
+                    }
+                    i += 2;
+                    continue;
+                }
             }
             if ((rect = this.getRect(charCurrent)) == null) {
                 continue;

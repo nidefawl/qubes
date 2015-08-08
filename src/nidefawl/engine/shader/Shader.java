@@ -43,7 +43,7 @@ public class Shader {
         Engine.checkGLError("glGetUniformLocationARB "+name);
         if (blub < 0) {
             missinglocations.put(name, blub);
-            System.err.println("Invalid uniform location for "+this.name+" - "+name+ " ("+blub+")");
+//            System.err.println("Invalid uniform location for "+this.name+" - "+name+ " ("+blub+")");
         }
         locations.put(name, blub);
         return blub.intValue();
@@ -87,7 +87,7 @@ public class Shader {
                 Engine.checkGLError("getLog");
                 if (getStatus(this.fragShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                     Engine.checkGLError("getStatus");
-                    throw new GameError("Failed compiling fragment shader\n"+log);
+                    throw new ShaderCompileError(this.name+" fragment", log);
                 }
             }
 
@@ -106,7 +106,7 @@ public class Shader {
                 Engine.checkGLError("getLog");
                 if (getStatus(this.vertShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                     Engine.checkGLError("getStatus");
-                    throw new GameError("Failed compiling vertex shader\n"+log);
+                    throw new ShaderCompileError(this.name+" vertex", log);
                 }
             }
             this.shader = glCreateProgramObjectARB();

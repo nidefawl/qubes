@@ -1,10 +1,13 @@
 #version 120
 
 //#define WAVING_WATER
-
+const float waveHeight = 1.0f;
+const float waveWidth = 0.1f;
 uniform int worldTime;
 
 uniform vec3 cameraPosition;
+
+uniform float frameTimeCounter;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -50,13 +53,16 @@ void main() {
 	}*/
 		iswater = 1.0f;
 	
+	// vertexPos.y += sin(waveWidth * gl_Vertex.x + frameTimeCounter) * cos(waveWidth * gl_Vertex.z + frameTimeCounter) * waveHeight;
+	// vertexPos.z += sin(waveWidth * gl_Vertex.y + frameTimeCounter) * cos(waveWidth * gl_Vertex.x + frameTimeCounter) * waveHeight;
+
 		
-	vec4 viewPos = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
+	vec4 viewPos = gbufferModelViewInverse * gl_ModelViewMatrix * vertexPos;
 	vec4 position = viewPos;
 
 	worldPosition.xyz = viewPos.xyz + cameraPosition.xyz;
 
-	vec4 localPosition = gbufferModelView * gl_Vertex;
+	vec4 localPosition = gbufferModelView * vertexPos;
 
 	distance = length(localPosition.xyz);
 
@@ -66,10 +72,9 @@ void main() {
 	color = gl_Color;
 	
 	texcoord = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-
-	lmcoord = gl_TextureMatrix[1] * vec4(0.8, 0.8, 0.8, 0.8);
+	lmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
 	
-
+// lmcoord.x=0.78f;
 
 	gl_FogFragCoord = gl_Position.z;
 
@@ -109,7 +114,7 @@ void main() {
                           tangent.y, binormal.y, normal.y,
                           tangent.z, binormal.z, normal.z);
 
-	viewVector = (gl_ModelViewMatrix * gl_Vertex).xyz;
+	viewVector = (gl_ModelViewMatrix * vertexPos).xyz;
 	viewVector = normalize(tbnMatrix * viewVector);
 
 

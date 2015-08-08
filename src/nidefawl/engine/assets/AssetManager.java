@@ -49,8 +49,22 @@ public class AssetManager {
                 fis2 = new FileInputStream(new File(folder, name + ".vsh"));
                 fis2 = new BufferedInputStream(fis2);
                 shader.load(fis, fis2);
+            } catch (GameError e) {
+                throw e;
             } catch (Exception e) {
                 throw new GameError("Cannot load asset '" + name + "': " + e, e);
+            } finally {
+                try {
+
+                    if (fis != null) {
+                        fis.close();
+                    }
+                    if (fis2 != null) {
+                        fis2.close();
+                    }
+                } catch (Exception e) {
+                    throw new GameError("Failed closing file", e);
+                }
             }
             return shader;
         
