@@ -4,6 +4,8 @@ import nidefawl.qubes.util.GameError;
 
 public class ShaderCompileError extends GameError {
 
+    private static final long serialVersionUID = -4538958766169500694L;
+    
     private String name;
     private String log;
 

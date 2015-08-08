@@ -254,5 +254,10 @@ public class Shader {
         }
     }
 
+    public int getAndResetNumCalls() {
+        int calls = setProgramUniformCalls;
+        setProgramUniformCalls = 0;
+        return calls;
+    }
 }
         

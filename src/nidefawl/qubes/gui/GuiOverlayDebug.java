@@ -132,10 +132,7 @@ public class GuiOverlayDebug extends Gui {
             int gap = 24;
             int wCol = w1 * 2 + gap;
             int hCol = Math.min(450, height - 20);
-            int xCol = 4;
             int yCol = 160;
-            int h = (int) (w1 * 0.6);
-            int gapy = 4;
             int b = 4;
             Tess.instance2.dontReset();
             Tess.instance2.add(0, yCol + hCol, 0);
