@@ -27,6 +27,7 @@ import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3;
+import nidefawl.qubes.world.World;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -61,6 +62,7 @@ public class Main extends GLGame {
      FontRenderer fontSmall;
     final PlayerSelf     entSelf       = new PlayerSelf(1);
     Movement             movement      = new Movement();
+    World world = null;
 
     public Main() {
         super(20);
@@ -68,18 +70,18 @@ public class Main extends GLGame {
         GLGame.displayHeight = initHeight;
     }
 
-    public void initGame() throws LWJGLException {
-        super.initGame();
+    @Override
+    public void initGame() {
         this.statsOverlay = new GuiOverlayStats();
         this.statsOverlay.setPos(0, 0);
         this.statsOverlay.setSize(displayWidth, displayHeight);
         this.debugOverlay = new GuiOverlayDebug();
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
-        
         Engine.checkGLError("Post startup");
     }
 
+    @Override
     public void input(float fTime) {
         double mdX = Mouse.getDX();
         double mdY = Mouse.getDY();
@@ -155,10 +157,14 @@ public class Main extends GLGame {
     
     public void render(float fTime) {
 //        fogColor.scale(0.4F);
+        glDepthMask(true);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
         Vec3 vUnproject = null;
         Engine.fb.bind();
         Engine.fb.clearFrameBuffer();
         Engine.checkGLError("drawDebug");
+        //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         Engine.worldRenderer.renderWorld(fTime);
         if (this.handleClick) {
             this.handleClick = false;
@@ -166,22 +172,25 @@ public class Main extends GLGame {
         }
         Engine.fb.unbindCurrentFrameBuffer();
         glActiveTexture(GL_TEXTURE0);
-
-        //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        glPushMatrix();
-        Engine.set2DMode(0, displayWidth, 0, displayHeight);
-        Engine.outRenderer.render(fTime);
-        glEnable(GL_TEXTURE_2D);
-//        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
-//        Tess.instance.draw(GL_QUADS);
-        glEnable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
         glDepthMask(true);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity(); // Reset The Projection Matrix
+        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
+        GL11.glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+        Engine.outRenderer.render(fTime);
+        glActiveTexture(GL_TEXTURE0);
+        glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_TEXTURE_2D);
+//      glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
+//      Tess.instance.draw(GL_QUADS);
         if (show) {
             if (this.debugOverlay != null) {
                 this.debugOverlay.render(fTime);
@@ -215,8 +224,6 @@ public class Main extends GLGame {
             this.statsOverlay.render(fTime);
         }
 
-        Engine.set3DMode();
-        glPopMatrix();
     }
 
     long lastShaderLoadTime = 0L;
@@ -225,7 +232,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 2000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 2111000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Engine.shaders.reload();
         }

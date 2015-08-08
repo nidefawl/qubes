@@ -47,7 +47,7 @@ public abstract class GLGame implements Runnable {
         this.thread.start();
     }
 
-    public void initGame() throws LWJGLException {
+    public void initDisplay() throws LWJGLException {
         Display.setDisplayMode(new DisplayMode(GLGame.displayWidth, GLGame.displayHeight));
         Display.setResizable(true);
         Display.setTitle(GLGame.appName);
@@ -69,18 +69,14 @@ public abstract class GLGame implements Runnable {
             Display.create();
         }
         Engine.checkGLError("Pre startup");
-
+        Keyboard.create();
+        Mouse.create();
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GL11.glShadeModel(GL11.GL_SMOOTH);
         GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
         GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
-        Engine.init();
-        resize(displayWidth, displayHeight);
-        TextureManager.getInstance().init();
-        AssetManager.getInstance().init();
-        this.running = true;
     }
-
+    
     public boolean isRunning() {
         return running;
     }
@@ -97,15 +93,14 @@ public abstract class GLGame implements Runnable {
     @Override
     public void run() {
         try {
-
+            initDisplay();
             initGame();
-            Keyboard.create();
-            Mouse.create();
-
+            Engine.init();
+            resize(displayWidth, displayHeight);
+            this.running = true;
             while (this.running) {
                 runTick();
             }
-
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
@@ -202,4 +197,6 @@ public abstract class GLGame implements Runnable {
 
     public abstract void onResize();
     public abstract void tick();
+    public abstract void initGame();
+
 }

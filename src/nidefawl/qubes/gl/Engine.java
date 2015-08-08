@@ -10,11 +10,13 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import nidefawl.qubes.*;
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.render.OutputRenderer;
 import nidefawl.qubes.render.RegionRenderer;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3;
@@ -93,6 +95,8 @@ public class Engine {
         glMatrixMode(GL_MODELVIEW);
         glActiveTexture(GL_TEXTURE0);
 
+        TextureManager.getInstance().init();
+        AssetManager.getInstance().init();
         textures.init();
         shaders.init();
         worldRenderer.init();
@@ -100,24 +104,6 @@ public class Engine {
         outRenderer.init();
     }
 
-    public static void set2DMode(float x, float width, float y, float height) {
-        //        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glMatrixMode(GL11.GL_PROJECTION); // Select The Projection Matrix
-        GL11.glPushMatrix(); // Store The Projection Matrix
-        GL11.glLoadIdentity(); // Reset The Projection Matrix
-        GL11.glOrtho(x, width, height, y, -100, 100); // Set Up An Ortho Screen
-        GL11.glMatrixMode(GL11.GL_MODELVIEW); // Select The Modelview Matrix
-        GL11.glPushMatrix(); // Store The Modelview Matrix
-        GL11.glLoadIdentity(); // Reset The Modelview Matrix
-    }
-
-    public static void set3DMode() {
-        GL11.glMatrixMode(GL11.GL_PROJECTION); // Select The Projection Matrix
-        GL11.glPopMatrix(); // Restore The Old Projection Matrix
-        GL11.glMatrixMode(GL11.GL_MODELVIEW); // Select The Modelview Matrix
-        GL11.glPopMatrix(); // Restore The Old Projection Matrix
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-    }
 
     /**
      * Render the current frame
