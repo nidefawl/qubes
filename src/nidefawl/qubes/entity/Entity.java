@@ -33,5 +33,12 @@ public abstract class Entity {
         this.pos.y += this.mot.y;
         this.pos.z += this.mot.z;
 	}
+
+    public void move(float x, float y, float z) {
+        this.pos.x = x;
+        this.pos.y = y;
+        this.pos.z = z;
+        this.lastPos.set(this.pos);
+    }
 	
 }

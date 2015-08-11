@@ -1,5 +1,18 @@
 #version 120
 
+/*
+ _______ _________ _______  _______  _ 
+(  ____ \\__   __/(  ___  )(  ____ )( )
+| (    \/   ) (   | (   ) || (    )|| |
+| (_____    | |   | |   | || (____)|| |
+(_____  )   | |   | |   | ||  _____)| |
+      ) |   | |   | |   | || (      (_)
+/\____) |   | |   | (___) || )       _ 
+\_______)   )_(   (_______)|/       (_)
+
+Do not modify this code until you have read the LICENSE.txt contained in the root directory of this shaderpack!
+
+*/
 
 /////////////////////////CONFIGURABLE VARIABLES////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////CONFIGURABLE VARIABLES////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,9 +268,9 @@ void 	DepthOfField(inout vec3 color)
 
 void 	Vignette(inout vec3 color) {
 	float dist = distance(texcoord.st, vec2(0.5f)) * 2.0f;
-		  dist /= 1.5142f;
+		  dist /= 1.8f;
 
-		  dist = pow(dist, 1.1f);
+		  dist = pow(dist, 1.2f);
 
 	color.rgb *= 1.0f - dist;
 
@@ -330,7 +343,7 @@ void CalculateExposure(inout vec3 color) {
 	float exposureMin = 0.13f;
 	float exposure = pow(eyeBrightnessSmooth.y / 240.0f, 6.0f) * exposureMax + exposureMin;
 
-	//exposure = 1.0f;
+	exposure = 1.0f;
 
 	color.rgb /= vec3(exposure);
 }
@@ -737,6 +750,19 @@ void LowlightFuzziness(inout vec3 color, in BloomDataStruct bloomData)
 /////////////////////////MAIN//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////MAIN//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void main() {
+
+	vec3 color = GetColorTexture(texcoord.st);	//Sample gcolor texture
+
+	CalculateBloom(bloomData);			//Gather bloom textures
+	color = mix(color, bloomData.bloom, vec3(0.002f));
+
+	Vignette(color);
+	CalculateExposure(color);
+	TonemapReinhard05(color, bloomData);
+	gl_FragData[0] = vec4(color.rgb, 1.0f);
+}
+
+void main1() {
 
 	vec3 color = GetColorTexture(texcoord.st);	//Sample gcolor texture
 

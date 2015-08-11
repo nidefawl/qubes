@@ -81,7 +81,7 @@ public class TimingHelper {
             }
         }
         
-        if (calls[i]++%1000==0) {
+        if (calls[i]++%7000==0) {
             float perCall = (float) millis[i] / (float) calls[i];
             String n1=""+i;
             if (hasName(i)) {

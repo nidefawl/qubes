@@ -5,27 +5,29 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+import nidefawl.game.Main;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.DisplayList;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.render.RegionRenderer;
+import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
-
 
 public class Region {
     public static final int REGION_SIZE_BITS = 2;
     public static final int REGION_SIZE      = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK = REGION_SIZE - 1;
     
-    final int               rX, rZ;
+    public final int        rX;
+    public final int        rZ;
     final Chunk[][]         chunks           = new Chunk[REGION_SIZE][REGION_SIZE];
     private boolean         isRendered;
-    private DisplayList         displayList;
-    private int[]           facesRendered    = new int[RegionRenderer.NUM_PASSES];
-    private boolean[]       hasPass          = new boolean[RegionRenderer.NUM_PASSES];
+    private DisplayList     displayList;
+    private int[]           facesRendered    = new int[WorldRenderer.NUM_PASSES];
+    private boolean[]       hasPass          = new boolean[WorldRenderer.NUM_PASSES];
     private Mesh[][]        meshes;
     boolean                 translucentOnly  = false;
     private int[]           color            = new int[256];
@@ -68,7 +70,7 @@ public class Region {
     }
     private boolean isEmpty = false;
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return isEmpty;
     }
     public void generate(World world) {
@@ -90,6 +92,10 @@ public class Region {
     }
 
     public void doMeshing(World world) {
+        if (this.meshes == null) {
+            System.err.println("this region was already rendered before");
+            return;
+        }
         hasSecondPass = false;
         for (int pass = 0; pass < 2; pass++) {
             LinkedList<Mesh> meshes = new LinkedList<Mesh>();
@@ -275,7 +281,7 @@ public class Region {
         return c.getBiome(i & 0xF, j, k & 0xF);
     }
 
-    public void renderRegion(RegionRenderer renderer, float fTime, int pass) {
+    public void renderRegion(WorldRenderer renderer, float fTime, int pass) {
         if (displayList != null && displayList.list > 0)
             glCallList(displayList.list + pass);
     }
@@ -296,26 +302,62 @@ public class Region {
         return facesRendered[i];
     }
 
-    public void makeRegion(RegionRenderer renderer) {
+    public void makeRegion(WorldRenderer renderer) {
+        if (isRendered) {
+            System.err.println("Already rendered!");
+            return;
+        }
+        if (this.meshes == null) {
+            System.err.println("this.meshes == null!!!");
+            isRendered = true;
+            return;
+        }
         isRendered = true;
         if (displayList == null)
             displayList = Engine.nextFreeDisplayList();
         this.lastcolor = 0;
         GL11.glColor3f(0F, 0F, 0F);
-        World w = renderer.getWorld();
         int top = 110;//w.worldHeightMinusOne;
         int bottom = 10;//w.worldHeightMinusOne;
-        for (int pass = 0; pass < RegionRenderer.NUM_PASSES; pass++) {
+        for (int pass = 0; pass < WorldRenderer.NUM_PASSES; pass++) {
             facesRendered[pass] = 0;
             glNewList(displayList.list+pass, GL11.GL_COMPILE);
             Mesh[] meshesPass = this.meshes[pass];
-            this.hasPass[pass] = meshesPass.length > 0;  
+            this.hasPass[pass] = meshesPass.length > 0;
+            this.hasPass[1] = true;
             if (this.hasPass[pass]) {
                 glBegin(GL_QUADS);
+                Tess.instance3.resetState();
+                Tess.instance3.setColor(-1, 255);
+              Tess.instance3.setBrightness(0xf00000);
+              if (pass > 0) {
+                  System.err.println("meshesPass.length: "+meshesPass.length);
+                  GL11.glColor4f(1,1,1,1);
+//
+//                  float w = 7F;
+//                  float v = 1F;
+//                  int num = 4;
+//                  int a = 0;
+//                  int y = 22;
+//                  for (int x = 0; x < num; x++)
+//                      for (int z = 0; z < num; z++) {
+//                          Tess.instance3.setOffset(x+0.5F, 0F, z+0.5F);
+//                          Tess.instance3.setBrightness(0xf00000);
+//                          Tess.instance3.setColor(-1, 255);
+//                          Tess.instance3.setNormals(0,1,0);
+//                          Tess.instance3.add(-w, y, w, 0, v / 32F);
+//                          Tess.instance3.add(w, y, w, v, v / 32F);
+//                          Tess.instance3.add(w, y, -w, v, 0);
+//                          Tess.instance3.add(-w, y, -w, 0, 0);
+//                          Tess.instance3.setOffset(0,0,0);
+//                      }
+              }
+//              Tess.instance3.setColor(-1, 255);
                 for (int a = 0; a < meshesPass.length; a++) {
                     Mesh mesh = meshesPass[a];
                     drawMesh(mesh);
                 }
+                Tess.instance3.draw(GL_QUADS);
                 glEnd();
             }
             glEndList();
@@ -325,59 +367,71 @@ public class Region {
     }
 
     private void drawMesh(Mesh mesh) {
+        Tess.instance3.setNormals(mesh.normal[0], mesh.normal[1], mesh.normal[2]);
         if (mesh.type != lastcolor) {
             lastcolor = mesh.type;
-            int block = mesh.type&0xFF;
-            int biome = (mesh.type>>12)&0xFF;
-//              System.out.println(block+"/"+biome);
-          float m = 1F;
-          float alpha = 1F;
-          if (Block.water.id == block) {
-              alpha = 0.8F;
-          }
-            int c = color[block];
-
-            if (block == Block.grass.id) {
-//                c = BiomeGenBase.byId[biome].getBiomeGrassColor(ColorizerGrass.grass);
-                m = 0.3F;
+            int block = mesh.type & 0xFF;
+            int biome = (mesh.type >> 12) & 0xFF;
+            //              System.out.println(block+"/"+biome);
+            float m = 1F;
+            float alpha = 1F;
+            if (Block.water.id == block) {
+              Tess.instance3.setNormals(0,1,0);
+                alpha = 1F;
             }
-//            int biomeC = BiomeGenBase.byId[biome].color;
-
-//            if (block == Block.GRASS.id) {
-//                c = BiomeGenBase.byId[biome].getBiomeGrassColor(ColorizerGrass.grass, null, 0,0,0);
+//            int c = color[block];
+//
+//            if (block == Block.grass.id) {
+//                //                c = BiomeGenBase.byId[biome].getBiomeGrassColor(ColorizerGrass.grass);
 //                m = 0.3F;
 //            }
-//            int biomeC = BiomeGenBase.byId[biome].field_150609_ah;
-//            float cr = ((biomeC>>16)&0xFF)/255.0F;
-//            float cg = ((biomeC>>8)&0xFF)/255.0F;
-//            float cb = ((biomeC>>0)&0xFF)/255.0F;
-//            float br = 0.2126F*cr+0.7152F*cg+0.0722F*cb;
-//            m = (m+br) / 2.0F;
-            if (block == 1) {
-                m = 0.8F;
-            }
-//                if (biome == BiomeGenBase.JUNGLE_HILLS.biomeID) {
-//                    float cr = biome.
-//                    m = 0.2F;
-//                }
-            if (c == 0) c = 0x444444;
-            float b = (c&0xFF)/255F;
+//            //            int biomeC = BiomeGenBase.byId[biome].color;
+//
+//            //            if (block == Block.GRASS.id) {
+//            //                c = BiomeGenBase.byId[biome].getBiomeGrassColor(ColorizerGrass.grass, null, 0,0,0);
+//            //                m = 0.3F;
+//            //            }
+//            //            int biomeC = BiomeGenBase.byId[biome].field_150609_ah;
+//            //            float cr = ((biomeC>>16)&0xFF)/255.0F;
+//            //            float cg = ((biomeC>>8)&0xFF)/255.0F;
+//            //            float cb = ((biomeC>>0)&0xFF)/255.0F;
+//            //            float br = 0.2126F*cr+0.7152F*cg+0.0722F*cb;
+//            //            m = (m+br) / 2.0F;
+//            if (block == 1) {
+//                m = 0.8F;
+//            }
+//            //                if (biome == BiomeGenBase.JUNGLE_HILLS.biomeID) {
+//            //                    float cr = biome.
+//            //                    m = 0.2F;
+//            //                }
+//            if (c == 0)
+//                c = 0x444444;
+            int c = -1;
+//          c = 0x444444;
+            float b = (c & 0xFF) / 255F;
             c >>= 8;
-            float g = (c&0xFF)/255F;
+            float g = (c & 0xFF) / 255F;
             c >>= 8;
-            float r = (c&0xFF)/255F;
-            GL11.glColor4f(r*m, g*m, b*m, alpha);
+            float r = (c & 0xFF) / 255F;
+            Tess.instance3.setColorRGBAF(r * m, g * m, b * m, alpha);
         }
 //            if (mesh.v0[1] >= top||mesh.v1[1] >= top||mesh.v2[1] >= top||mesh.v3[1] >= top||
 //                    mesh.v0[1] <= bottom||mesh.v1[1] <= bottom||mesh.v2[1] <= bottom||mesh.v3[1] <= bottom) {
 //                GL11.glColor3f(0.9F, 0.4F, 0.4F);
 //                lastcolor = -1;
 //            }
-        glNormal3f(mesh.normal[0], mesh.normal[1], mesh.normal[2]);
-        glVertex3i(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
-        glVertex3i(mesh.v1[0], mesh.v1[1], mesh.v1[2]);
-        glVertex3i(mesh.v2[0], mesh.v2[1], mesh.v2[2]);
-        glVertex3i(mesh.v3[0], mesh.v3[1], mesh.v3[2]);
+//        Tess.instance3.setBrightness(0xf000f0);
+        Tess.instance3.setColor(-1, 255);
+        Tess.instance3.setUV(0, 0);
+        Tess.instance3.add(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
+
+        Tess.instance3.setUV(1, 0);
+        Tess.instance3.add(mesh.v1[0], mesh.v1[1], mesh.v1[2]);
+        Tess.instance3.setUV(1, 1);
+        Tess.instance3.add(mesh.v2[0], mesh.v2[1], mesh.v2[2]);
+        Tess.instance3.setUV(0, 1);
+        Tess.instance3.add(mesh.v3[0], mesh.v3[1], mesh.v3[2]);
+
     }
 
     public void release() {

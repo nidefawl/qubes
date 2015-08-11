@@ -27,13 +27,13 @@ public class TextureManager {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
         byte[] data = getRGBA(image);
-        uploadTexture(data, image.getWidth(), image.getHeight(), repeat, filter);
+        uploadTexture(data, image.getWidth(), image.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter);
         return i;
     }
     public int makeNewTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
-        uploadTexture(rgba, w, h, repeat, filter);
+        uploadTexture(rgba, w, h, 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter);
         return i;
     }
     public static byte[] getRGBA(BufferedImage bufferedImage) {
@@ -59,7 +59,7 @@ public class TextureManager {
     /**
      * Copy the supplied image onto the specified OpenGL texture
      */
-    public void uploadTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter) {
+    public void uploadTexture(byte[] rgba, int w, int h, int bytespp, int format, int internalFormat, boolean repeat, boolean filter) {
         if (filter) {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);   
@@ -74,13 +74,13 @@ public class TextureManager {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_CLAMP);
         }
-        if (directBuf == null || directBuf.capacity() < w*h*4) {
-            directBuf = ByteBuffer.allocateDirect(w*h*4).order(ByteOrder.nativeOrder());
+        if (directBuf == null || directBuf.capacity() < w*h*bytespp) {
+            directBuf = ByteBuffer.allocateDirect(w*h*bytespp).order(ByteOrder.nativeOrder());
         }
         directBuf.clear();
-        directBuf.put(rgba, 0, w*h*4);
-        directBuf.position(0).limit(w*h*4);
-        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, w, h, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, directBuf);
+        directBuf.put(rgba, 0, w*h*bytespp);
+        directBuf.position(0).limit(w*h*bytespp);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL11.GL_UNSIGNED_BYTE, directBuf);
     }
 
     public void destroy() {

@@ -35,7 +35,7 @@ public abstract class GLGame implements Runnable {
     private long               timeLastFrame;
     public int                 fpsLimit;
     private Thread             thread;
-    protected volatile boolean running;
+    protected volatile boolean running = true;
     public static int          ticksran;
     public static float        renderTime;
     public int                 tick       = 0;

@@ -105,4 +105,5 @@ public class PlayerSelf extends Entity {
         this.mot.y *= slowdown;
         this.mot.z *= slowdown;
     }
+
 }

@@ -10,7 +10,6 @@ import java.nio.IntBuffer;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.render.OutputRenderer;
-import nidefawl.qubes.render.RegionRenderer;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
@@ -50,7 +49,6 @@ public class Engine {
     private static DisplayList[]      lists;
     public static Camera       camera = new Camera();
     public static WorldRenderer worldRenderer = new WorldRenderer();
-    public static RegionRenderer regionRenderer = new RegionRenderer();
     public static OutputRenderer outRenderer = new OutputRenderer();
     public static Shaders shaders = new Shaders();
     public static Textures textures = new Textures();
@@ -97,7 +95,6 @@ public class Engine {
         textures.init();
         shaders.init();
         worldRenderer.init();
-        regionRenderer.init();
         outRenderer.init();
     }
 

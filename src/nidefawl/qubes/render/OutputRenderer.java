@@ -29,6 +29,7 @@ public class OutputRenderer {
             glActiveTexture(GL_TEXTURE0);
             dbg.drawDbgTexture(0, 0, 6, Textures.texWater2.getGlid(), "Water");
             dbg.drawDbgTexture(0, 0, 7, Textures.texEmpty, "Blank");
+            dbg.drawDbgTexture(0, 1, -2, Textures.texNoise2, "Noise2");
             dbg.postDbgFB();
         }
 

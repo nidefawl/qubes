@@ -87,4 +87,9 @@ public class GameMath {
     public static long toLong(int x, int z) {
         return ((long) x << 32) |(z-Integer.MIN_VALUE);
     }
+    public static double dist2d(double x, double z, double xx, double zz) {
+        x = x - xx;
+        z = z - zz;
+        return Math.sqrt(x*x+z*z);
+    }
 }

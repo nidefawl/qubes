@@ -13,6 +13,7 @@ public class Tess {
     
     public final static Tess instance    = new Tess();
     public final static Tess instance2    = new Tess();
+    public final static Tess instance3    = new Tess();
 //    public final static int  VERTEX_SIZE = 4 * 3 + 4 * 2 + 4 * 4;
     public final static int  BUF_INCR = 1024;
     int                      vertexcount;
@@ -157,6 +158,24 @@ public class Tess {
         return getVSize() * v;
     }
 
+    public void setColorRGBAF(float r, float g, float b, float a) {
+        if (!useColorPtr && vertexcount > 0) {
+            throw new IllegalStateException("Cannot enable color pointer after a vertex has been added");
+        }
+        int iR = (int)r*255;
+        int iG = (int)g*255;
+        int iB = (int)b*255;
+        int iA = (int)a*255;
+        this.useColorPtr = true;
+        int rgb;
+        if (littleEndian) {
+            rgb = iB << 16 | iG <<8 | iR; 
+        } else {
+            rgb = iR << 16 | iG <<8 | iB;
+        }
+        rgba = rgb|iA<<24;
+    }
+
     public void setColor(int rgb, int i) {
         if (!useColorPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable color pointer after a vertex has been added");
@@ -164,7 +183,6 @@ public class Tess {
         this.useColorPtr = true;
         if (littleEndian) {
             rgb = (rgb>>16)&0xFF|(rgb&0xFF00)|(rgb&0xFF)<<16;
-//            rgba = Integer.reverseBytes((rgb&0xFFFFFF) | i << 24);
         }
         rgba = rgb|i<<24;  
         

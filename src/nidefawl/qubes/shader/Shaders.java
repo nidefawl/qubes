@@ -25,6 +25,7 @@ public class Shaders {
     public static Shader       depthBufShader;
     public static Shader       sky;
     public static Shader       sky2;
+    public static Shader       terrain;
     public static Shader       testShader;
 
     public void initShaders() {
@@ -71,6 +72,10 @@ public class Shaders {
             if (Shaders.sky2 != null)
                 Shaders.sky2.release();
             Shaders.sky2 = new_sky2;
+            Shader new_terrain = AssetManager.getInstance().loadShader("shaders/terrain");
+            if (Shaders.terrain != null)
+                Shaders.terrain.release();
+            Shaders.terrain = new_terrain;
         } catch (ShaderCompileError e) {
             Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
             System.out.println("shader "+e.getName()+" failed to compile");

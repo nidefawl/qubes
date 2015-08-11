@@ -3,14 +3,21 @@ package nidefawl.game;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
+
+import java.util.Locale;
+
 import nidefawl.qubes.GLGame;
+import nidefawl.qubes.assets.Textures;
+import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.gui.GuiOverlayStats;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3;
@@ -24,7 +31,8 @@ public class Main extends GLGame {
     static int               initWidth  = 1024;
     static int               initHeight = 512;
     static {
-        GLGame.appName = "Qubes";
+        GLGame.appName = "-";
+        Locale.setDefault(Locale.US);
     }
     static public final Main instance   = new Main();
 
@@ -35,6 +43,7 @@ public class Main extends GLGame {
     public static boolean DO_TIMING = false;
     public static boolean  show          = true;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
+    private long               lastTimeLoad          = System.currentTimeMillis();
 
     public GuiOverlayStats statsOverlay;
     public GuiOverlayDebug debugOverlay;
@@ -47,6 +56,9 @@ public class Main extends GLGame {
     final PlayerSelf       entSelf       = new PlayerSelf(1);
     Movement               movement      = new Movement();
     World                  world         = null;
+    boolean follow = true;
+    private float lastCamX;
+    private float lastCamZ;
 
     public Main() {
         super(20);
@@ -80,6 +92,8 @@ public class Main extends GLGame {
         this.debugOverlay.setSize(displayWidth, displayHeight);
         Engine.checkGLError("Post startup");
         setFPSLimit(20); 
+        this.world = new World(0x123);
+        this.entSelf.move(0, 140, 0);
     }
 
     @Override
@@ -109,7 +123,9 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F5:
                     if (isDown) {
-                        Engine.textures.genNoise();
+                        this.world.loader.flush();
+                        Engine.worldRenderer.flush();
+//                        Engine.textures.refreshNoiseTextures();
                     }
                     break;
                 case Keyboard.KEY_F2:
@@ -175,7 +191,7 @@ public class Main extends GLGame {
         Engine.getSceneFB().bind();
         Engine.getSceneFB().clearFrameBuffer();
         //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        Engine.worldRenderer.renderWorld(fTime);
+        Engine.worldRenderer.renderWorld(this.world, fTime);
         if (this.handleClick) {
             this.handleClick = false;
             vUnproject = Engine.unproject(winX, winY);
@@ -219,7 +235,7 @@ public class Main extends GLGame {
         GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
-//        glBindTexture(GL_TEXTURE_2D, Engine.fb.getTexture(0));
+//        glBindTexture(GL_TEXTURE_2D, Textures.texNoise2);
 //        {
 //            int tw = displayWidth;
 //            int th = displayHeight;
@@ -270,14 +286,16 @@ public class Main extends GLGame {
     }
 
     long lastShaderLoadTime = 0L;
+    private boolean doLoad = true;
     @Override
     public void onStatsUpdated(float dTime) {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 20200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 8000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
-            Engine.shaders.reload();
+//            Engine.shaders.reload();
+//            Engine.textures.refreshNoiseTextures();
         }
     }
 
@@ -285,6 +303,18 @@ public class Main extends GLGame {
     public void preRenderUpdate(float f) {
         this.entSelf.updateInputDirect(movement);
         Engine.camera.set(this.entSelf, f);
+        if (this.world != null) {
+            if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
+                if (follow) {
+                    lastCamX = Engine.camera.getPosition().x;
+                    lastCamZ = Engine.camera.getPosition().z;
+                }
+                int xPosP = GameMath.floor(lastCamX)>>(4+Region.REGION_SIZE_BITS);
+                int zPosP = GameMath.floor(lastCamZ)>>(4+Region.REGION_SIZE_BITS);
+                world.loadRegions(xPosP, zPosP, follow);
+                lastTimeLoad += 122L;
+            }
+        }
     }
 
     @Override
@@ -305,5 +335,9 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.setMessage(string);
         }
+    }
+
+    public World getWorld() {
+        return this.world;
     }
 }

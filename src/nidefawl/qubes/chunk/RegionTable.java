@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.plaf.synth.Region;
-
 import nidefawl.qubes.util.GameMath;
 
 

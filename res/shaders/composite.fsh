@@ -2218,7 +2218,7 @@ void main() {
                                                 + final.glow.torch                      * 1.15f
                                                 + final.heldLight                       * 0.05f
                                                 ;
-
+                                                
 
 // finalComposite=vec3(0,0,0);
 
@@ -2252,7 +2252,7 @@ void main() {
 
         // Test(finalComposite.rgb, surface);
 
-        finalComposite *= 0.0002f;                                                                                               //Scale image down for HDR
+        finalComposite *= 0.001f;                                                                                               //Scale image down for HDR
         finalComposite.b *= 1.0f;
 
 

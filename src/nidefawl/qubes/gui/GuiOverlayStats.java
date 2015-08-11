@@ -6,10 +6,13 @@ import java.util.ArrayList;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.GLGame;
+import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.world.World;
 
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
@@ -23,6 +26,7 @@ public class GuiOverlayStats extends Gui {
     ArrayList<String>  info        = new ArrayList<String>();
 
     private String     stats2;
+    private String stats3;
     private String     stats       = "";
     private String     statsRight  = "";
     long               messageTime = System.currentTimeMillis() - 5000L;
@@ -58,8 +62,20 @@ public class GuiOverlayStats extends Gui {
         Vector3f v = cam.getPosition();
         Main.instance.tick = 0;
         this.stats2 = String.format("%d setUniform/frame ", Main.instance.uniformCalls);
+        World world = Main.instance.getWorld();
+        if (world != null) {
+            RegionLoader loader = world.loader;
+            int numRegions = loader.getRegionsLoaded();
+            int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
+            this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d", 
+                    chunks, Region.REGION_SIZE * Region.REGION_SIZE * loader.getRegionsWithData() , Engine.worldRenderer.getNumRendered());
+
+        } else {
+            this.stats3 = null;
+        }
+
         info.clear();
-        info.add(String.format("yaw/pitch: %.2f", cam.getYaw(), cam.getPitch()));
+        info.add(String.format("yaw/pitch: %.2f, %.2f", cam.getYaw(), cam.getPitch()));
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
@@ -84,6 +100,10 @@ public class GuiOverlayStats extends Gui {
         y += font.getLineHeight() * 1.2F;
         font.drawString(stats2, 5, y, 0xFFFFFF, true, 1.0F);
         y += font.getLineHeight() * 1.2F;
+        if (stats3 != null) {
+            font.drawString(stats3, 5, y, 0xFFFFFF, true, 1.0F);
+            y += font.getLineHeight() * 1.2F;
+        }
         for (String st : info) {
             fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
             y += fontSmall.getLineHeight() * 1.2F;
