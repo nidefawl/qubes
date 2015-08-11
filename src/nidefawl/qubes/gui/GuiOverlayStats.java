@@ -10,7 +10,7 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.render.RegionLoader;
+import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.world.World;
 
@@ -64,7 +64,7 @@ public class GuiOverlayStats extends Gui {
         this.stats2 = String.format("%d setUniform/frame ", Main.instance.uniformCalls);
         World world = Main.instance.getWorld();
         if (world != null) {
-            RegionLoader loader = world.loader;
+            RegionRenderThread loader = world.loader;
             int numRegions = loader.getRegionsLoaded();
             int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
             this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d", 

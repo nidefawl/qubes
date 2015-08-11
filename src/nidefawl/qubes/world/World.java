@@ -6,7 +6,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.render.RegionLoader;
+import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.worldgen.TerrainGenerator;
 
 public class World {
@@ -20,7 +20,7 @@ public class World {
 
     private long         seed;
 
-    public RegionLoader loader;
+    public RegionRenderThread loader;
 
     private TerrainGenerator generator;
 
@@ -33,7 +33,7 @@ public class World {
         this.worldHeightMinusOne = (1 << worldHeightBits) - 1;
         this.worldSeaLevel = 59;//1 << (worldHeightBits - 1);
         this.generator = new TerrainGenerator(this, this.seed);
-        this.loader = new RegionLoader(this);
+        this.loader = new RegionRenderThread(this);
         
     }
 

@@ -12,7 +12,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
 
-public class RegionLoader implements Runnable {
+public class RegionRenderThread implements Runnable {
     static int                LOAD_DIST        = 1;                                        
     //1 << (8-Region.REGION_SIZE_BITS*Region.REGION_SIZE_BITS);
     public static final int   MAX_REGIONS      = (LOAD_DIST * 2 + 1) * (LOAD_DIST * 2 + 1);
@@ -22,7 +22,7 @@ public class RegionLoader implements Runnable {
     public final static int   NUM_LOAD_THREADS = 1;
     public Thread[]           loadThreads      = new Thread[NUM_LOAD_THREADS];
 
-    public RegionLoader(World world) {
+    public RegionRenderThread(World world) {
         this.world = world;
         this.regions = new RegionTable(512);
         for (int i = 0; i < loadThreads.length; i++) {
@@ -177,7 +177,7 @@ public class RegionLoader implements Runnable {
     }
 
     public void loadRegions(int x, int z, boolean follow) {
-        if (follow && this.regions.size() >= RegionLoader.MAX_REGIONS - 20) {
+        if (follow && this.regions.size() >= RegionRenderThread.MAX_REGIONS - 20) {
             Iterator<Long> it = this.regionLoadReqMap.iterator();
             for (; it.hasNext();) {
                 Long l = it.next();
@@ -199,8 +199,8 @@ public class RegionLoader implements Runnable {
             }
         }
 
-        for (int xx = -RegionLoader.LOAD_DIST; xx <= RegionLoader.LOAD_DIST; xx++) {
-            for (int zz = -RegionLoader.LOAD_DIST; zz <= RegionLoader.LOAD_DIST; zz++) {
+        for (int xx = -RegionRenderThread.LOAD_DIST; xx <= RegionRenderThread.LOAD_DIST; xx++) {
+            for (int zz = -RegionRenderThread.LOAD_DIST; zz <= RegionRenderThread.LOAD_DIST; zz++) {
                 loadRegion(xx + x, zz + z);
             }
         }
@@ -212,7 +212,7 @@ public class RegionLoader implements Runnable {
             return;
         }
 
-        if (this.regions.size() >= RegionLoader.MAX_REGIONS) {
+        if (this.regions.size() >= RegionRenderThread.MAX_REGIONS) {
             return;
         }
         this.regionLoadReqMap.add(pos);
