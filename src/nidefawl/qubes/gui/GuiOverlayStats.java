@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import nidefawl.game.Main;
 import nidefawl.qubes.GLGame;
 import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.render.RegionLoader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.world.World;
 

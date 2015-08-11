@@ -1,10 +1,13 @@
-package nidefawl.qubes.chunk;
+package nidefawl.qubes.render;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.game.Main;
+import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionTable;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;

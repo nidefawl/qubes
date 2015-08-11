@@ -4,9 +4,9 @@ import java.util.HashSet;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.render.RegionLoader;
 import nidefawl.qubes.worldgen.TerrainGenerator;
 
 public class World {

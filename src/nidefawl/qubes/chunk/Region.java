@@ -23,7 +23,7 @@ public class Region {
     
     public final int        rX;
     public final int        rZ;
-    final Chunk[][]         chunks           = new Chunk[REGION_SIZE][REGION_SIZE];
+    public final Chunk[][]         chunks           = new Chunk[REGION_SIZE][REGION_SIZE];
     private boolean         isRendered;
     private DisplayList     displayList;
     private int[]           facesRendered    = new int[WorldRenderer.NUM_PASSES];
