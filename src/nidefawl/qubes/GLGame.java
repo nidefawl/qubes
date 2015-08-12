@@ -11,6 +11,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Timer;
 import nidefawl.qubes.util.TimingHelper;
 
@@ -40,6 +41,9 @@ public abstract class GLGame implements Runnable {
     public static float        renderTime;
     public int                 tick       = 0;
     public int                 uniformCalls;
+
+    public float avgFrameTime = 0F;
+    private GameError error;
 
     public GLGame(float tickLen) {
         this.timer = new Timer(20);
@@ -197,9 +201,12 @@ public abstract class GLGame implements Runnable {
         }
         if (Main.DO_TIMING)
             TimingHelper.end(16);
+        if (this.error != null) {
+            this.error.printStackTrace();
+            shutdown();
+            return;
+        }
     }
-
-    public float avgFrameTime = 0F;
 
     public abstract void onStatsUpdated(float dSec);
 
@@ -248,5 +255,9 @@ public abstract class GLGame implements Runnable {
     public abstract void tick();
 
     public abstract void initGame();
+
+    public void setException(GameError error) {
+        this.error = error;
+    }
 
 }

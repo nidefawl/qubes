@@ -41,8 +41,8 @@ public class AssetTexture extends Asset {
         return data;
     }
 
-    public void setupTexture() {
-        this.glid = TextureManager.getInstance().makeNewTexture(this.data, this.width, this.height, true, false);
+    public void setupTexture(boolean repeat, boolean filter, int mipmapLvls) {
+        this.glid = TextureManager.getInstance().makeNewTexture(this.data, this.width, this.height, repeat, filter, mipmapLvls);
     }
     public int getGlid() {
         return glid;

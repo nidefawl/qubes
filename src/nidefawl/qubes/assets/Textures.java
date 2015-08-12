@@ -3,8 +3,10 @@ package nidefawl.qubes.assets;
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import nidefawl.game.Main;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
 import nidefawl.qubes.texture.TextureManager;
@@ -12,6 +14,7 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.*;
 
 public class Textures {
     public static int texNoise;
@@ -20,6 +23,7 @@ public class Textures {
     public static AssetTexture texWater;
     public static AssetTexture texWater2;
     public static AssetTexture texStone;
+    public static int blockTextureMap;
 
     public void genNoise(int texture) {
         int w = 64;
@@ -32,7 +36,7 @@ public class Textures {
                 }
 
         glBindTexture(GL_TEXTURE_2D, texture);
-        TextureManager.getInstance().uploadTexture(data, w, w, 3, GL_RGB, GL_RGB, true, true);
+        TextureManager.getInstance().uploadTexture(data, w, w, 3, GL_RGB, GL_RGB, true, true, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     public void genNoise2(int texture) {
@@ -95,7 +99,7 @@ public class Textures {
 //                break;
             }
         glBindTexture(GL_TEXTURE_2D, texture);
-        TextureManager.getInstance().uploadTexture(data, w, h, 3, GL_RGB, GL_RGB, true, true);
+        TextureManager.getInstance().uploadTexture(data, w, h, 3, GL_RGB, GL_RGB, true, true, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
         long l = TimingHelper.stopSilent(123);
         System.out.println(l);
@@ -163,7 +167,7 @@ public class Textures {
 //                break;
             }
         glBindTexture(GL_TEXTURE_2D, texture);
-        TextureManager.getInstance().uploadTexture(data, w, h, 3, GL_RGB, GL_RGB, true, true);
+        TextureManager.getInstance().uploadTexture(data, w, h, 3, GL_RGB, GL_RGB, true, true, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
         long l = TimingHelper.stopSilent(123);
         System.out.println(l);
@@ -206,13 +210,61 @@ public class Textures {
         texNoise2 = glGenTextures();
         genNoise(texNoise);
         genNoise2(texNoise2);
-        texEmpty = TextureManager.getInstance().makeNewTexture(new byte[16*16*4], 16, 16, true, false);
+        texEmpty = TextureManager.getInstance().makeNewTexture(new byte[16*16*4], 16, 16, true, false, 0);
         texWater = AssetManager.getInstance().loadPNGAsset("textures/water.png");
-        texWater.setupTexture();
+        texWater.setupTexture(true, false, 4);
         texWater2 = AssetManager.getInstance().loadPNGAsset("textures/water_still.png");
-        texWater2.setupTexture();
-        texStone = AssetManager.getInstance().loadPNGAsset("textures/stone.png");
-        texStone.setupTexture();
+        texWater2.setupTexture(true, false, 4);
+        texStone = AssetManager.getInstance().loadPNGAsset("textures/stone2.png");
+        texStone.setupTexture(true, false, 4);
+        int text = GL11.glGenTextures();
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, text);
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindTexture(GL30.GL_TEXTURE_2D_ARRAY)");
+        //Create storage for the texture. (100 layers of 1x1 texels)
+        String[] textures = new String[] {
+                "textures/stone.png",
+                "textures/dirt.png",
+                "textures/grass.png",
+                "textures/sand.png",
+                "textures/water.png",
+        };
+        int tileSize = texStone.getWidth();
+        ByteBuffer directBuf = null;
+        GL42.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, 
+                1,                    //No mipmaps as textures are 1x1
+                GL_RGBA8,              //Internal format
+                tileSize, tileSize,   //width,height
+                textures.length       //Number of layers
+        );
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("GL42.glTexStorage3D");
+        for (int i = 0; i < textures.length; i++) {
+            AssetTexture tex = AssetManager.getInstance().loadPNGAsset(textures[i]);
+            byte[] data = tex.getData();
+            if (directBuf == null || directBuf.capacity() < data.length) {
+                directBuf = ByteBuffer.allocateDirect(data.length).order(ByteOrder.nativeOrder());
+            }
+            directBuf.clear();
+            directBuf.put(data, 0, data.length);
+            directBuf.position(0).limit(data.length);
+            GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 
+                    0,                     //Mipmap number
+                    0, 0, i,                 //xoffset, yoffset, zoffset
+                    tileSize, tileSize, 1,                 //width, height, depth
+                    GL_RGBA,                //format
+                    GL_UNSIGNED_BYTE,      //type
+                    directBuf);                //pointer to data
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("GL12.glTexSubImage3D");
+
+        }
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        blockTextureMap = text;
     }
 
     public void refreshNoiseTextures() {

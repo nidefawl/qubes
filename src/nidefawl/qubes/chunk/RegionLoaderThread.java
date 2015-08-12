@@ -1,28 +1,31 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.chunk;
 
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.game.Main;
-import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.util.GameError;
 
-public class RegionRenderThread extends Thread {
-    private static long                                 sleepTime = 10;
-    private LinkedBlockingQueue<RegionRenderUpdateTask> queue     = new LinkedBlockingQueue<RegionRenderUpdateTask>();
-    private LinkedList<RegionRenderUpdateTask>          results   = new LinkedList<RegionRenderUpdateTask>();
-    private LinkedList<RegionRenderUpdateTask>          finish    = new LinkedList<RegionRenderUpdateTask>();
-    private volatile boolean                            hasResults;
-    private volatile boolean                            isRunning;
-    private final RegionRenderUpdateTask[]              tasks;
+public class RegionLoaderThread extends Thread {
+    private static long                         sleepTime = 10;
+    private LinkedBlockingQueue<RegionLoadTask> queue     = new LinkedBlockingQueue<RegionLoadTask>();
+    private LinkedList<RegionLoadTask>          results   = new LinkedList<RegionLoadTask>();
+    private LinkedList<RegionLoadTask>          finish    = new LinkedList<RegionLoadTask>();
+    private volatile boolean                    hasResults;
+    private volatile boolean                    isRunning;
+    private final RegionLoadTask[]              tasks;
 
-    public RegionRenderThread(int numTasks) {
-        setName("RegionRenderThread");
+    int tasksRunning = 0;
+    int nextTask     = 0;
+
+    public RegionLoaderThread(int numTasks) {
+        setName("RegionLoaderThread");
         setDaemon(true);
         this.isRunning = true;
-        this.tasks = new RegionRenderUpdateTask[numTasks];
+        this.tasks = new RegionLoadTask[numTasks];
         for (int i = 0; i < tasks.length; i++) {
-            tasks[i] = new RegionRenderUpdateTask();
+            tasks[i] = new RegionLoadTask();
         }
         if (numTasks > 3) {
             sleepTime = 0;
@@ -37,10 +40,12 @@ public class RegionRenderThread extends Thread {
 
     @Override
     public void run() {
+        System.out.println(getName() +" started");
+        
         while (Main.instance.isRunning() && this.isRunning) {
             boolean did = false;
             try {
-                RegionRenderUpdateTask task = this.queue.take();
+                RegionLoadTask task = this.queue.take();
                 if (task != null) {
                     if (task.isValid(this.id)) {
                         did = task.updateFromThread();
@@ -68,7 +73,7 @@ public class RegionRenderThread extends Thread {
                 onInterruption();
             }
         }
-        System.out.println("render thread ended");
+        System.out.println(getName() +" ended");
     }
 
     private void onInterruption() {
@@ -77,9 +82,6 @@ public class RegionRenderThread extends Thread {
             this.hasResults = false;
         }
     }
-
-    int tasksRunning = 0;
-    int nextTask     = 0;
 
     public int finishTasks() {
         if (finish.isEmpty()) {
@@ -93,7 +95,7 @@ public class RegionRenderThread extends Thread {
         }
         if (finish.size() > 0) {
             int num = 0;
-            RegionRenderUpdateTask w = this.finish.getFirst();
+            RegionLoadTask w = this.finish.getFirst();
             if (w.finish(this.id)) {
                 this.finish.removeFirst();
                 tasksRunning--;
@@ -105,7 +107,7 @@ public class RegionRenderThread extends Thread {
     }
 
     public boolean offer(Region worldrenderer) {
-        RegionRenderUpdateTask task = getNextTask();
+        RegionLoadTask task = getNextTask();
         if (task != null) {
             if (task.prepare(worldrenderer)) {
                 task.worldInstance = this.id;
@@ -126,7 +128,7 @@ public class RegionRenderThread extends Thread {
         return tasksRunning > 0;
     }
 
-    private RegionRenderUpdateTask getNextTask() {
+    private RegionLoadTask getNextTask() {
         if (tasksRunning >= this.tasks.length)
             return null;
         return tasks[nextTask % this.tasks.length];

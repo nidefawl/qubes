@@ -1,8 +1,8 @@
 package nidefawl.qubes.shader;
 
-import static org.lwjgl.opengl.ARBFragmentShader.GL_FRAGMENT_SHADER_ARB;
+import static org.lwjgl.opengl.ARBFragmentShader.*;
 import static org.lwjgl.opengl.ARBShaderObjects.*;
-import static org.lwjgl.opengl.ARBVertexShader.GL_VERTEX_SHADER_ARB;
+import static org.lwjgl.opengl.ARBVertexShader.*;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -10,6 +10,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
 
+import nidefawl.game.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
@@ -54,7 +55,7 @@ public class Shader {
         this.buffer = BufferUtils.createIntBuffer(1);
         Shaders.register(this);
     }
-    public void load(InputStream streamfsh, InputStream streamvsh) throws IOException {
+    public void load(InputStream streamfsh, InputStream streamvsh, boolean link) throws IOException {
         BufferedReader readerfsh = streamfsh != null ? new BufferedReader(new InputStreamReader(streamfsh)) : null;
         BufferedReader readervsh = streamvsh != null ? new BufferedReader(new InputStreamReader(streamvsh)) : null;
         try {
@@ -120,23 +121,37 @@ public class Shader {
                 glAttachObjectARB(this.shader, this.vertShader);
                 Engine.checkGLError("glAttachObjectARB");
             }
-            glLinkProgramARB(this.shader);
-            String log = getLog(this.shader);
-            Engine.checkGLError("getLog");
-            if (getStatus(this.shader, GL_OBJECT_LINK_STATUS_ARB) != 1) {
-                Engine.checkGLError("getStatus");
-                throw new GameError("Failed linking shader program\n"+log);
+            if (link) {
+                linkProgram();
             }
-            glValidateProgramARB(this.shader);
-            Engine.checkGLError("glValidateProgramARB\n"+log);
         } finally {
             if (readerfsh != null)
                 readerfsh.close();
             if (readervsh != null)
                 readervsh.close();
         }
-        
     }
+    public void bindAttribute(int attr, String attrName) {
+        glBindAttribLocationARB(this.shader, attr, attrName);
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+attrName+" = "+attr);
+    }
+    public void linkProgram() {
+        glLinkProgramARB(this.shader);
+        String log = getLog(this.shader);
+        Engine.checkGLError("getLog");
+        if (getStatus(this.shader, GL_OBJECT_LINK_STATUS_ARB) != 1) {
+            Engine.checkGLError("getStatus");
+            throw new GameError("Failed linking shader program\n"+log);
+        }
+        glUseProgramObjectARB(this.shader);
+        Engine.checkGLError("glUseProgramObjectARB\n"+log);
+        glValidateProgramARB(this.shader);
+        Engine.checkGLError("glValidateProgramARB\n"+log);
+        glUseProgramObjectARB(0);
+        Engine.checkGLError("glUseProgramObjectARB 0");
+    }
+
     public int getStatus(int obj, int a) {
         buffer.position(0).limit(1);
         glGetObjectParameterARB(obj, a, buffer);
@@ -162,6 +177,8 @@ public class Shader {
     public void enable() {
         if (this.shader >= 0) {
             glUseProgramObjectARB(this.shader);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
         }
     }
     public static void disable() {

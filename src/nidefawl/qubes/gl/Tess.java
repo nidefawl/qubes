@@ -3,11 +3,14 @@ package nidefawl.qubes.gl;
 import java.nio.*;
 
 import nidefawl.game.Main;
+import nidefawl.qubes.block.Block;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
 
 public class Tess {
+    public final static int ATTR_BLOCK = 6;
 
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
     
@@ -29,9 +32,13 @@ public class Tess {
     boolean                      useTexturePtr2;
     boolean                      useTexturePtr3;
     boolean                      useNormalPtr;
+    boolean                      useAttribPtr1;
     float                        u, v;
     float                        u2, v2;
     private int br;
+    private int attrBlockType;
+    private int attrBlockData;
+    private int attrBlockRenderType;
     private IntBuffer intBuffer;
     private FloatBuffer floatBuffer;
     private int normal;
@@ -79,6 +86,16 @@ public class Tess {
         this.useTexturePtr3 = true;
     }
 
+    public void setAttr(int blockId, int blockData, int renderType) {
+        if (!useAttribPtr1 && vertexcount > 0) {
+            throw new IllegalStateException("Cannot enable attr pointer after a vertex has been added");
+        }
+        this.attrBlockType = blockId;
+        this.attrBlockData = blockData;
+        this.attrBlockRenderType = renderType;
+        this.useAttribPtr1 = true;
+    }
+
     public void add(float x, float y) {
         add(x, y, 0);
     }
@@ -94,6 +111,8 @@ public class Tess {
         if (useTexturePtr2)
             stride+=1;
         if (useTexturePtr3)
+            stride+=2;
+        if (useAttribPtr1)
             stride+=2;
         return stride;
     }
@@ -135,6 +154,10 @@ public class Tess {
         }
         if (useTexturePtr2) {
             rawBuffer[index++] = br;
+        }
+        if (useAttribPtr1) {
+            rawBuffer[index++] = (attrBlockType&Block.BLOCK_MASK) | (attrBlockRenderType<<16);
+            rawBuffer[index++] = attrBlockData;
         }
         vertexcount++;
     }
@@ -254,6 +277,12 @@ public class Tess {
                 GL13.glClientActiveTexture(GL13.GL_TEXTURE0);
                 offset+=1;
             }
+            if (useAttribPtr1) {
+                GL20.glEnableVertexAttribArray(ATTR_BLOCK);
+                shortBuffer.position(offset*2);
+                GL20.glVertexAttribPointer(ATTR_BLOCK, 3, true, false, stride*4, shortBuffer);
+                offset+=2;
+            }
             GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glEnableClientState");
             buffer.position(0);
@@ -273,6 +302,8 @@ public class Tess {
             }
             if (useNormalPtr)
                 GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+            if (useAttribPtr1)
+                GL20.glDisableVertexAttribArray(ATTR_BLOCK);
             
         }
         if (this.reset)
@@ -286,8 +317,12 @@ public class Tess {
         this.useTexturePtr = false;
         this.useTexturePtr2 = false;
         this.useTexturePtr3 = false;
+        this.useAttribPtr1 = false;
         this.useColorPtr = false;
         this.u = this.v = 0;
+        this.attrBlockType = 0;
+        this.attrBlockRenderType= 0;
+        this.attrBlockData = 0;
         this.br = 0;
         this.rgba = -1;
         this.offsetX = this.offsetY = this.offsetZ = 0;

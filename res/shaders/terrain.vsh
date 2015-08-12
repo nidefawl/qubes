@@ -1,4 +1,4 @@
-#version 120
+#version 130
 
 
 //If you're using 1.7.2, it has a texture glitch where certain sides of blocks are mirrored. Enable the following to compensate and keep lighting correct
@@ -11,7 +11,7 @@ varying vec4 lmcoord;
 varying vec3 worldPosition;
 
 
-attribute vec4 mc_Entity;
+attribute vec4 blockinfo; // x == blockid, y == rendertype, z = metadata
 
 uniform int worldTime;
 uniform vec3 cameraPosition;
@@ -42,6 +42,7 @@ varying float materialIDs;
 varying mat3 tbnMatrix;
 varying vec4 vertexPos;
 varying vec3 vertexViewVector;
+flat varying int blockid;
 
 
 #define WAVING_GRASS
@@ -158,6 +159,8 @@ void main() {
 
 	color = gl_Color;
 
+	blockid = int(blockinfo.x);
+
 	texcoord = gl_MultiTexCoord0;
 
 	lmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
@@ -171,7 +174,7 @@ void main() {
 
 	
 	//Entity checker
-	// if (mc_Entity.x == 1920.0f)
+	// if (blockinfo.x == 1920.0f)
 	// {
 	// 	texcoord.st = vec2(0.2f);
 	// }
@@ -180,13 +183,13 @@ void main() {
 	materialIDs = 1.0f;
 
 	//Grass
-	if  (  mc_Entity.x == 31.0
+	if  (  blockinfo.x == 31.0
 
-		|| mc_Entity.x == 38.0f 	//Rose
-		|| mc_Entity.x == 37.0f 	//Flower
-		|| mc_Entity.x == 1925.0f 	//Biomes O Plenty: Medium Grass
-		|| mc_Entity.x == 1920.0f 	//Biomes O Plenty: Thorns, barley
-		|| mc_Entity.x == 1921.0f 	//Biomes O Plenty: Sunflower
+		|| blockinfo.x == 38.0f 	//Rose
+		|| blockinfo.x == 37.0f 	//Flower
+		|| blockinfo.x == 1925.0f 	//Biomes O Plenty: Medium Grass
+		|| blockinfo.x == 1920.0f 	//Biomes O Plenty: Thorns, barley
+		|| blockinfo.x == 1921.0f 	//Biomes O Plenty: Sunflower
 
 		)
 	{
@@ -194,26 +197,26 @@ void main() {
 		waveCoeff = 1.0f;
 	}
 
-	if (  mc_Entity.x == 175.0f)
+	if (  blockinfo.x == 175.0f)
 	{
 		materialIDs = max(materialIDs, 2.0f);
 	}
 	
 	//Wheat
-	if (mc_Entity.x == 59.0) {
+	if (blockinfo.x == 59.0) {
 		materialIDs = max(materialIDs, 2.0f);
 		waveCoeff = 1.0f;
 	}	
 	
 	//Leaves
-	if   ( mc_Entity.x == 18.0 
+	if   ( blockinfo.x == 18.0 
 
-		|| mc_Entity.x == 1962.0f //Biomes O Plenty: Leaves
-		|| mc_Entity.x == 1924.0f //Biomes O Plenty: Leaves
-		|| mc_Entity.x == 1923.0f //Biomes O Plenty: Leaves
-		|| mc_Entity.x == 1926.0f //Biomes O Plenty: Leaves
-		|| mc_Entity.x == 1936.0f //Biomes O Plenty: Giant Flower Leaves
-		|| mc_Entity.x == 161.0f //Biomes O Plenty: Giant Flower Leaves
+		|| blockinfo.x == 1962.0f //Biomes O Plenty: Leaves
+		|| blockinfo.x == 1924.0f //Biomes O Plenty: Leaves
+		|| blockinfo.x == 1923.0f //Biomes O Plenty: Leaves
+		|| blockinfo.x == 1926.0f //Biomes O Plenty: Leaves
+		|| blockinfo.x == 1936.0f //Biomes O Plenty: Giant Flower Leaves
+		|| blockinfo.x == 161.0f //Biomes O Plenty: Giant Flower Leaves
 
 		 ) {
 		materialIDs = max(materialIDs, 3.0f);
@@ -221,74 +224,72 @@ void main() {
 
 	
 	//Gold block
-	if (mc_Entity.x == 41) {
+	if (blockinfo.x == 41) {
 		materialIDs = max(materialIDs, 20.0f);
 	}
 	
 	//Iron block
-	if (mc_Entity.x == 42) {
+	if (blockinfo.x == 42) {
 		materialIDs = max(materialIDs, 21.0f);
 	}
 	
 	//Diamond Block
-	if (mc_Entity.x == 57) {
+	if (blockinfo.x == 57) {
 		materialIDs = max(materialIDs, 22.0f);
 	}
 	
 	//Emerald Block
-	if (mc_Entity.x == -123) {
+	if (blockinfo.x == -123) {
 		materialIDs = max(materialIDs, 23.0f);
 	}
 	
 	
 	
 	//sand
-	if (mc_Entity.x == 12) {
+	if (blockinfo.x == 12) {
 		materialIDs = max(materialIDs, 24.0f);
 	}
 
 	//sandstone
-	if (mc_Entity.x == 24 || mc_Entity.x == -128) {
+	if (blockinfo.x == 24 || blockinfo.x == -128) {
 		materialIDs = max(materialIDs, 25.0f);
 	}
 	
 	//stone
-	if (mc_Entity.x == 1) {
+	if (blockinfo.x == 1) {
 		materialIDs = max(materialIDs, 26.0f);
 	}
 	
 	//cobblestone
-	if (mc_Entity.x == 4) {
+	if (blockinfo.x == 4) {
 		materialIDs = max(materialIDs, 27.0f);
 	}
 	
 	//wool
-	if (mc_Entity.x == 35) {
+	if (blockinfo.x == 35) {
 		materialIDs = max(materialIDs, 28.0f);
 	}
 
 
 	//torch	
-	if (mc_Entity.x == 50) {
+	if (blockinfo.x == 50) {
 		materialIDs = max(materialIDs, 30.0f);
 	}
 
 	//lava
-	if (mc_Entity.x == 10 || mc_Entity.x == 11) {
+	if (blockinfo.x == 10 || blockinfo.x == 11) {
 		materialIDs = max(materialIDs, 31.0f);
 	}
 
 	//glowstone and lamp
-	if (mc_Entity.x == 89 || mc_Entity.x == 124) {
+	if (blockinfo.x == 89 || blockinfo.x == 124) {
 		materialIDs = max(materialIDs, 32.0f);
 	}
 
 	//fire
-	if (mc_Entity.x == 51) {
+	if (blockinfo.x == 51) {
 		materialIDs = max(materialIDs, 33.0f);
 	}
-	materialIDs = 26.0f;
-
 
 	float tick = FRAME_TIME;
 	
@@ -400,7 +401,7 @@ position.xyz += cameraPosition.xyz;
 
 #ifdef WAVING_WHEAT
 //Wheat//
-	if (mc_Entity.x == 59.0 && texcoord.t < 0.35) {
+	if (blockinfo.x == 59.0 && texcoord.t < 0.35) {
 		float speed = 0.1;
 		
 		float magnitude = sin((tick * pi / (28.0)) + position.x + position.z) * 0.12 + 0.02;
@@ -415,7 +416,7 @@ position.xyz += cameraPosition.xyz;
 	}
 	
 	//small leaf movement
-	if (mc_Entity.x == 59.0 && texcoord.t < 0.35) {
+	if (blockinfo.x == 59.0 && texcoord.t < 0.35) {
 		float speed = 0.04;
 		
 		float magnitude = (sin(((position.y + position.x)/2.0 + tick * pi / ((28.0)))) * 0.025 + 0.075) * 0.2;
@@ -497,7 +498,7 @@ position.xyz += cameraPosition.xyz;
 	// 	  colorDiff += abs(color.r - color.b);
 	// 	  colorDiff += abs(color.g - color.b);
 
-	// if (colorDiff < 0.001f && mc_Entity.x != -1.0f && mc_Entity.x != 63 && mc_Entity.x != 68 && mc_Entity.x != 323) {
+	// if (colorDiff < 0.001f && blockinfo.x != -1.0f && blockinfo.x != 63 && blockinfo.x != 68 && blockinfo.x != 323) {
 
 	// 	float lum = color.r + color.g + color.b;
 	// 		  lum /= 3.0f;

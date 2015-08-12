@@ -4,9 +4,12 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import nidefawl.game.Main;
 import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
@@ -14,6 +17,7 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Vector3f;
 
 public class WorldRenderer {
@@ -27,9 +31,10 @@ public class WorldRenderer {
     public Vector3f           moonPosition    = new Vector3f(-100, -300, -100);
     public float              sunAngle        = 0.30F;
 
-    private ArrayList<Region> regionsToRender = new ArrayList<Region>();
     private ArrayList<Region> firstPass       = new ArrayList<Region>();
     private ArrayList<Region> secondPass      = new ArrayList<Region>();
+    Region[] renderRegions = new Region[RegionLoader.MAX_REGIONS];
+    public int numRegions;
 
     public void init() {
         skyColor = new Vector3f(0.43F, .69F, 1.F);
@@ -96,16 +101,17 @@ public class WorldRenderer {
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogf(GL_FOG_START, 0);
-        glFogf(GL_FOG_END, Engine.zfar / 1.41F);
+        glFogf(GL_FOG_END, Engine.zfar / 7.41F);
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
         glDisable(GL_BLEND);
-        {
+        if (Main.useShaders) {
             Shaders.sky.enable();
-            drawSkybox();
-            Shader.disable();
+//          Shaders.setUniforms(Shaders.terrain, fTime); //???
         }
+        drawSkybox();
+        Shader.disable();
         glDisable(GL_FOG);
         glDepthMask(true);
         glEnable(GL_TEXTURE_2D);
@@ -114,85 +120,98 @@ public class WorldRenderer {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrix(Engine.getModelViewMatrix());
-        updateTerrain(world, fTime);
-        Shaders.terrain.enable();
-        Shaders.setUniforms(Shaders.terrain, fTime);
-        Shaders.terrain.setProgramUniform1i("texture", 0);
-        Shaders.terrain.setProgramUniform1i("normals", 2);
-        Shaders.terrain.setProgramUniform1i("noisetex", 3);
-        Shaders.terrain.setProgramUniform1i("specular", 5);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Textures.texStone.getGlid());
-        renderFirstPass(world, fTime);
-        float w = 4F;
-        float v = 1F;
-        int num = 8;
-//        Tess.instance.resetState();
-        Shaders.waterShader2.enable();
-        Shaders.setUniforms(Shaders.waterShader2, fTime);
-        Shaders.waterShader2.setProgramUniform1i("texture", 0);
-        Shaders.waterShader2.setProgramUniform1i("normals", 2);
-        Shaders.waterShader2.setProgramUniform1i("noisetex", 3);
-        Shaders.waterShader2.setProgramUniform1i("specular", 5);
-//        Tess.instance.setNormals(0, 1, 0);
-//        int a = 0;
-//        for (int x = -num; x <= num; x++)
-//            for (int z = -num; z <= num; z++) {
-//                Tess.instance.setOffset(x * w * 2, 0, z * w * 2);
-//                Tess.instance.setBrightness(0xf00000);
-//                Tess.instance.setColor(-1, 255);
-//                Tess.instance.add(-w, 0, w, 0, v / 32F);
-//                Tess.instance.add(w, 0, w, v, v / 32F);
-//                Tess.instance.add(w, 0, -w, v, 0);
-//                Tess.instance.add(-w, 0, -w, 0, 0);
-//            }
+        prepareRegions(world, fTime);
+        if (Main.useShaders) {
+            Shaders.terrain.enable();
+            Shaders.setUniforms(Shaders.terrain, fTime);
+            Shaders.terrain.setProgramUniform1i("texture", 0);
+            Shaders.terrain.setProgramUniform1i("normals", 2);
+            Shaders.terrain.setProgramUniform1i("noisetex", 3);
+            Shaders.terrain.setProgramUniform1i("specular", 5);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_2D, 0);
 
+            Shaders.terrain.enable();
+            Shaders.setUniforms(Shaders.terrain, fTime);
+            Shaders.terrain.setProgramUniform1i("blockTextures", 0);
+            Shaders.terrain.setProgramUniform1i("normals", 2);
+            Shaders.terrain.setProgramUniform1i("noisetex", 3);
+            Shaders.terrain.setProgramUniform1i("specular", 5);
+        } else {
+            Engine.enableLighting();
+            Shaders.testShader.enable();
+            Shaders.testShader.setProgramUniform1i("blockTextures", 0);
+        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("setProgramUniform1i");
+        renderFirstPass(world, fTime);
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderFirstPass");
+        Shader.disable();
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderFirstPass");
+        if (Main.useShaders) {
+            Shaders.waterShader2.enable();
+            Shaders.setUniforms(Shaders.waterShader2, fTime);
+            Shaders.waterShader2.setProgramUniform1i("texture", 0);
+            Shaders.waterShader2.setProgramUniform1i("normals", 2);
+            Shaders.waterShader2.setProgramUniform1i("noisetex", 3);
+            Shaders.waterShader2.setProgramUniform1i("specular", 5);
+        }
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Textures.texWater2.getGlid());
         renderSecondPass(world, fTime);
-//      Tess.instance.draw(GL_QUADS);
         Shader.disable();
-//        Tess.instance.resetState();
-//        {
-//            int x = 10;
-//            int y = 20;
-//            int z = 1;
-//            int tw = 22;
-//            int th = 22;
-//            Tess.instance.setNormals(0, 0, 1);
-//            Tess.instance.setBrightness(0xc00000);
-//            Tess.instance.setColor(-1, 255);
-//            Tess.instance.add(x + tw, y + th, z, v, 0);
-//            Tess.instance.add(x, y + th, z, 0, 0);
-//            Tess.instance.add(x, y, z, 0, v / 32F);
-//            Tess.instance.add(x + tw, y, z, v, v / 32F);
-//        }
-//        Tess.instance.draw(GL_QUADS);
-        //            this.debugOverlay.setMessage(""+Engine.readDepth(0,0));
+        if (!Main.useShaders) {
+            glDisable(GL_LIGHTING);
+        }
     }
 
     private int rendered;
-    void updateTerrain(World world, float fTime) {
+    void prepareRegions(World world, float fTime) {
+        int loaded = 0;
+//      if (follow && this.regions.size() >= MAX_REGIONS - 20   ) {
+//          Iterator<Long> it = this.regionLoadReqMap.iterator();
+//          for (; it.hasNext();) {
+//              Long l = it.next();
+//              int rx = GameMath.lhToX(l);
+//              int rz = GameMath.lhToZ(l);
+//              int dX = Math.abs(x - rx);
+//              int dZ = Math.abs(z - rz);
+//              if (dX > LOAD_DIST || dZ > LOAD_DIST) {
+//                  synchronized (this.regions) {
+//                      it.remove();
+//                      this.loadQueue.remove(l);
+//                      Region r = this.regions.remove(l);
+//                      if (r != null) {
+//                          r.release();
+//                          Engine.worldRenderer.regionRemoved(r);
+//                      }
+//                  }
+//              }
+//          }
+//      }
+  
         boolean created = false;
         firstPass.clear();
         secondPass.clear();
-        int len = this.regionsToRender.size();
-        for (int a = 0; a < len; a++) {
-            Region r = this.regionsToRender.get(a);
+        for (int a = 0; a < this.numRegions; a++) {
+            Region r = this.renderRegions[a];
             if (r == null)
                 continue;
             if (r.isEmpty())
                 continue;
-
-            if (!r.isRendered()) {
+            if (r.renderState < Region.RENDER_STATE_MESHED)
+                continue;
+            if (r.renderState == Region.RENDER_STATE_MESHED) {
                 if (created) {
                     continue;
                 }
@@ -202,8 +221,7 @@ public class WorldRenderer {
 
                 created = true;
                 r.makeRegion(this);
-            } else if (r.hasBlockData() && world.loader.hasAllNeighBours(r)) {
-                //                r.flushBlockData();
+                r.renderState = Region.RENDER_STATE_COMPILED;
             }
             if (r.hasPass(0)) {
                 firstPass.add(r);
@@ -215,6 +233,7 @@ public class WorldRenderer {
     }
     public void renderFirstPass(World world, float fTime) {
         GL11.glDisable(GL11.GL_BLEND);
+        GL11.glEnable(GL11.GL_BLEND);
         int size = firstPass.size();
 
         for (int i = 0; i < size; i++) {
@@ -247,32 +266,15 @@ public class WorldRenderer {
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    public void flush() {
-        for (Region r : this.regionsToRender) {
-            if (r != null) {
-                r.release();
-                try {
-                    Thread.sleep(10);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        this.regionsToRender.clear();
-    }
-
-
-    public void regionRemoved(Region region) {
-        regionsToRender.remove(region);
-        region.index = -1;
-    }
-
-    public void regionGenerated(int regionX, int regionZ, Region region) {
-        region.index = regionsToRender.size();
-        regionsToRender.add(region);
-    }
 
     public int getNumRendered() {
         return this.rendered;
+    }
+    public void flushRegions() {
+        this.numRegions = 0;
+        Arrays.fill(this.renderRegions, null);
+    }
+    public void putRegion(Region r) {
+        this.renderRegions[this.numRegions++] = r;
     }
 }

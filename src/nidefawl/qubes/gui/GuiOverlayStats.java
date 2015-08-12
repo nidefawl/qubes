@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import nidefawl.game.Main;
 import nidefawl.qubes.GLGame;
 import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.Engine;
@@ -31,6 +32,7 @@ public class GuiOverlayStats extends Gui {
     private String     statsRight  = "";
     long               messageTime = System.currentTimeMillis() - 5000L;
     String             message     = "";
+    private String stats4;
 
     public GuiOverlayStats() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -64,11 +66,13 @@ public class GuiOverlayStats extends Gui {
         this.stats2 = String.format("%d setUniform/frame ", Main.instance.uniformCalls);
         World world = Main.instance.getWorld();
         if (world != null) {
-            RegionRenderThread loader = world.loader;
+            RegionLoader loader = Engine.regionLoader;
             int numRegions = loader.getRegionsLoaded();
             int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
-            this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d", 
-                    chunks, Region.REGION_SIZE * Region.REGION_SIZE * loader.getRegionsWithData() , Engine.worldRenderer.getNumRendered());
+            this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d - wr-regions %d", 
+                    chunks, Region.REGION_SIZE * Region.REGION_SIZE * loader.getRegionsWithData() , Engine.worldRenderer.getNumRendered(),
+                    Engine.worldRenderer.numRegions);
+            this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On": "Off");
 
         } else {
             this.stats3 = null;
@@ -102,6 +106,10 @@ public class GuiOverlayStats extends Gui {
         y += font.getLineHeight() * 1.2F;
         if (stats3 != null) {
             font.drawString(stats3, 5, y, 0xFFFFFF, true, 1.0F);
+            y += font.getLineHeight() * 1.2F;
+        }
+        if (stats4 != null) {
+            font.drawString(stats4, 5, y, 0xFFFFFF, true, 1.0F);
             y += font.getLineHeight() * 1.2F;
         }
         for (String st : info) {

@@ -9,7 +9,9 @@ import java.nio.IntBuffer;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.Textures;
+import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.render.OutputRenderer;
+import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
@@ -48,8 +50,11 @@ public class Engine {
     public static float           zfar;
     private static DisplayList[]      lists;
     public static Camera       camera = new Camera();
+    public static Camera       suncamera = new Camera();
     public static WorldRenderer worldRenderer = new WorldRenderer();
     public static OutputRenderer outRenderer = new OutputRenderer();
+    public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
+    public static RegionLoader regionLoader = new RegionLoader();
     public static Shaders shaders = new Shaders();
     public static Textures textures = new Textures();
 
@@ -96,6 +101,8 @@ public class Engine {
         shaders.init();
         worldRenderer.init();
         outRenderer.init();
+        regionLoader.init();
+        regionRenderThread.init();
     }
 
 
@@ -335,5 +342,22 @@ public class Engine {
         return fb2;
     }
 
+
+    public static void restartRenderThreads() {
+        if (regionRenderThread != null) {
+            while (regionRenderThread.hasTasks()) {
+                regionRenderThread.finishTasks();
+                try {
+                    Thread.sleep(20);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            regionRenderThread.stopThread();
+            regionRenderThread = null;
+        }
+        regionRenderThread = new RegionRenderThread(3);
+        regionRenderThread.init();
+    }
 
 }

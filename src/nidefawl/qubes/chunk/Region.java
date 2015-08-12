@@ -15,16 +15,25 @@ import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Vector3f;
 
 public class Region {
     public static final int REGION_SIZE_BITS = 2;
     public static final int REGION_SIZE      = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK = REGION_SIZE - 1;
+    public static final int STATE_INIT = 0;
+    public static final int STATE_LOADING = 1;
+    public static final int STATE_LOAD_COMPLETE = 2;
+    //TODO: abstract render regions
+    public static final int RENDER_STATE_INIT     = 0;
+    public static final int RENDER_STATE_MESHING  = 1;
+    public static final int RENDER_STATE_MESHED   = 2;
+    public static final int RENDER_STATE_COMPILED = 3;
     
     public final int        rX;
     public final int        rZ;
     public final Chunk[][]         chunks           = new Chunk[REGION_SIZE][REGION_SIZE];
-    private boolean         isRendered;
+    public boolean         isRendered;
     private DisplayList     displayList;
     private int[]           facesRendered    = new int[WorldRenderer.NUM_PASSES];
     private boolean[]       hasPass          = new boolean[WorldRenderer.NUM_PASSES];
@@ -37,7 +46,10 @@ public class Region {
 
     private int[]           dims;
     private int[]           mask;
-    boolean hasSecondPass;
+    boolean                 hasSecondPass;
+    public int        state            = STATE_INIT;
+    public int        renderState            = RENDER_STATE_INIT;
+    
     public Region(int regionX, int regionZ) {
         this.rX = regionX;
         this.rZ = regionZ;
@@ -68,7 +80,7 @@ public class Region {
     public void setRendered(boolean isRendered) {
         this.isRendered = isRendered;
     }
-    private boolean isEmpty = false;
+    boolean isEmpty = false;
 
     public boolean isEmpty() {
         return isEmpty;
@@ -91,6 +103,8 @@ public class Region {
         return result < 0 ? result + m : result;
     }
 
+    
+    //TODO: abstract render crap
     public void doMeshing(World world) {
         if (this.meshes == null) {
             System.err.println("this region was already rendered before");
@@ -204,6 +218,8 @@ public class Region {
                                                 new int[] {x[0] + du[0],         x[1] + du[1],         x[2] + du[2]           },
                                                 new int[] {x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]   },
                                                 new int[] {x[0]         + dv[0], x[1]         + dv[1], x[2]         + dv[2]   },
+                                                new int[] {du[0], du[1], du[2]   },
+                                                new int[] {dv[0], dv[1], dv[2]   },
                                                 new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
                                         meshes.add(face);
                                     }
@@ -321,64 +337,45 @@ public class Region {
         int bottom = 10;//w.worldHeightMinusOne;
         for (int pass = 0; pass < WorldRenderer.NUM_PASSES; pass++) {
             facesRendered[pass] = 0;
-            glNewList(displayList.list+pass, GL11.GL_COMPILE);
+            glNewList(displayList.list + pass, GL11.GL_COMPILE);
             Mesh[] meshesPass = this.meshes[pass];
             this.hasPass[pass] = meshesPass.length > 0;
-            this.hasPass[1] = true;
             if (this.hasPass[pass]) {
-                glBegin(GL_QUADS);
                 Tess.instance3.resetState();
                 Tess.instance3.setColor(-1, 255);
-              Tess.instance3.setBrightness(0xf00000);
-              if (pass > 0) {
-                  System.err.println("meshesPass.length: "+meshesPass.length);
-                  GL11.glColor4f(1,1,1,1);
-//
-//                  float w = 7F;
-//                  float v = 1F;
-//                  int num = 4;
-//                  int a = 0;
-//                  int y = 22;
-//                  for (int x = 0; x < num; x++)
-//                      for (int z = 0; z < num; z++) {
-//                          Tess.instance3.setOffset(x+0.5F, 0F, z+0.5F);
-//                          Tess.instance3.setBrightness(0xf00000);
-//                          Tess.instance3.setColor(-1, 255);
-//                          Tess.instance3.setNormals(0,1,0);
-//                          Tess.instance3.add(-w, y, w, 0, v / 32F);
-//                          Tess.instance3.add(w, y, w, v, v / 32F);
-//                          Tess.instance3.add(w, y, -w, v, 0);
-//                          Tess.instance3.add(-w, y, -w, 0, 0);
-//                          Tess.instance3.setOffset(0,0,0);
-//                      }
-              }
-//              Tess.instance3.setColor(-1, 255);
+                Tess.instance3.setBrightness(0xf00000);
+                if (pass > 0) {
+                    System.err.println("meshesPass.length: " + meshesPass.length);
+                }
                 for (int a = 0; a < meshesPass.length; a++) {
                     Mesh mesh = meshesPass[a];
-                    drawMesh(mesh);
+                    drawPlane(mesh);
                 }
                 Tess.instance3.draw(GL_QUADS);
-                glEnd();
             }
             glEndList();
             facesRendered[pass] += meshesPass.length;
         }
-        this.meshes = null;
+//        this.meshes = null;
     }
 
-    private void drawMesh(Mesh mesh) {
+    private void drawPlane(Mesh mesh) {
         Tess.instance3.setNormals(mesh.normal[0], mesh.normal[1], mesh.normal[2]);
-        if (mesh.type != lastcolor) {
-            lastcolor = mesh.type;
+//        if (mesh.type != lastcolor) {
+//            lastcolor = mesh.type;
             int block = mesh.type & 0xFF;
             int biome = (mesh.type >> 12) & 0xFF;
             //              System.out.println(block+"/"+biome);
             float m = 1F;
             float alpha = 1F;
+            int c = -1;
             if (Block.water.id == block) {
-              Tess.instance3.setNormals(0,1,0);
-                alpha = 1F;
+//              Tess.instance3.setNormals(0,1,0);
+//                alpha = 1F;
+//                c = 0;
+//                return;
             }
+//            System.out.println(block);
 //            int c = color[block];
 //
 //            if (block == Block.grass.id) {
@@ -406,7 +403,6 @@ public class Region {
 //            //                }
 //            if (c == 0)
 //                c = 0x444444;
-            int c = -1;
 //          c = 0x444444;
             float b = (c & 0xFF) / 255F;
             c >>= 8;
@@ -414,23 +410,27 @@ public class Region {
             c >>= 8;
             float r = (c & 0xFF) / 255F;
             Tess.instance3.setColorRGBAF(r * m, g * m, b * m, alpha);
-        }
+//        }
 //            if (mesh.v0[1] >= top||mesh.v1[1] >= top||mesh.v2[1] >= top||mesh.v3[1] >= top||
 //                    mesh.v0[1] <= bottom||mesh.v1[1] <= bottom||mesh.v2[1] <= bottom||mesh.v3[1] <= bottom) {
 //                GL11.glColor3f(0.9F, 0.4F, 0.4F);
 //                lastcolor = -1;
 //            }
-//        Tess.instance3.setBrightness(0xf000f0);
-        Tess.instance3.setColor(-1, 255);
-        Tess.instance3.setUV(0, 0);
-        Tess.instance3.add(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
-
-        Tess.instance3.setUV(1, 0);
-        Tess.instance3.add(mesh.v1[0], mesh.v1[1], mesh.v1[2]);
-        Tess.instance3.setUV(1, 1);
-        Tess.instance3.add(mesh.v2[0], mesh.v2[1], mesh.v2[2]);
-        Tess.instance3.setUV(0, 1);
-        Tess.instance3.add(mesh.v3[0], mesh.v3[1], mesh.v3[2]);
+        Tess.instance3.setBrightness(0xf00000);
+//        Tess.instance3.setColor(-1, 122);
+        if (mesh.normal[0] < 120) {
+            float xl = mesh.du[0] + mesh.du[1] + mesh.du[2];
+            float yl = mesh.dv[0] + mesh.dv[1] + mesh.dv[2];
+            Tess.instance3.setAttr(block, 0, 0);
+            Tess.instance3.setUV(0, 0);
+            Tess.instance3.add(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
+            Tess.instance3.setUV(xl, 0);
+            Tess.instance3.add(mesh.v1[0], mesh.v1[1], mesh.v1[2]);
+            Tess.instance3.setUV(xl, yl);
+            Tess.instance3.add(mesh.v2[0], mesh.v2[1], mesh.v2[2]);
+            Tess.instance3.setUV(0, yl);
+            Tess.instance3.add(mesh.v3[0], mesh.v3[1], mesh.v3[2]);
+        }
 
     }
 
@@ -445,5 +445,9 @@ public class Region {
 
     public boolean hasPass(int i) {
         return this.hasPass[i];
+    }
+
+    public void setChunk(int x, int z, Chunk c) {
+        this.chunks[x][z] = c;
     }
 }

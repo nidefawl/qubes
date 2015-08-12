@@ -5,6 +5,7 @@ import java.util.Arrays;
 import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.WorldRenderer;
 
 public class Shaders {
@@ -32,49 +33,54 @@ public class Shaders {
         try {
             numShaders = 0;
             Arrays.fill(allShaders, null);
-            Shader new_waterShader = AssetManager.getInstance().loadShader("shaders/water");
+            AssetManager assetMgr = AssetManager.getInstance();
+            Shader new_waterShader = assetMgr.loadShader("shaders/water");
             if (Shaders.waterShader != null)
                 Shaders.waterShader.release();
             Shaders.waterShader = new_waterShader;
-            Shader new_waterShader2 = AssetManager.getInstance().loadShader("shaders/water2");
+            Shader new_waterShader2 = assetMgr.loadShader("shaders/water2");
             if (Shaders.waterShader2 != null)
                 Shaders.waterShader2.release();
             Shaders.waterShader2 = new_waterShader2;
-            Shader new_depthBufShader = AssetManager.getInstance().loadShader("shaders/renderdepth");
+            Shader new_depthBufShader = assetMgr.loadShader("shaders/renderdepth");
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             Shaders.depthBufShader = new_depthBufShader;
-            Shader new_composite1 = AssetManager.getInstance().loadShader("shaders/composite");
+            Shader new_composite1 = assetMgr.loadShader("shaders/composite");
             if (Shaders.composite1 != null)
                 Shaders.composite1.release();
             Shaders.composite1 = new_composite1;
-            Shader new_composite2 = AssetManager.getInstance().loadShader("shaders/composite1");
+            Shader new_composite2 = assetMgr.loadShader("shaders/composite1");
             if (Shaders.composite2 != null)
                 Shaders.composite2.release();
             Shaders.composite2 = new_composite2;
-            Shader new_composite3 = AssetManager.getInstance().loadShader("shaders/composite2");
+            Shader new_composite3 = assetMgr.loadShader("shaders/composite2");
             if (Shaders.composite3 != null)
                 Shaders.composite3.release();
             Shaders.composite3 = new_composite3;
-            Shader new_compositeFinal = AssetManager.getInstance().loadShader("shaders/final");
+            Shader new_compositeFinal = assetMgr.loadShader("shaders/final");
             if (Shaders.compositeFinal != null)
                 Shaders.compositeFinal.release();
             Shaders.compositeFinal = new_compositeFinal;
-            Shader new_testShader = AssetManager.getInstance().loadShader("shaders/test");
+            Shader new_testShader = assetMgr.loadShader("shaders/test", false);
             if (Shaders.testShader != null)
                 Shaders.testShader.release();
+            new_testShader.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
+            new_testShader.linkProgram();
             Shaders.testShader = new_testShader;
-            Shader new_sky = AssetManager.getInstance().loadShader("shaders/sky");
+            Shader new_sky = assetMgr.loadShader("shaders/sky");
             if (Shaders.sky != null)
                 Shaders.sky.release();
             Shaders.sky = new_sky;
-            Shader new_sky2 = AssetManager.getInstance().loadShader("shaders/sky");
+            Shader new_sky2 = assetMgr.loadShader("shaders/sky");
             if (Shaders.sky2 != null)
                 Shaders.sky2.release();
             Shaders.sky2 = new_sky2;
-            Shader new_terrain = AssetManager.getInstance().loadShader("shaders/terrain");
+            Shader new_terrain = assetMgr.loadShader("shaders/terrain", false);
             if (Shaders.terrain != null)
                 Shaders.terrain.release();
+            new_terrain.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
+            new_terrain.linkProgram();
             Shaders.terrain = new_terrain;
         } catch (ShaderCompileError e) {
             Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");

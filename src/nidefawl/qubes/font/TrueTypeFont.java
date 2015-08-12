@@ -293,7 +293,7 @@ public class TrueTypeFont {
             }
         }
         if (image != null) {
-            this.fontTextureID = TextureManager.getInstance().makeNewTexture(image, false, true);
+            this.fontTextureID = TextureManager.getInstance().makeNewTexture(image, false, true, 0);
         }
         this.spaceWidth = Math.min(this.fontMetrics.charWidth(' '), (int) (this.fontMetrics.getHeight() * 0.2D));
         int max = 0;
@@ -359,7 +359,7 @@ public class TrueTypeFont {
             }
             charMap.put((int) chBuffer[0], newRect);
             this.unallocate();
-            this.fontTextureID = TextureManager.getInstance().makeNewTexture(image, false, true);
+            this.fontTextureID = TextureManager.getInstance().makeNewTexture(image, false, true, 0);
             return chBuffer[0];
         }
         return -4;

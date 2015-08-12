@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.RegionRenderThread;
@@ -20,11 +21,10 @@ public class World {
 
     private long         seed;
 
-    public RegionRenderThread loader;
-
     private TerrainGenerator generator;
+    public int worldId;
 
-    public World(long seed) {
+    public World(int worldId, long seed) {
 
         this.seed = seed;
         this.worldHeightBits = 8;
@@ -33,15 +33,10 @@ public class World {
         this.worldHeightMinusOne = (1 << worldHeightBits) - 1;
         this.worldSeaLevel = 59;//1 << (worldHeightBits - 1);
         this.generator = new TerrainGenerator(this, this.seed);
-        this.loader = new RegionRenderThread(this);
         
     }
 
     public Chunk generateChunk(int i, int j) {
         return this.generator.getChunkAt(i, j);
-    }
-
-    public void loadRegions(int x, int z, boolean follow) {
-        this.loader.loadRegions(x, z, follow);
     }
 }
