@@ -139,14 +139,15 @@ public class WorldRenderer {
 //            Shaders.testShader.setProgramUniform1i("blockTextures", 0);
         }
 ////
+        Vector3f camPos = Engine.camera.getPosition();
+        glTranslatef(-camPos.x, -camPos.y, -camPos.z);
         renderFirstPass(world, fTime);
         Shader.disable();
         Engine.fbShadow.unbindCurrentFrameBuffer();
         glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
         Engine.getSceneFB().bind();
         Engine.getSceneFB().clearFrameBuffer();
-        
-        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
         
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();

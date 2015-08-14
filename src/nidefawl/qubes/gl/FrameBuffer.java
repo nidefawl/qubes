@@ -172,7 +172,7 @@ public class FrameBuffer implements IFrameBuffer {
 //        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D (depth)");
-        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, texture, 0);
+        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, texture, 0);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (depth)");
         glBindTexture(GL_TEXTURE_2D, 0);
     }

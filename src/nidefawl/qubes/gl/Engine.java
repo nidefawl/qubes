@@ -446,7 +446,6 @@ public class Engine {
                     glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
                     glRotatef(angle + 180.0F, 1.0F, 0.0F, 0.0F);
                 }
-                glTranslatef(-camPos.x, -camPos.y, -camPos.z);
                 readMat(GL_MODELVIEW_MATRIX, shadowModelView);
                 shadowModelView.update();
             } else {
@@ -473,9 +472,9 @@ public class Engine {
                 Quaternion.mul(q1, q2, q3);
                 GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
                 Matrix4f.mul(mat, shadowModelView, shadowModelView);
-                Matrix4f mat2 = new Matrix4f();
-                mat2.translate(new Vector3f(-camPos.x, -camPos.y, -camPos.z));
-                Matrix4f.mul(shadowModelView, mat2, shadowModelView);
+//                Matrix4f mat2 = new Matrix4f();
+//                mat2.translate(new Vector3f(-camPos.x, -camPos.y, -camPos.z));
+//                Matrix4f.mul(shadowModelView, mat2, shadowModelView);
                 shadowModelView.update();
             }
         }
