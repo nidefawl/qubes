@@ -47,6 +47,7 @@ public class Main extends GLGame {
     public static boolean DO_TIMING = false;
     public static boolean  show          = true;
     public static boolean  useShaders  = true;
+    public static boolean matrixSetupMode = true;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
     private long               lastTimeLoad          = System.currentTimeMillis();
 
@@ -399,6 +400,7 @@ public class Main extends GLGame {
     public void tick() {
         this.entSelf.tickUpdate();
         this.world.tickUpdate();
+        matrixSetupMode = Main.ticksran%100<50;
     }
 
     public void addDebugOnScreen(String string) {

@@ -410,11 +410,11 @@ public class Engine {
         regionRenderThread.init();
     }
 
-    public static void readMat() {
+    public static void readMat(int type, BufferedMatrix out) {
         mat.position(0).limit(16);
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, mat);
+        GL11.glGetFloat(type, mat);
         mat.position(0).limit(16);
-        shadowModelView.load(mat);
+        out.load(mat);
         mat.position(0).limit(16);
     }
 
@@ -423,62 +423,92 @@ public class Engine {
     protected static final Quaternion   q3    = new Quaternion();
     protected static final Quaternion   q4    = new Quaternion();
     protected static final Vector4f     _tmp1       = new Vector4f();
+
     public static void updateSun(float fTime) {
+        boolean mode = Main.matrixSetupMode;
         float sunPathRotation = -40.0F;
         float ca = Main.instance.getWorld().getSunAngle(fTime);
         {
-            
-            Matrix4f mat = new Matrix4f();
-            mat.translate(new Vector3f(0, 0, -100));
-            _tmp1.set(1f, 0f, 0f, -90.0F * Camera.PI_OVER_180);
-            q4.setFromAxisAngle(_tmp1);
-            
-            sunAngle = ca < 0.75F ? ca + 0.25F : ca - 0.75F;
-            float angle = ca * -360.0F;
-            if ((double) sunAngle <= 0.5D) {
-                //            GL11.glRotatef(ca * -360.0F, 0.0F, 0.0F, 1.0F);
-                //            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
-                _tmp1.set(0f, 0f, 1f, angle * Camera.PI_OVER_180);
-                q1.setFromAxisAngle(_tmp1);
-                _tmp1.set(1f, 0f, 0f, sunPathRotation * Camera.PI_OVER_180);
-                q2.setFromAxisAngle(_tmp1);
-            } else {
-                _tmp1.set(0f, 0f, 1f, sunPathRotation * Camera.PI_OVER_180);
-                q1.setFromAxisAngle(_tmp1);
-                _tmp1.set(1f, 0f, 0f, (angle + 180.0F) * Camera.PI_OVER_180);
-                q2.setFromAxisAngle(_tmp1);
-                //            GL11.glRotatef(ca * -360.0F + 180.0F, 0.0F, 0.0F, 1.0F);
-                //            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
-            }
-            Quaternion.mul(q4, q1, q1);
-            Quaternion.mul(q1, q2, q3);
-            GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
-            Matrix4f.mul(mat, shadowModelView, shadowModelView);
 
             Vector3f camPos = camera.getPosition();
-            Matrix4f mat2 = new Matrix4f();
-            mat2.translate(new Vector3f(-camPos.x, -camPos.y, -camPos.z));
-            Matrix4f.mul(shadowModelView, mat2, shadowModelView);
-            shadowModelView.update();
+            sunAngle = ca < 0.75F ? ca + 0.25F : ca - 0.75F;
+            float angle = ca * -360.0F;
+            if (mode) {
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity();
+
+                glTranslatef(0.0F, 0.0F, -100.0F);
+                glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
+                if ((double) sunAngle <= 0.5D) {
+                    glRotatef(angle, 0.0F, 0.0F, 1.0F);
+                    glRotatef(sunPathRotation, 1.0F, 0.0F, 0.0F);
+                } else {
+                    glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
+                    glRotatef(angle + 180.0F, 1.0F, 0.0F, 0.0F);
+                }
+                glTranslatef(-camPos.x, -camPos.y, -camPos.z);
+                readMat(GL_MODELVIEW_MATRIX, shadowModelView);
+                shadowModelView.update();
+            } else {
+                Matrix4f mat = new Matrix4f();
+                mat.translate(new Vector3f(0, 0, -100));
+                _tmp1.set(1f, 0f, 0f, 90.0F * Camera.PI_OVER_180);
+                q4.setFromAxisAngle(_tmp1);
+                if ((double) sunAngle <= 0.5D) {
+                    //            GL11.glRotatef(ca * -360.0F, 0.0F, 0.0F, 1.0F);
+                    //            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
+                    _tmp1.set(0f, 0f, 1f, angle * Camera.PI_OVER_180);
+                    q1.setFromAxisAngle(_tmp1);
+                    _tmp1.set(1f, 0f, 0f, sunPathRotation * Camera.PI_OVER_180);
+                    q2.setFromAxisAngle(_tmp1);
+                } else {
+                    _tmp1.set(0f, 0f, 1f, sunPathRotation * Camera.PI_OVER_180);
+                    q1.setFromAxisAngle(_tmp1);
+                    _tmp1.set(1f, 0f, 0f, (angle + 180.0F) * Camera.PI_OVER_180);
+                    q2.setFromAxisAngle(_tmp1);
+                    //            GL11.glRotatef(ca * -360.0F + 180.0F, 0.0F, 0.0F, 1.0F);
+                    //            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
+                }
+                Quaternion.mul(q4, q1, q1);
+                Quaternion.mul(q1, q2, q3);
+                GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
+                Matrix4f.mul(mat, shadowModelView, shadowModelView);
+                Matrix4f mat2 = new Matrix4f();
+                mat2.translate(new Vector3f(-camPos.x, -camPos.y, -camPos.z));
+                Matrix4f.mul(shadowModelView, mat2, shadowModelView);
+                shadowModelView.update();
+            }
         }
         {
             float angle = ca * 360.0F;
-            _tmp1.set(0f, 1f, 0f, -90.0F * Camera.PI_OVER_180);
-            q4.setFromAxisAngle(_tmp1);
-            _tmp1.set(0f, 0f, 1f, sunPathRotation * Camera.PI_OVER_180);
-            q1.setFromAxisAngle(_tmp1);
-            _tmp1.set(1f, 0f, 0f, angle * Camera.PI_OVER_180);
-            q2.setFromAxisAngle(_tmp1);
-            Quaternion.mul(q4, q1, q1);
-            Quaternion.mul(q1, q2, q3);
-            GameMath.convertQuaternionToMatrix4f(q3, sunModelView);
-            Matrix4f.mul(view, sunModelView, sunModelView);
-            sunModelView.update();
+
+            if (mode) {
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity();
+                glLoadMatrix(getViewMatrix());
+                glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+                glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
+                glRotatef(angle, 1.0F, 0.0F, 0.0F);
+                readMat(GL_MODELVIEW_MATRIX, sunModelView);
+                sunModelView.update();
+            } else {
+                _tmp1.set(0f, 1f, 0f, -90.0F * Camera.PI_OVER_180);
+                q4.setFromAxisAngle(_tmp1);
+                _tmp1.set(0f, 0f, 1f, sunPathRotation * Camera.PI_OVER_180);
+                q1.setFromAxisAngle(_tmp1);
+                _tmp1.set(1f, 0f, 0f, angle * Camera.PI_OVER_180);
+                q2.setFromAxisAngle(_tmp1);
+                Quaternion.mul(q4, q1, q1);
+                Quaternion.mul(q1, q2, q3);
+                GameMath.convertQuaternionToMatrix4f(q3, sunModelView);
+                Matrix4f.mul(view, sunModelView, sunModelView);
+                sunModelView.update();
+            }
 
             sunPosition.set(0, 100, 0);
             moonPosition.set(0, -100, 0);
             Matrix4f.transform(sunModelView, sunPosition, sunPosition);
-            Matrix4f.transform(sunModelView, moonPosition, moonPosition);
+            Matrix4f.transform(sunModelView, moonPosition, moonPosition);   
         }
         
     }

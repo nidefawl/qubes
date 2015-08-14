@@ -116,6 +116,9 @@ public class GuiOverlayStats extends Gui {
             fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
             y += fontSmall.getLineHeight() * 1.2F;
         }
+        String dbg = "Matrixmode: "+(Main.matrixSetupMode?"GL":"CPU");
+        fontSmall.drawString(dbg, 5, y, 0xFFFFFF, true, 1.0F);
+        y += fontSmall.getLineHeight() * 1.2F;
         if (System.currentTimeMillis() - messageTime < 5000) {
             int strwidth = font.getStringWidth(this.message);
             rleft = GLGame.displayWidth / 2 - strwidth / 2 - 8F;

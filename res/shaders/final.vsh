@@ -24,9 +24,9 @@ void main() {
 	gl_Position = ftransform();
 
 	if (sunAngle < 0.5f) {
-		lightVector = (gbufferModelView*vec4(normalize(sunPosition), 0)).xyz;
+		lightVector=normalize(sunPosition);
 	} else {
-		lightVector = (gbufferModelView*vec4(normalize(moonPosition), 0)).xyz;
+		lightVector=normalize(moonPosition);
 	}
 	
 	float timePow = 3.0f;
