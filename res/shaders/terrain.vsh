@@ -34,7 +34,7 @@ varying vec3 binormal;
 varying vec2 waves;
 varying vec3 worldNormal;
 
-varying float distance;
+varying float vdistance;
 //varying float idCheck;
 
 varying float materialIDs;
@@ -482,7 +482,7 @@ position.xyz += cameraPosition.xyz;
 
 	vec4 locposition = gl_ModelViewMatrix * gl_Vertex;
 	
-	distance = sqrt(locposition.x * locposition.x + locposition.y * locposition.y + locposition.z * locposition.z);
+	vdistance = sqrt(locposition.x * locposition.x + locposition.y * locposition.y + locposition.z * locposition.z);
 
 	position.xyz -= cameraPosition.xyz;
 

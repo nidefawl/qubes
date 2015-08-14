@@ -1,4 +1,4 @@
-#version 120
+#version 130
 
 /*
  _______ _________ _______  _______  _ 
@@ -27,8 +27,7 @@ Do not modify this code until you have read the LICENSE.txt contained in the roo
 
 /* DRAWBUFFERS:0123 */
 
-uniform sampler2D texture;
-uniform sampler2D lightmap;
+uniform sampler2DArray blockTextures;
 uniform sampler2D normals;
 uniform sampler2D specular;
 uniform sampler2D noisetex;
@@ -58,8 +57,9 @@ varying vec3 worldNormal;
 
 varying float materialIDs;
 
-varying float distance;
+varying float vdistance;
 varying float idCheck;
+flat varying int blockid;
 
 const int GL_LINEAR = 9729;
 const int GL_EXP = 2048;
@@ -220,7 +220,7 @@ vec4 GetTexture(in sampler2D tex, in vec2 coord)
 {
 	#ifdef PARALLAX
 		vec4 t = vec4(0.0f);
-		if (distance < 10.0f)
+		if (vdistance < 10.0f)
 		{
 			t = texture2DLod(tex, coord, 0);
 		}
@@ -260,7 +260,7 @@ vec2 CalculateParallaxCoord(in vec2 coord, in vec3 viewVector)
 		if (heightmap < 1.0f)
 		{
 			vec3 step = viewVector * stepSize;
-			float distAngleWeight = ((distance * 0.6f) * (2.1f - viewVector.z)) / 16.0;
+			float distAngleWeight = ((vdistance * 0.6f) * (2.1f - viewVector.z)) / 16.0;
 				 step *= distAngleWeight;
 				 step *= 2.0f;
 
@@ -305,7 +305,7 @@ void main() {
 
 	vec2 parallaxCoord = texcoord.st;
 	#ifdef PARALLAX
-		if (distance < 10.0f)
+		if (vdistance < 10.0f)
 		 parallaxCoord = CalculateParallaxCoord(texcoord.st, viewVector);
 	#endif
 
@@ -378,13 +378,17 @@ void main() {
 	
 	
 	
+
+	//Diffuse
+	vec4 albedo = texture(blockTextures, vec3(parallaxCoord.st, blockid-1)) * color;
+	
 	vec4 frag2;
 	
-	if (distance < bump_distance) {
+	if (vdistance < bump_distance) {
 	
 			vec3 bump = GetTexture(normals, parallaxCoord.st).rgb * 2.0f - 1.0f;
 			
-			float bumpmult = clamp(bump_distance * fademult - distance * fademult, 0.0f, 1.0f) * NORMAL_MAP_MAX_ANGLE;
+			float bumpmult = clamp(bump_distance * fademult - vdistance * fademult, 0.0f, 1.0f) * NORMAL_MAP_MAX_ANGLE;
 	              bumpmult *= 1.0f - (clamp(spec.g * 1.0f - 0.0f, 0.0f, 1.0f) * 0.97f);
 				  
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
@@ -392,14 +396,12 @@ void main() {
 			//bump += CalculateRainBump(worldPosition.xyz);
 			
 			frag2 = vec4(bump * tbnMatrix * 0.5 + 0.5, 1.0);
+			// albedo = vec4(GetTexture(normals, parallaxCoord.st).rgb * 2.0f - 1.0f,1.0f);
 			
 	} else {
 	
 			frag2 = vec4((normal) * 0.5f + 0.5f, 1.0f);					
 	}
-
-	//Diffuse
-	vec4 albedo = GetTexture(texture, parallaxCoord.st) * color;
 
 		//sunlightVisibility *= clamp(dot(frag2.rgb * 2.0f - 1.0f, normalize(sunPosition.xyz)), 0.0f, 1.0f);
 

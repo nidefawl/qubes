@@ -27,9 +27,9 @@ public class OutputRenderer {
             dbg.preDbgFB(true);
             dbg.drawDebug();
             glActiveTexture(GL_TEXTURE0);
-            dbg.drawDbgTexture(0, 0, 6, Textures.texWater2.getGlid(), "Water");
-            dbg.drawDbgTexture(0, 0, 7, Textures.texEmpty, "Blank");
-            dbg.drawDbgTexture(0, 1, -2, Textures.texNoise2, "Noise2");
+//            dbg.drawDbgTexture(0, 0, 6, Textures.texWater2.getGlid(), "Water");
+//            dbg.drawDbgTexture(0, 0, 7, Textures.texEmpty, "Blank");
+//            dbg.drawDbgTexture(0, 1, -2, Textures.texNoise2, "Noise2");
             dbg.postDbgFB();
         }
 
@@ -72,8 +72,10 @@ public class OutputRenderer {
         }
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getDepthTex());
         glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+        glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
         for (int i = 0; i < 4; i++) {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(i));
@@ -90,6 +92,8 @@ public class OutputRenderer {
                 dbg.drawDbgTexture(0, 0, i, Engine.getSceneFB().getTexture(i), "TexUnit " + i);
             }
             dbg.drawDbgTexture(0, 0, 4, Textures.texNoise, "TexUnit " + 4);
+            dbg.drawDbgTexture(0, 0, 5, Engine.getSceneFB().getDepthTex(), "Depth", Shaders.depthBufShader, Engine.znear, Engine.zfar);
+            dbg.drawDbgTexture(0, 0, 6, Engine.fbShadow.getDepthTex(), "Shadow", Shaders.depthBufShader, 0.05F, 256.0F);
             for (int i = 0; i < 4; i++) {
                 dbg.drawDbgTexture(0, 1, i, Engine.fbComposite0.getTexture(i), "ColAtt " + i);
             }
@@ -115,6 +119,8 @@ public class OutputRenderer {
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader composite2");
             Shaders.setUniforms(Shaders.composite2, fTime);
         }
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getDepthTex());
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
@@ -140,6 +146,8 @@ public class OutputRenderer {
             for (int i = 0; i < 4; i++) {
                 dbg.drawDbgTexture(1, 0, i, Engine.fbComposite0.getTexture(i), "TexUnit " + i);
             }
+            dbg.drawDbgTexture(1, 0, 5, Engine.getSceneFB().getDepthTex(), "Depth", Shaders.depthBufShader, Engine.znear, Engine.zfar);
+            dbg.drawDbgTexture(1, 0, 6, Engine.fbShadow.getDepthTex(), "Shadow", Shaders.depthBufShader, 0.05F, 256.0F);
             dbg.drawDbgTexture(1, 1, 2, Engine.fbComposite1.getTexture(2), "ColAtt " + 2);
             dbg.postDbgFB();
         }
@@ -159,6 +167,8 @@ public class OutputRenderer {
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader composite3");
             Shaders.setUniforms(Shaders.composite3, fTime);
         }
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getDepthTex());
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
@@ -189,12 +199,15 @@ public class OutputRenderer {
             dbg.drawDbgTexture(2, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit " + 1);
             dbg.drawDbgTexture(2, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit " + 2);
             dbg.drawDbgTexture(2, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit " + 3);
+            dbg.drawDbgTexture(2, 0, 5, Engine.getSceneFB().getDepthTex(), "Depth", Shaders.depthBufShader, Engine.znear, Engine.zfar);
+            dbg.drawDbgTexture(2, 0, 6, Engine.fbShadow.getDepthTex(), "Shadow", Shaders.depthBufShader, 0.05F, 256.0F);
             dbg.drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "ColAtt " + 0);
-            glActiveTexture(GL_TEXTURE0);
             dbg.drawDbgTexture(3, 0, 0, Engine.fbComposite2.getTexture(0), "TexUnit " + 0);
             dbg.drawDbgTexture(3, 0, 1, Engine.fbComposite0.getTexture(1), "TexUnit " + 1);
             dbg.drawDbgTexture(3, 0, 2, Engine.fbComposite1.getTexture(2), "TexUnit " + 2);
             dbg.drawDbgTexture(3, 0, 3, Engine.fbComposite0.getTexture(3), "TexUnit " + 3);
+            dbg.drawDbgTexture(3, 0, 5, Engine.getSceneFB().getDepthTex(), "Depth", Shaders.depthBufShader, Engine.znear, Engine.zfar);
+            dbg.drawDbgTexture(3, 0, 6, Engine.fbShadow.getDepthTex(), "Shadow", Shaders.depthBufShader, 0.05F, 256.0F);
             //    drawDbgTexture(2, 1, 0, Engine.fbComposite2.getTexture(0), "GL_TEXTURE"+0);
             dbg.postDbgFB();
         }
@@ -210,6 +223,8 @@ public class OutputRenderer {
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shader compositeF");
             Shaders.setUniforms(Shaders.compositeFinal, fTime);
         }
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getDepthTex());
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);

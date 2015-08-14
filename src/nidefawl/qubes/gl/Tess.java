@@ -185,10 +185,10 @@ public class Tess {
         if (!useColorPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable color pointer after a vertex has been added");
         }
-        int iR = (int)r*255;
-        int iG = (int)g*255;
-        int iB = (int)b*255;
-        int iA = (int)a*255;
+        int iR = (int) (r*255.0F);
+        int iG = (int) (g*255.0F);
+        int iB = (int) (b*255.0F);
+        int iA = (int) (a*255.0F);
         this.useColorPtr = true;
         int rgb;
         if (littleEndian) {

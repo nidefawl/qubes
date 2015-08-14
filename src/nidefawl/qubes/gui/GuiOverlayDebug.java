@@ -1,10 +1,14 @@
 package nidefawl.qubes.gui;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
+
 import nidefawl.game.Main;
+import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.shader.Shader;
 
 public class GuiOverlayDebug extends Gui {
 
@@ -85,6 +89,9 @@ public class GuiOverlayDebug extends Gui {
     }
 
     public void drawDbgTexture(int stage, int side, int num, int texture, String string) {
+        drawDbgTexture(stage, side, num, texture, string, null, 0, 0);
+    }
+    public void drawDbgTexture(int stage, int side, int num, int texture, String string, Shader depthBufShader, float f1, float f2) {
         int w1 = 120;
         int gap = 24;
         int wCol = w1 * 2 + gap;
@@ -101,12 +108,21 @@ public class GuiOverlayDebug extends Gui {
         glDisable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glEnable(GL_TEXTURE_2D);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         Tess.instance2.add(0, 0 + h, 0, 0, 0);
         Tess.instance2.add(w1, 0 + h, 0, 1, 0);
         Tess.instance2.add(w1, 0, 0, 1, 1);
         Tess.instance2.add(0, 0, 0, 0, 1);
+        if (depthBufShader != null) {
+            depthBufShader.enable();
+            depthBufShader.setProgramUniform1i("depthSampler", 0);
+            depthBufShader.setProgramUniform2f("zbufparam", f1, f2);
+        }
         Tess.instance2.draw(7);
+        if (depthBufShader != null) {
+            Shader.disable();
+        }
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);

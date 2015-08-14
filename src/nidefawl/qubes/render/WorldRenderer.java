@@ -18,18 +18,16 @@ import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 public class WorldRenderer {
 
     public static final int   NUM_PASSES      = 2;
 
-    public Vector3f           sun             = new Vector3f(-0.31F, 0.95F, 0.00F);
-    public Vector3f           up              = new Vector3f(0, 100, 0);
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
     public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
-    public Vector3f           moonPosition    = new Vector3f(-100, -300, -100);
-    public float              sunAngle        = 0.30F;
 
     private ArrayList<Region> firstPass       = new ArrayList<Region>();
     private ArrayList<Region> secondPass      = new ArrayList<Region>();
@@ -77,20 +75,85 @@ public class WorldRenderer {
     }
 
     public void renderWorld(World world, float fTime) {
+        prepareRegions(world, fTime);
+        
         this.rendered = 0;
-        //        sunAngle = 0.45F;
+//        Engine.suncamera.set(x, y, z, yaw, pitch);
         //        sun = new Vector3f(0.41F, 0.14F, 0.00F);
         //         glDisable(GL_CULL_FACE);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_CULL_FACE); // Cull back facing polygons
         //        glDisable(GL_CULL_FACE);
         glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
+        Engine.fbShadow.bind();
+        Engine.fbShadow.clearFrameBuffer();
+        glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        GL11.glClearColor(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glClear(16640);
+        glDisable(GL_FOG);
+        glDepthMask(true);
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_COLOR_MATERIAL);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        //        Engine.enableLighting();
+//        System.out.println(glGetBoolean(GL_COLOR_MATERIAL));
+//        System.out.println(glGetBoolean(GL_LIGHTING));
+        glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
         glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix());
+        glLoadIdentity();//Required?
+        glLoadMatrix(Engine.getShadowProjectionMatrix());
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glLoadMatrix(Engine.getViewMatrix());
+        glLoadMatrix(Engine.getShadowModelViewMatrix());
+//        GL11.glTranslatef(0.0F, 0.0F, -100.0F);
+//        GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
+//        float ca = Main.instance.getWorld().getSunAngle(fTime);
+//        sunAngle = ca < 0.75F?ca + 0.25F:ca - 0.75F;
+//        float angle = ca * -360.0F;
+//        float shadowAngle = sunAngle;
+//        sunAngle2 = angle;
+//        if((double)sunAngle <= 0.5D) {
+//            GL11.glRotatef(angle, 0.0F, 0.0F, 1.0F);
+//            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
+//         } else {
+//             sunAngle2 = angle + 180.0F;
+//            GL11.glRotatef(angle + 180.0F, 0.0F, 0.0F, 1.0F);
+//            shadowAngle = sunAngle - 0.5F;
+//            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
+//         }
+//        float shadowIntervalSize = 4.0F;
+//        float x1 = shadowIntervalSize / 2.0F;
+//        float raSun = shadowIntervalSize;
+//        Vector3f camPos = Engine.camera.getPosition();
+//        Engine.readMat();
+//        GL11.glTranslatef((float)camPos.x % raSun - x1, (float)camPos.y % raSun - x1, (float)camPos.z % raSun - x1);
+//        GL11.glTranslatef(-camPos.x, -camPos.y, -camPos.z);
+        if (Main.useShaders) {
+            Shaders.shadow.enable();
+            Shaders.setUniforms(Shaders.shadow, fTime);
+            Shaders.shadow.setProgramUniform1i("blockTextures", 0);
+            Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
+//            Shader.disable();
+//            Shaders.testShader.enable();
+//            Shaders.testShader.setProgramUniform1i("blockTextures", 0);
+        }
+////
+        renderFirstPass(world, fTime);
+        Shader.disable();
+        Engine.fbShadow.unbindCurrentFrameBuffer();
+        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        Engine.getSceneFB().bind();
+        Engine.getSceneFB().clearFrameBuffer();
+        
+        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
+        
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glLoadMatrix(Engine.getViewMatrix()); //TODO: GET RID OF, load into shader
         glDisable(GL_TEXTURE_2D);
         glDepthMask(false);
         glDisable(GL_ALPHA_TEST);
@@ -101,7 +164,7 @@ public class WorldRenderer {
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogf(GL_FOG_START, 0);
-        glFogf(GL_FOG_END, Engine.zfar / 7.41F);
+        glFogf(GL_FOG_END, Engine.zfar / 1.41F);
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
@@ -120,29 +183,22 @@ public class WorldRenderer {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrix(Engine.getModelViewMatrix());
-        prepareRegions(world, fTime);
         if (Main.useShaders) {
-            Shaders.terrain.enable();
-            Shaders.setUniforms(Shaders.terrain, fTime);
-            Shaders.terrain.setProgramUniform1i("texture", 0);
-            Shaders.terrain.setProgramUniform1i("normals", 2);
-            Shaders.terrain.setProgramUniform1i("noisetex", 3);
-            Shaders.terrain.setProgramUniform1i("specular", 5);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
-            glActiveTexture(GL_TEXTURE5);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
             Shaders.terrain.enable();
             Shaders.setUniforms(Shaders.terrain, fTime);
             Shaders.terrain.setProgramUniform1i("blockTextures", 0);
             Shaders.terrain.setProgramUniform1i("normals", 2);
             Shaders.terrain.setProgramUniform1i("noisetex", 3);
             Shaders.terrain.setProgramUniform1i("specular", 5);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, Textures.texEmptyNormal);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
+
         } else {
             Engine.enableLighting();
             Shaders.testShader.enable();
@@ -176,6 +232,8 @@ public class WorldRenderer {
     }
 
     private int rendered;
+
+    public float sunAngle2;
     void prepareRegions(World world, float fTime) {
         int loaded = 0;
 //      if (follow && this.regions.size() >= MAX_REGIONS - 20   ) {

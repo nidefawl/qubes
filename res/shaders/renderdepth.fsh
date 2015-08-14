@@ -11,6 +11,7 @@ float getBrightness(vec2 b) {
 float LinearizeDepth(vec2 uv)
 {
   float z = texture2D(depthSampler, uv).x;
+  // x == near, y == far
   return (2.0 * zbufparam.x) / (zbufparam.y + zbufparam.x - z * (zbufparam.y - zbufparam.x));	
 }
 void main() {

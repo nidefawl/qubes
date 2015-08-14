@@ -200,8 +200,6 @@ public class Main extends GLGame {
         glDepthFunc(GL_LEQUAL);
         Vec3 vUnproject = null;
         if (Main.DO_TIMING) TimingHelper.start(6);
-        Engine.getSceneFB().bind();
-        Engine.getSceneFB().clearFrameBuffer();
         //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         Engine.worldRenderer.renderWorld(this.world, fTime);
         if (this.handleClick) {
@@ -249,8 +247,21 @@ public class Main extends GLGame {
         GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
-        if (!Main.useShaders) {
-            glBindTexture(GL_TEXTURE_2D, Engine.fb2.getTexture(0));
+//        if (!Main.useShaders) {
+//        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
+//        {
+//            int tw = displayWidth;
+//            int th = displayHeight;
+//            float x = 0;
+//            float y = 0;
+//            Tess.instance.add(x + tw, y, 0, 1, 1);
+//            Tess.instance.add(x, y, 0, 0, 1);
+//            Tess.instance.add(x, y + th, 0, 0, 0);
+//            Tess.instance.add(x + tw, y + th, 0, 1, 0);
+//        }
+//        Tess.instance.draw(GL_QUADS);
+        GL11.glScalef(0.25F, 0.25F, 1);
+            glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
             {
                 int tw = displayWidth;
                 int th = displayHeight;
@@ -262,7 +273,8 @@ public class Main extends GLGame {
                 Tess.instance.add(x + tw, y + th, 0, 1, 0);
             }
             Tess.instance.draw(GL_QUADS);
-        }
+//        }
+            GL11.glLoadIdentity();
         if (show) {
             if (this.debugOverlay != null) {
                 this.debugOverlay.render(fTime);
@@ -318,7 +330,19 @@ public class Main extends GLGame {
     @Override
     public void preRenderUpdate(float f) {
         this.entSelf.updateInputDirect(movement);
-        Engine.camera.set(this.entSelf, f);
+        if (Main.DO_TIMING)
+            TimingHelper.start(13);
+        float px = entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f;
+        float py = entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f;
+        float pz = entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f;
+        float yaw = entSelf.yaw;
+        float pitch = entSelf.pitch;
+        Engine.camera.setPosition(px, py, pz);
+        Engine.camera.setOrientation(yaw, pitch);
+        Engine.updateCamera();
+        if (Main.DO_TIMING)
+            TimingHelper.end(13);
+        Engine.updateSun(f);
         if (this.world != null) {
             Engine.regionLoader.finishTasks();
             if (follow) {
@@ -374,6 +398,7 @@ public class Main extends GLGame {
     @Override
     public void tick() {
         this.entSelf.tickUpdate();
+        this.world.tickUpdate();
     }
 
     public void addDebugOnScreen(String string) {

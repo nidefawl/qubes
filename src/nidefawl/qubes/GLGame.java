@@ -155,20 +155,15 @@ public abstract class GLGame implements Runnable {
         if (Main.DO_TIMING)
             TimingHelper.end(10);
         if (Main.DO_TIMING)
-            TimingHelper.start(11);
-        preRenderUpdate(renderTime);
-        if (Main.DO_TIMING)
-            TimingHelper.end(11);
-        if (Main.DO_TIMING)
             TimingHelper.start(12);
         input(renderTime);
         if (Main.DO_TIMING)
             TimingHelper.end(12);
         if (Main.DO_TIMING)
-            TimingHelper.start(13);
-        Engine.update();
+            TimingHelper.start(11);
+        preRenderUpdate(renderTime);
         if (Main.DO_TIMING)
-            TimingHelper.end(13);
+            TimingHelper.end(11);
         render(renderTime);
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();

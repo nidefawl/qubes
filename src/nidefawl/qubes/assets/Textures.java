@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.gl.Engine;
@@ -23,6 +24,7 @@ public class Textures {
     public static AssetTexture texWater;
     public static AssetTexture texWater2;
     public static AssetTexture texStone;
+    public static int texEmptyNormal;
     public static int blockTextureMap;
 
     public void genNoise(int texture) {
@@ -105,6 +107,7 @@ public class Textures {
         System.out.println(l);
     }
     int a = 0;
+    
     public void genNoise3(int texture) {
         int noct = 8;
         long seed = 0xdeadbeefL;
@@ -206,11 +209,16 @@ public class Textures {
     }
 
     public void init() {
+        ByteBuffer directBuf = null;
         texNoise = glGenTextures();
         texNoise2 = glGenTextures();
         genNoise(texNoise);
         genNoise2(texNoise2);
         texEmpty = TextureManager.getInstance().makeNewTexture(new byte[16*16*4], 16, 16, true, false, 0);
+        int[] normalBumpMap = new int[16*16*4];
+        Arrays.fill(normalBumpMap, 0xff7f7fff);
+        byte[] ndata = TextureManager.getRGBA(normalBumpMap);
+        texEmptyNormal = TextureManager.getInstance().makeNewTexture(ndata, 16, 16, true, false, 0);
         texWater = AssetManager.getInstance().loadPNGAsset("textures/water.png");
         texWater.setupTexture(true, false, 4);
         texWater2 = AssetManager.getInstance().loadPNGAsset("textures/water_still.png");
@@ -230,7 +238,6 @@ public class Textures {
                 "textures/water.png",
         };
         int tileSize = texStone.getWidth();
-        ByteBuffer directBuf = null;
         GL42.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, 
                 1,                    //No mipmaps as textures are 1x1
                 GL_RGBA8,              //Internal format

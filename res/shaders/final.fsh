@@ -343,7 +343,9 @@ void CalculateExposure(inout vec3 color) {
 	float exposureMin = 0.13f;
 	float exposure = pow(eyeBrightnessSmooth.y / 240.0f, 6.0f) * exposureMax + exposureMin;
 
-	exposure = 1.0f;
+	//exposure = 1.0f;
+	// exposure = 1.0f;
+
 
 	color.rgb /= vec3(exposure);
 }
@@ -756,6 +758,7 @@ void main() {
 	CalculateBloom(bloomData);			//Gather bloom textures
 	color = mix(color, bloomData.bloom, vec3(0.002f));
 
+	// AddRainFogScatter(color, bloomData);
 	Vignette(color);
 	CalculateExposure(color);
 	TonemapReinhard05(color, bloomData);

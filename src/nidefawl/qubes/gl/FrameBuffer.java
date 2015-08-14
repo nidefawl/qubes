@@ -21,6 +21,7 @@ public class FrameBuffer implements IFrameBuffer {
     private int              fb;
     private IntBuffer        drawBufAtt;
     private boolean          hasDepth;
+    private boolean isShadowDepthBuffer;
     private int              numColorTextures;
     private int              depthTexture;
     private final int[]      colorAttTextures = new int[MAX_COLOR_ATT];
@@ -41,6 +42,11 @@ public class FrameBuffer implements IFrameBuffer {
 
     public void setHasDepthAttachment() {
         hasDepth = true;
+    }
+
+    public void setShadowBuffer() {
+        hasDepth = true;
+        isShadowDepthBuffer = true;
     }
 
     public void setup() {
@@ -110,6 +116,8 @@ public class FrameBuffer implements IFrameBuffer {
 
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
+        if (hasDepth)
+        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, depthTexture, 0);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
 //        glViewport(0, 0, renderWidth, renderHeight);
 //        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glViewport");
@@ -145,13 +153,21 @@ public class FrameBuffer implements IFrameBuffer {
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture (depth)");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        if (this.isShadowDepthBuffer) {
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL14.GL_TEXTURE_COMPARE_MODE, GL14.GL_COMPARE_R_TO_TEXTURE);
+        } else {
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+        }
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 //        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
@@ -183,6 +199,8 @@ public class FrameBuffer implements IFrameBuffer {
             GL20.glDrawBuffers(GL_NONE);
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
             glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//            glClearColor(1,1,1,1);
+//            glClear(GL_COLOR_BUFFER_BIT);
         }
     }
     

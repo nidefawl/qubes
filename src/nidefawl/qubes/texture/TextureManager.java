@@ -40,6 +40,21 @@ public class TextureManager {
         uploadTexture(rgba, w, h, 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
         return i;
     }
+    public static byte[] getRGBA(int[] irgba) {
+        byte textureData[] = new byte[irgba.length * 4];
+        for (int k1 = 0; k1 < irgba.length; k1++) {
+            if (irgba[k1] >> 24 == 0) {
+                for (int a = 0; a < 4; a++) 
+                    textureData[k1 * 4 + a] = 0;
+            } else {
+                textureData[k1 * 4 + 0] = (byte)(irgba[k1] >> 16 & 0xff);
+                textureData[k1 * 4 + 1] = (byte)(irgba[k1] >> 8 & 0xff);
+                textureData[k1 * 4 + 2] = (byte)(irgba[k1] >> 0 & 0xff);
+                textureData[k1 * 4 + 3] = (byte)(irgba[k1] >> 24 & 0xff);
+            }
+        }
+        return textureData;
+    }
     public static byte[] getRGBA(BufferedImage bufferedImage) {
         int j = bufferedImage.getWidth();
         int l = bufferedImage.getHeight();

@@ -11,6 +11,7 @@ import nidefawl.qubes.gl.DisplayList;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
@@ -212,7 +213,13 @@ public class Region {
                                             new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
                                     */
                                     if (add) {
-    
+                                        int faceDir = Dir.DIR_POS_X;
+                                        if (n1 < 0) faceDir = Dir.DIR_NEG_X;
+                                        if (n2 > 0) faceDir = Dir.DIR_POS_Y;
+                                        if (n2 < 0) faceDir = Dir.DIR_NEG_Y;
+                                        if (n3 > 0) faceDir = Dir.DIR_POS_Z;
+                                        if (n3 < 0) faceDir = Dir.DIR_NEG_Z;
+                                        
                                         Mesh face = new Mesh(c,
                                                 new int[] {x[0],                 x[1],                 x[2]                   },
                                                 new int[] {x[0] + du[0],         x[1] + du[1],         x[2] + du[2]           },
@@ -220,7 +227,8 @@ public class Region {
                                                 new int[] {x[0]         + dv[0], x[1]         + dv[1], x[2]         + dv[2]   },
                                                 new int[] {du[0], du[1], du[2]   },
                                                 new int[] {dv[0], dv[1], dv[2]   },
-                                                new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
+                                                new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)},
+                                                faceDir);
                                         meshes.add(face);
                                     }
                                     // Zero-out mask
@@ -366,50 +374,26 @@ public class Region {
             int block = mesh.type & 0xFF;
             int biome = (mesh.type >> 12) & 0xFF;
             //              System.out.println(block+"/"+biome);
+            int side = 0;
             float m = 1F;
+            switch (mesh.faceDir) {
+                case Dir.DIR_NEG_Y: m = 0.5F; break;
+                case Dir.DIR_POS_Y: m = 1F; break;
+                case Dir.DIR_NEG_Z: m = 0.8F; break;
+                case Dir.DIR_POS_Z: m = 0.8F; break;
+                case Dir.DIR_NEG_X: m = 0.6F; break;
+                case Dir.DIR_POS_X: m = 0.6F; break;
+            }
             float alpha = 1F;
             int c = -1;
-            if (Block.water.id == block) {
-//              Tess.instance3.setNormals(0,1,0);
-//                alpha = 1F;
-//                c = 0;
-//                return;
-            }
-//            System.out.println(block);
-//            int c = color[block];
-//
-//            if (block == Block.grass.id) {
-//                //                c = BiomeGenBase.byId[biome].getBiomeGrassColor(ColorizerGrass.grass);
-//                m = 0.3F;
-//            }
-//            //            int biomeC = BiomeGenBase.byId[biome].color;
-//
-//            //            if (block == Block.GRASS.id) {
-//            //                c = BiomeGenBase.byId[biome].getBiomeGrassColor(ColorizerGrass.grass, null, 0,0,0);
-//            //                m = 0.3F;
-//            //            }
-//            //            int biomeC = BiomeGenBase.byId[biome].field_150609_ah;
-//            //            float cr = ((biomeC>>16)&0xFF)/255.0F;
-//            //            float cg = ((biomeC>>8)&0xFF)/255.0F;
-//            //            float cb = ((biomeC>>0)&0xFF)/255.0F;
-//            //            float br = 0.2126F*cr+0.7152F*cg+0.0722F*cb;
-//            //            m = (m+br) / 2.0F;
-//            if (block == 1) {
-//                m = 0.8F;
-//            }
-//            //                if (biome == BiomeGenBase.JUNGLE_HILLS.biomeID) {
-//            //                    float cr = biome.
-//            //                    m = 0.2F;
-//            //                }
-//            if (c == 0)
-//                c = 0x444444;
-//          c = 0x444444;
+            
             float b = (c & 0xFF) / 255F;
             c >>= 8;
             float g = (c & 0xFF) / 255F;
             c >>= 8;
             float r = (c & 0xFF) / 255F;
-            Tess.instance3.setColorRGBAF(r * m, g * m, b * m, alpha);
+            Tess.instance3.setColorRGBAF(b*m,g*m,r*m, alpha);
+//            Tess.instance3.setColor(0x666666,255);
 //        }
 //            if (mesh.v0[1] >= top||mesh.v1[1] >= top||mesh.v2[1] >= top||mesh.v3[1] >= top||
 //                    mesh.v0[1] <= bottom||mesh.v1[1] <= bottom||mesh.v2[1] <= bottom||mesh.v3[1] <= bottom) {

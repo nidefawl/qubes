@@ -17,6 +17,7 @@ import nidefawl.qubes.util.GameMath;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 public class Shader {
     int fragShader = -1;
@@ -252,6 +253,10 @@ public class Shader {
     }
 
     public void setProgramUniform3f(String string, Vector3f position) {
+        setProgramUniform3f(string, position.x, position.y, position.z);
+    }
+
+    public void setProgramUniform3f(String string, Vector4f position) {
         setProgramUniform3f(string, position.x, position.y, position.z);
     }
 

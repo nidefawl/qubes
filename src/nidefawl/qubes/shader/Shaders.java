@@ -1,6 +1,9 @@
 package nidefawl.qubes.shader;
 
+import java.nio.FloatBuffer;
 import java.util.Arrays;
+
+import org.lwjgl.BufferUtils;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
@@ -28,6 +31,7 @@ public class Shaders {
     public static Shader       sky2;
     public static Shader       terrain;
     public static Shader       testShader;
+    public static Shader       shadow;
 
     public void initShaders() {
         try {
@@ -82,6 +86,12 @@ public class Shaders {
             new_terrain.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_terrain.linkProgram();
             Shaders.terrain = new_terrain;
+            Shader new_shadow = assetMgr.loadShader("shaders/shadow", false);
+            if (Shaders.shadow != null)
+                Shaders.shadow.release();
+            new_shadow.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
+            new_shadow.linkProgram();
+            Shaders.shadow = new_shadow;
         } catch (ShaderCompileError e) {
             Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
             System.out.println("shader "+e.getName()+" failed to compile");
@@ -99,47 +109,53 @@ public class Shaders {
     
 
 
-    public static void setUniforms(Shader compositeShader, float fTime) {
+    public static void setUniforms(Shader sh, float fTime) {
         WorldRenderer wr = Engine.worldRenderer;
-        compositeShader.setProgramUniform1f("near", Engine.znear);
-        compositeShader.setProgramUniform1f("far", Engine.zfar);
-        compositeShader.setProgramUniform1f("viewWidth", Main.displayWidth);
-        compositeShader.setProgramUniform1f("viewHeight", Main.displayHeight);
-        compositeShader.setProgramUniform1f("rainStrength", 0F);
-        compositeShader.setProgramUniform1f("wetness", 0);
-        compositeShader.setProgramUniform1f("aspectRatio", Main.displayWidth / (float) Main.displayHeight);
-        compositeShader.setProgramUniform1f("sunAngle", wr.sunAngle);
-        compositeShader.setProgramUniform1f("frameTimeCounter", (Main.ticksran + fTime)/20F);
-        compositeShader.setProgramUniform3f("cameraPosition", Engine.camera.getPosition());
-        compositeShader.setProgramUniform3f("upPosition", wr.up);
-        compositeShader.setProgramUniform3f("sunPosition", wr.sun);
-        compositeShader.setProgramUniform3f("moonPosition", wr.moonPosition);
-        compositeShader.setProgramUniform3f("skyColor", wr.skyColor);
-        compositeShader.setProgramUniform1i("isEyeInWater", 0);
-        compositeShader.setProgramUniform1i("heldBlockLightValue", 0);
-        compositeShader.setProgramUniform1i("worldTime", Main.ticksran%24000);
-        compositeShader.setProgramUniform1i("gcolor", 0);
-        compositeShader.setProgramUniform1i("gdepth", 1);
-        compositeShader.setProgramUniform1i("gnormal", 2);
-        compositeShader.setProgramUniform1i("shadow", 1);
-        compositeShader.setProgramUniform1i("composite", 3);
-        compositeShader.setProgramUniform1i("gdepthtex", 5);
-        compositeShader.setProgramUniform1i("noisetex", 4);
-        compositeShader.setProgramUniform1i("eyeAltitude", 4);
-        compositeShader.setProgramUniform1i("fogMode", 1);
-        compositeShader.setProgramUniform2i("eyeBrightness", 0, 0);
-        compositeShader.setProgramUniform2i("eyeBrightnessSmooth", 0, 0);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferModelView", false, Engine.getModelViewMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferModelViewInverse", false, Engine.getModelViewMatrixInv(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferPreviousModelView", false, Engine.getModelViewMatrixPrev(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferProjection", false, Engine.getProjectionMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferProjectionInverse", false, Engine.getProjectionMatrixInv(), false);
-        compositeShader.setProgramUniformMatrix4ARB("gbufferPreviousProjection", false, Engine.getProjectionMatrixPrev(), false);
-        
-        compositeShader.setProgramUniformMatrix4ARB("shadowModelView", false, Engine.getShadowModelViewMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("shadowModelViewInverse", false, Engine.getShadowModelViewMatrixInv(), false);
-        compositeShader.setProgramUniformMatrix4ARB("shadowProjection", false, Engine.getShadowProjectionMatrix(), false);
-        compositeShader.setProgramUniformMatrix4ARB("shadowProjectionInverse", false, Engine.getShadowProjectionMatrixInv(), false);
+        sh.setProgramUniform1f("near", Engine.znear);
+        sh.setProgramUniform1f("far", Engine.zfar);
+        sh.setProgramUniform1f("viewWidth", Main.displayWidth);
+        sh.setProgramUniform1f("viewHeight", Main.displayHeight);
+        sh.setProgramUniform1f("rainStrength", 0F);
+        sh.setProgramUniform1f("wetness", 0);
+        sh.setProgramUniform1f("aspectRatio", Main.displayWidth / (float) Main.displayHeight);
+        sh.setProgramUniform1f("sunAngle", Engine.sunAngle);
+        sh.setProgramUniform1f("shadowAngle", Engine.sunAngle);
+        sh.setProgramUniform1f("frameTimeCounter", (Main.ticksran + fTime)/20F);
+        sh.setProgramUniform3f("cameraPosition", Engine.camera.getPosition());
+        sh.setProgramUniform3f("previousCameraPosition", Engine.camera.getPrevPosition());
+        sh.setProgramUniform3f("upPosition", Engine.up);
+        sh.setProgramUniform3f("sunPosition", Engine.sunPosition);
+        sh.setProgramUniform3f("shadowLightPosition", Engine.sunPosition);
+        sh.setProgramUniform3f("moonPosition", Engine.moonPosition);
+        sh.setProgramUniform3f("skyColor", wr.skyColor);
+        sh.setProgramUniform1i("isEyeInWater", 0);
+        sh.setProgramUniform1i("heldBlockLightValue", 0);
+        sh.setProgramUniform1i("worldTime", Main.ticksran%24000);
+        sh.setProgramUniform1i("gcolor", 0);
+        sh.setProgramUniform1i("gdepth", 1);
+        sh.setProgramUniform1i("gnormal", 2);
+        sh.setProgramUniform1i("shadow", 6);
+        sh.setProgramUniform1i("composite", 3);
+        sh.setProgramUniform1i("gdepthtex", 5);
+        sh.setProgramUniform1i("noisetex", 4);
+        sh.setProgramUniform1i("eyeAltitude", 4);
+        sh.setProgramUniform1i("fogMode", 1);
+        sh.setProgramUniform2i("eyeBrightness", 0, 0);
+        sh.setProgramUniform2i("eyeBrightnessSmooth", 0, 240);
+        sh.setProgramUniformMatrix4ARB("gbufferView", false, Engine.getViewMatrix(), false);
+            sh.setProgramUniformMatrix4ARB("gbufferModelView", false, Engine.getViewMatrix(), false);
+            sh.setProgramUniformMatrix4ARB("gbufferModelViewInverse", false, Engine.getViewMatrixInv(), false);
+            sh.setProgramUniformMatrix4ARB("gbufferPreviousModelView", false, Engine.getViewMatrixPrev(), false);
+            
+            sh.setProgramUniformMatrix4ARB("gbufferProjection", false, Engine.getProjectionMatrix(), false);
+            sh.setProgramUniformMatrix4ARB("gbufferProjectionInverse", false, Engine.getProjectionMatrixInv(), false);
+            sh.setProgramUniformMatrix4ARB("gbufferPreviousProjection", false, Engine.getProjectionMatrixPrev(), false);
+            
+            sh.setProgramUniformMatrix4ARB("shadowModelView", false, Engine.getShadowModelViewMatrix(), false);
+            sh.setProgramUniformMatrix4ARB("shadowModelViewInverse", false, Engine.getShadowModelViewMatrixInv(), false);
+            sh.setProgramUniformMatrix4ARB("shadowProjection", false, Engine.getShadowProjectionMatrix(), false);
+            sh.setProgramUniformMatrix4ARB("shadowProjectionInverse", false, Engine.getShadowProjectionMatrixInv(), false);
+       
     }
 
     public static int getAndResetNumCalls() {

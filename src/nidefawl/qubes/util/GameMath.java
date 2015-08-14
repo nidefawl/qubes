@@ -2,6 +2,9 @@ package nidefawl.qubes.util;
 
 import java.nio.FloatBuffer;
 
+import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Quaternion;
+
 public class GameMath {
 
     public static float cos(float f) {
@@ -51,15 +54,45 @@ public class GameMath {
         inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] + m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
 
         det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-
-        if (det != 0.0) {
+        if ((double)det != 0.0) {
             for (i = 0; i < 16; ++i) {
                 matout.put(inv[i] / det);
             }
-        } 
+        }  else {
+            for (i = 0; i < 16; ++i) {
+                matout.put(0F);
+            }
+        }
         matout.flip();
     }
-    
+
+
+    public static Matrix4f convertQuaternionToMatrix4f(Quaternion q, Matrix4f out) {
+        out.setIdentity();
+        out.m00 = 1.0f - 2.0f * (q.getY() * q.getY() + q.getZ() * q.getZ());
+        out.m01 = 2.0f * (q.getX() * q.getY() + q.getZ() * q.getW());
+        out.m02 = 2.0f * (q.getX() * q.getZ() - q.getY() * q.getW());
+        out.m03 = 0.0f;
+
+        // Second row
+        out.m10 = 2.0f * (q.getX() * q.getY() - q.getZ() * q.getW());
+        out.m11 = 1.0f - 2.0f * (q.getX() * q.getX() + q.getZ() * q.getZ());
+        out.m12 = 2.0f * (q.getZ() * q.getY() + q.getX() * q.getW());
+        out.m13 = 0.0f;
+
+        // Third row
+        out.m20 = 2.0f * (q.getX() * q.getZ() + q.getY() * q.getW());
+        out.m21 = 2.0f * (q.getY() * q.getZ() - q.getX() * q.getW());
+        out.m22 = 1.0f - 2.0f * (q.getX() * q.getX() + q.getY() * q.getY());
+        out.m23 = 0.0f;
+
+        // Fourth row
+        out.m30 = 0;
+        out.m31 = 0;
+        out.m32 = 0;
+        out.m33 = 1.0f;
+        return out;
+    }
    public static float coTangent(float angle) {
        return (float)(1f / Math.tan(angle));
    }

@@ -4,7 +4,9 @@
 
 varying vec4 texcoord;
 
+uniform mat4 gbufferView;
 uniform mat4 gbufferModelView;
+uniform mat4 shadowModelView;
 uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 uniform vec3 upPosition;
@@ -46,9 +48,9 @@ void main() {
 	texcoord = gl_MultiTexCoord0;
 
 	if (sunAngle < 0.5f) {
-		lightVector = (gbufferModelView*vec4(normalize(sunPosition), 0)).xyz;
+		lightVector=normalize(sunPosition);
 	} else {
-		lightVector = (gbufferModelView*vec4(normalize(sunPosition), 0)).xyz*-1.0f;
+		lightVector=normalize(moonPosition);
 	}
 
 	upVector = (gbufferModelView*vec4(normalize(upPosition), 0)).xyz;

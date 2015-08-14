@@ -5,7 +5,7 @@
 /////////ADJUSTABLE VARIABLES//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////ADJUSTABLE VARIABLES//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SHADOW_MAP_BIAS 0.9
+#define SHADOW_MAP_BIAS 0
 
 #define ENABLE_SOFT_SHADOWS
 
@@ -248,6 +248,12 @@ bool    GetWaterMask(in vec2 coord, in float matID) {                           
 
 
 
+float LinearizeDepth(float z)
+{
+	vec2 zbufparam = vec2(0.05f, 256.0f);
+  // x == near, y == far
+  return (2.0 * zbufparam.x) / (zbufparam.y + zbufparam.x - z * (zbufparam.y - zbufparam.x));	
+}
 
 //Surface calculations
 vec4    GetScreenSpacePosition(in vec2 coord) { //Function that calculates the screen-space position of the objects in the scene using the depth texture and the texture coordinates of the full-screen quad
@@ -714,6 +720,7 @@ void    CalculateMasks(inout MaskStruct mask) {
 
 //Surface
 void    CalculateNdotL(inout SurfaceStruct surface) {           //Calculates direct sunlight without visibility check
+
         float direct = dot(surface.normal.rgb, surface.lightVector);
                   direct = direct * 1.0f + 0.0f;
                   //direct = clamp(direct, 0.0f, 1.0f);
@@ -760,14 +767,14 @@ float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruc
         if (rainStrength >= 0.99f)
                 return 1.0f;
 
-
         if (shadingStruct.direct > 0.0f) {
-                float distance = sqrt(  surface.screenSpacePosition.x * surface.screenSpacePosition.x   //Get surface distance in meters
+                float vdistance = sqrt(  surface.screenSpacePosition.x * surface.screenSpacePosition.x   //Get surface distance in meters
                                                           + surface.screenSpacePosition.y * surface.screenSpacePosition.y
                                                           + surface.screenSpacePosition.z * surface.screenSpacePosition.z);
 
+        		
                 vec4 worldposition = vec4(0.0f);
-                         worldposition = gbufferModelViewInverse * surface.screenSpacePosition;         //Transform from screen space to world space
+                worldposition = gbufferModelViewInverse * surface.screenSpacePosition;         //Transform from screen space to world space
 
                 float yDistanceSquared  = worldposition.y * worldposition.y;
 
@@ -785,11 +792,11 @@ float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruc
                 float shadowMult = 0.0f;                                                                                                                             //Multiplier used to fade out shadows at distance
                 float shading = 0.0f;
 
-               /* if (distance < shadowDistance && comparedepth > 0.0f &&                                                                                 //Avoid computing shadows past the shadow map projection
+		if (vdistance < shadowDistance && comparedepth > 0.0f &&											//Avoid computing shadows past the shadow map projection
                          worldposition.s < 1.0f && worldposition.s > 0.0f && worldposition.t < 1.0f && worldposition.t > 0.0f) {
 
                         float fademult = 0.15f;
-                                shadowMult = clamp((shadowDistance * 0.85f * fademult) - (distance * fademult), 0.0f, 1.0f);    //Calculate shadowMult to fade shadows out
+                                shadowMult = clamp((shadowDistance * 0.85f * fademult) - (vdistance * fademult), 0.0f, 1.0f);    //Calculate shadowMult to fade shadows out
 
                         float diffthresh = dist * 1.0f + 0.10f;
                                   diffthresh *= 3.0f / (shadowMapResolution / 2048.0f);
@@ -814,7 +821,7 @@ float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruc
                         #endif
 
 
-                }*/
+		}
 
                 shading = mix(1.0f, shading, shadowMult);
 
@@ -1997,9 +2004,9 @@ void main() {
         surface.linearDepth             = ExpToLinearDepth(surface.depth);                              //Get linear scene depth
         surface.screenSpacePosition = GetScreenSpacePosition(texcoord.st);                      //Gets the screen-space position
         surface.viewVector                      = normalize(surface.screenSpacePosition.rgb);   //Gets the view vector
-        surface.lightVector             = lightVector;                                                                  //Gets the sunlight vector
-         vec4 wlv                                      = gbufferModelViewInverse * vec4(surface.lightVector, 1.0f);
-       // vec4 wlv                                        = vec4(0.1f, 0.8f,0.4f, 0.f);//shadowModelViewInverse * vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        surface.lightVector             = lightVector;      
+	//vec4 wlv 					= gbufferModelViewInverse * vec4(surface.lightVector, 1.0f);
+	vec4 wlv 					= shadowModelViewInverse * vec4(0.0f, 0.0f, 0.0f, 1.0f);
         surface.worldLightVector        = normalize(wlv.xyz);
         surface.upVector                        = upVector;                                                                             //Store the up vector
 
@@ -2067,18 +2074,20 @@ void main() {
         //Calculate surface shading
         CalculateNdotL(surface);
         shading.direct                          = CalculateDirectLighting(surface);                             //Calculate direct sunlight without visibility check (shadows)
+                                                          //Gets the sunlight vector
+        	        // tmpV = vec3(shading.direct);
+
         shading.direct                          = mix(shading.direct, 1.0f, float(surface.mask.water)); //Remove shading from water
         shading.sunlightVisibility      = CalculateSunlightVisibility(surface, shading);                                        //Calculate shadows and apply them to direct lighting
         shading.direct                          *= shading.sunlightVisibility;
         shading.direct                          *= mix(1.0f, 0.0f, rainStrength);
         shading.waterDirect             = shading.direct;
-        shading.direct                          *= pow(mcLightmap.sky, 1.1f);
+	shading.direct 				*= pow(mcLightmap.sky, 0.1f);
         shading.bounced         = CalculateBouncedSunlight(surface);                    //Calculate fake bounced sunlight
         shading.scattered       = CalculateScatteredSunlight(surface);                  //Calculate fake scattered sunlight
         shading.skylight        = CalculateSkylight(surface);                                   //Calculate scattered light from sky
         shading.scatteredUp = CalculateScatteredUpLight(surface);
-        shading.heldLight       = CalculateHeldLightShading(surface);
-
+        shading.heldLight       = CalculateHeldLightShading(surface);  
         InitializeAO(surface);
         //if (texcoord.s < 0.5f && texcoord.t < 0.5f)
         //CalculateAO(surface);
@@ -2277,6 +2286,8 @@ void main() {
                 finalComposite.b = 0.0f;
         }
 
+    	tmpV = mix(finalComposite, tmpV, 1.0f);
+    	// tmpV = finalComposite;
         gl_FragData[0] = vec4(finalComposite, 1.0f);
         gl_FragData[1] = vec4(surface.mask.matIDs, surface.shadow * surface.cloudShadow * pow(mcLightmap.sky, 0.2f), mcLightmap.sky, 1.0f);
         // gl_FragData[1] = vec4(normalize(tmpV.xyz)*0.5f+0.5f, 1.0f);
