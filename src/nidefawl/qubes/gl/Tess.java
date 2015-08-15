@@ -9,45 +9,44 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 
-public class Tess {
+public class Tess extends TesselatorState {
     public final static int ATTR_BLOCK = 6;
 
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
     
     public final static Tess instance    = new Tess();
-    public final static Tess instance2    = new Tess();
-    public final static Tess instance3    = new Tess();
-//    public final static int  VERTEX_SIZE = 4 * 3 + 4 * 2 + 4 * 4;
-    public final static int  BUF_INCR = 1024;
-    int                      vertexcount;
-    int                      rgba;
-    int[]                   rawBuffer   = new int[BUF_INCR];
+    public final static Tess tessFont    = new Tess();
+    public final static Tess tessTerrain    = new Tess(true);
 
-    ByteBuffer                   buffer       = null;
-    private ShortBuffer          shortBuffer  = null;
-    int                          vaoId;
-    int                          vboId;
-    boolean                      useColorPtr;
-    boolean                      useTexturePtr;
-    boolean                      useTexturePtr2;
-    boolean                      useTexturePtr3;
-    boolean                      useNormalPtr;
-    boolean                      useAttribPtr1;
-    float                        u, v;
-    float                        u2, v2;
-    private int br;
-    private int attrBlockType;
-    private int attrBlockData;
-    private int attrBlockRenderType;
-    private IntBuffer intBuffer;
-    private FloatBuffer floatBuffer;
-    private int normal;
-    float offsetX;
-    float offsetY;
-    float offsetZ;
+    protected int           rgba;
+    protected float         u, v;
+    protected float         u2, v2;
+    protected int           br;
+    protected int           attrBlockType;
+    protected int           attrBlockData;
+    protected int           attrBlockRenderType;
+    protected int           normal;
+    protected float         offsetX;
+    protected float         offsetY;
+    protected float         offsetZ;
+    
     private boolean reset = true;
 
+    private final boolean isSoftTesselator;
+    ByteBuffer                   buffer       = null;
+    private ShortBuffer          shortBuffer  = null;
+    private IntBuffer            intBuffer;
+    private FloatBuffer          floatBuffer;
+
     public Tess() {
+        this(false);
+    }
+    public Tess(boolean isSoftTesselator) {
+        this.isSoftTesselator = isSoftTesselator;
+    }
+    
+    public boolean isSoftTesselator() {
+        return isSoftTesselator;
     }
 
     public void add(float x, float y, float z, float u, float v) {
@@ -99,23 +98,7 @@ public class Tess {
     public void add(float x, float y) {
         add(x, y, 0);
     }
-    public int getVSize() {
 
-        int stride = 3;
-        if (useColorPtr)
-            stride++;
-        if (useNormalPtr)
-            stride+=3;
-        if (useTexturePtr)
-            stride+=2;
-        if (useTexturePtr2)
-            stride+=1;
-        if (useTexturePtr3)
-            stride+=2;
-        if (useAttribPtr1)
-            stride+=2;
-        return stride;
-    }
     public void setNormals(float x, float y, float z) {
         if (!useNormalPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable normal pointer after a vertex has been added");
@@ -161,13 +144,20 @@ public class Tess {
         }
         vertexcount++;
     }
+    
+    public void copyTo(TesselatorState out) {
+        int index = getIdx(vertexcount);
+        super.copyTo(out, index);
+    }
 
     void resizeBuffer() {
         int[] oldBuffer = this.rawBuffer;
         int[] newBuffer = new int[oldBuffer.length + BUF_INCR];
         System.arraycopy(oldBuffer, 0, newBuffer, 0, oldBuffer.length);
         this.rawBuffer = newBuffer;
-        resizeDirect();
+        if (!isSoftTesselator()) {
+            resizeDirect();   
+        }
     }
 
     private void resizeDirect() {
@@ -175,10 +165,6 @@ public class Tess {
         intBuffer = buffer.asIntBuffer();
         floatBuffer = buffer.asFloatBuffer();
         shortBuffer = buffer.asShortBuffer();
-    }
-
-    int getIdx(int v) {
-        return getVSize() * v;
     }
 
     public void setColorRGBAF(float r, float g, float b, float a) {
@@ -218,6 +204,9 @@ public class Tess {
         this.reset = false;
     }
     public void draw(int mode) {
+        if (isSoftTesselator()) {
+            throw new IllegalStateException("Cannot draw soft tesselator");
+        }
         if (vertexcount >1) {
             if (buffer == null || intBuffer.capacity() < rawBuffer.length) {
                 resizeDirect();
@@ -336,6 +325,16 @@ public class Tess {
         this.offsetX=f;
         this.offsetY=j;
         this.offsetZ=g;
+    }
+
+    public static void destroyAll() {
+        instance.destroy();
+        tessFont.destroy();
+        tessTerrain.destroy();
+    }
+    public void drawState(TesselatorState tesselatorState, int mode) {
+        tesselatorState.copyTo(this, tesselatorState.getIdx(tesselatorState.vertexcount));
+        draw(mode);
     }
 
 }

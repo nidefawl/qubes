@@ -91,8 +91,9 @@ public abstract class GLGame implements Runnable {
     }
 
     private void cleanUpGame() {
+        Engine.stop();
         TextureManager.getInstance().destroy();
-        Tess.instance.destroy();
+        Tess.destroyAll();
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();

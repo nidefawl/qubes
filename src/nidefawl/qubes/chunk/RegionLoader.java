@@ -3,7 +3,7 @@ package nidefawl.qubes.chunk;
 import java.util.Iterator;
 
 public class RegionLoader {
-    public static int              LOAD_DIST        = 2;
+    public static int              LOAD_DIST        = 1;
     //1 << (8-Region.REGION_SIZE_BITS*Region.REGION_SIZE_BITS);
     public static final int MAX_REGIONS      = (LOAD_DIST * 2 + 1) * (LOAD_DIST * 2 + 1);
     final RegionTable       regions;
@@ -16,6 +16,9 @@ public class RegionLoader {
 
     public void init() {
         thread.init();
+    }
+    public void stop() {
+        thread.stopThread();
     }
 
     public boolean isChunkLoaded(int i, int j) {
@@ -49,7 +52,7 @@ public class RegionLoader {
             Region r = it.next();
             if (r.renderState == Region.RENDER_STATE_COMPILED) {
                 r.renderState = Region.RENDER_STATE_MESHED;
-                r.isRendered = false;
+                r.isCompiled = false;
             }
         }
     }

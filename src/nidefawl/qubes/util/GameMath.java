@@ -125,4 +125,14 @@ public class GameMath {
         z = z - zz;
         return Math.sqrt(x*x+z*z);
     }
+    public static int log2(int x) {
+        int y,v;
+        v = x;
+        y = -1;
+        while (v>0) {
+            v >>=1;
+            y++;
+        }
+        return y;
+    }
 }

@@ -505,7 +505,7 @@ public class TrueTypeFont {
         GlyphRect rect = this.getRect(index);
         if (rect == null) return 0;
         float startY = -2;
-        Tess tess = Tess.instance2;
+        Tess tess = Tess.tessFont;
         rect.drawQuadTess(tess, x, startY + y);
         return (rect.width - this.correctL);
     }

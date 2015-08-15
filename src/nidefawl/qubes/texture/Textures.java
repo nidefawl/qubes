@@ -233,14 +233,23 @@ public class Textures {
         //Create storage for the texture. (100 layers of 1x1 texels)
         String[] textures = new String[] {
                 "textures/stone.png",
-                "textures/dirt.png",
                 "textures/grass.png",
-                "textures/sand.png",
+                "textures/dirt.png",
                 "textures/water.png",
+                "textures/sand.png",
         };
+        AssetTexture[] assetTextures = new AssetTexture[textures.length];
+        int maxTileW = 0;
+        for (int i = 0; i < textures.length; i++) {
+            assetTextures[i] = AssetManager.getInstance().loadPNGAsset(textures[i]);
+            int texW = Math.max(assetTextures[i].getWidth(), assetTextures[i].getHeight());
+            maxTileW = Math.max(maxTileW, texW);
+        }
+        int w = GameMath.log2(maxTileW);
+        
         int tileSize = texStone.getWidth();
         GL42.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, 
-                1,                    //No mipmaps as textures are 1x1
+                w,                    
                 GL_RGBA8,              //Internal format
                 tileSize, tileSize,   //width,height
                 textures.length       //Number of layers
@@ -267,10 +276,11 @@ public class Textures {
                 Engine.checkGLError("GL12.glTexSubImage3D");
 
         }
-        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
         blockTextureMap = text;
     }

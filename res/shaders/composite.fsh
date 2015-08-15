@@ -5,7 +5,6 @@
 /////////ADJUSTABLE VARIABLES//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////ADJUSTABLE VARIABLES//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SHADOW_MAP_BIAS 0
 
 #define ENABLE_SOFT_SHADOWS
 
@@ -21,7 +20,7 @@
 //Some of these variables are critical for proper operation. Change at your own risk.
 
 const int               shadowMapResolution     = 4096;
-const float     shadowDistance                  = 180.0f;
+const float     shadowDistance                  = 320.0f;
 const bool              generateShadowMipmap    = false;
 const float     shadowIntervalSize              = 4.0f;
 const bool              shadowHardwareFiltering = true;
@@ -763,75 +762,80 @@ float   CalculateDirectLighting(in SurfaceStruct surface) {
         }
 }
 
-float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruct shadingStruct) {                              //Calculates shadows
-        if (rainStrength >= 0.99f)
-                return 1.0f;
 
-        if (shadingStruct.direct > 0.0f) {
-                float vdistance = sqrt(  surface.screenSpacePosition.x * surface.screenSpacePosition.x   //Get surface distance in meters
-                                                          + surface.screenSpacePosition.y * surface.screenSpacePosition.y
-                                                          + surface.screenSpacePosition.z * surface.screenSpacePosition.z);
-
-        		
-                vec4 worldposition = vec4(0.0f);
-                worldposition = gbufferModelViewInverse * surface.screenSpacePosition;         //Transform from screen space to world space
-
-                float yDistanceSquared  = worldposition.y * worldposition.y;
-
-                worldposition = shadowModelView * worldposition;        //Transform from world space to shadow space
-                float comparedepth = -worldposition.z;                          //Surface distance from sun to be compared to the shadow map
-
-                worldposition = shadowProjection * worldposition;
-                worldposition /= worldposition.w;
-
-                float dist = sqrt(worldposition.x * worldposition.x + worldposition.y * worldposition.y);
-                float distortFactor = (1.0f - SHADOW_MAP_BIAS) + dist * SHADOW_MAP_BIAS;
-                worldposition.xy *= 1.0f / distortFactor;
-                worldposition = worldposition * 0.5f + 0.5f;            //Transform from shadow space to shadow map coordinates
-
-                float shadowMult = 0.0f;                                                                                                                             //Multiplier used to fade out shadows at distance
-                float shading = 0.0f;
-
-		if (vdistance < shadowDistance && comparedepth > 0.0f &&											//Avoid computing shadows past the shadow map projection
-                         worldposition.s < 1.0f && worldposition.s > 0.0f && worldposition.t < 1.0f && worldposition.t > 0.0f) {
-
-                        float fademult = 0.15f;
-                                shadowMult = clamp((shadowDistance * 0.85f * fademult) - (vdistance * fademult), 0.0f, 1.0f);    //Calculate shadowMult to fade shadows out
-
-                        float diffthresh = dist * 1.0f + 0.10f;
-                                  diffthresh *= 3.0f / (shadowMapResolution / 2048.0f);
-                                  //diffthresh /= shadingStruct.direct + 0.1f;
-
-                        #if defined ENABLE_SOFT_SHADOWS
-
-                                int count = 0;
-                                float spread = 1.0f / shadowMapResolution;
-
-                                for (float i = -1.0f; i <= 1.0f; i += 1.0f) {
-                                        for (float j = -1.0f; j <= 1.0f; j += 1.0f) {
-                                                 shading += shadow2D(shadow, vec3(worldposition.st + vec2(i, j) * spread, worldposition.z - 0.0018f * diffthresh)).x;
-                                                count += 1;
-                                        }
-                                }
-                                shading /= count;
-
-                        #else
-                                diffthresh *= 3.0f;
-                                shading = shadow2D(shadow, vec3(worldposition.st, worldposition.z - 0.0008f * diffthresh), 3).x;
-                        #endif
+#define SHADOW_MAP_BIAS 0.2
+float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruct shadingStruct) {              //Calculates shadows
+    if (rainStrength >= 0.99f)
+        return 1.0f;
 
 
-		}
+    if (shadingStruct.direct > 0.0f) {
+        float gdistance = sqrt(  surface.screenSpacePosition.x * surface.screenSpacePosition.x   //Get surface distance in meters
+                              + surface.screenSpacePosition.y * surface.screenSpacePosition.y 
+                              + surface.screenSpacePosition.z * surface.screenSpacePosition.z);
+        
+        vec4 worldposition = vec4(0.0f);
+             worldposition = gbufferModelViewInverse * surface.screenSpacePosition;     //Transform from screen space to world space
+            
+        float yDistanceSquared  = worldposition.y * worldposition.y;
+        
+        worldposition = shadowModelView * worldposition;    //Transform from world space to shadow space
+        float comparedepth = -worldposition.z;              //Surface distance from sun to be compared to the shadow map
+        
+        worldposition = shadowProjection * worldposition;
+                float dist2 = sqrt(worldposition.x * worldposition.x + worldposition.y * worldposition.y + worldposition.z * worldposition.z);
+                                                   
+        worldposition /= worldposition.w;
 
-                shading = mix(1.0f, shading, shadowMult);
+        float dist = sqrt(worldposition.x * worldposition.x + worldposition.y * worldposition.y);
+        float distortFactor = (1.0f - SHADOW_MAP_BIAS) + dist * SHADOW_MAP_BIAS;
+        worldposition.xy *= 1.0f / distortFactor;
+        worldposition = worldposition * 0.5f + 0.5f;        //Transform from shadow space to shadow map coordinates
+        
+        float shadowMult = 0.0f;                                                                            //Multiplier used to fade out shadows at distance
+        float shading = 0.0f;
+        
+        if (gdistance < shadowDistance && comparedepth > 0.0f &&                                         //Avoid computing shadows past the shadow map projection
+            worldposition.s < 1.0f && worldposition.s > 0.0f && worldposition.t < 1.0f && worldposition.t > 0.0f) {
+             
+            float fademult = 0.15f;
+            shadowMult = clamp((shadowDistance * 0.85f * fademult) - (gdistance * fademult), 0.0f, 1.0f);    //Calculate shadowMult to fade shadows out
+            
+            float diffthresh = dist * 1.0f + 0.10f;
+                  diffthresh *= 3.0f / (shadowMapResolution / 2048.0f);
+                  //diffthresh /= shadingStruct.direct + 0.1f;
 
-                surface.shadow = shading;
+            #if defined ENABLE_SOFT_SHADOWS
 
-                return shading;
-        } else {
-                return 0.0f;
+                int count = 0;
+                float spread = 1.0f / shadowMapResolution;
+                float range = 4;
+                for (float i = -range; i <= range; i += 1.0f) {
+                    for (float j = -range; j <= range; j += 1.0f) {
+                         shading += shadow2D(shadow, vec3(worldposition.st + vec2(i, j) * spread, worldposition.z - 0.0018f * diffthresh)).x;
+                        count += 1;
+                    }
+                }
+                shading /= count;
+                    
+            #else
+                diffthresh *= 7.0f;
+                shading = shadow2D(shadow, vec3(worldposition.st, worldposition.z - 0.0008f * diffthresh), 3).x;
+            #endif
+
+            
         }
+        
+        shading = mix(1.0f, shading, shadowMult);
+
+        surface.shadow = shading;
+        
+        return shading;
+    } else {
+        return 0.0f;
+    }
 }
+
 
 float   CalculateBouncedSunlight(in SurfaceStruct surface) {
 
@@ -2003,6 +2007,7 @@ void main() {
         surface.depth                           = GetDepth(texcoord.st);                                                //Gets the scene depth
         surface.linearDepth             = ExpToLinearDepth(surface.depth);                              //Get linear scene depth
         surface.screenSpacePosition = GetScreenSpacePosition(texcoord.st);                      //Gets the screen-space position
+
         surface.viewVector                      = normalize(surface.screenSpacePosition.rgb);   //Gets the view vector
         surface.lightVector             = lightVector;      
 	//vec4 wlv 					= gbufferModelViewInverse * vec4(surface.lightVector, 1.0f);
@@ -2078,8 +2083,12 @@ void main() {
         	        // tmpV = vec3(shading.direct);
 
         shading.direct                          = mix(shading.direct, 1.0f, float(surface.mask.water)); //Remove shading from water
+
+
         shading.sunlightVisibility      = CalculateSunlightVisibility(surface, shading);                                        //Calculate shadows and apply them to direct lighting
+
         shading.direct                          *= shading.sunlightVisibility;
+
         shading.direct                          *= mix(1.0f, 0.0f, rainStrength);
         shading.waterDirect             = shading.direct;
 	shading.direct 				*= pow(mcLightmap.sky, 0.1f);
@@ -2286,7 +2295,7 @@ void main() {
                 finalComposite.b = 0.0f;
         }
 
-    	tmpV = mix(finalComposite, tmpV, 1.0f);
+    	// tmpV = mix(finalComposite, tmpV, 1.0f);
     	// tmpV = finalComposite;
         gl_FragData[0] = vec4(finalComposite, 1.0f);
         gl_FragData[1] = vec4(surface.mask.matIDs, surface.shadow * surface.cloudShadow * pow(mcLightmap.sky, 0.2f), mcLightmap.sky, 1.0f);

@@ -7,9 +7,7 @@ import java.util.LinkedList;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.gl.DisplayList;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Mesh;
@@ -34,7 +32,7 @@ public class Region {
     public final int        rX;
     public final int        rZ;
     public final Chunk[][]         chunks           = new Chunk[REGION_SIZE][REGION_SIZE];
-    public boolean         isRendered;
+    public boolean         isCompiled;
     private DisplayList     displayList;
     private int[]           facesRendered    = new int[WorldRenderer.NUM_PASSES];
     private boolean[]       hasPass          = new boolean[WorldRenderer.NUM_PASSES];
@@ -54,7 +52,7 @@ public class Region {
     public Region(int regionX, int regionZ) {
         this.rX = regionX;
         this.rZ = regionZ;
-        this.isRendered = false;
+        this.isCompiled = false;
         this.displayList = null;
         meshes = new Mesh[2][];
         color[0] = 0;
@@ -75,11 +73,11 @@ public class Region {
     }
 
     public boolean isRendered() {
-        return isRendered;
+        return isCompiled;
     }
 
     public void setRendered(boolean isRendered) {
-        this.isRendered = isRendered;
+        this.isCompiled = isRendered;
     }
     boolean isEmpty = false;
 
@@ -326,95 +324,96 @@ public class Region {
         return facesRendered[i];
     }
 
-    public void makeRegion(WorldRenderer renderer) {
-        if (isRendered) {
+    public void compileDisplayList(TesselatorState[] states) {
+        if (isCompiled) {
             System.err.println("Already rendered!");
             return;
         }
         if (this.meshes == null) {
             System.err.println("this.meshes == null!!!");
-            isRendered = true;
+            isCompiled = true;
             return;
         }
-        isRendered = true;
+        isCompiled = true;
         if (displayList == null)
             displayList = Engine.nextFreeDisplayList();
         this.lastcolor = 0;
         GL11.glColor3f(0F, 0F, 0F);
-        int top = 110;//w.worldHeightMinusOne;
-        int bottom = 10;//w.worldHeightMinusOne;
+        
         for (int pass = 0; pass < WorldRenderer.NUM_PASSES; pass++) {
             facesRendered[pass] = 0;
             glNewList(displayList.list + pass, GL11.GL_COMPILE);
-            Mesh[] meshesPass = this.meshes[pass];
-            this.hasPass[pass] = meshesPass.length > 0;
-            if (this.hasPass[pass]) {
-                Tess.instance3.resetState();
-                Tess.instance3.setColor(-1, 255);
-                Tess.instance3.setBrightness(0xf00000);
-                if (pass > 0) {
-                    System.err.println("meshesPass.length: " + meshesPass.length);
-                }
-                for (int a = 0; a < meshesPass.length; a++) {
-                    Mesh mesh = meshesPass[a];
-                    drawPlane(mesh);
-                }
-                Tess.instance3.draw(GL_QUADS);
-            }
+            Tess.instance.drawState(states[pass], GL_QUADS);
             glEndList();
-            facesRendered[pass] += meshesPass.length;
+            int nFaces = states[pass].vertexcount/4;
+            facesRendered[pass] += nFaces;
+            this.hasPass[pass] = nFaces > 0;
         }
 //        this.meshes = null;
     }
 
-    private void drawPlane(Mesh mesh) {
-        Tess.instance3.setNormals(mesh.normal[0], mesh.normal[1], mesh.normal[2]);
-//        if (mesh.type != lastcolor) {
-//            lastcolor = mesh.type;
-            int block = mesh.type & 0xFF;
-            int biome = (mesh.type >> 12) & 0xFF;
-            //              System.out.println(block+"/"+biome);
-            int side = 0;
-            float m = 1F;
-            switch (mesh.faceDir) {
-                case Dir.DIR_NEG_Y: m = 0.5F; break;
-                case Dir.DIR_POS_Y: m = 1F; break;
-                case Dir.DIR_NEG_Z: m = 0.8F; break;
-                case Dir.DIR_POS_Z: m = 0.8F; break;
-                case Dir.DIR_NEG_X: m = 0.6F; break;
-                case Dir.DIR_POS_X: m = 0.6F; break;
-            }
-            float alpha = 1F;
-            int c = -1;
-            
-            float b = (c & 0xFF) / 255F;
-            c >>= 8;
-            float g = (c & 0xFF) / 255F;
-            c >>= 8;
-            float r = (c & 0xFF) / 255F;
-            Tess.instance3.setColorRGBAF(b*m,g*m,r*m, alpha);
-//            Tess.instance3.setColor(0x666666,255);
+    public void renderMeshes(Tess tess, int pass) {
+        Mesh[] meshesPass = this.meshes[pass];
+        tess.resetState();
+        tess.setColor(-1, 255);
+        tess.setBrightness(0xf00000);
+//        if (pass > 0) {
+//            System.err.println("meshesPass.length: " + meshesPass.length);
 //        }
-//            if (mesh.v0[1] >= top||mesh.v1[1] >= top||mesh.v2[1] >= top||mesh.v3[1] >= top||
-//                    mesh.v0[1] <= bottom||mesh.v1[1] <= bottom||mesh.v2[1] <= bottom||mesh.v3[1] <= bottom) {
-//                GL11.glColor3f(0.9F, 0.4F, 0.4F);
-//                lastcolor = -1;
-//            }
-        Tess.instance3.setBrightness(0xf00000);
-//        Tess.instance3.setColor(-1, 122);
-        if (mesh.normal[0] < 120) {
-            float xl = mesh.du[0] + mesh.du[1] + mesh.du[2];
-            float yl = mesh.dv[0] + mesh.dv[1] + mesh.dv[2];
-            Tess.instance3.setAttr(block, 0, 0);
-            Tess.instance3.setUV(0, 0);
-            Tess.instance3.add(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
-            Tess.instance3.setUV(xl, 0);
-            Tess.instance3.add(mesh.v1[0], mesh.v1[1], mesh.v1[2]);
-            Tess.instance3.setUV(xl, yl);
-            Tess.instance3.add(mesh.v2[0], mesh.v2[1], mesh.v2[2]);
-            Tess.instance3.setUV(0, yl);
-            Tess.instance3.add(mesh.v3[0], mesh.v3[1], mesh.v3[2]);
+        for (int a = 0; a < meshesPass.length; a++) {
+            Mesh mesh = meshesPass[a];
+            drawFace(tess, mesh);
         }
+    }
+    private void drawFace(Tess tess, Mesh mesh) {
+        tess.setNormals(mesh.normal[0], mesh.normal[1], mesh.normal[2]);
+        int block = mesh.type & 0xFF;
+        int biome = (mesh.type >> 12) & 0xFF;
+        int side = 0;
+        float m = 1F;
+        switch (mesh.faceDir) {
+            case Dir.DIR_NEG_Y:
+                m = 0.5F;
+                break;
+            case Dir.DIR_POS_Y:
+                m = 1F;
+                break;
+            case Dir.DIR_NEG_Z:
+                m = 0.8F;
+                break;
+            case Dir.DIR_POS_Z:
+                m = 0.8F;
+                break;
+            case Dir.DIR_NEG_X:
+                m = 0.6F;
+                break;
+            case Dir.DIR_POS_X:
+                m = 0.6F;
+                break;
+        }
+        float alpha = 1F;
+        int c = Block.block[block].getColor();
+        if (block == Block.water.id) {
+            alpha = 0.8F;
+        }
+        float b = (c & 0xFF) / 255F;
+        c >>= 8;
+        float g = (c & 0xFF) / 255F;
+        c >>= 8;
+        float r = (c & 0xFF) / 255F;
+        tess.setColorRGBAF(b * m, g * m, r * m, alpha);
+        tess.setBrightness(0xf00000);
+        float xl = mesh.du[0] + mesh.du[1] + mesh.du[2];
+        float yl = mesh.dv[0] + mesh.dv[1] + mesh.dv[2];
+        tess.setAttr(block, 0, 0);
+        tess.setUV(0, 0);
+        tess.add(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
+        tess.setUV(xl, 0);
+        tess.add(mesh.v1[0], mesh.v1[1], mesh.v1[2]);
+        tess.setUV(xl, yl);
+        tess.add(mesh.v2[0], mesh.v2[1], mesh.v2[2]);
+        tess.setUV(0, yl);
+        tess.add(mesh.v3[0], mesh.v3[1], mesh.v3[2]);
 
     }
 
@@ -424,7 +423,7 @@ public class Region {
             displayList = null;
         }
         this.meshes = null;
-        this.isRendered = false;
+        this.isCompiled = false;
     }
 
     public boolean hasPass(int i) {

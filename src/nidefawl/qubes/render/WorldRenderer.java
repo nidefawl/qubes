@@ -194,8 +194,6 @@ public class WorldRenderer {
             Shaders.waterShader2.setProgramUniform1i("noisetex", 3);
             Shaders.waterShader2.setProgramUniform1i("specular", 5);
         }
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Textures.texWater2.getGlid());
         renderSecondPass(world, fTime);
         Shader.disable();
         if (!Main.useShaders) {
@@ -239,20 +237,8 @@ public class WorldRenderer {
                 continue;
             if (r.isEmpty())
                 continue;
-            if (r.renderState < Region.RENDER_STATE_MESHED)
+            if (r.renderState < Region.RENDER_STATE_COMPILED)
                 continue;
-            if (r.renderState == Region.RENDER_STATE_MESHED) {
-                if (created) {
-                    continue;
-                }
-                if (!Engine.hasFree()) {
-                    continue;
-                }
-
-                created = true;
-                r.makeRegion(this);
-                r.renderState = Region.RENDER_STATE_COMPILED;
-            }
             if (r.hasPass(0)) {
                 firstPass.add(r);
             }
@@ -263,7 +249,6 @@ public class WorldRenderer {
     }
     public void renderFirstPass(World world, float fTime) {
         GL11.glDisable(GL11.GL_BLEND);
-        GL11.glEnable(GL11.GL_BLEND);
         int size = firstPass.size();
 
         for (int i = 0; i < size; i++) {

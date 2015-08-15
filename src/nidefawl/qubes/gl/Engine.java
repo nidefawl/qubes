@@ -179,8 +179,8 @@ public class Engine {
     public static void resize(int displayWidth, int displayHeight) {
         float fieldOfView = 60;
         float aspectRatio = (float) displayWidth / (float) displayHeight;
-        znear = 0.04f;
-        zfar = 5000f;
+        znear = 0.05F;
+        zfar = 2500f;
         viewport.position(0);
         viewport.put(0);
         viewport.put(0);
@@ -202,13 +202,13 @@ public class Engine {
         projection.update();
         projection.update();
         
-        shadowZnear = 0.05F;
-        shadowZfar = 256.0F;
+        shadowZnear = -512.0F;
+        shadowZfar = 512.0F;
         shadowProjection.setZero();
         
         {
             
-            float shadowHalfPlane = 180.0F;
+            float shadowHalfPlane = 320.0F;
             float left = -shadowHalfPlane;
             float right = shadowHalfPlane;
             float bottom = -shadowHalfPlane;
@@ -472,8 +472,11 @@ public class Engine {
                 Quaternion.mul(q1, q2, q3);
                 GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
                 Matrix4f.mul(mat, shadowModelView, shadowModelView);
+//                float xoffset = 4.0F;
+//                float xint = xoffset*2;
 //                Matrix4f mat2 = new Matrix4f();
-//                mat2.translate(new Vector3f(-camPos.x, -camPos.y, -camPos.z));
+//                mat2.translate(new Vector3f(camPos.x % xint - xoffset, camPos.y % xint - xoffset, camPos.z % xint - xoffset));
+//                mat2.translate(new Vector3f(0, camPos.y-10, 0));
 //                Matrix4f.mul(shadowModelView, mat2, shadowModelView);
                 shadowModelView.update();
             }
@@ -510,6 +513,11 @@ public class Engine {
             Matrix4f.transform(sunModelView, moonPosition, moonPosition);   
         }
         
+    }
+
+    public static void stop() {
+        regionRenderThread.stopThread();
+        regionLoader.stop();
     }
 
 }

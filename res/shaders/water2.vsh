@@ -23,15 +23,18 @@ varying vec3 globalNormal;
 varying vec3 tangent;
 varying vec3 binormal;
 varying vec3 viewVector;
-varying float distance;
+varying float vdistance;
 
+attribute vec4 blockinfo; // x == blockid, y == rendertype, z = metadata
 //attribute vec4 mc_Entity;
 
 varying float iswater;
 varying float isice;
+flat varying int blockid;
 
 void main() {
 
+	blockid = int(blockinfo.x);
 	iswater = 0.0f;
 	isice = 0.0f;
 
@@ -53,8 +56,6 @@ void main() {
 	}*/
 		iswater = 1.0f;
 	
-	// vertexPos.y += sin(waveWidth * gl_Vertex.x + frameTimeCounter) * cos(waveWidth * gl_Vertex.z + frameTimeCounter) * waveHeight;
-	// vertexPos.z += sin(waveWidth * gl_Vertex.y + frameTimeCounter) * cos(waveWidth * gl_Vertex.x + frameTimeCounter) * waveHeight;
 
 		
 	vec4 viewPos = gbufferModelViewInverse * gl_ModelViewMatrix * vertexPos;
@@ -64,7 +65,7 @@ void main() {
 
 	vec4 localPosition = gbufferModelView * vertexPos;
 
-	distance = length(localPosition.xyz);
+	vdistance = length(localPosition.xyz);
 
 	gl_Position = gl_ProjectionMatrix * (gbufferModelView * position);
 

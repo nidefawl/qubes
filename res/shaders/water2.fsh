@@ -1,8 +1,8 @@
-#version 120
+#version 130
 
 #define WAVE_HEIGHT 0.06f
 
-uniform sampler2D texture;
+uniform sampler2DArray blockTextures;
 uniform sampler2D specular;
 uniform sampler2D normals;
 uniform sampler2D noisetex;
@@ -25,10 +25,11 @@ varying vec4 texcoord;
 varying vec4 lmcoord;
 varying vec3 worldPosition;
 varying vec4 vertexPos;
-varying float distance;
+varying float vdistance;
 
 varying float iswater;
 varying float isice;
+flat varying int blockid;
 
 #define ANIMATION_SPEED 1.0f
 
@@ -191,7 +192,7 @@ vec3 GetWaterParallaxCoord(in vec3 position, in vec3 viewVector)
 		vec3 pCoord = vec3(0.0f, 0.0f, 1.0f);
 
 		vec3 step = viewVector * stepSize;
-		float distAngleWeight = ((distance * 0.2f) * (2.1f - viewVector.z)) / 2.0f;
+		float distAngleWeight = ((vdistance * 0.2f) * (2.1f - viewVector.z)) / 2.0f;
 		distAngleWeight = 1.0f;
 		step *= distAngleWeight;
 
@@ -261,7 +262,8 @@ void main() {
 
 
 	vec3 wavesNormal = GetWavesNormal(worldPosition, 1.0f, tbnMatrix);
-	vec4 tex = texture2D(texture, texCoord.st);
+	vec4 tex = texture(blockTextures, vec3(texCoord.st, blockid-1));
+	// vec4 tex = texture2D(texture, texCoord.st);
 		 tex.a = 0.85f;
 	//float iswater = 0.0f;
 
@@ -275,8 +277,7 @@ void main() {
 
 	
 	if (iswater > 0.5f && !backfacing) {
-		vec4 albedo = texture2D(texture, texCoord.st).rgba;
-		float lum = albedo.r + albedo.g + albedo.b;
+		float lum = tex.r + tex.g + tex.b;
 			  lum /= 3.0f;
 
 			  lum = pow(lum, 1.0f) * 1.0f;

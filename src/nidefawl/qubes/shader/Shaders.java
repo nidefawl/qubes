@@ -42,9 +42,11 @@ public class Shaders {
             if (Shaders.waterShader != null)
                 Shaders.waterShader.release();
             Shaders.waterShader = new_waterShader;
-            Shader new_waterShader2 = assetMgr.loadShader("shaders/water2");
+            Shader new_waterShader2 = assetMgr.loadShader("shaders/water2", false);
             if (Shaders.waterShader2 != null)
                 Shaders.waterShader2.release();
+            new_waterShader2.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
+            new_waterShader2.linkProgram();
             Shaders.waterShader2 = new_waterShader2;
             Shader new_depthBufShader = assetMgr.loadShader("shaders/renderdepth");
             if (Shaders.depthBufShader != null)

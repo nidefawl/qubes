@@ -142,16 +142,6 @@ public class TerrainGenerator extends AbstractGen {
                 }   
             }    
         }
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = 0; y < this.world.worldHeight; y++) {
-                    double d = dNoise[y<<8|z<<4|x];
-                    if (d >= 0D) {
-                        c.blocks[y<<8|z<<4|x] = 1;
-                    }
-                }
-            }
-        }
         
     }
 
@@ -159,7 +149,7 @@ public class TerrainGenerator extends AbstractGen {
 //        Random rand = new Random(this.seed);
         int wh = this.world.worldHeight;
         
-//        double[] dNoise = new double[16*16*wh]; 
+        double[] dNoise = new double[16*16*wh]; 
         int cX = c.x<<4;
         int cZ = c.z<<4;
         boolean time=false;
@@ -167,9 +157,9 @@ public class TerrainGenerator extends AbstractGen {
         RiverNoiseResult r2Dn = r2D.generate(cX, cZ);
         RiverNoiseResult r2Dn2 = r2D2.generate(cX, cZ);
         if (time) TimingHelper.end(1);
-        
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
+                int xz=z<<4|x;
                 if (time) TimingHelper.start(2);
                 double dBaseHeight = (noise2D.get(cX|x, cZ|z))*3.3D;
                 if (time) TimingHelper.end(2);
@@ -224,25 +214,46 @@ public class TerrainGenerator extends AbstractGen {
                     double dt = func2(44+dN1*4, y, 14+0.4*dN2-dN4);
                     dBase -= dt*dBlurredA*dStr*(1.0D+dN1*0.2D+0.2*dN2);
                     dBase += dN7*01.7*clamp10(func2(138, y, 22)*2.8);
-//                    dNoise[idx] = dBase;
-                    if (dBase >= -0.2D) {
-                        c.blocks[y<<8|z<<4|x] = (short) Block.stone.id;
-                    } else if (y < 100) {
-                        c.blocks[y<<8|z<<4|x] = (short) Block.water.id;
-                    }
+                    dNoise[y<<8|xz] = dBase;
                 }   
             }    
         }
-//        for (int x = 0; x < 16; x++) {
-//            for (int z = 0; z < 16; z++) {
-//                for (int y = 0; y < this.world.worldHeight; y++) {
-//                    double d = dNoise[y<<8|z<<4|x];
-//                    if (d >= 0D) {
-//                        c.blocks[y<<8|z<<4|x] = 1;
-//                    }
-//                }
-//            }
+
+//        if (dBase >= -0.2D) {
+//            c.blocks[y<<8|z<<4|x] = (short) Block.stone.id;
+//        } else if (y < 100) {
+//            c.blocks[y<<8|z<<4|x] = (short) Block.water.id;
 //        }
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int top = Block.grass.id;
+                int earth = Block.dirt.id;
+                int stone = Block.stone.id;
+                int a = -1;
+                int xz=z<<4|x;
+                int curBlock = 0;
+                for (int y = this.world.worldHeight-1; y >= 0 ; y--) {
+                    double d = dNoise[y<<8|xz];
+                    if (d >= 0D) {
+                        if (a < 0) {
+                            curBlock = top;
+                        } else if (a < 3) {
+                            curBlock = earth;
+                        } else {
+                            curBlock = stone;
+                        }
+                        a++;
+                    } else {
+                        a = -1;
+                        curBlock = 0;
+                        if (y < 100) {
+                            curBlock = Block.water.id;
+                        }
+                    }
+                    c.blocks[y<<8|xz] = (short) curBlock;
+                }
+            }
+        }
         
     }
     private double func2(double m, double n, double j) {

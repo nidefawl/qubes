@@ -43,11 +43,12 @@ public class Main extends GLGame {
     public static void main(String[] args) {
         instance.startGame();
     }
-    public static boolean GL_ERROR_CHECKS = true;
-    public static boolean DO_TIMING = false;
-    public static boolean  show          = true;
-    public static boolean  useShaders  = true;
-    public static boolean matrixSetupMode = true;
+
+    public static boolean  GL_ERROR_CHECKS = false;
+    public static boolean  DO_TIMING       = false;
+    public static boolean  show            = true;
+    public static boolean  useShaders      = true;
+    public static boolean  matrixSetupMode = false;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
     private long               lastTimeLoad          = System.currentTimeMillis();
 
@@ -151,6 +152,11 @@ public class Main extends GLGame {
                         TimingHelper.reset();
                     }
                     break;
+                case Keyboard.KEY_F6:
+                    if (isDown) {
+                        TimingHelper.dump();
+                    }
+                    break;
                 case Keyboard.KEY_ESCAPE:
                     shutdown();
                     break;
@@ -248,9 +254,9 @@ public class Main extends GLGame {
         GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
-        if (!Main.useShaders) {
+//        if (!Main.useShaders) {
             GL11.glScalef(0.25F, 0.25F, 1);
-            glBindTexture(GL_TEXTURE_2D, Engine.fb2.getTexture(0));
+            glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
             {
                 int tw = displayWidth;
                 int th = displayHeight;
@@ -262,7 +268,7 @@ public class Main extends GLGame {
                 Tess.instance.add(x + tw, y + th, 0, 1, 0);
             }
             Tess.instance.draw(GL_QUADS);
-        }
+//        }
         GL11.glLoadIdentity();
         if (show) {
             if (this.debugOverlay != null) {
@@ -359,7 +365,6 @@ public class Main extends GLGame {
                             if (r.state == Region.STATE_LOAD_COMPLETE && r.renderState == Region.RENDER_STATE_INIT) {
                                 //                      System.out.println("thread.offer");
                                 if (thread.offer(r)) {
-                                    System.out.println("thread offer == true");
                                 } else {
     
                                     //                          System.out.println("thread seems busys");
@@ -388,7 +393,7 @@ public class Main extends GLGame {
     public void tick() {
         this.entSelf.tickUpdate();
         this.world.tickUpdate();
-        matrixSetupMode = Main.ticksran%100<50;
+//        matrixSetupMode = Main.ticksran%100<50;
     }
 
     public void addDebugOnScreen(String string) {

@@ -109,28 +109,28 @@ public class GuiOverlayDebug extends Gui {
         glEnable(GL_TEXTURE_2D);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        Tess.instance2.add(0, 0 + h, 0, 0, 0);
-        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
-        Tess.instance2.add(w1, 0, 0, 1, 1);
-        Tess.instance2.add(0, 0, 0, 0, 1);
+        Tess.tessFont.add(0, 0 + h, 0, 0, 0);
+        Tess.tessFont.add(w1, 0 + h, 0, 1, 0);
+        Tess.tessFont.add(w1, 0, 0, 1, 1);
+        Tess.tessFont.add(0, 0, 0, 0, 1);
         if (depthBufShader != null) {
             depthBufShader.enable();
             depthBufShader.setProgramUniform1i("depthSampler", 0);
             depthBufShader.setProgramUniform2f("zbufparam", f1, f2);
         }
-        Tess.instance2.draw(7);
+        Tess.tessFont.draw(7);
         if (depthBufShader != null) {
             Shader.disable();
         }
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
-        Tess.instance2.setColorF(0, 0.5F);
-        Tess.instance2.add(0, 0 + h, 0, 0, 0);
-        Tess.instance2.add(w1, 0 + h, 0, 1, 0);
-        Tess.instance2.add(w1, 0 + h-20, 0, 1, 1);
-        Tess.instance2.add(0, 0 + h-20, 0, 0, 1);
-        Tess.instance2.draw(7);
+        Tess.tessFont.setColorF(0, 0.5F);
+        Tess.tessFont.add(0, 0 + h, 0, 0, 0);
+        Tess.tessFont.add(w1, 0 + h, 0, 1, 0);
+        Tess.tessFont.add(w1, 0 + h-20, 0, 1, 1);
+        Tess.tessFont.add(0, 0 + h-20, 0, 0, 1);
+        Tess.tessFont.draw(7);
         glEnable(GL_TEXTURE_2D);
         fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
         fontSmall.drawString(""+texture+"", w1-2, h-2, -1, true, 1.0F, 1);
@@ -149,33 +149,33 @@ public class GuiOverlayDebug extends Gui {
             int hCol = Math.min(450, height - 20);
             int yCol = 160;
             int b = 4;
-            Tess.instance2.dontReset();
-            Tess.instance2.add(0, yCol + hCol, 0);
-            Tess.instance2.add(wCol, yCol + hCol, 0);
-            Tess.instance2.add(wCol, yCol, 0);
-            Tess.instance2.add(0, yCol, 0);
+            Tess.tessFont.dontReset();
+            Tess.tessFont.add(0, yCol + hCol, 0);
+            Tess.tessFont.add(wCol, yCol + hCol, 0);
+            Tess.tessFont.add(wCol, yCol, 0);
+            Tess.tessFont.add(0, yCol, 0);
             glDisable(GL_TEXTURE_2D);
             glPushMatrix();
             for (int i = 0; i < names.length; i++) {
                 glColor4f(.8F, .8F, .8F, 0.6F);
-                Tess.instance2.draw(GL_QUADS);
+                Tess.tessFont.draw(GL_QUADS);
                 glTranslatef(wCol + gap, 0, 0);
             }
             glPopMatrix();
-            Tess.instance2.resetState();
-            Tess.instance2.dontReset();
-            Tess.instance2.add(b, yCol + hCol - b, 0);
-            Tess.instance2.add(wCol - b, yCol + hCol - b, 0);
-            Tess.instance2.add(wCol - b, yCol + b, 0);
-            Tess.instance2.add(b, yCol + b, 0);
+            Tess.tessFont.resetState();
+            Tess.tessFont.dontReset();
+            Tess.tessFont.add(b, yCol + hCol - b, 0);
+            Tess.tessFont.add(wCol - b, yCol + hCol - b, 0);
+            Tess.tessFont.add(wCol - b, yCol + b, 0);
+            Tess.tessFont.add(b, yCol + b, 0);
             glPushMatrix();
             for (int i = 0; i < names.length; i++) {
                 glColor4f(.4F, .4F, .4F, 0.8F);
-                Tess.instance2.draw(GL_QUADS);
+                Tess.tessFont.draw(GL_QUADS);
                 glTranslatef(wCol + gap, 0, 0);
             }
             glPopMatrix();
-            Tess.instance2.resetState();
+            Tess.tessFont.resetState();
             glColor4f(1F, 1F, 1F, 1.0F);
             glEnable(GL_ALPHA_TEST);
             glEnable(GL_BLEND);

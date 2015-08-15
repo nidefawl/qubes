@@ -73,7 +73,7 @@ public class FontRenderer {
             color |= 0xff000000;
         }
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.trueTypeFont.fontTextureID);
-        Tess tess = Tess.instance2;
+        Tess tess = Tess.tessFont;
         if (shadow) {
             final int k2 = (color & 0xf0f0f0) >> 2 | color & 0xff000000;
             tess.setColorF(k2, alpha);
