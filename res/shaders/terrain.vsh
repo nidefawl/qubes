@@ -42,7 +42,7 @@ varying float materialIDs;
 varying mat3 tbnMatrix;
 varying vec4 vertexPos;
 varying vec3 vertexViewVector;
-flat varying int blockid;
+flat varying int blockTexture;
 
 
 #define WAVING_GRASS
@@ -159,7 +159,7 @@ void main() {
 
 	color = gl_Color;
 
-	blockid = int(blockinfo.x);
+	blockTexture = int(blockinfo.x);
 
 	texcoord = gl_MultiTexCoord0;
 

@@ -59,7 +59,7 @@ varying float materialIDs;
 
 varying float vdistance;
 varying float idCheck;
-flat varying int blockid;
+flat varying int blockTexture;
 
 const int GL_LINEAR = 9729;
 const int GL_EXP = 2048;
@@ -380,7 +380,7 @@ void main() {
 	
 
 	//Diffuse
-	vec4 albedo = texture(blockTextures, vec3(parallaxCoord.st, blockid-1)) * color;
+	vec4 albedo = texture(blockTextures, vec3(parallaxCoord.st, blockTexture)) * color;
 	
 	vec4 frag2;
 	

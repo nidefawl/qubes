@@ -10,7 +10,7 @@ varying vec4 lmcoord;
 attribute vec4 blockinfo;
 
 varying float materialIDs;
-flat varying int blockid;
+flat varying int blockTexture;
 
 uniform sampler2D noisetex;
 uniform float frameTimeCounter;
@@ -117,7 +117,7 @@ void main() {
 	//convert to world-space position
 
 	materialIDs = 0.0f;
-	blockid = int(blockinfo.x);
+	blockTexture = int(blockinfo.x);
 
 
 	//Grass

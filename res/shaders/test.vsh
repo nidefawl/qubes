@@ -8,7 +8,8 @@ varying vec4 lmcoord;
 varying vec4 texcoord;
 varying vec3 normal;
 varying vec3 globalNormal;
-flat varying int blockid;
+varying vec3 vposition;
+flat varying int blockTexture;
 
 
 void main() {
@@ -19,8 +20,9 @@ void main() {
 	color = gl_Color;
 	// color = vec4(0,0,0,1);
 	// color.r = blockinfo.x/255.0f;
-	blockid = int(blockinfo.x);
+	blockTexture = int(blockinfo.x);
 	vec4 v = gl_Vertex;
+	vposition = (gl_ModelViewMatrix * v).xyz;
 	gl_FogFragCoord = gl_Position.z;
 	gl_Position = gl_ModelViewProjectionMatrix * v;
 }
