@@ -424,6 +424,8 @@ public class Engine {
     protected static final Quaternion   q3    = new Quaternion();
     protected static final Quaternion   q4    = new Quaternion();
     protected static final Vector4f     _tmp1       = new Vector4f();
+    protected static final Vector3f     _tmp2       = new Vector3f();
+    protected static final Matrix4f _mat = new Matrix4f();
 
     public static void updateSun(float fTime) {
         boolean mode = Main.matrixSetupMode;
@@ -449,8 +451,9 @@ public class Engine {
                 readMat(GL_MODELVIEW_MATRIX, shadowModelView);
                 shadowModelView.update();
             } else {
-                Matrix4f mat = new Matrix4f();
-                mat.translate(new Vector3f(0, 0, -100));
+                _tmp2.set(0, 0, -100);
+                _mat.setIdentity();
+                _mat.translate(_tmp2);
                 _tmp1.set(1f, 0f, 0f, 90.0F * Camera.PI_OVER_180);
                 q4.setFromAxisAngle(_tmp1);
                 if ((double) sunAngle <= 0.5D) {
@@ -471,7 +474,7 @@ public class Engine {
                 Quaternion.mul(q4, q1, q1);
                 Quaternion.mul(q1, q2, q3);
                 GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
-                Matrix4f.mul(mat, shadowModelView, shadowModelView);
+                Matrix4f.mul(_mat, shadowModelView, shadowModelView);
                 shadowModelView.update();
             }
         }

@@ -205,6 +205,7 @@ public class Shader {
         if (uni == null) {
             int loc = getUniformLocation(name);
             uni = new Uniform1i(name, loc);
+            uniforms.put(name, uni);
         }
         if (uni.set(x)) {
             setProgramUniformCalls++;
@@ -216,6 +217,7 @@ public class Shader {
         if (uni == null) {
             int loc = getUniformLocation(name);
             uni = new Uniform2i(name, loc);
+            uniforms.put(name, uni);
         }
         if (uni.set(x, y)) {
             setProgramUniformCalls++;
@@ -226,6 +228,7 @@ public class Shader {
         if (uni == null) {
             int loc = getUniformLocation(name);
             uni = new Uniform2f(name, loc);
+            uniforms.put(name, uni);
         }
         if (uni.set(x, y)) {
             setProgramUniformCalls++;
@@ -236,6 +239,7 @@ public class Shader {
         if (uni == null) {
             int loc = getUniformLocation(name);
             uni = new Uniform1f(name, loc);
+            uniforms.put(name, uni);
         }
         if (uni.set(x)) {
             setProgramUniformCalls++;
@@ -246,6 +250,7 @@ public class Shader {
         if (uni == null) {
             int loc = getUniformLocation(name);
             uni = new Uniform3f(name, loc);
+            uniforms.put(name, uni);
         }
         if (uni.set(x, y, z)) {
             setProgramUniformCalls++;
@@ -266,6 +271,7 @@ public class Shader {
         if (uni == null) {
             int loc = getUniformLocation(name);
             uni = new UniformMat4(name, loc);
+            uniforms.put(name, uni);
         }
         if (invert) {
             GameMath.invertMat4x(matrix, tmp);

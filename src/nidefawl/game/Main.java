@@ -41,7 +41,7 @@ public class Main extends GLGame {
         instance.startGame();
     }
 
-    public static boolean  GL_ERROR_CHECKS = true;
+    public static boolean  GL_ERROR_CHECKS = false;
     public static boolean  DO_TIMING       = false;
     public static boolean  show            = false;
     public static boolean  useShaders      = false;
@@ -339,7 +339,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 4000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 2224000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Engine.shaders.reload();
 //            Engine.textures.refreshNoiseTextures();
