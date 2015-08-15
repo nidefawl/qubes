@@ -116,9 +116,9 @@ public class FrameBuffer implements IFrameBuffer {
 
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
-        if (hasDepth)
-        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, depthTexture, 0);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+//        if (hasDepth)
+//        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, depthTexture, 0);
+//        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
 //        glViewport(0, 0, renderWidth, renderHeight);
 //        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glViewport");
 //        
@@ -130,8 +130,8 @@ public class FrameBuffer implements IFrameBuffer {
 //        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, getDepthTex(), 0);
 
 //        drawBufAtt.rewind();
-        GL20.glDrawBuffers(this.drawBufAtt);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
+//        GL20.glDrawBuffers(this.drawBufAtt);
+//        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
         
 
     }
