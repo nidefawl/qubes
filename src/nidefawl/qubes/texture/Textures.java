@@ -1,4 +1,4 @@
-package nidefawl.qubes.assets;
+package nidefawl.qubes.texture;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -7,10 +7,11 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import nidefawl.game.Main;
+import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
-import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 

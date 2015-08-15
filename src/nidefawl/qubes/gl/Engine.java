@@ -9,13 +9,13 @@ import java.nio.IntBuffer;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.render.OutputRenderer;
 import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.texture.Textures;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3;

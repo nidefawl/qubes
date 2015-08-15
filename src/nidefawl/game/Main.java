@@ -7,7 +7,6 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import java.util.Locale;
 
 import nidefawl.qubes.GLGame;
-import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.PlayerSelf;
@@ -21,6 +20,7 @@ import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.texture.Textures;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.BlockPos;
@@ -248,21 +248,9 @@ public class Main extends GLGame {
         GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
-//        if (!Main.useShaders) {
-//        glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
-//        {
-//            int tw = displayWidth;
-//            int th = displayHeight;
-//            float x = 0;
-//            float y = 0;
-//            Tess.instance.add(x + tw, y, 0, 1, 1);
-//            Tess.instance.add(x, y, 0, 0, 1);
-//            Tess.instance.add(x, y + th, 0, 0, 0);
-//            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-//        }
-//        Tess.instance.draw(GL_QUADS);
-        GL11.glScalef(0.25F, 0.25F, 1);
-            glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
+        if (!Main.useShaders) {
+            GL11.glScalef(0.25F, 0.25F, 1);
+            glBindTexture(GL_TEXTURE_2D, Engine.fb2.getTexture(0));
             {
                 int tw = displayWidth;
                 int th = displayHeight;
@@ -274,8 +262,8 @@ public class Main extends GLGame {
                 Tess.instance.add(x + tw, y + th, 0, 1, 0);
             }
             Tess.instance.draw(GL_QUADS);
-//        }
-            GL11.glLoadIdentity();
+        }
+        GL11.glLoadIdentity();
         if (show) {
             if (this.debugOverlay != null) {
                 this.debugOverlay.render(fTime);

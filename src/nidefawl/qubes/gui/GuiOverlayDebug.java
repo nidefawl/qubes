@@ -2,13 +2,12 @@ package nidefawl.qubes.gui;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-
 import nidefawl.game.Main;
-import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.texture.Textures;
 
 public class GuiOverlayDebug extends Gui {
 

@@ -7,13 +7,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import nidefawl.game.Main;
-import nidefawl.qubes.assets.Textures;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.texture.Textures;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
@@ -96,9 +96,6 @@ public class WorldRenderer {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_COLOR_MATERIAL);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//        //        Engine.enableLighting();
-//        System.out.println(glGetBoolean(GL_COLOR_MATERIAL));
-//        System.out.println(glGetBoolean(GL_LIGHTING));
         glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();//Required?
@@ -106,39 +103,13 @@ public class WorldRenderer {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrix(Engine.getShadowModelViewMatrix());
-//        GL11.glTranslatef(0.0F, 0.0F, -100.0F);
-//        GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
-//        float ca = Main.instance.getWorld().getSunAngle(fTime);
-//        sunAngle = ca < 0.75F?ca + 0.25F:ca - 0.75F;
-//        float angle = ca * -360.0F;
-//        float shadowAngle = sunAngle;
-//        sunAngle2 = angle;
-//        if((double)sunAngle <= 0.5D) {
-//            GL11.glRotatef(angle, 0.0F, 0.0F, 1.0F);
-//            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
-//         } else {
-//             sunAngle2 = angle + 180.0F;
-//            GL11.glRotatef(angle + 180.0F, 0.0F, 0.0F, 1.0F);
-//            shadowAngle = sunAngle - 0.5F;
-//            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
-//         }
-//        float shadowIntervalSize = 4.0F;
-//        float x1 = shadowIntervalSize / 2.0F;
-//        float raSun = shadowIntervalSize;
-//        Vector3f camPos = Engine.camera.getPosition();
-//        Engine.readMat();
-//        GL11.glTranslatef((float)camPos.x % raSun - x1, (float)camPos.y % raSun - x1, (float)camPos.z % raSun - x1);
-//        GL11.glTranslatef(-camPos.x, -camPos.y, -camPos.z);
         if (Main.useShaders) {
             Shaders.shadow.enable();
             Shaders.setUniforms(Shaders.shadow, fTime);
             Shaders.shadow.setProgramUniform1i("blockTextures", 0);
             Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
-//            Shader.disable();
-//            Shaders.testShader.enable();
-//            Shaders.testShader.setProgramUniform1i("blockTextures", 0);
         }
-////
+        
         Vector3f camPos = Engine.camera.getPosition();
         glTranslatef(-camPos.x, -camPos.y, -camPos.z);
         renderFirstPass(world, fTime);
