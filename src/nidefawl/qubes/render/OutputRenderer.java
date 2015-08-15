@@ -9,7 +9,7 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.texture.Textures;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.TimingHelper;
 
 import org.lwjgl.opengl.*;
@@ -75,7 +75,7 @@ public class OutputRenderer {
         glActiveTexture(GL_TEXTURE6);
         glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getDepthTex());
         glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
+        glBindTexture(GL_TEXTURE_2D, TMgr.getEmpty());
         for (int i = 0; i < 4; i++) {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(i));
@@ -91,7 +91,7 @@ public class OutputRenderer {
             for (int i = 0; i < 4; i++) {
                 dbg.drawDbgTexture(0, 0, i, Engine.getSceneFB().getTexture(i), "TexUnit " + i);
             }
-            dbg.drawDbgTexture(0, 0, 4, Textures.texNoise, "TexUnit " + 4);
+            dbg.drawDbgTexture(0, 0, 4, TMgr.getNoise(), "TexUnit " + 4);
             dbg.drawDbgTexture(0, 0, 5, Engine.getSceneFB().getDepthTex(), "Depth", Shaders.depthBufShader, Engine.znear, Engine.zfar);
             dbg.drawDbgTexture(0, 0, 6, Engine.fbShadow.getDepthTex(), "Shadow", Shaders.depthBufShader, 0.05F, 256.0F);
             for (int i = 0; i < 4; i++) {
@@ -124,7 +124,7 @@ public class OutputRenderer {
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+        glBindTexture(GL_TEXTURE_2D, TMgr.getNoise());
         for (int i = 0; i < 4; i++) {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(i));
@@ -172,7 +172,7 @@ public class OutputRenderer {
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+        glBindTexture(GL_TEXTURE_2D, TMgr.getNoise());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite0.getTexture(0));
         glActiveTexture(GL_TEXTURE1);
@@ -228,7 +228,7 @@ public class OutputRenderer {
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+        glBindTexture(GL_TEXTURE_2D, TMgr.getNoise());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Engine.fbComposite2.getTexture(0));
         glActiveTexture(GL_TEXTURE1);

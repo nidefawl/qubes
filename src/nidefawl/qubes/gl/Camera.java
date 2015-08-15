@@ -1,6 +1,5 @@
 package nidefawl.qubes.gl;
 
-import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.util.GameMath;
 
 import org.lwjgl.util.vector.Matrix4f;

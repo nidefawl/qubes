@@ -1,7 +1,9 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.FloatBuffer;
@@ -14,8 +16,8 @@ import nidefawl.qubes.render.OutputRenderer;
 import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.texture.Textures;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3;
@@ -23,12 +25,11 @@ import nidefawl.qubes.vec.Vec3;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
-import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.*;
 
 public class Engine {
     public final static int MAX_DISPLAY_LISTS = 256;
-    public final static int SHADOW_BUFFER_SIZE = 4096;
+    public final static int SHADOW_BUFFER_SIZE = 2048;
     private static FloatBuffer    colorBuffer;
     private static IntBuffer      viewport;
     private static FloatBuffer    winZ;
@@ -69,7 +70,6 @@ public class Engine {
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
     public static Shaders            shaders            = new Shaders();
-    public static Textures           textures           = new Textures();
 
     public static void generateLightMapTexture() {
 
@@ -112,12 +112,13 @@ public class Engine {
 
         TextureManager.getInstance().init();
         AssetManager.getInstance().init();
-        textures.init();
+        BlockTextureArray.getInstance().init();
         shaders.init();
         worldRenderer.init();
         outRenderer.init();
         regionLoader.init();
         regionRenderThread.init();
+        BlockTextureArray.getInstance().reload();
     }
 
 
@@ -177,10 +178,10 @@ public class Engine {
     }
 
     public static void resize(int displayWidth, int displayHeight) {
-        float fieldOfView = 60;
+        float fieldOfView = 70;
         float aspectRatio = (float) displayWidth / (float) displayHeight;
         znear = 0.05F;
-        zfar = 2500f;
+        zfar = 1024F;
         viewport.position(0);
         viewport.put(0);
         viewport.put(0);
@@ -430,7 +431,6 @@ public class Engine {
         float ca = Main.instance.getWorld().getSunAngle(fTime);
         {
 
-            Vector3f camPos = camera.getPosition();
             sunAngle = ca < 0.75F ? ca + 0.25F : ca - 0.75F;
             float angle = ca * -360.0F;
             if (mode) {
@@ -472,12 +472,6 @@ public class Engine {
                 Quaternion.mul(q1, q2, q3);
                 GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
                 Matrix4f.mul(mat, shadowModelView, shadowModelView);
-//                float xoffset = 4.0F;
-//                float xint = xoffset*2;
-//                Matrix4f mat2 = new Matrix4f();
-//                mat2.translate(new Vector3f(camPos.x % xint - xoffset, camPos.y % xint - xoffset, camPos.z % xint - xoffset));
-//                mat2.translate(new Vector3f(0, camPos.y-10, 0));
-//                Matrix4f.mul(shadowModelView, mat2, shadowModelView);
                 shadowModelView.update();
             }
         }

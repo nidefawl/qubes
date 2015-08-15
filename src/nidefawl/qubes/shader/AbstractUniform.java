@@ -8,4 +8,8 @@ public class AbstractUniform {
         this.name = name;
         this.loc = loc;
     }
+
+    public boolean validLoc() {
+        return this.loc >= 0;
+    }
 }

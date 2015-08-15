@@ -13,14 +13,12 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.texture.Textures;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
 
 public class WorldRenderer {
 
@@ -35,12 +33,11 @@ public class WorldRenderer {
     public int numRegions;
 
     public void init() {
-        skyColor = new Vector3f(0.43F, .69F, 1.F);
-        skyColor.scale(0.4F);
+//        skyColor = new Vector3f(0.43F, .69F, 1.F);
     }
 
     private void drawSkybox() {
-        int scale = (int) (Engine.zfar / 2F);
+        int scale = (int) (Engine.zfar / 1.43F);
         int x = -scale;
         int y = -scale / 16;
         int z = -scale;
@@ -48,7 +45,7 @@ public class WorldRenderer {
         int y2 = scale / 16;
         int z2 = scale;
         Tess.instance.resetState();
-        int rgbai = ((int) (fogColor.x * 255)) << 16 | ((int) (fogColor.y * 255)) << 8 | ((int) (fogColor.z * 255));
+        int rgbai = ((int) (fogColor.x * 255.0F)) << 16 | ((int) (fogColor.y * 255.0F)) << 8 | ((int) (fogColor.z * 255.0F));
         Tess.instance.setColor(rgbai, 255);
         Tess.instance.add(x, y2, z);
         Tess.instance.add(x, y, z);
@@ -61,7 +58,7 @@ public class WorldRenderer {
         Tess.instance.add(x, y2, z);
         Tess.instance.add(x, y, z);
         Tess.instance.draw(GL_QUAD_STRIP);
-        rgbai = ((int) (skyColor.x * 255)) << 16 | ((int) (skyColor.y * 255)) << 8 | ((int) (skyColor.z * 255));
+        rgbai = ((int) (skyColor.x * 255.0F)) << 16 | ((int) (skyColor.y * 255.0F)) << 8 | ((int) (skyColor.z * 255.0F));
         Tess.instance.setColor(rgbai, 255);
         Tess.instance.add(x, y, z2);
         Tess.instance.add(x2, y, z2);
@@ -85,36 +82,37 @@ public class WorldRenderer {
         glEnable(GL_CULL_FACE); // Cull back facing polygons
         //        glDisable(GL_CULL_FACE);
         glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
-        Engine.fbShadow.bind();
-        Engine.fbShadow.clearFrameBuffer();
-        glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        GL11.glClearColor(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glClear(16640);
-        glDisable(GL_FOG);
-        glDepthMask(true);
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_COLOR_MATERIAL);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();//Required?
-        glLoadMatrix(Engine.getShadowProjectionMatrix());
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glLoadMatrix(Engine.getShadowModelViewMatrix());
         if (Main.useShaders) {
-            Shaders.shadow.enable();
-            Shaders.setUniforms(Shaders.shadow, fTime);
-            Shaders.shadow.setProgramUniform1i("blockTextures", 0);
-            Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
+            glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+//          glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
+            Engine.fbShadow.bind();
+            Engine.fbShadow.clearFrameBuffer();
+            glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            GL11.glClearColor(1.0F, 1.0F, 1.0F, 1.0F);
+            GL11.glClear(16640);
+            glDisable(GL_FOG);
+            glDepthMask(true);
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_COLOR_MATERIAL);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
+            glMatrixMode(GL_PROJECTION);
+            glLoadMatrix(Engine.getShadowProjectionMatrix());
+            glMatrixMode(GL_MODELVIEW);
+            glLoadMatrix(Engine.getShadowModelViewMatrix());
+            if (Main.useShaders) {
+                Shaders.shadow.enable();
+                Shaders.setUniforms(Shaders.shadow, fTime);
+                Shaders.shadow.setProgramUniform1i("blockTextures", 0);
+                Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
+            }
+            
+            Vector3f camPos = Engine.camera.getPosition();
+            glTranslatef(-camPos.x, -camPos.y, -camPos.z);
+            renderFirstPass(world, fTime);
+            Shader.disable();
+            Engine.fbShadow.unbindCurrentFrameBuffer();
         }
-        
-        Vector3f camPos = Engine.camera.getPosition();
-        glTranslatef(-camPos.x, -camPos.y, -camPos.z);
-        renderFirstPass(world, fTime);
-        Shader.disable();
-        Engine.fbShadow.unbindCurrentFrameBuffer();
         glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
         glViewport(0, 0, Main.displayWidth, Main.displayHeight);
         Engine.getSceneFB().bind();
@@ -136,7 +134,7 @@ public class WorldRenderer {
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogf(GL_FOG_START, 0);
-        glFogf(GL_FOG_END, Engine.zfar / 1.41F);
+        glFogf(GL_FOG_END, Engine.zfar / 2.3F);
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
@@ -147,14 +145,24 @@ public class WorldRenderer {
         }
         drawSkybox();
         Shader.disable();
-        glDisable(GL_FOG);
         glDepthMask(true);
         glEnable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         //        Engine.enableLighting();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrix(Engine.getModelViewMatrix());
+        glNormal3f(0.0F, -1.0F, 0.0F);
+        glColor4f(1F, 1F, 1F, 1F);
+        glFogi(GL_FOG_MODE, GL_LINEAR);
+        glFogf(GL_FOG_START, (Engine.zfar / 2.3F)*0.75F);
+        glFogf(GL_FOG_END, (Engine.zfar / 2.3F));
+        glEnable(GL_FOG);
+        glEnable(GL_COLOR_MATERIAL);
+        glColorMaterial(GL_FRONT, GL_AMBIENT);
         if (Main.useShaders) {
             Shaders.terrain.enable();
             Shaders.setUniforms(Shaders.terrain, fTime);
@@ -163,42 +171,45 @@ public class WorldRenderer {
             Shaders.terrain.setProgramUniform1i("noisetex", 3);
             Shaders.terrain.setProgramUniform1i("specular", 5);
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
+            glBindTexture(GL_TEXTURE_2D, TMgr.getEmpty());
             glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, Textures.texEmptyNormal);
+            glBindTexture(GL_TEXTURE_2D, TMgr.getEmptyNormalMap());
             glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, Textures.texNoise);
+            glBindTexture(GL_TEXTURE_2D, TMgr.getNoise());
             glActiveTexture(GL_TEXTURE5);
-            glBindTexture(GL_TEXTURE_2D, Textures.texEmpty);
-
+            glBindTexture(GL_TEXTURE_2D, TMgr.getEmptySpecularMap());
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("terrain shader");
         } else {
-            Engine.enableLighting();
+//            Engine.enableLighting();
             Shaders.testShader.enable();
             Shaders.testShader.setProgramUniform1i("blockTextures", 0);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("test shader");
         }
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
-        if (Main.GL_ERROR_CHECKS)
-            Engine.checkGLError("setProgramUniform1i");
+        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         renderFirstPass(world, fTime);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
-        Shader.disable();
-        if (Main.GL_ERROR_CHECKS)
-            Engine.checkGLError("renderFirstPass");
         if (Main.useShaders) {
-            Shaders.waterShader2.enable();
-            Shaders.setUniforms(Shaders.waterShader2, fTime);
-            Shaders.waterShader2.setProgramUniform1i("texture", 0);
-            Shaders.waterShader2.setProgramUniform1i("normals", 2);
-            Shaders.waterShader2.setProgramUniform1i("noisetex", 3);
-            Shaders.waterShader2.setProgramUniform1i("specular", 5);
+            Shaders.waterShader.enable();
+            Shaders.setUniforms(Shaders.waterShader, fTime);
+            Shaders.waterShader.setProgramUniform1i("texture", 0);
+            Shaders.waterShader.setProgramUniform1i("normals", 2);
+            Shaders.waterShader.setProgramUniform1i("noisetex", 3);
+            Shaders.waterShader.setProgramUniform1i("specular", 5);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("water shader");
         }
         renderSecondPass(world, fTime);
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderSecondPass");
         Shader.disable();
-        if (!Main.useShaders) {
-            glDisable(GL_LIGHTING);
-        }
+//        if (!Main.useShaders) {
+//            glDisable(GL_LIGHTING);
+//        }
+        glDisable(GL_FOG);
     }
 
     private int rendered;

@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import nidefawl.game.Main;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.render.WorldRenderer;
@@ -14,7 +13,6 @@ import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Vector3f;
 
 public class Region {
     public static final int REGION_SIZE_BITS = 2;
@@ -38,7 +36,6 @@ public class Region {
     private boolean[]       hasPass          = new boolean[WorldRenderer.NUM_PASSES];
     private Mesh[][]        meshes;
     boolean                 translucentOnly  = false;
-    private int[]           color            = new int[256];
     int                     lastcolor        = 0;
     public long             createTime       = System.currentTimeMillis();
     public int              index;
@@ -55,21 +52,6 @@ public class Region {
         this.isCompiled = false;
         this.displayList = null;
         meshes = new Mesh[2][];
-        color[0] = 0;
-        color[1] = 0xABABAB;
-        color[2] = 0x187314;
-        color[3] = 0x734E14;
-        color[4] = 0x5C5C5C;
-        color[8] = 0x2B41CF;
-        color[9] = 0x2B41CF;
-        color[10] = 0xE35930;
-        color[11] = 0xE35930;
-        color[12] = 0xEDE139;
-        color[13] = 0xC9C9C9;
-        color[13] = 0xC9C9C9;
-        color[166] = 0x656f73;
-        color[167] = 0x4a7a5b;
-        color[169] = 0xABABAB;
     }
 
     public boolean isRendered() {
@@ -367,7 +349,7 @@ public class Region {
     }
     private void drawFace(Tess tess, Mesh mesh) {
         tess.setNormals(mesh.normal[0], mesh.normal[1], mesh.normal[2]);
-        int block = mesh.type & 0xFF;
+        Block block = Block.block[mesh.type & Block.BLOCK_MASK];
         int biome = (mesh.type >> 12) & 0xFF;
         int side = 0;
         float m = 1F;
@@ -392,8 +374,8 @@ public class Region {
                 break;
         }
         float alpha = 1F;
-        int c = Block.block[block].getColor();
-        if (block == Block.water.id) {
+        int c = block.getColor();
+        if (block == Block.water) {
             alpha = 0.8F;
         }
         float b = (c & 0xFF) / 255F;
@@ -405,7 +387,7 @@ public class Region {
         tess.setBrightness(0xf00000);
         float xl = mesh.du[0] + mesh.du[1] + mesh.du[2];
         float yl = mesh.dv[0] + mesh.dv[1] + mesh.dv[2];
-        tess.setAttr(block, 0, 0);
+        tess.setAttr(block.getTextureFromSide(mesh.faceDir), 0, 0);
         tess.setUV(0, 0);
         tess.add(mesh.v0[0], mesh.v0[1], mesh.v0[2]);
         tess.setUV(xl, 0);

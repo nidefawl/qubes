@@ -1,16 +1,25 @@
 package nidefawl.qubes.texture;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import nidefawl.game.Main;
+import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
-
 import org.lwjgl.opengl.*;
 
 public class TextureManager {
     final static TextureManager instance = new TextureManager();
+
+    public int                  texNoise;
+    public int                  texEmpty;
+    public int                  texEmptyNormal;
+    private ByteBuffer          directBuf;
+    
 
     TextureManager() {
     }
@@ -19,10 +28,24 @@ public class TextureManager {
         return instance;
     }
 
+
     public void init() {
+        texNoise = glGenTextures();
+        reload();
+        texEmpty = makeNewTexture(new byte[16*16*4], 16, 16, true, false, 0);
+        int[] normalBumpMap = new int[16*16*4];
+        Arrays.fill(normalBumpMap, 0xff7f7fff);
+        byte[] ndata = TextureManager.getRGBA(normalBumpMap);
+        texEmptyNormal = makeNewTexture(ndata, 16, 16, true, false, 0);
     }
 
-    private ByteBuffer directBuf;
+    public void reload() {
+        byte[] data = TextureUtil.genNoise(64);
+        glBindTexture(GL_TEXTURE_2D, texNoise);
+        TextureManager.getInstance().uploadTexture(data, 64, 64, 3, GL_RGB, GL_RGB, true, true, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
 
     public void load(String path) {
 
@@ -126,6 +149,9 @@ public class TextureManager {
 //        }
     }
 
+    public int setupTexture(AssetTexture assetTexture, boolean repeat, boolean filter, int mipmapLvls) {
+        return makeNewTexture(assetTexture.getData(), assetTexture.getWidth(), assetTexture.getHeight(), repeat, filter, mipmapLvls);
+    }
     public void destroy() {
         // TODO Auto-generated method stub
         

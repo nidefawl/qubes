@@ -18,9 +18,6 @@ import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.gui.GuiOverlayStats;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.render.RegionRenderThread;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.texture.Textures;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.BlockPos;
@@ -44,10 +41,11 @@ public class Main extends GLGame {
         instance.startGame();
     }
 
-    public static boolean  GL_ERROR_CHECKS = false;
+    public static boolean  GL_ERROR_CHECKS = true;
     public static boolean  DO_TIMING       = false;
-    public static boolean  show            = true;
-    public static boolean  useShaders      = true;
+    public static boolean  show            = false;
+    public static boolean  useShaders      = false;
+    public static boolean  useEmptyShaders      = false;
     public static boolean  matrixSetupMode = false;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
     private long               lastTimeLoad          = System.currentTimeMillis();
@@ -147,14 +145,20 @@ public class Main extends GLGame {
                         Engine.regionLoader.reRender();
                     }
                     break;
-                case Keyboard.KEY_F4:
+                case Keyboard.KEY_F11:
                     if (isDown) {
+                        DO_TIMING = !DO_TIMING;
                         TimingHelper.reset();
+                    }
+                    break;
+                case Keyboard.KEY_F12:
+                    if (isDown) {
+                        TimingHelper.dump();
                     }
                     break;
                 case Keyboard.KEY_F6:
                     if (isDown) {
-                        TimingHelper.dump();
+                        useShaders = !useShaders;
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -254,21 +258,26 @@ public class Main extends GLGame {
         GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
-//        if (!Main.useShaders) {
-            GL11.glScalef(0.25F, 0.25F, 1);
-            glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
-            {
-                int tw = displayWidth;
-                int th = displayHeight;
-                float x = 0;
-                float y = 0;
-                Tess.instance.add(x + tw, y, 0, 1, 1);
-                Tess.instance.add(x, y, 0, 0, 1);
-                Tess.instance.add(x, y + th, 0, 0, 0);
-                Tess.instance.add(x + tw, y + th, 0, 1, 0);
-            }
+        {
+            int tw = displayWidth;
+            int th = displayHeight;
+            float x = 0;
+            float y = 0;
+            Tess.instance.add(x + tw, y, 0, 1, 1);
+            Tess.instance.add(x, y, 0, 0, 1);
+            Tess.instance.add(x, y + th, 0, 0, 0);
+            Tess.instance.add(x + tw, y + th, 0, 1, 0);
+            Tess.instance.dontReset();
+        }
+        if (!Main.useShaders) {
+            glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
             Tess.instance.draw(GL_QUADS);
-//        }
+        }
+//        GL11.glScalef(0.25F, 0.25F, 1);
+//        glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
+//        Tess.instance.draw(GL_QUADS);
+
+        Tess.instance.resetState();
         GL11.glLoadIdentity();
         if (show) {
             if (this.debugOverlay != null) {

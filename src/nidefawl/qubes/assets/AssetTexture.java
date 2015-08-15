@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 
 import nidefawl.qubes.texture.PNGDecoder;
-import nidefawl.qubes.texture.TextureManager;
 
 public class AssetTexture extends Asset {
 
@@ -14,7 +13,6 @@ public class AssetTexture extends Asset {
     private int width;
     private int height;
     private byte[] data;
-    private int glid;
 
     public AssetTexture(File file) {
         this.file = file;
@@ -39,12 +37,5 @@ public class AssetTexture extends Asset {
     }
     public byte[] getData() {
         return data;
-    }
-
-    public void setupTexture(boolean repeat, boolean filter, int mipmapLvls) {
-        this.glid = TextureManager.getInstance().makeNewTexture(this.data, this.width, this.height, repeat, filter, mipmapLvls);
-    }
-    public int getGlid() {
-        return glid;
     }
 }

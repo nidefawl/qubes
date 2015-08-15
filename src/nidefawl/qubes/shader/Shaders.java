@@ -1,9 +1,6 @@
 package nidefawl.qubes.shader;
 
-import java.nio.FloatBuffer;
 import java.util.Arrays;
-
-import org.lwjgl.BufferUtils;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
@@ -21,7 +18,6 @@ public class Shaders {
     }
 
     public static Shader       waterShader;
-    public static Shader       waterShader2;
     public static Shader       composite1;
     public static Shader       composite2;
     public static Shader       composite3;
@@ -38,33 +34,29 @@ public class Shaders {
             numShaders = 0;
             Arrays.fill(allShaders, null);
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_waterShader = assetMgr.loadShader("shaders/water");
+            Shader new_waterShader = assetMgr.loadShader("shaders/water", false);
             if (Shaders.waterShader != null)
                 Shaders.waterShader.release();
+            new_waterShader.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
+            new_waterShader.linkProgram();
             Shaders.waterShader = new_waterShader;
-            Shader new_waterShader2 = assetMgr.loadShader("shaders/water2", false);
-            if (Shaders.waterShader2 != null)
-                Shaders.waterShader2.release();
-            new_waterShader2.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
-            new_waterShader2.linkProgram();
-            Shaders.waterShader2 = new_waterShader2;
             Shader new_depthBufShader = assetMgr.loadShader("shaders/renderdepth");
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             Shaders.depthBufShader = new_depthBufShader;
-            Shader new_composite1 = assetMgr.loadShader("shaders/composite");
+            Shader new_composite1 = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/composite");
             if (Shaders.composite1 != null)
                 Shaders.composite1.release();
             Shaders.composite1 = new_composite1;
-            Shader new_composite2 = assetMgr.loadShader("shaders/composite1");
+            Shader new_composite2 = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/composite1");
             if (Shaders.composite2 != null)
                 Shaders.composite2.release();
             Shaders.composite2 = new_composite2;
-            Shader new_composite3 = assetMgr.loadShader("shaders/composite2");
+            Shader new_composite3 = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/composite2");
             if (Shaders.composite3 != null)
                 Shaders.composite3.release();
             Shaders.composite3 = new_composite3;
-            Shader new_compositeFinal = assetMgr.loadShader("shaders/final");
+            Shader new_compositeFinal = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/final");
             if (Shaders.compositeFinal != null)
                 Shaders.compositeFinal.release();
             Shaders.compositeFinal = new_compositeFinal;
@@ -142,6 +134,7 @@ public class Shaders {
         sh.setProgramUniform1i("noisetex", 4);
         sh.setProgramUniform1i("eyeAltitude", 4);
         sh.setProgramUniform1i("fogMode", 1);
+        sh.setProgramUniform1i("shadowMapResolution", Engine.SHADOW_BUFFER_SIZE);
         sh.setProgramUniform2i("eyeBrightness", 0, 0);
         sh.setProgramUniform2i("eyeBrightnessSmooth", 0, 240);
         sh.setProgramUniformMatrix4ARB("gbufferView", false, Engine.getViewMatrix(), false);

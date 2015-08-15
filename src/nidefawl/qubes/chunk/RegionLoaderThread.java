@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.game.Main;
-import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.util.GameError;
 
 public class RegionLoaderThread extends Thread {

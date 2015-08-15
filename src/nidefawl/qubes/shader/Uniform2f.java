@@ -12,12 +12,14 @@ public class Uniform2f extends AbstractUniform {
     }
 
     public boolean set(float x, float y) {
+        if (validLoc()) {
         if (x != lastX || y != lastY || first) {
             first = false;
             lastX = x;
             lastY = y;
             glUniform2fARB(this.loc, x, y);
             return true;
+        }
         }
         return false;
     }

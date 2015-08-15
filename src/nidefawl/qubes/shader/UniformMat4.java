@@ -13,6 +13,7 @@ public class UniformMat4 extends AbstractUniform {
     }
 
     public boolean set(FloatBuffer matrix, boolean transpose) {
+        if (validLoc()) {
         matrix.position(0).limit(16);
         int n = 0;
         for (int i = 0; i < 16; i++) {
@@ -29,6 +30,7 @@ public class UniformMat4 extends AbstractUniform {
             matrix.position(0).limit(16);
             glUniformMatrix4ARB(this.loc, transpose, matrix);
             return true;
+        }
         }
         return false;
     }

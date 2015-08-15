@@ -7,7 +7,6 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.texture.Textures;
 
 public class GuiOverlayDebug extends Gui {
 

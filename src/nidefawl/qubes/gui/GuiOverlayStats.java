@@ -10,12 +10,10 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
+import nidefawl.qubes.gl.DisplayList;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.render.RegionRenderThread;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.world.World;
 
-import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -27,31 +25,17 @@ public class GuiOverlayStats extends Gui {
     ArrayList<String>  info        = new ArrayList<String>();
 
     private String     stats2;
-    private String stats3;
+    private String     stats3;
     private String     stats       = "";
     private String     statsRight  = "";
     long               messageTime = System.currentTimeMillis() - 5000L;
     String             message     = "";
-    private String stats4;
-
+    private String     stats4;
+    DisplayList l;
+    boolean render = false;
     public GuiOverlayStats() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
         this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
-        //        boolean isWindows, is64bit;
-        //        isWindows = System.getProperty("os.name").contains("Windows");
-        //        if (isWindows) {
-        //            is64bit = (System.getenv("ProgramFiles(x86)") != null);
-        //        } else {
-        //            is64bit = (System.getProperty("os.arch").indexOf("64") != -1);
-        //        }
-        //        info.add("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + " on " + (is64bit ? "x64 OS" : "x86 OS") + ") version " + System.getProperty("os.version"));
-        //        info.add(new StringBuilder("Java: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).toString());
-        //
-        //        long mem = Runtime.getRuntime().maxMemory() / 1048576;
-        //        info.add("JVM Memory: " + mem + "MB");
-        //        info.add(new StringBuilder("VM: ").append(System.getProperty("java.vm.name")).append(" (").append(System.getProperty("java.vm.info")).append("), ").append(System.getProperty("java.vm.vendor")).toString());
-        //        info.add(new StringBuilder("LWJGL: ").append(Sys.getVersion()).toString());
-        //        info.add(new StringBuilder("OpenGL: ").append(GL11.glGetString(7937 /*GL_RENDERER*/)).append(" version ").append(GL11.glGetString(7938 /*GL_VERSION*/)).append(", ").append(GL11.glGetString(7936 /*GL_VENDOR*/)).toString());
     }
 
     public void update(float dTime) {
@@ -69,10 +53,9 @@ public class GuiOverlayStats extends Gui {
             RegionLoader loader = Engine.regionLoader;
             int numRegions = loader.getRegionsLoaded();
             int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
-            this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d - wr-regions %d", 
-                    chunks, Region.REGION_SIZE * Region.REGION_SIZE * loader.getRegionsWithData() , Engine.worldRenderer.getNumRendered(),
-                    Engine.worldRenderer.numRegions);
-            this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On": "Off");
+            this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d - wr-regions %d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
+                    * loader.getRegionsWithData(), Engine.worldRenderer.getNumRendered(), Engine.worldRenderer.numRegions);
+            this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On" : "Off");
 
         } else {
             this.stats3 = null;
@@ -83,42 +66,41 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
+        render = true;
     }
 
     public void render(float fTime) {
+        if (l == null) {
+            l = Engine.nextFreeDisplayList();
+        }
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        //            glBegin(GL_QUADS);
-        //            glTexCoord2f(1, 1);
-        //            glVertex2f(300, 300);
-        //            glTexCoord2f(0, 1);
-        //            glVertex2f(0, 300);
-        //            glTexCoord2f(0,0);
-        //            glVertex2f(0, 0);
-        //            glTexCoord2f(1, 0);
-        //            glVertex2f(300, 0);
-        //            glEnd();
-        glEnable(GL_TEXTURE_2D);
-        int y = 20;
-        font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
-        font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
-        y += font.getLineHeight() * 1.2F;
-        font.drawString(stats2, 5, y, 0xFFFFFF, true, 1.0F);
-        y += font.getLineHeight() * 1.2F;
-        if (stats3 != null) {
-            font.drawString(stats3, 5, y, 0xFFFFFF, true, 1.0F);
+        glEnable(GL_TEXTURE_2D);       int y = 20;
+        if (render) {
+            render = false;
+            glNewList(l.list, GL11.GL_COMPILE);
+            font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
+            font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
             y += font.getLineHeight() * 1.2F;
-        }
-        if (stats4 != null) {
-            font.drawString(stats4, 5, y, 0xFFFFFF, true, 1.0F);
+            font.drawString(stats2, 5, y, 0xFFFFFF, true, 1.0F);
             y += font.getLineHeight() * 1.2F;
-        }
-        for (String st : info) {
-            fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
+            if (stats3 != null) {
+                font.drawString(stats3, 5, y, 0xFFFFFF, true, 1.0F);
+                y += font.getLineHeight() * 1.2F;
+            }
+            if (stats4 != null) {
+                font.drawString(stats4, 5, y, 0xFFFFFF, true, 1.0F);
+                y += font.getLineHeight() * 1.2F;
+            }
+            for (String st : info) {
+                fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
+                y += fontSmall.getLineHeight() * 1.2F;
+            }
+            String dbg = "Matrixmode: " + (Main.matrixSetupMode ? "GL" : "CPU");
+            fontSmall.drawString(dbg, 5, y, 0xFFFFFF, true, 1.0F);
             y += fontSmall.getLineHeight() * 1.2F;
+            glEndList();
         }
-        String dbg = "Matrixmode: "+(Main.matrixSetupMode?"GL":"CPU");
-        fontSmall.drawString(dbg, 5, y, 0xFFFFFF, true, 1.0F);
-        y += fontSmall.getLineHeight() * 1.2F;
+        glCallList(l.list);
         if (System.currentTimeMillis() - messageTime < 5000) {
             int strwidth = font.getStringWidth(this.message);
             rleft = GLGame.displayWidth / 2 - strwidth / 2 - 8F;
@@ -137,6 +119,7 @@ public class GuiOverlayStats extends Gui {
         }
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
+ 
     }
 
     public void setMessage(String message) {

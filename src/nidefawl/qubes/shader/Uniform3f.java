@@ -13,6 +13,7 @@ public class Uniform3f extends AbstractUniform {
     }
 
     public boolean set(float x, float y, float z) {
+        if (validLoc()) {
         if (x != lastX || y != lastY || z != lastZ || first) {
             first = false;
             lastX = x;
@@ -20,6 +21,7 @@ public class Uniform3f extends AbstractUniform {
             lastZ = z;
             glUniform3fARB(this.loc, x, y, z);
             return true;
+        }
         }
         return false;
     }

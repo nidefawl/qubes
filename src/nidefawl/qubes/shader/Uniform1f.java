@@ -11,11 +11,13 @@ public class Uniform1f extends AbstractUniform {
     }
 
     public boolean set(float x) {
+        if (validLoc()) {
         if (x != lastX || first) {
             first = false;
             lastX = x;
             glUniform1fARB(this.loc, x);
             return true;
+        }
         }
         return false;
     }
