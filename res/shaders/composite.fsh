@@ -19,7 +19,6 @@
 //of the shaders mod. The shaders mod only reads these lines and doesn't actually know the real value assigned to these variables in GLSL.
 //Some of these variables are critical for proper operation. Change at your own risk.
 
-const int               shadowMapResolution     = 4096;
 const float     shadowDistance                  = 320.0f;
 const bool              generateShadowMipmap    = false;
 const float     shadowIntervalSize              = 4.0f;
@@ -101,6 +100,7 @@ uniform ivec2 eyeBrightness;
 uniform ivec2 eyeBrightnessSmooth;
 uniform int   fogMode;
 
+uniform int               shadowMapResolution;
 
 varying float timeSunrise;
 varying float timeNoon;
@@ -2098,8 +2098,8 @@ void main() {
         shading.scatteredUp = CalculateScatteredUpLight(surface);
         shading.heldLight       = CalculateHeldLightShading(surface);  
         InitializeAO(surface);
-        //if (texcoord.s < 0.5f && texcoord.t < 0.5f)
-        //CalculateAO(surface);
+        // if (texcoord.s < 0.5f && texcoord.t < 0.5f)
+        // CalculateAO(surface);
 
 
         //Colorize surface shading and store in lightmaps
