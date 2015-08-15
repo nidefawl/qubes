@@ -16,7 +16,6 @@ public class Tess extends TesselatorState {
     
     public final static Tess instance    = new Tess();
     public final static Tess tessFont    = new Tess();
-    public final static Tess tessTerrain    = new Tess(true);
 
     protected int           rgba;
     protected float         u, v;
@@ -330,7 +329,6 @@ public class Tess extends TesselatorState {
     public static void destroyAll() {
         instance.destroy();
         tessFont.destroy();
-        tessTerrain.destroy();
     }
     public void drawState(TesselatorState tesselatorState, int mode) {
         tesselatorState.copyTo(this, tesselatorState.getIdx(tesselatorState.vertexcount));

@@ -1,18 +1,23 @@
 package nidefawl.qubes.render;
 
+import java.util.List;
+
 import nidefawl.game.Main;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 public class RegionRenderUpdateTask {
-
-    public int worldInstance;
-
-    Region     region;
-    final TesselatorState[] state = new TesselatorState[WorldRenderer.NUM_PASSES];
+    public final Tess       tess   = new Tess(true);
+    public final Mesher     mesher = new Mesher();
+    final TesselatorState[] state  = new TesselatorState[WorldRenderer.NUM_PASSES];
+    
+    public int              worldInstance;
+    Region                  region;
+    
     public RegionRenderUpdateTask() {
         for (int i = 0; i < state.length; i++) {
             state[i] = new TesselatorState();
@@ -50,12 +55,18 @@ public class RegionRenderUpdateTask {
         World w = Main.instance.getWorld();
         if (w != null) {
             try {
-                this.region.doMeshing(w);
-                Tess tess = Tess.tessTerrain;
-                this.region.renderMeshes(tess, 0);
-                tess.copyTo(state[0]);
-                this.region.renderMeshes(tess, 1);
-                tess.copyTo(state[1]);
+                List<Mesh> mesh;
+                for (int i = 0; i < WorldRenderer.NUM_PASSES; i++) {
+                    mesh = mesher.mesh(w, this.region, i);
+                    tess.resetState();
+                    tess.setColor(-1, 255);
+                    tess.setBrightness(0xf00000);
+                    int size = mesh.size();
+                    for (int m = 0; m < size; m++) {
+                        mesh.get(m).draw(tess);
+                    }
+                    tess.copyTo(state[i]);
+                }
                 this.region.renderState = Region.RENDER_STATE_MESHED;
                 return true;
             } catch (Exception e) {
