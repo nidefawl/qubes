@@ -419,7 +419,7 @@ vec4 	ComputeRaytraceReflection(inout SurfaceStruct surface)
 {
 	float reflectionRange = 2.0f;
     float initialStepAmount = 1.0 - clamp(0.1f / 100.0, 0.0, 0.99);
-		  initialStepAmount *= 1.0f;
+		  initialStepAmount *= 4.0f;
 
 
 	 // vec2 dither = CalculateNoisePattern1(vec2(0.0f), 4.0f).xy * 2.0f - 1.0f;
@@ -455,7 +455,7 @@ vec4 	ComputeRaytraceReflection(inout SurfaceStruct surface)
 	int numSteps = 0;
 
     //while(count < far/initialStepAmount*reflectionRange)
-    for (int i = 0; i < 40; i++)
+    for (int i = 0; i < 22; i++)
     {
         if(currentPosition.x < 0 || currentPosition.x > 1 ||
            currentPosition.y < 0 || currentPosition.y > 1 ||
