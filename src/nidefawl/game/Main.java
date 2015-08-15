@@ -99,6 +99,16 @@ public class Main extends GLGame {
         setFPSLimit(20); 
         this.world = new World(1, 0x123);
         this.entSelf.move(0, 140, 0);
+        glActiveTexture(GL_TEXTURE0);
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(true);
+        glColorMask(true, true, true, true);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
     }
 
     @Override
@@ -205,117 +215,122 @@ public class Main extends GLGame {
     Vec3 mousePos = new Vec3();
     
     public void render(float fTime) {
-//        fogColor.scale(0.4F);
-        glDepthMask(true);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        Vec3 vUnproject = null;
-        if (Main.DO_TIMING) TimingHelper.start(6);
-        //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        Engine.worldRenderer.renderWorld(this.world, fTime);
-        if (this.handleClick) {
-            this.handleClick = false;
-            vUnproject = Engine.unproject(winX, winY);
-        }
-        Engine.getSceneFB().unbindCurrentFrameBuffer();
-        if (Main.DO_TIMING) TimingHelper.end(6);
-        if (Main.DO_TIMING) TimingHelper.start(7);
-        glActiveTexture(GL_TEXTURE0);
-        glDepthMask(true);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glLoadIdentity(); // Reset The Projection Matrix
-        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glLoadIdentity();
-        GL11.glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-        glDepthMask(true);
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
-        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(false);
-        if (Main.DO_TIMING) TimingHelper.end(7);
-        if (Main.useShaders) {
-            Engine.outRenderer.render(fTime);
-            Engine.outRenderer.renderFinal(fTime);
-        }
-        if (Main.DO_TIMING) TimingHelper.start(8);
-        glActiveTexture(GL_TEXTURE0);
-        glEnable(GL_ALPHA_TEST);
-        glDisable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_TEXTURE_2D);
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glLoadIdentity(); // Reset The Projection Matrix
-        GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glLoadIdentity();
-        {
-            int tw = displayWidth;
-            int th = displayHeight;
-            float x = 0;
-            float y = 0;
-            Tess.instance.add(x + tw, y, 0, 1, 1);
-            Tess.instance.add(x, y, 0, 0, 1);
-            Tess.instance.add(x, y + th, 0, 0, 0);
-            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-            Tess.instance.dontReset();
-        }
-        if (!Main.useShaders) {
-            glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
-            Tess.instance.draw(GL_QUADS);
-        }
-//        GL11.glScalef(0.25F, 0.25F, 1);
-//        glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
-//        Tess.instance.draw(GL_QUADS);
+//      fogColor.scale(0.4F);
+      Vec3 vUnproject = null;
 
-        Tess.instance.resetState();
-        GL11.glLoadIdentity();
-        if (show) {
-            if (this.debugOverlay != null) {
-                this.debugOverlay.render(fTime);
-            }
-        }
-        if (Main.DO_TIMING) TimingHelper.end(8);
-        if (Main.DO_TIMING) TimingHelper.start(9);
+      if (Main.useShaders) {
+          Engine.worldRenderer.renderShadowPass(this.world, fTime);
+      }
 
-        if (vUnproject != null) {
+      if (Main.DO_TIMING) TimingHelper.start(6);
+      Engine.getSceneFB().bind();
+      Engine.getSceneFB().clearFrameBuffer();
+      //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      Engine.worldRenderer.renderWorld(this.world, fTime);
+      if (this.handleClick) {
+          this.handleClick = false;
+          vUnproject = Engine.unproject(winX, winY);
+      }
+      Engine.getSceneFB().unbindCurrentFrameBuffer();
+      if (Main.DO_TIMING) TimingHelper.end(6);
+      if (Main.DO_TIMING) TimingHelper.start(7);
 
-            mousePos.set(vUnproject);
-            BlockPos blockPos = mousePos.toBlock();
-            int blockX = blockPos.x;
-            int blockY = blockPos.y;
-            int blockZ = blockPos.z;
-            //            int i = this.world.getBiome(blockX, blockY, blockZ);
-            //            int id = this.world.getTypeId(blockX, blockY, blockZ);
-            String msg = "";
-            msg += String.format("win:  %d %d\n", (int) winX, (int) winY);
-            msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
-            //            msg += String.format("Block:           %d\n", id);
-            //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
-            msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
 
-            if (this.statsOverlay != null) {
-                this.statsOverlay.setMessage(msg);
-            }
-        }
-        glEnable(GL_ALPHA_TEST);
-        glEnable(GL_TEXTURE_2D);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_COLOR_MATERIAL);
+      glDisable(GL_LIGHT0);
+      glDisable(GL_LIGHT1);
 
-        if (this.statsOverlay != null) {
-            this.statsOverlay.render(fTime);
-        }
-        if (Main.DO_TIMING) TimingHelper.end(9);
+      GL11.glMatrixMode(GL11.GL_PROJECTION);
+      GL11.glLoadIdentity(); // Reset The Projection Matrix
+      GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
+      GL11.glMatrixMode(GL11.GL_MODELVIEW);
+      GL11.glLoadIdentity();
+      GL11.glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+      glClearColor(0.71F, 0.82F, 1.00F, 1F);
+      glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+      glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      glDisable(GL_ALPHA_TEST);
+      glDisable(GL_BLEND);
+      glEnable(GL_DEPTH_TEST);
+      glDepthFunc(GL_ALWAYS);
+      glEnable(GL_TEXTURE_2D);
+      glActiveTexture(GL_TEXTURE0);
+      glDepthMask(false);
+      if (Main.DO_TIMING) TimingHelper.end(7);
+      if (Main.useShaders) {
+          Engine.outRenderer.render(fTime);
+          Engine.outRenderer.renderFinal(fTime);
+      }
+      if (Main.DO_TIMING) TimingHelper.start(8);
 
-    }
+      glDepthMask(true);
+
+      glDepthFunc(GL_LEQUAL);
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_DEPTH_TEST);
+      glEnable(GL_ALPHA_TEST);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      GL11.glMatrixMode(GL11.GL_MODELVIEW);
+      GL11.glLoadIdentity();
+      if (!Main.useShaders) {
+          {
+              int tw = displayWidth;
+              int th = displayHeight;
+              float x = 0;
+              float y = 0;
+              Tess.instance.add(x + tw, y, 0, 1, 1);
+              Tess.instance.add(x, y, 0, 0, 1);
+              Tess.instance.add(x, y + th, 0, 0, 0);
+              Tess.instance.add(x + tw, y + th, 0, 1, 0);
+              Tess.instance.dontReset();
+          }
+          glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
+          Tess.instance.draw(GL_QUADS);
+          Tess.instance.resetState();
+      }
+//      GL11.glScalef(0.25F, 0.25F, 1);
+//      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
+//      Tess.instance.draw(GL_QUADS);
+
+      GL11.glLoadIdentity();
+      if (show) {
+          if (this.debugOverlay != null) {
+              this.debugOverlay.render(fTime);
+          }
+      }
+      if (Main.DO_TIMING) TimingHelper.end(8);
+      if (Main.DO_TIMING) TimingHelper.start(9);
+
+      if (vUnproject != null) {
+
+          mousePos.set(vUnproject);
+          BlockPos blockPos = mousePos.toBlock();
+          int blockX = blockPos.x;
+          int blockY = blockPos.y;
+          int blockZ = blockPos.z;
+          //            int i = this.world.getBiome(blockX, blockY, blockZ);
+          //            int id = this.world.getTypeId(blockX, blockY, blockZ);
+          String msg = "";
+          msg += String.format("win:  %d %d\n", (int) winX, (int) winY);
+          msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
+          //            msg += String.format("Block:           %d\n", id);
+          //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
+          msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
+
+          if (this.statsOverlay != null) {
+              this.statsOverlay.setMessage(msg);
+          }
+      }
+
+      if (this.statsOverlay != null) {
+          this.statsOverlay.render(fTime);
+      }
+      if (Main.DO_TIMING) TimingHelper.end(9);
+      glEnable(GL_DEPTH_TEST);
+
+  }
 
     long lastShaderLoadTime = 0L;
     private boolean doLoad = true;
@@ -387,6 +402,7 @@ public class Main extends GLGame {
                 }
             }
         }
+        Engine.worldRenderer.prepareRegions(world, f);
     }
 
     @Override

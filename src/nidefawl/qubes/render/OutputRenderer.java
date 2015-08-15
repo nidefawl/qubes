@@ -33,20 +33,6 @@ public class OutputRenderer {
             dbg.postDbgFB();
         }
 
-        glDisable(GL_LIGHTING);
-        glDisable(GL_COLOR_MATERIAL);
-        glDisable(GL_LIGHT0);
-        glDisable(GL_LIGHT1);
-        //      glDisable(GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(770, 771);
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(false);
-        glDisable(GL_LIGHTING);
         Tess.instance.dontReset();
         {
             int tw = displayWidth;

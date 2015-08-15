@@ -71,52 +71,40 @@ public class WorldRenderer {
         Tess.instance.draw(GL_QUADS);
     }
 
+    public void renderShadowPass(World world, float fTime) {
+        glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+//          glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
+        glDisable(GL_FOG);
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_COLOR_MATERIAL);
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrix(Engine.getShadowProjectionMatrix());
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrix(Engine.getShadowModelViewMatrix());
+        Shaders.shadow.enable();
+        Shaders.setUniforms(Shaders.shadow, fTime);
+        Shaders.shadow.setProgramUniform1i("blockTextures", 0);
+        Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
+        Vector3f camPos = Engine.camera.getPosition();
+        glTranslatef(-camPos.x, -camPos.y, -camPos.z);
+        Engine.fbShadow.bind();
+        Engine.fbShadow.clearFrameBuffer();
+        glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(1.0F, 1.0F, 1.0F, 1.0F);
+        glClear(16640);
+        renderFirstPass(world, fTime);
+        Engine.fbShadow.unbindCurrentFrameBuffer();
+        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        Shader.disable();
+        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
+    }
     public void renderWorld(World world, float fTime) {
-        prepareRegions(world, fTime);
         
         this.rendered = 0;
-//        Engine.suncamera.set(x, y, z, yaw, pitch);
-        //        sun = new Vector3f(0.41F, 0.14F, 0.00F);
-        //         glDisable(GL_CULL_FACE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_CULL_FACE); // Cull back facing polygons
-        //        glDisable(GL_CULL_FACE);
-        glActiveTexture(GL_TEXTURE0);
-        if (Main.useShaders) {
-            glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
-//          glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, Textures.blockTextureMap);
-            Engine.fbShadow.bind();
-            Engine.fbShadow.clearFrameBuffer();
-            glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            GL11.glClearColor(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glClear(16640);
-            glDisable(GL_FOG);
-            glDepthMask(true);
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_COLOR_MATERIAL);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
-            glMatrixMode(GL_PROJECTION);
-            glLoadMatrix(Engine.getShadowProjectionMatrix());
-            glMatrixMode(GL_MODELVIEW);
-            glLoadMatrix(Engine.getShadowModelViewMatrix());
-            if (Main.useShaders) {
-                Shaders.shadow.enable();
-                Shaders.setUniforms(Shaders.shadow, fTime);
-                Shaders.shadow.setProgramUniform1i("blockTextures", 0);
-                Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
-            }
-            
-            Vector3f camPos = Engine.camera.getPosition();
-            glTranslatef(-camPos.x, -camPos.y, -camPos.z);
-            renderFirstPass(world, fTime);
-            Shader.disable();
-            Engine.fbShadow.unbindCurrentFrameBuffer();
-        }
-        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
-        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
-        Engine.getSceneFB().bind();
-        Engine.getSceneFB().clearFrameBuffer();
+        
+        glDisable(GL_BLEND);
         
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -125,10 +113,7 @@ public class WorldRenderer {
         glLoadIdentity();
         glLoadMatrix(Engine.getViewMatrix()); //TODO: GET RID OF, load into shader
         glDisable(GL_TEXTURE_2D);
-        glDepthMask(false);
         glDisable(GL_ALPHA_TEST);
-        //        Vector3f fogColor2 = new Vector3f(0.7F, 0,0);
-        //        fogColor2.scale(0.4F);
         Engine.setFog(fogColor, 1);
         glNormal3f(0.0F, -1.0F, 0.0F);
         glColor4f(1F, 1F, 1F, 1F);
@@ -138,14 +123,14 @@ public class WorldRenderer {
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
-        glDisable(GL_BLEND);
         if (Main.useShaders) {
             Shaders.sky.enable();
 //          Shaders.setUniforms(Shaders.terrain, fTime); //???
         }
+        glDepthMask(false);
         drawSkybox();
-        Shader.disable();
         glDepthMask(true);
+        Shader.disable();
         glEnable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         //        Engine.enableLighting();
@@ -215,7 +200,7 @@ public class WorldRenderer {
     private int rendered;
 
     public float sunAngle2;
-    void prepareRegions(World world, float fTime) {
+    public void prepareRegions(World world, float fTime) {
         int loaded = 0;
 //      if (follow && this.regions.size() >= MAX_REGIONS - 20   ) {
 //          Iterator<Long> it = this.regionLoadReqMap.iterator();
@@ -259,7 +244,7 @@ public class WorldRenderer {
         }
     }
     public void renderFirstPass(World world, float fTime) {
-        GL11.glDisable(GL11.GL_BLEND);
+        glDisable(GL_BLEND);
         int size = firstPass.size();
 
         for (int i = 0; i < size; i++) {
@@ -276,7 +261,8 @@ public class WorldRenderer {
     }
     public void renderSecondPass(World world, float fTime) {
         //TODO: sort by distance
-        GL11.glEnable(GL11.GL_BLEND);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         int size = secondPass.size();
 //        System.out.println(size);
         for (int i = 0; i < size; i++) {
@@ -289,7 +275,7 @@ public class WorldRenderer {
             glPopMatrix();
             this.rendered += r.getFacesRendered(1);
         }
-        GL11.glDisable(GL11.GL_BLEND);
+        glDisable(GL_BLEND);
     }
 
 
