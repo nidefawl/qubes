@@ -318,6 +318,7 @@ public class Tess extends TesselatorState {
     }
 
     public void destroy() {
+        buffer = null;
     }
 
     public void setOffset(float f, float j, float g) {

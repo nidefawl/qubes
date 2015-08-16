@@ -95,7 +95,6 @@ public class RegionLoader {
                     if (r.state == Region.STATE_INIT) {
 //                        System.out.println("thread.offer");
                         if (this.thread.offer(r)) {
-                          System.out.println("thread offer == true");
                             loaded++;
                         } else {
 

@@ -24,8 +24,9 @@ public class FrameBuffer implements IFrameBuffer {
     private boolean isShadowDepthBuffer;
     private int              numColorTextures;
     private int              depthTexture;
-    private final int[]      colorAttTextures = new int[MAX_COLOR_ATT];
-    private final int[]      colorAttFormats  = new int[MAX_COLOR_ATT];
+    private final int[]      colorAttTextures   = new int[MAX_COLOR_ATT];
+    private final int[]      colorAttFormats    = new int[MAX_COLOR_ATT];
+    private final int[]      colorAttMinFilters = new int[MAX_COLOR_ATT];
 
     public FrameBuffer(int renderWidth, int renderHeight) {
         this.renderWidth = renderWidth;
@@ -38,6 +39,16 @@ public class FrameBuffer implements IFrameBuffer {
             throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " is already set");
         }
         colorAttFormats[att] = fmt;
+        colorAttMinFilters[att] = GL_LINEAR;
+    }
+
+
+    public void setFilter(int att, int filter) {
+        att -= GL_COLOR_ATTACHMENT0;
+        if (colorAttFormats[att] == 0) {
+            throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " not set");
+        }
+        colorAttMinFilters[att] = filter;
     }
 
     public void setHasDepthAttachment() {
@@ -81,7 +92,7 @@ public class FrameBuffer implements IFrameBuffer {
             if (colorAttFormats[i] != 0) {
                 int att = GL_COLOR_ATTACHMENT0 + i;
                 int tex = colorTextures.get();
-                setupTexture(tex, colorAttFormats[i]);
+                setupTexture(tex, colorAttFormats[i], colorAttMinFilters[i]);
                 this.colorAttTextures[i] = tex;
                 GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, att, tex, 0);
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (color " + i + ")");
@@ -103,45 +114,22 @@ public class FrameBuffer implements IFrameBuffer {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
     }
 
-    public void unbindCurrentFrameBuffer() {//call to switch to default frame buffer
+    public void unbindCurrentFrameBuffer() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
-        glViewport(0, 0, GLGame.displayWidth, GLGame.displayHeight);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glViewport");
-        for (int i = 7; i >= 0; i--) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
     }
 
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
-//        if (hasDepth)
-//        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, depthTexture, 0);
-//        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
-//        glViewport(0, 0, renderWidth, renderHeight);
-//        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glViewport");
-//        
-//        for (int i = 0; i < colorAttFormats.length; i++) {
-//            if (colorAttFormats[i] != 0) {
-//                GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, colorAttTextures[i], 0);
-//            }
-//        }
-//        GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, getDepthTex(), 0);
-
-//        drawBufAtt.rewind();
-//        GL20.glDrawBuffers(this.drawBufAtt);
-//        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
-        
-
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
     }
 
-    public void setupTexture(int texture, int format) {
+    public void setupTexture(int texture, int format, int minfilter) {
         glBindTexture(GL_TEXTURE_2D, texture);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");

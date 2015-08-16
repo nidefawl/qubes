@@ -13,6 +13,7 @@ public class TimingHelper {
     public static long calls[] = new long[LEN];
     public static long beginNanos[] = new long[LEN];
     public static long beginMillis[] = new long[LEN];
+    public static boolean on[] = new boolean[LEN];
     private static String[] names = new String[LEN];
     private static HashMap<Object, Integer> map = new HashMap<Object, Integer>();
     private static int jObjectIdx = 500;
@@ -48,6 +49,8 @@ public class TimingHelper {
         beginMillis[i] = System.currentTimeMillis();
         if (useNanos)
             beginNanos[i] = System.nanoTime();
+        if (on[i]) System.err.println("ALREADY ON: "+i);
+        on[i] = true;
     }
     public static void startSilent(int i) {
         beginMillis[i] = System.currentTimeMillis();
@@ -67,6 +70,8 @@ public class TimingHelper {
     }
     public static long end(int i) {
         if (!init) return 0;
+        if (!on[i]) System.err.println("NOT ON: "+i);
+        on[i] = false;
         long millisPassed = System.currentTimeMillis() - beginMillis[i];
         long timeTaken = millisPassed*1000;
         if (millisPassed > 0) {
@@ -96,7 +101,7 @@ public class TimingHelper {
         for (int i = 0; i < calls.length; i++) {
             if (calls[i] > 0) {
                 float perCall = (float) millis[i] / (float) calls[i];
-                System.out.println(String.format("%s: %d calls. %.5f millis per call, %d ms total", hasName(i) ? names[i] : ""+i, calls[i], perCall, millis[i]));                
+                System.out.println(String.format("%2d %-20s %d calls. %.5f millis per call, %d ms total", i, hasName(i) ? names[i] : ""+i, calls[i], perCall, millis[i]));                
             }
         }
     }

@@ -1,14 +1,18 @@
 package nidefawl.qubes;
 
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
-import static org.lwjgl.opengl.GL11.GL_PROJECTION;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glLoadIdentity;
-import static org.lwjgl.opengl.GL11.glMatrixMode;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import nidefawl.game.Main;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gui.GuiCrash;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;
@@ -18,11 +22,7 @@ import nidefawl.qubes.util.TimingHelper;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.PixelFormat;
-import org.lwjgl.util.glu.GLU;
+import org.lwjgl.opengl.*;
 
 public abstract class GLGame implements Runnable {
     public static String       appName    = "LWJGL Test App";
@@ -34,9 +34,10 @@ public abstract class GLGame implements Runnable {
     public int                 lastFPS    = 0;
     private long               timeLastFPS;
     private long               timeLastFrame;
-    public int                 fpsLimit;
+    protected boolean          vsync        = true;
     private Thread             thread;
-    protected volatile boolean running = true;
+    protected volatile boolean running = false;
+    protected volatile boolean wasrunning = false;
     public static int          ticksran;
     public static float        renderTime;
     public int                 tick       = 0;
@@ -82,8 +83,19 @@ public abstract class GLGame implements Runnable {
         Mouse.create();
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GL11.glShadeModel(GL11.GL_SMOOTH);
-        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
+        glActiveTexture(GL_TEXTURE0);
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(true);
+        glColorMask(true, true, true, true);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+//        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+//        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
+        setVSync(true);
     }
 
     public boolean isRunning() {
@@ -91,9 +103,11 @@ public abstract class GLGame implements Runnable {
     }
 
     private void cleanUpGame() {
-        Engine.stop();
-        TextureManager.getInstance().destroy();
-        Tess.destroyAll();
+        if (this.wasrunning) {
+            Engine.stop();
+            TextureManager.getInstance().destroy();
+            Tess.destroyAll();
+        }
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();
@@ -104,27 +118,97 @@ public abstract class GLGame implements Runnable {
     public void run() {
         try {
             initDisplay();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            return;
+        }
+
+        try {
+            List<String> list = GL.validateCaps();
+            if (!list.isEmpty()) {
+                ArrayList<String> desc = new ArrayList<>();
+                desc.add("You graphics card does not support some of the required OpenGL features");
+                desc.add("");
+                for (String s : list) {
+                    desc.add(s);
+                }
+                showErrorScreen("Failed starting game", desc, null);
+                return;
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            return;
+        }
+        try {
+            this.running = true;
+            this.wasrunning = true;
+            setVSync(this.vsync);
             initGame();
             Engine.init();
             resize(displayWidth, displayHeight);
             timer.calculate();
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
-            this.running = true;
             while (this.running) {
                 runTick();
             }
         } catch (Throwable t) {
-            t.printStackTrace();
+            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t);
         } finally {
             cleanUpGame();
+        }
+    }
+
+    private void showErrorScreen(String title, List<String> desc, Throwable throwable) {
+        try {
+
+            Keyboard.destroy();
+            Mouse.destroy();
+            Display.destroy();
+            try {
+                Thread.sleep(120L);
+            } catch (InterruptedException interruptedexception) {
+            }
+            initDisplay();
+            GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
+            GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            GL11.glShadeModel(GL11.GL_FLAT);
+            glActiveTexture(GL_TEXTURE0);
+            glEnable(GL_ALPHA_TEST);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL);
+            glDepthMask(true);
+            glColorMask(true, true, true, true);
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+            GL11.glViewport(0, 0, displayWidth, displayHeight);
+            while (!Display.isCloseRequested()) {
+                checkResize();
+                guiCrash.setPos(0, 0);
+                guiCrash.setSize(displayWidth, displayHeight);
+                GL11.glMatrixMode(GL_PROJECTION);
+                GL11.glLoadIdentity();
+                GL11.glOrtho(0, displayWidth, displayHeight, 0, 0, 10);
+                GL11.glMatrixMode(GL_MODELVIEW);
+                GL11.glLoadIdentity();
+                GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
+                guiCrash.render(0);
+                Display.update();
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        } finally {
+            System.exit(1);
         }
     }
 
     public void shutdown() {
         this.running = false;
     }
-
+    protected boolean startRender = false;
     public void runTick() throws LWJGLException {
 
         if (Display.isCloseRequested()) {
@@ -133,17 +217,7 @@ public abstract class GLGame implements Runnable {
         }
         if (Main.DO_TIMING)
             TimingHelper.start(10);
-        if (Display.getWidth() != displayWidth || Display.getHeight() != displayHeight) {
-            displayWidth = Display.getWidth();
-            displayHeight = Display.getHeight();
-            if (displayWidth <= 0) {
-                displayWidth = 1;
-            }
-            if (displayHeight <= 0) {
-                displayHeight = 1;
-            }
-            resize(displayWidth, displayHeight);
-        }
+        checkResize();
         timer.calculate();
         ticksran += timer.ticks;
         renderTime = timer.partialTick;
@@ -163,6 +237,15 @@ public abstract class GLGame implements Runnable {
         if (Main.DO_TIMING)
             TimingHelper.start(11);
         preRenderUpdate(renderTime);
+//        if (!startRender) {
+//            try {
+//                Thread.sleep(10);
+//            } catch (InterruptedException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+//            return;
+//        }
         if (Main.DO_TIMING)
             TimingHelper.end(11);
         render(renderTime);
@@ -176,9 +259,6 @@ public abstract class GLGame implements Runnable {
         Display.update();
         if (Main.DO_TIMING)
             TimingHelper.end(15);
-        if (fpsLimit > 0) {
-            limitFpsTo(fpsLimit);
-        }
         if (Main.DO_TIMING)
             TimingHelper.start(16);
         long now = System.nanoTime();
@@ -198,19 +278,35 @@ public abstract class GLGame implements Runnable {
         if (Main.DO_TIMING)
             TimingHelper.end(16);
         if (this.error != null) {
-            this.error.printStackTrace();
-            shutdown();
-            return;
+            showErrorScreen("Error occured", Arrays.asList(new String[] { "There was an internal error"}), this.error);
+        }
+    }
+
+    private void checkResize() throws LWJGLException {
+        if (Display.getWidth() != displayWidth || Display.getHeight() != displayHeight) {
+            displayWidth = Display.getWidth();
+            displayHeight = Display.getHeight();
+            if (displayWidth <= 0) {
+                displayWidth = 1;
+            }
+            if (displayHeight <= 0) {
+                displayHeight = 1;
+            }
+            resize(displayWidth, displayHeight);
         }
     }
 
     public abstract void onStatsUpdated(float dSec);
 
-    public void setFPSLimit(int i) {
-        this.fpsLimit = i;
+    public void setVSync(boolean b) {
+        this.vsync = b;
+        Display.setSwapInterval(b ? 1 : 0);
+    }
+    public boolean getVSync() {
+        return this.vsync;
     }
 
-    private void limitFpsTo(int i) {
+    private void limitFpsTo(int fpsLimit) {
         long now = System.nanoTime();
         long el = now - timeLastFrame;
         timeLastFrame = now;
@@ -228,16 +324,10 @@ public abstract class GLGame implements Runnable {
 
     private void resize(int displayWidth, int displayHeight) throws LWJGLException {
         GL11.glViewport(0, 0, displayWidth, displayHeight);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        float aspectRatio = (float) displayWidth / (float) displayHeight;
-        GLU.gluPerspective(45, aspectRatio, 0.1F, 200010F);
-
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glClear(GL_COLOR_BUFFER_BIT);
-        Engine.resize(displayWidth, displayHeight);
-        onResize();
+        if (this.isRunning()) {
+            Engine.resize(displayWidth, displayHeight);
+            onResize();
+        }
     }
 
     public abstract void render(float f);

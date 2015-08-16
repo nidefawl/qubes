@@ -41,10 +41,10 @@ public class Main extends GLGame {
         instance.startGame();
     }
 
-    public static boolean  GL_ERROR_CHECKS = false;
+    public static boolean  GL_ERROR_CHECKS = true;
     public static boolean  DO_TIMING       = false;
     public static boolean  show            = false;
-    public static boolean  useShaders      = false;
+    public static boolean  useShaders      = true;
     public static boolean  useEmptyShaders      = false;
     public static boolean  matrixSetupMode = false;
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
@@ -73,7 +73,7 @@ public class Main extends GLGame {
         TimingHelper.setName(1, "Final_Stage0");
         TimingHelper.setName(2, "Final_Stage1");
         TimingHelper.setName(3, "Final_Stage2");
-        TimingHelper.setName(4, "Final_Stage3");
+//        TimingHelper.setName(4, "Final_Stage3");
         TimingHelper.setName(5, "Final_StageLast");
         TimingHelper.setName(6, "RenderScene");
         TimingHelper.setName(7, "PreFinalStage");
@@ -85,6 +85,8 @@ public class Main extends GLGame {
         TimingHelper.setName(13, "EngineUpdate");
         TimingHelper.setName(15, "DisplayUpdate");
         TimingHelper.setName(16, "CalcFPS");
+        TimingHelper.setName(17, "Final_Stage0to1Mipmap");
+        TimingHelper.setName(18, "Final_Stage1to2Mipmap");
     }
 
     @Override
@@ -96,19 +98,9 @@ public class Main extends GLGame {
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
         Engine.checkGLError("Post startup");
-        setFPSLimit(20); 
+//        setVSync(true);
         this.world = new World(1, 0x123);
         this.entSelf.move(0, 140, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glEnable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glDepthMask(true);
-        glColorMask(true, true, true, true);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
     }
 
     @Override
@@ -124,11 +116,7 @@ public class Main extends GLGame {
             switch (key) {
                 case Keyboard.KEY_F8:
                     if (isDown) {
-                        if (fpsLimit > 0) {
-                            setFPSLimit(0);
-                        } else {
-                            setFPSLimit(20); 
-                        }
+                        setVSync(!getVSync());
                     }
                     break;
                 case Keyboard.KEY_F3:
@@ -275,20 +263,8 @@ public class Main extends GLGame {
       GL11.glMatrixMode(GL11.GL_MODELVIEW);
       GL11.glLoadIdentity();
       if (!Main.useShaders) {
-          {
-              int tw = displayWidth;
-              int th = displayHeight;
-              float x = 0;
-              float y = 0;
-              Tess.instance.add(x + tw, y, 0, 1, 1);
-              Tess.instance.add(x, y, 0, 0, 1);
-              Tess.instance.add(x, y + th, 0, 0, 0);
-              Tess.instance.add(x + tw, y + th, 0, 1, 0);
-              Tess.instance.dontReset();
-          }
           glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
-          Tess.instance.draw(GL_QUADS);
-          Tess.instance.resetState();
+          Engine.drawFullscreenQuad();
       }
 //      GL11.glScalef(0.25F, 0.25F, 1);
 //      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
@@ -372,14 +348,15 @@ public class Main extends GLGame {
             int zPosP = GameMath.floor(lastCamZ)>>(4+Region.REGION_SIZE_BITS);
             if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
                 int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
-                if (i != 0) {
-                    System.out.println("Queued "+i+" regions for load");
-                }
+//                if (i != 0) {
+//                    System.out.println("Queued "+i+" regions for load");
+//                }
                 lastTimeLoad += 122L;
             }
             RegionRenderThread thread = Engine.regionRenderThread;
             thread.finishTasks();
             //HACKY
+            int nRegions = 0;
             Engine.worldRenderer.flushRegions();
             for (int xx = -RegionLoader.LOAD_DIST; xx <= RegionLoader.LOAD_DIST; xx++) {
                 for (int zz = -RegionLoader.LOAD_DIST; zz <= RegionLoader.LOAD_DIST; zz++) {
@@ -397,10 +374,13 @@ public class Main extends GLGame {
                         }
                         if (r.renderState >= Region.RENDER_STATE_MESHED) {
                             Engine.worldRenderer.putRegion(r);
+                            nRegions++;
                         }
                     }
                 }
             }
+            if (!startRender)
+            startRender = nRegions > 4;
         }
         Engine.worldRenderer.prepareRegions(world, f);
     }

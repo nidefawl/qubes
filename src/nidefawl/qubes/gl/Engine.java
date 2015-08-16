@@ -1,5 +1,7 @@
 package nidefawl.qubes.gl;
 
+import static nidefawl.qubes.GLGame.displayHeight;
+import static nidefawl.qubes.GLGame.displayWidth;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
@@ -70,6 +72,7 @@ public class Engine {
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
     public static Shaders            shaders            = new Shaders();
+    private static DisplayList fullscreenQuad;
 
     public static void generateLightMapTexture() {
 
@@ -242,15 +245,18 @@ public class Engine {
             fbComposite0.cleanUp();
         fbComposite0 = new FrameBuffer(displayWidth, displayHeight);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
+        fbComposite0.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR_MIPMAP_LINEAR);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB8);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB8);
+        fbComposite0.setFilter(GL_COLOR_ATTACHMENT3, GL_LINEAR_MIPMAP_LINEAR);
         fbComposite0.setup();
 //        fbComposite0 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
         if (fbComposite1 != null)
             fbComposite1.cleanUp();
         fbComposite1 = new FrameBuffer(displayWidth, displayHeight);
         fbComposite1.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
+        fbComposite1.setFilter(GL_COLOR_ATTACHMENT2, GL_LINEAR_MIPMAP_LINEAR);
         fbComposite1.setup();
         if (fbComposite2 != null)
             fbComposite2.cleanUp();
@@ -268,6 +274,26 @@ public class Engine {
         fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
         fbShadow.setShadowBuffer();
         fbShadow.setup();
+        if (fullscreenQuad == null) {
+            fullscreenQuad = nextFreeDisplayList();
+        }
+        {
+            Tess.instance.resetState();
+            int tw = displayWidth;
+            int th = displayHeight;
+            float x = 0;
+            float y = 0;
+            Tess.instance.add(x + tw, y, 0, 1, 1);
+            Tess.instance.add(x, y, 0, 0, 1);
+            Tess.instance.add(x, y + th, 0, 0, 0);
+            Tess.instance.add(x + tw, y + th, 0, 1, 0);
+            glNewList(fullscreenQuad.list, GL_COMPILE);
+            Tess.instance.draw(GL_QUADS);
+            glEndList();
+        }
+    }
+    public static void drawFullscreenQuad() {
+        glCallList(fullscreenQuad.list);
     }
 
     public static float readDepth(int x, int y) {

@@ -8,8 +8,6 @@ public interface IFrameBuffer {
 
     public abstract void bind();
 
-    public abstract void setupTexture(int texture, int format);
-
     public abstract int getTexture(int i);
 
     public abstract int getDepthTex();
