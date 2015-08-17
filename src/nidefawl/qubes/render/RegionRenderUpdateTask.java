@@ -31,6 +31,10 @@ public class RegionRenderUpdateTask {
     }
 
     public boolean finish(int id) {
+        if (!isValid(id)) {
+            region.renderState = Region.RENDER_STATE_INIT;
+            return true;
+        }
         if (this.region.renderState == Region.RENDER_STATE_MESHED) {
             if (!Engine.hasFree()) {
                 System.err.println("No free displaylists, waiting for free one before finishing world render task");
@@ -57,7 +61,7 @@ public class RegionRenderUpdateTask {
             try {
                 List<Mesh> mesh;
                 for (int i = 0; i < WorldRenderer.NUM_PASSES; i++) {
-                    mesh = mesher.mesh(w, this.region, i);
+                    mesh = mesher.mesh2(w, this.region, i);
                     tess.resetState();
                     tess.setColor(-1, 255);
                     tess.setBrightness(0xf00000);

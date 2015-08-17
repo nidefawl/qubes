@@ -1,5 +1,6 @@
 package nidefawl.qubes.vec;
 
+import nidefawl.game.Main;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Tess;
 
@@ -32,25 +33,27 @@ public class Mesh {
         int biome = (this.type >> 12) & 0xFF;
         int side = 0;
         float m = 1F;
-        switch (this.faceDir) {
-            case Dir.DIR_NEG_Y:
-                m = 0.5F;
-                break;
-            case Dir.DIR_POS_Y:
-                m = 1F;
-                break;
-            case Dir.DIR_NEG_Z:
-                m = 0.8F;
-                break;
-            case Dir.DIR_POS_Z:
-                m = 0.8F;
-                break;
-            case Dir.DIR_NEG_X:
-                m = 0.6F;
-                break;
-            case Dir.DIR_POS_X:
-                m = 0.6F;
-                break;
+        if (!Main.useShaders) {
+            switch (this.faceDir) {
+                case Dir.DIR_NEG_Y:
+                    m = 0.5F;
+                    break;
+                case Dir.DIR_POS_Y:
+                    m = 1F;
+                    break;
+                case Dir.DIR_NEG_Z:
+                    m = 0.8F;
+                    break;
+                case Dir.DIR_POS_Z:
+                    m = 0.8F;
+                    break;
+                case Dir.DIR_NEG_X:
+                    m = 0.6F;
+                    break;
+                case Dir.DIR_POS_X:
+                    m = 0.6F;
+                    break;
+            }
         }
         float alpha = 1F;
         int c = block.getColor();
@@ -66,14 +69,18 @@ public class Mesh {
         tess.setBrightness(0xf00000);
         float xl = this.du[0] + this.du[1] + this.du[2];
         float yl = this.dv[0] + this.dv[1] + this.dv[2];
-        tess.setAttr(block.getTextureFromSide(this.faceDir), 0, 0);
+        int tex = block.getTextureFromSide(this.faceDir);
+        tess.setAttr(tex, 0, 0);
         tess.setUV(0, 0);
         tess.add(this.v0[0], this.v0[1], this.v0[2]);
         tess.setUV(xl, 0);
+        tess.setAttr(tex, 0, 1);
         tess.add(this.v1[0], this.v1[1], this.v1[2]);
         tess.setUV(xl, yl);
+        tess.setAttr(tex, 0, 2);
         tess.add(this.v2[0], this.v2[1], this.v2[2]);
         tess.setUV(0, yl);
+        tess.setAttr(tex, 0, 3);
         tess.add(this.v3[0], this.v3[1], this.v3[2]);
     
     }

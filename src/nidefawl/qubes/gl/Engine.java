@@ -420,6 +420,20 @@ public class Engine {
     }
 
 
+
+    public static void flushRenderTasks() {
+        if (regionRenderThread != null) {
+            regionRenderThread.flush();
+            while (regionRenderThread.hasTasks()) {
+                regionRenderThread.finishTasks();
+                try {
+                    Thread.sleep(20);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
     public static void restartRenderThreads() {
         if (regionRenderThread != null) {
             while (regionRenderThread.hasTasks()) {

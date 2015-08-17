@@ -190,11 +190,45 @@ public class WorldRenderer {
         renderSecondPass(world, fTime);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
+        if (Main.renderWireFrame) {
+        }
         Shader.disable();
 //        if (!Main.useShaders) {
 //            glDisable(GL_LIGHTING);
 //        }
         glDisable(GL_FOG);
+    }
+    public void renderNormals(World world, float fTime) {
+        glPushAttrib(-1);
+        glDisable(GL_BLEND);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_ALPHA_TEST);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glLoadMatrix(Engine.getModelViewMatrix());
+        glDepthMask(false);
+        glDepthMask(true);
+        Shaders.normals.enable();
+        Engine.checkGLError("Shaders.normals.enable()");
+        glLineWidth(3.0F);
+        renderFirstPass(world, fTime);
+        Shader.disable();
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        glPopAttrib();
+        
     }
 
     private int rendered;

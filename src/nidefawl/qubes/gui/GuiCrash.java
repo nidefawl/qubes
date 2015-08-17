@@ -82,8 +82,6 @@ public class GuiCrash extends Gui {
             yp+=fontSmall.getLineHeight();
         }
 
-        GL11.glPopMatrix();
-
     }
 
 }

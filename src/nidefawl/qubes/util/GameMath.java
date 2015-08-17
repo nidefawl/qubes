@@ -68,7 +68,6 @@ public class GameMath {
 
 
     public static Matrix4f convertQuaternionToMatrix4f(Quaternion q, Matrix4f out) {
-        out.setIdentity();
         out.m00 = 1.0f - 2.0f * (q.getY() * q.getY() + q.getZ() * q.getZ());
         out.m01 = 2.0f * (q.getX() * q.getY() + q.getZ() * q.getW());
         out.m02 = 2.0f * (q.getX() * q.getZ() - q.getY() * q.getW());

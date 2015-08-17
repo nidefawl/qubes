@@ -271,18 +271,23 @@ public class Tess extends TesselatorState {
                 GL20.glVertexAttribPointer(ATTR_BLOCK, 3, true, false, stride*4, shortBuffer);
                 offset+=2;
             }
+            
             GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glEnableClientState");
             buffer.position(0);
             buffer.limit(getIdx(vertexcount) * 4);
             GL11.glDrawArrays(mode, 0, vertexcount);
+
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
             GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDisableClientState");
+
             if (useColorPtr)
                 GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
+
             if (useTexturePtr)
                 GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+
             if (useTexturePtr2||useTexturePtr3) {
                 GL13.glClientActiveTexture(GL13.GL_TEXTURE1);
                 GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
@@ -290,6 +295,7 @@ public class Tess extends TesselatorState {
             }
             if (useNormalPtr)
                 GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+
             if (useAttribPtr1)
                 GL20.glDisableVertexAttribArray(ATTR_BLOCK);
             

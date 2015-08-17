@@ -44,7 +44,6 @@ public abstract class GLGame implements Runnable {
     public int                 uniformCalls;
 
     public float avgFrameTime = 0F;
-    private GameError error;
 
     public GLGame(float tickLen) {
         this.timer = new Timer(20);
@@ -277,9 +276,6 @@ public abstract class GLGame implements Runnable {
         }
         if (Main.DO_TIMING)
             TimingHelper.end(16);
-        if (this.error != null) {
-            showErrorScreen("Error occured", Arrays.asList(new String[] { "There was an internal error"}), this.error);
-        }
     }
 
     private void checkResize() throws LWJGLException {
@@ -343,7 +339,7 @@ public abstract class GLGame implements Runnable {
     public abstract void initGame();
 
     public void setException(GameError error) {
-        this.error = error;
+        showErrorScreen("Error occured", Arrays.asList(new String[] { "There was an internal error"}), error);
     }
 
 }

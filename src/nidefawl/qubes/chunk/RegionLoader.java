@@ -37,7 +37,6 @@ public class RegionLoader {
     }
 
     public void flush() {
-        thread.flush();
         Iterator<Region> it = this.regions.iterator();
         while (it.hasNext()) {
             Region r = it.next();
@@ -51,7 +50,7 @@ public class RegionLoader {
         while (it.hasNext()) {
             Region r = it.next();
             if (r.renderState == Region.RENDER_STATE_COMPILED) {
-                r.renderState = Region.RENDER_STATE_MESHED;
+                r.renderState = Region.RENDER_STATE_INIT;
                 r.isCompiled = false;
             }
         }

@@ -42,6 +42,7 @@ uniform float far;
 uniform float viewWidth;
 uniform float viewHeight;
 uniform float aspectRatio;
+uniform int renderWireFrame;
 
 varying vec4 color;
 varying vec4 texcoord;
@@ -56,6 +57,8 @@ varying vec3 binormal;
 varying vec3 worldNormal;
 
 varying float materialIDs;
+
+varying highp vec3 triangle;
 
 varying float vdistance;
 varying float idCheck;
@@ -384,24 +387,24 @@ void main() {
 	
 	vec4 frag2;
 	
-	if (vdistance < bump_distance) {
+	// if (vdistance < bump_distance) {
 	
-			vec3 bump = GetTexture(normals, parallaxCoord.st).rgb * 2.0f - 1.0f;
+	// 		vec3 bump = GetTexture(normals, parallaxCoord.st).rgb * 2.0f - 1.0f;
 			
-			float bumpmult = clamp(bump_distance * fademult - vdistance * fademult, 0.0f, 1.0f) * NORMAL_MAP_MAX_ANGLE;
-	              bumpmult *= 1.0f - (clamp(spec.g * 1.0f - 0.0f, 0.0f, 1.0f) * 0.97f);
+	// 		float bumpmult = clamp(bump_distance * fademult - vdistance * fademult, 0.0f, 1.0f) * NORMAL_MAP_MAX_ANGLE;
+	//               bumpmult *= 1.0f - (clamp(spec.g * 1.0f - 0.0f, 0.0f, 1.0f) * 0.97f);
 				  
-			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+	// 		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 
-			//bump += CalculateRainBump(worldPosition.xyz);
+	// 		//bump += CalculateRainBump(worldPosition.xyz);
 			
-			frag2 = vec4(bump * tbnMatrix * 0.5 + 0.5, 1.0);
-			// albedo = vec4(GetTexture(normals, parallaxCoord.st).rgb * 2.0f - 1.0f,1.0f);
+	// 		frag2 = vec4(bump * tbnMatrix * 0.5 + 0.5, 1.0);
+	// 		// albedo = vec4(GetTexture(normals, parallaxCoord.st).rgb * 2.0f - 1.0f,1.0f);
 			
-	} else {
+	// } else {
 	
 			frag2 = vec4((normal) * 0.5f + 0.5f, 1.0f);					
-	}
+	// }
 
 		//sunlightVisibility *= clamp(dot(frag2.rgb * 2.0f - 1.0f, normalize(sunPosition.xyz)), 0.0f, 1.0f);
 
@@ -419,6 +422,13 @@ void main() {
 
 	//albedo.rgb *= mix(1.0f, 0.9f, darkFactor);
 	albedo.rgb = pow(albedo.rgb, vec3(mix(1.0f, 1.25f, darkFactor)));
+
+	// if 
+	if (renderWireFrame) {
+	    highp vec3 d = fwidth(triangle);
+	    highp vec3 tdist = smoothstep(vec3(0.0), d*3.0f, triangle);
+	    albedo.rgb = mix(vec3(1,0,0), albedo.rgb, min(min(tdist.x, tdist.y), tdist.z));
+	}
 
 
 

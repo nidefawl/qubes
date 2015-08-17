@@ -116,7 +116,6 @@ public class Region {
         if (displayList == null)
             displayList = Engine.nextFreeDisplayList();
         this.lastcolor = 0;
-        GL11.glColor3f(0F, 0F, 0F);
         
         for (int pass = 0; pass < WorldRenderer.NUM_PASSES; pass++) {
             facesRendered[pass] = 0;

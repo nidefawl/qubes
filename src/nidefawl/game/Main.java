@@ -47,6 +47,8 @@ public class Main extends GLGame {
     public static boolean  useShaders      = true;
     public static boolean  useEmptyShaders      = false;
     public static boolean  matrixSetupMode = false;
+    public static boolean  renderWireFrame = false;
+    
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
     private long               lastTimeLoad          = System.currentTimeMillis();
 
@@ -119,6 +121,11 @@ public class Main extends GLGame {
                         setVSync(!getVSync());
                     }
                     break;
+                case Keyboard.KEY_F9:
+                    if (isDown) {
+                        renderWireFrame = !renderWireFrame;
+                    }
+                    break;
                 case Keyboard.KEY_F3:
                     if (isDown) {
                         show = !show;
@@ -156,7 +163,9 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F6:
                     if (isDown) {
+                        Engine.flushRenderTasks();
                         useShaders = !useShaders;
+                        Engine.regionLoader.reRender();
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -211,18 +220,25 @@ public class Main extends GLGame {
       }
 
       if (Main.DO_TIMING) TimingHelper.start(6);
+      glDisable(GL_CULL_FACE);
       Engine.getSceneFB().bind();
       Engine.getSceneFB().clearFrameBuffer();
-      //                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+//      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       Engine.worldRenderer.renderWorld(this.world, fTime);
+//      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       if (this.handleClick) {
           this.handleClick = false;
           vUnproject = Engine.unproject(winX, winY);
+      }
+      if (Main.renderWireFrame) {
+          Engine.worldRenderer.renderNormals(this.world, fTime);
       }
       Engine.getSceneFB().unbindCurrentFrameBuffer();
       if (Main.DO_TIMING) TimingHelper.end(6);
       if (Main.DO_TIMING) TimingHelper.start(7);
 
+      glEnable(GL_CULL_FACE);
 
       glDisable(GL_LIGHTING);
       glDisable(GL_COLOR_MATERIAL);
@@ -315,7 +331,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 2224000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 224000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Engine.shaders.reload();
 //            Engine.textures.refreshNoiseTextures();

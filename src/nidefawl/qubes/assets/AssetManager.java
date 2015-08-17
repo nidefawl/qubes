@@ -46,12 +46,18 @@ public class AssetManager {
             Shader shader = new Shader(name);
             InputStream fis = null;
             InputStream fis2 = null;
+            InputStream fis3 = null;
             try {
                 fis = new FileInputStream(new File(folder, name + ".fsh"));
                 fis = new BufferedInputStream(fis);
                 fis2 = new FileInputStream(new File(folder, name + ".vsh"));
                 fis2 = new BufferedInputStream(fis2);
-                shader.load(fis, fis2, link);
+                File file = new File(folder, name + ".gsh");
+                if (file.exists()) {
+                    fis3 = new FileInputStream(file);
+                    fis3 = new BufferedInputStream(fis3);
+                }
+                shader.load(fis, fis2, fis3, link);
             } catch (GameError e) {
                 throw e;
             } catch (Exception e) {
@@ -64,6 +70,9 @@ public class AssetManager {
                     }
                     if (fis2 != null) {
                         fis2.close();
+                    }
+                    if (fis3 != null) {
+                        fis3.close();
                     }
                 } catch (Exception e) {
                     throw new GameError("Failed closing file", e);

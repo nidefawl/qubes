@@ -15,19 +15,23 @@ import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
+    private static final int SOUTH      = 0;
+    private static final int NORTH      = 1;
+    private static final int EAST       = 2;
+    private static final int WEST       = 3;
+    private static final int TOP        = 4;
+    private static final int BOTTOM     = 5;
+    private static final int CHUNK_WIDTH     = 16<<Region.REGION_SIZE_BITS;    
+    static class AO {
+        int a0, a1, a2, a3;
+    }
     private int[]           dims;
     private int[]           mask;
+    private BlockSurface[]           mask2;
     boolean                 hasSecondPass;
     boolean                 translucentOnly  = false;
     ArrayList<Mesh> meshes = new ArrayList<Mesh>();
 
-
-    public static int mod(int x, int m) {
-        int result = x % m;
-        return result < 0 ? result + m : result;
-    }
-
-    
 
     private boolean isTranslucent(int a) {
         if (a > 0 && !Block.blocksLight(a)) {
@@ -35,26 +39,61 @@ public class Mesher {
         }
         return false;
     }
-    
-    private void setMask(int n, int a, int b, int b1, int b2) {
-        if (isTranslucent(a)!=translucentOnly) {
-            hasSecondPass = true;
-            a = 0;
+
+
+    private int computeHeight2(int i, int j, int n, int w, int v, int u, BlockSurface c) {
+        int h = 1;
+        while (j + h < dims[v]) {
+            for (int k = 0; k < w; ++k) {
+                BlockSurface bs = mask2[n + k + h * dims[u]];
+                if (bs == null || !c.mergeWith(bs)) {
+                    return h;
+                }
+            }
+            h++;
         }
-        if (isTranslucent(b)!=translucentOnly) {
-            hasSecondPass = true;
-            b = 0;
-        }
-        if ((a != 0) == (b != 0) && (b1 == b2)) {
-            mask[n] = 0;
-        } else if (a != 0) {
-            mask[n] = a | b1<<12;
-        } else if (b != 0) {
-            mask[n] = -(b | b2<<12);
-        }
+        return h;
     }
 
-    public ArrayList<Mesh> mesh(World world, Region region, int pass) {
+
+    private int computeHeight(int i, int j, int n, int w, int v, int u, int c) {
+        int h = 1;
+        while (j + h < dims[v]) {
+            for (int k = 0; k < w; ++k) {
+                if (c != mask[n + k + h * dims[u]]) {
+                    return h;
+                }
+            }
+            h++;
+        }
+        return h;
+    }
+
+    BlockSurface bs1 = null;
+    BlockSurface bs2 = null;
+    private void setMask2(int n) {
+        if (bs1 != null && bs1.transparent!=translucentOnly) {
+            hasSecondPass = true;
+            bs1 = null;
+        }
+        if (bs2 != null && bs2.transparent!=translucentOnly) {
+            hasSecondPass = true;
+            bs2 = null;
+        }
+        if ((bs1 != null) == (bs2 != null)) {
+            mask2[n] = null;
+        } else if (bs1 != null) {
+            mask2[n] = bs1;
+        } else if (bs2 != null) {
+            mask2[n] = bs2;
+        }
+    }
+    /**
+     * 
+     */
+    Region region;
+    public ArrayList<Mesh> mesh2(World world, Region region, int pass) {
+        this.region = region;
         if (pass == 0) {
             hasSecondPass = false;
         }
@@ -68,84 +107,74 @@ public class Mesher {
             // Sweep over 3-axes
             if (dims == null) {
                 dims = new int[] { 16 * REGION_SIZE, world.worldHeight, 16 * REGION_SIZE };
-                mask = new int[Math.max(dims[1], dims[2]) * Math.max(dims[0], dims[1])];
+                mask2 = new BlockSurface[Math.max(dims[1], dims[2]) * Math.max(dims[0], dims[1])];
             }
             dims[1] = world.worldHeight;
             dims[1] = region.getHighestBlock() + 1;
-            Arrays.fill(mask, 0);
-            int nrm2[] = new int[] { 0, 0, 0 };
-            int du[] = new int[] { 0, 0, 0 };
-            int dv[] = new int[] { 0, 0, 0 };
+            Arrays.fill(mask2, null);
+            
             int x[] = new int[] { 0, 0, 0 };
-            int q[] = new int[] { 0, 0, 0 };
-            for (int d = 0; d < 3; ++d) {
-                int i, j, k, l, w, h;
-                int u = mod(d + 1, 3);
-                int v = mod(d + 2, 3);
+            int dir[] = new int[] { 0, 0, 0 };
+            for (int axis = 0; axis < 3; ++axis) {
+                int u = (axis + 1) % 3;
+                int v = (axis + 2) % 3;
                 x[0] = x[1] = x[2] = 0;
-                q[0] = q[1] = q[2] = 0;
+                dir[0] = dir[1] = dir[2] = 0;
                 int masklen = dims[u] * dims[v];
-                q[d] = 1;
-                for (x[d] = -1; x[d] < dims[d];) {
-                    // Compute mask
+                dir[axis] = 1;
+                for (x[axis] = -1; x[axis] < dims[axis];) {
+                    
                     int n = 0;
                     for (x[v] = 0; x[v] < dims[v]; ++x[v]) {
                         for (x[u] = 0; x[u] < dims[u]; ++x[u]) {
-                            int a = (x[d] >= 0  ? region.getTypeId(x[0], x[1], x[2]) : 0);
-                            int b = (x[d] < dims[d] - 1 ? region.getTypeId(x[0] + q[0], x[1] + q[1], x[2] + q[2]) : 0);
-                            int b1 = (x[d] >= 0  ? region.getBiome(x[0], x[1], x[2]) : 0);
-                            int b2 = (x[d] < dims[d] - 1 ? region.getBiome(x[0] + q[0], x[1] + q[1], x[2] + q[2]) : 0);
-                            setMask(n, a, b, b1, b2);
+                            bs1 = null;
+                            bs2 = null;
+                            if (x[axis] >= 0) {
+                                bs1 = getBlockSurface(x[0], x[1], x[2], 0, axis);
+                            }
+                            if (x[axis] < dims[axis] - 1) {
+                                bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
+                            }
+                            setMask2(n);
                             n++;
                         }
                     }
-                    // Increment x[d]
-                    ++x[d];
-                    // Generate mesh for mask using lexicographic ordering
+                    
+                    ++x[axis];
                     n = 0;
-                    for (j = 0; j < dims[v]; ++j) {
-                        for (i = 0; i < dims[u];) {
-                            int c = mask[n];
-                            if (mask[n] != 0) {
+                    for (int j = 0; j < dims[v]; ++j) {
+                        for (int i = 0; i < dims[u];) {
+                            BlockSurface c = mask2[n];
+                            if (c != null) {
                                 // Compute width
-                                w = 1;
-                                while (n + w < masklen && c == mask[n + w] && i + w < dims[u]) {
+                                int w = 1;
+                                while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(c)) && i + w < dims[u]) {
                                     w++;
                                 }
+                                int h = computeHeight2(i, j, n, w, v, u, c);
                                 // Compute height (this is slightly awkward
                                 boolean done = false;
-                                for (h = 1; !done && j + h < dims[v]; ++h) {
-                                    for (k = 0; !done && k < w; ++k) {
-                                        if (c != mask[n + k + h * dims[u]]) {
-                                            done = true;
-                                            break;
-                                        }
-                                    }
-                                    if (done) {
-                                        break;
-                                    }
-                                }
-                                // Add quad
-                                x[u] = i;
-                                x[v] = j;
-                                du[0] = du[1] = du[2] = 0;
-                                dv[0] = dv[1] = dv[2] = 0;
-                                nrm2[0] = nrm2[1] = nrm2[2] = 0;
-                                if (c > 0) {
-                                    dv[v] = h;
-                                    du[u] = w;
-                                } else {
-                                    c = -c;
-                                    du[v] = h;
-                                    dv[u] = w;
-                                }
+                                boolean add = true;
 
+                                int du[] = new int[] { 0, 0, 0 };
+                                int dv[] = new int[] { 0, 0, 0 };
+                                // Add quad
+                                if (c.face == 1) {
+                                    x[u] = i+w;
+                                    x[v] = j;
+                                    du[u] = -w;
+                                    dv[v] = h;
+                                } else {
+                                    x[u] = i;
+                                    x[v] = j;
+                                    du[u] = w;
+                                    dv[v] = h;
+                                }
 
                                 int n1 = du[1] * dv[2] - dv[1] * du[2];
                                 int n2 = du[2] * dv[0] - dv[2] * du[0];
                                 int n3 = du[0] * dv[1] - dv[0] * du[1];
-                                boolean add = true;
-                                if (isTranslucent(c&0xFFF) && !(n2 > 0)) {
+                                if (c.transparent && !(n2 > 0)) {
                                     add = false;
 //                                    continue;
                                 }
@@ -165,7 +194,7 @@ public class Mesher {
                                     if (n3 > 0) faceDir = Dir.DIR_POS_Z;
                                     if (n3 < 0) faceDir = Dir.DIR_NEG_Z;
                                     
-                                    Mesh face = new Mesh(c,
+                                    Mesh face = new Mesh(c.type,
                                             new int[] {x[0],                 x[1],                 x[2]                   },
                                             new int[] {x[0] + du[0],         x[1] + du[1],         x[2] + du[2]           },
                                             new int[] {x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]   },
@@ -176,10 +205,11 @@ public class Mesher {
                                             faceDir);
                                     meshes.add(face);
                                 }
-                                // Zero-out mask
-                                for (l = 0; l < h; ++l)
-                                    for (k = 0; k < w; ++k) {
-                                        mask[n + k + l * dims[u]] = 0;
+
+                                // Zero-out mask2
+                                for (int l = 0; l < h; ++l)
+                                    for (int k = 0; k < w; ++k) {
+                                        mask2[n + k + l * dims[u]] = null;
                                     }
                                 // Increment counters and continue
                                 i += w;
@@ -197,4 +227,22 @@ public class Mesher {
         return meshes;
     }
 
+
+
+    private BlockSurface getBlockSurface(int i, int j, int k, int l, int axis) {
+        int type = region.getTypeId(i, j, k);
+        if (type > 0) {
+
+            BlockSurface surface = new BlockSurface();
+            surface.type = type;
+            surface.transparent = isTranslucent(type);
+            surface.x = i;
+            surface.y = j;
+            surface.z = k;
+            surface.face = l;
+            surface.axis = axis;
+            return surface;
+        }
+        return null;
+    }
 }

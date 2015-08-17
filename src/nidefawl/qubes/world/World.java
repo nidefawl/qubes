@@ -6,6 +6,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TerrainGenerator;
+import nidefawl.qubes.worldgen.TestTerrain2;
 
 public class World {
     HashSet<Entity>      entities = new HashSet<>();

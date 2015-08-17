@@ -16,6 +16,7 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -32,6 +33,7 @@ public class Shader {
     private int setProgramUniformCalls;
 
     HashMap<String, Integer> missinglocations    = new HashMap<String, Integer>();
+    private int geometryShader;
     public int getUniformLocation(String name) {
         Integer blub = locations.get(name);
         if (blub != null) {
@@ -56,19 +58,29 @@ public class Shader {
         this.buffer = BufferUtils.createIntBuffer(1);
         Shaders.register(this);
     }
-    public void load(InputStream streamfsh, InputStream streamvsh, boolean link) throws IOException {
+    public void load(InputStream streamfsh, InputStream streamvsh, InputStream streamgsh, boolean link) throws IOException {
         BufferedReader readerfsh = streamfsh != null ? new BufferedReader(new InputStreamReader(streamfsh)) : null;
         BufferedReader readervsh = streamvsh != null ? new BufferedReader(new InputStreamReader(streamvsh)) : null;
+        BufferedReader readergsh = streamgsh != null ? new BufferedReader(new InputStreamReader(streamgsh)) : null;
         try {
 
             String fragCode = "";
             String vertCode = "";
+            String geomCode = "";
             String line;
             while (readerfsh != null && (line = readerfsh.readLine()) != null) {
                 fragCode += line + "\r\n";
             }
             while (readervsh != null && (line = readervsh.readLine()) != null) {
                 vertCode += line + "\r\n";
+            }
+            while (readergsh != null && (line = readergsh.readLine()) != null) {
+                if (!line.startsWith("//")) {
+                    line = line.trim();
+                    if (!line.isEmpty()) {
+                        geomCode += line + "\r\n";    
+                    }
+                }
             }
             if (vertCode.isEmpty() && fragCode.isEmpty()) {
                 throw new GameError("Failed reading shader source: "+name);
@@ -112,6 +124,25 @@ public class Shader {
                     throw new ShaderCompileError(this.name+" vertex", log);
                 }
             }
+
+
+            if (!geomCode.isEmpty()) {
+                this.geometryShader = glCreateShaderObjectARB(ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);
+                Engine.checkGLError("glCreateShaderObjectARB");
+                if (this.geometryShader == 0) {
+                    throw new GameError("Failed creating geometry shader");
+                }
+
+                glShaderSourceARB(this.geometryShader, geomCode);
+                Engine.checkGLError("glShaderSourceARB");
+                glCompileShaderARB(this.geometryShader);
+                String log = getLog(this.geometryShader);
+                Engine.checkGLError("getLog");
+                if (getStatus(this.geometryShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
+                    Engine.checkGLError("getStatus");
+                    throw new ShaderCompileError(this.name+" geometry", log);
+                }
+            }
             this.shader = glCreateProgramObjectARB();
             Engine.checkGLError("glCreateProgramObjectARB");
             if (this.fragShader > 0) {
@@ -122,6 +153,10 @@ public class Shader {
                 glAttachObjectARB(this.shader, this.vertShader);
                 Engine.checkGLError("glAttachObjectARB");
             }
+            if (this.geometryShader > 0) {
+                glAttachObjectARB(this.shader, this.geometryShader);
+                Engine.checkGLError("glAttachObjectARB");
+            }
             if (link) {
                 linkProgram();
             }
@@ -130,6 +165,8 @@ public class Shader {
                 readerfsh.close();
             if (readervsh != null)
                 readervsh.close();
+            if (readergsh != null)
+                readergsh.close();
         }
     }
     public void bindAttribute(int attr, String attrName) {

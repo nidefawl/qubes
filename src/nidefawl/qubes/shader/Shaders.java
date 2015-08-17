@@ -16,7 +16,7 @@ public class Shaders {
     public static void register(Shader shader) {
         allShaders[numShaders++] = shader;
     }
-
+    boolean startup = true;
     public static Shader       waterShader;
     public static Shader       composite1;
     public static Shader       composite2;
@@ -28,6 +28,7 @@ public class Shaders {
     public static Shader       terrain;
     public static Shader       testShader;
     public static Shader       shadow;
+    public static Shader       normals;
 
     public void initShaders() {
         try {
@@ -86,10 +87,23 @@ public class Shaders {
             new_shadow.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_shadow.linkProgram();
             Shaders.shadow = new_shadow;
+            Shader new_normals = assetMgr.loadShader("shaders/visnormals", false);
+            if (Shaders.normals != null)
+                Shaders.normals.release();
+            new_normals.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
+            new_normals.linkProgram();
+            Shaders.normals = new_normals;
+            startup = false;
+            System.out.println("!");
         } catch (ShaderCompileError e) {
-            Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
-            System.out.println("shader "+e.getName()+" failed to compile");
-            System.out.println(e.getLog());
+            e.printStackTrace();
+            if (startup) {
+                Main.instance.setException(e);
+            } else {
+                Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
+                System.out.println("shader "+e.getName()+" failed to compile");
+                System.out.println(e.getLog());
+            }
         }
     }
 
@@ -105,6 +119,7 @@ public class Shaders {
 
     public static void setUniforms(Shader sh, float fTime) {
         WorldRenderer wr = Engine.worldRenderer;
+        sh.setProgramUniform1i("renderWireFrame", Main.renderWireFrame? 1 : 0);
         sh.setProgramUniform1f("near", Engine.znear);
         sh.setProgramUniform1f("far", Engine.zfar);
         sh.setProgramUniform1f("viewWidth", Main.displayWidth);

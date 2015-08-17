@@ -14,6 +14,7 @@ varying vec3 worldPosition;
 attribute vec4 blockinfo; // x == blockid, y == rendertype, z = metadata
 
 uniform int worldTime;
+uniform int renderWireFrame;
 uniform vec3 cameraPosition;
 uniform float frameTimeCounter;
 uniform float rainStrength;
@@ -42,6 +43,10 @@ varying float materialIDs;
 varying mat3 tbnMatrix;
 varying vec4 vertexPos;
 varying vec3 vertexViewVector;
+
+varying highp vec3 triangle;
+
+
 flat varying int blockTexture;
 
 
@@ -154,34 +159,10 @@ float RepeatingImpulse(in float x, in float scale)
 
 	return Impulse(time, 3.0f / scale);
 }
-
-void main() {
-
-	color = gl_Color;
-
-	blockTexture = int(blockinfo.x);
-
-	texcoord = gl_MultiTexCoord0;
-
-	lmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
-	
-	vec4 viewpos = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
-	vec4 position = viewpos;
-
-	worldPosition = viewpos.xyz + cameraPosition.xyz;
+float setMaterial() {
 
 	float waveCoeff = 0.0f;
-
-	
-	//Entity checker
-	// if (blockinfo.x == 1920.0f)
-	// {
-	// 	texcoord.st = vec2(0.2f);
-	// }
-	
-	//Gather materials
 	materialIDs = 1.0f;
-
 	//Grass
 	if  (  blockinfo.x == 31.0
 
@@ -290,6 +271,152 @@ void main() {
 	if (blockinfo.x == 51) {
 		materialIDs = max(materialIDs, 33.0f);
 	}
+	return waveCoeff;
+}
+
+void main() {
+	color = gl_Color;
+
+	blockTexture = int(blockinfo.x);
+
+	texcoord = gl_MultiTexCoord0;
+
+	lmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
+	
+	vec4 viewpos = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
+	vec4 position = viewpos;
+
+	worldPosition = viewpos.xyz + cameraPosition.xyz;
+	if (renderWireFrame) {
+		if (blockinfo.y == 0) {
+	    	triangle = vec3(0, 0, 255);
+		}
+		if (blockinfo.y == 1) {
+	    	triangle = vec3(0, 255, 0);
+		}
+		if (blockinfo.y == 2) {
+	    	triangle = vec3(255, 0, 0);
+		}
+		if (blockinfo.y == 3) {
+	    	triangle = vec3(0, 0, 255);
+		}
+	}
+
+	//Entity checker
+	// if (blockinfo.x == 1920.0f)
+	// {
+	// 	texcoord.st = vec2(0.2f);
+	// }
+	
+	//Gather materials
+	setMaterial();
+position.xyz += cameraPosition.xyz;
+
+	vec4 locposition = gl_ModelViewMatrix * gl_Vertex;
+	
+	vdistance = sqrt(locposition.x * locposition.x + locposition.y * locposition.y + locposition.z * locposition.z);
+
+	position.xyz -= cameraPosition.xyz;
+
+	vec4 glpos = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+	// glpos.x*=2.0f;
+	gl_Position = glpos;
+	
+
+
+
+	
+
+	// float colorDiff = abs(color.r - color.g);
+	// 	  colorDiff += abs(color.r - color.b);
+	// 	  colorDiff += abs(color.g - color.b);
+
+	// if (colorDiff < 0.001f && blockinfo.x != -1.0f && blockinfo.x != 63 && blockinfo.x != 68 && blockinfo.x != 323) {
+
+	// 	float lum = color.r + color.g + color.b;
+	// 		  lum /= 3.0f;
+
+	// 	if (lum < 0.92f) {
+	// 		color.rgb = vec3(1.0f);
+	// 	}
+
+	// }	
+	
+	gl_FogFragCoord = gl_Position.z;
+	
+	
+	normal = normalize(gl_NormalMatrix * gl_Normal);
+	worldNormal = gl_Normal;
+
+	float texFix = -1.0f;
+
+	#ifdef TEXTURE_FIX
+	texFix = 1.0f;
+	#endif
+
+
+	if (gl_Normal.x > 0.5) {
+		//  1.0,  0.0,  0.0
+		tangent  = normalize(gl_NormalMatrix * vec3( 0.0,  0.0,  texFix));
+		binormal = normalize(gl_NormalMatrix * vec3( 0.0, -1.0,  0.0));
+		if (abs(materialIDs - 32.0f) < 0.1f)								//Optifine glowstone fix
+			color *= 1.75f;
+	} else if (gl_Normal.x < -0.5) {
+		// -1.0,  0.0,  0.0
+		tangent  = normalize(gl_NormalMatrix * vec3( 0.0,  0.0,  1.0));
+		binormal = normalize(gl_NormalMatrix * vec3( 0.0, -1.0,  0.0));
+		if (abs(materialIDs - 32.0f) < 0.1f)								//Optifine glowstone fix
+			color *= 1.75f;
+	} else if (gl_Normal.y > 0.5) {
+		//  0.0,  1.0,  0.0
+		tangent  = normalize(gl_NormalMatrix * vec3( 1.0,  0.0,  0.0));
+		binormal = normalize(gl_NormalMatrix * vec3( 0.0,  0.0,  1.0));
+	} else if (gl_Normal.y < -0.5) {
+		//  0.0, -1.0,  0.0
+		tangent  = normalize(gl_NormalMatrix * vec3( 1.0,  0.0,  0.0));
+		binormal = normalize(gl_NormalMatrix * vec3( 0.0,  0.0,  1.0));
+	} else if (gl_Normal.z > 0.5) {
+		//  0.0,  0.0,  1.0
+		tangent  = normalize(gl_NormalMatrix * vec3( 1.0,  0.0,  0.0));
+		binormal = normalize(gl_NormalMatrix * vec3( 0.0, -1.0,  0.0));
+	} else if (gl_Normal.z < -0.5) {
+		//  0.0,  0.0, -1.0
+		tangent  = normalize(gl_NormalMatrix * vec3( texFix,  0.0,  0.0));
+		binormal = normalize(gl_NormalMatrix * vec3( 0.0, -1.0,  0.0));
+	}
+	
+	tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
+                     tangent.y, binormal.y, normal.y,
+                     tangent.z, binormal.z, normal.z);
+
+	vertexPos = gl_Vertex;	
+}
+void main2() {
+
+	color = gl_Color;
+
+	blockTexture = int(blockinfo.x);
+
+	texcoord = gl_MultiTexCoord0;
+
+	lmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
+	
+	vec4 viewpos = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
+	vec4 position = viewpos;
+
+	worldPosition = viewpos.xyz + cameraPosition.xyz;
+
+	float waveCoeff = setMaterial();
+
+	
+	//Entity checker
+	// if (blockinfo.x == 1920.0f)
+	// {
+	// 	texcoord.st = vec2(0.2f);
+	// }
+	
+	//Gather materials
+	
 
 	float tick = FRAME_TIME;
 	
