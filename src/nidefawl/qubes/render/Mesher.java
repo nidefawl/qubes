@@ -19,6 +19,7 @@ public class Mesher {
     private final int[]    dims;
     private BlockSurface[] mask2;
     final static BlockSurfaceAir air = new BlockSurfaceAir();
+    @SuppressWarnings("rawtypes")
     List[] meshes = new List[WorldRenderer.NUM_PASSES];
     public Mesher() {
         for (int i = 0; i < WorldRenderer.NUM_PASSES; i++)

@@ -33,7 +33,6 @@ public class Engine {
     public final static int SHADOW_BUFFER_SIZE = 2048;
     private static FloatBuffer    colorBuffer;
     private static IntBuffer      viewport;
-    private static FloatBuffer    winZ;
     private static FloatBuffer    position;
     private static FloatBuffer    mat;
 
@@ -90,7 +89,6 @@ public class Engine {
         colorBuffer = BufferUtils.createFloatBuffer(16);
         viewport = BufferUtils.createIntBuffer(16);
         mat = BufferUtils.createFloatBuffer(16);
-        winZ = BufferUtils.createFloatBuffer(1);
         position = BufferUtils.createFloatBuffer(3);
         projection = new BufferedMatrix();
         view = new BufferedMatrix();

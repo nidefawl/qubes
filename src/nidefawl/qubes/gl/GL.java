@@ -20,7 +20,7 @@ public class GL {
     }
 
     public static List<String> validateCaps() {
-        ArrayList<String> missingExt = new ArrayList();
+        ArrayList<String> missingExt = new ArrayList<>();
         if (!caps.OpenGL30) {
             missingExt.add("OpenGL >= 3.0");
         }
