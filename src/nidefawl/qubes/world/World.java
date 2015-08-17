@@ -9,6 +9,7 @@ import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TerrainGenerator;
+import nidefawl.qubes.worldgen.TerrainGenerator2;
 
 public class World {
     public static final float MAX_XZ = RegionLoader.MAX_REGION_XZ*Region.REGION_SIZE*Chunk.SIZE;
@@ -39,7 +40,7 @@ public class World {
         this.worldHeight = 1 << worldHeightBits;
         this.worldHeightMinusOne = (1 << worldHeightBits) - 1;
         this.worldSeaLevel = 59;//1 << (worldHeightBits - 1);
-        this.generator = new TerrainGenerator(this, this.seed);
+        this.generator = new TerrainGenerator2(this, this.seed);
         
     }
 
