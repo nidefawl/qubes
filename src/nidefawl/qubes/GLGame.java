@@ -15,9 +15,7 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiCrash;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.Timer;
-import nidefawl.qubes.util.TimingHelper;
+import nidefawl.qubes.util.*;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
@@ -30,7 +28,6 @@ public abstract class GLGame implements Runnable {
     public static int          displayHeight;
     public static boolean      glDebug    = false;
     public final Timer         timer;
-    private int                fpsCounter = 0;
     public int                 lastFPS    = 0;
     private long               timeLastFPS;
     private long               timeLastFrame;
@@ -41,10 +38,7 @@ public abstract class GLGame implements Runnable {
     public static int          ticksran;
     public static float        renderTime;
     public int                 tick       = 0;
-    public int                 uniformCalls;
-
-    public float avgFrameTime = 0F;
-
+    
     public GLGame(float tickLen) {
         this.timer = new Timer(20);
     }
@@ -168,7 +162,10 @@ public abstract class GLGame implements Runnable {
                 Thread.sleep(120L);
             } catch (InterruptedException interruptedexception) {
             }
+            
             initDisplay();
+            
+            Mouse.setGrabbed(false);
             GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
             GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GL11.glShadeModel(GL11.GL_FLAT);
@@ -248,6 +245,7 @@ public abstract class GLGame implements Runnable {
         if (Main.DO_TIMING)
             TimingHelper.end(11);
         render(renderTime);
+        postRenderUpdate(renderTime);
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();
         //        if (Main.DO_TIMING) TimingHelper.end(14);
@@ -262,16 +260,16 @@ public abstract class GLGame implements Runnable {
             TimingHelper.start(16);
         long now = System.nanoTime();
         float took = timer.el;
-        avgFrameTime = avgFrameTime * 0.95F + (took) * 0.05F;
+        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("Post render");
-        fpsCounter++;
+        Stats.fpsCounter++;
         double l = (timer.absTime - timeLastFPS) / 1000.0D;
-        uniformCalls = Shaders.getAndResetNumCalls();
+        Stats.uniformCalls = Shaders.getAndResetNumCalls();
         if (l >= 1) {
             timeLastFPS = timer.absTime;
-            lastFPS = fpsCounter;
-            fpsCounter = 0;
+            lastFPS = Stats.fpsCounter;
+            Stats.fpsCounter = 0;
             onStatsUpdated(1.0F);
         }
         if (Main.DO_TIMING)
@@ -331,6 +329,8 @@ public abstract class GLGame implements Runnable {
     public abstract void input(float f);
 
     public abstract void preRenderUpdate(float f);
+
+    public abstract void postRenderUpdate(float f);
 
     public abstract void onResize();
 

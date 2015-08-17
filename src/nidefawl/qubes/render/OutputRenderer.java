@@ -12,6 +12,8 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.TimingHelper;
+import nidefawl.qubes.vec.Vec3;
+import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.*;
 
@@ -177,5 +179,4 @@ public class OutputRenderer {
         Shader.disable();
         if (Main.DO_TIMING) TimingHelper.end(5);
     }
-
 }

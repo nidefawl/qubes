@@ -16,7 +16,7 @@ public class TestTerrain2 extends AbstractGen {
     }
 
     @Override
-    public Chunk getChunkAt(int chunkX, int chunkZ) {
+    public Chunk generateChunk(int chunkX, int chunkZ) {
         long rx = chunkX * 0x589638F52CL;
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);
@@ -38,6 +38,7 @@ public class TestTerrain2 extends AbstractGen {
         for (int x = b-4; x < 16-b-4; x++) {
             for (int z = b; z < 16-b; z++) {
                 for (int y = c; y < c+d; y++) {
+                    System.out.println((chunk.getBlockX()+x)+"/"+(y)+"/"+(chunk.getBlockZ()+z));
                     chunk.blocks[y<<8|z<<4|x] = 1;
                 }
             }

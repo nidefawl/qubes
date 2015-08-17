@@ -3,12 +3,20 @@ package nidefawl.qubes.world;
 import java.util.HashSet;
 
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.Entity;
+import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.Flags;
+import nidefawl.qubes.util.RayTrace;
+import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TerrainGenerator;
 import nidefawl.qubes.worldgen.TestTerrain2;
 
 public class World {
+    public static final float MAX_XZ = RegionLoader.MAX_REGION_XZ*Region.REGION_SIZE*Chunk.SIZE;
+    public static final float MIN_XZ = -MAX_XZ;
     HashSet<Entity>      entities = new HashSet<>();
 
     public final int     worldHeight;
@@ -24,8 +32,11 @@ public class World {
     private int dayLen=1000;
     private int time;
 
-    public World(int worldId, long seed) {
+    private final RegionLoader regionLoader;
+    public static final int MAX_WORLDHEIGHT = 256;
 
+    public World(int worldId, long seed, RegionLoader regionLoader) {
+        this.regionLoader = regionLoader;
         this.seed = seed;
         this.worldHeightBits = 8;
         this.worldHeightBitsPlusFour = worldHeightBits + 4;
@@ -37,7 +48,7 @@ public class World {
     }
 
     public Chunk generateChunk(int i, int j) {
-        return this.generator.getChunkAt(i, j);
+        return this.generator.generateChunk(i, j);
     }
     public float getSunAngle(float fTime) {
         int timeOffset = this.time%dayLen;
@@ -55,6 +66,28 @@ public class World {
 //        if (offset < dayLen/3) {
 //            time += dayLen/3;
 //        }
+    }
+    public int getType(int x, int y, int z) {
+        Chunk c = getChunk(x>>4, z>>4);
+        if (c == null) {
+            return 0;
+        }
+        return c.getTypeId(x&0xF, y, z&0xF);
+    }
+    public boolean setType(int x, int y, int z, int type, int render) {
+        Chunk c = getChunk(x>>4, z>>4);
+        if (c == null) {
+            return false;
+        }
+        c.setType(x&0xF, y, z&0xF, type);
+        if ((render & Flags.RENDER) != 0) {
+            regionLoader.flagBlock(x, y, z);
+        }
+        return true;
+    }
+    
+    public Chunk getChunk(int x, int z) {
+        return regionLoader.get(x, z);
     }
     
     

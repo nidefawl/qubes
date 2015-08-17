@@ -7,6 +7,7 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
@@ -14,33 +15,37 @@ public class RegionRenderUpdateTask {
     public final Tess       tess   = new Tess(true);
     public final Mesher     mesher = new Mesher();
     final TesselatorState[] state  = new TesselatorState[WorldRenderer.NUM_PASSES];
-    
+
     public int              worldInstance;
     Region                  region;
+    private boolean         meshed;
     
     public RegionRenderUpdateTask() {
-        for (int i = 0; i < state.length; i++) {
-            state[i] = new TesselatorState();
+        for (int i = 0; i < this.state.length; i++) {
+            this.state[i] = new TesselatorState();
         }
     }
 
     public boolean prepare(Region region) {
         this.region = region;
+        this.meshed = false;
         region.renderState = Region.RENDER_STATE_MESHING;
         return true;
     }
 
     public boolean finish(int id) {
         if (!isValid(id)) {
-            region.renderState = Region.RENDER_STATE_INIT;
+            this.region.renderState = Region.RENDER_STATE_INIT;
             return true;
         }
-        if (this.region.renderState == Region.RENDER_STATE_MESHED) {
+        if (this.meshed) {
             if (!Engine.hasFree()) {
                 System.err.println("No free displaylists, waiting for free one before finishing world render task");
                 return false;
             }
-            this.region.compileDisplayList(state);
+            long l = System.nanoTime();
+            this.region.compileDisplayList(this.state);
+            Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
         } else {
             //TODO: flush display list if compile failed, or ignore
         }
@@ -53,25 +58,29 @@ public class RegionRenderUpdateTask {
     }
 
     public boolean updateFromThread() {
-        if (region.isEmpty()) {
+        if (this.region.isEmpty()) {
             return true;
         }
         World w = Main.instance.getWorld();
         if (w != null) {
             try {
-                List<Mesh> mesh;
+                long l = System.nanoTime();
+                this.mesher.mesh(w, this.region);
+                Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
+                l = System.nanoTime();
                 for (int i = 0; i < WorldRenderer.NUM_PASSES; i++) {
-                    mesh = mesher.mesh2(w, this.region, i);
-                    tess.resetState();
-                    tess.setColor(-1, 255);
-                    tess.setBrightness(0xf00000);
+                    List<Mesh> mesh = this.mesher.getMeshes(i);
+                    this.tess.resetState();
+                    this.tess.setColor(-1, 255);
+                    this.tess.setBrightness(0xf00000);
                     int size = mesh.size();
                     for (int m = 0; m < size; m++) {
-                        mesh.get(m).draw(tess);
+                        mesh.get(m).draw(this.tess);
                     }
-                    tess.copyTo(state[i]);
+                    this.tess.copyTo(this.state[i]);
                 }
-                this.region.renderState = Region.RENDER_STATE_MESHED;
+                Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
+                this.meshed = true;
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();

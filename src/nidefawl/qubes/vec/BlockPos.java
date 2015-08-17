@@ -10,4 +10,11 @@ public class BlockPos {
 		this.z = z;
 	}
 	
+	
+	
+	@Override
+	public String toString() {
+	    return "BlockPos["+x+","+y+","+z+"]";
+	}
+	
 }

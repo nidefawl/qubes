@@ -11,9 +11,12 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
@@ -29,8 +32,9 @@ public class WorldRenderer {
 
     private ArrayList<Region> firstPass       = new ArrayList<Region>();
     private ArrayList<Region> secondPass      = new ArrayList<Region>();
-    Region[] renderRegions = new Region[RegionLoader.MAX_REGIONS];
+    
     public int numRegions;
+    public BlockPos highlight = null;
 
     public void init() {
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
@@ -155,6 +159,8 @@ public class WorldRenderer {
             Shaders.terrain.setProgramUniform1i("normals", 2);
             Shaders.terrain.setProgramUniform1i("noisetex", 3);
             Shaders.terrain.setProgramUniform1i("specular", 5);
+            
+            //TODO: use direct state (GL.bindTexture)
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, TMgr.getEmpty());
             glActiveTexture(GL_TEXTURE2);
@@ -169,6 +175,7 @@ public class WorldRenderer {
 //            Engine.enableLighting();
             Shaders.testShader.enable();
             Shaders.testShader.setProgramUniform1i("blockTextures", 0);
+            Shaders.testShader.setProgramUniform1i("renderWireFrame", Main.renderWireFrame? 1 : 0);
             if (Main.GL_ERROR_CHECKS)
                 Engine.checkGLError("test shader");
         }
@@ -190,22 +197,21 @@ public class WorldRenderer {
         renderSecondPass(world, fTime);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
-        if (Main.renderWireFrame) {
-        }
         Shader.disable();
 //        if (!Main.useShaders) {
 //            glDisable(GL_LIGHTING);
 //        }
         glDisable(GL_FOG);
     }
-    public void renderNormals(World world, float fTime) {
+
+    public void renderViewDir(World world, float fTime) {
         glPushAttrib(-1);
         glDisable(GL_BLEND);
         glDepthFunc(GL_LEQUAL);
-        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
         glDisable(GL_ALPHA_TEST);
         glDisable(GL_CULL_FACE);
-        glEnable(GL_CULL_FACE);
+//        glEnable(GL_CULL_FACE);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -214,14 +220,130 @@ public class WorldRenderer {
         glPushMatrix();
         glLoadIdentity();
         glLoadMatrix(Engine.getModelViewMatrix());
-        glDepthMask(false);
-        glDepthMask(true);
+
+        glDisable(GL_TEXTURE_2D);
+        glLineWidth(3.0F);
+        Vec3 v1 = Engine.vOrigin;
+        Vec3 v2 = Engine.vTarget;
+        Tess.instance.setColor(-1, 255);
+        Tess.instance.add(v1.x, v1.y, v1.z);
+        Tess.instance.add(v2.x, v2.y, v2.z);
+        Tess.instance.draw(GL_LINES);
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        glPopAttrib();
+        
+    }
+
+    public void renderBlockHighlight(World world, float fTime) {
+        if (this.highlight != null) {
+            glPushAttrib(-1);
+            glEnable(GL_BLEND);
+            glDepthFunc(GL_LEQUAL);
+            glEnable(GL_DEPTH_TEST);
+            glDisable(GL_ALPHA_TEST);
+            glDisable(GL_CULL_FACE);
+            //        glEnable(GL_CULL_FACE);
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            glLoadMatrix(Engine.getModelViewMatrix());
+            glDisable(GL_TEXTURE_2D);
+            Tess.instance.setColor(-1, 120);
+            Tess.instance.setOffset(this.highlight.x, this.highlight.y, this.highlight.z);
+            float ext = 1/32F;
+            float zero = -ext;
+            float one = 1+ext;
+            Tess.instance.add(zero, zero, zero);
+            Tess.instance.add(one, zero, zero);
+            Tess.instance.add(one, one, zero);
+            Tess.instance.add(zero, one, zero);
+            
+            Tess.instance.add(zero, one, one);
+            Tess.instance.add(one, one, one);
+            Tess.instance.add(one, zero, one);
+            Tess.instance.add(zero, zero, one);
+            
+            Tess.instance.add(one, zero, one);
+            Tess.instance.add(one, one, one);
+            Tess.instance.add(one, one, zero);
+            Tess.instance.add(one, zero, zero);
+
+            Tess.instance.add(zero, one, one);
+            Tess.instance.add(zero, zero, one);
+            Tess.instance.add(zero, zero, zero);
+            Tess.instance.add(zero, one, zero);
+
+            Tess.instance.add(zero, zero, one);
+            Tess.instance.add(one, zero, one);
+            Tess.instance.add(one, zero, zero);
+            Tess.instance.add(zero, zero, zero);
+
+            Tess.instance.add(one, one, one);
+            Tess.instance.add(zero, one, one);
+            Tess.instance.add(zero, one, zero);
+            Tess.instance.add(one, one, zero);
+            
+            Tess.instance.draw(GL_QUADS);
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+            glPopAttrib();
+        }
+    }
+    public void renderNormals(World world, float fTime) {
+        glPushAttrib(-1);
+        glDisable(GL_BLEND);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_CULL_FACE);
+//        glEnable(GL_CULL_FACE);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glLoadMatrix(Engine.getModelViewMatrix());
         Shaders.normals.enable();
         Engine.checkGLError("Shaders.normals.enable()");
         glLineWidth(3.0F);
         renderFirstPass(world, fTime);
         Shader.disable();
-
+//        int y = 130;
+//        int x = 0;
+//        int z = 0;
+//        int w = 2;
+//        glDisable(GL_TEXTURE_2D);
+//        Tess.instance.resetState();
+//        Tess.instance.setColor(-1, 255);
+//        Tess.instance.add(x,y,z+w);
+//        Tess.instance.add(x+w,y,z+w);
+//        Tess.instance.add(x+w,y,z);
+//        Tess.instance.add(x,y,z);
+//        Tess.instance.draw(GL_QUADS);
+        glDisable(GL_TEXTURE_2D);
+        Vec3 v1 = Engine.vOrigin;
+        Vec3 v2 = Engine.vTarget;
+//        Vector3f cam = Engine.camera.getPosition();
+        glLineWidth(2.0F);
+        Tess.instance.setColor(-1, 255);
+        Tess.instance.add(0,0,0);
+        Tess.instance.add(0,1000,0);
+//        Tess.instance.add(v1.x, v1.y, v1.z);
+//        Tess.instance.add(v2.x, v2.y, v2.z);
+        Tess.instance.draw(GL_LINES);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
 
@@ -234,49 +356,7 @@ public class WorldRenderer {
     private int rendered;
 
     public float sunAngle2;
-    public void prepareRegions(World world, float fTime) {
-        int loaded = 0;
-//      if (follow && this.regions.size() >= MAX_REGIONS - 20   ) {
-//          Iterator<Long> it = this.regionLoadReqMap.iterator();
-//          for (; it.hasNext();) {
-//              Long l = it.next();
-//              int rx = GameMath.lhToX(l);
-//              int rz = GameMath.lhToZ(l);
-//              int dX = Math.abs(x - rx);
-//              int dZ = Math.abs(z - rz);
-//              if (dX > LOAD_DIST || dZ > LOAD_DIST) {
-//                  synchronized (this.regions) {
-//                      it.remove();
-//                      this.loadQueue.remove(l);
-//                      Region r = this.regions.remove(l);
-//                      if (r != null) {
-//                          r.release();
-//                          Engine.worldRenderer.regionRemoved(r);
-//                      }
-//                  }
-//              }
-//          }
-//      }
-  
-        boolean created = false;
-        firstPass.clear();
-        secondPass.clear();
-        for (int a = 0; a < this.numRegions; a++) {
-            Region r = this.renderRegions[a];
-            if (r == null)
-                continue;
-            if (r.isEmpty())
-                continue;
-            if (r.renderState < Region.RENDER_STATE_COMPILED)
-                continue;
-            if (r.hasPass(0)) {
-                firstPass.add(r);
-            }
-            if (r.hasPass(1)) {
-                secondPass.add(r);
-            }
-        }
-    }
+    
     public void renderFirstPass(World world, float fTime) {
         glDisable(GL_BLEND);
         int size = firstPass.size();
@@ -318,9 +398,16 @@ public class WorldRenderer {
     }
     public void flushRegions() {
         this.numRegions = 0;
-        Arrays.fill(this.renderRegions, null);
+        firstPass.clear();
+        secondPass.clear();
     }
     public void putRegion(Region r) {
-        this.renderRegions[this.numRegions++] = r;
+        this.numRegions++;
+        if (r.hasPass(0)) {
+            firstPass.add(r);
+        }
+        if (r.hasPass(1)) {
+            secondPass.add(r);
+        }
     }
 }

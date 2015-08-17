@@ -24,13 +24,11 @@ public class Region {
     //TODO: abstract render regions
     public static final int RENDER_STATE_INIT     = 0;
     public static final int RENDER_STATE_MESHING  = 1;
-    public static final int RENDER_STATE_MESHED   = 2;
-    public static final int RENDER_STATE_COMPILED = 3;
+    public static final int RENDER_STATE_COMPILED = 2;
     
     public final int        rX;
     public final int        rZ;
     public final Chunk[][]         chunks           = new Chunk[REGION_SIZE][REGION_SIZE];
-    public boolean         isCompiled;
     private DisplayList     displayList;
     private int[]           facesRendered    = new int[WorldRenderer.NUM_PASSES];
     private boolean[]       hasPass          = new boolean[WorldRenderer.NUM_PASSES];
@@ -40,21 +38,14 @@ public class Region {
 
     public int        state            = STATE_INIT;
     public int        renderState            = RENDER_STATE_INIT;
+    public boolean isRenderable = false;
     
     public Region(int regionX, int regionZ) {
         this.rX = regionX;
         this.rZ = regionZ;
-        this.isCompiled = false;
         this.displayList = null;
     }
-
-    public boolean isRendered() {
-        return isCompiled;
-    }
-
-    public void setRendered(boolean isRendered) {
-        this.isCompiled = isRendered;
-    }
+    
     boolean isEmpty = false;
 
     public boolean isEmpty() {
@@ -108,11 +99,6 @@ public class Region {
     }
 
     public void compileDisplayList(TesselatorState[] states) {
-        if (isCompiled) {
-            System.err.println("Already rendered!");
-            return;
-        }
-        isCompiled = true;
         if (displayList == null)
             displayList = Engine.nextFreeDisplayList();
         this.lastcolor = 0;
@@ -126,6 +112,7 @@ public class Region {
             facesRendered[pass] += nFaces;
             this.hasPass[pass] = nFaces > 0;
         }
+        this.isRenderable = true;
 //        this.meshes = null;
     }
 
@@ -135,7 +122,14 @@ public class Region {
             Engine.release(displayList);
             displayList = null;
         }
-        this.isCompiled = false;
+        for (int x = 0; x < REGION_SIZE; x++) {
+            for (int z = 0; z < REGION_SIZE; z++) {
+                chunks[x][z] = null;
+            }
+        }
+        state = STATE_INIT;
+        renderState = RENDER_STATE_INIT;
+        this.isRenderable = false;
     }
 
     public boolean hasPass(int i) {

@@ -10,17 +10,20 @@ public class Block {
     public final static Block stone = new Block(1).setName("stone");
     public final static Block grass = new BlockGrass(2).setName("grass");
     public final static Block dirt = new Block(3).setName("dirt");
-    public final static Block water = new Block(4).setName("water").setBlocksLight(false);
+    public final static Block water = new Block(4, true).setName("water");
     public final static Block sand = new Block(5).setName("sand");
     public final int id;
     private String name;
-    private boolean blocksLight;
+    private final boolean transparent;
     String[] textures;
-    
-    Block(int id) {
+
+    Block(int id, boolean transparent) {
         this.id = id;
         block[id] = this;
-        this.blocksLight = true;
+        this.transparent = transparent;
+    }
+    Block(int id) {
+        this(id, false);
     }
     
     Block setName(String name) {
@@ -30,16 +33,13 @@ public class Block {
     public String[] getTextures() {
         return this.textures;
     }
-    Block setBlocksLight(boolean b) {
-        this.blocksLight = b;
-        return this;
-    }
+    
     public String getName() {
         return name;
     }
 
-    public static boolean blocksLight(int a) {
-        return block[a] == null || block[a].blocksLight;
+    public boolean isTransparent() {
+        return transparent;
     }
     public int getColor() {
         return 0xFFFFFF;
@@ -56,5 +56,14 @@ public class Block {
                 }
             }
         }
+    }
+    public int getRenderPass() {
+        return transparent ? 1 : 0;
+    }
+    public static boolean isValid(int i) {
+        return i > 0 && i < block.length && block[i] != null;
+    }
+    public static Block get(int i) {
+        return isValid(i) ? block[i] : null;
     }
 }

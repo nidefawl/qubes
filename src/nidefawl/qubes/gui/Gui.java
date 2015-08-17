@@ -28,10 +28,10 @@ public abstract class Gui implements Renderable {
 
 	public void drawRect() {
         glBegin(GL_QUADS);
-        glVertex2f(rleft, rtop);
-        glVertex2f(rright, rtop);
-        glVertex2f(rright, rbottom);
         glVertex2f(rleft, rbottom);
+        glVertex2f(rright, rbottom);
+        glVertex2f(rright, rtop);
+        glVertex2f(rleft, rtop);
         glEnd();
     }
 	public void setSize(int w, int h) {

@@ -1,5 +1,7 @@
 package nidefawl.game;
 
+import static nidefawl.qubes.GLGame.displayHeight;
+import static nidefawl.qubes.GLGame.displayWidth;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
@@ -7,6 +9,8 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import java.util.Locale;
 
 import nidefawl.qubes.GLGame;
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.PlayerSelf;
@@ -18,8 +22,7 @@ import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.gui.GuiOverlayStats;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.render.RegionRenderThread;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.TimingHelper;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.world.World;
@@ -56,8 +59,6 @@ public class Main extends GLGame {
     public GuiOverlayDebug debugOverlay;
     private Gui            gui;
 
-    boolean                handleClick   = false;
-    float                  winX, winY;
 
     FontRenderer           fontSmall;
     final PlayerSelf       entSelf       = new PlayerSelf(1);
@@ -66,6 +67,8 @@ public class Main extends GLGame {
     public boolean follow = true;
     private float lastCamX;
     private float lastCamZ;
+    private RayTrace rayTrace;
+    public int selBlock = 0;
 
     public Main() {
         super(20);
@@ -101,8 +104,9 @@ public class Main extends GLGame {
         this.debugOverlay.setSize(displayWidth, displayHeight);
         Engine.checkGLError("Post startup");
 //        setVSync(true);
-        this.world = new World(1, 0x123);
+        this.world = new World(1, 0x123, Engine.regionLoader);
         this.entSelf.move(0, 140, 0);
+        this.rayTrace = new RayTrace();
     }
 
     @Override
@@ -133,9 +137,10 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F5:
                     if (isDown) {
-                        this.world = new World(this.world.worldId+1, 123);
+                        Engine.flushRenderTasks();
                         Engine.regionRenderThread.flush();
                         Engine.regionLoader.flush();
+                        this.world = new World(this.world.worldId+1, 123, Engine.regionLoader);
 //                        Engine.worldRenderer.flush();
 //                        Engine.textures.refreshNoiseTextures();
                     }
@@ -172,6 +177,12 @@ public class Main extends GLGame {
                     shutdown();
                     break;
             }
+            if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_0) {
+                this.selBlock = key - Keyboard.KEY_1;
+                if (!Block.isValid(this.selBlock)) {
+                    this.selBlock = 0;
+                }
+            }
         }
         while (Mouse.next()) {
             int key = Mouse.getEventButton();
@@ -204,16 +215,43 @@ public class Main extends GLGame {
     }
 
     private void handleClick(int eventX, int eventY) {
-        this.handleClick = true;
-        winX = (float) Mouse.getX();
-        winY = (float) Mouse.getY();
+        System.out.println("click");
+        BlockPos blockPos = rayTrace.getColl();
+        if (blockPos != null) {
+            BlockPos face = rayTrace.getFace();
+            int blockX = blockPos.x;
+            int blockY = blockPos.y;
+            int blockZ = blockPos.z;
+            //            int i = this.world.getBiome(blockX, blockY, blockZ);
+            int id = this.world.getType(blockX, blockY, blockZ);
+            String msg = "";
+            msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
+            msg += String.format("Block:           %d\n", id);
+            //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
+            msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
+
+            if (this.statsOverlay != null) {
+                this.statsOverlay.setMessage(msg);
+            }
+            int block = this.selBlock;
+            if (block > 0) {
+                blockX += face.x;
+                blockY += face.y;
+                blockZ += face.z;
+
+                this.world.setType(blockX, blockY, blockZ, block, Flags.RENDER);
+            } else {
+
+                this.world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
+            }
+        }
+        
+    
     }
 
-    Vec3 mousePos = new Vec3();
     
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
-      Vec3 vUnproject = null;
 
       if (Main.useShaders) {
           Engine.worldRenderer.renderShadowPass(this.world, fTime);
@@ -227,13 +265,12 @@ public class Main extends GLGame {
 //      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       Engine.worldRenderer.renderWorld(this.world, fTime);
 //      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      if (this.handleClick) {
-          this.handleClick = false;
-          vUnproject = Engine.unproject(winX, winY);
-      }
       if (Main.renderWireFrame) {
           Engine.worldRenderer.renderNormals(this.world, fTime);
       }
+      
+      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+      
       Engine.getSceneFB().unbindCurrentFrameBuffer();
       if (Main.DO_TIMING) TimingHelper.end(6);
       if (Main.DO_TIMING) TimingHelper.start(7);
@@ -282,6 +319,25 @@ public class Main extends GLGame {
           glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
           Engine.drawFullscreenQuad();
       }
+      if (this.movement.grabbed()) {
+          glDisable(GL_TEXTURE_2D);
+          Tess.instance.setColor(-1, 100);
+          Tess.instance.setOffset(displayWidth/2, displayHeight/2, 0);
+          float height = 1;
+          float w = 8;
+          Tess.instance.add(-w, height, 0);
+          Tess.instance.add(w, height, 0);
+          Tess.instance.add(w, -height, 0);
+          Tess.instance.add(-w, -height, 0);
+          Tess.instance.add(-height, w, 0);
+          Tess.instance.add(height, w, 0);
+          Tess.instance.add(height, -w, 0);
+          Tess.instance.add(-height, -w, 0);
+          Tess.instance.draw(GL_QUADS);
+
+          glEnable(GL_TEXTURE_2D);
+      
+      }
 //      GL11.glScalef(0.25F, 0.25F, 1);
 //      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
 //      Tess.instance.draw(GL_QUADS);
@@ -295,26 +351,6 @@ public class Main extends GLGame {
       if (Main.DO_TIMING) TimingHelper.end(8);
       if (Main.DO_TIMING) TimingHelper.start(9);
 
-      if (vUnproject != null) {
-
-          mousePos.set(vUnproject);
-          BlockPos blockPos = mousePos.toBlock();
-          int blockX = blockPos.x;
-          int blockY = blockPos.y;
-          int blockZ = blockPos.z;
-          //            int i = this.world.getBiome(blockX, blockY, blockZ);
-          //            int id = this.world.getTypeId(blockX, blockY, blockZ);
-          String msg = "";
-          msg += String.format("win:  %d %d\n", (int) winX, (int) winY);
-          msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
-          //            msg += String.format("Block:           %d\n", id);
-          //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
-          msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
-
-          if (this.statsOverlay != null) {
-              this.statsOverlay.setMessage(msg);
-          }
-      }
 
       if (this.statsOverlay != null) {
           this.statsOverlay.render(fTime);
@@ -339,6 +375,9 @@ public class Main extends GLGame {
     }
 
     @Override
+    public void postRenderUpdate(float f) {
+    }
+    @Override
     public void preRenderUpdate(float f) {
         this.entSelf.updateInputDirect(movement);
         if (Main.DO_TIMING)
@@ -351,10 +390,25 @@ public class Main extends GLGame {
         Engine.camera.setPosition(px, py, pz);
         Engine.camera.setOrientation(yaw, pitch);
         Engine.updateCamera();
+        float winX, winY;
+        
+        if (this.movement.grabbed()) {
+            winX = (float) displayWidth/2.0F;
+            winY = (float) displayHeight/2.0F;
+        } else {
+            winX = (float) Mouse.getX();
+            winY = (float) Mouse.getY();
+            if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
+            if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
+        }
+        Engine.updateMouseOverView(winX, winY);
         if (Main.DO_TIMING)
             TimingHelper.end(13);
         Engine.updateSun(f);
+        this.rayTrace.reset();
         if (this.world != null) {
+            this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir);
+            Engine.worldRenderer.highlight = this.rayTrace.getColl();
             Engine.regionLoader.finishTasks();
             if (follow) {
                 lastCamX = Engine.camera.getPosition().x;
@@ -388,7 +442,7 @@ public class Main extends GLGame {
                                 }
                             }
                         }
-                        if (r.renderState >= Region.RENDER_STATE_MESHED) {
+                        if (r.isRenderable) {
                             Engine.worldRenderer.putRegion(r);
                             nRegions++;
                         }
@@ -398,7 +452,6 @@ public class Main extends GLGame {
             if (!startRender)
             startRender = nRegions > 4;
         }
-        Engine.worldRenderer.prepareRegions(world, f);
     }
 
     @Override

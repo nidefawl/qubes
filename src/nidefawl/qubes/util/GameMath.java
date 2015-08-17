@@ -134,4 +134,14 @@ public class GameMath {
         }
         return y;
     }
+    public static int signum(float dy) {
+        return dy < 0 ? -1 : dy > 0 ? 1 : 0;
+    }
+    public static boolean isNormalFloat(float f) {
+        return f != Float.NaN && Math.abs(f) > 1.0E-5F;
+    }
+
+    public static float mod(float value, float modulus) {
+      return (value % modulus + modulus) % modulus;
+    }
 }

@@ -6,12 +6,14 @@ import java.util.ArrayList;
 
 import nidefawl.game.Main;
 import nidefawl.qubes.GLGame;
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.DisplayList;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
@@ -42,12 +44,12 @@ public class GuiOverlayStats extends Gui {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Main.instance.lastFPS, Main.instance.getVSync() ? (" (VSync)") : "",
-                Main.instance.avgFrameTime, Main.instance.tick);
+                Stats.avgFrameTime, Main.instance.tick);
         statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
         Main.instance.tick = 0;
-        this.stats2 = String.format("%d setUniform/frame ", Main.instance.uniformCalls);
+        this.stats2 = String.format("%d setUniform/frame ", Stats.uniformCalls);
         World world = Main.instance.getWorld();
         if (world != null) {
             RegionLoader loader = Engine.regionLoader;
@@ -62,10 +64,17 @@ public class GuiOverlayStats extends Gui {
         }
 
         info.clear();
+        info.add(String.format("Meshing: %.2fms", Stats.timeMeshing));
+        info.add(String.format("Rendering: %.2fms", Stats.timeRendering));
+        info.add(String.format("TerrainGen: %.2fms", Stats.timeWorldGen));
         info.add(String.format("yaw/pitch: %.2f, %.2f", cam.getYaw(), cam.getPitch()));
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
+        
+        Block b = Block.get(Main.instance.selBlock);
+        
+        info.add(String.format("Selected: %s", b == null ? "destroy" : b.getName()));
         render = true;
     }
 
@@ -102,18 +111,25 @@ public class GuiOverlayStats extends Gui {
         }
         glCallList(l.list);
         if (System.currentTimeMillis() - messageTime < 5000) {
-            int strwidth = font.getStringWidth(this.message);
+            int strwidth = 0;
+
+            String[] split = message.split("\n");
+            for (int i = 0; i < split.length; i++) {
+                strwidth = Math.max(font.getStringWidth(split[i]), strwidth);
+            }
             rleft = GLGame.displayWidth / 2 - strwidth / 2 - 8F;
             rright = GLGame.displayWidth / 2 + strwidth / 2 + 8F;
-            rtop = GLGame.displayHeight / 3 - 22;
-            rbottom = GLGame.displayHeight / 3 + 3;
+            rtop = 32;
+            rbottom = rtop + 8+(split.length)*24;
             setColor(0x121212);
             glDisable(GL_BLEND);
             glDisable(GL_TEXTURE_2D);
             drawRect();
             glEnable(GL_BLEND);
             glEnable(GL_TEXTURE_2D);
-            font.drawString(this.message, GLGame.displayWidth / 2 - strwidth / 2, GLGame.displayHeight / 3, 0xFFFFFF, true, 1.0F);
+            for (int i = 0; i < split.length; i++) {
+                font.drawString(split[i], GLGame.displayWidth / 2 - strwidth / 2, ((int)rtop)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+            }
 
             setColor(-1);
         }

@@ -25,8 +25,10 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
+import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.*;
 
 public class Engine {
@@ -166,18 +168,6 @@ public class Engine {
         colorBuffer.put(f).put(f1).put(f2).put(f3);
         colorBuffer.flip();
         return colorBuffer;
-    }
-
-    static final Vec3 v = new Vec3();
-
-    public static Vec3 unproject(float winX, float winY) {
-        glReadPixels((int) winX, (int) winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, winZ);
-        float depth = winZ.get(0);
-        GLU.gluUnProject(winX, winY, depth, getModelViewMatrix(), getProjectionMatrix(), viewport, position);
-        v.x = position.get(0);
-        v.y = position.get(1);
-        v.z = position.get(2);
-        return v;
     }
 
     public static void resize(int displayWidth, int displayHeight) {
@@ -359,6 +349,10 @@ public class Engine {
         Matrix4f cam = camera.getViewMatrix();
         view.load(cam);
         view.update();
+//        Vector4f zdepth = new Vector4f(0,0,-100, 0);
+//        Matrix4f.transform(view, zdepth, zdepth);
+//        System.out.println(zdepth);
+        
         Vector3f vec = camera.getPosition();
         modelview.setIdentity();
         modelview.m30 += modelview.m00 * -vec.x + modelview.m10 * -vec.y + modelview.m20 * -vec.z;
@@ -555,6 +549,41 @@ public class Engine {
     public static void stop() {
         regionRenderThread.stopThread();
         regionLoader.stop();
+    }
+
+
+    public static final Vec3 vOrigin = new Vec3();
+    public static final Vec3 vDir = new Vec3();
+    public static final Vec3 vTarget = new Vec3();
+    public static final Vec3 t = new Vec3();
+
+    public static void updateMouseOverView(float winX, float winY) {
+        viewport.position(0);
+        position.position(0);
+        if (!Project.gluUnProject(winX, winY, 1F, getModelViewMatrix(), getProjectionMatrix(), viewport, position)) {
+            System.err.println("unproject fail 1");
+        }
+        vTarget.x = position.get(0);
+        vTarget.y = position.get(1);
+        vTarget.z = position.get(2);
+//        Vector4f zdepth = new Vector4f(0,0,-100, 0);
+//        Matrix4f.transform(view, zdepth, zdepth);
+//        System.out.println(vTarget); 
+        viewport.position(0);
+        position.position(0);
+        //TODO: optimize
+        if (!Project.gluUnProject(winX, winY, 0F, getModelViewMatrix(), getProjectionMatrix(), viewport, position)) {
+            System.err.println("unproject fail 2");
+        }
+        vOrigin.x = position.get(0);
+        vOrigin.y = position.get(1);
+        vOrigin.z = position.get(2);
+        Vec3.sub(vTarget, vOrigin, vDir);
+        vDir.normalise();
+        t.set(vDir);
+        t.scale(-0.1F);
+        Vec3.add(vOrigin, t, vOrigin);
+//      System.out.println(vDir); 
     }
 
 }

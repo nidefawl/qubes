@@ -5,13 +5,14 @@ import java.util.Iterator;
 public class RegionLoader {
     public static int              LOAD_DIST        = 1;
     //1 << (8-Region.REGION_SIZE_BITS*Region.REGION_SIZE_BITS);
-    public static final int MAX_REGIONS      = (LOAD_DIST * 2 + 1) * (LOAD_DIST * 2 + 1);
+    public static final int MAX_REGION_XZ      = 16;
+    public static final int MAX_REGIONS      = (MAX_REGION_XZ*2)*(MAX_REGION_XZ*2);
     final RegionTable       regions;
     final int[][]           direction        = new int[][] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
     final RegionLoaderThread thread = new RegionLoaderThread(3);
 
     public RegionLoader() {
-        this.regions = new RegionTable(512);
+        this.regions = new RegionTable(MAX_REGION_XZ*2);
     }
 
     public void init() {
@@ -51,9 +52,18 @@ public class RegionLoader {
             Region r = it.next();
             if (r.renderState == Region.RENDER_STATE_COMPILED) {
                 r.renderState = Region.RENDER_STATE_INIT;
-                r.isCompiled = false;
             }
         }
+    }
+
+
+    public void flagBlock(int x, int y, int z) {
+        int toRegionX = x >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
+        int toRegionZ = z >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
+        Region r = regions.get(toRegionX, toRegionZ);
+        if (r == null)
+            return;
+        r.renderState = Region.RENDER_STATE_INIT;
     }
 
     public Region getRegion(int regionX, int regionZ) {
@@ -112,7 +122,7 @@ public class RegionLoader {
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 Region rNeighbour = this.regions.get(r.rX + x, r.rZ + z);
-                if (rNeighbour == null || !rNeighbour.isRendered())
+                if (rNeighbour == null)
                     return false;
             }
         }

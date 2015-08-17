@@ -98,6 +98,7 @@ public class Shaders {
         } catch (ShaderCompileError e) {
             e.printStackTrace();
             if (startup) {
+                System.out.println(e.getLog());
                 Main.instance.setException(e);
             } else {
                 Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");

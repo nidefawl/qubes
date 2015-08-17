@@ -54,7 +54,7 @@ public class TerrainGenerator extends AbstractGen {
     }
 
     @Override
-    public Chunk getChunkAt(int chunkX, int chunkZ) {
+    public Chunk generateChunk(int chunkX, int chunkZ) {
         long rx = chunkX * 0x589638F52CL;
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);

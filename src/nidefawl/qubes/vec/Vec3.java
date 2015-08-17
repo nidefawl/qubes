@@ -16,6 +16,10 @@ public class Vec3 {
         this.z = z;
     }
 
+    public Vec3(Vec3 v) {
+        this.set(v);
+    }
+
     public BlockPos toBlock() {
         return new BlockPos(GameMath.floor(this.x), GameMath.floor(this.y), GameMath.floor(this.z));
     }
@@ -185,4 +189,5 @@ public class Vec3 {
         }
         throw new IllegalStateException("vec with len <= 0");
     }
+
 }
