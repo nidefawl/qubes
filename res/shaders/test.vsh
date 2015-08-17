@@ -2,6 +2,7 @@
 
 
 attribute vec4 blockinfo;
+uniform int renderWireFrame;
 
 varying vec4 color;
 varying vec4 lmcoord;
@@ -9,6 +10,7 @@ varying vec4 texcoord;
 varying vec3 normal;
 varying vec3 globalNormal;
 varying vec3 vposition;
+varying highp vec3 triangle;
 flat varying int blockTexture;
 
 
@@ -23,6 +25,20 @@ void main() {
 	blockTexture = int(blockinfo.x);
 	vec4 v = gl_Vertex;
 	vposition = (gl_ModelViewMatrix * v).xyz;
-	gl_FogFragCoord = gl_Position.z;
+	gl_FogFragCoord = vposition.z;
 	gl_Position = gl_ModelViewProjectionMatrix * v;
+	if (renderWireFrame) {
+		if (blockinfo.y == 0) {
+	    	triangle = vec3(0, 0, 255);
+		}
+		if (blockinfo.y == 1) {
+	    	triangle = vec3(0, 255, 0);
+		}
+		if (blockinfo.y == 2) {
+	    	triangle = vec3(255, 0, 0);
+		}
+		if (blockinfo.y == 3) {
+	    	triangle = vec3(0, 0, 255);
+		}
+	}
 }
