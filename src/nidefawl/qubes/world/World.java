@@ -6,13 +6,9 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.RayTrace;
-import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TerrainGenerator;
-import nidefawl.qubes.worldgen.TestTerrain2;
 
 public class World {
     public static final float MAX_XZ = RegionLoader.MAX_REGION_XZ*Region.REGION_SIZE*Chunk.SIZE;

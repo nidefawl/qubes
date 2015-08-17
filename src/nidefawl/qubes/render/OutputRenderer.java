@@ -2,19 +2,14 @@ package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import static nidefawl.qubes.GLGame.*;
 import nidefawl.game.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.TimingHelper;
-import nidefawl.qubes.vec.Vec3;
-import nidefawl.qubes.world.World;
-
 import org.lwjgl.opengl.*;
 
 public class OutputRenderer {

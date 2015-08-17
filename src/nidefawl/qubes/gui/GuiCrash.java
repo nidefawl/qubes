@@ -11,8 +11,6 @@ import java.util.List;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
 
-import org.lwjgl.Sys;
-import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 public class GuiCrash extends Gui {

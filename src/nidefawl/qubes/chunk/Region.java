@@ -2,14 +2,8 @@ package nidefawl.qubes.chunk;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.vec.Dir;
-import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;

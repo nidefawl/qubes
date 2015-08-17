@@ -6,7 +6,6 @@ import static nidefawl.qubes.chunk.Region.*;
 import java.util.*;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Mesh;

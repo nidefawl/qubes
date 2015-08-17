@@ -1,7 +1,5 @@
 package nidefawl.game;
 
-import static nidefawl.qubes.GLGame.displayHeight;
-import static nidefawl.qubes.GLGame.displayWidth;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
@@ -10,7 +8,6 @@ import java.util.Locale;
 
 import nidefawl.qubes.GLGame;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.PlayerSelf;
@@ -24,7 +21,6 @@ import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.render.RegionRenderThread;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.input.Keyboard;

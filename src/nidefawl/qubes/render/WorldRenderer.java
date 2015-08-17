@@ -4,14 +4,10 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-
 import nidefawl.game.Main;
 import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
@@ -19,7 +15,6 @@ import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.world.World;
 
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Vector3f;
 

@@ -1,7 +1,5 @@
 package nidefawl.qubes.gl;
 
-import static nidefawl.qubes.GLGame.displayHeight;
-import static nidefawl.qubes.GLGame.displayWidth;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
@@ -25,7 +23,6 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.glu.Project;
