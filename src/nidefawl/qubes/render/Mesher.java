@@ -3,9 +3,7 @@ package nidefawl.qubes.render;
 
 import static nidefawl.qubes.chunk.Region.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.*;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
@@ -15,33 +13,24 @@ import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
-    private static final int SOUTH      = 0;
-    private static final int NORTH      = 1;
-    private static final int EAST       = 2;
-    private static final int WEST       = 3;
-    private static final int TOP        = 4;
-    private static final int BOTTOM     = 5;
-    private static final int CHUNK_WIDTH     = 16<<Region.REGION_SIZE_BITS;    
     static class AO {
         int a0, a1, a2, a3;
     }
-    private int[]           dims;
-    private int[]           mask;
-    private BlockSurface[]           mask2;
-    boolean                 hasSecondPass;
-    boolean                 translucentOnly  = false;
-    ArrayList<Mesh> meshes = new ArrayList<Mesh>();
 
-
-    private boolean isTranslucent(int a) {
-        if (a > 0 && !Block.blocksLight(a)) {
-            return true;
-        }
-        return false;
+    private final int[]    dims;
+    private BlockSurface[] mask2;
+    final static BlockSurfaceAir air = new BlockSurfaceAir();
+    List[] meshes = new List[WorldRenderer.NUM_PASSES];
+    public Mesher() {
+        for (int i = 0; i < WorldRenderer.NUM_PASSES; i++)
+            this.meshes[i] = new ArrayList<>();
+        this.dims = new int[3];
+        this.mask2 = new BlockSurface[World.MAX_WORLDHEIGHT*World.MAX_WORLDHEIGHT]; // max world height sqared
     }
 
 
-    private int computeHeight2(int i, int j, int n, int w, int v, int u, BlockSurface c) {
+
+    private int computeHeight(int i, int j, int n, int w, int v, int u, BlockSurface c) {
         int h = 1;
         while (j + h < dims[v]) {
             for (int k = 0; k < w; ++k) {
@@ -55,62 +44,92 @@ public class Mesher {
         return h;
     }
 
-
-    private int computeHeight(int i, int j, int n, int w, int v, int u, int c) {
-        int h = 1;
-        while (j + h < dims[v]) {
-            for (int k = 0; k < w; ++k) {
-                if (c != mask[n + k + h * dims[u]]) {
-                    return h;
-                }
-            }
-            h++;
-        }
-        return h;
-    }
-
     BlockSurface bs1 = null;
     BlockSurface bs2 = null;
     private void setMask2(int n) {
-        if (bs1 != null && bs1.transparent!=translucentOnly) {
-            hasSecondPass = true;
-            bs1 = null;
-        }
-        if (bs2 != null && bs2.transparent!=translucentOnly) {
-            hasSecondPass = true;
-            bs2 = null;
-        }
-        if ((bs1 != null) == (bs2 != null)) {
-            mask2[n] = null;
-        } else if (bs1 != null) {
-            mask2[n] = bs1;
-        } else if (bs2 != null) {
-            mask2[n] = bs2;
-        }
-    }
-    /**
-     * 
-     */
-    Region region;
-    public ArrayList<Mesh> mesh2(World world, Region region, int pass) {
-        this.region = region;
-        if (pass == 0) {
-            hasSecondPass = false;
-        }
-        meshes.clear();
-        if (!region.isEmpty() && (pass == 0 || hasSecondPass)) {
-            translucentOnly = pass == 1;
-            // block index of first chunk in this region of REGION_SIZE * REGION_SIZE chunks
-    //        int xOff = rX << (REGION_SIZE_BITS + 4);
-    //        int zOff = rZ << (REGION_SIZE_BITS + 4);
-
-            // Sweep over 3-axes
-            if (dims == null) {
-                dims = new int[] { 16 * REGION_SIZE, world.worldHeight, 16 * REGION_SIZE };
-                mask2 = new BlockSurface[Math.max(dims[1], dims[2]) * Math.max(dims[0], dims[1])];
+        // first handle everything inside of region
+        if (bs1 != null && bs2 != null) {
+            if (bs1 == air && bs2 == air) {
+                mask2[n] = null;
+                return;
             }
-            dims[1] = world.worldHeight;
+            if (bs1 != air && bs2 == air) {
+                mask2[n] = bs1;
+                return;
+            }
+            if (bs1 == air && bs2 != air) {
+                mask2[n] = bs2;
+                return;
+            }
+            if (bs1.pass == bs2.pass) {
+                mask2[n] = null;
+                return;
+            }
+            if (bs1.pass == 0) {
+                mask2[n] = bs1;
+                return;
+            }
+            if (bs2.pass == 0) {
+                mask2[n] = bs2;
+                return;
+            }
+            System.err.println("transition from non-air to non-air, non of both have pass == 0, UNDEFINED STATE!");
+            return;
+        }
+        if (bs1 == null && bs2 == null) {
+            System.err.println("BOTH FACES ARE OUTSIDE, UNDEFINED STATE!");
+        }
+        // this part only executes when one of both faces is outside the region
+        if (bs1 == null) {
+            if (bs2.pass == 0) {
+                mask2[n] = bs2;
+            } else {
+                mask2[n] = null;
+            }
+//            mask2[n] = null;
+            return;
+        }
+        if (bs2 == null) {
+            if (bs1.pass == 0) {
+                mask2[n] = bs1;
+            } else {
+                mask2[n] = null;
+            }
+//            mask2[n] = null;
+            return;
+        }
+//        if (bs1 != null && bs2 != null && bs1.pass != bs2.pass) {
+//            if (bs1 != air && bs1.pass == 0) {
+//                mask2[n] = bs1;
+//                return;
+//            }
+//            if (bs2 != air && bs2.pass == 0) {
+//                mask2[n] = bs2;
+//                return;
+//            }
+//            mask2[n] = null;
+//            return;
+//        }
+//        int typeA = bs1 == null ? -1 : bs1.pass+1;
+//        int typeB = bs2 == null ? -1 : bs2.pass+1;
+//        if (typeA == typeB) {
+//            mask2[n] = null;
+//        } else if (bs1 != null) {
+//            mask2[n] = bs1;
+//        } else if (bs2 != null) {
+//            mask2[n] = bs2;
+//        }
+    }
+    
+    Region region;
+    public void mesh(World world, Region region) {
+        this.region = region;
+        for (int i = 0; i < WorldRenderer.NUM_PASSES; i++)
+            this.meshes[i].clear();
+        if (!region.isEmpty()) {
+            dims[0] = 16*REGION_SIZE;
             dims[1] = region.getHighestBlock() + 1;
+            dims[2] = 16*REGION_SIZE;
             Arrays.fill(mask2, null);
             
             int x[] = new int[] { 0, 0, 0 };
@@ -129,10 +148,10 @@ public class Mesher {
                         for (x[u] = 0; x[u] < dims[u]; ++x[u]) {
                             bs1 = null;
                             bs2 = null;
-                            if (x[axis] >= 0) {
+                            if (x[axis] >= -1) {
                                 bs1 = getBlockSurface(x[0], x[1], x[2], 0, axis);
                             }
-                            if (x[axis] < dims[axis] - 1) {
+                            if (x[axis] < dims[axis]) {
                                 bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
                             }
                             setMask2(n);
@@ -145,13 +164,13 @@ public class Mesher {
                     for (int j = 0; j < dims[v]; ++j) {
                         for (int i = 0; i < dims[u];) {
                             BlockSurface c = mask2[n];
-                            if (c != null) {
+                            if (c != null && c != air) {
                                 // Compute width
                                 int w = 1;
                                 while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(c)) && i + w < dims[u]) {
                                     w++;
                                 }
-                                int h = computeHeight2(i, j, n, w, v, u, c);
+                                int h = computeHeight(i, j, n, w, v, u, c);
                                 // Compute height (this is slightly awkward
                                 boolean done = false;
                                 boolean add = true;
@@ -175,7 +194,7 @@ public class Mesher {
                                 int n2 = du[2] * dv[0] - dv[2] * du[0];
                                 int n3 = du[0] * dv[1] - dv[0] * du[1];
                                 if (c.transparent && !(n2 > 0)) {
-                                    add = false;
+//                                    add = false;
 //                                    continue;
                                 }
                                 /*
@@ -203,7 +222,7 @@ public class Mesher {
                                             new int[] {dv[0], dv[1], dv[2]   },
                                             new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)},
                                             faceDir);
-                                    meshes.add(face);
+                                    meshes[c.pass].add(face);
                                 }
 
                                 // Zero-out mask2
@@ -222,20 +241,30 @@ public class Mesher {
                     }
                 }
             }
-            
         }
-        return meshes;
     }
 
 
 
     private BlockSurface getBlockSurface(int i, int j, int k, int l, int axis) {
+        if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
+            return air;
+        }
+        if (i < 0 || i >= dims[0]) {
+//            System.err.println("We need the neighbour region!");
+            return air;
+        }
+        if (k < 0 || k >= dims[2]) {
+//            System.err.println("We need the neighbour region!");
+            return air;
+        }
         int type = region.getTypeId(i, j, k);
         if (type > 0) {
-
+            Block block = Block.block[type];
             BlockSurface surface = new BlockSurface();
             surface.type = type;
-            surface.transparent = isTranslucent(type);
+            surface.transparent = block.isTransparent();
+            surface.pass = block.getRenderPass();
             surface.x = i;
             surface.y = j;
             surface.z = k;
@@ -243,6 +272,11 @@ public class Mesher {
             surface.axis = axis;
             return surface;
         }
-        return null;
+        return air;
+    }
+
+
+    public List<Mesh> getMeshes(int i) {
+        return this.meshes[i];
     }
 }
