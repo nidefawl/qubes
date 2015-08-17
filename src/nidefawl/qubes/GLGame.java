@@ -101,6 +101,7 @@ public abstract class GLGame implements Runnable {
             TextureManager.getInstance().destroy();
             Tess.destroyAll();
         }
+        Thread.dumpStack();
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();
@@ -154,7 +155,7 @@ public abstract class GLGame implements Runnable {
 
     private void showErrorScreen(String title, List<String> desc, Throwable throwable) {
         try {
-
+            Thread.dumpStack();
             Keyboard.destroy();
             Mouse.destroy();
             Display.destroy();
@@ -205,6 +206,7 @@ public abstract class GLGame implements Runnable {
         this.running = false;
     }
     protected boolean startRender = false;
+    private Object[] showError;
     public void runTick() throws LWJGLException {
 
         if (Display.isCloseRequested()) {
@@ -274,6 +276,9 @@ public abstract class GLGame implements Runnable {
         }
         if (Main.DO_TIMING)
             TimingHelper.end(16);
+        if (this.showError != null) {
+            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2]);
+        }
     }
 
     private void checkResize() throws LWJGLException {
@@ -339,7 +344,11 @@ public abstract class GLGame implements Runnable {
     public abstract void initGame();
 
     public void setException(GameError error) {
-        showErrorScreen("Error occured", Arrays.asList(new String[] { "There was an internal error"}), error);
+        if (Thread.currentThread() != thread) {
+            this.showError = new Object[] { "Error occured", Arrays.asList(new String[] { "There was an internal error"}), error };
+            return;
+        }
+        showErrorScreen( "Error occured", Arrays.asList(new String[] { "There was an internal error"}), error );
     }
 
 }
