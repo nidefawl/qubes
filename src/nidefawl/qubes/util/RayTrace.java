@@ -77,16 +77,16 @@ public class RayTrace {
         
         // Avoids an infinite loop.
         
-        if (!GameMath.isNormalFloat(dx) || !GameMath.isNormalFloat(dy) || !GameMath.isNormalFloat(dz)) {
-            System.err.println("Raycast in zero direction!");
+        if ((!GameMath.isNormalFloat(dx) && !GameMath.isNormalFloat(dy) && !GameMath.isNormalFloat(dz))) {
+            System.err.println("Raycast in zero direction ("+dx+"/"+dy+"/"+dz+")!");
             return;
         }
         
         // Rescale from units of 1 cube-edge to units of 'direction' so we can
         // compare with 't'.
-        float radius = 64.0F;
+        float radius = 120*1.5F;
         radius /= Math.sqrt(dx*dx+dy*dy+dz*dz);
-        int maxSteps = 100;
+        int maxSteps = 120;
         while (/* ray has not gone past bounds of world */
                (stepX > 0 ? x < MAX_X : x >= MIN_X) &&
                (stepY > 0 ? y < MAX_Y : y >= MIN_Y) &&

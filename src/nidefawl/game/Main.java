@@ -43,7 +43,7 @@ public class Main extends GLGame {
     public static boolean  GL_ERROR_CHECKS = true;
     public static boolean  DO_TIMING       = false;
     public static boolean  show            = false;
-    public static boolean  useShaders      = true;
+    public static boolean  useShaders      = false;
     public static boolean  useEmptyShaders      = false;
     public static boolean  matrixSetupMode = false;
     public static boolean  renderWireFrame = false;
@@ -62,9 +62,12 @@ public class Main extends GLGame {
     World                  world         = null;
     public boolean follow = true;
     private float lastCamX;
+    private float lastCamY;
     private float lastCamZ;
     private RayTrace rayTrace;
     public int selBlock = 0;
+    long lastShaderLoadTime = 0L;
+    private boolean doLoad = true;
 
     public Main() {
         super(20);
@@ -136,7 +139,8 @@ public class Main extends GLGame {
                         Engine.flushRenderTasks();
                         Engine.regionRenderThread.flush();
                         Engine.regionLoader.flush();
-                        this.world = new World(this.world.worldId+1, 123, Engine.regionLoader);
+                        Engine.regionRenderer.flush();
+                        this.world = new World(this.world.worldId+1, 0x123, Engine.regionLoader);
 //                        Engine.worldRenderer.flush();
 //                        Engine.textures.refreshNoiseTextures();
                     }
@@ -148,7 +152,7 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F1:
                     if (isDown) {
-                        Engine.regionLoader.reRender();
+                        Engine.regionRenderer.reRender();
                     }
                     break;
                 case Keyboard.KEY_F11:
@@ -166,7 +170,7 @@ public class Main extends GLGame {
                     if (isDown) {
                         Engine.flushRenderTasks();
                         useShaders = !useShaders;
-                        Engine.regionLoader.reRender();
+                        Engine.regionRenderer.reRender();
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -212,6 +216,14 @@ public class Main extends GLGame {
 
     private void handleClick(int eventX, int eventY) {
         System.out.println("click");
+//        if (this.movement.grabbed()) {
+            this.mouseClicked = true;
+//        }
+    }
+    boolean mouseClicked = false;
+    
+    
+    private void setBlock() {
         BlockPos blockPos = rayTrace.getColl();
         if (blockPos != null) {
             BlockPos face = rayTrace.getFace();
@@ -241,11 +253,8 @@ public class Main extends GLGame {
                 this.world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
             }
         }
-        
-    
     }
 
-    
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
 
@@ -255,6 +264,7 @@ public class Main extends GLGame {
 
       if (Main.DO_TIMING) TimingHelper.start(6);
       glDisable(GL_CULL_FACE);
+      glEnable(GL_CULL_FACE);
       Engine.getSceneFB().bind();
       Engine.getSceneFB().clearFrameBuffer();
 
@@ -356,14 +366,12 @@ public class Main extends GLGame {
 
   }
 
-    long lastShaderLoadTime = 0L;
-    private boolean doLoad = true;
     @Override
     public void onStatsUpdated(float dTime) {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 4224000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 4444000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Engine.shaders.reload();
 //            Engine.textures.refreshNoiseTextures();
@@ -402,12 +410,23 @@ public class Main extends GLGame {
             TimingHelper.end(13);
         Engine.updateSun(f);
         this.rayTrace.reset();
+        Engine.worldRenderer.highlight = null;
         if (this.world != null) {
             this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir);
-            Engine.worldRenderer.highlight = this.rayTrace.getColl();
+            BlockPos p = this.rayTrace.getColl();
+            if (p != null) {
+                if ( this.mouseClicked) {
+                    setBlock();
+                }   
+            }
+            //TODO: add some better logic for highlighting, don't render "into" camera
+            if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
+                Engine.worldRenderer.highlight = p;
+            }
             Engine.regionLoader.finishTasks();
             if (follow) {
                 lastCamX = Engine.camera.getPosition().x;
+                lastCamY = Engine.camera.getPosition().y;
                 lastCamZ = Engine.camera.getPosition().z;
             }
             int xPosP = GameMath.floor(lastCamX)>>(4+Region.REGION_SIZE_BITS);
@@ -419,35 +438,13 @@ public class Main extends GLGame {
 //                }
                 lastTimeLoad += 122L;
             }
-            RegionRenderThread thread = Engine.regionRenderThread;
-            thread.finishTasks();
             //HACKY
-            int nRegions = 0;
-            Engine.worldRenderer.flushRegions();
-            for (int xx = -RegionLoader.LOAD_DIST; xx <= RegionLoader.LOAD_DIST; xx++) {
-                for (int zz = -RegionLoader.LOAD_DIST; zz <= RegionLoader.LOAD_DIST; zz++) {
-                    Region r = Engine.regionLoader.getRegion(xx + xPosP, zz + zPosP);
-                    if (r != null)  {
-                        if (!thread.busy()) {
-                            if (r.state == Region.STATE_LOAD_COMPLETE && r.renderState == Region.RENDER_STATE_INIT) {
-                                //                      System.out.println("thread.offer");
-                                if (thread.offer(r)) {
-                                } else {
-    
-                                    //                          System.out.println("thread seems busys");
-                                }
-                            }
-                        }
-                        if (r.isRenderable) {
-                            Engine.worldRenderer.putRegion(r);
-                            nRegions++;
-                        }
-                    }
-                }
-            }
-            if (!startRender)
-            startRender = nRegions > 4;
+//            int nRegions = 0;
+            Engine.regionRenderer.update(lastCamX, lastCamY, lastCamZ, xPosP, zPosP, f);
+//            if (!startRender)
+//            startRender = nRegions > 4;
         }
+        this.mouseClicked = false;
     }
 
     @Override

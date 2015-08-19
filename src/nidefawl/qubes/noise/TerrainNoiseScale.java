@@ -8,7 +8,7 @@ import nidefawl.qubes.world.World;
 public class TerrainNoiseScale extends AbstractNoiseGen {
     final static int               w     = Chunk.SIZE;
     final static int               h     = World.MAX_WORLDHEIGHT;
-    final static int               scale = 4;
+    final static int               scale = 8;
     final static int               wLow  = (w / scale) + 1;
     final static int               hLow  = (h / scale) + 1;
     
@@ -26,7 +26,7 @@ public class TerrainNoiseScale extends AbstractNoiseGen {
         this.nOctaves = nOctaves;
     }
 
-    double get(int x, int y, int z) {
+    double get(int x, int y, int z, double freq) {
         double d = 0.0D;
         double dAmplitude = 1.0D;
         double dFreq = 1.0D;
@@ -35,20 +35,20 @@ public class TerrainNoiseScale extends AbstractNoiseGen {
             double dY = y * this.scaleY * dFreq;
             double dZ = z * this.scaleZ * dFreq;
             d += this.noise.eval(dX, dY, dZ) * dAmplitude;
-            dFreq *= 1.69D;
+            dFreq *= freq;
             dAmplitude = 1D / dFreq;
         }
         return d;
     }
 
-    public double[] gen(int cx, int cz) {
+    public double[] gen(int cx, int cz, double freq) {
         cx /= scale;
         cz /= scale;
         double[] dn = new double[wLow * wLow * hLow];
         for (int x = 0; x < wLow; x++) {
             for (int z = 0; z < wLow; z++) {
                 for (int y = 0; y < hLow; y++) {
-                    double n = get(x + cx, y, z + cz);
+                    double n = get(x + cx, y, z + cz, freq);
                     dn[(z * wLow + x) * (hLow) + y] = n;
 
                 }

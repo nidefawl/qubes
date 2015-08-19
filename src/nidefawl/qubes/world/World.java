@@ -6,6 +6,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.Entity;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TerrainGenerator;
@@ -54,7 +55,7 @@ public class World {
         if (fSun>1)fSun--;
         float f = 1.0F - (float)(Math.cos(fSun*Math.PI)+1)/2.0F;
 //        return fSun+(f-fSun)/3.0F;
-        return 0.89F;
+        return 0.86F;
     }
 
     public void tickUpdate() {
@@ -78,7 +79,7 @@ public class World {
         }
         c.setType(x&0xF, y, z&0xF, type);
         if ((render & Flags.RENDER) != 0) {
-            regionLoader.flagBlock(x, y, z);
+            Engine.regionRenderer.flagBlock(x, y, z);
         }
         return true;
     }

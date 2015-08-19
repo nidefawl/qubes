@@ -2,10 +2,12 @@ package nidefawl.qubes.chunk;
 
 import java.util.Iterator;
 
+import nidefawl.qubes.render.MeshedRegion;
+
 public class RegionLoader {
-    public static int              LOAD_DIST        = 2;
+    public static final int              LOAD_DIST        = 4;
     //1 << (8-Region.REGION_SIZE_BITS*Region.REGION_SIZE_BITS);
-    public static final int MAX_REGION_XZ      = 16;
+    public static final int MAX_REGION_XZ      = 64;
     public static final int MAX_REGIONS      = (MAX_REGION_XZ*2)*(MAX_REGION_XZ*2);
     final RegionTable       regions;
     final int[][]           direction        = new int[][] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
@@ -41,30 +43,15 @@ public class RegionLoader {
         Iterator<Region> it = this.regions.iterator();
         while (it.hasNext()) {
             Region r = it.next();
+            MeshedRegion m = r.meshedRegion;
+            if (m != null)
+                m.release();
             r.release();
         }
         this.regions.clear();
     }
 
-    public void reRender() {
-        Iterator<Region> it = this.regions.iterator();
-        while (it.hasNext()) {
-            Region r = it.next();
-            if (r.renderState == Region.RENDER_STATE_COMPILED) {
-                r.renderState = Region.RENDER_STATE_INIT;
-            }
-        }
-    }
 
-
-    public void flagBlock(int x, int y, int z) {
-        int toRegionX = x >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
-        int toRegionZ = z >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
-        Region r = regions.get(toRegionX, toRegionZ);
-        if (r == null)
-            return;
-        r.renderState = Region.RENDER_STATE_INIT;
-    }
 
     public Region getRegion(int regionX, int regionZ) {
         return regions.get(regionX, regionZ);
@@ -116,6 +103,52 @@ public class RegionLoader {
             }
         }
         return loaded;
+    }
+
+    public boolean cacheRegions(int rX, int rZ, int renderChunkX, int renderChunkZ, RegionCache cache) {
+        int offsetX = rX-renderChunkX;
+        int offsetZ = rZ-renderChunkZ;
+        boolean minXReq = offsetX > 0;
+        boolean maxXReq = offsetX < LOAD_DIST-1;
+        boolean minZReq = offsetZ > 0;
+        boolean maxZReq = offsetZ < LOAD_DIST-1;
+//        minXReq=maxXReq=minZReq=maxZReq=true;
+        
+        Region r = this.regions.get(rX, rZ);
+        cache.set(0, 0, r);
+        r = this.regions.get(rX - 1, rZ - 1);
+        if (r != null && r.isChunkLoaded(Region.REGION_SIZE-1, Region.REGION_SIZE-1)) {
+            cache.set(-1, -1, r);
+        } else if (minXReq && minZReq) return false;
+        r = this.regions.get(rX + 1, rZ + 1);
+        if (r != null && r.isChunkLoaded(Region.REGION_SIZE-1, Region.REGION_SIZE-1)) {
+            cache.set(1, 1, r);
+        } else if (maxXReq && maxZReq) return false;
+        r = this.regions.get(rX + 1, rZ - 1);
+        if (r != null && r.isChunkLoaded(0, Region.REGION_SIZE-1)) {
+            cache.set(1, -1, r);
+        } else if (maxXReq && minZReq) return false;
+        r = this.regions.get(rX - 1, rZ + 1);
+        if (r != null && r.isChunkLoaded(Region.REGION_SIZE-1, 0)) {
+            cache.set(-1, 1, r);
+        } else if (minXReq && maxZReq) return false;
+        r = this.regions.get(rX - 1, rZ);
+        if (r != null && r.allLoadedX(Region.REGION_SIZE-1)) {
+            cache.set(-1, 0, r);
+        } else if (minXReq) return false;
+        r = this.regions.get(rX + 1, rZ);
+        if (r != null && r.allLoadedX(0)) {
+            cache.set(1, 0, r);
+        } else if (maxXReq) return false;
+        r = this.regions.get(rX, rZ - 1);
+        if (r != null && r.allLoadedZ(Region.REGION_SIZE-1)) {
+            cache.set(0, -1, r);
+        } else if (minZReq) return false;
+        r = this.regions.get(rX, rZ + 1);
+        if (r != null && r.allLoadedZ(0)) {
+            cache.set(0, 1, r);
+        } else if (maxZReq) return false;
+        return true;
     }
 
     public boolean hasAllNeighBours(Region r) {

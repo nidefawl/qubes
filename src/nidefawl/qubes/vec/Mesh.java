@@ -3,9 +3,10 @@ package nidefawl.qubes.vec;
 import nidefawl.game.Main;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.render.BlockSurface;
 
 public class Mesh {
-    public final int type;
+    public final BlockSurface bs;
     public final int v0[];
     public final int v1[];
     public final int v2[];
@@ -14,8 +15,10 @@ public class Mesh {
     public final int dv[];
     public final byte normal[];
     public int faceDir;
-
-    public Mesh(int type, int[] v0, int[] v1, int[] v2, int[] v3, int[] du, int[] dv, byte[] normal, int faceDir) {
+    final static float[] AO_TABLE = new float[] {
+            153F/255F, 183F/255F, 255F/255F
+    };
+    public Mesh(BlockSurface bs, int[] v0, int[] v1, int[] v2, int[] v3, int[] du, int[] dv, byte[] normal) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
@@ -23,18 +26,16 @@ public class Mesh {
         this.du = du;
         this.dv = dv;
         this.normal = normal;
-        this.type = type;
-        this.faceDir = faceDir;
+        this.bs = bs;
     }
 
     public void draw(Tess tess) {
         tess.setNormals(this.normal[0], this.normal[1], this.normal[2]);
-        Block block = Block.block[this.type & Block.BLOCK_MASK];
-        int biome = (this.type >> 12) & 0xFF;
-        int side = 0;
+        Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
+        int side = this.bs.axis<<1|this.bs.face;
         float m = 1F;
         if (!Main.useShaders) {
-            switch (this.faceDir) {
+            switch (side) {
                 case Dir.DIR_NEG_Y:
                     m = 0.5F;
                     break;
@@ -65,23 +66,120 @@ public class Mesh {
         float g = (c & 0xFF) / 255F;
         c >>= 8;
         float r = (c & 0xFF) / 255F;
-        tess.setColorRGBAF(b * m, g * m, r * m, alpha);
+        
+        AO_TABLE[0] = 166/255F;
+        AO_TABLE[1] = 213F/255F;
+        AO_TABLE[2] = 255F/255F;
+        
+        
+        float fao0 = AO_TABLE[this.bs.ao0];
+        float fao1 = AO_TABLE[this.bs.ao1];
+        float fao2 = AO_TABLE[this.bs.ao2];
+        float fao3 = AO_TABLE[this.bs.ao3];
+
         tess.setBrightness(0xf00000);
-        float xl = this.du[0] + this.du[1] + this.du[2];
-        float yl = this.dv[0] + this.dv[1] + this.dv[2];
-        int tex = block.getTextureFromSide(this.faceDir);
-        tess.setAttr(tex, 0, 0);
-        tess.setUV(0, 0);
-        tess.add(this.v0[0], this.v0[1], this.v0[2]);
-        tess.setUV(xl, 0);
-        tess.setAttr(tex, 0, 1);
-        tess.add(this.v1[0], this.v1[1], this.v1[2]);
-        tess.setUV(xl, yl);
-        tess.setAttr(tex, 0, 2);
-        tess.add(this.v2[0], this.v2[1], this.v2[2]);
-        tess.setUV(0, yl);
-        tess.setAttr(tex, 0, 3);
-        tess.add(this.v3[0], this.v3[1], this.v3[2]);
-    
+        int tex = block.getTextureFromSide(side);
+        
+        int idx = 0;
+        
+        if (bs.face == 0) {
+            if (fao1 <= fao2 && fao1 <= fao0) {
+                bs.rotateVertex = true;
+            } 
+            if (fao3 <= fao0 && fao3 <= fao2) {
+                bs.rotateVertex = true;
+            }
+            if (bs.rotateVertex) {
+                setUV(tess, 3);
+                tess.setAttr(tex, 0, idx++);
+                tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
+                tess.add(this.v3[0], this.v3[1], this.v3[2]);
+            }
+            setUV(tess, 0);
+            tess.setAttr(tex, 0, idx++);
+            tess.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
+            tess.add(this.v0[0], this.v0[1], this.v0[2]);
+
+            setUV(tess, 1);
+            tess.setAttr(tex, 0, idx++);
+            tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
+            tess.add(this.v1[0], this.v1[1], this.v1[2]);
+
+            setUV(tess, 2);
+            tess.setAttr(tex, 0, idx++);
+            tess.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
+            tess.add(this.v2[0], this.v2[1], this.v2[2]);
+            
+            if (!bs.rotateVertex) {
+                setUV(tess, 3);
+                tess.setAttr(tex, 0, idx++);
+                tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
+                tess.add(this.v3[0], this.v3[1], this.v3[2]);
+            }
+        } else {
+            if (fao1 <= fao2 && fao1 <= fao0) {
+                bs.rotateVertex = true;
+            } 
+            if (fao3 <= fao0 && fao3 <= fao2) {
+                bs.rotateVertex = true;
+            }
+            if (bs.rotateVertex) {
+                setUV(tess, 0);
+                tess.setAttr(tex, 0, idx++);
+                tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
+                tess.add(this.v0[0], this.v0[1], this.v0[2]);
+            }
+
+            setUV(tess, 3);
+            tess.setAttr(tex, 0, idx++);
+            tess.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
+            tess.add(this.v3[0], this.v3[1], this.v3[2]);
+
+            setUV(tess, 2);
+            tess.setAttr(tex, 0, idx++);
+            tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
+            tess.add(this.v2[0], this.v2[1], this.v2[2]);
+
+            setUV(tess, 1);
+            tess.setAttr(tex, 0, idx++);
+            tess.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
+            tess.add(this.v1[0], this.v1[1], this.v1[2]);
+            
+
+            if (!bs.rotateVertex) {
+                tess.setAttr(tex, 0, idx++);
+                setUV(tess, 0);
+                tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
+                tess.add(this.v0[0], this.v0[1], this.v0[2]);
+            }
+        }
+    }
+
+    private void setUV(Tess tess, int idx) {
+        float u = 0; float v = 0;
+        // 0 0 -> 0, 0
+        // 0 1 -> 1, 0
+        // 1 0 -> 1, 1
+        // 1 1 -> 0, 1
+        if (this.bs.axis==0) {
+            idx = (idx+1)&0x3;
+        }
+        int y = idx>>1;
+        int x = (idx&1)^y;
+        switch (this.bs.axis) {
+            case 0:
+                u = this.dv[2]*x;
+                v = this.du[1]*y;
+                break;
+            case 1:
+                u = this.du[2]*x;
+                v = this.dv[0]*y;
+                break;
+            case 2:
+                u = this.du[0]*x;
+                v = this.dv[1]*y;
+                break;
+        }
+        tess.setUV(u, v);
     }
 }

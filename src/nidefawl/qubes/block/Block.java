@@ -10,7 +10,7 @@ public class Block {
     public final static Block stone = new Block(1).setName("stone");
     public final static Block grass = new BlockGrass(2).setName("grass");
     public final static Block dirt = new Block(3).setName("dirt");
-    public final static Block water = new Block(4, true).setName("water");
+    public final static Block water = new BlockWater(4).setName("water");
     public final static Block sand = new Block(5).setName("sand");
     public final int id;
     private String name;
@@ -58,12 +58,15 @@ public class Block {
         }
     }
     public int getRenderPass() {
-        return transparent ? 1 : 0;
+        return 0;
     }
     public static boolean isValid(int i) {
         return i > 0 && i < block.length && block[i] != null;
     }
     public static Block get(int i) {
         return isValid(i) ? block[i] : null;
+    }
+    public boolean applyAO() {
+        return true;
     }
 }

@@ -101,7 +101,6 @@ public abstract class GLGame implements Runnable {
             TextureManager.getInstance().destroy();
             Tess.destroyAll();
         }
-        Thread.dumpStack();
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();
@@ -155,7 +154,6 @@ public abstract class GLGame implements Runnable {
 
     private void showErrorScreen(String title, List<String> desc, Throwable throwable) {
         try {
-            Thread.dumpStack();
             Keyboard.destroy();
             Mouse.destroy();
             Display.destroy();

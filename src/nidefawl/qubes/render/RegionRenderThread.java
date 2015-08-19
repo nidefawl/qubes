@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.game.Main;
-import nidefawl.qubes.chunk.Region;
+//import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;
 
 public class RegionRenderThread extends Thread {
@@ -104,10 +104,11 @@ public class RegionRenderThread extends Thread {
         return 0;
     }
 
-    public boolean offer(Region worldrenderer) {
+
+    public boolean offer(MeshedRegion m, int renderChunkX, int renderChunkZ) {
         RegionRenderUpdateTask task = getNextTask();
         if (task != null) {
-            if (task.prepare(worldrenderer)) {
+            if (task.prepare(m, renderChunkX, renderChunkZ)) {
                 task.worldInstance = this.id;
                 this.queue.add(task);
                 nextTask++;

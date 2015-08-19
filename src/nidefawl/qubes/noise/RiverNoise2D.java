@@ -107,47 +107,4 @@ public class RiverNoise2D extends AbstractNoiseGen {
         return r;
     }
 
-//  public double[] get(int x, int z) {
-//      int w = 1;
-//      double scale2 = scale * 5;
-//      int size = w+iW*2;
-//      size *= size;
-//      double[] dNoise = new double[size];
-//      for (int iX = -iW; iX < w + iW; iX++)
-//          for (int iZ = -iW; iZ < w + iW; iZ++) {
-//              double d1 = n2.eval((iX+x) * scale2, (iZ+z) * scale2) * 0.1D;
-//              double d2 = n3.eval((iX+x) * scale2, (iZ+z) * scale2) * 0.1D;
-//
-//              double d = -1D;
-//              double dX = (iX+x) * scale;
-//              double dZ = (iZ+z) * scale;
-//              double dN = n1.eval(dX + d1, dZ + d2);
-//              d += Math.abs(dN) * 10;
-//              d *= 0.5D;
-//              d += 0.5D;
-//              d = Math.min(1, d);
-//              d = Math.max(0, d);
-//              d = 1 - d;
-//              d += 0.08D;
-//              d = Math.pow(d, 12);
-//              //                        d-=1D;
-//              d = Math.min(1, d);
-//              d = Math.max(0, d);
-//              dNoise[((iZ + iW) * (w + iW * 2)) + (iX + iW)] = d;
-//          }
-//
-//      double dBlurred = getBlur(dNoise, 0, 0, w);
-//      dBlurred = 1 - dBlurred;
-//      dBlurred = Math.pow(dBlurred, 4);
-//      dBlurred = Math.min(1, dBlurred);
-//      dBlurred = Math.max(0, dBlurred);
-//      dBlurred = 1 - dBlurred;
-//      double d = getBlur(dNoise, 0, 0, 0);
-////      d = 1 - d;
-//      d = Math.pow(d, 4);
-//      d = Math.min(1, d);
-//      d = Math.max(0, d);
-////      d = 1 - d;
-//      return new double[] {dBlurred, d};
-//  }
 }

@@ -7,13 +7,13 @@ import java.util.ArrayList;
 import nidefawl.game.Main;
 import nidefawl.qubes.GLGame;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Camera;
-import nidefawl.qubes.gl.DisplayList;
-import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL11;
@@ -35,6 +35,7 @@ public class GuiOverlayStats extends Gui {
     private String     stats4;
     DisplayList l;
     boolean render = false;
+    private String stats5;
     public GuiOverlayStats() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
         this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
@@ -55,10 +56,16 @@ public class GuiOverlayStats extends Gui {
             RegionLoader loader = Engine.regionLoader;
             int numRegions = loader.getRegionsLoaded();
             int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
-            this.stats3 = String.format("Chunks - loaded %d - with blockdata: %d - blockfaces %d - wr-regions %d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
-                    * loader.getRegionsWithData(), Engine.worldRenderer.getNumRendered(), Engine.worldRenderer.numRegions);
+            this.stats3 = String.format("Chunks - loaded %d/%d - V %d - wr-regions %d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
+                    * loader.getRegionsWithData(), Engine.worldRenderer.getNumRendered(), Engine.regionRenderer.numRegions);
             this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On" : "Off");
 
+            this.stats5 = "";
+            BlockPos p = Engine.worldRenderer.highlight;
+            if (p != null) {
+                this.stats5 = String.format("%d %d %d (Region %d %d)", p.x, p.y, p.z, 
+                        p.x>>(Region.REGION_SIZE_BITS+Chunk.SIZE_BITS), p.z>>(Region.REGION_SIZE_BITS+Chunk.SIZE_BITS));
+            }
         } else {
             this.stats3 = null;
         }
@@ -80,7 +87,7 @@ public class GuiOverlayStats extends Gui {
 
     public void render(float fTime) {
         if (l == null) {
-            l = Engine.nextFreeDisplayList();
+            l = Engine.newDisplayList();
         }
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);       int y = 20;
@@ -98,6 +105,10 @@ public class GuiOverlayStats extends Gui {
             }
             if (stats4 != null) {
                 font.drawString(stats4, 5, y, 0xFFFFFF, true, 1.0F);
+                y += font.getLineHeight() * 1.2F;
+            }
+            if (stats5 != null) {
+                font.drawString(stats5, GLGame.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
                 y += font.getLineHeight() * 1.2F;
             }
             for (String st : info) {

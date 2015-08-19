@@ -12,9 +12,7 @@ import java.nio.IntBuffer;
 import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
-import nidefawl.qubes.render.OutputRenderer;
-import nidefawl.qubes.render.RegionRenderThread;
-import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.*;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
@@ -29,7 +27,7 @@ import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.*;
 
 public class Engine {
-    public final static int MAX_DISPLAY_LISTS = 256;
+    public final static int MAX_DISPLAY_LISTS = 512;
     public final static int SHADOW_BUFFER_SIZE = 2048;
     private static FloatBuffer    colorBuffer;
     private static IntBuffer      viewport;
@@ -58,8 +56,8 @@ public class Engine {
     
     public static float              shadowZnear;
     public static float              shadowZfar;
-    
-    private static DisplayList[]     lists;
+
+    private static RegionDisplayList[]     lists;
     public static Vector4f           sunPosition        = new Vector4f();
     public static Vector4f           moonPosition       = new Vector4f();
     public static Vector3f           up                 = new Vector3f();
@@ -67,6 +65,7 @@ public class Engine {
     public static Camera             camera             = new Camera();
     public static WorldRenderer      worldRenderer      = new WorldRenderer();
     public static OutputRenderer     outRenderer        = new OutputRenderer();
+    public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
     public static Shaders            shaders            = new Shaders();
@@ -118,6 +117,7 @@ public class Engine {
         outRenderer.init();
         regionLoader.init();
         regionRenderThread.init();
+        regionRenderer.init();
         BlockTextureArray.getInstance().reload();
     }
 
@@ -260,7 +260,7 @@ public class Engine {
         fbShadow.setShadowBuffer();
         fbShadow.setup();
         if (fullscreenQuad == null) {
-            fullscreenQuad = nextFreeDisplayList();
+            fullscreenQuad = newDisplayList();
         }
         {
             Tess.instance.resetState();
@@ -357,6 +357,7 @@ public class Engine {
         
         Matrix4f.mul(view, modelview, modelview);
         modelview.update();
+        
     }
 
     public static void setFog(Vector3f fogColor, float alpha) {
@@ -371,10 +372,10 @@ public class Engine {
     }
 
 
-    public static DisplayList nextFreeDisplayList() {
+    public static RegionDisplayList nextFreeDisplayList() {
         for (int i = 0; i < lists.length; i++) {
             if (!lists[i].inUse) {
-                DisplayList alloc = lists[i];
+                RegionDisplayList alloc = lists[i];
                 alloc.inUse = true;
                 return alloc;
             }
@@ -382,18 +383,25 @@ public class Engine {
         return null;
     }
 
-    public static void release(DisplayList displayList) {
+    public static void release(RegionDisplayList displayList) {
         displayList.inUse = false;
     }
 
     public static void allocateDisplayLists(int maxRegions) {
-        lists = new DisplayList[maxRegions];
-        int a = glGenLists(maxRegions * 2);
+        lists = new RegionDisplayList[maxRegions];
+        int a = glGenLists(maxRegions * MeshedRegion.NUM_LAYERS*WorldRenderer.NUM_PASSES);
         for (int i = 0; i < lists.length; i++) {
-            lists[i] = new DisplayList();
-            lists[i].list = a + i * 2;
+            lists[i] = new RegionDisplayList();
+            lists[i].list = a + i * MeshedRegion.NUM_LAYERS*WorldRenderer.NUM_PASSES;
         }
     }
+    public static DisplayList newDisplayList() {
+        DisplayList list = new DisplayList();
+        list.inUse = true;
+        list.list = glGenLists(1);
+        return list;
+    }
+
 
     public static boolean hasFree() {
         for (int i = 0; i < lists.length; i++) {

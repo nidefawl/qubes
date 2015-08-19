@@ -94,7 +94,6 @@ public class Shaders {
             new_normals.linkProgram();
             Shaders.normals = new_normals;
             startup = false;
-            System.out.println("!");
         } catch (ShaderCompileError e) {
             e.printStackTrace();
             if (startup) {

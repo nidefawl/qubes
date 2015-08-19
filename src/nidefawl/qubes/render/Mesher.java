@@ -3,26 +3,28 @@ package nidefawl.qubes.render;
 
 import static nidefawl.qubes.chunk.Region.*;
 
+import static nidefawl.qubes.render.MeshedRegion.*;
+
 import java.util.*;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.RegionCache;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
-    static class AO {
-        int a0, a1, a2, a3;
-    }
 
     private final int[]    dims;
     private BlockSurface[] mask2;
     final static BlockSurfaceAir air = new BlockSurfaceAir();
     @SuppressWarnings("rawtypes")
-    List[] meshes = new List[WorldRenderer.NUM_PASSES];
+    List[] meshes = new List[WorldRenderer.NUM_PASSES*NUM_LAYERS];
     public Mesher() {
-        for (int i = 0; i < WorldRenderer.NUM_PASSES; i++)
+        for (int i = 0; i < meshes.length; i++)
             this.meshes[i] = new ArrayList<>();
         this.dims = new int[3];
         this.mask2 = new BlockSurface[World.MAX_WORLDHEIGHT*World.MAX_WORLDHEIGHT]; // max world height sqared
@@ -79,23 +81,19 @@ public class Mesher {
         if (bs1 == null && bs2 == null) {
             System.err.println("BOTH FACES ARE OUTSIDE, UNDEFINED STATE!");
         }
-        // this part only executes when one of both faces is outside the region
-        if (bs1 == null) {
-            if (bs2.pass == 0) {
+        // this part only executes when one of both faces are outside the region
+        if (bs1 == null) { // neighbour is not loaded
+            if (bs2.pass>=0) {
+//                bs2.extraFace=true;
                 mask2[n] = bs2;
-            } else {
-                mask2[n] = null;
             }
-//            mask2[n] = null;
             return;
         }
         if (bs2 == null) {
-            if (bs1.pass == 0) {
+            if (bs1.pass>=0) {
+//                bs1.extraFace=true;
                 mask2[n] = bs1;
-            } else {
-                mask2[n] = null;
             }
-//            mask2[n] = null;
             return;
         }
 //        if (bs1 != null && bs2 != null && bs1.pass != bs2.pass) {
@@ -121,15 +119,16 @@ public class Mesher {
 //        }
     }
     
-    Region region;
-    public void mesh(World world, Region region) {
-        this.region = region;
-        for (int i = 0; i < WorldRenderer.NUM_PASSES; i++)
+    RegionCache cache;
+    public void mesh(World world, RegionCache cache) {
+        this.cache = cache;
+        Region region = cache.get(0, 0);
+        for (int i = 0; i < this.meshes.length; i++)
             this.meshes[i].clear();
         if (!region.isEmpty()) {
-            dims[0] = 16*REGION_SIZE;
-            dims[1] = region.getHighestBlock() + 1;
-            dims[2] = 16*REGION_SIZE;
+            dims[0] = Chunk.SIZE*REGION_SIZE;
+            dims[1] = region.getHighestBlock() + 1; // always correct (with neighbours)?
+            dims[2] = Chunk.SIZE*REGION_SIZE;
             Arrays.fill(mask2, null);
             
             int x[] = new int[] { 0, 0, 0 };
@@ -164,7 +163,7 @@ public class Mesher {
                     for (int j = 0; j < dims[v]; ++j) {
                         for (int i = 0; i < dims[u];) {
                             BlockSurface c = mask2[n];
-                            if (c != null && c != air) {
+                            if (c != null && c != air && (!c.extraFace)) {
                                 // Compute width
                                 int w = 1;
                                 while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(c)) && i + w < dims[u]) {
@@ -178,18 +177,22 @@ public class Mesher {
                                 int du[] = new int[] { 0, 0, 0 };
                                 int dv[] = new int[] { 0, 0, 0 };
                                 // Add quad
-                                if (c.face == 1) {
-                                    x[u] = i+w;
-                                    x[v] = j;
-                                    du[u] = -w;
-                                    dv[v] = h;
-                                } else {
-                                    x[u] = i;
-                                    x[v] = j;
-                                    du[u] = w;
-                                    dv[v] = h;
-                                }
+//                                if (c.face == 1) {
+//                                    x[u] = i+w;
+//                                    x[v] = j;
+//                                    du[u] = -w;
+//                                    dv[v] = h;
+//                                } else {
+//                                    x[u] = i;
+//                                    x[v] = j;
+//                                    du[u] = w;
+//                                    dv[v] = h;
+//                                }
 
+                                x[u] = i;
+                                x[v] = j;
+                                du[u] = w;
+                                dv[v] = h;
                                 int n1 = du[1] * dv[2] - dv[1] * du[2];
                                 int n2 = du[2] * dv[0] - dv[2] * du[0];
                                 int n3 = du[0] * dv[1] - dv[0] * du[1];
@@ -206,23 +209,17 @@ public class Mesher {
                                         new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
                                 */
                                 if (add) {
-                                    int faceDir = Dir.DIR_POS_X;
-                                    if (n1 < 0) faceDir = Dir.DIR_NEG_X;
-                                    if (n2 > 0) faceDir = Dir.DIR_POS_Y;
-                                    if (n2 < 0) faceDir = Dir.DIR_NEG_Y;
-                                    if (n3 > 0) faceDir = Dir.DIR_POS_Z;
-                                    if (n3 < 0) faceDir = Dir.DIR_NEG_Z;
                                     
-                                    Mesh face = new Mesh(c.type,
+                                    Mesh face = new Mesh(c,
                                             new int[] {x[0],                 x[1],                 x[2]                   },
                                             new int[] {x[0] + du[0],         x[1] + du[1],         x[2] + du[2]           },
                                             new int[] {x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]   },
                                             new int[] {x[0]         + dv[0], x[1]         + dv[1], x[2]         + dv[2]   },
                                             new int[] {du[0], du[1], du[2]   },
                                             new int[] {dv[0], dv[1], dv[2]   },
-                                            new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)},
-                                            faceDir);
-                                    meshes[c.pass].add(face);
+                                            new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
+                                    int layer = LAYER_MAIN;
+                                    meshes[c.pass+WorldRenderer.NUM_PASSES*layer].add(face);
                                 }
 
                                 // Zero-out mask2
@@ -250,13 +247,29 @@ public class Mesher {
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return air;
         }
-        if (i < 0 || i >= dims[0]) {
-//            System.err.println("We need the neighbour region!");
-            return air;
+        int regionX = 0;
+        int regionZ = 0;
+        if (i < 0) {
+            i += Chunk.SIZE*REGION_SIZE;
+            regionX--;
+        } else if (i >= dims[0]) {
+            i -= Chunk.SIZE*REGION_SIZE;
+            regionX++;
         }
-        if (k < 0 || k >= dims[2]) {
-//            System.err.println("We need the neighbour region!");
-            return air;
+        if (k < 0) {
+            k += Chunk.SIZE*REGION_SIZE;
+            regionZ--;
+        } else if (k >= dims[2]) {
+            k -= Chunk.SIZE*REGION_SIZE;
+            regionZ++;
+        }
+        Region region = this.cache.get(regionX, regionZ);
+        if (region == null) {
+            if (regionX==0&&regionZ==0) {
+                System.err.println("REGION IS NULL ON CENTER; SHOULD NOT HAPPEN");
+            }
+//            System.err.println("adj missing on "+regionX+"/"+regionZ);
+            return null;
         }
         int type = region.getTypeId(i, j, k);
         if (type > 0) {
@@ -266,17 +279,27 @@ public class Mesher {
             surface.transparent = block.isTransparent();
             surface.pass = block.getRenderPass();
             surface.x = i;
+            surface.extraFace = regionX != 0 || regionZ != 0;
             surface.y = j;
             surface.z = k;
             surface.face = l;
             surface.axis = axis;
+            surface.calcAO(this.cache);
+            surface.x = i+region.rX*Region.REGION_SIZE_BLOCKS;
+            surface.y = j;
+            surface.z = k+region.rZ*Region.REGION_SIZE_BLOCKS;
             return surface;
         }
+//        if (regionX!=0&&regionZ!=0) {
+//            if (!region.isChunkLoaded((i>>4), (k>>4))) {
+//                System.err.println("CHUNK NOT LOADED ON NEIGHBOUR");
+//            }
+//        }
         return air;
     }
 
 
-    public List<Mesh> getMeshes(int i) {
-        return this.meshes[i];
+    public List<Mesh> getMeshes(int layer, int pass) {
+        return this.meshes[pass+WorldRenderer.NUM_PASSES*layer];
     }
 }
