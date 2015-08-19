@@ -30,7 +30,7 @@ public class TerrainGenerator2 extends AbstractGen {
         this.seed = seed;
 
         Random rand = new Random(this.seed);
-        double scaleMixXZ = 0.80D;
+        double scaleMixXZ = 4.80D;
         double scaleMixY = scaleMixXZ*0.4D;
         double scaleMix2XZ = 1.1D;
         double scaleMix2Y = scaleMix2XZ;
@@ -51,7 +51,7 @@ public class TerrainGenerator2 extends AbstractGen {
         this.noise2D = new TerrainNoise2D(rand.nextLong(), 1, 1, 1);
         double dRScale = 0.23D;
         this.r2D = new RiverNoise2D(rand.nextLong(), dRScale, 8);
-         dRScale = 0.8D;
+         dRScale = 0.14D;
         this.r2D2 = new RiverNoise2D(rand.nextLong(), dRScale, 8);
     }
 
@@ -94,10 +94,11 @@ public class TerrainGenerator2 extends AbstractGen {
                         a++;
                     } else {
                         a = -1;
+                        curBlock = 0;
 //                        if (y < 60) {
 //                            curBlock = Block.water.id;
 //                        }
-                        if (d2 > 0.5) {
+                        if (d2 > 0.5 || y <=93) {
                             curBlock = Block.water.id;
                         }
                     }
@@ -118,11 +119,11 @@ public class TerrainGenerator2 extends AbstractGen {
         RiverNoiseResult r2Dn = r2D.generate(cX, cZ);
         RiverNoiseResult r2Dn2 = r2D2.generate(cX, cZ);
         if (time) TimingHelper.end(1);
-        double[] dNoise2_ = noise2.gen(cX, cZ, 1.6D);
+        double[] dNoise2_ = noise2.gen(cX, cZ, 1.97D + 0.01);
         double[] dnoise5_ = noise5.gen(cX, cZ, 2.59D);
-//        double[] dnoise_ = noise.gen(cX, cZ, 2D);
-//        double[] dnoise3_ = noise3.gen(cX, cZ, 2D);
-//        double[] dnoise4_ = noise4.gen(cX, cZ, 2D);
+        double[] dnoise_ = noise.gen(cX, cZ, 2D);
+        double[] dnoise3_ = noise3.gen(cX, cZ, 2D);
+        double[] dnoise4_ = noise4.gen(cX, cZ, 2D);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<4|x;
@@ -132,10 +133,10 @@ public class TerrainGenerator2 extends AbstractGen {
                 if (time) TimingHelper.start(3);
                 double dh2 = noiseM2.get(cX|x, cZ|z);
                 double xd = 0.9D;
-                dh2 = 1-clamp10((1-clamp10((dh2-(1-xd))/xd))*0.85);
+                dh2 = 1-clamp10((1-clamp10((dh2-(1-xd))/xd))*0.7);
                 if (time) TimingHelper.end(3);
                 if (time) TimingHelper.start(4);
-                double dStr = 24.0D;
+                double dStr = 12.0D;
                 double dBlurred = (clamp10(Math.pow(1+r2Dn.getBlur(x, z, 8), 1.3)-1))*44;
                 double dBlurredA = (clamp10(Math.pow(1+r2Dn2.getBlur(x, z, 8), 1.3)-1))*23;
                 double dBlurred2 = r2Dn.getBlur(x, z, 2)*1.8D;//r2D.getBlur(x, z, 4);
@@ -155,6 +156,11 @@ public class TerrainGenerator2 extends AbstractGen {
 //                        if (dYH < 0.5)
 //                            dYH = 0.5;
                     }
+                    dYH-=func2(144, y, 15)*0.02;
+                    dYH+=func2(104, y, 25)*0.08;
+//                    dYH-=func2(149, y, 12)*0.3;
+//                    dYH-=func2(157, y, 12)*0.7;
+//                    dYH+=func2(104, y, 12)*12.7;
                     if (x+z==0) {
 //                        System.out.println(y+"/"+dYH);
                     }
@@ -165,9 +171,9 @@ public class TerrainGenerator2 extends AbstractGen {
                     int idx = idx_xz+y;
                     double dN = dNoise2_[idx];
                     double dN7 = dnoise5_[idx];
-//                    double dN1 = dnoise_[idx]*3.0D;
-//                    double dN2 = dnoise3_[idx]*3.0D;
-//                    double dN4 = (dnoise4_[idx]*0.5+0.5)*7.0D;
+                    double dN1 = dnoise_[idx]*3.0D;
+                    double dN2 = dnoise3_[idx]*3.0D;
+                    double dN4 = (dnoise4_[idx]*0.5+0.5)*7.0D;
                     if (time) TimingHelper.end(5);
                     if (dN < 0) {
 //                        dN*=0.01D;
@@ -184,8 +190,8 @@ public class TerrainGenerator2 extends AbstractGen {
                     xr+=dRiverH2*dBlurred*dStr;
 
                     dBase -= xr;
-//                    double dt = func2(44+dN1*4, y, 14+0.4*dN2-dN4);
-//                    dBase -= dt*dBlurredA*dStr*(1.0D+dN1*0.2D+0.2*dN2);
+                    double dt = func2(44+dN1*4, y, 14+0.4*dN2-dN4);
+//                    dBase -= dt*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2)*20;
                     dBase += dN7*1.7*dh2;
                     dNoise[y<<8|xz] = dBase;
                     dNoise2[y<<8|xz] = y<riverY-4?xr:0;
