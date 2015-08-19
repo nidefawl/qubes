@@ -143,7 +143,7 @@ public abstract class GLGame implements Runnable {
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
             while (this.running) {
-                runTick();
+                runFrame();
             }
         } catch (Throwable t) {
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t);
@@ -205,7 +205,7 @@ public abstract class GLGame implements Runnable {
     }
     protected boolean startRender = false;
     private Object[] showError;
-    public void runTick() throws LWJGLException {
+    public void runFrame() throws LWJGLException {
 
         if (Display.isCloseRequested()) {
             shutdown();

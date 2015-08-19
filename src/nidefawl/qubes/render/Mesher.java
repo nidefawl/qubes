@@ -176,48 +176,13 @@ public class Mesher {
 
                                 int du[] = new int[] { 0, 0, 0 };
                                 int dv[] = new int[] { 0, 0, 0 };
-                                // Add quad
-//                                if (c.face == 1) {
-//                                    x[u] = i+w;
-//                                    x[v] = j;
-//                                    du[u] = -w;
-//                                    dv[v] = h;
-//                                } else {
-//                                    x[u] = i;
-//                                    x[v] = j;
-//                                    du[u] = w;
-//                                    dv[v] = h;
-//                                }
-
                                 x[u] = i;
                                 x[v] = j;
                                 du[u] = w;
                                 dv[v] = h;
-                                int n1 = du[1] * dv[2] - dv[1] * du[2];
-                                int n2 = du[2] * dv[0] - dv[2] * du[0];
-                                int n3 = du[0] * dv[1] - dv[0] * du[1];
-                                if (c.transparent && !(n2 > 0)) {
-//                                    add = false;
-//                                    continue;
-                                }
-                                /*
-                                Mesh face = new Mesh(c,
-                                        new int[] {xOff + x[0],                 x[1],                 zOff + x[2]                   },
-                                        new int[] {xOff + x[0] + du[0],         x[1] + du[1],         zOff + x[2] + du[2]           },
-                                        new int[] {xOff + x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], zOff + x[2] + du[2] + dv[2]   },
-                                        new int[] {xOff + x[0]         + dv[0], x[1]         + dv[1], zOff + x[2]         + dv[2]   },
-                                        new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
-                                */
                                 if (add) {
                                     
-                                    Mesh face = new Mesh(c,
-                                            new int[] {x[0],                 x[1],                 x[2]                   },
-                                            new int[] {x[0] + du[0],         x[1] + du[1],         x[2] + du[2]           },
-                                            new int[] {x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]   },
-                                            new int[] {x[0]         + dv[0], x[1]         + dv[1], x[2]         + dv[2]   },
-                                            new int[] {du[0], du[1], du[2]   },
-                                            new int[] {dv[0], dv[1], dv[2]   },
-                                            new byte[] {(byte) (n1 > 0 ? 1 : n1 < 0 ? -1 : 0), (byte) (n2 > 0 ? 1 : n2 < 0 ? -1 : 0), (byte) (n3 > 0 ? 1 : n3 < 0 ? -1 : 0)});
+                                    Mesh face = new Mesh(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                                     int layer = LAYER_MAIN;
                                     meshes[c.pass+WorldRenderer.NUM_PASSES*layer].add(face);
                                 }

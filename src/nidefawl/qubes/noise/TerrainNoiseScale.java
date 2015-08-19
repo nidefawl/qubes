@@ -8,7 +8,7 @@ import nidefawl.qubes.world.World;
 public class TerrainNoiseScale extends AbstractNoiseGen {
     final static int               w     = Chunk.SIZE;
     final static int               h     = World.MAX_WORLDHEIGHT;
-    final static int               scale = 8;
+    final static int               scale = 4;
     final static int               wLow  = (w / scale) + 1;
     final static int               hLow  = (h / scale) + 1;
     

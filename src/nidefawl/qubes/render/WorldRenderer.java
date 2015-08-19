@@ -3,7 +3,9 @@ package nidefawl.qubes.render;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
+import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import nidefawl.game.Main;
@@ -14,9 +16,8 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Mesh;
-import nidefawl.qubes.vec.Vec3;
+import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
 
 import org.lwjgl.opengl.GL30;
@@ -28,6 +29,7 @@ public class WorldRenderer {
 
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
     public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
+    public HashMap<Integer, AABB> debugBBs = new HashMap<>();
     
     public BlockPos highlight = null;
     public float sunAngle2;
@@ -357,6 +359,68 @@ public class WorldRenderer {
     
     public int getNumRendered() {
         return this.rendered;
+    }
+
+    public void renderDebugBB(World world, float fTime) {
+        if (!this.debugBBs.isEmpty()) {
+            glPushAttrib(-1);
+            glEnable(GL_BLEND);
+            glDepthFunc(GL_LEQUAL);
+            glEnable(GL_DEPTH_TEST);
+            glDisable(GL_ALPHA_TEST);
+            glDisable(GL_CULL_FACE);
+            //        glEnable(GL_CULL_FACE);
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            glLoadMatrix(Engine.getModelViewMatrix());
+            glDisable(GL_TEXTURE_2D);
+            for (Integer i : debugBBs.keySet()) {
+                AABB bb = debugBBs.get(i);
+                int iColor = GameMath.randomI(i*19)%33;
+                iColor = Color.getHSBColor(iColor/33F, 0.8F, 1.0F).getRGB();
+                float fMinX = (float) bb.minX;
+                float fMinY = (float) bb.minY;
+                float fMinZ = (float) bb.minZ;
+                float fMaxX = (float) bb.maxX;
+                float fMaxY = (float) bb.maxY;
+                float fMaxZ = (float) bb.maxZ;
+                
+                Tess.instance.setColor(iColor, 120);
+                float ext = 1/32F;
+                float zero = -ext;
+                float one = 1+ext;
+                Tess.instance.add(fMinX, fMinY, fMinZ);
+                Tess.instance.add(fMaxX, fMinY, fMinZ);
+                Tess.instance.add(fMaxX, fMinY, fMaxZ);
+                Tess.instance.add(fMinX, fMinY, fMaxZ);
+                Tess.instance.add(fMinX, fMinY, fMinZ);
+                Tess.instance.add(fMinX, fMaxY, fMinZ);
+                Tess.instance.add(fMaxX, fMaxY, fMinZ);
+                Tess.instance.add(fMaxX, fMaxY, fMaxZ);
+                Tess.instance.add(fMinX, fMaxY, fMaxZ);
+                Tess.instance.add(fMinX, fMaxY, fMinZ);
+                glLineWidth(2.0F);
+                Tess.instance.draw(GL_LINE_STRIP);
+                Tess.instance.setColor(iColor, 120);
+                Tess.instance.add(fMinX, fMinY, fMaxZ);
+                Tess.instance.add(fMinX, fMaxY, fMaxZ);
+                Tess.instance.add(fMaxX, fMinY, fMaxZ);
+                Tess.instance.add(fMaxX, fMaxY, fMaxZ);
+                Tess.instance.add(fMaxX, fMinY, fMinZ);
+                Tess.instance.add(fMaxX, fMaxY, fMinZ);
+                Tess.instance.draw(GL_LINES);
+            }
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+            glPopAttrib();
+        }
     }
 
 }

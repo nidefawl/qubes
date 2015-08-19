@@ -7,8 +7,8 @@ public class Movement {
     boolean grabbed = false;
     public int mX;
     public int mY;
-    public int jump;
-    public int sneak;
+    public float jump;
+    public float sneak;
     
     public void update(double mdX, double mdY) {
         this.strafe = 0;
@@ -16,24 +16,28 @@ public class Movement {
         this.jump = 0;
         this.sneak = 0;
         if (this.grabbed) {
-
+            float mult = 1.0F;
+            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL))
+                mult = 0.01F;
             if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
-                this.forward++;
+                this.forward += mult;
             }
             if (Keyboard.isKeyDown(Keyboard.KEY_S)) {
-                this.forward--;
+                this.forward-=mult;
             }
             if (Keyboard.isKeyDown(Keyboard.KEY_D)) {
-                this.strafe--;
+                this.strafe-=mult;
             }
             if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
-                this.strafe++;
+                this.strafe+=mult;
+            }
+            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL))
+                mult = 0.03F;
+            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                this.sneak+=mult;
             }
             if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
-                this.sneak++;
-            }
-            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-                this.jump++;
+                this.jump+=mult;
             }
             this.mX += mdX;
             this.mY += mdY;

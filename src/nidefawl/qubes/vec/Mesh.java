@@ -7,27 +7,62 @@ import nidefawl.qubes.render.BlockSurface;
 
 public class Mesh {
     public final BlockSurface bs;
-    public final int v0[];
-    public final int v1[];
-    public final int v2[];
-    public final int v3[];
+    public final float v0[];
+    public final float v1[];
+    public final float v2[];
+    public final float v3[];
     public final int du[];
     public final int dv[];
     public final byte normal[];
     public int faceDir;
+    private int[] pos;
+    private int w;
+    private int h;
     final static float[] AO_TABLE = new float[] {
             153F/255F, 183F/255F, 255F/255F
     };
-    public Mesh(BlockSurface bs, int[] v0, int[] v1, int[] v2, int[] v3, int[] du, int[] dv, byte[] normal) {
-        this.v0 = v0;
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = v3;
-        this.du = du;
-        this.dv = dv;
-        this.normal = normal;
+
+
+    public Mesh(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
         this.bs = bs;
+        this.pos = pos;
+        this.du = du; 
+        this.dv = dv;
+        this.w = w;
+        this.h = h;
+        this.normal = new byte[3];
+        this.v0 = new float[3];
+        this.v1 = new float[3];
+        this.v2 = new float[3];
+        this.v3 = new float[3];
+        float d = -2E-4F;
+//        d = 0;
+        float[] fdu = new float[] { du[0], du[1], du[2] };
+        float[] fdv = new float[] { dv[0], dv[1], dv[2] };
+        fdu[u] -= d;
+        fdv[v] -= d;
+        for (int i = 0; i < 3; i++) {
+            float fPos = this.pos[i];
+            if (i == u) {
+                fPos += d/2.0F;
+            }
+            if (i == v) {
+                fPos += d/2.0F;
+            }
+            this.v0[i] = fPos;
+            this.v1[i] = fPos + fdu[i];
+            this.v2[i] = fPos + fdu[i] + fdv[i];
+            this.v3[i] = fPos + fdv[i];
+        }
+        int n1 = du[1] * dv[2] - dv[1] * du[2];
+        int n2 = du[2] * dv[0] - dv[2] * du[0];
+        int n3 = du[0] * dv[1] - dv[0] * du[1];
+        this.normal[0] = (byte) (n1 < 0 ? -1 : n1 > 0 ? 1 : 0);
+        this.normal[1] = (byte) (n2 < 0 ? -1 : n2 > 0 ? 1 : 0);
+        this.normal[2] = (byte) (n3 < 0 ? -1 : n3 > 0 ? 1 : 0);
+
     }
+
 
     public void draw(Tess tess) {
         tess.setNormals(this.normal[0], this.normal[1], this.normal[2]);

@@ -1,6 +1,8 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.vec.AABB;
+import nidefawl.qubes.world.World;
 
 public class Block {
 
@@ -16,6 +18,7 @@ public class Block {
     private String name;
     private final boolean transparent;
     String[] textures;
+    final AABB blockBounds = new AABB(0, 0, 0, 1, 1, 1);
 
     Block(int id, boolean transparent) {
         this.id = id;
@@ -68,5 +71,11 @@ public class Block {
     }
     public boolean applyAO() {
         return true;
+    }
+    
+    public AABB getCollisionBB(World world, int x, int y, int z, AABB aabb) {
+        aabb.set(this.blockBounds);
+        aabb.offset(x, y, z);
+        return aabb;
     }
 }

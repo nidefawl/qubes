@@ -12,7 +12,7 @@ varying vec3 vposition;
 flat varying int blockTexture;
 varying highp vec3 triangle;
 
- 
+
 
 float getBrightness(vec2 b) {
 	return (1-pow(1-b.x, 2))*(1-pow(1-b.y, 2));
@@ -24,11 +24,12 @@ void main() {
 	vec4 fogColor = vec4(gl_Fog.color.rgb, tex.a);
 	//distance
 	float dist = length(vposition);
+	float fdistscale = 1.0f-clamp((dist - 10.0f) / 60.0f, 0.0f, 0.8f);
     float fogFactor = clamp( (dist - 200.0f) / 700.0f, 0.0f, 0.2f );
     fogFactor += clamp( (dist - 20.0f) / 420.0f, 0.0f, 0.06f );
     tex = mix(tex, fogColor, fogFactor);
 	if (renderWireFrame) {
-	    highp vec3 d = fwidth(triangle);
+	    highp vec3 d = fwidth(triangle)*fdistscale;
 	    highp vec3 tdist = smoothstep(vec3(0.0), d*3.0f, triangle);
 	    tex.rgb = mix(vec3(1,0,0), tex.rgb, min(min(tdist.x, tdist.y), tdist.z));
 	}

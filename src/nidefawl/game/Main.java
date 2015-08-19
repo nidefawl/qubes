@@ -103,9 +103,21 @@ public class Main extends GLGame {
         this.debugOverlay.setSize(displayWidth, displayHeight);
         Engine.checkGLError("Post startup");
 //        setVSync(true);
-        this.world = new World(1, 0x123, Engine.regionLoader);
-        this.entSelf.move(0, 140, 0);
+        
+        setWorld(new World(1, 0x1234, Engine.regionLoader));
+        this.entSelf.move(-800, 140, 1540);
+        this.entSelf.yaw=6.72F;
+        this.entSelf.pitch=38.50F;
+        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
+        this.entSelf.toggleFly();
         this.rayTrace = new RayTrace();
+    }
+    public void setWorld(World world) {
+        if (this.world != null) {
+            this.world.onLeave();
+        }
+        this.world = world;
+        this.world.addEntity(this.entSelf);
     }
 
     @Override
@@ -140,7 +152,11 @@ public class Main extends GLGame {
                         Engine.regionRenderThread.flush();
                         Engine.regionLoader.flush();
                         Engine.regionRenderer.flush();
-                        this.world = new World(this.world.worldId+1, 0x123, Engine.regionLoader);
+                        int nId = 1;
+                        if (this.world != null) {
+                            nId = this.world.worldId+1;
+                        }
+                        setWorld(new World(nId, 0x123, Engine.regionLoader));
 //                        Engine.worldRenderer.flush();
 //                        Engine.textures.refreshNoiseTextures();
                     }
@@ -175,6 +191,11 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_ESCAPE:
                     shutdown();
+                    break;
+                case Keyboard.KEY_H:
+                    if (isDown) {
+                        this.entSelf.toggleFly();
+                    }
                     break;
             }
             if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_0) {
@@ -215,10 +236,7 @@ public class Main extends GLGame {
     }
 
     private void handleClick(int eventX, int eventY) {
-        System.out.println("click");
-//        if (this.movement.grabbed()) {
-            this.mouseClicked = true;
-//        }
+        this.mouseClicked = true;
     }
     boolean mouseClicked = false;
     
@@ -274,8 +292,9 @@ public class Main extends GLGame {
       if (Main.renderWireFrame) {
           Engine.worldRenderer.renderNormals(this.world, fTime);
       }
-      
+
       Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+      Engine.worldRenderer.renderDebugBB(this.world, fTime);
       
       Engine.getSceneFB().unbindCurrentFrameBuffer();
       if (Main.DO_TIMING) TimingHelper.end(6);
@@ -383,12 +402,14 @@ public class Main extends GLGame {
     }
     @Override
     public void preRenderUpdate(float f) {
-        this.entSelf.updateInputDirect(movement);
+        if (this.world != null) {
+            this.entSelf.updateInputDirect(movement);
+        }
         if (Main.DO_TIMING)
             TimingHelper.start(13);
-        float px = entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f;
-        float py = entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f;
-        float pz = entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f;
+        float px = (float) (entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f);
+        float py = (float) (entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f) + 1.3F;
+        float pz = (float) (entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f) ;
         float yaw = entSelf.yaw;
         float pitch = entSelf.pitch;
         Engine.camera.setPosition(px, py, pz);
@@ -444,7 +465,11 @@ public class Main extends GLGame {
 //            if (!startRender)
 //            startRender = nRegions > 4;
         }
-        this.mouseClicked = false;
+        boolean releaseMouse = !this.mouseClicked || (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) ? !Mouse.isButtonDown(0) : true);
+                
+        if (releaseMouse) {
+            this.mouseClicked = false;
+        }
     }
 
     @Override
@@ -458,8 +483,8 @@ public class Main extends GLGame {
     }
     @Override
     public void tick() {
-        this.entSelf.tickUpdate();
-        this.world.tickUpdate();
+       if (this.world != null)
+           this.world.tickUpdate();
 //        matrixSetupMode = Main.ticksran%100<50;
     }
 
