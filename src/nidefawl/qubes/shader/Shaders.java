@@ -45,19 +45,19 @@ public class Shaders {
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             Shaders.depthBufShader = new_depthBufShader;
-            Shader new_composite1 = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/composite");
+            Shader new_composite1 = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/composite");
             if (Shaders.composite1 != null)
                 Shaders.composite1.release();
             Shaders.composite1 = new_composite1;
-            Shader new_composite2 = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/composite1");
+            Shader new_composite2 = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/composite1");
             if (Shaders.composite2 != null)
                 Shaders.composite2.release();
             Shaders.composite2 = new_composite2;
-            Shader new_composite3 = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/composite2");
+            Shader new_composite3 = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/composite2");
             if (Shaders.composite3 != null)
                 Shaders.composite3.release();
             Shaders.composite3 = new_composite3;
-            Shader new_compositeFinal = assetMgr.loadShader(Main.useEmptyShaders ? "shaders/empty" : "shaders/final");
+            Shader new_compositeFinal = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/final");
             if (Shaders.compositeFinal != null)
                 Shaders.compositeFinal.release();
             Shaders.compositeFinal = new_compositeFinal;
@@ -120,11 +120,11 @@ public class Shaders {
     public static void setUniforms(Shader sh, float fTime) {
         WorldRenderer wr = Engine.worldRenderer;
         sh.setProgramUniform1i("renderWireFrame", Main.renderWireFrame? 1 : 0);
-        sh.setProgramUniform1f("near", Engine.znear);
-        sh.setProgramUniform1f("far", Engine.zfar);
+        sh.setProgramUniform1f("near", sh == shadow ? Engine.shadowZnear : Engine.znear);
+        sh.setProgramUniform1f("far", sh == shadow ? Engine.shadowZfar : Engine.zfar);
         sh.setProgramUniform1f("viewWidth", Main.displayWidth);
         sh.setProgramUniform1f("viewHeight", Main.displayHeight);
-        sh.setProgramUniform1f("rainStrength", 0F);
+        sh.setProgramUniform1f("rainStrength", 0);
         sh.setProgramUniform1f("wetness", 0);
         sh.setProgramUniform1f("aspectRatio", Main.displayWidth / (float) Main.displayHeight);
         sh.setProgramUniform1f("sunAngle", Engine.sunAngle);
@@ -138,7 +138,7 @@ public class Shaders {
         sh.setProgramUniform3f("moonPosition", Engine.moonPosition);
         sh.setProgramUniform3f("skyColor", wr.skyColor);
         sh.setProgramUniform1i("isEyeInWater", 0);
-        sh.setProgramUniform1i("heldBlockLightValue", 0);
+        sh.setProgramUniform1i("heldBlockLightValue", 15);
         sh.setProgramUniform1i("worldTime", Main.ticksran%24000);
         sh.setProgramUniform1i("gcolor", 0);
         sh.setProgramUniform1i("gdepth", 1);
@@ -150,21 +150,24 @@ public class Shaders {
         sh.setProgramUniform1i("eyeAltitude", 4);
         sh.setProgramUniform1i("fogMode", 1);
         sh.setProgramUniform1i("shadowMapResolution", Engine.SHADOW_BUFFER_SIZE);
+        sh.setProgramUniform1i("shadowDistance", Engine.SHADOW_ORTHO_DIST);
         sh.setProgramUniform2i("eyeBrightness", 0, 0);
-        sh.setProgramUniform2i("eyeBrightnessSmooth", 0, 240);
+        sh.setProgramUniform2i("eyeBrightnessSmooth", 0, 200);
+        
+
         sh.setProgramUniformMatrix4ARB("gbufferView", false, Engine.getViewMatrix(), false);
-            sh.setProgramUniformMatrix4ARB("gbufferModelView", false, Engine.getViewMatrix(), false);
-            sh.setProgramUniformMatrix4ARB("gbufferModelViewInverse", false, Engine.getViewMatrixInv(), false);
-            sh.setProgramUniformMatrix4ARB("gbufferPreviousModelView", false, Engine.getViewMatrixPrev(), false);
-            
-            sh.setProgramUniformMatrix4ARB("gbufferProjection", false, Engine.getProjectionMatrix(), false);
-            sh.setProgramUniformMatrix4ARB("gbufferProjectionInverse", false, Engine.getProjectionMatrixInv(), false);
-            sh.setProgramUniformMatrix4ARB("gbufferPreviousProjection", false, Engine.getProjectionMatrixPrev(), false);
-            
-            sh.setProgramUniformMatrix4ARB("shadowModelView", false, Engine.getShadowModelViewMatrix(), false);
-            sh.setProgramUniformMatrix4ARB("shadowModelViewInverse", false, Engine.getShadowModelViewMatrixInv(), false);
-            sh.setProgramUniformMatrix4ARB("shadowProjection", false, Engine.getShadowProjectionMatrix(), false);
-            sh.setProgramUniformMatrix4ARB("shadowProjectionInverse", false, Engine.getShadowProjectionMatrixInv(), false);
+        sh.setProgramUniformMatrix4ARB("gbufferModelView", false, Engine.getViewMatrix(), false);
+        sh.setProgramUniformMatrix4ARB("gbufferModelViewInverse", false, Engine.getViewMatrixInv(), false);
+        sh.setProgramUniformMatrix4ARB("gbufferPreviousModelView", false, Engine.getViewMatrixPrev(), false);
+        
+        sh.setProgramUniformMatrix4ARB("gbufferProjection", false, Engine.getProjectionMatrix(), false);
+        sh.setProgramUniformMatrix4ARB("gbufferProjectionInverse", false, Engine.getProjectionMatrixInv(), false);
+        sh.setProgramUniformMatrix4ARB("gbufferPreviousProjection", false, Engine.getProjectionMatrixPrev(), false);
+        
+        sh.setProgramUniformMatrix4ARB("shadowModelView", false, Engine.getShadowModelViewMatrix(), false);
+        sh.setProgramUniformMatrix4ARB("shadowModelViewInverse", false, Engine.getShadowModelViewMatrixInv(), false);
+        sh.setProgramUniformMatrix4ARB("shadowProjection", false, Engine.getShadowProjectionMatrix(), false);
+        sh.setProgramUniformMatrix4ARB("shadowProjectionInverse", false, Engine.getShadowProjectionMatrixInv(), false);
        
     }
 

@@ -57,6 +57,9 @@ public class PlayerSelf extends Entity {
     public void tickUpdate() {
         float vel = GameMath.sqrtf(this.forward * this.forward + this.strafe * this.strafe);
         float slowdown = 0.28F;
+        float f = -getGravity();
+        float fn = 0.11F;
+        this.noclip = this.fly;
         if (this.fly) {
             maxSpeed = 0.9F;
             float var7 = 0.0F;
@@ -83,11 +86,11 @@ public class PlayerSelf extends Entity {
             }
 
             float f8 = GameMath.degreesToRadians(-this.pitch);
-            float f = GameMath.cos(f8);
+            float fm = GameMath.cos(f8);
             float f1 = -GameMath.sin(f8) * Math.signum(-this.forward);
-            float f2 = f5 * f + f4;
+            float f2 = f5 * fm + f4;
             float f3 = GameMath.sqrtf(f5 * f5 + f7 * f7) * f1 + var7;
-            float f9 = f7 * f + f6;
+            float f9 = f7 * fm + f6;
             float f10 = GameMath.sqrtf(GameMath.sqrtf(f2 * f2 + f9 * f9) + f3 * f3);
             if (f10 > 0.01F) {
                 float f11 = maxSpeed / f10;
@@ -98,32 +101,41 @@ public class PlayerSelf extends Entity {
             this.jump *= 1;
         } else {
             slowdown = 0.28F;
-            maxSpeed = 0.3F;
-//            if (!jumped) {
-//                jumped = true;
-//            }
-            this.mot.y += 1.45D * this.jump;
+            maxSpeed = 0.2F;
+            this.mot.y += 0.49171D * this.jump;
+            this.jump *= 0.5;
             if (vel > 0.01F) {
                 if (vel < 1)
                     vel = 1;
-                float f = maxSpeed / vel;
-                float forward = -this.forward * f;
-                float strafe = -this.strafe * f;
+                float fm = maxSpeed / vel;
+                float forward = -this.forward * fm;
+                float strafe = -this.strafe * fm;
                 float sinY = GameMath.sin(GameMath.degreesToRadians(this.yaw));
                 float cosY = GameMath.cos(GameMath.degreesToRadians(this.yaw));
                 this.mot.x += -forward * sinY + strafe * cosY;
                 this.mot.z += forward * cosY + strafe * sinY;
             }
-            this.jump *= 0.93F;
         }
         super.tickUpdate();
         this.mot.x *= slowdown;
-        this.mot.y *= slowdown;
         this.mot.z *= slowdown;
+        if (this.fly) {
+
+            this.mot.y *= slowdown;
+        } else {
+
+            this.mot.y = this.mot.y*(1F-fn)+f*fn;
+        }
+//      float f = getGravity();
+//      if (this.mot.y > 0) {
+//          this.mot.y *= slowdown;
+//      }
+//      if (this.mot.y > f) {
+//      }
     }
 
     public float getGravity() {
-        return this.fly ? 0 : 0.92F;
+        return this.fly ? 0 : 0.98F;
     }
 
     public void toggleFly() {

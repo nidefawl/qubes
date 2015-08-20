@@ -27,8 +27,12 @@ import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.*;
 
 public class Engine {
-    public final static int MAX_DISPLAY_LISTS = 512;
-    public final static int SHADOW_BUFFER_SIZE = 2048;
+    public final static int   MAX_DISPLAY_LISTS  = 512;
+    public final static int   SHADOW_BUFFER_SIZE = 4096;
+    public final static int   SHADOW_ORTHO_DIST  = 240;
+    public final static float shadowZnear        = -128F;
+    public final static float shadowZfar         = 512.0F;
+    
     private static FloatBuffer    colorBuffer;
     private static IntBuffer      viewport;
     private static FloatBuffer    position;
@@ -54,13 +58,12 @@ public class Engine {
     public static float              znear;
     public static float              zfar;
     
-    public static float              shadowZnear;
-    public static float              shadowZfar;
 
     private static RegionDisplayList[]     lists;
     public static Vector4f           sunPosition        = new Vector4f();
     public static Vector4f           moonPosition       = new Vector4f();
     public static Vector3f           up                 = new Vector3f();
+    public static Vector4f           back                 = new Vector4f();
     public static float              sunAngle        = 0F;
     public static Camera             camera             = new Camera();
     public static WorldRenderer      worldRenderer      = new WorldRenderer();
@@ -191,13 +194,11 @@ public class Engine {
         projection.update();
         projection.update();
         
-        shadowZnear = -512.0F;
-        shadowZfar = 512.0F;
         shadowProjection.setZero();
         
         {
             
-            float shadowHalfPlane = 320.0F;
+            float shadowHalfPlane = SHADOW_ORTHO_DIST;
             float left = -shadowHalfPlane;
             float right = shadowHalfPlane;
             float bottom = -shadowHalfPlane;
@@ -256,7 +257,7 @@ public class Engine {
         if (fbShadow != null)
             fbShadow.cleanUp();
         fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
-        fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
+//        fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
         fbShadow.setShadowBuffer();
         fbShadow.setup();
         if (fullscreenQuad == null) {
@@ -341,19 +342,24 @@ public class Engine {
 
     public static void updateCamera() {
         up.set(0, 100, 0);
+//        back.set(0, -10, 0);
         Matrix4f cam = camera.getViewMatrix();
         view.load(cam);
         view.update();
 //        Vector4f zdepth = new Vector4f(0,0,-100, 0);
-//        Matrix4f.transform(view, zdepth, zdepth);
 //        System.out.println(zdepth);
+//        Matrix4f.transform(view, back, back);
+//        System.out.println(back);
         
         Vector3f vec = camera.getPosition();
         modelview.setIdentity();
-        modelview.m30 += modelview.m00 * -vec.x + modelview.m10 * -vec.y + modelview.m20 * -vec.z;
-        modelview.m31 += modelview.m01 * -vec.x + modelview.m11 * -vec.y + modelview.m21 * -vec.z;
-        modelview.m32 += modelview.m02 * -vec.x + modelview.m12 * -vec.y + modelview.m22 * -vec.z;
-        modelview.m33 += modelview.m03 * -vec.x + modelview.m13 * -vec.y + modelview.m23 * -vec.z;
+        float x = vec.x - 0;
+        float y = vec.y - 0;
+        float z = vec.z - 0;
+        modelview.m30 += modelview.m00 * -x + modelview.m10 * -y + modelview.m20 * -z;
+        modelview.m31 += modelview.m01 * -x + modelview.m11 * -y + modelview.m21 * -z;
+        modelview.m32 += modelview.m02 * -x + modelview.m12 * -y + modelview.m22 * -z;
+        modelview.m33 += modelview.m03 * -x + modelview.m13 * -y + modelview.m23 * -z;
         
         Matrix4f.mul(view, modelview, modelview);
         modelview.update();
@@ -463,6 +469,8 @@ public class Engine {
     protected static final Vector4f     _tmp1       = new Vector4f();
     protected static final Vector3f     _tmp2       = new Vector3f();
     protected static final Matrix4f _mat = new Matrix4f();
+    protected static final Matrix4f _mat2 = new Matrix4f();
+    protected static final Matrix4f _mat3 = new Matrix4f();
 
     public static void updateSun(float fTime) {
         boolean mode = Main.matrixSetupMode;
@@ -491,6 +499,15 @@ public class Engine {
                 _tmp2.set(0, 0, -100);
                 _mat.setIdentity();
                 _mat.translate(_tmp2);
+                Vector3f vec = camera.getPosition();
+                float trans = 12;
+                float trans2 = trans / 2.0f;
+                float x= (float)vec.x % trans - trans2;
+                float y= (float)vec.y % trans - trans2;
+                float z= (float)vec.z % trans - trans2;
+                _tmp2.set(x,y,z);
+                _mat3.setIdentity();
+                _mat3.translate(_tmp2);
                 _tmp1.set(1f, 0f, 0f, 90.0F * Camera.PI_OVER_180);
                 q4.setFromAxisAngle(_tmp1);
                 if ((double) sunAngle <= 0.5D) {
@@ -510,8 +527,18 @@ public class Engine {
                 }
                 Quaternion.mul(q4, q1, q1);
                 Quaternion.mul(q1, q2, q3);
-                GameMath.convertQuaternionToMatrix4f(q3, shadowModelView);
-                Matrix4f.mul(_mat, shadowModelView, shadowModelView);
+                GameMath.convertQuaternionToMatrix4f(q3, _mat2);
+                Matrix4f.mul(_mat2, _mat3, _mat2);
+                Matrix4f.mul(_mat, _mat2, shadowModelView);
+//                float x = vec.x - 0;
+//                float y = vec.y - 0;
+//                float z = vec.z - 0;
+//                SMCLog.info("shadow interval %.2f %.2f %.2f", fx, fy, fz);
+//                glTranslatef(fx,fy,fz);
+//                shadowModelView.m30 += shadowModelView.m00 * -x + shadowModelView.m10 * -y + shadowModelView.m20 * -z;
+//                shadowModelView.m31 += shadowModelView.m01 * -x + shadowModelView.m11 * -y + shadowModelView.m21 * -z;
+//                shadowModelView.m32 += shadowModelView.m02 * -x + shadowModelView.m12 * -y + shadowModelView.m22 * -z;
+//                shadowModelView.m33 += shadowModelView.m03 * -x + shadowModelView.m13 * -y + shadowModelView.m23 * -z;
                 shadowModelView.update();
             }
         }

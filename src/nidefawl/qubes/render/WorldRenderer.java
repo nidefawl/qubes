@@ -86,7 +86,6 @@ public class WorldRenderer {
         glMatrixMode(GL_PROJECTION);
         glLoadMatrix(Engine.getShadowProjectionMatrix());
         glMatrixMode(GL_MODELVIEW);
-        
         glLoadMatrix(Engine.getShadowModelViewMatrix());
         Shaders.shadow.enable();
         Shaders.setUniforms(Shaders.shadow, fTime);
@@ -96,9 +95,6 @@ public class WorldRenderer {
         glTranslatef(-camPos.x, -camPos.y, -camPos.z);
         Engine.fbShadow.bind();
         Engine.fbShadow.clearFrameBuffer();
-        glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(1.0F, 1.0F, 1.0F, 1.0F);
-        glClear(16640);
         Engine.regionRenderer.renderFirstPass(world, fTime);
         Engine.fbShadow.unbindCurrentFrameBuffer();
         glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
@@ -126,7 +122,7 @@ public class WorldRenderer {
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
-        if (Main.useShaders) {
+        if (!Main.useBasicShaders) {
             Shaders.sky.enable();
 //          Shaders.setUniforms(Shaders.terrain, fTime); //???
         }
@@ -151,7 +147,7 @@ public class WorldRenderer {
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
-        if (Main.useShaders) {
+        if (!Main.useBasicShaders) {
             Shaders.terrain.enable();
             Shaders.setUniforms(Shaders.terrain, fTime);
             Shaders.terrain.setProgramUniform1i("blockTextures", 0);
@@ -184,7 +180,7 @@ public class WorldRenderer {
         Engine.regionRenderer.renderFirstPass(world, fTime);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
-        if (Main.useShaders) {
+        if (!Main.useBasicShaders) {
             Shaders.waterShader.enable();
             Shaders.setUniforms(Shaders.waterShader, fTime);
             Shaders.waterShader.setProgramUniform1i("texture", 0);

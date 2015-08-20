@@ -84,9 +84,9 @@ public class RayTrace {
         
         // Rescale from units of 1 cube-edge to units of 'direction' so we can
         // compare with 't'.
-        float radius = 120*1.5F;
+        float radius = 55*1.5F;
         radius /= Math.sqrt(dx*dx+dy*dy+dz*dz);
-        int maxSteps = 120;
+        int maxSteps = 55;
         while (/* ray has not gone past bounds of world */
                (stepX > 0 ? x < MAX_X : x >= MIN_X) &&
                (stepY > 0 ? y < MAX_Y : y >= MIN_Y) &&

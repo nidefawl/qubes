@@ -3,6 +3,7 @@ package nidefawl.qubes.entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.BlockColl;
 import nidefawl.qubes.util.CollisionQuery;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.vec.Vec3D;
@@ -55,58 +56,67 @@ public abstract class Entity {
     public boolean hitGround;
     private void step() {
         if (this.noclip) {
-            this.pos.x += this.mot.x;
-            this.pos.y += this.mot.y;
-            this.pos.z += this.mot.z;
+            aabb.offset(this.mot.x, this.mot.y, this.mot.z);
+            this.pos.x = aabb.getCenterX();
+            this.pos.y = aabb.minY;
+            this.pos.z = aabb.getCenterZ();
             return;
         }
-        this.mot.y -= getGravity();
-//        Engine.worldRenderer.debugBBs.clear();
-        dbg.set(aabb);
-//        aabb.set(dbg);
-        aabb2.set(this.dbg);
+        Engine.worldRenderer.debugBBs.clear();
+//        Engine.worldRenderer.debugBBs.put(0, aabb);
+//        dbg.set(aabb);
+////        aabb.set(dbg);
+        aabb2.set(this.aabb);
         aabb2.expandTo(this.mot.x, this.mot.y, this.mot.z);
+//        Engine.worldRenderer.debugBBs.put(1, aabb2);
         this.coll.query(this.world, aabb2);
         int a = this.coll.getNumCollisions();
-
+        int i = 0;
+//        for (; i < a; i++) {
+//            BlockColl coll = this.coll.get(i);
+//            Engine.worldRenderer.debugBBs.put(2+i, coll.blockBB);
+//        }
+//
+        int y1=GameMath.floor(aabb.minY);
         double mx = this.mot.x;
         double my = this.mot.y;
         double mz = this.mot.z;
-        if (a > 0) {
-            int i = 0;
-            for (; i < a; i++) {
-                BlockColl coll = this.coll.get(i);
-                my = coll.blockBB.getYOffset(this.dbg, my);
-            }
-            dbg.offset(0, my, 0);
-            for (i=0; i < a; i++) {
-                BlockColl coll = this.coll.get(i);
-                mx = coll.blockBB.getXOffset(this.dbg, mx);
-            }
-            dbg.offset(mx, 0, 0);
-            for (i=0; i < a; i++) {
-                BlockColl coll = this.coll.get(i);
-                mz = coll.blockBB.getZOffset(this.dbg, mz);
-            }
-            dbg.offset(0, 0, mz);
-        } else {
+        int n = 2;
+        for (i=0; i < a; i++) {
+            BlockColl coll = this.coll.get(i);
+            my = coll.blockBB.getYOffset(this.aabb, my);
+        }
+        this.aabb.offset(0, my, 0);
+        for (i=0; i < a; i++) {
+            BlockColl coll = this.coll.get(i);
+            mx = coll.blockBB.getXOffset(this.aabb, mx);
+//            if (coll.y == y1)
+//              Engine.worldRenderer.debugBBs.put(n++, coll.blockBB);
+                
+        }
+        this.aabb.offset(mx, 0, 0);
+        for (i=0; i < a; i++) {
+            BlockColl coll = this.coll.get(i);
+            mz = coll.blockBB.getZOffset(this.aabb, mz);
+        }
+        this.aabb.offset(0, 0, mz);
+        
+        if (this.mot.x != mx) {
+            this.mot.x = 0;
         }
 
-        if (this.mot.x != mx)
-            this.mot.x = 0;
+        if (this.mot.z != mz) {
+            this.mot.z = 0;
+        }
         this.hitGround = this.mot.y != my && this.mot.y < 0;
         if (this.mot.y != my) {
             this.mot.y = 0;
-            this.pos.y = dbg.minY;
-        } else {
-
-            this.pos.y += this.mot.y;
         }
-        if (this.mot.z != mz)
-            this.mot.z = 0;
-        this.pos.x += this.mot.x;
-        this.pos.z += this.mot.z;
-        aabb.centerXZ(this.pos.x, this.pos.y, this.pos.z);
+        
+//        aabb.offset(this.mot.x, this.mot.y, this.mot.z);
+        this.pos.x = aabb.getCenterX();
+        this.pos.y = aabb.minY;
+        this.pos.z = aabb.getCenterZ();
     }
 
     public float getGravity() {

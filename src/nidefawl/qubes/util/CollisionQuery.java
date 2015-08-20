@@ -24,9 +24,9 @@ public class CollisionQuery {
         int minX = GameMath.floor(aabb.minX)-1;
         int minY = GameMath.floor(aabb.minY)-1;
         int minZ = GameMath.floor(aabb.minZ)-1;
-        int maxX = GameMath.floor(aabb.maxX)+1;
-        int maxY = GameMath.floor(aabb.maxY)+1;
-        int maxZ = GameMath.floor(aabb.maxZ)+1;
+        int maxX = GameMath.floor(aabb.maxX+1)+1;
+        int maxY = GameMath.floor(aabb.maxY+1)+1;
+        int maxZ = GameMath.floor(aabb.maxZ+1)+1;
         if (minY < 0) minY = 0;
         if (maxY < 0) {//out of world
             return;

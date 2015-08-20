@@ -40,13 +40,12 @@ public class Main extends GLGame {
         instance.startGame();
     }
 
-    public static boolean  GL_ERROR_CHECKS = true;
-    public static boolean  DO_TIMING       = false;
-    public static boolean  show            = false;
-    public static boolean  useShaders      = false;
-    public static boolean  useEmptyShaders      = false;
-    public static boolean  matrixSetupMode = false;
-    public static boolean  renderWireFrame = false;
+    public static boolean  GL_ERROR_CHECKS    = false;
+    public static boolean  DO_TIMING          = false;
+    public static boolean  show               = false;
+    public static boolean  useBasicShaders    = true;
+    public static boolean  matrixSetupMode    = false;
+    public static boolean  renderWireFrame    = false;
     
     long                   lastClickTime = System.currentTimeMillis() - 5000L;
     private long               lastTimeLoad          = System.currentTimeMillis();
@@ -105,11 +104,11 @@ public class Main extends GLGame {
 //        setVSync(true);
         
         setWorld(new World(1, 0x1234, Engine.regionLoader));
-        this.entSelf.move(-800, 140, 1540);
+        this.entSelf.move(-800, 222, 1540);
         this.entSelf.yaw=6.72F;
         this.entSelf.pitch=38.50F;
-        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
-        this.entSelf.toggleFly();
+//        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
+//        this.entSelf.toggleFly();
         this.rayTrace = new RayTrace();
     }
     public void setWorld(World world) {
@@ -185,7 +184,7 @@ public class Main extends GLGame {
                 case Keyboard.KEY_F6:
                     if (isDown) {
                         Engine.flushRenderTasks();
-                        useShaders = !useShaders;
+                        useBasicShaders = !useBasicShaders;
                         Engine.regionRenderer.reRender();
                     }
                     break;
@@ -276,7 +275,7 @@ public class Main extends GLGame {
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
 
-      if (Main.useShaders) {
+      if (!Main.useBasicShaders) {
           Engine.worldRenderer.renderShadowPass(this.world, fTime);
       }
 
@@ -324,7 +323,7 @@ public class Main extends GLGame {
       glActiveTexture(GL_TEXTURE0);
       glDepthMask(false);
       if (Main.DO_TIMING) TimingHelper.end(7);
-      if (Main.useShaders) {
+      if (!Main.useBasicShaders) {
           Engine.outRenderer.render(fTime);
           Engine.outRenderer.renderFinal(fTime);
       }
@@ -340,7 +339,7 @@ public class Main extends GLGame {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       GL11.glMatrixMode(GL11.GL_MODELVIEW);
       GL11.glLoadIdentity();
-      if (!Main.useShaders) {
+      if (Main.useBasicShaders) {
           glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
           Engine.drawFullscreenQuad();
       }
@@ -390,7 +389,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 4444000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 40000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Engine.shaders.reload();
 //            Engine.textures.refreshNoiseTextures();
@@ -407,9 +406,15 @@ public class Main extends GLGame {
         }
         if (Main.DO_TIMING)
             TimingHelper.start(13);
-        float px = (float) (entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f);
-        float py = (float) (entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f) + 1.3F;
-        float pz = (float) (entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f) ;
+//        float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
+//        float cosY = GameMath.cos(GameMath.degreesToRadians(entSelf.yaw));
+//        float forward = 1;
+//        float strafe = 0;
+//        float fx = -forward * sinY + strafe * cosY;
+//        float fz = forward * cosY + strafe * sinY;
+        float px = (float) (entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f) + 0;
+        float py = (float) (entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f) + 1.62F;
+        float pz = (float) (entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f) + 0;
         float yaw = entSelf.yaw;
         float pitch = entSelf.pitch;
         Engine.camera.setPosition(px, py, pz);

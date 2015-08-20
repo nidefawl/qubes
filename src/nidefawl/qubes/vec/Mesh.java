@@ -30,7 +30,6 @@ public class Mesh {
         this.dv = dv;
         this.w = w;
         this.h = h;
-        this.normal = new byte[3];
         this.v0 = new float[3];
         this.v1 = new float[3];
         this.v2 = new float[3];
@@ -54,13 +53,29 @@ public class Mesh {
             this.v2[i] = fPos + fdu[i] + fdv[i];
             this.v3[i] = fPos + fdv[i];
         }
-        int n1 = du[1] * dv[2] - dv[1] * du[2];
-        int n2 = du[2] * dv[0] - dv[2] * du[0];
-        int n3 = du[0] * dv[1] - dv[0] * du[1];
-        this.normal[0] = (byte) (n1 < 0 ? -1 : n1 > 0 ? 1 : 0);
-        this.normal[1] = (byte) (n2 < 0 ? -1 : n2 > 0 ? 1 : 0);
-        this.normal[2] = (byte) (n3 < 0 ? -1 : n3 > 0 ? 1 : 0);
-
+        int side = bs.axis<<1|bs.face;
+        byte[] normal=null;
+        switch (side) {
+            case Dir.DIR_NEG_Y:
+                normal = new byte[] {0,-1,0};
+                break;
+            case Dir.DIR_POS_Y:
+                normal = new byte[] {0,1,0};
+                break;
+            case Dir.DIR_NEG_Z:
+                normal = new byte[] {0,0,-1};
+                break;
+            case Dir.DIR_POS_Z:
+                normal = new byte[] {0,0,1};
+                break;
+            case Dir.DIR_NEG_X:
+                normal = new byte[] {-1,0,0};
+                break;
+            case Dir.DIR_POS_X:
+                normal = new byte[] {1,0,0};
+                break;
+        }
+        this.normal = normal;
     }
 
 
@@ -68,29 +83,30 @@ public class Mesh {
         tess.setNormals(this.normal[0], this.normal[1], this.normal[2]);
         Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
         int side = this.bs.axis<<1|this.bs.face;
+//        float m = 1F;
+//        if (!Main.useShaders) {
+//            switch (side) {
+//                case Dir.DIR_NEG_Y:
+//                    m = 0.5F;
+//                    break;
+//                case Dir.DIR_POS_Y:
+//                    m = 1F;
+//                    break;
+//                case Dir.DIR_NEG_Z:
+//                    m = 0.8F;
+//                    break;
+//                case Dir.DIR_POS_Z:
+//                    m = 0.8F;
+//                    break;
+//                case Dir.DIR_NEG_X:
+//                    m = 0.6F;
+//                    break;
+//                case Dir.DIR_POS_X:
+//                    m = 0.6F;
+//                    break;
+//            }
+//        }
         float m = 1F;
-        if (!Main.useShaders) {
-            switch (side) {
-                case Dir.DIR_NEG_Y:
-                    m = 0.5F;
-                    break;
-                case Dir.DIR_POS_Y:
-                    m = 1F;
-                    break;
-                case Dir.DIR_NEG_Z:
-                    m = 0.8F;
-                    break;
-                case Dir.DIR_POS_Z:
-                    m = 0.8F;
-                    break;
-                case Dir.DIR_NEG_X:
-                    m = 0.6F;
-                    break;
-                case Dir.DIR_POS_X:
-                    m = 0.6F;
-                    break;
-            }
-        }
         float alpha = 1F;
         int c = block.getColor();
         if (block == Block.water) {
@@ -102,9 +118,9 @@ public class Mesh {
         c >>= 8;
         float r = (c & 0xFF) / 255F;
         
-        AO_TABLE[0] = 166/255F;
-        AO_TABLE[1] = 213F/255F;
-        AO_TABLE[2] = 255F/255F;
+        AO_TABLE[0] = 0.5F;
+        AO_TABLE[1] = 0.75F;
+        AO_TABLE[2] = 1.0F;
         
         
         float fao0 = AO_TABLE[this.bs.ao0];
@@ -126,28 +142,28 @@ public class Mesh {
             }
             if (bs.rotateVertex) {
                 setUV(tess, 3);
-                tess.setAttr(tex, 0, idx++);
+                tess.setAttr(tex, side, idx++);
                 tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
                 tess.add(this.v3[0], this.v3[1], this.v3[2]);
             }
             setUV(tess, 0);
-            tess.setAttr(tex, 0, idx++);
+            tess.setAttr(tex, side, idx++);
             tess.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
             tess.add(this.v0[0], this.v0[1], this.v0[2]);
 
             setUV(tess, 1);
-            tess.setAttr(tex, 0, idx++);
+            tess.setAttr(tex, side, idx++);
             tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
             tess.add(this.v1[0], this.v1[1], this.v1[2]);
 
             setUV(tess, 2);
-            tess.setAttr(tex, 0, idx++);
+            tess.setAttr(tex, side, idx++);
             tess.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
             tess.add(this.v2[0], this.v2[1], this.v2[2]);
             
             if (!bs.rotateVertex) {
                 setUV(tess, 3);
-                tess.setAttr(tex, 0, idx++);
+                tess.setAttr(tex, side, idx++);
                 tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
                 tess.add(this.v3[0], this.v3[1], this.v3[2]);
             }
@@ -160,29 +176,29 @@ public class Mesh {
             }
             if (bs.rotateVertex) {
                 setUV(tess, 0);
-                tess.setAttr(tex, 0, idx++);
+                tess.setAttr(tex, side, idx++);
                 tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
                 tess.add(this.v0[0], this.v0[1], this.v0[2]);
             }
 
             setUV(tess, 3);
-            tess.setAttr(tex, 0, idx++);
+            tess.setAttr(tex, side, idx++);
             tess.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
             tess.add(this.v3[0], this.v3[1], this.v3[2]);
 
             setUV(tess, 2);
-            tess.setAttr(tex, 0, idx++);
+            tess.setAttr(tex, side, idx++);
             tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
             tess.add(this.v2[0], this.v2[1], this.v2[2]);
 
             setUV(tess, 1);
-            tess.setAttr(tex, 0, idx++);
+            tess.setAttr(tex, side, idx++);
             tess.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
             tess.add(this.v1[0], this.v1[1], this.v1[2]);
             
 
             if (!bs.rotateVertex) {
-                tess.setAttr(tex, 0, idx++);
+                tess.setAttr(tex, side, idx++);
                 setUV(tess, 0);
                 tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
                 tess.add(this.v0[0], this.v0[1], this.v0[2]);
