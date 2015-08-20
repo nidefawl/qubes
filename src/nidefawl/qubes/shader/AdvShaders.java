@@ -8,7 +8,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.WorldRenderer;
 
-public class Shaders {
+public class AdvShaders {
 
     public static Shader[] allShaders = new Shader[16];
     public static int numShaders = 0;
@@ -36,63 +36,63 @@ public class Shaders {
             Arrays.fill(allShaders, null);
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_waterShader = assetMgr.loadShader("shaders/water", false);
-            if (Shaders.waterShader != null)
-                Shaders.waterShader.release();
+            if (AdvShaders.waterShader != null)
+                AdvShaders.waterShader.release();
             new_waterShader.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_waterShader.linkProgram();
-            Shaders.waterShader = new_waterShader;
+            AdvShaders.waterShader = new_waterShader;
             Shader new_depthBufShader = assetMgr.loadShader("shaders/renderdepth");
-            if (Shaders.depthBufShader != null)
-                Shaders.depthBufShader.release();
-            Shaders.depthBufShader = new_depthBufShader;
+            if (AdvShaders.depthBufShader != null)
+                AdvShaders.depthBufShader.release();
+            AdvShaders.depthBufShader = new_depthBufShader;
             Shader new_composite1 = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/composite");
-            if (Shaders.composite1 != null)
-                Shaders.composite1.release();
-            Shaders.composite1 = new_composite1;
+            if (AdvShaders.composite1 != null)
+                AdvShaders.composite1.release();
+            AdvShaders.composite1 = new_composite1;
             Shader new_composite2 = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/composite1");
-            if (Shaders.composite2 != null)
-                Shaders.composite2.release();
-            Shaders.composite2 = new_composite2;
+            if (AdvShaders.composite2 != null)
+                AdvShaders.composite2.release();
+            AdvShaders.composite2 = new_composite2;
             Shader new_composite3 = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/composite2");
-            if (Shaders.composite3 != null)
-                Shaders.composite3.release();
-            Shaders.composite3 = new_composite3;
+            if (AdvShaders.composite3 != null)
+                AdvShaders.composite3.release();
+            AdvShaders.composite3 = new_composite3;
             Shader new_compositeFinal = assetMgr.loadShader(Main.useBasicShaders ? "shaders/empty" : "shaders/final");
-            if (Shaders.compositeFinal != null)
-                Shaders.compositeFinal.release();
-            Shaders.compositeFinal = new_compositeFinal;
+            if (AdvShaders.compositeFinal != null)
+                AdvShaders.compositeFinal.release();
+            AdvShaders.compositeFinal = new_compositeFinal;
             Shader new_testShader = assetMgr.loadShader("shaders/test", false);
-            if (Shaders.testShader != null)
-                Shaders.testShader.release();
+            if (AdvShaders.testShader != null)
+                AdvShaders.testShader.release();
             new_testShader.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_testShader.linkProgram();
-            Shaders.testShader = new_testShader;
+            AdvShaders.testShader = new_testShader;
             Shader new_sky = assetMgr.loadShader("shaders/sky");
-            if (Shaders.sky != null)
-                Shaders.sky.release();
-            Shaders.sky = new_sky;
+            if (AdvShaders.sky != null)
+                AdvShaders.sky.release();
+            AdvShaders.sky = new_sky;
             Shader new_sky2 = assetMgr.loadShader("shaders/sky");
-            if (Shaders.sky2 != null)
-                Shaders.sky2.release();
-            Shaders.sky2 = new_sky2;
+            if (AdvShaders.sky2 != null)
+                AdvShaders.sky2.release();
+            AdvShaders.sky2 = new_sky2;
             Shader new_terrain = assetMgr.loadShader("shaders/terrain", false);
-            if (Shaders.terrain != null)
-                Shaders.terrain.release();
+            if (AdvShaders.terrain != null)
+                AdvShaders.terrain.release();
             new_terrain.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_terrain.linkProgram();
-            Shaders.terrain = new_terrain;
+            AdvShaders.terrain = new_terrain;
             Shader new_shadow = assetMgr.loadShader("shaders/shadow", false);
-            if (Shaders.shadow != null)
-                Shaders.shadow.release();
+            if (AdvShaders.shadow != null)
+                AdvShaders.shadow.release();
             new_shadow.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_shadow.linkProgram();
-            Shaders.shadow = new_shadow;
+            AdvShaders.shadow = new_shadow;
             Shader new_normals = assetMgr.loadShader("shaders/visnormals", false);
-            if (Shaders.normals != null)
-                Shaders.normals.release();
+            if (AdvShaders.normals != null)
+                AdvShaders.normals.release();
             new_normals.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
             new_normals.linkProgram();
-            Shaders.normals = new_normals;
+            AdvShaders.normals = new_normals;
             startup = false;
         } catch (ShaderCompileError e) {
             e.printStackTrace();

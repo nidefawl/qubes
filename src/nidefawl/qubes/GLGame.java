@@ -13,7 +13,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiCrash;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.AdvShaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 
@@ -265,7 +265,7 @@ public abstract class GLGame implements Runnable {
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;
         double l = (timer.absTime - timeLastFPS) / 1000.0D;
-        Stats.uniformCalls = Shaders.getAndResetNumCalls();
+        Stats.uniformCalls = AdvShaders.getAndResetNumCalls();
         if (l >= 1) {
             timeLastFPS = timer.absTime;
             lastFPS = Stats.fpsCounter;

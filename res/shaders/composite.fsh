@@ -19,7 +19,11 @@
 //of the shaders mod. The shaders mod only reads these lines and doesn't actually know the real value assigned to these variables in GLSL.
 //Some of these variables are critical for proper operation. Change at your own risk.
 
-const float     shadowDistance                  = 320.0f;
+uniform int               shadowMapResolution;
+
+uniform int               shadowDistance;
+
+// const float     shadowDistance                  = 320.0f;
 const bool              generateShadowMipmap    = false;
 const float     shadowIntervalSize              = 4.0f;
 const bool              shadowHardwareFiltering = true;
@@ -99,8 +103,6 @@ uniform float eyeAltitude;
 uniform ivec2 eyeBrightness;
 uniform ivec2 eyeBrightnessSmooth;
 uniform int   fogMode;
-
-uniform int               shadowMapResolution;
 
 varying float timeSunrise;
 varying float timeNoon;
@@ -809,7 +811,7 @@ float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruc
 
                 int count = 0;
                 float spread = 1.0f / shadowMapResolution;
-                float range = 4;
+                float range = 1;
                 for (float i = -range; i <= range; i += 1.0f) {
                     for (float j = -range; j <= range; j += 1.0f) {
                          shading += shadow2D(shadow, vec3(worldposition.st + vec2(i, j) * spread, worldposition.z - 0.0018f * diffthresh)).x;
@@ -819,7 +821,7 @@ float   CalculateSunlightVisibility(inout SurfaceStruct surface, in ShadingStruc
                 shading /= count;
                     
             #else
-                diffthresh *= 7.0f;
+                diffthresh *= 3.0f;
                 shading = shadow2D(shadow, vec3(worldposition.st, worldposition.z - 0.0008f * diffthresh), 3).x;
             #endif
 

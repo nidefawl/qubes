@@ -14,7 +14,7 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.AdvShaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.*;
@@ -87,10 +87,10 @@ public class WorldRenderer {
         glLoadMatrix(Engine.getShadowProjectionMatrix());
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrix(Engine.getShadowModelViewMatrix());
-        Shaders.shadow.enable();
-        Shaders.setUniforms(Shaders.shadow, fTime);
-        Shaders.shadow.setProgramUniform1i("blockTextures", 0);
-        Shaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
+        AdvShaders.shadow.enable();
+        AdvShaders.setUniforms(AdvShaders.shadow, fTime);
+        AdvShaders.shadow.setProgramUniform1i("blockTextures", 0);
+        AdvShaders.shadow.setProgramUniform1f("shadowAngle", Engine.sunAngle);
         Vector3f camPos = Engine.camera.getPosition();
         glTranslatef(-camPos.x, -camPos.y, -camPos.z);
         Engine.fbShadow.bind();
@@ -123,7 +123,7 @@ public class WorldRenderer {
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
         if (!Main.useBasicShaders) {
-            Shaders.sky.enable();
+            AdvShaders.sky.enable();
 //          Shaders.setUniforms(Shaders.terrain, fTime); //???
         }
         glDepthMask(false);
@@ -148,12 +148,12 @@ public class WorldRenderer {
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT, GL_AMBIENT);
         if (!Main.useBasicShaders) {
-            Shaders.terrain.enable();
-            Shaders.setUniforms(Shaders.terrain, fTime);
-            Shaders.terrain.setProgramUniform1i("blockTextures", 0);
-            Shaders.terrain.setProgramUniform1i("normals", 2);
-            Shaders.terrain.setProgramUniform1i("noisetex", 3);
-            Shaders.terrain.setProgramUniform1i("specular", 5);
+            AdvShaders.terrain.enable();
+            AdvShaders.setUniforms(AdvShaders.terrain, fTime);
+            AdvShaders.terrain.setProgramUniform1i("blockTextures", 0);
+            AdvShaders.terrain.setProgramUniform1i("normals", 2);
+            AdvShaders.terrain.setProgramUniform1i("noisetex", 3);
+            AdvShaders.terrain.setProgramUniform1i("specular", 5);
             
             //TODO: use direct state (GL.bindTexture)
             glActiveTexture(GL_TEXTURE1);
@@ -168,9 +168,9 @@ public class WorldRenderer {
                 Engine.checkGLError("terrain shader");
         } else {
 //            Engine.enableLighting();
-            Shaders.testShader.enable();
-            Shaders.testShader.setProgramUniform1i("blockTextures", 0);
-            Shaders.testShader.setProgramUniform1i("renderWireFrame", Main.renderWireFrame? 1 : 0);
+            AdvShaders.testShader.enable();
+            AdvShaders.testShader.setProgramUniform1i("blockTextures", 0);
+            AdvShaders.testShader.setProgramUniform1i("renderWireFrame", Main.renderWireFrame? 1 : 0);
             if (Main.GL_ERROR_CHECKS)
                 Engine.checkGLError("test shader");
         }
@@ -181,12 +181,12 @@ public class WorldRenderer {
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
         if (!Main.useBasicShaders) {
-            Shaders.waterShader.enable();
-            Shaders.setUniforms(Shaders.waterShader, fTime);
-            Shaders.waterShader.setProgramUniform1i("texture", 0);
-            Shaders.waterShader.setProgramUniform1i("normals", 2);
-            Shaders.waterShader.setProgramUniform1i("noisetex", 3);
-            Shaders.waterShader.setProgramUniform1i("specular", 5);
+            AdvShaders.waterShader.enable();
+            AdvShaders.setUniforms(AdvShaders.waterShader, fTime);
+            AdvShaders.waterShader.setProgramUniform1i("texture", 0);
+            AdvShaders.waterShader.setProgramUniform1i("normals", 2);
+            AdvShaders.waterShader.setProgramUniform1i("noisetex", 3);
+            AdvShaders.waterShader.setProgramUniform1i("specular", 5);
             if (Main.GL_ERROR_CHECKS)
                 Engine.checkGLError("water shader");
         }
@@ -313,7 +313,7 @@ public class WorldRenderer {
         glPushMatrix();
         glLoadIdentity();
         glLoadMatrix(Engine.getModelViewMatrix());
-        Shaders.normals.enable();
+        AdvShaders.normals.enable();
         Engine.checkGLError("Shaders.normals.enable()");
         glLineWidth(3.0F);
         Engine.regionRenderer.renderFirstPass(world, fTime);

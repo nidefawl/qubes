@@ -56,7 +56,7 @@ public class Shader {
     public Shader(String name) {
         this.name = name;
         this.buffer = BufferUtils.createIntBuffer(1);
-        Shaders.register(this);
+        AdvShaders.register(this);
     }
     public void load(InputStream streamfsh, InputStream streamvsh, InputStream streamgsh, boolean link) throws IOException {
         BufferedReader readerfsh = streamfsh != null ? new BufferedReader(new InputStreamReader(streamfsh)) : null;

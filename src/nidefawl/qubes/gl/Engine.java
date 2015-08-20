@@ -13,7 +13,7 @@ import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.render.*;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.AdvShaders;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;
@@ -71,7 +71,7 @@ public class Engine {
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
-    public static Shaders            shaders            = new Shaders();
+    public static AdvShaders            shaders            = new AdvShaders();
     private static DisplayList fullscreenQuad;
 
     public static void generateLightMapTexture() {
