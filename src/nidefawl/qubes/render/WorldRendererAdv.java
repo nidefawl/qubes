@@ -6,7 +6,7 @@ import static org.lwjgl.opengl.GL13.*;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Vector3f;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;

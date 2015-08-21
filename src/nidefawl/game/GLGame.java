@@ -1,4 +1,4 @@
-package nidefawl.qubes;
+package nidefawl.game;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;

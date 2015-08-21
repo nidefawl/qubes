@@ -10,7 +10,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;

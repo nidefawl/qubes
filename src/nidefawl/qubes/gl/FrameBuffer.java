@@ -6,7 +6,7 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.BufferUtils;

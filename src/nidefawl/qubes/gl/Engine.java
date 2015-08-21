@@ -9,7 +9,7 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.render.*;

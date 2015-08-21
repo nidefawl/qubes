@@ -3,7 +3,7 @@ package nidefawl.qubes.render;
 import java.util.ArrayList;
 import java.util.List;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.chunk.Region;
 import static nidefawl.qubes.chunk.Region.*;
 import static nidefawl.qubes.render.MeshedRegion.*;

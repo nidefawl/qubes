@@ -2,7 +2,8 @@ package nidefawl.qubes.gui;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import nidefawl.game.Main;
+
+import nidefawl.qubes.Main;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;

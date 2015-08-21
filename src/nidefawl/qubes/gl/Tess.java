@@ -2,7 +2,7 @@ package nidefawl.qubes.gl;
 
 import java.nio.*;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
 
 import org.lwjgl.opengl.GL11;

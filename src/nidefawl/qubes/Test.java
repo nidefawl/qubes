@@ -1,4 +1,4 @@
-package nidefawl.game;
+package nidefawl.qubes;
 
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 

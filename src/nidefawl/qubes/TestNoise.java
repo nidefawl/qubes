@@ -1,13 +1,14 @@
-package nidefawl.qubes.noise;
+package nidefawl.qubes;
 
 import java.util.Random;
 
+import nidefawl.qubes.noise.TerrainNoise;
 import nidefawl.qubes.util.GameMath;
 
-public class Test {
+public class TestNoise {
 
     public static void main(String[] args) {
-        Test t = new Test(new Random(1));
+        TestNoise t = new TestNoise(new Random(1));
         {
 
             long l = System.nanoTime();
@@ -43,7 +44,7 @@ public class Test {
     int                        wLow  = (w / scale)+1;
     int                        hLow  = (h / scale)+1;
 
-    public Test(Random rand) {
+    public TestNoise(Random rand) {
         double scaleMixXZ = 1;
         double scaleMixY = 1;
         this.noise = new TerrainNoise(rand.nextLong(), scaleMixXZ, scaleMixY, scaleMixXZ, 1);

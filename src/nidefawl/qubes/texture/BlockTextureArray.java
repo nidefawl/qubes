@@ -7,7 +7,7 @@ import java.nio.ByteOrder;
 import java.util.*;
 import java.util.Map.Entry;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;

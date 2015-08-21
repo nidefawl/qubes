@@ -1,6 +1,6 @@
 package nidefawl.qubes.texture;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
 import nidefawl.qubes.util.GameMath;

@@ -2,7 +2,7 @@ package nidefawl.qubes.shader;
 
 import java.util.Arrays;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;

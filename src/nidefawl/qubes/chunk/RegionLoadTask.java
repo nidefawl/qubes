@@ -1,6 +1,6 @@
 package nidefawl.qubes.chunk;
 
-import nidefawl.game.Main;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
 

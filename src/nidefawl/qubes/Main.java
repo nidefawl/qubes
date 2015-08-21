@@ -1,4 +1,4 @@
-package nidefawl.game;
+package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -6,7 +6,7 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import java.util.Locale;
 
-import nidefawl.qubes.GLGame;
+import nidefawl.game.GLGame;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;

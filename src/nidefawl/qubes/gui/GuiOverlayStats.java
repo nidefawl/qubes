@@ -4,8 +4,8 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.util.ArrayList;
 
-import nidefawl.game.Main;
-import nidefawl.qubes.GLGame;
+import nidefawl.game.GLGame;
+import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
