@@ -1,11 +1,7 @@
 package nidefawl.qubes.gl;
 
 import nidefawl.qubes.util.GameMath;
-
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Quaternion;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+import nidefawl.qubes.vec.*;
 
 public class Camera {
 

@@ -4,6 +4,8 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.util.ArrayList;
 
+import org.lwjgl.opengl.GL11;
+
 import nidefawl.game.GLGame;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
@@ -11,13 +13,13 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.Camera;
+import nidefawl.qubes.gl.DisplayList;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
-
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Vector3f;
 
 public class GuiOverlayStats extends Gui {
 

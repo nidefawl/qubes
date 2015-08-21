@@ -1,8 +1,9 @@
 package nidefawl.qubes.shader;
 
-import static org.lwjgl.opengl.ARBFragmentShader.*;
+import static org.lwjgl.opengl.ARBFragmentShader.GL_FRAGMENT_SHADER_ARB;
 import static org.lwjgl.opengl.ARBShaderObjects.*;
-import static org.lwjgl.opengl.ARBVertexShader.*;
+import static org.lwjgl.opengl.ARBVertexShader.GL_VERTEX_SHADER_ARB;
+import static org.lwjgl.opengl.ARBVertexShader.glBindAttribLocationARB;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -10,16 +11,17 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
 
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.ARBGeometryShader4;
+
+import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
-
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.ARBGeometryShader4;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vec.Vector4f;
 
 public class Shader {
     int fragShader = -1;
@@ -106,6 +108,9 @@ public class Shader {
                 if (getStatus(this.fragShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                     Engine.checkGLError("getStatus");
                     throw new ShaderCompileError(this.name+" fragment", log);
+                } else if (!log.isEmpty()) {
+                    System.out.println(this.name+" fragment");
+                    System.out.println(log);
                 }
             }
 
@@ -125,6 +130,9 @@ public class Shader {
                 if (getStatus(this.vertShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                     Engine.checkGLError("getStatus");
                     throw new ShaderCompileError(this.name+" vertex", log);
+                } else if (!log.isEmpty()) {
+                    System.out.println(this.name+" vertex");
+                    System.out.println(log);
                 }
             }
 
@@ -144,6 +152,9 @@ public class Shader {
                 if (getStatus(this.geometryShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                     Engine.checkGLError("getStatus");
                     throw new ShaderCompileError(this.name+" geometry", log);
+                } else if (!log.isEmpty()) {
+                    System.out.println(this.name+" geometryShader");
+                    System.out.println(log);
                 }
             }
             this.shader = glCreateProgramObjectARB();
@@ -195,7 +206,7 @@ public class Shader {
 
     public int getStatus(int obj, int a) {
         buffer.position(0).limit(1);
-        glGetObjectParameterARB(obj, a, buffer);
+        GL.glGetObjectParameterivARB(obj, a, buffer);
         return buffer.get();
     }
 

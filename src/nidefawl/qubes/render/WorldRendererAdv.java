@@ -4,8 +4,8 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.util.vector.Vector3f;
 
+import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
@@ -14,6 +14,7 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class WorldRendererAdv extends WorldRenderer {
@@ -80,9 +81,9 @@ public class WorldRendererAdv extends WorldRenderer {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_COLOR_MATERIAL);
         glMatrixMode(GL_PROJECTION);
-        glLoadMatrix(Engine.getShadowProjectionMatrix());
+        GL.glLoadMatrixf(Engine.getShadowProjectionMatrix());
         glMatrixMode(GL_MODELVIEW);
-        glLoadMatrix(Engine.getShadowModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getShadowModelViewMatrix());
         shadow.enable();
         Shaders.setUniforms(shadow, fTime);
         shadow.setProgramUniform1i("blockTextures", 0);
@@ -104,10 +105,10 @@ public class WorldRendererAdv extends WorldRenderer {
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix());//TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getProjectionMatrix());//TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glLoadMatrix(Engine.getViewMatrix());//TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getViewMatrix());//TODO: GET RID OF, load into shader
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
         
@@ -136,10 +137,10 @@ public class WorldRendererAdv extends WorldRenderer {
         //        Engine.enableLighting();
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix());//TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getProjectionMatrix());//TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glLoadMatrix(Engine.getModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getModelViewMatrix());
         glNormal3f(0.0F, -1.0F, 0.0F);
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);

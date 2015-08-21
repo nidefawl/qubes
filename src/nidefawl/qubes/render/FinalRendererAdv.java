@@ -7,11 +7,11 @@ import static org.lwjgl.opengl.GL30.*;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
+import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;

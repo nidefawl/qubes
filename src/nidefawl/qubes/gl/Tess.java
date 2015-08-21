@@ -259,8 +259,8 @@ public class Tess extends TesselatorState {
             }
             if (useTexturePtr2) {
                 GL13.glClientActiveTexture(GL13.GL_TEXTURE1);
-                shortBuffer.position(offset*2);
-                GL11.glTexCoordPointer(2, stride*4, shortBuffer);
+                buffer.position(offset*4);
+                GL11.glTexCoordPointer(2, GL11.GL_SHORT, stride*4, buffer);
                 GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
                 GL13.glClientActiveTexture(GL13.GL_TEXTURE0);
                 offset+=1;

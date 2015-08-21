@@ -2,10 +2,10 @@ package nidefawl.qubes.gl;
 
 import java.nio.FloatBuffer;
 
-import nidefawl.qubes.util.GameMath;
-
 import org.lwjgl.BufferUtils;
-import org.lwjgl.util.vector.Matrix4f;
+
+import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.Matrix4f;
 
 public class BufferedMatrix extends Matrix4f {
     private static final long serialVersionUID = 6952943666759024629L;

@@ -4,11 +4,16 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+
+import nidefawl.game.GL;
+import nidefawl.game.GLGame;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
@@ -18,13 +23,8 @@ import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.vec.Vec3;
-
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.GLU;
-import org.lwjgl.util.glu.Project;
-import org.lwjgl.util.vector.*;
+import nidefawl.qubes.util.Project;
+import nidefawl.qubes.vec.*;
 
 public class Engine {
     public final static int   MAX_DISPLAY_LISTS  = 512;
@@ -77,7 +77,7 @@ public class Engine {
     public static boolean checkGLError(String s) {
         int i = GL11.glGetError();
         if (i != 0) {
-            String s1 = GLU.gluErrorString(i);
+            String s1 = GLGame.getGlErrorString(i);
             throw new GameError("Error - " + s + ": " + s1);
         }
         return false;
@@ -303,7 +303,7 @@ public class Engine {
         fog.put(fogColor.z);
         fog.put(1);
         fog.flip();
-        glFog(GL_FOG_COLOR, fog);
+        GL.glFogv(GL_FOG_COLOR, fog);
 
     }
 
@@ -386,7 +386,7 @@ public class Engine {
 
     public static void readMat(int type, BufferedMatrix out) {
         mat.position(0).limit(16);
-        GL11.glGetFloat(type, mat);
+        GL.glGetFloatv(type, mat);
         mat.position(0).limit(16);
         out.load(mat);
         mat.position(0).limit(16);
@@ -478,7 +478,7 @@ public class Engine {
             if (mode) {
                 glMatrixMode(GL_MODELVIEW);
                 glLoadIdentity();
-                glLoadMatrix(getViewMatrix());
+                GL.glLoadMatrixf(getViewMatrix());
                 glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
                 glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
                 glRotatef(angle, 1.0F, 0.0F, 0.0F);

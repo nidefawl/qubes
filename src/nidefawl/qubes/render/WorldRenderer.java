@@ -1,28 +1,27 @@
 package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
+import org.lwjgl.opengl.GL30;
+
+import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.shader.*;
+import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
-
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.util.vector.Vector3f;
 
 public class WorldRenderer {
 
@@ -146,10 +145,10 @@ public class WorldRenderer {
         
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glLoadMatrix(Engine.getViewMatrix()); //TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getViewMatrix()); //TODO: GET RID OF, load into shader
         if (Main.DO_TIMING) TimingHelper.endStart("preSky");
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
@@ -177,10 +176,10 @@ public class WorldRenderer {
         //        Engine.enableLighting();
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glLoadMatrix(Engine.getModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getModelViewMatrix());
         glNormal3f(0.0F, -1.0F, 0.0F);
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -238,11 +237,11 @@ public class WorldRenderer {
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
-        glLoadMatrix(Engine.getModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getModelViewMatrix());
 
         glDisable(GL_TEXTURE_2D);
         glLineWidth(3.0F);
@@ -274,11 +273,11 @@ public class WorldRenderer {
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
             glLoadIdentity();
-            glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+            GL.glLoadMatrixf(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             glLoadIdentity();
-            glLoadMatrix(Engine.getModelViewMatrix());
+            GL.glLoadMatrixf(Engine.getModelViewMatrix());
             glDisable(GL_TEXTURE_2D);
             Tess.instance.setColor(-1, 120);
             Tess.instance.setOffset(this.highlight.x, this.highlight.y, this.highlight.z);
@@ -334,11 +333,11 @@ public class WorldRenderer {
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
-        glLoadMatrix(Engine.getModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getModelViewMatrix());
         Shaders.normals.enable();
         Engine.checkGLError("Shaders.normals.enable()");
         glLineWidth(3.0F);
@@ -395,11 +394,11 @@ public class WorldRenderer {
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
             glLoadIdentity();
-            glLoadMatrix(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
+            GL.glLoadMatrixf(Engine.getProjectionMatrix()); //TODO: GET RID OF, load into shader
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             glLoadIdentity();
-            glLoadMatrix(Engine.getModelViewMatrix());
+            GL.glLoadMatrixf(Engine.getModelViewMatrix());
             glDisable(GL_TEXTURE_2D);
             for (Integer i : debugBBs.keySet()) {
                 AABB bb = debugBBs.get(i);

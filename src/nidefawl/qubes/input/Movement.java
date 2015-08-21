@@ -1,6 +1,6 @@
 package nidefawl.qubes.input;
 
-import org.lwjgl.input.Keyboard;
+import nidefawl.game.Keyboard;
 
 public class Movement {
     public float strafe, forward;
@@ -17,7 +17,7 @@ public class Movement {
         this.sneak = 0;
         if (this.grabbed) {
             float mult = 1.0F;
-            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL))
+            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL))
                 mult = 0.2F;
             if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
                 this.forward += mult;
@@ -31,9 +31,9 @@ public class Movement {
             if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
                 this.strafe+=mult;
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL))
+            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL))
                 mult = 0.03F;
-            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT_SHIFT)) {
                 this.sneak+=mult;
             }
             if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {

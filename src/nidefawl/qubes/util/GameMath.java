@@ -2,8 +2,8 @@ package nidefawl.qubes.util;
 
 import java.nio.FloatBuffer;
 
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Quaternion;
+import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Quaternion;
 
 public class GameMath {
 

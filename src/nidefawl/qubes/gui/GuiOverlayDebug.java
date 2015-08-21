@@ -87,7 +87,8 @@ public class GuiOverlayDebug extends Gui {
         int w1 = 120;
         int gap = 24;
         int wCol = w1 * 2 + gap;
-        int yCol = 160;
+        int hCol = Math.min(450, height - 20);
+        int yCol = Math.min(290, height - hCol);
         int h = (int) (w1 * 0.6);
         int gapy = 4;
         int b = 4;
