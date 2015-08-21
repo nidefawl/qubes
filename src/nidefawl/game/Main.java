@@ -18,7 +18,10 @@ import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.gui.GuiOverlayStats;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.render.WorldRendererAdv;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.render.RegionRenderThread;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.World;
@@ -41,7 +44,6 @@ public class Main extends GLGame {
     }
 
     public static boolean  GL_ERROR_CHECKS    = false;
-    public static boolean  DO_TIMING          = false;
     public static boolean  show               = false;
     public static boolean  useBasicShaders    = true;
     public static boolean  matrixSetupMode    = false;
@@ -67,29 +69,28 @@ public class Main extends GLGame {
     public int selBlock = 0;
     long lastShaderLoadTime = 0L;
     private boolean doLoad = true;
-
     public Main() {
         super(20);
         GLGame.displayWidth = initWidth;
         GLGame.displayHeight = initHeight;
-        TimingHelper.setName(0, "Final_Prepare");
-        TimingHelper.setName(1, "Final_Stage0");
-        TimingHelper.setName(2, "Final_Stage1");
-        TimingHelper.setName(3, "Final_Stage2");
-//        TimingHelper.setName(4, "Final_Stage3");
-        TimingHelper.setName(5, "Final_StageLast");
-        TimingHelper.setName(6, "RenderScene");
-        TimingHelper.setName(7, "PreFinalStage");
-        TimingHelper.setName(8, "PostFinalStage");
-        TimingHelper.setName(9, "GUIStats");
-        TimingHelper.setName(10, "UpdateTimer");
-        TimingHelper.setName(11, "PreRenderUpdate");
-        TimingHelper.setName(12, "Input");
-        TimingHelper.setName(13, "EngineUpdate");
-        TimingHelper.setName(15, "DisplayUpdate");
-        TimingHelper.setName(16, "CalcFPS");
-        TimingHelper.setName(17, "Final_Stage0to1Mipmap");
-        TimingHelper.setName(18, "Final_Stage1to2Mipmap");
+//        TimingHelper.setName(0, "Final_Prepare");
+//        TimingHelper.setName(1, "Final_Stage0");
+//        TimingHelper.setName(2, "Final_Stage1");
+//        TimingHelper.setName(3, "Final_Stage2");
+////        TimingHelper.setName(4, "Final_Stage3");
+//        TimingHelper.setName(5, "Final_StageLast");
+//        TimingHelper.setName(6, "RenderScene");
+//        TimingHelper.setName(7, "PreFinalStage");
+//        TimingHelper.setName(8, "PostFinalStage");
+//        TimingHelper.setName(9, "GUIStats");
+//        TimingHelper.setName(10, "UpdateTimer");
+//        TimingHelper.setName(11, "PreRenderUpdate");
+//        TimingHelper.setName(12, "Input");
+//        TimingHelper.setName(13, "EngineUpdate");
+//        TimingHelper.setName(15, "DisplayUpdate");
+//        TimingHelper.setName(16, "CalcFPS");
+//        TimingHelper.setName(17, "Final_Stage0to1Mipmap");
+//        TimingHelper.setName(18, "Final_Stage1to2Mipmap");
     }
 
     @Override
@@ -172,8 +173,7 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F11:
                     if (isDown) {
-                        DO_TIMING = !DO_TIMING;
-                        TimingHelper.reset();
+                        toggleTiming = true;
                     }
                     break;
                 case Keyboard.KEY_F12:
@@ -183,9 +183,8 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F6:
                     if (isDown) {
-                        Engine.flushRenderTasks();
                         useBasicShaders = !useBasicShaders;
-                        Engine.regionRenderer.reRender();
+                        Engine.switchRenderer(useBasicShaders);
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -275,36 +274,31 @@ public class Main extends GLGame {
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
 
-      if (!Main.useBasicShaders) {
-          Engine.worldRenderer.renderShadowPass(this.world, fTime);
-      }
-
-      if (Main.DO_TIMING) TimingHelper.start(6);
-      glDisable(GL_CULL_FACE);
+        if (Main.DO_TIMING) TimingHelper.startSec("world");
+        if (Main.DO_TIMING) TimingHelper.startSec("ShadowPass");
+        Engine.worldRenderer.renderShadowPass(this.world, fTime);
+        if (Main.DO_TIMING) TimingHelper.endStart("bindFB");
       glEnable(GL_CULL_FACE);
       Engine.getSceneFB().bind();
+      if (Main.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
       Engine.getSceneFB().clearFrameBuffer();
+      if (Main.DO_TIMING) TimingHelper.endStart("renderWorld");
 
-//      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       Engine.worldRenderer.renderWorld(this.world, fTime);
-//      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      if (Main.renderWireFrame) {
-          Engine.worldRenderer.renderNormals(this.world, fTime);
-      }
-
-      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
-      Engine.worldRenderer.renderDebugBB(this.world, fTime);
-      
+//      if (Main.renderWireFrame) {
+//      if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
+//          Engine.worldRenderer.renderNormals(this.world, fTime);
+//      }
+      if (Main.DO_TIMING) TimingHelper.endStart("renderBlockHighlight");
+//      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+      if (Main.DO_TIMING) TimingHelper.endStart("renderDebugBB");
+//      Engine.worldRenderer.renderDebugBB(this.world, fTime);
+      if (Main.DO_TIMING) TimingHelper.endStart("unbindCurrentFrameBuffer");
       Engine.getSceneFB().unbindCurrentFrameBuffer();
-      if (Main.DO_TIMING) TimingHelper.end(6);
-      if (Main.DO_TIMING) TimingHelper.start(7);
-
-      glEnable(GL_CULL_FACE);
-
-      glDisable(GL_LIGHTING);
-      glDisable(GL_COLOR_MATERIAL);
-      glDisable(GL_LIGHT0);
-      glDisable(GL_LIGHT1);
+      if (Main.DO_TIMING) TimingHelper.endSec();
+      if (Main.DO_TIMING) TimingHelper.endSec();
+      if (Main.DO_TIMING) TimingHelper.startSec("screen");
+      if (Main.DO_TIMING) TimingHelper.startSec("prepare");
 
       GL11.glMatrixMode(GL11.GL_PROJECTION);
       GL11.glLoadIdentity(); // Reset The Projection Matrix
@@ -321,14 +315,14 @@ public class Main extends GLGame {
       glDepthFunc(GL_ALWAYS);
       glEnable(GL_TEXTURE_2D);
       glActiveTexture(GL_TEXTURE0);
+      if (Main.DO_TIMING) TimingHelper.endStart("final");
+      
+      
       glDepthMask(false);
-      if (Main.DO_TIMING) TimingHelper.end(7);
-      if (!Main.useBasicShaders) {
-          Engine.outRenderer.render(fTime);
-          Engine.outRenderer.renderFinal(fTime);
-      }
-      if (Main.DO_TIMING) TimingHelper.start(8);
-
+      Engine.outRenderer.render(fTime);
+      Engine.outRenderer.renderFinal(fTime);
+      
+      if (Main.DO_TIMING) TimingHelper.endStart("gui");
       glDepthMask(true);
 
       glDepthFunc(GL_LEQUAL);
@@ -337,13 +331,9 @@ public class Main extends GLGame {
       glEnable(GL_ALPHA_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      GL11.glMatrixMode(GL11.GL_MODELVIEW);
-      GL11.glLoadIdentity();
-      if (Main.useBasicShaders) {
-          glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
-          Engine.drawFullscreenQuad();
-      }
+      
       if (this.movement.grabbed()) {
+          if (Main.DO_TIMING) TimingHelper.startSec("crosshair");
           glDisable(GL_TEXTURE_2D);
           Tess.instance.setColor(-1, 100);
           Tess.instance.setOffset(displayWidth/2, displayHeight/2, 0);
@@ -358,30 +348,31 @@ public class Main extends GLGame {
           Tess.instance.add(height, -w, 0);
           Tess.instance.add(-height, -w, 0);
           Tess.instance.draw(GL_QUADS);
-
           glEnable(GL_TEXTURE_2D);
-      
+          if (Main.DO_TIMING) TimingHelper.endSec();
       }
 //      GL11.glScalef(0.25F, 0.25F, 1);
 //      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
 //      Tess.instance.draw(GL_QUADS);
 
-      GL11.glLoadIdentity();
       if (show) {
+          if (Main.DO_TIMING) TimingHelper.startSec("debugOverlay");
           if (this.debugOverlay != null) {
               this.debugOverlay.render(fTime);
           }
+          if (Main.DO_TIMING) TimingHelper.endSec();
       }
-      if (Main.DO_TIMING) TimingHelper.end(8);
-      if (Main.DO_TIMING) TimingHelper.start(9);
-
+      if (Main.DO_TIMING) TimingHelper.startSec("statsOverlay");
 
       if (this.statsOverlay != null) {
           this.statsOverlay.render(fTime);
       }
-      if (Main.DO_TIMING) TimingHelper.end(9);
+      if (Main.DO_TIMING) TimingHelper.endSec();
+      
+      if (Main.DO_TIMING) TimingHelper.endSec();
       glEnable(GL_DEPTH_TEST);
 
+      if (Main.DO_TIMING) TimingHelper.endSec();
   }
 
     @Override
@@ -389,9 +380,11 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 40000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 4444000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
-            Engine.shaders.reload();
+            Shaders.initShaders();
+            Engine.worldRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 //            Engine.textures.refreshNoiseTextures();
         }
     }
@@ -404,8 +397,6 @@ public class Main extends GLGame {
         if (this.world != null) {
             this.entSelf.updateInputDirect(movement);
         }
-        if (Main.DO_TIMING)
-            TimingHelper.start(13);
 //        float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
 //        float cosY = GameMath.cos(GameMath.degreesToRadians(entSelf.yaw));
 //        float forward = 1;
@@ -432,8 +423,6 @@ public class Main extends GLGame {
             if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
         }
         Engine.updateMouseOverView(winX, winY);
-        if (Main.DO_TIMING)
-            TimingHelper.end(13);
         Engine.updateSun(f);
         this.rayTrace.reset();
         Engine.worldRenderer.highlight = null;

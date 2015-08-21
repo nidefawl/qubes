@@ -14,6 +14,7 @@ import nidefawl.game.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.Stats;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBGeometryShader4;
@@ -31,6 +32,9 @@ public class Shader {
     HashMap<String, AbstractUniform> uniforms    = new HashMap<String, AbstractUniform>();
     private final FloatBuffer tmp         = BufferUtils.createFloatBuffer(16);
     private int setProgramUniformCalls;
+    void incUniformCalls() {
+        Stats.uniformCalls++;
+    }
 
     HashMap<String, Integer> missinglocations    = new HashMap<String, Integer>();
     private int geometryShader;
@@ -56,7 +60,6 @@ public class Shader {
     public Shader(String name) {
         this.name = name;
         this.buffer = BufferUtils.createIntBuffer(1);
-        AdvShaders.register(this);
     }
     public void load(InputStream streamfsh, InputStream streamvsh, InputStream streamgsh, boolean link) throws IOException {
         BufferedReader readerfsh = streamfsh != null ? new BufferedReader(new InputStreamReader(streamfsh)) : null;
@@ -245,7 +248,7 @@ public class Shader {
             uniforms.put(name, uni);
         }
         if (uni.set(x)) {
-            setProgramUniformCalls++;
+            incUniformCalls();
         }
     }
 
@@ -257,7 +260,7 @@ public class Shader {
             uniforms.put(name, uni);
         }
         if (uni.set(x, y)) {
-            setProgramUniformCalls++;
+            incUniformCalls();
         }
     }
     public void setProgramUniform2f(String name, float x, float y) {
@@ -268,7 +271,7 @@ public class Shader {
             uniforms.put(name, uni);
         }
         if (uni.set(x, y)) {
-            setProgramUniformCalls++;
+            incUniformCalls();
         }
     }
     public void setProgramUniform1f(String name, float x) {
@@ -279,7 +282,7 @@ public class Shader {
             uniforms.put(name, uni);
         }
         if (uni.set(x)) {
-            setProgramUniformCalls++;
+            incUniformCalls();
         }
     }
     public void setProgramUniform3f(String name, float x, float y, float z) {
@@ -290,7 +293,7 @@ public class Shader {
             uniforms.put(name, uni);
         }
         if (uni.set(x, y, z)) {
-            setProgramUniformCalls++;
+            incUniformCalls();
         }
     }
 
@@ -316,7 +319,7 @@ public class Shader {
             matrix.position(0).limit(16);
         }
         if (uni.set(matrix, transpose)) {
-            setProgramUniformCalls++;
+            incUniformCalls();
         }
     }
 

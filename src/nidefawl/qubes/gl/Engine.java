@@ -13,7 +13,7 @@ import nidefawl.game.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.render.*;
-import nidefawl.qubes.shader.AdvShaders;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;
@@ -48,10 +48,7 @@ public class Engine {
     private static FloatBuffer       depthRead;
     private static FloatBuffer       fog;
 
-    public static FrameBuffer        fb2;
-    public static FrameBuffer        fbComposite0;
-    public static FrameBuffer        fbComposite1;
-    public static FrameBuffer        fbComposite2;
+    public static FrameBuffer        fbScene;
     public static FrameBuffer        fbDbg;
     public static FrameBuffer        fbShadow;
     
@@ -67,11 +64,10 @@ public class Engine {
     public static float              sunAngle        = 0F;
     public static Camera             camera             = new Camera();
     public static WorldRenderer      worldRenderer      = new WorldRenderer();
-    public static OutputRenderer     outRenderer        = new OutputRenderer();
+    public static FinalRendererBase  outRenderer        = new FinalRenderer();
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
-    public static AdvShaders            shaders            = new AdvShaders();
     private static DisplayList fullscreenQuad;
 
     public static void generateLightMapTexture() {
@@ -112,60 +108,15 @@ public class Engine {
         glMatrixMode(GL_MODELVIEW);
         glActiveTexture(GL_TEXTURE0);
 
+        Shaders.init();
         TextureManager.getInstance().init();
         AssetManager.getInstance().init();
         BlockTextureArray.getInstance().init();
-        shaders.init();
-        worldRenderer.init();
-        outRenderer.init();
         regionLoader.init();
         regionRenderThread.init();
         regionRenderer.init();
         BlockTextureArray.getInstance().reload();
-    }
-
-
-    /**
-     * Render the current frame
-     * 
-     * @param fTime
-     */
-    public static void enableLighting() {
-
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-        glEnable(GL_LIGHT1);
-        glEnable(GL_COLOR_MATERIAL);
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-        glLight(GL_LIGHT0, GL_POSITION, setColorBuffer(0.16169041989141428, 0.8084520874101966, -0.5659164515496377, 0.0D));
-        float diffuse = 0.6F;
-        float ambient = 0.0F;
-        float specular = 0.0F;
-        glLight(GL_LIGHT0, GL_DIFFUSE, setColorBuffer(diffuse, diffuse, diffuse, 1.0F));
-        glLight(GL_LIGHT0, GL_AMBIENT, setColorBuffer(ambient, ambient, ambient, 1.0F));
-        specular = 0.1F;
-        glLight(GL_LIGHT0, GL_SPECULAR, setColorBuffer(specular, specular, specular, 1.0F));
-        glLight(GL_LIGHT1, GL_POSITION, setColorBuffer(-0.16169041989141428, 0.8084520874101966, 0.5659164515496377, 0.0D));
-        glLight(GL_LIGHT1, GL_DIFFUSE, setColorBuffer(diffuse, diffuse, diffuse, 1.0F));
-        glLight(GL_LIGHT1, GL_AMBIENT, setColorBuffer(ambient, ambient, ambient, 1.0F));
-        specular = 0.1F;
-        glLight(GL_LIGHT1, GL_SPECULAR, setColorBuffer(specular, specular, specular, 1.0F));
-        specular = 0.2F;
-        GL11.glMaterial(GL11.GL_FRONT, GL11.GL_SPECULAR, setColorBuffer(specular, specular, specular, 1.0F));
-
-        glShadeModel(GL_FLAT);
-        glLightModel(GL_LIGHT_MODEL_AMBIENT, setColorBuffer(0.4F, 0.4F, 0.4F, 1.0F));
-    }
-
-    private static FloatBuffer setColorBuffer(double d, double d1, double d2, double d3) {
-        return setColorBuffer((float) d, (float) d1, (float) d2, (float) d3);
-    }
-
-    private static FloatBuffer setColorBuffer(float f, float f1, float f2, float f3) {
-        colorBuffer.clear();
-        colorBuffer.put(f).put(f1).put(f2).put(f3);
-        colorBuffer.flip();
-        return colorBuffer;
+        switchRenderer(true);
     }
 
     public static void resize(int displayWidth, int displayHeight) {
@@ -216,48 +167,20 @@ public class Engine {
         }
         shadowProjection.update();
         shadowProjection.update();
+
         
-        
-        if (fb2 != null)
-            fb2.cleanUp();
-        fb2 = new FrameBuffer(displayWidth, displayHeight);
-        fb2.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
-        fb2.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB8);
-        fb2.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
-        fb2.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB8);
-        fb2.setHasDepthAttachment();
-        fb2.setup();
-        if (fbComposite0 != null)
-            fbComposite0.cleanUp();
-        fbComposite0 = new FrameBuffer(displayWidth, displayHeight);
-        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
-        fbComposite0.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR_MIPMAP_LINEAR);
-        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB8);
-        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
-        fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB8);
-        fbComposite0.setFilter(GL_COLOR_ATTACHMENT3, GL_LINEAR_MIPMAP_LINEAR);
-        fbComposite0.setup();
-//        fbComposite0 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
-        if (fbComposite1 != null)
-            fbComposite1.cleanUp();
-        fbComposite1 = new FrameBuffer(displayWidth, displayHeight);
-        fbComposite1.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
-        fbComposite1.setFilter(GL_COLOR_ATTACHMENT2, GL_LINEAR_MIPMAP_LINEAR);
-        fbComposite1.setup();
-        if (fbComposite2 != null)
-            fbComposite2.cleanUp();
-        fbComposite2 = new FrameBuffer(displayWidth, displayHeight);
-        fbComposite2.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
-        fbComposite2.setup();
+
         if (fbDbg != null)
             fbDbg.cleanUp();
         fbDbg = new FrameBuffer(displayWidth, displayHeight);
         fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
+        fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbDbg.setup();
         if (fbShadow != null)
             fbShadow.cleanUp();
         fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
 //        fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
+//        fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbShadow.setShadowBuffer();
         fbShadow.setup();
         if (fullscreenQuad == null) {
@@ -276,6 +199,13 @@ public class Engine {
             glNewList(fullscreenQuad.list, GL_COMPILE);
             Tess.instance.draw(GL_QUADS);
             glEndList();
+        }
+        
+        if (worldRenderer != null) {
+            worldRenderer.resize(displayWidth, displayHeight);
+        }
+        if (outRenderer != null) {
+            outRenderer.resize(displayWidth, displayHeight);
         }
     }
     public static void drawFullscreenQuad() {
@@ -419,7 +349,7 @@ public class Engine {
     }
 
     public static IFrameBuffer getSceneFB() {
-        return fb2;
+        return fbScene;
     }
 
 
@@ -614,6 +544,28 @@ public class Engine {
         t.scale(-0.1F);
         Vec3.add(vOrigin, t, vOrigin);
 //      System.out.println(vDir); 
+    }
+
+    public static void switchRenderer(boolean useBasicShaders) {
+        flushRenderTasks();
+        if (worldRenderer != null) worldRenderer.release();
+        if (outRenderer != null) outRenderer.release();
+        if (useBasicShaders) {
+            worldRenderer = new WorldRenderer();
+            outRenderer = new FinalRenderer();
+        } else {
+            worldRenderer = new WorldRendererAdv();
+            outRenderer = new FinalRendererAdv();
+        }
+        worldRenderer.init();
+        outRenderer.init();
+        worldRenderer.resize(Main.displayWidth, Main.displayHeight);
+        outRenderer.resize(Main.displayWidth, Main.displayHeight);
+        regionRenderer.reRender();
+    }
+
+    public static void setSceneFB(FrameBuffer fb) {
+        fbScene = fb;
     }
 
 }

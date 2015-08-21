@@ -12,10 +12,6 @@ public interface IFrameBuffer {
 
     public abstract int getDepthTex();
 
-    public abstract void clearDepth();
-
-    public abstract void clear(int n, float r, float g, float b, float a);
-
     public abstract void setDrawAll();
 
     public abstract void clearFrameBuffer();

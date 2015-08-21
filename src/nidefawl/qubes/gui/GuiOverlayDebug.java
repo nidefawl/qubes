@@ -39,9 +39,7 @@ public class GuiOverlayDebug extends Gui {
     public void preDbgFB(boolean clear) {
         Engine.fbDbg.bind();
         if (clear) {
-            Engine.fbDbg.clear(0, 0, 0, 0, 0F);
-            Engine.fbDbg.clearDepth();
-            Engine.fbDbg.setDrawAll();
+            Engine.fbDbg.clearFrameBuffer();
         }
         glPushAttrib(-1);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.bind");
@@ -58,11 +56,6 @@ public class GuiOverlayDebug extends Gui {
         glDepthMask(false);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_ALPHA_TEST);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_LIGHT0);
-        glDisable(GL_LIGHT1);
-        //          glDisable(GL_CULL_FACE);
-        glDisable(GL_COLOR_MATERIAL);
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glDisable(GL_ALPHA_TEST);
@@ -142,11 +135,16 @@ public class GuiOverlayDebug extends Gui {
                 "Composite2",
                 "Final",
         };
+        if (Main.useBasicShaders) {
+            names = new String[] {
+                    "Final",
+            };
+        }
             int w1 = 120;
             int gap = 24;
             int wCol = w1 * 2 + gap;
             int hCol = Math.min(450, height - 20);
-            int yCol = 160;
+            int yCol = Math.min(290, height - hCol);
             int b = 4;
             Tess.tessFont.dontReset();
             Tess.tessFont.add(0, yCol + hCol, 0);

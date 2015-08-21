@@ -13,7 +13,6 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiCrash;
-import nidefawl.qubes.shader.AdvShaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 
@@ -38,6 +37,8 @@ public abstract class GLGame implements Runnable {
     public static int          ticksran;
     public static float        renderTime;
     public int                 tick       = 0;
+    public static boolean  DO_TIMING          = false;
+    public static boolean toggleTiming;
     
     public GLGame(float tickLen) {
         this.timer = new Timer(20);
@@ -45,7 +46,7 @@ public abstract class GLGame implements Runnable {
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
-        this.thread.setPriority(10);
+        this.thread.setPriority(Thread.MAX_PRIORITY);
         this.thread.start();
     }
 
@@ -206,13 +207,16 @@ public abstract class GLGame implements Runnable {
     protected boolean startRender = false;
     private Object[] showError;
     public void runFrame() throws LWJGLException {
-
+        if (toggleTiming) {
+            toggleTiming = false;
+            DO_TIMING = !DO_TIMING;
+            TimingHelper.reset();
+        }
         if (Display.isCloseRequested()) {
             shutdown();
             return;
         }
-        if (Main.DO_TIMING)
-            TimingHelper.start(10);
+        if (Main.DO_TIMING) TimingHelper.startSec("pre render");
         checkResize();
         timer.calculate();
         ticksran += timer.ticks;
@@ -221,17 +225,18 @@ public abstract class GLGame implements Runnable {
             this.tick();
             tick++;
         }
+        Stats.uniformCalls = 0;
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("pre render");
         if (Main.DO_TIMING)
-            TimingHelper.end(10);
+            TimingHelper.endSec();
         if (Main.DO_TIMING)
-            TimingHelper.start(12);
+            TimingHelper.startSec("input");
         input(renderTime);
         if (Main.DO_TIMING)
-            TimingHelper.end(12);
+            TimingHelper.endSec();
         if (Main.DO_TIMING)
-            TimingHelper.start(11);
+            TimingHelper.startSec("preRenderUpdate");
         preRenderUpdate(renderTime);
 //        if (!startRender) {
 //            try {
@@ -243,21 +248,25 @@ public abstract class GLGame implements Runnable {
 //            return;
 //        }
         if (Main.DO_TIMING)
-            TimingHelper.end(11);
+            TimingHelper.endSec();
         render(renderTime);
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("postRenderUpdate");
         postRenderUpdate(renderTime);
+        if (Main.DO_TIMING)
+            TimingHelper.endSec();
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();
         //        if (Main.DO_TIMING) TimingHelper.end(14);
-        if (Main.DO_TIMING)
-            TimingHelper.start(15);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("render");
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("Display.update");
         Display.update();
         if (Main.DO_TIMING)
-            TimingHelper.end(15);
+            TimingHelper.endSec();
         if (Main.DO_TIMING)
-            TimingHelper.start(16);
+            TimingHelper.startSec("calcFPS");
         long now = System.nanoTime();
         float took = timer.el;
         Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
@@ -265,7 +274,6 @@ public abstract class GLGame implements Runnable {
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;
         double l = (timer.absTime - timeLastFPS) / 1000.0D;
-        Stats.uniformCalls = AdvShaders.getAndResetNumCalls();
         if (l >= 1) {
             timeLastFPS = timer.absTime;
             lastFPS = Stats.fpsCounter;
@@ -273,7 +281,7 @@ public abstract class GLGame implements Runnable {
             onStatsUpdated(1.0F);
         }
         if (Main.DO_TIMING)
-            TimingHelper.end(16);
+            TimingHelper.endSec();
         if (this.showError != null) {
             this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2]);
         }

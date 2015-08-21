@@ -25,10 +25,15 @@ public class FrameBuffer implements IFrameBuffer {
     private final int[]      colorAttTextures   = new int[MAX_COLOR_ATT];
     private final int[]      colorAttFormats    = new int[MAX_COLOR_ATT];
     private final int[]      colorAttMinFilters = new int[MAX_COLOR_ATT];
+    private final boolean[]      clearBuffer = new boolean[MAX_COLOR_ATT];
+    private final float[][]      clearColor = new float[MAX_COLOR_ATT][];
 
     public FrameBuffer(int renderWidth, int renderHeight) {
         this.renderWidth = renderWidth;
         this.renderHeight = renderHeight;
+        for (int a = 0; a < clearColor.length; a++) {
+            clearColor[a] = new float[4];
+        }
     }
 
     public void setColorAtt(int att, int fmt) {
@@ -47,6 +52,17 @@ public class FrameBuffer implements IFrameBuffer {
             throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " not set");
         }
         colorAttMinFilters[att] = filter;
+    }
+    public void setClearColor(int att, float r, float g, float b, float a) {
+        att -= GL_COLOR_ATTACHMENT0;
+        if (colorAttFormats[att] == 0) {
+            throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " not set");
+        }
+        this.clearColor[att][0] = r;
+        this.clearColor[att][1] = g;
+        this.clearColor[att][2] = b;
+        this.clearColor[att][3] = a;
+        this.clearBuffer[att] = true;
     }
 
     public void setHasDepthAttachment() {
@@ -179,39 +195,37 @@ public class FrameBuffer implements IFrameBuffer {
     }
 
     
-    @Override
     public void clearDepth() {
         if (this.hasDepth) {
-            GL20.glDrawBuffers(GL_NONE);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
-            glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//            glClearColor(1,1,1,1);
-//            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_DEPTH_BUFFER_BIT);
         }
     }
     
-    @Override
-    public void clear(int n, float r, float g, float b, float a) {
-        if (this.numColorTextures > 0) {
-            GL20.glDrawBuffers(GL30.GL_COLOR_ATTACHMENT0+n);
-            glClearColor(r, g, b, a);
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-    }
     
     @Override
     public void setDrawAll() {
+        if (this.numColorTextures > 0)
         GL20.glDrawBuffers(this.drawBufAtt);
     }
     
     @Override
     public void clearFrameBuffer() {
-        this.clear(0, 1.0F, 1.0F, 1.0F, 1.0F);
-        this.clear(1, 1.0F, 1.0F, 1.0F, 1.0F);
-        this.clear(2, 0F, 0F, 0F, 0F);
-        this.clear(3, 0F, 0F, 0F, 0F);
         this.clearDepth();
-        this.setDrawAll();
+        int cleared = 0;
+        for (int i = 0; i < clearBuffer.length; i++) {
+            if (this.clearBuffer[i]) {
+                if (this.numColorTextures > 1) {
+                    int att = GL_COLOR_ATTACHMENT0 + i;
+                    GL20.glDrawBuffers(att);
+                    cleared++;
+                }
+                glClearColor(this.clearColor[i][0], this.clearColor[i][1], this.clearColor[i][2], this.clearColor[i][3]);
+                glClear(GL_COLOR_BUFFER_BIT);
+            }
+        }
+        if (cleared > 0) {
+            this.setDrawAll();
+        }
     }
 
     public void cleanUp() {

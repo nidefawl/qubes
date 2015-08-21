@@ -3,6 +3,7 @@ package nidefawl.qubes.util;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Stack;
 
 public class TimingHelper {
     public static boolean useNanos = true;
@@ -17,7 +18,20 @@ public class TimingHelper {
     private static String[] names = new String[LEN];
     private static HashMap<Object, Integer> map = new HashMap<Object, Integer>();
     private static int jObjectIdx = 500;
-    public static void startObj(Object o) {
+    static Stack<String> stack = new Stack<>();
+    static String stackToString() {
+        String s = "";
+        for (String s1 : stack)
+            s += "." + s1;
+        return s.length() > 0 ? s.substring(1) : s;
+    }
+    public static void endStart(String o) {
+        endSec();
+        startSec(o);
+    }
+    public static void startSec(String o) {
+        stack.push(o);
+        o = stackToString();
         Integer idx = map.get(o);
         if (idx == null) {
             synchronized (map) {
@@ -30,27 +44,37 @@ public class TimingHelper {
                 }
             }
         }
-        start(idx);
+        
+        if (!start(idx)) {
+
+            System.err.println("ALREADY ON: "+o);
+            Thread.dumpStack();
+        }
     }
-    public static void endObj(Object o) {
+    public static void endSec() {
+        String o = stackToString();
+        stack.pop();
         Integer idx = map.get(o);
         if (idx != null) {
             end(idx);
         }
     }
-    public static void start(int i) {
+    public static boolean start(int i) {
         if (!init) {
             long jvmuptime = ManagementFactory.getRuntimeMXBean().getUptime();
             if (jvmuptime < 2700) {
-                return;
+                return true;
             }
             init = true;
         }
         beginMillis[i] = System.currentTimeMillis();
         if (useNanos)
             beginNanos[i] = System.nanoTime();
-        if (on[i]) System.err.println("ALREADY ON: "+i);
+        if (on[i]) {
+            return false;
+        }
         on[i] = true;
+        return true;
     }
     public static void startSilent(int i) {
         beginMillis[i] = System.currentTimeMillis();
@@ -85,23 +109,18 @@ public class TimingHelper {
                 nanos[i] -= 1000*1000;
             }
         }
-        
-        if (calls[i]++%700220==0) {
-            float perCall = (float) millis[i] / (float) calls[i];
-            String n1=""+i;
-            if (hasName(i)) {
-                n1 = names[i];
-            }
-            n1 = String.format("%-20s",n1);
-            System.out.println(String.format("%s %d calls. %.5f millis per call, %d ms total", n1, calls[i], perCall, millis[i]));
-        }
+        calls[i]++;
         return timeTaken;
     }
     public static void dump() {
+        System.out.println("----------------------------------------------");     
         for (int i = 0; i < calls.length; i++) {
             if (calls[i] > 0) {
                 float perCall = (float) millis[i] / (float) calls[i];
-                System.out.println(String.format("%2d %-20s %d calls. %.5f millis per call, %d ms total", i, hasName(i) ? names[i] : ""+i, calls[i], perCall, millis[i]));                
+                String pre = String.format("%2d %-40s %d calls", i, hasName(i) ? names[i] : ""+i, calls[i]);
+                String perCallS = String.format("%.5f ms/call", perCall);
+                String totals = String.format("%d ms total", millis[i]);
+                System.out.println(String.format("%-50s %20s %20s", pre, perCallS, totals));                
             }
         }
     }
