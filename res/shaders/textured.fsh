@@ -8,6 +8,6 @@ in vec2 pass_texcoord;
 out vec4 out_Color;
  
 void main(void) {
-	vec4 tex = texture(tex0, pass_texcoord.st);
+	vec4 tex = texture(tex0, pass_texcoord.st, 0);
     out_Color = tex*pass_Color;
 }

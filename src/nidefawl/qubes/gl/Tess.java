@@ -22,6 +22,8 @@ public class Tess extends TesselatorState {
     public final static Tess instance    = new Tess();
     public final static Tess tessFont    = new Tess();
 
+    public final static int BUF_INCR  = 1024;
+    public int[]         rawBuffer = new int[BUF_INCR];
     protected int           rgba;
     protected float         u, v;
     protected float         u2, v2;
@@ -34,8 +36,6 @@ public class Tess extends TesselatorState {
     protected float         offsetY;
     protected float         offsetZ;
     
-    private boolean reset = true;
-
     private final boolean isSoftTesselator;
     ByteBuffer                   buffer       = null;
     private IntBuffer            intBuffer;
@@ -136,10 +136,6 @@ public class Tess extends TesselatorState {
         vertexcount++;
     }
     
-    public void copyTo(TesselatorState out) {
-        int index = getIdx(vertexcount);
-        super.copyTo(out, index);
-    }
 
     void resizeBuffer() {
         int[] oldBuffer = this.rawBuffer;
@@ -151,10 +147,6 @@ public class Tess extends TesselatorState {
         }
     }
 
-    int vboId = 0;
-
-    private boolean buffered;
-    int vboSize = 0;
     private void resizeDirect() {
         buffer = ByteBuffer.allocateDirect(rawBuffer.length*4).order(ByteOrder.nativeOrder());
         intBuffer = buffer.asIntBuffer();
@@ -193,90 +185,46 @@ public class Tess extends TesselatorState {
     public void setColorF(int rgb, float alpha) {
         setColor(rgb&0xFFFFFF, (int) Math.max(0, Math.min(255, alpha * 255F)));
     }
-    public void dontReset() {
-        this.reset = false;
-    }
-    public void draw(int mode) {
+    
+    public void draw(int mode, TesselatorState out) {
         if (isSoftTesselator()) {
             throw new IllegalStateException("Cannot draw soft tesselator");
         }
         if (vertexcount >1) {
-            Engine.enableVAO();
-            if (this.vboId == 0) {
-                vboId = GL15.glGenBuffers();
+            if (buffer == null || intBuffer.capacity() < rawBuffer.length) {
+                resizeDirect();
             }
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+            int vIdx = getIdx(vertexcount);
+            int len = vIdx * 4;
+            intBuffer.clear();
+            intBuffer.put(rawBuffer, 0, vIdx);
+            buffer.position(0);
+            buffer.limit(len);
+            
+            out.bindVBO();
+            if (out.vboSize <= len) {
+                GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+            } else {
+                GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, len, buffer);
+            }
+            out.vboSize = len;
+            if (out == this) {
+                setAttrPtr();
+                drawVBO(mode);
+                for (int i = 0; i < attributes.length; i++)
+                    GL20.glDisableVertexAttribArray(i);
+            } else {
+                this.copyTo(out);
+            }
 
-            
-            if (!buffered) {
-                buffered = true;
-                if (buffer == null || intBuffer.capacity() < rawBuffer.length) {
-                    resizeDirect();
-                }
-                intBuffer.clear();
-                intBuffer.put(rawBuffer, 0, getIdx(vertexcount));
-                int len = getIdx(vertexcount) * 4;
-                buffer.position(0);
-                buffer.limit(len);
-                if (vboSize <= len) {
-                    GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-                } else {
-                    GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, len, buffer);
-                }
-                vboSize = len;
-            }
-            
-            int stride = getVSize();
-            
-            
-            GL20.glEnableVertexAttribArray(0);
-            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride*4, 0);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+0);
-            
-            int offset = 4;
-            if (useNormalPtr) {
-                GL20.glEnableVertexAttribArray(1);
-                GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, stride*4, offset*4);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+1);
-                offset+=1;
-            }
-            if (useTexturePtr) {
-                GL20.glEnableVertexAttribArray(2);
-                GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, stride*4, offset*4);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+2);
-                offset+=2;
-            }
-            if (useColorPtr) {
-                GL20.glEnableVertexAttribArray(3);
-                GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride*4, offset*4);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+3);
-                offset+=1;
-            }
-            if (useTexturePtr2) {
-                GL20.glEnableVertexAttribArray(4);
-                GL20.glVertexAttribPointer(4, 2, GL11.GL_SHORT, false, stride*4, offset*4);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+4);
-                offset+=1;
-            }
-            if (useAttribPtr1) {
-                GL20.glEnableVertexAttribArray(5);
-                GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, stride*4, offset*4);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+5);
-                offset+=2;
-            }
-            
-            GL11.glDrawArrays(mode, 0, vertexcount);
-
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
-            for (int i = 0; i < attributes.length; i++)
-                GL20.glDisableVertexAttribArray(i);
-
-            Engine.disableVAO();
         }
-        if (this.reset)
-            resetState();
+        resetState();
+    }
+    public void draw(int mode) {
+        this.draw(mode, this);
     }
     
+
 
     public void resetState() {
         this.vertexcount = 0;
@@ -292,8 +240,6 @@ public class Tess extends TesselatorState {
         this.br = 0;
         this.rgba = -1;
         this.offsetX = this.offsetY = this.offsetZ = 0;
-        this.reset = true;
-        this.buffered = false;
     }
 
     public void destroy() {
@@ -310,10 +256,6 @@ public class Tess extends TesselatorState {
     public static void destroyAll() {
         instance.destroy();
         tessFont.destroy();
-    }
-    public void drawState(TesselatorState tesselatorState, int mode) {
-        tesselatorState.copyTo(this, tesselatorState.getIdx(tesselatorState.vertexcount));
-        draw(mode);
     }
 
 }

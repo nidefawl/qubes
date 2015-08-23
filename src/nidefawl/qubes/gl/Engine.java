@@ -135,15 +135,6 @@ public class Engine {
         switchRenderer(true);
         GL30.glBindVertexArray(vaoId);
     }
-    public static void enableVAO() {
-//        GL30.glBindVertexArray(vaoId);
-    }
-    public static void enableVAOTerrain() {
-//        GL30.glBindVertexArray(vaoTerrainId);
-    }
-    public static void disableVAO() {
-//        GL30.glBindVertexArray(0);
-    }
 
     public static void resize(int displayWidth, int displayHeight) {
         float fieldOfView = 70;
@@ -199,7 +190,7 @@ public class Engine {
         if (fbDbg != null)
             fbDbg.cleanUp();
         fbDbg = new FrameBuffer(displayWidth, displayHeight);
-        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
+        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB4);
         fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbDbg.setup();
         if (fbShadow != null)
@@ -209,9 +200,20 @@ public class Engine {
 //        fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbShadow.setShadowBuffer();
         fbShadow.setup();
-//        if (fullscreenQuad == null) {
-//            fullscreenQuad = newDisplayList();
-//        }
+        if (fullscreenquad == null) {
+            fullscreenquad = new TesselatorState();
+        }
+        Tess.instance.resetState();
+        int tw = Main.displayWidth;
+        int th = Main.displayHeight;
+        float x = 0;
+        float y = 0;
+        Tess.instance.setColor(0xFFFFFF, 0xff);
+        Tess.instance.add(x + tw, y, 0, 1, 1);
+        Tess.instance.add(x, y, 0, 0, 1);
+        Tess.instance.add(x, y + th, 0, 0, 0);
+        Tess.instance.add(x + tw, y + th, 0, 1, 0);
+        Tess.instance.draw(GL_QUADS, fullscreenquad);
 //        {
 //            Tess.instance.resetState();
 //            int tw = displayWidth;
@@ -234,17 +236,9 @@ public class Engine {
             outRenderer.resize(displayWidth, displayHeight);
         }
     }
+    static TesselatorState fullscreenquad;
     public static void drawFullscreenQuad() {
-        Tess.instance.resetState();
-        int tw = Main.displayWidth;
-        int th = Main.displayHeight;
-        float x = 0;
-        float y = 0;
-        Tess.instance.add(x + tw, y, 0, 1, 1);
-        Tess.instance.add(x, y, 0, 0, 1);
-        Tess.instance.add(x, y + th, 0, 0, 0);
-        Tess.instance.add(x + tw, y + th, 0, 1, 0);
-        Tess.instance.draw(GL_QUADS);
+        fullscreenquad.drawQuads();
 //        glCallList(fullscreenQuad.list);
     }
 

@@ -27,8 +27,6 @@ import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.World;
 
 public class Main extends GLGame {
-    static int               initWidth  = 1024;
-    static int               initHeight = 512;
     static {
         GLGame.appName = "-";
         Locale.setDefault(Locale.US);
@@ -39,18 +37,16 @@ public class Main extends GLGame {
         instance.startGame();
     }
 
-    public static int ticksran;
-    public static float renderTime;
     public static boolean  show               = false;
     public static boolean  useBasicShaders    = true;
     public static boolean  matrixSetupMode    = false;
     public static boolean  renderWireFrame    = false;
-    public static boolean toggleTiming;
     
     long         lastClickTime = System.currentTimeMillis() - 5000L;
     private long lastTimeLoad  = System.currentTimeMillis();
 
     public GuiOverlayStats statsOverlay;
+    public Gui statsCached;
     public GuiOverlayDebug debugOverlay;
     private Gui            gui;
 
@@ -58,10 +54,6 @@ public class Main extends GLGame {
     final PlayerSelf   entSelf            = new PlayerSelf(1);
     Movement           movement           = new Movement();
     World              world              = null;
-    public int         lastFPS            = 0;
-    protected long     timeLastFPS;
-    protected long     timeLastFrame;
-    public int         tick               = 0;
     public boolean     follow             = true;
     private float      lastCamX;
     private float      lastCamY;
@@ -70,14 +62,9 @@ public class Main extends GLGame {
     public int         selBlock           = 0;
     long               lastShaderLoadTime = System.currentTimeMillis();
     private boolean    doLoad             = true;
-    public final Timer timer;
-    protected boolean  startRender        = false;
-    private Object[]   showError;
     
     public Main() {
-        this.timer = new Timer(20);
-        GLGame.displayWidth = initWidth;
-        GLGame.displayHeight = initHeight;
+        super();
 //        TimingHelper.setName(0, "Final_Prepare");
 //        TimingHelper.setName(1, "Final_Stage0");
 //        TimingHelper.setName(2, "Final_Stage1");
@@ -104,8 +91,9 @@ public class Main extends GLGame {
         String title = "LWJGL "+info.lwjglVersion+" - "+info.openGLVersion;
         setTitle(title);
         this.statsOverlay = new GuiOverlayStats();
-        this.statsOverlay.setPos(0, 0);
-        this.statsOverlay.setSize(displayWidth, displayHeight);
+        this.statsCached = new GuiCached(statsOverlay); 
+        this.statsCached.setPos(0, 0);
+        this.statsCached.setSize(displayWidth, displayHeight);
         this.debugOverlay = new GuiOverlayDebug();
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
@@ -298,12 +286,12 @@ public class Main extends GLGame {
       Engine.worldRenderer.renderWorld(this.world, fTime);
       if (Main.renderWireFrame) {
           if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
-//          Engine.worldRenderer.renderNormals(this.world, fTime);
+          Engine.worldRenderer.renderNormals(this.world, fTime);
       }
       if (Main.DO_TIMING) TimingHelper.endStart("renderBlockHighlight");
-//      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
       if (Main.DO_TIMING) TimingHelper.endStart("renderDebugBB");
-//      Engine.worldRenderer.renderDebugBB(this.world, fTime);
+      Engine.worldRenderer.renderDebugBB(this.world, fTime);
       if (Main.DO_TIMING) TimingHelper.endStart("unbindCurrentFrameBuffer");
       Engine.getSceneFB().unbindCurrentFrameBuffer();
       if (Main.DO_TIMING) TimingHelper.endSec();
@@ -375,8 +363,8 @@ public class Main extends GLGame {
       }
       if (Main.DO_TIMING) TimingHelper.startSec("statsOverlay");
 
-      if (this.statsOverlay != null) {
-          this.statsOverlay.render(fTime);
+      if (this.statsCached != null) {
+          this.statsCached.render(fTime);
       }
       if (Main.DO_TIMING) TimingHelper.endSec();
       
@@ -388,8 +376,8 @@ public class Main extends GLGame {
 
     @Override
     public void onStatsUpdated(float dTime) {
-        if (this.statsOverlay != null) {
-            this.statsOverlay.update(dTime);
+        if (this.statsCached != null) {
+            this.statsCached.update(dTime);
         }
         if (System.currentTimeMillis()-lastShaderLoadTime > 1000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
@@ -481,9 +469,9 @@ public class Main extends GLGame {
     public void onResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
             Engine.resize(displayWidth, displayHeight);
-            if (this.statsOverlay != null) {
-                this.statsOverlay.setSize(displayWidth, displayHeight);
-                this.statsOverlay.setPos(0, 0);
+            if (this.statsCached != null) {
+                this.statsCached.setSize(displayWidth, displayHeight);
+                this.statsCached.setPos(0, 0);
             }
             this.debugOverlay.setPos(0, 0);
             this.debugOverlay.setSize(displayWidth, displayHeight);
@@ -505,269 +493,4 @@ public class Main extends GLGame {
     public World getWorld() {
         return this.world;
     }
-    
-    @Override
-    protected void onDestroy() {
-        Engine.stop();
-        TextureManager.getInstance().destroy();
-        Tess.destroyAll();
-    }
-
-    public void setException(GameError error) {
-        if (Thread.currentThread() != getMainThread()) {
-            this.showError = new Object[] { "Error occured", Arrays.asList(new String[] { "There was an internal error"}), error };
-            return;
-        }
-        showErrorScreen( "Error occured", Arrays.asList(new String[] { "There was an internal error"}), error );
-    }
-
-
-    private void showErrorScreen(String title, List<String> desc, Throwable throwable) {
-        try {
-            if (this.wasrunning) {
-                onDestroy();
-            }
-            destroyContext();
-            try {
-                Thread.sleep(120L);
-            } catch (InterruptedException interruptedexception) {
-            }
-
-            initDisplay();
-
-            Engine.baseInit();
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - initdisplay");
-            GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glClearColor");
-            GL11.glShadeModel(GL11.GL_SMOOTH);
-            glActiveTexture(GL_TEXTURE0);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glActiveTexture(GL_TEXTURE0)");
-            glEnable(GL_ALPHA_TEST);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - GL_ALPHA_TEST");
-            glEnable(GL_BLEND);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - GL_BLEND");
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glBlendFunc");
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LEQUAL);
-            glDepthMask(true);
-            glColorMask(true, true, true, true);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glColorMask");
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-//            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-//            GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
-            setVSync(true);
-
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen");
-            Mouse.setGrabbed(false);
-            GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
-            GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            GL11.glShadeModel(GL11.GL_FLAT);
-            glActiveTexture(GL_TEXTURE0);
-            glEnable(GL_ALPHA_TEST);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LEQUAL);
-            glDepthMask(true);
-            glColorMask(true, true, true, true);
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-            GL11.glViewport(0, 0, displayWidth, displayHeight);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glViewport");
-            while (!isCloseRequested()) {
-                checkResize();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen checkResize");
-                updateInput();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateInput");
-                guiCrash.setPos(0, 0);
-                guiCrash.setSize(displayWidth, displayHeight);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.setSize");
-                GL11.glMatrixMode(GL_PROJECTION);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_PROJECTION)");
-                GL11.glLoadIdentity();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
-                GL11.glOrtho(0, displayWidth, displayHeight, 0, 0, 10);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glOrtho");
-                GL11.glMatrixMode(GL_MODELVIEW);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_MODELVIEW)");
-                GL11.glLoadIdentity();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
-                GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClearColor");
-                GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClear");
-                guiCrash.render(0);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.render");
-                updateDisplay();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateDisplay");
-            }
-        } catch (Throwable t) {
-            t.printStackTrace();
-        } finally {
-            System.exit(1);
-        }
-    }
-
-    @Override
-    public void runFrame() {
-        if (toggleTiming) {
-            toggleTiming = false;
-            DO_TIMING = !DO_TIMING;
-            TimingHelper.reset();
-        }
-        if (isCloseRequested()) {
-            shutdown();
-            return;
-        }
-        if (Main.DO_TIMING) TimingHelper.startSec("pre render");
-        checkResize();
-        timer.calculate();
-        ticksran += timer.ticks;
-        renderTime = timer.partialTick;
-        for (int i = 0; i < timer.ticks; i++) {
-            this.tick();
-            tick++;
-        }
-        Stats.uniformCalls = 0;
-        if (Main.GL_ERROR_CHECKS)
-            Engine.checkGLError("pre render");
-        if (Main.DO_TIMING)
-            TimingHelper.endSec();
-        if (Main.DO_TIMING)
-            TimingHelper.startSec("input");
-        updateInput();
-        input(renderTime);
-        if (Main.DO_TIMING)
-            TimingHelper.endSec();
-        if (Main.DO_TIMING)
-            TimingHelper.startSec("preRenderUpdate");
-        preRenderUpdate(renderTime);
-//        if (!startRender) {
-//            try {
-//                Thread.sleep(10);
-//            } catch (InterruptedException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
-//            return;
-//        }
-        if (Main.DO_TIMING)
-            TimingHelper.endSec();
-        render(renderTime);
-        if (Main.DO_TIMING)
-            TimingHelper.startSec("postRenderUpdate");
-        postRenderUpdate(renderTime);
-        if (Main.DO_TIMING)
-            TimingHelper.endSec();
-        //        if (Main.DO_TIMING) TimingHelper.start(14);
-        //        GL11.glFlush();
-        //        if (Main.DO_TIMING) TimingHelper.end(14);
-        if (Main.GL_ERROR_CHECKS)
-            Engine.checkGLError("render");
-        if (Main.DO_TIMING)
-            TimingHelper.startSec("Display.update");
-        updateDisplay();
-        if (Main.DO_TIMING)
-            TimingHelper.endSec();
-        if (Main.DO_TIMING)
-            TimingHelper.startSec("calcFPS");
-        long now = System.nanoTime();
-        float took = timer.el;
-        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
-        if (Main.GL_ERROR_CHECKS)
-            Engine.checkGLError("Post render");
-        Stats.fpsCounter++;
-        double l = (timer.absTime - timeLastFPS) / 1000.0D;
-        if (l >= 1) {
-            timeLastFPS = timer.absTime;
-            lastFPS = Stats.fpsCounter;
-            Stats.fpsCounter = 0;
-            onStatsUpdated(1.0F);
-        }
-        if (Main.DO_TIMING)
-            TimingHelper.endSec();
-        if (this.showError != null) {
-            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2]);
-        }
-    }
-
-    @Override
-    public void mainLoop() {
-        try {
-            this.running = true;
-            this.wasrunning = true;
-            setVSync(this.vsync);
-            initGame();
-            Engine.init();
-            onResize(displayWidth, displayHeight);
-            timer.calculate();
-            timeLastFrame = System.nanoTime();
-            timeLastFPS = timer.absTime;
-            while (this.running) {
-                runFrame();
-            }
-        } catch (Throwable t) {
-            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t);
-        } finally {
-            if (this.wasrunning) {
-                onDestroy();
-            }
-            destroyContext();
-        }
-    }
-    @Override
-    public void initGLContext() {
-        GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-        glActiveTexture(GL_TEXTURE0);
-        glEnable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glDepthMask(true);
-        int a = GL11.GL_TEXTURE_MATRIX;
-        glColorMask(true, true, true, true);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-//        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-//        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
-        setVSync(true);
-        try {
-            List<String> list = GL.validateCaps();
-            if (!list.isEmpty()) {
-                ArrayList<String> desc = new ArrayList<>();
-                desc.add("You graphics card does not support some of the required OpenGL features");
-                desc.add("");
-                for (String s : list) {
-                    desc.add(s);
-                }
-                showErrorScreen("Failed starting game", desc, null);
-                return;
-            }
-        } catch (Throwable t) {
-            t.printStackTrace();
-            return;
-        }
-    }
-
-
-    protected void limitFpsTo(int fpsLimit) {
-        long now = System.nanoTime();
-        long el = now - timeLastFrame;
-        timeLastFrame = now;
-        double elD = el / 10000000.D;
-        int timePerFrame = (int) Math.ceil(1000.0D / (float) fpsLimit);
-        int sleepD = (int) Math.ceil(timePerFrame - elD);
-        if (sleepD >= 1) {
-            try {
-                Thread.sleep((long) sleepD);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 }

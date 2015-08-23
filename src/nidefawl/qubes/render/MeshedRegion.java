@@ -125,7 +125,6 @@ public class MeshedRegion {
         
         ByteBuffer buf = Engine.getBuffer();
         IntBuffer intBuffer = Engine.getIntBuffer();
-        Engine.enableVAOTerrain();
         for (int layer = 0; layer < NUM_LAYERS; layer++) {
             for (int pass = 0; pass < NUM_PASSES; pass++) {
                 int idx = pass + (NUM_PASSES * layer);
@@ -146,9 +145,7 @@ public class MeshedRegion {
             }
         }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        Engine.disableVAO();
         this.isRenderable = true;
-        //        this.meshes = null;
     }
 
     public void release() {

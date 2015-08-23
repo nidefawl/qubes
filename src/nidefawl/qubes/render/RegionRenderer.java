@@ -14,6 +14,7 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.world.World;
@@ -161,10 +162,6 @@ public class RegionRenderer {
     public void renderFirstPass(World world, float fTime) {
         glDisable(GL_BLEND);
         int size = firstPass.size();
-
-        Engine.enableVAOTerrain();
-        
-        
         
         
         for (int i = 0; i < size; i++) {
@@ -201,15 +198,12 @@ public class RegionRenderer {
         for (int i = 0; i < Tess.attributes.length; i++)
             GL20.glDisableVertexAttribArray(i);
 
-        Engine.disableVAO();
     }
     public void renderSecondPass(World world, float fTime) {
         //TODO: sort by distance
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         int size = secondPass.size();
-//        System.out.println(size);
-        Engine.enableVAOTerrain();
         
         for (int i = 0; i < size; i++) {
             MeshedRegion r = secondPass.get(i);
@@ -235,7 +229,6 @@ public class RegionRenderer {
         for (int i = 0; i < Tess.attributes.length; i++)
             GL20.glDisableVertexAttribArray(i);
 
-        Engine.disableVAO();
         glDisable(GL_BLEND);
     }
 
@@ -295,8 +288,8 @@ public class RegionRenderer {
     public List<MeshedRegion> getRegions(int i) {
         return i == 0 ? firstPass : secondPass;
     }
+    TesselatorState debug = new TesselatorState();
     public void renderDebug(World world, float fTime) {
-        Tess.instance.dontReset();
         Tess.instance.setColor(-1, 200);
         int b=Region.REGION_SIZE*Chunk.SIZE;
         int h = World.MAX_WORLDHEIGHT/3*2;
@@ -311,6 +304,7 @@ public class RegionRenderer {
                 Tess.instance.add(z, h, x);
             }
         }
+        Tess.instance.draw(GL_LINES, debug);
         glDisable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
 //        List<MeshedRegion> regions = Engine.regionRenderer.getRegions(0);
@@ -326,11 +320,10 @@ public class RegionRenderer {
                 MeshedRegion r = zRegions[z];
                 glPushMatrix();
                 r.translate();
-                Tess.instance.draw(GL_LINES);
+                debug.drawQuads();
                 glPopMatrix();
             }
         }
-        Tess.instance.resetState();
         for (int x = 0; x < this.regions.length; x++) {
             MeshedRegion[] zRegions = this.regions[x];
             for (int z = 0; z < this.regions.length; z++) {

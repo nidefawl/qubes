@@ -52,7 +52,7 @@ public class GuiCrash extends Gui {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
-        Shaders.font.enable();
+        Shaders.textured.enable();
         fontBig.drawString(this.title, width / 2, height / 6, -1, true, 1.0F, 2);
 
         glEnable(GL_ALPHA_TEST);

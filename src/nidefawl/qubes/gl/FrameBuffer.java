@@ -25,6 +25,7 @@ public class FrameBuffer implements IFrameBuffer {
     private final int[]      colorAttTextures   = new int[MAX_COLOR_ATT];
     private final int[]      colorAttFormats    = new int[MAX_COLOR_ATT];
     private final int[]      colorAttMinFilters = new int[MAX_COLOR_ATT];
+    private final int[]      colorAttMagFilters = new int[MAX_COLOR_ATT];
     private final boolean[]      clearBuffer = new boolean[MAX_COLOR_ATT];
     private final float[][]      clearColor = new float[MAX_COLOR_ATT][];
 
@@ -43,15 +44,17 @@ public class FrameBuffer implements IFrameBuffer {
         }
         colorAttFormats[att] = fmt;
         colorAttMinFilters[att] = GL_LINEAR;
+        colorAttMagFilters[att] = GL_LINEAR;
     }
 
 
-    public void setFilter(int att, int filter) {
+    public void setFilter(int att, int filter, int magfilter) {
         att -= GL_COLOR_ATTACHMENT0;
         if (colorAttFormats[att] == 0) {
             throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " not set");
         }
         colorAttMinFilters[att] = filter;
+        colorAttMagFilters[att] = magfilter;
     }
     public void setClearColor(int att, float r, float g, float b, float a) {
         att -= GL_COLOR_ATTACHMENT0;
@@ -106,7 +109,7 @@ public class FrameBuffer implements IFrameBuffer {
             if (colorAttFormats[i] != 0) {
                 int att = GL_COLOR_ATTACHMENT0 + i;
                 int tex = colorTextures.get();
-                setupTexture(tex, colorAttFormats[i], colorAttMinFilters[i]);
+                setupTexture(tex, colorAttFormats[i], colorAttMinFilters[i], colorAttMagFilters[i]);
                 this.colorAttTextures[i] = tex;
                 GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, att, tex, 0);
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (color " + i + ")");
@@ -138,13 +141,13 @@ public class FrameBuffer implements IFrameBuffer {
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
     }
 
-    public void setupTexture(int texture, int format, int minfilter) {
+    public void setupTexture(int texture, int format, int minfilter, int magFilter) {
         glBindTexture(GL_TEXTURE_2D, texture);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
         glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
         glBindTexture(GL_TEXTURE_2D, 0);

@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import nidefawl.game.GL;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.opengl.GL11;
@@ -21,7 +22,6 @@ public class FontRenderer {
     public int maxWidth = -1;
     public int drawedHeight = 0;
     public float shadowOffset = 0.8F;
-    private Tess outTess;
 	
 	public static FontRenderer get(String fontName, float size, int style, int lineHeight) {
 		String hashName = fontName.trim().toLowerCase()+","+size+","+style+","+lineHeight;
@@ -75,7 +75,7 @@ public class FontRenderer {
         if ((color & 0xff000000) == 0) {
             color |= 0xff000000;
         }
-        Tess tess = this.outTess != null ? this.outTess : Tess.tessFont;
+        Tess tess = Tess.tessFont;
         if (shadow) {
             final int k2 = (color & 0xf0f0f0) >> 2 | color & 0xff000000;
             tess.setColorF(k2, alpha);
@@ -83,10 +83,8 @@ public class FontRenderer {
         }
         tess.setColorF(color, alpha);
         int w = this.trueTypeFont.drawString(tess, x, y, chatline, alignment, true, alpha, maxWidth);
-        if (this.outTess == null) {
-            GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, getTexture());
-            tess.draw(GL11.GL_QUADS);
-        }
+        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, getTexture());
+        tess.draw(GL11.GL_QUADS, tess);
         this.drawedHeight = this.trueTypeFont.drawedHeight;
         return w;
     }
@@ -204,10 +202,4 @@ public class FontRenderer {
     public boolean isValid(char charAt) {
         return trueTypeFont.getRect(charAt) != null;
     }
-
-
-    public void setTess(Tess tess) {
-        this.outTess = tess;
-    }
-
 }

@@ -43,4 +43,7 @@ public abstract class Gui implements Renderable {
 		this.posX = x;
 		this.posY = y;
 	}
+
+    public void update(float dTime) {
+    }
 }

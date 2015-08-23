@@ -16,6 +16,7 @@ import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
@@ -42,6 +43,8 @@ public class WorldRenderer {
 
     
     public Shader       testShader;
+
+    private TesselatorState highlightCube;
 
 
     private void releaseShaders() {
@@ -74,6 +77,7 @@ public class WorldRenderer {
     public void init() {
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         initShaders();
+        highlightCube = new TesselatorState();
     }
 
     protected void drawSkybox() {
@@ -84,7 +88,6 @@ public class WorldRenderer {
         int x2 = scale;
         int y2 = scale / 16;
         int z2 = scale;
-        Tess.instance.resetState();
         int rgbai = ((int) (fogColor.x * 255.0F)) << 16 | ((int) (fogColor.y * 255.0F)) << 8 | ((int) (fogColor.z * 255.0F));
         Tess.instance.setColor(rgbai, 255);
         Tess.instance.add(x, y2, z);
@@ -279,42 +282,10 @@ public class WorldRenderer {
             glLoadIdentity();
             GL.glLoadMatrixf(Engine.getModelViewMatrix());
             glDisable(GL_TEXTURE_2D);
-            Tess.instance.setColor(-1, 120);
-            Tess.instance.setOffset(this.highlight.x, this.highlight.y, this.highlight.z);
-            float ext = 1/32F;
-            float zero = -ext;
-            float one = 1+ext;
-            Tess.instance.add(zero, zero, zero);
-            Tess.instance.add(one, zero, zero);
-            Tess.instance.add(one, one, zero);
-            Tess.instance.add(zero, one, zero);
-            
-            Tess.instance.add(zero, one, one);
-            Tess.instance.add(one, one, one);
-            Tess.instance.add(one, zero, one);
-            Tess.instance.add(zero, zero, one);
-            
-            Tess.instance.add(one, zero, one);
-            Tess.instance.add(one, one, one);
-            Tess.instance.add(one, one, zero);
-            Tess.instance.add(one, zero, zero);
-
-            Tess.instance.add(zero, one, one);
-            Tess.instance.add(zero, zero, one);
-            Tess.instance.add(zero, zero, zero);
-            Tess.instance.add(zero, one, zero);
-
-            Tess.instance.add(zero, zero, one);
-            Tess.instance.add(one, zero, one);
-            Tess.instance.add(one, zero, zero);
-            Tess.instance.add(zero, zero, zero);
-
-            Tess.instance.add(one, one, one);
-            Tess.instance.add(zero, one, one);
-            Tess.instance.add(zero, one, zero);
-            Tess.instance.add(one, one, zero);
-            
-            Tess.instance.draw(GL_QUADS);
+            Shaders.colored.enable();
+            glTranslatef(this.highlight.x, this.highlight.y, this.highlight.z);
+            highlightCube.drawQuads();
+            Shader.disable();
             glMatrixMode(GL_PROJECTION);
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
@@ -452,6 +423,36 @@ public class WorldRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
+
+        float ext = 1/32F;
+        float zero = -ext;
+        float one = 1+ext;
+        Tess.instance.setColorRGBAF(1, 1, 1, 0.2F);
+        Tess.instance.add(zero, zero, zero);
+        Tess.instance.add(one, zero, zero);
+        Tess.instance.add(one, one, zero);
+        Tess.instance.add(zero, one, zero);
+        Tess.instance.add(zero, one, one);
+        Tess.instance.add(one, one, one);
+        Tess.instance.add(one, zero, one);
+        Tess.instance.add(zero, zero, one);
+        Tess.instance.add(one, zero, one);
+        Tess.instance.add(one, one, one);
+        Tess.instance.add(one, one, zero);
+        Tess.instance.add(one, zero, zero);
+        Tess.instance.add(zero, one, one);
+        Tess.instance.add(zero, zero, one);
+        Tess.instance.add(zero, zero, zero);
+        Tess.instance.add(zero, one, zero);
+        Tess.instance.add(zero, zero, one);
+        Tess.instance.add(one, zero, one);
+        Tess.instance.add(one, zero, zero);
+        Tess.instance.add(zero, zero, zero);
+        Tess.instance.add(one, one, one);
+        Tess.instance.add(zero, one, one);
+        Tess.instance.add(zero, one, zero);
+        Tess.instance.add(one, one, zero);
+        Tess.instance.draw(GL_QUADS, highlightCube);
         // TODO Auto-generated method stub
         
     }

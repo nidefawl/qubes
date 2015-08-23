@@ -227,7 +227,7 @@ public class FinalRendererAdv extends FinalRendererBase {
         Engine.setSceneFB(sceneFB);
         fbComposite0 = new FrameBuffer(displayWidth, displayHeight);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);
-        fbComposite0.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR_MIPMAP_LINEAR);
+        fbComposite0.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
         fbComposite0.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB8);
         fbComposite0.setClearColor(GL_COLOR_ATTACHMENT1, 1.0F, 1.0F, 1.0F, 1.0F);
@@ -235,13 +235,13 @@ public class FinalRendererAdv extends FinalRendererBase {
         fbComposite0.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
         fbComposite0.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB8);
         fbComposite0.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
-        fbComposite0.setFilter(GL_COLOR_ATTACHMENT3, GL_LINEAR_MIPMAP_LINEAR);
+        fbComposite0.setFilter(GL_COLOR_ATTACHMENT3, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
         fbComposite0.setup();
 //        fbComposite0 = new FrameBuffer(false, new int[] { GL_RGB16, GL_RGB8, GL_RGB16, GL_RGB8 });
         fbComposite1 = new FrameBuffer(displayWidth, displayHeight);
         fbComposite1.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16);
         fbComposite1.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
-        fbComposite1.setFilter(GL_COLOR_ATTACHMENT2, GL_LINEAR_MIPMAP_LINEAR);
+        fbComposite1.setFilter(GL_COLOR_ATTACHMENT2, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
         fbComposite1.setup();
         fbComposite2 = new FrameBuffer(displayWidth, displayHeight);
         fbComposite2.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16);

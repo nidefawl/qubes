@@ -10,7 +10,7 @@ public class Shaders {
     public static void reinit() {
         Shaders.depthBufShader = null;
         Shaders.normals = null;
-        Shaders.font = null;
+        Shaders.textured = null;
         initShaders();
     }
 
@@ -20,7 +20,8 @@ public class Shaders {
 
     public static Shader depthBufShader;
     public static Shader normals;
-    public static Shader font;
+    public static Shader textured;
+    public static Shader colored;
 
     public static void initShaders() {
         try {
@@ -28,16 +29,20 @@ public class Shaders {
 
             Shader new_depthBufShader = assetMgr.loadShader("shaders/renderdepth");
             Shader new_normals = assetMgr.loadShader("shaders/visnormals");
-            Shader new_font = assetMgr.loadShader("shaders/font");
+            Shader new_textured = assetMgr.loadShader("shaders/textured");
+            Shader new_colored = assetMgr.loadShader("shaders/colored");
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             if (Shaders.normals != null)
                 Shaders.normals.release();
-            if (Shaders.font != null)
-                Shaders.font.release();
+            if (Shaders.textured != null)
+                Shaders.textured.release();
+            if (Shaders.colored != null)
+                Shaders.colored.release();
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
-            Shaders.font = new_font;
+            Shaders.textured = new_textured;
+            Shaders.colored = new_colored;
         } catch (ShaderCompileError e) {
             e.printStackTrace();
             Main.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
