@@ -631,7 +631,6 @@ struct LightmapStruct {                 //Lighting information to light the scen
 
 struct ShadingStruct {                  //Shading calculation variables
         float   direct;
-        float   waterDirect;
         float   bounced;                        //Fake bounced sunlight
         float   skylight;                       //Light coming from sky
         float   scattered;                      //Fake scattered sunlight
@@ -1052,8 +1051,8 @@ void    AddSunglow(inout SurfaceStruct surface) {
         float sunglowFactor = CalculateSunglow(surface);
         float antiSunglowFactor = CalculateAntiSunglow(surface);
 
-        surface.sky.albedo *= 1.0f + pow(sunglowFactor, 1.1f) * (7.0f + timeNoon * 1.0f) * (1.0f - rainStrength);
-        surface.sky.albedo *= mix(vec3(1.0f), colorSunlight * 11.0f, pow(clamp(vec3(sunglowFactor) * (1.0f - timeMidnight) * (1.0f - rainStrength), vec3(0.0f), vec3(1.0f)), vec3(2.0f)));
+        surface.sky.albedo *= 1.0f + pow(sunglowFactor, 1.1f) * (1.0f + timeNoon * 1.0f) * (1.0f - rainStrength);
+        surface.sky.albedo *= mix(vec3(1.0f), colorSunlight * 1.0f, pow(clamp(vec3(sunglowFactor) * (1.0f - timeMidnight) * (1.0f - rainStrength), vec3(0.0f), vec3(1.0f)), vec3(2.0f)));
 
         surface.sky.albedo *= 1.0f + antiSunglowFactor * 2.0f * (1.0f - rainStrength);
         //surface.sky.albedo *= mix(vec3(1.0f), colorSunlight, antiSunglowFactor);
@@ -1305,7 +1304,7 @@ void    CalculateAtmosphericScattering(inout vec3 color, in SurfaceStruct surfac
 
         fogColor += mix(vec3(0.0f), sunColor * 10.0f, sunglow * 0.8f);
 
-        float fogFactor = pow(surface.linearDepth / 1500.0f, 2.0f);
+        float fogFactor = pow(surface.linearDepth / far*0.75f, 2.0f);
                   //fogFactor = mix(fogFactor, 1.0f, float(surface.mask.sky) * 0.8f * rainStrength);
                   //fogFactor = mix(fogFactor, 1.0f, float(surface.mask.clouds) * 0.8f * rainStrength);
 
@@ -1324,7 +1323,7 @@ void    CalculateAtmosphericScattering(inout vec3 color, in SurfaceStruct surfac
         // color.g *= 1.0f - clamp(fogFactor - 0.26f, 0.0f, 1.0f) * 0.5* redshift;
 
         //add scattered low frequency light
-        color += fogColor * fogFactor * 2.0f;
+        color += fogColor * fogFactor * 0.8f;
 
 }
 
@@ -2000,7 +1999,7 @@ void    Test(inout vec3 color, inout SurfaceStruct surface)
 void main() {
         //Initialize surface properties required for lighting calculation for any surface that is not part of the sky
         surface.albedo                          = GetAlbedoLinear(texcoord.st);                                 //Gets the albedo texture
-        surface.albedo                          = pow(surface.albedo, vec3(1.4f));
+        surface.albedo                          = pow(surface.albedo, vec3(1.25f));
 
         surface.albedo = mix(surface.albedo, vec3(dot(surface.albedo, vec3(0.3333f))), vec3(0.035f));
 
@@ -2040,7 +2039,7 @@ void main() {
 
         surface.sky.sunSpot     = vec3(float(CalculateSunspot(surface))) * vec3((min(1.0f, float(surface.mask.sky) + float(surface.mask.sunspot)))) * colorSunlight;
         surface.sky.sunSpot     *= 1.0f - timeMidnight;
-        surface.sky.sunSpot     *= 500.0f;
+        surface.sky.sunSpot     *= 200.0f;
         surface.sky.sunSpot     *= 1.0f - rainStrength;
         //surface.sky.sunSpot     *= 1.0f - timeMidnight;
 
@@ -2092,7 +2091,6 @@ void main() {
         shading.direct                          *= shading.sunlightVisibility;
 
         shading.direct                          *= mix(1.0f, 0.0f, rainStrength);
-        shading.waterDirect             = shading.direct;
 	shading.direct 				*= pow(mcLightmap.sky, 0.1f);
         shading.bounced         = CalculateBouncedSunlight(surface);                    //Calculate fake bounced sunlight
         shading.scattered       = CalculateScatteredSunlight(surface);                  //Calculate fake scattered sunlight
@@ -2124,7 +2122,7 @@ void main() {
         lightmap.bouncedSunlight        *= pow(vec3(mcLightmap.sky), vec3(1.75f));
         lightmap.bouncedSunlight        *= mix(1.0f, 0.25f, timeSunrise + timeSunset);
         lightmap.bouncedSunlight        *= mix(1.0f, 0.0f, rainStrength);
-        lightmap.bouncedSunlight        *= surface.ao.bouncedSunlight;
+        lightmap.bouncedSunlight        *= surface.ao.bouncedSunlight*0;
         //lightmap.bouncedSunlight      *= surface.ao.constant * 0.5f + 0.5f;
 
 
@@ -2219,18 +2217,18 @@ void main() {
         DoLowlightEye(final.nolight);
 
         surface.cloudShadow = 1.0f;
-        float sunlightMult = 1.2f;
+        float sunlightMult = 1.15f;
 
         //Apply lightmaps to albedo and generate final shaded surface
         vec3 finalComposite = 
 // 
 // ---
-    							final.sunlight                    * 0.65f         * sunlightMult                          //Add direct sunlight
-                                                + final.skylight                        * 0.05f                         //Add ambient skylight
-                                                + final.nolight                         * 0.0005f                       //Add base ambient light
-                                                + final.bouncedSunlight         * 0.005f        * sunlightMult                          //Add fake bounced sunlight
+    							final.sunlight                    * 0.45f         * sunlightMult                          //Add direct sunlight
+                                                + final.skylight                        * 0.01f                         //Add ambient skylight
+                                                + final.nolight                         * 0.003f                       //Add base ambient light
+                                                + final.bouncedSunlight         * 0.002f        * sunlightMult                          //Add fake bounced sunlight
                                                 + final.scatteredSunlight       * 0.02f         * (1.0f - sunlightMult)                                 //Add fake scattered sunlight
-                                                + final.scatteredUpLight        * 0.0015f       * sunlightMult
+                                                + final.scatteredUpLight        * 0.01f       * sunlightMult
                                                 + final.torchlight                      * 5.0f                  //Add light coming from emissive blocks
                                                 + final.glow.lava                       * 8.6f
                                                 + final.glow.glowstone          * 1.1f
@@ -2244,7 +2242,7 @@ void main() {
 
 
         //Apply sky to final composite
-                 surface.sky.albedo *= 8.0f;
+                 surface.sky.albedo *= 4.0f;
                  surface.sky.albedo = surface.sky.albedo * surface.sky.tintColor + surface.sky.sunglow + surface.sky.sunSpot;
                  //CloudPlane(surface);
                  //DoNightEye(surface.sky.albedo);

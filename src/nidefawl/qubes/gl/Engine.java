@@ -6,11 +6,14 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
 import nidefawl.game.GLGame;
@@ -37,6 +40,8 @@ public class Engine {
     private static IntBuffer      viewport;
     private static FloatBuffer    position;
     private static FloatBuffer    mat;
+    private static ByteBuffer    buffer;
+    private static IntBuffer    intbuffer;
 
     private static BufferedMatrix projection;
     private static BufferedMatrix view;
@@ -68,7 +73,9 @@ public class Engine {
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
-    private static DisplayList fullscreenQuad;
+//    private static DisplayList fullscreenQuad;
+    public static int vaoId         = 0;
+    public static int vaoTerrainId  = 0;
 
     public static void generateLightMapTexture() {
 
@@ -83,10 +90,18 @@ public class Engine {
         return false;
     }
 
+    public static void baseInit() {
+
+        vaoId = GL30.glGenVertexArrays();
+        vaoTerrainId = GL30.glGenVertexArrays();
+        Shaders.reinit();
+    }
     public static void init() {
         colorBuffer = BufferUtils.createFloatBuffer(16);
         viewport = BufferUtils.createIntBuffer(16);
         mat = BufferUtils.createFloatBuffer(16);
+        buffer = BufferUtils.createByteBuffer(1024*1024*32);
+        intbuffer = buffer.asIntBuffer();
         position = BufferUtils.createFloatBuffer(3);
         projection = new BufferedMatrix();
         view = new BufferedMatrix();
@@ -108,7 +123,8 @@ public class Engine {
         glMatrixMode(GL_MODELVIEW);
         glActiveTexture(GL_TEXTURE0);
 
-        Shaders.init();
+        baseInit();
+        
         TextureManager.getInstance().init();
         AssetManager.getInstance().init();
         BlockTextureArray.getInstance().init();
@@ -117,6 +133,16 @@ public class Engine {
         regionRenderer.init();
         BlockTextureArray.getInstance().reload();
         switchRenderer(true);
+        GL30.glBindVertexArray(vaoId);
+    }
+    public static void enableVAO() {
+//        GL30.glBindVertexArray(vaoId);
+    }
+    public static void enableVAOTerrain() {
+//        GL30.glBindVertexArray(vaoTerrainId);
+    }
+    public static void disableVAO() {
+//        GL30.glBindVertexArray(0);
     }
 
     public static void resize(int displayWidth, int displayHeight) {
@@ -183,23 +209,23 @@ public class Engine {
 //        fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbShadow.setShadowBuffer();
         fbShadow.setup();
-        if (fullscreenQuad == null) {
-            fullscreenQuad = newDisplayList();
-        }
-        {
-            Tess.instance.resetState();
-            int tw = displayWidth;
-            int th = displayHeight;
-            float x = 0;
-            float y = 0;
-            Tess.instance.add(x + tw, y, 0, 1, 1);
-            Tess.instance.add(x, y, 0, 0, 1);
-            Tess.instance.add(x, y + th, 0, 0, 0);
-            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-            glNewList(fullscreenQuad.list, GL_COMPILE);
-            Tess.instance.draw(GL_QUADS);
-            glEndList();
-        }
+//        if (fullscreenQuad == null) {
+//            fullscreenQuad = newDisplayList();
+//        }
+//        {
+//            Tess.instance.resetState();
+//            int tw = displayWidth;
+//            int th = displayHeight;
+//            float x = 0;
+//            float y = 0;
+//            Tess.instance.add(x + tw, y, 0, 1, 1);
+//            Tess.instance.add(x, y, 0, 0, 1);
+//            Tess.instance.add(x, y + th, 0, 0, 0);
+//            Tess.instance.add(x + tw, y + th, 0, 1, 0);
+//            glNewList(fullscreenQuad.list, GL_COMPILE);
+//            Tess.instance.draw(GL_QUADS);
+//            glEndList();
+//        }
         
         if (worldRenderer != null) {
             worldRenderer.resize(displayWidth, displayHeight);
@@ -209,7 +235,17 @@ public class Engine {
         }
     }
     public static void drawFullscreenQuad() {
-        glCallList(fullscreenQuad.list);
+        Tess.instance.resetState();
+        int tw = Main.displayWidth;
+        int th = Main.displayHeight;
+        float x = 0;
+        float y = 0;
+        Tess.instance.add(x + tw, y, 0, 1, 1);
+        Tess.instance.add(x, y, 0, 0, 1);
+        Tess.instance.add(x, y + th, 0, 0, 0);
+        Tess.instance.add(x + tw, y + th, 0, 1, 0);
+        Tess.instance.draw(GL_QUADS);
+//        glCallList(fullscreenQuad.list);
     }
 
     public static float readDepth(int x, int y) {
@@ -566,6 +602,14 @@ public class Engine {
 
     public static void setSceneFB(FrameBuffer fb) {
         fbScene = fb;
+    }
+
+    public static ByteBuffer getBuffer() {
+        return buffer;
+    }
+
+    public static IntBuffer getIntBuffer() {
+        return intbuffer;
     }
 
 }

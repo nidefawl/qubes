@@ -2,15 +2,20 @@ package nidefawl.qubes.gl;
 
 import java.nio.*;
 
+import org.lwjgl.opengl.*;
+
 import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL20;
-
 public class Tess extends TesselatorState {
-    public final static int ATTR_BLOCK = 6;
+    final public static String[] attributes = new String[] {
+            "in_position",
+            "in_normal",
+            "in_texcoord",
+            "in_color",
+            "in_brightness",
+            "in_blockinfo",
+    };
 
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
     
@@ -33,9 +38,7 @@ public class Tess extends TesselatorState {
 
     private final boolean isSoftTesselator;
     ByteBuffer                   buffer       = null;
-    private ShortBuffer          shortBuffer  = null;
     private IntBuffer            intBuffer;
-    private FloatBuffer          floatBuffer;
 
     public Tess() {
         this(false);
@@ -75,15 +78,6 @@ public class Tess extends TesselatorState {
         this.useTexturePtr = true;
     }
 
-    public void setUV2(float u, float v) {
-        if (!useTexturePtr3 && vertexcount > 0) {
-            throw new IllegalStateException("Cannot enable texture pointer after a vertex has been added");
-        }
-        this.u2 = u;
-        this.v2 = v;
-        this.useTexturePtr3 = true;
-    }
-
     public void setAttr(int blockId, int blockData, int renderType) {
         if (!useAttribPtr1 && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable attr pointer after a vertex has been added");
@@ -120,6 +114,7 @@ public class Tess extends TesselatorState {
         rawBuffer[index++] = Float.floatToRawIntBits(x);
         rawBuffer[index++] = Float.floatToRawIntBits(y);
         rawBuffer[index++] = Float.floatToRawIntBits(z);
+        rawBuffer[index++] = Float.floatToRawIntBits(1);
         if (useNormalPtr) {
             rawBuffer[index++] = normal;
         }
@@ -127,10 +122,7 @@ public class Tess extends TesselatorState {
             rawBuffer[index++] = Float.floatToRawIntBits(u);
             rawBuffer[index++] = Float.floatToRawIntBits(v);
         }
-//        if (useTexturePtr3) {
-//            rawBuffer[index++] = Float.floatToRawIntBits(u2);
-//            rawBuffer[index++] = Float.floatToRawIntBits(v2);
-//        }
+        
         if (useColorPtr) {
             rawBuffer[index++] = rgba;
         }
@@ -159,11 +151,13 @@ public class Tess extends TesselatorState {
         }
     }
 
+    int vboId = 0;
+
+    private boolean buffered;
+    int vboSize = 0;
     private void resizeDirect() {
         buffer = ByteBuffer.allocateDirect(rawBuffer.length*4).order(ByteOrder.nativeOrder());
         intBuffer = buffer.asIntBuffer();
-        floatBuffer = buffer.asFloatBuffer();
-        shortBuffer = buffer.asShortBuffer();
     }
 
     public void setColorRGBAF(float r, float g, float b, float a) {
@@ -207,98 +201,77 @@ public class Tess extends TesselatorState {
             throw new IllegalStateException("Cannot draw soft tesselator");
         }
         if (vertexcount >1) {
-            if (buffer == null || intBuffer.capacity() < rawBuffer.length) {
-                resizeDirect();
+            Engine.enableVAO();
+            if (this.vboId == 0) {
+                vboId = GL15.glGenBuffers();
             }
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
 
-//            System.out.println("draw "+vertexcount+" vertex");
-//            System.out.println("draw "+getIdx(vertexcount)+" ints");
-//            System.out.println("getIdx(vertexcount) "+getIdx(vertexcount) );
-//            System.out.println("getVSize() "+getVSize() );
-//            System.out.println("rawBuffer.length "+rawBuffer.length );
-//            System.out.println("intBuffer.position() "+intBuffer.position() );
-//            System.out.println("intBuffer.capacity() "+intBuffer.capacity());
-//            System.out.println("intBuffer.remaining() "+intBuffer.remaining());
-            intBuffer.clear();
-            intBuffer.put(rawBuffer, 0, getIdx(vertexcount));
-            buffer.position(0);
-            buffer.limit(getIdx(vertexcount) * 4);
+            
+            if (!buffered) {
+                buffered = true;
+                if (buffer == null || intBuffer.capacity() < rawBuffer.length) {
+                    resizeDirect();
+                }
+                intBuffer.clear();
+                intBuffer.put(rawBuffer, 0, getIdx(vertexcount));
+                int len = getIdx(vertexcount) * 4;
+                buffer.position(0);
+                buffer.limit(len);
+                if (vboSize <= len) {
+                    GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+                } else {
+                    GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, len, buffer);
+                }
+                vboSize = len;
+            }
+            
             int stride = getVSize();
-            int offset = 0;
-            floatBuffer.position(0);
-            GL11.glVertexPointer(3, stride*4, floatBuffer);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("vertexptr");
-            offset+=3;
+            
+            
+            GL20.glEnableVertexAttribArray(0);
+            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride*4, 0);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+0);
+            
+            int offset = 4;
             if (useNormalPtr) {
-                GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-                buffer.position(offset*4);
-                GL11.glNormalPointer(stride*4, buffer);
+                GL20.glEnableVertexAttribArray(1);
+                GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, stride*4, offset*4);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+1);
                 offset+=1;
             }
             if (useTexturePtr) {
-                GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                floatBuffer.position(offset);
-                GL11.glTexCoordPointer(2, stride*4, floatBuffer);
+                GL20.glEnableVertexAttribArray(2);
+                GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, stride*4, offset*4);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+2);
                 offset+=2;
             }
-//            if (useTexturePtr3) {
-//                GL13.glClientActiveTexture(GL13.GL_TEXTURE1);
-//                floatBuffer.position(offset);
-//                GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-//                GL11.glTexCoordPointer(2, stride*4, floatBuffer);
-//                GL13.glClientActiveTexture(GL13.GL_TEXTURE0);
-//                offset+=2;
-//            }
             if (useColorPtr) {
-                GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-//                System.out.println("set c off "+offset*4);
-//              System.out.println("buffer.limit() "+buffer.limit() );
-                buffer.position(offset*4);
-                GL11.glColorPointer(4, true, stride*4, buffer);
+                GL20.glEnableVertexAttribArray(3);
+                GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride*4, offset*4);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+3);
                 offset+=1;
             }
             if (useTexturePtr2) {
-                GL13.glClientActiveTexture(GL13.GL_TEXTURE1);
-                buffer.position(offset*4);
-                GL11.glTexCoordPointer(2, GL11.GL_SHORT, stride*4, buffer);
-                GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                GL13.glClientActiveTexture(GL13.GL_TEXTURE0);
+                GL20.glEnableVertexAttribArray(4);
+                GL20.glVertexAttribPointer(4, 2, GL11.GL_SHORT, false, stride*4, offset*4);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+4);
                 offset+=1;
             }
             if (useAttribPtr1) {
-                GL20.glEnableVertexAttribArray(ATTR_BLOCK);
-                shortBuffer.position(offset*2);
-                GL20.glVertexAttribPointer(ATTR_BLOCK, 3, true, false, stride*4, shortBuffer);
+                GL20.glEnableVertexAttribArray(5);
+                GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, stride*4, offset*4);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+5);
                 offset+=2;
             }
             
-            GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glEnableClientState");
-            buffer.position(0);
-            buffer.limit(getIdx(vertexcount) * 4);
             GL11.glDrawArrays(mode, 0, vertexcount);
 
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
-            GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDisableClientState");
+            for (int i = 0; i < attributes.length; i++)
+                GL20.glDisableVertexAttribArray(i);
 
-            if (useColorPtr)
-                GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
-
-            if (useTexturePtr)
-                GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-
-            if (useTexturePtr2||useTexturePtr3) {
-                GL13.glClientActiveTexture(GL13.GL_TEXTURE1);
-                GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                GL13.glClientActiveTexture(GL13.GL_TEXTURE0);
-            }
-            if (useNormalPtr)
-                GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
-
-            if (useAttribPtr1)
-                GL20.glDisableVertexAttribArray(ATTR_BLOCK);
-            
+            Engine.disableVAO();
         }
         if (this.reset)
             resetState();
@@ -310,7 +283,6 @@ public class Tess extends TesselatorState {
         this.useNormalPtr = false;
         this.useTexturePtr = false;
         this.useTexturePtr2 = false;
-        this.useTexturePtr3 = false;
         this.useAttribPtr1 = false;
         this.useColorPtr = false;
         this.u = this.v = 0;
@@ -321,10 +293,12 @@ public class Tess extends TesselatorState {
         this.rgba = -1;
         this.offsetX = this.offsetY = this.offsetZ = 0;
         this.reset = true;
+        this.buffered = false;
     }
 
     public void destroy() {
         buffer = null;
+        GL15.glDeleteBuffers(this.vboId);
     }
 
     public void setOffset(float f, float j, float g) {

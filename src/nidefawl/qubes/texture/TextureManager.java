@@ -103,6 +103,8 @@ public class TextureManager {
      */
     public void uploadTexture(byte[] rgba, int w, int h, int bytespp, int format, int internalFormat, boolean repeat, boolean filter, int mipmapLevel) {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glEnable(GL11.GL_TEXTURE_2D)");
+
         int magfilter = GL11.GL_NEAREST;
         int minfilter = GL11.GL_NEAREST;
         int wrap_s = GL11.GL_CLAMP;

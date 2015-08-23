@@ -18,6 +18,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
@@ -196,7 +197,9 @@ public class Main extends GLGame {
                     }
                     break;
             }
-            if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_0) {
+            if (key == Keyboard.KEY_0) {
+                this.selBlock = 0;
+            } else if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_9) {
                 this.selBlock = key - Keyboard.KEY_1;
                 if (!Block.isValid(this.selBlock)) {
                     this.selBlock = 0;
@@ -294,13 +297,13 @@ public class Main extends GLGame {
 
       Engine.worldRenderer.renderWorld(this.world, fTime);
       if (Main.renderWireFrame) {
-      if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
-          Engine.worldRenderer.renderNormals(this.world, fTime);
+          if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
+//          Engine.worldRenderer.renderNormals(this.world, fTime);
       }
       if (Main.DO_TIMING) TimingHelper.endStart("renderBlockHighlight");
-      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+//      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
       if (Main.DO_TIMING) TimingHelper.endStart("renderDebugBB");
-      Engine.worldRenderer.renderDebugBB(this.world, fTime);
+//      Engine.worldRenderer.renderDebugBB(this.world, fTime);
       if (Main.DO_TIMING) TimingHelper.endStart("unbindCurrentFrameBuffer");
       Engine.getSceneFB().unbindCurrentFrameBuffer();
       if (Main.DO_TIMING) TimingHelper.endSec();
@@ -313,7 +316,6 @@ public class Main extends GLGame {
       GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
       GL11.glMatrixMode(GL11.GL_MODELVIEW);
       GL11.glLoadIdentity();
-      GL11.glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
       glClearColor(0.71F, 0.82F, 1.00F, 1F);
       glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
       glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -355,6 +357,7 @@ public class Main extends GLGame {
           Tess.instance.add(height, w, 0);
           Tess.instance.add(height, -w, 0);
           Tess.instance.add(-height, -w, 0);
+
           Tess.instance.draw(GL_QUADS);
           glEnable(GL_TEXTURE_2D);
           if (Main.DO_TIMING) TimingHelper.endSec();
@@ -388,7 +391,7 @@ public class Main extends GLGame {
         if (this.statsOverlay != null) {
             this.statsOverlay.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 444000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 1000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -521,29 +524,42 @@ public class Main extends GLGame {
 
     private void showErrorScreen(String title, List<String> desc, Throwable throwable) {
         try {
+            if (this.wasrunning) {
+                onDestroy();
+            }
             destroyContext();
             try {
                 Thread.sleep(120L);
             } catch (InterruptedException interruptedexception) {
             }
-            
+
             initDisplay();
+
+            Engine.baseInit();
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - initdisplay");
             GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glClearColor");
             GL11.glShadeModel(GL11.GL_SMOOTH);
             glActiveTexture(GL_TEXTURE0);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glActiveTexture(GL_TEXTURE0)");
             glEnable(GL_ALPHA_TEST);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - GL_ALPHA_TEST");
             glEnable(GL_BLEND);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - GL_BLEND");
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glBlendFunc");
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
             glDepthMask(true);
             glColorMask(true, true, true, true);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glColorMask");
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
 //            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
 //            GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
             setVSync(true);
-            
+
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen");
             Mouse.setGrabbed(false);
             GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
             GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -559,20 +575,33 @@ public class Main extends GLGame {
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             GL11.glViewport(0, 0, displayWidth, displayHeight);
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glViewport");
             while (!isCloseRequested()) {
                 checkResize();
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen checkResize");
                 updateInput();
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateInput");
                 guiCrash.setPos(0, 0);
                 guiCrash.setSize(displayWidth, displayHeight);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.setSize");
                 GL11.glMatrixMode(GL_PROJECTION);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_PROJECTION)");
                 GL11.glLoadIdentity();
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
                 GL11.glOrtho(0, displayWidth, displayHeight, 0, 0, 10);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glOrtho");
                 GL11.glMatrixMode(GL_MODELVIEW);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_MODELVIEW)");
                 GL11.glLoadIdentity();
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
                 GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClearColor");
                 GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClear");
                 guiCrash.render(0);
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.render");
                 updateDisplay();
+                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateDisplay");
             }
         } catch (Throwable t) {
             t.printStackTrace();

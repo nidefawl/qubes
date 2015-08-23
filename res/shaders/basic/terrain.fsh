@@ -3,15 +3,16 @@
 uniform sampler2DArray blockTextures;
 uniform int renderWireFrame;
 
-varying vec4 color;
-varying vec4 lmcoord;
-varying vec3 normal;
-varying vec3 globalNormal;
-varying vec4 texcoord;
-varying vec3 vposition;
-flat varying int blockTexture;
-varying highp vec3 triangle;
+in vec4 color;
+in vec4 lmcoord;
+in vec3 normal;
+in vec3 globalNormal;
+in vec4 texcoord;
+in vec3 vposition;
+flat in int blockTexture;
+in highp vec3 triangle;
 
+out vec4 out_Color;
 
 
 float getBrightness(vec2 b) {
@@ -34,7 +35,7 @@ void main() {
 	    tex.rgb = mix(vec3(1,0,0), tex.rgb, min(min(tdist.x, tdist.y), tdist.z));
 	}
 
-    gl_FragData[0] = tex;
+    out_Color = tex;
 	// gl_FragData[0] = vec4(1, 1, 0, 1.0);
 	//float brightness = getBrightness(wpos);
 	//gl_FragData[0] = vec4(brightness, brightness, brightness, 1);

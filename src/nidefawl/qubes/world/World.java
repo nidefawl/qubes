@@ -60,7 +60,7 @@ public class World {
         if (fSun>1)fSun--;
         float f = 1.0F - (float)(Math.cos(fSun*Math.PI)+1)/2.0F;
 //        return fSun+(f-fSun)/3.0F;
-        return 0.87F;
+        return 0.78F;
     }
 
     public void tickUpdate() {

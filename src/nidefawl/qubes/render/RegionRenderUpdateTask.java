@@ -18,10 +18,9 @@ import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
 public class RegionRenderUpdateTask {
-    public final Tess       tess   = new Tess(true);
     public final Mesher     mesher = new Mesher();
     public final RegionCache cache = new RegionCache();
-    final TesselatorState[] state  = new TesselatorState[NUM_PASSES*NUM_LAYERS];
+    final Tess[] tess  = new Tess[NUM_PASSES*NUM_LAYERS];
 
     public int              worldInstance;
     private boolean         meshed;
@@ -30,8 +29,8 @@ public class RegionRenderUpdateTask {
     private MeshedRegion mr;
     
     public RegionRenderUpdateTask() {
-        for (int i = 0; i < this.state.length; i++) {
-            this.state[i] = new TesselatorState();
+        for (int i = 0; i < this.tess.length; i++) {
+            this.tess[i] = new Tess(true);
         }
     }
 
@@ -65,7 +64,7 @@ public class RegionRenderUpdateTask {
                 return false;
             }
             long l = System.nanoTime();
-            this.mr.compileDisplayList(this.state);
+            this.mr.compileDisplayList(this.tess);
             Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
         } else {
             //TODO: flush display list if compile failed, or ignore
@@ -99,16 +98,17 @@ public class RegionRenderUpdateTask {
                 l = System.nanoTime();
                 for (int j = 0; j < NUM_LAYERS; j++) {
                     for (int i = 0; i < NUM_PASSES; i++) {
+                        int idx = i+NUM_PASSES*j;
+                        Tess tess = this.tess[idx];
                         List<Mesh> mesh = this.mesher.getMeshes(j, i);
-                        this.tess.resetState();
-                        this.tess.setColor(-1, 255);
-                        this.tess.setBrightness(0xf00000);
+                        tess.resetState();
+                        tess.setColor(-1, 255);
+                        tess.setBrightness(0xf00000);
                         int size = mesh.size();
                         for (int m = 0; m < size; m++) {
                             Mesh face = mesh.get(m);
-                            face.draw(this.tess);
+                            face.draw(tess);
                         }
-                        this.tess.copyTo(this.state[i+NUM_PASSES*j]);
                     }
                 }
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;

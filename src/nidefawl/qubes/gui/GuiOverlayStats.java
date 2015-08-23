@@ -1,11 +1,14 @@
 package nidefawl.qubes.gui;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import java.util.ArrayList;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
+import nidefawl.game.GL;
 import nidefawl.game.GLGame;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
@@ -13,9 +16,9 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Camera;
-import nidefawl.qubes.gl.DisplayList;
-import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.*;
+import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
@@ -23,7 +26,7 @@ import nidefawl.qubes.world.World;
 
 public class GuiOverlayStats extends Gui {
 
-    final FontRenderer font;
+    final public FontRenderer font;
     final FontRenderer fontSmall;
 
     ArrayList<String>  info        = new ArrayList<String>();
@@ -38,6 +41,8 @@ public class GuiOverlayStats extends Gui {
     DisplayList l;
     boolean render = false;
     private String stats5;
+    Tess tess = new Tess(false);
+    Tess tess2 = new Tess(false);
     public GuiOverlayStats() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
         this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
@@ -92,10 +97,17 @@ public class GuiOverlayStats extends Gui {
             l = Engine.newDisplayList();
         }
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_TEXTURE_2D);       int y = 20;
+        glEnable(GL_TEXTURE_2D);
+
+        int y = 20;
         if (render) {
             render = false;
-            glNewList(l.list, GL11.GL_COMPILE);
+            tess.resetState();
+            tess.dontReset();
+            tess2.resetState();
+            tess2.dontReset();
+            font.setTess(tess);
+            fontSmall.setTess(tess2);
             font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
             y += font.getLineHeight() * 1.2F;
@@ -120,9 +132,15 @@ public class GuiOverlayStats extends Gui {
             String dbg = "Matrixmode: " + (Main.matrixSetupMode ? "GL" : "CPU");
             fontSmall.drawString(dbg, 5, y, 0xFFFFFF, true, 1.0F);
             y += fontSmall.getLineHeight() * 1.2F;
-            glEndList();
+            font.setTess(null);
+            fontSmall.setTess(null);
         }
-        glCallList(l.list);
+
+        Shaders.font.enable();
+        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, font.getTexture());
+        tess.draw(GL_QUADS);
+        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fontSmall.getTexture());
+        tess2.draw(GL_QUADS);
         if (System.currentTimeMillis() - messageTime < 5000) {
             int strwidth = 0;
 
@@ -134,10 +152,12 @@ public class GuiOverlayStats extends Gui {
             rright = GLGame.displayWidth / 2 + strwidth / 2 + 8F;
             rtop = 32;
             rbottom = rtop + 8+(split.length)*24;
-            setColor(0x121212);
             glDisable(GL_BLEND);
             glDisable(GL_TEXTURE_2D);
+//            Shader.disable();
+//            Tess.instance.setColor(0, 255);
             drawRect();
+//            Shaders.font.enable();
             glEnable(GL_BLEND);
             glEnable(GL_TEXTURE_2D);
             for (int i = 0; i < split.length; i++) {
@@ -146,6 +166,7 @@ public class GuiOverlayStats extends Gui {
 
             setColor(-1);
         }
+        Shader.disable();
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
  

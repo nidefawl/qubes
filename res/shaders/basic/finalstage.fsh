@@ -1,10 +1,13 @@
-#version 130
+#version 150 core
+ 
+uniform sampler2D tex0;
 
-uniform sampler2D texture;
+in vec2 pass_texcoord;
 
-varying vec4 texcoord;
+out vec4 out_Color;
 
 
 void main() {
-    gl_FragData[0] = texture2D(texture, texcoord.st);
+	vec4 tex = texture(tex0, pass_texcoord);
+    out_Color = tex;
 }

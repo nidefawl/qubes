@@ -8,6 +8,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.shader.Shaders;
 
 public class GuiOverlayDebug extends Gui {
 
@@ -126,8 +127,10 @@ public class GuiOverlayDebug extends Gui {
         Tess.tessFont.add(0, 0 + h-20, 0, 0, 1);
         Tess.tessFont.draw(7);
         glEnable(GL_TEXTURE_2D);
+        Shaders.font.enable();
         fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
         fontSmall.drawString(""+texture+"", w1-2, h-2, -1, true, 1.0F, 1);
+        Shader.disable();
         glPopMatrix();
     }
     public void drawDebug() {
@@ -180,12 +183,14 @@ public class GuiOverlayDebug extends Gui {
             glEnable(GL_BLEND);
             glEnable(GL_TEXTURE_2D);
             glPushMatrix();
+            Shaders.font.enable();
             for (int i = 0; i < names.length; i++) {
                 fontSmall.drawString(names[i], 8, yCol+20, -1, true, 1.0F);
                 fontSmall.drawString("INPUT", 12, yCol+50, -1, true, 1.0F);
                 fontSmall.drawString("OUTPUT", 8+w1+gap/2, yCol+50, -1, true, 1.0F);
                 glTranslatef(wCol + gap, 0, 0);
             }
+            Shader.disable();
             glPopMatrix();
     }
 

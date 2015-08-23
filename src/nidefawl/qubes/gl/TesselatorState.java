@@ -2,15 +2,14 @@ package nidefawl.qubes.gl;
 
 public class TesselatorState {
     public final static int BUF_INCR  = 1024;
-    protected int[]         rawBuffer = new int[BUF_INCR];
+    public int[]         rawBuffer = new int[BUF_INCR];
     public int           vertexcount;
 
-    protected boolean       useColorPtr;
-    protected boolean       useTexturePtr;
-    protected boolean       useTexturePtr2;
-    protected boolean       useTexturePtr3;
-    protected boolean       useNormalPtr;
-    protected boolean       useAttribPtr1;
+    public boolean       useColorPtr;
+    public boolean       useTexturePtr;
+    public boolean       useTexturePtr2;
+    public boolean       useNormalPtr;
+    public boolean       useAttribPtr1;
     
     public void copyTo(TesselatorState out, int len) {
         if (len >= out.rawBuffer.length) {
@@ -21,19 +20,18 @@ public class TesselatorState {
         out.useColorPtr = this.useColorPtr;
         out.useTexturePtr = this.useTexturePtr;
         out.useTexturePtr2 = this.useTexturePtr2;
-        out.useTexturePtr3 = this.useTexturePtr3;
         out.useNormalPtr = this.useNormalPtr;
         out.useAttribPtr1 = this.useAttribPtr1;
     }
     
 
 
-    int getIdx(int v) {
+    public int getIdx(int v) {
         return getVSize() * v;
     }
     
     public int getVSize() {
-        int stride = 3;
+        int stride = 4;
         if (useColorPtr)
             stride++;
         if (useNormalPtr)
@@ -42,10 +40,14 @@ public class TesselatorState {
             stride+=2;
         if (useTexturePtr2)
             stride+=1;
-        if (useTexturePtr3)
-            stride+=2;
         if (useAttribPtr1)
             stride+=2;
         return stride;
+    }
+    
+    public TesselatorState copyState() {
+        TesselatorState state = new TesselatorState();
+        this.copyTo(state, this.getIdx(this.vertexcount));
+        return state;
     }
 }

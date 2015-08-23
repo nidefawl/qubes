@@ -7,6 +7,8 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import java.awt.Color;
 import java.util.HashMap;
 
+import org.lwjgl.opengl.ARBGeometryShader4;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
@@ -52,9 +54,7 @@ public class WorldRenderer {
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader terrain = assetMgr.loadShader("shaders/basic/terrain", false);
-            terrain.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
-            terrain.linkProgram();
+            Shader terrain = assetMgr.loadShader("shaders/basic/terrain");
             releaseShaders();
             testShader = terrain;
             startup = false;
@@ -183,7 +183,7 @@ public class WorldRenderer {
         glNormal3f(0.0F, -1.0F, 0.0F);
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);
-        glFogf(GL_FOG_START, (Engine.zfar / 2.3F)*0.75F);
+        glFogf(GL_FOG_START, (Engine.zfar / 2.3F)*0.85F);
         glFogf(GL_FOG_END, (Engine.zfar / 2.3F));
         glEnable(GL_FOG);
         glEnable(GL_COLOR_MATERIAL);
@@ -341,7 +341,10 @@ public class WorldRenderer {
         Shaders.normals.enable();
         Engine.checkGLError("Shaders.normals.enable()");
         glLineWidth(3.0F);
+        Engine.checkGLError("glLineWidth");
+        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_LINES_ADJACENCY_ARB);
         Engine.regionRenderer.renderFirstPass(world, fTime);
+        Engine.regionRenderer.setDrawMode(GL_QUADS);
         Shader.disable();
 //        int y = 130;
 //        int x = 0;

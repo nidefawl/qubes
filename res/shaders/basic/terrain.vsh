@@ -1,43 +1,48 @@
-#version 130
-
+#version 150 core
+ 
+in vec4 in_position;
+in vec3 in_normal;
+in vec4 in_texcoord;
+in vec4 in_color;
+in vec4 in_brightness;
+in vec3 in_blockinfo;
 
 attribute vec4 blockinfo;
 uniform int renderWireFrame;
 
-varying vec4 color;
-varying vec4 lmcoord;
-varying vec4 texcoord;
-varying vec3 normal;
-varying vec3 globalNormal;
-varying vec3 vposition;
-varying highp vec3 triangle;
-flat varying int blockTexture;
+out vec4 color;
+out vec4 lmcoord;
+out vec4 texcoord;
+out vec3 normal;
+out vec3 globalNormal;
+out vec3 vposition;
+out highp vec3 triangle;
+flat out int blockTexture;
 
 
 void main() {
-	texcoord = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-	lmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
-	normal = normalize(gl_NormalMatrix * gl_Normal);
-	globalNormal = normalize(gl_Normal);
-	color = gl_Color;
+	texcoord = gl_TextureMatrix[0] * in_texcoord;
+	lmcoord = gl_TextureMatrix[1] * in_brightness;
+	normal = normalize(gl_NormalMatrix * in_normal);
+	globalNormal = normalize(in_normal);
+	color = in_color;
 	// color = vec4(0,0,0,1);
 	// color.r = blockinfo.x/255.0f;
-	blockTexture = int(blockinfo.x);
-	vec4 v = gl_Vertex;
-	vposition = (gl_ModelViewMatrix * v).xyz;
-	gl_FogFragCoord = vposition.z;
-	gl_Position = gl_ModelViewProjectionMatrix * v;
+	blockTexture = int(in_blockinfo.x);
+	vposition = (gl_ModelViewMatrix * in_position).xyz;
+	// gl_FogFragCoord = vposition.z;
+	gl_Position = gl_ModelViewProjectionMatrix * in_position;
 	if (renderWireFrame) {
-		if (blockinfo.y == 0) {
+		if (in_blockinfo.y == 0) {
 	    	triangle = vec3(0, 0, 255);
 		}
-		if (blockinfo.y == 1) {
+		if (in_blockinfo.y == 1) {
 	    	triangle = vec3(0, 255, 0);
 		}
-		if (blockinfo.y == 2) {
+		if (in_blockinfo.y == 2) {
 	    	triangle = vec3(255, 0, 0);
 		}
-		if (blockinfo.y == 3) {
+		if (in_blockinfo.y == 3) {
 	    	triangle = vec3(0, 0, 255);
 		}
 	}

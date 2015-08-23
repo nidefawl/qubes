@@ -1,9 +1,15 @@
-#version 130
+#version 150 core
+ 
+in vec4 in_position;
+in vec3 in_normal;
+in vec2 in_texcoord;
+in vec4 in_color;
+in vec4 in_brightness;
+in vec3 in_blockinfo;
 
-
-varying vec4 texcoord;
+out vec2 pass_texcoord;
 
 void main() {
-	texcoord = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	pass_texcoord = in_texcoord;
+	gl_Position = gl_ModelViewProjectionMatrix * in_position;
 }

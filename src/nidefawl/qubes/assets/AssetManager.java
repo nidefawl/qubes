@@ -38,9 +38,6 @@ public class AssetManager {
     }
 
     public Shader loadShader(String name) {
-        return loadShader(name, true);
-    }
-    public Shader loadShader(String name, boolean link) {
         File f = new File(folder, name);
         if (f.getParentFile().exists()) {
             Shader shader = new Shader(name);
@@ -57,7 +54,7 @@ public class AssetManager {
                     fis3 = new FileInputStream(file);
                     fis3 = new BufferedInputStream(fis3);
                 }
-                shader.load(fis, fis2, fis3, link);
+                shader.load(fis, fis2, fis3);
             } catch (GameError e) {
                 throw e;
             } catch (Exception e) {

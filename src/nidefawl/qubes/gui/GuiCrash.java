@@ -8,10 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import nidefawl.game.GL;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.shader.Shaders;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
 public class GuiCrash extends Gui {
     FontRenderer         fontSmall = FontRenderer.get("Arial", 16, 1, 18);
@@ -48,16 +52,16 @@ public class GuiCrash extends Gui {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
-
+        Shaders.font.enable();
         fontBig.drawString(this.title, width / 2, height / 6, -1, true, 1.0F, 2);
 
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_TEXTURE_2D);
+        GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, 0);
         int l = width / 5;
         int t = height / 5;
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.3F);
         Tess.instance.add(width - l, height - t);
         Tess.instance.add(width - l, t);
         Tess.instance.add(l, t);
@@ -79,6 +83,7 @@ public class GuiCrash extends Gui {
             fontSmall.drawString(this.desc2.get(i), l + 10, yp, -1, true, 1.0F, 0);
             yp+=fontSmall.getLineHeight();
         }
+        Shader.disable();
 
     }
 

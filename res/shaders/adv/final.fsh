@@ -20,8 +20,8 @@ Do not modify this code until you have read the LICENSE.txt contained in the roo
 #define SATURATION_BOOST 0.2f 			//How saturated the final image should be. 0 is unchanged saturation. Higher values create more saturated image
 
 //Define one of these, not more, not less.
-	//#define TONEMAP_NATURAL
-	#define TONEMAP_FILMIC
+	#define TONEMAP_NATURAL
+	// #define TONEMAP_FILMIC
 
 //#define LOCAL_OPERATOR					//Use local operator when tone mapping. Local operators increase image sharpness and local contrast but can cause haloing
 
@@ -640,7 +640,7 @@ void TonemapReinhard05(inout vec3 color, BloomDataStruct bloomData)
 	//color.b *= 0.85f;
 
 	#ifdef TONEMAP_NATURAL
-	float averageLuminance = 0.00006f;
+	float averageLuminance = 0.00005f;
 	#endif
 	#ifdef TONEMAP_FILMIC
 	float averageLuminance = 0.00003f;
@@ -649,7 +649,7 @@ void TonemapReinhard05(inout vec3 color, BloomDataStruct bloomData)
 
 
 	#ifdef TONEMAP_NATURAL
-	float contrast = 0.85f;
+	float contrast = 0.94f;
 	#endif
 	#ifdef TONEMAP_FILMIC
 	float contrast = 0.9f;
@@ -712,7 +712,7 @@ void TonemapReinhard05(inout vec3 color, BloomDataStruct bloomData)
 
 
 	#ifdef TONEMAP_NATURAL
-	color.rgb = value * 2.195f - 0.00f;
+	color.rgb = value * 1.6f;
 	#endif
 
 	#ifdef TONEMAP_FILMIC

@@ -17,6 +17,7 @@ import org.lwjgl.opengl.ARBGeometryShader4;
 import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
@@ -63,7 +64,7 @@ public class Shader {
         this.name = name;
         this.buffer = BufferUtils.createIntBuffer(1);
     }
-    public void load(InputStream streamfsh, InputStream streamvsh, InputStream streamgsh, boolean link) throws IOException {
+    public void load(InputStream streamfsh, InputStream streamvsh, InputStream streamgsh) throws IOException {
         BufferedReader readerfsh = streamfsh != null ? new BufferedReader(new InputStreamReader(streamfsh)) : null;
         BufferedReader readervsh = streamvsh != null ? new BufferedReader(new InputStreamReader(streamvsh)) : null;
         BufferedReader readergsh = streamgsh != null ? new BufferedReader(new InputStreamReader(streamgsh)) : null;
@@ -171,9 +172,13 @@ public class Shader {
                 glAttachObjectARB(this.shader, this.geometryShader);
                 Engine.checkGLError("glAttachObjectARB");
             }
-            if (link) {
-                linkProgram();
+            String[] tessAttrib = Tess.attributes;
+            for (int i = 0; i < tessAttrib.length; i++) {
+                glBindAttribLocationARB(this.shader, i, tessAttrib[i]);
+                if (Main.GL_ERROR_CHECKS)
+                    Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+tessAttrib[i]+" = "+i);
             }
+            linkProgram();
         } finally {
             if (readerfsh != null)
                 readerfsh.close();
@@ -188,7 +193,7 @@ public class Shader {
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+attrName+" = "+attr);
     }
-    public void linkProgram() {
+    void linkProgram() {
         glLinkProgramARB(this.shader);
         String log = getLog(this.shader);
         Engine.checkGLError("getLog");

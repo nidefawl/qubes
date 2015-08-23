@@ -79,7 +79,6 @@ public class RegionRenderThread extends Thread {
     }
 
     int tasksRunning = 0;
-    int nextTask     = 0;
 
     public int finishTasks() {
         if (finish.isEmpty()) {
@@ -96,6 +95,7 @@ public class RegionRenderThread extends Thread {
             RegionRenderUpdateTask w = this.finish.getFirst();
             if (w.finish(this.id)) {
                 this.finish.removeFirst();
+                w.worldInstance = 0;
                 tasksRunning--;
             }
             num++;
@@ -111,7 +111,6 @@ public class RegionRenderThread extends Thread {
             if (task.prepare(m, renderChunkX, renderChunkZ)) {
                 task.worldInstance = this.id;
                 this.queue.add(task);
-                nextTask++;
                 tasksRunning++;
                 return true;
             }
@@ -130,10 +129,13 @@ public class RegionRenderThread extends Thread {
     private RegionRenderUpdateTask getNextTask() {
         if (tasksRunning >= this.tasks.length)
             return null;
-        return tasks[nextTask % this.tasks.length];
+        for (int i = 0; i < this.tasks.length; i++)
+            if (tasks[i].worldInstance == 0)
+                return tasks[i];
+        return null;
     }
 
-    int id = 0;
+    int id = 1;
 
     public void flush() {
         id++;

@@ -9,6 +9,7 @@ import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
@@ -34,6 +35,10 @@ public class FinalRenderer extends FinalRendererBase {
 
     @Override
     public void renderFinal(float fTime) {
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
+        GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
+        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
 
         if (Main.DO_TIMING)
             TimingHelper.startSec("enableShader");
@@ -42,7 +47,7 @@ public class FinalRenderer extends FinalRendererBase {
             Engine.checkGLError("enable shader final");
         if (Main.DO_TIMING)
             TimingHelper.endStart("setProgramUniform");
-        shaderFinal.setProgramUniform1i("texture", 0);
+        shaderFinal.setProgramUniform1i("tex0", 0);
         if (Main.DO_TIMING)
             TimingHelper.endStart("bindTexture");
 
@@ -50,10 +55,6 @@ public class FinalRenderer extends FinalRendererBase {
         //        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         //        GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, TMgr.getNoise());
 
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
-        GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
-        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
 
         if (Main.DO_TIMING)
             TimingHelper.endStart("drawFullscreenQuad");

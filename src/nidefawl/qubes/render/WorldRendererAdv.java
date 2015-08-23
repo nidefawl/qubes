@@ -47,17 +47,11 @@ public class WorldRendererAdv extends WorldRenderer {
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_waterShader = assetMgr.loadShader("shaders/adv/water", false);
-            new_waterShader.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
-            new_waterShader.linkProgram();
+            Shader new_waterShader = assetMgr.loadShader("shaders/adv/water");
             Shader new_sky = assetMgr.loadShader("shaders/adv/sky");
             Shader new_sky2 = assetMgr.loadShader("shaders/adv/sky");
-            Shader new_terrain = assetMgr.loadShader("shaders/adv/terrain", false);
-            Shader new_shadow = assetMgr.loadShader("shaders/adv/shadow", false);
-            new_shadow.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
-            new_shadow.linkProgram();
-            new_terrain.bindAttribute(Tess.ATTR_BLOCK, "blockinfo");
-            new_terrain.linkProgram();
+            Shader new_terrain = assetMgr.loadShader("shaders/adv/terrain");
+            Shader new_shadow = assetMgr.loadShader("shaders/adv/shadow");
             releaseShaders();
             waterShader = new_waterShader;
             sky = new_sky;

@@ -4,6 +4,11 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.util.*;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+
+import nidefawl.qubes.Main;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
@@ -144,19 +149,31 @@ public class RegionRenderer {
 //                }
             }
     }
-
+    int drawMode = GL11.GL_QUADS;
+    public int getDrawMode() {
+//        this.drawMode = GL11.GL_LINES_ADJANCENY
+        return drawMode;
+    }
+    public void setDrawMode(int i) {
+        this.drawMode = i;
+    }
     
     public void renderFirstPass(World world, float fTime) {
         glDisable(GL_BLEND);
         int size = firstPass.size();
 
+        Engine.enableVAOTerrain();
+        
+        
+        
+        
         for (int i = 0; i < size; i++) {
             MeshedRegion r = firstPass.get(i);
 //            if (i <= 2) continue;
             glPushMatrix();
             // block index of first chunk in this region of REGION_SIZE * REGION_SIZE chunks
             r.translate();
-            r.renderRegion(fTime, 0, MeshedRegion.LAYER_MAIN);
+            r.renderRegion(fTime, 0, MeshedRegion.LAYER_MAIN, this.drawMode);
             MeshedRegion rN;
              rN = getByRegionCoord(r.rX+1, r.rZ);
             if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.xNeg) {
@@ -174,12 +191,17 @@ public class RegionRenderer {
 //            rN = getByRegionCoord(r.rX, r.rZ+1);
 //            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.zNeg)
 //                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_ZPOS);
-            rN = getByRegionCoord(r.rX, r.rZ-1);
-            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.zPos)
-                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_ZNEG);
+            /*------------------*/
+//            rN = getByRegionCoord(r.rX, r.rZ-1);
+//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.zPos)
+//                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_ZNEG);
             glPopMatrix();
             this.rendered += r.getNumVertices(0);
         }
+        for (int i = 0; i < Tess.attributes.length; i++)
+            GL20.glDisableVertexAttribArray(i);
+
+        Engine.disableVAO();
     }
     public void renderSecondPass(World world, float fTime) {
         //TODO: sort by distance
@@ -187,11 +209,13 @@ public class RegionRenderer {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         int size = secondPass.size();
 //        System.out.println(size);
+        Engine.enableVAOTerrain();
+        
         for (int i = 0; i < size; i++) {
             MeshedRegion r = secondPass.get(i);
             glPushMatrix();
             r.translate();
-            r.renderRegion(fTime, 1, MeshedRegion.LAYER_MAIN);
+            r.renderRegion(fTime, 1, MeshedRegion.LAYER_MAIN, this.drawMode);
             //TODO: cache from first pass
 //            MeshedRegion rN = getByRegionCoord(r.rX+1, r.rZ);
 //            if (rN == null || rN.renderState < RENDER_STATE_COMPILED)
@@ -208,6 +232,10 @@ public class RegionRenderer {
             glPopMatrix();
             this.rendered += r.getNumVertices(1);
         }
+        for (int i = 0; i < Tess.attributes.length; i++)
+            GL20.glDisableVertexAttribArray(i);
+
+        Engine.disableVAO();
         glDisable(GL_BLEND);
     }
 
