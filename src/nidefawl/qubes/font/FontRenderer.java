@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import nidefawl.game.GL;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.opengl.GL11;

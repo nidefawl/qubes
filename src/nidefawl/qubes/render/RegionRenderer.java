@@ -5,10 +5,8 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.*;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
-import nidefawl.qubes.Main;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
@@ -16,7 +14,6 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.world.World;
 
 public class RegionRenderer {

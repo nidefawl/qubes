@@ -11,8 +11,6 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 

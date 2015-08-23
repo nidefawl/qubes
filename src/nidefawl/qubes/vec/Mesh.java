@@ -1,6 +1,5 @@
 package nidefawl.qubes.vec;
 
-import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.BlockSurface;

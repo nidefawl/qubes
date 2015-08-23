@@ -5,7 +5,6 @@ import nidefawl.qubes.util.BlockColl;
 import nidefawl.qubes.util.CollisionQuery;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABB;
-import nidefawl.qubes.vec.Vec3;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.World;
 

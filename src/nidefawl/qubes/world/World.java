@@ -2,18 +2,14 @@ package nidefawl.qubes.world;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.worldgen.AbstractGen;
-import nidefawl.qubes.worldgen.TerrainGenerator;
 import nidefawl.qubes.worldgen.TerrainGenerator2;
 
 public class World {

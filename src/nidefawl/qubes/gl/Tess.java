@@ -4,7 +4,6 @@ import java.nio.*;
 
 import org.lwjgl.opengl.*;
 
-import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;
 
 public class Tess extends TesselatorState {

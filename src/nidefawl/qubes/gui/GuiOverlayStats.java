@@ -1,14 +1,8 @@
 package nidefawl.qubes.gui;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
-
 import java.util.ArrayList;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-
-import nidefawl.game.GL;
 import nidefawl.game.GLGame;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.block.Block;

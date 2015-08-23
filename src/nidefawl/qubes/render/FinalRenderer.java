@@ -9,12 +9,8 @@ import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.*;
-import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.TimingHelper;
-import org.lwjgl.opengl.*;
 
 public class FinalRenderer extends FinalRendererBase {
 

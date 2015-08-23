@@ -1,17 +1,13 @@
 package nidefawl.qubes.render;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import nidefawl.qubes.Main;
-import nidefawl.qubes.chunk.Region;
-import static nidefawl.qubes.chunk.Region.*;
 import static nidefawl.qubes.render.MeshedRegion.*;
 import static nidefawl.qubes.render.WorldRenderer.*;
 import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Mesh;

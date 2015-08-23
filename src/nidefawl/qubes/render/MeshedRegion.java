@@ -2,12 +2,9 @@ package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
-
-import org.lwjgl.BufferUtils;
 
 import static nidefawl.qubes.render.RegionRenderer.*;
 import static nidefawl.qubes.render.WorldRenderer.*;
@@ -19,7 +16,6 @@ import org.lwjgl.opengl.GL20;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.util.GameMath;
 
 public class MeshedRegion {
     public static final int LAYER_MAIN        = 0;
