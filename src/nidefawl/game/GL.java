@@ -8,7 +8,9 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.opengl.ARBTextureStorage;
 import org.lwjgl.opengl.ContextCapabilities;
+import org.lwjgl.opengl.GL42;
 
 public class GL {
 
@@ -37,6 +39,9 @@ public class GL {
         if (!caps.GL_ARB_vertex_shader) {
             missingExt.add("GL_EXT_vertex_shader");
         }
+        if (!(caps.OpenGL42 || caps.GL_ARB_texture_storage)) {
+            missingExt.add("OpenGL42 or GL_ARB_texture_storage");
+        }
         return missingExt;
     }
 
@@ -60,5 +65,13 @@ public class GL {
 
     public static ContextCapabilities getCaps() {
         return org.lwjgl.opengl.GL.getCurrent().getCapabilities();
+    }
+    public static void glTexStorage3D(int target, int levels, int internalformat, int width, int height, int depth) {
+        ContextCapabilities caps = getCaps();
+        if (caps.OpenGL42) {
+            GL42.glTexStorage3D(target, levels, internalformat, width, height, depth);
+        } else if (caps.GL_ARB_texture_storage) {
+            ARBTextureStorage.glTexStorage3D(target, levels, internalformat, width, height, depth);
+        }
     }
 }

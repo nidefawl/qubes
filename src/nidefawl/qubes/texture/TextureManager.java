@@ -53,6 +53,8 @@ public class TextureManager {
     public int makeNewTexture(BufferedImage image, boolean repeat, boolean filter, int mipmapLevels) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glBindTexture(GL11.GL_TEXTURE_2D, i)");
+
         byte[] data = getRGBA(image);
         uploadTexture(data, image.getWidth(), image.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevels);
         return i;
@@ -102,13 +104,10 @@ public class TextureManager {
      * Copy the supplied image onto the specified OpenGL texture
      */
     public void uploadTexture(byte[] rgba, int w, int h, int bytespp, int format, int internalFormat, boolean repeat, boolean filter, int mipmapLevel) {
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glEnable(GL11.GL_TEXTURE_2D)");
-
         int magfilter = GL11.GL_NEAREST;
         int minfilter = GL11.GL_NEAREST;
-        int wrap_s = GL11.GL_CLAMP;
-        int wrap_t = GL11.GL_CLAMP;
+        int wrap_s = GL12.GL_CLAMP_TO_EDGE;
+        int wrap_t = GL12.GL_CLAMP_TO_EDGE;
         
         if (filter) {
             magfilter = GL11.GL_LINEAR;
@@ -134,9 +133,9 @@ public class TextureManager {
             wrap_t = GL11.GL_REPEAT;
         }
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, wrap_s);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_S");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_S ("+(repeat?"REPEAT":"CLAMP")+")");
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, wrap_t);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_T");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_T ("+(repeat?"REPEAT":"CLAMP")+")");
         if (directBuf == null || directBuf.capacity() < w*h*bytespp) {
             directBuf = ByteBuffer.allocateDirect(w*h*bytespp).order(ByteOrder.nativeOrder());
         }

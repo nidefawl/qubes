@@ -20,6 +20,7 @@ import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.GuiCrash;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 
@@ -101,7 +102,7 @@ public abstract class GLGame extends AbstractGLGame {
         };
     }
     
-    public void initDisplay() {
+    public void initDisplay(boolean debugContext) {
     	try {
     		initCallbacks();
             glfwSetErrorCallback(errorCallback);
@@ -113,10 +114,12 @@ public abstract class GLGame extends AbstractGLGame {
             glfwDefaultWindowHints(); // optional, the current window hints are already the default
             glfwWindowHint(GLFW_VISIBLE, GL_FALSE); // the window will stay hidden after creation
             glfwWindowHint(GLFW_RESIZABLE, GL_TRUE); // the window will be resizable
-//            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-//            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            if (!debugContext) {
+//              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+//              glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            }
 
             glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, glDebug ? GL_TRUE : GL_FALSE);
 //            glfwWindowHint(GLFW_RED_BITS, 8);
@@ -191,19 +194,6 @@ public abstract class GLGame extends AbstractGLGame {
         Engine.stop();
         TextureManager.getInstance().destroy();
         Tess.destroyAll();
-    }
-
-	@Override
-    public void run() {
-        try {
-            initDisplay();
-        } catch (Throwable t) {
-            t.printStackTrace();
-            return;
-        }
-
-        initGLContext();
-        mainLoop();
     }
 
 
@@ -371,7 +361,7 @@ public abstract class GLGame extends AbstractGLGame {
             timeLastFPS = timer.absTime;
             lastFPS = (int) (Stats.fpsCounter/l);
             Stats.fpsCounter = 0;
-            onStatsUpdated(1.0F);
+            onStatsUpdated((float) l);
         }
         if (Main.DO_TIMING)
             TimingHelper.endSec();
@@ -396,6 +386,7 @@ public abstract class GLGame extends AbstractGLGame {
                 runFrame();
             }
         } catch (Throwable t) {
+            t.printStackTrace();
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t);
         } finally {
             if (this.wasrunning) {
@@ -406,16 +397,13 @@ public abstract class GLGame extends AbstractGLGame {
     }
     @Override
     public void initGLContext() {
-        GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glActiveTexture(GL_TEXTURE0);
-        glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
-        int a = GL11.GL_TEXTURE_MATRIX;
         glColorMask(true, true, true, true);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
@@ -461,8 +449,9 @@ public abstract class GLGame extends AbstractGLGame {
                 Thread.sleep(120L);
             } catch (InterruptedException interruptedexception) {
             }
+            Tess.useClientStates = true;
 
-            initDisplay();
+            initDisplay(true);
 
             Engine.baseInit();
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - initdisplay");
@@ -492,7 +481,6 @@ public abstract class GLGame extends AbstractGLGame {
             Mouse.setGrabbed(false);
             GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
             GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            GL11.glShadeModel(GL11.GL_FLAT);
             glActiveTexture(GL_TEXTURE0);
             glEnable(GL_ALPHA_TEST);
             glEnable(GL_BLEND);
@@ -504,6 +492,8 @@ public abstract class GLGame extends AbstractGLGame {
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             GL11.glViewport(0, 0, displayWidth, displayHeight);
+//            Engine.updateOrthoMatrix(displayWidth, displayHeight);
+//            Shaders.updateUBO();
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glViewport");
             while (!isCloseRequested()) {
                 checkResize();
@@ -523,7 +513,7 @@ public abstract class GLGame extends AbstractGLGame {
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_MODELVIEW)");
                 GL11.glLoadIdentity();
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
-                GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClearColor");
                 GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClear");

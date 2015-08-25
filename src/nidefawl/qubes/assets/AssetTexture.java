@@ -1,28 +1,22 @@
 package nidefawl.qubes.assets;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 
 import nidefawl.qubes.texture.PNGDecoder;
 
 public class AssetTexture extends Asset {
 
-    private File file;
     private int width;
     private int height;
     private byte[] data;
 
-    public AssetTexture(File file) {
-        this.file = file;
+    public AssetTexture() {
     }
 
-    public void load() throws Exception {
-        FileInputStream fis = new FileInputStream(this.file);
-        BufferedInputStream bif = new BufferedInputStream(fis);
+    public void load(InputStream is) throws Exception {
 
-        PNGDecoder dec = new PNGDecoder(bif);
+        PNGDecoder dec = new PNGDecoder(is);
         this.width = dec.getWidth();
         this.height = dec.getHeight();
         ByteBuffer buffer = ByteBuffer.allocate(width*height*4); 

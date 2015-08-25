@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="jar" name="Game">
+    <property environment="env"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.7"/>
+    <property name="source" value="1.7"/>
+    <path id="CraftlandLauncherLoader.classpath">
+        <pathelement location="bin"/>
+        <pathelement location="lib/lwjgl/lwjgl.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="compile"/>
+        <copy includeemptydirs="false" todir="compile">
+            <fileset dir="src">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <mkdir dir="compile/res"/>
+        <copy includeemptydirs="false" todir="compile/res">
+            <fileset dir="res">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <unzip src="lib/lwjgl/lwjgl.jar" dest="compile" />
+    </target>
+    <target name="clean">
+        <delete dir="compile"/>
+    </target>
+    <target depends="init" name="build">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="compile" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="CraftlandLauncherLoader.classpath"/>
+        </javac>
+    </target>
+	<target name="jar" depends="build">
+    <delete file="..\game.jar"/>
+	<jar destfile="..\game.jar" basedir="compile" includes="**/*">
+	</jar>
+    </target>
+</project>

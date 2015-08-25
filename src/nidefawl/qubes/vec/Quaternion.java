@@ -3,7 +3,6 @@ package nidefawl.qubes.vec;
 import java.nio.FloatBuffer;
 
 public class Quaternion {
-    private static final long serialVersionUID = 1L;
 
     public float x, y, z, w;
 

@@ -61,7 +61,7 @@ public abstract class Entity {
             this.pos.z = aabb.getCenterZ();
             return;
         }
-        Engine.worldRenderer.debugBBs.clear();
+//        Engine.worldRenderer.debugBBs.clear();
 //        Engine.worldRenderer.debugBBs.put(0, aabb);
 //        dbg.set(aabb);
 ////        aabb.set(dbg);

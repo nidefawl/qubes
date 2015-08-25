@@ -74,9 +74,9 @@ public class WorldRendererAdv extends WorldRenderer {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_COLOR_MATERIAL);
         glMatrixMode(GL_PROJECTION);
-        GL.glLoadMatrixf(Engine.getShadowProjectionMatrix());
+        GL.glLoadMatrixf(Engine.getMatShadowP().get());
         glMatrixMode(GL_MODELVIEW);
-        GL.glLoadMatrixf(Engine.getShadowModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getMatShadowMV().get());
         shadow.enable();
         Shaders.setUniforms(shadow, fTime);
         shadow.setProgramUniform1i("blockTextures", 0);
@@ -98,10 +98,10 @@ public class WorldRendererAdv extends WorldRenderer {
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        GL.glLoadMatrixf(Engine.getProjectionMatrix());//TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getMatSceneP().get());//TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        GL.glLoadMatrixf(Engine.getViewMatrix());//TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getMatSceneV().get());//TODO: GET RID OF, load into shader
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
         
@@ -130,10 +130,10 @@ public class WorldRendererAdv extends WorldRenderer {
         //        Engine.enableLighting();
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        GL.glLoadMatrixf(Engine.getProjectionMatrix());//TODO: GET RID OF, load into shader
+        GL.glLoadMatrixf(Engine.getMatSceneP().get());//TODO: GET RID OF, load into shader
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        GL.glLoadMatrixf(Engine.getModelViewMatrix());
+        GL.glLoadMatrixf(Engine.getMatSceneMV().get());
         glNormal3f(0.0F, -1.0F, 0.0F);
         glColor4f(1F, 1F, 1F, 1F);
         glFogi(GL_FOG_MODE, GL_LINEAR);

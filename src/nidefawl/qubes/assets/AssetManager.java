@@ -12,6 +12,7 @@ public class AssetManager {
     ArrayList<Asset>          assets   = new ArrayList<>();
 
     AssetManager() {
+        
     }
 
     public static AssetManager getInstance() {
@@ -21,63 +22,76 @@ public class AssetManager {
     public void init() {
         folder.mkdirs();
     }
+    public InputStream findResource(String name) {
+        try {
+
+            if (folder.exists()) {
+                File f = new File(folder, name);
+                if (f.exists()) {
+                    FileInputStream fis = new FileInputStream(f);
+                    BufferedInputStream bif = new BufferedInputStream(fis);
+                    return bif;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return getClass().getResourceAsStream("/res/"+name);
+    }
 
     public AssetTexture loadPNGAsset(String name) {
-        File f = new File(folder, name);
-        if (f.exists()) {
-            try {
-                AssetTexture asset = new AssetTexture(f);
-                asset.load();
+        InputStream is = null;
+        try {
+            is = findResource(name);
+            if (is != null) {
+                AssetTexture asset = new AssetTexture();
+                asset.load(is);
                 assets.add(asset);
                 return asset;
-            } catch (Exception e) {
-                throw new GameError("Cannot load asset '" + name + "': " + e, e);
+            }
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new GameError("Error while closing inputstream", e);
+                }
             }
         }
-        throw new GameError("Cannot load asset '" + f + "': File does not exist");
+        throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
 
     public Shader loadShader(String name) {
-        File f = new File(folder, name);
-        if (f.getParentFile().exists()) {
-            Shader shader = new Shader(name);
-            InputStream fis = null;
-            InputStream fis2 = null;
-            InputStream fis3 = null;
+        Shader shader = new Shader(name);
+        InputStream fis = null;
+        InputStream fis2 = null;
+        InputStream fis3 = null;
+        try {
+            fis = findResource(name + ".fsh");
+            fis2 = findResource(name + ".vsh");
+            fis3 = findResource(name + ".gsh");
+            shader.load(fis, fis2, fis3);
+        } catch (GameError e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+        } finally {
             try {
-                fis = new FileInputStream(new File(folder, name + ".fsh"));
-                fis = new BufferedInputStream(fis);
-                fis2 = new FileInputStream(new File(folder, name + ".vsh"));
-                fis2 = new BufferedInputStream(fis2);
-                File file = new File(folder, name + ".gsh");
-                if (file.exists()) {
-                    fis3 = new FileInputStream(file);
-                    fis3 = new BufferedInputStream(fis3);
+                if (fis != null) {
+                    fis.close();
                 }
-                shader.load(fis, fis2, fis3);
-            } catch (GameError e) {
-                throw e;
+                if (fis2 != null) {
+                    fis2.close();
+                }
+                if (fis3 != null) {
+                    fis3.close();
+                }
             } catch (Exception e) {
-                throw new GameError("Cannot load asset '" + name + "': " + e, e);
-            } finally {
-                try {
-
-                    if (fis != null) {
-                        fis.close();
-                    }
-                    if (fis2 != null) {
-                        fis2.close();
-                    }
-                    if (fis3 != null) {
-                        fis3.close();
-                    }
-                } catch (Exception e) {
-                    throw new GameError("Failed closing file", e);
-                }
+                throw new GameError("Failed closing file", e);
             }
-            return shader;
-        
         }
-        throw new GameError("Cannot load asset '" + f.getParentFile() + "': File does not exist");
+        return shader;
     }
 }

@@ -13,6 +13,7 @@ import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
 
@@ -159,41 +160,13 @@ public class RegionRenderer {
     public void renderFirstPass(World world, float fTime) {
         glDisable(GL_BLEND);
         int size = firstPass.size();
-        
-        
         for (int i = 0; i < size; i++) {
             MeshedRegion r = firstPass.get(i);
-//            if (i <= 2) continue;
-            glPushMatrix();
-            // block index of first chunk in this region of REGION_SIZE * REGION_SIZE chunks
-            r.translate();
             r.renderRegion(fTime, 0, MeshedRegion.LAYER_MAIN, this.drawMode);
-            MeshedRegion rN;
-             rN = getByRegionCoord(r.rX+1, r.rZ);
-            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.xNeg) {
-//                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_XPOS);
-            }
-            rN = getByRegionCoord(r.rX-1, r.rZ);
-            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.xPos) {
-//                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_XNEG);
-//                if (r.rX==2&&r.rZ==-2) {
-//
-//                    System.out.println("do "+r.rX+"/"+r.rZ +" - "+rN.xPos+"/"+rN.xNeg);
-//                    System.out.println(" "+rN.rX+"/"+rN.rZ);
-//                }
-            }
-//            rN = getByRegionCoord(r.rX, r.rZ+1);
-//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.zNeg)
-//                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_ZPOS);
-            /*------------------*/
-//            rN = getByRegionCoord(r.rX, r.rZ-1);
-//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED || !rN.zPos)
-//                r.renderRegion(fTime, 0, MeshedRegion.LAYER_EXTRA_FACES_ZNEG);
-            glPopMatrix();
             this.rendered += r.getNumVertices(0);
         }
-        for (int i = 0; i < Tess.attributes.length; i++)
-            GL20.glDisableVertexAttribArray(i);
+//        for (int i = 0; i < Tess.attributes.length; i++)
+//            GL20.glDisableVertexAttribArray(i);
 
     }
     public void renderSecondPass(World world, float fTime) {
@@ -204,27 +177,11 @@ public class RegionRenderer {
         
         for (int i = 0; i < size; i++) {
             MeshedRegion r = secondPass.get(i);
-            glPushMatrix();
-            r.translate();
             r.renderRegion(fTime, 1, MeshedRegion.LAYER_MAIN, this.drawMode);
-            //TODO: cache from first pass
-//            MeshedRegion rN = getByRegionCoord(r.rX+1, r.rZ);
-//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED)
-//                r.renderRegion(fTime, 1, MeshedRegion.LAYER_EXTRA_FACES_XPOS);
-//            rN = getByRegionCoord(r.rX-1, r.rZ);
-//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED)
-//                r.renderRegion(fTime, 1, MeshedRegion.LAYER_EXTRA_FACES_XNEG);
-//            rN = getByRegionCoord(r.rX, r.rZ+1);
-//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED)
-//                r.renderRegion(fTime, 1, MeshedRegion.LAYER_EXTRA_FACES_ZPOS);
-//            rN = getByRegionCoord(r.rX, r.rZ-1);
-//            if (rN == null || rN.renderState < RENDER_STATE_COMPILED)
-//                r.renderRegion(fTime, 1, MeshedRegion.LAYER_EXTRA_FACES_ZNEG);
-            glPopMatrix();
             this.rendered += r.getNumVertices(1);
         }
-        for (int i = 0; i < Tess.attributes.length; i++)
-            GL20.glDisableVertexAttribArray(i);
+//        for (int i = 0; i < Tess.attributes.length; i++)
+//            GL20.glDisableVertexAttribArray(i);
 
         glDisable(GL_BLEND);
     }
@@ -249,9 +206,9 @@ public class RegionRenderer {
     }
     public void update(float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         flushRegions();
-        int rChunkX = GameMath.floor(lastCamX)>>(4+Region.REGION_SIZE_BITS);
+        int rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
 //        int rChunkY = GameMath.floor(lastCamY)>>(4+Region.REGION_SIZE_BITS);
-        int rChunkZ = GameMath.floor(lastCamZ)>>(4+Region.REGION_SIZE_BITS);
+        int rChunkZ = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
         boolean reposition = false;
         //TODO: only move center every n regions
         if (rChunkX != this.renderChunkX || rChunkZ != this.renderChunkZ) {
@@ -302,7 +259,6 @@ public class RegionRenderer {
             }
         }
         Tess.instance.draw(GL_LINES, debug);
-        glDisable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
 //        List<MeshedRegion> regions = Engine.regionRenderer.getRegions(0);
 //        for (MeshedRegion r : regions) {
@@ -311,31 +267,36 @@ public class RegionRenderer {
 //            Tess.instance.draw(GL_LINES);
 //            glPopMatrix();
 //        }
+        debug.bindVBO();
+        debug.setAttrPtr();
         for (int x = 0; x < this.regions.length; x++) {
             MeshedRegion[] zRegions = this.regions[x];
             for (int z = 0; z < this.regions.length; z++) {
                 MeshedRegion r = zRegions[z];
-                glPushMatrix();
-                r.translate();
-                debug.drawQuads();
-                glPopMatrix();
+              int xOff = r.rX << (Region.REGION_SIZE_BITS + 4);
+              int zOff = r.rZ << (Region.REGION_SIZE_BITS + 4);
+                Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
+                debug.drawVBO(GL_LINES);
+                Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
             }
         }
-        for (int x = 0; x < this.regions.length; x++) {
-            MeshedRegion[] zRegions = this.regions[x];
-            for (int z = 0; z < this.regions.length; z++) {
-                MeshedRegion r = zRegions[z];
-                if (r.rX == this.renderChunkX && r.rZ == this.renderChunkZ) {
-                    glPushMatrix();
-                    r.translate();
-                    Tess.instance.add(0, 120, Region.REGION_SIZE_BLOCKS);
-                    Tess.instance.add(0, 120, 0);
-                    Tess.instance.add(Region.REGION_SIZE_BLOCKS, 120, 0);
-                    Tess.instance.add(Region.REGION_SIZE_BLOCKS, 120, Region.REGION_SIZE_BLOCKS);
-                    Tess.instance.draw(GL_QUADS);
-                    glPopMatrix();
-                }
-            }
-        }
+//        for (int x = 0; x < this.regions.length; x++) {
+//            MeshedRegion[] zRegions = this.regions[x];
+//            for (int z = 0; z < this.regions.length; z++) {
+//                MeshedRegion r = zRegions[z];
+//                if (r.rX == this.renderChunkX && r.rZ == this.renderChunkZ) {
+//                    int xOff = r.rX << (Region.REGION_SIZE_BITS + 4);
+//                    int zOff = r.rZ << (Region.REGION_SIZE_BITS + 4);
+//                    Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
+//                    Tess.instance.setColor(0x888800, 0x1f);
+//                    Tess.instance.add(0, 120, Region.REGION_SIZE_BLOCKS);
+//                    Tess.instance.add(0, 120, 0);
+//                    Tess.instance.add(Region.REGION_SIZE_BLOCKS, 120, 0);
+//                    Tess.instance.add(Region.REGION_SIZE_BLOCKS, 120, Region.REGION_SIZE_BLOCKS);
+//                    Tess.instance.draw(GL_QUADS);
+//                    Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
+//                }
+//            }
+//        }
     }
 }

@@ -12,6 +12,7 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
@@ -29,13 +30,11 @@ import nidefawl.qubes.util.Project;
 import nidefawl.qubes.vec.*;
 
 public class Engine {
-    public final static int   MAX_DISPLAY_LISTS  = 512;
-    public final static int   SHADOW_BUFFER_SIZE = 4096;
-    public final static int   SHADOW_ORTHO_DIST  = 240;
-    public final static float shadowZnear        = -128F;
+    public final static int   SHADOW_BUFFER_SIZE = 1024*4;
+    public final static int   SHADOW_ORTHO_DIST  = 16*16;
+    public final static float shadowZnear        = 8F;
     public final static float shadowZfar         = 512.0F;
     
-    private static FloatBuffer    colorBuffer;
     private static IntBuffer      viewport;
     private static FloatBuffer    position;
     private static FloatBuffer    mat;
@@ -44,10 +43,14 @@ public class Engine {
 
     private static BufferedMatrix projection;
     private static BufferedMatrix view;
+    private static BufferedMatrix modelviewprojection;
     private static BufferedMatrix modelview;
     private static BufferedMatrix shadowProjection;
+    private static BufferedMatrix orthoP;
+    private static BufferedMatrix orthoMV;
     private static BufferedMatrix sunModelView;
     private static BufferedMatrix shadowModelView;
+    private static BufferedMatrix shadowModelViewProjection;
 
     private static FloatBuffer       depthRead;
     private static FloatBuffer       fog;
@@ -60,7 +63,6 @@ public class Engine {
     public static float              zfar;
     
 
-    private static RegionDisplayList[]     lists;
     public static Vector4f           sunPosition        = new Vector4f();
     public static Vector4f           moonPosition       = new Vector4f();
     public static Vector3f           up                 = new Vector3f();
@@ -72,7 +74,6 @@ public class Engine {
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
-//    private static DisplayList fullscreenQuad;
     public static int vaoId         = 0;
     public static int vaoTerrainId  = 0;
 
@@ -90,13 +91,8 @@ public class Engine {
     }
 
     public static void baseInit() {
-
         vaoId = GL30.glGenVertexArrays();
         vaoTerrainId = GL30.glGenVertexArrays();
-        Shaders.reinit();
-    }
-    public static void init() {
-        colorBuffer = BufferUtils.createFloatBuffer(16);
         viewport = BufferUtils.createIntBuffer(16);
         mat = BufferUtils.createFloatBuffer(16);
         buffer = BufferUtils.createByteBuffer(1024*1024*32);
@@ -105,24 +101,29 @@ public class Engine {
         projection = new BufferedMatrix();
         view = new BufferedMatrix();
         modelview = new BufferedMatrix();
+        modelviewprojection = new BufferedMatrix();
         shadowProjection = new BufferedMatrix();
+        shadowModelViewProjection = new BufferedMatrix();
+        orthoP = new BufferedMatrix();
+        orthoMV = new BufferedMatrix();
         sunModelView = new BufferedMatrix();
         shadowModelView = new BufferedMatrix();
         depthRead = BufferUtils.createFloatBuffer(16);
         fog = BufferUtils.createFloatBuffer(16);
-        allocateDisplayLists(MAX_DISPLAY_LISTS);
-        
-
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        glActiveTexture(GL_TEXTURE1);
-        glMatrixMode(GL_TEXTURE);
-        glLoadIdentity();
-        glScalef(1/256F, 1/256F, 1/256F);
-        glTranslatef(8, 8, 8);
-        glMatrixMode(GL_MODELVIEW);
+    }
+    public static void init() {
+//        allocateDisplayLists(MAX_DISPLAY_LISTS);
+//        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         glActiveTexture(GL_TEXTURE0);
+//        glActiveTexture(GL_TEXTURE1);
+//        glMatrixMode(GL_TEXTURE);
+//        glLoadIdentity();
+//        glScalef(1/256F, 1/256F, 1/256F);
+//        glTranslatef(8, 8, 8);
+//        glMatrixMode(GL_MODELVIEW);
 
         baseInit();
+        Shaders.reinit();
         
         TextureManager.getInstance().init();
         AssetManager.getInstance().init();
@@ -164,7 +165,6 @@ public class Engine {
         shadowProjection.setZero();
         
         {
-            
             float shadowHalfPlane = SHADOW_ORTHO_DIST;
             float left = -shadowHalfPlane;
             float right = shadowHalfPlane;
@@ -183,13 +183,13 @@ public class Engine {
         }
         shadowProjection.update();
         shadowProjection.update();
-
+        updateOrthoMatrix(displayWidth, displayHeight);
         
 
         if (fbDbg != null)
             fbDbg.cleanUp();
         fbDbg = new FrameBuffer(displayWidth, displayHeight);
-        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB4);
+        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
         fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbDbg.setup();
         if (fbShadow != null)
@@ -213,20 +213,6 @@ public class Engine {
         Tess.instance.add(x, y + th, 0, 0, 0);
         Tess.instance.add(x + tw, y + th, 0, 1, 0);
         Tess.instance.draw(GL_QUADS, fullscreenquad);
-//        {
-//            Tess.instance.resetState();
-//            int tw = displayWidth;
-//            int th = displayHeight;
-//            float x = 0;
-//            float y = 0;
-//            Tess.instance.add(x + tw, y, 0, 1, 1);
-//            Tess.instance.add(x, y, 0, 0, 1);
-//            Tess.instance.add(x, y + th, 0, 0, 0);
-//            Tess.instance.add(x + tw, y + th, 0, 1, 0);
-//            glNewList(fullscreenQuad.list, GL_COMPILE);
-//            Tess.instance.draw(GL_QUADS);
-//            glEndList();
-//        }
         
         if (worldRenderer != null) {
             worldRenderer.resize(displayWidth, displayHeight);
@@ -235,10 +221,39 @@ public class Engine {
             outRenderer.resize(displayWidth, displayHeight);
         }
     }
+    public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
+        orthoMV.setIdentity();
+        orthoMV.update();
+        orthoMV.update();
+        orthoP.setZero();
+        
+        {
+            float left = 0;
+            float right = displayWidth;
+            float bottom = displayHeight;
+            float top = 0;
+            float zNear2D = -100;
+            float zFar2D = 100;
+            // First the scale part
+            orthoP.m00 = 2.0f / (right - left);
+            orthoP.m11 = 2.0f / (top - bottom);
+            orthoP.m22 = (-2.0f) / (zFar2D - zNear2D);
+            orthoP.m33 = 1.0f;
+            
+            // Then the translation part
+            orthoP.m30 = -( (right+left) / (right-left) );
+            orthoP.m31 = -( (top+bottom) / (top-bottom) );
+            orthoP.m32 = -( (zFar2D+zNear2D) / (zFar2D-zNear2D) );
+        }
+
+        Matrix4f.mul(orthoP, orthoMV, orthoP);
+        
+        orthoP.update();
+        orthoP.update();
+    }
     static TesselatorState fullscreenquad;
     public static void drawFullscreenQuad() {
         fullscreenquad.drawQuads();
-//        glCallList(fullscreenQuad.list);
     }
 
     public static float readDepth(int x, int y) {
@@ -247,56 +262,35 @@ public class Engine {
         return depthRead.get(0);
     }
 
-    public static FloatBuffer getProjectionMatrix() {
-        return projection.get();
+
+    public static BufferedMatrix getMatSceneP() {
+        return projection;
+    }
+    public static BufferedMatrix getMatSceneV() {
+        return view;
+    }
+    public static BufferedMatrix getMatSceneMV() {
+        return modelview;
+    }
+    public static BufferedMatrix getMatSceneMVP() {
+        return modelviewprojection;
+    }
+    public static BufferedMatrix getMatOrthoP() {
+        return orthoP;
+    }
+    public static BufferedMatrix getMatOrthoMV() {
+        return orthoMV;
+    }
+    public static BufferedMatrix getMatShadowP() {
+        return shadowProjection;
     }
 
-    public static FloatBuffer getProjectionMatrixInv() {
-        return projection.getInv();
+    public static BufferedMatrix getMatShadowMV() {
+        return shadowModelView;
     }
 
-    public static FloatBuffer getViewMatrix() {
-        return view.get();
-    }
-
-    public static FloatBuffer getViewMatrixInv() {
-        return view.getInv();
-    }
-
-    public static FloatBuffer getViewMatrixPrev() {
-        return view.getPrev();
-    }
-
-    public static FloatBuffer getModelViewMatrixInv() {
-        return modelview.getInv();
-    }
-
-    public static FloatBuffer getModelViewMatrix() {
-        return modelview.get();
-    }
-
-    public static FloatBuffer getModelViewMatrixPrev() {
-        return modelview.getPrev();
-    }
-
-    public static FloatBuffer getProjectionMatrixPrev() {
-        return projection.getPrev();
-    }
-
-    public static FloatBuffer getShadowProjectionMatrixInv() {
-        return shadowProjection.getInv();
-    }
-
-    public static FloatBuffer getShadowProjectionMatrix() {
-        return shadowProjection.get();
-    }
-
-    public static FloatBuffer getShadowModelViewMatrixInv() {
-        return shadowModelView.getInv();
-    }
-
-    public static FloatBuffer getShadowModelViewMatrix() {
-        return shadowModelView.get();
+    public static BufferedMatrix getMatShadowMVP() {
+        return shadowModelViewProjection;
     }
 
     public static void updateCamera() {
@@ -305,10 +299,6 @@ public class Engine {
         Matrix4f cam = camera.getViewMatrix();
         view.load(cam);
         view.update();
-//        Vector4f zdepth = new Vector4f(0,0,-100, 0);
-//        System.out.println(zdepth);
-//        Matrix4f.transform(view, back, back);
-//        System.out.println(back);
         
         Vector3f vec = camera.getPosition();
         modelview.setIdentity();
@@ -321,8 +311,9 @@ public class Engine {
         modelview.m33 += modelview.m03 * -x + modelview.m13 * -y + modelview.m23 * -z;
         
         Matrix4f.mul(view, modelview, modelview);
+        Matrix4f.mul(projection, modelview, modelviewprojection);
         modelview.update();
-        
+        modelviewprojection.update();
     }
 
     public static void setFog(Vector3f fogColor, float alpha) {
@@ -334,47 +325,6 @@ public class Engine {
         fog.flip();
         GL.glFogv(GL_FOG_COLOR, fog);
 
-    }
-
-
-    public static RegionDisplayList nextFreeDisplayList() {
-        for (int i = 0; i < lists.length; i++) {
-            if (!lists[i].inUse) {
-                RegionDisplayList alloc = lists[i];
-                alloc.inUse = true;
-                return alloc;
-            }
-        }
-        return null;
-    }
-
-    public static void release(RegionDisplayList displayList) {
-        displayList.inUse = false;
-    }
-
-    public static void allocateDisplayLists(int maxRegions) {
-        lists = new RegionDisplayList[maxRegions];
-        int a = glGenLists(maxRegions * MeshedRegion.NUM_LAYERS*WorldRenderer.NUM_PASSES);
-        for (int i = 0; i < lists.length; i++) {
-            lists[i] = new RegionDisplayList();
-            lists[i].list = a + i * MeshedRegion.NUM_LAYERS*WorldRenderer.NUM_PASSES;
-        }
-    }
-    public static DisplayList newDisplayList() {
-        DisplayList list = new DisplayList();
-        list.inUse = true;
-        list.list = glGenLists(1);
-        return list;
-    }
-
-
-    public static boolean hasFree() {
-        for (int i = 0; i < lists.length; i++) {
-            if (!lists[i].inUse) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static IFrameBuffer getSceneFB() {
@@ -421,16 +371,6 @@ public class Engine {
         mat.position(0).limit(16);
     }
 
-    protected static final Quaternion   q1       = new Quaternion();
-    protected static final Quaternion   q2     = new Quaternion();
-    protected static final Quaternion   q3    = new Quaternion();
-    protected static final Quaternion   q4    = new Quaternion();
-    protected static final Vector4f     _tmp1       = new Vector4f();
-    protected static final Vector3f     _tmp2       = new Vector3f();
-    protected static final Matrix4f _mat = new Matrix4f();
-    protected static final Matrix4f _mat2 = new Matrix4f();
-    protected static final Matrix4f _mat3 = new Matrix4f();
-
     public static void updateSun(float fTime) {
         boolean mode = Main.matrixSetupMode;
         float sunPathRotation = -40.0F;
@@ -439,98 +379,54 @@ public class Engine {
 
             sunAngle = ca < 0.75F ? ca + 0.25F : ca - 0.75F;
             float angle = ca * -360.0F;
-            if (mode) {
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
 
-                glTranslatef(0.0F, 0.0F, -100.0F);
-                glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
-                if ((double) sunAngle <= 0.5D) {
-                    glRotatef(angle, 0.0F, 0.0F, 1.0F);
-                    glRotatef(sunPathRotation, 1.0F, 0.0F, 0.0F);
-                } else {
-                    glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
-                    glRotatef(angle + 180.0F, 1.0F, 0.0F, 0.0F);
-                }
-                readMat(GL_MODELVIEW_MATRIX, shadowModelView);
-                shadowModelView.update();
+            shadowModelView.setIdentity();
+            Vector3f vec = camera.getPosition();
+            float trans = 12;
+            float trans2 = trans / 2.0f;
+            float x= (float)vec.x;// % trans - trans2;
+            float y= (float)vec.y;// % trans - trans2;
+            float z= (float)vec.z;// % trans - trans2;
+            shadowModelView.translate(0.0F, 0.0F, -100.0F);
+            shadowModelView.rotate(90.0F * Camera.PI_OVER_180, 1f, 0f, 0f);
+            if ((double) sunAngle <= 0.5D) {
+                shadowModelView.rotate(angle * Camera.PI_OVER_180, 0f, 0f, 1f);
+                shadowModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 1f, 0f, 0f);
             } else {
-                _tmp2.set(0, 0, -100);
-                _mat.setIdentity();
-                _mat.translate(_tmp2);
-                Vector3f vec = camera.getPosition();
-                float trans = 12;
-                float trans2 = trans / 2.0f;
-                float x= (float)vec.x % trans - trans2;
-                float y= (float)vec.y % trans - trans2;
-                float z= (float)vec.z % trans - trans2;
-                _tmp2.set(x,y,z);
-                _mat3.setIdentity();
-                _mat3.translate(_tmp2);
-                _tmp1.set(1f, 0f, 0f, 90.0F * Camera.PI_OVER_180);
-                q4.setFromAxisAngle(_tmp1);
-                if ((double) sunAngle <= 0.5D) {
-                    //            GL11.glRotatef(ca * -360.0F, 0.0F, 0.0F, 1.0F);
-                    //            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
-                    _tmp1.set(0f, 0f, 1f, angle * Camera.PI_OVER_180);
-                    q1.setFromAxisAngle(_tmp1);
-                    _tmp1.set(1f, 0f, 0f, sunPathRotation * Camera.PI_OVER_180);
-                    q2.setFromAxisAngle(_tmp1);
-                } else {
-                    _tmp1.set(0f, 0f, 1f, sunPathRotation * Camera.PI_OVER_180);
-                    q1.setFromAxisAngle(_tmp1);
-                    _tmp1.set(1f, 0f, 0f, (angle + 180.0F) * Camera.PI_OVER_180);
-                    q2.setFromAxisAngle(_tmp1);
-                    //            GL11.glRotatef(ca * -360.0F + 180.0F, 0.0F, 0.0F, 1.0F);
-                    //            GL11.glRotatef(-40, 1.0F, 0.0F, 0.0F);
-                }
-                Quaternion.mul(q4, q1, q1);
-                Quaternion.mul(q1, q2, q3);
-                GameMath.convertQuaternionToMatrix4f(q3, _mat2);
-                Matrix4f.mul(_mat2, _mat3, _mat2);
-                Matrix4f.mul(_mat, _mat2, shadowModelView);
-//                float x = vec.x - 0;
-//                float y = vec.y - 0;
-//                float z = vec.z - 0;
-//                SMCLog.info("shadow interval %.2f %.2f %.2f", fx, fy, fz);
-//                glTranslatef(fx,fy,fz);
-//                shadowModelView.m30 += shadowModelView.m00 * -x + shadowModelView.m10 * -y + shadowModelView.m20 * -z;
-//                shadowModelView.m31 += shadowModelView.m01 * -x + shadowModelView.m11 * -y + shadowModelView.m21 * -z;
-//                shadowModelView.m32 += shadowModelView.m02 * -x + shadowModelView.m12 * -y + shadowModelView.m22 * -z;
-//                shadowModelView.m33 += shadowModelView.m03 * -x + shadowModelView.m13 * -y + shadowModelView.m23 * -z;
-                shadowModelView.update();
+                shadowModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 0f, 0f, 1f);
+                shadowModelView.rotate((angle + 180.0F) * Camera.PI_OVER_180, 1f, 0f, 0f);
             }
+            shadowModelView.translate(-x, -260, -z);
+            
+            Matrix4f.mul(shadowProjection, shadowModelView, shadowModelViewProjection);
+            shadowModelView.update();
+            shadowModelViewProjection.update();
         }
         {
             float angle = ca * 360.0F;
 
             if (mode) {
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
-                GL.glLoadMatrixf(getViewMatrix());
-                glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-                glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
-                glRotatef(angle, 1.0F, 0.0F, 0.0F);
-                readMat(GL_MODELVIEW_MATRIX, sunModelView);
-                sunModelView.update();
+//                glMatrixMode(GL_MODELVIEW);
+//                glLoadIdentity();
+//                GL.glLoadMatrixf(getMatSceneV().get());
+//                glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+//                glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
+//                glRotatef(angle, 1.0F, 0.0F, 0.0F);
+//                readMat(GL_MODELVIEW_MATRIX, sunModelView);
+//                sunModelView.update();
             } else {
-                _tmp1.set(0f, 1f, 0f, -90.0F * Camera.PI_OVER_180);
-                q4.setFromAxisAngle(_tmp1);
-                _tmp1.set(0f, 0f, 1f, sunPathRotation * Camera.PI_OVER_180);
-                q1.setFromAxisAngle(_tmp1);
-                _tmp1.set(1f, 0f, 0f, angle * Camera.PI_OVER_180);
-                q2.setFromAxisAngle(_tmp1);
-                Quaternion.mul(q4, q1, q1);
-                Quaternion.mul(q1, q2, q3);
-                GameMath.convertQuaternionToMatrix4f(q3, sunModelView);
-                Matrix4f.mul(view, sunModelView, sunModelView);
+                sunModelView.setIdentity();
+                sunModelView.rotate(-90.0F * Camera.PI_OVER_180, 0f, 1f, 0f);
+                sunModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 0.0F, 0.0F, 1.0F);
+                sunModelView.rotate(angle * Camera.PI_OVER_180, 1.0F, 0.0F, 0.0F);
                 sunModelView.update();
+                Matrix4f.mul(view, sunModelView, sunModelView);
             }
 
             sunPosition.set(0, 100, 0);
             moonPosition.set(0, -100, 0);
             Matrix4f.transform(sunModelView, sunPosition, sunPosition);
-            Matrix4f.transform(sunModelView, moonPosition, moonPosition);   
+            Matrix4f.transform(sunModelView, moonPosition, moonPosition);
         }
         
     }
@@ -549,7 +445,7 @@ public class Engine {
     public static void updateMouseOverView(float winX, float winY) {
         viewport.position(0);
         position.position(0);
-        if (!Project.gluUnProject(winX, winY, 1F, getModelViewMatrix(), getProjectionMatrix(), viewport, position)) {
+        if (!Project.gluUnProject(winX, winY, 1F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
             System.err.println("unproject fail 1");
         }
         vTarget.x = position.get(0);
@@ -561,7 +457,7 @@ public class Engine {
         viewport.position(0);
         position.position(0);
         //TODO: optimize
-        if (!Project.gluUnProject(winX, winY, 0F, getModelViewMatrix(), getProjectionMatrix(), viewport, position)) {
+        if (!Project.gluUnProject(winX, winY, 0F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
             System.err.println("unproject fail 2");
         }
         vOrigin.x = position.get(0);
@@ -603,6 +499,24 @@ public class Engine {
 
     public static IntBuffer getIntBuffer() {
         return intbuffer;
+    }
+
+    public static IntBuffer glGenBuffers(int i) {
+        ByteBuffer buf = Engine.getBuffer();
+        buf.clear();
+        IntBuffer intbuf = Engine.getIntBuffer();
+        intbuf.clear();
+        GL15.glGenBuffers(i, buf);
+        return intbuf;
+    }
+
+    public static void deleteBuffers(int ...buffers) {
+        ByteBuffer buf = Engine.getBuffer();
+        IntBuffer intbuf = Engine.getIntBuffer();
+        intbuf.clear();
+        intbuf.put(buffers);
+        buf.position(0).limit(buffers.length*4);
+        GL15.glDeleteBuffers(buffers.length, buf);
     }
 
 }

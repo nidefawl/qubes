@@ -2,6 +2,8 @@
 layout(lines_adjacency) in;
 layout(line_strip, max_vertices = 2) out;
 
+#headerMatrix
+
 
 in Data{
     vec3 normal;
@@ -17,11 +19,11 @@ void main(){
     middle.w = 1.0;
     vec3 normal = normalize((vdata[0].normal + vdata[1].normal + vdata[2].normal + vdata[3].normal)/4);
 
-    gl_Position = gl_ModelViewProjectionMatrix * middle;
+    gl_Position = in_matrix.mvp * middle;
     gdata.color = vec3(0);
     EmitVertex();
     
-    gl_Position = gl_ModelViewProjectionMatrix * (middle + vec4(normal*0.4, 0));
+    gl_Position = in_matrix.mvp * (middle + vec4(normal*0.4, 0));
     gdata.color = normal*0.5+0.5;
     
     EmitVertex();

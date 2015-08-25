@@ -411,8 +411,8 @@ public class Matrix4f {
      * @param vec The vector to translate by
      * @return this
      */
-    public Matrix4f translate(Vector3f vec) {
-        return translate(vec, this);
+    public Matrix4f translate(float x, float y, float z) {
+        return translate(x, y, z, this);
     }
 
     /**
@@ -455,8 +455,8 @@ public class Matrix4f {
      * @param axis The vector representing the rotation axis. Must be normalized.
      * @return this
      */
-    public Matrix4f rotate(float angle, Vector3f axis) {
-        return rotate(angle, axis, this);
+    public Matrix4f rotate(float angle, float x, float y, float z) {
+        return rotate(angle, x, y, z, this);
     }
 
     /**
@@ -466,8 +466,8 @@ public class Matrix4f {
      * @param dest The matrix to put the result, or null if a new matrix is to be created
      * @return The rotated matrix
      */
-    public Matrix4f rotate(float angle, Vector3f axis, Matrix4f dest) {
-        return rotate(angle, axis, this, dest);
+    public Matrix4f rotate(float angle, float x, float y, float z, Matrix4f dest) {
+        return rotate(angle, x, y, z, this, dest);
     }
 
     /**
@@ -479,30 +479,30 @@ public class Matrix4f {
      * @param dest The matrix to put the result, or null if a new matrix is to be created
      * @return The rotated matrix
      */
-    public static Matrix4f rotate(float angle, Vector3f axis, Matrix4f src, Matrix4f dest) {
+    public static Matrix4f rotate(float angle, float x, float y, float z, Matrix4f src, Matrix4f dest) {
         if (dest == null)
             dest = new Matrix4f();
         float c = (float) Math.cos(angle);
         float s = (float) Math.sin(angle);
         float oneminusc = 1.0f - c;
-        float xy = axis.x*axis.y;
-        float yz = axis.y*axis.z;
-        float xz = axis.x*axis.z;
-        float xs = axis.x*s;
-        float ys = axis.y*s;
-        float zs = axis.z*s;
+        float xy = x*y;
+        float yz = y*z;
+        float xz = x*z;
+        float xs = x*s;
+        float ys = y*s;
+        float zs = z*s;
 
-        float f00 = axis.x*axis.x*oneminusc+c;
+        float f00 = x*x*oneminusc+c;
         float f01 = xy*oneminusc+zs;
         float f02 = xz*oneminusc-ys;
         // n[3] not used
         float f10 = xy*oneminusc-zs;
-        float f11 = axis.y*axis.y*oneminusc+c;
+        float f11 = y*y*oneminusc+c;
         float f12 = yz*oneminusc+xs;
         // n[7] not used
         float f20 = xz*oneminusc+ys;
         float f21 = yz*oneminusc-xs;
-        float f22 = axis.z*axis.z*oneminusc+c;
+        float f22 = z*z*oneminusc+c;
 
         float t00 = src.m00 * f00 + src.m10 * f01 + src.m20 * f02;
         float t01 = src.m01 * f00 + src.m11 * f01 + src.m21 * f02;
@@ -533,8 +533,8 @@ public class Matrix4f {
      * @param dest The destination matrix or null if a new matrix is to be created
      * @return the translated matrix
      */
-    public Matrix4f translate(Vector3f vec, Matrix4f dest) {
-        return translate(vec, this, dest);
+    public Matrix4f translate(float x, float y, float z, Matrix4f dest) {
+        return translate(x, y, z, this, dest);
     }
 
     /**
@@ -544,14 +544,14 @@ public class Matrix4f {
      * @param dest The destination matrix or null if a new matrix is to be created
      * @return The translated matrix
      */
-    public static Matrix4f translate(Vector3f vec, Matrix4f src, Matrix4f dest) {
+    public static Matrix4f translate(float x, float y, float z, Matrix4f src, Matrix4f dest) {
         if (dest == null)
             dest = new Matrix4f();
 
-        dest.m30 += src.m00 * vec.x + src.m10 * vec.y + src.m20 * vec.z;
-        dest.m31 += src.m01 * vec.x + src.m11 * vec.y + src.m21 * vec.z;
-        dest.m32 += src.m02 * vec.x + src.m12 * vec.y + src.m22 * vec.z;
-        dest.m33 += src.m03 * vec.x + src.m13 * vec.y + src.m23 * vec.z;
+        dest.m30 += src.m00 * x + src.m10 * y + src.m20 * z;
+        dest.m31 += src.m01 * x + src.m11 * y + src.m21 * z;
+        dest.m32 += src.m02 * x + src.m12 * y + src.m22 * z;
+        dest.m33 += src.m03 * x + src.m13 * y + src.m23 * z;
 
         return dest;
     }

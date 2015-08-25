@@ -74,7 +74,7 @@ public class BlockTextureArray {
         this.textures = new int[Block.NUM_BLOCKS<<BLOCK_TEXTURE_BITS];
         int w = GameMath.log2(this.tileSize);
 
-        GL42.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, w, GL_RGBA8,              //Internal format
+        nidefawl.game.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, w, GL_RGBA8,              //Internal format
                 this.tileSize, this.tileSize,   //width,height
                 this.maxTextures       //Number of layers
         );

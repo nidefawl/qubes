@@ -15,8 +15,8 @@ public class Mesh {
     public final byte normal[];
     public int faceDir;
     private int[] pos;
-    private int w;
-    private int h;
+    public int w;
+    public int h;
     final static float[] AO_TABLE = new float[] {
             153F/255F, 183F/255F, 255F/255F
     };
@@ -33,7 +33,7 @@ public class Mesh {
         this.v1 = new float[3];
         this.v2 = new float[3];
         this.v3 = new float[3];
-        float d = -2E-4F;
+        float d = -2E-3F;
 //        d = 0;
         float[] fdu = new float[] { du[0], du[1], du[2] };
         float[] fdv = new float[] { dv[0], dv[1], dv[2] };
@@ -82,30 +82,30 @@ public class Mesh {
         tess.setNormals(this.normal[0], this.normal[1], this.normal[2]);
         Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
         int side = this.bs.axis<<1|this.bs.face;
-//        float m = 1F;
-//        if (!Main.useShaders) {
-//            switch (side) {
-//                case Dir.DIR_NEG_Y:
-//                    m = 0.5F;
-//                    break;
-//                case Dir.DIR_POS_Y:
-//                    m = 1F;
-//                    break;
-//                case Dir.DIR_NEG_Z:
-//                    m = 0.8F;
-//                    break;
-//                case Dir.DIR_POS_Z:
-//                    m = 0.8F;
-//                    break;
-//                case Dir.DIR_NEG_X:
-//                    m = 0.6F;
-//                    break;
-//                case Dir.DIR_POS_X:
-//                    m = 0.6F;
-//                    break;
-//            }
-//        }
         float m = 1F;
+//        if (!Main.useShaders) {
+            switch (side) {
+                case Dir.DIR_NEG_Y:
+                    m = 0.5F;
+                    break;
+                case Dir.DIR_POS_Y:
+                    m = 1F;
+                    break;
+                case Dir.DIR_NEG_Z:
+                    m = 0.8F;
+                    break;
+                case Dir.DIR_POS_Z:
+                    m = 0.8F;
+                    break;
+                case Dir.DIR_NEG_X:
+                    m = 0.6F;
+                    break;
+                case Dir.DIR_POS_X:
+                    m = 0.6F;
+                    break;
+            }
+//        }
+//        float m = 1F;
         float alpha = 1F;
         int c = block.getColor();
         if (block == Block.water) {
@@ -117,8 +117,8 @@ public class Mesh {
         c >>= 8;
         float r = (c & 0xFF) / 255F;
         
-        AO_TABLE[0] = 0.5F;
-        AO_TABLE[1] = 0.75F;
+        AO_TABLE[0] = 0.6F;
+        AO_TABLE[1] = 0.8F;
         AO_TABLE[2] = 1.0F;
         
         
@@ -126,7 +126,7 @@ public class Mesh {
         float fao1 = AO_TABLE[this.bs.ao1];
         float fao2 = AO_TABLE[this.bs.ao2];
         float fao3 = AO_TABLE[this.bs.ao3];
-
+        
         tess.setBrightness(0xf00000);
         int tex = block.getTextureFromSide(side);
         

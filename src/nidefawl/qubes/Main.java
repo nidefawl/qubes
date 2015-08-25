@@ -17,6 +17,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
@@ -86,13 +87,17 @@ public class Main extends GLGame {
         SysInfo info = new SysInfo();
         String title = "LWJGL "+info.lwjglVersion+" - "+info.openGLVersion;
         setTitle(title);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
         this.statsOverlay = new GuiOverlayStats();
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
         this.statsCached = new GuiCached(statsOverlay); 
         this.statsCached.setPos(0, 0);
         this.statsCached.setSize(displayWidth, displayHeight);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         this.debugOverlay = new GuiOverlayDebug();
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("initGame 4");
         Engine.checkGLError("Post startup");
 //        setVSync(true);
         
@@ -280,14 +285,22 @@ public class Main extends GLGame {
       if (Main.DO_TIMING) TimingHelper.endStart("renderWorld");
 
       Engine.worldRenderer.renderWorld(this.world, fTime);
+      if (Main.GL_ERROR_CHECKS)
+          Engine.checkGLError("renderWorld");
       if (Main.renderWireFrame) {
           if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
           Engine.worldRenderer.renderNormals(this.world, fTime);
+          if (Main.GL_ERROR_CHECKS)
+              Engine.checkGLError("renderNormals");
       }
       if (Main.DO_TIMING) TimingHelper.endStart("renderBlockHighlight");
       Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+      if (Main.GL_ERROR_CHECKS)
+          Engine.checkGLError("renderBlockHighlight");
       if (Main.DO_TIMING) TimingHelper.endStart("renderDebugBB");
       Engine.worldRenderer.renderDebugBB(this.world, fTime);
+      if (Main.GL_ERROR_CHECKS)
+          Engine.checkGLError("renderDebugBB");
       if (Main.DO_TIMING) TimingHelper.endStart("unbindCurrentFrameBuffer");
       Engine.getSceneFB().unbindCurrentFrameBuffer();
       if (Main.DO_TIMING) TimingHelper.endSec();
@@ -295,23 +308,17 @@ public class Main extends GLGame {
       if (Main.DO_TIMING) TimingHelper.startSec("screen");
       if (Main.DO_TIMING) TimingHelper.startSec("prepare");
 
-      GL11.glMatrixMode(GL11.GL_PROJECTION);
-      GL11.glLoadIdentity(); // Reset The Projection Matrix
-      GL11.glOrtho(0, displayWidth, displayHeight, 0, -100, 100);
-      GL11.glMatrixMode(GL11.GL_MODELVIEW);
-      GL11.glLoadIdentity();
       glClearColor(0.71F, 0.82F, 1.00F, 1F);
       glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-      glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      glDisable(GL_ALPHA_TEST);
+//      glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
       glDisable(GL_BLEND);
       glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_ALWAYS);
-      glEnable(GL_TEXTURE_2D);
+//      glEnable(GL_TEXTURE_2D);
       glActiveTexture(GL_TEXTURE0);
       if (Main.DO_TIMING) TimingHelper.endStart("final");
       
-      
+      Shaders.bindOrthoUBO();
       glDepthMask(false);
       Engine.outRenderer.render(fTime);
       Engine.outRenderer.renderFinal(fTime);
@@ -322,11 +329,11 @@ public class Main extends GLGame {
       glDepthFunc(GL_LEQUAL);
       glActiveTexture(GL_TEXTURE0);
       glDisable(GL_DEPTH_TEST);
-      glEnable(GL_ALPHA_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       
       if (this.movement.grabbed()) {
+          Shaders.colored.enable();
           if (Main.DO_TIMING) TimingHelper.startSec("crosshair");
           glDisable(GL_TEXTURE_2D);
           Tess.instance.setColor(-1, 100);
@@ -341,14 +348,15 @@ public class Main extends GLGame {
           Tess.instance.add(height, w, 0);
           Tess.instance.add(height, -w, 0);
           Tess.instance.add(-height, -w, 0);
-
           Tess.instance.draw(GL_QUADS);
           glEnable(GL_TEXTURE_2D);
           if (Main.DO_TIMING) TimingHelper.endSec();
+          Shader.disable();
       }
-//      GL11.glScalef(0.25F, 0.25F, 1);
-//      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
-//      Tess.instance.draw(GL_QUADS);
+//      Shaders.textured.enable();
+//      glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
+//      Engine.drawFullscreenQuad();
+//      Shader.disable();
 
       if (show) {
           if (Main.DO_TIMING) TimingHelper.startSec("debugOverlay");
@@ -406,6 +414,7 @@ public class Main extends GLGame {
         Engine.camera.setPosition(px, py, pz);
         Engine.camera.setOrientation(yaw, pitch);
         Engine.updateCamera();
+        Shaders.updateUBO();
         float winX, winY;
         
         if (this.movement.grabbed()) {

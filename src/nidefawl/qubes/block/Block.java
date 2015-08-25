@@ -55,7 +55,7 @@ public class Block {
             Block b = Block.block[i];
             if (b != null) {
                 if (b.textures == null) {
-                    b.textures = new String[] { "/textures/blocks/"+b.name+".png" };
+                    b.textures = new String[] { "textures/blocks/"+b.name+".png" };
                 }
             }
         }

@@ -5,6 +5,9 @@ import java.util.List;
 import nidefawl.qubes.Main;
 import static nidefawl.qubes.render.MeshedRegion.*;
 import static nidefawl.qubes.render.WorldRenderer.*;
+
+import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
@@ -55,10 +58,6 @@ public class RegionRenderUpdateTask {
             return true;
         }
         if (this.meshed) {
-            if (!Engine.hasFree()) {
-                System.err.println("No free displaylists, waiting for free one before finishing world render task");
-                return false;
-            }
             long l = System.nanoTime();
             this.mr.compileDisplayList(this.tess);
             Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -88,6 +87,8 @@ public class RegionRenderUpdateTask {
         World w = Main.instance.getWorld();
         if (w != null) {
             try {
+              int xOff = this.mr.rX << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
+              int zOff = this.mr.rZ << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
                 long l = System.nanoTime();
                 this.mesher.mesh(w, this.cache);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
@@ -100,6 +101,8 @@ public class RegionRenderUpdateTask {
                         tess.resetState();
                         tess.setColor(-1, 255);
                         tess.setBrightness(0xf00000);
+
+                        tess.setOffset(xOff, 0, zOff);
                         int size = mesh.size();
                         for (int m = 0; m < size; m++) {
                             Mesh face = mesh.get(m);

@@ -15,16 +15,11 @@ public class Project {
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f };
 
-    private static final FloatBuffer matrix = BufferUtils.createFloatBuffer(16);
     private static final FloatBuffer finalMatrix = BufferUtils.createFloatBuffer(16);
 
     private static final FloatBuffer tempMatrix = BufferUtils.createFloatBuffer(16);
     private static final float[] in = new float[4];
     private static final float[] out = new float[4];
-
-    private static final float[] forward = new float[3];
-    private static final float[] side = new float[3];
-    private static final float[] up = new float[3];
 
     /**
      * Method gluUnproject

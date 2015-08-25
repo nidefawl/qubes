@@ -1,5 +1,7 @@
 package nidefawl.qubes.gl;
 
+import java.nio.ByteBuffer;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
@@ -52,6 +54,43 @@ public class TesselatorState {
             vboId = GL15.glGenBuffers();
         }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+    }
+    
+    public void setClientStates(ByteBuffer buffer) {
+        int stride = getVSize();
+        GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
+        GL11.glVertexPointer(4, GL11.GL_FLOAT, stride*4, (ByteBuffer) buffer.position(0));
+        int offset = 4;
+        if (useNormalPtr) {
+            GL11.glNormalPointer(stride*4, (ByteBuffer) buffer.position(offset*4));
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glNormalPointer");
+            GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
+            offset+=1;
+        }
+        if (useTexturePtr) {
+            GL11.glTexCoordPointer(2, GL11.GL_FLOAT, stride*4, (ByteBuffer) buffer.position(offset*4));
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexCoordPointer");
+            GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+            offset+=2;
+        }
+        if (useColorPtr) {
+            GL11.glColorPointer(4, true, stride*4, (ByteBuffer) buffer.position(offset*4));
+            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexCoordPointer");
+            GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
+            offset+=1;
+        }
+        if (useTexturePtr2) {
+//            GL11.glTexCoordPointer(2, GL11.GL_SHORT, stride, (ByteBuffer) buffer.position(offset*4));
+//            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexCoordPointer");
+//            GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+            offset+=1;
+        }
+        if (useAttribPtr1) {
+//            GL20.glEnableVertexAttribArray(5);
+//            GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, stride*4, offset*4);
+//            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+5);
+//            offset+=2;
+        }
     }
 
     public void setAttrPtr() {

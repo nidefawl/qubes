@@ -1,24 +1,17 @@
 package nidefawl.qubes.gl;
 
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.vec.*;
+import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Vector3f;
 
 public class Camera {
 
-    protected final static float PI_OVER_180      = 0.0174532925f;
-
-
-    protected float              pitchAngle = 0;
-    protected float              bearingAngle = 0;
-    protected final Vector3f     position    = new Vector3f();
-    protected final Vector3f     prevposition    = new Vector3f();
-    protected final Quaternion   pitch       = new Quaternion();
-    protected final Quaternion   bearing     = new Quaternion();
-    protected final Quaternion   rotation    = new Quaternion();
-    protected final Matrix4f      viewMatrix  = new Matrix4f();
-    protected final Vector4f     _tmp1       = new Vector4f();
-
-    public boolean             changed          = true;
+    protected final static float PI_OVER_180 = 0.0174532925f;
+    protected float          pitchAngle   = 0;
+    protected float          bearingAngle = 0;
+    protected final Vector3f position     = new Vector3f();
+    protected final Vector3f prevposition = new Vector3f();
+    protected final Matrix4f viewMatrix   = new Matrix4f();
+    public boolean changed = true;
 
     public float getYaw() {
         return bearingAngle;
@@ -28,12 +21,9 @@ public class Camera {
         return pitchAngle;
     }
     public void reorient() {
-        _tmp1.set(1f, 0f, 0f, pitchAngle * PI_OVER_180);
-        pitch.setFromAxisAngle(_tmp1);
-        _tmp1.set(0f, 1f, 0f, bearingAngle * PI_OVER_180);
-        bearing.setFromAxisAngle(_tmp1);
-        Quaternion.mul(pitch, bearing, rotation);
-        GameMath.convertQuaternionToMatrix4f(rotation, this.viewMatrix);
+        this.viewMatrix.setIdentity();
+        this.viewMatrix.rotate(pitchAngle * PI_OVER_180, 1f, 0f, 0f);
+        this.viewMatrix.rotate(bearingAngle * PI_OVER_180, 0f, 1f, 0f);
     }
 
 

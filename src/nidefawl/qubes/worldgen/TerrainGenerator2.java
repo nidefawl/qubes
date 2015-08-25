@@ -34,7 +34,7 @@ public class TerrainGenerator2 extends AbstractGen {
         double scaleMixY = scaleMixXZ*0.4D;
         double scaleMix2XZ = 1.1D;
         double scaleMix2Y = scaleMix2XZ;
-        double scaleT1XZ = 2.3D;
+        double scaleT1XZ = 1.3D;
         double scaleT1Y = scaleT1XZ*0.3D;
         double scaleT2XZ = 4.3D;
         double scaleT2Y = scaleT1XZ*0.3D;
@@ -158,6 +158,7 @@ public class TerrainGenerator2 extends AbstractGen {
                     }
                     dYH-=func2(144, y, 15)*0.02;
                     dYH+=func2(104, y, 25)*0.08;
+//                    dYH-=func2(92, y, 12)*0.08;
 //                    dYH-=func2(149, y, 12)*0.3;
 //                    dYH-=func2(157, y, 12)*0.7;
 //                    dYH+=func2(104, y, 12)*12.7;

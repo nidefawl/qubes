@@ -43,7 +43,7 @@ public class GuiOverlayStats extends Gui {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Main.instance.lastFPS, Main.instance.getVSync() ? (" (VSync)") : "",
-                Stats.avgFrameTime, Main.instance.tick);
+                Stats.avgFrameTime, (int)Math.round(Main.instance.tick/dTime));
         statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();

@@ -20,8 +20,10 @@ public class Tess extends TesselatorState {
     
     public final static Tess instance    = new Tess();
     public final static Tess tessFont    = new Tess();
+    public static boolean useClientStates;
 
     public final static int BUF_INCR  = 1024;
+
     public int[]         rawBuffer = new int[BUF_INCR];
     protected int           rgba;
     protected float         u, v;
@@ -199,19 +201,32 @@ public class Tess extends TesselatorState {
             intBuffer.put(rawBuffer, 0, vIdx);
             buffer.position(0);
             buffer.limit(len);
-            
-            out.bindVBO();
-            if (out.vboSize <= len) {
-                GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+            if (useClientStates) {
             } else {
-                GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, len, buffer);
+                out.bindVBO();
+                if (out.vboSize <= len) {
+                    GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+                } else {
+                    GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, len, buffer);
+                }
+                out.vboSize = len;
             }
-            out.vboSize = len;
             if (out == this) {
-                setAttrPtr();
+                if (useClientStates) {
+                    setClientStates(buffer);
+                } else {
+                    setAttrPtr();
+                }
                 drawVBO(mode);
-                for (int i = 0; i < attributes.length; i++)
-                    GL20.glDisableVertexAttribArray(i);
+                if (useClientStates) {
+                    GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
+                    GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+                    GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                    GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
+                } else {
+                    for (int i = 0; i < attributes.length; i++)
+                        GL20.glDisableVertexAttribArray(i);
+                }
             } else {
                 this.copyTo(out);
             }
@@ -219,6 +234,7 @@ public class Tess extends TesselatorState {
         }
         resetState();
     }
+    
     public void draw(int mode) {
         this.draw(mode, this);
     }

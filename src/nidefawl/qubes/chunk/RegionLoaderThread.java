@@ -26,11 +26,6 @@ public class RegionLoaderThread extends Thread {
         for (int i = 0; i < tasks.length; i++) {
             tasks[i] = new RegionLoadTask();
         }
-        if (numTasks > 3) {
-            sleepTime = 0;
-        } else {
-            sleepTime = 10;
-        }
     }
 
     public void init() {
@@ -64,7 +59,7 @@ public class RegionLoaderThread extends Thread {
             }
             try {
                 if (sleepTime > 0) {
-                    Thread.sleep(sleepTime);
+                    Thread.sleep(did ? sleepTime : sleepTime*3);
                 }
             } catch (InterruptedException e) {
                 if (!isRunning)

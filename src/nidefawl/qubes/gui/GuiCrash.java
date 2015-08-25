@@ -48,27 +48,24 @@ public class GuiCrash extends Gui {
     @Override
     public void render(float fTime) {
 
-        glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
-        Shaders.textured.enable();
+        
         fontBig.drawString(this.title, width / 2, height / 6, -1, true, 1.0F, 2);
 
-        glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_TEXTURE_2D);
-        GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, 0);
         int l = width / 5;
         int t = height / 5;
+        Tess.instance.setColor(0x333333, 255);
         Tess.instance.add(width - l, height - t);
         Tess.instance.add(width - l, t);
         Tess.instance.add(l, t);
         Tess.instance.add(l, height - t);
         Tess.instance.draw(GL11.GL_QUADS);
 
-        glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
@@ -83,7 +80,6 @@ public class GuiCrash extends Gui {
             fontSmall.drawString(this.desc2.get(i), l + 10, yp, -1, true, 1.0F, 0);
             yp+=fontSmall.getLineHeight();
         }
-        Shader.disable();
 
     }
 

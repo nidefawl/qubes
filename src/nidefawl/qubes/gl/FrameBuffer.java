@@ -1,6 +1,7 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
@@ -133,7 +134,7 @@ public class FrameBuffer implements IFrameBuffer {
 
     public void unbindCurrentFrameBuffer() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentFrameBuffer");
     }
 
     public void bind() {
@@ -144,8 +145,8 @@ public class FrameBuffer implements IFrameBuffer {
     public void setupTexture(int texture, int format, int minfilter, int magFilter) {
         glBindTexture(GL_TEXTURE_2D, texture);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
         glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
@@ -156,8 +157,8 @@ public class FrameBuffer implements IFrameBuffer {
     private void createDepthTextureAttachment(int texture) {
         glBindTexture(GL_TEXTURE_2D, texture);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture (depth)");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         if (this.isShadowDepthBuffer) {
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -167,17 +168,21 @@ public class FrameBuffer implements IFrameBuffer {
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+//            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
         }
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexParameteri (depth)");
+
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 //        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT32, renderWidth, renderHeight, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (ByteBuffer) null);
+
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D (depth)");
-        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, texture, 0);
+        glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, texture, 0);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (depth)");
         glBindTexture(GL_TEXTURE_2D, 0);
     }

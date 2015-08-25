@@ -94,27 +94,6 @@ public class Mesher {
             }
             return;
         }
-//        if (bs1 != null && bs2 != null && bs1.pass != bs2.pass) {
-//            if (bs1 != air && bs1.pass == 0) {
-//                mask2[n] = bs1;
-//                return;
-//            }
-//            if (bs2 != air && bs2.pass == 0) {
-//                mask2[n] = bs2;
-//                return;
-//            }
-//            mask2[n] = null;
-//            return;
-//        }
-//        int typeA = bs1 == null ? -1 : bs1.pass+1;
-//        int typeB = bs2 == null ? -1 : bs2.pass+1;
-//        if (typeA == typeB) {
-//            mask2[n] = null;
-//        } else if (bs1 != null) {
-//            mask2[n] = bs1;
-//        } else if (bs2 != null) {
-//            mask2[n] = bs2;
-//        }
     }
     
     RegionCache cache;
@@ -169,7 +148,6 @@ public class Mesher {
                                 }
                                 int h = computeHeight(i, j, n, w, v, u, c);
                                 // Compute height (this is slightly awkward
-                                boolean done = false;
                                 boolean add = true;
 
                                 int du[] = new int[] { 0, 0, 0 };
