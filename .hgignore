@@ -1,4 +1,3 @@
 syntax: regexp
-^/compile/
-syntax: glob
-/compile/
+^compile\\*
+^bin\\*
