@@ -1,2 +1,2 @@
 syntax: regexp
-^\.compile/
+^\.compile/*
