@@ -2,7 +2,7 @@
 layout(lines_adjacency) in;
 layout(line_strip, max_vertices = 2) out;
 
-#headerMatrix
+#pragma include "ubo_scene.glsl"
 
 
 in Data{

@@ -6,24 +6,13 @@
 uniform sampler2DArray blockTextures;
 uniform int renderWireFrame;
 
-layout(std140) uniform LightInfo {
-  vec4 Position; // Light position in eye coords.
-  vec4 La; // Ambient light intensity
-  vec4 Ld; // Diffuse light intensity
-  vec4 Ls; // Specular light intensity
-} Light;
 
 in vec4 color;
-in vec4 lmcoord;
 in vec3 normal;
-in vec3 globalNormal;
 in vec4 texcoord;
 in vec3 vposition;
-in vec3 bposition;
 in vec4 blockinfo;
-in vec3 LightIntensity;
 in highp vec3 triangle;
-in vec4 lposition;
 
 out vec4 out_Color;
 out vec4 out_Normal;
@@ -47,6 +36,6 @@ void main() {
 	}
     out_Color = tex*color;
     out_Normal = vec4((normal) * 0.5f + 0.5f, 1.0f);
-    out_Material = vec4(blockinfo.x+1.0f, blockinfo.y, blockinfo.z, blockinfo.w);
+    out_Material = vec4(blockinfo.x+1.0f, blockinfo.y, blockinfo.z, 1);
     // gl_FragData[0] = vec4(0,1,1,1);
 }

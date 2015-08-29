@@ -19,7 +19,7 @@ import nidefawl.qubes.world.World;
 public class RegionRenderUpdateTask {
     public final Mesher     mesher = new Mesher();
     public final RegionCache cache = new RegionCache();
-    final Tess[] tess  = new Tess[NUM_PASSES*NUM_LAYERS];
+    final Tess[] tess  = new Tess[NUM_PASSES];
 
     public int              worldInstance;
     private boolean         meshed;
@@ -93,23 +93,26 @@ public class RegionRenderUpdateTask {
                 this.mesher.mesh(w, this.cache);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
-                for (int j = 0; j < NUM_LAYERS; j++) {
-                    for (int i = 0; i < NUM_PASSES; i++) {
-                        int idx = i+NUM_PASSES*j;
-                        Tess tess = this.tess[idx];
-                        List<Mesh> mesh = this.mesher.getMeshes(j, i);
-                        tess.resetState();
+                for (int i = 0; i < NUM_PASSES; i++) {
+                    Tess tess = this.tess[i];
+                    List<Mesh> mesh = this.mesher.getMeshes(i);
+                    tess.resetState();
+                    if (i != 2) {
                         tess.setColor(-1, 255);
                         tess.setBrightness(0xf00000);
-
-                        tess.setOffset(xOff, 0, zOff);
-                        int size = mesh.size();
-                        for (int m = 0; m < size; m++) {
-                            Mesh face = mesh.get(m);
+                    }
+                    tess.setOffset(xOff, 0, zOff);
+                    int size = mesh.size();
+                    for (int m = 0; m < size; m++) {
+                        Mesh face = mesh.get(m);
+                        if (i == 2) {
+                            face.drawBasic(tess);
+                        } else {
                             face.draw(tess);
                         }
                     }
                 }
+            
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
                 this.meshed = true;
                 return true;

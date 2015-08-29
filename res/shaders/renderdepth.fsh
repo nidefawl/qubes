@@ -1,21 +1,22 @@
-#version 120
+#version 150 core
 
 
-uniform sampler2D depthSampler;
+uniform sampler2D tex0;
 uniform vec2 zbufparam;
-varying vec2 wpos;
 
-float getBrightness(vec2 b) {
-	return (1-pow(1-b.x, 2))*(1-pow(1-b.y, 2));
-}
+in vec4 pass_Color;
+in vec2 pass_texcoord;
+ 
+out vec4 out_Color;
+ 
 float LinearizeDepth(vec2 uv)
 {
-  float z = texture2D(depthSampler, uv).x;
+  float z = texture2D(tex0, uv).x;
   // x == near, y == far
   return (2.0 * zbufparam.x) / (zbufparam.y + zbufparam.x - z * (zbufparam.y - zbufparam.x));	
 }
-void main() {
-  vec2 uv = wpos;
-  float d = LinearizeDepth(uv);
-  gl_FragData[0] = vec4(d, d, d, 1);
+
+void main(void) {
+  float d = LinearizeDepth(pass_texcoord);
+  out_Color = vec4(d, d, d, 1);
 }

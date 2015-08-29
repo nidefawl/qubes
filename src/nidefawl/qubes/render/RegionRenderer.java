@@ -26,15 +26,17 @@ public class RegionRenderer {
     public static final int RENDER_STATE_INIT     = 0;
     public static final int RENDER_STATE_MESHING  = 1;
     public static final int RENDER_STATE_COMPILED = 2;
+    public static final int IN_FRUSTUM_FULLY = 1;
+    public static final int IN_FRUSTUM = 0;
+    public static final int ALL = -1;
 
-    private ArrayList<MeshedRegion> firstPass       = new ArrayList<MeshedRegion>();
-    private ArrayList<MeshedRegion> secondPass      = new ArrayList<MeshedRegion>();
+    private ArrayList<MeshedRegion> renderList       = new ArrayList<MeshedRegion>();
 //    MeshedRegionTable regions = new MeshedRegionTable(RENDER_DISTANCE*2);
     public int rendered;
     public int numRegions;
-    private int renderChunkX;
-    private int renderChunkY;
-    private int renderChunkZ;
+    public int renderChunkX;
+    public int renderChunkY;
+    public int renderChunkZ;
 
     public void init() {
         this.regions = create();
@@ -51,6 +53,7 @@ public class RegionRenderer {
                 MeshedRegion m = new MeshedRegion();
                 m.rX = x-(RENDER_DISTANCE+OFFS_OVER);
                 m.rZ = z-(RENDER_DISTANCE+OFFS_OVER);
+                m.updateBB();
                 zRegions[z] = m;
             }
         }
@@ -88,6 +91,7 @@ public class RegionRenderer {
                 } else {
                     zRegions[z].rX += rChunkX;
                     zRegions[z].rZ += rChunkZ;
+                    zRegions[z].updateBB();
                 }
             }
         }
@@ -157,52 +161,32 @@ public class RegionRenderer {
         this.drawMode = i;
     }
     
-    public void renderFirstPass(World world, float fTime) {
-        glDisable(GL_BLEND);
-        int size = firstPass.size();
+    public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
+        int size = renderList.size();
+        int nSkipped = 0;
         for (int i = 0; i < size; i++) {
-            MeshedRegion r = firstPass.get(i);
-            r.renderRegion(fTime, 0, MeshedRegion.LAYER_MAIN, this.drawMode);
-            this.rendered += r.getNumVertices(0);
+            MeshedRegion r = renderList.get(i);
+            if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
+                r.renderRegion(fTime, pass, this.drawMode);
+                this.rendered += r.getNumVertices(0);   
+            } else {
+                nSkipped++;
+            }
         }
-//        for (int i = 0; i < Tess.attributes.length; i++)
-//            GL20.glDisableVertexAttribArray(i);
+//        System.out.println(nFrustum+": "+nSkipped);
 
     }
-    public void renderSecondPass(World world, float fTime) {
-        //TODO: sort by distance
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        int size = secondPass.size();
-        
-        for (int i = 0; i < size; i++) {
-            MeshedRegion r = secondPass.get(i);
-            r.renderRegion(fTime, 1, MeshedRegion.LAYER_MAIN, this.drawMode);
-            this.rendered += r.getNumVertices(1);
-        }
-//        for (int i = 0; i < Tess.attributes.length; i++)
-//            GL20.glDisableVertexAttribArray(i);
-
-        glDisable(GL_BLEND);
-    }
-
 
     public int getNumRendered() {
         return this.rendered;
     }
     public void flushRegions() {
         this.numRegions = 0;
-        firstPass.clear();
-        secondPass.clear();
+        renderList.clear();
     }
     public void putRegion(MeshedRegion r) {
         this.numRegions++;
-        if (r.hasPass(0)) {
-            firstPass.add(r);
-        }
-        if (r.hasPass(1)) {
-            secondPass.add(r);
-        }
+        renderList.add(r);
     }
     public void update(float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         flushRegions();
@@ -224,6 +208,10 @@ public class RegionRenderer {
                 MeshedRegion m = this.get(xx, zz);
                 if (m != null) {
                     if (m.isRenderable) {
+                        m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb);
+                        for (int i = 0; i < Engine.NUM_PROJECTIONS-1; i++) {
+                            m.frustumStates[1+i] = Engine.shadowCamFrustum[i].checkFrustum(m.aabb);
+                        }
                         putRegion(m);
                     }
                     if (m.renderState == RENDER_STATE_INIT) {
@@ -240,7 +228,7 @@ public class RegionRenderer {
     }
     
     public List<MeshedRegion> getRegions(int i) {
-        return i == 0 ? firstPass : secondPass;
+        return renderList;
     }
     TesselatorState debug = new TesselatorState();
     public void renderDebug(World world, float fTime) {

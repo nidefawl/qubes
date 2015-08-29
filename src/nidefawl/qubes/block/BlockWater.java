@@ -19,4 +19,7 @@ public class BlockWater extends Block {
     public AABB getCollisionBB(World world, int x, int y, int z, AABB aabb) {
         return null;
     }
+    public float getAlpha() {
+        return 0.8f;
+    }
 }

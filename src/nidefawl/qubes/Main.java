@@ -14,11 +14,13 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.World;
@@ -174,7 +176,7 @@ public class Main extends GLGame {
                 case Keyboard.KEY_F6:
                     if (isDown) {
                         useBasicShaders = !useBasicShaders;
-                        Engine.switchRenderer(useBasicShaders);
+                        Engine.reloadRenderer(useBasicShaders);
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -224,7 +226,7 @@ public class Main extends GLGame {
     public void input(float fTime) {
         double mdX = Mouse.getDX();
         double mdY = Mouse.getDY();
-        this.movement.update(mdX, mdY);
+        this.movement.update(mdX, -mdY);
     }
 
     private void setGrabbed(boolean b) {
@@ -302,7 +304,8 @@ public class Main extends GLGame {
       if (Main.GL_ERROR_CHECKS)
           Engine.checkGLError("renderDebugBB");
       if (Main.DO_TIMING) TimingHelper.endStart("unbindCurrentFrameBuffer");
-      Engine.getSceneFB().unbindCurrentFrameBuffer();
+      Engine.getSceneFB();
+    FrameBuffer.unbindFramebuffer();
       if (Main.DO_TIMING) TimingHelper.endSec();
       if (Main.DO_TIMING) TimingHelper.endSec();
       if (Main.DO_TIMING) TimingHelper.startSec("screen");
@@ -318,7 +321,7 @@ public class Main extends GLGame {
       glActiveTexture(GL_TEXTURE0);
       if (Main.DO_TIMING) TimingHelper.endStart("final");
       
-      Shaders.bindOrthoUBO();
+      UniformBuffer.bindOrthoUBO();
       glDepthMask(false);
       Engine.outRenderer.render(fTime);
       Engine.outRenderer.renderFinal(fTime);
@@ -354,7 +357,7 @@ public class Main extends GLGame {
           Shader.disable();
       }
 //      Shaders.textured.enable();
-//      glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
+//      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
 //      Engine.drawFullscreenQuad();
 //      Shader.disable();
 
@@ -383,7 +386,7 @@ public class Main extends GLGame {
         if (this.statsCached != null) {
             this.statsCached.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 1000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 1200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -414,7 +417,7 @@ public class Main extends GLGame {
         Engine.camera.setPosition(px, py, pz);
         Engine.camera.setOrientation(yaw, pitch);
         Engine.updateCamera();
-        Shaders.updateUBO();
+        UniformBuffer.updateUBO(f);
         float winX, winY;
         
         if (this.movement.grabbed()) {
@@ -422,7 +425,7 @@ public class Main extends GLGame {
             winY = (float) displayHeight/2.0F;
         } else {
             winX = (float) Mouse.getX();
-            winY = (float) Mouse.getY();
+            winY = (float) (displayHeight-Mouse.getY());
             if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
             if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
         }
@@ -431,16 +434,18 @@ public class Main extends GLGame {
         this.rayTrace.reset();
         Engine.worldRenderer.highlight = null;
         if (this.world != null) {
-            this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir);
-            BlockPos p = this.rayTrace.getColl();
-            if (p != null) {
-                if ( this.mouseClicked) {
-                    setBlock();
-                }   
-            }
-            //TODO: add some better logic for highlighting, don't render "into" camera
-            if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
-                Engine.worldRenderer.highlight = p;
+            if (Engine.vDir != null) {
+                this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir);
+                BlockPos p = this.rayTrace.getColl();
+                if (p != null) {
+                    if ( this.mouseClicked) {
+                        setBlock();
+                    }   
+                }
+                //TODO: add some better logic for highlighting, don't render "into" camera
+                if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
+                    Engine.worldRenderer.highlight = p;
+                }
             }
             Engine.regionLoader.finishTasks();
             if (follow) {

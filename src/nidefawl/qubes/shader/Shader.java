@@ -12,7 +12,10 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBGeometryShader4;
@@ -21,6 +24,7 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
 import nidefawl.qubes.Main;
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameError;
@@ -70,37 +74,16 @@ public class Shader {
         this.name = name;
         this.buffer = BufferUtils.createIntBuffer(1);
     }
-    private String readFully(InputStream is) throws IOException {
-        BufferedReader reader = is != null ? new BufferedReader(new InputStreamReader(is)) : null;
-        try {
-            String code = "";
-            String line;
-            while (reader != null && (line = reader.readLine()) != null) {
-                line = line.trim();
-                if ("#headerdef".equals(line)) {
-                    line = Shaders.headerMatrix+Shaders.headerUniforms;
-                }
-                if ("#headerMatrix".equals(line)) {
-                    line = Shaders.headerMatrix;
-                }
-                if ("#headerUniforms".equals(line)) {
-                    line = Shaders.headerUniforms;
-                }
-                code += line + "\r\n";
-            }
-            return code;
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-    }
-    public void load(InputStream streamfsh, InputStream streamvsh, InputStream streamgsh) throws IOException {
 
+    public void load(AssetManager assetManager, String path, String fname) throws IOException {
 
-        String fragCode = readFully(streamfsh);
-        String vertCode = readFully(streamvsh);
-        String geomCode = readFully(streamgsh);
+        ShaderSource vertCode = new ShaderSource();
+        ShaderSource fragCode = new ShaderSource();
+        ShaderSource geomCode = new ShaderSource();
+        
+        vertCode.load(assetManager, path, fname + ".vsh");
+        fragCode.load(assetManager, path, fname + ".fsh");
+        geomCode.load(assetManager, path, fname + ".gsh");
         if (vertCode.isEmpty() && fragCode.isEmpty()) {
             throw new GameError("Failed reading shader source: "+name);
         }
@@ -114,14 +97,14 @@ public class Shader {
                 throw new GameError("Failed creating fragment shader");
             }
 
-            glShaderSourceARB(this.fragShader, fragCode);
+            glShaderSourceARB(this.fragShader, fragCode.getSource());
             Engine.checkGLError("glShaderSourceARB");
             glCompileShaderARB(this.fragShader);
             String log = getLog(this.fragShader);
             Engine.checkGLError("getLog");
             if (getStatus(this.fragShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(this.name+" fragment", log);
+                throw new ShaderCompileError(fragCode, this.name+" fragment", log);
             } else if (!log.isEmpty()) {
                 System.out.println(this.name+" fragment");
                 System.out.println(log);
@@ -136,14 +119,14 @@ public class Shader {
                 throw new GameError("Failed creating vertex shader");
             }
 
-            glShaderSourceARB(this.vertShader, vertCode);
+            glShaderSourceARB(this.vertShader, vertCode.getSource());
             Engine.checkGLError("glShaderSourceARB");
             glCompileShaderARB(this.vertShader);
             String log = getLog(this.vertShader);
             Engine.checkGLError("getLog");
             if (getStatus(this.vertShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(this.name+" vertex", log);
+                throw new ShaderCompileError(vertCode, this.name+" vertex", log);
             } else if (!log.isEmpty()) {
                 System.out.println(this.name+" vertex");
                 System.out.println(log);
@@ -158,14 +141,14 @@ public class Shader {
                 throw new GameError("Failed creating geometry shader");
             }
 
-            glShaderSourceARB(this.geometryShader, geomCode);
+            glShaderSourceARB(this.geometryShader, geomCode.getSource());
             Engine.checkGLError("glShaderSourceARB");
             glCompileShaderARB(this.geometryShader);
             String log = getLog(this.geometryShader);
             Engine.checkGLError("getLog");
             if (getStatus(this.geometryShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(this.name+" geometry", log);
+                throw new ShaderCompileError(geomCode, this.name+" geometry", log);
             } else if (!log.isEmpty()) {
                 System.out.println(this.name+" geometryShader");
                 System.out.println(log);
@@ -220,46 +203,9 @@ public class Shader {
         glUseProgramObjectARB(0);
         Engine.checkGLError("glUseProgramObjectARB 0");
         
+        
+        UniformBuffer.bindBuffers(this);
 
-
-        // Get uniform block index and data size
-        final int blockIndex = glGetUniformBlockIndex(this.shader, "scenedata");
-        if (blockIndex != -1) {
-//            System.out.println(name+"/"+blockIndex);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 0, Shaders.uboMatrix);
-            if (Main.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-            glUniformBlockBinding(this.shader, blockIndex, 0);
-            if (Main.GL_ERROR_CHECKS)
-                Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
-
-        }
-        // Get uniform block index and data size
-        final int light = glGetUniformBlockIndex(this.shader, "LightInfo");
-        if (light != -1) {
-            final int blockSize = glGetActiveUniformBlocki(this.shader, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE);
-//            System.out.println(name+"/"+light+" light, size "+blockSize);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 1, Shaders.uboLight);
-            if (Main.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-            glUniformBlockBinding(this.shader, light, 1);
-            if (Main.GL_ERROR_CHECKS)
-                Engine.checkGLError("glUniformBlockBinding blockIndex "+light);
-
-        }
-        // Get uniform block index and data size
-        final int mat = glGetUniformBlockIndex(this.shader, "MaterialInfo");
-        if (mat != -1) {
-            final int blockSize = glGetActiveUniformBlocki(this.shader, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE);
-//            System.out.println(name+"/"+light+" MaterialInfo, size "+blockSize);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 2, Shaders.uboMaterial);
-            if (Main.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-            glUniformBlockBinding(this.shader, mat, 2);
-            if (Main.GL_ERROR_CHECKS)
-                Engine.checkGLError("glUniformBlockBinding blockIndex "+mat);
-
-        }
     }
 
     public int getStatus(int obj, int a) {
@@ -397,5 +343,6 @@ public class Shader {
         setProgramUniformCalls = 0;
         return calls;
     }
+
 }
         

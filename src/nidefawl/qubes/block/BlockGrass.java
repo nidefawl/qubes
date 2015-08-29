@@ -8,7 +8,7 @@ public class BlockGrass extends Block {
     
     @Override
     public int getColor() {
-        return 0xB6FF9E;
+        return 0x70cf63;
     }
 
 }

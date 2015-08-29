@@ -65,32 +65,22 @@ public class AssetManager {
 
     public Shader loadShader(String name) {
         Shader shader = new Shader(name);
-        InputStream fis = null;
-        InputStream fis2 = null;
-        InputStream fis3 = null;
         try {
-            fis = findResource(name + ".fsh");
-            fis2 = findResource(name + ".vsh");
-            fis3 = findResource(name + ".gsh");
-            shader.load(fis, fis2, fis3);
+            int idx = name.lastIndexOf("/");
+            String path;
+            String fname;
+            if (idx == 0) {
+                path = "";
+                fname = name;
+            } else {
+                path = name.substring(0, idx);
+                fname = name.substring(idx+1);
+            }
+            shader.load(this, path, fname);
         } catch (GameError e) {
             throw e;
         } catch (Exception e) {
             throw new GameError("Cannot load asset '" + name + "': " + e, e);
-        } finally {
-            try {
-                if (fis != null) {
-                    fis.close();
-                }
-                if (fis2 != null) {
-                    fis2.close();
-                }
-                if (fis3 != null) {
-                    fis3.close();
-                }
-            } catch (Exception e) {
-                throw new GameError("Failed closing file", e);
-            }
         }
         return shader;
     }

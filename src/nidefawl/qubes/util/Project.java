@@ -5,6 +5,10 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 
+import nidefawl.qubes.gl.BufferedMatrix;
+import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Vector3f;
+
 public class Project {
 
 
@@ -191,5 +195,70 @@ public class Project {
                     + in[3] * m.get(m.position() + 3*4 + i);
 
         }
+    }
+
+    public static void fovProjMat(float fieldOfView, float aspectRatio, float znear, float zfar, Matrix4f to) {
+        float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
+        float x_scale = y_scale / aspectRatio;
+        float frustum_length = zfar - znear;
+
+        to.setIdentity();
+        to.m00 = x_scale;
+        to.m11 = y_scale;
+        to.m22 = -((zfar + znear) / frustum_length);
+        to.m23 = -1;
+        to.m32 = -((2 * znear * zfar) / frustum_length);
+        to.m33 = 0;
+    }
+
+    public static void orthoMat(float left, float right, float top, float bottom, float znear, float zfar, Matrix4f to) {
+        to.setZero();
+        to.m00 = 2.0f / (right - left);
+        to.m11 = 2.0f / (top - bottom);
+        to.m22 = (-2.0f) / (zfar - znear);
+        to.m33 = 1.0f;
+        to.m30 = -( (right+left) / (right-left) );
+        to.m31 = -( (top+bottom) / (top-bottom) );
+        to.m32 = -( (zfar+znear) / (zfar-znear) );
+    }
+
+    static Vector3f tmp3 = new Vector3f();
+    static Vector3f tmp4 = new Vector3f();
+    static Vector3f tmp5 = new Vector3f();
+    public static void lookAt(float eyex, float eyey, float eyez, float centerx, float centery, float centerz, float upx, float upy, 
+            float upz, Matrix4f to)
+    {
+        tmp3.set(upx, upy, upz);
+        tmp4.set(centerx - eyex, centery - eyey, centerz - eyez);
+        tmp4.normalise();
+        Vector3f.cross(tmp4, tmp3, tmp5);
+        tmp5.normalise();
+        Vector3f.cross(tmp5, tmp4, tmp3);
+        to.m00 = tmp5.x;
+        to.m10 = tmp5.y;
+        to.m20 = tmp5.z;
+        to.m01 = tmp3.x;
+        to.m11 = tmp3.y;
+        to.m21 = tmp3.z;
+        to.m02 = -tmp4.x;
+        to.m12 = -tmp4.y;
+        to.m22 = -tmp4.z;
+        to.translate(-eyex, -eyey, -eyez);
+//        normalize(forward);
+//        cross(forward, up, side);
+//        normalize(side);
+//        cross(side, forward, up);
+//        __gluMakeIdentityf(matrix);
+//        matrix.put(0, side[0]);
+//        matrix.put(4, side[1]);
+//        matrix.put(8, side[2]);
+//        matrix.put(1, up[0]);
+//        matrix.put(5, up[1]);
+//        matrix.put(9, up[2]);
+//        matrix.put(2, -forward[0]);
+//        matrix.put(6, -forward[1]);
+//        matrix.put(10, -forward[2]);
+//        GL11.glMultMatrix(matrix);
+//        GL11.glTranslatef(-eyex, -eyey, -eyez);
     }
 }

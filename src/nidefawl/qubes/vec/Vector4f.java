@@ -58,6 +58,13 @@ public class Vector4f {
     }
 
     /**
+     * @return the length squared of the vector
+     */
+    public float lengthSquaredXYZ() {
+        return x * x + y * y + z * z;
+    }
+
+    /**
      * Translate a vector
      * @param x The translation in x
      * @param y the translation in y
@@ -282,6 +289,13 @@ public class Vector4f {
      */
     public final float length() {
         return (float) Math.sqrt(lengthSquared());
+    }
+
+    /**
+     * @return the length of the vector
+     */
+    public final float lengthXYZ() {
+        return (float) Math.sqrt(lengthSquaredXYZ());
     }
 
 }

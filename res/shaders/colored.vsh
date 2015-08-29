@@ -1,6 +1,7 @@
 #version 150 core
 
-#headerdef
+#pragma include "ubo_scene.glsl"
+#pragma include "vertex_layout.glsl"
 
 uniform vec3 in_offset;
 out vec4 pass_Color;

@@ -20,7 +20,7 @@ public class Mesher {
     private BlockSurface[] mask2;
     final static BlockSurfaceAir air = new BlockSurfaceAir();
     @SuppressWarnings("rawtypes")
-    List[] meshes = new List[WorldRenderer.NUM_PASSES*NUM_LAYERS];
+    List[] meshes = new List[WorldRenderer.NUM_PASSES];
     public Mesher() {
         for (int i = 0; i < meshes.length; i++)
             this.meshes[i] = new ArrayList<>();
@@ -97,11 +97,18 @@ public class Mesher {
     }
     
     RegionCache cache;
+    private int strategy;
     public void mesh(World world, RegionCache cache) {
         this.cache = cache;
-        Region region = cache.get(0, 0);
         for (int i = 0; i < this.meshes.length; i++)
             this.meshes[i].clear();
+        this.strategy = 0;
+        this.meshRound(world, cache);
+        this.strategy = 1;
+        this.meshRound(world, cache);
+    }
+    public void meshRound(World world, RegionCache cache) {
+        Region region = cache.get(0, 0);
         if (!region.isEmpty()) {
             dims[0] = Chunk.SIZE*REGION_SIZE;
             dims[1] = region.getHighestBlock() + 1; // always correct (with neighbours)?
@@ -159,8 +166,7 @@ public class Mesher {
                                 if (add) {
                                     
                                     Mesh face = new Mesh(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
-                                    int layer = LAYER_MAIN;
-                                    meshes[c.pass+WorldRenderer.NUM_PASSES*layer].add(face);
+                                    meshes[c.pass].add(face);
                                 }
 
                                 // Zero-out mask2
@@ -215,17 +221,26 @@ public class Mesher {
         int type = region.getTypeId(i, j, k);
         if (type > 0) {
             Block block = Block.block[type];
+            int pass = block.getRenderPass();
+            if (strategy == 1 && pass > 0) {
+                return air;
+            }
             BlockSurface surface = new BlockSurface();
             surface.type = type;
             surface.transparent = block.isTransparent();
-            surface.pass = block.getRenderPass();
             surface.x = i;
             surface.extraFace = regionX != 0 || regionZ != 0;
             surface.y = j;
             surface.z = k;
             surface.face = l;
             surface.axis = axis;
-            surface.calcAO(this.cache);
+            surface.pass = pass;
+            if (strategy == 1) {
+                surface.type = 1;
+                surface.pass = 2;
+            } else {
+                surface.calcAO(this.cache);
+            }
             surface.x = i+region.rX*Region.REGION_SIZE_BLOCKS;
             surface.y = j;
             surface.z = k+region.rZ*Region.REGION_SIZE_BLOCKS;
@@ -240,7 +255,7 @@ public class Mesher {
     }
 
 
-    public List<Mesh> getMeshes(int layer, int pass) {
-        return this.meshes[pass+WorldRenderer.NUM_PASSES*layer];
+    public List<Mesh> getMeshes(int pass) {
+        return this.meshes[pass];
     }
 }

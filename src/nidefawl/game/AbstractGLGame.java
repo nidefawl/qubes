@@ -11,7 +11,7 @@ public abstract class AbstractGLGame implements Runnable {
 	protected volatile boolean running = false;
 	protected volatile boolean wasrunning = false;
 	public static boolean DO_TIMING = false;
-	public static boolean GL_ERROR_CHECKS = false;
+	public static boolean GL_ERROR_CHECKS = true;
 	public static long windowId = 0;
 
 	public AbstractGLGame() {

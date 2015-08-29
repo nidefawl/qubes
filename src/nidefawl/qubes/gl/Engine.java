@@ -2,7 +2,6 @@ package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
@@ -19,21 +18,21 @@ import nidefawl.game.GL;
 import nidefawl.game.GLGame;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.Project;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
 
 public class Engine {
     public final static int   SHADOW_BUFFER_SIZE = 1024*4;
     public final static int   SHADOW_ORTHO_DIST  = 16*16;
-    public final static float shadowZnear        = 8F;
-    public final static float shadowZfar         = 512.0F;
+    public final static int   NUM_PROJECTIONS  = 3 + 1; // 3 sun view shadow pass + player view camera
     
     private static IntBuffer      viewport;
     private static FloatBuffer    position;
@@ -52,6 +51,11 @@ public class Engine {
     private static BufferedMatrix shadowModelView;
     private static BufferedMatrix shadowModelViewProjection;
 
+    private static Matrix4f[] shadowSplitProj;
+    private static BufferedMatrix[] shadowSplitMVP;
+    public static float[] shadowSplitDepth;
+    public static Frustum[] shadowCamFrustum;
+
     private static FloatBuffer       depthRead;
     private static FloatBuffer       fog;
 
@@ -62,20 +66,22 @@ public class Engine {
     public static float              znear;
     public static float              zfar;
     
+    static TesselatorState fullscreenquad;
 
+    public static Frustum            camFrustum         = new Frustum();
     public static Vector4f           sunPosition        = new Vector4f();
     public static Vector4f           moonPosition       = new Vector4f();
     public static Vector3f           up                 = new Vector3f();
-    public static Vector4f           back                 = new Vector4f();
-    public static float              sunAngle        = 0F;
+    public static Vector4f           back               = new Vector4f();
+    public static float              sunAngle           = 0F;
     public static Camera             camera             = new Camera();
     public static WorldRenderer      worldRenderer      = new WorldRenderer();
     public static FinalRendererBase  outRenderer        = new FinalRenderer();
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
-    public static int vaoId         = 0;
-    public static int vaoTerrainId  = 0;
+    public static int                vaoId              = 0;
+    public static int                vaoTerrainId       = 0;
 
     public static void generateLightMapTexture() {
 
@@ -112,17 +118,10 @@ public class Engine {
         fog = BufferUtils.createFloatBuffer(16);
     }
     public static void init() {
-//        allocateDisplayLists(MAX_DISPLAY_LISTS);
-//        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         glActiveTexture(GL_TEXTURE0);
-//        glActiveTexture(GL_TEXTURE1);
-//        glMatrixMode(GL_TEXTURE);
-//        glLoadIdentity();
-//        glScalef(1/256F, 1/256F, 1/256F);
-//        glTranslatef(8, 8, 8);
-//        glMatrixMode(GL_MODELVIEW);
 
         baseInit();
+        UniformBuffer.reinit();
         Shaders.reinit();
         
         TextureManager.getInstance().init();
@@ -132,10 +131,9 @@ public class Engine {
         regionRenderThread.init();
         regionRenderer.init();
         BlockTextureArray.getInstance().reload();
-        switchRenderer(true);
+        reloadRenderer(true);
         GL30.glBindVertexArray(vaoId);
     }
-
     public static void resize(int displayWidth, int displayHeight) {
         float fieldOfView = 70;
         float aspectRatio = (float) displayWidth / (float) displayHeight;
@@ -147,42 +145,39 @@ public class Engine {
         viewport.put(displayWidth);
         viewport.put(displayHeight);
         viewport.flip();
+        
 
-        float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
-        float x_scale = y_scale / aspectRatio;
-        float frustum_length = zfar - znear;
-
-        projection.setIdentity();
-        projection.m00 = x_scale;
-        projection.m11 = y_scale;
-        projection.m22 = -((zfar + znear) / frustum_length);
-        projection.m23 = -1;
-        projection.m32 = -((2 * znear * zfar) / frustum_length);
-        projection.m33 = 0;
+        Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
         projection.update();
         projection.update();
-        
-        shadowProjection.setZero();
-        
-        {
-            float shadowHalfPlane = SHADOW_ORTHO_DIST;
-            float left = -shadowHalfPlane;
-            float right = shadowHalfPlane;
-            float bottom = -shadowHalfPlane;
-            float top = shadowHalfPlane;
-            // First the scale part
-            shadowProjection.m00 = 2.0f / (right - left);
-            shadowProjection.m11 = 2.0f / (top - bottom);
-            shadowProjection.m22 = (-2.0f) / (shadowZfar - shadowZnear);
-            shadowProjection.m33 = 1.0f;
-            
-            // Then the translation part
-            shadowProjection.m30 = -( (right+left) / (right-left) );
-            shadowProjection.m31 = -( (top+bottom) / (top-bottom) );
-            shadowProjection.m32 = -( (shadowZfar+shadowZnear) / (shadowZfar-shadowZnear) );
+        float splits[] = new float[] {
+                10, 50
+        };
+        shadowSplitProj = new Matrix4f[splits.length+1];
+        shadowSplitMVP = new BufferedMatrix[splits.length+1];
+        shadowSplitDepth = new float[splits.length+1];
+        shadowCamFrustum = new Frustum[splits.length+1];
+        int i;
+        for (i = 0; i < shadowCamFrustum.length; i++) {
+            shadowCamFrustum[i] = new Frustum();
         }
+        for (i = 0; i < shadowSplitProj.length; i++) {
+            shadowSplitProj[i] = new Matrix4f();
+        }
+        for (i = 0; i < shadowSplitMVP.length; i++) {
+            shadowSplitMVP[i] = new BufferedMatrix();
+        }
+        float last = znear;
+        for (i = 0; i < splits.length; i++) {
+            Project.fovProjMat(fieldOfView, aspectRatio, last, splits[i], shadowSplitProj[i]);
+            last = splits[i];
+        }
+        Project.fovProjMat(fieldOfView, aspectRatio, last, 200, shadowSplitProj[i]);
+        
+        Project.orthoMat(-SHADOW_ORTHO_DIST, SHADOW_ORTHO_DIST, SHADOW_ORTHO_DIST, -SHADOW_ORTHO_DIST, -512F, 512F*8, shadowProjection);
         shadowProjection.update();
         shadowProjection.update();
+
         updateOrthoMatrix(displayWidth, displayHeight);
         
 
@@ -195,10 +190,11 @@ public class Engine {
         if (fbShadow != null)
             fbShadow.cleanUp();
         fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
-//        fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
-//        fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
+        fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         fbShadow.setShadowBuffer();
         fbShadow.setup();
+
         if (fullscreenquad == null) {
             fullscreenquad = new TesselatorState();
         }
@@ -226,32 +222,12 @@ public class Engine {
         orthoMV.update();
         orthoMV.update();
         orthoP.setZero();
-        
-        {
-            float left = 0;
-            float right = displayWidth;
-            float bottom = displayHeight;
-            float top = 0;
-            float zNear2D = -100;
-            float zFar2D = 100;
-            // First the scale part
-            orthoP.m00 = 2.0f / (right - left);
-            orthoP.m11 = 2.0f / (top - bottom);
-            orthoP.m22 = (-2.0f) / (zFar2D - zNear2D);
-            orthoP.m33 = 1.0f;
-            
-            // Then the translation part
-            orthoP.m30 = -( (right+left) / (right-left) );
-            orthoP.m31 = -( (top+bottom) / (top-bottom) );
-            orthoP.m32 = -( (zFar2D+zNear2D) / (zFar2D-zNear2D) );
-        }
-
+        Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
         Matrix4f.mul(orthoP, orthoMV, orthoP);
-        
         orthoP.update();
         orthoP.update();
     }
-    static TesselatorState fullscreenquad;
+    
     public static void drawFullscreenQuad() {
         fullscreenquad.drawQuads();
     }
@@ -302,18 +278,12 @@ public class Engine {
         
         Vector3f vec = camera.getPosition();
         modelview.setIdentity();
-        float x = vec.x - 0;
-        float y = vec.y - 0;
-        float z = vec.z - 0;
-        modelview.m30 += modelview.m00 * -x + modelview.m10 * -y + modelview.m20 * -z;
-        modelview.m31 += modelview.m01 * -x + modelview.m11 * -y + modelview.m21 * -z;
-        modelview.m32 += modelview.m02 * -x + modelview.m12 * -y + modelview.m22 * -z;
-        modelview.m33 += modelview.m03 * -x + modelview.m13 * -y + modelview.m23 * -z;
-        
+        modelview.translate(-vec.x, -vec.y, -vec.z);
         Matrix4f.mul(view, modelview, modelview);
         Matrix4f.mul(projection, modelview, modelviewprojection);
         modelview.update();
         modelviewprojection.update();
+        camFrustum.set(modelviewprojection);
     }
 
     public static void setFog(Vector3f fogColor, float alpha) {
@@ -327,7 +297,7 @@ public class Engine {
 
     }
 
-    public static IFrameBuffer getSceneFB() {
+    public static FrameBuffer getSceneFB() {
         return fbScene;
     }
 
@@ -372,62 +342,135 @@ public class Engine {
     }
 
     public static void updateSun(float fTime) {
-        boolean mode = Main.matrixSetupMode;
-        float sunPathRotation = -40.0F;
+        float sunPathRotation = -15.0F;
+        float moonPathRotation = -50.0F;
         float ca = Main.instance.getWorld().getSunAngle(fTime);
         {
-
-            sunAngle = ca < 0.75F ? ca + 0.25F : ca - 0.75F;
-            float angle = ca * -360.0F;
-
-            shadowModelView.setIdentity();
-            Vector3f vec = camera.getPosition();
-            float trans = 12;
-            float trans2 = trans / 2.0f;
-            float x= (float)vec.x;// % trans - trans2;
-            float y= (float)vec.y;// % trans - trans2;
-            float z= (float)vec.z;// % trans - trans2;
-            shadowModelView.translate(0.0F, 0.0F, -100.0F);
-            shadowModelView.rotate(90.0F * Camera.PI_OVER_180, 1f, 0f, 0f);
-            if ((double) sunAngle <= 0.5D) {
-                shadowModelView.rotate(angle * Camera.PI_OVER_180, 0f, 0f, 1f);
-                shadowModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 1f, 0f, 0f);
+            float angle = ca * 360.0F;
+            sunModelView.setIdentity();
+            sunModelView.rotate(-90.0F * Camera.PI_OVER_180, 0f, 1f, 0f);
+            sunModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 0.0F, 0.0F, 1.0F);
+            sunModelView.rotate(angle * Camera.PI_OVER_180, 1.0F, 0.0F, 0.0F);
+            sunModelView.update();
+            sunPosition.set(0, 100, 0);
+            Matrix4f.transform(sunModelView, sunPosition, sunPosition);
+            sunModelView.setIdentity();
+            sunModelView.rotate(-90.0F * Camera.PI_OVER_180, 0f, 1f, 0f);
+            sunModelView.rotate(angle * Camera.PI_OVER_180, 0f, 0f, 1f);
+            sunModelView.rotate(moonPathRotation * Camera.PI_OVER_180, 1f, 0f, 0f);
+            sunModelView.update();
+            moonPosition.set(0, -100, 0);
+            Matrix4f.transform(sunModelView, moonPosition, moonPosition);
+        }
+        {
+            Vector4f lightPos;
+            if (sunPosition.y <= 0) {
+                lightPos = moonPosition;
             } else {
-                shadowModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 0f, 0f, 1f);
-                shadowModelView.rotate((angle + 180.0F) * Camera.PI_OVER_180, 1f, 0f, 0f);
+                lightPos = sunPosition;
             }
-            shadowModelView.translate(-x, -260, -z);
+            shadowModelView.setIdentity();
+            shadowModelView.translate(0, 0, 100);
+            Project.lookAt(lightPos.x, lightPos.y, lightPos.z, 0,0,0, 0, 1, 0, shadowModelView);  
+
+            float x = regionRenderer.renderChunkX<<(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
+            float z = regionRenderer.renderChunkZ<<(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
+            shadowModelView.translate(-x, -180, -z);
             
             Matrix4f.mul(shadowProjection, shadowModelView, shadowModelViewProjection);
             shadowModelView.update();
             shadowModelViewProjection.update();
         }
-        {
-            float angle = ca * 360.0F;
-
-            if (mode) {
-//                glMatrixMode(GL_MODELVIEW);
-//                glLoadIdentity();
-//                GL.glLoadMatrixf(getMatSceneV().get());
-//                glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-//                glRotatef(sunPathRotation, 0.0F, 0.0F, 1.0F);
-//                glRotatef(angle, 1.0F, 0.0F, 0.0F);
-//                readMat(GL_MODELVIEW_MATRIX, sunModelView);
-//                sunModelView.update();
-            } else {
-                sunModelView.setIdentity();
-                sunModelView.rotate(-90.0F * Camera.PI_OVER_180, 0f, 1f, 0f);
-                sunModelView.rotate(sunPathRotation * Camera.PI_OVER_180, 0.0F, 0.0F, 1.0F);
-                sunModelView.rotate(angle * Camera.PI_OVER_180, 1.0F, 0.0F, 0.0F);
-                sunModelView.update();
-                Matrix4f.mul(view, sunModelView, sunModelView);
-            }
-
-            sunPosition.set(0, 100, 0);
-            moonPosition.set(0, -100, 0);
-            Matrix4f.transform(sunModelView, sunPosition, sunPosition);
-            Matrix4f.transform(sunModelView, moonPosition, moonPosition);
+//        Engine.worldRenderer.debugBBs.clear();
+        if (Main.DO_TIMING) TimingHelper.startSec("calcShadow");
+        int i;
+        for (i = 0; i < shadowSplitProj.length; i++) {
+            calcShadow(i);
         }
+        if (Main.DO_TIMING) TimingHelper.endSec();
+        
+    }
+    public static void calcShadow(int split) {
+        Vector3f[] frustumCorners = new Vector3f[] {
+                new Vector3f(-1,  1, 0),
+                new Vector3f( 1,  1, 0),
+                new Vector3f( 1, -1, 0),
+                new Vector3f(-1, -1, 0),
+                new Vector3f(-1,  1, 1),
+                new Vector3f( 1,  1, 1),
+                new Vector3f( 1, -1, 1),
+                new Vector3f(-1, -1, 1), 
+        };
+        Matrix4f newMat = new Matrix4f();
+        Matrix4f newMatInv = new Matrix4f();
+        Matrix4f.mul(projection, view, newMat);
+        Matrix4f.mul(shadowSplitProj[split], modelview, newMat);
+        Matrix4f.transpose(newMat, newMat);
+        Matrix4f.invert(newMat, newMatInv);
+        AABB bb = new AABB(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        for (int i = 0; i < 8; i++) {
+            
+            Matrix4f.transformTransposed(newMatInv, frustumCorners[i], frustumCorners[i]);
+            if (bb.minX > frustumCorners[i].x)
+                bb.minX = frustumCorners[i].x;
+            if (bb.maxX < frustumCorners[i].x)
+                bb.maxX = frustumCorners[i].x;
+            if (bb.minY > frustumCorners[i].y)
+                bb.minY = frustumCorners[i].y;
+            if (bb.maxY < frustumCorners[i].y)
+                bb.maxY = frustumCorners[i].y;
+            if (bb.minZ > frustumCorners[i].z)
+                bb.minZ = frustumCorners[i].z;
+            if (bb.maxZ < frustumCorners[i].z)
+                bb.maxZ = frustumCorners[i].z;
+        }
+        Vector3f frustumCenter = new Vector3f(0,0,0);
+        for (int i = 0; i < 8; i++) {
+            Vector3f.add(frustumCenter, frustumCorners[i], frustumCenter);
+        }
+        frustumCenter.scale(1.0f/8.0f);
+//        Engine.worldRenderer.debugBBs.put(split, bb);
+        float radius = Vector3f.sub(frustumCorners[0], frustumCorners[6], null).length()/2.0f;
+        Vector3f lightPos = new Vector3f();
+        if (sunPosition.y <= 0) {
+            lightPos.set(moonPosition.x, moonPosition.y, moonPosition.z);
+        } else {
+            lightPos.set(sunPosition.x, sunPosition.y, sunPosition.z);
+        }
+        lightPos.scale(-1);
+        lightPos.normalise();
+        
+        /** SNAP TO TEXTURE INCREMENTS, (Seems not to work with deferred) */
+        /*
+        */
+        Matrix4f matLookAt = new Matrix4f();
+        Matrix4f matLookAtInv = new Matrix4f();
+        Matrix4f scale = new Matrix4f();
+        float texelsPerUnit = SHADOW_BUFFER_SIZE / (radius*2.0f);
+        scale.scale(new Vector3f(texelsPerUnit, texelsPerUnit, texelsPerUnit));
+        Project.lookAt(0, 0, 0, -lightPos.x, -lightPos.y, -lightPos.z, 0, 1, 0, matLookAt);
+        Matrix4f.mul(matLookAt, scale, matLookAt);
+        Matrix4f.invert(matLookAt, matLookAtInv);
+        Matrix4f.transform(matLookAt, frustumCenter, frustumCenter);
+        frustumCenter.x = GameMath.floor(frustumCenter.x);
+        frustumCenter.y = GameMath.floor(frustumCenter.y);
+        Matrix4f.transform(matLookAtInv, frustumCenter, frustumCenter);
+        
+        
+        
+        Vector3f eye = new Vector3f();
+        Vector3f.sub(frustumCenter, lightPos.scale(radius*2.0f), eye);
+        
+        shadowSplitMVP[split].setIdentity();
+        Project.lookAt(eye.x, eye.y, eye.z, frustumCenter.x, frustumCenter.y, frustumCenter.z, 0, 1, 0, shadowSplitMVP[split]);
+        Matrix4f matOrtho = new Matrix4f();
+        Project.orthoMat(-radius, radius, radius, -radius, -512, 512*8, matOrtho);
+        Matrix4f.mul(matOrtho, shadowSplitMVP[split], shadowSplitMVP[split]);
+        shadowSplitMVP[split].update();
+        shadowSplitMVP[split].update();
+        shadowSplitDepth[split] = radius;
+        shadowCamFrustum[split].set(shadowSplitMVP[split]);
+//        System.out.println(radius);
         
     }
 
@@ -438,7 +481,8 @@ public class Engine {
 
 
     public static final Vec3 vOrigin = new Vec3();
-    public static final Vec3 vDir = new Vec3();
+    public static Vec3 vDir = null;
+    public static final Vec3 vDirTmp = new Vec3();
     public static final Vec3 vTarget = new Vec3();
     public static final Vec3 t = new Vec3();
 
@@ -463,25 +507,22 @@ public class Engine {
         vOrigin.x = position.get(0);
         vOrigin.y = position.get(1);
         vOrigin.z = position.get(2);
-        Vec3.sub(vTarget, vOrigin, vDir);
-        vDir.normalise();
-        t.set(vDir);
-        t.scale(-0.1F);
-        Vec3.add(vOrigin, t, vOrigin);
+        Vec3.sub(vTarget, vOrigin, vDirTmp);
+        vDir = vDirTmp.normaliseNull();
+        if (vDir != null) {
+            t.set(vDir);
+            t.scale(-0.1F);
+            Vec3.add(vOrigin, t, vOrigin);
+        }
 //      System.out.println(vDir); 
     }
 
-    public static void switchRenderer(boolean useBasicShaders) {
+    public static void reloadRenderer(boolean useBasicShaders) {
         flushRenderTasks();
         if (worldRenderer != null) worldRenderer.release();
         if (outRenderer != null) outRenderer.release();
-        if (useBasicShaders) {
-            worldRenderer = new WorldRenderer();
-            outRenderer = new FinalRenderer();
-        } else {
-            worldRenderer = new WorldRendererAdv();
-            outRenderer = new FinalRendererAdv();
-        }
+        worldRenderer = new WorldRenderer();
+        outRenderer = new FinalRenderer();
         worldRenderer.init();
         outRenderer.init();
         worldRenderer.resize(Main.displayWidth, Main.displayHeight);
@@ -517,6 +558,10 @@ public class Engine {
         intbuf.put(buffers);
         buf.position(0).limit(buffers.length*4);
         GL15.glDeleteBuffers(buffers.length, buf);
+    }
+
+    public static BufferedMatrix getMatShadowSplitMVP(int i) {
+        return shadowSplitMVP[i];
     }
 
 }

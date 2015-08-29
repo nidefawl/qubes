@@ -1,10 +1,13 @@
-#version 120
+#version 150 core
 
-varying vec2 wpos;
+#pragma include "ubo_scene.glsl"
+#pragma include "vertex_layout.glsl"
 
-
+out vec4 pass_Color;
+out vec2 pass_texcoord;
 
 void main() {
-	wpos = gl_MultiTexCoord0.xy;
-	gl_Position = gl_ProjectionMatrix * gl_Vertex;
+    pass_Color = in_color;
+    pass_texcoord = in_texcoord.st;
+    gl_Position = in_matrix.mvp * in_position;
 }

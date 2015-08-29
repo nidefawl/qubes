@@ -1,6 +1,7 @@
 #version 150
 
-#headerdef
+#pragma include "ubo_scene.glsl"
+#pragma include "vertex_layout.glsl"
 
 
 out Data{

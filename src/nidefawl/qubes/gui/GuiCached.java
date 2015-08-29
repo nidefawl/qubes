@@ -43,7 +43,7 @@ public class GuiCached extends Gui {
             fbDbg.clearFrameBuffer();
             GL14.glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             this.gui.render(fTime);
-            fbDbg.unbindCurrentFrameBuffer();
+            FrameBuffer.unbindFramebuffer();
         }
         Shaders.textured.enable();
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));

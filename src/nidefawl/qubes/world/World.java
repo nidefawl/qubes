@@ -50,13 +50,25 @@ public class World {
         return this.generator.generateChunk(i, j);
     }
     public float getSunAngle(float fTime) {
-        int timeOffset = this.time%dayLen;
+//        if (time > 2000)
+//            time = 1200;
+//        fTime = 0;
+//        time = 15500;
+//        time = 1630;
+//        time = 15000;
+        dayLen = 500;
+        float timeOffset = (this.time)%dayLen;
         float fSun = (timeOffset+fTime)/(float) dayLen + 0.25F;
         if (fSun<0)fSun++;
         if (fSun>1)fSun--;
         float f = 1.0F - (float)(Math.cos(fSun*Math.PI)+1)/2.0F;
-//        return fSun+(f-fSun)/3.0F;
-        return 0.90F;
+             return fSun+(f-fSun)/3.0F;
+//        return 1f;
+//        float a = timeOffset / (float) dayLen;
+////        a = 0f;
+////        a*=0.3f;
+//        return a;
+////        return 0.8f+a;
     }
 
     public void tickUpdate() {

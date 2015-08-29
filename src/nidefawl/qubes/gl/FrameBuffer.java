@@ -13,7 +13,7 @@ import nidefawl.qubes.util.GameError;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
-public class FrameBuffer implements IFrameBuffer {
+public class FrameBuffer {
     private static final int MAX_COLOR_ATT    = 8;
     private final int        renderWidth;
     private final int        renderHeight;
@@ -132,7 +132,7 @@ public class FrameBuffer implements IFrameBuffer {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
     }
 
-    public void unbindCurrentFrameBuffer() {
+    public static void unbindFramebuffer() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentFrameBuffer");
     }
@@ -186,7 +186,7 @@ public class FrameBuffer implements IFrameBuffer {
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (depth)");
         glBindTexture(GL_TEXTURE_2D, 0);
     }
-    @Override
+    
     public int getTexture(int i) {
         if (this.colorAttFormats[i] == 0) {
             throw new IllegalStateException("Framebuffer does not have texture for attachment "+i);
@@ -194,7 +194,6 @@ public class FrameBuffer implements IFrameBuffer {
         return this.colorAttTextures[i];
     }
 
-    @Override
     public int getDepthTex() {
         if (!hasDepth) {
             throw new IllegalStateException("Framebuffer does not have depth texture");
@@ -210,13 +209,11 @@ public class FrameBuffer implements IFrameBuffer {
     }
     
     
-    @Override
     public void setDrawAll() {
         if (this.numColorTextures > 0)
         GL20.glDrawBuffers(this.drawBufAtt);
     }
     
-    @Override
     public void clearFrameBuffer() {
         this.clearDepth();
         int cleared = 0;
@@ -255,5 +252,13 @@ public class FrameBuffer implements IFrameBuffer {
             glDeleteTextures(colorTextures);
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
         }
+    }
+
+    public int getWidth() {
+        return this.renderWidth;
+    }
+
+    public int getHeight() {
+        return this.renderHeight;
     }
 }

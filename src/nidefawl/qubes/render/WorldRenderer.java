@@ -8,14 +8,13 @@ import java.awt.Color;
 import java.util.HashMap;
 
 import org.lwjgl.opengl.ARBGeometryShader4;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
@@ -27,7 +26,7 @@ import nidefawl.qubes.world.World;
 
 public class WorldRenderer {
 
-    public static final int   NUM_PASSES      = 2;
+    public static final int   NUM_PASSES      = 3;
 
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
 //    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
@@ -35,7 +34,6 @@ public class WorldRenderer {
     public HashMap<Integer, AABB> debugBBs = new HashMap<>();
     
     public BlockPos highlight = null;
-    public float sunAngle2;
 
     protected int rendered;
 
@@ -47,6 +45,8 @@ public class WorldRenderer {
     public Shader       shadowShader;
 
     private TesselatorState highlightCube;
+    private TesselatorState skybox1;
+    private TesselatorState skybox2;
 
 
     private void releaseShaders() {
@@ -76,7 +76,6 @@ public class WorldRenderer {
             shadowShader = shadow;
             startup = false;
         } catch (ShaderCompileError e) {
-            e.printStackTrace();
             if (startup) {
                 System.out.println(e.getLog());
                 Main.instance.setException(e);
@@ -92,70 +91,81 @@ public class WorldRenderer {
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         initShaders();
         highlightCube = new TesselatorState();
-    }
-
-    protected void drawSkybox() {
-        int scale = (int) (Engine.zfar / 1.43F);
-        int x = -scale;
-        int y = -scale / 16;
-        int z = -scale;
-        int x2 = scale;
-        int y2 = scale / 16;
-        int z2 = scale;
-        int rgbai = 0;
-        rgbai = ((int) (fogColor.x * 255.0F)) << 16 | ((int) (fogColor.y * 255.0F)) << 8 | ((int) (fogColor.z * 255.0F));
-//      Shaders.colored.enable();
-      Tess.instance.setColor(rgbai, 255);
-      Tess.instance.add(x, y2, z);
-      Tess.instance.add(x, y, z);
-      Tess.instance.add(x2, y2, z);
-      Tess.instance.add(x2, y, z);
-      Tess.instance.add(x2, y2, z2);
-      Tess.instance.add(x2, y, z2);
-      Tess.instance.add(x, y2, z2);
-      Tess.instance.add(x, y, z2);
-      Tess.instance.add(x, y2, z);
-      Tess.instance.add(x, y, z);
-      Tess.instance.draw(GL_QUAD_STRIP);
-//      Tess.instance.draw(GL_TRIANGLE_STRIP);
-      
-      rgbai = ((int) (skyColor.x * 255.0F)) << 16 | ((int) (skyColor.y * 255.0F)) << 8 | ((int) (skyColor.z * 255.0F));
-      Tess.instance.setColor(-1, 255);
-      Tess.instance.add(x, y, z2);
-      Tess.instance.add(x2, y, z2);
-      Tess.instance.add(x2, y, z);
-      Tess.instance.add(x, y, z);
-      Tess.instance.add(x, y2, z);
-      Tess.instance.add(x2, y2, z);
-      Tess.instance.add(x2, y2, z2);
-      Tess.instance.add(x, y2, z2);
-//    Tess.instance.draw(GL_TRIANGLES);
-      Tess.instance.draw(GL_QUADS);
-        Shader.disable();
+        skybox1 = new TesselatorState();
+        skybox2 = new TesselatorState();
     }
 
     public void renderShadowPass(World world, float fTime) {
-//        glEnable(GL_CULL_FACE);
+//        glDisable(GL_CULL_FACE);
 //        glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(1.1f, 4.f);
+        glPolygonOffset(1.1f, 2.f);
+        glDisable(GL_BLEND);
 
-        glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE, Engine.SHADOW_BUFFER_SIZE);
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("viewport");
+        glViewport(0, 0, Engine.SHADOW_BUFFER_SIZE/2, Engine.SHADOW_BUFFER_SIZE/2);
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("bindtex");
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("enableshader");
         shadowShader.enable();
         shadowShader.setProgramUniform1i("blockTextures", 0);
-        Vector3f camPos = Engine.camera.getPosition();
-        glTranslatef(-camPos.x, -camPos.y, -camPos.z);
+        shadowShader.setProgramUniform1i("shadowSplit", 0);
+
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("bindfb");
         Engine.fbShadow.bind();
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("clearfb");
         Engine.fbShadow.clearFrameBuffer();
-        Engine.regionRenderer.renderFirstPass(world, fTime);
-        Engine.fbShadow.unbindCurrentFrameBuffer();
-        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("render1");
+        Engine.regionRenderer.renderRegions(world, fTime, 2, 1, RegionRenderer.IN_FRUSTUM);
+        shadowShader.setProgramUniform1i("shadowSplit", 1);
+        
+        glPolygonOffset(2.4f, 2.f);
+
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("viewport");
+        glViewport(Engine.SHADOW_BUFFER_SIZE/2, 0, Engine.SHADOW_BUFFER_SIZE/2, Engine.SHADOW_BUFFER_SIZE/2);
+//        Engine.fbShadow2.bind();
+//        Engine.fbShadow2.clearFrameBuffer();
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("render2");
+        Engine.regionRenderer.renderRegions(world, fTime, 2, 2, RegionRenderer.IN_FRUSTUM);
+        shadowShader.setProgramUniform1i("shadowSplit", 2);
+        
+        glPolygonOffset(4.4f, 2.f);
+
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("viewport");
+        glViewport(0, Engine.SHADOW_BUFFER_SIZE/2, Engine.SHADOW_BUFFER_SIZE/2, Engine.SHADOW_BUFFER_SIZE/2);
+//        Engine.fbShadow3.bind();
+//        Engine.fbShadow3.clearFrameBuffer();
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("render3");
+        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, RegionRenderer.IN_FRUSTUM);
+        
+
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("unbindFramebuffer");
+        FrameBuffer.unbindFramebuffer();
+        
+
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("disable");
         Shader.disable();
+
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("viewport");
         glViewport(0, 0, Main.displayWidth, Main.displayHeight);
-//        glCullFace(GL_BACK);
+        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
+        if (Main.DO_TIMING)
+            TimingHelper.endSec();
     }
 
     public void renderWorld(World world, float fTime) {
@@ -168,15 +178,14 @@ public class WorldRenderer {
             TimingHelper.endStart("Sky");
         glDepthMask(false);
         skyShader.enable();
-        drawSkybox();
+        skybox1.bindAndDraw(GL_QUAD_STRIP);
+        skybox2.bindAndDraw(GL_QUADS);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("skyShader.drawSkybox");
         Shader.disable();
         glDepthMask(true);
-        Shader.disable();
         if (Main.DO_TIMING)
             TimingHelper.endStart("setupView2");
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         if (Main.DO_TIMING)
             TimingHelper.endStart("testShader");
@@ -185,18 +194,22 @@ public class WorldRenderer {
         testShader.setProgramUniform1i("renderWireFrame", Main.renderWireFrame ? 1 : 0);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("test shader");
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        
+        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         Engine.regionRenderer.rendered = 0;
         if (Main.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
-        Engine.regionRenderer.renderFirstPass(world, fTime);
+        glDisable(GL_BLEND);
+        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
         if (Main.DO_TIMING)
             TimingHelper.endStart("renderSecondPass");
 
-        Engine.regionRenderer.renderSecondPass(world, fTime);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, RegionRenderer.IN_FRUSTUM);
+        glDisable(GL_BLEND);
         this.rendered = Engine.regionRenderer.rendered;
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
@@ -234,7 +247,7 @@ public class WorldRenderer {
         glLineWidth(3.0F);
         Engine.checkGLError("glLineWidth");
         Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_LINES_ADJACENCY_ARB);
-        Engine.regionRenderer.renderFirstPass(world, fTime);
+        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.ALL);
         Engine.regionRenderer.setDrawMode(GL_QUADS);
         Shader.disable();
         glDisable(GL_TEXTURE_2D);
@@ -314,32 +327,74 @@ public class WorldRenderer {
         float ext = 1/32F;
         float zero = -ext;
         float one = 1+ext;
-        Tess.instance.setColorRGBAF(1, 1, 1, 0.2F);
-        Tess.instance.add(zero, zero, zero);
-        Tess.instance.add(one, zero, zero);
-        Tess.instance.add(one, one, zero);
-        Tess.instance.add(zero, one, zero);
-        Tess.instance.add(zero, one, one);
-        Tess.instance.add(one, one, one);
-        Tess.instance.add(one, zero, one);
-        Tess.instance.add(zero, zero, one);
-        Tess.instance.add(one, zero, one);
-        Tess.instance.add(one, one, one);
-        Tess.instance.add(one, one, zero);
-        Tess.instance.add(one, zero, zero);
-        Tess.instance.add(zero, one, one);
-        Tess.instance.add(zero, zero, one);
-        Tess.instance.add(zero, zero, zero);
-        Tess.instance.add(zero, one, zero);
-        Tess.instance.add(zero, zero, one);
-        Tess.instance.add(one, zero, one);
-        Tess.instance.add(one, zero, zero);
-        Tess.instance.add(zero, zero, zero);
-        Tess.instance.add(one, one, one);
-        Tess.instance.add(zero, one, one);
-        Tess.instance.add(zero, one, zero);
-        Tess.instance.add(one, one, zero);
-        Tess.instance.draw(GL_QUADS, highlightCube);
+        Tess tesselator = Tess.instance;
+        tesselator.setColorRGBAF(1, 1, 1, 0.2F);
+        tesselator.add(zero, zero, zero);
+        tesselator.add(one, zero, zero);
+        tesselator.add(one, one, zero);
+        tesselator.add(zero, one, zero);
+        tesselator.add(zero, one, one);
+        tesselator.add(one, one, one);
+        tesselator.add(one, zero, one);
+        tesselator.add(zero, zero, one);
+        tesselator.add(one, zero, one);
+        tesselator.add(one, one, one);
+        tesselator.add(one, one, zero);
+        tesselator.add(one, zero, zero);
+        tesselator.add(zero, one, one);
+        tesselator.add(zero, zero, one);
+        tesselator.add(zero, zero, zero);
+        tesselator.add(zero, one, zero);
+        tesselator.add(zero, zero, one);
+        tesselator.add(one, zero, one);
+        tesselator.add(one, zero, zero);
+        tesselator.add(zero, zero, zero);
+        tesselator.add(one, one, one);
+        tesselator.add(zero, one, one);
+        tesselator.add(zero, one, zero);
+        tesselator.add(one, one, zero);
+        tesselator.draw(GL_QUADS, highlightCube);
+        tesselator.resetState();
+
+        
+
+        int scale = (int) (Engine.zfar / 1.43F);
+        int x = -scale;
+        int y = -scale / 16;
+        int z = -scale;
+        int x2 = scale;
+        int y2 = scale / 16;
+        int z2 = scale;
+        int rgbai = 0;
+        rgbai = ((int) (fogColor.x * 255.0F)) << 16 | ((int) (fogColor.y * 255.0F)) << 8 | ((int) (fogColor.z * 255.0F));
+        //      Shaders.colored.enable();
+        tesselator.setColor(rgbai, 255);
+        tesselator.add(x, y2, z);
+        tesselator.add(x, y, z);
+        tesselator.add(x2, y2, z);
+        tesselator.add(x2, y, z);
+        tesselator.add(x2, y2, z2);
+        tesselator.add(x2, y, z2);
+        tesselator.add(x, y2, z2);
+        tesselator.add(x, y, z2);
+        tesselator.add(x, y2, z);
+        tesselator.add(x, y, z);
+        tesselator.draw(GL_QUAD_STRIP, skybox1);
+        //      tesselator.draw(GL_TRIANGLE_STRIP);
+
+        rgbai = ((int) (skyColor.x * 255.0F)) << 16 | ((int) (skyColor.y * 255.0F)) << 8 | ((int) (skyColor.z * 255.0F));
+        tesselator.setColor(-1, 255);
+        tesselator.add(x, y, z2);
+        tesselator.add(x2, y, z2);
+        tesselator.add(x2, y, z);
+        tesselator.add(x, y, z);
+        tesselator.add(x, y2, z);
+        tesselator.add(x2, y2, z);
+        tesselator.add(x2, y2, z2);
+        tesselator.add(x, y2, z2);
+        //    tesselator.draw(GL_TRIANGLES);
+        tesselator.draw(GL_QUADS, skybox2);
+        
     }
 
 }

@@ -5,7 +5,7 @@ import java.util.Iterator;
 import nidefawl.qubes.render.MeshedRegion;
 
 public class RegionLoader {
-    public static final int              LOAD_DIST        = 4;
+    public static final int              LOAD_DIST        = 5;
     //1 << (8-Region.REGION_SIZE_BITS*Region.REGION_SIZE_BITS);
     public static final int MAX_REGION_XZ      = 64;
     public static final int MAX_REGIONS      = (MAX_REGION_XZ*2)*(MAX_REGION_XZ*2);

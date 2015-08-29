@@ -399,6 +399,80 @@ public class Matrix4f {
     }
 
     /**
+     * Transform a Vector by a matrix and return the result in a destination
+     * vector.
+     * @param left The left matrix
+     * @param right The right vector
+     * @param dest The destination vector, or null if a new one is to be created
+     * @return the destination vector
+     */
+    public static Vector3f transform(Matrix4f left, Vector3f right, Vector3f dest) {
+        if (dest == null)
+            dest = new Vector3f();
+
+        float right_w = 1;
+        float x = left.m00 * right.x + left.m10 * right.y + left.m20 * right.z + left.m30 * right_w;
+        float y = left.m01 * right.x + left.m11 * right.y + left.m21 * right.z + left.m31 * right_w;
+        float z = left.m02 * right.x + left.m12 * right.y + left.m22 * right.z + left.m32 * right_w;
+        float w = left.m03 * right.x + left.m13 * right.y + left.m23 * right.z + left.m33 * right_w;
+
+        dest.x = x / w;
+        dest.y = y / w;
+        dest.z = z / w;
+
+        return dest;
+    }
+
+    /**
+     * Transform a Vector by a matrix and return the result in a destination
+     * vector.
+     * @param left The left matrix
+     * @param right The right vector
+     * @param dest The destination vector, or null if a new one is to be created
+     * @return the destination vector
+     */
+    public static Vector4f transformTransposed(Matrix4f left, Vector4f right, Vector4f dest) {
+        if (dest == null)
+            dest = new Vector4f();
+
+        float x = left.m00 * right.x + left.m01 * right.y + left.m02 * right.z + left.m03 * right.w;
+        float y = left.m10 * right.x + left.m11 * right.y + left.m12 * right.z + left.m13 * right.w;
+        float z = left.m20 * right.x + left.m21 * right.y + left.m22 * right.z + left.m23 * right.w;
+        float w = left.m30 * right.x + left.m31 * right.y + left.m32 * right.z + left.m33 * right.w;
+
+        dest.x = x;
+        dest.y = y;
+        dest.z = z;
+        dest.w = w;
+
+        return dest;
+    }
+
+    /**
+     * Transform a Vector by a matrix and return the result in a destination
+     * vector.
+     * @param left The left matrix
+     * @param right The right vector
+     * @param dest The destination vector, or null if a new one is to be created
+     * @return the destination vector
+     */
+    public static Vector3f transformTransposed(Matrix4f left, Vector3f right, Vector3f dest) {
+        if (dest == null)
+            dest = new Vector3f();
+        float right_w = 1;
+        float x = left.m00 * right.x + left.m01 * right.y + left.m02 * right.z + left.m03 * right_w;
+        float y = left.m10 * right.x + left.m11 * right.y + left.m12 * right.z + left.m13 * right_w;
+        float z = left.m20 * right.x + left.m21 * right.y + left.m22 * right.z + left.m23 * right_w;
+        float w = left.m30 * right.x + left.m31 * right.y + left.m32 * right.z + left.m33 * right_w;
+
+        dest.x = x / w;
+        dest.y = y / w;
+        dest.z = z / w;
+
+        return dest;
+    }
+
+    /**
      * Transpose this matrix
      * @return this
      */

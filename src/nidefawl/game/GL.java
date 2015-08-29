@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lwjgl.opengl.ARBTextureStorage;
-import org.lwjgl.opengl.ContextCapabilities;
+import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.opengl.GL42;
 
 public class GL {
@@ -22,7 +22,7 @@ public class GL {
     }
 
     public static List<String> validateCaps() {
-        final ContextCapabilities caps = getCaps();
+        final GLCapabilities caps = getCaps();
         ArrayList<String> missingExt = new ArrayList<>();
         if (!caps.OpenGL30) {
             missingExt.add("OpenGL >= 3.0");
@@ -63,11 +63,11 @@ public class GL {
         org.lwjgl.opengl.GL11.glLoadMatrixf(matrix);
     }
 
-    public static ContextCapabilities getCaps() {
-        return org.lwjgl.opengl.GL.getCurrent().getCapabilities();
+    public static GLCapabilities getCaps() {
+        return org.lwjgl.opengl.GL.getCapabilities();
     }
     public static void glTexStorage3D(int target, int levels, int internalformat, int width, int height, int depth) {
-        ContextCapabilities caps = getCaps();
+        GLCapabilities caps = getCaps();
         if (caps.OpenGL42) {
             GL42.glTexStorage3D(target, levels, internalformat, width, height, depth);
         } else if (caps.GL_ARB_texture_storage) {

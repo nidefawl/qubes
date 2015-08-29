@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import nidefawl.qubes.gui.GuiCrash;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
+import nidefawl.swing.TextDialog;
 
 public abstract class GLGame extends AbstractGLGame {
     static int               initWidth  = 1024;
@@ -35,6 +37,7 @@ public abstract class GLGame extends AbstractGLGame {
 	private GLFWMouseButtonCallback cbMouseButton;
 	private GLFWScrollCallback cbScrollCallback;
 	private GLFWWindowFocusCallback cbWindowFocus;
+	private GLFWCursorPosCallback  cbCursorPos;
     public static boolean toggleTiming;
     public int         lastFPS            = 0;
     protected long     timeLastFPS;
@@ -45,11 +48,19 @@ public abstract class GLGame extends AbstractGLGame {
     public static int ticksran;
     protected boolean  startRender        = false;
     private Object[]   showError;
+    private LogBufferStream outStream;
+    private LogBufferStream errStream;
 	
     public GLGame() {
         this.timer = new Timer(20);
         displayWidth = initWidth;
         displayHeight = initHeight;
+        outStream = new LogBufferStream(System.out);
+        errStream = new LogBufferStream(System.err);
+        System.out.flush();
+        System.err.flush();
+        System.setOut(outStream);
+        System.setErr(errStream);
     }
 
     void initCallbacks() { 
@@ -94,11 +105,17 @@ public abstract class GLGame extends AbstractGLGame {
     		}
     		
     	};
-    	cbWindowFocus = new GLFWWindowFocusCallback() {
-        	@Override
-        	public void invoke(long window, int focused) {
-        		Mouse.setGrabbed(false);
-        	}
+        cbWindowFocus = new GLFWWindowFocusCallback() {
+            @Override
+            public void invoke(long window, int focused) {
+                Mouse.setGrabbed(false);
+            }
+        };
+        cbCursorPos = new GLFWCursorPosCallback() {
+            @Override
+            public void invoke(long window, double xpos, double ypos) {
+                Mouse.update(xpos, ypos);
+            }
         };
     }
     
@@ -148,6 +165,7 @@ public abstract class GLGame extends AbstractGLGame {
             );
 
             glfwMakeContextCurrent(windowId);
+            org.lwjgl.opengl.GL.createCapabilities();
             // Make the window visible
             glfwShowWindow(windowId);
             glfwSetCallback(windowId, cbWindowSize);
@@ -155,8 +173,8 @@ public abstract class GLGame extends AbstractGLGame {
             glfwSetCallback(windowId, cbMouseButton);
             glfwSetCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
-            org.lwjgl.opengl.GL.createCapabilities(false);
-            GLContext.createFromCurrent();
+            glfwSetCallback(windowId, cbCursorPos);
+            
             int major, minor, rev;
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
             minor = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
@@ -269,7 +287,6 @@ public abstract class GLGame extends AbstractGLGame {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
-    	Mouse.update(displayWidth, displayHeight);
     }
 
 	@Override
@@ -386,7 +403,6 @@ public abstract class GLGame extends AbstractGLGame {
                 runFrame();
             }
         } catch (Throwable t) {
-            t.printStackTrace();
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t);
         } finally {
             if (this.wasrunning) {
@@ -449,7 +465,16 @@ public abstract class GLGame extends AbstractGLGame {
                 Thread.sleep(120L);
             } catch (InterruptedException interruptedexception) {
             }
-            Tess.useClientStates = true;
+            String buf1 = outStream.baos.toString("UTF-8");
+            String buf2 = errStream.baos.toString("UTF-8");
+            TextDialog dlg = new TextDialog(title, desc, throwable);
+            dlg.prepend(buf1);
+            dlg.prepend(buf2);
+            dlg.setVisible(displayWidth, displayHeight);
+            while (dlg.isVisible()) {
+                Thread.sleep(4400);
+            }
+            /*Tess.useClientStates = true;
 
             initDisplay(true);
 
@@ -521,7 +546,7 @@ public abstract class GLGame extends AbstractGLGame {
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.render");
                 updateDisplay();
                 if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateDisplay");
-            }
+            }*/
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {

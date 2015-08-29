@@ -44,6 +44,10 @@ public abstract class Entity {
 	}
 	
 	public void tickUpdate() {
+	    if (this.yaw > 360)
+	        this.yaw -= 360;
+	    if (this.yaw < 0)
+	        this.yaw += 360;
         this.lastYaw = this.yaw;
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);

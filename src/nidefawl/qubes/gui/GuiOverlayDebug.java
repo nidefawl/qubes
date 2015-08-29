@@ -11,6 +11,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.UniformBuffer;
 
 public class GuiOverlayDebug extends Gui {
 
@@ -69,7 +70,7 @@ public class GuiOverlayDebug extends Gui {
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
         glPopAttrib();
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopAttrib");
-        Engine.fbDbg.unbindCurrentFrameBuffer();
+        FrameBuffer.unbindFramebuffer();
     }
 
     public void drawDbgTexture(int stage, int side, int num, int texture, String string) {
@@ -90,7 +91,7 @@ public class GuiOverlayDebug extends Gui {
         w1-=5;
         mat.translate(gap/2+(w1+gap/2)*side, 0, 0);
         mat.translate(0, gapy+(gapy+h)*num, 0);
-        Shaders.pushMat(mat);
+        UniformBuffer.pushMat(mat);
         glEnable(GL_BLEND);
         GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, texture);
         Shaders.textured.enable();
@@ -116,7 +117,7 @@ public class GuiOverlayDebug extends Gui {
         fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
         fontSmall.drawString(""+texture+"", w1-2, h-2, -1, true, 1.0F, 1);
         Shader.disable();
-        Shaders.popMat();
+        UniformBuffer.popMat();
     }
     TesselatorState state = new TesselatorState();
     public void drawDebug() {
@@ -128,9 +129,13 @@ public class GuiOverlayDebug extends Gui {
         };
         if (Main.useBasicShaders) {
             names = new String[] {
+                    "Deferred",
+                    "Blur",
                     "Final",
             };
         }
+        mat.setIdentity();
+        UniformBuffer.pushMat(mat);
             int w1 = 120;
             int gap = 24;
             int wCol = w1 * 2 + gap;
@@ -144,35 +149,37 @@ public class GuiOverlayDebug extends Gui {
             Tess.tessFont.add(wCol, yCol, 0);
             Tess.tessFont.add(0, yCol, 0);
             Tess.tessFont.draw(GL_QUADS, state);
-            glPushMatrix();
             for (int i = 0; i < names.length; i++) {
                 state.drawQuads();
-                glTranslatef(wCol + gap, 0, 0);
+                mat.translate(wCol + gap, 0, 0);
+                UniformBuffer.pushMat(mat);
             }
-            glPopMatrix();
+            mat.setIdentity();
+            UniformBuffer.pushMat(mat);
             Tess.tessFont.setColorRGBAF(.4F, .4F, .4F, 0.8F);
             Tess.tessFont.add(b, yCol + hCol - b, 0);
             Tess.tessFont.add(wCol - b, yCol + hCol - b, 0);
             Tess.tessFont.add(wCol - b, yCol + b, 0);
             Tess.tessFont.add(b, yCol + b, 0);
             Tess.tessFont.draw(GL_QUADS, state);
-            glPushMatrix();
             for (int i = 0; i < names.length; i++) {
                 state.drawQuads();
-                glTranslatef(wCol + gap, 0, 0);
+                mat.translate(wCol + gap, 0, 0);
+                UniformBuffer.pushMat(mat);
             }
-            glPopMatrix();
+            mat.setIdentity();
+            UniformBuffer.pushMat(mat);
             glEnable(GL_BLEND);
-            glPushMatrix();
             Shaders.textured.enable();
             for (int i = 0; i < names.length; i++) {
                 fontSmall.drawString(names[i], 8, yCol+20, -1, true, 1.0F);
                 fontSmall.drawString("INPUT", 12, yCol+50, -1, true, 1.0F);
                 fontSmall.drawString("OUTPUT", 8+w1+gap/2, yCol+50, -1, true, 1.0F);
-                glTranslatef(wCol + gap, 0, 0);
+                mat.translate(wCol + gap, 0, 0);
+                UniformBuffer.pushMat(mat);
             }
             Shader.disable();
-            glPopMatrix();
+        UniformBuffer.popMat();
     }
 
 }

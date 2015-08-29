@@ -78,6 +78,19 @@ public class Mesh {
     }
 
 
+    public void drawBasic(Tess tess) {
+        if (bs.face == 0) {
+            tess.add(this.v0[0], this.v0[1], this.v0[2]);
+            tess.add(this.v1[0], this.v1[1], this.v1[2]);
+            tess.add(this.v2[0], this.v2[1], this.v2[2]);
+            tess.add(this.v3[0], this.v3[1], this.v3[2]);
+        } else {
+            tess.add(this.v3[0], this.v3[1], this.v3[2]);
+            tess.add(this.v2[0], this.v2[1], this.v2[2]);
+            tess.add(this.v1[0], this.v1[1], this.v1[2]);
+            tess.add(this.v0[0], this.v0[1], this.v0[2]);
+        }
+    }
     public void draw(Tess tess) {
         tess.setNormals(this.normal[0], this.normal[1], this.normal[2]);
         Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
@@ -106,19 +119,20 @@ public class Mesh {
             }
 //        }
 //        float m = 1F;
-        float alpha = 1F;
+        float alpha = block.getAlpha();
         int c = block.getColor();
-        if (block == Block.water) {
-            alpha = 0.8F;
-        }
         float b = (c & 0xFF) / 255F;
         c >>= 8;
         float g = (c & 0xFF) / 255F;
         c >>= 8;
         float r = (c & 0xFF) / 255F;
-        
+
         AO_TABLE[0] = 0.6F;
         AO_TABLE[1] = 0.8F;
+        AO_TABLE[2] = 1.0F;
+
+        AO_TABLE[0] = 0.4F;
+        AO_TABLE[1] = 0.6F;
         AO_TABLE[2] = 1.0F;
         
         

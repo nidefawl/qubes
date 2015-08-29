@@ -1,0 +1,19 @@
+#version 150 core
+
+
+in vec4 color;
+in vec3 vposition;
+
+out vec4 out_Color;
+
+// const vec3 fogColor=vec3(0.84f, 0.84f, 0.96f);
+
+const vec3 fogColor=vec3(0.54f, 0.74f, 0.96f)*1.1f;
+
+void main() {
+  float dist = length(vposition);
+  float fogFactor = clamp( (dist - 150.0f) / 550.0f, 0.0f, 0.5f );
+  // fogFactor += clamp( (dist - 20.0f) / 420.0f, 0.0f, 0.06f );
+  vec4 skycolor = mix(vec4(fogColor, 1), vec4(1,1,1, 1), fogFactor);
+  out_Color = skycolor;
+}

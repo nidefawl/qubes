@@ -14,6 +14,7 @@ public class Block {
     public final static Block dirt = new Block(3).setName("dirt");
     public final static Block water = new BlockWater(4).setName("water");
     public final static Block sand = new Block(5).setName("sand");
+    public final static Block ligth = new BlockLight(6).setName("light").setTextures("blank");
     public final int id;
     private String name;
     private final boolean transparent;
@@ -35,6 +36,14 @@ public class Block {
     }
     public String[] getTextures() {
         return this.textures;
+    }
+
+    public Block setTextures(String...list) {
+        for (int a = 0; a < list.length; a++) {
+            list[a] = "textures/blocks/" + list[a] + ".png";
+        }
+        this.textures = list;
+        return this;
     }
     
     public String getName() {
@@ -77,5 +86,8 @@ public class Block {
         aabb.set(this.blockBounds);
         aabb.offset(x, y, z);
         return aabb;
+    }
+    public float getAlpha() {
+        return 1;
     }
 }

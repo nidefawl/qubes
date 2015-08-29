@@ -62,7 +62,7 @@ public class TesselatorState {
         GL11.glVertexPointer(4, GL11.GL_FLOAT, stride*4, (ByteBuffer) buffer.position(0));
         int offset = 4;
         if (useNormalPtr) {
-            GL11.glNormalPointer(stride*4, (ByteBuffer) buffer.position(offset*4));
+            GL11.glNormalPointer(GL11.GL_BYTE, stride*4, (ByteBuffer) buffer.position(offset*4));
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glNormalPointer");
             GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
             offset+=1;
@@ -74,7 +74,7 @@ public class TesselatorState {
             offset+=2;
         }
         if (useColorPtr) {
-            GL11.glColorPointer(4, true, stride*4, (ByteBuffer) buffer.position(offset*4));
+            GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, stride*4, (ByteBuffer) buffer.position(offset*4));
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexCoordPointer");
             GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
             offset+=1;
@@ -137,8 +137,12 @@ public class TesselatorState {
     }
 
     public void drawQuads() {
+        bindAndDraw(GL11.GL_QUADS);
+    }
+
+    public void bindAndDraw(int mode) {
         bindVBO();
         setAttrPtr();
-        drawVBO(GL11.GL_QUADS);
+        drawVBO(mode);
     }
 }

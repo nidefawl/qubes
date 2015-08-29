@@ -190,4 +190,13 @@ public class Vec3 {
         throw new IllegalStateException("vec with len <= 0");
     }
 
+    public final Vec3 normaliseNull() {
+        float len = length();
+        if (len > 1E-8F) {
+            float l = 1.0F / len;
+            return scale(l);
+        }
+        return null;
+    }
+
 }

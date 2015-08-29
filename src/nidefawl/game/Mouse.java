@@ -17,19 +17,26 @@ public class Mouse {
 	protected static double scrollDX;
 	protected static double scrollDY;
 
+    private static double lastX, lastY;
     static DoubleBuffer bx;
     static DoubleBuffer by;
 	public static void init() {
 
         bx = BufferUtils.createDoubleBuffer(1);
         by = BufferUtils.createDoubleBuffer(1);
+        lastX = lastY = -1;
+        setLastPos();
 	}
 	public static double getDX() {
-		return dx;
+	    double _dx = dx;
+	    dx = 0;
+		return _dx;
 	}
 
 	public static double getDY() {
-		return dy;
+        double _dy = dy;
+        dy = 0;
+        return _dy;
 	}
 
 	public static boolean getState(int action) {
@@ -54,30 +61,37 @@ public class Mouse {
 	}
 
 	public static void setGrabbed(boolean b) {
+        if (b != isGrabbed) {
+            setLastPos();
+        }
 		isGrabbed = b;
-        GLFW.glfwSetInputMode(GLGame.windowId, GLFW.GLFW_CURSOR, b ? GLFW.GLFW_CURSOR_HIDDEN : GLFW.GLFW_CURSOR_NORMAL);
+        GLFW.glfwSetInputMode(GLGame.windowId, GLFW.GLFW_CURSOR, b ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
 	}
 
-	public static boolean isButtonDown(int i) {
+	private static void setLastPos() {
+        bx.position(0);
+        by.position(0);
+        GLFW.glfwGetCursorPos(GLGame.windowId, bx, by);    
+        lastX = bx.get();
+        lastY = by.get();
+    }
+    public static boolean isButtonDown(int i) {
 		return glfwGetMouseButton(GLGame.windowId, GLFW.GLFW_MOUSE_BUTTON_LEFT+i) == GLFW.GLFW_PRESS;
 	}
 
-	public static void update(int displayWidth, int displayHeight) {
-		double centerX = displayWidth/2;
-		double centerY = displayHeight/2;
-		bx.position(0);
-		by.position(0);
-		GLFW.glfwGetCursorPos(GLGame.windowId, bx, by);
-		x = bx.get();
-		y = displayHeight-by.get();
-        if (Mouse.isGrabbed) {
-    		dx = x-centerX;
-    		dy = y-centerY;
-            glfwSetCursorPos(GLGame.windowId, centerX, centerY);
+	public static void update(double mx, double my) {
+//	    mx = my = 0;
+		x = mx;
+		y = my;
+        if (isGrabbed) {
+    		dx += x-lastX;
+    		dy += y-lastY;
         } else {
         	dx = 0;
         	dy = 0;
         }
+        lastX = mx;
+        lastY = my;
 	}
 
 }
