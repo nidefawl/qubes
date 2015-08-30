@@ -23,8 +23,6 @@ public class MeshUpdateTask {
 
     public int              worldInstance;
     private boolean         meshed;
-    private int x;
-    private int z;
     private MeshedRegion mr;
     
     public MeshUpdateTask() {
@@ -42,8 +40,6 @@ public class MeshUpdateTask {
                 }
             }
             this.mr = mr;
-            this.x = mr.rX; 
-            this.z = mr.rZ;
             mr.renderState = RegionRenderer.RENDER_STATE_MESHING;
             return true;
         } else {
@@ -88,9 +84,10 @@ public class MeshUpdateTask {
         if (w != null) {
             try {
               int xOff = this.mr.rX << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
+              int yOff = this.mr.rY << (Region.SLICE_HEIGHT_BLOCK_BITS);
               int zOff = this.mr.rZ << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
                 long l = System.nanoTime();
-                this.mesher.mesh(w, this.cache);
+                this.mesher.mesh(w, this.cache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
                 for (int i = 0; i < NUM_PASSES; i++) {
@@ -101,7 +98,7 @@ public class MeshUpdateTask {
                         tess.setColor(-1, 255);
                         tess.setBrightness(0xf00000);
                     }
-                    tess.setOffset(xOff, 0, zOff);
+                    tess.setOffset(xOff, yOff, zOff);
                     int size = mesh.size();
                     for (int m = 0; m < size; m++) {
                         TerrainQuad face = mesh.get(m);

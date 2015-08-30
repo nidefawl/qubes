@@ -15,9 +15,17 @@ public class Uniform1i extends AbstractUniform {
             if (x != lastX || first) {
                 first = false;
                 lastX = x;
-                glUniform1iARB(this.loc, x);
-                return true;
+                return set();
             }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean set() {
+        if (validLoc()) {
+            glUniform1iARB(this.loc, lastX);
+            return true;
         }
         return false;
     }

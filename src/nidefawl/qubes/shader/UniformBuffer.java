@@ -120,8 +120,8 @@ public class UniformBuffer {
         uboBuffer.put(1F);
         uboBuffer.put(Main.displayWidth);
         uboBuffer.put(Main.displayHeight);
-        uboBuffer.put(1F);
-        uboBuffer.put(1F);
+        uboBuffer.put(Engine.znear);
+        uboBuffer.put(Engine.zfar);
         uboBuffer.flip();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
         if (Main.GL_ERROR_CHECKS)

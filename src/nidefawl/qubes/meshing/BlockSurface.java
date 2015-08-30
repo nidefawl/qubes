@@ -23,6 +23,8 @@ public class BlockSurface {
     public int ao3 = 0;
     public boolean rotateVertex;
     public boolean extraFace;
+    protected boolean resolved;
+    public boolean hasAO;
     
     public void calcAO(RegionCache cache) {
         if (Block.block[this.type].applyAO()) {
@@ -194,7 +196,11 @@ public class BlockSurface {
     }
 
 
-    public boolean mergeWith(BlockSurface c) {
+    public boolean mergeWith(RegionCache cache, BlockSurface c) {
+        if (!this.resolved)
+            this.resolve(cache);
+        if (!c.resolved)
+            c.resolve(cache);
         if (c.type == this.type && c.face == this.face && c.pass == this.pass && c.extraFace == this.extraFace) {
             return this.ao0 == c.ao0 && this.ao1 == c.ao1 && this.ao2 == c.ao2 && this.ao3 == c.ao3;
 //            if (Math.abs(this.x-c.x)>3||Math.abs(this.z-c.z)>3) {
@@ -208,6 +214,47 @@ public class BlockSurface {
 //            return true;
         }
         return false;
+    }
+
+    void resolve(RegionCache cache) {
+        this.resolved = true;
+        if (this.hasAO) {
+            this.calcAO(cache);
+        }
+    }
+
+    public void reset() {
+        ao0 = 0;
+        ao1 = 0;
+        ao2 = 0;
+        ao3 = 0;
+        this.type = 0;
+        this.transparent = false;
+        this.region = null;
+        this.transparent = false;
+        this.extraFace = false;
+        this.type = 0;
+        this.face = 0;
+        this.pass = 0;
+        this.rotateVertex = false;
+        x = y = z = 0;
+        axis = 0;
+
+//        public boolean transparent;
+//        public int type;
+//        public int face;
+//        public int axis;
+//        public int x;
+//        public int y;
+//        public int z;
+//        public int pass;
+//        public Region region;
+//        public int ao0 = 0;
+//        public int ao1 = 0;
+//        public int ao2 = 0;
+//        public int ao3 = 0;
+//        public boolean rotateVertex;
+//        public boolean extraFace;
     }
 
 }

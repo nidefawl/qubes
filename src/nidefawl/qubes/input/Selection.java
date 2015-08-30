@@ -2,10 +2,14 @@ package nidefawl.qubes.input;
 
 import static org.lwjgl.opengl.GL11.*;
 
+import nidefawl.game.Keyboard;
+import nidefawl.qubes.Main;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.vec.BlockPos;
@@ -15,10 +19,12 @@ public class Selection {
     private TesselatorState highlightSelection;
     boolean                 mouseDown         = false;
     boolean                 mouseStateChanged = false;
+    private RayTrace rayTrace;
 
     public void init() {
 
         highlightSelection = new TesselatorState();
+        this.rayTrace = new RayTrace(); 
     }
 
     public BlockPos[] selection = new BlockPos[] {
@@ -108,30 +114,43 @@ public class Selection {
         tesselator.resetState();
     }
 
-    public void update(World world, double px, double py, double pz, RayTrace rayTrace) {
-        BlockPos p = rayTrace.getColl();
-        //      if (p != null) {
-        //          if (this.mouseClicked && !mouseDown) {
-        //              setBlock();
-        //          }
-        //      }
-        //TODO: add some better logic for highlighting, don't render "into" camera
-        if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
-            if (!mouseDown) {
-                set(0, p);
-                set(1, p);
-            } else if (mouseStateChanged) {
-                set(0, p);
-            } else {
-                set(1, p);
-            }
-        } else {
-            if (!mouseDown) {
-                set(1, selection[0]);
-            }
-            //          System.err.println("fail "+p);
+    public void update(World world, double px, double py, double pz) {
+        this.rayTrace.reset();
+        if (world == null) {
+            this.mouseDown = false;
+            this.mouseStateChanged = false;
+            return;
         }
-        this.mouseStateChanged = false;
+        if (Engine.vDir != null) {
+            this.rayTrace.doRaytrace(world, Engine.vOrigin, Engine.vDir, extendReach() ? 200 : 55);
+
+            BlockPos p = rayTrace.getColl();
+            //      if (p != null) {
+            //          if (this.mouseClicked && !mouseDown) {
+            //              setBlock();
+            //          }
+            //      }
+            //TODO: add some better logic for highlighting, don't render "into" camera
+            if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
+                if (!mouseDown ||(Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL))) {
+                    set(0, p);
+                    set(1, p);
+                } else if (mouseStateChanged) {
+                    set(0, p);
+                } else {
+                    set(1, p);
+                }
+            } else {
+                if (!mouseDown) {
+                    set(1, selection[0]);
+                }
+                //          System.err.println("fail "+p);
+            }
+            this.mouseStateChanged = false;
+            if (this.mouseDown && Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL)) {
+                onRelease();
+            }
+        }
     }
 
     private void set(int i, BlockPos p2) {
@@ -147,16 +166,13 @@ public class Selection {
     public void clicked(int button, boolean isDown) {
         this.mouseDown = isDown;
         this.mouseStateChanged = this.mouseDown != isDown;
-        if (this.mouseStateChanged) {
-            if (mouseDown) {
-            } else {
-
-            }
+        if (!this.mouseDown && !Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL)) {
+            onRelease();
         }
     }
 
     public boolean extendReach() {
-        return this.mouseDown;
+        return this.mouseDown || Main.instance.movement.grabbed();
     }
 
     public BlockPos getMin() {
@@ -171,5 +187,64 @@ public class Selection {
         BlockPos p1 = getMin();
         BlockPos p2 = getMax();
         return (p2.x-p1.x+1)*(p2.y-p1.y+1)*(p2.z-p1.z+1);
+    }
+    
+    
+
+    private void onRelease() {
+        World world = Main.instance.getWorld();
+        if (world != null) {
+            int blocks = Engine.selection.getNumBlocks();
+            System.out.println(blocks);
+            if (blocks == 1) {
+                BlockPos blockPos = rayTrace.getColl();
+                if (blockPos != null) {
+                    BlockPos face = rayTrace.getFace();
+                    int blockX = blockPos.x;
+                    int blockY = blockPos.y;
+                    int blockZ = blockPos.z;
+                    //            int i = this.world.getBiome(blockX, blockY, blockZ);
+                    int id = world.getType(blockX, blockY, blockZ);
+                    String msg = "";
+                    msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
+                    msg += String.format("Block:           %d\n", id);
+                    //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
+                    msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
+
+                    if (Main.instance.statsOverlay != null) {
+                        Main.instance.statsOverlay.setMessage(msg);
+                    }
+                    int block = Main.instance.selBlock;
+                    if (block > 0) {
+                        blockX += face.x;
+                        blockY += face.y;
+                        blockZ += face.z;
+
+                        world.setType(blockX, blockY, blockZ, block, Flags.RENDER);
+                    } else {
+
+                        world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
+                    }
+                }
+            } else {
+                BlockPos p1 = Engine.selection.getMin();
+                BlockPos p2 = Engine.selection.getMax();
+                int w = p2.x-p1.x+1;
+                int h = p2.y-p1.y+1;
+                int l = p2.z-p1.z+1;
+                for (int x = 0; x < w; x++) {
+                    for (int y = 0; y < h; y++) {
+                        for (int z = 0; z < l; z++) {
+                            int blockX = p1.x+x;
+                            int blockY = p1.y+y;
+                            int blockZ = p1.z+z;
+                            world.setType(blockX, blockY, blockZ, Main.instance.selBlock, Flags.RENDER);
+                        }
+                    }
+                    
+                }
+                
+            }
+        }
     }
 }

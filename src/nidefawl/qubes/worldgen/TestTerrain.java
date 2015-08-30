@@ -21,8 +21,7 @@ public class TestTerrain extends AbstractGen {
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);
         int heightBits = world.worldHeightBits;
-        short[] blocks = new short[16*16*this.world.worldHeight];
-        Chunk c = new Chunk(blocks, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(chunkX, chunkZ, heightBits);
         generateTerrain(c);
         c.checkIsEmtpy();
         return c;
@@ -33,10 +32,11 @@ public class TestTerrain extends AbstractGen {
         int b = 4;
         int c = 60;
         int d = 8;
+        short[] blocks = new short[Chunk.SIZE*Chunk.SIZE*this.world.worldHeight];
         for (int x = b; x < 16-b; x++) {
             for (int z = b; z < 16-b; z++) {
                 for (int y = c; y < c+d; y++) {
-                    chunk.blocks[y<<8|z<<4|x] = 1;
+                    blocks[y<<8|z<<4|x] = 1;
                 }
             }
         }
@@ -46,10 +46,11 @@ public class TestTerrain extends AbstractGen {
         for (int x = b; x < 16-b; x++) {
             for (int z = b; z < 16-b; z++) {
                 for (int y = c; y < c+d; y++) {
-                    chunk.blocks[y<<8|z<<4|x] = 1;
+                    blocks[y<<8|z<<4|x] = 1;
                 }
             }
         }
+        chunk.setBlocks(blocks);
     }
 
 }

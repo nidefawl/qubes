@@ -42,6 +42,8 @@ public class FinalRenderer {
         if (Main.DO_TIMING)
             TimingHelper.endStart("enableShader");
         shaderDeferred.enable();
+        shaderDeferred.setProgramUniform1f("near", Engine.znear);
+        shaderDeferred.setProgramUniform1f("far", Engine.zfar);
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
 
@@ -245,8 +247,6 @@ public class FinalRenderer {
             shaderFinal.enable();
             shaderFinal.setProgramUniform1i("texColor", 0);
             shaderFinal.setProgramUniform1i("texBlur", 1);
-            shaderFinal.setProgramUniform1f("near", Engine.znear);
-            shaderFinal.setProgramUniform1f("far", Engine.zfar);
             shaderBlur.enable();
             shaderBlur.setProgramUniform1i("texColor", 0);
             shaderThreshold.enable();
@@ -258,8 +258,6 @@ public class FinalRenderer {
             shaderDeferred.setProgramUniform1i("texDepth", 3);
             shaderDeferred.setProgramUniform1i("texShadow", 4);
             shaderDeferred.setProgramUniform1i("noisetex", 5);
-            shaderDeferred.setProgramUniform1f("near", Engine.znear);
-            shaderDeferred.setProgramUniform1f("far", Engine.zfar);
             Shader.disable();
         } catch (ShaderCompileError e) {
             Main.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");

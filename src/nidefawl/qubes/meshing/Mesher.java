@@ -9,6 +9,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.util.TimingHelper2;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
@@ -16,9 +17,13 @@ public class Mesher {
     private final int[]    dims;
     private BlockSurface[] mask2;
     final static BlockSurfaceAir air = new BlockSurfaceAir();
+    private final BlockSurface[] scratchPad = new BlockSurface[1000000];
+    int scratchpadidx = 0;
     @SuppressWarnings("rawtypes")
     List[] meshes = new List[WorldRenderer.NUM_PASSES];
     public Mesher() {
+        for (int i = 0; i < scratchPad.length; i++)
+            this.scratchPad[i] = new BlockSurface();
         for (int i = 0; i < meshes.length; i++)
             this.meshes[i] = new ArrayList<>();
         this.dims = new int[3];
@@ -32,7 +37,7 @@ public class Mesher {
         while (j + h < dims[v]) {
             for (int k = 0; k < w; ++k) {
                 BlockSurface bs = mask2[n + k + h * dims[u]];
-                if (bs == null || !c.mergeWith(bs)) {
+                if (bs == null || !c.mergeWith(cache, bs)) {
                     return h;
                 }
             }
@@ -95,21 +100,28 @@ public class Mesher {
     
     RegionCache cache;
     private int strategy;
-    public void mesh(World world, RegionCache cache) {
+    private int yPos;
+    final static boolean MEASURE = false;
+    public void mesh(World world, RegionCache cache, int rY) {
+        this.yPos = rY<<SLICE_HEIGHT_BLOCK_BITS;
         this.cache = cache;
         for (int i = 0; i < this.meshes.length; i++)
             this.meshes[i].clear();
         this.strategy = 0;
+        if (MEASURE) TimingHelper2.startSec("mesh0");
         this.meshRound(world, cache);
         this.strategy = 1;
+        if (MEASURE) TimingHelper2.endStart("mesh1");
         this.meshRound(world, cache);
+        if (MEASURE) TimingHelper2.endSec();
     }
     public void meshRound(World world, RegionCache cache) {
+        scratchpadidx = 0;
         Region region = cache.get(0, 0);
         if (!region.isEmpty()) {
-            dims[0] = Chunk.SIZE*REGION_SIZE;
-            dims[1] = region.getHighestBlock() + 1; // always correct (with neighbours)?
-            dims[2] = Chunk.SIZE*REGION_SIZE;
+            dims[0] = REGION_SIZE_BLOCKS;
+            dims[1] = SLICE_HEIGHT_BLOCKS;
+            dims[2] = REGION_SIZE_BLOCKS;
             Arrays.fill(mask2, null);
             
             int x[] = new int[] { 0, 0, 0 };
@@ -122,22 +134,28 @@ public class Mesher {
                 int masklen = dims[u] * dims[v];
                 dir[axis] = 1;
                 for (x[axis] = -1; x[axis] < dims[axis];) {
-                    
+
+                    if (MEASURE) TimingHelper2.startSec("masq");
                     int n = 0;
                     for (x[v] = 0; x[v] < dims[v]; ++x[v]) {
                         for (x[u] = 0; x[u] < dims[u]; ++x[u]) {
                             bs1 = null;
                             bs2 = null;
                             if (x[axis] >= -1) {
+                                if (MEASURE) TimingHelper2.startSec("getBlockSurface");
                                 bs1 = getBlockSurface(x[0], x[1], x[2], 0, axis);
+                                if (MEASURE) TimingHelper2.endSec();
                             }
                             if (x[axis] < dims[axis]) {
+                                if (MEASURE) TimingHelper2.startSec("getBlockSurface");
                                 bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
+                                if (MEASURE) TimingHelper2.endSec();
                             }
                             setMask2(n);
                             n++;
                         }
                     }
+                    if (MEASURE) TimingHelper2.endStart("compute");
                     
                     ++x[axis];
                     n = 0;
@@ -147,7 +165,7 @@ public class Mesher {
                             if (c != null && c != air && (!c.extraFace)) {
                                 // Compute width
                                 int w = 1;
-                                while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(c)) && i + w < dims[u]) {
+                                while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(cache, c)) && i + w < dims[u]) {
                                     w++;
                                 }
                                 int h = computeHeight(i, j, n, w, v, u, c);
@@ -161,6 +179,8 @@ public class Mesher {
                                 du[u] = w;
                                 dv[v] = h;
                                 if (add) {
+                                    if (!c.resolved)
+                                        c.resolve(cache);
                                     
                                     TerrainQuad face = new TerrainQuad(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                                     meshes[c.pass].add(face);
@@ -180,6 +200,7 @@ public class Mesher {
                             }
                         }
                     }
+                    if (MEASURE) TimingHelper2.endSec();
                 }
             }
         }
@@ -188,23 +209,24 @@ public class Mesher {
 
 
     private BlockSurface getBlockSurface(int i, int j, int k, int l, int axis) {
+        j += yPos;
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return air;
         }
         int regionX = 0;
         int regionZ = 0;
         if (i < 0) {
-            i += Chunk.SIZE*REGION_SIZE;
+            i += REGION_SIZE_BLOCKS;
             regionX--;
         } else if (i >= dims[0]) {
-            i -= Chunk.SIZE*REGION_SIZE;
+            i -= REGION_SIZE_BLOCKS;
             regionX++;
         }
         if (k < 0) {
-            k += Chunk.SIZE*REGION_SIZE;
+            k += REGION_SIZE_BLOCKS;
             regionZ--;
         } else if (k >= dims[2]) {
-            k -= Chunk.SIZE*REGION_SIZE;
+            k -= REGION_SIZE_BLOCKS;
             regionZ++;
         }
         Region region = this.cache.get(regionX, regionZ);
@@ -226,9 +248,9 @@ public class Mesher {
             surface.type = type;
             surface.transparent = block.isTransparent();
             surface.x = i;
-            surface.extraFace = regionX != 0 || regionZ != 0;
             surface.y = j;
             surface.z = k;
+            surface.extraFace = regionX != 0 || regionZ != 0;
             surface.face = l;
             surface.axis = axis;
             surface.pass = pass;
@@ -236,20 +258,21 @@ public class Mesher {
                 surface.type = 1;
                 surface.pass = 2;
             } else {
-                surface.calcAO(this.cache);
+                surface.hasAO = true;
             }
-            surface.x = i+region.rX*Region.REGION_SIZE_BLOCKS;
-            surface.y = j;
-            surface.z = k+region.rZ*Region.REGION_SIZE_BLOCKS;
+            surface.region = region;
             return surface;
         }
-//        if (regionX!=0&&regionZ!=0) {
-//            if (!region.isChunkLoaded((i>>4), (k>>4))) {
-//                System.err.println("CHUNK NOT LOADED ON NEIGHBOUR");
-//            }
-//        }
         return air;
     }
+
+
+    private BlockSurface next() {
+        BlockSurface surface = scratchPad[scratchpadidx++];
+        surface.reset();
+        return surface;
+    }
+
 
 
     public List<TerrainQuad> getMeshes(int pass) {

@@ -37,7 +37,6 @@ public class Main extends GLGame {
     }
 
     public static boolean  show               = false;
-    public static boolean  useBasicShaders    = true;
     public static boolean  matrixSetupMode    = false;
     public static boolean  renderWireFrame    = false;
     
@@ -51,7 +50,7 @@ public class Main extends GLGame {
 
     FontRenderer       fontSmall;
     final PlayerSelf   entSelf            = new PlayerSelf(1);
-    Movement           movement           = new Movement();
+    public Movement           movement           = new Movement();
     World              world              = null;
     public boolean     follow             = true;
     private float      lastCamX;
@@ -109,7 +108,6 @@ public class Main extends GLGame {
         this.entSelf.pitch=38.50F;
 //        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
 //        this.entSelf.toggleFly();
-        this.rayTrace = new RayTrace();
     }
     public void setWorld(World world) {
         if (this.world != null) {
@@ -175,8 +173,7 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F6:
                     if (isDown) {
-                        useBasicShaders = !useBasicShaders;
-                        Engine.reloadRenderer(useBasicShaders);
+                        TimingHelper2.dump();
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
@@ -206,9 +203,6 @@ public class Main extends GLGame {
         switch (button) {
             case 0:
                 Engine.selection.clicked(button, isDown);
-                if (!isDown) {
-                    onRelease();
-                }
                 break;
             case 1:
                 if (isDown ) {
@@ -237,59 +231,6 @@ public class Main extends GLGame {
     }
 
 
-    private void onRelease() {
-        int blocks = Engine.selection.getNumBlocks();
-        System.out.println(blocks);
-        if (blocks == 1) {
-            BlockPos blockPos = rayTrace.getColl();
-            if (blockPos != null) {
-                BlockPos face = rayTrace.getFace();
-                int blockX = blockPos.x;
-                int blockY = blockPos.y;
-                int blockZ = blockPos.z;
-                //            int i = this.world.getBiome(blockX, blockY, blockZ);
-                int id = this.world.getType(blockX, blockY, blockZ);
-                String msg = "";
-                msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
-                msg += String.format("Block:           %d\n", id);
-                //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
-                msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
-
-                if (this.statsOverlay != null) {
-                    this.statsOverlay.setMessage(msg);
-                }
-                int block = this.selBlock;
-                if (block > 0) {
-                    blockX += face.x;
-                    blockY += face.y;
-                    blockZ += face.z;
-
-                    this.world.setType(blockX, blockY, blockZ, block, Flags.RENDER);
-                } else {
-
-                    this.world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
-                }
-            }
-        } else {
-            BlockPos p1 = Engine.selection.getMin();
-            BlockPos p2 = Engine.selection.getMax();
-            int w = p2.x-p1.x+1;
-            int h = p2.y-p1.y+1;
-            int l = p2.z-p1.z+1;
-            for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                    for (int z = 0; z < l; z++) {
-                        int blockX = p1.x+x;
-                        int blockY = p1.y+y;
-                        int blockZ = p1.z+z;
-                        this.world.setType(blockX, blockY, blockZ, this.selBlock, Flags.RENDER);
-                    }
-                }
-                
-            }
-            
-        }
-    }
 
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
@@ -404,7 +345,7 @@ public class Main extends GLGame {
         if (this.statsCached != null) {
             this.statsCached.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 1000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 122000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -449,13 +390,9 @@ public class Main extends GLGame {
         }
         Engine.updateMouseOverView(winX, winY);
         Engine.updateSun(f);
-        this.rayTrace.reset();
+        Engine.selection.update(world, px, py, pz);
         
         if (this.world != null) {
-            if (Engine.vDir != null) {
-                this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir, (Engine.selection.extendReach() || !this.movement.grabbed()) ? 200 : 55);
-                Engine.selection.update(this.world, px, py, pz, this.rayTrace);
-            }
             Engine.regionLoader.finishTasks();
             if (follow) {
                 lastCamX = Engine.camera.getPosition().x;

@@ -2,17 +2,17 @@ package nidefawl.game;
 
 
 public abstract class AbstractGLGame implements Runnable {
-	public static String appName = "LWJGL Test App";
-	public static int displayWidth;
-	public static int displayHeight;
-	public static boolean glDebug = false;
-	protected boolean vsync = true;
-	private Thread thread;
-	protected volatile boolean running = false;
-	protected volatile boolean wasrunning = false;
-	public static boolean DO_TIMING = false;
-	public static boolean GL_ERROR_CHECKS = true;
-	public static long windowId = 0;
+    public static String       appName         = "LWJGL Test App";
+    public static int          displayWidth;
+    public static int          displayHeight;
+    public static boolean      glDebug         = false;
+    public static boolean      DO_TIMING       = false;
+    public static boolean      GL_ERROR_CHECKS = false;
+    public static long         windowId        = 0;
+    protected boolean          vsync           = true;
+    protected volatile boolean running         = false;
+    protected volatile boolean wasrunning      = false;
+    private Thread             thread;
 
 	public AbstractGLGame() {
 	}

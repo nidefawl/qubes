@@ -26,6 +26,7 @@ public class MeshedRegion {
     private boolean[] hasPass       = new boolean[NUM_PASSES];
     public int        rX;
     public int        rZ;
+    public int rY;
     public int        renderState   = RENDER_STATE_INIT;
     public boolean    isRenderable  = false;
     public boolean    xNeg;
@@ -35,11 +36,6 @@ public class MeshedRegion {
     public final AABB aabb          = new AABB();
     public int[]      frustumStates = new int[Engine.NUM_PROJECTIONS];
 
-    public MeshedRegion(int regionX, int regionZ) {
-        this.rX = regionX;
-        this.rZ = regionZ;
-        updateBB();
-    }
 
     public MeshedRegion() {
     }
@@ -157,13 +153,12 @@ public class MeshedRegion {
 
     public void updateBB() {
         int bits = Region.REGION_SIZE_BITS + Chunk.SIZE_BITS;
-        int len = 1 << bits;
         this.aabb.minX = this.rX << (bits);
+        this.aabb.minY = this.rY << (Region.SLICE_HEIGHT_BLOCK_BITS);
         this.aabb.minZ = this.rZ << (bits);
-        this.aabb.maxX = this.aabb.minX + len;
-        this.aabb.maxZ = this.aabb.minZ + len;
-        this.aabb.minY = 0;
-        this.aabb.maxY = World.MAX_WORLDHEIGHT;
+        this.aabb.maxX = this.aabb.minX + Region.REGION_SIZE_BLOCKS;
+        this.aabb.maxY = this.aabb.minY + Region.SLICE_HEIGHT_BLOCKS;
+        this.aabb.maxZ = this.aabb.minZ + Region.REGION_SIZE_BLOCKS;
 
     }
 

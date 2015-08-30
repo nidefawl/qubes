@@ -36,6 +36,7 @@ public class Shader {
     HashMap<String, Integer> missinglocations    = new HashMap<String, Integer>();
     private final FloatBuffer tmp         = BufferUtils.createFloatBuffer(16);
     private int setProgramUniformCalls;
+    private int numUses;
     void incUniformCalls() {
         Stats.uniformCalls++;
     }
@@ -225,8 +226,13 @@ public class Shader {
             glUseProgramObjectARB(this.shader);
             if (Main.GL_ERROR_CHECKS)
                 Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
+            numUses++;
+            if (numUses < 2) {
+                reuploadUniforms();
+            }
         }
     }
+
     public static void disable() {
         glUseProgramObjectARB(0);
     }
@@ -327,6 +333,12 @@ public class Shader {
             incUniformCalls();
         }
     }
+    public void reuploadUniforms() {
+        for (AbstractUniform uni : uniforms.values()) {
+            uni.set();
+        }
+    }
+
 
     public int getAndResetNumCalls() {
         int calls = setProgramUniformCalls;

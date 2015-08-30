@@ -61,8 +61,7 @@ public class TerrainGenerator2 extends AbstractGen {
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);
         int heightBits = world.worldHeightBits;
-        short[] blocks = new short[16*16*this.world.worldHeight];
-        Chunk c = new Chunk(blocks, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(chunkX, chunkZ, heightBits);
         generateTerrain(c);
         c.checkIsEmtpy();
         return c;
@@ -72,6 +71,7 @@ public class TerrainGenerator2 extends AbstractGen {
         double[][] dn = generateNoise(c.getBlockX(), c.getBlockZ());
         double[] dNoise = dn[0];
         double[] dNoise2 = dn[1];
+        short[] blocks = new short[Chunk.SIZE*Chunk.SIZE*this.world.worldHeight];
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int top = Block.grass.id;
@@ -102,10 +102,11 @@ public class TerrainGenerator2 extends AbstractGen {
                             curBlock = Block.water.id;
                         }
                     }
-                    c.blocks[y << 8 | xz] = (short) curBlock;
+                    blocks[y << 8 | xz] = (short) curBlock;
                 }
             }
         }
+        c.setBlocks(blocks);
     }
 
     private double[][] generateNoise(int cX, int cZ) {

@@ -54,8 +54,8 @@ public class GuiOverlayStats extends Gui {
             RegionLoader loader = Engine.regionLoader;
             int numRegions = loader.getRegionsLoaded();
             int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
-            this.stats3 = String.format("Chunks - loaded %d/%d - V %d - wr-regions %d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
-                    * loader.getRegionsWithData(), Engine.worldRenderer.getNumRendered(), Engine.regionRenderer.numRegions);
+            this.stats3 = String.format("Chunks - loaded %d/%d - R %d/%d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
+                    * loader.getRegionsWithData(), Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
             this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On" : "Off");
 
             this.stats5 = "";

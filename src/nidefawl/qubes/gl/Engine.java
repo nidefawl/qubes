@@ -128,6 +128,7 @@ public class Engine {
         UniformBuffer.reinit();
         Shaders.reinit();
         
+        Shaders.init();
         TextureManager.getInstance().init();
         AssetManager.getInstance().init();
         BlockTextureArray.getInstance().init();
@@ -444,7 +445,7 @@ public class Engine {
         }
         lightPos.scale(-1);
         lightPos.normalise();
-        
+
         /** SNAP TO TEXTURE INCREMENTS, (Seems not to work with deferred) */
         /*
         */
@@ -473,7 +474,7 @@ public class Engine {
         Matrix4f.mul(matOrtho, shadowSplitMVP[split], shadowSplitMVP[split]);
         shadowSplitMVP[split].update();
         shadowSplitMVP[split].update();
-        shadowSplitDepth[split] = radius;
+        shadowSplitDepth[split] = radius/1.41F; // I'm 90% sure this is wrong, the shader requires 1 x radius and should reduce the input depth for each cascade as they are not centered on the same point
         shadowCamFrustum[split].set(shadowSplitMVP[split]);
 //        System.out.println(radius);
         
@@ -545,6 +546,10 @@ public class Engine {
 
     public static IntBuffer getIntBuffer() {
         return intbuffer;
+    }
+
+    public static FloatBuffer getFloatBuffer() {
+        return fog;
     }
 
     public static IntBuffer glGenBuffers(int i) {

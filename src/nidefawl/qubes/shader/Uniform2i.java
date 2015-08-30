@@ -17,9 +17,17 @@ public class Uniform2i extends AbstractUniform {
             first = false;
             lastX = x;
             lastY = y;
-            glUniform2iARB(this.loc, x, y);
-            return true;
+            return set();
         }
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean set() {
+        if (validLoc()) {
+            glUniform2iARB(this.loc, lastX, lastY);
+            return true;
         }
         return false;
     }

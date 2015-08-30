@@ -35,7 +35,7 @@ public class WorldRenderer {
 
     
 
-    protected int rendered;
+    public int rendered;
 
     private boolean startup;
 
@@ -199,6 +199,7 @@ public class WorldRenderer {
             TimingHelper.endStart("renderFirstPass");
         glDisable(GL_BLEND);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
+        rendered = Engine.regionRenderer.rendered;
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
         if (Main.DO_TIMING)

@@ -19,9 +19,17 @@ public class Uniform3f extends AbstractUniform {
             lastX = x;
             lastY = y;
             lastZ = z;
-            glUniform3fARB(this.loc, x, y, z);
-            return true;
+            return set();
         }
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean set() {
+        if (validLoc()) {
+            glUniform3fARB(this.loc, lastX, lastY, lastZ);
+            return true;
         }
         return false;
     }

@@ -14,7 +14,6 @@ public class Shaders {
     }
 
     public static void init() {
-        initShaders();
         Shaders.colored.enable();
         colored.setProgramUniform3f("in_offset", 0, 0, 0);
         if (Main.GL_ERROR_CHECKS)

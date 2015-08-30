@@ -47,6 +47,7 @@ public abstract class GLGame extends AbstractGLGame {
     private Object[]   showError;
     private LogBufferStream outStream;
     private LogBufferStream errStream;
+    private long frameTime;
 	
     public GLGame() {
         this.timer = new Timer(20);
@@ -362,13 +363,14 @@ public abstract class GLGame extends AbstractGLGame {
             Engine.checkGLError("render");
         if (Main.DO_TIMING)
             TimingHelper.startSec("Display.update");
+        float took = (System.nanoTime()-frameTime) / 1000000F;
+        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
         updateDisplay();
+        frameTime = System.nanoTime();
         if (Main.DO_TIMING)
             TimingHelper.endSec();
         if (Main.DO_TIMING)
             TimingHelper.startSec("calcFPS");
-        float took = timer.el;
-        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;

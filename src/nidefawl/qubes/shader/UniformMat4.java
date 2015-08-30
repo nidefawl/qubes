@@ -1,9 +1,12 @@
 package nidefawl.qubes.shader;
 
 
+import static org.lwjgl.opengl.ARBShaderObjects.glUniform3fARB;
+
 import java.nio.FloatBuffer;
 
 import nidefawl.game.GL;
+import nidefawl.qubes.gl.Engine;
 
 public class UniformMat4 extends AbstractUniform {
 
@@ -32,6 +35,19 @@ public class UniformMat4 extends AbstractUniform {
             GL.glUniformMatrix4fvARB(this.loc, transpose, matrix);
             return true;
         }
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean set() {
+        if (validLoc()) {
+            FloatBuffer buf = Engine.getFloatBuffer();
+            buf.clear();
+            buf.put(last);
+            buf.position(0).limit(16);
+            GL.glUniformMatrix4fvARB(this.loc, transpose, buf);
+            return true;
         }
         return false;
     }

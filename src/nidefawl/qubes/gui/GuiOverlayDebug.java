@@ -119,19 +119,11 @@ public class GuiOverlayDebug extends Gui {
     }
     TesselatorState state = new TesselatorState();
     public void drawDebug() {
-        String[] names = {
-                "Composite0",
-                "Composite1",
-                "Composite2",
-                "Final",
-        };
-        if (Main.useBasicShaders) {
-            names = new String[] {
+        String[] names = new String[] {
                     "Deferred",
                     "Blur",
                     "Final",
             };
-        }
         mat.setIdentity();
         UniformBuffer.pushMat(mat);
             int w1 = 120;

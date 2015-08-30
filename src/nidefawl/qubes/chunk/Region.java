@@ -1,12 +1,16 @@
 package nidefawl.qubes.chunk;
 
 import nidefawl.qubes.render.region.MeshedRegion;
+import nidefawl.qubes.world.World;
 
 public class Region {
     public static final int REGION_SIZE_BITS      = 1;
     public static final int REGION_SIZE           = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK      = REGION_SIZE - 1;
-    public static final int REGION_SIZE_BLOCKS    = Chunk.SIZE * REGION_SIZE;
+    public static final int REGION_SIZE_BLOCK_SIZE_BITS    = Chunk.SIZE_BITS+REGION_SIZE_BITS;
+    public static final int REGION_SIZE_BLOCKS    = 1 << REGION_SIZE_BLOCK_SIZE_BITS;
+    public static final int SLICE_HEIGHT_BLOCK_BITS = 5;
+    public static final int SLICE_HEIGHT_BLOCKS    = 1<<SLICE_HEIGHT_BLOCK_BITS;
     
     public static final int STATE_INIT            = 0;
     public static final int STATE_LOADING         = 1;
@@ -48,13 +52,13 @@ public class Region {
     public void flushBlockData() {
         for (int x = 0; x < REGION_SIZE; x++) {
             for (int z = 0; z < REGION_SIZE; z++) {
-                chunks[x][z].blocks = null;
+                chunks[x][z].deallocate();
             }
         }
     }
 
     public boolean hasBlockData() {
-        return chunks[0][0].blocks != null;
+        return !chunks[0][0].isEmpty();
     }
 
     public void release() {
@@ -71,18 +75,20 @@ public class Region {
     }
 
     public final int getTypeId(int i, int j, int k) {
-        Chunk chunk = chunks[i >> 4][k >> 4];
-        if (chunk == null) {
-            return 0;
+        
+        try {
+
+            Chunk chunk = chunks[i >> Chunk.SIZE_BITS][k >> Chunk.SIZE_BITS];
+            if (chunk == null) {
+                return 0;
+            }
+            return chunk.getTypeId(i & 0xF, j, k & 0xF);   
+        } catch (Exception e) {
+            System.err.println("Exception while trying to access block "+i+"/"+j+"/"+k+" in region "+this.rX+"/"+this.rZ);
+            throw e;
         }
-        int id = chunk.getTypeId(i & 0xF, j, k & 0xF);
-        return id;
     }
 
-    public final int getBiome(int i, int j, int k) {
-        Chunk c = chunks[i >> 4][k >> 4];
-        return c.getBiome(i & 0xF, j, k & 0xF);
-    }
 
     public boolean isChunkLoaded(int x, int z) {
         Chunk c = chunks[x][z];

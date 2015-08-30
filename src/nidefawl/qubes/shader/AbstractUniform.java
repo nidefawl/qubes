@@ -1,6 +1,6 @@
 package nidefawl.qubes.shader;
 
-public class AbstractUniform {
+public abstract class AbstractUniform {
     final String name;
     final int loc;
     boolean first = true;
@@ -12,4 +12,5 @@ public class AbstractUniform {
     public boolean validLoc() {
         return this.loc >= 0;
     }
+    public abstract boolean set();
 }
