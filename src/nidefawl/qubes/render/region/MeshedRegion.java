@@ -1,7 +1,7 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.render.region;
 
-import static nidefawl.qubes.render.RegionRenderer.RENDER_STATE_INIT;
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+import static nidefawl.qubes.render.region.RegionRenderer.RENDER_STATE_INIT;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -33,7 +33,7 @@ public class MeshedRegion {
     public boolean zPos;
     public boolean zNeg;
     public final AABB aabb = new AABB();
-    int[]           frustumStates = new int[Engine.NUM_PROJECTIONS];
+    public int[]           frustumStates = new int[Engine.NUM_PROJECTIONS];
 
     public MeshedRegion(int regionX, int regionZ) {
         this.rX = regionX;

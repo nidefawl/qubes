@@ -1,28 +1,29 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.meshing;
 
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.Main;
+import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;
 
-public class RegionRenderThread extends Thread {
+public class MeshThread extends Thread {
     private static long                                 sleepTime = 10;
-    private LinkedBlockingQueue<RegionRenderUpdateTask> queue     = new LinkedBlockingQueue<RegionRenderUpdateTask>();
-    private LinkedList<RegionRenderUpdateTask>          results   = new LinkedList<RegionRenderUpdateTask>();
-    private LinkedList<RegionRenderUpdateTask>          finish    = new LinkedList<RegionRenderUpdateTask>();
+    private LinkedBlockingQueue<MeshUpdateTask> queue     = new LinkedBlockingQueue<MeshUpdateTask>();
+    private LinkedList<MeshUpdateTask>          results   = new LinkedList<MeshUpdateTask>();
+    private LinkedList<MeshUpdateTask>          finish    = new LinkedList<MeshUpdateTask>();
     private volatile boolean                            hasResults;
     private volatile boolean                            isRunning;
-    private final RegionRenderUpdateTask[]              tasks;
+    private final MeshUpdateTask[]              tasks;
 
-    public RegionRenderThread(int numTasks) {
+    public MeshThread(int numTasks) {
         setName("RegionRenderThread");
         setDaemon(true);
         this.isRunning = true;
-        this.tasks = new RegionRenderUpdateTask[numTasks];
+        this.tasks = new MeshUpdateTask[numTasks];
         for (int i = 0; i < tasks.length; i++) {
-            tasks[i] = new RegionRenderUpdateTask();
+            tasks[i] = new MeshUpdateTask();
         }
         if (numTasks > 3) {
             sleepTime = 0;
@@ -40,7 +41,7 @@ public class RegionRenderThread extends Thread {
         while (Main.instance.isRunning() && this.isRunning) {
             boolean did = false;
             try {
-                RegionRenderUpdateTask task = this.queue.take();
+                MeshUpdateTask task = this.queue.take();
                 if (task != null) {
                     if (task.isValid(this.id)) {
                         did = task.updateFromThread();
@@ -92,7 +93,7 @@ public class RegionRenderThread extends Thread {
         }
         if (finish.size() > 0) {
             int num = 0;
-            RegionRenderUpdateTask w = this.finish.getFirst();
+            MeshUpdateTask w = this.finish.getFirst();
             if (w.finish(this.id)) {
                 this.finish.removeFirst();
                 w.worldInstance = 0;
@@ -106,7 +107,7 @@ public class RegionRenderThread extends Thread {
 
 
     public boolean offer(MeshedRegion m, int renderChunkX, int renderChunkZ) {
-        RegionRenderUpdateTask task = getNextTask();
+        MeshUpdateTask task = getNextTask();
         if (task != null) {
             if (task.prepare(m, renderChunkX, renderChunkZ)) {
                 task.worldInstance = this.id;
@@ -126,7 +127,7 @@ public class RegionRenderThread extends Thread {
         return tasksRunning > 0;
     }
 
-    private RegionRenderUpdateTask getNextTask() {
+    private MeshUpdateTask getNextTask() {
         if (tasksRunning >= this.tasks.length)
             return null;
         for (int i = 0; i < this.tasks.length; i++)

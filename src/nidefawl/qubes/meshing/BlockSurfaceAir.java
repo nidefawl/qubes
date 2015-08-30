@@ -1,4 +1,4 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.meshing;
 
 public class BlockSurfaceAir extends BlockSurface {
     

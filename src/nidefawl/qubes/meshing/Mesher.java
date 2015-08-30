@@ -1,9 +1,8 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.meshing;
 
 
 import static nidefawl.qubes.chunk.Region.*;
-
-import static nidefawl.qubes.render.MeshedRegion.*;
+import static nidefawl.qubes.render.region.MeshedRegion.*;
 
 import java.util.*;
 
@@ -11,7 +10,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
-import nidefawl.qubes.vec.Mesh;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
@@ -165,7 +164,7 @@ public class Mesher {
                                 dv[v] = h;
                                 if (add) {
                                     
-                                    Mesh face = new Mesh(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
+                                    TerrainQuad face = new TerrainQuad(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                                     meshes[c.pass].add(face);
                                 }
 
@@ -255,7 +254,7 @@ public class Mesher {
     }
 
 
-    public List<Mesh> getMeshes(int pass) {
+    public List<TerrainQuad> getMeshes(int pass) {
         return this.meshes[pass];
     }
 }

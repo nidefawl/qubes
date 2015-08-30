@@ -1,10 +1,10 @@
-package nidefawl.qubes.vec;
+package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.render.BlockSurface;
+import nidefawl.qubes.vec.Dir;
 
-public class Mesh {
+public class TerrainQuad {
     public final BlockSurface bs;
     public final float v0[];
     public final float v1[];
@@ -22,7 +22,7 @@ public class Mesh {
     };
 
 
-    public Mesh(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
+    public TerrainQuad(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
         this.bs = bs;
         this.pos = pos;
         this.du = du; 

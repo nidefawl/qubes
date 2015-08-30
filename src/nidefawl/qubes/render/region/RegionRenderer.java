@@ -1,4 +1,4 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.render.region;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -13,6 +13,7 @@ import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
@@ -196,7 +197,7 @@ public class RegionRenderer {
         if (rChunkX != this.renderChunkX || rChunkZ != this.renderChunkZ) {
             reposition = true;
         }
-        RegionRenderThread thread = Engine.regionRenderThread;
+        MeshThread thread = Engine.regionRenderThread;
         thread.finishTasks();
         if (reposition) {
             reposition(rChunkX, rChunkZ);

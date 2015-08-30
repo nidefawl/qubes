@@ -15,6 +15,7 @@ import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;

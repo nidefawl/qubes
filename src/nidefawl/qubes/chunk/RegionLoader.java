@@ -2,7 +2,7 @@ package nidefawl.qubes.chunk;
 
 import java.util.Iterator;
 
-import nidefawl.qubes.render.MeshedRegion;
+import nidefawl.qubes.render.region.MeshedRegion;
 
 public class RegionLoader {
     public static final int              LOAD_DIST        = 5;

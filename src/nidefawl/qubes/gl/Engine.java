@@ -22,7 +22,9 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.input.Selection;
+import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.render.*;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.BlockTextureArray;
@@ -77,9 +79,9 @@ public class Engine {
     public static float              sunAngle           = 0F;
     public static Camera             camera             = new Camera();
     public static WorldRenderer      worldRenderer      = new WorldRenderer();
-    public static FinalRendererBase  outRenderer        = new FinalRenderer();
+    public static FinalRenderer      outRenderer        = new FinalRenderer();
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
-    public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
+    public static MeshThread regionRenderThread = new MeshThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
     public static Selection          selection          = new Selection();
     public static int                vaoId              = 0;
@@ -332,7 +334,7 @@ public class Engine {
             regionRenderThread.stopThread();
             regionRenderThread = null;
         }
-        regionRenderThread = new RegionRenderThread(3);
+        regionRenderThread = new MeshThread(3);
         regionRenderThread.init();
     }
 

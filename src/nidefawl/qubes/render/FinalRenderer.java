@@ -17,7 +17,7 @@ import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.TimingHelper;
 
-public class FinalRenderer extends FinalRendererBase {
+public class FinalRenderer {
 
     public Shader shaderFinal;
     public Shader shaderBlur;
@@ -173,7 +173,7 @@ public class FinalRenderer extends FinalRendererBase {
         if (Main.DO_TIMING) TimingHelper.endSec();
     }
 
-    @Override
+
     public void render(float fTime) {
 
         if (Main.show) {
@@ -194,7 +194,7 @@ public class FinalRenderer extends FinalRendererBase {
 
     }
 
-    @Override
+
     public void renderFinal(float fTime) {
         if (Main.show) {
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
@@ -229,7 +229,7 @@ public class FinalRenderer extends FinalRendererBase {
 
     }
 
-    @Override
+
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
@@ -268,7 +268,7 @@ public class FinalRenderer extends FinalRendererBase {
         }
     }
 
-    @Override
+
     public void resize(int displayWidth, int displayHeight) {
         releaseFrameBuffers();
         sceneFB = new FrameBuffer(displayWidth, displayHeight);
@@ -344,13 +344,13 @@ public class FinalRenderer extends FinalRendererBase {
         Engine.setSceneFB(null);
     }
 
-    @Override
+
     public void release() {
         releaseShaders();
         releaseFrameBuffers();
     }
 
-    @Override
+
     public void init() {
         initShaders();
     }

@@ -1,4 +1,4 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Region;

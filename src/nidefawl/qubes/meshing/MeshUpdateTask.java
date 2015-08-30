@@ -1,22 +1,24 @@
-package nidefawl.qubes.render;
+package nidefawl.qubes.meshing;
 
 import java.util.List;
 
 import nidefawl.qubes.Main;
-import static nidefawl.qubes.render.MeshedRegion.*;
+
 import static nidefawl.qubes.render.WorldRenderer.*;
+import static nidefawl.qubes.render.region.MeshedRegion.*;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.render.region.MeshedRegion;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
-import nidefawl.qubes.vec.Mesh;
 import nidefawl.qubes.world.World;
 
-public class RegionRenderUpdateTask {
+public class MeshUpdateTask {
     public final Mesher     mesher = new Mesher();
     public final RegionCache cache = new RegionCache();
     final Tess[] tess  = new Tess[NUM_PASSES];
@@ -27,7 +29,7 @@ public class RegionRenderUpdateTask {
     private int z;
     private MeshedRegion mr;
     
-    public RegionRenderUpdateTask() {
+    public MeshUpdateTask() {
         for (int i = 0; i < this.tess.length; i++) {
             this.tess[i] = new Tess(true);
         }
@@ -95,7 +97,7 @@ public class RegionRenderUpdateTask {
                 l = System.nanoTime();
                 for (int i = 0; i < NUM_PASSES; i++) {
                     Tess tess = this.tess[i];
-                    List<Mesh> mesh = this.mesher.getMeshes(i);
+                    List<TerrainQuad> mesh = this.mesher.getMeshes(i);
                     tess.resetState();
                     if (i != 2) {
                         tess.setColor(-1, 255);
@@ -104,7 +106,7 @@ public class RegionRenderUpdateTask {
                     tess.setOffset(xOff, 0, zOff);
                     int size = mesh.size();
                     for (int m = 0; m < size; m++) {
-                        Mesh face = mesh.get(m);
+                        TerrainQuad face = mesh.get(m);
                         if (i == 2) {
                             face.drawBasic(tess);
                         } else {
