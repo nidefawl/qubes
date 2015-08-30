@@ -257,7 +257,7 @@ void main() {
 	float isLight = float(block==6);
 	vec3 E = normalize(-prop.position.xyz);
 	vec3 R = normalize(-reflect(prop.lightVector, prop.normal));  
-	vec3 Ispec = vec3(0.6) * directShading * pow(max(dot(R,E),0.0),2.0f);
+	vec3 Ispec = Light.Ls.rgb * directShading * pow(max(dot(R,E),0.0),2.0f);
 	vec3 Idiff = Light.Ld.rgb * clamp( directShading, 0.0, 1.0);     
 	vec3 finalLight = vec3(0);
 		finalLight = Light.La.rgb;
