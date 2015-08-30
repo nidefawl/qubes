@@ -20,20 +20,20 @@ import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.world.World;
 
 public class MeshedRegion {
-    
-    private int[]           vertexCount       = new int[NUM_PASSES];
-    private int[]           vbo;
-    private boolean[]       hasPass           = new boolean[NUM_PASSES];
+
+    private int[]     vertexCount   = new int[NUM_PASSES];
+    private int[]     vbo;
+    private boolean[] hasPass       = new boolean[NUM_PASSES];
     public int        rX;
     public int        rZ;
-    public int              renderState       = RENDER_STATE_INIT;
-    public boolean          isRenderable      = false;
-    public boolean xNeg;
-    public boolean xPos;
-    public boolean zPos;
-    public boolean zNeg;
-    public final AABB aabb = new AABB();
-    public int[]           frustumStates = new int[Engine.NUM_PROJECTIONS];
+    public int        renderState   = RENDER_STATE_INIT;
+    public boolean    isRenderable  = false;
+    public boolean    xNeg;
+    public boolean    xPos;
+    public boolean    zPos;
+    public boolean    zNeg;
+    public final AABB aabb          = new AABB();
+    public int[]      frustumStates = new int[Engine.NUM_PROJECTIONS];
 
     public MeshedRegion(int regionX, int regionZ) {
         this.rX = regionX;
@@ -49,52 +49,59 @@ public class MeshedRegion {
         GL20.glEnableVertexAttribArray(0);
         if (pass != 2) {
             int stride = 13;
-            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride*4, 0);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+0);
+            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride * 4, 0);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("AttribPtr " + 0);
             int offset = 4;
             GL20.glEnableVertexAttribArray(1);
-            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, stride*4, offset*4);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+1);
-            offset+=1;
+            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, stride * 4, offset * 4);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("AttribPtr " + 1);
+            offset += 1;
             GL20.glEnableVertexAttribArray(2);
-            GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, stride*4, offset*4);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+2);
-            offset+=2;
+            GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, stride * 4, offset * 4);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("AttribPtr " + 2);
+            offset += 2;
             GL20.glEnableVertexAttribArray(3);
-            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride*4, offset*4);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+3);
-            offset+=1;
+            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride * 4, offset * 4);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("AttribPtr " + 3);
+            offset += 1;
             GL20.glEnableVertexAttribArray(4);
-            GL20.glVertexAttribPointer(4, 2, GL11.GL_SHORT, false, stride*4, offset*4);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+4);
-            offset+=1;
+            GL20.glVertexAttribPointer(4, 2, GL11.GL_SHORT, false, stride * 4, offset * 4);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("AttribPtr " + 4);
+            offset += 1;
             GL20.glEnableVertexAttribArray(5);
-            GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, stride*4, offset*4);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+5);
-            offset+=2;
+            GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, stride * 4, offset * 4);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("AttribPtr " + 5);
+            offset += 2;
         } else {
             int stride = 4;
-            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride*4, 0);
+            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride * 4, 0);
         }
         try {
 
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+this.vertexCount[pass]+")");
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("glDrawArrays (" + this.vertexCount[pass] + ")");
         } catch (Exception e) {
-            if (Main.ticksran%40==0)
-            System.out.println(e.getMessage());
+            if (Main.ticksran % 40 == 0)
+                System.out.println(e.getMessage());
         }
         GL11.glDrawArrays(drawMode, 0, this.vertexCount[pass]);
 
         for (int i = 0; i < Tess.attributes.length; i++)
             GL20.glDisableVertexAttribArray(i);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-//        if (displayList != null && displayList.list > 0)
-//            glCallList(displayList.list + idx);
-//          glNewList(displayList.list + idx, GL11.GL_COMPILE);
-//          Tess.instance.drawState(states[idx], GL_QUADS);
-//          glEndList();
+        //        if (displayList != null && displayList.list > 0)
+        //            glCallList(displayList.list + idx);
+        //          glNewList(displayList.list + idx, GL11.GL_COMPILE);
+        //          Tess.instance.drawState(states[idx], GL_QUADS);
+        //          glEndList();
     }
-    
+
     public void compileDisplayList(Tess[] states) {
         if (this.vbo == null) {
             this.vbo = new int[NUM_PASSES];
@@ -105,7 +112,7 @@ public class MeshedRegion {
         }
         Arrays.fill(this.hasPass, false);
         Arrays.fill(this.vertexCount, 0);
-        
+
         ByteBuffer buf = Engine.getBuffer();
         IntBuffer intBuffer = Engine.getIntBuffer();
         for (int pass = 0; pass < NUM_PASSES; pass++) {
@@ -113,18 +120,20 @@ public class MeshedRegion {
             int len = tess.getIdx(tess.vertexcount);
             intBuffer.clear();
             intBuffer.put(tess.rawBuffer, 0, len);
-            buf.position(0).limit(len*4);
+            buf.position(0).limit(len * 4);
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo[pass]);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glBindBuffer "+vbo[pass]);
-//            System.out.println(buf);
-//            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW);
-            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len*4L, buf, GL15.GL_STATIC_DRAW);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glBufferData /"+intBuffer);
-            
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("glBindBuffer " + vbo[pass]);
+            //            System.out.println(buf);
+            //            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW);
+            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len * 4L, buf, GL15.GL_STATIC_DRAW);
+            if (Main.GL_ERROR_CHECKS)
+                Engine.checkGLError("glBufferData /" + intBuffer);
+
             vertexCount[pass] = tess.vertexcount;
             this.hasPass[pass] |= tess.vertexcount > 0;
         }
-    
+
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         this.isRenderable = true;
     }
@@ -146,24 +155,16 @@ public class MeshedRegion {
         return this.hasPass[i];
     }
 
-    public void translate() {
-//        int xOff = this.rX << (Region.REGION_SIZE_BITS + 4);
-//        int zOff = this.rZ << (Region.REGION_SIZE_BITS + 4);
-////        long seed = this.rX*19+this.rZ*23;
-////        float yOffset = ((GameMath.randomI(seed)%10) / 20F)-0.25F;
-//        glTranslatef(xOff, 0, zOff);
-    }
-
     public void updateBB() {
         int bits = Region.REGION_SIZE_BITS + Chunk.SIZE_BITS;
         int len = 1 << bits;
         this.aabb.minX = this.rX << (bits);
         this.aabb.minZ = this.rZ << (bits);
-        this.aabb.maxX = this.aabb.minX+len;
-        this.aabb.maxZ = this.aabb.minZ+len;
+        this.aabb.maxX = this.aabb.minX + len;
+        this.aabb.maxZ = this.aabb.minZ + len;
         this.aabb.minY = 0;
         this.aabb.maxY = World.MAX_WORLDHEIGHT;
-        
+
     }
 
 }
