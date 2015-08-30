@@ -141,9 +141,9 @@ public class UniformBuffer {
         uboBuffer.put(Engine.moonPosition.y);
         uboBuffer.put(Engine.moonPosition.z);
         uboBuffer.put(1F);
-        float ambIntens = 0.36F;
-        float diffIntens = 0.8F;
-        float specIntens = 25.3F;
+        float ambIntens = 0.34F;
+        float diffIntens = 0.7F;
+        float specIntens = 0.3F;
         uboBuffer.put(ambIntens*1.1F);
         uboBuffer.put(ambIntens*1.1F);
         uboBuffer.put(ambIntens*1.1F);

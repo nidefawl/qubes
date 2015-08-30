@@ -59,8 +59,12 @@ public class GuiOverlayStats extends Gui {
             this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On" : "Off");
 
             this.stats5 = "";
-            BlockPos p = Engine.worldRenderer.highlight;
-            if (p != null) {
+            BlockPos p = Engine.selection.selection[0];
+            BlockPos p2 = Engine.selection.selection[1];
+            if (p != null && p2 != null) {
+                this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
+            }
+            else if (p != null) {
                 this.stats5 = String.format("%d %d %d (Region %d %d)", p.x, p.y, p.z, 
                         p.x>>(Region.REGION_SIZE_BITS+Chunk.SIZE_BITS), p.z>>(Region.REGION_SIZE_BITS+Chunk.SIZE_BITS));
             }

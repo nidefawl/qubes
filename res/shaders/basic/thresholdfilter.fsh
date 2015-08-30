@@ -12,7 +12,7 @@ void main()
 {
     vec4 colorsample = texture( texColor, pass_texcoord );
     float sum = colorsample.r + colorsample.g + colorsample.b;
-    sum -= 4.7f;
+    sum -= 2.9f;
     sum = clamp(exp(sum*4), 0, 1);
     // sum = sum >= 2.8 ? 1 : 0;
     out_Color = vec4(colorsample.rgb*sum, colorsample.a);

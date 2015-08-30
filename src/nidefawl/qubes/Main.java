@@ -198,7 +198,6 @@ public class Main extends GLGame {
             }
         }
     }
-    
     public void onMouseClick(long window, int button, int action, int mods) {
 
         boolean b = Mouse.isGrabbed();
@@ -206,8 +205,9 @@ public class Main extends GLGame {
         long timeSinceLastClick = System.currentTimeMillis() - lastClickTime;
         switch (button) {
             case 0:
-                if (isDown) {
-                    handleClick(Mouse.getX(), Mouse.getY());
+                Engine.selection.clicked(button, isDown);
+                if (!isDown) {
+                    onRelease();
                 }
                 break;
             case 1:
@@ -219,6 +219,7 @@ public class Main extends GLGame {
         }
         if (b != this.movement.grabbed()) {
             setGrabbed(b);
+            Engine.selection.resetSelection();
         }
     }
 
@@ -235,41 +236,58 @@ public class Main extends GLGame {
         Mouse.setGrabbed(b);
     }
 
-    private void handleClick(double d, double e) {
-        this.mouseClicked = true;
-    }
-    boolean mouseClicked = false;
-    
-    
-    private void setBlock() {
-        BlockPos blockPos = rayTrace.getColl();
-        if (blockPos != null) {
-            BlockPos face = rayTrace.getFace();
-            int blockX = blockPos.x;
-            int blockY = blockPos.y;
-            int blockZ = blockPos.z;
-            //            int i = this.world.getBiome(blockX, blockY, blockZ);
-            int id = this.world.getType(blockX, blockY, blockZ);
-            String msg = "";
-            msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
-            msg += String.format("Block:           %d\n", id);
-            //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
-            msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
 
-            if (this.statsOverlay != null) {
-                this.statsOverlay.setMessage(msg);
+    private void onRelease() {
+        int blocks = Engine.selection.getNumBlocks();
+        System.out.println(blocks);
+        if (blocks == 1) {
+            BlockPos blockPos = rayTrace.getColl();
+            if (blockPos != null) {
+                BlockPos face = rayTrace.getFace();
+                int blockX = blockPos.x;
+                int blockY = blockPos.y;
+                int blockZ = blockPos.z;
+                //            int i = this.world.getBiome(blockX, blockY, blockZ);
+                int id = this.world.getType(blockX, blockY, blockZ);
+                String msg = "";
+                msg += String.format("Coordinate:  %d %d %d\n", blockX, blockY, blockZ);
+                msg += String.format("Block:           %d\n", id);
+                //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
+                msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
+
+                if (this.statsOverlay != null) {
+                    this.statsOverlay.setMessage(msg);
+                }
+                int block = this.selBlock;
+                if (block > 0) {
+                    blockX += face.x;
+                    blockY += face.y;
+                    blockZ += face.z;
+
+                    this.world.setType(blockX, blockY, blockZ, block, Flags.RENDER);
+                } else {
+
+                    this.world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
+                }
             }
-            int block = this.selBlock;
-            if (block > 0) {
-                blockX += face.x;
-                blockY += face.y;
-                blockZ += face.z;
-
-                this.world.setType(blockX, blockY, blockZ, block, Flags.RENDER);
-            } else {
-
-                this.world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
+        } else {
+            BlockPos p1 = Engine.selection.getMin();
+            BlockPos p2 = Engine.selection.getMax();
+            int w = p2.x-p1.x+1;
+            int h = p2.y-p1.y+1;
+            int l = p2.z-p1.z+1;
+            for (int x = 0; x < w; x++) {
+                for (int y = 0; y < h; y++) {
+                    for (int z = 0; z < l; z++) {
+                        int blockX = p1.x+x;
+                        int blockY = p1.y+y;
+                        int blockZ = p1.z+z;
+                        this.world.setType(blockX, blockY, blockZ, this.selBlock, Flags.RENDER);
+                    }
+                }
+                
             }
+            
         }
     }
 
@@ -296,7 +314,7 @@ public class Main extends GLGame {
               Engine.checkGLError("renderNormals");
       }
       if (Main.DO_TIMING) TimingHelper.endStart("renderBlockHighlight");
-      Engine.worldRenderer.renderBlockHighlight(this.world, fTime);
+      Engine.selection.renderBlockHighlight(this.world, fTime);
       if (Main.GL_ERROR_CHECKS)
           Engine.checkGLError("renderBlockHighlight");
       if (Main.DO_TIMING) TimingHelper.endStart("renderDebugBB");
@@ -432,20 +450,11 @@ public class Main extends GLGame {
         Engine.updateMouseOverView(winX, winY);
         Engine.updateSun(f);
         this.rayTrace.reset();
-        Engine.worldRenderer.highlight = null;
+        
         if (this.world != null) {
             if (Engine.vDir != null) {
-                this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir);
-                BlockPos p = this.rayTrace.getColl();
-                if (p != null) {
-                    if ( this.mouseClicked) {
-                        setBlock();
-                    }   
-                }
-                //TODO: add some better logic for highlighting, don't render "into" camera
-                if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
-                    Engine.worldRenderer.highlight = p;
-                }
+                this.rayTrace.doRaytrace(this.world, Engine.vOrigin, Engine.vDir, (Engine.selection.extendReach() || !this.movement.grabbed()) ? 200 : 55);
+                Engine.selection.update(this.world, px, py, pz, this.rayTrace);
             }
             Engine.regionLoader.finishTasks();
             if (follow) {
@@ -468,11 +477,10 @@ public class Main extends GLGame {
 //            if (!startRender)
 //            startRender = nRegions > 4;
         }
-        boolean releaseMouse = !this.mouseClicked || (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL) ? !Mouse.isButtonDown(0) : true);
-                
-        if (releaseMouse) {
-            this.mouseClicked = false;
-        }
+//        boolean releaseMouse = !this.mouseClicked || (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL) ? !Mouse.isButtonDown(0) : true);
+//                
+//        if (releaseMouse) {
+//        }
     }
     
     @Override

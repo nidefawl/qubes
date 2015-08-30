@@ -40,8 +40,6 @@ public class RegionRenderer {
 
     public void init() {
         this.regions = create();
-        MeshedRegion r = getByRegionCoord(0, 0);
-        System.out.println(r.rX+"/"+r.rZ);
     }
     
     MeshedRegion[][] regions;

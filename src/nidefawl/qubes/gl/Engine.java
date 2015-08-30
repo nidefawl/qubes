@@ -21,6 +21,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
+import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
@@ -80,6 +81,7 @@ public class Engine {
     public static RegionRenderer     regionRenderer     = new RegionRenderer();
     public static RegionRenderThread regionRenderThread = new RegionRenderThread(3);
     public static RegionLoader       regionLoader       = new RegionLoader();
+    public static Selection          selection          = new Selection();
     public static int                vaoId              = 0;
     public static int                vaoTerrainId       = 0;
 
@@ -130,6 +132,7 @@ public class Engine {
         regionLoader.init();
         regionRenderThread.init();
         regionRenderer.init();
+        selection.init();
         BlockTextureArray.getInstance().reload();
         reloadRenderer(true);
         GL30.glBindVertexArray(vaoId);

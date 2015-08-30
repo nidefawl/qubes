@@ -32,8 +32,8 @@ public class WorldRenderer {
 //    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
     public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
     public HashMap<Integer, AABB> debugBBs = new HashMap<>();
+
     
-    public BlockPos highlight = null;
 
     protected int rendered;
 
@@ -44,7 +44,6 @@ public class WorldRenderer {
     public Shader       skyShader;
     public Shader       shadowShader;
 
-    private TesselatorState highlightCube;
     private TesselatorState skybox1;
     private TesselatorState skybox2;
 
@@ -90,7 +89,6 @@ public class WorldRenderer {
     public void init() {
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         initShaders();
-        highlightCube = new TesselatorState();
         skybox1 = new TesselatorState();
         skybox2 = new TesselatorState();
     }
@@ -221,20 +219,6 @@ public class WorldRenderer {
             TimingHelper.endSec();
     }
 
-
-    public void renderBlockHighlight(World world, float fTime) {
-        if (this.highlight != null) {
-            glEnable(GL_BLEND);
-            glDisable(GL_CULL_FACE);
-            Shaders.colored.enable();
-            Shaders.colored.setProgramUniform3f("in_offset", this.highlight.x, this.highlight.y, this.highlight.z);
-            highlightCube.drawQuads();
-            Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
-            Shader.disable();
-            glEnable(GL_CULL_FACE);
-            glDisable(GL_BLEND);
-        }
-    }
     public void renderNormals(World world, float fTime) {
         glPushAttrib(-1);
         glDisable(GL_BLEND);
@@ -328,33 +312,33 @@ public class WorldRenderer {
         float zero = -ext;
         float one = 1+ext;
         Tess tesselator = Tess.instance;
-        tesselator.setColorRGBAF(1, 1, 1, 0.2F);
-        tesselator.add(zero, zero, zero);
-        tesselator.add(one, zero, zero);
-        tesselator.add(one, one, zero);
-        tesselator.add(zero, one, zero);
-        tesselator.add(zero, one, one);
-        tesselator.add(one, one, one);
-        tesselator.add(one, zero, one);
-        tesselator.add(zero, zero, one);
-        tesselator.add(one, zero, one);
-        tesselator.add(one, one, one);
-        tesselator.add(one, one, zero);
-        tesselator.add(one, zero, zero);
-        tesselator.add(zero, one, one);
-        tesselator.add(zero, zero, one);
-        tesselator.add(zero, zero, zero);
-        tesselator.add(zero, one, zero);
-        tesselator.add(zero, zero, one);
-        tesselator.add(one, zero, one);
-        tesselator.add(one, zero, zero);
-        tesselator.add(zero, zero, zero);
-        tesselator.add(one, one, one);
-        tesselator.add(zero, one, one);
-        tesselator.add(zero, one, zero);
-        tesselator.add(one, one, zero);
-        tesselator.draw(GL_QUADS, highlightCube);
-        tesselator.resetState();
+//        tesselator.setColorRGBAF(1, 1, 1, 0.2F);
+//        tesselator.add(zero, zero, zero);
+//        tesselator.add(one, zero, zero);
+//        tesselator.add(one, one, zero);
+//        tesselator.add(zero, one, zero);
+//        tesselator.add(zero, one, one);
+//        tesselator.add(one, one, one);
+//        tesselator.add(one, zero, one);
+//        tesselator.add(zero, zero, one);
+//        tesselator.add(one, zero, one);
+//        tesselator.add(one, one, one);
+//        tesselator.add(one, one, zero);
+//        tesselator.add(one, zero, zero);
+//        tesselator.add(zero, one, one);
+//        tesselator.add(zero, zero, one);
+//        tesselator.add(zero, zero, zero);
+//        tesselator.add(zero, one, zero);
+//        tesselator.add(zero, zero, one);
+//        tesselator.add(one, zero, one);
+//        tesselator.add(one, zero, zero);
+//        tesselator.add(zero, zero, zero);
+//        tesselator.add(one, one, one);
+//        tesselator.add(zero, one, one);
+//        tesselator.add(zero, one, zero);
+//        tesselator.add(one, one, zero);
+//        tesselator.draw(GL_QUADS, highlightCube);
+//        tesselator.resetState();
 
         
 
