@@ -66,6 +66,12 @@ uniform float near;
 uniform float far;
 
 in vec2 pass_texcoord;
+in vec3 sunDirection;
+in vec3 moonDirection;
+in float cosSunUpAngle;
+in float nightlight;
+in float dayLight;
+in float dayLightIntens;
 
 out vec4 out_Color;
 
@@ -141,7 +147,7 @@ void setSunSpotDens() {
 	vec3 halfVector2 = normalize(-prop.lightVector + npos);
     prop.sunProximity = 1.0f - dot(halfVector2, npos);
 
-    prop.sunSpotDens = clamp((prop.sunProximity-0.967f)/0.01f, 0, 1);
+    prop.sunSpotDens = clamp((prop.sunProximity-.9f)/1.3f, 0, 1);
     float extraDens = clamp(pow((prop.sunProximity-0.942f)/0.01f, 4), 0, 1);
     prop.sunSpotColor = vec4(0.9f+extraDens*0.1f, 0.9f+extraDens*0.1f, 0.8f+extraDens*0.2f, 1.0f);
 }
@@ -208,28 +214,15 @@ float Get3DNoise(in vec3 pos)
 }
 
 void main() {
-/*
-
-	vec4 fogColor = vec4(0.82f, 0.82f, 0.92f, 1);
-	//distance
-    float fogFactor = clamp( (dist - 70.0f) /  370.0f, 0.0f, 0.22f );
-    fogFactor += clamp( (dist - 20.0f) / 420.0f, 0.0f, 0.02f );
-    tex = mix(tex*color, fogColor, fogFactor);
-    */
 
 
 	prop.albedo = texture(texColor, pass_texcoord).rgb;
 #ifdef DO_SHADING
-	prop.albedo = pow(prop.albedo, vec3(0.7));
-    // prop.albedo = pow(prop.albedo, vec3(2.8));
+	prop.albedo = pow(prop.albedo, vec3(1/2.2));
+    prop.albedo = pow(prop.albedo, vec3(2.2));
     prop.albedo = mix(prop.albedo, vec3(dot(prop.albedo, vec3(0.3333f))), vec3(0.15f));
 
 
-	vec3 sunDirection = normalize(Light.vSun.xyz);
-	vec3 moonDirection = normalize(Light.vMoon.xyz);
-	float cosSunUpAngle = dot(sunDirection, vec3(0,3,0));
-	float dayLight = clamp(cosSunUpAngle, 0.0f, 1.0f);
-	float nightlight = 1-dayLight;
 	prop.timeMidnight = nightlight;
 	prop.normal = texture(texNormals, pass_texcoord).rgb * 2.0f - 1.0f;
 	prop.depth = texture(texDepth, pass_texcoord).r;
@@ -264,37 +257,40 @@ void main() {
 	float isLight = float(block==6);
 	vec3 E = normalize(-prop.position.xyz);
 	vec3 R = normalize(-reflect(prop.lightVector, prop.normal));  
-	vec3 Ispec = vec3(0.6) * directShading * isWater * pow(max(dot(R,E),0.0),2.0f);
+	vec3 Ispec = vec3(0.6) * directShading * pow(max(dot(R,E),0.0),2.0f);
 	vec3 Idiff = Light.Ld.rgb * clamp( directShading, 0.0, 1.0);     
-	float bla = clamp(dot(normalize(mix(Light.vSun, Light.vMoon, nightlight).xyz), vec3(0, 1, 0)), 0, 1);
 	vec3 finalLight = vec3(0);
-	if (isLight<1) {
 		finalLight = Light.La.rgb;
-		finalLight += shadow * Idiff*bla;
-		finalLight += shadow * Ispec*bla;
+		finalLight += shadow * Idiff*dayLightIntens;
+		finalLight += shadow * Ispec*dayLightIntens;
 		finalLight *= clamp(dayLight, 0.5, 1.0f)*0.97f;
-		finalLight *= 1+(isLight*10);
-	} else {
-		finalLight += shadow * Ispec*bla;
-		finalLight*=14;
-		finalLight += Light.La.rgb;
-		finalLight += shadow * Idiff*bla;
-	}
 	finalLight.rg *= 1.0f-nightlight*0.4f;
+
+
 	// finalLight = mix(finalLight, vSky, isSky);
 	// finalLight = mix(finalLight, vec4(1,0,0,1), isWater);
 	// finalLight.a = 1.0f;
-	vec3 sky=mix(prop.albedo, vec3(0.04), nightlight)*0.63;
+	vec3 sky=mix(prop.albedo, vec3(0.04), nightlight)*0.23;
 	// sky += pow(mix(vSky, vMoon, nightlight), vec3(1));
 	vec3 scat = mix(vSky, vMoon, nightlight);
 	float scatbr = clamp((scat.r+scat.b+scat.g) / 2.0f, 0, 1);
-	sky = mix(sky, sky*scat, 0.7f);
-	sky += scat*0.7f;
+	sky = mix(sky, sky*scat, 0.3f);
+	sky += scat*0.5f;
 	sky += sky*Light.La.rgb*(1.0-scatbr)*1.1f;
 	// sky += prop.sunSpotColor.rgb*prop.sunSpotDens;
 	// sky += vSky*0.9f*(1-nightlight);
 	vec3 terr=prop.albedo*finalLight;
+
+	
+	vec3 fogColor = vec3(0.82f, 0.82f, 0.92f);
+	//distance
+	float dist = length(prop.position);
+
+    float fogFactor = clamp( (dist - 75.0f) /  429.0f, 0.0f, 0.94f );
+    // terr = mix(terr, vec3(1), fogFactor);
 	prop.albedo = mix(terr, sky, isSky);
+	prop.albedo = mix(prop.albedo, fogColor, clamp(fogFactor-prop.sunSpotDens*1.2, 0, 0.05));
+
 	// prop.albedo = vec4(vec3(bla), 1);
 	// prop.albedo = vec4(prop.sunSpotDens, 0, 0, 1);
 	// debugcolor = vec3(tan(acos(clamp(prop.NdotL, 0, 1))), 0, 0);

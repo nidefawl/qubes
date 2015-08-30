@@ -318,6 +318,8 @@ public abstract class GLGame extends AbstractGLGame {
             DO_TIMING = !DO_TIMING;
             TimingHelper.reset();
         }
+        if (Main.DO_TIMING)
+            TimingHelper.check();
         if (isCloseRequested()) {
             shutdown();
             return;

@@ -6,7 +6,7 @@ const float D = 0.20; // Toe Strength
 const float E = 0.02; // Toe Numerator
 const float F = 0.30; // Toe Denominator
 
-const float fMiddleGray = 0.18f;
+const float fMiddleGray = 0.23f;
 const float fWhitePoint = 2.0f;
 
 #define RGB_TO_LUMINANCE vec3(0.212671, 0.715160, 0.072169)

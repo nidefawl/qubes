@@ -52,11 +52,13 @@ public class World {
     public float getSunAngle(float fTime) {
 //        if (time > 2000)
 //            time = 1200;
-//        fTime = 0;
-//        time = 15500;
+//        if (time >1040) {
+          fTime = 0;
+          time = 1269;
+//        }
 //        time = 1630;
 //        time = 15000;
-        dayLen = 500;
+        dayLen = 1500;
         float timeOffset = (this.time)%dayLen;
         float fSun = (timeOffset+fTime)/(float) dayLen + 0.25F;
         if (fSun<0)fSun++;

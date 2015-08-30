@@ -1,9 +1,7 @@
 package nidefawl.qubes.util;
 
 import java.lang.management.ManagementFactory;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Stack;
+import java.util.*;
 
 public class TimingHelper {
     public static boolean useNanos = true;
@@ -112,16 +110,67 @@ public class TimingHelper {
         calls[i]++;
         return timeTaken;
     }
+    static class TimingEntry {
+        float perCall;
+        public int idx;
+    }
+    static boolean hasChild(int i) {
+
+        String thisName = hasName(i) ? names[i] : ""+i;
+        for (int j = 0; j < calls.length; j++) {
+            if (j != i) {
+
+                if (calls[j] > 0) {
+                    String otherName = hasName(j) ? names[j] : ""+j;
+                    if (otherName.startsWith(thisName) && otherName.length() > thisName.length()) {
+                        return true;
+                    }
+                }       
+            }
+        }
+        return false;
+    }
     public static void dump() {
-        System.out.println("----------------------------------------------");     
+        System.out.println("----------------------------------------------");
+        final HashMap<Integer, TimingEntry> entries = new HashMap<>();
         for (int i = 0; i < calls.length; i++) {
             if (calls[i] > 0) {
                 float perCall = (float) millis[i] / (float) calls[i];
-                String pre = String.format("%2d %-40s %d calls", i, hasName(i) ? names[i] : ""+i, calls[i]);
+                boolean hasChild = hasChild(i);
+                if (!hasChild) {
+
+                    TimingEntry entry = new TimingEntry();
+                    entry.idx = i;
+                    entry.perCall = perCall;
+                    entries.put(i, entry);
+                }
+                String thisName = hasName(i) ? names[i] : ""+i;
+                String pre = String.format("%2d %-40s %7d calls", i, thisName, calls[i]);
                 String perCallS = String.format("%.5f ms/call", perCall);
                 String totals = String.format("%d ms total", millis[i]);
-                System.out.println(String.format("%-50s %20s %20s", pre, perCallS, totals));                
+                System.out.println(String.format("%-50s %20s %20s", pre, perCallS, totals));   
             }
+        }
+
+        TreeMap<Integer, TimingEntry> map = new TreeMap<>(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return Float.compare(entries.get(o2).perCall, entries.get(o1).perCall);
+            }
+        });
+        map.putAll(entries);
+        Iterator<TimingEntry> it = map.values().iterator();
+        int i = 0;
+        System.out.println("-------------     HOTSPOTS     --------------");
+        while (it.hasNext()) {
+            TimingEntry entry = it.next();
+            String pre = String.format("%2d %-40s %7d calls", entry.idx, hasName(entry.idx) ? names[entry.idx] : ""+entry.idx, calls[entry.idx]);
+            String perCallS = String.format("%.5f ms/call", entry.perCall);
+            String totals = String.format("%d ms total", millis[entry.idx]);
+            System.out.println(String.format("%-50s %20s %20s", pre, perCallS, totals));
+            i++;
+            if (i > 12)
+                break;
         }
     }
     public static void setName(int i, String name) {
@@ -142,5 +191,13 @@ public class TimingHelper {
         Arrays.fill(nanos, 0);
         Arrays.fill(millis, 0);
         init = false;
+    }
+    public static void check() {
+        if (!stack.isEmpty()) {
+            System.err.println("stack was expected to be empty");
+            String o = stackToString();
+            System.err.println(o);
+            stack.clear();
+        }
     }
 }

@@ -46,7 +46,7 @@ public class FinalRenderer extends FinalRendererBase {
             Engine.checkGLError("enable shaderDeferred");
 
         if (Main.DO_TIMING)
-            TimingHelper.startSec("bindTextures");
+            TimingHelper.endStart("bindTextures");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
@@ -89,18 +89,18 @@ public class FinalRenderer extends FinalRendererBase {
         {0, 1, 2, 3, 4, 5, 7, 8, 9, 10},
     };
     public void renderBlur(float fTime) {
-        int kawaseKernSizeSetting = 3;
+        int kawaseKernSizeSetting = 4;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
         
         int input = this.deferred.getTexture(0);
         FrameBuffer buffer = blur1;
 
-        if (Main.DO_TIMING) TimingHelper.endStart("enableShader");
+        if (Main.DO_TIMING) TimingHelper.startSec("enableShader");
         shaderBlur.enable();
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shaderBlur");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
         shaderThreshold.enable();
-        if (Main.DO_TIMING) TimingHelper.startSec("bindFramebuffer");
+        if (Main.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
         buffer.bind();
         if (Main.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
         buffer.clearFrameBuffer();
@@ -119,7 +119,7 @@ public class FinalRenderer extends FinalRendererBase {
         for (int p = 0; p < kawaseKernPasses.length; p++) {
             if (Main.DO_TIMING) TimingHelper.endStart("setuniforms");
             shaderBlur.setProgramUniform3f("blurPassProp", 1.0F/w, 1.0F/h, kawaseKernPasses[p]);
-            if (Main.DO_TIMING) TimingHelper.startSec("bindFramebuffer");
+            if (Main.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
             buffer.bind();
             if (Main.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
             buffer.clearFrameBuffer();
@@ -170,6 +170,7 @@ public class FinalRenderer extends FinalRendererBase {
                 TimingHelper.endSec();
         }
         this.blurTexture = input;
+        if (Main.DO_TIMING) TimingHelper.endSec();
     }
 
     @Override
@@ -182,7 +183,7 @@ public class FinalRenderer extends FinalRendererBase {
             dbg.postDbgFB();
         }
         if (Main.DO_TIMING)
-            TimingHelper.endStart("Deferred");
+            TimingHelper.startSec("Deferred");
         renderDeferred(fTime);
         if (Main.DO_TIMING)
             TimingHelper.endStart("Blur");

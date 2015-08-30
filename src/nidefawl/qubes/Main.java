@@ -386,7 +386,7 @@ public class Main extends GLGame {
         if (this.statsCached != null) {
             this.statsCached.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 1200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 1000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
