@@ -8,14 +8,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import nidefawl.game.GL;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
-
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 
 public class GuiCrash extends Gui {
     FontRenderer         fontSmall = FontRenderer.get("Arial", 16, 1, 18);

@@ -8,7 +8,6 @@ import java.awt.Color;
 import java.util.HashMap;
 
 import org.lwjgl.opengl.ARBGeometryShader4;
-import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;

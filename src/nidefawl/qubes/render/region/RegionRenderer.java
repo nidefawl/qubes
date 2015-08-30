@@ -5,8 +5,6 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.*;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;

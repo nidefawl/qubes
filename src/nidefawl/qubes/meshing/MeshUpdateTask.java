@@ -5,8 +5,6 @@ import java.util.List;
 import nidefawl.qubes.Main;
 
 import static nidefawl.qubes.render.WorldRenderer.*;
-import static nidefawl.qubes.render.region.MeshedRegion.*;
-
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;

@@ -5,7 +5,6 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 
-import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 

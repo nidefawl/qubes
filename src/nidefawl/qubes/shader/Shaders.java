@@ -1,19 +1,8 @@
 package nidefawl.qubes.shader;
 
-import static org.lwjgl.opengl.ARBUniformBufferObject.*;
-
-import java.nio.FloatBuffer;
-
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL15;
-
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.util.TimingHelper;
-import nidefawl.qubes.vec.Matrix4f;
 
 public class Shaders {
 

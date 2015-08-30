@@ -6,7 +6,6 @@ import org.lwjgl.BufferUtils;
 
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
-import nidefawl.qubes.vec.Vector3f;
 
 public class BufferedMatrix extends Matrix4f {
     

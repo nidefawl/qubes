@@ -2,7 +2,6 @@ package nidefawl.qubes.input;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.shader.Shader;

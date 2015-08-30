@@ -2,8 +2,6 @@ package nidefawl.qubes.meshing;
 
 
 import static nidefawl.qubes.chunk.Region.*;
-import static nidefawl.qubes.render.region.MeshedRegion.*;
-
 import java.util.*;
 
 import nidefawl.qubes.block.Block;

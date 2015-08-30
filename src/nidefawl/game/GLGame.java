@@ -8,7 +8,6 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +19,6 @@ import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gui.GuiCrash;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.swing.TextDialog;

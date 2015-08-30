@@ -3,23 +3,13 @@ package nidefawl.qubes.shader;
 import static org.lwjgl.opengl.ARBFragmentShader.*;
 import static org.lwjgl.opengl.ARBShaderObjects.*;
 import static org.lwjgl.opengl.ARBVertexShader.*;
-import static org.lwjgl.opengl.ARBUniformBufferObject.*;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBGeometryShader4;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
