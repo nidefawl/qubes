@@ -18,8 +18,6 @@ import nidefawl.game.GL;
 import nidefawl.game.GLGame;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.meshing.MeshThread;

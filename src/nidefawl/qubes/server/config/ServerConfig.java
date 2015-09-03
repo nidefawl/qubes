@@ -1,8 +1,5 @@
 package nidefawl.qubes.server.config;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 public class ServerConfig extends AbstractYMLConfig {
 	public ServerConfig() {
 		super(true);

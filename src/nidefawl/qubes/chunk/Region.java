@@ -1,7 +1,6 @@
 package nidefawl.qubes.chunk;
 
 import nidefawl.qubes.render.region.MeshedRegion;
-import nidefawl.qubes.world.World;
 
 public class Region {
     public static final int REGION_SIZE_BITS      = 1;

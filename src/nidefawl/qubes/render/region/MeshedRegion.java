@@ -15,7 +15,6 @@ import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.vec.AABB;
-import nidefawl.qubes.world.World;
 
 public class MeshedRegion {
 

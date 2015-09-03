@@ -1,8 +1,6 @@
 package nidefawl.qubes.config;
 
 import java.io.File;
-import java.io.IOException;
-
 import nidefawl.qubes.network.ReaderThread;
 import nidefawl.qubes.network.WriterThread;
 import nidefawl.qubes.network.server.NetworkServer;

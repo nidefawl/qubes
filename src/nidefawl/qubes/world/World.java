@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import nidefawl.qubes.Main;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionLoader;
@@ -15,7 +14,6 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.worldgen.AbstractGen;
-import nidefawl.qubes.worldgen.TerrainGenerator2;
 import nidefawl.qubes.worldgen.TestTerrain2;
 
 public class World {

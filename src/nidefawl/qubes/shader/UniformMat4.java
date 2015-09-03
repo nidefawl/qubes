@@ -1,8 +1,6 @@
 package nidefawl.qubes.shader;
 
 
-import static org.lwjgl.opengl.ARBShaderObjects.glUniform3fARB;
-
 import java.nio.FloatBuffer;
 
 import nidefawl.game.GL;

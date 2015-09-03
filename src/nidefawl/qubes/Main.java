@@ -4,12 +4,9 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
-import java.awt.Color;
-import java.net.URL;
 import java.util.*;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.*;
@@ -21,14 +18,12 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.profile.GPUProfiler;
-import nidefawl.qubes.gl.profile.GPUTaskProfile;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.*;
-import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.Light;
 import nidefawl.qubes.world.World;
