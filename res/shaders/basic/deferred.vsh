@@ -4,35 +4,31 @@
 #pragma include "vertex_layout.glsl"
 
 layout(std140) uniform LightInfo {
-  vec4 vSun; // Light position in eye coords.
-  vec4 vMoon; // Light position in eye coords.
+  vec4 dayLightTime; 
+  vec4 posSun; // Light position in world space
+  vec4 lightDir; // Light dir in world space
   vec4 La; // Ambient light intensity
   vec4 Ld; // Diffuse light intensity
   vec4 Ls; // Specular light intensity
-} Light;
+} SkyLight;
 
-layout(std140) uniform MaterialInfo {
-  vec4 Ka; // Ambient reflectivity
-  vec4 Kd; // Diffuse reflectivity
-  vec4 Ks; // Specular reflectivity
-  float Shininess; // Specular shininess factor
-} Material;
 
 out vec2 pass_texcoord;
-out vec3 sunDirection;
-out vec3 moonDirection;
-out float cosSunUpAngle;
-out float dayLight;
-out float nightlight;
+out float dayNoon;
+out float nightNoon;
 out float dayLightIntens;
-
+out float lightAngleUp;
+out float moonSunFlip;
+float   easeInOutCubic(float t)
+{
+	return t<0.5 ? 4.0*t*t*t : (t-1.0)*(2.0*t-2.0)*(2.0*t-2.0)+1.0;
+}
 void main() {
-	sunDirection = normalize(Light.vSun.xyz);
-	moonDirection = normalize(Light.vMoon.xyz);
-	cosSunUpAngle = dot(sunDirection, vec3(0,3,0));
-	dayLight = clamp(cosSunUpAngle, 0.0f, 1.0f);
-	nightlight = 1-dayLight;
-	dayLightIntens = clamp(dot(normalize(mix(Light.vSun, Light.vMoon, nightlight).xyz), vec3(0, 1, 0)), 0, 1);
+	dayNoon = easeInOutCubic(SkyLight.dayLightTime.x);
+	nightNoon = easeInOutCubic(SkyLight.dayLightTime.y);
+	dayLightIntens = SkyLight.dayLightTime.z;
+	lightAngleUp = SkyLight.dayLightTime.w;
+	moonSunFlip = dayNoon > nightNoon ? 0 : 1;
 	pass_texcoord = in_texcoord.st;
 	gl_Position = in_matrix.mvp * in_position;
 }

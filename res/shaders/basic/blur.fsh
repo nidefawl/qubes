@@ -77,8 +77,8 @@ vec4 blur13(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
 
 void main() {
 	vec2 pixelScale;
-	pixelScale.x = BLUR_SCALE * ( 1.0 / in_matrix.resolution.x );
-	pixelScale.y = BLUR_SCALE * ( 1.0 / in_matrix.resolution.y );
+	pixelScale.x = BLUR_SCALE * ( 1.0 / in_matrix.viewport.x );
+	pixelScale.y = BLUR_SCALE * ( 1.0 / in_matrix.viewport.y );
 	vec2[KERNEL_SIZE] offset = GetOffsetArray( pixelScale );
 
 	vec3 color = vec3( 0.0, 0.0, 0.0 );

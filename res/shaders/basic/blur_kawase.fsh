@@ -54,7 +54,8 @@ vec3 KawaseBlurFilter( sampler2D tex, vec2 texCoord, vec2 pixelSize, float itera
 
 void main()
 {
-    //vec3 col = texture(texColor, pass_texcoord).xyz;
+    // out_Color = texture(texColor, pass_texcoord);
+
     out_Color = vec4(KawaseBlurFilter( texColor, pass_texcoord.xy, blurPassProp.xy, blurPassProp.z ), 1);
 
     // // double-Kawase is also an option, but loses some quality

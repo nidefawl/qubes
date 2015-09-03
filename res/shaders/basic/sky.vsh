@@ -10,6 +10,5 @@ out vec3 vposition;
 void main() {
 	color = in_color;
 	vposition = (in_matrix.view * in_position).xyz;
-
-	gl_Position = in_matrix.proj * in_matrix.view * in_position;
+	gl_Position = in_matrix.vp * in_position;
 }
