@@ -20,7 +20,7 @@ public class ChunkManagerClient extends ChunkManager {
     }
 
     @Override
-    public void stopThreads() {
+    public void onWorldUnload() {
     }
 
 }

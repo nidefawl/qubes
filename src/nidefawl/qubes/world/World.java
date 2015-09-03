@@ -13,6 +13,7 @@ import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.worldgen.AbstractGen;
+import nidefawl.qubes.worldgen.TerrainGenerator2;
 import nidefawl.qubes.worldgen.TestTerrain2;
 
 public abstract class World {
@@ -48,6 +49,7 @@ public abstract class World {
         this.worldHeight = 1 << worldHeightBits;
         this.worldHeightMinusOne = (1 << worldHeightBits) - 1;
         this.worldSeaLevel = 59;//1 << (worldHeightBits - 1);
+//        this.generator = new TerrainGenerator2(this, this.seed);
         this.generator = new TestTerrain2(this, this.seed);
 
     }
@@ -71,7 +73,7 @@ public abstract class World {
 //                fTime = 0;
         dayLen = 211500;
 //        time = 53000;
-        time = 63000;
+        time = 163000;
         float timeOffset = (this.time) % dayLen;
         float fSun = (timeOffset + fTime) / (float) dayLen + 0.25F;
         if (fSun < 0)
@@ -136,7 +138,7 @@ public abstract class World {
     public void onLeave() {
         this.entities.clear();
         this.entityList.clear();
-        this.getChunkManager().stopThreads();
+        this.getChunkManager().onWorldUnload();
     }
 
 

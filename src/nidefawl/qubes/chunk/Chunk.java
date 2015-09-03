@@ -12,6 +12,7 @@ public class Chunk {
     public final int        z;
     public int              facesRendered;
     public byte[]           biomes    = new byte[SIZE * SIZE];
+    public long loadTime = System.currentTimeMillis();
     boolean modified = false;
 
     public Chunk(int x, int z, int heightBits) {
@@ -101,5 +102,12 @@ public class Chunk {
     public void setBlocks(short[] blocks) {
         this.blocks = blocks;
         flagModified();
+    }
+    public boolean justLoaded() {
+        return System.currentTimeMillis()-this.loadTime<10000;
+    }
+
+    public short[] getBlocks() {
+        return this.blocks;
     }
 }

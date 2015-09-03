@@ -122,9 +122,18 @@ public class Game extends GameBase {
             Engine.regionRenderer.flush();
         }
         this.world = world;
-        this.world.onLoad();
-        this.world.addEntity(this.entSelf);
+        if (this.world != null) {
+            this.world.onLoad();
+            this.world.addEntity(this.entSelf);   
+        }
     }
+    
+    @Override
+    public void shutdown() {
+        super.shutdown();
+        setWorld(null);
+    }
+    
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
@@ -182,6 +191,7 @@ public class Game extends GameBase {
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
+                    setWorld(null);
                     shutdown();
                     break;
                 case Keyboard.KEY_H:
@@ -257,62 +267,63 @@ public class Game extends GameBase {
 
         if (Game.DO_TIMING)
             TimingHelper.startSec("world");
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("ShadowPass");
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("renderShadowPass");
-        
-        Engine.shadowRenderer.renderShadowPass(this.world, fTime);
-        glEnable(GL_CULL_FACE);
-        Engine.getSceneFB().bind();
-        Engine.getSceneFB().clearFrameBuffer();
-        
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-        
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("renderWorld");
-
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("renderWorld");
-        Engine.worldRenderer.renderWorld(this.world, fTime);
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-        
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("renderWorld");
-        
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("renderBlockHighlight");
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("renderBlockHighlight");
-        Engine.selection.renderBlockHighlight(this.world, fTime);
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-        
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("renderBlockHighlight");
-        
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("renderDebugBB");
-
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("renderDebugBB");
-        Engine.worldRenderer.renderDebugBB(this.world, fTime);
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-        
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("renderDebugBB");
-        
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("unbindCurrentFrameBuffer");
-
-        FrameBuffer.unbindFramebuffer();
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
+        if (this.world != null) {
+            if (Game.DO_TIMING)
+                TimingHelper.startSec("ShadowPass");
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("renderShadowPass");
+            Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+            glEnable(GL_CULL_FACE);
+            Engine.getSceneFB().bind();
+            Engine.getSceneFB().clearFrameBuffer();
+            
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("renderWorld");
+            
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("renderWorld");
+            Engine.worldRenderer.renderWorld(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("renderWorld");
+            
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("renderBlockHighlight");
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("renderBlockHighlight");
+                Engine.selection.renderBlockHighlight(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+            
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("renderBlockHighlight");
+            
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("renderDebugBB");
+            
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("renderDebugBB");
+            Engine.worldRenderer.renderDebugBB(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("renderDebugBB");
+            
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("unbindCurrentFrameBuffer");
+            
+            FrameBuffer.unbindFramebuffer();
+            if (Game.DO_TIMING)
+                TimingHelper.endSec();
+            if (Game.DO_TIMING)
+                TimingHelper.endSec();
+        }
         if (Game.DO_TIMING)
             TimingHelper.startSec("screen");
         if (Game.DO_TIMING)
@@ -328,42 +339,52 @@ public class Game extends GameBase {
 //      glEnable(GL_TEXTURE_2D);
       glActiveTexture(GL_TEXTURE0);
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-      if (Game.DO_TIMING) TimingHelper.endStart("final");
+      
 
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
-      UniformBuffer.bindOrthoUBO();
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-      glDepthMask(false);
-      Engine.outRenderer.render(this.world, fTime);
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
-      Engine.outRenderer.renderFinal(this.world, fTime);
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderWireFrame");
-      glDepthMask(true);
-      glDepthFunc(GL_LEQUAL);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      if (Engine.renderWireFrame) {
-          glDisable(GL_CULL_FACE);
-          if (Game.DO_TIMING) TimingHelper.endStart("renderWireFrame");
-          Engine.getSceneFB().bindRead();
-          GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-          FrameBuffer.unbindReadFramebuffer();
-          UniformBuffer.bindProjUBO();
-          if (Game.DO_TIMING) TimingHelper.endStart("renderNormals");
-          Engine.worldRenderer.renderNormals(this.world, fTime);
-          Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-          if (Game.GL_ERROR_CHECKS)
-              Engine.checkGLError("renderNormals");
+      if (this.world != null) {
+          if (Game.DO_TIMING) TimingHelper.endStart("final");
+
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
           UniformBuffer.bindOrthoUBO();
-          glEnable(GL_CULL_FACE);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          glDepthMask(false);
+          Engine.outRenderer.render(this.world, fTime);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
+          Engine.outRenderer.renderFinal(this.world, fTime);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderWireFrame");
+          glDepthMask(true);
+          glDepthFunc(GL_LEQUAL);
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          if (Engine.renderWireFrame) {
+              glDisable(GL_CULL_FACE);
+              if (Game.DO_TIMING) TimingHelper.endStart("renderWireFrame");
+              Engine.getSceneFB().bindRead();
+              GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+              FrameBuffer.unbindReadFramebuffer();
+              UniformBuffer.bindProjUBO();
+              if (Game.DO_TIMING) TimingHelper.endStart("renderNormals");
+              Engine.worldRenderer.renderNormals(this.world, fTime);
+              Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
+              if (Game.GL_ERROR_CHECKS)
+                  Engine.checkGLError("renderNormals");
+              UniformBuffer.bindOrthoUBO();
+              glEnable(GL_CULL_FACE);
+          }
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+      } else {
+
+          glDepthFunc(GL_LEQUAL);
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       }
+
       
 
       glDisable(GL_DEPTH_TEST);
       glActiveTexture(GL_TEXTURE0);
       if (Game.DO_TIMING) TimingHelper.endStart("gui");
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("gui");
       
       if (this.movement.grabbed()) {
@@ -434,10 +455,12 @@ public class Game extends GameBase {
     }
     @Override
     public void preRenderUpdate(float f) {
-        if (this.world != null) {
-            this.world.updateFrame(f);
-            this.entSelf.updateInputDirect(movement);
+        if (this.world == null) {
+            return;
         }
+        
+        this.world.updateFrame(f);
+        this.entSelf.updateInputDirect(movement);
 //        float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
 //        float cosY = GameMath.cos(GameMath.degreesToRadians(entSelf.yaw));
 //        float forward = 1;
@@ -493,6 +516,7 @@ public class Game extends GameBase {
             if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
                 int halflen = (RegionRenderer.RENDER_DISTANCE+1)*RegionRenderer.REGION_SIZE;
                 ((ChunkManagerServer) world.getChunkManager()).ensureLoaded(xPosC, zPosC, halflen);
+                ((ChunkManagerServer) world.getChunkManager()).unloadUnused(xPosC, zPosC, halflen+2);
 //                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
 //                if (i != 0) {
 //                    System.out.println("Queued "+i+" regions for load");

@@ -7,7 +7,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
-public class ChunkLoadThread extends Thread {
+public class ChunkUnloadThread extends Thread {
     private static long               sleepTime = 10;
     private LinkedBlockingQueue<Long> queue     = new LinkedBlockingQueue<Long>();
     private volatile boolean          isRunning;
@@ -15,8 +15,8 @@ public class ChunkLoadThread extends Thread {
     private ChunkManagerServer mgr;
     private boolean finished;
 
-    public ChunkLoadThread(ChunkManagerServer mgr) {
-        setName("ChunkLoadThread");
+    public ChunkUnloadThread(ChunkManagerServer mgr) {
+        setName("ChunkUnloadThread");
         setDaemon(true);
         this.isRunning = true;
         this.mgr = mgr;
@@ -29,20 +29,18 @@ public class ChunkLoadThread extends Thread {
     @Override
     public void run() {
         try {
-
             System.out.println(getName() + " started");
-
-            while (BootClient.instance.isRunning() && this.isRunning) {
+            while ((BootClient.instance.isRunning() && this.isRunning) || !this.queue.isEmpty()) {
                 boolean did = false;
                 try {
                     Long task = this.queue.take();
                     if (task != null) {
                         synchronized (this.mgr.syncObj) {
                             Chunk c = mgr.table.get(task);
-                            if (c == null) {
+                            if (c != null) {
                                 int x = GameMath.lhToX(task);
                                 int z = GameMath.lhToZ(task);
-                                mgr.loadOrGenerate(x, z);
+                                mgr.unloadChunk(x, z);
                             }
                         }
                     }
@@ -73,12 +71,8 @@ public class ChunkLoadThread extends Thread {
     private void onInterruption() {
     }
 
-    public void queueLoad(int x, int z) {
-        this.queue.add(GameMath.toLong(x, z));
-    }
 
-    public void queueLoadChecked(int x, int z) {
-        long l = GameMath.toLong(x, z);
+    public void queueUnloadChecked(Long l) {
         if (!this.queue.contains(l)) {
             this.queue.add(l);
         }
@@ -88,9 +82,13 @@ public class ChunkLoadThread extends Thread {
         if (!this.finished) {
             this.isRunning = false;
             try {
-                this.queue.clear();
+                if (!this.queue.isEmpty()) {
+                    System.out.println("Waiting for "+this.queue.size()+" chunks to unload...");
+                }
+                while (!this.queue.isEmpty()) {
+                    Thread.sleep(100);
+                }
                 this.interrupt();
-                Thread.sleep(60);
             } catch (Exception e) {
                 e.printStackTrace();
             }

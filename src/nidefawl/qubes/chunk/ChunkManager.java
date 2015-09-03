@@ -23,5 +23,5 @@ public abstract class ChunkManager {
         return this.table.approxSize();
     }
     public abstract void startThreads();
-    public abstract void stopThreads();
+    public abstract void onWorldUnload();
 }
