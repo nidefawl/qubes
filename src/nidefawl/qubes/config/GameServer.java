@@ -48,8 +48,6 @@ public class GameServer implements Runnable {
 	protected void loop() {
 		try {
 			this.networkServer.update();
-			System.out.println("Writer threads: "+WriterThread.ACTIVE_THREADS);
-			System.out.println("Reader threads: "+ReaderThread.ACTIVE_THREADS);
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -74,7 +72,7 @@ public class GameServer implements Runnable {
 
 	public void loadConfig() {
 		try {
-			this.config.load(new File("config", "config.yml"));
+			this.config.load(new File("config", "server.yml"));
 		} catch (InvalidConfigException e) {
 			e.printStackTrace();
 		}

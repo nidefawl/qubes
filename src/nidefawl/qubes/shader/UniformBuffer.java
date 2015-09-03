@@ -7,11 +7,12 @@ import java.nio.FloatBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
 
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.world.ClientWorld;
 import nidefawl.qubes.world.World;
 
 public class UniformBuffer {
@@ -29,7 +30,7 @@ public class UniformBuffer {
             uboMatrix = Engine.glGenBuffers(1).get();
             GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
             GL15.glBufferData(GL_UNIFORM_BUFFER, blockSize, GL15.GL_DYNAMIC_DRAW);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("UBO Matrix");
         }
         if (uboLight == 0) {
@@ -37,7 +38,7 @@ public class UniformBuffer {
             uboLight = Engine.glGenBuffers(1).get();
             GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
             GL15.glBufferData(GL_UNIFORM_BUFFER, blockSize, GL15.GL_DYNAMIC_DRAW);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("UBO Matrix");
         }
     }
@@ -58,10 +59,10 @@ public class UniformBuffer {
         uboBuffer.put(pushdmv.get());
         uboBuffer.flip();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
         GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
     }
     public static void popMat() {
@@ -70,35 +71,35 @@ public class UniformBuffer {
     static BufferedMatrix pushdmv;
     static BufferedMatrix pushdmvp = new BufferedMatrix();
     public static void bindOrthoUBO() {
-        if (Main.DO_TIMING) TimingHelper.startSec("bindOrthoUBO");
+        if (Client.DO_TIMING) TimingHelper.startSec("bindOrthoUBO");
         uboBuffer.position(0).limit(128);
         uboBuffer.put(Engine.getMatOrthoP().get());
         uboBuffer.put(Engine.getMatOrthoMV().get());
         uboBuffer.flip();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
         GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
-        if (Main.DO_TIMING) TimingHelper.endSec();
+        if (Client.DO_TIMING) TimingHelper.endSec();
     }
     public static void bindProjUBO() {
-        if (Main.DO_TIMING) TimingHelper.startSec("bindOrthoUBO");
+        if (Client.DO_TIMING) TimingHelper.startSec("bindOrthoUBO");
         uboBuffer.position(0).limit(128);
         uboBuffer.put(Engine.getMatSceneMVP().get());
         uboBuffer.put(Engine.getMatSceneMV().get());
         uboBuffer.flip();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
         GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
-        if (Main.DO_TIMING) TimingHelper.endSec();
+        if (Client.DO_TIMING) TimingHelper.endSec();
     }
-    public static void updateUBO(World world, float f) {
-        if (Main.DO_TIMING) TimingHelper.startSec("updateUBO");
+    public static void updateUBO(ClientWorld world, float f) {
+        if (Client.DO_TIMING) TimingHelper.startSec("updateUBO");
         uboBuffer.position(0).limit(SIZE_STRUCT);
         uboBuffer.put(Engine.getMatSceneMVP().get());
         uboBuffer.put(Engine.getMatSceneMV().get());
@@ -120,21 +121,21 @@ public class UniformBuffer {
         Engine.camera.getPosition().store(uboBuffer);
         uboBuffer.put(1F);
         
-        uboBuffer.put(Main.ticksran+f);
+        uboBuffer.put(Client.ticksran+f);
         uboBuffer.put(1F);
         uboBuffer.put(1F);
         uboBuffer.put(1F);
         
-        uboBuffer.put(Main.displayWidth);
-        uboBuffer.put(Main.displayHeight);
+        uboBuffer.put(Client.displayWidth);
+        uboBuffer.put(Client.displayHeight);
         uboBuffer.put(Engine.znear);
         uboBuffer.put(Engine.zfar);
         uboBuffer.flip();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
         GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+uboMatrix+"/"+uboBuffer);
         //    System.out.println(name+"/"+blockIndex);
         // Uniform A
@@ -169,12 +170,12 @@ public class UniformBuffer {
         uboBuffer.put(0);
         uboBuffer.flip();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
         GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
-        if (Main.DO_TIMING) TimingHelper.endSec();
+        if (Client.DO_TIMING) TimingHelper.endSec();
         
     }
     public static void bindBuffers(Shader shader) {
@@ -183,10 +184,10 @@ public class UniformBuffer {
         if (blockIndex != -1) {
 //            System.out.println(name+"/"+blockIndex);
             glBindBufferBase(GL_UNIFORM_BUFFER, 0, UniformBuffer.uboMatrix);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
             glUniformBlockBinding(shader.shader, blockIndex, 0);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
 
         }
@@ -196,10 +197,10 @@ public class UniformBuffer {
 //            final int blockSize = glGetActiveUniformBlocki(shader.shader, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE);
 //            System.out.println(name+"/"+light+" light, size "+blockSize);
             glBindBufferBase(GL_UNIFORM_BUFFER, 1, UniformBuffer.uboLight);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
             glUniformBlockBinding(shader.shader, light, 1);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("glUniformBlockBinding blockIndex "+light);
 
         }

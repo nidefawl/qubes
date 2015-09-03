@@ -16,6 +16,7 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
 import nidefawl.game.GL;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
@@ -318,28 +319,28 @@ public abstract class GLGame extends AbstractGLGame {
             DO_TIMING = !DO_TIMING;
             TimingHelper.reset();
         }
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.check();
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.startFrame();
         if (isCloseRequested()) {
             shutdown();
             return;
         }
-        if (Main.DO_TIMING) TimingHelper.startSec("pre render");
+        if (Client.DO_TIMING) TimingHelper.startSec("pre render");
         checkResize();
         updateTime();
         Stats.uniformCalls = 0;
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("pre render");
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("input");
         updateInput();
         input(renderTime);
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("preRenderUpdate");
         preRenderUpdate(renderTime);
 //        if (!startRender) {
@@ -351,20 +352,20 @@ public abstract class GLGame extends AbstractGLGame {
 //            }
 //            return;
 //        }
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
         render(renderTime);
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("postRenderUpdate");
         postRenderUpdate(renderTime);
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();
         //        if (Main.DO_TIMING) TimingHelper.end(14);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("render");
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("Display.update");
         float took = (System.nanoTime()-frameTime) / 1000000F;
         Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
@@ -372,11 +373,11 @@ public abstract class GLGame extends AbstractGLGame {
         updateDisplay();
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         frameTime = System.nanoTime();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("calcFPS");
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;
         double l = (timer.absTime - timeLastFPS) / 1000.0D;
@@ -386,7 +387,7 @@ public abstract class GLGame extends AbstractGLGame {
             Stats.fpsCounter = 0;
             onStatsUpdated((float) l);
         }
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
         if (this.showError != null) {
 //            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2], true);
@@ -493,7 +494,7 @@ public abstract class GLGame extends AbstractGLGame {
                 this.wasrunning = false;
                 this.running = false;
                 this.sysExit = false;
-                Main.main(Main.lastargs);
+//                Client.main(Main.lastargs);
                 return;
             }
             /*Tess.useClientStates = true;

@@ -1,5 +1,6 @@
 package nidefawl.qubes.shader;
 
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
@@ -18,11 +19,11 @@ public class Shaders {
     public static void init() {
         Shaders.colored.enable();
         colored.setProgramUniform3f("in_offset", 0, 0, 0);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("setProgramUniform3f");
         Shaders.textured.enable();
         textured.setProgramUniform1i("tex0", 0);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("setProgramUniform1i");
         Shader.disable();
     }

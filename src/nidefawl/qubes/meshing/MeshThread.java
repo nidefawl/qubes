@@ -3,6 +3,7 @@ package nidefawl.qubes.meshing;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;

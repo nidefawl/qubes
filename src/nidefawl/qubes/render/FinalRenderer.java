@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.game.GL;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
@@ -38,14 +39,14 @@ public class FinalRenderer {
 
     public void renderDeferred(World world, float fTime) {
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("bindFramebuffer");
         deferred.bind();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("clearFrameBuffer");
         deferred.clearFrameBuffer();
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("enableShader");
         shaderDeferred.enable();
         ArrayList<Light> lights = world.lights;
@@ -79,10 +80,10 @@ public class FinalRenderer {
             glUniform1f(glGetUniformLocation(shaderLightingPass.Program, ("lights[" + std::to_string(i) + "].Radius").c_str()), radius);
              */
         }
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("bindTextures");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
@@ -91,18 +92,18 @@ public class FinalRenderer {
         GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, TMgr.getNoise());
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("drawFullscreenQuad");
         Engine.drawFullscreenQuad();
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
 
-        if (Main.show) {
+        if (Client.show) {
             Shader.disable();
             FrameBuffer.unbindFramebuffer();
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
-            if (Main.DO_TIMING)
+            if (Client.DO_TIMING)
                 TimingHelper.startSec("DebugOverlayDef");
             dbg.preDbgFB(false);
             dbg.drawDbgTexture(0, 0, 0, Engine.getSceneFB().getTexture(0), "texColor");
@@ -113,7 +114,7 @@ public class FinalRenderer {
             dbg.drawDbgTexture(0, 0, 5, TMgr.getNoise(), "noiseTex");
             dbg.drawDbgTexture(0, 1, 0, this.deferred.getTexture(0), "DeferredOut");
             dbg.postDbgFB();
-            if (Main.DO_TIMING)
+            if (Client.DO_TIMING)
                 TimingHelper.endSec();
         }
 
@@ -132,54 +133,54 @@ public class FinalRenderer {
         int input = this.deferred.getTexture(0);
         FrameBuffer buffer = blur1;
 
-        if (Main.DO_TIMING) TimingHelper.startSec("enableShader");
+        if (Client.DO_TIMING) TimingHelper.startSec("enableShader");
         shaderBlur.enable();
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("enable shaderBlur");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("enable shaderBlur");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
         shaderThreshold.enable();
-        if (Main.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
+        if (Client.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
         buffer.bind();
-        if (Main.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
+        if (Client.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
         buffer.clearFrameBuffer();
-        if (Main.DO_TIMING)  TimingHelper.endStart("bindTexture");
+        if (Client.DO_TIMING)  TimingHelper.endStart("bindTexture");
         float w, h;
         w = deferred.getWidth();
         h = deferred.getHeight();
 //        if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
             GL11.glViewport(0, 0, buffer.getWidth(), buffer.getHeight());
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
-        if (Main.DO_TIMING) TimingHelper.endStart("drawFullscreenQuad");
+        if (Client.DO_TIMING) TimingHelper.endStart("drawFullscreenQuad");
         Engine.drawFullscreenQuad();
         input = buffer.getTexture(0);
         buffer = buffer == blur1 ? blur2 : blur1;
         shaderBlur.enable();
         for (int p = 0; p < kawaseKernPasses.length; p++) {
-            if (Main.DO_TIMING) TimingHelper.endStart("setuniforms");
+            if (Client.DO_TIMING) TimingHelper.endStart("setuniforms");
             shaderBlur.setProgramUniform3f("blurPassProp", 1.0F/w, 1.0F/h, kawaseKernPasses[p]);
-            if (Main.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
+            if (Client.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
             buffer.bind();
-            if (Main.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
+            if (Client.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
             buffer.clearFrameBuffer();
-            if (Main.DO_TIMING)  TimingHelper.endStart("bindTexture");
+            if (Client.DO_TIMING)  TimingHelper.endStart("bindTexture");
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
-            if (Main.DO_TIMING) TimingHelper.endStart("drawFullscreenQuad");
+            if (Client.DO_TIMING) TimingHelper.endStart("drawFullscreenQuad");
             Engine.drawFullscreenQuad();
             
 
 
-            if (Main.show) {
+            if (Client.show) {
 //                if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
                     GL11.glViewport(0, 0, deferred.getWidth(), deferred.getHeight());
                 FrameBuffer.unbindFramebuffer();
                 Shader.disable();
                 GuiOverlayDebug dbg = Main.instance.debugOverlay;
-                if (Main.DO_TIMING)
+                if (Client.DO_TIMING)
                     TimingHelper.startSec("DebugOverlayBlur");
                 dbg.preDbgFB(false);
                 dbg.drawDbgTexture(1, 0, p+1, input, "pass"+p+" in");
                 dbg.drawDbgTexture(1, 1, p+1, buffer.getTexture(0), "pass"+p+" out");
                 dbg.postDbgFB();
-                if (Main.DO_TIMING)
+                if (Client.DO_TIMING)
                     TimingHelper.endSec();
                 shaderBlur.enable();
 //                if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
@@ -195,41 +196,41 @@ public class FinalRenderer {
         Shader.disable();
         if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
             GL11.glViewport(0, 0, deferred.getWidth(), deferred.getHeight());
-        if (Main.show) {
+        if (Client.show) {
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
-            if (Main.DO_TIMING)
+            if (Client.DO_TIMING)
                 TimingHelper.startSec("DebugOverlayBlur");
             dbg.preDbgFB(false);
             dbg.drawDbgTexture(1, 0, 0, deferred.getTexture(0), "texColor");
             dbg.drawDbgTexture(1, 1, 0, input, "blured");
             dbg.postDbgFB();
-            if (Main.DO_TIMING)
+            if (Client.DO_TIMING)
                 TimingHelper.endSec();
         }
         this.blurTexture = input;
-        if (Main.DO_TIMING) TimingHelper.endSec();
+        if (Client.DO_TIMING) TimingHelper.endSec();
     }
 
 
     public void render(World world, float fTime) {
 
-        if (Main.show) {
+        if (Client.show) {
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
             dbg.preDbgFB(true);
             dbg.drawDebug();
             dbg.postDbgFB();
         }
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.startSec("Deferred");
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred");
         renderDeferred(world, fTime);
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("Blur");
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Blur");
         renderBlur(world, fTime);
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endSec();
         FrameBuffer.unbindFramebuffer();
 
@@ -237,34 +238,34 @@ public class FinalRenderer {
 
 
     public void renderFinal(World world, float fTime) {
-        if (Main.show) {
+        if (Client.show) {
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
-            if (Main.DO_TIMING)
+            if (Client.DO_TIMING)
                 TimingHelper.startSec("DebugOverlayFinal");
             dbg.preDbgFB(false);
             dbg.drawDbgTexture(2, 0, 0, deferred.getTexture(0), "texColor");
             dbg.drawDbgTexture(2, 0, 1, blurTexture, "texBlur");
             dbg.postDbgFB();
-            if (Main.DO_TIMING)
+            if (Client.DO_TIMING)
                 TimingHelper.endSec();
         }
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("enableShader");
         shaderFinal.enable();
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderBlur");
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("bindTexture");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, deferred.getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, blurTexture);
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("drawFullscreenQuad");
         Engine.drawFullscreenQuad();
 
-        if (Main.DO_TIMING)
+        if (Client.DO_TIMING)
             TimingHelper.endStart("disableShader");
         Shader.disable();
 

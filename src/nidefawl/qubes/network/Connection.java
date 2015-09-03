@@ -3,10 +3,12 @@ package nidefawl.qubes.network;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
+import nidefawl.qubes.network.server.ServerHandler;
 
 public class Connection {
 
@@ -74,7 +76,7 @@ public class Connection {
     }
 
     public void onError(final Exception e) {
-    	if (isConnected) {
+    	if (isConnected && !(e instanceof SocketException)) {
             e.printStackTrace();
     	}
         this.isConnected = false;
@@ -172,5 +174,13 @@ public class Connection {
 	public InetSocketAddress getAddr() {
 		return (InetSocketAddress) this.socket.getRemoteSocketAddress();
 	}
+
+    public IHandler getHandler() {
+        return this.handler;
+    }
+
+    public void onFinish() {
+        this.handler.onFinish();
+    }
 
 }

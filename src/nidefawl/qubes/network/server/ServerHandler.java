@@ -81,4 +81,9 @@ public class ServerHandler implements IHandler {
 		System.out.println("client send disconnect");
 		this.conn.disconnect("Client sent disconnect: "+packetDisconnect.message);
 	}
+
+    @Override
+    public void onFinish() {
+        System.out.println("Lost connection: "+getHandlerName());
+    }
 }

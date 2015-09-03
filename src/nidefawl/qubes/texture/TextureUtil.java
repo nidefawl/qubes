@@ -1,5 +1,6 @@
 package nidefawl.qubes.texture;
 
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
@@ -28,7 +29,7 @@ public class TextureUtil {
         OpenSimplexNoise n3 = new OpenSimplexNoise(seed * 19);
         byte[] data = new byte[w * h * 3];
         TimingHelper.startSilent(123);
-        float f1 = Main.ticksran + Main.instance.timer.partialTick;
+//        float f1 = Client.ticksran + Main.instance.partialTick;
         int iW = 2;
         double scale = 1 / 10D;
         double scale2 = scale * 5;

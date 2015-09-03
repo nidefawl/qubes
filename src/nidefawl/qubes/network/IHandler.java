@@ -15,4 +15,9 @@ public interface IHandler {
 	public String getHandlerName();
 
 	public void handleDisconnect(PacketDisconnect packetDisconnect);
+
+	/**
+	 * Called post disconnect and post cleanup
+	 */
+    public void onFinish();
 }

@@ -3,6 +3,7 @@ package nidefawl.qubes.chunk;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.util.GameError;
 

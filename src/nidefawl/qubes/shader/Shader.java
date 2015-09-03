@@ -13,7 +13,7 @@ import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
@@ -162,7 +162,7 @@ public class Shader {
         String[] tessAttrib = Tess.attributes;
         for (int i = 0; i < tessAttrib.length; i++) {
             glBindAttribLocationARB(this.shader, i, tessAttrib[i]);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+tessAttrib[i]+" = "+i);
         }
         GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
@@ -176,7 +176,7 @@ public class Shader {
 
     public void bindAttribute(int attr, String attrName) {
         glBindAttribLocationARB(this.shader, attr, attrName);
-        if (Main.GL_ERROR_CHECKS)
+        if (Client.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+attrName+" = "+attr);
     }
     void linkProgram() {
@@ -224,7 +224,7 @@ public class Shader {
     public void enable() {
         if (this.shader >= 0) {
             glUseProgramObjectARB(this.shader);
-            if (Main.GL_ERROR_CHECKS)
+            if (Client.GL_ERROR_CHECKS)
                 Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
             numUses++;
             if (numUses < 2) {

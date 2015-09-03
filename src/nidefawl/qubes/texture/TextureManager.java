@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import org.lwjgl.opengl.*;
@@ -53,7 +53,7 @@ public class TextureManager {
     public int makeNewTexture(BufferedImage image, boolean repeat, boolean filter, int mipmapLevels) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glBindTexture(GL11.GL_TEXTURE_2D, i)");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glBindTexture(GL11.GL_TEXTURE_2D, i)");
 
         byte[] data = getRGBA(image);
         uploadTexture(data, image.getWidth(), image.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevels);
@@ -115,27 +115,27 @@ public class TextureManager {
         }
 
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipmapLevel);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_MAX_LEVEL "+mipmapLevel);
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_MAX_LEVEL "+mipmapLevel);
         if (mipmapLevel > 0) {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_GENERATE_MIPMAP, GL11.GL_TRUE);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_GENERATE_MIPMAP GL_TRUE");
+            if (Client.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_GENERATE_MIPMAP GL_TRUE");
 //            GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, mipmapLevel, internalFormat, w, h);
             minfilter = filter ?  GL11.GL_LINEAR_MIPMAP_LINEAR : GL11.GL_LINEAR_MIPMAP_NEAREST;
 //            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
         }
         
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, magfilter);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri MAG_FILTER");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri MAG_FILTER");
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, minfilter);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri MIN_FILTER");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri MIN_FILTER");
         if (repeat) {
             wrap_s = GL11.GL_REPEAT;
             wrap_t = GL11.GL_REPEAT;
         }
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, wrap_s);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_S ("+(repeat?"REPEAT":"CLAMP")+")");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_S ("+(repeat?"REPEAT":"CLAMP")+")");
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, wrap_t);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_T ("+(repeat?"REPEAT":"CLAMP")+")");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_T ("+(repeat?"REPEAT":"CLAMP")+")");
         if (directBuf == null || directBuf.capacity() < w*h*bytespp) {
             directBuf = ByteBuffer.allocateDirect(w*h*bytespp).order(ByteOrder.nativeOrder());
         }
@@ -143,7 +143,7 @@ public class TextureManager {
         directBuf.put(rgba, 0, w*h*bytespp);
         directBuf.position(0).limit(w*h*bytespp);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL11.GL_UNSIGNED_BYTE, directBuf);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glTexImage2D");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glTexImage2D");
 //        if (mipmapLevel > 0) {
 //            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 //            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL30.glGenerateMipmap");

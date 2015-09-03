@@ -2,6 +2,7 @@ package nidefawl.qubes.meshing;
 
 import java.util.List;
 
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 
 import static nidefawl.qubes.render.WorldRenderer.*;

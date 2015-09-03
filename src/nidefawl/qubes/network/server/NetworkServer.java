@@ -7,6 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.config.GameServer;
 import nidefawl.qubes.network.Connection;
+import nidefawl.qubes.network.WriterThread;
 
 
 public class NetworkServer {
@@ -42,6 +43,7 @@ public class NetworkServer {
     public void addConnection(final Socket s) throws IOException {
         final Connection c = new Connection(s);
         final ServerHandler h = new ServerHandler(this.server, this, c);
+        System.out.println("New connection: "+h.getHandlerName());
         c.setHandler(h);
         this.newConnections.add(c);
         c.startThreads();
@@ -67,6 +69,7 @@ public class NetworkServer {
             try {
                 c.update();
                 if (c.finished()) {
+                    c.onFinish();
                     this.connections.remove(a--);
                 }
             } catch (Exception e) {

@@ -7,7 +7,7 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.BufferUtils;
@@ -92,19 +92,19 @@ public class FrameBuffer {
         if (numTextures == 0) {
             throw new IllegalStateException("No textures defined");
         }
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenFramebuffers");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenFramebuffers");
         this.drawBufAtt = BufferUtils.createIntBuffer(this.numColorTextures);
         IntBuffer colorTextures = BufferUtils.createIntBuffer(numTextures);
         glGenTextures(colorTextures);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenTextures");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenTextures");
         colorTextures.rewind();
         this.fb = GL30.glGenFramebuffers();
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
         GL20.glDrawBuffers(GL_NONE);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
         glReadBuffer(GL_NONE);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glReadBuffer");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glReadBuffer");
         colorTextures.rewind();
         for (int i = 0; i < colorAttFormats.length; i++) {
             if (colorAttFormats[i] != 0) {
@@ -113,7 +113,7 @@ public class FrameBuffer {
                 setupTexture(tex, colorAttFormats[i], colorAttMinFilters[i], colorAttMagFilters[i]);
                 this.colorAttTextures[i] = tex;
                 GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, att, tex, 0);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (color " + i + ")");
+                if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (color " + i + ")");
                 this.drawBufAtt.put(att);
             }
         }
@@ -134,37 +134,37 @@ public class FrameBuffer {
 
     public static void unbindFramebuffer() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentFrameBuffer");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentFrameBuffer");
     }
     public static void unbindReadFramebuffer() {
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentReadBuffer");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentReadBuffer");
     }
 
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
     }
     public void bindRead() {
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, this.fb);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
     }
 
     public void setupTexture(int texture, int format, int minfilter, int magFilter) {
         glBindTexture(GL_TEXTURE_2D, texture);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
         glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     private void createDepthTextureAttachment(int texture) {
         glBindTexture(GL_TEXTURE_2D, texture);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture (depth)");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture (depth)");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         if (this.isShadowDepthBuffer) {
@@ -178,7 +178,7 @@ public class FrameBuffer {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
         }
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexParameteri (depth)");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexParameteri (depth)");
 
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
@@ -189,9 +189,9 @@ public class FrameBuffer {
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT32, renderWidth, renderHeight, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (ByteBuffer) null);
 
 //        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D (depth)");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D (depth)");
         glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, texture, 0);
-        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (depth)");
+        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (depth)");
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     
@@ -244,7 +244,7 @@ public class FrameBuffer {
     public void cleanUp() {
         if (this.fb != 0) {
             GL30.glDeleteFramebuffers(this.fb);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteFramebuffers");
+            if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteFramebuffers");
         }
         IntBuffer colorTextures = BufferUtils.createIntBuffer(MAX_COLOR_ATT+1);
         for (int i = 0; i < colorAttTextures.length; i++) {
@@ -258,7 +258,7 @@ public class FrameBuffer {
         colorTextures.flip();
         if (colorTextures.remaining() > 0) {
             glDeleteTextures(colorTextures);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
+            if (Client.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
         }
     }
 

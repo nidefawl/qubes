@@ -14,6 +14,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL41;
 
 import nidefawl.game.GL;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
@@ -156,7 +157,7 @@ public class ShadowRenderer {
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
-        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
+        glViewport(0, 0, Client.displayWidth, Client.displayHeight);
         //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_CULL_FACE);
@@ -195,7 +196,7 @@ public class ShadowRenderer {
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
-        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
+        glViewport(0, 0, Client.displayWidth, Client.displayHeight);
         //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_CULL_FACE);
@@ -235,7 +236,7 @@ public class ShadowRenderer {
 
         Shader.disable();
 
-        glViewport(0, 0, Main.displayWidth, Main.displayHeight);
+        glViewport(0, 0, Client.displayWidth, Client.displayHeight);
         glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
     }

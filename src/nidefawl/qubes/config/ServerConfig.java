@@ -6,19 +6,18 @@ public class ServerConfig extends AbstractYMLConfig {
 	}
 	
 	public int port;
-	public String host;
-	public long packetTimeout;
+	public int packetTimeout;
 	
 	@Override
 	public void setDefaults() {
-		host = "";
-		port = 21087;
+        port = 21087;
+        packetTimeout = 5000;
 	}
 
 	@Override
 	public void load() {
-		host = getString("host", host);
-		port = getInt("port", port);
+        port = getInt("port", port);
+        packetTimeout = getInt("packetTimeout", packetTimeout);
 	}
 
 }

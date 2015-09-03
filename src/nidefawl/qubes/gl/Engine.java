@@ -16,7 +16,7 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.GL;
 import nidefawl.game.GLGame;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.input.Selection;
@@ -209,8 +209,8 @@ public class Engine {
             fullscreenquad = new TesselatorState();
         }
         Tess.instance.resetState();
-        int tw = Main.displayWidth;
-        int th = Main.displayHeight;
+        int tw = Client.displayWidth;
+        int th = Client.displayHeight;
         float x = 0;
         float y = 0;
         Tess.instance.setColor(0xFFFFFF, 0xff);
@@ -365,11 +365,11 @@ public class Engine {
     }
     public static void updateShadowProjections(float fTime) {
 //        Engine.worldRenderer.debugBBs.clear();
-        if (Main.DO_TIMING) TimingHelper.startSec("calcShadow");
+        if (Client.DO_TIMING) TimingHelper.startSec("calcShadow");
         for (int i = 0; i < shadowSplitMVP.length; i++) {
             calcShadow(i);
         }
-        if (Main.DO_TIMING) TimingHelper.endSec();
+        if (Client.DO_TIMING) TimingHelper.endSec();
         
     }
     public static void calcShadow(int split) {
@@ -505,9 +505,9 @@ public class Engine {
         worldRenderer.init();
         outRenderer.init();
         shadowRenderer.init();
-        worldRenderer.resize(Main.displayWidth, Main.displayHeight);
-        outRenderer.resize(Main.displayWidth, Main.displayHeight);
-        shadowRenderer.resize(Main.displayWidth, Main.displayHeight);
+        worldRenderer.resize(Client.displayWidth, Client.displayHeight);
+        outRenderer.resize(Client.displayWidth, Client.displayHeight);
+        shadowRenderer.resize(Client.displayWidth, Client.displayHeight);
         regionRenderer.reRender();
     }
 

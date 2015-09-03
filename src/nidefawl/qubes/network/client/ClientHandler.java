@@ -70,4 +70,8 @@ public class ClientHandler implements IHandler {
 	public void handleDisconnect(PacketDisconnect packetDisconnect) {
 		this.conn.disconnect("Server sent disconnect: "+packetDisconnect.message);
 	}
+    @Override
+    public void onFinish() {
+        System.out.println("Lost connection: "+getHandlerName());
+    }
 }

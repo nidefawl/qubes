@@ -3,6 +3,7 @@ package nidefawl.qubes.input;
 import static org.lwjgl.opengl.GL11.*;
 
 import nidefawl.game.Keyboard;
+import nidefawl.qubes.Client;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
