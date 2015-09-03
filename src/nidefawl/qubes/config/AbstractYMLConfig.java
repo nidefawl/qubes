@@ -1,4 +1,4 @@
-package nidefawl.qubes.server.config;
+package nidefawl.qubes.config;
 
 import java.io.*;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package nidefawl.qubes.server.config;
+package nidefawl.qubes.config;
 
 @SuppressWarnings("serial")
 public class InvalidConfigException extends Exception {

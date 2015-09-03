@@ -1,4 +1,4 @@
-package nidefawl.qubes.server.config;
+package nidefawl.qubes.config;
 
 public class ServerConfig extends AbstractYMLConfig {
 	public ServerConfig() {

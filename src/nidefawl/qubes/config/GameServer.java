@@ -4,8 +4,6 @@ import java.io.File;
 import nidefawl.qubes.network.ReaderThread;
 import nidefawl.qubes.network.WriterThread;
 import nidefawl.qubes.network.server.NetworkServer;
-import nidefawl.qubes.server.config.InvalidConfigException;
-import nidefawl.qubes.server.config.ServerConfig;
 
 public class GameServer implements Runnable {
 	final ServerConfig config = new ServerConfig();

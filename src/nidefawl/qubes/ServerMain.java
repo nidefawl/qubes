@@ -1,10 +1,11 @@
-package nidefawl.qubes.config;
+package nidefawl.qubes;
 
-import nidefawl.qubes.server.config.WorkingDir;
+import nidefawl.qubes.config.GameServer;
+import nidefawl.qubes.config.WorkingDir;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
-public class Main {
+public class ServerMain {
 
 	public static void main(String[] args) {
 		try {
