@@ -6,8 +6,6 @@ import java.util.*;
 
 import org.lwjgl.opengl.GL11;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
@@ -18,11 +16,11 @@ import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
 public class RegionRenderer {
-    public static final int RENDER_DISTANCE     = RegionLoader.LOAD_DIST;
+    public static final int RENDER_DISTANCE     = 4;
     public static final int LENGTH     = RENDER_DISTANCE*2+1;
     public static final int OFFS_OVER     = 2;
     public static final int LENGTH_OVER     = (RENDER_DISTANCE+OFFS_OVER)*2+1;
-    public static final int HEIGHT_SLICES     = World.MAX_WORLDHEIGHT>>Region.SLICE_HEIGHT_BLOCK_BITS;
+    public static final int HEIGHT_SLICES     = World.MAX_WORLDHEIGHT>>RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
     //TODO: abstract render regions
     public static final int RENDER_STATE_INIT     = 0;
     public static final int RENDER_STATE_MESHING  = 1;
@@ -162,9 +160,9 @@ public class RegionRenderer {
         for (int rx = -n; rx <= n; rx+=n)
             for (int rz = -n; rz <= n; rz+=n) {
                 for (int ry = -n; ry <= n; ry+=n) {
-                    int regionX2 = (x+rx) >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
-                    int regionY2 = (y+ry) >> (Region.SLICE_HEIGHT_BLOCK_BITS);
-                    int regionZ2 = (z+rz) >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
+                    int regionX2 = (x+rx) >> (RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS);
+                    int regionY2 = (y+ry) >> (RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
+                    int regionZ2 = (z+rz) >> (RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS);
                     MeshedRegion r = getByRegionCoord(regionX2, regionY2, regionZ2);
                     if (r != null) {
                         r.renderState = RENDER_STATE_INIT;
@@ -214,9 +212,9 @@ public class RegionRenderer {
     }
     public void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         flushRegions();
-        int rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
-        int rChunkY = GameMath.floor(lastCamY)>>(Region.SLICE_HEIGHT_BLOCK_BITS);
-        int rChunkZ = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
+        int rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+        int rChunkY = GameMath.floor(lastCamY)>>(RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
+        int rChunkZ = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
         boolean reposition = false;
         //TODO: only move center every n regions
         if (rChunkX != this.renderChunkX || rChunkZ != this.renderChunkZ) {
@@ -257,9 +255,16 @@ public class RegionRenderer {
         return renderList;
     }
     TesselatorState debug = new TesselatorState();
+    public static final int REGION_SIZE_BITS      = 1;
+    public static final int REGION_SIZE           = 1 << REGION_SIZE_BITS;
+    public static final int REGION_SIZE_MASK      = REGION_SIZE - 1;
+    public static final int REGION_SIZE_BLOCK_SIZE_BITS    = Chunk.SIZE_BITS+REGION_SIZE_BITS;
+    public static final int REGION_SIZE_BLOCKS    = 1 << REGION_SIZE_BLOCK_SIZE_BITS;
+    public static final int SLICE_HEIGHT_BLOCK_BITS = 5;
+    public static final int SLICE_HEIGHT_BLOCKS    = 1<<SLICE_HEIGHT_BLOCK_BITS;
     public void renderDebug(World world, float fTime) {
         Tess.instance.setColor(-1, 200);
-        int b=Region.REGION_SIZE*Chunk.SIZE;
+        int b=RegionRenderer.REGION_SIZE*Chunk.SIZE;
         int h = World.MAX_WORLDHEIGHT/3*2;
         for (int x = 0; x < b; x+=Chunk.SIZE) {
             for (int z = 0; z < b; z+=Chunk.SIZE) {
@@ -287,8 +292,8 @@ public class RegionRenderer {
             MeshedRegion[][] zRegions = this.regions[x];
             for (int z = 0; z < this.regions.length; z++) {
                 MeshedRegion[] r = zRegions[z];
-                int xOff = r[0].rX << (Region.REGION_SIZE_BITS + 4);
-                int zOff = r[0].rZ << (Region.REGION_SIZE_BITS + 4);
+                int xOff = r[0].rX << (RegionRenderer.REGION_SIZE_BITS + 4);
+                int zOff = r[0].rZ << (RegionRenderer.REGION_SIZE_BITS + 4);
                 Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
                 debug.drawVBO(GL_LINES);
                 Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);

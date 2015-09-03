@@ -3,6 +3,7 @@ package nidefawl.qubes.chunk;
 import java.util.Iterator;
 
 import nidefawl.qubes.render.region.MeshedRegion;
+import nidefawl.qubes.render.region.RegionRenderer;
 
 public class RegionLoader {
     public static final int              LOAD_DIST        = 4;
@@ -25,18 +26,18 @@ public class RegionLoader {
     }
 
     public boolean isChunkLoaded(int i, int j) {
-        int toRegionX = i >> Region.REGION_SIZE_BITS;
-        int toRegionZ = j >> Region.REGION_SIZE_BITS;
+        int toRegionX = i >> RegionRenderer.REGION_SIZE_BITS;
+        int toRegionZ = j >> RegionRenderer.REGION_SIZE_BITS;
         return regions.containsKey(toRegionX, toRegionZ);
     }
 
     public Chunk get(int chunkX, int chunkZ) {
-        int toRegionX = chunkX >> Region.REGION_SIZE_BITS;
-        int toRegionZ = chunkZ >> Region.REGION_SIZE_BITS;
+        int toRegionX = chunkX >> RegionRenderer.REGION_SIZE_BITS;
+        int toRegionZ = chunkZ >> RegionRenderer.REGION_SIZE_BITS;
         Region region = regions.get(toRegionX, toRegionZ);
         if (region == null)
             return null;
-        return region.chunks[chunkX & Region.REGION_SIZE_MASK][chunkZ & Region.REGION_SIZE_MASK];
+        return region.chunks[chunkX & RegionRenderer.REGION_SIZE_MASK][chunkZ & RegionRenderer.REGION_SIZE_MASK];
     }
 
     public void flush() {
@@ -117,23 +118,23 @@ public class RegionLoader {
         Region r = this.regions.get(rX, rZ);
         cache.set(0, 0, r);
         r = this.regions.get(rX - 1, rZ - 1);
-        if (r != null && r.isChunkLoaded(Region.REGION_SIZE-1, Region.REGION_SIZE-1)) {
+        if (r != null && r.isChunkLoaded(RegionRenderer.REGION_SIZE-1, RegionRenderer.REGION_SIZE-1)) {
             cache.set(-1, -1, r);
         } else if (minXReq && minZReq) return false;
         r = this.regions.get(rX + 1, rZ + 1);
-        if (r != null && r.isChunkLoaded(Region.REGION_SIZE-1, Region.REGION_SIZE-1)) {
+        if (r != null && r.isChunkLoaded(RegionRenderer.REGION_SIZE-1, RegionRenderer.REGION_SIZE-1)) {
             cache.set(1, 1, r);
         } else if (maxXReq && maxZReq) return false;
         r = this.regions.get(rX + 1, rZ - 1);
-        if (r != null && r.isChunkLoaded(0, Region.REGION_SIZE-1)) {
+        if (r != null && r.isChunkLoaded(0, RegionRenderer.REGION_SIZE-1)) {
             cache.set(1, -1, r);
         } else if (maxXReq && minZReq) return false;
         r = this.regions.get(rX - 1, rZ + 1);
-        if (r != null && r.isChunkLoaded(Region.REGION_SIZE-1, 0)) {
+        if (r != null && r.isChunkLoaded(RegionRenderer.REGION_SIZE-1, 0)) {
             cache.set(-1, 1, r);
         } else if (minXReq && maxZReq) return false;
         r = this.regions.get(rX - 1, rZ);
-        if (r != null && r.allLoadedX(Region.REGION_SIZE-1)) {
+        if (r != null && r.allLoadedX(RegionRenderer.REGION_SIZE-1)) {
             cache.set(-1, 0, r);
         } else if (minXReq) return false;
         r = this.regions.get(rX + 1, rZ);
@@ -141,7 +142,7 @@ public class RegionLoader {
             cache.set(1, 0, r);
         } else if (maxXReq) return false;
         r = this.regions.get(rX, rZ - 1);
-        if (r != null && r.allLoadedZ(Region.REGION_SIZE-1)) {
+        if (r != null && r.allLoadedZ(RegionRenderer.REGION_SIZE-1)) {
             cache.set(0, -1, r);
         } else if (minZReq) return false;
         r = this.regions.get(rX, rZ + 1);

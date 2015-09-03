@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
-import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.world.World;
@@ -16,7 +15,7 @@ import nidefawl.qubes.world.WorldClient;
  *
  */
 public class ChunkRenderCache {
-    public final static int WIDTH = Region.REGION_SIZE;
+    public final static int WIDTH = RegionRenderer.REGION_SIZE;
     public final static int WIDTH_EXTRA = WIDTH+2;
     public final static int WIDTH_BLOCKS = WIDTH_EXTRA*Chunk.SIZE;
     final public Chunk[] chunks = new Chunk[WIDTH_EXTRA*WIDTH_EXTRA]; //TODO: are corners required?
@@ -45,8 +44,8 @@ public class ChunkRenderCache {
     }
 
     public boolean cache(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
-        int basechunkX = mr.rX<<Region.REGION_SIZE_BITS;
-        int basechunkZ = mr.rZ<<Region.REGION_SIZE_BITS;
+        int basechunkX = mr.rX<<RegionRenderer.REGION_SIZE_BITS;
+        int basechunkZ = mr.rZ<<RegionRenderer.REGION_SIZE_BITS;
         int offsetX = mr.rX-renderChunkX;
         int offsetZ = mr.rZ-renderChunkZ;
         boolean minXReq = offsetX > 0;

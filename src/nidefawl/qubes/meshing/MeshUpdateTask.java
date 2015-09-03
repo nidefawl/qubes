@@ -6,7 +6,6 @@ import java.util.List;
 
 import nidefawl.qubes.BootClient;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -76,9 +75,9 @@ public class MeshUpdateTask {
         World w = BootClient.instance.getWorld();
         if (w != null) {
             try {
-              int xOff = this.mr.rX << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
-              int yOff = this.mr.rY << (Region.SLICE_HEIGHT_BLOCK_BITS);
-              int zOff = this.mr.rZ << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
+              int xOff = this.mr.rX << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS);
+              int yOff = this.mr.rY << (RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
+              int zOff = this.mr.rZ << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS);
                 long l = System.nanoTime();
                 this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;

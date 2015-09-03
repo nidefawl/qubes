@@ -1,7 +1,6 @@
 package nidefawl.qubes.world;
 
 import nidefawl.qubes.chunk.ChunkManager;
-import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.util.GameMath;

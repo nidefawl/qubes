@@ -1,9 +1,6 @@
 package nidefawl.qubes.meshing;
 
-
-import static nidefawl.qubes.chunk.Region.REGION_SIZE_BLOCKS;
-import static nidefawl.qubes.chunk.Region.SLICE_HEIGHT_BLOCKS;
-import static nidefawl.qubes.chunk.Region.SLICE_HEIGHT_BLOCK_BITS;
+import static nidefawl.qubes.render.region.RegionRenderer.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,10 +8,9 @@ import java.util.List;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
@@ -108,7 +104,7 @@ public class Mesher {
     private int yPos;
     final static boolean MEASURE = false;
     public void mesh(World world, ChunkRenderCache ccache, int rY) {
-        this.yPos = rY<<SLICE_HEIGHT_BLOCK_BITS;
+        this.yPos = rY<<RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
         this.cache = ccache;
         for (int i = 0; i < this.meshes.length; i++)
             this.meshes[i].clear();
@@ -122,9 +118,9 @@ public class Mesher {
     }
     public void meshRound(World world, ChunkRenderCache ccache) {
         scratchpadidx = 0;
-        dims[0] = REGION_SIZE_BLOCKS;
-        dims[1] = SLICE_HEIGHT_BLOCKS;
-        dims[2] = REGION_SIZE_BLOCKS;
+        dims[0] = RegionRenderer.REGION_SIZE_BLOCKS;
+        dims[1] = RegionRenderer.SLICE_HEIGHT_BLOCKS;
+        dims[2] = RegionRenderer.REGION_SIZE_BLOCKS;
         Arrays.fill(mask2, null);
         
         int x[] = new int[] { 0, 0, 0 };

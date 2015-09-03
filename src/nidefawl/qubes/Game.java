@@ -10,7 +10,6 @@ import org.lwjgl.opengl.GL30;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
@@ -487,12 +486,12 @@ public class Game extends GameBase {
                 lastCamY = Engine.camera.getPosition().y;
                 lastCamZ = Engine.camera.getPosition().z;
             }
-            int xPosP = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
-            int zPosP = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
+            int xPosP = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+            int zPosP = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
             int xPosC = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS);
             int zPosC = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS);
             if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
-                int halflen = (RegionRenderer.RENDER_DISTANCE+1)*Region.REGION_SIZE;
+                int halflen = (RegionRenderer.RENDER_DISTANCE+1)*RegionRenderer.REGION_SIZE;
                 ((ChunkManagerServer) world.getChunkManager()).ensureLoaded(xPosC, zPosC, halflen);
 //                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
 //                if (i != 0) {

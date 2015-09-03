@@ -2,8 +2,6 @@ package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionCache;
 
 public class BlockSurface {
 

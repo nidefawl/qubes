@@ -1,9 +1,10 @@
 package nidefawl.qubes.chunk;
 
-import static nidefawl.qubes.chunk.Region.REGION_SIZE_BLOCKS;
+import static nidefawl.qubes.render.region.RegionRenderer.*;
 
 import java.util.Arrays;
 
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.world.World;
 
 /**
@@ -34,17 +35,17 @@ public class RegionCache {
         int regionX = 0;
         int regionZ = 0;
         if (i < 0) {
-            i += REGION_SIZE_BLOCKS;
+            i += RegionRenderer.REGION_SIZE_BLOCKS;
             regionX--;
-        } else if (i >= REGION_SIZE_BLOCKS) {
-            i -= REGION_SIZE_BLOCKS;
+        } else if (i >= RegionRenderer.REGION_SIZE_BLOCKS) {
+            i -= RegionRenderer.REGION_SIZE_BLOCKS;
             regionX++;
         }
         if (k < 0) {
-            k += REGION_SIZE_BLOCKS;
+            k += RegionRenderer.REGION_SIZE_BLOCKS;
             regionZ--;
-        } else if (k >= REGION_SIZE_BLOCKS) {
-            k -= REGION_SIZE_BLOCKS;
+        } else if (k >= RegionRenderer.REGION_SIZE_BLOCKS) {
+            k -= RegionRenderer.REGION_SIZE_BLOCKS;
             regionZ++;
         }
         Region region = get(regionX, regionZ);

@@ -8,6 +8,7 @@ import nidefawl.qubes.chunk.*;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.lighting.DynamicLight;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.*;
@@ -15,7 +16,7 @@ import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TestTerrain2;
 
 public abstract class World {
-    public static final float MAX_XZ     = RegionLoader.MAX_REGION_XZ * Region.REGION_SIZE * Chunk.SIZE;
+    public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;
     public static final float MIN_XZ     = -MAX_XZ;
     HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
     ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list

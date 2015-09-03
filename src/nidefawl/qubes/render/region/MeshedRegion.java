@@ -11,7 +11,6 @@ import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.vec.AABB;
@@ -154,13 +153,13 @@ public class MeshedRegion {
     }
 
     public void updateBB() {
-        int bits = Region.REGION_SIZE_BITS + Chunk.SIZE_BITS;
+        int bits = RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS;
         this.aabb.minX = this.rX << (bits);
-        this.aabb.minY = this.rY << (Region.SLICE_HEIGHT_BLOCK_BITS);
+        this.aabb.minY = this.rY << (RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
         this.aabb.minZ = this.rZ << (bits);
-        this.aabb.maxX = this.aabb.minX + Region.REGION_SIZE_BLOCKS;
-        this.aabb.maxY = this.aabb.minY + Region.SLICE_HEIGHT_BLOCKS;
-        this.aabb.maxZ = this.aabb.minZ + Region.REGION_SIZE_BLOCKS;
+        this.aabb.maxX = this.aabb.minX + RegionRenderer.REGION_SIZE_BLOCKS;
+        this.aabb.maxY = this.aabb.minY + RegionRenderer.SLICE_HEIGHT_BLOCKS;
+        this.aabb.maxZ = this.aabb.minZ + RegionRenderer.REGION_SIZE_BLOCKS;
 
     }
 

@@ -7,10 +7,9 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.BootClient;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Stats;
@@ -63,7 +62,7 @@ public class GuiOverlayStats extends Gui {
             }
             else if (p != null) {
                 this.stats5 = String.format("%d %d %d (Region %d %d)", p.x, p.y, p.z, 
-                        p.x>>(Region.REGION_SIZE_BITS+Chunk.SIZE_BITS), p.z>>(Region.REGION_SIZE_BITS+Chunk.SIZE_BITS));
+                        p.x>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), p.z>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS));
             }
         } else {
             this.stats3 = null;

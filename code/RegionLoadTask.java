@@ -1,6 +1,7 @@
 package nidefawl.qubes.chunk;
 
 import nidefawl.qubes.BootClient;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
 
@@ -28,10 +29,10 @@ public class RegionLoadTask {
     public boolean updateFromThread() {
         World w = BootClient.instance.getWorld();
         if (w != null) {
-            for (int x = 0; x < Region.REGION_SIZE; x++) {
-                for (int z = 0; z < Region.REGION_SIZE; z++) {
+            for (int x = 0; x < RegionRenderer.REGION_SIZE; x++) {
+                for (int z = 0; z < RegionRenderer.REGION_SIZE; z++) {
                     long l = System.nanoTime();
-                    Chunk c = w.generateChunk(region.rX << Region.REGION_SIZE_BITS | x, region.rZ << Region.REGION_SIZE_BITS | z);
+                    Chunk c = w.generateChunk(region.rX << RegionRenderer.REGION_SIZE_BITS | x, region.rZ << RegionRenderer.REGION_SIZE_BITS | z);
                     c.checkIsEmtpy();
                     Stats.timeWorldGen += (System.nanoTime()-l) / 1000000.0D;
                     region.setChunk(x, z, c);
