@@ -13,7 +13,6 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.world.ClientWorld;
-import nidefawl.qubes.world.World;
 
 public class UniformBuffer {
     final static int NUM_MATRIXES = 11;

@@ -8,7 +8,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
-import nidefawl.qubes.network.server.ServerHandler;
 
 public class Connection {
 

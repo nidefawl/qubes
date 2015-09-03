@@ -1,7 +1,5 @@
 package nidefawl.qubes.texture;
 
-import nidefawl.qubes.Game;
-import nidefawl.qubes.BootClient;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
 import nidefawl.qubes.perf.TimingHelper;

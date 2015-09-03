@@ -7,7 +7,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.config.GameServer;
 import nidefawl.qubes.network.Connection;
-import nidefawl.qubes.network.WriterThread;
 
 
 public class NetworkServer {

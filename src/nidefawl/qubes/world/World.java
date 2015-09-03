@@ -11,7 +11,6 @@ import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.worldgen.AbstractGen;
 import nidefawl.qubes.worldgen.TestTerrain2;

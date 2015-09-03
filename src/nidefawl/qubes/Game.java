@@ -4,12 +4,9 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
-import java.util.*;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
-import nidefawl.game.*;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Region;

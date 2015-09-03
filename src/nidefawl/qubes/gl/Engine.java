@@ -16,7 +16,6 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.meshing.MeshThread;
@@ -25,8 +24,6 @@ import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
 

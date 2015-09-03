@@ -3,7 +3,6 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.*;
 import java.util.ArrayList;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.BootClient;
 import nidefawl.qubes.block.Block;
