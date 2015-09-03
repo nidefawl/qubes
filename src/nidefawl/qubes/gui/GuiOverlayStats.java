@@ -80,6 +80,7 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
+        info.addAll(Main.instance.glProfileResults);
         
         Block b = Block.get(Main.instance.selBlock);
         
@@ -112,9 +113,6 @@ public class GuiOverlayStats extends Gui {
                 fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
                 y += fontSmall.getLineHeight() * 1.2F;
             }
-            String dbg = "Matrixmode: " + (Main.matrixSetupMode ? "GL" : "CPU");
-            fontSmall.drawString(dbg, 5, y, 0xFFFFFF, true, 1.0F);
-            y += fontSmall.getLineHeight() * 1.2F;
 
         if (System.currentTimeMillis() - messageTime < 5000) {
             int strwidth = 0;

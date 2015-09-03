@@ -5,7 +5,7 @@
 package nidefawl.qubes.util;
 
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Vec3;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class RayTrace {
@@ -27,7 +27,7 @@ public class RayTrace {
         face = null;
     }
 
-    public void doRaytrace(World world, Vec3 origin, Vec3 direction, int maxDist) {
+    public void doRaytrace(World world, Vector3f origin, Vector3f direction, int maxDist) {
         coll = null;
         collType = 0;
         face = null;

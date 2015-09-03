@@ -4,9 +4,13 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
+import java.awt.Color;
+import java.net.URL;
 import java.util.*;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.*;
 import nidefawl.qubes.block.Block;
@@ -16,6 +20,8 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.profile.GPUProfiler;
+import nidefawl.qubes.gl.profile.GPUTaskProfile;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.shader.Shader;
@@ -23,6 +29,8 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.Light;
 import nidefawl.qubes.world.World;
 
 public class Main extends GLGame {
@@ -30,15 +38,15 @@ public class Main extends GLGame {
         GLGame.appName = "-";
         Locale.setDefault(Locale.US);
     }
-    static public final Main instance   = new Main();
-
+    static public Main instance;
+    public static String[] lastargs;
     public static void main(String[] args) {
+        lastargs = args;
+        instance   = new Main();
         instance.startGame();
     }
 
     public static boolean  show               = false;
-    public static boolean  matrixSetupMode    = false;
-    public static boolean  renderWireFrame    = false;
     
     long         lastClickTime = System.currentTimeMillis() - 5000L;
     private long lastTimeLoad  = System.currentTimeMillis();
@@ -100,7 +108,8 @@ public class Main extends GLGame {
         this.debugOverlay.setSize(displayWidth, displayHeight);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("initGame 4");
         Engine.checkGLError("Post startup");
-//        setVSync(true);
+    }
+    public void lateInitGame() {
         
         setWorld(new World(1, 0x1234, Engine.regionLoader));
         this.entSelf.move(-800, 222, 1540);
@@ -128,7 +137,7 @@ public class Main extends GLGame {
                     break;
                 case Keyboard.KEY_F9:
                     if (isDown) {
-                        renderWireFrame = !renderWireFrame;
+                        Engine.toggleWireFrame();
                     }
                     break;
                 case Keyboard.KEY_F3:
@@ -184,6 +193,21 @@ public class Main extends GLGame {
                         this.entSelf.toggleFly();
                     }
                     break;
+                case Keyboard.KEY_KP_SUBTRACT:
+                    if (isDown)
+                        for (int i = 0; i < 22; i++) {
+
+                            this.world.removeLight(0);
+                        }
+                    break;
+                case Keyboard.KEY_KP_ADD:
+                    if (isDown)
+                    this.world.addLight(new Vector3f(entSelf.pos).translate(0,1,0));
+                    break;
+                case Keyboard.KEY_KP_MULTIPLY:
+                    if (isDown)
+                    this.world.spawnLights(entSelf.pos.toBlock());
+                    break;
             }
             if (key == Keyboard.KEY_0) {
                 this.selBlock = 0;
@@ -235,41 +259,70 @@ public class Main extends GLGame {
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
 
-        if (Main.DO_TIMING) TimingHelper.startSec("world");
-        if (Main.DO_TIMING) TimingHelper.startSec("ShadowPass");
-        Engine.worldRenderer.renderShadowPass(this.world, fTime);
-        if (Main.DO_TIMING) TimingHelper.endStart("bindFB");
-      glEnable(GL_CULL_FACE);
-      Engine.getSceneFB().bind();
-      if (Main.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
-      Engine.getSceneFB().clearFrameBuffer();
-      if (Main.DO_TIMING) TimingHelper.endStart("renderWorld");
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("world");
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("ShadowPass");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("renderShadowPass");
+        
+        Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+        glEnable(GL_CULL_FACE);
+        Engine.getSceneFB().bind();
+        Engine.getSceneFB().clearFrameBuffer();
+        
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("renderWorld");
 
-      Engine.worldRenderer.renderWorld(this.world, fTime);
-      if (Main.GL_ERROR_CHECKS)
-          Engine.checkGLError("renderWorld");
-      if (Main.renderWireFrame) {
-          if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
-          Engine.worldRenderer.renderNormals(this.world, fTime);
-          if (Main.GL_ERROR_CHECKS)
-              Engine.checkGLError("renderNormals");
-      }
-      if (Main.DO_TIMING) TimingHelper.endStart("renderBlockHighlight");
-      Engine.selection.renderBlockHighlight(this.world, fTime);
-      if (Main.GL_ERROR_CHECKS)
-          Engine.checkGLError("renderBlockHighlight");
-      if (Main.DO_TIMING) TimingHelper.endStart("renderDebugBB");
-      Engine.worldRenderer.renderDebugBB(this.world, fTime);
-      if (Main.GL_ERROR_CHECKS)
-          Engine.checkGLError("renderDebugBB");
-      if (Main.DO_TIMING) TimingHelper.endStart("unbindCurrentFrameBuffer");
-      Engine.getSceneFB();
-    FrameBuffer.unbindFramebuffer();
-      if (Main.DO_TIMING) TimingHelper.endSec();
-      if (Main.DO_TIMING) TimingHelper.endSec();
-      if (Main.DO_TIMING) TimingHelper.startSec("screen");
-      if (Main.DO_TIMING) TimingHelper.startSec("prepare");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("renderWorld");
+        Engine.worldRenderer.renderWorld(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderWorld");
+        
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("renderBlockHighlight");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("renderBlockHighlight");
+        Engine.selection.renderBlockHighlight(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderBlockHighlight");
+        
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("renderDebugBB");
 
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("renderDebugBB");
+        Engine.worldRenderer.renderDebugBB(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        
+        if (Main.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderDebugBB");
+        
+        if (Main.DO_TIMING)
+            TimingHelper.endStart("unbindCurrentFrameBuffer");
+
+        FrameBuffer.unbindFramebuffer();
+        if (Main.DO_TIMING)
+            TimingHelper.endSec();
+        if (Main.DO_TIMING)
+            TimingHelper.endSec();
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("screen");
+        if (Main.DO_TIMING)
+            TimingHelper.startSec("prepare");
+
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("glClear");
       glClearColor(0.71F, 0.82F, 1.00F, 1F);
       glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 //      glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -278,21 +331,44 @@ public class Main extends GLGame {
       glDepthFunc(GL_ALWAYS);
 //      glEnable(GL_TEXTURE_2D);
       glActiveTexture(GL_TEXTURE0);
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       if (Main.DO_TIMING) TimingHelper.endStart("final");
-      
-      UniformBuffer.bindOrthoUBO();
-      glDepthMask(false);
-      Engine.outRenderer.render(fTime);
-      Engine.outRenderer.renderFinal(fTime);
-      
-      if (Main.DO_TIMING) TimingHelper.endStart("gui");
-      glDepthMask(true);
 
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
+      UniformBuffer.bindOrthoUBO();
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+      glDepthMask(false);
+      Engine.outRenderer.render(this.world, fTime);
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
+      Engine.outRenderer.renderFinal(this.world, fTime);
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderWireFrame");
+      glDepthMask(true);
       glDepthFunc(GL_LEQUAL);
-      glActiveTexture(GL_TEXTURE0);
-      glDisable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      if (Engine.renderWireFrame) {
+          glDisable(GL_CULL_FACE);
+          if (Main.DO_TIMING) TimingHelper.endStart("renderWireFrame");
+          Engine.getSceneFB().bindRead();
+          GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+          FrameBuffer.unbindReadFramebuffer();
+          UniformBuffer.bindProjUBO();
+          if (Main.DO_TIMING) TimingHelper.endStart("renderNormals");
+          Engine.worldRenderer.renderNormals(this.world, fTime);
+          Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
+          if (Main.GL_ERROR_CHECKS)
+              Engine.checkGLError("renderNormals");
+          UniformBuffer.bindOrthoUBO();
+          glEnable(GL_CULL_FACE);
+      }
+      
+
+      glDisable(GL_DEPTH_TEST);
+      glActiveTexture(GL_TEXTURE0);
+      if (Main.DO_TIMING) TimingHelper.endStart("gui");
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("gui");
       
       if (this.movement.grabbed()) {
           Shaders.colored.enable();
@@ -338,6 +414,8 @@ public class Main extends GLGame {
       glEnable(GL_DEPTH_TEST);
 
       if (Main.DO_TIMING) TimingHelper.endSec();
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+      
   }
 
     @Override
@@ -345,10 +423,11 @@ public class Main extends GLGame {
         if (this.statsCached != null) {
             this.statsCached.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 122000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 2000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
+            Engine.shadowRenderer.initShaders();
             Engine.outRenderer.initShaders();
 //            Engine.textures.refreshNoiseTextures();
         }
@@ -360,6 +439,7 @@ public class Main extends GLGame {
     @Override
     public void preRenderUpdate(float f) {
         if (this.world != null) {
+            this.world.updateFrame(f);
             this.entSelf.updateInputDirect(movement);
         }
 //        float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
@@ -371,12 +451,24 @@ public class Main extends GLGame {
         float px = (float) (entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f) + 0;
         float py = (float) (entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f) + 1.62F;
         float pz = (float) (entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f) + 0;
+        Light l = this.world.lights.get(0);
+        l.loc.x = px;
+        l.loc.y = py;
+        l.loc.z = pz;
+//        int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
+        l.intensity = 7.6F;
+        l.color = new Vector3f(1*l.intensity);
+//        l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
+//        l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
+//        l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
         float yaw = entSelf.yaw;
         float pitch = entSelf.pitch;
         Engine.camera.setPosition(px, py, pz);
         Engine.camera.setOrientation(yaw, pitch);
+        Engine.setLightPosition(this.world.getLightPosition());
         Engine.updateCamera();
-        UniformBuffer.updateUBO(f);
+        Engine.updateShadowProjections(f);
+        UniformBuffer.updateUBO(this.world, f);
         float winX, winY;
         
         if (this.movement.grabbed()) {
@@ -389,7 +481,6 @@ public class Main extends GLGame {
             if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
         }
         Engine.updateMouseOverView(winX, winY);
-        Engine.updateSun(f);
         Engine.selection.update(world, px, py, pz);
         
         if (this.world != null) {

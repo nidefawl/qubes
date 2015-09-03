@@ -4,6 +4,8 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.util.ArrayList;
+
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.game.GL;
@@ -11,11 +13,15 @@ import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
+import nidefawl.qubes.gl.profile.GPUProfiler;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TimingHelper;
+import nidefawl.qubes.world.Light;
+import nidefawl.qubes.world.World;
 
 public class FinalRenderer {
 
@@ -30,7 +36,7 @@ public class FinalRenderer {
     private FrameBuffer blur2;
     private int         blurTexture;
 
-    public void renderDeferred(float fTime) {
+    public void renderDeferred(World world, float fTime) {
 
         if (Main.DO_TIMING)
             TimingHelper.startSec("bindFramebuffer");
@@ -42,8 +48,37 @@ public class FinalRenderer {
         if (Main.DO_TIMING)
             TimingHelper.endStart("enableShader");
         shaderDeferred.enable();
-        shaderDeferred.setProgramUniform1f("near", Engine.znear);
-        shaderDeferred.setProgramUniform1f("far", Engine.zfar);
+        ArrayList<Light> lights = world.lights;
+        shaderDeferred.setProgramUniform1i("numLights", Math.min(256, lights.size()));
+        for (int a = 0; a < lights.size() && a < 256; a++) {
+            Light light = lights.get(a);
+            shaderDeferred.setProgramUniform3f("lights["+a+"].Position", light.loc);
+            shaderDeferred.setProgramUniform3f("lights["+a+"].Color", light.color);
+            float constant = 1.0f;
+            float linear = 0.7f;
+            float quadratic = 1.8f;
+            shaderDeferred.setProgramUniform1f("lights["+a+"].Linear", linear);
+            shaderDeferred.setProgramUniform1f("lights["+a+"].Quadratic", quadratic);
+            float lightThreshold = 1.0f;
+            float maxBrightness = Math.max(Math.max(light.color.x, light.color.y), light.color.z);
+            float lightL = (float) (linear * linear - 4 * quadratic * (constant - (256.0 / lightThreshold) * maxBrightness));
+            float radius = (-linear + GameMath.sqrtf(lightL)) / (2 * quadratic);
+            shaderDeferred.setProgramUniform1f("lights["+a+"].Radius", radius);
+
+            /*
+             *             // Update attenuation parameters and calculate radius
+            const GLfloat constant = 1.0; // Note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+            const GLfloat linear = 0.7;
+            const GLfloat quadratic = 1.8;
+            glUniform1f(glGetUniformLocation(shaderLightingPass.Program, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
+            glUniform1f(glGetUniformLocation(shaderLightingPass.Program, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
+            // Then calculate radius of light volume/sphere
+            const GLfloat lightThreshold = 5.0; // 5 / 256
+            const GLfloat maxBrightness = std::fmaxf(std::fmaxf(lightColors[i].r, lightColors[i].g), lightColors[i].b);
+            GLfloat radius = (-linear + static_cast<float>(std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0 / lightThreshold) * maxBrightness)))) / (2 * quadratic);
+            glUniform1f(glGetUniformLocation(shaderLightingPass.Program, ("lights[" + std::to_string(i) + "].Radius").c_str()), radius);
+             */
+        }
         if (Main.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
 
@@ -53,7 +88,7 @@ public class FinalRenderer {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
         GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
-        GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.fbShadow.getDepthTex());
+        GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, TMgr.getNoise());
 
         if (Main.DO_TIMING)
@@ -74,7 +109,7 @@ public class FinalRenderer {
             dbg.drawDbgTexture(0, 0, 1, Engine.getSceneFB().getTexture(1), "texNormals");
             dbg.drawDbgTexture(0, 0, 2, Engine.getSceneFB().getTexture(2), "texMaterial");
             dbg.drawDbgTexture(0, 0, 3, Engine.getSceneFB().getDepthTex(), "texDepth");
-            dbg.drawDbgTexture(0, 0, 4, Engine.fbShadow.getDepthTex(), "texShadow");
+            dbg.drawDbgTexture(0, 0, 4, Engine.shadowRenderer.getDebugTexture(), "texShadow");
             dbg.drawDbgTexture(0, 0, 5, TMgr.getNoise(), "noiseTex");
             dbg.drawDbgTexture(0, 1, 0, this.deferred.getTexture(0), "DeferredOut");
             dbg.postDbgFB();
@@ -90,8 +125,8 @@ public class FinalRenderer {
         {0, 1, 2, 3, 4, 4, 5},
         {0, 1, 2, 3, 4, 5, 7, 8, 9, 10},
     };
-    public void renderBlur(float fTime) {
-        int kawaseKernSizeSetting = 4;
+    public void renderBlur(World world, float fTime) {
+        int kawaseKernSizeSetting = 2;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
         
         int input = this.deferred.getTexture(0);
@@ -176,7 +211,7 @@ public class FinalRenderer {
     }
 
 
-    public void render(float fTime) {
+    public void render(World world, float fTime) {
 
         if (Main.show) {
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
@@ -186,10 +221,14 @@ public class FinalRenderer {
         }
         if (Main.DO_TIMING)
             TimingHelper.startSec("Deferred");
-        renderDeferred(fTime);
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred");
+        renderDeferred(world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         if (Main.DO_TIMING)
             TimingHelper.endStart("Blur");
-        renderBlur(fTime);
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Blur");
+        renderBlur(world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         if (Main.DO_TIMING)
             TimingHelper.endSec();
         FrameBuffer.unbindFramebuffer();
@@ -197,7 +236,7 @@ public class FinalRenderer {
     }
 
 
-    public void renderFinal(float fTime) {
+    public void renderFinal(World world, float fTime) {
         if (Main.show) {
             GuiOverlayDebug dbg = Main.instance.debugOverlay;
             if (Main.DO_TIMING)

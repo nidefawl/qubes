@@ -27,6 +27,14 @@ public class Vector3f {
         set(x, y, z);
     }
 
+    public Vector3f(Vec3D pos) {
+        set((float)pos.x, (float)pos.y, (float)pos.z);
+    }
+
+    public Vector3f(double d) {
+        this((float)d, (float)d, (float)d);
+    }
+
     /* (non-Javadoc)
      * @see org.lwjgl.util.vector.WritableVector2f#set(float, float)
      */
@@ -330,5 +338,18 @@ public class Vector3f {
             return scale(l);
         } else
             throw new IllegalStateException("Zero length vector");
+    }
+
+    public Vector3f normaliseNull() {
+        float len = length();
+        if (len > 1E-8F) {
+            float l = 1.0f / len;
+            return scale(l);
+        }
+        return null;
+    }
+
+    public Vector3f scaleN(float f) {
+        return new Vector3f(this).scale(f);
     }
 }

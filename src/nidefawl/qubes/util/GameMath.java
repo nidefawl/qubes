@@ -144,4 +144,9 @@ public class GameMath {
     public static float mod(float value, float modulus) {
       return (value % modulus + modulus) % modulus;
     }
+    public final static float PI_OVER_180 = 0.0174532925f;
+    
+    public static float clamp(float e, float f, float g) {
+        return e < f ? f : e > g ? g : e;
+    }
 }

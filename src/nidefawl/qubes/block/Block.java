@@ -14,7 +14,8 @@ public class Block {
     public final static Block dirt = new Block(3).setName("dirt");
     public final static Block water = new BlockWater(4).setName("water");
     public final static Block sand = new Block(5).setName("sand");
-    public final static Block ligth = new BlockSolidColor(6).setName("light").setTextures("blank");
+    public final static Block solid = new BlockSolidColor(6).setName("solid").setTextures("blank");
+//    public final static Block ligth = new BlockSolidColor(6).setName("solid").setTextures("blank");
     public final int id;
     private String name;
     private final boolean transparent;

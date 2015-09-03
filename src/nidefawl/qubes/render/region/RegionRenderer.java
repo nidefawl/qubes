@@ -120,8 +120,10 @@ public class RegionRenderer {
     private MeshedRegion getByRegionCoord(int x, int y, int z) {
         x -= this.renderChunkX-RENDER_DISTANCE;
         z -= this.renderChunkZ-RENDER_DISTANCE;
+        x+=OFFS_OVER;
+        z+=OFFS_OVER;
         if (x>=0&&x<LENGTH_OVER&&z>=0&&z<LENGTH_OVER && y >= 0 && y < HEIGHT_SLICES)
-            return this.regions[x+OFFS_OVER][z+OFFS_OVER][y];
+            return this.regions[x][z][y];
         return null;
     }
     public void flush() {
@@ -173,12 +175,16 @@ public class RegionRenderer {
             }
     }
     int drawMode = GL11.GL_QUADS;
+    int drawInstances = 0;
     public int getDrawMode() {
 //        this.drawMode = GL11.GL_LINES_ADJANCENY
         return drawMode;
     }
     public void setDrawMode(int i) {
         this.drawMode = i;
+    }
+    public void setDrawInstances(int i) {
+        this.drawInstances = i;
     }
     
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
@@ -187,7 +193,7 @@ public class RegionRenderer {
         for (int i = 0; i < size; i++) {
             MeshedRegion r = renderList.get(i);
             if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
-                r.renderRegion(fTime, pass, this.drawMode);
+                r.renderRegion(fTime, pass, this.drawMode, this.drawInstances);
                 this.rendered++;//( += r.getNumVertices(0);   
             } else {
                 nSkipped++;
@@ -251,8 +257,6 @@ public class RegionRenderer {
     }
     TesselatorState debug = new TesselatorState();
     public void renderDebug(World world, float fTime) {
-        if (1==2-1)
-            return;
         Tess.instance.setColor(-1, 200);
         int b=Region.REGION_SIZE*Chunk.SIZE;
         int h = World.MAX_WORLDHEIGHT/3*2;

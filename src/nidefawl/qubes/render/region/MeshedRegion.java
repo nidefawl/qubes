@@ -7,9 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Main;
 import nidefawl.qubes.chunk.Chunk;
@@ -40,7 +38,7 @@ public class MeshedRegion {
     public MeshedRegion() {
     }
 
-    public void renderRegion(float fTime, int pass, int drawMode) {
+    public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo[pass]);
         GL20.glEnableVertexAttribArray(0);
         if (pass != 2) {
@@ -86,7 +84,12 @@ public class MeshedRegion {
             if (Main.ticksran % 40 == 0)
                 System.out.println(e.getMessage());
         }
-        GL11.glDrawArrays(drawMode, 0, this.vertexCount[pass]);
+        if (drawInstances > 0) {
+            GL31.glDrawArraysInstanced(drawMode, 0, this.vertexCount[pass], drawInstances);
+        } else {
+
+            GL11.glDrawArrays(drawMode, 0, this.vertexCount[pass]);
+        }
 
         for (int i = 0; i < Tess.attributes.length; i++)
             GL20.glDisableVertexAttribArray(i);

@@ -307,6 +307,17 @@ public class Shader {
             incUniformCalls();
         }
     }
+    public void setProgramUniform4f(String name, float x, float y, float z, float w) {
+        Uniform4f uni = (Uniform4f) uniforms.get(name);
+        if (uni == null) {
+            int loc = getUniformLocation(name);
+            uni = new Uniform4f(name, loc);
+            uniforms.put(name, uni);
+        }
+        if (uni.set(x, y, z, w)) {
+            incUniformCalls();
+        }
+    }
 
     public void setProgramUniform3f(String string, Vector3f position) {
         setProgramUniform3f(string, position.x, position.y, position.z);

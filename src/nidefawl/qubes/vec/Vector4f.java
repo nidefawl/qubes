@@ -14,6 +14,16 @@ public class Vector4f {
     public Vector4f() {
         super();
     }
+    /**
+     * Constructor for Vector4f.
+     * @param cameraPos 
+     */
+    public Vector4f(Vector4f v) {
+        set(v.x, v.y, v.z, v.w);
+    }
+    public void set(Vector4f v) {
+        set(v.x, v.y, v.z, v.w);
+    }
 
 
     /**
@@ -206,6 +216,13 @@ public class Vector4f {
     }
 
     /* (non-Javadoc)
+     * @see org.lwjgl.vector.Vector#scale(float)
+     */
+    public Vector4f scaleN(float scale) {
+        return new Vector4f(this).scale(scale);
+    }
+
+    /* (non-Javadoc)
      * @see org.lwjgl.vector.Vector#store(FloatBuffer)
      */
     public Vector4f store(FloatBuffer buf) {
@@ -296,6 +313,9 @@ public class Vector4f {
      */
     public final float lengthXYZ() {
         return (float) Math.sqrt(lengthSquaredXYZ());
+    }
+    public void normalise() {
+        normalise(this);
     }
 
 }

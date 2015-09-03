@@ -19,6 +19,8 @@ import nidefawl.game.GL;
 import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.profile.GPUProfiler;
+import nidefawl.qubes.gl.profile.GPUTaskProfile;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.swing.TextDialog;
@@ -44,7 +46,7 @@ public abstract class GLGame extends AbstractGLGame {
     public int         tick               = 0;
     public static int ticksran;
     protected boolean  startRender        = false;
-    private Object[]   showError;
+    private GameError   showError;
     private LogBufferStream outStream;
     private LogBufferStream errStream;
     private long frameTime;
@@ -318,6 +320,7 @@ public abstract class GLGame extends AbstractGLGame {
         }
         if (Main.DO_TIMING)
             TimingHelper.check();
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.startFrame();
         if (isCloseRequested()) {
             shutdown();
             return;
@@ -365,7 +368,9 @@ public abstract class GLGame extends AbstractGLGame {
             TimingHelper.startSec("Display.update");
         float took = (System.nanoTime()-frameTime) / 1000000F;
         Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("updateDisplay");
         updateDisplay();
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         frameTime = System.nanoTime();
         if (Main.DO_TIMING)
             TimingHelper.endSec();
@@ -384,9 +389,20 @@ public abstract class GLGame extends AbstractGLGame {
         if (Main.DO_TIMING)
             TimingHelper.endSec();
         if (this.showError != null) {
-            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2]);
+//            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2], true);
+            throw this.showError;
+        }
+        if (GPUProfiler.PROFILING_ENABLED) {
+            GPUProfiler.endFrame();
+            GPUTaskProfile tp;
+            while((tp = GPUProfiler.getFrameResults()) != null){
+                glProfileResults.clear();
+                tp.dump(glProfileResults);
+                GPUProfiler.recycle(tp); 
+            }   
         }
     }
+    public ArrayList<String> glProfileResults = new ArrayList<>();
 
     @Override
     public void mainLoop() {
@@ -400,11 +416,12 @@ public abstract class GLGame extends AbstractGLGame {
             timer.calculate();
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
+            lateInitGame();
             while (this.running) {
                 runFrame();
             }
         } catch (Throwable t) {
-            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t);
+            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t, true);
         } finally {
             if (this.wasrunning) {
                 onDestroy();
@@ -412,6 +429,7 @@ public abstract class GLGame extends AbstractGLGame {
             destroyContext();
         }
     }
+
     @Override
     public void initGLContext() {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -436,7 +454,7 @@ public abstract class GLGame extends AbstractGLGame {
                 for (String s : list) {
                     desc.add(s);
                 }
-                showErrorScreen("Failed starting game", desc, null);
+                showErrorScreen("Failed starting game", desc, null, false);
                 return;
             }
         } catch (Throwable t) {
@@ -456,24 +474,27 @@ public abstract class GLGame extends AbstractGLGame {
         }
     }
 
-    private void showErrorScreen(String title, List<String> desc, Throwable throwable) {
+    private void showErrorScreen(String title, List<String> desc, Throwable throwable, boolean b) {
         try {
             if (this.wasrunning) {
                 onDestroy();
             }
             destroyContext();
-            try {
-                Thread.sleep(120L);
-            } catch (InterruptedException interruptedexception) {
-            }
             String buf1 = outStream.baos.toString("UTF-8");
             String buf2 = errStream.baos.toString("UTF-8");
-            TextDialog dlg = new TextDialog(title, desc, throwable);
+            TextDialog dlg = new TextDialog(title, desc, throwable, b);
             dlg.prepend(buf1);
             dlg.prepend(buf2);
             dlg.setVisible(displayWidth, displayHeight);
             while (dlg.isVisible()) {
-                Thread.sleep(4400);
+                Thread.sleep(100);
+            }
+            if (dlg.reqRestart) {
+                this.wasrunning = false;
+                this.running = false;
+                this.sysExit = false;
+                Main.main(Main.lastargs);
+                return;
             }
             /*Tess.useClientStates = true;
 
@@ -551,16 +572,13 @@ public abstract class GLGame extends AbstractGLGame {
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
+            if (this.sysExit)
             System.exit(1);
         }
     }
 
     public void setException(GameError error) {
-        if (Thread.currentThread() != getMainThread()) {
-            this.showError = new Object[] { "Error occured", Arrays.asList(new String[] { "There was an internal error"}), error };
-            return;
-        }
-        showErrorScreen( "Error occured", Arrays.asList(new String[] { "There was an internal error"}), error );
+        this.showError = error;
     }
 
     public long getTime() {

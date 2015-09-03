@@ -10,6 +10,8 @@ public class Shaders {
         Shaders.depthBufShader = null;
         Shaders.normals = null;
         Shaders.textured = null;
+        Shaders.colored = null;
+        Shaders.wireframe = null;
         initShaders();
     }
 
@@ -27,6 +29,7 @@ public class Shaders {
 
     public static Shader depthBufShader;
     public static Shader normals;
+    public static Shader wireframe;
     public static Shader textured;
     public static Shader colored;
 
@@ -39,6 +42,7 @@ public class Shaders {
             Shader new_normals = assetMgr.loadShader("shaders/visnormals");
             Shader new_textured = assetMgr.loadShader("shaders/textured");
             Shader new_colored = assetMgr.loadShader("shaders/colored");
+            Shader new_wireframe = assetMgr.loadShader("shaders/wireframe");
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             if (Shaders.normals != null)
@@ -47,6 +51,9 @@ public class Shaders {
                 Shaders.textured.release();
             if (Shaders.colored != null)
                 Shaders.colored.release();
+            if (Shaders.wireframe != null)
+                Shaders.wireframe.release();
+            Shaders.wireframe = new_wireframe;
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
             Shaders.textured = new_textured;

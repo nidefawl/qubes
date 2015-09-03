@@ -12,6 +12,7 @@ public abstract class AbstractGLGame implements Runnable {
     protected boolean          vsync           = true;
     protected volatile boolean running         = false;
     protected volatile boolean wasrunning      = false;
+    protected volatile boolean sysExit      = true;
     private Thread             thread;
 
 	public AbstractGLGame() {
@@ -92,7 +93,9 @@ public abstract class AbstractGLGame implements Runnable {
 
 	public abstract void runFrame();
 
-	public abstract void initGame();
+    public abstract void initGame();
+    
+    public abstract void lateInitGame();
 
 	public abstract void mainLoop();
 

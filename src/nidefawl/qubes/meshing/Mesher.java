@@ -1,11 +1,15 @@
 package nidefawl.qubes.meshing;
 
 
-import static nidefawl.qubes.chunk.Region.*;
-import java.util.*;
+import static nidefawl.qubes.chunk.Region.REGION_SIZE_BLOCKS;
+import static nidefawl.qubes.chunk.Region.SLICE_HEIGHT_BLOCKS;
+import static nidefawl.qubes.chunk.Region.SLICE_HEIGHT_BLOCK_BITS;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.render.WorldRenderer;

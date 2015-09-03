@@ -97,26 +97,26 @@ public class TerrainQuad {
         int side = this.bs.axis<<1|this.bs.face;
         float m = 1F;
 //        if (!Main.useShaders) {
-            switch (side) {
-                case Dir.DIR_NEG_Y:
-                    m = 0.5F;
-                    break;
-                case Dir.DIR_POS_Y:
-                    m = 1F;
-                    break;
-                case Dir.DIR_NEG_Z:
-                    m = 0.8F;
-                    break;
-                case Dir.DIR_POS_Z:
-                    m = 0.8F;
-                    break;
-                case Dir.DIR_NEG_X:
-                    m = 0.6F;
-                    break;
-                case Dir.DIR_POS_X:
-                    m = 0.6F;
-                    break;
-            }
+//            switch (side) {
+//                case Dir.DIR_NEG_Y:
+//                    m = 0.5F;
+//                    break;
+//                case Dir.DIR_POS_Y:
+//                    m = 1F;
+//                    break;
+//                case Dir.DIR_NEG_Z:
+//                    m = 0.8F;
+//                    break;
+//                case Dir.DIR_POS_Z:
+//                    m = 0.8F;
+//                    break;
+//                case Dir.DIR_NEG_X:
+//                    m = 0.6F;
+//                    break;
+//                case Dir.DIR_POS_X:
+//                    m = 0.6F;
+//                    break;
+//            }
 //        }
 //        float m = 1F;
         float alpha = block.getAlpha();

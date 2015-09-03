@@ -4,12 +4,15 @@ import java.io.*;
 import java.util.ArrayList;
 
 import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.util.GameError;
 
 public class AssetManager {
     final static AssetManager instance = new AssetManager();
     File                      folder   = new File("res");
     ArrayList<Asset>          assets   = new ArrayList<>();
+    private ShaderSource lastFailedShader;
 
     AssetManager() {
         
@@ -77,11 +80,18 @@ public class AssetManager {
                 fname = name.substring(idx+1);
             }
             shader.load(this, path, fname);
+        } catch (ShaderCompileError e) {
+            this.lastFailedShader = e.getShaderSource();
+            throw e;
         } catch (GameError e) {
             throw e;
         } catch (Exception e) {
             throw new GameError("Cannot load asset '" + name + "': " + e, e);
         }
         return shader;
+    }
+
+    public ShaderSource getLastFailedShaderSource() {
+        return this.lastFailedShader;
     }
 }

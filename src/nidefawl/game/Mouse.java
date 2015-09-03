@@ -9,6 +9,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 
 public class Mouse {
+    public final static boolean DISABLE_MOUSE_INPUT = false; 
 
 	protected static double dy;
 	protected static double dx;
@@ -74,13 +75,16 @@ public class Mouse {
         GLFW.glfwGetCursorPos(GLGame.windowId, bx, by);    
         lastX = bx.get();
         lastY = by.get();
+        if (DISABLE_MOUSE_INPUT)
+            lastX = lastY = 0;
     }
     public static boolean isButtonDown(int i) {
 		return glfwGetMouseButton(GLGame.windowId, GLFW.GLFW_MOUSE_BUTTON_LEFT+i) == GLFW.GLFW_PRESS;
 	}
 
 	public static void update(double mx, double my) {
-//	    mx = my = 0;
+	    if (DISABLE_MOUSE_INPUT)
+	        mx = my = 0;
 		x = mx;
 		y = my;
         if (isGrabbed) {

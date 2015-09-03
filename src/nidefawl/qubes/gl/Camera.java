@@ -1,11 +1,11 @@
 package nidefawl.qubes.gl;
 
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
 public class Camera {
 
-    protected final static float PI_OVER_180 = 0.0174532925f;
     protected float          pitchAngle   = 0;
     protected float          bearingAngle = 0;
     protected final Vector3f position     = new Vector3f();
@@ -22,8 +22,8 @@ public class Camera {
     }
     public void reorient() {
         this.viewMatrix.setIdentity();
-        this.viewMatrix.rotate(pitchAngle * PI_OVER_180, 1f, 0f, 0f);
-        this.viewMatrix.rotate(bearingAngle * PI_OVER_180, 0f, 1f, 0f);
+        this.viewMatrix.rotate(pitchAngle * GameMath.PI_OVER_180, 1f, 0f, 0f);
+        this.viewMatrix.rotate(bearingAngle * GameMath.PI_OVER_180, 0f, 1f, 0f);
     }
 
 

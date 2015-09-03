@@ -136,9 +136,17 @@ public class FrameBuffer {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentFrameBuffer");
     }
+    public static void unbindReadFramebuffer() {
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentReadBuffer");
+    }
 
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
+        if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+    }
+    public void bindRead() {
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, this.fb);
         if (Main.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
     }
 

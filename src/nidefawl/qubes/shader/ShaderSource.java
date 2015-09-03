@@ -6,13 +6,18 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nidefawl.qubes.Main;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.gl.Engine;
 
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
+    static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"");
     static Pattern lineError = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
 
     HashMap<Integer, String> sources = new HashMap<Integer, String>();
+
+    HashMap<Integer, String> sourceNames = new HashMap<Integer, String>();
 
     private String processed;
     int nInclude = 0;
@@ -24,7 +29,8 @@ public class ShaderSource {
         InputStream is = null;
         BufferedReader reader = null;
         try {
-            is = assetManager.findResource(path + "/" + name);
+            String fpath = path + "/" + name;
+            is = assetManager.findResource(fpath);
             while (is == null && resolve) {
                 int a = path.lastIndexOf("/");
                 if (a > 0) {
@@ -32,6 +38,7 @@ public class ShaderSource {
                 } else {
                     break;
                 }
+                fpath = path + "/" + name;
                 is = assetManager.findResource(path + "/" + name);
             }
             if (is != null) {
@@ -43,20 +50,20 @@ public class ShaderSource {
                     lines.add(line);
                     fullSource += line + "\r\n";
                 }
-                sources.put(nInclude++, fullSource);
-
+                sources.put(nInclude, fullSource);
+                sourceNames.put(nInclude, fpath);
+                nInclude++;
                 String code = "";
                 int nLineOffset = 0;
-                boolean insertLine = false;
+                boolean insertLine = true;
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
-                    nLineOffset++;
                     if (line.startsWith("#pragma")) {
                         if (resolve) {
                             throw new ShaderCompileError(line, name, "Recursive inlcudes are not supported");
                         }
-                        Matcher m = patternInclude.matcher(line);
-                        if (m.matches()) {
+                        Matcher m;
+                        if ((m = patternInclude.matcher(line)).matches()) {
                             String filename = m.group(1);
                             String include = readParse(assetManager, path, filename, true);
                             if (include == null) {
@@ -65,16 +72,22 @@ public class ShaderSource {
                             code += "#line " + 1 + " " + (nInclude-1) + "\r\n";
                             code += include;
                             insertLine = true;
+                        } else if ((m = patternDefine.matcher(line)).matches()) {
+                            String define = m.group(1);
+                            String replace = Engine.getDefinition(define);
+                            code += replace + "\r\n";
                         } else {
                             throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
                         }
                     } else {
-                        if (insertLine) {
+                        if (insertLine && !resolve) {
                             insertLine = false;
                             code += "#line " + (nLineOffset+1) + " " + 0 + "\r\n";
+//                            nLineOffset--;
                         }
                         code += line + "\r\n";
                     }
+                    nLineOffset++;
                 }
                 return code;
             } else {
@@ -101,13 +114,14 @@ public class ShaderSource {
             String[] lines = log.split("\r?\n");
             for (int n = 0; n < lines.length; n++) {
                 String logLine = lines[n];
-                errLog += logLine + "\r\n";
                 Matcher m = lineError.matcher(logLine);
                 if (m.matches()) {
                     Integer i = Integer.parseInt(m.group(1));
                     if (i < 0) i = 0;
                     Integer i2 = Integer.parseInt(m.group(2))-1;
                     String source = sources.get(i);
+                    String sourceName = sourceNames.get(i);
+                    errLog += sourceName+":"+i2+" "+m.group(3)+"\r\n";
                     if (source == null) {
                         System.err.println("failed getting source idx "+i + " ("+sources.keySet()+")");
                         continue;
@@ -118,6 +132,9 @@ public class ShaderSource {
                         continue;
                     }
                     errLog += lines2[i2] + "\r\n";
+                } else {
+
+                    errLog += logLine + "\r\n"; 
                 }
             }
         } catch (Throwable t) {

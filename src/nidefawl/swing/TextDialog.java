@@ -8,14 +8,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.DefaultCaret;
 
+import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.ShaderSource;
+import nidefawl.qubes.util.GameError;
 
 @SuppressWarnings("serial")
 public class TextDialog extends JFrame implements ActionListener, ClipboardOwner {
@@ -33,13 +39,19 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
     private final JPanel              topPanel         = new JPanel();
     private final JTextAreaWithScroll errorText;
     private final JLabel              errorOccured;
+    public boolean reqRestart;
+    private Throwable throwable;
+    private AbstractButton shaderBtn;
+    private ShaderSource shader;
 
     /**
      * Create the dialog.
+     * @param b 
      * 
      * @param string
      */
-    public TextDialog(String title, List<String> desca, Throwable throwable) {
+    public TextDialog(String title, List<String> desca, Throwable t, boolean b) {
+        this.throwable = t;
         this.setTitle(title);
         this.setLayout(new BorderLayout());
         this.setResizable(true);
@@ -60,9 +72,21 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
         bottomPane.setLayout(new BorderLayout());
         bottomPane.add(forceUpdatePane, BorderLayout.WEST);
         bottomPane.add(buttonPane, BorderLayout.EAST);
+        final JButton restartbutton = new JButton("Restart");
+        restartbutton.setActionCommand("Restart");
+        restartbutton.addActionListener(this);
+         shaderBtn = new JButton("Show source");
+        shaderBtn.setActionCommand("source");
+        shaderBtn.addActionListener(this);
         final JButton closeButtone = new JButton("Close");
         closeButtone.setActionCommand("Close");
         closeButtone.addActionListener(this);
+        shader = AssetManager.getInstance().getLastFailedShaderSource();
+        if (shader != null) {
+            buttonPane.add(shaderBtn);
+        }
+        if (b)
+        buttonPane.add(restartbutton);
         buttonPane.add(closeButtone);
         this.add(this.errorText.getScrollPane());
 
@@ -115,16 +139,35 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
         final JScrollBar vertical = this.errorText.getScrollPane().getVerticalScrollBar();
         vertical.setValue(vertical.getMaximum());
     }
-
+    String flip = null;
     @Override
     public void actionPerformed(final ActionEvent evt) {
         final String btnID = evt.getActionCommand();
         if (btnID.equals("Close")) {
             this.setVisible(false);
             this.dispose();
-            if (this.getDefaultCloseOperation() == EXIT_ON_CLOSE) {
-                System.exit(0);
+        }
+        if (btnID.equals("Restart")) {
+            this.reqRestart = true;
+            this.setVisible(false);
+            this.dispose();
+        }
+        if (btnID.equals("source")) {
+            if (flip == null) {
+                flip = this.errorText.getText();
+                this.errorText.setText(shader.getSource());   
+            } else {
+                this.errorText.setText(flip);
+                flip = null;
             }
+            shaderBtn.setText(flip == null ? "Show source" : "Show error");
+            DefaultCaret caret = (DefaultCaret) this.errorText.getCaret();
+            caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+            final JScrollBar vertical = this.errorText.getScrollPane().getVerticalScrollBar();
+            vertical.setValue(0);
+            this.errorText.updateUI();
+            System.out.println(vertical.getValue());
         }
     }
 

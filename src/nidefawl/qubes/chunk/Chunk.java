@@ -5,6 +5,7 @@ import nidefawl.qubes.block.Block;
 public class Chunk {
     public static final int SIZE_BITS = 4;
     public static final int SIZE      = 1 << SIZE_BITS;
+    public static final int MASK = SIZE-1;
     public final int        worldHeightBits;
     private short[]          blocks;
     public final int        x;
