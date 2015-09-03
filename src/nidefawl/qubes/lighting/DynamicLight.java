@@ -1,12 +1,12 @@
-package nidefawl.qubes.world;
+package nidefawl.qubes.lighting;
 
 import nidefawl.qubes.vec.Vector3f;
 
-public class Light {
+public class DynamicLight {
     public Vector3f loc;
     public Vector3f color;
     public double intensity;
-    public Light(Vector3f loc, Vector3f color, float intensity) {
+    public DynamicLight(Vector3f loc, Vector3f color, float intensity) {
         this.loc = loc;
         this.color = color;
         this.intensity = intensity;

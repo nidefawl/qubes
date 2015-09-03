@@ -1,11 +1,14 @@
 package nidefawl.qubes.world;
 
+import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.RegionLoader;
+import nidefawl.qubes.chunk.client.ChunkManagerClient;
+import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
-public class ClientWorld extends World {
+public class WorldClient extends World {
     float dayLightIntensity;
     float nightNoon;
     float dayNoon;
@@ -19,8 +22,8 @@ public class ClientWorld extends World {
     private final Vector3f       lightDirection;
     private final Vector3f       tmp1;
 
-    public ClientWorld(int worldId, long seed, RegionLoader regionLoader) {
-        super(worldId, seed, regionLoader);
+    public WorldClient(int worldId, long seed) {
+        super(worldId, seed);
         this.sunModelView = new Matrix4f();
         this.moonModelView = new Matrix4f();
         this.sunPosition = new Vector3f();
@@ -30,6 +33,11 @@ public class ClientWorld extends World {
         this.tmp1 = new Vector3f();
     }
 
+
+    @Override
+    public ChunkManager makeChunkManager() {
+        return new ChunkManagerClient(this);
+    }
 
     public void updateFrame(float fTime) {
         float sunPathRotation = -15.0F;

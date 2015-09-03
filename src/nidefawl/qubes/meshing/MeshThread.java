@@ -7,6 +7,7 @@ import nidefawl.qubes.BootClient;
 import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.world.WorldClient;
 
 public class MeshThread extends Thread {
     private static long                                 sleepTime = 10;
@@ -106,10 +107,10 @@ public class MeshThread extends Thread {
     }
 
 
-    public boolean offer(MeshedRegion m, int renderChunkX, int renderChunkZ) {
+    public boolean offer(WorldClient world, MeshedRegion m, int renderChunkX, int renderChunkZ) {
         MeshUpdateTask task = getNextTask();
         if (task != null) {
-            if (task.prepare(m, renderChunkX, renderChunkZ)) {
+            if (task.prepare(world, m, renderChunkX, renderChunkZ)) {
                 task.worldInstance = this.id;
                 this.queue.add(task);
                 tasksRunning++;

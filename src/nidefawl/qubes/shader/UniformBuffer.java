@@ -12,7 +12,7 @@ import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.vec.Matrix4f;
-import nidefawl.qubes.world.ClientWorld;
+import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
     final static int NUM_MATRIXES = 11;
@@ -97,7 +97,7 @@ public class UniformBuffer {
             Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
         if (Game.DO_TIMING) TimingHelper.endSec();
     }
-    public static void updateUBO(ClientWorld world, float f) {
+    public static void updateUBO(WorldClient world, float f) {
         if (Game.DO_TIMING) TimingHelper.startSec("updateUBO");
         uboBuffer.position(0).limit(SIZE_STRUCT);
         uboBuffer.put(Engine.getMatSceneMVP().get());

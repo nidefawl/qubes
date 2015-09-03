@@ -19,6 +19,7 @@ import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Keyboard;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
@@ -29,8 +30,7 @@ import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.ClientWorld;
-import nidefawl.qubes.world.Light;
+import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.World;
 
 public class Game extends GameBase {
@@ -49,7 +49,7 @@ public class Game extends GameBase {
     FontRenderer       fontSmall;
     final PlayerSelf entSelf            = new PlayerSelf(1);
     public Movement  movement           = new Movement();
-    ClientWorld      world              = null;
+    WorldClient      world              = null;
     public boolean   follow             = true;
     private float      lastCamX;
     private float      lastCamY;
@@ -105,16 +105,18 @@ public class Game extends GameBase {
     }
     public void lateInitGame() {
         BlockTextureArray.getInstance().reload();
-        setWorld(new ClientWorld(1, 0x1234, Engine.regionLoader));
+        setWorld(new WorldClient(1, 0x1234));
         this.entSelf.move(-800, 222, 1540);
         this.entSelf.yaw=6.72F;
         this.entSelf.pitch=38.50F;
 //        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
 //        this.entSelf.toggleFly();
     }
-    public void setWorld(ClientWorld world) {
+    public void setWorld(WorldClient world) {
         if (this.world != null) {
             this.world.onLeave();
+            Engine.flushRenderTasks();
+            Engine.regionRenderer.flush();
         }
         this.world = world;
         this.world.addEntity(this.entSelf);
@@ -141,15 +143,11 @@ public class Game extends GameBase {
                     break;
                 case Keyboard.KEY_F5:
                     if (isDown) {
-                        Engine.flushRenderTasks();
-                        Engine.regionRenderThread.flush();
-                        Engine.regionLoader.flush();
-                        Engine.regionRenderer.flush();
                         int nId = 1;
                         if (this.world != null) {
                             nId = this.world.worldId+1;
                         }
-                        setWorld(new ClientWorld(nId, 0x123, Engine.regionLoader));
+                        setWorld(new WorldClient(nId, 0x123));
 //                        Engine.worldRenderer.flush();
 //                        Engine.textures.refreshNoiseTextures();
                     }
@@ -445,7 +443,7 @@ public class Game extends GameBase {
         float px = (float) (entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f) + 0;
         float py = (float) (entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f) + 1.62F;
         float pz = (float) (entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f) + 0;
-        Light l = this.world.lights.get(0);
+        DynamicLight l = this.world.lights.get(0);
         l.loc.x = px;
         l.loc.y = py;
         l.loc.z = pz;
@@ -478,7 +476,7 @@ public class Game extends GameBase {
         Engine.selection.update(world, px, py, pz);
         
         if (this.world != null) {
-            Engine.regionLoader.finishTasks();
+//            Engine.regionLoader.finishTasks();
             if (follow) {
                 lastCamX = Engine.camera.getPosition().x;
                 lastCamY = Engine.camera.getPosition().y;
@@ -487,7 +485,7 @@ public class Game extends GameBase {
             int xPosP = GameMath.floor(lastCamX)>>(4+Region.REGION_SIZE_BITS);
             int zPosP = GameMath.floor(lastCamZ)>>(4+Region.REGION_SIZE_BITS);
             if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
-                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
+//                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
 //                if (i != 0) {
 //                    System.out.println("Queued "+i+" regions for load");
 //                }
@@ -495,7 +493,7 @@ public class Game extends GameBase {
             }
             //HACKY
 //            int nRegions = 0;
-            Engine.regionRenderer.update(lastCamX, lastCamY, lastCamZ, xPosP, zPosP, f);
+            Engine.regionRenderer.update(this.world, lastCamX, lastCamY, lastCamZ, xPosP, zPosP, f);
 //            if (!startRender)
 //            startRender = nRegions > 4;
         }

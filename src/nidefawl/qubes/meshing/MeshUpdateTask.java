@@ -1,26 +1,27 @@
 package nidefawl.qubes.meshing;
 
+import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+
 import java.util.List;
 
 import nidefawl.qubes.BootClient;
-
-import static nidefawl.qubes.render.WorldRenderer.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldClient;
 
 public class MeshUpdateTask {
     public final Mesher     mesher = new Mesher();
-    public final RegionCache cache = new RegionCache();
+    public final ChunkRenderCache ccache = new ChunkRenderCache();
     final Tess[] tess  = new Tess[NUM_PASSES];
 
+    RegionCache cache = new RegionCache();
     public int              worldInstance;
     private boolean         meshed;
     private MeshedRegion mr;
@@ -31,14 +32,8 @@ public class MeshUpdateTask {
         }
     }
 
-    public boolean prepare(MeshedRegion mr, int renderChunkX, int renderChunkZ) {
-        this.cache.flush();
-        if (Engine.regionLoader.cacheRegions(mr.rX, mr.rZ, renderChunkX, renderChunkZ, this.cache)) {
-            if (mr.rX == 0 &&mr.rZ== 0 ) {
-                for (int a = 0; a < cache.regions.length; a++) {
-                    System.out.println(""+a+" = "+cache.regions[a]);
-                }
-            }
+    public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
+        if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
             this.mr = mr;
             mr.renderState = RegionRenderer.RENDER_STATE_MESHING;
             return true;
@@ -60,10 +55,10 @@ public class MeshUpdateTask {
         } else {
             //TODO: flush display list if compile failed, or ignore
         }
-        this.mr.xNeg = this.cache.get(-1, 0) != null;
-        this.mr.xPos = this.cache.get(1, 0) != null;
-        this.mr.zNeg = this.cache.get(0, -1) != null;
-        this.mr.zPos = this.cache.get(0, 1) != null;
+        this.mr.xNeg = this.ccache.getWest() != null;
+        this.mr.xPos = this.ccache.getEast() != null;
+        this.mr.zNeg = this.ccache.getNorth() != null;
+        this.mr.zPos = this.ccache.getSouth() != null;
         this.mr.xNeg = false;
         this.mr.zNeg = false;
         this.mr.zPos = false;

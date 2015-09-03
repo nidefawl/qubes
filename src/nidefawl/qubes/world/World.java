@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionLoader;
+import nidefawl.qubes.chunk.*;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.*;
@@ -20,7 +19,7 @@ public abstract class World {
     public static final float MIN_XZ     = -MAX_XZ;
     HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
     ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
-    public ArrayList<Light>         lights = new ArrayList<>();                                           // use fast array list
+    public ArrayList<DynamicLight>         lights = new ArrayList<>();                                           // use fast array list
 
     public final int worldHeight;
     public final int worldHeightMinusOne;
@@ -35,12 +34,12 @@ public abstract class World {
     private int         dayLen = 1000;
     private int         time;
 
-    private final RegionLoader regionLoader;
+    private final ChunkManager chunkMgr;
     private final Random       rand;
     public static final int    MAX_WORLDHEIGHT = 256;
 
-    public World(int worldId, long seed, RegionLoader regionLoader) {
-        this.regionLoader = regionLoader;
+    public World(int worldId, long seed) {
+        this.chunkMgr = makeChunkManager();
         this.seed = seed;
         this.rand = new Random(seed);
         this.worldHeightBits = 8;
@@ -51,6 +50,7 @@ public abstract class World {
         this.generator = new TestTerrain2(this, this.seed);
 
     }
+    public abstract ChunkManager makeChunkManager();
 
     public Chunk generateChunk(int i, int j) {
         return this.generator.generateChunk(i, j);
@@ -125,7 +125,7 @@ public abstract class World {
     }
 
     public Chunk getChunk(int x, int z) {
-        return regionLoader.get(x, z);
+        return chunkMgr.get(x, z);
     }
 
     public void onLeave() {
@@ -157,7 +157,7 @@ public abstract class World {
 //        if (this.rand.nextInt(10) == 0) {
             intens+=141;
 //        }
-        Light light = new Light(pos, new Vector3f(r, g, b),  intens);
+        DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
         this.lights.add(light);
         System.out.println("added, size: "+lights.size());
     }
@@ -179,6 +179,9 @@ public abstract class World {
             return c.getTopBlock(x&Chunk.MASK, z&Chunk.MASK);
         }
         return 0;
+    }
+    public ChunkManager getChunkManager() {
+        return this.chunkMgr;
     }
 
 }

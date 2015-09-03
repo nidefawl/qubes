@@ -51,11 +51,8 @@ public class GuiOverlayStats extends Gui {
         this.stats2 = String.format("%d setUniform/frame ", Stats.uniformCalls);
         World world = BootClient.instance.getWorld();
         if (world != null) {
-            RegionLoader loader = Engine.regionLoader;
-            int numRegions = loader.getRegionsLoaded();
-            int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
-            this.stats3 = String.format("Chunks - loaded %d/%d - R %d/%d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
-                    * loader.getRegionsWithData(), Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
+            int numChunks = world.getChunkManager().getChunksLoaded();
+            this.stats3 = String.format("Chunks %d - R %d/%d", numChunks, Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
             this.stats4 = String.format("Follow: %s", BootClient.instance.follow ? "On" : "Off");
 
             this.stats5 = "";

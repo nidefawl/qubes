@@ -15,13 +15,13 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.GuiOverlayDebug;
+import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.world.Light;
 import nidefawl.qubes.world.World;
 
 public class FinalRenderer {
@@ -49,10 +49,10 @@ public class FinalRenderer {
         if (Game.DO_TIMING)
             TimingHelper.endStart("enableShader");
         shaderDeferred.enable();
-        ArrayList<Light> lights = world.lights;
+        ArrayList<DynamicLight> lights = world.lights;
         shaderDeferred.setProgramUniform1i("numLights", Math.min(256, lights.size()));
         for (int a = 0; a < lights.size() && a < 256; a++) {
-            Light light = lights.get(a);
+            DynamicLight light = lights.get(a);
             shaderDeferred.setProgramUniform3f("lights["+a+"].Position", light.loc);
             shaderDeferred.setProgramUniform3f("lights["+a+"].Color", light.color);
             float constant = 1.0f;

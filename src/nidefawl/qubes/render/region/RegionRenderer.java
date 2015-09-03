@@ -15,6 +15,7 @@ import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldClient;
 
 public class RegionRenderer {
     public static final int RENDER_DISTANCE     = RegionLoader.LOAD_DIST;
@@ -211,7 +212,7 @@ public class RegionRenderer {
         this.numRegions++;
         renderList.add(r);
     }
-    public void update(float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
+    public void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         flushRegions();
         int rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
         int rChunkY = GameMath.floor(lastCamY)>>(Region.SLICE_HEIGHT_BLOCK_BITS);
@@ -240,10 +241,10 @@ public class RegionRenderer {
                         }
                         if (m.renderState == RENDER_STATE_INIT) {
                             if (!thread.busy()) {
-                                Region r = Engine.regionLoader.getRegion(m.rX, m.rZ);
-                                if (r != null && r.state == Region.STATE_LOAD_COMPLETE) {
-                                    thread.offer(m, renderChunkX, renderChunkZ);
-                                }
+//                                Region r = Engine.regionLoader.getRegion(m.rX, m.rZ);
+//                                if (r != null && r.state == Region.STATE_LOAD_COMPLETE) {
+//                                }
+                                thread.offer(world, m, renderChunkX, renderChunkZ);
                             }
                         }
                     }
