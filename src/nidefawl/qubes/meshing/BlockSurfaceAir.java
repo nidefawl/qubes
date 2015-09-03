@@ -8,11 +8,5 @@ public class BlockSurfaceAir extends BlockSurface {
         this.pass = -1;
         this.resolved = true;
     }
-    
-    @Override
-    public boolean mergeWith(RegionCache cache, BlockSurface c) {
-        return super.mergeWith(cache, c);
-    }
-    
 
 }

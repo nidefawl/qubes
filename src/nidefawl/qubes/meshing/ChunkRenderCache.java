@@ -19,18 +19,18 @@ public class ChunkRenderCache {
     public final static int WIDTH = Region.REGION_SIZE;
     public final static int WIDTH_EXTRA = WIDTH+2;
     public final static int WIDTH_BLOCKS = WIDTH_EXTRA*Chunk.SIZE;
-    final public Chunk[] regions = new Chunk[WIDTH_EXTRA*WIDTH_EXTRA]; //TODO: are corners required?
+    final public Chunk[] chunks = new Chunk[WIDTH_EXTRA*WIDTH_EXTRA]; //TODO: are corners required?
 
     public void set(int x, int z, Chunk region) {
-        this.regions[(x+1)*WIDTH_EXTRA+(z+1)] = region;
+        this.chunks[(x+1)*WIDTH_EXTRA+(z+1)] = region;
     }
     
     public Chunk get(int x, int z) {
-        return this.regions[(x+1)*WIDTH_EXTRA+(z+1)];
+        return this.chunks[(x+1)*WIDTH_EXTRA+(z+1)];
     }
 
     public void flush() {
-        Arrays.fill(this.regions, null);
+        Arrays.fill(this.chunks, null);
     }
 
     /** call with relative coords */
@@ -38,22 +38,8 @@ public class ChunkRenderCache {
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return 0;
         }
-        int chunkX = 0;
-        int chunkZ = 0;
-        if (i < 0) {
-            i += WIDTH_BLOCKS;
-            chunkX--;
-        } else if (i >= WIDTH_BLOCKS) {
-            i -= WIDTH_BLOCKS;
-            chunkX++;
-        }
-        if (k < 0) {
-            k += WIDTH_BLOCKS;
-            chunkZ--;
-        } else if (k >= WIDTH_BLOCKS) {
-            k -= WIDTH_BLOCKS;
-            chunkZ++;
-        }
+        int chunkX = i>>Chunk.SIZE_BITS;
+        int chunkZ = k>>Chunk.SIZE_BITS;
         Chunk region = get(chunkX, chunkZ);
         return region != null ? region.getTypeId(i&0xF, j, k&0xF) : 0;
     }
@@ -68,8 +54,8 @@ public class ChunkRenderCache {
         boolean minZReq = offsetZ > 0;
         boolean maxZReq = offsetZ < RegionRenderer.RENDER_DISTANCE-1;
         ChunkManager mgr = world.getChunkManager();
-        for (int x = -1; x < WIDTH+2; x++) {
-            for (int z = -1; z < WIDTH+2; z++) {
+        for (int x = -1; x < WIDTH+1; x++) {
+            for (int z = -1; z < WIDTH+1; z++) {
                 Chunk c = mgr.get(basechunkX+x, basechunkZ+z);
                 if (c == null) {
                     if (x >= 0 && x < WIDTH && z >= 0 && z < WIDTH) {

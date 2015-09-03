@@ -7,7 +7,6 @@ import java.util.List;
 import nidefawl.qubes.BootClient;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
-import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -21,7 +20,6 @@ public class MeshUpdateTask {
     public final ChunkRenderCache ccache = new ChunkRenderCache();
     final Tess[] tess  = new Tess[NUM_PASSES];
 
-    RegionCache cache = new RegionCache();
     public int              worldInstance;
     private boolean         meshed;
     private MeshedRegion mr;
@@ -82,7 +80,7 @@ public class MeshUpdateTask {
               int yOff = this.mr.rY << (Region.SLICE_HEIGHT_BLOCK_BITS);
               int zOff = this.mr.rZ << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
                 long l = System.nanoTime();
-                this.mesher.mesh(w, this.cache, this.mr.rY);
+                this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
                 for (int i = 0; i < NUM_PASSES; i++) {

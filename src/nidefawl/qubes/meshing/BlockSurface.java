@@ -1,6 +1,7 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
 
@@ -16,7 +17,7 @@ public class BlockSurface {
     public int y;
     public int z;
     public int pass;
-    public Region region;
+    public Chunk chunk;
     public int ao0 = 0;
     public int ao1 = 0;
     public int ao2 = 0;
@@ -26,7 +27,7 @@ public class BlockSurface {
     protected boolean resolved;
     public boolean hasAO;
     
-    public void calcAO(RegionCache cache) {
+    public void calcAO(ChunkRenderCache cache) {
         if (Block.block[this.type].applyAO()) {
             int face = this.axis<<1|this.face;
             switch (face) {
@@ -72,7 +73,7 @@ public class BlockSurface {
         return side > 0 && !Block.block[side].isTransparent();
     }
 
-    private void calcPosZ(RegionCache cache) {
+    private void calcPosZ(ChunkRenderCache cache) {
         int x = this.x;
         int y = this.y;
         int z = this.z+1;
@@ -93,7 +94,7 @@ public class BlockSurface {
         this.ao3 = vertexAO(cp, nc, np);
     }
 
-    private void calcNegZ(RegionCache cache) {
+    private void calcNegZ(ChunkRenderCache cache) {
         int x = this.x;
         int y = this.y;
         int z = this.z - 1;
@@ -114,7 +115,7 @@ public class BlockSurface {
         this.ao3 = vertexAO(cp, pc, pp);
     }
 
-    private void calcPosX(RegionCache cache) {
+    private void calcPosX(ChunkRenderCache cache) {
         int x = this.x+1;
         int y = this.y;
         int z = this.z;
@@ -134,7 +135,7 @@ public class BlockSurface {
         this.ao2 = vertexAO(cp, pc, pp); //top left
         this.ao3 = vertexAO(cp, nc, np); //bottom left
     }
-    private void calcNegX(RegionCache cache) {
+    private void calcNegX(ChunkRenderCache cache) {
         int x = this.x-1;
         int y = this.y;
         int z = this.z;
@@ -154,7 +155,7 @@ public class BlockSurface {
         this.ao2 = vertexAO(cp, nc, np); //bottom right
         this.ao3 = vertexAO(cp, pc, pp); //top right
     }
-    private void calcPosY(RegionCache cache) {
+    private void calcPosY(ChunkRenderCache cache) {
         int x = this.x;
         int y = this.y+1;
         int z = this.z;
@@ -174,7 +175,7 @@ public class BlockSurface {
         this.ao2 = vertexAO(cp, pc, pp);
         this.ao3 = vertexAO(cn, pc, pn);
     }
-    private void calcNegY(RegionCache cache) {
+    private void calcNegY(ChunkRenderCache cache) {
         int x = this.x;
         int y = this.y-1;
         int z = this.z;
@@ -196,7 +197,7 @@ public class BlockSurface {
     }
 
 
-    public boolean mergeWith(RegionCache cache, BlockSurface c) {
+    public boolean mergeWith(ChunkRenderCache cache, BlockSurface c) {
         if (!this.resolved)
             this.resolve(cache);
         if (!c.resolved)
@@ -216,7 +217,7 @@ public class BlockSurface {
         return false;
     }
 
-    void resolve(RegionCache cache) {
+    void resolve(ChunkRenderCache cache) {
         this.resolved = true;
         if (this.hasAO) {
             this.calcAO(cache);
@@ -230,7 +231,7 @@ public class BlockSurface {
         ao3 = 0;
         this.type = 0;
         this.transparent = false;
-        this.region = null;
+        this.chunk = null;
         this.transparent = false;
         this.extraFace = false;
         this.type = 0;

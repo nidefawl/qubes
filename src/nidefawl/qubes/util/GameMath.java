@@ -110,14 +110,14 @@ public class GameMath {
         seed ^= (seed << 4);
         return (int) seed;
     }
-    public static int lhToX(long l) {
+    public static int lhToZ(long l) {
         return (int) (l&0xFFFFFFFF) + Integer.MIN_VALUE;
     }
-    public static int lhToZ(long l) {
+    public static int lhToX(long l) {
         return (int) (l >> 32);
     }
     public static long toLong(int x, int z) {
-        return ((long) x << 32) |(z-Integer.MIN_VALUE);
+        return ((long) x << 32) | ((long)z-Integer.MIN_VALUE);
     }
     public static double dist2d(double x, double z, double xx, double zz) {
         x = x - xx;

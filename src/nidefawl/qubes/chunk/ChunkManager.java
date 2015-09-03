@@ -1,6 +1,5 @@
 package nidefawl.qubes.chunk;
 
-import nidefawl.qubes.meshing.ChunkRenderCache;
 import nidefawl.qubes.world.World;
 
 public abstract class ChunkManager {
@@ -17,10 +16,12 @@ public abstract class ChunkManager {
     protected abstract ChunkTable makeChunkTable();
 
     public Chunk get(int x, int z) {
-        return null;
+        return this.table.get(x, z);
     }
 
     public int getChunksLoaded() {
         return this.table.approxSize();
     }
+    public abstract void startThreads();
+    public abstract void stopThreads();
 }

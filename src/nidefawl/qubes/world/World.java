@@ -50,6 +50,10 @@ public abstract class World {
         this.generator = new TestTerrain2(this, this.seed);
 
     }
+    
+    public AbstractGen getGenerator() {
+        return generator;
+    }
     public abstract ChunkManager makeChunkManager();
 
     public Chunk generateChunk(int i, int j) {
@@ -131,6 +135,12 @@ public abstract class World {
     public void onLeave() {
         this.entities.clear();
         this.entityList.clear();
+        this.getChunkManager().stopThreads();
+    }
+
+
+    public void onLoad() {
+        this.getChunkManager().startThreads();
     }
 
     public void addEntity(Entity ent) {

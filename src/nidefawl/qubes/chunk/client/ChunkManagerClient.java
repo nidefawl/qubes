@@ -13,5 +13,14 @@ public class ChunkManagerClient extends ChunkManager {
     protected ChunkTable makeChunkTable() {
         return new ChunkTable(MAX_CHUNK*2);
     }
+    
+
+    @Override
+    public void startThreads() {
+    }
+
+    @Override
+    public void stopThreads() {
+    }
 
 }

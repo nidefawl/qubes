@@ -9,7 +9,9 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
+import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
@@ -23,6 +25,8 @@ import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
+import nidefawl.qubes.render.region.MeshedRegion;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
@@ -119,6 +123,7 @@ public class Game extends GameBase {
             Engine.regionRenderer.flush();
         }
         this.world = world;
+        this.world.onLoad();
         this.world.addEntity(this.entSelf);
     }
     @Override
@@ -482,9 +487,13 @@ public class Game extends GameBase {
                 lastCamY = Engine.camera.getPosition().y;
                 lastCamZ = Engine.camera.getPosition().z;
             }
-            int xPosP = GameMath.floor(lastCamX)>>(4+Region.REGION_SIZE_BITS);
-            int zPosP = GameMath.floor(lastCamZ)>>(4+Region.REGION_SIZE_BITS);
+            int xPosP = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
+            int zPosP = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+Region.REGION_SIZE_BITS);
+            int xPosC = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS);
+            int zPosC = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS);
             if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
+                int halflen = (RegionRenderer.RENDER_DISTANCE+1)*Region.REGION_SIZE;
+                ((ChunkManagerServer) world.getChunkManager()).ensureLoaded(xPosC, zPosC, halflen);
 //                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
 //                if (i != 0) {
 //                    System.out.println("Queued "+i+" regions for load");

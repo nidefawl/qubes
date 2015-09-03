@@ -36,7 +36,7 @@ public class WorldClient extends World {
 
     @Override
     public ChunkManager makeChunkManager() {
-        return new ChunkManagerClient(this);
+        return new ChunkManagerServer(this);
     }
 
     public void updateFrame(float fTime) {

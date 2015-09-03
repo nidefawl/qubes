@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
 import nidefawl.qubes.perf.TimingHelper2;
@@ -102,112 +103,110 @@ public class Mesher {
         }
     }
     
-    RegionCache cache;
+    ChunkRenderCache cache;
     private int strategy;
     private int yPos;
     final static boolean MEASURE = false;
-    public void mesh(World world, RegionCache cache, int rY) {
+    public void mesh(World world, ChunkRenderCache ccache, int rY) {
         this.yPos = rY<<SLICE_HEIGHT_BLOCK_BITS;
-        this.cache = cache;
+        this.cache = ccache;
         for (int i = 0; i < this.meshes.length; i++)
             this.meshes[i].clear();
         this.strategy = 0;
         if (MEASURE) TimingHelper2.startSec("mesh0");
-        this.meshRound(world, cache);
+        this.meshRound(world, ccache);
         this.strategy = 1;
         if (MEASURE) TimingHelper2.endStart("mesh1");
-        this.meshRound(world, cache);
+        this.meshRound(world, ccache);
         if (MEASURE) TimingHelper2.endSec();
     }
-    public void meshRound(World world, RegionCache cache) {
+    public void meshRound(World world, ChunkRenderCache ccache) {
         scratchpadidx = 0;
-        Region region = cache.get(0, 0);
-        if (!region.isEmpty()) {
-            dims[0] = REGION_SIZE_BLOCKS;
-            dims[1] = SLICE_HEIGHT_BLOCKS;
-            dims[2] = REGION_SIZE_BLOCKS;
-            Arrays.fill(mask2, null);
-            
-            int x[] = new int[] { 0, 0, 0 };
-            int dir[] = new int[] { 0, 0, 0 };
-            for (int axis = 0; axis < 3; ++axis) {
-                int u = (axis + 1) % 3;
-                int v = (axis + 2) % 3;
-                x[0] = x[1] = x[2] = 0;
-                dir[0] = dir[1] = dir[2] = 0;
-                int masklen = dims[u] * dims[v];
-                dir[axis] = 1;
-                for (x[axis] = -1; x[axis] < dims[axis];) {
+        dims[0] = REGION_SIZE_BLOCKS;
+        dims[1] = SLICE_HEIGHT_BLOCKS;
+        dims[2] = REGION_SIZE_BLOCKS;
+        Arrays.fill(mask2, null);
+        
+        int x[] = new int[] { 0, 0, 0 };
+        int dir[] = new int[] { 0, 0, 0 };
+        for (int axis = 0; axis < 3; ++axis) {
+            int u = (axis + 1) % 3;
+            int v = (axis + 2) % 3;
+            x[0] = x[1] = x[2] = 0;
+            dir[0] = dir[1] = dir[2] = 0;
+            int masklen = dims[u] * dims[v];
+            dir[axis] = 1;
+            for (x[axis] = -1; x[axis] < dims[axis];) {
 
-                    if (MEASURE) TimingHelper2.startSec("masq");
-                    int n = 0;
-                    for (x[v] = 0; x[v] < dims[v]; ++x[v]) {
-                        for (x[u] = 0; x[u] < dims[u]; ++x[u]) {
-                            bs1 = null;
-                            bs2 = null;
-                            if (x[axis] >= -1) {
-                                if (MEASURE) TimingHelper2.startSec("getBlockSurface");
-                                bs1 = getBlockSurface(x[0], x[1], x[2], 0, axis);
-                                if (MEASURE) TimingHelper2.endSec();
-                            }
-                            if (x[axis] < dims[axis]) {
-                                if (MEASURE) TimingHelper2.startSec("getBlockSurface");
-                                bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
-                                if (MEASURE) TimingHelper2.endSec();
-                            }
-                            setMask2(n);
-                            n++;
+                if (MEASURE) TimingHelper2.startSec("masq");
+                int n = 0;
+                for (x[v] = 0; x[v] < dims[v]; ++x[v]) {
+                    for (x[u] = 0; x[u] < dims[u]; ++x[u]) {
+                        bs1 = null;
+                        bs2 = null;
+                        if (x[axis] >= -1) {
+                            if (MEASURE) TimingHelper2.startSec("getBlockSurface");
+                            bs1 = getBlockSurface(x[0], x[1], x[2], 0, axis);
+                            if (MEASURE) TimingHelper2.endSec();
                         }
-                    }
-                    if (MEASURE) TimingHelper2.endStart("compute");
-                    
-                    ++x[axis];
-                    n = 0;
-                    for (int j = 0; j < dims[v]; ++j) {
-                        for (int i = 0; i < dims[u];) {
-                            BlockSurface c = mask2[n];
-                            if (c != null && c != air && (!c.extraFace)) {
-                                // Compute width
-                                int w = 1;
-                                while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(cache, c)) && i + w < dims[u]) {
-                                    w++;
-                                }
-                                int h = computeHeight(i, j, n, w, v, u, c);
-                                // Compute height (this is slightly awkward
-                                boolean add = true;
-
-                                int du[] = new int[] { 0, 0, 0 };
-                                int dv[] = new int[] { 0, 0, 0 };
-                                x[u] = i;
-                                x[v] = j;
-                                du[u] = w;
-                                dv[v] = h;
-                                if (add) {
-                                    if (!c.resolved)
-                                        c.resolve(cache);
-                                    
-                                    TerrainQuad face = new TerrainQuad(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
-                                    meshes[c.pass].add(face);
-                                }
-
-                                // Zero-out mask2
-                                for (int l = 0; l < h; ++l)
-                                    for (int k = 0; k < w; ++k) {
-                                        mask2[n + k + l * dims[u]] = null;
-                                    }
-                                // Increment counters and continue
-                                i += w;
-                                n += w;
-                            } else {
-                                ++i;
-                                ++n;
-                            }
+                        if (x[axis] < dims[axis]) {
+                            if (MEASURE) TimingHelper2.startSec("getBlockSurface");
+                            bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
+                            if (MEASURE) TimingHelper2.endSec();
                         }
+                        setMask2(n);
+                        n++;
                     }
-                    if (MEASURE) TimingHelper2.endSec();
                 }
+                if (MEASURE) TimingHelper2.endStart("compute");
+                
+                ++x[axis];
+                n = 0;
+                for (int j = 0; j < dims[v]; ++j) {
+                    for (int i = 0; i < dims[u];) {
+                        BlockSurface c = mask2[n];
+                        if (c != null && c != air && (!c.extraFace)) {
+                            // Compute width
+                            int w = 1;
+                            while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(ccache, c)) && i + w < dims[u]) {
+                                w++;
+                            }
+                            int h = computeHeight(i, j, n, w, v, u, c);
+                            // Compute height (this is slightly awkward
+                            boolean add = true;
+
+                            int du[] = new int[] { 0, 0, 0 };
+                            int dv[] = new int[] { 0, 0, 0 };
+                            x[u] = i;
+                            x[v] = j;
+                            du[u] = w;
+                            dv[v] = h;
+                            if (add) {
+                                if (!c.resolved)
+                                    c.resolve(ccache);
+                                
+                                TerrainQuad face = new TerrainQuad(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
+                                meshes[c.pass].add(face);
+                            }
+
+                            // Zero-out mask2
+                            for (int l = 0; l < h; ++l)
+                                for (int k = 0; k < w; ++k) {
+                                    mask2[n + k + l * dims[u]] = null;
+                                }
+                            // Increment counters and continue
+                            i += w;
+                            n += w;
+                        } else {
+                            ++i;
+                            ++n;
+                        }
+                    }
+                }
+                if (MEASURE) TimingHelper2.endSec();
             }
         }
+    
     }
 
 
@@ -217,31 +216,19 @@ public class Mesher {
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return air;
         }
-        int regionX = 0;
-        int regionZ = 0;
-        if (i < 0) {
-            i += REGION_SIZE_BLOCKS;
-            regionX--;
-        } else if (i >= dims[0]) {
-            i -= REGION_SIZE_BLOCKS;
-            regionX++;
-        }
-        if (k < 0) {
-            k += REGION_SIZE_BLOCKS;
-            regionZ--;
-        } else if (k >= dims[2]) {
-            k -= REGION_SIZE_BLOCKS;
-            regionZ++;
-        }
-        Region region = this.cache.get(regionX, regionZ);
-        if (region == null) {
-            if (regionX==0&&regionZ==0) {
-                System.err.println("REGION IS NULL ON CENTER; SHOULD NOT HAPPEN");
+        int chunkX = i>>Chunk.SIZE_BITS;
+        int chunkZ = k>>Chunk.SIZE_BITS;
+//                            System.out.println("block "+i+"/"+k+" is in chunk "+chunkX+"/"+chunkZ);
+        boolean center = chunkX >= 0 && chunkX < ChunkRenderCache.WIDTH && chunkZ >= 0 && chunkZ < ChunkRenderCache.WIDTH;
+        Chunk chunk = this.cache.get(chunkX, chunkZ);
+        if (chunk == null) {
+            if (center) {
+                System.err.println("CHUNK IS NULL ON CENTER; SHOULD NOT HAPPEN");
             }
 //            System.err.println("adj missing on "+regionX+"/"+regionZ);
             return null;
         }
-        int type = region.getTypeId(i, j, k);
+        int type = chunk.getTypeId(i&0xF, j, k&0xF);
         if (type > 0) {
             Block block = Block.block[type];
             int pass = block.getRenderPass();
@@ -254,7 +241,7 @@ public class Mesher {
             surface.x = i;
             surface.y = j;
             surface.z = k;
-            surface.extraFace = regionX != 0 || regionZ != 0;
+            surface.extraFace = !center;
             surface.face = l;
             surface.axis = axis;
             surface.pass = pass;
@@ -264,7 +251,7 @@ public class Mesher {
             } else {
                 surface.hasAO = true;
             }
-            surface.region = region;
+            surface.chunk = chunk;
             return surface;
         }
         return air;
