@@ -1,4 +1,4 @@
-package nidefawl.qubes.gl.profile;
+package nidefawl.qubes.perf;
 
 import static org.lwjgl.opengl.GL15.glGenQueries;
 import static org.lwjgl.opengl.GL33.GL_TIMESTAMP;

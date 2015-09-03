@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.game.*;
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.entity.PlayerSelf;
@@ -17,19 +18,25 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.profile.GPUProfiler;
 import nidefawl.qubes.gui.*;
+import nidefawl.qubes.input.Keyboard;
+import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.perf.TimingHelper;
+import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.ClientWorld;
 import nidefawl.qubes.world.Light;
 import nidefawl.qubes.world.World;
 
-public class Client extends GLGame {
+public class Game extends GameBase {
 
 
     public static boolean  show               = false;
@@ -55,7 +62,7 @@ public class Client extends GLGame {
     long               lastShaderLoadTime = System.currentTimeMillis();
     private boolean    doLoad             = true;
     
-    public Client() {
+    public Game() {
         super();
 //        TimingHelper.setName(0, "Final_Prepare");
 //        TimingHelper.setName(1, "Final_Stage0");
@@ -79,24 +86,28 @@ public class Client extends GLGame {
 
     @Override
     public void initGame() {
+        AssetManager.getInstance().init();
+        Engine.init();
+        TextureManager.getInstance().init();
+        BlockTextureArray.getInstance().init();
         SysInfo info = new SysInfo();
         String title = "LWJGL "+info.lwjglVersion+" - "+info.openGLVersion;
         setTitle(title);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
         this.statsOverlay = new GuiOverlayStats();
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
         this.statsCached = new GuiCached(statsOverlay); 
         this.statsCached.setPos(0, 0);
         this.statsCached.setSize(displayWidth, displayHeight);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         this.debugOverlay = new GuiOverlayDebug();
         this.debugOverlay.setPos(0, 0);
         this.debugOverlay.setSize(displayWidth, displayHeight);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("initGame 4");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 4");
         Engine.checkGLError("Post startup");
     }
     public void lateInitGame() {
-        
+        BlockTextureArray.getInstance().reload();
         setWorld(new ClientWorld(1, 0x1234, Engine.regionLoader));
         this.entSelf.move(-800, 222, 1540);
         this.entSelf.yaw=6.72F;
@@ -245,9 +256,9 @@ public class Client extends GLGame {
     public void render(float fTime) {
 //      fogColor.scale(0.4F);
 
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("world");
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("ShadowPass");
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("renderShadowPass");
@@ -260,7 +271,7 @@ public class Client extends GLGame {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("renderWorld");
 
         if (GPUProfiler.PROFILING_ENABLED)
@@ -269,10 +280,10 @@ public class Client extends GLGame {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderWorld");
         
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("renderBlockHighlight");
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("renderBlockHighlight");
@@ -280,10 +291,10 @@ public class Client extends GLGame {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderBlockHighlight");
         
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("renderDebugBB");
 
         if (GPUProfiler.PROFILING_ENABLED)
@@ -292,20 +303,20 @@ public class Client extends GLGame {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderDebugBB");
         
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("unbindCurrentFrameBuffer");
 
         FrameBuffer.unbindFramebuffer();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("screen");
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("prepare");
 
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("glClear");
@@ -318,7 +329,7 @@ public class Client extends GLGame {
 //      glEnable(GL_TEXTURE_2D);
       glActiveTexture(GL_TEXTURE0);
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-      if (Client.DO_TIMING) TimingHelper.endStart("final");
+      if (Game.DO_TIMING) TimingHelper.endStart("final");
 
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
       UniformBuffer.bindOrthoUBO();
@@ -335,15 +346,15 @@ public class Client extends GLGame {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       if (Engine.renderWireFrame) {
           glDisable(GL_CULL_FACE);
-          if (Client.DO_TIMING) TimingHelper.endStart("renderWireFrame");
+          if (Game.DO_TIMING) TimingHelper.endStart("renderWireFrame");
           Engine.getSceneFB().bindRead();
           GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
           FrameBuffer.unbindReadFramebuffer();
           UniformBuffer.bindProjUBO();
-          if (Client.DO_TIMING) TimingHelper.endStart("renderNormals");
+          if (Game.DO_TIMING) TimingHelper.endStart("renderNormals");
           Engine.worldRenderer.renderNormals(this.world, fTime);
           Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-          if (Client.GL_ERROR_CHECKS)
+          if (Game.GL_ERROR_CHECKS)
               Engine.checkGLError("renderNormals");
           UniformBuffer.bindOrthoUBO();
           glEnable(GL_CULL_FACE);
@@ -352,13 +363,13 @@ public class Client extends GLGame {
 
       glDisable(GL_DEPTH_TEST);
       glActiveTexture(GL_TEXTURE0);
-      if (Client.DO_TIMING) TimingHelper.endStart("gui");
+      if (Game.DO_TIMING) TimingHelper.endStart("gui");
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("gui");
       
       if (this.movement.grabbed()) {
           Shaders.colored.enable();
-          if (Client.DO_TIMING) TimingHelper.startSec("crosshair");
+          if (Game.DO_TIMING) TimingHelper.startSec("crosshair");
           glDisable(GL_TEXTURE_2D);
           Tess.instance.setColor(-1, 100);
           Tess.instance.setOffset(displayWidth/2, displayHeight/2, 0);
@@ -374,7 +385,7 @@ public class Client extends GLGame {
           Tess.instance.add(-height, -w, 0);
           Tess.instance.draw(GL_QUADS);
           glEnable(GL_TEXTURE_2D);
-          if (Client.DO_TIMING) TimingHelper.endSec();
+          if (Game.DO_TIMING) TimingHelper.endSec();
           Shader.disable();
       }
 //      Shaders.textured.enable();
@@ -383,23 +394,23 @@ public class Client extends GLGame {
 //      Shader.disable();
 
       if (show) {
-          if (Client.DO_TIMING) TimingHelper.startSec("debugOverlay");
+          if (Game.DO_TIMING) TimingHelper.startSec("debugOverlay");
           if (this.debugOverlay != null) {
               this.debugOverlay.render(fTime);
           }
-          if (Client.DO_TIMING) TimingHelper.endSec();
+          if (Game.DO_TIMING) TimingHelper.endSec();
       }
-      if (Client.DO_TIMING) TimingHelper.startSec("statsOverlay");
+      if (Game.DO_TIMING) TimingHelper.startSec("statsOverlay");
 
       if (this.statsCached != null) {
           this.statsCached.render(fTime);
       }
-      if (Client.DO_TIMING) TimingHelper.endSec();
+      if (Game.DO_TIMING) TimingHelper.endSec();
       
-      if (Client.DO_TIMING) TimingHelper.endSec();
+      if (Game.DO_TIMING) TimingHelper.endSec();
       glEnable(GL_DEPTH_TEST);
 
-      if (Client.DO_TIMING) TimingHelper.endSec();
+      if (Game.DO_TIMING) TimingHelper.endSec();
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       
   }

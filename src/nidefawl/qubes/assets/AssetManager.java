@@ -3,6 +3,7 @@ package nidefawl.qubes.assets;
 import java.io.*;
 import java.util.ArrayList;
 
+import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
@@ -10,9 +11,9 @@ import nidefawl.qubes.util.GameError;
 
 public class AssetManager {
     final static AssetManager instance = new AssetManager();
-    File                      folder   = new File("res");
     ArrayList<Asset>          assets   = new ArrayList<>();
     private ShaderSource lastFailedShader;
+    File                      folder;
 
     AssetManager() {
         
@@ -23,8 +24,9 @@ public class AssetManager {
     }
 
     public void init() {
-        folder.mkdirs();
+        folder = WorkingEnv.getAssetFolder();
     }
+    
     public InputStream findResource(String name) {
         try {
 

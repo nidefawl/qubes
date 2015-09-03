@@ -2,9 +2,8 @@ package nidefawl.qubes.input;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import nidefawl.game.Keyboard;
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
@@ -173,7 +172,7 @@ public class Selection {
     }
 
     public boolean extendReach() {
-        return this.mouseDown || Main.instance.movement.grabbed();
+        return this.mouseDown || BootClient.instance.movement.grabbed();
     }
 
     public BlockPos getMin() {
@@ -193,7 +192,7 @@ public class Selection {
     
 
     private void onRelease() {
-        World world = Main.instance.getWorld();
+        World world = BootClient.instance.getWorld();
         if (world != null) {
             int blocks = Engine.selection.getNumBlocks();
             System.out.println(blocks);
@@ -212,10 +211,10 @@ public class Selection {
                     //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
                     msg += String.format("Chunk:          %d/%d", blockX >> 4, blockZ >> 4);
 
-                    if (Main.instance.statsOverlay != null) {
-                        Main.instance.statsOverlay.setMessage(msg);
+                    if (BootClient.instance.statsOverlay != null) {
+                        BootClient.instance.statsOverlay.setMessage(msg);
                     }
-                    int block = Main.instance.selBlock;
+                    int block = BootClient.instance.selBlock;
                     if (block > 0) {
                         blockX += face.x;
                         blockY += face.y;
@@ -239,7 +238,7 @@ public class Selection {
                             int blockX = p1.x+x;
                             int blockY = p1.y+y;
                             int blockZ = p1.z+z;
-                            world.setType(blockX, blockY, blockZ, Main.instance.selBlock, Flags.RENDER);
+                            world.setType(blockX, blockY, blockZ, BootClient.instance.selBlock, Flags.RENDER);
                         }
                     }
                     

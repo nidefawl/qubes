@@ -7,7 +7,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
-import nidefawl.qubes.util.TimingHelper;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.World;
 
 public class TerrainGenerator2 extends AbstractGen {

@@ -1,4 +1,4 @@
-package nidefawl.game;
+package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.EXTDirectStateAccess.glBindMultiTextureEXT;
 import static org.lwjgl.opengl.EXTDirectStateAccess.glGenerateTextureMipmapEXT;

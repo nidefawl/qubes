@@ -7,7 +7,7 @@ import java.nio.ByteOrder;
 import java.util.*;
 import java.util.Map.Entry;
 
-import nidefawl.qubes.Client;
+import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
@@ -41,7 +41,7 @@ public class BlockTextureArray {
     public void reload() {
         ByteBuffer directBuf = null;
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid);
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindTexture(GL30.GL_TEXTURE_2D_ARRAY)");
 
         int maxTileW = 0;
@@ -74,11 +74,11 @@ public class BlockTextureArray {
         this.textures = new int[Block.NUM_BLOCKS<<BLOCK_TEXTURE_BITS];
         int w = GameMath.log2(this.tileSize);
 
-        nidefawl.game.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, w, GL_RGBA8,              //Internal format
+        nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, w, GL_RGBA8,              //Internal format
                 this.tileSize, this.tileSize,   //width,height
                 this.maxTextures       //Number of layers
         );
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("GL42.glTexStorage3D");
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = text.entrySet().iterator();
         int slot = 0;
@@ -101,7 +101,7 @@ public class BlockTextureArray {
                         GL_RGBA,                //format
                         GL_UNSIGNED_BYTE,      //type
                         directBuf);                //pointer to data
-                if (Client.GL_ERROR_CHECKS)
+                if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("GL12.glTexSubImage3D");
                 textures[blockId << 4 | i] = slot;
                 slot++;

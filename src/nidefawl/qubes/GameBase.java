@@ -1,6 +1,7 @@
-package nidefawl.game;
+package nidefawl.qubes;
 
-import static org.lwjgl.glfw.Callbacks.*;
+import static org.lwjgl.glfw.Callbacks.errorCallbackPrint;
+import static org.lwjgl.glfw.Callbacks.glfwSetCallback;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -15,44 +16,64 @@ import java.util.List;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
-import nidefawl.game.GL;
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.profile.GPUProfiler;
-import nidefawl.qubes.gl.profile.GPUTaskProfile;
+import nidefawl.qubes.input.Mouse;
+import nidefawl.qubes.logging.LogBufferStream;
+import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.perf.GPUTaskProfile;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.swing.TextDialog;
 
-public abstract class GLGame extends AbstractGLGame {
-    static int               initWidth  = 1024;
-    static int               initHeight = 512;
+public abstract class GameBase implements Runnable {
+    public static String  appName         = "LWJGL Test App";
+    public static int     displayWidth;
+    public static int     displayHeight;
+    public static boolean glDebug         = false;
+    public static boolean GL_ERROR_CHECKS = false;
+    public static long    windowId        = 0;
+    static int            initWidth       = 1024;
+    static int            initHeight      = 512;
 
     // We need to strongly reference callback instances.
-    private GLFWErrorCallback errorCallback;
-	private GLFWWindowSizeCallback cbWindowSize;
-	private GLFWKeyCallback cbKeyboard;
-	private GLFWMouseButtonCallback cbMouseButton;
-	private GLFWScrollCallback cbScrollCallback;
-	private GLFWWindowFocusCallback cbWindowFocus;
-	private GLFWCursorPosCallback  cbCursorPos;
-    public static boolean toggleTiming;
-    public int         lastFPS            = 0;
-    protected long     timeLastFPS;
-    protected long     timeLastFrame;
-    public static float renderTime;
-    public final Timer timer;
-    public int         tick               = 0;
-    public static int ticksran;
-    protected boolean  startRender        = false;
-    private GameError   showError;
-    private LogBufferStream outStream;
-    private LogBufferStream errStream;
-    private long frameTime;
-	
-    public GLGame() {
+    private GLFWErrorCallback       errorCallback;
+    private GLFWWindowSizeCallback  cbWindowSize;
+    private GLFWKeyCallback         cbKeyboard;
+    private GLFWMouseButtonCallback cbMouseButton;
+    private GLFWScrollCallback      cbScrollCallback;
+    private GLFWWindowFocusCallback cbWindowFocus;
+    private GLFWCursorPosCallback   cbCursorPos;
+
+    public static boolean      toggleTiming;
+    public static boolean      DO_TIMING   = false;
+    public static float        renderTime;
+    public static int          ticksran;
+    public int                 lastFPS     = 0;
+    protected long             timeLastFPS;
+    protected long             timeLastFrame;
+    public final Timer         timer;
+    public int                 tick        = 0;
+    protected boolean          startRender = false;
+    private GameError          showError;
+    private LogBufferStream    outStream;
+    private LogBufferStream    errStream;
+    private long               frameTime;
+    protected boolean          vsync       = true;
+    protected volatile boolean running     = false;
+    protected volatile boolean wasrunning  = false;
+    protected volatile boolean sysExit     = true;
+    private Thread             thread;
+
+    public void startGame() {
+        this.thread = new Thread(this, appName + " main thread");
+        this.thread.setPriority(Thread.MAX_PRIORITY);
+        this.thread.start();
+    }
+
+    public GameBase() {
         this.timer = new Timer(20);
         displayWidth = initWidth;
         displayHeight = initHeight;
@@ -64,12 +85,29 @@ public abstract class GLGame extends AbstractGLGame {
         System.setErr(errStream);
     }
 
-    void initCallbacks() { 
-		errorCallback = errorCallbackPrint(System.err);
-		cbWindowSize = new GLFWWindowSizeCallback() {
-    		
-    		@Override
-    		public void invoke(long window, int width, int height) {
+    public boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public final void run() {
+        try {
+            initDisplay(false);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            return;
+        }
+
+        initGLContext();
+        mainLoop();
+    }
+
+    void initCallbacks() {
+        errorCallback = errorCallbackPrint(System.err);
+        cbWindowSize = new GLFWWindowSizeCallback() {
+
+            @Override
+            public void invoke(long window, int width, int height) {
                 displayWidth = width;
                 displayHeight = height;
                 if (displayWidth <= 0) {
@@ -78,34 +116,34 @@ public abstract class GLGame extends AbstractGLGame {
                 if (displayHeight <= 0) {
                     displayHeight = 1;
                 }
-                System.out.println("resize "+displayWidth+"/"+displayHeight);
+                System.out.println("resize " + displayWidth + "/" + displayHeight);
 
-               if (isRunning())
-                GL11.glViewport(0, 0, displayWidth, displayHeight);
-            	onResize(displayWidth, displayHeight);
-    		}
-    	};
-    	cbKeyboard = new GLFWKeyCallback() {
-            @Override
-            public void invoke(long window, int key, int scancode, int action, int mods) {
-            	onKeyPress(window, key, scancode, action, mods);
+                if (isRunning())
+                    GL11.glViewport(0, 0, displayWidth, displayHeight);
+                onResize(displayWidth, displayHeight);
             }
         };
-    	cbMouseButton = new GLFWMouseButtonCallback() {
-    		
-    		@Override
-    		public void invoke(long window, int button, int action, int mods) {
-    			onMouseClick(window, button, action, mods);
-    		}
-    	};
-    	cbScrollCallback = new GLFWScrollCallback() {
-    		@Override
-    		public void invoke(long window, double xoffset, double yoffset) {
-    			Mouse.scrollDX+=xoffset;
-    			Mouse.scrollDY+=yoffset;
-    		}
-    		
-    	};
+        cbKeyboard = new GLFWKeyCallback() {
+            @Override
+            public void invoke(long window, int key, int scancode, int action, int mods) {
+                onKeyPress(window, key, scancode, action, mods);
+            }
+        };
+        cbMouseButton = new GLFWMouseButtonCallback() {
+
+            @Override
+            public void invoke(long window, int button, int action, int mods) {
+                onMouseClick(window, button, action, mods);
+            }
+        };
+        cbScrollCallback = new GLFWScrollCallback() {
+            @Override
+            public void invoke(long window, double xoffset, double yoffset) {
+                Mouse.scrollDX += xoffset;
+                Mouse.scrollDY += yoffset;
+            }
+
+        };
         cbWindowFocus = new GLFWWindowFocusCallback() {
             @Override
             public void invoke(long window, int focused) {
@@ -119,39 +157,38 @@ public abstract class GLGame extends AbstractGLGame {
             }
         };
     }
-    
+
     public void initDisplay(boolean debugContext) {
-    	try {
-    		initCallbacks();
+        try {
+            initCallbacks();
             glfwSetErrorCallback(errorCallback);
             // Initialize GLFW. Most GLFW functions will not work before doing this.
-            if ( glfwInit() != GL11.GL_TRUE )
+            if (glfwInit() != GL11.GL_TRUE)
                 throw new IllegalStateException("Unable to initialize GLFW");
-     
+
             // Configure our window
-            glfwDefaultWindowHints(); // optional, the current window hints are already the default
-            glfwWindowHint(GLFW_VISIBLE, GL_FALSE); // the window will stay hidden after creation
-            glfwWindowHint(GLFW_RESIZABLE, GL_TRUE); // the window will be resizable
+            glfwDefaultWindowHints();// optional, the current window hints are already the default
+            glfwWindowHint(GLFW_VISIBLE, GL_FALSE);// the window will stay hidden after creation
+            glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);// the window will be resizable
             if (!debugContext) {
-//              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-//              glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+                //              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+                //              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+                //              glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+                //              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             }
 
             glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, glDebug ? GL_TRUE : GL_FALSE);
-//            glfwWindowHint(GLFW_RED_BITS, 8);
-//            glfwWindowHint(GLFW_GREEN_BITS, 8);
-//            glfwWindowHint(GLFW_BLUE_BITS, 8);
-//            glfwWindowHint(GLFW_ALPHA_BITS, 8);
+            //            glfwWindowHint(GLFW_RED_BITS, 8);
+            //            glfwWindowHint(GLFW_GREEN_BITS, 8);
+            //            glfwWindowHint(GLFW_BLUE_BITS, 8);
+            //            glfwWindowHint(GLFW_ALPHA_BITS, 8);
             glfwWindowHint(GLFW_DEPTH_BITS, 24);
             glfwWindowHint(GLFW_STENCIL_BITS, 1);
-//            glfwWindowHint(GLFW_DOUBLE_BUFFER, GL_TRUE);//Check Version
-
+            //            glfwWindowHint(GLFW_DOUBLE_BUFFER, GL_TRUE);//Check Version
 
             // Create the window
             windowId = glfwCreateWindow(displayWidth, displayHeight, appName, NULL, NULL);
-            if ( windowId == NULL )
+            if (windowId == NULL)
                 throw new RuntimeException("Failed to create the GLFW window");
             // Make the OpenGL context current
             Mouse.init();
@@ -159,11 +196,7 @@ public abstract class GLGame extends AbstractGLGame {
             // Get the resolution of the primary monitor
             ByteBuffer vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             // Center our window
-            glfwSetWindowPos(
-                windowId,
-                (GLFWvidmode.width(vidmode) - displayWidth) / 2,
-                (GLFWvidmode.height(vidmode) - displayHeight) / 2
-            );
+            glfwSetWindowPos(windowId, (GLFWvidmode.width(vidmode) - displayWidth) / 2, (GLFWvidmode.height(vidmode) - displayHeight) / 2);
 
             glfwMakeContextCurrent(windowId);
             org.lwjgl.opengl.GL.createCapabilities();
@@ -175,7 +208,7 @@ public abstract class GLGame extends AbstractGLGame {
             glfwSetCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
             glfwSetCallback(windowId, cbCursorPos);
-            
+
             int major, minor, rev;
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
             minor = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
@@ -185,15 +218,11 @@ public abstract class GLGame extends AbstractGLGame {
             System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
             if (GL_ERROR_CHECKS)
-            	_checkGLError("Pre startup");
-            
-    	} catch (Throwable t) {
-    		throw new RuntimeException(t);
-    	}
-    }
+                _checkGLError("Pre startup");
 
-    public boolean isRunning() {
-        return running;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     protected void destroyContext() {
@@ -207,16 +236,13 @@ public abstract class GLGame extends AbstractGLGame {
         windowId = 0;
     }
 
-    
-    @Override
     protected void onDestroy() {
         Engine.stop();
         TextureManager.getInstance().destroy();
         Tess.destroyAll();
     }
 
-
-	public void shutdown() {
+    public void shutdown() {
         this.running = false;
     }
 
@@ -229,10 +255,14 @@ public abstract class GLGame extends AbstractGLGame {
         this.vsync = b;
         setVSync_impl(b);
     }
+
     public boolean getVSync() {
         return this.vsync;
     }
-    
+
+    public Thread getMainThread() {
+        return this.thread;
+    }
 
     private static boolean _checkGLError(String s) {
         int i = GL11.glGetError();
@@ -242,59 +272,53 @@ public abstract class GLGame extends AbstractGLGame {
         }
         return false;
     }
-    
-	public static String getGlErrorString(int error_code) {
-		switch (error_code) {
-		case GL11.GL_NO_ERROR:
-			return "No error";
-		case GL11.GL_INVALID_ENUM:
-			return "Invalid enum";
-		case GL11.GL_INVALID_VALUE:
-			return "Invalid value";
-		case GL11.GL_INVALID_OPERATION:
-			return "Invalid operation";
-		case GL11.GL_STACK_OVERFLOW:
-			return "Stack overflow";
-		case GL11.GL_STACK_UNDERFLOW:
-			return "Stack underflow";
-		case GL11.GL_OUT_OF_MEMORY:
-			return "Out of memory";
-		case ARBImaging.GL_TABLE_TOO_LARGE:
-			return "Table too large";
-		case EXTFramebufferObject.GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
-			return "Invalid framebuffer operation";
-		default:
-			return "ErrorCode "+error_code;
-		}
-	}
 
-    
-    public void updateDisplay() {
-        glfwSwapBuffers(windowId); // swap the color buffers
+    public static String getGlErrorString(int error_code) {
+        switch (error_code) {
+            case GL11.GL_NO_ERROR:
+                return "No error";
+            case GL11.GL_INVALID_ENUM:
+                return "Invalid enum";
+            case GL11.GL_INVALID_VALUE:
+                return "Invalid value";
+            case GL11.GL_INVALID_OPERATION:
+                return "Invalid operation";
+            case GL11.GL_STACK_OVERFLOW:
+                return "Stack overflow";
+            case GL11.GL_STACK_UNDERFLOW:
+                return "Stack underflow";
+            case GL11.GL_OUT_OF_MEMORY:
+                return "Out of memory";
+            case ARBImaging.GL_TABLE_TOO_LARGE:
+                return "Table too large";
+            case EXTFramebufferObject.GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
+                return "Invalid framebuffer operation";
+            default:
+                return "ErrorCode " + error_code;
+        }
     }
-    
 
-    
+    public void updateDisplay() {
+        glfwSwapBuffers(windowId);// swap the color buffers
+    }
+
     public boolean isCloseRequested() {
         return glfwWindowShouldClose(windowId) != GL_FALSE;
     }
 
     protected void setVSync_impl(boolean b) {
         glfwSwapInterval(b ? 1 : 0);
-	}
-    
-    @Override
+    }
+
     public void updateInput() {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
     }
 
-	@Override
-	public void setTitle(String title) {
-		glfwSetWindowTitle(windowId, title);
-	}
-
+    public void setTitle(String title) {
+        glfwSetWindowTitle(windowId, title);
+    }
 
     protected void limitFpsTo(int fpsLimit) {
         long now = System.nanoTime();
@@ -312,107 +336,109 @@ public abstract class GLGame extends AbstractGLGame {
         }
     }
 
-    @Override
     public void runFrame() {
         if (toggleTiming) {
             toggleTiming = false;
             DO_TIMING = !DO_TIMING;
             TimingHelper.reset();
         }
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.check();
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.startFrame();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.startFrame();
         if (isCloseRequested()) {
             shutdown();
             return;
         }
-        if (Client.DO_TIMING) TimingHelper.startSec("pre render");
+        if (Game.DO_TIMING)
+            TimingHelper.startSec("pre render");
         checkResize();
         updateTime();
         Stats.uniformCalls = 0;
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("pre render");
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("input");
         updateInput();
         input(renderTime);
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("preRenderUpdate");
         preRenderUpdate(renderTime);
-//        if (!startRender) {
-//            try {
-//                Thread.sleep(10);
-//            } catch (InterruptedException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
-//            return;
-//        }
-        if (Client.DO_TIMING)
+        //        if (!startRender) {
+        //            try {
+        //                Thread.sleep(10);
+        //            } catch (InterruptedException e) {
+        //                // TODO Auto-generated catch block
+        //                e.printStackTrace();
+        //            }
+        //            return;
+        //        }
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
         render(renderTime);
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("postRenderUpdate");
         postRenderUpdate(renderTime);
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();
         //        if (Main.DO_TIMING) TimingHelper.end(14);
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("render");
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("Display.update");
-        float took = (System.nanoTime()-frameTime) / 1000000F;
+        float took = (System.nanoTime() - frameTime) / 1000000F;
         Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("updateDisplay");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("updateDisplay");
         updateDisplay();
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
         frameTime = System.nanoTime();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("calcFPS");
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;
         double l = (timer.absTime - timeLastFPS) / 1000.0D;
         if (l >= 0.5F) {
             timeLastFPS = timer.absTime;
-            lastFPS = (int) (Stats.fpsCounter/l);
+            lastFPS = (int) (Stats.fpsCounter / l);
             Stats.fpsCounter = 0;
             onStatsUpdated((float) l);
         }
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
         if (this.showError != null) {
-//            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2], true);
+            //            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2], true);
             throw this.showError;
         }
         if (GPUProfiler.PROFILING_ENABLED) {
             GPUProfiler.endFrame();
             GPUTaskProfile tp;
-            while((tp = GPUProfiler.getFrameResults()) != null){
+            while ((tp = GPUProfiler.getFrameResults()) != null) {
                 glProfileResults.clear();
                 tp.dump(glProfileResults);
-                GPUProfiler.recycle(tp); 
-            }   
+                GPUProfiler.recycle(tp);
+            }
         }
     }
+
     public ArrayList<String> glProfileResults = new ArrayList<>();
 
-    @Override
     public void mainLoop() {
         try {
             this.running = true;
             this.wasrunning = true;
             setVSync(this.vsync);
             initGame();
-            Engine.init();
             onResize(displayWidth, displayHeight);
             timer.calculate();
             timeLastFrame = System.nanoTime();
@@ -422,7 +448,7 @@ public abstract class GLGame extends AbstractGLGame {
                 runFrame();
             }
         } catch (Throwable t) {
-            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed"}), t, true);
+            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed" }), t, true);
         } finally {
             if (this.wasrunning) {
                 onDestroy();
@@ -431,7 +457,6 @@ public abstract class GLGame extends AbstractGLGame {
         }
     }
 
-    @Override
     public void initGLContext() {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glActiveTexture(GL_TEXTURE0);
@@ -443,8 +468,8 @@ public abstract class GLGame extends AbstractGLGame {
         glColorMask(true, true, true, true);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-//        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-//        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
+        //        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+        //        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
         setVSync(true);
         try {
             List<String> list = GL.validateCaps();
@@ -464,7 +489,6 @@ public abstract class GLGame extends AbstractGLGame {
         }
     }
 
-    @Override
     public void updateTime() {
         timer.calculate();
         ticksran += timer.ticks;
@@ -481,8 +505,8 @@ public abstract class GLGame extends AbstractGLGame {
                 onDestroy();
             }
             destroyContext();
-            String buf1 = outStream.baos.toString("UTF-8");
-            String buf2 = errStream.baos.toString("UTF-8");
+            String buf1 = outStream.getLogString();
+            String buf2 = errStream.getLogString();
             TextDialog dlg = new TextDialog(title, desc, throwable, b);
             dlg.prepend(buf1);
             dlg.prepend(buf2);
@@ -494,13 +518,13 @@ public abstract class GLGame extends AbstractGLGame {
                 this.wasrunning = false;
                 this.running = false;
                 this.sysExit = false;
-//                Client.main(Main.lastargs);
+                //                Client.main(Main.lastargs);
                 return;
             }
             /*Tess.useClientStates = true;
-
+            
             initDisplay(true);
-
+            
             Engine.baseInit();
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - initdisplay");
             GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -521,10 +545,10 @@ public abstract class GLGame extends AbstractGLGame {
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glColorMask");
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
-//            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-//            GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
+            //            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+            //            GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
             setVSync(true);
-
+            
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen");
             Mouse.setGrabbed(false);
             GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
@@ -540,8 +564,8 @@ public abstract class GLGame extends AbstractGLGame {
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             GL11.glViewport(0, 0, displayWidth, displayHeight);
-//            Engine.updateOrthoMatrix(displayWidth, displayHeight);
-//            Shaders.updateUBO();
+            //            Engine.updateOrthoMatrix(displayWidth, displayHeight);
+            //            Shaders.updateUBO();
             if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glViewport");
             while (!isCloseRequested()) {
                 checkResize();
@@ -574,7 +598,7 @@ public abstract class GLGame extends AbstractGLGame {
             t.printStackTrace();
         } finally {
             if (this.sysExit)
-            System.exit(1);
+                System.exit(1);
         }
     }
 
@@ -585,4 +609,24 @@ public abstract class GLGame extends AbstractGLGame {
     public long getTime() {
         return timer.absTime;
     }
+
+    protected abstract void onKeyPress(long window, int key, int scancode, int action, int mods);
+
+    protected abstract void onMouseClick(long window, int button, int action, int mods);
+
+    public abstract void render(float f);
+
+    public abstract void input(float f);
+
+    public abstract void preRenderUpdate(float f);
+
+    public abstract void postRenderUpdate(float f);
+
+    public abstract void onResize(int displayWidth, int displayHeight);
+
+    public abstract void tick();
+
+    public abstract void initGame();
+
+    public abstract void lateInitGame();
 }

@@ -3,8 +3,8 @@ package nidefawl.qubes.meshing;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;
@@ -39,7 +39,7 @@ public class MeshThread extends Thread {
 
     @Override
     public void run() {
-        while (Main.instance.isRunning() && this.isRunning) {
+        while (BootClient.instance.isRunning() && this.isRunning) {
             boolean did = false;
             try {
                 MeshUpdateTask task = this.queue.take();
@@ -57,7 +57,7 @@ public class MeshThread extends Thread {
                     break;
                 onInterruption();
             } catch (Exception e) {
-                Main.instance.setException(new GameError("Exception in " + getName(), e));
+                BootClient.instance.setException(new GameError("Exception in " + getName(), e));
                 break;
             }
             try {

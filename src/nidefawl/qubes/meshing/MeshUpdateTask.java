@@ -2,8 +2,8 @@ package nidefawl.qubes.meshing;
 
 import java.util.List;
 
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 
 import static nidefawl.qubes.render.WorldRenderer.*;
 import nidefawl.qubes.chunk.Chunk;
@@ -81,7 +81,7 @@ public class MeshUpdateTask {
 //        if (this.mr.isEmpty()) {
 //            return true;
 //        }
-        World w = Main.instance.getWorld();
+        World w = BootClient.instance.getWorld();
         if (w != null) {
             try {
               int xOff = this.mr.rX << (Region.REGION_SIZE_BITS + Chunk.SIZE_BITS);
@@ -115,7 +115,7 @@ public class MeshUpdateTask {
                 this.meshed = true;
                 return true;
             } catch (Exception e) {
-                Main.instance.setException(new GameError("Error while updating region", e));
+                BootClient.instance.setException(new GameError("Error while updating region", e));
             }
             return false;
         }

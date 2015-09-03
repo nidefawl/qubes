@@ -1,7 +1,5 @@
 package nidefawl.qubes.input;
 
-import nidefawl.game.Keyboard;
-
 public class Movement {
     public float strafe, forward;
     boolean grabbed = false;

@@ -1,11 +1,11 @@
 package nidefawl.qubes.texture;
 
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.TimingHelper;
 
 public class TextureUtil {
 

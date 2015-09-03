@@ -3,7 +3,7 @@ package nidefawl.qubes.font;
 import java.awt.Font;
 import java.util.HashMap;
 
-import nidefawl.game.GL;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameError;
 

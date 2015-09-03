@@ -3,8 +3,8 @@ package nidefawl.qubes.chunk;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.util.GameError;
 
 public class RegionLoaderThread extends Thread {
@@ -37,7 +37,7 @@ public class RegionLoaderThread extends Thread {
     public void run() {
         System.out.println(getName() +" started");
         
-        while (Main.instance.isRunning() && this.isRunning) {
+        while (BootClient.instance.isRunning() && this.isRunning) {
             boolean did = false;
             try {
                 RegionLoadTask task = this.queue.take();
@@ -55,7 +55,7 @@ public class RegionLoaderThread extends Thread {
                     break;
                 onInterruption();
             } catch (Exception e) {
-                Main.instance.setException(new GameError("Exception in " + getName(), e));
+                BootClient.instance.setException(new GameError("Exception in " + getName(), e));
                 break;
             }
             try {

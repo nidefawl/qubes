@@ -1,4 +1,4 @@
-package nidefawl.game;
+package nidefawl.qubes.input;
 
 import static org.lwjgl.glfw.GLFW.glfwGetMouseButton;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPos;
@@ -8,6 +8,8 @@ import java.nio.DoubleBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 
+import nidefawl.qubes.GameBase;
+
 public class Mouse {
     public final static boolean DISABLE_MOUSE_INPUT = false; 
 
@@ -15,8 +17,8 @@ public class Mouse {
 	protected static double dx;
 	protected static double x;
 	protected static double y;
-	protected static double scrollDX;
-	protected static double scrollDY;
+	public static double scrollDX;
+	public static double scrollDY;
 
     private static double lastX, lastY;
     static DoubleBuffer bx;
@@ -53,7 +55,7 @@ public class Mouse {
 	}
 
 	public static void setCursorPosition(int i, int j) {
-		glfwSetCursorPos(GLGame.windowId, i, j);
+		glfwSetCursorPos(GameBase.windowId, i, j);
 	}
 
 	static boolean isGrabbed;
@@ -66,20 +68,20 @@ public class Mouse {
             setLastPos();
         }
 		isGrabbed = b;
-        GLFW.glfwSetInputMode(GLGame.windowId, GLFW.GLFW_CURSOR, b ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
+        GLFW.glfwSetInputMode(GameBase.windowId, GLFW.GLFW_CURSOR, b ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
 	}
 
 	private static void setLastPos() {
         bx.position(0);
         by.position(0);
-        GLFW.glfwGetCursorPos(GLGame.windowId, bx, by);    
+        GLFW.glfwGetCursorPos(GameBase.windowId, bx, by);    
         lastX = bx.get();
         lastY = by.get();
         if (DISABLE_MOUSE_INPUT)
             lastX = lastY = 0;
     }
     public static boolean isButtonDown(int i) {
-		return glfwGetMouseButton(GLGame.windowId, GLFW.GLFW_MOUSE_BUTTON_LEFT+i) == GLFW.GLFW_PRESS;
+		return glfwGetMouseButton(GameBase.windowId, GLFW.GLFW_MOUSE_BUTTON_LEFT+i) == GLFW.GLFW_PRESS;
 	}
 
 	public static void update(double mx, double my) {

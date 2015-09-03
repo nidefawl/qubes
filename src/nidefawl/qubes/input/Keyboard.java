@@ -1,6 +1,8 @@
-package nidefawl.game;
+package nidefawl.qubes.input;
 
 import org.lwjgl.glfw.GLFW;
+
+import nidefawl.qubes.GameBase;
 
 public class Keyboard {
 	/** The unknown key. */
@@ -134,7 +136,7 @@ public class Keyboard {
 		KEY_LAST          = KEY_MENU;
 
 	public static boolean isKeyDown(int key) {
-		return GLFW.glfwGetKey(GLGame.windowId, key) == GLFW.GLFW_PRESS;
+		return GLFW.glfwGetKey(GameBase.windowId, key) == GLFW.GLFW_PRESS;
 	}
 	public static boolean getState(int action) {
 		return action == GLFW.GLFW_PRESS;

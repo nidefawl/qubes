@@ -5,7 +5,7 @@ import nidefawl.qubes.config.WorkingEnv;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
-public class ServerMain {
+public class BootServer {
 
 	public static void main(String[] args) {
 		try {

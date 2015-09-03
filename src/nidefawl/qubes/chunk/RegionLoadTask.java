@@ -1,7 +1,7 @@
 package nidefawl.qubes.chunk;
 
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
 
@@ -27,7 +27,7 @@ public class RegionLoadTask {
     }
 
     public boolean updateFromThread() {
-        World w = Main.instance.getWorld();
+        World w = BootClient.instance.getWorld();
         if (w != null) {
             for (int x = 0; x < Region.REGION_SIZE; x++) {
                 for (int z = 0; z < Region.REGION_SIZE; z++) {

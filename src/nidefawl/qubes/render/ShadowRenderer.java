@@ -13,12 +13,12 @@ import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL41;
 
-import nidefawl.game.GL;
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
@@ -69,9 +69,9 @@ public class ShadowRenderer {
         } catch (ShaderCompileError e) {
             if (startup) {
                 System.out.println(e.getLog());
-                Main.instance.setException(e);
+                BootClient.instance.setException(e);
             } else {
-                Main.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
+                BootClient.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
                 System.out.println("shader " + e.getName() + " failed to compile");
                 System.out.println(e.getLog());
             }
@@ -157,7 +157,7 @@ public class ShadowRenderer {
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
-        glViewport(0, 0, Client.displayWidth, Client.displayHeight);
+        glViewport(0, 0, Game.displayWidth, Game.displayHeight);
         //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_CULL_FACE);
@@ -196,7 +196,7 @@ public class ShadowRenderer {
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
-        glViewport(0, 0, Client.displayWidth, Client.displayHeight);
+        glViewport(0, 0, Game.displayWidth, Game.displayHeight);
         //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_CULL_FACE);
@@ -236,7 +236,7 @@ public class ShadowRenderer {
 
         Shader.disable();
 
-        glViewport(0, 0, Client.displayWidth, Client.displayHeight);
+        glViewport(0, 0, Game.displayWidth, Game.displayHeight);
         glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
     }

@@ -12,8 +12,8 @@ import java.util.List;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.chunk.RegionCache;
+import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.util.TimingHelper2;
 import nidefawl.qubes.world.World;
 
 public class Mesher {

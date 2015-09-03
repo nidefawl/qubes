@@ -14,13 +14,13 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
-import nidefawl.game.GL;
-import nidefawl.game.GLGame;
-import nidefawl.qubes.Client;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.RegionLoader;
 import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.meshing.MeshThread;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shaders;
@@ -94,7 +94,7 @@ public class Engine {
     public static boolean checkGLError(String s) {
         int i = GL11.glGetError();
         if (i != 0) {
-            String s1 = GLGame.getGlErrorString(i);
+            String s1 = GameBase.getGlErrorString(i);
             throw new GameError("Error - " + s + ": " + s1);
         }
         return false;
@@ -142,14 +142,10 @@ public class Engine {
         Shaders.reinit();
         
         Shaders.init();
-        TextureManager.getInstance().init();
-        AssetManager.getInstance().init();
-        BlockTextureArray.getInstance().init();
         regionLoader.init();
         regionRenderThread.init();
         regionRenderer.init();
         selection.init();
-        BlockTextureArray.getInstance().reload();
         reloadRenderer(true);
         GL30.glBindVertexArray(vaoId);
     }
@@ -209,8 +205,8 @@ public class Engine {
             fullscreenquad = new TesselatorState();
         }
         Tess.instance.resetState();
-        int tw = Client.displayWidth;
-        int th = Client.displayHeight;
+        int tw = Game.displayWidth;
+        int th = Game.displayHeight;
         float x = 0;
         float y = 0;
         Tess.instance.setColor(0xFFFFFF, 0xff);
@@ -365,11 +361,11 @@ public class Engine {
     }
     public static void updateShadowProjections(float fTime) {
 //        Engine.worldRenderer.debugBBs.clear();
-        if (Client.DO_TIMING) TimingHelper.startSec("calcShadow");
+        if (Game.DO_TIMING) TimingHelper.startSec("calcShadow");
         for (int i = 0; i < shadowSplitMVP.length; i++) {
             calcShadow(i);
         }
-        if (Client.DO_TIMING) TimingHelper.endSec();
+        if (Game.DO_TIMING) TimingHelper.endSec();
         
     }
     public static void calcShadow(int split) {
@@ -505,9 +501,9 @@ public class Engine {
         worldRenderer.init();
         outRenderer.init();
         shadowRenderer.init();
-        worldRenderer.resize(Client.displayWidth, Client.displayHeight);
-        outRenderer.resize(Client.displayWidth, Client.displayHeight);
-        shadowRenderer.resize(Client.displayWidth, Client.displayHeight);
+        worldRenderer.resize(Game.displayWidth, Game.displayHeight);
+        outRenderer.resize(Game.displayWidth, Game.displayHeight);
+        shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
         regionRenderer.reRender();
     }
 

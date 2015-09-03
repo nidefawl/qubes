@@ -3,9 +3,9 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.*;
 import java.util.ArrayList;
 
-import nidefawl.game.GLGame;
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.Region;
@@ -43,21 +43,21 @@ public class GuiOverlayStats extends Gui {
     public void update(float dTime) {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
-        stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Main.instance.lastFPS, Main.instance.getVSync() ? (" (VSync)") : "",
-                Stats.avgFrameTime, (int)Math.round(Main.instance.tick/dTime));
+        stats = String.format("FPS: %d%s (%.2f), %d ticks/s", BootClient.instance.lastFPS, BootClient.instance.getVSync() ? (" (VSync)") : "",
+                Stats.avgFrameTime, (int)Math.round(BootClient.instance.tick/dTime));
         statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
-        Main.instance.tick = 0;
+        BootClient.instance.tick = 0;
         this.stats2 = String.format("%d setUniform/frame ", Stats.uniformCalls);
-        World world = Main.instance.getWorld();
+        World world = BootClient.instance.getWorld();
         if (world != null) {
             RegionLoader loader = Engine.regionLoader;
             int numRegions = loader.getRegionsLoaded();
             int chunks = numRegions * Region.REGION_SIZE * Region.REGION_SIZE;
             this.stats3 = String.format("Chunks - loaded %d/%d - R %d/%d", chunks, Region.REGION_SIZE * Region.REGION_SIZE
                     * loader.getRegionsWithData(), Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
-            this.stats4 = String.format("Follow: %s", Main.instance.follow ? "On" : "Off");
+            this.stats4 = String.format("Follow: %s", BootClient.instance.follow ? "On" : "Off");
 
             this.stats5 = "";
             BlockPos p = Engine.selection.selection[0];
@@ -81,9 +81,9 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
-        info.addAll(Main.instance.glProfileResults);
+        info.addAll(BootClient.instance.glProfileResults);
         
-        Block b = Block.get(Main.instance.selBlock);
+        Block b = Block.get(BootClient.instance.selBlock);
         
         info.add(String.format("Selected: %s", b == null ? "destroy" : b.getName()));
         render = true;
@@ -107,7 +107,7 @@ public class GuiOverlayStats extends Gui {
                 y += font.getLineHeight() * 1.2F;
             }
             if (stats5 != null) {
-                font.drawString(stats5, GLGame.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
+                font.drawString(stats5, GameBase.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
                 y += font.getLineHeight() * 1.2F;
             }
             for (String st : info) {
@@ -122,8 +122,8 @@ public class GuiOverlayStats extends Gui {
             for (int i = 0; i < split.length; i++) {
                 strwidth = Math.max(font.getStringWidth(split[i]), strwidth);
             }
-            rleft = GLGame.displayWidth / 2 - strwidth / 2 - 8F;
-            rright = GLGame.displayWidth / 2 + strwidth / 2 + 8F;
+            rleft = GameBase.displayWidth / 2 - strwidth / 2 - 8F;
+            rright = GameBase.displayWidth / 2 + strwidth / 2 + 8F;
             rtop = 32;
             rbottom = rtop + 8+(split.length)*24;
 //            glDisable(GL_BLEND);
@@ -135,7 +135,7 @@ public class GuiOverlayStats extends Gui {
 //            glEnable(GL_BLEND);
             glEnable(GL_TEXTURE_2D);
             for (int i = 0; i < split.length; i++) {
-                font.drawString(split[i], GLGame.displayWidth / 2 - strwidth / 2, ((int)rtop)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)rtop)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
 
             setColor(-1);

@@ -9,20 +9,17 @@ import java.util.HashMap;
 import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 
-import nidefawl.game.GL;
-import nidefawl.qubes.Client;
-import nidefawl.qubes.Main;
+import nidefawl.qubes.Game;
+import nidefawl.qubes.BootClient;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.gl.*;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.TimingHelper;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
@@ -73,9 +70,9 @@ public class WorldRenderer {
         } catch (ShaderCompileError e) {
             if (startup) {
                 System.out.println(e.getLog());
-                Main.instance.setException(e);
+                BootClient.instance.setException(e);
             } else {
-                Main.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
+                BootClient.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
                 System.out.println("shader "+e.getName()+" failed to compile");
                 System.out.println(e.getLog());
             }
@@ -91,41 +88,41 @@ public class WorldRenderer {
 
     public void renderWorld(World world, float fTime) {
 
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.startSec("setupView");
 
         glDisable(GL_BLEND);
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("Sky");
         glDepthMask(false);
         skyShader.enable();
         skybox1.bindAndDraw(GL_QUAD_STRIP);
         skybox2.bindAndDraw(GL_QUADS);
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("skyShader.drawSkybox");
         Shader.disable();
         glDepthMask(true);
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("setupView2");
 
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("testShader");
         terrainShader.enable();
         terrainShader.setProgramUniform1i("blockTextures", 0);
         terrainShader.setProgramUniform1i("renderWireFrame", Engine.renderWireFrame ? 1 : 0);
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("test shader");
         
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         Engine.regionRenderer.rendered = 0;
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
         glDisable(GL_BLEND);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
         rendered = Engine.regionRenderer.rendered;
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endStart("renderSecondPass");
 
         glEnable(GL_BLEND);
@@ -133,13 +130,13 @@ public class WorldRenderer {
         Engine.regionRenderer.renderRegions(world, fTime, 1, 0, RegionRenderer.IN_FRUSTUM);
         glDisable(GL_BLEND);
         this.rendered = Engine.regionRenderer.rendered;
-        if (Client.GL_ERROR_CHECKS)
+        if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
         Shader.disable();
         //        if (!Main.useShaders) {
         //            glDisable(GL_LIGHTING);
         //        }
-        if (Client.DO_TIMING)
+        if (Game.DO_TIMING)
             TimingHelper.endSec();
     }
 

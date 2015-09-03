@@ -1,4 +1,4 @@
-package nidefawl.game;
+package nidefawl.qubes.logging;
 
 import java.io.*;
 
@@ -49,6 +49,15 @@ public class LogBufferStream extends PrintStream {
     public synchronized void write(int b) {
         super.write(b);
         baos.write(b);
+    }
+
+    public String getLogString() {
+        try {
+            return this.baos.toString("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
 }

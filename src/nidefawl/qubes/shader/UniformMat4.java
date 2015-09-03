@@ -3,8 +3,8 @@ package nidefawl.qubes.shader;
 
 import java.nio.FloatBuffer;
 
-import nidefawl.game.GL;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
 
 public class UniformMat4 extends AbstractUniform {
 

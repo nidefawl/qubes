@@ -3,8 +3,7 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.opengl.GL13;
 
-import nidefawl.game.GL;
-import nidefawl.qubes.Client;
+import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.Shader;
@@ -37,7 +36,7 @@ public class GuiOverlayDebug extends Gui {
         }
         glPushAttrib(-1);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.bind");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.bind");
         glMatrixMode(5888);
         glPushMatrix();
         glLoadIdentity();
@@ -45,7 +44,7 @@ public class GuiOverlayDebug extends Gui {
         glPushMatrix();
         glLoadIdentity();
         glOrtho(0.0D, width, height, 0.0D, 0.0D, 1.0D);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.ortho");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.ortho");
         glDisable(3008);
         glDepthFunc(519);
         glDepthMask(false);
@@ -59,15 +58,15 @@ public class GuiOverlayDebug extends Gui {
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
         glMatrixMode(5889);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
         glPopMatrix();
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
         glMatrixMode(5888);
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
         glPopMatrix();
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
         glPopAttrib();
-        if (Client.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopAttrib");
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopAttrib");
         FrameBuffer.unbindFramebuffer();
     }
 

@@ -1,9 +1,9 @@
-package nidefawl.qubes.util;
+package nidefawl.qubes.perf;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
 
-public class TimingHelper {
+public class TimingHelper2 {
     public static boolean useNanos = true;
     public static boolean init = false;
     public static int LEN = 1000;

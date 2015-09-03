@@ -1,11 +1,10 @@
 package nidefawl.qubes;
 
-import nidefawl.game.GLGame;
 import nidefawl.qubes.config.WorkingEnv;
 
-public class Main {
+public class BootClient {
 
-    static public Client instance;
+    static public Game instance;
 
     public static void main(String[] args) {
         try {
@@ -14,8 +13,8 @@ public class Main {
             System.err.println("Failed starting game");
             e.printStackTrace();
         }
-        GLGame.appName = "-";
-        instance = new Client();
+        GameBase.appName = "-";
+        instance = new Game();
         instance.startGame();
     }
 }
