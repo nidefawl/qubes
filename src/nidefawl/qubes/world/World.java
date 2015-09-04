@@ -1,8 +1,6 @@
 package nidefawl.qubes.world;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 import nidefawl.qubes.chunk.*;
 import nidefawl.qubes.entity.Entity;
@@ -32,17 +30,18 @@ public abstract class World {
     private long seed;
 
     private AbstractGen generator;
-    public int          worldId;
     private int         dayLen = 1000;
     private int         time;
 
     private final ChunkManager chunkMgr;
     private final Random       rand;
+    private final UUID uuid;
     public static final int    MAX_WORLDHEIGHT = 256;
 
-    public World(int worldId, long seed) {
+    public World(WorldSettings settings) {
         this.chunkMgr = makeChunkManager();
-        this.seed = seed;
+        this.seed = settings.seed;
+        this.uuid = settings.uuid;
         this.rand = new Random(seed);
         this.worldHeightBits = 8;
         this.worldHeightBitsPlusFour = worldHeightBits + 4;
@@ -89,7 +88,8 @@ public abstract class World {
         //        return a;
         ////        return 0.8f+a;
     }
-
+//    long lastCheck = System.currentTimeMillis();
+//    int lastTime = this.time;
     public void tickUpdate() {
         this.time++;
         //        int offset = time%dayLen;
@@ -101,6 +101,14 @@ public abstract class World {
             Entity e = this.entities.get(i);
             e.tickUpdate();
         }
+//        long lPassed = System.currentTimeMillis()-lastCheck;
+//        
+//        if (lPassed >= 1000) {
+//            float perSec = (this.time-this.lastTime) / (lPassed/1000.0F);
+//            System.out.printf("%.2f ticks/s\n", perSec);
+//            lastTime = time;
+//            lastCheck = System.currentTimeMillis();
+//        }
     }
 
     public int getType(int x, int y, int z) {

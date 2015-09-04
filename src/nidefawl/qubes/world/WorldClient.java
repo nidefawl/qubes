@@ -21,8 +21,8 @@ public class WorldClient extends World {
     private final Vector3f       lightDirection;
     private final Vector3f       tmp1;
 
-    public WorldClient(int worldId, long seed) {
-        super(worldId, seed);
+    public WorldClient(WorldSettings settings) {
+        super(settings);
         this.sunModelView = new Matrix4f();
         this.moonModelView = new Matrix4f();
         this.sunPosition = new Vector3f();
@@ -35,7 +35,7 @@ public class WorldClient extends World {
 
     @Override
     public ChunkManager makeChunkManager() {
-        return new ChunkManagerServer(this);
+        return new ChunkManagerClient(this);
     }
 
     public void updateFrame(float fTime) {

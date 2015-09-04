@@ -108,7 +108,7 @@ public class Game extends GameBase {
     }
     public void lateInitGame() {
         BlockTextureArray.getInstance().reload();
-        setWorld(new WorldClient(1, 0x1234));
+//        setWorld(new WorldClient(null));
         this.entSelf.move(-800, 222, 1540);
         this.entSelf.yaw=6.72F;
         this.entSelf.pitch=38.50F;
@@ -133,10 +133,23 @@ public class Game extends GameBase {
         super.shutdown();
         setWorld(null);
     }
-    
+
+    protected void onTextInput(long window, int codepoint) {
+        if (this.gui != null) {
+            if (this.gui.onTextInput(codepoint)) {
+                return;
+            }
+        }
+    }
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
+
+            if (this.gui != null) {
+                if (this.gui.onKeyPress(key, scancode, action, mods)) {
+                    return;
+                }
+            }
             boolean isDown = Keyboard.getState(action);
             switch (key) {
                 case Keyboard.KEY_F8:
@@ -156,11 +169,7 @@ public class Game extends GameBase {
                     break;
                 case Keyboard.KEY_F5:
                     if (isDown) {
-                        int nId = 1;
-                        if (this.world != null) {
-                            nId = this.world.worldId+1;
-                        }
-                        setWorld(new WorldClient(nId, 0x123));
+//                        setWorld(new WorldClient(null));
 //                        Engine.worldRenderer.flush();
 //                        Engine.textures.refreshNoiseTextures();
                     }
@@ -194,26 +203,31 @@ public class Game extends GameBase {
                     setWorld(null);
                     shutdown();
                     break;
-                case Keyboard.KEY_H:
-                    if (isDown) {
-                        this.entSelf.toggleFly();
-                    }
-                    break;
-                case Keyboard.KEY_KP_SUBTRACT:
-                    if (isDown)
-                        for (int i = 0; i < 22; i++) {
+            }
+            if (this.world != null) {
 
-                            this.world.removeLight(0);
+                switch (key) {
+                    case Keyboard.KEY_H:
+                        if (isDown) {
+                            this.entSelf.toggleFly();
                         }
-                    break;
-                case Keyboard.KEY_KP_ADD:
-                    if (isDown)
-                    this.world.addLight(new Vector3f(entSelf.pos).translate(0,1,0));
-                    break;
-                case Keyboard.KEY_KP_MULTIPLY:
-                    if (isDown)
-                    this.world.spawnLights(entSelf.pos.toBlock());
-                    break;
+                        break;
+                    case Keyboard.KEY_KP_SUBTRACT:
+                        if (isDown)
+                            for (int i = 0; i < 22; i++) {
+
+                                this.world.removeLight(0);
+                            }
+                        break;
+                    case Keyboard.KEY_KP_ADD:
+                        if (isDown)
+                            this.world.addLight(new Vector3f(entSelf.pos).translate(0, 1, 0));
+                        break;
+                    case Keyboard.KEY_KP_MULTIPLY:
+                        if (isDown)
+                            this.world.spawnLights(entSelf.pos.toBlock());
+                        break;
+                }
             }
             if (key == Keyboard.KEY_0) {
                 this.selBlock = 0;
@@ -226,24 +240,29 @@ public class Game extends GameBase {
         }
     }
     public void onMouseClick(long window, int button, int action, int mods) {
+        if (this.gui != null) {
+            this.gui.onMouseClick(button, action);
+        } else {
 
-        boolean b = Mouse.isGrabbed();
-        boolean isDown = Mouse.getState(action);
-        long timeSinceLastClick = System.currentTimeMillis() - lastClickTime;
-        switch (button) {
-            case 0:
-                Engine.selection.clicked(button, isDown);
-                break;
-            case 1:
-                if (isDown ) {
-                    setGrabbed(!b);
-                    b = !b;
-                }
-                break;
-        }
-        if (b != this.movement.grabbed()) {
-            setGrabbed(b);
-            Engine.selection.resetSelection();
+
+            boolean b = Mouse.isGrabbed();
+            boolean isDown = Mouse.getState(action);
+            long timeSinceLastClick = System.currentTimeMillis() - lastClickTime;
+            switch (button) {
+                case 0:
+                    Engine.selection.clicked(button, isDown);
+                    break;
+                case 1:
+                    if (isDown ) {
+                        setGrabbed(!b);
+                        b = !b;
+                    }
+                    break;
+            }
+            if (b != this.movement.grabbed()) {
+                setGrabbed(b);
+                Engine.selection.resetSelection();
+            }
         }
     }
 
@@ -332,21 +351,21 @@ public class Game extends GameBase {
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("glClear");
       glClearColor(0.71F, 0.82F, 1.00F, 1F);
       glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-//      glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      glDisable(GL_BLEND);
-      glEnable(GL_DEPTH_TEST);
-      glDepthFunc(GL_ALWAYS);
-//      glEnable(GL_TEXTURE_2D);
-      glActiveTexture(GL_TEXTURE0);
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       
 
+      glActiveTexture(GL_TEXTURE0);
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
+      UniformBuffer.bindOrthoUBO();
+      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       if (this.world != null) {
+//        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+          glDisable(GL_BLEND);
+          glEnable(GL_DEPTH_TEST);
+          glDepthFunc(GL_ALWAYS);
+//          glEnable(GL_TEXTURE_2D);
           if (Game.DO_TIMING) TimingHelper.endStart("final");
 
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
-          UniformBuffer.bindOrthoUBO();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
           glDepthMask(false);
           Engine.outRenderer.render(this.world, fTime);
           if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
@@ -373,21 +392,21 @@ public class Game extends GameBase {
               glEnable(GL_CULL_FACE);
           }
           if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          glDisable(GL_DEPTH_TEST);
       } else {
 
-          glDepthFunc(GL_LEQUAL);
+//          glDepthFunc(GL_LEQUAL);
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//          glActiveTexture(GL_TEXTURE0);
       }
 
       
 
-      glDisable(GL_DEPTH_TEST);
-      glActiveTexture(GL_TEXTURE0);
       if (Game.DO_TIMING) TimingHelper.endStart("gui");
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("gui");
       
-      if (this.movement.grabbed()) {
+      if (this.world != null && this.gui == null && this.movement.grabbed()) {
           Shaders.colored.enable();
           if (Game.DO_TIMING) TimingHelper.startSec("crosshair");
           glDisable(GL_TEXTURE_2D);
@@ -413,17 +432,22 @@ public class Game extends GameBase {
 //      Engine.drawFullscreenQuad();
 //      Shader.disable();
 
-      if (show) {
-          if (Game.DO_TIMING) TimingHelper.startSec("debugOverlay");
-          if (this.debugOverlay != null) {
-              this.debugOverlay.render(fTime);
-          }
-          if (Game.DO_TIMING) TimingHelper.endSec();
-      }
-      if (Game.DO_TIMING) TimingHelper.startSec("statsOverlay");
+      if (this.gui != null) {
+          this.gui.render(fTime, Mouse.getX(), Mouse.getY());
+      } else if (this.world != null) {
 
-      if (this.statsCached != null) {
-          this.statsCached.render(fTime);
+          if (show) {
+              if (Game.DO_TIMING) TimingHelper.startSec("debugOverlay");
+              if (this.debugOverlay != null) {
+                  this.debugOverlay.render(fTime, 0, 0);
+              }
+              if (Game.DO_TIMING) TimingHelper.endSec();
+          }
+          if (Game.DO_TIMING) TimingHelper.startSec("statsOverlay");
+
+          if (this.statsCached != null) {
+              this.statsCached.render(fTime, 0, 0);
+          }
       }
       if (Game.DO_TIMING) TimingHelper.endSec();
       
@@ -440,7 +464,7 @@ public class Game extends GameBase {
         if (this.statsCached != null) {
             this.statsCached.update(dTime);
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 222000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 2000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -456,6 +480,10 @@ public class Game extends GameBase {
     @Override
     public void preRenderUpdate(float f) {
         if (this.world == null) {
+            UniformBuffer.updateUBO(this.world, f);
+            if (this.gui == null) {
+                this.showGUI(new GuiMainMenu());
+            }
             return;
         }
         
@@ -535,6 +563,22 @@ public class Game extends GameBase {
 //        }
     }
     
+    public void showGUI(Gui gui) {
+
+        if (this.gui != null) {
+            this.gui.onClose();
+
+        }
+        this.gui = gui;
+        if (this.gui != null) {
+
+            this.gui.setPos(0, 0);
+            this.gui.setSize(displayWidth, displayHeight);
+            this.gui.initGui(this.gui.firstOpen);
+            this.gui.firstOpen = false;
+        }
+    }
+
     @Override
     public void onResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
@@ -543,8 +587,15 @@ public class Game extends GameBase {
                 this.statsCached.setSize(displayWidth, displayHeight);
                 this.statsCached.setPos(0, 0);
             }
-            this.debugOverlay.setPos(0, 0);
-            this.debugOverlay.setSize(displayWidth, displayHeight);
+            if (this.debugOverlay != null) {
+                this.debugOverlay.setPos(0, 0);
+                this.debugOverlay.setSize(displayWidth, displayHeight);
+            }
+            if (this.gui != null) {
+                this.gui.setPos(0, 0);
+                this.gui.setSize(displayWidth, displayHeight);
+                this.gui.initGui(this.gui.firstOpen);
+            }
         }
     }
     @Override

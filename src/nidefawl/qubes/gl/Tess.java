@@ -112,6 +112,9 @@ public class Tess extends TesselatorState {
         if (index + getVSize() >= rawBuffer.length) {
             resizeBuffer();
         }
+        if (offsetX != 0) {
+//            System.out.println(vertexcount+ " - "+x+"/"+y+"/"+z);
+        }
         rawBuffer[index++] = Float.floatToRawIntBits(x);
         rawBuffer[index++] = Float.floatToRawIntBits(y);
         rawBuffer[index++] = Float.floatToRawIntBits(z);

@@ -1,6 +1,6 @@
 package nidefawl.qubes;
 
-import nidefawl.qubes.config.GameServer;
+import jline.console.ConsoleReader;
 import nidefawl.qubes.config.WorkingEnv;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -21,10 +21,10 @@ public class BootServer {
 	        SignalHandler handler = new SignalHandler () {
 	            public void handle(Signal sig) {
 	            	instance.halt();
-	            }
-	        };
+                }
+            };
+            nidefawl.qubes.input.ConsoleReader.startThread(instance);
 	        Signal.handle(new Signal("INT"), handler);
-	        instance.loadConfig();
 			instance.startServer();
 		} catch (Exception e) {
 			System.err.println("Failed starting server");

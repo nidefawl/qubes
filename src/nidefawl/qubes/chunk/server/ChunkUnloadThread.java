@@ -30,7 +30,7 @@ public class ChunkUnloadThread extends Thread {
     public void run() {
         try {
             System.out.println(getName() + " started");
-            while ((BootClient.instance.isRunning() && this.isRunning) || !this.queue.isEmpty()) {
+            while ((mgr.isRunning() && this.isRunning) || !this.queue.isEmpty()) {
                 boolean did = false;
                 try {
                     Long task = this.queue.take();

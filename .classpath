@@ -13,5 +13,6 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/Game/lib/snakeyaml/snakeyaml-1.16-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/jline/jline-2.13.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

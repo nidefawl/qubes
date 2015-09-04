@@ -84,7 +84,7 @@ public class GuiOverlayStats extends Gui {
         render = true;
     }
 
-    public void render(float fTime) {
+    public void render(float fTime, double mx, double mY) {
         Shaders.textured.enable();
 
         int y = 20;
@@ -117,23 +117,9 @@ public class GuiOverlayStats extends Gui {
             for (int i = 0; i < split.length; i++) {
                 strwidth = Math.max(font.getStringWidth(split[i]), strwidth);
             }
-            rleft = GameBase.displayWidth / 2 - strwidth / 2 - 8F;
-            rright = GameBase.displayWidth / 2 + strwidth / 2 + 8F;
-            rtop = 32;
-            rbottom = rtop + 8+(split.length)*24;
-//            glDisable(GL_BLEND);
-            glDisable(GL_TEXTURE_2D);
-//            Shader.disable();
-//            Tess.instance.setColor(0, 255);
-            drawRect();
-//            Shaders.font.enable();
-//            glEnable(GL_BLEND);
-            glEnable(GL_TEXTURE_2D);
             for (int i = 0; i < split.length; i++) {
-                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)rtop)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)0)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
-
-            setColor(-1);
         }
         Shader.disable();
  
@@ -142,5 +128,8 @@ public class GuiOverlayStats extends Gui {
     public void setMessage(String message) {
         this.messageTime = System.currentTimeMillis();
         this.message = message;
+    }
+    @Override
+    public void initGui(boolean first) {
     }
 }

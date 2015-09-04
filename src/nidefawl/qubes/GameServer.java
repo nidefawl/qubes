@@ -1,0 +1,169 @@
+package nidefawl.qubes;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+
+import nidefawl.qubes.commands.CommandHandler;
+import nidefawl.qubes.config.InvalidConfigException;
+import nidefawl.qubes.config.ServerConfig;
+import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.network.server.NetworkServer;
+import nidefawl.qubes.world.WorldServer;
+import nidefawl.qubes.world.WorldSettings;
+
+public class GameServer implements Runnable {
+	final ServerConfig config = new ServerConfig();
+	final CommandHandler commands = new CommandHandler();
+	Thread mainThread;
+	Thread handshakeThread;
+	NetworkServer networkServer;
+	private boolean running;
+	private boolean finished;
+	private WorldServer[] worlds;
+
+	public GameServer() {
+
+	}
+
+	public void startServer() {
+		this.mainThread = new Thread(this);
+		this.mainThread.setPriority(Thread.MAX_PRIORITY);
+		this.mainThread.start();
+	}
+
+	@Override
+	public void run() {
+		try {
+			this.running = true;
+			load();
+			networkServer.startListener();
+			System.out.println("server is running");
+			while (this.running) {
+				loop();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			System.out.println("server ended");
+			this.finished = true;
+		}
+	}
+
+	private void load() {
+        loadConfig();
+        try {
+            this.networkServer = new NetworkServer(this);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        File worldFolder = WorkingEnv.getWorldsFolder();
+        worldFolder.mkdirs();
+        File[] worldList = worldFolder.listFiles(new FileFilter() {
+            
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isDirectory() && new File(pathname, "world.yml").exists();
+            }
+        });
+        ArrayList<WorldServer> worldsLoaded = new ArrayList<>();
+        for (int i = 0; worldList != null && i < worldList.length; i++) {
+            File worldDirectory = worldList[i];
+            try {
+                WorldSettings settings = new WorldSettings(worldDirectory);
+                settings.load(new File(worldDirectory, "world.yml"));
+                WorldServer world = new WorldServer(settings, this);
+                worldsLoaded.add(world);
+            } catch (InvalidConfigException e) {
+                e.printStackTrace();
+            }
+        }
+        if (worldsLoaded.isEmpty()) {
+            String name = "world";
+            File f = new File(worldFolder, name);
+            f.mkdirs();
+            WorldSettings settings = new WorldSettings(f);
+            File fConfig = new File(f, "world.yml");
+            try {
+                settings.write(fConfig);
+            } catch (InvalidConfigException e) {
+                e.printStackTrace();
+            }
+            WorldServer world = new WorldServer(settings, this);
+            worldsLoaded.add(world);
+        }
+        this.worlds = worldsLoaded.toArray(new WorldServer[worldsLoaded.size()]);
+        for (int i = 0; i < this.worlds.length; i++) {
+            this.worlds[i].onLoad();
+        }
+    }
+
+	static final long TICK_LEN_MS = 50;
+	long lastTick = System.currentTimeMillis();
+    protected void loop() throws Exception {
+        long start = System.currentTimeMillis();
+        this.networkServer.update();
+        long passed = System.currentTimeMillis()-lastTick;
+        if (passed >= TICK_LEN_MS) {
+            updateTick();
+            lastTick = System.currentTimeMillis();
+        }
+        passed = System.currentTimeMillis()-start;
+        if (passed < 10) {
+            long lSleep = 10-passed;
+            if (lSleep > 0)
+                Thread.sleep(lSleep);
+        }
+	}
+
+	private void updateTick() {
+	    for (int i = 0; i < this.worlds.length; i++) {
+	        try {
+	            this.worlds[i].tickUpdate();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    }
+    }
+
+    public boolean isRunning() {
+		return this.running;
+	}
+
+	public void halt() {
+		if (this.running) {
+			this.running = false;
+			System.out.println("Shutting down server...");
+			if (this.worlds != null) {
+
+	            for (int i = 0; i < this.worlds.length; i++) {
+	                this.worlds[i].onLeave();
+	            }
+            }
+            if (this.networkServer != null) {
+                try {
+                    this.networkServer.halt();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+		}
+	}
+
+	public void loadConfig() {
+		try {
+			this.config.load(new File("config", "server.yml"));
+		} catch (InvalidConfigException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public ServerConfig getConfig() {
+		return this.config;
+	}
+
+    public CommandHandler getCommandHandler() {
+        return this.commands;
+    }
+
+}

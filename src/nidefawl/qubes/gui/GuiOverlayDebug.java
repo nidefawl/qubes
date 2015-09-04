@@ -23,7 +23,7 @@ public class GuiOverlayDebug extends Gui {
 
 	}
 
-	public void render(float fTime) {
+	public void render(float fTime, double mx, double mY) {
 	    Shaders.textured.enable();
         glBindTexture(GL_TEXTURE_2D, Engine.fbDbg.getTexture(0));
         Engine.drawFullscreenQuad();
@@ -171,4 +171,7 @@ public class GuiOverlayDebug extends Gui {
         UniformBuffer.popMat();
     }
 
+    @Override
+    public void initGui(boolean first) {
+    }
 }

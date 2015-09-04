@@ -34,7 +34,7 @@ public class GuiCached extends Gui {
         this.gui.setSize(w, h);
     }
 
-    public void render(float fTime) {
+    public void render(float fTime, double mx, double mY) {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         if (refresh) {
@@ -42,7 +42,7 @@ public class GuiCached extends Gui {
             fbDbg.bind();
             fbDbg.clearFrameBuffer();
             GL14.glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-            this.gui.render(fTime);
+            this.gui.render(fTime, 0, 0);
             FrameBuffer.unbindFramebuffer();
         }
         Shaders.textured.enable();
@@ -54,6 +54,9 @@ public class GuiCached extends Gui {
     public void update(float fTime) {
         this.gui.update(fTime);
         this.refresh = true;
+    }
+    @Override
+    public void initGui(boolean first) {
     }
     
 }

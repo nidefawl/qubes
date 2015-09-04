@@ -139,10 +139,17 @@ public class UniformBuffer {
         //    System.out.println(name+"/"+blockIndex);
         // Uniform A
         uboBuffer.position(0).limit(96);
-        uboBuffer.put(world.getDayNoonFloat()); // dayTime
-        uboBuffer.put(world.getNightNoonFloat()); // nightlight
-        uboBuffer.put(world.getDayLightIntensity()); // dayLightIntens
-        uboBuffer.put(world.getLightAngleUp()); // lightAngleUp
+        if (world != null) {
+            uboBuffer.put(world.getDayNoonFloat()); // dayTime
+            uboBuffer.put(world.getNightNoonFloat()); // nightlight
+            uboBuffer.put(world.getDayLightIntensity()); // dayLightIntens
+            uboBuffer.put(world.getLightAngleUp()); // lightAngleUp
+        } else {
+            uboBuffer.put(0);
+            uboBuffer.put(0);
+            uboBuffer.put(0);
+            uboBuffer.put(0);
+        }
         
         uboBuffer.put(Engine.lightPosition.x);
         uboBuffer.put(Engine.lightPosition.y);

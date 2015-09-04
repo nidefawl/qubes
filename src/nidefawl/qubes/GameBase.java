@@ -46,6 +46,7 @@ public abstract class GameBase implements Runnable {
     private GLFWScrollCallback      cbScrollCallback;
     private GLFWWindowFocusCallback cbWindowFocus;
     private GLFWCursorPosCallback   cbCursorPos;
+    private GLFWCharCallback        cbText;
 
     public static boolean      toggleTiming;
     public static boolean      DO_TIMING   = false;
@@ -156,6 +157,12 @@ public abstract class GameBase implements Runnable {
                 Mouse.update(xpos, ypos);
             }
         };
+        cbText = new GLFWCharCallback() {
+            @Override
+            public void invoke(long window, int codepoint) {
+                onTextInput(window, codepoint);
+            }
+        };
     }
 
     public void initDisplay(boolean debugContext) {
@@ -208,6 +215,7 @@ public abstract class GameBase implements Runnable {
             glfwSetCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
             glfwSetCallback(windowId, cbCursorPos);
+            glfwSetCallback(windowId, cbText);
 
             int major, minor, rev;
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
@@ -610,6 +618,9 @@ public abstract class GameBase implements Runnable {
         return timer.absTime;
     }
 
+
+    protected abstract void onTextInput(long window, int codepoint);
+    
     protected abstract void onKeyPress(long window, int key, int scancode, int action, int mods);
 
     protected abstract void onMouseClick(long window, int button, int action, int mods);

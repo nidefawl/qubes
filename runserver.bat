@@ -1,1 +1,1 @@
-java -cp bin;lib/guava/guava-18.0.jar;lib/snakeyaml/snakeyaml-1.16.jar nidefawl.qubes.ServerMain
+java -cp bin;lib/guava/guava-18.0.jar;lib/snakeyaml/snakeyaml-1.16.jar;lib/jline/jline-2.13.jar nidefawl.qubes.BootServer

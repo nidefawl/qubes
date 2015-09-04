@@ -10,6 +10,7 @@ import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.worldgen.AbstractGen;
 
 public class ChunkManagerServer extends ChunkManager {
@@ -20,7 +21,7 @@ public class ChunkManagerServer extends ChunkManager {
     public final Object syncObj = new Object();
     public final Object syncObj2 = new Object();
 
-    public ChunkManagerServer(World world) {
+    public ChunkManagerServer(WorldServer world) {
         super(world);
         this.regionFileCache = new RegionFileCache(new File(WorkingEnv.getWorldsFolder(), "test"));
         this.thread = new ChunkLoadThread(this);
@@ -28,7 +29,6 @@ public class ChunkManagerServer extends ChunkManager {
         this.reader = new ChunkReader(this, this.regionFileCache);
     }
     public void startThreads() {
-
         this.thread.start();
         this.unloadThread.start();
     }
@@ -106,5 +106,8 @@ public class ChunkManagerServer extends ChunkManager {
                 this.reader.saveChunk(c);
             }
         }
+    }
+    public boolean isRunning() {
+        return ((WorldServer)this.world).getServer().isRunning();
     }
 }

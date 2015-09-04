@@ -20,4 +20,10 @@ public class ServerConfig extends AbstractYMLConfig {
         packetTimeout = getInt("packetTimeout", packetTimeout);
 	}
 
+    @Override
+    public void save() {
+        setInt("port", port);
+        setInt("packetTimeout", packetTimeout);
+    }
+
 }

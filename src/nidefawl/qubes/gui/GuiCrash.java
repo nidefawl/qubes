@@ -41,7 +41,7 @@ public class GuiCrash extends Gui {
     }
 
     @Override
-    public void render(float fTime) {
+    public void render(float fTime, double mx, double mY) {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -76,6 +76,9 @@ public class GuiCrash extends Gui {
             yp+=fontSmall.getLineHeight();
         }
 
+    }
+    @Override
+    public void initGui(boolean first) {
     }
 
 }

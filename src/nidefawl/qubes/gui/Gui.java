@@ -1,45 +1,70 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.glColor3f;
-import nidefawl.qubes.gl.Tess;
+import java.util.ArrayList;
+
+import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.util.Renderable;
 
-public abstract class Gui implements Renderable {
+public abstract class Gui extends AbstractUI {
+    ArrayList<AbstractUI> buttons   = new ArrayList<>();
+    public boolean    firstOpen = true;
 
-
-	public void setColor(int color) {
-        float cr = ((color >> 16) & 0xFF) / 255F;
-        float cg = ((color >> 8) & 0xFF) / 255F;
-        float cb = (color & 0xFF) / 255F;
-        glColor3f(cr, cg, cb);
+    public void renderButtons(float fTime, double mX, double mY) {
+        for (int i = 0; i < this.buttons.size(); i++) {
+            this.buttons.get(i).render(fTime, mX, mY);
+        }
     }
 
-	public float rleft   = 0F;
-    public float rright  = 0F;
-    public float rtop    = 0F;
-    public float rbottom = 0F;
-    public int width;
-	public int height;
-	public int posX;
-	public int posY;
-
-	public void drawRect() {
-        Tess.instance.add(rleft, rbottom);
-        Tess.instance.add(rright, rbottom);
-        Tess.instance.add(rright, rtop);
-        Tess.instance.add(rleft, rtop);
-        Tess.instance.draw(GL_QUADS);
+    public void onClose() {
     }
-	public void setSize(int w, int h) {
-		this.width = w;
-		this.height = h;
-	}
-	public void setPos(int x, int y) {
-		this.posX = x;
-		this.posY = y;
-	}
 
-    public void update(float dTime) {
+    public boolean onMouseClick(int button, int action) {
+        if (selectedButton != null && action == 0) {
+            if (selectedButton.enabled && selectedButton.draw && selectedButton.mouseOver(Mouse.getX(), Mouse.getY())) {
+                selectedButton.handleMouseUp(this, action);
+            }
+            selectedButton = null;
+            return true;
+        } else if (selectedButton == null && action == 1){
+            for (int i = 0; i < this.buttons.size(); i++) {
+                AbstractUI b = this.buttons.get(i);
+                if (b.enabled && b.draw && b.mouseOver(Mouse.getX(), Mouse.getY())) {
+                    if (!b.handleMouseDown(this, action)) {
+                        selectedButton = b;    
+                    }
+                    return true;
+                }
+            }
+        }
+        selectedButton = null;
+        return false;
+    }
+
+    public boolean onGuiClicked(AbstractUI element) {
+        return false;
+    }
+
+    public boolean onKeyPress(int key, int scancode, int action, int mods) {
+        for (int i = 0; i < this.buttons.size(); i++) {
+            AbstractUI b = this.buttons.get(i);
+            if (b.enabled && b.draw) {
+                if (b.onKeyPress(key, scancode, action, mods)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean onTextInput(int codepoint) {
+        for (int i = 0; i < this.buttons.size(); i++) {
+            AbstractUI b = this.buttons.get(i);
+            if (b.enabled && b.draw) {
+                if (b.onTextInput(codepoint)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

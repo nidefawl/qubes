@@ -2,19 +2,20 @@ package nidefawl.qubes.world;
 
 import java.io.File;
 
+import nidefawl.qubes.GameServer;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
-import nidefawl.qubes.worldgen.AbstractGen;
-import nidefawl.qubes.worldgen.TestTerrain2;
 
 public class WorldServer extends World {
 
-    private File worldFolder;
+    private File worldDirectory;
+    private final GameServer server;
 
     //    private AbstractGen generator;
-    public WorldServer(int worldId, long seed, WorldSettings settings) {
-        super(worldId, seed);
-        this.worldFolder = settings.getWorldFolder();
+    public WorldServer(WorldSettings settings, GameServer server) {
+        super(settings);
+        this.worldDirectory = settings.getWorldDirectory();
+        this.server = server;
         //        this.generator = new TestTerrain2(this, this.seed);
     }
 
@@ -27,4 +28,11 @@ public class WorldServer extends World {
     //        return generator;
     //    }
 
+    public File getWorldDirectory() {
+        return worldDirectory;
+    }
+
+    public GameServer getServer() {
+        return this.server;
+    }
 }

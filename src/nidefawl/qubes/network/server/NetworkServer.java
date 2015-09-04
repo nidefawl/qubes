@@ -5,7 +5,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.config.GameServer;
+import nidefawl.qubes.GameServer;
 import nidefawl.qubes.network.Connection;
 
 

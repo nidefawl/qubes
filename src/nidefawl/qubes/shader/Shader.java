@@ -223,18 +223,23 @@ public class Shader {
     }
     public void enable() {
         if (this.shader >= 0) {
-            glUseProgramObjectARB(this.shader);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
-            numUses++;
-            if (numUses < 2) {
-                reuploadUniforms();
-            }
+//            if (lastBoundShader != this.shader) {
+//                lastBoundShader = this.shader;
+                glUseProgramObjectARB(this.shader);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
+                numUses++;
+                if (numUses < 2) {
+                    reuploadUniforms();
+                }
+//            }
         }
     }
-
+//    static int lastBoundShader = -1;
     public static void disable() {
-        glUseProgramObjectARB(0);
+//        if (lastBoundShader != 0)
+            glUseProgramObjectARB(0);
+//        lastBoundShader = 0;
     }
     public void release() {
         if (this.shader >= 0) {

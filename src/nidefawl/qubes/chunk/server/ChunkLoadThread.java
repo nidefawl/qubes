@@ -32,7 +32,7 @@ public class ChunkLoadThread extends Thread {
 
             System.out.println(getName() + " started");
 
-            while (BootClient.instance.isRunning() && this.isRunning) {
+            while (mgr.isRunning() && this.isRunning) {
                 boolean did = false;
                 try {
                     Long task = this.queue.take();
