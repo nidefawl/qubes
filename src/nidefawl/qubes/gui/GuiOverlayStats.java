@@ -3,8 +3,8 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.*;
 import java.util.ArrayList;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
-import nidefawl.qubes.BootClient;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.font.FontRenderer;
@@ -41,18 +41,18 @@ public class GuiOverlayStats extends Gui {
     public void update(float dTime) {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
-        stats = String.format("FPS: %d%s (%.2f), %d ticks/s", BootClient.instance.lastFPS, BootClient.instance.getVSync() ? (" (VSync)") : "",
-                Stats.avgFrameTime, (int)Math.round(BootClient.instance.tick/dTime));
+        stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
+                Stats.avgFrameTime, (int)Math.round(Game.instance.tick/dTime));
         statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
-        BootClient.instance.tick = 0;
+        Game.instance.tick = 0;
         this.stats2 = String.format("%d setUniform/frame ", Stats.uniformCalls);
-        World world = BootClient.instance.getWorld();
+        World world = Game.instance.getWorld();
         if (world != null) {
             int numChunks = world.getChunkManager().getChunksLoaded();
             this.stats3 = String.format("Chunks %d - R %d/%d", numChunks, Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
-            this.stats4 = String.format("Follow: %s", BootClient.instance.follow ? "On" : "Off");
+            this.stats4 = String.format("Follow: %s", Game.instance.follow ? "On" : "Off");
 
             this.stats5 = "";
             BlockPos p = Engine.selection.selection[0];
@@ -76,9 +76,9 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
-        info.addAll(BootClient.instance.glProfileResults);
+        info.addAll(Game.instance.glProfileResults);
         
-        Block b = Block.get(BootClient.instance.selBlock);
+        Block b = Block.get(Game.instance.selBlock);
         
         info.add(String.format("Selected: %s", b == null ? "destroy" : b.getName()));
         render = true;

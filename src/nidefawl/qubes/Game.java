@@ -61,6 +61,8 @@ public class Game extends GameBase {
     public int         selBlock           = 0;
     long               lastShaderLoadTime = System.currentTimeMillis();
     private boolean    doLoad             = true;
+
+    static public Game instance;
     
     public Game() {
         super();

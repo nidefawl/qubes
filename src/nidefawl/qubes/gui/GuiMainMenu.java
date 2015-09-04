@@ -4,7 +4,7 @@ import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 import org.lwjgl.glfw.GLFW;
 
-import nidefawl.qubes.BootClient;
+import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
@@ -68,7 +68,7 @@ public class GuiMainMenu extends Gui {
 //        if (element.posX+element.width>this.width) {
 //            element.posX = 0;
 //        }
-        BootClient.instance.showGUI(new GuiMainMenu());
+        Game.instance.showGUI(new GuiMainMenu());
         return true;
     }
 

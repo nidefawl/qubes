@@ -4,8 +4,6 @@ import nidefawl.qubes.config.WorkingEnv;
 
 public class BootClient {
 
-    static public Game instance;
-
     public static void main(String[] args) {
         try {
             WorkingEnv.init();
@@ -14,7 +12,7 @@ public class BootClient {
             e.printStackTrace();
         }
         GameBase.appName = "-";
-        instance = new Game();
-        instance.startGame();
+        Game.instance = new Game();
+        Game.instance.startGame();
     }
 }

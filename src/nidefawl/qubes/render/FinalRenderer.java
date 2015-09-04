@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.BootClient;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
@@ -102,7 +101,7 @@ public class FinalRenderer {
         if (Game.show) {
             Shader.disable();
             FrameBuffer.unbindFramebuffer();
-            GuiOverlayDebug dbg = BootClient.instance.debugOverlay;
+            GuiOverlayDebug dbg = Game.instance.debugOverlay;
             if (Game.DO_TIMING)
                 TimingHelper.startSec("DebugOverlayDef");
             dbg.preDbgFB(false);
@@ -173,7 +172,7 @@ public class FinalRenderer {
                     GL11.glViewport(0, 0, deferred.getWidth(), deferred.getHeight());
                 FrameBuffer.unbindFramebuffer();
                 Shader.disable();
-                GuiOverlayDebug dbg = BootClient.instance.debugOverlay;
+                GuiOverlayDebug dbg = Game.instance.debugOverlay;
                 if (Game.DO_TIMING)
                     TimingHelper.startSec("DebugOverlayBlur");
                 dbg.preDbgFB(false);
@@ -197,7 +196,7 @@ public class FinalRenderer {
         if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
             GL11.glViewport(0, 0, deferred.getWidth(), deferred.getHeight());
         if (Game.show) {
-            GuiOverlayDebug dbg = BootClient.instance.debugOverlay;
+            GuiOverlayDebug dbg = Game.instance.debugOverlay;
             if (Game.DO_TIMING)
                 TimingHelper.startSec("DebugOverlayBlur");
             dbg.preDbgFB(false);
@@ -215,7 +214,7 @@ public class FinalRenderer {
     public void render(World world, float fTime) {
 
         if (Game.show) {
-            GuiOverlayDebug dbg = BootClient.instance.debugOverlay;
+            GuiOverlayDebug dbg = Game.instance.debugOverlay;
             dbg.preDbgFB(true);
             dbg.drawDebug();
             dbg.postDbgFB();
@@ -239,7 +238,7 @@ public class FinalRenderer {
 
     public void renderFinal(World world, float fTime) {
         if (Game.show) {
-            GuiOverlayDebug dbg = BootClient.instance.debugOverlay;
+            GuiOverlayDebug dbg = Game.instance.debugOverlay;
             if (Game.DO_TIMING)
                 TimingHelper.startSec("DebugOverlayFinal");
             dbg.preDbgFB(false);
@@ -300,7 +299,7 @@ public class FinalRenderer {
             shaderDeferred.setProgramUniform1i("noisetex", 5);
             Shader.disable();
         } catch (ShaderCompileError e) {
-            BootClient.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
+            Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
         }

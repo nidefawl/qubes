@@ -10,7 +10,6 @@ import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.BootClient;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.perf.TimingHelper;
@@ -70,9 +69,9 @@ public class WorldRenderer {
         } catch (ShaderCompileError e) {
             if (startup) {
                 System.out.println(e.getLog());
-                BootClient.instance.setException(e);
+                Game.instance.setException(e);
             } else {
-                BootClient.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
+                Game.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
                 System.out.println("shader "+e.getName()+" failed to compile");
                 System.out.println(e.getLog());
             }

@@ -2,7 +2,7 @@ package nidefawl.qubes.chunk.server;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.BootClient;
+import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
@@ -51,7 +51,7 @@ public class ChunkLoadThread extends Thread {
                         break;
                     onInterruption();
                 } catch (Exception e) {
-                    BootClient.instance.setException(new GameError("Exception in " + getName(), e));
+                    Game.instance.setException(new GameError("Exception in " + getName(), e));
                     break;
                 }
                 try {

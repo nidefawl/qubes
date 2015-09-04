@@ -1,7 +1,6 @@
 package nidefawl.qubes.shader;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.BootClient;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 
@@ -60,7 +59,7 @@ public class Shaders {
             Shaders.textured = new_textured;
             Shaders.colored = new_colored;
         } catch (ShaderCompileError e) {
-            BootClient.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
+            Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
         }
