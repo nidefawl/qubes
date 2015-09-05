@@ -15,6 +15,12 @@ public abstract class ChunkManager {
 
     protected abstract ChunkTable makeChunkTable();
 
+    /**
+     * 
+     * @param x
+     * @param z
+     * @return null if the chunk isn't loaded
+     */
     public Chunk get(int x, int z) {
         return this.table.get(x, z);
     }
@@ -24,4 +30,7 @@ public abstract class ChunkManager {
     }
     public abstract void startThreads();
     public abstract void onWorldUnload();
+
+    public void saveAll() {
+    }
 }

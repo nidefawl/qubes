@@ -51,8 +51,8 @@ public class GuiCached extends Gui {
         Engine.drawFullscreenQuad();
         Shader.disable();
     }
-    public void update(float fTime) {
-        this.gui.update(fTime);
+    public void refresh() {
+        ((GuiOverlayStats) this.gui).refresh(); // TODO: make interface, or something
         this.refresh = true;
     }
     @Override

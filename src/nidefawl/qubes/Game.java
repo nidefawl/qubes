@@ -4,8 +4,14 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Stack;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+
+import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
@@ -17,10 +23,13 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.*;
-import nidefawl.qubes.input.Keyboard;
-import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.input.*;
 import nidefawl.qubes.lighting.DynamicLight;
+import nidefawl.qubes.logging.IErrorHandler;
+import nidefawl.qubes.network.client.NetworkClient;
+import nidefawl.qubes.network.client.ThreadConnect;
+import nidefawl.qubes.network.packet.Packet;
+import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
@@ -36,7 +45,7 @@ import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.World;
 
-public class Game extends GameBase {
+public class Game extends GameBase implements IErrorHandler {
 
 
     public static boolean  show               = false;
@@ -45,12 +54,11 @@ public class Game extends GameBase {
     private long lastTimeLoad  = System.currentTimeMillis();
 
     public GuiOverlayStats statsOverlay;
-    public Gui statsCached;
+    public GuiCached statsCached;
     public GuiOverlayDebug debugOverlay;
     private Gui            gui;
 
     FontRenderer       fontSmall;
-    final PlayerSelf entSelf            = new PlayerSelf(1);
     public Movement  movement           = new Movement();
     WorldClient      world              = null;
     public boolean   follow             = true;
@@ -61,8 +69,34 @@ public class Game extends GameBase {
     public int         selBlock           = 0;
     long               lastShaderLoadTime = System.currentTimeMillis();
     private boolean    doLoad             = true;
+    PlayerProfile profile = new PlayerProfile();
+    private ThreadConnect connect;
+
+    private NetworkClient client;
+    float px, py, pz;
+    PlayerSelf player;
+
+    public ArrayList<EditBlockTask> edits = Lists.newArrayList();
+    public int step = 0;
+
+    private boolean updateRenderers = true;
 
     static public Game instance;
+    public void connectTo(String host) {
+        try {
+            String[] split = host.split(":");
+            int port = 21087;
+            if (split.length > 1) {
+                port = StringUtil.parseInt(split[1], port);
+            }
+            host = split[0];
+            connect = new ThreadConnect(host, port);
+            connect.startThread();
+            showGUI(new GuiConnecting(connect));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     
     public Game() {
         super();
@@ -111,9 +145,9 @@ public class Game extends GameBase {
     public void lateInitGame() {
         BlockTextureArray.getInstance().reload();
 //        setWorld(new WorldClient(null));
-        this.entSelf.move(-800, 222, 1540);
-        this.entSelf.yaw=6.72F;
-        this.entSelf.pitch=38.50F;
+//        this.entSelf.move(-800, 222, 1540);
+//        this.entSelf.yaw=6.72F;
+//        this.entSelf.pitch=38.50F;
 //        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
 //        this.entSelf.toggleFly();
     }
@@ -126,7 +160,6 @@ public class Game extends GameBase {
         this.world = world;
         if (this.world != null) {
             this.world.onLoad();
-            this.world.addEntity(this.entSelf);   
         }
     }
     
@@ -164,6 +197,11 @@ public class Game extends GameBase {
                         Engine.toggleWireFrame();
                     }
                     break;
+                case Keyboard.KEY_R:
+                    if (isDown) {
+                        updateRenderers=!updateRenderers;
+                    }
+                    break;
                 case Keyboard.KEY_F3:
                     if (isDown) {
                         show = !show;
@@ -174,6 +212,11 @@ public class Game extends GameBase {
 //                        setWorld(new WorldClient(null));
 //                        Engine.worldRenderer.flush();
 //                        Engine.textures.refreshNoiseTextures();
+                        PlayerSelf p = getPlayer();
+                        if (p != null) {
+                            Random rand = new Random();
+                            p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
+                        }
                     }
                     break;
                 case Keyboard.KEY_F2:
@@ -202,16 +245,45 @@ public class Game extends GameBase {
                     }
                     break;
                 case Keyboard.KEY_ESCAPE:
-                    setWorld(null);
-                    shutdown();
+                    if (this.world != null) {
+                        setWorld(null);
+                    }
+                    if (this.client != null) {
+                        this.client.disconnect();
+                    }
+                    if (this.gui == null)
+                        showGUI(new GuiMainMenu());
                     break;
             }
             if (this.world != null) {
 
                 switch (key) {
-                    case Keyboard.KEY_H:
+                    case Keyboard.KEY_U:
                         if (isDown) {
-                            this.entSelf.toggleFly();
+                            this.edits.clear();
+                            step = 0;
+                        }
+                        break;
+                    case Keyboard.KEY_I:
+                        if (isDown) {
+                            if (step-1 >= 0) {
+                                step--;
+                                if (edits.size()>step)
+                                edits.get(step).apply(world);
+                            }
+                        }
+                        break;
+                    case Keyboard.KEY_O:
+                        if (isDown) {
+                            if (step+1 < edits.size()) {
+                                step++;
+                                edits.get(step).apply(world);
+                            }
+                        }
+                        break;
+                    case Keyboard.KEY_H:
+                        if (isDown & this.player != null) {
+                            this.player.toggleFly();
                         }
                         break;
                     case Keyboard.KEY_KP_SUBTRACT:
@@ -222,12 +294,12 @@ public class Game extends GameBase {
                             }
                         break;
                     case Keyboard.KEY_KP_ADD:
-                        if (isDown)
-                            this.world.addLight(new Vector3f(entSelf.pos).translate(0, 1, 0));
+                        if (isDown && this.player != null)
+                            this.world.addLight(new Vector3f(this.player.pos).translate(0, 1, 0));
                         break;
                     case Keyboard.KEY_KP_MULTIPLY:
-                        if (isDown)
-                            this.world.spawnLights(entSelf.pos.toBlock());
+                        if (isDown && this.player != null)
+                            this.world.spawnLights(this.player.pos.toBlock());
                         break;
                 }
             }
@@ -306,7 +378,9 @@ public class Game extends GameBase {
             
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderWorld");
+            glDisable(GL_CULL_FACE);
             Engine.worldRenderer.renderWorld(this.world, fTime);
+            glEnable(GL_CULL_FACE);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
             
@@ -462,11 +536,11 @@ public class Game extends GameBase {
   }
 
     @Override
-    public void onStatsUpdated(float dTime) {
+    public void onStatsUpdated() {
         if (this.statsCached != null) {
-            this.statsCached.update(dTime);
+            this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 2000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 222000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -481,72 +555,96 @@ public class Game extends GameBase {
     }
     @Override
     public void preRenderUpdate(float f) {
+        if (this.client != null) {
+            String reason = this.client.getClient().getDisconnectReason();
+            if (reason != null) {
+                this.client.disconnect();
+                System.out.println(reason);
+                setWorld(null);
+                setPlayer(null);
+                showGUI(new GuiDisconnected(reason));
+            } else {
+
+                this.client.update();
+            }
+        }
         if (this.world == null) {
             UniformBuffer.updateUBO(this.world, f);
-            if (this.gui == null) {
+            if (this.gui == null && this.client == null) {
                 this.showGUI(new GuiMainMenu());
             }
             return;
         }
         
         this.world.updateFrame(f);
-        this.entSelf.updateInputDirect(movement);
-//        float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
-//        float cosY = GameMath.cos(GameMath.degreesToRadians(entSelf.yaw));
-//        float forward = 1;
-//        float strafe = 0;
-//        float fx = -forward * sinY + strafe * cosY;
-//        float fz = forward * cosY + strafe * sinY;
-        float px = (float) (entSelf.lastPos.x + (entSelf.pos.x - entSelf.lastPos.x) * f) + 0;
-        float py = (float) (entSelf.lastPos.y + (entSelf.pos.y - entSelf.lastPos.y) * f) + 1.62F;
-        float pz = (float) (entSelf.lastPos.z + (entSelf.pos.z - entSelf.lastPos.z) * f) + 0;
-        DynamicLight l = this.world.lights.get(0);
-        l.loc.x = px;
-        l.loc.y = py;
-        l.loc.z = pz;
-//        int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
-        l.intensity = 7.6F;
-        l.color = new Vector3f(1*l.intensity);
-//        l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
-//        l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
-//        l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
-        float yaw = entSelf.yaw;
-        float pitch = entSelf.pitch;
-        Engine.camera.setPosition(px, py, pz);
-        Engine.camera.setOrientation(yaw, pitch);
+        PlayerSelf player = getPlayer();
+        if (player != null) {
+            player.updateInputDirect(movement);
+//          float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
+//          float cosY = GameMath.cos(GameMath.degreesToRadians(entSelf.yaw));
+//          float forward = 1;
+//          float strafe = 0;
+//          float fx = -forward * sinY + strafe * cosY;
+//          float fz = forward * cosY + strafe * sinY;
+            if (follow) {
+                lastCamX = px;
+                lastCamY = py;
+                lastCamZ = pz;
+            }
+            px = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
+            py = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
+            pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+            if (this.world.lights.size() > 0) {
+                DynamicLight l = this.world.lights.get(0);
+                l.loc.x = px;
+                l.loc.y = py;
+                l.loc.z = pz;
+//                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
+                l.intensity = 7.6F;
+                l.color = new Vector3f(1*l.intensity);
+//                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
+//                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
+//                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
+            }
+          float yaw = player.yaw;
+          float pitch = player.pitch;
+          Engine.camera.setPosition(px, py, pz);
+          Engine.camera.setOrientation(yaw, pitch);       
+        }
+
         Engine.setLightPosition(this.world.getLightPosition());
         Engine.updateCamera();
         Engine.updateShadowProjections(f);
         UniformBuffer.updateUBO(this.world, f);
-        float winX, winY;
-        
-        if (this.movement.grabbed()) {
-            winX = (float) displayWidth/2.0F;
-            winY = (float) displayHeight/2.0F;
-        } else {
-            winX = (float) Mouse.getX();
-            winY = (float) (displayHeight-Mouse.getY());
-            if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
-            if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
-        }
-        Engine.updateMouseOverView(winX, winY);
-        Engine.selection.update(world, px, py, pz);
-        
-        if (this.world != null) {
-//            Engine.regionLoader.finishTasks();
-            if (follow) {
-                lastCamX = Engine.camera.getPosition().x;
-                lastCamY = Engine.camera.getPosition().y;
-                lastCamZ = Engine.camera.getPosition().z;
+        if (player != null) {
+            float winX, winY;
+
+            if (this.movement.grabbed()) {
+                winX = (float) displayWidth/2.0F;
+                winY = (float) displayHeight/2.0F;
+            } else {
+                winX = (float) Mouse.getX();
+                winY = (float) (displayHeight-Mouse.getY());
+                if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
+                if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
-            int xPosP = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-            int zPosP = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-            int xPosC = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS);
-            int zPosC = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS);
+            Engine.updateMouseOverView(winX, winY);
+            Engine.selection.update(world, px, py, pz);
+        }
+        
+        if (this.world != null && updateRenderers) {
+//            Engine.regionLoader.finishTasks();
+            float renderRegionX = follow ? px : lastCamX;
+//            float renderRegionY = follow ? py : lastCamY;
+            float renderRegionZ = follow ? pz : lastCamZ;
+            int xPosP = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+            int zPosP = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+            int xPosC = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS);
+            int zPosC = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS);
             if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
                 int halflen = (RegionRenderer.RENDER_DISTANCE+1)*RegionRenderer.REGION_SIZE;
-                ((ChunkManagerServer) world.getChunkManager()).ensureLoaded(xPosC, zPosC, halflen);
-                ((ChunkManagerServer) world.getChunkManager()).unloadUnused(xPosC, zPosC, halflen+2);
+//                world.getChunkManager().ensureLoaded(xPosC, zPosC, halflen);
+//                world.getChunkManager().unloadUnused(xPosC, zPosC, halflen+2);
 //                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
 //                if (i != 0) {
 //                    System.out.println("Queued "+i+" regions for load");
@@ -555,7 +653,7 @@ public class Game extends GameBase {
             }
             //HACKY
 //            int nRegions = 0;
-            Engine.regionRenderer.update(this.world, lastCamX, lastCamY, lastCamZ, xPosP, zPosP, f);
+            Engine.regionRenderer.update(this.world, px, py, pz, xPosP, zPosP, f);
 //            if (!startRender)
 //            startRender = nRegions > 4;
         }
@@ -578,6 +676,8 @@ public class Game extends GameBase {
             this.gui.setSize(displayWidth, displayHeight);
             this.gui.initGui(this.gui.firstOpen);
             this.gui.firstOpen = false;
+            if (Mouse.isGrabbed())
+                setGrabbed(false);
         }
     }
 
@@ -604,6 +704,13 @@ public class Game extends GameBase {
     public void tick() {
        if (this.world != null)
            this.world.tickUpdate();
+       if (this.gui != null) {
+           this.gui.update();
+       }
+//       if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
+//           this.setWorld(null);
+//           showGUI(new GuiMainMenu());
+//       }
 //        matrixSetupMode = Main.ticksran%100<50;
     }
 
@@ -615,5 +722,33 @@ public class Game extends GameBase {
 
     public World getWorld() {
         return this.world;
+    }
+
+    public synchronized void setConnection(NetworkClient client) {
+        this.connect.cancel();
+        this.connect = null;
+        if (this.client != null) {
+            this.client.disconnect();
+            this.client = null;
+        }
+        this.client = client;
+    }
+
+    public PlayerSelf getPlayer() {
+        return this.player;
+    }
+
+    public void setPlayer(PlayerSelf player) {
+        this.player = player;
+    }
+
+    public void sendPacket(Packet packet) {
+        if (this.client != null) {
+            this.client.sendPacket(packet);
+        }
+    }
+
+    public PlayerProfile getProfile() {
+        return this.profile;
     }
 }

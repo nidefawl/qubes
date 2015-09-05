@@ -1,12 +1,11 @@
-package nidefawl.qubes.input;
+package nidefawl.qubes.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import jline.console.UserInterruptException;
-import nidefawl.qubes.GameServer;
-import nidefawl.qubes.commands.Command;
-import nidefawl.qubes.commands.ICommandSource;
+import nidefawl.qubes.server.commands.Command;
+import nidefawl.qubes.server.commands.ICommandSource;
 
 public class ConsoleReader implements Runnable, ICommandSource {
 
@@ -89,6 +88,12 @@ public class ConsoleReader implements Runnable, ICommandSource {
     @Override
     public GameServer getServer() {
         return this.server;
+    }
+
+    @Override
+    public void sendMessage(String string) {
+        out.println(string);
+        out.flush();
     }
 
 }

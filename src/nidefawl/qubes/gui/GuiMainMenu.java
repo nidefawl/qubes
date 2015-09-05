@@ -6,14 +6,17 @@ import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.font.ITextEdit;
+import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 
-public class GuiMainMenu extends Gui {
+public class GuiMainMenu extends Gui implements ITextEdit {
 
     final public FontRenderer font;
     final FontRenderer fontSmall;
+    private TextField field;
 
     public GuiMainMenu() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -33,9 +36,11 @@ public class GuiMainMenu extends Gui {
 
             int w = 200;
             int h = 30;
-            this.buttons.add(new TextField(2, "localhost:21087"));
-            this.buttons.get(1).setPos(this.posX+this.width/2-w/2, this.posY+this.height/2);
-            this.buttons.get(1).setSize(w, h);
+            this.field = new TextField(this, 2, "localhost:21087");
+            field.setPos(this.posX+this.width/2-w/2, this.posY+this.height/2);
+            field.setSize(w, h);
+//            field.
+            this.buttons.add(field);
         }
     }
     public boolean onMouseClick(int button, int action) {
@@ -45,7 +50,7 @@ public class GuiMainMenu extends Gui {
         return super.onMouseClick(button, action);
     }
 
-    public void update(float dTime) {
+    public void update() {
         
     }
 
@@ -68,8 +73,24 @@ public class GuiMainMenu extends Gui {
 //        if (element.posX+element.width>this.width) {
 //            element.posX = 0;
 //        }
-        Game.instance.showGUI(new GuiMainMenu());
+        if (element instanceof Button) {
+            String s = field.getText();
+            if (!s.isEmpty()) {
+                Game.instance.connectTo(s);    
+            }
+        }
         return true;
+    }
+    @Override
+    public void submit(TextInput textInputRenderer, String text) {
+        String s = field.getText();
+        if (!s.isEmpty()) {
+            Game.instance.connectTo(s);    
+        }
+    }
+    @Override
+    public void onEscape(TextInput textInput) {
+        this.field.focused = false;
     }
 
 

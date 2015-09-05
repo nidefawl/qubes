@@ -8,5 +8,6 @@ public class Stats {
     public static double timeMeshing = 0L;
     public static double timeRendering = 0L;
     public static double timeWorldGen = 0L;
+    public static double fpsInteval;
 
 }

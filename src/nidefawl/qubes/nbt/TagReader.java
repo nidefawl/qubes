@@ -3,9 +3,7 @@ package nidefawl.qubes.nbt;
 import java.io.*;
 import java.util.zip.*;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.*;
 
 public class TagReader {
 
@@ -37,5 +35,17 @@ public class TagReader {
         Tag.write(tag, out);
         zipOut.finish();
         return ostream.toByteArray();
+    }
+
+    public static Tag readTagFromFile(File f) throws IOException {
+        ByteSource source = Files.asByteSource(f);
+        byte[] data = source.read();
+        return readTagFromCompressedBytes(data);
+    }
+
+    public static void writeTagToFile(Tag t, File f) throws IOException {
+        byte[] data = writeTagToCompresedBytes(t);
+        ByteSink sink = Files.asByteSink(f);
+        sink.write(data);
     }
 }

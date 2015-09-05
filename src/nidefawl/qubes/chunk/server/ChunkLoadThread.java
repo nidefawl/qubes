@@ -4,6 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -51,7 +52,7 @@ public class ChunkLoadThread extends Thread {
                         break;
                     onInterruption();
                 } catch (Exception e) {
-                    Game.instance.setException(new GameError("Exception in " + getName(), e));
+                    ErrorHandler.setException(new GameError("Exception in " + getName(), e));
                     break;
                 }
                 try {
@@ -77,8 +78,7 @@ public class ChunkLoadThread extends Thread {
         this.queue.add(GameMath.toLong(x, z));
     }
 
-    public void queueLoadChecked(int x, int z) {
-        long l = GameMath.toLong(x, z);
+    public void queueLoadChecked(long l) {
         if (!this.queue.contains(l)) {
             this.queue.add(l);
         }

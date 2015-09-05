@@ -5,6 +5,8 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.*;
 
 import org.lwjgl.opengl.GL11;
+
+import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
@@ -16,15 +18,12 @@ import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
 public class RegionRenderer {
-    public static final int RENDER_DISTANCE     = 4;
+    public static final int RENDER_DISTANCE     = 12;
     public static final int LENGTH     = RENDER_DISTANCE*2+1;
     public static final int OFFS_OVER     = 2;
     public static final int LENGTH_OVER     = (RENDER_DISTANCE+OFFS_OVER)*2+1;
     public static final int HEIGHT_SLICES     = World.MAX_WORLDHEIGHT>>RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
     //TODO: abstract render regions
-    public static final int RENDER_STATE_INIT     = 0;
-    public static final int RENDER_STATE_MESHING  = 1;
-    public static final int RENDER_STATE_COMPILED = 2;
     public static final int IN_FRUSTUM_FULLY = 1;
     public static final int IN_FRUSTUM = 0;
     public static final int ALL = -1;
@@ -132,7 +131,7 @@ public class RegionRenderer {
                 MeshedRegion[] m = zRegions[z];
                 for (int y = 0; y < HEIGHT_SLICES; y++) {
                     MeshedRegion r = m[y];
-                    r.renderState = RENDER_STATE_INIT;
+                    r.needsUpdate = true;
                     r.isRenderable = false;
                     r.release();
                 }
@@ -147,7 +146,7 @@ public class RegionRenderer {
                 MeshedRegion[] m = zRegions[z];
                 for (int y = 0; y < HEIGHT_SLICES; y++) {
                     MeshedRegion r = m[y];
-                    r.renderState = RENDER_STATE_INIT;
+                    r.needsUpdate = true;
                     r.isRenderable = false;
                 }
             }
@@ -165,13 +164,30 @@ public class RegionRenderer {
                     int regionZ2 = (z+rz) >> (RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS);
                     MeshedRegion r = getByRegionCoord(regionX2, regionY2, regionZ2);
                     if (r != null) {
-                        r.renderState = RENDER_STATE_INIT;
+                        r.needsUpdate = true;
                     }
                 }
 //                if (regionX2 != toRegionX || regionZ2 != toRegionZ) {
 //                    System.out.println("also flagging neighbour "+regionX2+"/"+regionZ2+ " ("+toRegionX+"/"+toRegionZ+")");
 //                }
             }
+    }
+
+    public void flagChunk(int x, int z) {
+        int n = 1;
+        for (int rx = -n; rx <= n; rx += n) {
+            int regionX2 = (x + rx) >> (RegionRenderer.REGION_SIZE_BITS);
+            for (int rz = -n; rz <= n; rz += n) {
+                int regionZ2 = (z + rz) >> (RegionRenderer.REGION_SIZE_BITS);
+                for (int ry = 0; ry < RegionRenderer.HEIGHT_SLICES; ry++) {
+                    MeshedRegion r = getByRegionCoord(regionX2, ry, regionZ2);
+                    if (r != null) {
+//                        System.out.println("flag region "+r.rX+"/"+r.rZ);
+                        r.needsUpdate = true;
+                    }
+                }
+            }
+        }
     }
     int drawMode = GL11.GL_QUADS;
     int drawInstances = 0;
@@ -192,7 +208,20 @@ public class RegionRenderer {
         for (int i = 0; i < size; i++) {
             MeshedRegion r = renderList.get(i);
             if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
+//                System.out.println(this.rendered);
+//                if (this.rendering == 1) {
+//                    long sr = GameMath.randomI(r.rX*31+r.rY*13+r.rZ*23);
+//                    float fX = (GameMath.randomI(sr+0)%10) / 40.0f;
+//                    float fY = (GameMath.randomI(sr+1)%10) / 40.0f;
+//                    float fZ = (GameMath.randomI(sr+2)%10) / 40.0f;
+//                    Engine.worldRenderer.terrainShader.setProgramUniform4f("terroffset", fX, fY, fZ, 0);
+//                }
                 r.renderRegion(fTime, pass, this.drawMode, this.drawInstances);
+
+//                if (this.rendering == 1) {
+//                    Engine.worldRenderer.terrainShader.setProgramUniform4f("terroffset", 0,0,0,0);    
+//                }
+                
                 this.rendered++;//( += r.getNumVertices(0);   
             } else {
                 nSkipped++;
@@ -237,12 +266,14 @@ public class RegionRenderer {
                             }
                             putRegion(m);
                         }
-                        if (m.renderState == RENDER_STATE_INIT) {
+                        if (m.needsUpdate) {
                             if (!thread.busy()) {
 //                                Region r = Engine.regionLoader.getRegion(m.rX, m.rZ);
 //                                if (r != null && r.state == Region.STATE_LOAD_COMPLETE) {
 //                                }
-                                thread.offer(world, m, renderChunkX, renderChunkZ);
+                                if (thread.offer(world, m, renderChunkX, renderChunkZ)) {
+                                    m.needsUpdate = false;
+                                }
                             }
                         }
                     }
@@ -255,6 +286,7 @@ public class RegionRenderer {
         return renderList;
     }
     TesselatorState debug = new TesselatorState();
+    public int rendering;
     public static final int REGION_SIZE_BITS      = 1;
     public static final int REGION_SIZE           = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK      = REGION_SIZE - 1;
@@ -262,6 +294,7 @@ public class RegionRenderer {
     public static final int REGION_SIZE_BLOCKS    = 1 << REGION_SIZE_BLOCK_SIZE_BITS;
     public static final int SLICE_HEIGHT_BLOCK_BITS = 5;
     public static final int SLICE_HEIGHT_BLOCKS    = 1<<SLICE_HEIGHT_BLOCK_BITS;
+    public static final int SLICE_HEIGHT_BLOCK_MASK    = SLICE_HEIGHT_BLOCKS-1;
     public void renderDebug(World world, float fTime) {
         Tess.instance.setColor(-1, 200);
         int b=RegionRenderer.REGION_SIZE*Chunk.SIZE;

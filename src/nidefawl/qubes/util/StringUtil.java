@@ -33,4 +33,12 @@ public class StringUtil {
             return def;
         }
     }
+
+    public static int parseInt(String string, int def) { // TODO: use faster org.craftland.mod.Util.getInt()
+        try {
+            return Integer.parseInt(string);
+        } catch (Exception e) {
+            return def;
+        }
+    }
 }

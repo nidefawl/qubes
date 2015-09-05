@@ -57,10 +57,21 @@ public class Mesher {
                 return;
             }
             if (bs1 != air && bs2 == air) {
+                
+                //fix double faces on top of slice
+                int rY = bs1.y >> SLICE_HEIGHT_BLOCK_BITS;
+                if (rY < HEIGHT_SLICES - 1 && bs1.axis == 1 && rY == ySlice && (bs1.y & SLICE_HEIGHT_BLOCK_MASK) == SLICE_HEIGHT_BLOCK_MASK) {
+                    mask2[n] = null;
+                } else
                 mask2[n] = bs1;
                 return;
             }
             if (bs1 == air && bs2 != air) {
+                //fix double faces on bottom of slice
+                int rY = bs2.y >> SLICE_HEIGHT_BLOCK_BITS;
+                if (rY > 0 && bs2.axis == 1 && rY == ySlice && (bs2.y & SLICE_HEIGHT_BLOCK_MASK) == 0) {
+                    mask2[n] = null;
+                } else
                 mask2[n] = bs2;
                 return;
             }
@@ -102,8 +113,10 @@ public class Mesher {
     ChunkRenderCache cache;
     private int strategy;
     private int yPos;
+    private int ySlice;
     final static boolean MEASURE = false;
     public void mesh(World world, ChunkRenderCache ccache, int rY) {
+        this.ySlice = rY;
         this.yPos = rY<<RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
         this.cache = ccache;
         for (int i = 0; i < this.meshes.length; i++)
@@ -116,13 +129,17 @@ public class Mesher {
         this.meshRound(world, ccache);
         if (MEASURE) TimingHelper2.endSec();
     }
+
+    final int[] min = new int[] {-1, 0, -1};
+    final int[] max = new int[] {0, -1, 0};
     public void meshRound(World world, ChunkRenderCache ccache) {
         scratchpadidx = 0;
         dims[0] = RegionRenderer.REGION_SIZE_BLOCKS;
         dims[1] = RegionRenderer.SLICE_HEIGHT_BLOCKS;
         dims[2] = RegionRenderer.REGION_SIZE_BLOCKS;
         Arrays.fill(mask2, null);
-        
+        final int[] min = new int[] {-1, -1, -1};
+        final int[] max = new int[] {0, 0, 0};
         int x[] = new int[] { 0, 0, 0 };
         int dir[] = new int[] { 0, 0, 0 };
         for (int axis = 0; axis < 3; ++axis) {
@@ -140,12 +157,12 @@ public class Mesher {
                     for (x[u] = 0; x[u] < dims[u]; ++x[u]) {
                         bs1 = null;
                         bs2 = null;
-                        if (x[axis] >= -1) {
+                        if (x[axis] >= min[axis]) {
                             if (MEASURE) TimingHelper2.startSec("getBlockSurface");
                             bs1 = getBlockSurface(x[0], x[1], x[2], 0, axis);
                             if (MEASURE) TimingHelper2.endSec();
                         }
-                        if (x[axis] < dims[axis]) {
+                        if (x[axis] < dims[axis]-max[axis]) {
                             if (MEASURE) TimingHelper2.startSec("getBlockSurface");
                             bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
                             if (MEASURE) TimingHelper2.endSec();

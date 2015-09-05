@@ -30,9 +30,10 @@ public class MeshUpdateTask {
     }
 
     public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
+        this.ccache.flush();
         if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
             this.mr = mr;
-            mr.renderState = RegionRenderer.RENDER_STATE_MESHING;
+            mr.isUpdating = true;
             return true;
         } else {
 //            System.out.println("cannot render "+mr.rX+"/"+mr.rZ);
@@ -41,8 +42,10 @@ public class MeshUpdateTask {
     }
 
     public boolean finish(int id) {
+        mr.isUpdating = false;
         if (!isValid(id)) {
-            mr.renderState = RegionRenderer.RENDER_STATE_INIT;
+//            mr.renderState = RegionRenderer.RENDER_STATE_INIT;
+            this.ccache.flush();
             return true;
         }
         if (this.meshed) {
@@ -60,7 +63,8 @@ public class MeshUpdateTask {
         this.mr.zNeg = false;
         this.mr.zPos = false;
         this.mr.xPos = false;
-        this.mr.renderState = RegionRenderer.RENDER_STATE_COMPILED;
+        this.mr.isRenderable = true;
+        this.ccache.flush();
         return true;
     }
 

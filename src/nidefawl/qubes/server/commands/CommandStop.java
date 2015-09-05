@@ -1,4 +1,4 @@
-package nidefawl.qubes.commands;
+package nidefawl.qubes.server.commands;
 
 public class CommandStop extends Command {
 
@@ -9,5 +9,9 @@ public class CommandStop extends Command {
 
     public void execute(ICommandSource source, String cmd, String[] args, String line) {
         source.getServer().halt();
+    }
+
+    public boolean runSynchronized() {
+        return false;
     }
 }

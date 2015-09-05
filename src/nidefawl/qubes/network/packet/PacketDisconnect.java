@@ -2,7 +2,7 @@ package nidefawl.qubes.network.packet;
 
 import java.io.*;
 
-import nidefawl.qubes.network.IHandler;
+import nidefawl.qubes.network.Handler;
 
 public class PacketDisconnect extends Packet {
 	public int code = 0;
@@ -33,7 +33,7 @@ public class PacketDisconnect extends Packet {
 	}
 
 	@Override
-	public void handle(IHandler h) {
+	public void handle(Handler h) {
 		h.handleDisconnect(this);
 	}
 

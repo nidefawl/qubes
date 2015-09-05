@@ -1,7 +1,6 @@
 package nidefawl.qubes.render.region;
 
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
-import static nidefawl.qubes.render.region.RegionRenderer.RENDER_STATE_INIT;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -23,14 +22,15 @@ public class MeshedRegion {
     public int        rX;
     public int        rZ;
     public int rY;
-    public int        renderState   = RENDER_STATE_INIT;
-    public boolean    isRenderable  = false;
     public boolean    xNeg;
     public boolean    xPos;
     public boolean    zPos;
     public boolean    zNeg;
     public final AABB aabb          = new AABB();
     public int[]      frustumStates = new int[Engine.NUM_PROJECTIONS];
+    public boolean    needsUpdate   = true;
+    public boolean    isUpdating   = false;
+    public boolean    isRenderable  = false;
 
 
     public MeshedRegion() {
@@ -132,7 +132,6 @@ public class MeshedRegion {
         }
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        this.isRenderable = true;
     }
 
     public void release() {
@@ -140,7 +139,6 @@ public class MeshedRegion {
             Engine.deleteBuffers(this.vbo);
             this.vbo = null;
         }
-        renderState = RENDER_STATE_INIT;
         this.isRenderable = false;
     }
 

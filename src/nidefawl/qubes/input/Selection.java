@@ -6,6 +6,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Flags;
@@ -218,30 +219,23 @@ public class Selection {
                         blockX += face.x;
                         blockY += face.y;
                         blockZ += face.z;
-
-                        world.setType(blockX, blockY, blockZ, block, Flags.RENDER);
+                        Game.instance.sendPacket(new PacketCSetBlock(world.getId(), blockX, blockY, blockZ, block));
+//                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
                     } else {
+                        Game.instance.sendPacket(new PacketCSetBlock(world.getId(), blockX, blockY, blockZ, 0));
 
-                        world.setType(blockX, blockY, blockZ, 0, Flags.RENDER);
+//                        world.setType(blockX, blockY, blockZ, 0, Flags.MARK);
                     }
                 }
             } else {
                 BlockPos p1 = Engine.selection.getMin();
                 BlockPos p2 = Engine.selection.getMax();
-                int w = p2.x-p1.x+1;
-                int h = p2.y-p1.y+1;
-                int l = p2.z-p1.z+1;
-                for (int x = 0; x < w; x++) {
-                    for (int y = 0; y < h; y++) {
-                        for (int z = 0; z < l; z++) {
-                            int blockX = p1.x+x;
-                            int blockY = p1.y+y;
-                            int blockZ = p1.z+z;
-                            world.setType(blockX, blockY, blockZ, Game.instance.selBlock, Flags.RENDER);
-                        }
-                    }
-                    
-                }
+
+                EditBlockTask task = new EditBlockTask(p1, p2, Game.instance.selBlock);
+                Game.instance.edits.add(task);
+                Game.instance.step = 0;
+                task.apply(world);
+                System.out.println("APPLY");;
                 
             }
         }

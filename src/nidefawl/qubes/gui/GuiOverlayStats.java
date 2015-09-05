@@ -1,6 +1,5 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.*;
 import java.util.ArrayList;
 
 import nidefawl.qubes.Game;
@@ -8,7 +7,8 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.Camera;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -38,11 +38,12 @@ public class GuiOverlayStats extends Gui {
         this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
     }
 
-    public void update(float dTime) {
+
+    public void refresh() {
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
-                Stats.avgFrameTime, (int)Math.round(Game.instance.tick/dTime));
+                Stats.avgFrameTime, (int)Math.round(Game.instance.tick/Stats.fpsInteval));
         statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
@@ -118,7 +119,7 @@ public class GuiOverlayStats extends Gui {
                 strwidth = Math.max(font.getStringWidth(split[i]), strwidth);
             }
             for (int i = 0; i < split.length; i++) {
-                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)0)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)30)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
         }
         Shader.disable();

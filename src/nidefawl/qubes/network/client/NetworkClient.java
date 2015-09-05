@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 import nidefawl.qubes.network.Connection;
+import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.Packet;
 
 public class NetworkClient {
@@ -30,9 +31,25 @@ public class NetworkClient {
             this.conn.update();
         }
         if (this.conn.finished()) {
-            this.conn.disconnect("Disconnected");
+            this.conn.disconnect(Connection.LOCAL, "Disconnected");
         }
     
+    }
+    public void processLogin() {
+        if (this.conn.isConnected()) {
+            this.conn.validateConnection();
+            final Packet p = this.conn.pollPacket();
+            if (p != null) {
+                p.handle(this.client);
+            }
+        }
+        if (this.conn.finished()) {
+            this.conn.disconnect(Connection.LOCAL, "Disconnected");
+        }
+    
+    }
+    public ClientHandler getClient() {
+        return client;
     }
 
 
@@ -43,6 +60,10 @@ public class NetworkClient {
 
 	public void sendPacket(Packet packet) {
 		this.conn.sendPacket(packet);
+	}
+	
+	public void disconnect() {
+	    this.conn.disconnect(Connection.LOCAL, "User requested disconnect");
 	}
 
 }

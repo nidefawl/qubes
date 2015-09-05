@@ -193,4 +193,8 @@ public class Vec3D {
         return new Vec3D(this.x+x, this.y+y, this.z+z);
     }
 
+    public void set(Vector3f pos) {
+        set(pos.x, pos.y, pos.z);
+    }
+
 }

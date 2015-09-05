@@ -29,19 +29,21 @@ public abstract class World {
 
     private long seed;
 
-    private AbstractGen generator;
-    private int         dayLen = 1000;
-    private int         time;
+    public int         dayLen = 1000;
+    public int         time;
 
     private final ChunkManager chunkMgr;
     private final Random       rand;
     private final UUID uuid;
+    private int id;
     public static final int    MAX_WORLDHEIGHT = 256;
 
-    public World(WorldSettings settings) {
+    public World(IWorldSettings settings) {
+        this.id = settings.getId();
         this.chunkMgr = makeChunkManager();
-        this.seed = settings.seed;
-        this.uuid = settings.uuid;
+        this.seed = settings.getSeed();
+        this.uuid = settings.getUUID();
+        this.time = settings.getTime();
         this.rand = new Random(seed);
         this.worldHeightBits = 8;
         this.worldHeightBitsPlusFour = worldHeightBits + 4;
@@ -49,18 +51,10 @@ public abstract class World {
         this.worldHeightMinusOne = (1 << worldHeightBits) - 1;
         this.worldSeaLevel = 59;//1 << (worldHeightBits - 1);
 //        this.generator = new TerrainGenerator2(this, this.seed);
-        this.generator = new TestTerrain2(this, this.seed);
 
     }
-    
-    public AbstractGen getGenerator() {
-        return generator;
-    }
+
     public abstract ChunkManager makeChunkManager();
-
-    public Chunk generateChunk(int i, int j) {
-        return this.generator.generateChunk(i, j);
-    }
 
     public float getSunAngle(float fTime) {
         //        if (time > 2000)
@@ -96,9 +90,9 @@ public abstract class World {
         //        if (offset < dayLen/3) {
         //            time += dayLen/3;
         //        }
-        int size = this.entities.size();
+        int size = this.entityList.size();
         for (int i = 0; i < size; i++) {
-            Entity e = this.entities.get(i);
+            Entity e = this.entityList.get(i);
             e.tickUpdate();
         }
 //        long lPassed = System.currentTimeMillis()-lastCheck;
@@ -122,7 +116,7 @@ public abstract class World {
         }
         return c.getTypeId(x & 0xF, y, z & 0xF);
     }
-
+    
     public boolean setType(int x, int y, int z, int type, int render) {
         if (y >= this.worldHeight)
             return false;
@@ -133,11 +127,12 @@ public abstract class World {
             return false;
         }
         c.setType(x & 0xF, y, z & 0xF, type);
-        if ((render & Flags.RENDER) != 0) {
-            Engine.regionRenderer.flagBlock(x, y, z);
+        if ((render & Flags.MARK) != 0) {
+            flagBlock(x, y, z);
         }
         return true;
     }
+    public abstract void flagBlock(int x, int y, int z);
 
     public Chunk getChunk(int x, int z) {
         return chunkMgr.get(x, z);
@@ -162,6 +157,14 @@ public abstract class World {
         this.entityList.add(ent);
         ent.world = this;
         addLight(new Vector3f(ent.pos));
+    }
+
+    public void removeEntity(Entity ent) {
+        Entity e = this.entities.remove(ent.id);
+        if (e != null) {
+            this.entityList.remove(e);
+            ent.world = null;
+        }
     }
 
     public void removeLight(int i) {
@@ -205,4 +208,24 @@ public abstract class World {
         return this.chunkMgr;
     }
 
+
+    public UUID getUUID() {
+        return this.uuid;
+    }
+
+    public long getSeed() {
+        return this.seed;
+    }
+
+    public int getTime() {
+        return this.time;
+    }
+
+    /** dynamically generated at boot time 
+     * do not use for storage
+     * @return a consistent world-id at runtime only
+     */
+    public int getId() {
+        return this.id;
+    }
 }

@@ -6,17 +6,18 @@ import java.util.UUID;
 import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.util.StringUtil;
 
-public class WorldSettings extends AbstractYMLConfig {
+public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
+
+    public int  time;
+    public long seed;
+    public UUID uuid;
     private final File dir;
+    private int id;
 
     public WorldSettings(File worldDirectory) {
         super(true);
         this.dir = worldDirectory;
     }
-
-    public int  time;
-    public long seed;
-    public UUID uuid;
 
     @Override
     public void setDefaults() {
@@ -43,5 +44,29 @@ public class WorldSettings extends AbstractYMLConfig {
         setString("uuid", this.uuid.toString());
         setString("seed", Long.toHexString(this.seed));
         setInt("time", this.time);
+    }
+
+    @Override
+    public long getSeed() {
+        return this.seed;
+    }
+
+    @Override
+    public UUID getUUID() {
+        return this.uuid;
+    }
+
+    @Override
+    public int getTime() {
+        return this.time;
+    }
+
+    @Override
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }

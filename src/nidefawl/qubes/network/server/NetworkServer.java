@@ -5,8 +5,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.GameServer;
 import nidefawl.qubes.network.Connection;
+import nidefawl.qubes.server.GameServer;
 
 
 public class NetworkServer {
@@ -52,11 +52,11 @@ public class NetworkServer {
         this.isRunning = false;
         for (int a = 0; a < this.connections.size(); a++) {
             final Connection c = this.connections.get(a);
-            c.disconnect("Server ended");
+            c.disconnect(Connection.LOCAL, "Server ended");
         }
         Connection cNew = null;
         while ((cNew = this.newConnections.poll()) != null) {
-            cNew.disconnect("Server ended");
+            cNew.disconnect(Connection.LOCAL, "Server ended");
         }
 		this.listenThread.halt();
 	}

@@ -1,4 +1,4 @@
-package nidefawl.qubes.commands;
+package nidefawl.qubes.server.commands;
 
 import java.util.HashSet;
 
@@ -26,5 +26,9 @@ public abstract class Command {
 
     public String getName() {
         return this.name;
+    }
+
+    public boolean runSynchronized() {
+        return true;
     }
 }

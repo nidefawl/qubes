@@ -2,7 +2,7 @@ package nidefawl.qubes.network.packet;
 
 import java.io.*;
 
-import nidefawl.qubes.network.IHandler;
+import nidefawl.qubes.network.Handler;
 
 public class PacketHandshake extends Packet {
 	public int version;
@@ -30,7 +30,7 @@ public class PacketHandshake extends Packet {
 	}
 
 	@Override
-	public void handle(IHandler h) {
+	public void handle(Handler h) {
 		h.handleHandshake(this);
 	}
 

@@ -1,6 +1,6 @@
-package nidefawl.qubes.commands;
+package nidefawl.qubes.server.commands;
 
-import nidefawl.qubes.GameServer;
+import nidefawl.qubes.server.GameServer;
 
 public interface ICommandSource {
 
@@ -11,5 +11,7 @@ public interface ICommandSource {
     GameServer getServer();
 
     void onError(Command c, Exception e);
+
+    void sendMessage(String format);
 
 }

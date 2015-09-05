@@ -1,6 +1,9 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.network.client.ClientHandler;
+import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
 
 public class PlayerSelf extends Entity {
@@ -13,9 +16,13 @@ public class PlayerSelf extends Entity {
     private boolean   jumped;
     private float   sneak;
     public float eyeHeight = 1.3F;
+    public String name;
+    private ClientHandler clientHandler;
 
-    public PlayerSelf(int id) {
-        super(id);
+    public PlayerSelf(ClientHandler clientHandler, String name) {
+        super();
+        this.name = name;
+        this.clientHandler = clientHandler;
     }
 
     public void updateInputDirect(Movement movement) {
@@ -132,6 +139,15 @@ public class PlayerSelf extends Entity {
 //      }
 //      if (this.mot.y > f) {
 //      }
+//        this.network.send(PacketMovement)
+        int flags = 0;
+        if (this.hitGround) {
+            flags |= 1;
+        }
+        if (this.fly) {
+            flags |= 2;
+        }
+        this.clientHandler.sendPacket(new PacketCMovement(this.pos, flags));
     }
 
     public float getGravity() {
@@ -140,6 +156,10 @@ public class PlayerSelf extends Entity {
 
     public void toggleFly() {
         this.fly = !fly;
+    }
+    
+    public void setFly(boolean fly) {
+        this.fly = fly;
     }
 
 }

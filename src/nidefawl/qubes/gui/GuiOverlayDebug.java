@@ -19,10 +19,6 @@ public class GuiOverlayDebug extends Gui {
         this.fontSmall = FontRenderer.get("Arial", 12, 1, 14);
 	}
 
-	public void update() {
-
-	}
-
 	public void render(float fTime, double mx, double mY) {
 	    Shaders.textured.enable();
         glBindTexture(GL_TEXTURE_2D, Engine.fbDbg.getTexture(0));

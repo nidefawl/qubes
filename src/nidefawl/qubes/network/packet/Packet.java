@@ -2,7 +2,7 @@ package nidefawl.qubes.network.packet;
 
 import java.io.*;
 
-import nidefawl.qubes.network.IHandler;
+import nidefawl.qubes.network.Handler;
 
 
 public abstract class Packet {
@@ -17,21 +17,29 @@ public abstract class Packet {
         register(PacketPing.class, 1, true, true);
         register(PacketHandshake.class, 2, true, true);
         register(PacketDisconnect.class, 3, true, true);
+        register(PacketAuth.class, 4, true, true);
+        register(PacketSSpawnInWorld.class, 5, true, false);
+        register(PacketCMovement.class, 6, true, true);
+        register(PacketSChunkData.class, 7, true, false);
+        register(PacketCSetBlock.class, 8, false, true);
+        register(PacketCSetBlocks.class, 9, false, true);
+        register(PacketSSetBlock.class, 10, false, true);
+        register(PacketSSetBlocks.class, 11, false, true);
     }
     public Packet() {
     }
 
-    public static Packet read(final DataInput stream) throws IOException {
+    public static Packet read(final DataInput stream) throws IOException, InvalidPacketException {
         int t = stream.readUnsignedByte();
         Packet p;
         try {
             p = makePacket(t);
             if (p == null) {
-                throw new IOException("Invalid packet "+t);
+                throw new InvalidPacketException("Invalid packet "+t);
             }
             p.readPacket(stream);
         } catch (InvalidPacketException e) {
-            throw new IOException("Invalid packet "+t+"/"+e.getClazz()+": "+e.getMessage());
+            throw new InvalidPacketException("Invalid packet "+t+"/"+e.getClazz()+": "+e.getMessage(), e);
         }
         return p;
     }
@@ -51,7 +59,7 @@ public abstract class Packet {
 
     public abstract int getID();
 
-    public abstract void handle(IHandler h);
+    public abstract void handle(Handler h);
 
 
     private static Packet makePacket(final Class<? extends Packet> c) throws InvalidPacketException {

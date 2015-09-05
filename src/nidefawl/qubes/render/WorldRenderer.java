@@ -117,7 +117,9 @@ public class WorldRenderer {
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
         glDisable(GL_BLEND);
+        Engine.regionRenderer.rendering = 1;
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.rendering = 0;
         rendered = Engine.regionRenderer.rendered;
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");

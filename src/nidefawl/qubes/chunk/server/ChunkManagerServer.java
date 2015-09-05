@@ -20,9 +20,11 @@ public class ChunkManagerServer extends ChunkManager {
     private RegionFileCache regionFileCache;
     public final Object syncObj = new Object();
     public final Object syncObj2 = new Object();
+    private WorldServer worldServer;
 
     public ChunkManagerServer(WorldServer world) {
         super(world);
+        this.worldServer = world;
         this.regionFileCache = new RegionFileCache(new File(WorkingEnv.getWorldsFolder(), "test"));
         this.thread = new ChunkLoadThread(this);
         this.unloadThread = new ChunkUnloadThread(this);
@@ -52,7 +54,7 @@ public class ChunkManagerServer extends ChunkManager {
         synchronized (this.syncObj2) {
             Chunk c = this.reader.loadChunk(this.world, x, z);
             if (c == null) {
-                AbstractGen gen = world.getGenerator();
+                AbstractGen gen = worldServer.getGenerator();
                 long l = System.nanoTime();
                 c = gen.generateChunk(x, z);
                 Stats.timeWorldGen += (System.nanoTime()-l) / 1000000.0D;
@@ -64,7 +66,13 @@ public class ChunkManagerServer extends ChunkManager {
         this.thread.queueLoad(x, z);
     }
     public void queueLoadChecked(int x, int z) {
-        this.thread.queueLoadChecked(x, z);
+        this.thread.queueLoadChecked(GameMath.toLong(x, z));
+    }
+    public void queueLoadChecked(long l) {
+        Chunk c = this.table.get(l);
+        if (c == null) {
+            this.thread.queueLoadChecked(l);   
+        }
     }
 
     public void ensureLoaded(int xPosC, int zPosC, int halflen) {
@@ -102,8 +110,27 @@ public class ChunkManagerServer extends ChunkManager {
         Chunk c = this.table.remove(x, z);
         if (c != null) {
             System.out.println("unloading "+x+"/"+z);
+            saveChunk(c);
+        }
+    }
+    private void saveChunk(Chunk c) {
+        synchronized (this.syncObj2) {
+            this.reader.saveChunk(c);
+        }
+    }
+    public void saveChunk(int x, int z) {
+        Chunk c = this.table.get(x, z);
+        if (c != null)
+            saveChunk(c);
+    }
+    public void saveAll() {
+        synchronized (this.syncObj) {
             synchronized (this.syncObj2) {
-                this.reader.saveChunk(c);
+                List<Chunk> l = this.table.asList();
+                for (int i = 0; i < l.size(); i++) {
+                    Chunk c = l.get(i);
+                    saveChunk(c);
+                }
             }
         }
     }

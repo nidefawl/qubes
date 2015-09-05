@@ -15,7 +15,7 @@ import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.ClipboardHelper;
 
-public class TextInputRenderer {
+public class TextInput {
 
     public TrueTypeFont trueType;
     public String       editText;
@@ -38,13 +38,15 @@ public class TextInputRenderer {
     public int          yPos;
     public int          width;
     public int          height;
+    private ITextEdit itextedit;
 
-    public TextInputRenderer(FontRenderer font) {
+    public TextInput(FontRenderer font, ITextEdit itextedit) {
         this.mpos = 0;
         this.searchPattern = "";
         this.editText = "";
         this.font = font;
         this.trueType = font.trueTypeFont;
+        this.itextedit = itextedit;
     }
 
     public static boolean use17 = false;
@@ -307,6 +309,7 @@ public class TextInputRenderer {
     }
 
     private void submit(String text) {
+        itextedit.submit(this, text);
     }
 
     public void makeCursorVisible() {
@@ -653,8 +656,7 @@ public class TextInputRenderer {
     }
 
     private void onEscape() {
-        // TODO Auto-generated method stub
-
+        itextedit.onEscape(this);
     }
 
     public int getLeft() {

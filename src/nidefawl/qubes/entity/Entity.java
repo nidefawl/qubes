@@ -8,7 +8,8 @@ import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.World;
 
 public abstract class Entity {
-    public int id;
+    static int NEXT_ENT_ID=0;
+    public int id = ++NEXT_ENT_ID;
     public World world;
 	public Vec3D pos = new Vec3D();
 	public Vec3D lastPos = new Vec3D();
@@ -25,7 +26,7 @@ public abstract class Entity {
     private double height;
     private double length;
     
-	public Entity(int id) {
+	public Entity() {
 		this.width = 0.8D;
 		this.height = 1.6D;
 		this.length = 0.8D;
@@ -125,7 +126,10 @@ public abstract class Entity {
         return 0.98F;
     }
 
-    public void move(float x, float y, float z) {
+    public void move(Vec3D v) {
+        move(v.x, v.y, v.z);
+    }
+    public void move(double x, double y, double z) {
         this.pos.x = x;
         this.pos.y = y;
         this.pos.z = z;

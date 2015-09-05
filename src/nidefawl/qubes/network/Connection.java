@@ -6,10 +6,15 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import nidefawl.qubes.BootServer;
+import nidefawl.qubes.network.packet.InvalidPacketException;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
+import nidefawl.qubes.util.GameContext;
 
 public class Connection {
+    public final static int REMOTE = 0;
+    public final static int LOCAL = 1;
 
     public final Socket           socket;
     public final DataInputStream  inStream;
@@ -19,10 +24,10 @@ public class Connection {
     public volatile boolean       isConnected = true;
     private boolean               cleanUp     = false;
     LinkedBlockingQueue<Packet>   incoming    = new LinkedBlockingQueue<Packet>();
-    LinkedBlockingQueue<Packet>   incoming2    = new LinkedBlockingQueue<Packet>();
     LinkedBlockingQueue<Packet>   outgoing    = new LinkedBlockingQueue<Packet>();
-    private IHandler              handler;
+    private Handler              handler;
 	private InputStream sIn;
+	private Throwable readWriteException;
 
     public Connection(final Socket s) throws IOException {
         this.socket = s;
@@ -43,21 +48,16 @@ public class Connection {
         return this.isConnected;
     }
 
-    public boolean readPackets() throws IOException {
-    	try {
-
-            final Packet p = Packet.read(this.inStream);
-            if (p != null) {
-                if (p.handleSynchronized())
-                    this.incoming.add(p);
-                else p.handle(this.handler);
-                return true;
-            } else {
-                System.out.println("NOTHING!");
-            }
-    	} catch (Exception e) {
-    		throw e;
-    	}
+    public boolean readPackets() throws IOException, InvalidPacketException {
+        final Packet p = Packet.read(this.inStream);
+        if (p != null) {
+            if (p.handleSynchronized())
+                this.incoming.add(p);
+            else p.handle(this.handler);
+            return true;
+        } else {
+            System.out.println("NOTHING!");
+        }
         return false;
     }
 
@@ -65,7 +65,7 @@ public class Connection {
         Packet p = this.outgoing.take();
         if (p != null) {
             Packet.write(p, this.outStream);
-            while ((p = this.outgoing.peek()) != null) {
+            while ((p = this.outgoing.poll()) != null) {
                 Packet.write(p, this.outStream);
             }
             this.outStream.flush();
@@ -75,10 +75,11 @@ public class Connection {
     }
 
     public void onError(final Exception e) {
-    	if (isConnected && !(e instanceof SocketException)) {
-            e.printStackTrace();
-    	}
-        this.isConnected = false;
+        // TODO: check if we always catch the correct error 
+        //(not eof/readtimeout after a NPE in a packet)
+        if (this.readWriteException == null) { 
+            this.readWriteException = e;
+        }
     }
 
     public void sendPacket(final Packet p) {
@@ -86,11 +87,24 @@ public class Connection {
             this.outgoing.add(p);
         }
     }
-
-    public void update() {
+    public void validateConnection() {
         if (!this.isConnected) {
             this.onDisconnect();
+        } else {
+            if (this.readWriteException != null) {
+                this.disconnect(LOCAL, "Error: "+this.readWriteException.getMessage());
+                if (!(this.readWriteException instanceof IOException)) {
+                    this.readWriteException.printStackTrace();
+                } else if (this.readWriteException instanceof RuntimeException || this.readWriteException.getCause() instanceof RuntimeException) {
+                    this.readWriteException.printStackTrace();
+                }
+                this.isConnected = false;
+            }
         }
+    }
+
+    public void update() {
+        validateConnection();
         if (this.isConnected) {
             int max = 1000;
             while (max-- > 0) {
@@ -106,14 +120,6 @@ public class Connection {
             }
         }
     }
-    public void updateBlocking() throws InterruptedException {
-        if (this.isConnected) {
-            final Packet p = this.incoming2.take();
-            if (p != null) {
-                p.handle(this.handler);
-            }
-        }
-    }
 
     private void onDisconnect() {
         if (!this.cleanUp) {
@@ -123,17 +129,14 @@ public class Connection {
             try {
                 this.inStream.close();
             } catch (final Exception e) {
-                e.printStackTrace();
             }
             try {
                 this.outStream.close();
             } catch (final Exception e) {
-                e.printStackTrace();
             }
             try {
                 this.socket.close();
             } catch (final Exception e) {
-                e.printStackTrace();
             }
 
         }
@@ -144,15 +147,23 @@ public class Connection {
         this.writeThread.interruptThread();
     }
 
-    public void disconnect(String reason) {
+    public void disconnect(int from, String reason) {
         if (this.isConnected) {
+            if (Thread.currentThread() != GameContext.getMainThread()) {
+                System.err.println("Disconnect from non-mainthread: "+Thread.currentThread()+ " (Mainthread: "+GameContext.getMainThread()+")");
+            }
+            this.handler.onDisconnect(from, reason);
         	try {
         		interruptThreads();
-                Packet.write(new PacketDisconnect(0, reason), this.outStream);
-        		this.outStream.flush();
-        		this.socket.shutdownOutput();
+        		if (from != Connection.REMOTE) {
+                    Packet.write(new PacketDisconnect(0, reason), this.outStream);
+                    this.outStream.flush();
+                    this.socket.shutdownOutput();
+        		}
         	} catch (Exception e) {
-        		e.printStackTrace();
+                if (!(e instanceof SocketException)) {
+                    e.printStackTrace();
+                }
         	}
         	
         	
@@ -162,7 +173,7 @@ public class Connection {
         }
     }
 
-    public void setHandler(final IHandler handler) {
+    public void setHandler(final Handler handler) {
         this.handler = handler;
     }
 
@@ -174,12 +185,16 @@ public class Connection {
 		return (InetSocketAddress) this.socket.getRemoteSocketAddress();
 	}
 
-    public IHandler getHandler() {
+    public Handler getHandler() {
         return this.handler;
     }
 
     public void onFinish() {
         this.handler.onFinish();
+    }
+
+    public Packet pollPacket() {
+        return this.incoming.poll();
     }
 
 }

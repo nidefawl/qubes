@@ -3,6 +3,7 @@ package nidefawl.qubes.gui;
 import nidefawl.qubes.util.Renderable;
 
 public abstract class AbstractUI implements Renderable {
+    public int           id;
     public int width;
     public int height;
     public int posX;
@@ -22,7 +23,7 @@ public abstract class AbstractUI implements Renderable {
         this.posY = y;
     }
 
-    public void update(float dTime) {
+    public void update() {
     }
 
     public boolean mouseOver(double mX, double mY) {

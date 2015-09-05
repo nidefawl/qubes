@@ -257,7 +257,7 @@ public abstract class GameBase implements Runnable {
     protected void checkResize() {
     }
 
-    public abstract void onStatsUpdated(float dSec);
+    public abstract void onStatsUpdated();
 
     public void setVSync(boolean b) {
         this.vsync = b;
@@ -415,12 +415,12 @@ public abstract class GameBase implements Runnable {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;
-        double l = (timer.absTime - timeLastFPS) / 1000.0D;
-        if (l >= 0.5F) {
+        Stats.fpsInteval = (timer.absTime - timeLastFPS) / 1000.0D;
+        if (Stats.fpsInteval >= 0.5F) {
             timeLastFPS = timer.absTime;
-            lastFPS = (int) (Stats.fpsCounter / l);
+            lastFPS = (int) (Stats.fpsCounter / Stats.fpsInteval);
             Stats.fpsCounter = 0;
-            onStatsUpdated((float) l);
+            onStatsUpdated();
         }
         if (Game.DO_TIMING)
             TimingHelper.endSec();

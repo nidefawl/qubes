@@ -1,4 +1,4 @@
-package nidefawl.qubes.commands;
+package nidefawl.qubes.server.commands;
 
 import java.util.HashSet;
 
@@ -13,6 +13,7 @@ public class CommandHandler {
 
     private void registerBaseCommands() {
         this.register(CommandStop.class);
+        this.register(CommandSave.class);
     }
 
     private void register(Class<? extends Command> class1) {
@@ -39,9 +40,14 @@ public class CommandHandler {
 
     private void executeCommand(ICommandSource source, Command c, String cmd, String[] args, String line) {
         try {
-            source.preExecuteCommand(c);
-            c.testPermission(source, cmd, args, line);
-            c.execute(source, cmd, args, line);
+            if (c.runSynchronized()) {
+                source.getServer().commandQueue.add(new PreparedCommand(source, c, cmd, args, line));
+            } else {
+
+                source.preExecuteCommand(c);
+                c.testPermission(source, cmd, args, line);
+                c.execute(source, cmd, args, line);
+            }
         } catch (Exception e) {
             source.onError(c, e);
         }

@@ -9,7 +9,6 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 
 public class Button extends AbstractUI implements Renderable {
-    public int           id;
     private String       text;
     private FontRenderer font;
     private int          color  = 0x999999;
