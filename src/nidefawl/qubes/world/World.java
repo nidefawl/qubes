@@ -66,7 +66,7 @@ public abstract class World {
 //                fTime = 0;
         dayLen = 211500;
 //        time = 53000;
-        time = 163000;
+        time = 113000;
         fTime=0;
         float timeOffset = (this.time) % dayLen;
         float fSun = (timeOffset + fTime) / (float) dayLen + 0.25F;

@@ -12,8 +12,6 @@ public class Tess extends TesselatorState {
             "in_normal",
             "in_texcoord",
             "in_color",
-            "in_brightness",
-            "in_blockinfo",
     };
 
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
@@ -27,11 +25,6 @@ public class Tess extends TesselatorState {
     public int[]         rawBuffer = new int[BUF_INCR];
     protected int           rgba;
     protected float         u, v;
-    protected float         u2, v2;
-    protected int           br;
-    protected int           attrBlockType;
-    protected int           attrBlockData;
-    protected int           attrBlockRenderType;
     protected int           normal;
     protected float         offsetX;
     protected float         offsetY;
@@ -62,14 +55,6 @@ public class Tess extends TesselatorState {
         add(x, y, z);
     }
 
-    public void setBrightness(int br) {
-        if (!useTexturePtr2 && vertexcount > 0) {
-            throw new IllegalStateException("Cannot enable texture pointer after a vertex has been added");
-        }
-        this.br = br;
-        this.useTexturePtr2 = true;
-    }
-
     public void setUV(float u, float v) {
         if (!useTexturePtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable texture pointer after a vertex has been added");
@@ -77,16 +62,6 @@ public class Tess extends TesselatorState {
         this.u = u;
         this.v = v;
         this.useTexturePtr = true;
-    }
-
-    public void setAttr(int blockId, int blockData, int renderType) {
-        if (!useAttribPtr1 && vertexcount > 0) {
-            throw new IllegalStateException("Cannot enable attr pointer after a vertex has been added");
-        }
-        this.attrBlockType = blockId;
-        this.attrBlockData = blockData;
-        this.attrBlockRenderType = renderType;
-        this.useAttribPtr1 = true;
     }
 
     public void add(float x, float y) {
@@ -129,13 +104,6 @@ public class Tess extends TesselatorState {
         
         if (useColorPtr) {
             rawBuffer[index++] = rgba;
-        }
-        if (useTexturePtr2) {
-            rawBuffer[index++] = br;
-        }
-        if (useAttribPtr1) {
-            rawBuffer[index++] = (attrBlockType&Block.BLOCK_MASK) | (attrBlockRenderType<<16);
-            rawBuffer[index++] = attrBlockData;
         }
         vertexcount++;
     }
@@ -227,7 +195,7 @@ public class Tess extends TesselatorState {
                     GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
                     GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
                 } else {
-                    for (int i = 0; i < attributes.length; i++)
+                    for (int i = 0; i < 3; i++)
                         GL20.glDisableVertexAttribArray(i);
                 }
             } else {
@@ -248,14 +216,8 @@ public class Tess extends TesselatorState {
         this.vertexcount = 0;
         this.useNormalPtr = false;
         this.useTexturePtr = false;
-        this.useTexturePtr2 = false;
-        this.useAttribPtr1 = false;
         this.useColorPtr = false;
         this.u = this.v = 0;
-        this.attrBlockType = 0;
-        this.attrBlockRenderType= 0;
-        this.attrBlockData = 0;
-        this.br = 0;
         this.rgba = -1;
         this.offsetX = this.offsetY = this.offsetZ = 0;
     }

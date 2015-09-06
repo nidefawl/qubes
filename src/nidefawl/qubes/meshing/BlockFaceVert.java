@@ -4,7 +4,6 @@ import java.nio.ByteOrder;
 
 public class BlockFaceVert {
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
-    int                          ao           = 0;
     int                          rgba;
     float                        u;
     float                        v;

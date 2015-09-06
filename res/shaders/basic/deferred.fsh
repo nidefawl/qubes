@@ -36,7 +36,7 @@ struct SurfaceProperties {
     vec4    position;  // camera/eye space position
     vec4    worldposition;  // world space position
     vec3    viewVector;                     //Vector representing the viewing direction
-    vec4    blockinfo;
+    uvec4    blockinfo;
     vec4    sunSpotColor;
     float   sunSpotDens;
     float   sunProximity;
@@ -46,7 +46,7 @@ struct SurfaceProperties {
 
 uniform sampler2D texColor;
 uniform sampler2D texNormals;
-uniform sampler2D texMaterial;
+uniform usampler2D texMaterial;
 uniform sampler2D texDepth;
 uniform sampler2DShadow texShadow;
 uniform sampler2D texShadow2;
@@ -157,12 +157,11 @@ void main() {
 	vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
 
     setSunSpotDens();
-    float block = prop.blockinfo.x;
   	float directShading = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
-    float shadow = getShadow();
-	float isSky = clamp(1.0f-prop.blockinfo.x, 0.0f, 1.0f);
-	float isWater = float(block==4||block==6);
-	float isLight = float(block==6);
+    float shadow = 1;//getShadow();
+	float isSky = float(prop.blockinfo.y==0);
+	float isWater = float(prop.blockinfo.y==4||prop.blockinfo.y==6);
+	float isLight = float(prop.blockinfo.y==6);
 
 
 	vec3 Ispec = SkyLight.Ls.rgb * directShading * spec;

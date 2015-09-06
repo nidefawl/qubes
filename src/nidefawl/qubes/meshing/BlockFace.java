@@ -17,9 +17,6 @@ public class BlockFace {
     private int[] pos;
     public int w;
     public int h;
-    final static float[] AO_TABLE = new float[] {
-            153F/255F, 183F/255F, 255F/255F
-    };
 
 
     public BlockFace(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
@@ -82,17 +79,10 @@ public class BlockFace {
 
 
     public void drawBasic(BlockFaceAttr attr) {
-        if (bs.face == 0) {
-            attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
-            attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
-            attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
-            attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-        } else {
-            attr.v0.setPos(this.v3[0], this.v3[1], this.v3[2]);
-            attr.v1.setPos(this.v2[0], this.v2[1], this.v2[2]);
-            attr.v2.setPos(this.v1[0], this.v1[1], this.v1[2]);
-            attr.v3.setPos(this.v0[0], this.v0[1], this.v0[2]);
-        }
+        attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
+        attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
+        attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
+        attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
     }
     
     public void draw(BlockFaceAttr attr) {
@@ -100,29 +90,6 @@ public class BlockFace {
         Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
         int side = this.bs.axis<<1|this.bs.face;
         float m = 1F;
-//        if (!Main.useShaders) {
-//            switch (side) {
-//                case Dir.DIR_NEG_Y:
-//                    m = 0.5F;
-//                    break;
-//                case Dir.DIR_POS_Y:
-//                    m = 1F;
-//                    break;
-//                case Dir.DIR_NEG_Z:
-//                    m = 0.8F;
-//                    break;
-//                case Dir.DIR_POS_Z:
-//                    m = 0.8F;
-//                    break;
-//                case Dir.DIR_NEG_X:
-//                    m = 0.6F;
-//                    break;
-//                case Dir.DIR_POS_X:
-//                    m = 0.6F;
-//                    break;
-//            }
-//        }
-//        float m = 1F;
         float alpha = block.getAlpha();
         int c = block.getColor();
         float b = (c & 0xFF) / 255F;
@@ -131,87 +98,29 @@ public class BlockFace {
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        AO_TABLE[0] = 0.6F;
-        AO_TABLE[1] = 0.8F;
-        AO_TABLE[2] = 1.0F;
-
-        AO_TABLE[0] = 0.4F;
-        AO_TABLE[1] = 0.6F;
-        AO_TABLE[2] = 1.0F;
-        
-        
-        float fao0 = AO_TABLE[this.bs.ao0];
-        float fao1 = AO_TABLE[this.bs.ao1];
-        float fao2 = AO_TABLE[this.bs.ao2];
-        float fao3 = AO_TABLE[this.bs.ao3];
-        
-        attr.setBrightness(0xf00000);
         int tex = block.getTextureFromSide(side);
         attr.setTex(tex);
+
+        attr.setBrightness(0xf00000);
         
-        int idx = 0;
+        attr.setAO(this.bs.ao0, this.bs.ao1, this.bs.ao2, this.bs.ao3);
         
-        if (bs.face == 0) {
-            if (fao1 <= fao2 && fao1 <= fao0) {
-                bs.rotateVertex = true;
-            } 
-            if (fao3 <= fao0 && fao3 <= fao2) {
-                bs.rotateVertex = true;
-            }
-            if (bs.rotateVertex) {
-                setUV(attr.v3, 3);
-                attr.v3.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
-                attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-            }
-            setUV(attr.v0, 0);
-            attr.v0.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
-            attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
+        setUV(attr.v0, 0);
+        attr.v0.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
 
-            setUV(attr.v1, 1);
-            attr.v1.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
-            attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
+        setUV(attr.v1, 1);
+        attr.v1.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
 
-            setUV(attr.v2, 2);
-            attr.v2.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
-            attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
-            
-            if (!bs.rotateVertex) {
-                setUV(attr.v3, 3);
-                attr.v3.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
-                attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-            }
-        } else {
-            if (fao1 <= fao2 && fao1 <= fao0) {
-                bs.rotateVertex = true;
-            } 
-            if (fao3 <= fao0 && fao3 <= fao2) {
-                bs.rotateVertex = true;
-            }
-            if (bs.rotateVertex) {
-                setUV(attr.v0, 0);
-                attr.v0.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
-                attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
-            }
+        setUV(attr.v2, 2);
+        attr.v2.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
 
-            setUV(attr.v3, 3);
-            attr.v3.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
-            attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-
-            setUV(attr.v2, 2);
-            attr.v2.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
-            attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
-
-            setUV(attr.v1, 1);
-            attr.v1.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
-            attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
-            
-
-            if (!bs.rotateVertex) {
-                setUV(attr.v0, 0);
-                attr.v0.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
-                attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
-            }
-        }
+        setUV(attr.v3, 3);
+        attr.v3.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
+        
     }
 
     private void setUV(BlockFaceVert tess, int idx) {

@@ -19,6 +19,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
@@ -161,11 +162,15 @@ public class Shader {
             glAttachObjectARB(this.shader, this.geometryShader);
             Engine.checkGLError("glAttachObjectARB");
         }
-        String[] tessAttrib = Tess.attributes;
-        for (int i = 0; i < tessAttrib.length; i++) {
-            glBindAttribLocationARB(this.shader, i, tessAttrib[i]);
+        for (int i = 0; i < Tess.attributes.length; i++) {
+            glBindAttribLocationARB(this.shader, i, Tess.attributes[i]);
             if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+tessAttrib[i]+" = "+i);
+                Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+Tess.attributes[i]+" = "+i);
+        }
+        for (int i = 0; i < BlockFaceAttr.attributes.length; i++) {
+            glBindAttribLocationARB(this.shader, i+Tess.attributes.length, BlockFaceAttr.attributes[i]);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
         }
         GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
         GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");

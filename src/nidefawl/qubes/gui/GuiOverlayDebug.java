@@ -87,7 +87,6 @@ public class GuiOverlayDebug extends Gui {
         UniformBuffer.pushMat(mat);
         glEnable(GL_BLEND);
         GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, texture);
-        Shaders.textured.enable();
         Tess.tessFont.setColor(-1, 255);
         Tess.tessFont.add(0, 0 + h, 0, 0, 0);
         Tess.tessFont.add(w1, 0 + h, 0, 1, 0);
@@ -97,6 +96,15 @@ public class GuiOverlayDebug extends Gui {
             depthBufShader.enable();
             depthBufShader.setProgramUniform1i("depthSampler", 0);
             depthBufShader.setProgramUniform2f("zbufparam", f1, f2);
+        } else {
+
+            if (texture ==  Engine.getSceneFB().getTexture(2)) {
+                Shaders.renderUINT.enable();
+                Shaders.renderUINT.setProgramUniform1i("tex0", 0);
+            } else {
+                Shaders.textured.enable();    
+            }   
+            
         }
         Tess.tessFont.draw(7);
         Shaders.colored.enable();

@@ -20,7 +20,6 @@ public class BlockSurface {
     public int ao1 = 0;
     public int ao2 = 0;
     public int ao3 = 0;
-    public boolean rotateVertex;
     public boolean extraFace;
     protected boolean resolved;
     public boolean hasAO;
@@ -48,21 +47,16 @@ public class BlockSurface {
                     calcNegZ(cache);
                     return;
             }
-        } else {
-            ao0 = 2;
-            ao1 = 2;
-            ao2 = 2;
-            ao3 = 2;
         }
     }
 
     int vertexAO(int side1, int side2, int corner) {
-        int ao = 2;
-        if (isOpaque(side1)) 
+        int ao = 3;
+        if (!isOpaque(side1)) 
             ao--;
-        if (isOpaque(side2)) 
+        if (!isOpaque(side2)) 
             ao--;
-        if (ao>0&&isOpaque(corner)) 
+        if (!isOpaque(corner)) 
             ao--;
         return ao;
     }
@@ -107,10 +101,10 @@ public class BlockSurface {
         int nc = cache.getTypeId(x - 1, y, z);
         int cp = cache.getTypeId(x, y + 1, z);
         int pc = cache.getTypeId(x + 1, y, z);
-        this.ao0 = vertexAO(cn, pc, pn);
-        this.ao1 = vertexAO(cn, nc, nn);
-        this.ao2 = vertexAO(cp, nc, np);
-        this.ao3 = vertexAO(cp, pc, pp);
+        this.ao1 = vertexAO(cn, pc, pn);
+        this.ao0 = vertexAO(cn, nc, nn);
+        this.ao3 = vertexAO(cp, nc, np);
+        this.ao2 = vertexAO(cp, pc, pp);
     }
 
     private void calcPosX(ChunkRenderCache cache) {
@@ -128,10 +122,10 @@ public class BlockSurface {
         int cn = cache.getTypeId(x, y, z-1);
         int pc = cache.getTypeId(x, y+1, z);
         int cp = cache.getTypeId(x, y, z+1);
-        this.ao0 = vertexAO(cn, nc, nn);//bottom right
-        this.ao1 = vertexAO(cn, pc, pn); //top right
-        this.ao2 = vertexAO(cp, pc, pp); //top left
-        this.ao3 = vertexAO(cp, nc, np); //bottom left
+        this.ao1 = vertexAO(cn, nc, nn);//bottom right
+        this.ao2 = vertexAO(cn, pc, pn); //top right
+        this.ao3 = vertexAO(cp, pc, pp); //top left
+        this.ao0 = vertexAO(cp, nc, np); //bottom left
     }
     private void calcNegX(ChunkRenderCache cache) {
         int x = this.x-1;
@@ -148,10 +142,10 @@ public class BlockSurface {
         int cn = cache.getTypeId(x, y, z-1);
         int pc = cache.getTypeId(x, y+1, z);
         int cp = cache.getTypeId(x, y, z+1);
-        this.ao0 = vertexAO(cn, pc, pn);//top left
-        this.ao1 = vertexAO(cn, nc, nn);//bottom left
-        this.ao2 = vertexAO(cp, nc, np); //bottom right
-        this.ao3 = vertexAO(cp, pc, pp); //top right
+        this.ao3 = vertexAO(cn, pc, pn);//top left
+        this.ao0 = vertexAO(cn, nc, nn);//bottom left
+        this.ao1 = vertexAO(cp, nc, np); //bottom right
+        this.ao2 = vertexAO(cp, pc, pp); //top right
     }
     private void calcPosY(ChunkRenderCache cache) {
         int x = this.x;
@@ -188,10 +182,10 @@ public class BlockSurface {
         int cn = cache.getTypeId(x, y, z-1);
         int pc = cache.getTypeId(x+1, y, z);
         int cp = cache.getTypeId(x, y, z+1);
-        this.ao0 = vertexAO(cp, nc, np);
-        this.ao1 = vertexAO(cn, nc, nn);
-        this.ao2 = vertexAO(cn, pc, pn);
-        this.ao3 = vertexAO(cp, pc, pp);
+        this.ao1 = vertexAO(cp, nc, np);
+        this.ao0 = vertexAO(cn, nc, nn);
+        this.ao3 = vertexAO(cn, pc, pn);
+        this.ao2 = vertexAO(cp, pc, pp);
     }
 
 
@@ -202,15 +196,6 @@ public class BlockSurface {
             c.resolve(cache);
         if (c.type == this.type && c.face == this.face && c.pass == this.pass && c.extraFace == this.extraFace) {
             return this.ao0 == c.ao0 && this.ao1 == c.ao1 && this.ao2 == c.ao2 && this.ao3 == c.ao3;
-//            if (Math.abs(this.x-c.x)>3||Math.abs(this.z-c.z)>3) {
-//                System.out.println("no");
-//                return false;
-//            }
-//            int bface = ;
-//            if (bface==2) {
-//                return false;
-//            }
-//            return true;
         }
         return false;
     }
@@ -235,25 +220,9 @@ public class BlockSurface {
         this.type = 0;
         this.face = 0;
         this.pass = 0;
-        this.rotateVertex = false;
         x = y = z = 0;
         axis = 0;
 
-//        public boolean transparent;
-//        public int type;
-//        public int face;
-//        public int axis;
-//        public int x;
-//        public int y;
-//        public int z;
-//        public int pass;
-//        public Region region;
-//        public int ao0 = 0;
-//        public int ao1 = 0;
-//        public int ao2 = 0;
-//        public int ao3 = 0;
-//        public boolean rotateVertex;
-//        public boolean extraFace;
     }
 
 }

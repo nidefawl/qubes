@@ -157,7 +157,12 @@ public class FrameBuffer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
+        if (format == GL_RGBA16UI) {
+            glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGRA_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
+        } else {
+            glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
+        }
+        
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
         glBindTexture(GL_TEXTURE_2D, 0);
     }

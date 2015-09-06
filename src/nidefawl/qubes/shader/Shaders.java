@@ -32,6 +32,7 @@ public class Shaders {
     public static Shader wireframe;
     public static Shader textured;
     public static Shader colored;
+    public static Shader renderUINT;
 
 
     public static void initShaders() {
@@ -43,6 +44,7 @@ public class Shaders {
             Shader new_textured = assetMgr.loadShader("shaders/textured");
             Shader new_colored = assetMgr.loadShader("shaders/colored");
             Shader new_wireframe = assetMgr.loadShader("shaders/wireframe");
+            Shader new_uint = assetMgr.loadShader("shaders/render_uint_texture");
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             if (Shaders.normals != null)
@@ -53,11 +55,14 @@ public class Shaders {
                 Shaders.colored.release();
             if (Shaders.wireframe != null)
                 Shaders.wireframe.release();
+            if (Shaders.renderUINT != null)
+                Shaders.renderUINT.release();
             Shaders.wireframe = new_wireframe;
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
             Shaders.textured = new_textured;
             Shaders.colored = new_colored;
+            Shaders.renderUINT = new_uint;
         } catch (ShaderCompileError e) {
             Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             System.out.println("shader " + e.getName() + " failed to compile");

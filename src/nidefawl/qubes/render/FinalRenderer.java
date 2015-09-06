@@ -319,7 +319,8 @@ public class FinalRenderer {
         sceneFB = new FrameBuffer(displayWidth, displayHeight);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB16F);
-        sceneFB.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGB16F);
+        sceneFB.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
+        sceneFB.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
         sceneFB.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
         sceneFB.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
         sceneFB.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
