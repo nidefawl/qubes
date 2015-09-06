@@ -12,16 +12,17 @@ void main() {
 	gl_Position = in_matrix.mvp * in_position;
 	vposition = (in_matrix.mv * in_position).xyz;
 	color = linecolor;
-	if (in_blockinfo.y == 0) {
+	int vertexID = int(mod(gl_VertexID, 4));
+	if (vertexID == 0) {
     	triangle = vec3(0, 0, 255);
 	}
-	if (in_blockinfo.y == 1) {
+	if (vertexID == 1) {
     	triangle = vec3(0, 255, 0);
 	}
-	if (in_blockinfo.y == 2) {
+	if (vertexID == 2) {
     	triangle = vec3(255, 0, 0);
 	}
-	if (in_blockinfo.y == 3) {
+	if (vertexID == 3) {
     	triangle = vec3(0, 0, 255);
 	}
 }
