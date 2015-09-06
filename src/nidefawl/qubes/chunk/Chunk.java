@@ -3,18 +3,18 @@ package nidefawl.qubes.chunk;
 import nidefawl.qubes.block.Block;
 
 public class Chunk {
-    public static final int SIZE_BITS = 4;
-    public static final int SIZE      = 1 << SIZE_BITS;
-    public static final int MASK = SIZE-1;
+    public static final int SIZE_BITS       = 4;
+    public static final int SIZE            = 1 << SIZE_BITS;
+    public static final int MASK            = SIZE - 1;
     public final int        worldHeightBits;
-    private short[]          blocks;
+    private short[]         blocks;
     public final int        x;
     public final int        z;
     public int              facesRendered;
-    public byte[]           biomes    = new byte[SIZE * SIZE];
-    public long loadTime = System.currentTimeMillis();
-    boolean updateHeightMap = true;
-    public boolean needsSave = false;
+    public byte[]           biomes          = new byte[SIZE * SIZE];
+    public long             loadTime        = System.currentTimeMillis();
+    boolean                 updateHeightMap = true;
+    public boolean          needsSave       = false;
 
     public Chunk(int x, int z, int heightBits) {
         this.worldHeightBits = heightBits;
@@ -22,7 +22,7 @@ public class Chunk {
         this.z = z;
     }
 
-    boolean isEmpty = false;
+    boolean     isEmpty = false;
     private int top;
 
     public void checkIsEmtpy() {
@@ -112,8 +112,9 @@ public class Chunk {
         this.blocks = blocks;
         flagModified();
     }
+
     public boolean justLoaded() {
-        return System.currentTimeMillis()-this.loadTime<10000;
+        return System.currentTimeMillis() - this.loadTime < 10000;
     }
 
     public short[] getBlocks() {
