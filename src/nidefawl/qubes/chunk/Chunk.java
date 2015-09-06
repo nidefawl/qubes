@@ -13,7 +13,8 @@ public class Chunk {
     public int              facesRendered;
     public byte[]           biomes    = new byte[SIZE * SIZE];
     public long loadTime = System.currentTimeMillis();
-    boolean modified = false;
+    boolean updateHeightMap = true;
+    public boolean needsSave = false;
 
     public Chunk(int x, int z, int heightBits) {
         this.worldHeightBits = heightBits;
@@ -61,24 +62,32 @@ public class Chunk {
         return -1;
     }
 
-    public void setType(int i, int j, int k, int type) {
-        this.blocks[j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] = (short) type;
-        flagModified();
+    public boolean setType(int i, int j, int k, int type) {
+        int idx = j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i;
+        int cur = this.blocks[idx] & Block.BLOCK_MASK;
+        if (cur != type) {
+
+            this.blocks[idx] = (short) type;
+            flagModified();
+            return true;
+        }
+        return false;
     }
 
     private void flagModified() {
-        this.modified = true;
+        this.updateHeightMap = true;
+        this.needsSave = true;
     }
 
     public int getTopBlock() {
-        if (this.modified || this.top < 0) {
+        if (this.updateHeightMap || this.top < 0) {
             updateChunk();
         }
         return top;
     }
 
     private void updateChunk() {
-        this.modified = false;
+        this.updateHeightMap = false;
         int topY = 0;
         for (int i = 0; i < SIZE; i++) {
             for (int k = 0; k < SIZE; k++) {

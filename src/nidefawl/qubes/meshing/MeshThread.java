@@ -60,15 +60,6 @@ public class MeshThread extends Thread {
                 Game.instance.setException(new GameError("Exception in " + getName(), e));
                 break;
             }
-            try {
-                if (sleepTime > 0) {
-                    Thread.sleep(sleepTime);
-                }
-            } catch (InterruptedException e) {
-                if (!isRunning)
-                    break;
-                onInterruption();
-            }
         }
         System.out.println("render thread ended");
     }
@@ -82,10 +73,9 @@ public class MeshThread extends Thread {
 
     int tasksRunning = 0;
 
-    public int finishTasks() {
-        if (finish.isEmpty()) {
-            if (!hasResults)
-                return 0;
+    public MeshedRegion finishTask() {
+        MeshedRegion m = null;
+        if (finish.isEmpty() && hasResults) {
             synchronized (this.results) {
                 this.finish.addAll(this.results);
                 this.results.clear();
@@ -93,17 +83,15 @@ public class MeshThread extends Thread {
             }
         }
         if (finish.size() > 0) {
-            int num = 0;
             MeshUpdateTask w = this.finish.getFirst();
             if (w.finish(this.id)) {
                 this.finish.removeFirst();
                 w.worldInstance = 0;
+                m = w.getRegion();
                 tasksRunning--;
             }
-            num++;
-            return num;
         }
-        return 0;
+        return m;
     }
 
 

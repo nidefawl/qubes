@@ -9,9 +9,13 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
+	<property name="targetfile" value="U:\game\server.jar" />
     <path id="CraftlandLauncherLoader.classpath">
         <pathelement location="bin"/>
-        <pathelement location="lib/lwjgl/lwjgl.jar"/>
+        <pathelement location="lib/jline/jline-2.13.jar"/>
+        <pathelement location="lib/lwjgl_dbg/lwjgl.jar"/>
+        <pathelement location="lib/guava/guava-18.0.jar"/>
+        <pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
     </path>
     <target name="init">
         <mkdir dir="compile"/>
@@ -28,6 +32,14 @@
         </copy>
         <unzip src="lib/lwjgl/lwjgl.jar" dest="compile" />
     </target>
+    <target name="initserver">
+        <mkdir dir="compileserver"/>
+        <copy includeemptydirs="false" todir="compileserver">
+            <fileset dir="src">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
     <target name="clean">
         <delete dir="compile"/>
     </target>
@@ -38,9 +50,27 @@
             <classpath refid="CraftlandLauncherLoader.classpath"/>
         </javac>
     </target>
+    <target depends="initserver" name="buildserver">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="compileserver" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="CraftlandLauncherLoader.classpath"/>
+        </javac>
+    </target>
 	<target name="jar" depends="build">
-    <delete file="..\game.jar"/>
-	<jar destfile="..\game.jar" basedir="compile" includes="**/*">
+	    <delete file="..\game.jar"/>
+		<jar destfile="..\game.jar" basedir="compile" includes="**/*">
 	</jar>
+	</target>
+
+	<target name="jarserver" depends="buildserver">
+		<delete file="..\server.jar"/>
+		<jar destfile="..\server.jar" basedir="compileserver" includes="**/*">
+	        <manifest>
+	            <attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
+	        </manifest>
+		</jar>
+        <delete file="${targetfile}"/>
+        <copy file="..\server.jar" tofile="${targetfile}"/>
     </target>
 </project>

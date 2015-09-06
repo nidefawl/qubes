@@ -24,7 +24,6 @@ public class ThreadConnect implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("connect thread started");
         NetworkClient client = null;
         try {
             stateStr = "Connecting to "+host+":"+port;
@@ -54,7 +53,7 @@ public class ThreadConnect implements Runnable {
                 if (!connected && client != null) {
                     if (!cancelled)
                         stateStr = client.getClient().getDisconnectReason();
-                    client.disconnect();
+                    client.disconnect("Failed connecting to server");
                 }
             } catch (Exception e2) {
                 e2.printStackTrace();

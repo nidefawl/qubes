@@ -7,9 +7,11 @@ import java.util.Set;
 import com.google.common.collect.*;
 
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.ChunkManager;
+import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.packet.PacketSSetBlocks;
-import nidefawl.qubes.network.server.ServerHandler;
+import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameMath;
@@ -55,10 +57,10 @@ public class PlayerChunkTracker {
     }
 
     Map<Long, Entry> map              = new MapMaker().makeMap();
-    Set<Long>        newInstances     = Sets.newHashSet();
     Set<Entry>       flaggedInstances = Sets.newHashSet();
 
     private WorldServer worldServer;
+    int                 ticksLastCheck = 0;
 
     public PlayerChunkTracker(WorldServer worldServer) {
         this.worldServer = worldServer;
@@ -72,19 +74,19 @@ public class PlayerChunkTracker {
         BlockPos pos = player.pos.toBlock();
         int lastX = player.chunkX;
         int lastZ = player.chunkZ;
-        player.chunkX = pos.x >> Chunk.SIZE_BITS;
-        player.chunkZ = pos.z >> Chunk.SIZE_BITS;
-        int dx = player.chunkX - lastX;
-        int dz = player.chunkZ - lastZ;
-        if (dx != 0 || dz != 0) {
+        int chunkX = pos.x >> Chunk.SIZE_BITS;
+        int chunkZ = pos.z >> Chunk.SIZE_BITS;
+        int dx = chunkX - lastX;
+        int dz = chunkZ - lastZ;
+        if (Math.abs(dx)>2||Math.abs(dz)>2) {
             for (int x = -dist; x <= dist; x++) {
                 for (int z = -dist; z <= dist; z++) {
                     int rX = x + lastX;
                     int rZ = z + lastZ;
-                    int aX = x + player.chunkX;
-                    int aZ = z + player.chunkZ;
+                    int aX = x + chunkX;
+                    int aZ = z + chunkZ;
                     //if old position outside new boundaries: remove old 
-                    if (rX < player.chunkX - dist || rZ < player.chunkZ - dist || rX > player.chunkX + dist || rZ > player.chunkZ + dist) {
+                    if (rX < chunkX - dist || rZ < chunkZ - dist || rX > chunkX + dist || rZ > chunkZ + dist) {
                         untrackPlayerChunk(player, rX, rZ);
 
                         //if new position outside old boundaries: add new
@@ -94,6 +96,8 @@ public class PlayerChunkTracker {
                     }
                 }
             }
+            player.chunkX = chunkX;
+            player.chunkZ = chunkZ;
         }
     }
 
@@ -161,13 +165,9 @@ public class PlayerChunkTracker {
         if (e == null && create) {
             e = new Entry(x, z);
             this.map.put(l, e);
-            this.newInstances.add(e.hash);
+            worldServer.getChunkManager().queueLoadChecked(l);
         }
         return e;
-    }
-
-    public Set<Long> getChunksToLoad() {
-        return this.newInstances;
     }
 
     public void flagBlock(int x, int y, int z) {
@@ -187,7 +187,7 @@ public class PlayerChunkTracker {
                 Chunk c = this.worldServer.getChunk(e.x, e.z);
                 if (c != null) {
                     if (e.wholeChunkUpdate) {
-                        ServerHandler[] handlers = new ServerHandler[e.players.size()];
+                        ServerHandlerPlay[] handlers = new ServerHandlerPlay[e.players.size()];
                         int i = 0;
                         for (Player p : e.players) {
                             handlers[i++] = p.netHandler;
@@ -221,6 +221,36 @@ public class PlayerChunkTracker {
 
             this.flaggedInstances.clear();
 
+        }
+    }
+
+    public int getSize() {
+        return this.map.size();
+    }
+
+    public boolean isRequired(int cx, int cz) {
+        int dist = 2;
+        for (int x = -dist; x <= dist; x++) {
+            for (int z = -dist; z <= dist; z++) {
+                if (this.map.containsKey(GameMath.toLong(x + cx, z + cz))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void recheckIfRequiredChunksLoaded() {
+        ticksLastCheck++;
+        if (ticksLastCheck > 100) {
+            ticksLastCheck = 0;
+            ChunkManagerServer mgr = (ChunkManagerServer) worldServer.getChunkManager();
+            for (Entry e : this.map.values()) {
+                Chunk c = mgr.get(e.x, e.z);
+                if (c == null) {
+                    mgr.queueLoadChecked(e.hash);
+                }
+            }
         }
     }
 

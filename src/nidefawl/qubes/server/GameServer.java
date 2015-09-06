@@ -164,11 +164,15 @@ public class GameServer implements Runnable, IErrorHandler {
     public boolean isRunning() {
 		return this.running;
 	}
+    public void stopServer() {
+        this.running = false;
+    }
 
 	public void halt() {
 		if (this.running) {
 			this.running = false;
 			System.out.println("Shutting down server...");
+            save(true);
 			if (this.worlds != null) {
 	            for (int i = 0; i < this.worlds.length; i++) {
 	                this.worlds[i].onLeave();
@@ -186,7 +190,12 @@ public class GameServer implements Runnable, IErrorHandler {
 
 	public void loadConfig() {
 		try {
-			this.config.load(new File("config", "server.yml"));
+		    File f = new File(WorkingEnv.getConfigFolder(), "server.yml");
+		    if (!f.exists()) {
+		        this.config.write(f);
+		    } else {
+	            this.config.load();
+		    }
 		} catch (InvalidConfigException e) {
 			e.printStackTrace();
 		}
@@ -226,6 +235,14 @@ public class GameServer implements Runnable, IErrorHandler {
         for (int i = 0; i < this.worlds.length; i++) {
             this.worlds[i].save(b);
         }
+    }
+
+    public NetworkServer getNetwork() {
+        return this.networkServer;
+    }
+
+    public WorldServer[] getWorlds() {
+        return this.worlds;
     }
 
 }

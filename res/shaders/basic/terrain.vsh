@@ -3,7 +3,7 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "vertex_layout.glsl"
 
-
+// uniform vec4 terroffset;
 out vec4 color;
 out vec4 texcoord;
 out vec3 normal;
@@ -17,5 +17,6 @@ void main() {
 	color = in_color;
 
 	blockinfo = in_blockinfo;
+	// gl_Position = in_matrix.mvp * (in_position+terroffset);
 	gl_Position = in_matrix.mvp * in_position;
 }

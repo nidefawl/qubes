@@ -25,7 +25,7 @@ import nidefawl.qubes.world.World;
 
 public class WorldRenderer {
 
-    public static final int   NUM_PASSES      = 6;
+    public static final int   NUM_PASSES      = 3;
 
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
 //    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
@@ -108,7 +108,6 @@ public class WorldRenderer {
             TimingHelper.endStart("testShader");
         terrainShader.enable();
         terrainShader.setProgramUniform1i("blockTextures", 0);
-        terrainShader.setProgramUniform1i("renderWireFrame", Engine.renderWireFrame ? 1 : 0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("test shader");
         

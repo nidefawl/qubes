@@ -1,5 +1,6 @@
 package nidefawl.qubes.network.client;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -26,13 +27,11 @@ public class ClientHandler extends Handler {
 
     public final NetworkClient client;
     private long               time;
-    private final Connection   conn;
     public final static long   timeout = 5000;
 
-    public ClientHandler(final NetworkClient client, Connection conn) {
+    public ClientHandler(final NetworkClient client) {
         this.client = client;
         this.time = System.currentTimeMillis();
-        this.conn = conn;
     }
 
     @Override
@@ -44,7 +43,7 @@ public class ClientHandler extends Handler {
     public void update() {
         if (state != STATE_CONNECTED) {
             if (System.currentTimeMillis() - time > timeout) {
-                this.conn.disconnect(Connection.LOCAL, "Packet timed out");
+                this.client.disconnect("Packet timed out");
                 return;
             }
         } else {
@@ -53,22 +52,22 @@ public class ClientHandler extends Handler {
 
     @Override
     public void handlePing(PacketPing p) {
-        this.conn.sendPacket(new PacketPing(p.time));
+        this.client.sendPacket(new PacketPing(p.time));
     }
 
     @Override
     public void handleHandshake(PacketHandshake packetHandshake) {
         if (this.state != STATE_HANDSHAKE) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            this.client.disconnect("Invalid packet");
             return;
         }
         if (packetHandshake.version != this.client.netVersion) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid version. Client is on version " + this.client.netVersion + ", Server on " + packetHandshake.version);
+            this.client.disconnect("Invalid version. Client is on version " + this.client.netVersion + ", Server on " + packetHandshake.version);
             return;
         }
         this.state = STATE_AUTH;
         this.time = System.currentTimeMillis();
-        this.conn.sendPacket(new PacketAuth(Game.instance.getProfile().getName()));
+        this.client.sendPacket(new PacketAuth(Game.instance.getProfile().getName()));
     }
 
     @Override
@@ -78,12 +77,7 @@ public class ClientHandler extends Handler {
 
     @Override
     public void handleDisconnect(PacketDisconnect packetDisconnect) {
-        this.conn.disconnect(Connection.REMOTE, "Server sent disconnect: " + packetDisconnect.message);
-    }
-
-    @Override
-    public void onFinish() {
-        System.out.println("Lost connection: " + getHandlerName());
+        this.client.onKick(packetDisconnect.code, packetDisconnect.message);
     }
 
     public int getState() {
@@ -115,7 +109,7 @@ public class ClientHandler extends Handler {
     @Override
     public void handleJoinGame(PacketSSpawnInWorld packetJoinGame) {
         if (this.state != STATE_AUTH) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            this.client.disconnect("Invalid packet");
             return;
         }
         this.state = STATE_CONNECTED;
@@ -131,7 +125,7 @@ public class ClientHandler extends Handler {
     }
 
     public void sendPacket(Packet packet) {
-        this.conn.sendPacket(packet);
+        this.client.sendPacket(packet);
     }
 
     public static short[] byteToShortArray(byte[] blocks, int offset, int len) {
@@ -207,4 +201,5 @@ public class ClientHandler extends Handler {
             this.world.setType(p.chunkX<<Chunk.SIZE_BITS|x, y, p.chunkZ<<Chunk.SIZE_BITS|z, type, Flags.MARK);            
         }
     }
+
 }

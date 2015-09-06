@@ -20,8 +20,10 @@ public class PreparedCommand {
             source.preExecuteCommand(c);
             c.testPermission(source, cmd, args, line);
             c.execute(source, cmd, args, line);
-        } catch (Exception e) {
+        } catch (CommandException e) {
             source.onError(c, e);
+        } catch (Exception e) {
+            source.onError(c, new CommandException("Error: "+e.getMessage(), e));
         }
     }
 

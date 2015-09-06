@@ -216,20 +216,21 @@ public class ShadowRenderer {
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 1, RegionRenderer.IN_FRUSTUM);
+        final int shadowPass = 2;
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 1, RegionRenderer.IN_FRUSTUM);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
-        glPolygonOffset(2.4f, 2.f);
+        glPolygonOffset(1.2f, 2.f);
 
         glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 2, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 2, RegionRenderer.IN_FRUSTUM);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
-        glPolygonOffset(4.4f, 2.f);
+        glPolygonOffset(2.4f, 2.f);
 
         glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 3, RegionRenderer.IN_FRUSTUM);
 
         FrameBuffer.unbindFramebuffer();
 
@@ -257,6 +258,7 @@ public class ShadowRenderer {
     public void resize(int displayWidth, int displayHeight) {
         if (this.fbShadow != null)
             this.fbShadow.cleanUp();
+        SHADOW_BUFFER_SIZE = 512*8;
         this.fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
         this.fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
         this.fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);

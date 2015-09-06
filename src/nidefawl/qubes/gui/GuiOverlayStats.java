@@ -70,7 +70,7 @@ public class GuiOverlayStats extends Gui {
         }
 
         info.clear();
-        info.add(String.format("Meshing: %.2fms", Stats.timeMeshing));
+        info.add(String.format("Meshing: %.2fms (%d %.2f)", Stats.timeMeshing, Stats.regionUpdates, Stats.timeMeshing/(float)(Stats.regionUpdates+1)));
         info.add(String.format("Rendering: %.2fms", Stats.timeRendering));
         info.add(String.format("TerrainGen: %.2fms", Stats.timeWorldGen));
         info.add(String.format("yaw/pitch: %.2f, %.2f", cam.getYaw(), cam.getPitch()));

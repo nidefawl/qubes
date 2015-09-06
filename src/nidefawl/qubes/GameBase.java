@@ -315,7 +315,14 @@ public abstract class GameBase implements Runnable {
     }
 
     protected void setVSync_impl(boolean b) {
-        glfwSwapInterval(b ? 1 : 0);
+        int vsync = 0;
+        if (b) {
+            vsync = 1;
+            if (GL.getCaps().WGL_EXT_swap_control && GL.getCaps().WGL_EXT_swap_control_tear) {
+                vsync = -1;
+            }
+        }
+        glfwSwapInterval(vsync);
     }
 
     public void updateInput() {
@@ -476,6 +483,14 @@ public abstract class GameBase implements Runnable {
         glColorMask(true, true, true, true);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+        glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
+        glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
+        glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
+        glHint(GL_FOG_HINT, GL_FASTEST);
+        glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, GL_FASTEST);
+        glHint(GL14.GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
+        glHint(GL20.GL_FRAGMENT_SHADER_DERIVATIVE_HINT, GL_FASTEST);
         //        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
         //        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
         setVSync(true);

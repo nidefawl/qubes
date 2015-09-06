@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.BootServer;
+import nidefawl.qubes.StartServer;
 import nidefawl.qubes.network.packet.InvalidPacketException;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
@@ -14,20 +14,21 @@ import nidefawl.qubes.util.GameContext;
 
 public class Connection {
     public final static int REMOTE = 0;
-    public final static int LOCAL = 1;
+    public final static int LOCAL  = 1;
 
     public final Socket           socket;
     public final DataInputStream  inStream;
     public final DataOutputStream outStream;
     private final ReaderThread    readThread;
     private final WriterThread    writeThread;
-    public volatile boolean       isConnected = true;
-    private boolean               cleanUp     = false;
-    LinkedBlockingQueue<Packet>   incoming    = new LinkedBlockingQueue<Packet>();
-    LinkedBlockingQueue<Packet>   outgoing    = new LinkedBlockingQueue<Packet>();
-    private Handler              handler;
-	private InputStream sIn;
-	private Throwable readWriteException;
+    public volatile boolean       isConnected      = true;
+    private boolean               cleanUp          = false;
+    LinkedBlockingQueue<Packet>   incoming         = new LinkedBlockingQueue<Packet>();
+    LinkedBlockingQueue<Packet>   outgoing         = new LinkedBlockingQueue<Packet>();
+    private InputStream           sIn;
+    private Throwable             readWriteException;
+    private int                   disconnectFrom   = -1;
+    private String                disconnectReason = null;
 
     public Connection(final Socket s) throws IOException {
         this.socket = s;
@@ -41,7 +42,7 @@ public class Connection {
     public void startThreads() {
         this.readThread.start();
         this.writeThread.start();
-//        this.handler.startThread();
+        //        this.handler.startThread();
     }
 
     public boolean isConnected() {
@@ -51,9 +52,7 @@ public class Connection {
     public boolean readPackets() throws IOException, InvalidPacketException {
         final Packet p = Packet.read(this.inStream);
         if (p != null) {
-            if (p.handleSynchronized())
-                this.incoming.add(p);
-            else p.handle(this.handler);
+            this.incoming.add(p);
             return true;
         } else {
             System.out.println("NOTHING!");
@@ -77,7 +76,7 @@ public class Connection {
     public void onError(final Exception e) {
         // TODO: check if we always catch the correct error 
         //(not eof/readtimeout after a NPE in a packet)
-        if (this.readWriteException == null) { 
+        if (this.readWriteException == null) {
             this.readWriteException = e;
         }
     }
@@ -87,36 +86,24 @@ public class Connection {
             this.outgoing.add(p);
         }
     }
+
     public void validateConnection() {
         if (!this.isConnected) {
             this.onDisconnect();
         } else {
             if (this.readWriteException != null) {
-                this.disconnect(LOCAL, "Error: "+this.readWriteException.getMessage());
+                String excMessage = this.readWriteException.getMessage();
+                if (this.readWriteException instanceof EOFException) {
+                    this.disconnect(REMOTE, "Connection closed");
+
+                } else {
+                    this.disconnect(LOCAL, "Error: " + excMessage);
+                }
                 if (!(this.readWriteException instanceof IOException)) {
                     this.readWriteException.printStackTrace();
                 } else if (this.readWriteException instanceof RuntimeException || this.readWriteException.getCause() instanceof RuntimeException) {
                     this.readWriteException.printStackTrace();
                 }
-                this.isConnected = false;
-            }
-        }
-    }
-
-    public void update() {
-        validateConnection();
-        if (this.isConnected) {
-            int max = 1000;
-            while (max-- > 0) {
-                final Packet p = this.incoming.poll();
-                if (p != null) {
-                    p.handle(this.handler);
-                    continue;
-                }
-                break;
-            }
-            if (this.isConnected) {
-                this.handler.update();
             }
         }
     }
@@ -142,7 +129,7 @@ public class Connection {
         }
     }
 
-    private void interruptThreads() {
+    public void interruptThreads() {
         this.readThread.interruptThread();
         this.writeThread.interruptThread();
     }
@@ -150,51 +137,48 @@ public class Connection {
     public void disconnect(int from, String reason) {
         if (this.isConnected) {
             if (Thread.currentThread() != GameContext.getMainThread()) {
-                System.err.println("Disconnect from non-mainthread: "+Thread.currentThread()+ " (Mainthread: "+GameContext.getMainThread()+")");
+                System.err.println("Disconnect from non-mainthread: " + Thread.currentThread() + " (Mainthread: " + GameContext.getMainThread() + ")");
             }
-            this.handler.onDisconnect(from, reason);
-        	try {
-        		interruptThreads();
-        		if (from != Connection.REMOTE) {
+            try {
+                this.interruptThreads();
+                if (from != Connection.REMOTE) {
                     Packet.write(new PacketDisconnect(0, reason), this.outStream);
                     this.outStream.flush();
                     this.socket.shutdownOutput();
-        		}
-        	} catch (Exception e) {
+                }
+            } catch (Exception e) {
                 if (!(e instanceof SocketException)) {
                     e.printStackTrace();
                 }
-        	}
-        	
-        	
+            }
+            this.disconnectReason = reason;
+            this.disconnectFrom = from;
             this.isConnected = false;
             this.onDisconnect();
-            System.out.println(this.handler.getHandlerName()+" disconnected: "+reason);   
         }
-    }
-
-    public void setHandler(final Handler handler) {
-        this.handler = handler;
     }
 
     public boolean finished() {
         return this.cleanUp;
     }
 
-	public InetSocketAddress getAddr() {
-		return (InetSocketAddress) this.socket.getRemoteSocketAddress();
-	}
-
-    public Handler getHandler() {
-        return this.handler;
-    }
-
-    public void onFinish() {
-        this.handler.onFinish();
+    public InetSocketAddress getAddr() {
+        return (InetSocketAddress) this.socket.getRemoteSocketAddress();
     }
 
     public Packet pollPacket() {
         return this.incoming.poll();
     }
 
+    public LinkedBlockingQueue<Packet> getIncoming() {
+        return this.incoming;
+    }
+
+    public int getDisconnectFrom() {
+        return disconnectFrom;
+    }
+
+    public String getDisconnectReason() {
+        return disconnectReason;
+    }
 }

@@ -12,6 +12,8 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
@@ -257,68 +259,52 @@ public class Shader {
     }
 
     public void setProgramUniform1i(String name, int x) {
-        Uniform1i uni = (Uniform1i) uniforms.get(name);
-        if (uni == null) {
-            int loc = getUniformLocation(name);
-            uni = new Uniform1i(name, loc);
-            uniforms.put(name, uni);
-        }
+        Uniform1i uni = getUniform(name, Uniform1i.class);
         if (uni.set(x)) {
             incUniformCalls();
         }
     }
 
     public void setProgramUniform2i(String name, int x, int y) {
-        Uniform2i uni = (Uniform2i) uniforms.get(name);
-        if (uni == null) {
-            int loc = getUniformLocation(name);
-            uni = new Uniform2i(name, loc);
-            uniforms.put(name, uni);
-        }
+        Uniform2i uni = getUniform(name, Uniform2i.class);
         if (uni.set(x, y)) {
             incUniformCalls();
         }
     }
     public void setProgramUniform2f(String name, float x, float y) {
-        Uniform2f uni = (Uniform2f) uniforms.get(name);
-        if (uni == null) {
-            int loc = getUniformLocation(name);
-            uni = new Uniform2f(name, loc);
-            uniforms.put(name, uni);
-        }
+        Uniform2f uni = getUniform(name, Uniform2f.class);
         if (uni.set(x, y)) {
             incUniformCalls();
         }
     }
     public void setProgramUniform1f(String name, float x) {
-        Uniform1f uni = (Uniform1f) uniforms.get(name);
-        if (uni == null) {
-            int loc = getUniformLocation(name);
-            uni = new Uniform1f(name, loc);
-            uniforms.put(name, uni);
-        }
+        Uniform1f uni = getUniform(name, Uniform1f.class);
         if (uni.set(x)) {
             incUniformCalls();
         }
     }
     public void setProgramUniform3f(String name, float x, float y, float z) {
-        Uniform3f uni = (Uniform3f) uniforms.get(name);
-        if (uni == null) {
-            int loc = getUniformLocation(name);
-            uni = new Uniform3f(name, loc);
-            uniforms.put(name, uni);
-        }
+        Uniform3f uni = getUniform(name, Uniform3f.class);
         if (uni.set(x, y, z)) {
             incUniformCalls();
         }
     }
-    public void setProgramUniform4f(String name, float x, float y, float z, float w) {
-        Uniform4f uni = (Uniform4f) uniforms.get(name);
+    public<T extends AbstractUniform> T getUniform(String name, Class<T> type) {
+        T uni = (T) uniforms.get(name);
         if (uni == null) {
             int loc = getUniformLocation(name);
-            uni = new Uniform4f(name, loc);
+            try {
+                uni = type.getDeclaredConstructor(String.class, int.class).newInstance(name, loc);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             uniforms.put(name, uni);
         }
+        return type.cast(uni);
+    }
+    public void setProgramUniform4f(String name, float x, float y, float z, float w) {
+        Uniform4f uni = getUniform(name, Uniform4f.class);
+        Lists.newArrayList();
         if (uni.set(x, y, z, w)) {
             incUniformCalls();
         }
@@ -334,12 +320,7 @@ public class Shader {
 
 
     public void setProgramUniformMatrix4ARB(String name, boolean transpose, FloatBuffer matrix, boolean invert) {
-        UniformMat4 uni = (UniformMat4) uniforms.get(name);
-        if (uni == null) {
-            int loc = getUniformLocation(name);
-            uni = new UniformMat4(name, loc);
-            uniforms.put(name, uni);
-        }
+        UniformMat4 uni = getUniform(name, UniformMat4.class);
         if (invert) {
             GameMath.invertMat4x(matrix, tmp);
             matrix = tmp;

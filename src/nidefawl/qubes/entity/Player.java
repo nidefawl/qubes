@@ -10,7 +10,7 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.network.packet.*;
-import nidefawl.qubes.network.server.ServerHandler;
+import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.player.PlayerData;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.ICompressTask;
@@ -22,13 +22,13 @@ import nidefawl.qubes.world.WorldServer;
 public class Player extends Entity {
 
     public String        name;
-    public ServerHandler netHandler;
+    public ServerHandlerPlay netHandler;
     public boolean flying;
     public int chunkX;
     public int chunkZ;
     public boolean chunkTracked;
-     Set<Long> chunks = Sets.newHashSet();
-     Set<Long> sendChunks = Sets.newHashSet();
+     Set<Long> chunks = Sets.newLinkedHashSet();
+     Set<Long> sendChunks = Sets.newLinkedHashSet();
 
     public Player() {
         super();
@@ -90,6 +90,14 @@ public class Player extends Entity {
         if (this.chunks.remove(hash)) {
             this.sendChunks.remove(hash);
         }
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void kick(String string) {
+        this.netHandler.kick(string);
     }
 
 }

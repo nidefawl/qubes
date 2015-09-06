@@ -21,20 +21,20 @@ public class EditBlockTask {
     public void apply(World world) {
         Game.instance.sendPacket(new PacketCSetBlocks(world.getId(), p1, p2, this.block));
 
-//        int w = p2.x-p1.x+1;
-//        int h = p2.y-p1.y+1;
-//        int l = p2.z-p1.z+1;
-//        for (int x = 0; x < w; x++) {
-//            for (int y = 0; y < h; y++) {
-//                for (int z = 0; z < l; z++) {
-//                    int blockX = p1.x+x;
-//                    int blockY = p1.y+y;
-//                    int blockZ = p1.z+z;
-//                    world.setType(blockX, blockY, blockZ, block, Flags.MARK);
-//                }
-//            }
-//            
-//        }
+        int w = p2.x-p1.x+1;
+        int h = p2.y-p1.y+1;
+        int l = p2.z-p1.z+1;
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+                for (int z = 0; z < l; z++) {
+                    int blockX = p1.x+x;
+                    int blockY = p1.y+y;
+                    int blockZ = p1.z+z;
+                    world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                }
+            }
+            
+        }
     }
 
 }

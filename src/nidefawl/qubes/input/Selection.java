@@ -195,7 +195,7 @@ public class Selection {
         World world = Game.instance.getWorld();
         if (world != null) {
             int blocks = Engine.selection.getNumBlocks();
-            System.out.println(blocks);
+//            System.out.println(blocks);
             if (blocks == 1) {
                 BlockPos blockPos = rayTrace.getColl();
                 if (blockPos != null) {
@@ -220,11 +220,11 @@ public class Selection {
                         blockY += face.y;
                         blockZ += face.z;
                         Game.instance.sendPacket(new PacketCSetBlock(world.getId(), blockX, blockY, blockZ, block));
-//                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
                     } else {
                         Game.instance.sendPacket(new PacketCSetBlock(world.getId(), blockX, blockY, blockZ, 0));
 
-//                        world.setType(blockX, blockY, blockZ, 0, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, 0, Flags.MARK);
                     }
                 }
             } else {
@@ -235,7 +235,6 @@ public class Selection {
                 Game.instance.edits.add(task);
                 Game.instance.step = 0;
                 task.apply(world);
-                System.out.println("APPLY");;
                 
             }
         }

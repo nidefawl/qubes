@@ -43,7 +43,7 @@ public class WorldServer extends World {
 //  int lastTime = this.time;
   public void tickUpdate() {
       super.tickUpdate();
-      updateChunkTracker();
+      updateChunks();
   }
     @Override
     public ChunkManager makeChunkManager() {
@@ -61,18 +61,13 @@ public class WorldServer extends World {
     public GameServer getServer() {
         return this.server;
     }
-    public void updateChunkTracker() {
+    public void updateChunks() {
         for (int i = 0; i < players.size(); i++) {
             this.chunkTracker.update(players.get(i));
         }
-        Set<Long> set = this.chunkTracker.getChunksToLoad();
-        if (!set.isEmpty()) {
-            for (Long l : set) {
-                this.chunkServer.queueLoadChecked(l);
-            }
-            set.clear();
-        }
+        this.chunkTracker.recheckIfRequiredChunksLoaded();
         this.chunkTracker.sendBlockChanges();
+        this.chunkServer.saveAndUnloadChunks(10);
     }
 
     public void addPlayer(Player player) {
@@ -91,5 +86,8 @@ public class WorldServer extends World {
     }
     public void flagBlock(int x, int y, int z) {
         this.chunkTracker.flagBlock(x, y, z);
+    }
+    public PlayerChunkTracker getPlayerChunkTracker() {
+        return this.chunkTracker;
     }
 }

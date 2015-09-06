@@ -2,6 +2,8 @@ package nidefawl.qubes.shader;
 
 import static org.lwjgl.opengl.ARBShaderObjects.glUniform3fARB;
 
+import nidefawl.qubes.vec.Vector3f;
+
 public class Uniform3f extends AbstractUniform {
 
     private float lastX;
@@ -32,6 +34,10 @@ public class Uniform3f extends AbstractUniform {
             return true;
         }
         return false;
+    }
+
+    public void set(Vector3f loc) {
+        this.set(loc.x, loc.y, loc.z);
     }
 
 }

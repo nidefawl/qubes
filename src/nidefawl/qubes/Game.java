@@ -249,7 +249,7 @@ public class Game extends GameBase implements IErrorHandler {
                         setWorld(null);
                     }
                     if (this.client != null) {
-                        this.client.disconnect();
+                        this.client.disconnect("Quit");
                     }
                     if (this.gui == null)
                         showGUI(new GuiMainMenu());
@@ -399,18 +399,6 @@ public class Game extends GameBase implements IErrorHandler {
                 Engine.checkGLError("renderBlockHighlight");
             
             if (Game.DO_TIMING)
-                TimingHelper.endStart("renderDebugBB");
-            
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("renderDebugBB");
-            Engine.worldRenderer.renderDebugBB(this.world, fTime);
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-            
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("renderDebugBB");
-            
-            if (Game.DO_TIMING)
                 TimingHelper.endStart("unbindCurrentFrameBuffer");
             
             FrameBuffer.unbindFramebuffer();
@@ -447,27 +435,56 @@ public class Game extends GameBase implements IErrorHandler {
           if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
           Engine.outRenderer.renderFinal(this.world, fTime);
           if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderWireFrame");
           glDepthMask(true);
           glDepthFunc(GL_LEQUAL);
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          if (Engine.renderWireFrame) {
+          boolean pass = Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
+          if (pass) {
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("forwardPass");
+
               glDisable(GL_CULL_FACE);
-              if (Game.DO_TIMING) TimingHelper.endStart("renderWireFrame");
+              if (Game.DO_TIMING) TimingHelper.endStart("forwardPass");
               Engine.getSceneFB().bindRead();
               GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
               FrameBuffer.unbindReadFramebuffer();
               UniformBuffer.bindProjUBO();
-              if (Game.DO_TIMING) TimingHelper.endStart("renderNormals");
-              Engine.worldRenderer.renderNormals(this.world, fTime);
-              Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-              if (Game.GL_ERROR_CHECKS)
-                  Engine.checkGLError("renderNormals");
+              
+              if (!Engine.worldRenderer.debugBBs.isEmpty()) {
+
+                  
+                  if (Game.DO_TIMING)
+                      TimingHelper.startSec("renderDebugBB");
+                  
+                  if (GPUProfiler.PROFILING_ENABLED)
+                      GPUProfiler.start("renderDebugBB");
+                  Engine.worldRenderer.renderDebugBB(this.world, fTime);
+                  if (GPUProfiler.PROFILING_ENABLED)
+                      GPUProfiler.end();
+                  
+                  if (Game.GL_ERROR_CHECKS)
+                      Engine.checkGLError("renderDebugBB");
+                  if (Game.DO_TIMING)
+                  TimingHelper.endSec();
+              }
+              
+              if (Engine.renderWireFrame) {
+                    if (Game.DO_TIMING)
+                        TimingHelper.startSec("renderNormals");
+                    Engine.worldRenderer.renderNormals(this.world, fTime);
+                    glEnable(GL_POLYGON_OFFSET_FILL);
+                    glPolygonOffset(-1.1f, 2.f);
+                    Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
+                    glDisable(GL_POLYGON_OFFSET_FILL);
+                    if (Game.GL_ERROR_CHECKS)
+                        Engine.checkGLError("renderNormals");
+                    if (Game.DO_TIMING)
+                        TimingHelper.endSec();
+              }
               UniformBuffer.bindOrthoUBO();
               glEnable(GL_CULL_FACE);
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
           }
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
           glDisable(GL_DEPTH_TEST);
       } else {
 
@@ -504,7 +521,7 @@ public class Game extends GameBase implements IErrorHandler {
           Shader.disable();
       }
 //      Shaders.textured.enable();
-//      glBindTexture(GL_TEXTURE_2D, Engine.fbShadow.getTexture(0));
+//      glBindTexture(GL_TEXTURE_2D, Engine.shadowRenderer.getDebugTexture());
 //      Engine.drawFullscreenQuad();
 //      Shader.disable();
 
@@ -540,7 +557,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 222000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 4000/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -557,14 +574,12 @@ public class Game extends GameBase implements IErrorHandler {
     public void preRenderUpdate(float f) {
         if (this.client != null) {
             String reason = this.client.getClient().getDisconnectReason();
-            if (reason != null) {
-                this.client.disconnect();
-                System.out.println(reason);
+            if (reason!=null) {
                 setWorld(null);
                 setPlayer(null);
+                this.client = null;
                 showGUI(new GuiDisconnected(reason));
             } else {
-
                 this.client.update();
             }
         }
@@ -728,7 +743,7 @@ public class Game extends GameBase implements IErrorHandler {
         this.connect.cancel();
         this.connect = null;
         if (this.client != null) {
-            this.client.disconnect();
+            this.client.disconnect("Quit");
             this.client = null;
         }
         this.client = client;

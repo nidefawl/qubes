@@ -34,11 +34,6 @@ public class PacketDisconnect extends Packet {
 
 	@Override
 	public void handle(Handler h) {
-		h.handleDisconnect(this);
+	    h.handleDisconnect(this);
 	}
-
-    
-    public boolean handleSynchronized() {
-        return false;
-    }
 }

@@ -61,7 +61,6 @@ public abstract class Packet {
 
     public abstract void handle(Handler h);
 
-
     private static Packet makePacket(final Class<? extends Packet> c) throws InvalidPacketException {
         Packet p = null;
         if (c != null) {

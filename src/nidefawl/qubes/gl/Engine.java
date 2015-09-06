@@ -45,11 +45,6 @@ public class Engine {
     private static BufferedMatrix orthoP;
     private static BufferedMatrix orthoMV;
 
-    private static Matrix4f[]       shadowSplitProj;
-    private static BufferedMatrix[] shadowSplitMVP;
-    public static float[]           shadowSplitDepth;
-    public static Frustum[]         shadowCamFrustum;
-
     private static FloatBuffer depthRead;
     private static FloatBuffer fog;
 
@@ -67,6 +62,7 @@ public class Engine {
     public static Vector3f       lightDirection;
     public static float          sunAngle     = 0F;
     public static Camera         camera;
+    public static ShadowProjector shadowProj;
     public static WorldRenderer  worldRenderer;
     public static ShadowRenderer  shadowRenderer;
     public static FinalRenderer  outRenderer;
@@ -120,6 +116,7 @@ public class Engine {
         lightDirection = new Vector3f();
         back = new Vector4f();
         camera = new Camera();
+        shadowProj = new ShadowProjector();
         worldRenderer = new WorldRenderer();
         shadowRenderer = new ShadowRenderer();
         outRenderer = new FinalRenderer();
@@ -146,7 +143,7 @@ public class Engine {
     public static void resize(int displayWidth, int displayHeight) {
         fieldOfView = 70;
         aspectRatio = (float) displayWidth / (float) displayHeight;
-        znear = 0.05F;
+        znear = 0.1F;
         zfar = 1024F;
         viewport.position(0);
         viewport.put(0);
@@ -159,29 +156,7 @@ public class Engine {
         Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
         projection.update();
         projection.update();
-        float[] splits = new float[] {
-                10, 50
-        };
-        shadowSplitProj = new Matrix4f[splits.length+1];
-        shadowSplitMVP = new BufferedMatrix[splits.length+1];
-        shadowSplitDepth = new float[splits.length+1];
-        shadowCamFrustum = new Frustum[splits.length+1];
-        int i;
-        for (i = 0; i < shadowSplitProj.length; i++) {
-            shadowSplitProj[i] = new Matrix4f();
-        }
-        for (i = 0; i < shadowCamFrustum.length; i++) {
-            shadowCamFrustum[i] = new Frustum();
-        }
-        for (i = 0; i < shadowSplitMVP.length; i++) {
-            shadowSplitMVP[i] = new BufferedMatrix();
-        }
-        float last = znear;
-        for (i = 0; i < splits.length; i++) {
-            Project.fovProjMat(fieldOfView, aspectRatio, last, splits[i], shadowSplitProj[i]);
-            last = splits[i];
-        }
-        Project.fovProjMat(fieldOfView, aspectRatio, last, 150, shadowSplitProj[i]);
+        shadowProj.setSplits(new float[] {znear, 20, 80, 160}, fieldOfView, aspectRatio);
 
 
         updateOrthoMatrix(displayWidth, displayHeight);
@@ -313,7 +288,7 @@ public class Engine {
         if (regionRenderThread != null) {
             regionRenderThread.flush();
             while (regionRenderThread.hasTasks()) {
-                regionRenderThread.finishTasks();
+                regionRenderThread.finishTask();
                 try {
                     Thread.sleep(20);
                 } catch (Exception e) {
@@ -325,7 +300,7 @@ public class Engine {
     public static void restartRenderThreads() {
         if (regionRenderThread != null) {
             while (regionRenderThread.hasTasks()) {
-                regionRenderThread.finishTasks();
+                regionRenderThread.finishTask();
                 try {
                     Thread.sleep(20);
                 } catch (Exception e) {
@@ -355,89 +330,10 @@ public class Engine {
     public static void updateShadowProjections(float fTime) {
 //        Engine.worldRenderer.debugBBs.clear();
         if (Game.DO_TIMING) TimingHelper.startSec("calcShadow");
-        for (int i = 0; i < shadowSplitMVP.length; i++) {
-            calcShadow(i);
-        }
+        shadowProj.calcSplits(modelview, lightDirection, shadowRenderer.getTextureSize() / 2.0f); //divide tex size by 2 as we use only a quarter per cascade
+        
         if (Game.DO_TIMING) TimingHelper.endSec();
         
-    }
-    public static void calcShadow(int split) {
-        Vector3f[] frustumCorners = new Vector3f[] {
-                new Vector3f(-1,  1, 0),
-                new Vector3f( 1,  1, 0),
-                new Vector3f( 1, -1, 0),
-                new Vector3f(-1, -1, 0),
-                new Vector3f(-1,  1, 1),
-                new Vector3f( 1,  1, 1),
-                new Vector3f( 1, -1, 1),
-                new Vector3f(-1, -1, 1), 
-        };
-        Matrix4f newMat = new Matrix4f();
-        Matrix4f newMatInv = new Matrix4f();
-        Matrix4f.mul(projection, view, newMat);
-        Matrix4f.mul(shadowSplitProj[split], modelview, newMat);
-        Matrix4f.transpose(newMat, newMat);
-        Matrix4f.invert(newMat, newMatInv);
-        AABB bb = new AABB(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-        for (int i = 0; i < 8; i++) {
-            
-            Matrix4f.transformTransposed(newMatInv, frustumCorners[i], frustumCorners[i]);
-            if (bb.minX > frustumCorners[i].x)
-                bb.minX = frustumCorners[i].x;
-            if (bb.maxX < frustumCorners[i].x)
-                bb.maxX = frustumCorners[i].x;
-            if (bb.minY > frustumCorners[i].y)
-                bb.minY = frustumCorners[i].y;
-            if (bb.maxY < frustumCorners[i].y)
-                bb.maxY = frustumCorners[i].y;
-            if (bb.minZ > frustumCorners[i].z)
-                bb.minZ = frustumCorners[i].z;
-            if (bb.maxZ < frustumCorners[i].z)
-                bb.maxZ = frustumCorners[i].z;
-        }
-        Vector3f frustumCenter = new Vector3f(0,0,0);
-        for (int i = 0; i < 8; i++) {
-            Vector3f.add(frustumCenter, frustumCorners[i], frustumCenter);
-        }
-        frustumCenter.scale(1.0f/8.0f);
-//        Engine.worldRenderer.debugBBs.put(split, bb);
-        float radius = Vector3f.sub(frustumCorners[0], frustumCorners[6], null).length()/2.0f;
-
-        /** SNAP TO TEXTURE INCREMENTS, (Seems not to work with deferred) */
-        /*
-        */
-        Matrix4f matLookAt = new Matrix4f();
-        Matrix4f matLookAtInv = new Matrix4f();
-//        Matrix4f scale = new Matrix4f();
-        float texelsPerUnit = (radius*2.0f) / (float) shadowRenderer.getTextureSize();
-//        scale.scale(new Vector3f(texelsPerUnit, texelsPerUnit, texelsPerUnit));
-        Project.lookAt(0, 0, 0, lightDirection.x, lightDirection.y, lightDirection.z, 0, 1, 0, matLookAt);
-//        Matrix4f.mul(matLookAt, scale, matLookAt);
-        Matrix4f.invert(matLookAt, matLookAtInv);
-        Matrix4f.transform(matLookAt, frustumCenter, frustumCenter);
-        frustumCenter.scale(1.0f/texelsPerUnit);
-        frustumCenter.x = GameMath.floor(frustumCenter.x);
-        frustumCenter.y = GameMath.floor(frustumCenter.y);
-        frustumCenter.z = GameMath.floor(frustumCenter.z);
-        frustumCenter.scale(texelsPerUnit);
-        Matrix4f.transform(matLookAtInv, frustumCenter, frustumCenter);
-        
-        
-        
-        Vector3f eye = new Vector3f();
-        Vector3f.sub(frustumCenter, lightDirection.scaleN(-(512+radius*2.0f)), eye);
-        
-        shadowSplitMVP[split].setIdentity();
-        Project.lookAt(eye.x, eye.y, eye.z, frustumCenter.x, frustumCenter.y, frustumCenter.z, 0, 1, 0, shadowSplitMVP[split]);
-//        Project.lookAt(eye.x-frustumCenter.x, eye.y-frustumCenter.y, eye.z-frustumCenter.z, 0,0,0, 0, 1, 0, shadowSplitMVP[split]);
-        Matrix4f matOrtho = new Matrix4f();
-        Project.orthoMat(-radius, radius, radius, -radius, 0, 512*8, matOrtho);
-        Matrix4f.mul(matOrtho, shadowSplitMVP[split], shadowSplitMVP[split]);
-        shadowSplitMVP[split].update();
-        shadowSplitMVP[split].update();
-        shadowSplitDepth[split] = radius/1.11F; // I'm 90% sure this is wrong, the shader requires 1 x radius and should reduce the input depth for each cascade as they are not centered on the same point
-        shadowCamFrustum[split].set(shadowSplitMVP[split]);
-//        System.out.println(radius);
     }
 
     public static void stop() {
@@ -531,10 +427,6 @@ public class Engine {
         intbuf.put(buffers);
         buf.position(0).limit(buffers.length*4);
         GL15.glDeleteBuffers(buffers.length, buf);
-    }
-
-    public static BufferedMatrix getMatShadowSplitMVP(int i) {
-        return shadowSplitMVP[i];
     }
 
     public static String getDefinition(String define) {

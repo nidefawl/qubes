@@ -19,6 +19,7 @@ import nidefawl.qubes.world.WorldServer;
 public class PlayerManager {
     private File directory;
     private Map<String, Player> players = new MapMaker().makeMap();
+    private Map<String, Player> playersLowerCase = new MapMaker().makeMap();
     private GameServer server;
 
     public PlayerManager(GameServer server) {
@@ -67,12 +68,14 @@ public class PlayerManager {
         data.world = world.getUUID();
         player.load(data);
         this.players.put(name, player);
+        this.playersLowerCase.put(name.toLowerCase(), player);
         world.addPlayer(player);
         return player;
     }
 
     public void removePlayer(Player p) {
         this.players.remove(p.name);
+        this.playersLowerCase.remove(p.name.toLowerCase());
         WorldServer world = (WorldServer) p.world;
         if (world != null) {
             world.removePlayer(p);
@@ -93,5 +96,23 @@ public class PlayerManager {
                 e.printStackTrace();
             }
         }
+    }
+    public Player getPlayer(String string) {
+        return this.playersLowerCase.get(string);
+    }
+
+    public Player matchPlayer(String string) {
+        Iterator<Map.Entry<String, Player>> it = this.playersLowerCase.entrySet().iterator();
+        String lowerStr = string.toLowerCase();
+        Player match = null;
+        while (it.hasNext()) {
+            Map.Entry<String, Player> entry = it.next();
+            String pName = entry.getKey();
+            if (pName.equals(lowerStr))
+                return entry.getValue();
+            if (match == null && pName.contains(lowerStr))
+                match = entry.getValue();
+        }
+        return match;
     }
 }

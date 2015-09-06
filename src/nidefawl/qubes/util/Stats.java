@@ -9,5 +9,6 @@ public class Stats {
     public static double timeRendering = 0L;
     public static double timeWorldGen = 0L;
     public static double fpsInteval;
+    public static int regionUpdates = 0;
 
 }

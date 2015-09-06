@@ -15,7 +15,7 @@ import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
-    final static int NUM_MATRIXES = 11;
+    final static int NUM_MATRIXES = 11+8;
     final static int SIZE_STRUCT = NUM_MATRIXES*64+16+16+16+16;
 
     private static FloatBuffer uboBuffer;
@@ -107,14 +107,22 @@ public class UniformBuffer {
         uboBuffer.put(Engine.getMatSceneNormal().get());
         uboBuffer.put(Engine.getMatSceneMV().getInv());
         uboBuffer.put(Engine.getMatSceneP().getInv());
-        uboBuffer.put(Engine.getMatShadowSplitMVP(0).get());
-        uboBuffer.put(Engine.getMatShadowSplitMVP(1).get());
-        uboBuffer.put(Engine.getMatShadowSplitMVP(2).get());
-        uboBuffer.put(Engine.getMatShadowSplitMVP(2).get());
+        uboBuffer.put(Engine.shadowProj.getSMVP(0));
+        uboBuffer.put(Engine.shadowProj.getSMVP(1));
+        uboBuffer.put(Engine.shadowProj.getSMVP(2));
+        uboBuffer.put(Engine.shadowProj.getSMVP(2));
+        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(0));
+        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(1));
+        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(2));
+        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(2));
+        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(0));
+        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(1));
+        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(2));
+        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(2));
         
-        uboBuffer.put(Engine.shadowSplitDepth[0]);
-        uboBuffer.put(Engine.shadowSplitDepth[1]);
-        uboBuffer.put(Engine.shadowSplitDepth[2]);
+        uboBuffer.put(Engine.shadowProj.shadowSplitDepth[0]);
+        uboBuffer.put(Engine.shadowProj.shadowSplitDepth[1]);
+        uboBuffer.put(Engine.shadowProj.shadowSplitDepth[2]);
         uboBuffer.put(1F);
         
         Engine.camera.getPosition().store(uboBuffer);

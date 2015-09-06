@@ -14,4 +14,5 @@ void main(void) {
 	vec4 tex = texture(texColor, pass_texcoord.st, 0);
 	vec4 texBloom = texture(texBlur, pass_texcoord.st, 0);
 	out_Color = vec4(ToneMap(tex.rgb+texBloom.rgb*0.4), tex.a);
+	// out_Color = vec4(tex.rgb, tex.a);
 }

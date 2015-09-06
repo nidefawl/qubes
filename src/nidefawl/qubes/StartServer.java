@@ -9,7 +9,7 @@ import nidefawl.qubes.util.Side;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
-public class BootServer {
+public class StartServer {
 
 	public static void main(String[] args) {
 		try {

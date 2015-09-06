@@ -14,6 +14,9 @@ public class CommandHandler {
     private void registerBaseCommands() {
         this.register(CommandStop.class);
         this.register(CommandSave.class);
+        this.register(CommandKick.class);
+        this.register(CommandList.class);
+        this.register(CommandStats.class);
     }
 
     private void register(Class<? extends Command> class1) {
@@ -48,8 +51,10 @@ public class CommandHandler {
                 c.testPermission(source, cmd, args, line);
                 c.execute(source, cmd, args, line);
             }
-        } catch (Exception e) {
+        } catch (CommandException e) {
             source.onError(c, e);
+        } catch (Exception e) {
+            source.onError(c, new CommandException("Error: "+e.getMessage(), e));
         }
     }
 

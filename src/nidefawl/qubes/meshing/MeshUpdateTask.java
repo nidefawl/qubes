@@ -1,12 +1,15 @@
 package nidefawl.qubes.meshing;
 
+import static nidefawl.qubes.meshing.BlockFaceAttr.BLOCK_FACE_INT_SIZE;
+
+import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_2_BLOCK_FACE_INT_SIZE;
+
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
 
 import java.util.List;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
@@ -17,23 +20,27 @@ import nidefawl.qubes.world.WorldClient;
 public class MeshUpdateTask {
     public final Mesher     mesher = new Mesher();
     public final ChunkRenderCache ccache = new ChunkRenderCache();
-    final Tess[] tess  = new Tess[NUM_PASSES];
+//    final Tess[] tess  = new Tess[NUM_PASSES];
+    final BlockFaceAttr attr = new BlockFaceAttr();
+//    final ByteBuffer directBuffer = BufferUtils.createAlignedByteBuffer(1024*1024*10, 16);
 
     public int              worldInstance;
     private boolean         meshed;
     private MeshedRegion mr;
+    final int[][] buffers = new int[NUM_PASSES][];
+    final int[] vertexCount = new int[NUM_PASSES];
+    final int[] bufferIdx = new int[NUM_PASSES];
     
     public MeshUpdateTask() {
-        for (int i = 0; i < this.tess.length; i++) {
-            this.tess[i] = new Tess(true);
-        }
+//        for (int i = 0; i < this.tess.length; i++) {
+//            this.tess[i] = new Tess(true);
+//        }
     }
 
     public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
         this.ccache.flush();
         if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
             this.mr = mr;
-            mr.isUpdating = true;
             return true;
         } else {
 //            System.out.println("cannot render "+mr.rX+"/"+mr.rZ);
@@ -42,7 +49,6 @@ public class MeshUpdateTask {
     }
 
     public boolean finish(int id) {
-        mr.isUpdating = false;
         if (!isValid(id)) {
 //            mr.renderState = RegionRenderer.RENDER_STATE_INIT;
             this.ccache.flush();
@@ -50,7 +56,12 @@ public class MeshUpdateTask {
         }
         if (this.meshed) {
             long l = System.nanoTime();
-            this.mr.compileDisplayList(this.tess);
+            this.mr.preUploadBuffers();
+
+            for (int i = 0; i < NUM_PASSES; i++) {
+                this.mr.uploadBuffer(i, this.buffers[i], this.bufferIdx[i], this.vertexCount[i]);
+            }
+//            this.mr.compileDisplayList(this.tess);
             Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
         } else {
             //TODO: flush display list if compile failed, or ignore
@@ -73,6 +84,7 @@ public class MeshUpdateTask {
     }
 
     public boolean updateFromThread() {
+        Stats.regionUpdates++;
 //        if (this.mr.isEmpty()) {
 //            return true;
 //        }
@@ -87,23 +99,33 @@ public class MeshUpdateTask {
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
                 for (int i = 0; i < NUM_PASSES; i++) {
-                    Tess tess = this.tess[i];
-                    List<TerrainQuad> mesh = this.mesher.getMeshes(i);
-                    tess.resetState();
-                    if (i != 2) {
-                        tess.setColor(-1, 255);
-                        tess.setBrightness(0xf00000);
-                    }
-                    tess.setOffset(xOff, yOff, zOff);
+                    this.vertexCount[i] = 0;
+                    this.bufferIdx[i] = 0;
+//                    Tess tess = this.tess[i];
+                    List<BlockFace> mesh = this.mesher.getMeshes(i);
+//                    tess.resetState();
+//                    if (i != 2) {
+//                        tess.setColor(-1, 255);
+//                        tess.setBrightness(0xf00000);
+//                    }
+                    attr.setOffset(xOff, yOff, zOff);
                     int size = mesh.size();
+                    final int SIZE = i == 2 ? PASS_2_BLOCK_FACE_INT_SIZE : BLOCK_FACE_INT_SIZE; 
+                    checkBufferSize(i, size * SIZE);
+                    int[] buffer = this.buffers[i];
                     for (int m = 0; m < size; m++) {
-                        TerrainQuad face = mesh.get(m);
+                        BlockFace face = mesh.get(m);
                         if (i == 2) {
-                            face.drawBasic(tess);
+//                            attr.putBasic(buffer, m*blockFaceBuffSize, i);
+                            face.drawBasic(attr);
+                            attr.putBasic(buffer, m*SIZE, i);
                         } else {
-                            face.draw(tess);
+                            face.draw(attr);
+                            attr.put(buffer, m*SIZE, i);
                         }
                     }
+                    this.bufferIdx[i] = size*SIZE;
+                    this.vertexCount[i] = size*4;
                 }
             
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -115,6 +137,18 @@ public class MeshUpdateTask {
             return false;
         }
         return false;
+    }
+
+    private void checkBufferSize(int bufferIdx, int length) {
+        if (this.buffers[bufferIdx] == null || this.buffers[bufferIdx].length < length) {
+            int newSize = (length+2048);
+            System.out.println("realloc buffer to length "+newSize);
+            this.buffers[bufferIdx] = new int[newSize];
+        }
+    }
+
+    public MeshedRegion getRegion() {
+        return this.mr;
     }
 
 }

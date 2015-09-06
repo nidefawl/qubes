@@ -49,6 +49,7 @@ uniform sampler2D texNormals;
 uniform sampler2D texMaterial;
 uniform sampler2D texDepth;
 uniform sampler2DShadow texShadow;
+uniform sampler2D texShadow2;
 uniform sampler2D noisetex;
 
 
@@ -76,43 +77,49 @@ vec4 unprojectPos(in vec2 coord, in float depth) {
 
 vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
     vec4 v2 = shadowMVP * worldpos;
-    v2 /= v2.w;
     v2 = v2 * 0.5f + 0.5f;
     return v2;
 }
 vec3 debugcolor = vec3(0);
+const float clampmin = 0;//1.0/8.0;
+const float clampmax = 1-clampmin;
 float getShadow() {
 
     float gdistance = max((length(prop.position.xyz)-26.0f)/17.0f, 0);
-
     vec4 v = getShadowTexcoord(in_matrix.shadow_split_mvp[0], prop.worldposition);
     vec4 v2 = getShadowTexcoord(in_matrix.shadow_split_mvp[1], prop.worldposition);
     vec4 v3 = getShadowTexcoord(in_matrix.shadow_split_mvp[2], prop.worldposition);
 
-    float depth = prop.worldposition.z/prop.worldposition.w;
-
-
-    if (clamp(v.x, 0, 1) == v.x && clamp(v.z, 0, 1) == v.z && prop.linearDepth<in_matrix.shadow_split_depth.x*0.98) {
-    // v.z *= (1.0f-0.001f * gdistance);
+    // float depth = prop.worldposition.z/prop.worldposition.w;
+    // if (prop.linearDepth > 2) {
+    // 	debugcolor = vec3(1,0,0);
+    // }
+    vec2 cPos = pass_texcoord*2.0-1.0;
+    float dst = sqrt(cPos.x*cPos.x+cPos.y*cPos.y);
+    float weight = max(0.68, 1.3-dst);
+    // weight = 0.98;
+	    // debugcolor = vec3(weight, 0,0);
+    if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && prop.linearDepth<in_matrix.shadow_split_depth.x*weight) {
     	v.z-=0.00004f;
-	    debugcolor = vec3(0,0,1);
+	    // debugcolor = vec3(v.xy,1);
 		return texture(texShadow, vec3(v.xy*0.5, v.z)).r;
     }
-    if (clamp(v2.x, 0, 1) == v2.x && clamp(v2.z, 0, 1) == v2.z && prop.linearDepth<in_matrix.shadow_split_depth.y*0.98) {
+    if (clamp(v2.x, clampmin, clampmax) == v2.x && clamp(v2.z, clampmin, clampmax) == v2.z && prop.linearDepth<in_matrix.shadow_split_depth.y*weight) {
     // v.z *= (1.0f-0.001f * gdistance);
     	v2.z-=0.00007f;
-	    debugcolor = vec3(0,1,0);
+	    // debugcolor = vec3(0,1,0);
 	    return texture(texShadow, vec3(v2.xy*0.5+vec2(0.5,0),v2.z)).r;
     }
-    if (clamp(v3.x, 0, 1) == v3.x && clamp(v3.z, 0, 1) == v3.z && prop.linearDepth<in_matrix.shadow_split_depth.z*1.98) {
+    if (clamp(v3.x, clampmin, clampmax) == v3.x && clamp(v3.z, clampmin, clampmax) == v3.z && prop.linearDepth<in_matrix.shadow_split_depth.z) {
     // v.z *= (1.0f-0.001f * gdistance);
     	// v3.z-=bias;
     	v2.z-=0.00007f;
-	    debugcolor = vec3(1,0,0);
+	    // debugcolor = vec3(1,0,0);
 	    return texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5),v3.z)).r;
     }
     return 1;
 }
+
 void setSunSpotDens() {
     vec3 npos = normalize(prop.position.xyz);
 	vec3 halfVector2 = normalize(-SkyLight.lightDir.xyz + npos);
@@ -170,7 +177,7 @@ void main() {
 	finalLight *= isLight*12+1;
 	finalLight *= 1.0-fNight*0.73;
 
-    for(int i = 0; i < numLights; ++i)
+    for(int i = 1; i < numLights; ++i)
     {
         // Calculate distance between light source and current fragment
         float fDist = length(lights[i].Position - prop.worldposition.xyz);
@@ -214,12 +221,13 @@ void main() {
 	float dist = length(prop.position);
 
     float fogFactor = clamp( (dist - 35.0f) /  1429.0f, 0.0f, 0.94f );
-
 	prop.albedo = mix(terr, sky, isSky);
 	prop.albedo = mix(prop.albedo, fogColor, clamp(fogFactor-prop.sunSpotDens*1.2, 0, 0.05));
-	// if (length(debugcolor) > 0) {
-	// 	prop.albedo = mix(prop.albedo, debugcolor, 0.02);
-	// }
+
+	if (length(debugcolor) > 0) {
+		prop.albedo = mix(prop.albedo, debugcolor, 0.3);
+	}
+
 #endif
 	out_Color = vec4(prop.albedo, 1);
 }

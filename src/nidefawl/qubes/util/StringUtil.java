@@ -41,4 +41,15 @@ public class StringUtil {
             return def;
         }
     }
+
+    public static String combine(String[] args, int start, int end) {
+        String s = "";
+        for (int j = start; j < args.length && j < end; j++) {
+            if (!s.isEmpty()) {
+                s += " ";
+            }
+            s += args[j];
+        }
+        return s;
+    }
 }

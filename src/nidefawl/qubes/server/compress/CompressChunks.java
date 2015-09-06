@@ -6,7 +6,7 @@ import java.util.Set;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.network.packet.PacketSChunkData;
-import nidefawl.qubes.network.server.ServerHandler;
+import nidefawl.qubes.network.server.ServerHandlerPlay;
 
 public class CompressChunks implements ICompressTask {
 
@@ -14,9 +14,9 @@ public class CompressChunks implements ICompressTask {
     private int worldid;
     private int[][] coords;
     private int chunkLen;
-    private ServerHandler[] handlers;
+    private ServerHandlerPlay[] handlers;
 
-    public CompressChunks(int worldid, Collection<Chunk> chunks, ServerHandler... handlers) {
+    public CompressChunks(int worldid, Collection<Chunk> chunks, ServerHandlerPlay... handlers) {
         this.chunks = chunks;
         this.handlers = handlers;
         this.worldid = worldid;

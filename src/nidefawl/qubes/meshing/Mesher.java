@@ -198,7 +198,7 @@ public class Mesher {
                                 if (!c.resolved)
                                     c.resolve(ccache);
                                 
-                                TerrainQuad face = new TerrainQuad(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
+                                BlockFace face = new BlockFace(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                                 meshes[c.pass].add(face);
                             }
 
@@ -279,7 +279,7 @@ public class Mesher {
 
 
 
-    public List<TerrainQuad> getMeshes(int pass) {
+    public List<BlockFace> getMeshes(int pass) {
         return this.meshes[pass];
     }
 }

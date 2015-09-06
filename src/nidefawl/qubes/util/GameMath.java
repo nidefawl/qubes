@@ -149,4 +149,10 @@ public class GameMath {
     public static float clamp(float e, float f, float g) {
         return e < f ? f : e > g ? g : e;
     }
+    public static int distSq3Di(int x, int y, int z, int x2, int y2, int z2) {
+        x = x2-x;
+        y = y2-y;
+        z = z2-y;
+        return x*x+y*y+z*z;
+    }
 }

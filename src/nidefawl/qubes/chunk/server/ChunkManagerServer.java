@@ -7,6 +7,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.ChunkTable;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
@@ -20,7 +21,7 @@ public class ChunkManagerServer extends ChunkManager {
     private RegionFileCache regionFileCache;
     public final Object syncObj = new Object();
     public final Object syncObj2 = new Object();
-    private WorldServer worldServer;
+    WorldServer worldServer;
 
     public ChunkManagerServer(WorldServer world) {
         super(world);
@@ -75,41 +76,30 @@ public class ChunkManagerServer extends ChunkManager {
         }
     }
 
-    public void ensureLoaded(int xPosC, int zPosC, int halflen) {
-        for (int x = -halflen; x <= halflen; x++) {
-            for (int z = -halflen; z <= halflen; z++) {
-                Chunk c = this.table.get(xPosC+x, zPosC+z);
-                if (c == null) {
-                    this.queueLoadChecked(xPosC+x, zPosC+z);
-                }
-            }
+    Iterator<Chunk> it = null;
+    public void saveAndUnloadChunks(int max) {
+        Iterator<Chunk> it = this.it;
+        if (it == null || !it.hasNext()) {
+            it = this.it = this.table.iterator();
         }
-        // TODO Auto-generated method stub
-        
-    }
-    public void unloadUnused(int xPosC, int zPosC, int halflen) {
-        HashSet<Long> toUnload = null;
-        Iterator<Chunk> it = this.table.iterator();
-        while (it.hasNext()) {
+        PlayerChunkTracker tracker = this.worldServer.getPlayerChunkTracker();
+        int saved = 0;
+        while (it.hasNext() && saved < max) {
             Chunk c = it.next();
             if (c.justLoaded()) {
                 continue;
             }
-            if (c.x < xPosC-halflen || c.x > xPosC+halflen || c.z < zPosC-halflen || c.z > zPosC+halflen) {
-                if (toUnload == null) toUnload = new HashSet<>();
-                toUnload.add(GameMath.toLong(c.x, c.z));
+            if (!tracker.isRequired(c.x, c.z)) {
+                this.unloadThread.queueUnloadChecked(GameMath.toLong(c.x, c.z));
+            } else if (c.needsSave) {
+                saveChunk(c);
             }
-        }
-        if (toUnload != null) { 
-            for (Long l : toUnload) {
-                this.unloadThread.queueUnloadChecked(l);
-            }
+            saved++;
         }
     }
     public void unloadChunk(int x, int z) {
         Chunk c = this.table.remove(x, z);
         if (c != null) {
-            System.out.println("unloading "+x+"/"+z);
             saveChunk(c);
         }
     }
@@ -129,7 +119,10 @@ public class ChunkManagerServer extends ChunkManager {
                 List<Chunk> l = this.table.asList();
                 for (int i = 0; i < l.size(); i++) {
                     Chunk c = l.get(i);
-                    saveChunk(c);
+                    if (c.needsSave) {
+                        saveChunk(c);
+                        c.needsSave = false;
+                    }
                 }
             }
         }

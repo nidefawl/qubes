@@ -38,7 +38,9 @@ public class WorkingEnv {
     public static File getAssetFolder() {
         return assetDir;
     }
-
+    public static File getConfigFolder() {
+        return config;
+    }
     public static File getWorldsFolder() {
         return worlds;
     }

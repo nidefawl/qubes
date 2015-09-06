@@ -4,7 +4,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.vec.Dir;
 
-public class TerrainQuad {
+public class BlockFace {
     public final BlockSurface bs;
     public final float v0[];
     public final float v1[];
@@ -22,7 +22,7 @@ public class TerrainQuad {
     };
 
 
-    public TerrainQuad(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
+    public BlockFace(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
         this.bs = bs;
         this.pos = pos;
         this.du = du; 
@@ -33,7 +33,10 @@ public class TerrainQuad {
         this.v1 = new float[3];
         this.v2 = new float[3];
         this.v3 = new float[3];
-        float d = -2E-3F;
+        float d = 0;//-1E-3F;
+//        if (bs.pass == 2) {
+//            d = -0.03F;
+//        }
 //        d = 0;
         float[] fdu = new float[] { du[0], du[1], du[2] };
         float[] fdv = new float[] { dv[0], dv[1], dv[2] };
@@ -78,21 +81,22 @@ public class TerrainQuad {
     }
 
 
-    public void drawBasic(Tess tess) {
+    public void drawBasic(BlockFaceAttr attr) {
         if (bs.face == 0) {
-            tess.add(this.v0[0], this.v0[1], this.v0[2]);
-            tess.add(this.v1[0], this.v1[1], this.v1[2]);
-            tess.add(this.v2[0], this.v2[1], this.v2[2]);
-            tess.add(this.v3[0], this.v3[1], this.v3[2]);
+            attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
+            attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
+            attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
+            attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
         } else {
-            tess.add(this.v3[0], this.v3[1], this.v3[2]);
-            tess.add(this.v2[0], this.v2[1], this.v2[2]);
-            tess.add(this.v1[0], this.v1[1], this.v1[2]);
-            tess.add(this.v0[0], this.v0[1], this.v0[2]);
+            attr.v0.setPos(this.v3[0], this.v3[1], this.v3[2]);
+            attr.v1.setPos(this.v2[0], this.v2[1], this.v2[2]);
+            attr.v2.setPos(this.v1[0], this.v1[1], this.v1[2]);
+            attr.v3.setPos(this.v0[0], this.v0[1], this.v0[2]);
         }
     }
-    public void draw(Tess tess) {
-        tess.setNormals(this.normal[0], this.normal[1], this.normal[2]);
+    
+    public void draw(BlockFaceAttr attr) {
+        attr.setNormal(this.normal[0], this.normal[1], this.normal[2]);
         Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
         int side = this.bs.axis<<1|this.bs.face;
         float m = 1F;
@@ -141,8 +145,9 @@ public class TerrainQuad {
         float fao2 = AO_TABLE[this.bs.ao2];
         float fao3 = AO_TABLE[this.bs.ao3];
         
-        tess.setBrightness(0xf00000);
+        attr.setBrightness(0xf00000);
         int tex = block.getTextureFromSide(side);
+        attr.setTex(tex);
         
         int idx = 0;
         
@@ -154,31 +159,26 @@ public class TerrainQuad {
                 bs.rotateVertex = true;
             }
             if (bs.rotateVertex) {
-                setUV(tess, 3);
-                tess.setAttr(tex, side, idx++);
-                tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
-                tess.add(this.v3[0], this.v3[1], this.v3[2]);
+                setUV(attr.v3, 3);
+                attr.v3.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
+                attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
             }
-            setUV(tess, 0);
-            tess.setAttr(tex, side, idx++);
-            tess.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
-            tess.add(this.v0[0], this.v0[1], this.v0[2]);
+            setUV(attr.v0, 0);
+            attr.v0.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
+            attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
 
-            setUV(tess, 1);
-            tess.setAttr(tex, side, idx++);
-            tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
-            tess.add(this.v1[0], this.v1[1], this.v1[2]);
+            setUV(attr.v1, 1);
+            attr.v1.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
+            attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
 
-            setUV(tess, 2);
-            tess.setAttr(tex, side, idx++);
-            tess.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
-            tess.add(this.v2[0], this.v2[1], this.v2[2]);
+            setUV(attr.v2, 2);
+            attr.v2.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
+            attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
             
             if (!bs.rotateVertex) {
-                setUV(tess, 3);
-                tess.setAttr(tex, side, idx++);
-                tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
-                tess.add(this.v3[0], this.v3[1], this.v3[2]);
+                setUV(attr.v3, 3);
+                attr.v3.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
+                attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
             }
         } else {
             if (fao1 <= fao2 && fao1 <= fao0) {
@@ -188,38 +188,33 @@ public class TerrainQuad {
                 bs.rotateVertex = true;
             }
             if (bs.rotateVertex) {
-                setUV(tess, 0);
-                tess.setAttr(tex, side, idx++);
-                tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
-                tess.add(this.v0[0], this.v0[1], this.v0[2]);
+                setUV(attr.v0, 0);
+                attr.v0.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
+                attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
             }
 
-            setUV(tess, 3);
-            tess.setAttr(tex, side, idx++);
-            tess.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
-            tess.add(this.v3[0], this.v3[1], this.v3[2]);
+            setUV(attr.v3, 3);
+            attr.v3.setColorRGBAF(b * m * fao2, g * m * fao2, r * m * fao2, alpha);
+            attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
 
-            setUV(tess, 2);
-            tess.setAttr(tex, side, idx++);
-            tess.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
-            tess.add(this.v2[0], this.v2[1], this.v2[2]);
+            setUV(attr.v2, 2);
+            attr.v2.setColorRGBAF(b * m * fao3, g * m * fao3, r * m * fao3, alpha);
+            attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
 
-            setUV(tess, 1);
-            tess.setAttr(tex, side, idx++);
-            tess.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
-            tess.add(this.v1[0], this.v1[1], this.v1[2]);
+            setUV(attr.v1, 1);
+            attr.v1.setColorRGBAF(b * m * fao0, g * m * fao0, r * m * fao0, alpha);
+            attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
             
 
             if (!bs.rotateVertex) {
-                tess.setAttr(tex, side, idx++);
-                setUV(tess, 0);
-                tess.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
-                tess.add(this.v0[0], this.v0[1], this.v0[2]);
+                setUV(attr.v0, 0);
+                attr.v0.setColorRGBAF(b * m * fao1, g * m * fao1, r * m * fao1, alpha);
+                attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
             }
         }
     }
 
-    private void setUV(Tess tess, int idx) {
+    private void setUV(BlockFaceVert tess, int idx) {
         float u = 0; float v = 0;
         // 0 0 -> 0, 0
         // 0 1 -> 1, 0

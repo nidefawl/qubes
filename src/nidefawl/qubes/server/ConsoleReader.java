@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 
 import jline.console.UserInterruptException;
 import nidefawl.qubes.server.commands.Command;
+import nidefawl.qubes.server.commands.CommandException;
 import nidefawl.qubes.server.commands.ICommandSource;
 
 public class ConsoleReader implements Runnable, ICommandSource {
@@ -75,14 +76,21 @@ public class ConsoleReader implements Runnable, ICommandSource {
     }
 
     @Override
-    public void onError(Command c, Exception e) {
-        out.println("An exception occured while executing '"+c.getName()+"': "+e.getMessage());
-        e.printStackTrace();
+    public void onError(Command c, CommandException e) {
+        
+        if (e.getCause() != null) {
+            out.println("An exception occured while executing '"+c.getName()+"': "+e.getMessage());
+            e.getCause().printStackTrace();
+        } else {
+            out.println(e.getMessage());
+        }
+        out.flush();
     }
 
     @Override
     public void onUnknownCommand(String cmd, String line) {
         out.println("Unknown command '"+cmd+"'");
+        out.flush();
     }
 
     @Override

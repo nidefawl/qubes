@@ -67,6 +67,7 @@ public abstract class World {
         dayLen = 211500;
 //        time = 53000;
         time = 163000;
+        fTime=0;
         float timeOffset = (this.time) % dayLen;
         float fSun = (timeOffset + fTime) / (float) dayLen + 0.25F;
         if (fSun < 0)
@@ -126,9 +127,11 @@ public abstract class World {
         if (c == null) {
             return false;
         }
-        c.setType(x & 0xF, y, z & 0xF, type);
-        if ((render & Flags.MARK) != 0) {
-            flagBlock(x, y, z);
+        if (c.setType(x & 0xF, y, z & 0xF, type)) {
+
+            if ((render & Flags.MARK) != 0) {
+                flagBlock(x, y, z);
+            }   
         }
         return true;
     }
@@ -174,22 +177,25 @@ public abstract class World {
     }
 
     public void addLight(Vector3f pos) {
-        float r = this.rand.nextFloat()*0.5f+0.5f;
-        float g = this.rand.nextFloat()*0.5f+0.5f;
-        float b = this.rand.nextFloat()*0.5f+0.5f;
+//        float r = this.rand.nextFloat()*0.5f+0.5f;
+//        float g = this.rand.nextFloat()*0.5f+0.5f;
+//        float b = this.rand.nextFloat()*0.5f+0.5f;
+        float r = 1;
+        float b = 1;
+        float g = 1;
         float intens = 10+this.rand.nextInt(10);
 //        if (this.rand.nextInt(10) == 0) {
-            intens+=141;
+            intens+=200;
+//            intens = 2.7f;
 //        }
         DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
         this.lights.add(light);
-        System.out.println("added, size: "+lights.size());
     }
 
     public void spawnLights(BlockPos block) {
         for (int i = 0; i < 10; i++) {
 
-            int range = 80;
+            int range = 210;
             int x = block.x+this.rand.nextInt(range*2)-range;
             int z = block.z+this.rand.nextInt(range*2)-range;
             int y = getHighestBlockAt(x, z);

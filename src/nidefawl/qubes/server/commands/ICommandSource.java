@@ -10,7 +10,7 @@ public interface ICommandSource {
 
     GameServer getServer();
 
-    void onError(Command c, Exception e);
+    void onError(Command c, CommandException e);
 
     void sendMessage(String format);
 

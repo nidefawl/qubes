@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.logging.ErrorHandler;
+import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -39,9 +40,12 @@ public class ChunkUnloadThread extends Thread {
                         synchronized (this.mgr.syncObj) {
                             Chunk c = mgr.table.get(task);
                             if (c != null) {
+                                PlayerChunkTracker tracker = mgr.worldServer.getPlayerChunkTracker();
                                 int x = GameMath.lhToX(task);
                                 int z = GameMath.lhToZ(task);
-                                mgr.unloadChunk(x, z);
+                                if (!tracker.isRequired(x, z)) {
+                                    mgr.unloadChunk(x, z);
+                                }
                             }
                         }
                     }

@@ -1,6 +1,7 @@
 package nidefawl.qubes.render.region;
 
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+import static nidefawl.qubes.meshing.BlockFaceAttr.*;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -12,6 +13,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.vec.AABB;
 
 public class MeshedRegion {
@@ -34,45 +36,48 @@ public class MeshedRegion {
 
 
     public MeshedRegion() {
+        Arrays.fill(frustumStates, -2);
     }
-
+    private void enabledDefaultBlockPtrs() {
+        GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, BLOCK_VERT_BYTE_SIZE, 0);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 0);
+        int offset = 4;
+        GL20.glEnableVertexAttribArray(1);
+        GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 1);
+        offset += 1; //5
+        GL20.glEnableVertexAttribArray(2);
+        GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 2);
+        offset += 2; //7
+        GL20.glEnableVertexAttribArray(3);
+        GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 3);
+        offset += 1; //8
+        GL20.glEnableVertexAttribArray(4);
+        GL20.glVertexAttribPointer(4, 2, GL11.GL_SHORT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 4);
+        offset += 1; //9
+        GL20.glEnableVertexAttribArray(5);
+        GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 5);
+        offset += 2; //11
+    }
     public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo[pass]);
         GL20.glEnableVertexAttribArray(0);
         if (pass != 2) {
-            int stride = 13;
-            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride * 4, 0);
+            enabledDefaultBlockPtrs();
+        } else {
+            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, PASS_2_BLOCK_VERT_BYTE_SIZE, 0);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("AttribPtr " + 0);
-            int offset = 4;
-            GL20.glEnableVertexAttribArray(1);
-            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, stride * 4, offset * 4);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("AttribPtr " + 1);
-            offset += 1;
-            GL20.glEnableVertexAttribArray(2);
-            GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, stride * 4, offset * 4);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("AttribPtr " + 2);
-            offset += 2;
-            GL20.glEnableVertexAttribArray(3);
-            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride * 4, offset * 4);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("AttribPtr " + 3);
-            offset += 1;
-            GL20.glEnableVertexAttribArray(4);
-            GL20.glVertexAttribPointer(4, 2, GL11.GL_SHORT, false, stride * 4, offset * 4);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("AttribPtr " + 4);
-            offset += 1;
-            GL20.glEnableVertexAttribArray(5);
-            GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, stride * 4, offset * 4);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("AttribPtr " + 5);
-            offset += 2;
-        } else {
-            int stride = 4;
-            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride * 4, 0);
         }
         try {
 
@@ -134,6 +139,40 @@ public class MeshedRegion {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
 
+
+    public void preUploadBuffers() {
+        if (this.vbo == null) {
+            this.vbo = new int[NUM_PASSES];
+            IntBuffer intbuf = Engine.glGenBuffers(this.vbo.length);
+            for (int i = 0; i < vbo.length; i++) {
+                vbo[i] = intbuf.get(i);
+            }
+        }
+        Arrays.fill(this.hasPass, false);
+        Arrays.fill(this.vertexCount, 0);
+    }
+    public void uploadBuffer(int pass, int[] buffer, int len, int numV) {
+        ByteBuffer buf = Engine.getBuffer();
+        IntBuffer intBuffer = Engine.getIntBuffer();
+        intBuffer.clear();
+        intBuffer.put(buffer, 0, len);
+        buf.position(0).limit(len * 4);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo[pass]);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindBuffer " + vbo[pass]);
+        //            System.out.println(buf);
+        //            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len * 4L, buf, GL15.GL_STATIC_DRAW);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBufferData /" + intBuffer);
+
+        vertexCount[pass] = numV;
+        this.hasPass[pass] |= numV > 0;
+//        if (numV > 0)
+//        System.out.println("pass "+pass+" on "+this+" has "+numV+" vertices (buffer len "+len+")");
+
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+    }
     public void release() {
         if (this.vbo != null) {
             Engine.deleteBuffers(this.vbo);
@@ -161,4 +200,8 @@ public class MeshedRegion {
 
     }
 
+    @Override
+    public String toString() {
+        return "MeshedRegion[x="+this.rX+",y="+this.rY+",z="+this.rZ+"]";
+    }
 }

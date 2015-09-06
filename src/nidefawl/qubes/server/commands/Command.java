@@ -2,6 +2,9 @@ package nidefawl.qubes.server.commands;
 
 import java.util.HashSet;
 
+import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.server.GameServer;
+
 public abstract class Command {
     HashSet<String> aliases = new HashSet<>();
     final String    name;
@@ -30,5 +33,18 @@ public abstract class Command {
 
     public boolean runSynchronized() {
         return true;
+    }
+
+    static void checkArgs(String[] args, int i, int j, String string) {
+        if (args.length < i || (j >= 0 && args.length > j))
+            throw new CommandException("Usage: "+string);
+    }
+
+    static Player matchPlayer(GameServer server, String string) {
+        Player p = server.getPlayerManager().matchPlayer(string);
+        if (p == null) {
+            throw new CommandException("Player not found");
+        }
+        return p;
     }
 }

@@ -126,7 +126,8 @@ public class PlayerSelf extends Entity {
         super.tickUpdate();
         this.mot.x *= slowdown;
         this.mot.z *= slowdown;
-        if (this.fly) {
+        boolean nofall = this.fly || this.world.getChunk(GameMath.floor(this.pos.x)>>4, GameMath.floor(this.pos.z)>>4) == null;
+        if (nofall) {
 
             this.mot.y *= slowdown;
         } else {
