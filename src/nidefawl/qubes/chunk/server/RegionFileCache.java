@@ -10,6 +10,7 @@ public class RegionFileCache {
 	public RegionFileCache(File dir) {
 		this.dir = dir;
 		this.dir.mkdirs();
+		System.out.println("RegionFileCache at "+dir.getAbsolutePath());
 	}
 
 	public static int lhToZ(long l) {

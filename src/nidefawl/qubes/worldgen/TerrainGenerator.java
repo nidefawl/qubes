@@ -59,8 +59,9 @@ public class TerrainGenerator extends AbstractGen {
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);
         int heightBits = world.worldHeightBits;
-        Chunk c = new Chunk(chunkX, chunkZ, heightBits);
-        generateTerrain(c);
+        Chunk c = new Chunk(this.world, chunkX, chunkZ, heightBits);
+        short[] blocks = c.getBlocks();
+        generateTerrain(c, blocks);
         c.checkIsEmtpy();
         return c;
     }
@@ -144,7 +145,7 @@ public class TerrainGenerator extends AbstractGen {
         
     }
 
-    private void generateTerrain(Chunk c) {
+    private void generateTerrain(Chunk c, short[] blocks) {
 //        Random rand = new Random(this.seed);
         int wh = this.world.worldHeight;
         
@@ -223,7 +224,6 @@ public class TerrainGenerator extends AbstractGen {
 //        } else if (y < 100) {
 //            c.blocks[y<<8|z<<4|x] = (short) Block.water.id;
 //        }
-        short[] blocks = new short[Chunk.SIZE*Chunk.SIZE*this.world.worldHeight];
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int top = Block.grass.id;
@@ -254,7 +254,6 @@ public class TerrainGenerator extends AbstractGen {
                 }
             }
         }
-        c.setBlocks(blocks);
         
     }
     private double func2(double m, double n, double j) {

@@ -45,6 +45,8 @@ public class ChunkUnloadThread extends Thread {
                                 int z = GameMath.lhToZ(task);
                                 if (!tracker.isRequired(x, z)) {
                                     mgr.unloadChunk(x, z);
+                                } else {
+                                    c.isUnloading = false;
                                 }
                             }
                         }

@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
@@ -12,9 +13,7 @@ import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.player.PlayerData;
-import nidefawl.qubes.server.compress.CompressChunks;
-import nidefawl.qubes.server.compress.ICompressTask;
-import nidefawl.qubes.server.compress.CompressThread;
+import nidefawl.qubes.server.compress.*;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.WorldServer;
@@ -29,7 +28,8 @@ public class Player extends Entity {
     public boolean chunkTracked;
      Set<Long> chunks = Sets.newLinkedHashSet();
      Set<Long> sendChunks = Sets.newLinkedHashSet();
-
+     int lastLight = 0;
+     
     public Player() {
         super();
     }
@@ -74,10 +74,36 @@ public class Player extends Entity {
 //                System.out.println("got list with "+chunks.size()+" chunks for client ");
                 Iterable<List<Chunk>> iter = Iterables.partition(chunks, 16);
                 for (List<Chunk> list : iter) {
-                    CompressThread.submit(new CompressChunks(this.world.getId(), list, this.netHandler));
+                    CompressThread.submit(new CompressChunks(this.world.getId(), list, new ServerHandlerPlay[] {this.netHandler}, true));
                 }
             }
         }
+//        if (lastLight++>444) {
+//            lastLight = 0;
+//            Iterator<Long> it  = this.chunks.iterator();
+//            Set<Chunk> chunks = null;
+//            while (it.hasNext()) {
+//                long l = it.next();
+//                int x = GameMath.lhToX(l);
+//                int z = GameMath.lhToZ(l);
+//                Chunk c = this.world.getChunkManager().get(x, z);
+//                if (c != null) {
+//                    if (chunks == null) {
+//                        chunks = Sets.newHashSet();
+//                    }
+////                    System.out.println("send chunk "+c);
+//                    chunks.add(c);
+//                    if (chunks.size() > 31)
+//                        break;
+//                }
+//            }
+//            if (chunks != null) {
+////              System.out.println("got list with "+chunks.size()+" chunks for client ");
+//              Iterable<List<Chunk>> iter = Iterables.partition(chunks, 16);
+//              for (List<Chunk> list : iter) {
+//              }
+//          }
+//        }
     }
 
     public void watchingChunk(long hash) {

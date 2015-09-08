@@ -100,10 +100,12 @@ public class BlockFace {
 
         int tex = block.getTextureFromSide(side);
         attr.setTex(tex);
+//
+//        attr.(0xf00000);
 
-        attr.setBrightness(0xf00000);
-        
-        attr.setAO(this.bs.ao0, this.bs.ao1, this.bs.ao2, this.bs.ao3);
+        attr.setAO(this.bs.maskedAO);
+        attr.setLight(this.bs.maskedLightSky, this.bs.maskedLightBlock);
+        attr.setType(this.bs.type);
         
         setUV(attr.v0, 0);
         attr.v0.setColorRGBAF(b * m, g * m, r * m, alpha);

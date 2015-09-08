@@ -16,6 +16,7 @@ import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldClient;
 
 public class GuiOverlayStats extends Gui {
 
@@ -49,7 +50,7 @@ public class GuiOverlayStats extends Gui {
         Vector3f v = cam.getPosition();
         Game.instance.tick = 0;
         this.stats2 = String.format("%d setUniform/frame ", Stats.uniformCalls);
-        World world = Game.instance.getWorld();
+        WorldClient world = (WorldClient) Game.instance.getWorld();
         if (world != null) {
             int numChunks = world.getChunkManager().getChunksLoaded();
             this.stats3 = String.format("Chunks %d - R %d/%d", numChunks, Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
@@ -58,12 +59,22 @@ public class GuiOverlayStats extends Gui {
             this.stats5 = "";
             BlockPos p = Engine.selection.selection[0];
             BlockPos p2 = Engine.selection.selection[1];
-            if (p != null && p2 != null) {
+            if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
             }
             else if (p != null) {
-                this.stats5 = String.format("%d %d %d (Region %d %d)", p.x, p.y, p.z, 
-                        p.x>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), p.z>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS));
+                int lvl = world.getLight(p.x, p.y, p.z);
+                int lvl1 = world.getLight(p.x, p.y+1, p.z);
+                int block1 = lvl&0xF;
+                int sky1 = (lvl>>4)&0xF;
+                int block2 = lvl1&0xF;
+                int sky2 = (lvl1>>4)&0xF;
+                int h = world.getHeight(p.x, p.z);
+                this.stats5 = String.format("%d %d %d (Region %d %d)\nLight: %d/%d (+1: %d/%d)\nHeight: %d", p.x, p.y, p.z, 
+                        p.x>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), 
+                        p.z>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), 
+                        sky1, block1, sky2, block2,
+                        h);
             }
         } else {
             this.stats3 = null;
@@ -119,7 +130,7 @@ public class GuiOverlayStats extends Gui {
                 strwidth = Math.max(font.getStringWidth(split[i]), strwidth);
             }
             for (int i = 0; i < split.length; i++) {
-                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)30)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
         }
         Shader.disable();

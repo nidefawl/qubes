@@ -262,7 +262,7 @@ public class Mesher {
                 surface.type = 1;
                 surface.pass = 2;
             } else {
-                surface.hasAO = true;
+                surface.calcLight = true;
             }
             surface.chunk = chunk;
             return surface;

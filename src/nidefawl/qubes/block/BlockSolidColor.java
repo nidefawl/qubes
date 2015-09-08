@@ -10,7 +10,12 @@ public class BlockSolidColor extends Block {
     }
     @Override
     public boolean applyAO() {
-        return true;
+        return false;
+    }
+    
+    @Override
+    public int getLightValue() {
+        return 15;
     }
     
     @Override
@@ -18,7 +23,5 @@ public class BlockSolidColor extends Block {
         return 0x8888ff;
     }
 
-    public float getAlpha() {
-        return 1f;
-    }
+    
 }

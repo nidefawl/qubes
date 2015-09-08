@@ -1,6 +1,7 @@
 package nidefawl.qubes.chunk.server;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.nbt.Tag;
@@ -44,22 +45,41 @@ public class ChunkReader {
 
     private Compound writeChunk(Chunk c) {
         Compound cmp = new Compound();
-        cmp.setInt("version", 1);
+        cmp.setInt("version", 2);
         cmp.setInt("x", c.x);
         cmp.setInt("z", c.z);
         short[] blocks = c.getBlocks();
         byte[] byteBlocks = shortToByteArray(blocks);
         cmp.setByteArray("blocks", byteBlocks);
+        byte[] blockLight = c.getBlockLight();
+        byte[] blockLight2 = new byte[blockLight.length];
+        System.arraycopy(blockLight, 0, blockLight2, 0, blockLight2.length);
+        cmp.setByteArray("blockLight", blockLight);
+        cmp.setBoolean("needsLightInit", c.needsLightInit);
         return cmp;
     }
 
     private Chunk readChunk(World world, int x, int z, Compound t) {
-        Chunk c = new Chunk(x, z, world.worldHeightBits);
+        int version = t.getInt("version");
+        if (version != 2) {
+            System.err.println("Not loading version "+version+" chunk at "+x+"/"+z);
+            return null;
+        }
+        Chunk c = new Chunk(world, x, z, world.worldHeightBits);
         Tag.ByteArray bytearray = t.getByteArray("blocks");
         byte[] byteBlocks = bytearray.getArray();
-        short[] blocks = byteToShortArray(byteBlocks);
-        c.setBlocks(blocks);
+        byteToShortArray(byteBlocks, c.getBlocks());
+        Tag.ByteArray blockLightArr = t.getByteArray("blockLight");
+        byte[] blockLight = blockLightArr.getArray();
+        System.arraycopy(blockLight, 0, c.getBlockLight(), 0, blockLight.length);
+        c.needsLightInit = t.getBoolean("needsLightInit");
         return c;
+    }
+
+    public static void byteToShortArray(byte[] blocks, short[] dst) {
+        for (int i = 0; i < dst.length; i++) {
+            dst[i] = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
+        }
     }
 
 

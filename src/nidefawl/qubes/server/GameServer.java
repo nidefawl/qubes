@@ -172,10 +172,18 @@ public class GameServer implements Runnable, IErrorHandler {
 		if (this.running) {
 			this.running = false;
 			System.out.println("Shutting down server...");
-            save(true);
+            try {
+                save(true);
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
 			if (this.worlds != null) {
 	            for (int i = 0; i < this.worlds.length; i++) {
-	                this.worlds[i].onLeave();
+	                try {
+	                    this.worlds[i].onLeave();
+	                } catch (Throwable t) {
+	                    t.printStackTrace();
+	                }
 	            }
             }
             if (this.networkServer != null) {

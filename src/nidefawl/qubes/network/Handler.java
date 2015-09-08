@@ -40,7 +40,7 @@ public abstract class Handler {
     }
 
 
-    public void handleChunkDataMulti(PacketSChunkData packetChunkDataMulti, boolean b) {
+    public void handleChunkDataMulti(PacketSChunkData packetChunkDataMulti, int light) {
     }
 
     public void handleSetBlock(PacketCSetBlock packetCSetBlock) {
@@ -61,5 +61,8 @@ public abstract class Handler {
         while ((p = incoming.poll()) != null) {
             p.handle(this);
         }
+    }
+
+    public void handleLightChunk(PacketSLightChunk packetSLightChunk) {
     }
 }

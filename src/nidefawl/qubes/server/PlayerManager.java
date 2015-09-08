@@ -29,9 +29,12 @@ public class PlayerManager {
     public void init() {
         this.directory = WorkingEnv.getPlayerData();
     }
+    public File getPlayerFile(String name) {
+        return new File(this.directory, name+".player");
+    }
 
     public PlayerData loadPlayer(String name) {
-        File f = new File(this.directory, name);
+        File f = getPlayerFile(name);
         PlayerData data = new PlayerData();
         if (f.exists()) {
             try {
@@ -45,7 +48,7 @@ public class PlayerManager {
     }
 
     public void savePlayer(String name, PlayerData data) {
-        File f = new File(this.directory, name);
+        File f = getPlayerFile(name);
         Tag t = data.save();
         try {
             TagReader.writeTagToFile(t, f);

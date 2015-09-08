@@ -28,8 +28,6 @@ public abstract class ChunkManager {
     public int getChunksLoaded() {
         return this.table.size();
     }
-    public abstract void startThreads();
-    public abstract void onWorldUnload();
 
     public void saveAll() {
     }

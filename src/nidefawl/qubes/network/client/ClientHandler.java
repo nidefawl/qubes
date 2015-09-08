@@ -1,5 +1,6 @@
 package nidefawl.qubes.network.client;
 
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -16,6 +17,7 @@ import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.TripletShortHash;
+import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.WorldClient;
@@ -128,19 +130,20 @@ public class ClientHandler extends Handler {
         this.client.sendPacket(packet);
     }
 
-    public static short[] byteToShortArray(byte[] blocks, int offset, int len) {
-        short[] shorts = new short[len/2];
-        for (int i = 0; i < shorts.length; i++) {
-            shorts[i] = (short) ( (blocks[offset+i*2+0]&0xFF) | ((blocks[offset+i*2+1]&0xFF)<<8) );
+    public static void byteToShortArray(byte[] blocks, short[] dst, int offset) {
+        for (int i = 0; i < dst.length; i++) {
+            dst[i] = (short) ( (blocks[offset+i*2+0]&0xFF) | ((blocks[offset+i*2+1]&0xFF)<<8) );
         }
-        return shorts;
     }
 
     @Override
-    public void handleChunkDataMulti(PacketSChunkData packet, boolean b) {
+    public void handleChunkDataMulti(PacketSChunkData packet, int flags) {
         int[][] coords = packet.coords;
         int len = coords.length;
-        byte[] decompressed = inflate(packet.blocks);
+        byte[] decompressed = packet.blocks;
+        if ((flags&1)!=0) {
+            decompressed = inflate(packet.blocks);
+        }
         int offset = 0;
         int singleChunkByteSize = packet.chunkLen;
         for (int i = 0; i < len; i++) {
@@ -151,9 +154,14 @@ public class ClientHandler extends Handler {
                 offset += singleChunkByteSize;
                 continue;
             }
-            short[] blocks = byteToShortArray(decompressed, offset, singleChunkByteSize);
-            offset += singleChunkByteSize;
-            c.setBlocks(blocks);
+            short[] dst = c.getBlocks();
+            byteToShortArray(decompressed, dst, offset);
+            offset += dst.length*2;
+            if ((flags&2)!=0) {
+                byte[] light = c.getBlockLight();
+                System.arraycopy(decompressed, offset, light, 0, light.length);
+                offset += light.length;
+            }
             Engine.regionRenderer.flagChunk(c.x, c.z);
         }
     }
@@ -192,14 +200,40 @@ public class ClientHandler extends Handler {
             System.err.println("Cannot process PacketSSetBlocks, chunk is not loaded");
             return;
         }
-        for (int i = 0; i < p.len; i++) {
-            short pos = p.positions.get(i);
-            short type = p.types.get(i);
+        short[] positions = p.positions;
+        short[] blocks = p.blocks;
+        byte[] lights = p.lights;
+        int len = positions.length;
+        for (int i = 0; i < len; i++) {
+            short pos = positions[i];
+            short type = blocks[i];
+            byte light = lights[i];
             int x = TripletShortHash.getX(pos);
             int y = TripletShortHash.getY(pos);
             int z = TripletShortHash.getZ(pos);
-            this.world.setType(p.chunkX<<Chunk.SIZE_BITS|x, y, p.chunkZ<<Chunk.SIZE_BITS|z, type, Flags.MARK);            
+            c.setType(x&Chunk.MASK, y, z&Chunk.MASK, type);
+            c.setLight(x&Chunk.MASK, y, z&Chunk.MASK, -1, light&0xFF);
+            this.world.flagBlock(p.chunkX<<Chunk.SIZE_BITS|x, y, p.chunkZ<<Chunk.SIZE_BITS|z);      
         }
+    }
+
+    public void handleLightChunk(PacketSLightChunk packet) {
+        Chunk c = this.chunkManager.get(packet.coordX, packet.coordZ);
+        if (c == null) {
+            System.err.println("Failed recv. light data, chunk is not loaded: " + packet.coordX + "/" + packet.coordZ);
+            return;
+        }
+        BlockBoundingBox box = BlockBoundingBox.fromShorts(packet.min, packet.max);
+        if(283>>4==packet.coordX&&(-523)>>4==packet.coordZ) {
+            if (box.contains(283&0xF, 137, -523&0xF)) {
+                System.err.println("light is flagged333");
+            }
+        }
+//        System.out.println("light "+packet.coordX+"/"+packet.coordZ+" - "+box);
+        byte[] decompressed = inflate(packet.data);
+        c.setLights(decompressed, box);
+        Engine.regionRenderer.flagChunk(c.x, c.z); //TODO: do not flag whole y-slice
+
     }
 
 }

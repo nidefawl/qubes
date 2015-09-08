@@ -11,6 +11,8 @@ public class ListenThread extends Thread {
 	private boolean finished;
 
     public ListenThread(final NetworkServer server, final int port) throws IOException {
+        setName("ListenThread");
+        setDaemon(true);
         this.serverSocket = new ServerSocket(port);
         this.server = server;
     }

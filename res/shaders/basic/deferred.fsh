@@ -158,7 +158,7 @@ void main() {
 
     setSunSpotDens();
   	float directShading = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
-    float shadow = 1;//getShadow();
+    float shadow = getShadow()*0.8+0.2;
 	float isSky = float(prop.blockinfo.y==0);
 	float isWater = float(prop.blockinfo.y==4||prop.blockinfo.y==6);
 	float isLight = float(prop.blockinfo.y==6);
@@ -168,13 +168,13 @@ void main() {
 	vec3 Idiff = SkyLight.Ld.rgb * directShading;     
 	vec3 finalLight = vec3(0);
 	float fNight = smoothstep(0, 1, clamp(nightNoon-isLight, 0, 1));
-	finalLight = SkyLight.La.rgb*(1-fNight*0.48);
+	finalLight = SkyLight.La.rgb*(1-fNight*0.28);
 	finalLight += shadow * Idiff*dayLightIntens;
 	finalLight += shadow * Ispec*dayLightIntens;
 	finalLight *= clamp(dayLightIntens, 0.5, 1.0)*1.0;
-	finalLight.rg *= 1.0-fNight*0.43;
+	finalLight.rg *= 1.0-fNight*0.23;
 	finalLight *= isLight*12+1;
-	finalLight *= 1.0-fNight*0.73;
+	finalLight *= 1.0-fNight*0.63;
 
     for(int i = 1; i < numLights; ++i)
     {

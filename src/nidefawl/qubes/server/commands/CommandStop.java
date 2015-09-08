@@ -8,7 +8,7 @@ public class CommandStop extends Command {
     }
 
     public void execute(ICommandSource source, String cmd, String[] args, String line) {
-        source.getServer().halt();
+        source.getServer().stopServer();
     }
 
     public boolean runSynchronized() {

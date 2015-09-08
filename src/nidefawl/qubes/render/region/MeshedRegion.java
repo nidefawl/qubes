@@ -59,11 +59,17 @@ public class MeshedRegion {
             Engine.checkGLError("AttribPtr " + 3);
         offset += 1; //8
         GL20.glEnableVertexAttribArray(4);
-//        GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        //      GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
         GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, BLOCK_VERT_BYTE_SIZE, offset * 4);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("AttribPtr " + 4);
-        offset += 2; //10
+        offset += 2;//10
+        GL20.glEnableVertexAttribArray(5);
+        //    GL20.glVertexAttribPointer(5, 4, GL11.GL_SHORT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        GL30.glVertexAttribIPointer(5, 4, GL11.GL_UNSIGNED_SHORT, BLOCK_VERT_BYTE_SIZE, offset * 4);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("AttribPtr " + 5);
+        offset += 2;//12
     }
     public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo[pass]);
@@ -71,7 +77,7 @@ public class MeshedRegion {
         int attr = 1;
         if (pass != 2) {
             enabledDefaultBlockPtrs();
-            attr = 5;
+            attr = 6;
         } else {
             GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, PASS_2_BLOCK_VERT_BYTE_SIZE, 0);
             if (Game.GL_ERROR_CHECKS)

@@ -23,10 +23,10 @@ public class ChunkManagerServer extends ChunkManager {
     public final Object syncObj2 = new Object();
     WorldServer worldServer;
 
-    public ChunkManagerServer(WorldServer world) {
+    public ChunkManagerServer(WorldServer world, File worldDirectory) {
         super(world);
         this.worldServer = world;
-        this.regionFileCache = new RegionFileCache(new File(WorkingEnv.getWorldsFolder(), "test"));
+        this.regionFileCache = new RegionFileCache(new File(worldDirectory, "data"));
         this.thread = new ChunkLoadThread(this);
         this.unloadThread = new ChunkUnloadThread(this);
         this.reader = new ChunkReader(this, this.regionFileCache);
@@ -58,7 +58,10 @@ public class ChunkManagerServer extends ChunkManager {
                 AbstractGen gen = worldServer.getGenerator();
                 long l = System.nanoTime();
                 c = gen.generateChunk(x, z);
+                c.postGenerate();
                 Stats.timeWorldGen += (System.nanoTime()-l) / 1000000.0D;
+            } else {
+                c.postLoad();
             }
             this.table.put(x, z, c);
         }
@@ -90,6 +93,7 @@ public class ChunkManagerServer extends ChunkManager {
                 continue;
             }
             if (!tracker.isRequired(c.x, c.z)) {
+                c.isUnloading = true;
                 this.unloadThread.queueUnloadChecked(GameMath.toLong(c.x, c.z));
             } else if (c.needsSave) {
                 saveChunk(c);
@@ -100,6 +104,7 @@ public class ChunkManagerServer extends ChunkManager {
     public void unloadChunk(int x, int z) {
         Chunk c = this.table.remove(x, z);
         if (c != null) {
+            c.isValid = false;
             saveChunk(c);
         }
     }

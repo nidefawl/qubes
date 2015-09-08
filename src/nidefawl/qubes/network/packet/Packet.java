@@ -25,6 +25,7 @@ public abstract class Packet {
         register(PacketCSetBlocks.class, 9, false, true);
         register(PacketSSetBlock.class, 10, false, true);
         register(PacketSSetBlocks.class, 11, false, true);
+        register(PacketSLightChunk.class, 12, false, true);
     }
     public Packet() {
     }

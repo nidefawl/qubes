@@ -13,7 +13,7 @@ public class StartServer {
 
 	public static void main(String[] args) {
 		try {
-			WorkingEnv.init(Side.SERVER, "server");
+			WorkingEnv.init(Side.SERVER, ".");
 			final GameServer instance = new GameServer();
 	        Runtime.getRuntime().addShutdownHook(new Thread(
 	        	new Runnable() {

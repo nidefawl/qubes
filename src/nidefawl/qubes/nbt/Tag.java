@@ -399,6 +399,20 @@ public abstract class Tag {
         public void setByte(String string, int b) {
             this.data.put(string, new Tag.Byte(b));
         }
+
+
+        public void setBoolean(String string, boolean bool) {
+            this.data.put(string, new Tag.Byte(bool?1:0));
+        }
+
+        public int getInt(String string) {
+            Tag t = this.data.get(string);
+            return t instanceof Tag.Int ? ((Tag.Int) t).getInt() : 0;
+        }
+
+        public boolean getBoolean(String string) {
+            return getByte(string) > 0;
+        }
     }
 
     public static class Float extends Tag {

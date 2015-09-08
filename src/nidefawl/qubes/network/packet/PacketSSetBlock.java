@@ -7,19 +7,22 @@ import java.io.IOException;
 import nidefawl.qubes.network.Handler;
 
 public class PacketSSetBlock extends AbstractPacketWorldRef {
+
     public PacketSSetBlock() {
     }
 
-    public PacketSSetBlock(int id, int x, int y, int z, int type) {
+    public PacketSSetBlock(int id, int x, int y, int z, int type, int light) {
         super(id);
         this.x = x;
         this.y = y;
         this.z = z;
         this.type = type;
+        this.light = light;
     }
 
     public int x, y, z;
     public int type;
+    private int light;
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
@@ -27,6 +30,7 @@ public class PacketSSetBlock extends AbstractPacketWorldRef {
         y = stream.readInt();
         z = stream.readInt();
         type = stream.readInt();
+        light = stream.readUnsignedByte();
 
     }
 
@@ -36,6 +40,7 @@ public class PacketSSetBlock extends AbstractPacketWorldRef {
         stream.writeInt(y);
         stream.writeInt(z);
         stream.writeInt(type);
+        stream.writeByte(light);
     }
 
     @Override

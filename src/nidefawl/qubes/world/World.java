@@ -1,7 +1,9 @@
 package nidefawl.qubes.world;
 
+import java.io.File;
 import java.util.*;
 
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.*;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
@@ -29,16 +31,18 @@ public abstract class World {
 
     private long seed;
 
-    public int         dayLen = 1000;
-    public int         time;
+    public int dayLen = 1000;
+    public int time;
 
     private final ChunkManager chunkMgr;
     private final Random       rand;
-    private final UUID uuid;
-    private int id;
+    private final UUID         uuid;
+    private int                id;
+    public IWorldSettings settings;
     public static final int    MAX_WORLDHEIGHT = 256;
 
     public World(IWorldSettings settings) {
+        this.settings = settings;
         this.id = settings.getId();
         this.chunkMgr = makeChunkManager();
         this.seed = settings.getSeed();
@@ -64,10 +68,11 @@ public abstract class World {
         //        }
 //                time = (int) (System.currentTimeMillis()/50L);
 //                fTime = 0;
-        dayLen = 211500;
+//        dayLen = 211500;
 //        time = 53000;
-        time = 113000;
+        time = 133000;
         fTime=0;
+      dayLen = 211500;
         float timeOffset = (this.time) % dayLen;
         float fSun = (timeOffset + fTime) / (float) dayLen + 0.25F;
         if (fSun < 0)
@@ -128,13 +133,17 @@ public abstract class World {
             return false;
         }
         if (c.setType(x & 0xF, y, z & 0xF, type)) {
-
+            updateLight(x, y, z);
             if ((render & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
             }   
         }
         return true;
     }
+    public void updateLight(int x, int y, int z) {
+        
+    }
+
     public abstract void flagBlock(int x, int y, int z);
 
     public Chunk getChunk(int x, int z) {
@@ -144,12 +153,10 @@ public abstract class World {
     public void onLeave() {
         this.entities.clear();
         this.entityList.clear();
-        this.getChunkManager().onWorldUnload();
     }
 
 
     public void onLoad() {
-        this.getChunkManager().startThreads();
     }
 
     public void addEntity(Entity ent) {
@@ -233,5 +240,51 @@ public abstract class World {
      */
     public int getId() {
         return this.id;
+    }
+
+    public Chunk getChunkFromBlock(int x, int z) {
+        return getChunk(x>>Chunk.SIZE_BITS, z>>Chunk.SIZE_BITS);
+    }
+
+    public void updateLightHeightMap(Chunk chunk, int i, int j, int min, int max, boolean add) {
+    }
+
+    public Chunk getChunkIfNeightboursLoaded(int x, int z) {
+        Chunk c = this.getChunkManager().get(x, z);
+        if (c != null) {
+            for (int _x = -1; _x < 2; _x++)
+                for (int _z = -1; _z < 2; _z++) {
+                    if (_x == 0 && _z == 0)
+                        continue;
+                    if (getChunkManager().get(x + _x, z + _z) == null)
+                        return null;
+                }
+        }
+        return c;
+    }
+
+    public boolean canSeeSky(int x, int y, int z) {
+        Chunk c = getChunk(x >> Chunk.SIZE_BITS, z >> Chunk.SIZE_BITS);
+        return c == null ? false : c.getHeightMap(x & Chunk.MASK, z & Chunk.MASK) <= y + 1;
+    }
+
+    public boolean isTransparent(int x, int y, int z) {
+        Chunk c = getChunk(x >> Chunk.SIZE_BITS, z >> Chunk.SIZE_BITS);
+        return c == null ? false : !Block.isOpaque(c.getTypeId(x & Chunk.MASK, y, z & Chunk.MASK));
+    }
+
+    public int getHeight(int x, int z) {
+        Chunk c = getChunk(x >> Chunk.SIZE_BITS, z >> Chunk.SIZE_BITS);
+        return c == null ? 0 : c.getHeightMap(x & Chunk.MASK, z & Chunk.MASK);
+    }
+
+    public int getLight(int i, int j, int k) {
+        Chunk c = getChunk(i >> Chunk.SIZE_BITS, k >> Chunk.SIZE_BITS);
+        if (c == null)
+            return 0;
+        return c.getLight(i & Chunk.MASK, j, k & Chunk.MASK);
+    }
+
+    public void flagChunkLightUpdate(int x, int z) {
     }
 }

@@ -1,10 +1,21 @@
 package nidefawl.qubes.world;
 
+import static nidefawl.qubes.chunk.Chunk.MASK;
+import static nidefawl.qubes.chunk.Chunk.SIZE;
+import static nidefawl.qubes.chunk.Chunk.SIZE_BITS;
+
+import java.util.*;
+
+import com.google.common.collect.Lists;
+
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
-import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.TripletLongHash;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -93,5 +104,17 @@ public class WorldClient extends World {
     public void flagBlock(int x, int y, int z) {
         Engine.regionRenderer.flagBlock(x, y, z);
     }
+    
+    @Override
+    public void tickUpdate() {
+        super.tickUpdate();
+    }
+
+
+    public int getHeight(int x, int z) {
+        return 0;
+    }
+
+
 
 }

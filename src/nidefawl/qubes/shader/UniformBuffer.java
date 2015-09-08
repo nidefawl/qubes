@@ -15,7 +15,7 @@ import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
-    final static int NUM_MATRIXES = 11+8;
+    final static int NUM_MATRIXES = 11;
     final static int SIZE_STRUCT = NUM_MATRIXES*64+16+16+16+16;
 
     private static FloatBuffer uboBuffer;
@@ -111,14 +111,6 @@ public class UniformBuffer {
         uboBuffer.put(Engine.shadowProj.getSMVP(1));
         uboBuffer.put(Engine.shadowProj.getSMVP(2));
         uboBuffer.put(Engine.shadowProj.getSMVP(2));
-        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(0));
-        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(1));
-        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(2));
-        uboBuffer.put(Engine.shadowProj.getShadow_MV_INV(2));
-        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(0));
-        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(1));
-        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(2));
-        uboBuffer.put(Engine.shadowProj.getShadow_PROJ_INV(2));
         
         uboBuffer.put(Engine.shadowProj.shadowSplitDepth[0]);
         uboBuffer.put(Engine.shadowProj.shadowSplitDepth[1]);
@@ -167,9 +159,9 @@ public class UniformBuffer {
         uboBuffer.put(Engine.lightDirection.y);
         uboBuffer.put(Engine.lightDirection.z);
         uboBuffer.put(1F);
-        float ambIntens = 0.15F;
-        float diffIntens = 0.34F;
-        float specIntens = 0.23F;
+        float ambIntens = 0.14F;
+        float diffIntens = 0.54F;
+        float specIntens = 0.53F;
         uboBuffer.put(ambIntens);
         uboBuffer.put(ambIntens);
         uboBuffer.put(ambIntens);

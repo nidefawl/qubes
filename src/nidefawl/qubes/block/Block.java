@@ -9,7 +9,7 @@ public class Block {
     public static final int BLOCK_MASK = 0xFF;
     public static final int NUM_BLOCKS = 256;
     public static final Block[] block = new Block[NUM_BLOCKS];
-    public final static Block stone = new Block(1).setName("stone2");
+    public final static Block stone = new Block(1).setName("stone");
     public final static Block grass = new BlockGrass(2).setName("grass");
     public final static Block dirt = new Block(3).setName("dirt");
     public final static Block water = new BlockWater(4).setName("water");
@@ -92,6 +92,9 @@ public class Block {
         return 1;
     }
     public int getLightValue() {
-        return 15;
+        return 0;
+    }
+    public final static boolean isOpaque(int typeId) {
+        return typeId != 0 && !block[typeId].isTransparent();
     }
 }

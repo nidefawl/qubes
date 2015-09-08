@@ -1,7 +1,7 @@
 package nidefawl.qubes.meshing;
 
 public class BlockFaceAttr {
-    public final static int BLOCK_VERT_INT_SIZE = 10;
+    public final static int BLOCK_VERT_INT_SIZE = 12;
     public final static int BLOCK_VERT_BYTE_SIZE = BLOCK_VERT_INT_SIZE<<2;
     public final static int BLOCK_FACE_INT_SIZE = BLOCK_VERT_INT_SIZE*4;
     public final static int BLOCK_FACE_BYTE_SIZE = BLOCK_FACE_INT_SIZE<<2;
@@ -11,6 +11,7 @@ public class BlockFaceAttr {
     public final static int PASS_2_BLOCK_FACE_BYTE_SIZE = PASS_2_BLOCK_FACE_INT_SIZE<<2;
     final public static String[] attributes = new String[] {
             "in_blockinfo",
+            "in_light",
     };
     public final BlockFaceVert v0 = new BlockFaceVert();
     public final BlockFaceVert v1 = new BlockFaceVert();
@@ -21,9 +22,11 @@ public class BlockFaceAttr {
     };
     private int tex;
     private int normal;
-    private int brightness;
     int xOff, yOff, zOff;
-    private int ao;
+    private int aoMask;
+    private int lightMaskSky;
+    private int lightMaskBlock;
+    private int type;
 
     public void setTex(int tex) {
         this.tex = tex;
@@ -42,11 +45,12 @@ public class BlockFaceAttr {
         normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
     }
     
-    public void setBrightness(int i) {
-        brightness = i;
+    public void setLight(int sky, int block) {
+        this.lightMaskSky = sky;
+        this.lightMaskBlock = block;
     }
     
-    public void put(int[] rawBuffer, int index, int pass, BlockFace face) {
+    public void put(int[] rawBuffer, int index, int pass) {
         for (int i = 0; i < 4; i++) {
             BlockFaceVert v = this.v[i % 4];
             rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
@@ -57,8 +61,10 @@ public class BlockFaceAttr {
             rawBuffer[index + 5] = Float.floatToRawIntBits(v.u);
             rawBuffer[index + 6] = Float.floatToRawIntBits(v.v);
             rawBuffer[index + 7] = v.rgba;
-            rawBuffer[index + 8] = tex|face.bs.type<<16; //2x SHORT
-            rawBuffer[index + 9] = this.ao; // lower 8 bit = AO
+            rawBuffer[index + 8] = tex|this.type<<16; //2x SHORT
+            rawBuffer[index + 9] = this.aoMask; // lower 8 bit = AO
+            rawBuffer[index + 10] = this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16; 
+            rawBuffer[index + 11] = 0;
             index += BLOCK_VERT_INT_SIZE;
         }
         
@@ -75,9 +81,12 @@ public class BlockFaceAttr {
         }
     }
 
-    public void setAO(int ao0, int ao1, int ao2, int ao3) {
-        this.ao = ((ao3&0x3)<<6)|((ao2&0x3)<<4)|((ao1&0x3)<<2)|(ao0&0x3);
-        
+    public void setAO(int aoMask) {
+        this.aoMask = aoMask;
+    }
+    
+    public void setType(int type) {
+        this.type = type;
     }
 
 }

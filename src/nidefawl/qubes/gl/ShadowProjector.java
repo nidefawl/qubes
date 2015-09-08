@@ -9,8 +9,6 @@ import nidefawl.qubes.vec.*;
 public class ShadowProjector {
     private Matrix4f[]       shadowSplitProj;
     private BufferedMatrix[] shadowSplitMVP;
-    private BufferedMatrix[] shadowSplitProj2;
-    private BufferedMatrix[] shadowSplitMV;
     public float[]           shadowSplitDepth;
     public Frustum[]         shadowCamFrustum;
     Matrix4f newMat = new Matrix4f();
@@ -107,12 +105,8 @@ public class ShadowProjector {
 //        Matrix4f.mul(matOrtho, matLookAt, matLookAt);
 
         Matrix4f.mul(matOrtho, shadowSplitMVP[split], shadowSplitMVP[split]);
-        shadowSplitProj2[split].load(matLookAt);
-        shadowSplitMV[split].load(shadowSplitMVP[split]);
         shadowSplitMVP[split].update();
         shadowSplitMVP[split].update();
-        shadowSplitProj2[split].update();
-        shadowSplitMV[split].update();
 //        shadowSplitDepth[split] = radius / 1.41F;// I'm 90% sure this is wrong, the shader requires 1 x radius and should reduce the input depth for each cascade as they are not centered on the same point
         shadowCamFrustum[split].set(shadowSplitMVP[split]);
 ////
@@ -132,8 +126,6 @@ public class ShadowProjector {
         this.splits = splits;
         shadowSplitProj = new Matrix4f[splits.length - 1];
         shadowSplitMVP = new BufferedMatrix[splits.length - 1];
-        shadowSplitProj2 = new BufferedMatrix[splits.length - 1];
-        shadowSplitMV = new BufferedMatrix[splits.length - 1];
         shadowSplitDepth = new float[splits.length - 1];
         shadowCamFrustum = new Frustum[splits.length - 1];
         int i;
@@ -142,12 +134,6 @@ public class ShadowProjector {
         }
         for (i = 0; i < shadowSplitMVP.length; i++) {
             shadowSplitMVP[i] = new BufferedMatrix();
-        }
-        for (i = 0; i < shadowSplitProj2.length; i++) {
-            shadowSplitProj2[i] = new BufferedMatrix();
-        }
-        for (i = 0; i < shadowSplitMV.length; i++) {
-            shadowSplitMV[i] = new BufferedMatrix();
         }
         for (i = 0; i < shadowCamFrustum.length; i++) {
             shadowCamFrustum[i] = new Frustum();
@@ -176,17 +162,6 @@ public class ShadowProjector {
 
     public FloatBuffer getSMVP(int i) {
         return shadowSplitMVP[i].get();
-    }
-
-
-    public FloatBuffer getShadow_MV_INV(int i) {
-        return shadowSplitMV[i].getInv();
-    }
-
-
-
-    public FloatBuffer getShadow_PROJ_INV(int i) {
-        return shadowSplitProj2[i].getInv();
     }
 
 }

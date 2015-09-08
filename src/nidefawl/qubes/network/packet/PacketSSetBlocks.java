@@ -13,39 +13,46 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
     public PacketSSetBlocks() {
     }
 
-    public PacketSSetBlocks(int id, int x, int z) {
+    public PacketSSetBlocks(int id, int x, int z, short[] pos, short[] blocks, byte[] lights) {
         super(id);
         this.chunkX = x;
         this.chunkZ = z;
+        this.positions = pos;
+        this.blocks = blocks;
+        this.lights = lights;
 
     }
 
-    public int         len;
-    public int         chunkX, chunkZ;
-    public List<Short> positions;
-    public List<Short> types;
+    public int     chunkX, chunkZ;
+    public short[] positions;
+    public short[] blocks;
+    public byte[]  lights;
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
-        this.len = stream.readInt();
         this.chunkX = stream.readInt();
         this.chunkZ = stream.readInt();
-        this.positions = Lists.newArrayList();
-        this.types = Lists.newArrayList();
-        for (int i = 0; i < this.len; i++) {
-            this.positions.add(stream.readShort());
-            this.types.add(stream.readShort());
+        int len = stream.readInt();
+        positions = new short[len];
+        blocks = new short[len];
+        lights = new byte[len];
+        for (int i = 0; i < len; i++) {
+            positions[i] = stream.readShort();
+            blocks[i] = stream.readShort();
+            lights[i] = stream.readByte();
         }
     }
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
-        stream.writeInt(this.len);
         stream.writeInt(this.chunkX);
         stream.writeInt(this.chunkZ);
-        for (int i = 0; i < this.len; i++) {
-            stream.writeShort(this.positions.get(i));
-            stream.writeShort(this.types.get(i));
+        int len = this.positions.length;
+        stream.writeInt(len);
+        for (int i = 0; i < len; i++) {
+            stream.writeShort(this.positions[i]);
+            stream.writeShort(this.blocks[i]);
+            stream.writeByte(this.lights[i]);
         }
     }
 

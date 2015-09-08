@@ -121,7 +121,7 @@ public class MeshUpdateTask {
                             attr.putBasic(buffer, m*SIZE, i);
                         } else {
                             face.draw(attr);
-                            attr.put(buffer, m*SIZE, i, face);
+                            attr.put(buffer, m*SIZE, i);
                         }
                     }
                     this.bufferIdx[i] = size*SIZE;

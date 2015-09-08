@@ -54,7 +54,7 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
     @Override
     public void handle(Handler h) {
         if (h.isValidWorld(this)) {
-            h.handleChunkDataMulti(this, (this.flags&1)!=0);    
+            h.handleChunkDataMulti(this, this.flags);    
         }
     }
 

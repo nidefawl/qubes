@@ -1,5 +1,6 @@
 package nidefawl.qubes.server.compress;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -15,21 +16,21 @@ public class CompressChunks implements ICompressTask {
     private int[][] coords;
     private int chunkLen;
     private ServerHandlerPlay[] handlers;
+    private boolean hasLight;
 
-    public CompressChunks(int worldid, Collection<Chunk> chunks, ServerHandlerPlay... handlers) {
+    public CompressChunks(int worldid, Collection<Chunk> chunks, ServerHandlerPlay[] handlers, boolean hasLight) {
         this.chunks = chunks;
         this.handlers = handlers;
         this.worldid = worldid;
+        this.hasLight = hasLight;
     }
 
 
-    public static int shortToByteArray(short[] src, byte[] dst, int offset) {
-        int i = 0;
-        for (; i < src.length; i++) {
+    public static void shortToByteArray(short[] src, byte[] dst, int offset) {
+        for (int i = 0; i < src.length; i++) {
             dst[offset+i*2+0] = (byte) (src[i]&0xFF);
             dst[offset+i*2+1] = (byte) ((src[i]>>8)&0xFF);
         }
-        return offset+i*2;
     }
 
     @Override
@@ -41,7 +42,14 @@ public class CompressChunks implements ICompressTask {
         for (Chunk c : chunks) {
             this.coords[idx++] = new int[] { c.x, c.z};
             short[] blocks = c.getBlocks();
-            offset = shortToByteArray(blocks, tmpBuffer, offset);
+            shortToByteArray(blocks, tmpBuffer, offset);
+            offset += blocks.length*2;
+            if (hasLight) {
+                byte[] light = c.getBlockLight();
+                System.arraycopy(light, 0, tmpBuffer, offset, light.length);
+//              Arrays.fill(tmpBuffer, offset, offset+light.length, (byte)0xFF);
+              offset += light.length;
+            }
             if (idx == 1) {
                 this.chunkLen = offset;
             }
@@ -57,6 +65,8 @@ public class CompressChunks implements ICompressTask {
         packet.chunkLen = this.chunkLen;
         packet.coords = this.coords;
         packet.flags |= 1;
+        if (this.hasLight)
+        packet.flags |= 2;
         for (int i = 0; i < handlers.length; i++)
             this.handlers[i].sendPacket(packet);
     }

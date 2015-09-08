@@ -14,21 +14,12 @@ public class ChunkManagerClient extends ChunkManager {
     protected ChunkTable makeChunkTable() {
         return new ChunkTable(MAX_CHUNK*2);
     }
-    
-
-    @Override
-    public void startThreads() {
-    }
-
-    @Override
-    public void onWorldUnload() {
-        this.table.clear();
-    }
 
     public Chunk getOrMake(int x, int z) {
         Chunk c = this.table.get(x, z);
         if (c == null) {
-            c = new Chunk(x, z, this.world.worldHeightBits);
+            c = new Chunk(this.world, x, z, this.world.worldHeightBits);
+            c.world = this.world;
             this.table.put(x, z, c);
         }
         return c;

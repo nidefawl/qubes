@@ -31,16 +31,22 @@ public class ChunkRenderCache {
     public void flush() {
         Arrays.fill(this.chunks, null);
     }
-
     /** call with relative coords */
     public int getTypeId(int i, int j, int k) {
+
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return 0;
         }
-        int chunkX = i>>Chunk.SIZE_BITS;
-        int chunkZ = k>>Chunk.SIZE_BITS;
-        Chunk region = get(chunkX, chunkZ);
+        Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
         return region != null ? region.getTypeId(i&0xF, j, k&0xF) : 0;
+    }
+
+    public int getLight(int i, int j, int k) {
+        if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
+            return 0xF0;
+        }
+        Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
+        return region != null ? region.getLight(i&0xF, j, k&0xF) : 0;
     }
 
     public boolean cache(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
