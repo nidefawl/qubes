@@ -70,7 +70,7 @@ public class BlockLightThread extends Thread {
                         }
                     }
                     long lT = System.currentTimeMillis()-last;
-                    if (lT>=1000) {
+                    if (lT>=10000) {
                         last = System.currentTimeMillis();
                         int n = this.lightUpdater.numBlocksUpdate;
                         this.lightUpdater.numBlocksUpdate = 0;

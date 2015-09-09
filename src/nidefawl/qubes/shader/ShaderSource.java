@@ -12,7 +12,8 @@ import nidefawl.qubes.gl.Engine;
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"");
-    static Pattern lineError = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
+    static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
+    static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
 
     HashMap<Integer, String> sources = new HashMap<Integer, String>();
 
@@ -79,7 +80,7 @@ public class ShaderSource {
                             throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
                         }
                     } else {
-                        if (insertLine && !resolve) {
+                        if (i>0&&insertLine && !resolve) {
                             insertLine = false;
                             code += "#line " + (nLineOffset+1) + " " + 0 + "\r\n";
 //                            nLineOffset--;
@@ -113,11 +114,16 @@ public class ShaderSource {
             String[] lines = log.split("\r?\n");
             for (int n = 0; n < lines.length; n++) {
                 String logLine = lines[n];
-                Matcher m = lineError.matcher(logLine);
+                Matcher m = lineErrorAMD.matcher(logLine);
+                int offset = 0;
+                if (!m.matches()) {
+                    offset=-1;
+                    m = lineErrorNVIDIA.matcher(logLine);
+                }
                 if (m.matches()) {
                     Integer i = Integer.parseInt(m.group(1));
                     if (i < 0) i = 0;
-                    Integer i2 = Integer.parseInt(m.group(2))-1;
+                    Integer i2 = Integer.parseInt(m.group(2))-1+offset;
                     String source = sources.get(i);
                     String sourceName = sourceNames.get(i);
                     errLog += sourceName+":"+i2+" "+m.group(3)+"\r\n";
@@ -126,14 +132,14 @@ public class ShaderSource {
                         continue;
                     }
                     String[] lines2 = source.split("\r?\n");
-                    if (lines2.length < i2) {
+                    if (lines2.length <= i2) {
                         System.err.println("failed getting line idx "+i2+" ("+lines2.length+")");
                         continue;
                     }
                     errLog += lines2[i2] + "\r\n";
                 } else {
 
-                    errLog += logLine + "\r\n"; 
+                    errLog += "-"+logLine + "\r\n"; 
                 }
             }
         } catch (Throwable t) {

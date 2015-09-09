@@ -1,10 +1,16 @@
 package nidefawl.qubes.render.region;
 
 import static org.lwjgl.opengl.GL11.*;
+import static nidefawl.qubes.render.WorldRenderer.*;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.*;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL31;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
@@ -12,148 +18,159 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.meshing.MeshThread;
+import nidefawl.qubes.perf.TimingHelper;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
 public class RegionRenderer {
-    public static final int RENDER_DISTANCE     = 12;
-    public static final int LENGTH     = RENDER_DISTANCE*2+1;
-    public static final int OFFS_OVER     = 2;
-    public static final int LENGTH_OVER     = (RENDER_DISTANCE+OFFS_OVER)*2+1;
-    public static final int HEIGHT_SLICES     = World.MAX_WORLDHEIGHT>>RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
-    //TODO: abstract render regions
-    public static final int IN_FRUSTUM_FULLY = 1;
-    public static final int IN_FRUSTUM = 0;
-    public static final int ALL = -1;
+    public static final int REGION_SIZE_BITS            = 1;
+    public static final int REGION_SIZE                 = 1 << REGION_SIZE_BITS;
+    public static final int REGION_SIZE_MASK            = REGION_SIZE - 1;
+    public static final int REGION_SIZE_BLOCK_SIZE_BITS = Chunk.SIZE_BITS + REGION_SIZE_BITS;
+    public static final int REGION_SIZE_BLOCKS          = 1 << REGION_SIZE_BLOCK_SIZE_BITS;
+    public static final int SLICE_HEIGHT_BLOCK_BITS     = 5;
+    public static final int SLICE_HEIGHT_BLOCKS         = 1 << SLICE_HEIGHT_BLOCK_BITS;
+    public static final int SLICE_HEIGHT_BLOCK_MASK     = SLICE_HEIGHT_BLOCKS - 1;
+    
+    public static final int RENDER_DISTANCE = 12;
+    public static final int LENGTH          = RENDER_DISTANCE * 2 + 1;
+    public static final int OFFS_OVER       = 2;
+    public static final int LENGTH_OVER     = (RENDER_DISTANCE + OFFS_OVER) * 2 + 1;
+    public static final int HEIGHT_SLICES   = World.MAX_WORLDHEIGHT >> RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
 
-    private ArrayList<MeshedRegion> renderList       = new ArrayList<MeshedRegion>();
-//    MeshedRegionTable regions = new MeshedRegionTable(RENDER_DISTANCE*2);
-    public int rendered;
-    public int numRegions;
-    public int renderChunkX;
-    public int renderChunkY;
-    public int renderChunkZ;
+    
+    
+    final Comparator<MeshedRegion> compare = new Comparator<MeshedRegion>() {
+        @Override
+        public int compare(MeshedRegion o1, MeshedRegion o2) {
+            return sortCompare(o1, o2);
+        }
+    };
+
+
+    public int                      rendered;
+    public int                      numRegions;
+    public int                      renderChunkX;
+    public int                      renderChunkY;
+    public int                      renderChunkZ;
+    private ArrayList<MeshedRegion> renderList      = new ArrayList<>();
+    
+    private ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
+    boolean                         needsSorting    = false;
+    
+    
+    TesselatorState                 debug           = new TesselatorState();
 
     public void init() {
         this.regions = create();
     }
     
-    MeshedRegion[][][] regions;
-    private MeshedRegion[][][] create() {
-        MeshedRegion[][][] regions = new MeshedRegion[LENGTH_OVER][][];
-        for (int x = 0; x < regions.length; x++) {
-            MeshedRegion[][] zRegions = regions[x] = new MeshedRegion[LENGTH_OVER][];
-            for (int z = 0; z < zRegions.length; z++) {
-                MeshedRegion[] ySlices = zRegions[z] = new MeshedRegion[HEIGHT_SLICES];
-                for (int y = 0; y < HEIGHT_SLICES; y++) {
-                    MeshedRegion m = new MeshedRegion();
-                    m.rX = x-(RENDER_DISTANCE+OFFS_OVER);
-                    m.rY = y;
-                    m.rZ = z-(RENDER_DISTANCE+OFFS_OVER);
-                    m.updateBB();
-                    ySlices[y] = m;
-                }
+    MeshedRegion[][] regions;
+    private MeshedRegion[][] create() {
+        MeshedRegion[][] regions = new MeshedRegion[LENGTH_OVER*LENGTH_OVER][];
+        for (int i = 0; i < regions.length; i++) {
+            int x = (i%LENGTH_OVER);
+            int z = (i/LENGTH_OVER);
+            MeshedRegion[] ySlices = regions[i] = new MeshedRegion[HEIGHT_SLICES];
+            for (int y = 0; y < HEIGHT_SLICES; y++) {
+                MeshedRegion m = new MeshedRegion();
+                m.rX = (x)-(RENDER_DISTANCE+OFFS_OVER);
+                m.rY = y;
+                m.rZ = (z)-(RENDER_DISTANCE+OFFS_OVER);
+                m.updateBB();
+                ySlices[y] = m;
             }
         }
         return regions;
     }
-    private MeshedRegion getDirect(int x, int y, int z) {
-        return this.regions[x][z][y];
-    }
-    private MeshedRegion[] getStack(int x, int z) {
-        return this.regions[x][z];
-    }
-    //TODO: keep second array around and flipflop
+
     private void reposition(int rChunkX, int rChunkZ) {
-        
         int diffX = rChunkX-this.renderChunkX;
         int diffZ = rChunkZ-this.renderChunkZ;
         
-        //TODO: this can be done better
-        // we can calculate which regions will fall out of the grid
-        HashSet<MeshedRegion[]> oldRegions = new HashSet<>();
-        for (int x = 0; x < this.regions.length; x++) {
-            MeshedRegion[][] zRegions = this.regions[x];
-            for (int z = 0; z < this.regions.length; z++) {
-                oldRegions.add(zRegions[z]);
-            }
-        }
-        MeshedRegion[][][] newRegions = create(); //TODO: do not allocate new MeshedRegion where getDirect returns the old one
-        for (int x = 0; x < newRegions.length; x++) {
-            MeshedRegion[][] zRegions = newRegions[x];
-            for (int z = 0; z < zRegions.length; z++) {
-                int oldX = x+diffX;
-                int oldZ = z+diffZ;
+        MeshedRegion[][] newRegions = new MeshedRegion[LENGTH_OVER*LENGTH_OVER][];
+        for (int i = 0; i < newRegions.length; i++) {
+            int x = (i%LENGTH_OVER);
+            int z = (i/LENGTH_OVER);
+            int oldX = x+diffX;
+            int oldZ = z+diffZ;
 
-                if (oldX>=0&&oldX<LENGTH_OVER&&oldZ>=0&&oldZ<LENGTH_OVER) {
-                    MeshedRegion[] m = getStack(oldX, oldZ);
-                    zRegions[z] = m;
-                    oldRegions.remove(m);
-                } else {
-                    MeshedRegion[] m = zRegions[z];
-                    for (int y = 0; y < HEIGHT_SLICES; y++) {
-                        m[y].rX += rChunkX;
-                        m[y].rZ += rChunkZ;
-                        m[y].updateBB();
-                    }
+            if (oldX>=0&&oldX<LENGTH_OVER&&oldZ>=0&&oldZ<LENGTH_OVER) {
+                int oldXZPos = oldZ*LENGTH_OVER+oldX;
+                MeshedRegion[] m = this.regions[oldXZPos];
+                this.regions[oldXZPos] = null;
+                newRegions[i] = m;
+            } else {
+                MeshedRegion[] ySlice = newRegions[i] = new MeshedRegion[HEIGHT_SLICES];
+                for (int y = 0; y < HEIGHT_SLICES; y++) {
+                    MeshedRegion m = new MeshedRegion();
+                    m.rX = (x)-(RENDER_DISTANCE+OFFS_OVER);
+                    m.rY = y;
+                    m.rZ = (z)-(RENDER_DISTANCE+OFFS_OVER);
+                    m.rX += rChunkX;
+                    m.rZ += rChunkZ;
+                    m.updateBB();
+                    ySlice[y] = m;
                 }
             }
         }
-        for (MeshedRegion[] old : oldRegions) {
-            for (int y = 0; y < HEIGHT_SLICES; y++) {
-                old[y].release();
-                
+        for (int i = 0; i < this.regions.length; i++) {
+            MeshedRegion[] m = this.regions[i];
+            if (m != null) {
+                for (int y = 0; y < HEIGHT_SLICES; y++) {
+                    m[y].release();
+                }
             }
+            
         }
+        
         this.regions = newRegions;
         this.renderChunkX = rChunkX;
         this.renderChunkZ = rChunkZ;
         
     }
-    private MeshedRegion get(int x, int y, int z) {
-        return this.regions[x+OFFS_OVER][z+OFFS_OVER][y];
-    }
+
     private MeshedRegion getByRegionCoord(int x, int y, int z) {
         x -= this.renderChunkX-RENDER_DISTANCE;
         z -= this.renderChunkZ-RENDER_DISTANCE;
         x+=OFFS_OVER;
         z+=OFFS_OVER;
         if (x>=0&&x<LENGTH_OVER&&z>=0&&z<LENGTH_OVER && y >= 0 && y < HEIGHT_SLICES)
-            return this.regions[x][z][y];
+            return this.regions[z*LENGTH_OVER+x][y];
         return null;
     }
-    public void flush() {
+
+    public void resetAll() {
         System.out.println("flush");
+        flushRegions();
         this.regionsToUpdate.clear();
-        for (int x = 0; x < this.regions.length; x++) {
-            MeshedRegion[][] zRegions = this.regions[x];
-            for (int z = 0; z < this.regions.length; z++) {
-                MeshedRegion[] m = zRegions[z];
-                for (int y = 0; y < HEIGHT_SLICES; y++) {
-                    MeshedRegion r = m[y];
-                    r.needsUpdate = true;
-                    r.isRenderable = false;
-                    r.isUpdating = false;
-                    r.release();
-                }
+        this.renderChunkX = this.renderChunkY = this.renderChunkZ = 0;
+
+        for (int i = 0; i < this.regions.length; i++) {
+            MeshedRegion[] m = this.regions[i];
+            for (int y = 0; y < HEIGHT_SLICES; y++) {
+                MeshedRegion r = m[y];
+                r.needsUpdate = true;
+                r.isRenderable = false;
+                r.isUpdating = false;
+                r.release();
             }
         }
+        this.regions = create();
     }
 
     public void reRender() {
         this.regionsToUpdate.clear();
-        for (int x = 0; x < this.regions.length; x++) {
-            MeshedRegion[][] zRegions = this.regions[x];
-            for (int z = 0; z < this.regions.length; z++) {
-                MeshedRegion[] m = zRegions[z];
-                for (int y = 0; y < HEIGHT_SLICES; y++) {
-                    MeshedRegion r = m[y];
-                    r.needsUpdate = true;
-                    r.isRenderable = false;
-                    r.isUpdating = false;
-                }
+        for (int i = 0; i < this.regions.length; i++) {
+            MeshedRegion[] m = this.regions[i];
+            for (int y = 0; y < HEIGHT_SLICES; y++) {
+                MeshedRegion r = m[y];
+                r.needsUpdate = true;
+                r.isRenderable = false;
+                r.isUpdating = false;
             }
         }
     }
@@ -188,7 +205,6 @@ public class RegionRenderer {
                 for (int ry = 0; ry < RegionRenderer.HEIGHT_SLICES; ry++) {
                     MeshedRegion r = getByRegionCoord(regionX2, ry, regionZ2);
                     if (r != null) {
-//                        System.out.println("flag region "+r.rX+"/"+r.rZ);
                         r.needsUpdate = true;
                     }
                 }
@@ -197,10 +213,7 @@ public class RegionRenderer {
     }
     int drawMode = GL11.GL_QUADS;
     int drawInstances = 0;
-    public int getDrawMode() {
-//        this.drawMode = GL11.GL_LINES_ADJANCENY
-        return drawMode;
-    }
+    
     public void setDrawMode(int i) {
         this.drawMode = i;
     }
@@ -210,40 +223,116 @@ public class RegionRenderer {
     
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
         int size = renderList.size();
-        int nSkipped = 0;
+
+        if (isMergedRender) { //NOT faster
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, BATCH_VBO[pass]);
+            MeshedRegion.enableVertexPtrs(pass);
+        }
         for (int i = 0; i < size; i++) {
             MeshedRegion r = renderList.get(i);
             if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
-//                System.out.println(this.rendered);
-//                if (this.rendering == 1) {
-//                    long sr = GameMath.randomI(r.rX*31+r.rY*13+r.rZ*23);
-//                    float fX = (GameMath.randomI(sr+0)%10) / 40.0f;
-//                    float fY = (GameMath.randomI(sr+1)%10) / 40.0f;
-//                    float fZ = (GameMath.randomI(sr+2)%10) / 40.0f;
-//                    Engine.worldRenderer.terrainShader.setProgramUniform4f("terroffset", fX, fY, fZ, 0);
-//                }
-                r.renderRegion(fTime, pass, this.drawMode, this.drawInstances);
-
-//                if (this.rendering == 1) {
-//                    Engine.worldRenderer.terrainShader.setProgramUniform4f("terroffset", 0,0,0,0);    
-//                }
-                
-                this.rendered++;//( += r.getNumVertices(0);   
-            } else {
-                nSkipped++;
+                if (isMergedRender) {
+//                    r.
+                    if (drawInstances > 0) {
+                        GL31.glDrawArraysInstanced(drawMode, r.vertexIndex[pass], r.vertexCount[pass], drawInstances);
+                    } else {
+                        GL11.glDrawArrays(drawMode, r.vertexIndex[pass], r.vertexCount[pass]);
+                    }
+                } else {
+                    r.renderRegion(fTime, pass, this.drawMode, this.drawInstances);    
+                }
+                this.rendered++;  
             }
         }
-//        System.out.println(nFrustum+": "+nSkipped);
 
+        if (isMergedRender) {
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+            MeshedRegion.disableVertexPtrs(pass);
+        }
     }
 
-    public void flushRegions() {
+     void flushRegions() {
         this.numRegions = 0;
         renderList.clear();
     }
-    public void putRegion(MeshedRegion r) {
+     void putRegion(MeshedRegion r) {
         this.numRegions++;
         renderList.add(r);
+    }
+
+    boolean         isMergedRender = false;
+    private boolean dirty = true;
+
+    private static int[] BATCH_VBO;
+
+    private static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
+    private static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
+//    = BufferUtils.createByteBuffer(1024*1024*32);
+    void reallocBuffer(int pass, int len) {
+        if (buffers[pass] == null || buffers[pass].capacity() < len) {
+            int align = ((len+8)/8)*8;
+            System.out.println("realloc buffer "+pass+" with "+len+" bytes");
+            buffers[pass] = BufferUtils.createByteBuffer(align);
+            intbuffers[pass] = buffers[pass].asIntBuffer();
+        }
+    }
+    public void merge() {
+        isMergedRender = !isMergedRender;
+        if (isMergedRender) {
+            if (BATCH_VBO == null) {
+                BATCH_VBO = new int[NUM_PASSES];
+                IntBuffer intbuf = Engine.glGenBuffers(NUM_PASSES);
+                for (int i = 0; i < NUM_PASSES; i++) {
+                    BATCH_VBO[i] = intbuf.get(i);
+                }
+            }
+            if (dirty) {
+                dirty = false;
+                for (int pass = 0; pass < NUM_PASSES; pass++) {
+                    int len = 0;
+                    for (int i = 0; i < this.regions.length; i++) {
+                        MeshedRegion[] regions = this.regions[i];
+                        for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
+                            len += regions[yy].buffer[pass].length;
+                        }
+                    }
+                    int[] data = new int[len];
+                    int vIndex = 0;
+                    int bIndex = 0;
+                    for (int i = 0; i < this.regions.length; i++) {
+                        MeshedRegion[] regions = this.regions[i];
+                        for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
+                            MeshedRegion m = regions[yy];
+                            int[] regionBuf = m.buffer[pass];
+                            System.arraycopy(regionBuf, 0, data, bIndex, regionBuf.length);
+                            m.vertexIndex[pass] = vIndex;
+                            bIndex += regionBuf.length;
+                            vIndex += m.vertexCount[pass];
+                        }
+                    }
+                    
+                    reallocBuffer(pass, len*4);
+                    ByteBuffer buf = buffers[pass];
+                    IntBuffer intBuffer = intbuffers[pass];
+                    if (len > intBuffer.capacity()) {
+                        System.err.println("OVER CAPACTIY: "+(len*4)+" bytes");
+                    } else {
+                        intBuffer.clear();
+                        intBuffer.put(data, 0, len);
+                        buf.position(0).limit(len * 4);
+                        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, BATCH_VBO[pass]);
+                        if (Game.GL_ERROR_CHECKS)
+                            Engine.checkGLError("glBindBuffer " + BATCH_VBO[pass]);
+                        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len * 4L, buf, GL15.GL_STATIC_DRAW);
+                        if (Game.GL_ERROR_CHECKS)
+                            Engine.checkGLError("glBufferData /" + intBuffer);
+        
+                        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+                        System.out.println("pass " + pass + " size: " + len + " ints - vertex count "+vIndex);
+                    }
+                }
+            }
+        }
     }
     public void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         flushRegions();
@@ -259,28 +348,28 @@ public class RegionRenderer {
         MeshedRegion mFinished = thread.finishTask();
         if (mFinished != null) {
             mFinished.isUpdating = false;
+            this.dirty = true;
         }
+        
         if (reposition) {
             needsSorting = true;
+            TimingHelper.startSilent(1);;
             reposition(rChunkX, rChunkZ);
+            System.out.println(TimingHelper.stopSilent(1));
         }
-        for (int xx = 0; xx < LENGTH; xx++) {
-            for (int zz = 0; zz < LENGTH; zz++) {
-                for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
-                    MeshedRegion m = this.get(xx, yy, zz);
-                    if (m != null) {
-                        m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb);
-                        for (int i = 0; i < Engine.NUM_PROJECTIONS-1; i++) {
-                            m.frustumStates[1+i] = Engine.shadowProj.checkFrustum(i, m.aabb);
-                        }
-                        if (m.isRenderable) {
-                            putRegion(m);
-                        }
-                        if (m.needsUpdate && !m.isUpdating) {
-                            m.isUpdating = true;
-                            regionsToUpdate.add(m);
-                            needsSorting = true;
-                        }
+        for (int i = 0; i < this.regions.length; i++) {
+            MeshedRegion[] regions = this.regions[i];
+            for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
+                MeshedRegion m = regions[yy];
+                if (m != null) {
+                    updateFrustum(m);
+                    if (m.isRenderable) {
+                        putRegion(m);
+                    }
+                    if (m.needsUpdate && !m.isUpdating) {
+                        m.isUpdating = true;
+                        regionsToUpdate.add(m);
+                        needsSorting = true;
                     }
                 }
             }
@@ -293,10 +382,44 @@ public class RegionRenderer {
             
             for (int i = 0; i < regionsToUpdate.size() && !thread.busy(); i++) {
                 MeshedRegion m = regionsToUpdate.get(i);
+                if (m.failedCached > 0) {
+                    continue;
+                }
+//                System.out.println("put "+m);
                 if (thread.offer(world, m, renderChunkX, renderChunkZ)) {
                     m.needsUpdate = false;
+                    m.failedCached = 0;
                     regionsToUpdate.remove(i--);
+                } else {
+                    m.failedCached = 10+(i%5);
                 }
+            }
+        }
+    }
+    /**
+     * @param m
+     */
+    private void updateFrustum(MeshedRegion m) {
+        for (int i = 0; i < 4; i++) {
+            m.frustumStates[i] = -1;
+        }
+        if (m.isRenderable && m.hasAnyPass()) {
+            m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb);
+            for (int i = 0; i < 3; i++) {
+                int state = Engine.shadowProj.checkFrustum(2-i, m.aabb);
+                if (state < 0) {
+                    break;
+                }
+                m.frustumStates[3-i] = state;
+            }
+        }
+    }
+    public void tickUpdate() {
+        for (int i = 0; i < regionsToUpdate.size(); i++) {
+            MeshedRegion m = regionsToUpdate.get(i);
+            if (m.failedCached > 0) {
+                m.failedCached--;
+                continue;
             }
         }
     }
@@ -320,30 +443,6 @@ public class RegionRenderer {
         return (dist1 < dist2) ? -1 : ((dist1 == dist2) ? 0 : 1);
     }
 
-    boolean needsSorting = false;
-    Comparator<MeshedRegion> compare = new Comparator<MeshedRegion>() {
-        
-        @Override
-        public int compare(MeshedRegion o1, MeshedRegion o2) {
-            return sortCompare(o1, o2);
-        }
-    };
-    ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
-    
-    public List<MeshedRegion> getRegions(int i) {
-        return renderList;
-    }
-
-    TesselatorState debug = new TesselatorState();
-    public int rendering;
-    public static final int REGION_SIZE_BITS      = 1;
-    public static final int REGION_SIZE           = 1 << REGION_SIZE_BITS;
-    public static final int REGION_SIZE_MASK      = REGION_SIZE - 1;
-    public static final int REGION_SIZE_BLOCK_SIZE_BITS    = Chunk.SIZE_BITS+REGION_SIZE_BITS;
-    public static final int REGION_SIZE_BLOCKS    = 1 << REGION_SIZE_BLOCK_SIZE_BITS;
-    public static final int SLICE_HEIGHT_BLOCK_BITS = 5;
-    public static final int SLICE_HEIGHT_BLOCKS    = 1<<SLICE_HEIGHT_BLOCK_BITS;
-    public static final int SLICE_HEIGHT_BLOCK_MASK    = SLICE_HEIGHT_BLOCKS-1;
     public void renderDebug(World world, float fTime) {
         Tess.instance.setColor(-1, 200);
         int b=RegionRenderer.REGION_SIZE*Chunk.SIZE;
@@ -361,43 +460,15 @@ public class RegionRenderer {
         }
         Tess.instance.draw(GL_LINES, debug);
         glEnable(GL_BLEND);
-//        List<MeshedRegion> regions = Engine.regionRenderer.getRegions(0);
-//        for (MeshedRegion r : regions) {
-//            glPushMatrix();
-//            r.translate();
-//            Tess.instance.draw(GL_LINES);
-//            glPopMatrix();
-//        }
         debug.bindVBO();
         debug.setAttrPtr();
-        for (int x = 0; x < this.regions.length; x++) {
-            MeshedRegion[][] zRegions = this.regions[x];
-            for (int z = 0; z < this.regions.length; z++) {
-                MeshedRegion[] r = zRegions[z];
-                int xOff = r[0].rX << (RegionRenderer.REGION_SIZE_BITS + 4);
-                int zOff = r[0].rZ << (RegionRenderer.REGION_SIZE_BITS + 4);
-                Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
-                debug.drawVBO(GL_LINES);
-                Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
-            }
+        for (int i = 0; i < this.regions.length; i++) {
+            MeshedRegion[] r = this.regions[i];
+            int xOff = r[0].rX << (RegionRenderer.REGION_SIZE_BITS + 4);
+            int zOff = r[0].rZ << (RegionRenderer.REGION_SIZE_BITS + 4);
+            Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
+            debug.drawVBO(GL_LINES);
+            Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
         }
-//        for (int x = 0; x < this.regions.length; x++) {
-//            MeshedRegion[] zRegions = this.regions[x];
-//            for (int z = 0; z < this.regions.length; z++) {
-//                MeshedRegion r = zRegions[z];
-//                if (r.rX == this.renderChunkX && r.rZ == this.renderChunkZ) {
-//                    int xOff = r.rX << (Region.REGION_SIZE_BITS + 4);
-//                    int zOff = r.rZ << (Region.REGION_SIZE_BITS + 4);
-//                    Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
-//                    Tess.instance.setColor(0x888800, 0x1f);
-//                    Tess.instance.add(0, 120, Region.REGION_SIZE_BLOCKS);
-//                    Tess.instance.add(0, 120, 0);
-//                    Tess.instance.add(Region.REGION_SIZE_BLOCKS, 120, 0);
-//                    Tess.instance.add(Region.REGION_SIZE_BLOCKS, 120, Region.REGION_SIZE_BLOCKS);
-//                    Tess.instance.draw(GL_QUADS);
-//                    Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
-//                }
-//            }
-//        }
     }
 }

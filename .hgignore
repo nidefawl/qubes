@@ -1,7 +1,8 @@
 syntax: regexp
-^compile\\*
-^bin\\*
-^config\\*
-^worlds\\*
-^server\\*
-^regions\\*
+^compile\\*$
+^compileserver\\*$
+^bin\\*$
+^config\\*$
+^worlds\\*$
+^server\\*$
+^regions\\*$

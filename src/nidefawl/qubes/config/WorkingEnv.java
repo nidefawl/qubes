@@ -12,6 +12,7 @@ public class WorkingEnv {
     static File worlds;
     static File config;
     static File playerdata;
+    private static boolean loadAssetsFromClassPath;
 	
 	public static void init(Side side, String basePath) {
         Locale.setDefault(Locale.US);
@@ -20,7 +21,7 @@ public class WorkingEnv {
         config = new File(workingDir, "config");
         worlds = new File(workingDir, "worlds");
         playerdata = new File(workingDir, "playerdata");
-		if (new File("res").isDirectory()) {
+		if (!loadAssetsFromClassPath && new File("res").isDirectory()) {
 		    assetDir = new File("res");
 		} else {
 		    assetDir = new File(workingDir, "res");
@@ -47,6 +48,13 @@ public class WorkingEnv {
     
     public static File getPlayerData() {
         return playerdata;
+    }
+
+    public static boolean loadAssetsFromClassPath() {
+        return loadAssetsFromClassPath;
+    }
+    public static void setClassPathAssets() {
+        loadAssetsFromClassPath = true;
     }
 
 }

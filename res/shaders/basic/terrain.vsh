@@ -1,5 +1,5 @@
 #version 150 core
- 
+
 #pragma include "ubo_scene.glsl"
 #pragma include "vertex_layout.glsl"
 
@@ -7,15 +7,16 @@
 out vec4 color;
 out vec4 texcoord;
 out vec3 normal;
-out uvec4 blockinfo;
-out vec4 faceAO;
-out vec4 faceLight;
-out vec4 faceLightSky;
+flat out uvec4 blockinfo;
+flat out vec4 faceAO;
+flat out vec4 faceLight;
+flat out vec4 faceLightSky;
 out vec2 texPos;
 #define MAX_AO 3.0
 
 const vec4 aoLevels = vec4(0, 0.2, 0.4, 0.6)*0.85;
-
+#define LIGHT_MASK 0xFu
+#define AO_MASK 0x3u
 void main() {
 	texcoord = in_texcoord;
 	vec4 camNormal = in_matrix.normal * vec4(in_normal.xyz, 1);
@@ -23,25 +24,24 @@ void main() {
 	normal = normalize(camNormal.xyz);
 	color = in_color;
 
-
 	faceAO = vec4(
-		aoLevels[in_blockinfo.z&0x3],
-		aoLevels[(in_blockinfo.z>>2)&0x3],
-		aoLevels[(in_blockinfo.z>>4)&0x3],
-		aoLevels[(in_blockinfo.z>>6)&0x3]
+		aoLevels[in_blockinfo.z&AO_MASK],
+		aoLevels[(in_blockinfo.z>>2)&AO_MASK],
+		aoLevels[(in_blockinfo.z>>4)&AO_MASK],
+		aoLevels[(in_blockinfo.z>>6)&AO_MASK]
 		);
 	// faceAO = vec4(0, 0, 0, 0);
 	faceLightSky = vec4(
-		float(in_light.y&0xF)/15.0,
-		float((in_light.y>>4)&0xF)/15.0,
-		float((in_light.y>>8)&0xF)/15.0,
-		float((in_light.y>>12)&0xF)/15.0
+		float(in_light.y&LIGHT_MASK)/15.0,
+		float((in_light.y>>4)&LIGHT_MASK)/15.0,
+		float((in_light.y>>8)&LIGHT_MASK)/15.0,
+		float((in_light.y>>12)&LIGHT_MASK)/15.0
 		);
 	faceLight = vec4(
-		float(in_light.x&0xF)/15.0,
-		float((in_light.x>>4)&0xF)/15.0,
-		float((in_light.x>>8)&0xF)/15.0,
-		float((in_light.x>>12)&0xF)/15.0
+		float(in_light.x&LIGHT_MASK)/15.0,
+		float((in_light.x>>4)&LIGHT_MASK)/15.0,
+		float((in_light.x>>8)&LIGHT_MASK)/15.0,
+		float((in_light.x>>12)&LIGHT_MASK)/15.0
 		);
 	// faceLight = vec4(1,1,1,1)*0;
 	// faceLightSky = vec4(1,1,1,1)*0.8;

@@ -11,6 +11,8 @@ import nidefawl.qubes.world.WorldServer;
 
 public class ServerHandlerLogin extends ServerHandler {
 
+    private String name;
+
     public ServerHandlerLogin(GameServer server, NetworkServer netServer, Connection conn) {
         super(server, netServer, conn);
     }
@@ -40,13 +42,28 @@ public class ServerHandlerLogin extends ServerHandler {
             this.conn.disconnect(Connection.LOCAL, "Invalid packet");
             return;
         }
+        this.name = packetAuth.name;
         this.time = System.currentTimeMillis();
+        this.state = STATE_CLIENT_SETTINGS;
+        this.sendPacket(new PacketAuth(name, true));
+    }
+    
+    @Override
+    public void handleClientSettings(PacketCSettings packet) {
+        if (this.state != STATE_CLIENT_SETTINGS) {
+            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            return;
+        }
         this.state = STATE_CONNECTED;
         try {
             PlayerManager mgr = this.server.getPlayerManager();
-            Player player = mgr.addPlayer(packetAuth.name);
+            Player player = mgr.addPlayer(this.name);
+            player.setChunkLoadDistance(packet.chunkLoadDistance);
             player.netHandler = new ServerHandlerPlay(player, this);
             this.netServer.addServerHandlerPlay(player, this, player.netHandler);
+            this.time = System.currentTimeMillis();
+        } catch (IllegalArgumentException e) {
+            this.conn.disconnect(Connection.LOCAL, "Received invalid settings");
         } catch (Exception e) {
             this.conn.disconnect(Connection.LOCAL, "Failed loading player data");
             ErrorHandler.setException(new GameError("Failed adding player", e));

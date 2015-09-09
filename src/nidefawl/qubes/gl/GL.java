@@ -42,6 +42,7 @@ public class GL {
         if (!(caps.OpenGL42 || caps.GL_ARB_texture_storage)) {
             missingExt.add("OpenGL42 or GL_ARB_texture_storage");
         }
+        
         return missingExt;
     }
 

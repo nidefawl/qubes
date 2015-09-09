@@ -22,5 +22,5 @@ void main() {
     float mixF = min(min(tdist.x, tdist.y), tdist.z);
     if (mixF > 0.3)
         discard;
-    out_Color = vec4(color.rbg, color.a*fdistscale);
+    out_Color = vec4(1,0,1, color.a*fdistscale);
 }

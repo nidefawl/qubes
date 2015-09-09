@@ -4,7 +4,10 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.representer.Representer;
 
 import com.google.common.io.Closeables;
 
@@ -42,7 +45,12 @@ public abstract class AbstractYMLConfig {
         OutputStreamWriter writer = null;
         try {
             writer = new OutputStreamWriter(os);
-            Yaml yaml = new Yaml();
+            DumperOptions options=new DumperOptions();
+            options.setIndent(4);
+            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            options.setPrettyFlow(true);
+            
+            Yaml yaml = new Yaml(new SafeConstructor(),new Representer(),options);
             yaml.dump(this.map, writer);
         } catch (Exception e) {
             e.printStackTrace();

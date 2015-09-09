@@ -17,6 +17,9 @@ public class Frustum {
         new Vector4f(),
         new Vector4f(),
     };
+    public static final int FRUSTUM_INSIDE_FULLY = 1;
+    public static final int FRUSTUM_INSIDE = 0;
+    public static final int FRUSTUM_OUTSIDE = -1;
     
     public void set(Matrix4f mvp) {
         frustum[LEFT].x = mvp.m03+mvp.m00;
@@ -66,19 +69,43 @@ public class Frustum {
      * @return -1 if outside, 0 if collides, 1 if fully inside
      */
     public int checkFrustum(AABB aabb) {
-        int result = 1;
+        int result = FRUSTUM_INSIDE_FULLY;
         for(int i=0; i < 6; i++) {
             Vector4f plane = frustum[i];
             float pX = (float) (plane.x > 0 ? aabb.maxX : aabb.minX);
             float pY = (float) (plane.y > 0 ? aabb.maxY : aabb.minY);
             float pZ = (float) (plane.z > 0 ? aabb.maxZ : aabb.minZ);
             if (planeDistance(plane, pX, pY, pZ) < 0)
-                return -1;
+                return FRUSTUM_OUTSIDE;
             float nX = (float) (plane.x < 0 ? aabb.maxX : aabb.minX);
             float nY = (float) (plane.y < 0 ? aabb.maxY : aabb.minY);
             float nZ = (float) (plane.z < 0 ? aabb.maxZ : aabb.minZ);
             if (planeDistance(plane, nX, nY, nZ) < 0)
-                result =  0;
+                result = FRUSTUM_INSIDE;
+        }
+        return result;
+    }
+
+
+    /**
+     * check if aabb is inside or collides frustum
+     * @param aabb
+     * @return -1 if outside, 0 if collides, 1 if fully inside
+     */
+    public int checkFrustum(AABBInt aabb) {
+        int result = FRUSTUM_INSIDE_FULLY;
+        for(int i=0; i < 6; i++) {
+            Vector4f plane = frustum[i];
+            float pX = (float) (plane.x > 0 ? aabb.maxX : aabb.minX);
+            float pY = (float) (plane.y > 0 ? aabb.maxY : aabb.minY);
+            float pZ = (float) (plane.z > 0 ? aabb.maxZ : aabb.minZ);
+            if (planeDistance(plane, pX, pY, pZ) < 0)
+                return FRUSTUM_OUTSIDE;
+            float nX = (float) (plane.x < 0 ? aabb.maxX : aabb.minX);
+            float nY = (float) (plane.y < 0 ? aabb.maxY : aabb.minY);
+            float nZ = (float) (plane.z < 0 ? aabb.maxZ : aabb.minZ);
+            if (planeDistance(plane, nX, nY, nZ) < 0)
+                result = FRUSTUM_INSIDE;
         }
         return result;
     }

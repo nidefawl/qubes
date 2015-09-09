@@ -23,6 +23,6 @@ void main() {
     	triangle = vec3(255, 0, 0);
 	}
 	if (vertexID == 3) {
-    	triangle = vec3(0, 0, 255);
+    	triangle = vec3(0, 255, 0);
 	}
 }

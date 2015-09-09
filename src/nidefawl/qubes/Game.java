@@ -155,7 +155,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.world != null) {
             this.world.onLeave();
             Engine.flushRenderTasks();
-            Engine.regionRenderer.flush();
+            Engine.regionRenderer.resetAll();
         }
         this.world = world;
         if (this.world != null) {
@@ -258,6 +258,16 @@ public class Game extends GameBase implements IErrorHandler {
             if (this.world != null) {
 
                 switch (key) {
+                    case Keyboard.KEY_M:
+                        if (isDown) {
+                            Engine.regionRenderer.merge();
+                        }
+                        break;
+                    case Keyboard.KEY_N:
+                        if (isDown) {
+                            showGUI(new GuiSelectWorld());
+                        }
+                        break;
                     case Keyboard.KEY_U:
                         if (isDown) {
                             this.edits.clear();
@@ -557,7 +567,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 2200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 222200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -722,6 +732,7 @@ public class Game extends GameBase implements IErrorHandler {
        if (this.gui != null) {
            this.gui.update();
        }
+       Engine.regionRenderer.tickUpdate();
 //       if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
 //           this.setWorld(null);
 //           showGUI(new GuiMainMenu());

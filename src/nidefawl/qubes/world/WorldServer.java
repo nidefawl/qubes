@@ -40,7 +40,7 @@ public class WorldServer extends World {
         System.out.println("World directory at "+settings.getWorldDirectory().getAbsolutePath());
         this.server = server;
         this.chunkServer = (ChunkManagerServer) getChunkManager();
-        this.generator = new TestTerrain2(this, this.getSeed());
+        this.generator = settings.getGenerator(this);
         this.lightUpdater = new BlockLightThread(this);
     }
     public void onLeave() {

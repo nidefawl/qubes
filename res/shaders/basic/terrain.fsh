@@ -31,7 +31,7 @@ float getBrightness(vec2 b) {
 float lightAdj(float sky, float block) {
 	// x = 1 - x;
 	// return 1-x*x*x*(x*(x*6 - 15) + 10);
-	const float minLevel = 0.25;
+	const float minLevel = 0.1;
 	return minLevel+clamp((sky+block)*(1-minLevel), 0, (1-minLevel));
 }
 void main() {
@@ -63,7 +63,7 @@ void main() {
 	color_adj *= color.rgb;
 	color_adj *= ambientOccl;
 	color_adj *= lightAdj(lightSky, lightBlock);
-    out_Color = vec4(color_adj, vec3(tex.a*color.a));
+    out_Color = vec4(color_adj, tex.a*color.a);
     out_Normal = vec4((normal) * 0.5f + 0.5f, 1.0f);
     out_Material = blockinfo;
     // gl_FragData[0] = vec4(0,1,1,1);

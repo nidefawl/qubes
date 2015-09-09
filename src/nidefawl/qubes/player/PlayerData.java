@@ -10,6 +10,7 @@ public class PlayerData {
     public Vector3f pos = new Vector3f();
     public UUID world;
     public boolean flying;
+    public int chunkLoadDistance;
 
     public void load(Tag.Compound t) {
         this.pos = t.getVec3("pos");

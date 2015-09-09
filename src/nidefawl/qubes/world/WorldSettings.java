@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.util.StringUtil;
+import nidefawl.qubes.worldgen.*;
 
 public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 
@@ -13,6 +14,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     public UUID uuid;
     private final File dir;
     private int id;
+    private int generator;
 
     public WorldSettings(File worldDirectory) {
         super(true);
@@ -31,6 +33,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
         String strseed = getString("seed", "0");
         this.seed = StringUtil.parseLong(strseed, 0);
         this.time = getInt("time", this.time);
+        this.generator = getInt("generator", this.generator);
         String strUUID = getString("uuid", "");
         this.uuid = StringUtil.parseUUID(strUUID, this.uuid);
     }
@@ -44,6 +47,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
         setString("uuid", this.uuid.toString());
         setString("seed", Long.toHexString(this.seed));
         setInt("time", this.time);
+        setInt("generator", this.generator);
     }
 
     @Override
@@ -68,5 +72,22 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    /**
+     * @return
+     */
+    public AbstractGen getGenerator(WorldServer w) {
+        switch (this.generator) {
+            case 0:
+                return new TestTerrain2(w, this.getSeed());
+            case 1:
+                return new TerrainGenerator2(w, this.getSeed());
+            case 2:
+                return new TestTerrain(w, this.getSeed());
+            case 3:
+                return new TerrainGenerator(w, this.getSeed());
+        }
+        return new TestTerrain2(w, this.getSeed());
     }
 }

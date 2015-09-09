@@ -8,6 +8,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.packet.PacketSSetBlocks;
+import nidefawl.qubes.network.packet.PacketSTrackChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressLight;
@@ -194,7 +195,7 @@ public class PlayerChunkTracker {
     private void trackPlayerChunk(Player player, int x, int z) {
         Entry entry = getEntry(x, z, true);
         entry.addPlayer(player);
-        player.watchingChunk(entry.hash);
+        player.watchingChunk(entry.hash, x, z);
     }
 
     /**
@@ -218,7 +219,7 @@ public class PlayerChunkTracker {
             Thread.dumpStack();
             l = GameMath.toLong(x, z);
         }
-        player.unwatchingChunk(l);
+        player.unwatchingChunk(l, x, z);
     }
 
     /**

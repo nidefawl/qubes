@@ -1,5 +1,7 @@
 package nidefawl.qubes.meshing;
 
+import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+
 import java.util.Arrays;
 
 import nidefawl.qubes.chunk.Chunk;
@@ -54,6 +56,7 @@ public class ChunkRenderCache {
         int basechunkZ = mr.rZ<<RegionRenderer.REGION_SIZE_BITS;
         int offsetX = mr.rX-renderChunkX;
         int offsetZ = mr.rZ-renderChunkZ;
+        
         boolean minXReq = offsetX > 0;
         boolean maxXReq = offsetX < RegionRenderer.RENDER_DISTANCE-1;
         boolean minZReq = offsetZ > 0;

@@ -92,6 +92,7 @@ public class Mesher {
         }
         if (bs1 == null && bs2 == null) {
             System.err.println("BOTH FACES ARE OUTSIDE, UNDEFINED STATE!");
+            return;
         }
         // this part only executes when one of both faces are outside the region
         if (bs1 == null) { // neighbour is not loaded
@@ -235,9 +236,9 @@ public class Mesher {
         boolean center = chunkX >= 0 && chunkX < ChunkRenderCache.WIDTH && chunkZ >= 0 && chunkZ < ChunkRenderCache.WIDTH;
         Chunk chunk = this.cache.get(chunkX, chunkZ);
         if (chunk == null) {
-            if (center) {
-                System.err.println("CHUNK IS NULL ON CENTER; SHOULD NOT HAPPEN");
-            }
+//            if (center) {
+//                System.err.println("CHUNK IS NULL SHOULD NOT HAPPEN");
+//            }
 //            System.err.println("adj missing on "+regionX+"/"+regionZ);
             return null;
         }
@@ -264,7 +265,6 @@ public class Mesher {
             } else {
                 surface.calcLight = true;
             }
-            surface.chunk = chunk;
             return surface;
         }
         return air;

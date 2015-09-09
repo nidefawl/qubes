@@ -5,6 +5,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 
 public class Shaders {
+    private static boolean startup = true;
 
     public static void reinit() {
         Shaders.depthBufShader = null;
@@ -64,9 +65,14 @@ public class Shaders {
             Shaders.colored = new_colored;
             Shaders.renderUINT = new_uint;
         } catch (ShaderCompileError e) {
-            Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
+            if (startup) {
+                throw e;
+            } else {
+                Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
+            }
         }
+        startup = false;
     }
 }

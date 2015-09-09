@@ -23,9 +23,12 @@ public abstract class Packet {
         register(PacketSChunkData.class, 7, true, false);
         register(PacketCSetBlock.class, 8, false, true);
         register(PacketCSetBlocks.class, 9, false, true);
-        register(PacketSSetBlock.class, 10, false, true);
-        register(PacketSSetBlocks.class, 11, false, true);
-        register(PacketSLightChunk.class, 12, false, true);
+        register(PacketSSetBlock.class, 10, true, false);
+        register(PacketSSetBlocks.class, 11, true, false);
+        register(PacketSLightChunk.class, 12, true, false);
+        register(PacketSTrackChunk.class, 13, true, false);
+        register(PacketCSettings.class, 14, false, true);
+        register(PacketCSwitchWorld.class, 15, false, true);
     }
     public Packet() {
     }

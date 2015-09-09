@@ -64,25 +64,41 @@ public class NetworkServer {
 
     public void update() {
         for (int a = 0; a < this.handlersLogin.size(); a++) {
+            ServerHandlerLogin loginHandler = null;
             try {
-                ServerHandlerLogin loginHandler = this.handlersLogin.get(a);
+                loginHandler = this.handlersLogin.get(a);
                 loginHandler.update();
                 if (loginHandler.finished()) {
                     this.handlersLogin.remove(a--);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                try {
+                    if (loginHandler != null) {
+                        loginHandler.kick("Server error");
+                    }
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }
             }
         }
         for (int a = 0; a < this.handlersPlay.size(); a++) {
+            ServerHandlerPlay playerHandler = null;
             try {
-                ServerHandlerPlay playerHandler = this.handlersPlay.get(a);
+                playerHandler = this.handlersPlay.get(a);
                 playerHandler.update();
                 if (playerHandler.finished()) {
                     this.handlersPlay.remove(a--);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                try {
+                    if (playerHandler != null) {
+                        playerHandler.kick("Server error");
+                    }
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
@@ -71,6 +72,23 @@ public class ClientHandler extends Handler {
         this.time = System.currentTimeMillis();
         this.client.sendPacket(new PacketAuth(Game.instance.getProfile().getName()));
     }
+    @Override
+    public void handleAuth(PacketAuth packetAuth) {
+        if (this.state != STATE_AUTH) {
+            this.client.disconnect("Invalid packet");
+            return;
+        }
+        this.state = STATE_CLIENT_SETTINGS;
+        this.time = System.currentTimeMillis();
+        if (packetAuth.success) {
+            PlayerProfile profile = Game.instance.getProfile();
+            profile.setIngameName(packetAuth.name);
+            this.player = new PlayerSelf(this, profile);
+            this.sendPacket(new PacketCSettings(12));
+        } else {
+            this.client.onKick(Connection.REMOTE, "Invalid auth");
+        }
+    }
 
     @Override
     public String getHandlerName() {
@@ -109,8 +127,8 @@ public class ClientHandler extends Handler {
     }
 
     @Override
-    public void handleJoinGame(PacketSSpawnInWorld packetJoinGame) {
-        if (this.state != STATE_AUTH) {
+    public void handleSpawnInWorld(PacketSSpawnInWorld packetJoinGame) {
+        if (this.state < STATE_CLIENT_SETTINGS) {
             this.client.disconnect("Invalid packet");
             return;
         }
@@ -118,7 +136,6 @@ public class ClientHandler extends Handler {
         this.time = System.currentTimeMillis();
         this.world = new WorldClient(new WorldSettingsClient(packetJoinGame.id, packetJoinGame.uuid, packetJoinGame.seed, packetJoinGame.time));
         this.chunkManager = (ChunkManagerClient) this.world.getChunkManager();
-        this.player = new PlayerSelf(this, Game.instance.getProfile().getName());
         this.player.setFly((packetJoinGame.flags & 0x1) != 0);
         this.world.addEntity(player);
         this.player.move(packetJoinGame.pos);
@@ -224,16 +241,19 @@ public class ClientHandler extends Handler {
             return;
         }
         BlockBoundingBox box = BlockBoundingBox.fromShorts(packet.min, packet.max);
-        if(283>>4==packet.coordX&&(-523)>>4==packet.coordZ) {
-            if (box.contains(283&0xF, 137, -523&0xF)) {
-                System.err.println("light is flagged333");
-            }
-        }
-//        System.out.println("light "+packet.coordX+"/"+packet.coordZ+" - "+box);
         byte[] decompressed = inflate(packet.data);
-        c.setLights(decompressed, box);
-        Engine.regionRenderer.flagChunk(c.x, c.z); //TODO: do not flag whole y-slice
+        if (c.setLights(decompressed, box)) {
+            Engine.regionRenderer.flagChunk(c.x, c.z); //TODO: do not flag whole y-slice
+        } else {
+            System.out.println("not flagging empty light update "+packet.coordX+"/"+packet.coordZ+" - "+box);  
+        }
 
+    }
+    public void handleTrackChunk(PacketSTrackChunk p) {
+        if (!p.add) {
+            this.chunkManager.remove(p.x, p.z);
+            Engine.regionRenderer.flagChunk(p.x, p.z);
+        }
     }
 
 }

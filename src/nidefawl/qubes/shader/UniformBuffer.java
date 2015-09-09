@@ -161,7 +161,7 @@ public class UniformBuffer {
         uboBuffer.put(1F);
         float ambIntens = 0.14F;
         float diffIntens = 0.54F;
-        float specIntens = 0.53F;
+        float specIntens = 0.38F;
         uboBuffer.put(ambIntens);
         uboBuffer.put(ambIntens);
         uboBuffer.put(ambIntens);

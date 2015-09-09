@@ -15,7 +15,7 @@ public abstract class ServerHandler extends Handler {
     protected int                     state = STATE_HANDSHAKE;
     protected final Connection        conn;
     protected final InetSocketAddress addr;
-    protected final String            name;
+    protected final String            handlerName;
     protected long                    time;
     protected GameServer              server;
     protected NetworkServer           netServer;
@@ -23,7 +23,7 @@ public abstract class ServerHandler extends Handler {
     public ServerHandler(GameServer server, NetworkServer netServer, Connection conn) {
         this.conn = conn;
         this.addr = this.conn.getAddr();
-        this.name = this.addr.getHostString();
+        this.handlerName = this.addr.getHostString();
         this.time = System.currentTimeMillis();
         this.server = server;
         this.netServer = netServer;
@@ -83,7 +83,7 @@ public abstract class ServerHandler extends Handler {
 
     @Override
     public String getHandlerName() {
-        return this.name;
+        return this.handlerName;
     }
 
 

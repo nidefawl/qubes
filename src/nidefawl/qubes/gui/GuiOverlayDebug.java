@@ -101,6 +101,7 @@ public class GuiOverlayDebug extends Gui {
             if (texture ==  Engine.getSceneFB().getTexture(2)) {
                 Shaders.renderUINT.enable();
                 Shaders.renderUINT.setProgramUniform1i("tex0", 0);
+                GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, texture);
             } else {
                 Shaders.textured.enable();    
             }   

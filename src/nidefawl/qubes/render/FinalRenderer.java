@@ -34,6 +34,7 @@ public class FinalRenderer {
     private FrameBuffer blur1;
     private FrameBuffer blur2;
     private int         blurTexture;
+    private boolean startup = true;
     
     /** deferred shader uniform array for lights
      * Layout:
@@ -125,6 +126,7 @@ public class FinalRenderer {
         {0, 1, 2, 3, 4, 4, 5},
         {0, 1, 2, 3, 4, 5, 7, 8, 9, 10},
     };
+    
     public void renderBlur(World world, float fTime) {
         int kawaseKernSizeSetting = 2;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
@@ -307,10 +309,15 @@ public class FinalRenderer {
             }
             Shader.disable();
         } catch (ShaderCompileError e) {
-            Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
+            if (startup) {
+                throw e;
+            } else {
+                Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
+            }
         }
+        startup = false;
     }
 
 

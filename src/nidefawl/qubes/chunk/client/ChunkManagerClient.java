@@ -25,4 +25,15 @@ public class ChunkManagerClient extends ChunkManager {
         return c;
     }
 
+    /**
+     * @param x
+     * @param z
+     */
+    public void remove(int x, int z) {
+        Chunk c = this.table.remove(x, z);
+        if (c != null) {
+            c.isValid = false;
+        }
+    }
+
 }

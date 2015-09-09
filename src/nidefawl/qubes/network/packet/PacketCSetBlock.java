@@ -23,6 +23,7 @@ public class PacketCSetBlock extends AbstractPacketWorldRef {
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
+        super.readPacket(stream);
         x = stream.readInt();
         y = stream.readInt();
         z = stream.readInt();
@@ -32,6 +33,7 @@ public class PacketCSetBlock extends AbstractPacketWorldRef {
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
+        super.writePacket(stream);
         stream.writeInt(x);
         stream.writeInt(y);
         stream.writeInt(z);

@@ -80,7 +80,7 @@ public class MeshUpdateTask {
     }
 
     public boolean isValid(int id) {
-        return this.worldInstance == id;
+        return this.worldInstance == id && this.mr.isValid;
     }
 
     public boolean updateFromThread() {
@@ -98,7 +98,7 @@ public class MeshUpdateTask {
                 this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
-                for (int i = 0; i < NUM_PASSES; i++) {
+                for (int i = 0; i < NUM_PASSES && this.mr.isValid; i++) {
                     this.vertexCount[i] = 0;
                     this.bufferIdx[i] = 0;
 //                    Tess tess = this.tess[i];

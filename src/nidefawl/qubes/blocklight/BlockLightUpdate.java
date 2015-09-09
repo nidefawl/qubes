@@ -48,10 +48,6 @@ public class BlockLightUpdate {
     public void updateBlock(LightChunkCache cache, int x, int y, int z, int type) {
         int idxRemove = 0;
         int idxAdd = 0;
-        System.out.println(type);
-//        qRemove.clear();
-//        q2.clear();
-//        qAdd.clear();
         int current = cache.getLight(x, y, z, type);
         int newLevel = getNewLightLevel(cache, x, y, z, type);
         long[] stackRem = this.stackRemove;

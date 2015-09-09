@@ -24,21 +24,38 @@ public class ServerHandlerPlay extends ServerHandler {
     }
     @Override
     public void update() {
-        super.update();
         if (this.state == STATE_CONNECTED) {
             this.state = STATE_PLAYING;
-            WorldServer world = (WorldServer) this.player.world;
+            WorldServer world = this.server.getWorld(player.spawnWorld);
             int flags = 0;
             if (this.player.flying) {
                 flags |= 1;
             }
             sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getSeed(), world.getTime()));
+            world.addPlayer(player);
         }
+        super.update();
+    }
+
+    @Override
+    public void handleSwitchWorld(PacketCSwitchWorld packetCSwitchWorld) {
+        int idx = packetCSwitchWorld.flags;
+        WorldServer[] worlds = this.server.getWorlds();
+        if (idx<0||idx>=worlds.length) idx = 0;
+        WorldServer worldCurrent = (WorldServer) this.player.world;
+        worldCurrent.removePlayer(this.player);
+        WorldServer world = worlds[idx];
+        int flags = 0;
+        if (this.player.flying) {
+            flags |= 1;
+        }
+        sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getSeed(), world.getTime()));
+        world.addPlayer(player);
     }
 
     @Override
     public String getHandlerName() {
-        return this.name;
+        return this.handlerName;
     }
     
     @Override
@@ -52,6 +69,10 @@ public class ServerHandlerPlay extends ServerHandler {
             if (this.player != null) {
                 PlayerManager mgr = this.server.getPlayerManager();
                 mgr.removePlayer(this.player);
+                WorldServer world = (WorldServer) this.player.world;
+                if (world != null) {
+                    world.removePlayer(this.player);
+                }
             }
         } catch (Exception e) {
             ErrorHandler.setException(new GameError("Failed removing player", e));

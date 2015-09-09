@@ -94,12 +94,14 @@ public class Connection {
             if (this.readWriteException != null) {
                 String excMessage = this.readWriteException.getMessage();
                 if (this.readWriteException instanceof EOFException) {
-                    this.disconnect(REMOTE, "Connection closed");
+                    this.disconnect(LOCAL, "Connection closed");
 
                 } else {
                     this.disconnect(LOCAL, "Error: " + excMessage);
                 }
-                if (!(this.readWriteException instanceof IOException)) {
+                if (this.readWriteException instanceof InvalidPacketException) {
+                    this.readWriteException.printStackTrace();
+                } else if (!(this.readWriteException instanceof IOException)) {
                     this.readWriteException.printStackTrace();
                 } else if (this.readWriteException instanceof RuntimeException || this.readWriteException.getCause() instanceof RuntimeException) {
                     this.readWriteException.printStackTrace();
@@ -135,6 +137,10 @@ public class Connection {
     }
 
     public void disconnect(int from, String reason) {
+        if (this.disconnectReason == null || (from == Connection.REMOTE && this.disconnectFrom == Connection.LOCAL)) {
+            this.disconnectReason = reason;
+            this.disconnectFrom = from;
+        }
         if (this.isConnected) {
             if (Thread.currentThread() != GameContext.getMainThread()) {
                 System.err.println("Disconnect from non-mainthread: " + Thread.currentThread() + " (Mainthread: " + GameContext.getMainThread() + ")");
@@ -151,8 +157,6 @@ public class Connection {
                     e.printStackTrace();
                 }
             }
-            this.disconnectReason = reason;
-            this.disconnectFrom = from;
             this.isConnected = false;
             this.onDisconnect();
         }

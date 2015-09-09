@@ -7,8 +7,9 @@ import nidefawl.qubes.network.packet.*;
 public abstract class Handler {
     public final static int STATE_HANDSHAKE = 0;
     public final static int STATE_AUTH      = 1;
-    public final static int STATE_CONNECTED = 2;
-    public final static int STATE_PLAYING = 3;
+    public final static int STATE_CLIENT_SETTINGS = 2;
+    public final static int STATE_CONNECTED = 3;
+    public final static int STATE_PLAYING = 4;
 
     public abstract boolean isServerSide();
 
@@ -30,7 +31,7 @@ public abstract class Handler {
     public void handleDisconnect(PacketDisconnect packetDisconnect) {
     }
     
-    public void handleJoinGame(PacketSSpawnInWorld packetJoinGame) {
+    public void handleSpawnInWorld(PacketSSpawnInWorld packetJoinGame) {
     }
 
     public void handleAuth(PacketAuth packetAuth) {
@@ -64,5 +65,27 @@ public abstract class Handler {
     }
 
     public void handleLightChunk(PacketSLightChunk packetSLightChunk) {
+    }
+
+    /**
+     * @param packetSTrackChunk
+     */
+    public void handleTrackChunk(PacketSTrackChunk packetSTrackChunk) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /**
+     * @param packet
+     */
+    public void handleClientSettings(PacketCSettings packet) {
+    }
+
+    /**
+     * @param packetCSwitchWorld
+     */
+    public void handleSwitchWorld(PacketCSwitchWorld packetCSwitchWorld) {
+        // TODO Auto-generated method stub
+        
     }
 }

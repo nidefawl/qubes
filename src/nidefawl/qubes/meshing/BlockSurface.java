@@ -17,7 +17,6 @@ public class BlockSurface {
     public int y;
     public int z;
     public int pass;
-    public Chunk chunk;
     public boolean extraFace;
     protected boolean resolved;
     public boolean calcLight;
@@ -100,28 +99,26 @@ public class BlockSurface {
 
 
     public void calcAO(ChunkRenderCache cache) {
-        if (Block.block[this.type].applyAO()) {
-            int face = this.axis<<1|this.face;
-            switch (face) {
-                case 0:
-                    calcPosX(cache);
-                    return;
-                case 1:
-                    calcNegX(cache);
-                    return;
-                case 2:
-                    calcPosY(cache);
-                    return;
-                case 3:
-                    calcNegY(cache);
-                    return;
-                case 4:
-                    calcPosZ(cache);
-                    return;
-                case 5:
-                    calcNegZ(cache);
-                    return;
-            }
+        int face = this.axis<<1|this.face;
+        switch (face) {
+            case 0:
+                calcPosX(cache);
+                return;
+            case 1:
+                calcNegX(cache);
+                return;
+            case 2:
+                calcPosY(cache);
+                return;
+            case 3:
+                calcNegY(cache);
+                return;
+            case 4:
+                calcPosZ(cache);
+                return;
+            case 5:
+                calcNegZ(cache);
+                return;
         }
     }
 
@@ -183,12 +180,14 @@ public class BlockSurface {
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNN, brPN, brPP, brNP);
-        
-        int ao0 = vertexAO(cn, nc, nn);
-        int ao1 = vertexAO(cn, pc, pn);
-        int ao2 = vertexAO(cp, pc, pp);
-        int ao3 = vertexAO(cp, nc, np);
-        this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+
+        if (Block.block[this.type].applyAO()) {
+            int ao0 = vertexAO(cn, nc, nn);
+            int ao1 = vertexAO(cn, pc, pn);
+            int ao2 = vertexAO(cp, pc, pp);
+            int ao3 = vertexAO(cp, nc, np);
+            this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+        }
     }
     
     private void calcNegZ(ChunkRenderCache cache) {
@@ -198,8 +197,6 @@ public class BlockSurface {
         if (isOpaque(cache.getTypeId(x, y, z))) {
             return;
         }
-        int absX = (this.x|(cache.get(0, 0).x)<<4);
-        int absZ = (this.z|(cache.get(0, 0).z)<<4);
 
         
         int pp = cache.getTypeId(x + 1, y + 1, z);
@@ -237,12 +234,14 @@ public class BlockSurface {
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNN, brPN, brPP, brNP);
-        
-        int ao1 = vertexAO(cn, pc, pn);
-        int ao0 = vertexAO(cn, nc, nn);
-        int ao3 = vertexAO(cp, nc, np);
-        int ao2 = vertexAO(cp, pc, pp);
-        this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+
+        if (Block.block[this.type].applyAO()) {
+            int ao1 = vertexAO(cn, pc, pn);
+            int ao0 = vertexAO(cn, nc, nn);
+            int ao3 = vertexAO(cp, nc, np);
+            int ao2 = vertexAO(cp, pc, pp);
+            this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+        }
     }
 
     private void calcPosX(ChunkRenderCache cache) {
@@ -287,12 +286,14 @@ public class BlockSurface {
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNP, brNN, brPN, brPP);
-        
-        int ao1 = vertexAO(cn, nc, nn);//bottom right
-        int ao2 = vertexAO(cn, pc, pn); //top right
-        int ao3 = vertexAO(cp, pc, pp); //top left
-        int ao0 = vertexAO(cp, nc, np); //bottom left
-        this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+
+        if (Block.block[this.type].applyAO()) {
+            int ao1 = vertexAO(cn, nc, nn);//bottom right
+            int ao2 = vertexAO(cn, pc, pn); //top right
+            int ao3 = vertexAO(cp, pc, pp); //top left
+            int ao0 = vertexAO(cp, nc, np); //bottom left
+            this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+        }
     }
     private void calcNegX(ChunkRenderCache cache) {
         int x = this.x-1;
@@ -336,12 +337,14 @@ public class BlockSurface {
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNP, brNN, brPN, brPP);
-        
-        int ao2 = vertexAO(cn, pc, pn);//top left
-        int ao1 = vertexAO(cn, nc, nn);//bottom left
-        int ao0 = vertexAO(cp, nc, np); //bottom right
-        int ao3 = vertexAO(cp, pc, pp); //top right
-        this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+
+        if (Block.block[this.type].applyAO()) {
+            int ao2 = vertexAO(cn, pc, pn);//top left
+            int ao1 = vertexAO(cn, nc, nn);//bottom left
+            int ao0 = vertexAO(cp, nc, np); //bottom right
+            int ao3 = vertexAO(cp, pc, pp); //top right
+            this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+        }
     }
 
     private void calcPosY(ChunkRenderCache cache) {
@@ -388,12 +391,14 @@ public class BlockSurface {
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNN, brNP, brPP, brPN);
         
-        
-        int ao0 = vertexAO(cn, nc, nn);
-        int ao1 = vertexAO(cp, nc, np);
-        int ao2 = vertexAO(cp, pc, pp);
-        int ao3 = vertexAO(cn, pc, pn);
-        this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+
+        if (Block.block[this.type].applyAO()) {
+            int ao0 = vertexAO(cn, nc, nn);
+            int ao1 = vertexAO(cp, nc, np);
+            int ao2 = vertexAO(cp, pc, pp);
+            int ao3 = vertexAO(cn, pc, pn);
+            this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+        }
     }
     private void calcNegY(ChunkRenderCache cache) {
         int x = this.x;
@@ -438,12 +443,14 @@ public class BlockSurface {
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNN, brNP, brPP, brPN);
         
-        
-        int ao1 = vertexAO(cp, nc, np);
-        int ao0 = vertexAO(cn, nc, nn);
-        int ao3 = vertexAO(cn, pc, pn);
-        int ao2 = vertexAO(cp, pc, pp);
-        this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+
+        if (Block.block[this.type].applyAO()) {
+            int ao1 = vertexAO(cp, nc, np);
+            int ao0 = vertexAO(cn, nc, nn);
+            int ao3 = vertexAO(cn, pc, pn);
+            int ao2 = vertexAO(cp, pc, pp);
+            this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
+        }
     }
 
 
@@ -486,8 +493,6 @@ public class BlockSurface {
         this.maskedLightBlock = 0;
         this.maskedLightSky = 0;
         this.type = 0;
-        this.transparent = false;
-        this.chunk = null;
         this.transparent = false;
         this.extraFace = false;
         this.calcLight = false;

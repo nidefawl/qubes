@@ -90,8 +90,10 @@ public class GameServer implements Runnable, IErrorHandler {
             File worldDirectory = worldList[i];
             try {
                 WorldSettings settings = new WorldSettings(worldDirectory);
-                settings.load(new File(worldDirectory, "world.yml"));
+                File settingsFile = new File(worldDirectory, "world.yml");
+                settings.load(settingsFile);
                 settings.setId(getNextWorldID());
+                settings.write(settingsFile);
                 WorldServer world = new WorldServer(settings, this);
                 worldsLoaded.add(world);
             } catch (InvalidConfigException e) {
@@ -199,11 +201,10 @@ public class GameServer implements Runnable, IErrorHandler {
 	public void loadConfig() {
 		try {
 		    File f = new File(WorkingEnv.getConfigFolder(), "server.yml");
-		    if (!f.exists()) {
-		        this.config.write(f);
-		    } else {
+		    if (f.exists()) {
 	            this.config.load();
 		    }
+            this.config.write(f);
 		} catch (InvalidConfigException e) {
 			e.printStackTrace();
 		}

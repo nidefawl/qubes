@@ -1,22 +1,18 @@
 package nidefawl.qubes.entity;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.server.ChunkReader;
-import nidefawl.qubes.network.packet.*;
+import nidefawl.qubes.network.packet.PacketSTrackChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.player.PlayerData;
-import nidefawl.qubes.server.compress.*;
+import nidefawl.qubes.server.compress.CompressChunks;
+import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.WorldServer;
 
 public class Player extends Entity {
 
@@ -29,6 +25,8 @@ public class Player extends Entity {
      Set<Long> chunks = Sets.newLinkedHashSet();
      Set<Long> sendChunks = Sets.newLinkedHashSet();
      int lastLight = 0;
+    public UUID spawnWorld;
+    private int chunkLoadDistance;
      
     public Player() {
         super();
@@ -38,6 +36,8 @@ public class Player extends Entity {
         this.pos.set(data.pos);
         this.lastPos.set(data.pos);
         this.flying = data.flying;
+        this.spawnWorld = data.world;
+        this.chunkLoadDistance = data.chunkLoadDistance;
     }
 
     public PlayerData save() {
@@ -49,7 +49,7 @@ public class Player extends Entity {
     }
 
     public int getChunkLoadDistance() {
-        return 6;
+        return this.chunkLoadDistance;
     }
     @Override
     public void tickUpdate() {
@@ -106,15 +106,17 @@ public class Player extends Entity {
 //        }
     }
 
-    public void watchingChunk(long hash) {
+    public void watchingChunk(long hash, int x, int z) {
         if (this.chunks.add(hash)) {
             this.sendChunks.add(hash);
+            this.netHandler.sendPacket(new PacketSTrackChunk(x, z, true));
         }
     }
 
-    public void unwatchingChunk(long hash) {
+    public void unwatchingChunk(long hash, int x, int z) {
         if (this.chunks.remove(hash)) {
             this.sendChunks.remove(hash);
+            this.netHandler.sendPacket(new PacketSTrackChunk(x, z, false));
         }
     }
 
@@ -124,6 +126,16 @@ public class Player extends Entity {
 
     public void kick(String string) {
         this.netHandler.kick(string);
+    }
+
+    /**
+     * @param chunkLoadDistance2
+     */
+    public void setChunkLoadDistance(int distance) {
+        if (distance < 2 || distance > 32) {
+            throw new IllegalArgumentException("Invalid chunk load distance");
+        }
+        this.chunkLoadDistance = distance;
     }
 
 }

@@ -18,15 +18,15 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
 
 public class ShadowRenderer {
     public Shader   shadowShader;
-    private boolean startup;
+    private boolean startup = true;
 
     //results between those 2 modes are equal
     // the geom shader mode uses geometry shader to instanciate the terrain
@@ -66,15 +66,15 @@ public class ShadowRenderer {
             shadowShader = shadow;
             this.uploadViewport = true;
         } catch (ShaderCompileError e) {
+            System.out.println("shader " + e.getName() + " failed to compile");
+            System.out.println(e.getLog());
             if (startup) {
-                System.out.println(e.getLog());
-                Game.instance.setException(e);
+                throw e;
             } else {
                 Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
-                System.out.println("shader " + e.getName() + " failed to compile");
-                System.out.println(e.getLog());
             }
         }
+        startup = false;
     }
     public void setAvaialbeRenderModes() {
         Arrays.fill(availableRenderModes, false);
@@ -152,7 +152,7 @@ public class ShadowRenderer {
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, Frustum.FRUSTUM_INSIDE);
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
@@ -191,7 +191,7 @@ public class ShadowRenderer {
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, Frustum.FRUSTUM_INSIDE);
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
@@ -217,20 +217,20 @@ public class ShadowRenderer {
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
         final int shadowPass = 2;
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 1, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 1, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
         glPolygonOffset(1.2f, 2.f);
 
         glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 2, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 2, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
         glPolygonOffset(2.4f, 2.f);
 
         glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 3, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 3, Frustum.FRUSTUM_INSIDE);
 
         FrameBuffer.unbindFramebuffer();
 

@@ -30,6 +30,7 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
+        super.readPacket(stream);
         this.chunkX = stream.readInt();
         this.chunkZ = stream.readInt();
         int len = stream.readInt();
@@ -45,6 +46,7 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
+        super.writePacket(stream);
         stream.writeInt(this.chunkX);
         stream.writeInt(this.chunkZ);
         int len = this.positions.length;
@@ -63,6 +65,7 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
 
     @Override
     public void handle(Handler h) {
+        if (h.isValidWorld(this))
         h.handleMultiBlock(this);
     }
 

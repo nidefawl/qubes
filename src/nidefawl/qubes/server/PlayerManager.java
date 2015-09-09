@@ -72,17 +72,12 @@ public class PlayerManager {
         player.load(data);
         this.players.put(name, player);
         this.playersLowerCase.put(name.toLowerCase(), player);
-        world.addPlayer(player);
         return player;
     }
 
     public void removePlayer(Player p) {
         this.players.remove(p.name);
         this.playersLowerCase.remove(p.name.toLowerCase());
-        WorldServer world = (WorldServer) p.world;
-        if (world != null) {
-            world.removePlayer(p);
-        }
         PlayerData data = p.save();
         savePlayer(p.name, data);
     }

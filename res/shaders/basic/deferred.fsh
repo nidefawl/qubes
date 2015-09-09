@@ -23,7 +23,7 @@ struct Light {
     float Radius;
 };
 
-#define NR_LIGHTS 256
+#define NR_LIGHTS 64
 uniform int numLights;
 uniform Light lights[NR_LIGHTS];
 
@@ -102,20 +102,20 @@ float getShadow() {
     if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && prop.linearDepth<in_matrix.shadow_split_depth.x*weight) {
     	v.z-=0.00004f;
 	    // debugcolor = vec3(v.xy,1);
-		return texture(texShadow, vec3(v.xy*0.5, v.z)).r;
+		return texture(texShadow, vec3(v.xy*0.5, v.z));
     }
     if (clamp(v2.x, clampmin, clampmax) == v2.x && clamp(v2.z, clampmin, clampmax) == v2.z && prop.linearDepth<in_matrix.shadow_split_depth.y*weight) {
     // v.z *= (1.0f-0.001f * gdistance);
     	v2.z-=0.00007f;
 	    // debugcolor = vec3(0,1,0);
-	    return texture(texShadow, vec3(v2.xy*0.5+vec2(0.5,0),v2.z)).r;
+	    return texture(texShadow, vec3(v2.xy*0.5+vec2(0.5,0),v2.z));
     }
     if (clamp(v3.x, clampmin, clampmax) == v3.x && clamp(v3.z, clampmin, clampmax) == v3.z && prop.linearDepth<in_matrix.shadow_split_depth.z) {
     // v.z *= (1.0f-0.001f * gdistance);
     	// v3.z-=bias;
     	v2.z-=0.00007f;
 	    // debugcolor = vec3(1,0,0);
-	    return texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5),v3.z)).r;
+	    return texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5),v3.z));
     }
     return 1;
 }
@@ -151,17 +151,17 @@ void main() {
     prop.viewVector = normalize(in_matrix.cameraPosition.xyz - prop.worldposition.xyz);
     prop.NdotL = dot( prop.normal, SkyLight.lightDir.xyz );
 
-    vec3 reflectDir = reflect(-SkyLight.lightDir.xyz, prop.normal);  
-    float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), 2);
+    vec3 reflectDir = normalize(reflect(-SkyLight.lightDir.xyz, prop.normal));  
+    float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), 2.2);
 
 	vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
 
     setSunSpotDens();
   	float directShading = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
     float shadow = getShadow()*0.8+0.2;
-	float isSky = float(prop.blockinfo.y==0);
-	float isWater = float(prop.blockinfo.y==4||prop.blockinfo.y==6);
-	float isLight = float(prop.blockinfo.y==6);
+	float isSky = float(prop.blockinfo.y==0u);
+	float isWater = float(prop.blockinfo.y==4u||prop.blockinfo.y==6u);
+	float isLight = float(prop.blockinfo.y==6u);
 
 
 	vec3 Ispec = SkyLight.Ls.rgb * directShading * spec;
@@ -173,8 +173,9 @@ void main() {
 	finalLight += shadow * Ispec*dayLightIntens;
 	finalLight *= clamp(dayLightIntens, 0.5, 1.0)*1.0;
 	finalLight.rg *= 1.0-fNight*0.23;
-	finalLight *= isLight*12+1;
+	// finalLight *= isLight*24+1;
 	finalLight *= 1.0-fNight*0.63;
+    finalLight = mix(finalLight, vec3(24.0), isLight);
 
     for(int i = 1; i < numLights; ++i)
     {

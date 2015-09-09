@@ -49,21 +49,21 @@ public class ShadowProjector {
         Matrix4f.mul(shadowSplitProj[split], modelview, newMat);
         Matrix4f.transpose(newMat, newMat);
         Matrix4f.invert(newMat, newMatInv);
-        AABB bb = new AABB(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+//        AABB bb = new AABB(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
         for (int i = 0; i < 8; i++) {
             Matrix4f.transformTransposed(newMatInv, furstumCornersIn[i], furstumCornersOut[i]);
-            if (bb.minX > furstumCornersOut[i].x)
-                bb.minX = furstumCornersOut[i].x;
-            if (bb.maxX < furstumCornersOut[i].x)
-                bb.maxX = furstumCornersOut[i].x;
-            if (bb.minY > furstumCornersOut[i].y)
-                bb.minY = furstumCornersOut[i].y;
-            if (bb.maxY < furstumCornersOut[i].y)
-                bb.maxY = furstumCornersOut[i].y;
-            if (bb.minZ > furstumCornersOut[i].z)
-                bb.minZ = furstumCornersOut[i].z;
-            if (bb.maxZ < furstumCornersOut[i].z)
-                bb.maxZ = furstumCornersOut[i].z;
+//            if (bb.minX > furstumCornersOut[i].x)
+//                bb.minX = furstumCornersOut[i].x;
+//            if (bb.maxX < furstumCornersOut[i].x)
+//                bb.maxX = furstumCornersOut[i].x;
+//            if (bb.minY > furstumCornersOut[i].y)
+//                bb.minY = furstumCornersOut[i].y;
+//            if (bb.maxY < furstumCornersOut[i].y)
+//                bb.maxY = furstumCornersOut[i].y;
+//            if (bb.minZ > furstumCornersOut[i].z)
+//                bb.minZ = furstumCornersOut[i].z;
+//            if (bb.maxZ < furstumCornersOut[i].z)
+//                bb.maxZ = furstumCornersOut[i].z;
         }
         frustumCenter.set(0, 0, 0);
         for (int i = 0; i < 8; i++) {
@@ -155,7 +155,7 @@ public class ShadowProjector {
         }
     }
 
-    public int checkFrustum(int i, AABB aabb) {
+    public int checkFrustum(int i, AABBInt aabb) {
         return shadowCamFrustum[i].checkFrustum(aabb);
     }
 

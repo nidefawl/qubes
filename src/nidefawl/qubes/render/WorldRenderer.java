@@ -13,13 +13,13 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABB;
+import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
@@ -36,7 +36,7 @@ public class WorldRenderer {
 
     public int rendered;
 
-    private boolean startup;
+    private boolean startup = true;
 
 
     public Shader       terrainShader;
@@ -67,15 +67,15 @@ public class WorldRenderer {
             skyShader = sky;
             startup = false;
         } catch (ShaderCompileError e) {
+            System.out.println("shader " + e.getName() + " failed to compile");
+            System.out.println(e.getLog());
             if (startup) {
-                System.out.println(e.getLog());
-                Game.instance.setException(e);
+                throw e;
             } else {
-                Game.instance.addDebugOnScreen("\0uff3333shader "+e.getName()+" failed to compile");
-                System.out.println("shader "+e.getName()+" failed to compile");
-                System.out.println(e.getLog());
+                Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             }
         }
+        startup = false;
     }
 
     public void init() {
@@ -116,9 +116,7 @@ public class WorldRenderer {
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
         glDisable(GL_BLEND);
-        Engine.regionRenderer.rendering = 1;
-        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
-        Engine.regionRenderer.rendering = 0;
+        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
@@ -127,7 +125,7 @@ public class WorldRenderer {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
         glDisable(GL_BLEND);
         this.rendered = Engine.regionRenderer.rendered;
         if (Game.GL_ERROR_CHECKS)
@@ -145,8 +143,8 @@ public class WorldRenderer {
         glLineWidth(3.0F);
         Engine.checkGLError("glLineWidth");
         Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_LINES_ADJACENCY_ARB);
-        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
         Engine.regionRenderer.setDrawMode(GL_QUADS);
         glLineWidth(2.0F);
 
@@ -159,9 +157,9 @@ public class WorldRenderer {
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
-        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, RegionRenderer.IN_FRUSTUM);
+        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
         Shader.disable();
     }
     

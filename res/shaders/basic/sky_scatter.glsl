@@ -60,10 +60,12 @@ vec3 absorb(float dist, vec3 color, float factor){
 }
 
 #define NO_SCATTERING1
+#ifdef NO_SCATTERING
 vec3 skyAtmoScat(vec3 eyedir, vec3 lightdir, float moon){
-	#ifdef NO_SCATTERING
-		return vec3(0);
-	#else
+    return vec3(0);
+}
+#else
+vec3 skyAtmoScat(vec3 eyedir, vec3 lightdir, float moon){
     float alpha = dot(eyedir, lightdir);
     Kr = mix(Kr1, Kr2, moon);
     intensity = mix(intensity, 0.2, moon);
@@ -98,5 +100,5 @@ vec3 skyAtmoScat(vec3 eyedir, vec3 lightdir, float moon){
 
     // gl_FragColor = vec4(color, 1.0);
     return color;
-	#endif
 }
+#endif

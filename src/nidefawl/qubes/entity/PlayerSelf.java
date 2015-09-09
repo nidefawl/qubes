@@ -1,6 +1,7 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
@@ -16,12 +17,12 @@ public class PlayerSelf extends Entity {
     private boolean   jumped;
     private float   sneak;
     public float eyeHeight = 1.3F;
-    public String name;
+    public PlayerProfile profile;
     private ClientHandler clientHandler;
 
-    public PlayerSelf(ClientHandler clientHandler, String name) {
+    public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
         super();
-        this.name = name;
+        this.profile = profile;
         this.clientHandler = clientHandler;
     }
 

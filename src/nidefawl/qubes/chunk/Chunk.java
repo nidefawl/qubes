@@ -225,6 +225,7 @@ public class Chunk {
                 this.setLight(xz & MASK, y, (xz >> SIZE_BITS) & MASK, 1, 15);
             }
         }
+        this.world.flagChunkLightUpdate(x, z);
     }
     
     public void initHeightMap() {
@@ -264,7 +265,6 @@ public class Chunk {
 
     public void postGenerate() {
         initLight();
-        this.world.flagChunkLightUpdate(x, z);
     }
 
     /**
@@ -295,8 +295,9 @@ public class Chunk {
     /** 
      * @param decompressed
      * @param box
+     * @return 
      */
-    public void setLights(byte[] lightData, BlockBoundingBox bb) {
+    public boolean setLights(byte[] lightData, BlockBoundingBox bb) {
         int w = bb.getWidth();
         int h = bb.getHeight();
         int l = bb.getLength();
@@ -304,14 +305,19 @@ public class Chunk {
         if (volume <= 0) {
             throw new IllegalArgumentException("Expected bb volume to be in range. (Volume is "+volume+"). "+bb.toString());
         }
+        boolean changed = false;
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < l; z++) {
                 int xz = (z+bb.lowZ)<<(SIZE_BITS)|(x+bb.lowX);
                 for (int y = 0; y < h; y++) {
                     int idx = (y+bb.lowY)<<(SIZE_BITS*2)|xz;
-                    this.blockLight[idx] = lightData[y*w*l+z*w+x];
+                    byte cur = this.blockLight[idx];
+                    byte newV = lightData[y*w*l+z*w+x];
+                    changed |= cur!=newV;
+                    this.blockLight[idx] = newV;
                 }
             }
         }
+        return changed;
     }
 }

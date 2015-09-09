@@ -58,7 +58,7 @@ public class PacketSSpawnInWorld extends Packet {
 
     @Override
     public void handle(Handler h) {
-        h.handleJoinGame(this);
+        h.handleSpawnInWorld(this);
     }
 
 }

@@ -21,6 +21,7 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
+        super.readPacket(stream);
         this.flags = stream.readUnsignedByte();
         this.len = stream.readInt();
         this.coords = new int[len][];
@@ -35,6 +36,7 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
+        super.writePacket(stream);
         stream.writeByte(this.flags);
         stream.writeInt(this.len);
         for (int i = 0; i < len; i++) {

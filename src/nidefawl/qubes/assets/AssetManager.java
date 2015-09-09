@@ -28,20 +28,33 @@ public class AssetManager {
     }
     
     public InputStream findResource(String name) {
-        try {
+        Exception e = null;
+        if (!WorkingEnv.loadAssetsFromClassPath()) {
+            try {
 
-            if (folder.exists()) {
-                File f = new File(folder, name);
-                if (f.exists()) {
-                    FileInputStream fis = new FileInputStream(f);
-                    BufferedInputStream bif = new BufferedInputStream(fis);
-                    return bif;
+                if (folder.exists()) {
+                    File f = new File(folder, name);
+                    if (f.exists()) {
+                        FileInputStream fis = new FileInputStream(f);
+                        BufferedInputStream bif = new BufferedInputStream(fis);
+                        return bif;
+                    }
                 }
+            } catch (IOException ioe) {
+                e = ioe;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return getClass().getResourceAsStream("/res/"+name);
+        InputStream is = null;
+        try {
+            is = getClass().getResourceAsStream("/res/"+name);
+        } catch (Exception e2) {
+            throw e2;
+        }
+
+        if (is == null && e != null) {
+            throw new RuntimeException(e);
+        }
+        return is;
     }
 
     public AssetTexture loadPNGAsset(String name) {
