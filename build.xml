@@ -5,7 +5,7 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
-	<property name="targetfile" value="U:\game\server.jar" />
+	<property name="targetfile" value="U:/game/server.jar" />
     <path id="CraftlandLauncherLoader.classpath">
         <pathelement location="bin"/>
         <pathelement location="lib/jline/jline-2.13.jar"/>
@@ -13,7 +13,7 @@
         <pathelement location="lib/guava/guava-18.0.jar"/>
         <pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
     </path>
-	<property name="launch4j.dir" location="C:\Program Files (x86)\Launch4j" />
+	<property name="launch4j.dir" location="C:/Program Files (x86)/Launch4j" />
 	<taskdef name="launch4j"
 	    classname="net.sf.launch4j.ant.Launch4jTask"
 	    classpath="${launch4j.dir}/launch4j.jar
@@ -45,18 +45,22 @@
         </javac>
     </target>
     <target name="build_game_jar">
-	    <delete file="..\game.jar" failonerror="no"/>
-		<jar destfile="..\game.jar" basedir="compile/game" includes="**/*" compress="false">
+	    <delete file="../game.jar" failonerror="no"/>
+		<jar destfile="../game.jar" basedir="compile/game" includes="**/*" compress="false">
 	        <manifest>
             	<attribute name="Main-Class" value="nidefawl.qubes.BootClient"/>
 	        </manifest>
-			<fileset file="..\game_deps.jar" />
+			<fileset file="../game_deps.jar" />
 		</jar>
+        <copy includeemptydirs="false" todir="../qubes">
+            <fileset file="../game.jar" />
+        </copy>
     </target>
     <target name="build_game_exe">
     	<launch4j configFile="../launch4j_game.xml" />
 
     </target>
+
     	
     <target name="build_game">
         <echo message="${ant.project.name}: ${ant.file}"/>
@@ -64,10 +68,15 @@
     	<antcall target="build_game_compile" />
     	<antcall target="build_game_jar" />
     </target>
+    <target name="build_compile_and_jar">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    	<antcall target="build_game_compile" />
+    	<antcall target="build_game_jar" />
+	</target>
 	
 	<target name="build_deps">
         <echo message="${ant.project.name}: ${ant.file}"/>
-	    <delete file="..\game_deps.jar" failonerror="no"/>
+	    <delete file="../game_deps.jar" failonerror="no"/>
 	    <delete dir="compile/deps" failonerror="no"/>
         <mkdir dir="compile/deps"/>
 		<copy file="lib/jline/jline-2.13.jar" tofile="compile/deps/jline.jar"/>
@@ -76,14 +85,17 @@
 		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="compile/deps/snakeyaml.jar"/>
         <mkdir dir="compile/deps/natives"/>
     	<copy includeemptydirs="false" todir="compile/deps/natives">
-    		<fileset dir="C:\lwjgl3\libs">
+    		<fileset dir="C:/lwjgl3/libs">
     			<include name="*.*"/>
     		</fileset>
     	</copy>
     	<delete dir="compile/deps/META-INF" />
-		<jar destfile="..\game_deps.jar" compress="false">
+		<jar destfile="../game_deps.jar" compress="false">
 	        <fileset dir="compile/deps" includes="**/*" /> 
 		</jar>
+        <copy includeemptydirs="false" todir="../qubes">
+            <fileset file="../game_deps.jar" />
+        </copy>
 	</target>
 
     <target name="initserver">
@@ -102,13 +114,13 @@
         </javac>
     </target>
 	<target name="jarserver" depends="buildserver">
-		<delete file="..\server.jar"/>
-		<jar destfile="..\server.jar" basedir="compileserver" includes="**/*">
+		<delete file="../server.jar"/>
+		<jar destfile="../server.jar" basedir="compileserver" includes="**/*">
 	        <manifest>
 	            <attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
 	        </manifest>
 		</jar>
         <delete file="${targetfile}"/>
-        <copy file="..\server.jar" tofile="${targetfile}"/>
+        <copy file="../server.jar" tofile="${targetfile}"/>
     </target>
 </project>
