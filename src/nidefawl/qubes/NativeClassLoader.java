@@ -18,7 +18,7 @@ public class NativeClassLoader extends ClassLoader {
     
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        if (name.startsWith("nidefawl")) {
+        if (!name.startsWith("java")) {
 //            System.out.println(getClass().getSimpleName()+": "+name);
             byte[] classData = cppLoadClass(name);
             if (classData != null) {
@@ -29,22 +29,23 @@ public class NativeClassLoader extends ClassLoader {
     }
     public static byte[] loadGameResource(String name) {
         byte[] data = instance == null ? null : instance.cppLoadResource(name);
-      System.out.println("loadGameResource: "+name+" = "+(data == null ? "null" : "[b len "+data.length));
+//      System.out.println("loadGameResource: "+name+" = "+(data == null ? "null" : "[b len "+data.length));
         return data;
     }
-    private static NativeClassLoader instance;
-    public static void start() {
+    public static void setLoader() {
         try {
-            instance = new NativeClassLoader();
             System.out.println("Triggered class loader");
+            instance = new NativeClassLoader();
             Thread.currentThread().setContextClassLoader(instance);
-            Class s = instance.loadClass("nidefawl.qubes.BootClient");
-            Object o = s.newInstance();
-            String[] args = new String[0];
-            Method m = s.getDeclaredMethod("main", args.getClass());
-            m.invoke(o, new Object[] {args});
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    private static NativeClassLoader instance;
+    /**
+     * @return the instance
+     */
+    public static NativeClassLoader getInstance() {
+        return instance;
     }
 }
