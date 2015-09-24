@@ -6,3 +6,4 @@ syntax: regexp
 ^worlds\\*$
 ^server\\*$
 ^regions\\*$
+^packs\\*$
