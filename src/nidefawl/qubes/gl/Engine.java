@@ -29,6 +29,8 @@ import nidefawl.qubes.vec.*;
 public class Engine {
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
 
+    public static boolean initRenderers = true;
+
     private static IntBuffer   viewport;
     private static FloatBuffer position;
     private static FloatBuffer mat;
@@ -116,12 +118,14 @@ public class Engine {
         lightDirection = new Vector3f();
         back = new Vector4f();
         camera = new Camera();
-        shadowProj = new ShadowProjector();
-        worldRenderer = new WorldRenderer();
-        shadowRenderer = new ShadowRenderer();
-        outRenderer = new FinalRenderer();
-        regionRenderer = new RegionRenderer();
-        regionRenderThread = new MeshThread(3);
+        if (initRenderers) {
+            shadowProj = new ShadowProjector();
+            worldRenderer = new WorldRenderer();
+            shadowRenderer = new ShadowRenderer();
+            outRenderer = new FinalRenderer();
+            regionRenderer = new RegionRenderer();
+            regionRenderThread = new MeshThread(3);
+        }
         selection = new Selection();
     }
     
@@ -133,10 +137,12 @@ public class Engine {
         Shaders.reinit();
         
         Shaders.init();
-        regionRenderThread.init();
-        regionRenderer.init();
-        selection.init();
-        reloadRenderer(true);
+        if (initRenderers) {
+            regionRenderThread.init();
+            regionRenderer.init();
+            selection.init();
+            reloadRenderer(true);
+        }
         GL30.glBindVertexArray(vaoId);
     }
     
@@ -156,7 +162,9 @@ public class Engine {
         Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
         projection.update();
         projection.update();
-        shadowProj.setSplits(new float[] {znear, 20, 80, 160}, fieldOfView, aspectRatio);
+        if (initRenderers) {
+            shadowProj.setSplits(new float[] {znear, 20, 80, 620}, fieldOfView, aspectRatio);
+        }
 
 
         updateOrthoMatrix(displayWidth, displayHeight);
@@ -337,6 +345,7 @@ public class Engine {
     }
 
     public static void stop() {
+        if (regionRenderThread != null)
         regionRenderThread.stopThread();
     }
 

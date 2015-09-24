@@ -16,6 +16,7 @@ public class TextureManager {
     final static TextureManager instance = new TextureManager();
 
     public int                  texNoise;
+//    public int                  texNoise2;
     public int                  texEmpty;
     public int                  texEmptyNormal;
     private ByteBuffer          directBuf;
@@ -31,6 +32,7 @@ public class TextureManager {
 
     public void init() {
         texNoise = glGenTextures();
+//        texNoise2 = glGenTextures();
         reload();
         texEmpty = makeNewTexture(new byte[16*16*4], 16, 16, true, false, 0);
         int[] normalBumpMap = new int[16*16*4];
@@ -44,6 +46,11 @@ public class TextureManager {
         glBindTexture(GL_TEXTURE_2D, texNoise);
         TextureManager.getInstance().uploadTexture(data, 64, 64, 3, GL_RGB, GL_RGB, true, true, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
+        int size=256;
+//        byte[] data2 = TextureUtil.genNoise2(size,size);
+//        glBindTexture(GL_TEXTURE_2D, texNoise2);
+//        TextureManager.getInstance().uploadTexture(data2, size, size, 3, GL_RGB, GL_RGB, true, true, 0);
+//        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
 
@@ -64,6 +71,16 @@ public class TextureManager {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
         uploadTexture(rgba, w, h, 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
         return i;
+    }
+    public int makeNewTexture(AssetTexture tex, boolean repeat, boolean filter, int mipmapLevel) {
+        int i = GL11.glGenTextures();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
+        uploadTexture(tex.getData(), tex.getWidth(), tex.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
+        return i;
+        
+    }
+    public int makeNewTexture(AssetTexture tex) {
+        return makeNewTexture(tex, false, true, 0);
     }
     public static byte[] getRGBA(int[] irgba) {
         byte textureData[] = new byte[irgba.length * 4];

@@ -9,11 +9,9 @@ import java.util.Stack;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameContext;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Side;
 
 public class BootClient {
@@ -122,6 +120,9 @@ public class BootClient {
             System.out.println("Using temporary directory "+temp.getAbsolutePath());
             System.setProperty("org.lwjgl.librarypath", new File(temp, "natives").getAbsolutePath());
             InputStream in = BootClient.class.getResourceAsStream("/game_deps.jar");
+            if (in == null) {
+                in = new FileInputStream(new File("../game_deps.jar"));
+            }
             ZipInputStream zipIn = null;
             try {
                 zipIn = new ZipInputStream(in);
@@ -164,15 +165,26 @@ public class BootClient {
         }
 
     }
+    public static void main2(String[] args) {
+        System.out.println("test");
+        System.err.println("errtest");
+        
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
+        
         try {
             System.loadLibrary(JNI_LIBRARY_NAME);
             System.out.println("Found lwjgl");
         } catch (UnsatisfiedLinkError e) {
             try {
                 loadDeps();
-                WorkingEnv.setClassPathAssets();
                 Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -195,19 +207,19 @@ public class BootClient {
             e.printStackTrace();
         }
 
-        String name = "me" + (GameMath.randomI(System.currentTimeMillis()));
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-") && args[i].length() > 1) {
-                if (i + 1 < args.length) {
-                    if (args[i].substring(1).equalsIgnoreCase("name")) {
-                        name = args[i + 1];
-                    }
-                }
-            }
-        }
+//        String name = "me" + (GameMath.randomI(System.currentTimeMillis()));
+//        for (int i = 0; i < args.length; i++) {
+//            if (args[i].startsWith("-") && args[i].length() > 1) {
+//                if (i + 1 < args.length) {
+//                    if (args[i].substring(1).equalsIgnoreCase("name")) {
+//                        name = args[i + 1];
+//                    }
+//                }
+//            }
+//        }
         GameBase.appName = "-";
         Game.instance = new Game();
-        Game.instance.getProfile().setName(name);
+        Game.instance.getProfile().setName("Player");
         ErrorHandler.setHandler(Game.instance);
         Game.instance.startGame();
         GameContext.setMainThread(Game.instance.getMainThread());

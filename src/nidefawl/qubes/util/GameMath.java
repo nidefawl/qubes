@@ -155,4 +155,32 @@ public class GameMath {
         z = z2-z;
         return x*x+y*y+z*z;
     }
+    /**
+     * @param f
+     * @param i
+     * @return
+     */
+    public static float pow(float base, int exp) {
+        if (exp == 0) {
+            return 1.0F;
+        }
+        if (exp <= 0) {
+            base = 1.0F / base;
+            exp = -exp;
+        }
+        float temp = base;
+        exp--;
+        while (true) {
+            if ((exp & 0x1) != 0) {
+                base *= temp;
+            }
+            exp >>= 1;
+            if (exp == 0) {
+                break;
+            }
+            temp *= temp;
+        }
+        return base;
+
+    }
 }

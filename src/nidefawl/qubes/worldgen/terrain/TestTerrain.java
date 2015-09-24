@@ -1,11 +1,11 @@
-package nidefawl.qubes.worldgen;
+package nidefawl.qubes.worldgen.terrain;
 
 import java.util.Random;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.world.World;
 
-public class TestTerrain extends AbstractGen {
+public class TestTerrain implements ITerrainGen {
 
     private World world;
     private long  seed;

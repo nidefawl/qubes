@@ -6,6 +6,10 @@ import java.util.UUID;
 import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.worldgen.*;
+import nidefawl.qubes.worldgen.populator.ChunkPopulator;
+import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
+import nidefawl.qubes.worldgen.populator.IChunkPopulator;
+import nidefawl.qubes.worldgen.terrain.*;
 
 public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 
@@ -15,10 +19,12 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     private final File dir;
     private int id;
     private int generator;
+    private String worldName;
 
     public WorldSettings(File worldDirectory) {
         super(true);
         this.dir = worldDirectory;
+        this.worldName = this.dir.getName();
     }
 
     @Override
@@ -77,7 +83,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     /**
      * @return
      */
-    public AbstractGen getGenerator(WorldServer w) {
+    public ITerrainGen getGenerator(WorldServer w) {
         switch (this.generator) {
             case 0:
                 return new TestTerrain2(w, this.getSeed());
@@ -89,5 +95,26 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
                 return new TerrainGenerator(w, this.getSeed());
         }
         return new TestTerrain2(w, this.getSeed());
+    }
+
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.world.IWorldSettings#getName()
+     */
+    @Override
+    public String getName() {
+        return this.worldName;
+    }
+
+    /**
+     * @param worldServer
+     * @return
+     */
+    public IChunkPopulator getPopulator(WorldServer worldServer) {
+        switch (this.generator) {
+            case 0:
+            case 2:
+                return new EmptyChunkPopulator();
+        }
+        return new ChunkPopulator();
     }
 }

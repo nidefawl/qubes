@@ -1,5 +1,7 @@
 package nidefawl.qubes.player;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import nidefawl.qubes.nbt.Tag;
@@ -11,11 +13,15 @@ public class PlayerData {
     public UUID world;
     public boolean flying;
     public int chunkLoadDistance;
+    public HashSet<String> joinedChannels = new HashSet<>();
 
     public void load(Tag.Compound t) {
         this.pos = t.getVec3("pos");
         this.world = t.getUUID("world");
         this.flying = t.getByte("fly") != 0;
+        List list = t.getList("chatchannels");
+        list = Tag.unwrapStringList(list);
+        this.joinedChannels = new HashSet<>(list);
     }
 
     public Tag save() {
@@ -24,7 +30,8 @@ public class PlayerData {
         if (this.world != null) {
             cmp.setUUID("world", this.world);    
         }
-        cmp.setByte("fly", this.flying ? 1 : 0); 
+        cmp.setByte("fly", this.flying ? 1 : 0);
+        cmp.setList("chatchannels", Tag.wrapStringList(this.joinedChannels));
         return cmp;
     }
 

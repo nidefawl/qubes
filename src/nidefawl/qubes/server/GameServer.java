@@ -7,11 +7,13 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.ServerConfig;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.network.server.NetworkServer;
+import nidefawl.qubes.network.server.ServerHandlerLogin;
 import nidefawl.qubes.server.commands.CommandHandler;
 import nidefawl.qubes.server.commands.PreparedCommand;
 import nidefawl.qubes.server.compress.CompressThread;
@@ -22,7 +24,6 @@ import nidefawl.qubes.world.WorldSettings;
 public class GameServer implements Runnable, IErrorHandler {
 	final ServerConfig config = new ServerConfig();
     final CommandHandler commands = new CommandHandler();
-    final PlayerManager playerManager = new PlayerManager(this);
 	Thread mainThread;
 	Thread handshakeThread;
 	NetworkServer networkServer;
@@ -32,14 +33,15 @@ public class GameServer implements Runnable, IErrorHandler {
     private HashMap<UUID, WorldServer> worldsMap = new HashMap<>();
     static final long TICK_LEN_MS = 50;
     long lastTick = System.currentTimeMillis();
+    long lastSaveTick = System.currentTimeMillis();
+    int lastSaveStep = 0;
     private GameError reportedException;
     private int nextWorldID = 0;
     public ConcurrentLinkedQueue<PreparedCommand> commandQueue = new ConcurrentLinkedQueue<>();
 
-	public GameServer() {
-
-	}
-
+    final PlayerManager playerManager = new PlayerManager(this);
+    final ChannelManager channelManager = new ChannelManager(this);
+    
 	public void startServer() {
 		this.mainThread = new Thread(this);
 		this.mainThread.setPriority(Thread.MAX_PRIORITY);
@@ -135,6 +137,11 @@ public class GameServer implements Runnable, IErrorHandler {
             lastTick = System.currentTimeMillis();
         }
         long start2 = System.currentTimeMillis();
+        if (start2-this.lastSaveTick > 10000) {
+            this.lastSaveTick = start2;
+            this.saveAndUnloadData();
+        }
+        start2 = System.currentTimeMillis();
         PreparedCommand run;
         while ((run = commandQueue.poll()) != null) {
 
@@ -153,14 +160,22 @@ public class GameServer implements Runnable, IErrorHandler {
         }
 	}
 
-	private void updateTick() {
-	    for (int i = 0; i < this.worlds.length; i++) {
-	        try {
-	            this.worlds[i].tickUpdate();
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
-	    }
+    private void updateTick() {
+        for (int i = 0; i < this.worlds.length; i++) {
+            try {
+                this.worlds[i].tickUpdate();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private void saveAndUnloadData() {
+        int idx = this.lastSaveStep++%this.worlds.length;
+        try {
+            this.worlds[idx].unloadUnused();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean isRunning() {
@@ -252,6 +267,14 @@ public class GameServer implements Runnable, IErrorHandler {
 
     public WorldServer[] getWorlds() {
         return this.worlds;
+    }
+
+    /**
+     * @return 
+     * 
+     */
+    public ChannelManager getChatChannelMgr() {
+        return this.channelManager;
     }
 
 }

@@ -9,6 +9,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Camera;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -23,15 +24,13 @@ public class GuiOverlayStats extends Gui {
     final public FontRenderer font;
     final FontRenderer fontSmall;
 
+    ArrayList<String>  info1        = new ArrayList<String>();
     ArrayList<String>  info        = new ArrayList<String>();
 
-    private String     stats2;
-    private String     stats3;
     private String     stats       = "";
     private String     statsRight  = "";
     long               messageTime = System.currentTimeMillis() - 5000L;
     String             message     = "";
-    private String     stats4;
     boolean render = false;
     private String stats5;
     public GuiOverlayStats() {
@@ -49,12 +48,15 @@ public class GuiOverlayStats extends Gui {
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
         Game.instance.tick = 0;
-        this.stats2 = String.format("%d setUniform/frame ", Stats.uniformCalls);
+        info1.clear();
+        info1.add( String.format("%d setUniform/frame ", Stats.uniformCalls) );
         WorldClient world = (WorldClient) Game.instance.getWorld();
         if (world != null) {
             int numChunks = world.getChunkManager().getChunksLoaded();
-            this.stats3 = String.format("Chunks %d - R %d/%d", numChunks, Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions);
-            this.stats4 = String.format("Follow: %s", Game.instance.follow ? "On" : "Off");
+            info1.add( String.format("Chunks %d - R %d/%d", numChunks, Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions) );
+            info1.add( String.format("Follow: %s", Game.instance.follow ? "On" : "Off") );
+            info1.add( String.format("UpdateRenderers: %s", Game.instance.updateRenderers ? "On" : "Off") );
+            info1.add( String.format("RenderMode: %s", BlockFaceAttr.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
 
             this.stats5 = "";
             BlockPos p = Engine.selection.selection[0];
@@ -76,8 +78,6 @@ public class GuiOverlayStats extends Gui {
                         sky1, block1, sky2, block2,
                         h);
             }
-        } else {
-            this.stats3 = null;
         }
 
         info.clear();
@@ -103,14 +103,8 @@ public class GuiOverlayStats extends Gui {
             font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
             y += font.getLineHeight() * 1.2F;
-            font.drawString(stats2, 5, y, 0xFFFFFF, true, 1.0F);
-            y += font.getLineHeight() * 1.2F;
-            if (stats3 != null) {
-                font.drawString(stats3, 5, y, 0xFFFFFF, true, 1.0F);
-                y += font.getLineHeight() * 1.2F;
-            }
-            if (stats4 != null) {
-                font.drawString(stats4, 5, y, 0xFFFFFF, true, 1.0F);
+            for (String s : info1) {
+                font.drawString(s, 5, y, 0xFFFFFF, true, 1.0F);
                 y += font.getLineHeight() * 1.2F;
             }
             if (stats5 != null) {

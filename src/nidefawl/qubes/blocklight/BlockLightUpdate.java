@@ -1,5 +1,7 @@
 package nidefawl.qubes.blocklight;
 
+import static nidefawl.qubes.chunk.Chunk.MASK;
+
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.GameMath;
@@ -41,6 +43,7 @@ public class BlockLightUpdate {
                 }
             }
         }
+        c.isLit = true;
     }
 
 
@@ -122,7 +125,6 @@ public class BlockLightUpdate {
                 int dirX = Dir.getDirX(s);
                 int dirY = Dir.getDirY(s);
                 int dirZ = Dir.getDirZ(s);
-                newLevel = type == 1 && dirY < 0 && lvl == 0xF ? lvl : lvl - 1;
                 dirX += x2;
                 dirY += y2;
                 dirZ += z2;
@@ -135,15 +137,19 @@ public class BlockLightUpdate {
                     System.err.println(lx+","+ly+","+lz+" - "+prevLVL);
                     continue;
                 }
-                if (dirY > 0 && dirY < cache.worldHeightMin1) {
-                    if (cache.isTransparent(dirX, dirY, dirZ)) {
+                if (dirY > 0 && dirY </*=*/ cache.worldHeightMin1) {
+                    int dirType = cache.getTypeId(dirX, dirY, dirZ);
+                    boolean transparent = !Block.isOpaque(dirType);
+                    int lightLoss = 1;
+                    if (transparent) {
                         int lvl1 = cache.getLight(dirX, dirY, dirZ, type);
                         if (lvl1 + 2 <= lvl) {
+                            int setLight = dirType == 0 && type == 1 && dirY < 0 && lvl == 0xF ? lvl : lvl - lightLoss;
 //                            if (lvl1==15&&type==1&&!cache.canSeeSky(dirX, dirY, dirZ)) {
 //                                System.out.println("skip fully lit block that is not sky block");
 //                                continue;
 //                            }
-                            setLight(cache, dirX, dirY, dirZ, type, newLevel, 0);
+                            setLight(cache, dirX, dirY, dirZ, type, setLight, 0);
                             int dist = GameMath.distSq3Di(dirX, dirY, dirZ, x, y, z);
                             if (dist < max && idxAdd < stackAdd.length) {
                                 lx = dirX;
@@ -175,16 +181,20 @@ public class BlockLightUpdate {
         if (id != 0 && !Block.block[id].isTransparent()) {
             return lvl;
         }
+
+        int lightLoss = 1;
+
+        if (lightLoss < 1)
+            lightLoss = 1;
         int h = cache.getHeight(i, k);
         if (type == 1 && j + 1 >= h) {
-            return 0xF;
+            return id == 0 ? 0xF : 0xF - lightLoss;
         }
-        
         for (int s = 0; s < 6; s++) {
             int dirX = Dir.getDirX(s) + i;
             int dirY = Dir.getDirY(s) + j;
             int dirZ = Dir.getDirZ(s) + k;
-            int lvl2 = cache.getLight(dirX, dirY, dirZ, type) - 1;
+            int lvl2 = cache.getLight(dirX, dirY, dirZ, type) - lightLoss;
             if (lvl2 > lvl)
                 lvl = lvl2;
 

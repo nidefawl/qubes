@@ -2,6 +2,7 @@ package nidefawl.qubes.gl;
 
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 
 public class Camera {
@@ -33,6 +34,13 @@ public class Camera {
         this.position.x = x;
         this.position.y = y;
         this.position.z = z;
+    }
+
+
+
+    public void setPosition(Vec3D v) {
+        this.prevposition.set(this.position);
+        this.position.set(v);
     }
 
     public void setOrientation(float yaw, float pitch) {

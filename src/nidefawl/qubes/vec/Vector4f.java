@@ -314,8 +314,9 @@ public class Vector4f {
     public final float lengthXYZ() {
         return (float) Math.sqrt(lengthSquaredXYZ());
     }
-    public void normalise() {
+    public Vector4f normalise() {
         normalise(this);
+        return this;
     }
 
 }

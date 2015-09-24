@@ -88,4 +88,20 @@ public abstract class Handler {
         // TODO Auto-generated method stub
         
     }
+
+    /**
+     * @param packetChatMessage
+     */
+    public void handleChat(PacketChatMessage packetChatMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /**
+     * @param packetChatChannels
+     */
+    public void handleChannels(PacketChatChannels packetChatChannels) {
+        // TODO Auto-generated method stub
+        
+    }
 }

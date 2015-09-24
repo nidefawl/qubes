@@ -2,6 +2,7 @@ package nidefawl.qubes.assets;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.Shader;
@@ -12,6 +13,7 @@ import nidefawl.qubes.util.GameError;
 public class AssetManager {
     final static AssetManager instance = new AssetManager();
     ArrayList<Asset>          assets   = new ArrayList<>();
+    ArrayList<AssetPack>          assetPacks   = new ArrayList<>();
     private ShaderSource lastFailedShader;
     File                      folder;
 
@@ -25,42 +27,58 @@ public class AssetManager {
 
     public void init() {
         folder = WorkingEnv.getAssetFolder();
-    }
-    
-    public InputStream findResource(String name) {
-        Exception e = null;
-        if (!WorkingEnv.loadAssetsFromClassPath()) {
-            try {
-
-                if (folder.exists()) {
-                    File f = new File(folder, name);
-                    if (f.exists()) {
-                        FileInputStream fis = new FileInputStream(f);
-                        BufferedInputStream bif = new BufferedInputStream(fis);
-                        return bif;
-                    }
+        assetPacks.add(new AssetPackClassPath());
+//        if (!WorkingEnv.loadAssetsFromClassPath()) {
+//        }
+        if (folder.exists())
+        assetPacks.add(new AssetPackFolder(folder));
+        File f = WorkingEnv.getPacksFolder();
+        if (f.isDirectory()) {
+            File[] fPackList = f.listFiles(new FilenameFilter() {
+                
+                @Override
+                public boolean accept(File dir, String name) {
+                    return dir.isDirectory();
                 }
-            } catch (IOException ioe) {
-                e = ioe;
+            });
+            for (int i = 0;fPackList != null &&  i < fPackList.length; i++) {
+                assetPacks.add(new AssetPackFolder(fPackList[i]));
             }
         }
+        Collections.reverse(assetPacks);
+        System.out.println("Found "+assetPacks.size()+" asset packs");
+    }
+    
+    public InputStream findResource(String name, boolean optional) {
         InputStream is = null;
-        try {
-            is = getClass().getResourceAsStream("/res/"+name);
-        } catch (Exception e2) {
-            throw e2;
+        for (int i = 0; i < assetPacks.size(); i++) {
+            AssetPack pack = assetPacks.get(i);
+            try {
+                is = pack.getInputStream(name);
+                if (is != null) {
+                    return is;
+                }
+            } catch (IOException e1) {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        throw new GameError("Failed loading resource "+name+" from "+pack, e);
+                    }
+                }
+                throw new GameError("Failed loading resource "+name+" from "+pack, e1);
+            }
         }
 
-        if (is == null && e != null) {
-            throw new RuntimeException(e);
-        }
-        return is;
+        if (optional)
+            return null;
+        throw new RuntimeException("Missing resource "+name);
     }
 
     public AssetTexture loadPNGAsset(String name) {
         InputStream is = null;
         try {
-            is = findResource(name);
+            is = findResource(name, false);
             if (is != null) {
                 AssetTexture asset = new AssetTexture();
                 asset.load(is);
@@ -87,7 +105,7 @@ public class AssetManager {
             int idx = name.lastIndexOf("/");
             String path;
             String fname;
-            if (idx == 0) {
+            if (idx <= 0) {
                 path = "";
                 fname = name;
             } else {

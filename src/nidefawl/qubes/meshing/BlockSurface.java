@@ -9,6 +9,7 @@ public class BlockSurface {
 
     public BlockSurface() {
     }
+    public boolean isLeaves;
     public boolean transparent;
     public int type;
     public int face;
@@ -23,6 +24,7 @@ public class BlockSurface {
     public int maskedLightSky = 0;
     public int maskedLightBlock = 0;
     public int maskedAO = 0;
+    boolean isAirAbove;
     public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
         return ((ao3&0x3)<<6)|((ao2&0x3)<<4)|((ao1&0x3)<<2)|(ao0&0x3);
     }
@@ -34,7 +36,7 @@ public class BlockSurface {
       br3 = (br3&0xF) | (br3&0xF0)<<4;
       return (br0+br1+br2+br3) >> 2;
   }
-    public void maskLight(int ao0, int ao1, int ao2, int ao3) {
+    public void maskLight(int ao0, int ao1, int ao2, int ao3, Block block) {
         int sky = 0;
         sky |= (ao3>>8)&0xF; // shift down by 8, skylight is now in upper byte (mix_light shifted it there), then mask out the overflow
         sky <<= 4;
@@ -43,15 +45,16 @@ public class BlockSurface {
         sky |= (ao1>>8)&0xF;
         sky <<= 4;
         sky |= (ao0>>8)&0xF;
-        int block = 0;
-        block |= (ao3)&0xF;
-        block <<= 4;
-        block |= (ao2)&0xF;
-        block <<= 4;
-        block |= (ao1)&0xF;
-        block <<= 4;
-        block |= (ao0)&0xF;
-        this.maskedLightBlock = block;
+        int self = block.getLightValue();
+        int blockLight = 0;
+        blockLight |= Math.max((ao3)&0xF, self);
+        blockLight <<= 4;
+        blockLight |= Math.max((ao2)&0xF, self);
+        blockLight <<= 4;
+        blockLight |= Math.max((ao1)&0xF, self);
+        blockLight <<= 4;
+        blockLight |= Math.max((ao0)&0xF, self);
+        this.maskedLightBlock = blockLight;
         this.maskedLightSky = sky;
     }
 
@@ -124,24 +127,24 @@ public class BlockSurface {
 
     int vertexAO(int side1, int side2, int corner) {
         int ao = 3;
-        if (!isOpaque(side1)) 
+        if (!isOccluding(side1)) 
             ao--;
-        if (!isOpaque(side2)) 
+        if (!isOccluding(side2)) 
             ao--;
-        if (!isOpaque(corner)) 
+        if (!isOccluding(corner)) 
             ao--;
         return ao;
     }
 
-    private boolean isOpaque(int side) {
-        return side > 0 && !Block.block[side].isTransparent();
+    private boolean isOccluding(int id) {
+        return id > 0 && Block.block[id].isOccluding();
     }
 
     private void calcPosZ(ChunkRenderCache cache) {
         int x = this.x;
         int y = this.y;
         int z = this.z+1;
-        if (isOpaque(cache.getTypeId(x, y, z))) {
+        if (isOccluding(cache.getTypeId(x, y, z))) {
             return;
         }
         int pp = cache.getTypeId(x+1, y+1, z);
@@ -163,23 +166,23 @@ public class BlockSurface {
         int br_pn = br_pc;
         int br_nn = br_nc;
         int br_np = br_nc;
-        if (!isOpaque(cp) || !isOpaque(pc)) {
+        if (!isOccluding(cp) || !isOccluding(pc)) {
             br_pp = cache.getLight(x + 1, y + 1, z);
         }
-        if (!isOpaque(cp) || !isOpaque(nc)) {
+        if (!isOccluding(cp) || !isOccluding(nc)) {
             br_pn = cache.getLight(x + 1, y - 1, z);
         }
-        if (!isOpaque(cn) || !isOpaque(nc)) {
+        if (!isOccluding(cn) || !isOccluding(nc)) {
             br_nn = cache.getLight(x - 1, y - 1, z);
         }
-        if (!isOpaque(cn) || !isOpaque(pc)) {
+        if (!isOccluding(cn) || !isOccluding(pc)) {
             br_np = cache.getLight(x - 1, y + 1, z);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP);
+        maskLight(brNN, brPN, brPP, brNP, Block.block[this.type]);
 
         if (Block.block[this.type].applyAO()) {
             int ao0 = vertexAO(cn, nc, nn);
@@ -194,7 +197,7 @@ public class BlockSurface {
         int x = this.x;
         int y = this.y;
         int z = this.z - 1;
-        if (isOpaque(cache.getTypeId(x, y, z))) {
+        if (isOccluding(cache.getTypeId(x, y, z))) {
             return;
         }
 
@@ -217,23 +220,23 @@ public class BlockSurface {
         int br_pn = br_pc;
         int br_nn = br_nc;
         int br_np = br_nc;
-        if (!isOpaque(cp) || !isOpaque(pc)) {
+        if (!isOccluding(cp) || !isOccluding(pc)) {
             br_pp = cache.getLight(x + 1, y + 1, z);
         }
-        if (!isOpaque(cp) || !isOpaque(nc)) {
+        if (!isOccluding(cp) || !isOccluding(nc)) {
             br_pn = cache.getLight(x + 1, y - 1, z);
         }
-        if (!isOpaque(cn) || !isOpaque(nc)) {
+        if (!isOccluding(cn) || !isOccluding(nc)) {
             br_nn = cache.getLight(x - 1, y - 1, z);
         }
-        if (!isOpaque(cn) || !isOpaque(pc)) {
+        if (!isOccluding(cn) || !isOccluding(pc)) {
             br_np = cache.getLight(x - 1, y + 1, z);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP);
+        maskLight(brNN, brPN, brPP, brNP, Block.block[this.type]);
 
         if (Block.block[this.type].applyAO()) {
             int ao1 = vertexAO(cn, pc, pn);
@@ -248,7 +251,7 @@ public class BlockSurface {
         int x = this.x+1;
         int y = this.y;
         int z = this.z;
-        if (isOpaque(cache.getTypeId(x, y, z))) {
+        if (isOccluding(cache.getTypeId(x, y, z))) {
             return;
         }
         int pp = cache.getTypeId(x, y+1, z+1);
@@ -269,23 +272,23 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOpaque(cp) || !isOpaque(pc)) {
+        if (!isOccluding(cp) || !isOccluding(pc)) {
             br_pp = cache.getLight(x, y+1, z+1);
         }
-        if (!isOpaque(cp) || !isOpaque(nc)) {
+        if (!isOccluding(cp) || !isOccluding(nc)) {
             br_np = cache.getLight(x, y-1, z+1);
         }
-        if (!isOpaque(cn) || !isOpaque(nc)) {
+        if (!isOccluding(cn) || !isOccluding(nc)) {
             br_nn = cache.getLight(x, y-1, z-1);
         }
-        if (!isOpaque(cn) || !isOpaque(pc)) {
+        if (!isOccluding(cn) || !isOccluding(pc)) {
             br_pn = cache.getLight(x, y+1, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNP, brNN, brPN, brPP);
+        maskLight(brNP, brNN, brPN, brPP, Block.block[this.type]);
 
         if (Block.block[this.type].applyAO()) {
             int ao1 = vertexAO(cn, nc, nn);//bottom right
@@ -299,7 +302,7 @@ public class BlockSurface {
         int x = this.x-1;
         int y = this.y;
         int z = this.z;
-        if (isOpaque(cache.getTypeId(x, y, z))) {
+        if (isOccluding(cache.getTypeId(x, y, z))) {
             return;
         }
         int pp = cache.getTypeId(x, y+1, z+1);
@@ -320,23 +323,23 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOpaque(cp) || !isOpaque(pc)) {
+        if (!isOccluding(cp) || !isOccluding(pc)) {
             br_pp = cache.getLight(x, y+1, z+1);
         }
-        if (!isOpaque(cp) || !isOpaque(nc)) {
+        if (!isOccluding(cp) || !isOccluding(nc)) {
             br_np = cache.getLight(x, y-1, z+1);
         }
-        if (!isOpaque(cn) || !isOpaque(nc)) {
+        if (!isOccluding(cn) || !isOccluding(nc)) {
             br_nn = cache.getLight(x, y-1, z-1);
         }
-        if (!isOpaque(cn) || !isOpaque(pc)) {
+        if (!isOccluding(cn) || !isOccluding(pc)) {
             br_pn = cache.getLight(x, y+1, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNP, brNN, brPN, brPP);
+        maskLight(brNP, brNN, brPN, brPP, Block.block[this.type]);
 
         if (Block.block[this.type].applyAO()) {
             int ao2 = vertexAO(cn, pc, pn);//top left
@@ -351,7 +354,7 @@ public class BlockSurface {
         int x = this.x;
         int y = this.y+1;
         int z = this.z;
-        if (isOpaque(cache.getTypeId(x, y, z))) {
+        if (isOccluding(cache.getTypeId(x, y, z))) {
             return;
         }
         int pp = cache.getTypeId(x+1, y, z+1);
@@ -373,23 +376,23 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOpaque(cp) || !isOpaque(pc)) {
+        if (!isOccluding(cp) || !isOccluding(pc)) {
             br_pp = cache.getLight(x+1, y, z+1);
         }
-        if (!isOpaque(cp) || !isOpaque(nc)) {
+        if (!isOccluding(cp) || !isOccluding(nc)) {
             br_np = cache.getLight(x-1, y, z+1);
         }
-        if (!isOpaque(cn) || !isOpaque(nc)) {
+        if (!isOccluding(cn) || !isOccluding(nc)) {
             br_nn = cache.getLight(x-1, y, z-1);
         }
-        if (!isOpaque(cn) || !isOpaque(pc)) {
+        if (!isOccluding(cn) || !isOccluding(pc)) {
             br_pn = cache.getLight(x+1, y, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brNP, brPP, brPN);
+        maskLight(brNN, brNP, brPP, brPN, Block.block[this.type]);
         
 
         if (Block.block[this.type].applyAO()) {
@@ -404,7 +407,7 @@ public class BlockSurface {
         int x = this.x;
         int y = this.y-1;
         int z = this.z;
-        if (isOpaque(cache.getTypeId(x, y, z))) {
+        if (isOccluding(cache.getTypeId(x, y, z))) {
             return;
         }
         int pp = cache.getTypeId(x+1, y, z+1);
@@ -425,23 +428,23 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOpaque(cp) || !isOpaque(pc)) {
+        if (!isOccluding(cp) || !isOccluding(pc)) {
             br_pp = cache.getLight(x+1, y, z+1);
         }
-        if (!isOpaque(cp) || !isOpaque(nc)) {
+        if (!isOccluding(cp) || !isOccluding(nc)) {
             br_np = cache.getLight(x-1, y, z+1);
         }
-        if (!isOpaque(cn) || !isOpaque(nc)) {
+        if (!isOccluding(cn) || !isOccluding(nc)) {
             br_nn = cache.getLight(x-1, y, z-1);
         }
-        if (!isOpaque(cn) || !isOpaque(pc)) {
+        if (!isOccluding(cn) || !isOccluding(pc)) {
             br_pn = cache.getLight(x+1, y, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brNP, brPP, brPN);
+        maskLight(brNN, brNP, brPP, brPN, Block.block[this.type]);
         
 
         if (Block.block[this.type].applyAO()) {
@@ -460,6 +463,9 @@ public class BlockSurface {
         if (!c.resolved)
             c.resolve(cache);
         if (c.type == this.type && c.face == this.face && c.pass == this.pass && c.extraFace == this.extraFace) {
+            if (this.isAirAbove != c.isAirAbove) {
+                return false;
+            }
             if (this.calcLight && this.maskedAO != c.maskedAO) {
                 return false;
             }
@@ -485,6 +491,9 @@ public class BlockSurface {
         if (this.calcLight) {
             this.calcAO(cache);
             this.calcLight(cache);
+        }
+        if (this.type == Block.water.id) {
+            this.isAirAbove = cache.getTypeId(x, y+1, z) == 0;
         }
     }
 

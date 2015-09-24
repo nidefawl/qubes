@@ -239,7 +239,7 @@ public class PNGDecoder {
                 readChunkUnzip(inflater, curLine, 0, curLine.length);
                 unfilter(curLine, prevLine);
 
-                buffer.position(offset + y*stride);
+                buffer.position(offset + (height-y-1)*stride);
 
                 switch (colorType) {
                 case COLOR_TRUECOLOR:

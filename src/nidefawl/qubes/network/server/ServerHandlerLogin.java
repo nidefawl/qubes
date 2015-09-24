@@ -1,5 +1,6 @@
 package nidefawl.qubes.network.server;
 
+import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
@@ -57,11 +58,24 @@ public class ServerHandlerLogin extends ServerHandler {
         this.state = STATE_CONNECTED;
         try {
             PlayerManager mgr = this.server.getPlayerManager();
+            System.out.println(this.name);
+            Player exist = mgr.getPlayer(this.name);
+            System.out.println(this.name+"/"+exist);
+            if (exist != null) {
+                exist.kick("Another player is using your account");
+                this.kick("Another player is using your account");
+                return;
+            }
+            
             Player player = mgr.addPlayer(this.name);
             player.setChunkLoadDistance(packet.chunkLoadDistance);
             player.netHandler = new ServerHandlerPlay(player, this);
+            
             this.netServer.addServerHandlerPlay(player, this, player.netHandler);
+            ChannelManager mgr2 = this.server.getChatChannelMgr();
+            mgr2.addUser(player);
             this.time = System.currentTimeMillis();
+            
         } catch (IllegalArgumentException e) {
             this.conn.disconnect(Connection.LOCAL, "Received invalid settings");
         } catch (Exception e) {

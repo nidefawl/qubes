@@ -352,4 +352,20 @@ public class Vector3f {
     public Vector3f scaleN(float f) {
         return new Vector3f(this).scale(f);
     }
+
+    /**
+     * @param v
+     */
+    public void set(Vec3D v) {
+        set((float) v.x, (float) v.y, (float) v.z);
+    }
+
+    /**
+     * @param dir
+     */
+    public void addVec(Vector3f dir) {
+        this.x+=dir.x;
+        this.y+=dir.y;
+        this.z+=dir.z;
+    }
 }

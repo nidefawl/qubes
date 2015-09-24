@@ -10,11 +10,21 @@ public class Block {
     public static final int NUM_BLOCKS = 256;
     public static final Block[] block = new Block[NUM_BLOCKS];
     public final static Block stone = new Block(1).setName("stone");
-    public final static Block grass = new BlockGrass(2).setName("grass");
+    public final static Block grass = new BlockGrass(2).setName("grass").setTextures("grass_top", "grass_side", "grass_side_overlay");
     public final static Block dirt = new Block(3).setName("dirt");
     public final static Block water = new BlockWater(4).setName("water");
-    public final static Block sand = new Block(5).setName("sand");
-    public final static Block solid = new BlockSolidColor(6).setName("solid").setTextures("blank");
+    public final static Block sand = new BlockSand(5).setName("sand");
+    public final static Block glowstone = new BlockGlowStone(6).setName("solid").setTextures("glowstone");
+    public final static Block log_acacia = new BlockLog(7).setName("log_acacia").setTextures("log_acacia", "log_acacia_top");
+    public final static Block log_birch = new BlockLog(8).setName("log_birch").setTextures("log_birch", "log_birch_top");
+    public final static Block log_jungle = new BlockLog(9).setName("log_jungle").setTextures("log_jungle", "log_jungle_top");
+    public final static Block log_spruce = new BlockLog(10).setName("log_spruce").setTextures("log_spruce", "log_spruce_top");
+    public final static Block log_oak = new BlockLog(11).setName("log_oak").setTextures("log_oak", "log_oak_top");
+    public final static Block leaves_acacia = new BlockLeaves(12).setName("leaves_acacia");
+    public final static Block leaves_birch = new BlockLeaves(13).setName("leaves_birch");
+    public final static Block leaves_jungle = new BlockLeaves(14).setName("leaves_jungle");
+    public final static Block leaves_spruce = new BlockLeaves(15).setName("leaves_spruce");
+    public final static Block leaves_oak = new BlockLeaves(16).setName("leaves_oak");
 //    public final static Block ligth = new BlockSolidColor(6).setName("solid").setTextures("blank");
     public final int id;
     private String name;
@@ -54,7 +64,7 @@ public class Block {
     public boolean isTransparent() {
         return transparent;
     }
-    public int getColor() {
+    public int getColorFromSide(int side) {
         return 0xFFFFFF;
     }
     public int getTextureFromSide(int faceDir) {
@@ -80,6 +90,9 @@ public class Block {
         return isValid(i) ? block[i] : null;
     }
     public boolean applyAO() {
+        return true;
+    }
+    public boolean isOccluding() {
         return true;
     }
     

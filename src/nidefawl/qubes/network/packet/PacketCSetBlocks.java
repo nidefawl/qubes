@@ -12,10 +12,11 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
     public int x, y, z;
     public int x2, y2, z2;
     public int type;
+    public int flags;
     public PacketCSetBlocks() {
     }
 
-    public PacketCSetBlocks(int id, BlockPos pos1, BlockPos pos2, int type) {
+    public PacketCSetBlocks(int id, BlockPos pos1, BlockPos pos2, int type, boolean hollow) {
         super(id);
         this.x = pos1.x;
         this.y = pos1.y;
@@ -24,6 +25,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         this.y2 = pos2.y;
         this.z2 = pos2.z;
         this.type = type;
+        this.flags |= hollow ? 1 : 0;
     }
 
     @Override
@@ -36,6 +38,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         y2 = stream.readInt();
         z2 = stream.readInt();
         type = stream.readInt();
+        flags = stream.readInt();
 
     }
 
@@ -49,6 +52,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         stream.writeInt(y2);
         stream.writeInt(z2);
         stream.writeInt(type);
+        stream.writeInt(flags);
     }
 
     @Override

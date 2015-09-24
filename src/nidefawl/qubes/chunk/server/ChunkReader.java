@@ -55,7 +55,8 @@ public class ChunkReader {
         byte[] blockLight2 = new byte[blockLight.length];
         System.arraycopy(blockLight, 0, blockLight2, 0, blockLight2.length);
         cmp.setByteArray("blockLight", blockLight);
-        cmp.setBoolean("needsLightInit", c.needsLightInit);
+        cmp.setBoolean("isLit", c.isLit);
+        cmp.setBoolean("isPopulated", c.isPopulated);
         return cmp;
     }
 
@@ -72,7 +73,8 @@ public class ChunkReader {
         Tag.ByteArray blockLightArr = t.getByteArray("blockLight");
         byte[] blockLight = blockLightArr.getArray();
         System.arraycopy(blockLight, 0, c.getBlockLight(), 0, blockLight.length);
-        c.needsLightInit = t.getBoolean("needsLightInit");
+        c.isPopulated = t.getBoolean("isPopulated");
+        c.isLit = t.getBoolean("isLit");
         return c;
     }
 

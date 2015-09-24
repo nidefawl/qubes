@@ -29,6 +29,8 @@ public abstract class Packet {
         register(PacketSTrackChunk.class, 13, true, false);
         register(PacketCSettings.class, 14, false, true);
         register(PacketCSwitchWorld.class, 15, false, true);
+        register(PacketChatMessage.class, 16, true, true);
+        register(PacketChatChannels.class, 17, true, false);
     }
     public Packet() {
     }
@@ -90,11 +92,15 @@ public abstract class Packet {
 
     public static void init() {
     }
-
     public static String readString(DataInput stream) throws IOException {
+        return readString(stream, -1);
+    }
+
+    public static String readString(DataInput stream, int i) throws IOException {
 		int len = stream.readShort();
-		if (len >= MAX_STR_LEN) {
-			throw new IOException("Maximum string length exceeded ("+len+" >= "+MAX_STR_LEN+")");
+		int maxLen = i > 0 ? i : MAX_STR_LEN;
+		if (len >= maxLen) {
+			throw new IOException("Maximum string length exceeded ("+len+" >= "+maxLen+")");
 		}
 		byte[] str = new byte[len];
 		stream.readFully(str);

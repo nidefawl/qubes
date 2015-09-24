@@ -10,6 +10,7 @@ public class BlockFaceVert {
     float                        x;
     float                        y;
     float                        z;
+    int dirOffset;
 
     public void setColorRGBAF(float r, float g, float b, float a) {
         int iR = (int) (r * 255.0F);
@@ -17,7 +18,7 @@ public class BlockFaceVert {
         int iB = (int) (b * 255.0F);
         int iA = (int) (a * 255.0F);
         int rgb;
-        if (littleEndian) {
+        if (!littleEndian) {
             rgb = iB << 16 | iG << 8 | iR;
         } else {
             rgb = iR << 16 | iG << 8 | iB;
@@ -34,5 +35,9 @@ public class BlockFaceVert {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public void setFaceVertDir(int n) {
+        dirOffset = n;
     }
 }

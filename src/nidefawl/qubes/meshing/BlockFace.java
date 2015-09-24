@@ -1,7 +1,9 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockGrass;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
 
 public class BlockFace {
@@ -17,6 +19,55 @@ public class BlockFace {
     private int[] pos;
     public int w;
     public int h;
+    public static int encNormal(int i, int j, int k) {
+        byte byte0 = (byte)i;
+        byte byte1 = (byte)j;
+        byte byte2 = (byte)k;
+        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+    }
+    
+    final static int[][] faceVDirections = new int[6][];
+    static void initDir() {
+        faceVDirections[Dir.DIR_NEG_Y] = new int[] {
+                encNormal(-1,  0, -1),
+                encNormal(-1,  0,  1), 
+                encNormal( 1,  0,  1), 
+                encNormal( 1,  0, -1), 
+            };
+        faceVDirections[Dir.DIR_POS_Y] = new int[] {
+                encNormal(-1,  0, -1),
+                encNormal(-1,  0,  1), 
+                encNormal( 1,  0,  1), 
+                encNormal( 1,  0, -1), 
+            };
+        faceVDirections[Dir.DIR_NEG_X] = new int[] {
+                encNormal(0, -1, -1),
+                encNormal(0,  1, -1), 
+                encNormal(0,  1,  1), 
+                encNormal(0, -1,  1), 
+            };
+        faceVDirections[Dir.DIR_POS_X] = new int[] {
+                encNormal(0, -1, -1),
+                encNormal(0,  1, -1), 
+                encNormal(0,  1,  1), 
+                encNormal(0, -1,  1), 
+            };
+        faceVDirections[Dir.DIR_NEG_Z] = new int[] {
+                encNormal(-1, -1, 0),
+                encNormal( 1, -1, 0),  
+                encNormal( 1,  1, 0), 
+                encNormal(-1,  1, 0),
+            };
+        faceVDirections[Dir.DIR_POS_Z] = new int[] {
+                encNormal(-1, -1, 0),
+                encNormal( 1, -1, 0), 
+                encNormal( 1,  1, 0), 
+                encNormal(-1,  1, 0), 
+            };
+    }
+    static {
+        initDir();
+    }
 
 
     public BlockFace(BlockSurface bs, int[] pos, int[] du, int[] dv, int u, int v, int w, int h) {
@@ -30,29 +81,67 @@ public class BlockFace {
         this.v1 = new float[3];
         this.v2 = new float[3];
         this.v3 = new float[3];
-        float d = 0;//-1E-3F;
-//        if (bs.pass == 2) {
-//            d = -0.03F;
-//        }
-//        d = 0;
-        float[] fdu = new float[] { du[0], du[1], du[2] };
-        float[] fdv = new float[] { dv[0], dv[1], dv[2] };
-        fdu[u] -= d;
-        fdv[v] -= d;
-        for (int i = 0; i < 3; i++) {
-            float fPos = this.pos[i];
-            if (i == u) {
-                fPos += d/2.0F;
-            }
-            if (i == v) {
-                fPos += d/2.0F;
-            }
-            this.v0[i] = fPos;
-            this.v1[i] = fPos + fdu[i];
-            this.v2[i] = fPos + fdu[i] + fdv[i];
-            this.v3[i] = fPos + fdv[i];
-        }
         int side = bs.axis<<1|bs.face;
+
+        if (bs.pass == 2) {
+            //extend faces to fix flickering from t-junctions
+            float[] fdu = new float[] { du[0], du[1], du[2] };
+            float[] fdv = new float[] { dv[0], dv[1], dv[2] };
+            float d = -2E-3F; 
+            fdu[u] -= d;
+            fdv[v] -= d;
+            for (int i = 0; i < 3; i++) {
+                float fPos = this.pos[i];
+                if (i == u) {
+                    fPos += d / 2.0F;
+                }
+                if (i == v) {
+                    fPos += d / 2.0F;
+                }
+                this.v0[i] = fPos;
+                this.v1[i] = fPos + fdu[i];
+                this.v2[i] = fPos + fdu[i] + fdv[i];
+                this.v3[i] = fPos + fdv[i];
+            }
+
+        } else {
+            for (int i = 0; i < 3; i++) {
+                float fPos = this.pos[i];
+                this.v0[i] = fPos;
+                this.v1[i] = fPos + du[i];
+                this.v2[i] = fPos + du[i] + dv[i];
+                this.v3[i] = fPos + dv[i];
+            }
+        }
+        
+        if (bs.type == Block.water.id && bs.isAirAbove) {
+            switch (side) {
+                case Dir.DIR_NEG_Y:
+                    break;
+                case Dir.DIR_POS_Y:
+                    this.v3[1]-=0.1f;
+                    this.v0[1]-=0.1f;
+                    this.v1[1]-=0.1f;
+                    this.v2[1]-=0.1f;
+                    break;
+                case Dir.DIR_NEG_Z:
+                    this.v3[1]-=0.1f;
+                    this.v2[1]-=0.1f;
+                    break;
+                case Dir.DIR_POS_Z:
+                    this.v3[1]-=0.1f;
+                    this.v2[1]-=0.1f;
+                    break;
+                case Dir.DIR_NEG_X:
+                    this.v1[1]-=0.1f;
+                    this.v2[1]-=0.1f;
+                    break;
+                case Dir.DIR_POS_X:
+                    this.v1[1]-=0.1f;
+                    this.v2[1]-=0.1f;
+                    break;
+            }
+        }
         byte[] normal=null;
         switch (side) {
             case Dir.DIR_NEG_Y:
@@ -77,32 +166,44 @@ public class BlockFace {
         this.normal = normal;
     }
 
-
-    public void drawBasic(BlockFaceAttr attr) {
+    /**
+     * Draw basic block face
+     *
+     * @param attr the attr
+     * @param buffer the buffer
+     * @param offset the offset
+     * @return the number of faces drawn (vertex count / 4)
+     */
+    public int drawBasic(BlockFaceAttr attr, int[] buffer, int offset) {
+        attr.setReverse((this.bs.face&1)!=0);
         attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
         attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
         attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
+        attr.putBasic(buffer, offset);
+        return 1;
     }
     
-    public void draw(BlockFaceAttr attr) {
+    public int draw(BlockFaceAttr attr, int[] buffer, int offset) {
         attr.setNormal(this.normal[0], this.normal[1], this.normal[2]);
         Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
-        int side = this.bs.axis<<1|this.bs.face;
+        this.faceDir = this.bs.axis<<1|this.bs.face;
         float m = 1F;
         float alpha = block.getAlpha();
-        int c = block.getColor();
+        int c = block.getColorFromSide(this.faceDir);
         float b = (c & 0xFF) / 255F;
         c >>= 8;
         float g = (c & 0xFF) / 255F;
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        int tex = block.getTextureFromSide(side);
+        initDir();
+        int tex = block.getTextureFromSide(this.faceDir);
         attr.setTex(tex);
+        attr.setFaceDir(faceDir);
+        attr.setReverse((this.bs.face&1)!=0);
 //
 //        attr.(0xf00000);
-
         attr.setAO(this.bs.maskedAO);
         attr.setLight(this.bs.maskedLightSky, this.bs.maskedLightBlock);
         attr.setType(this.bs.type);
@@ -110,19 +211,45 @@ public class BlockFace {
         setUV(attr.v0, 0);
         attr.v0.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
+        attr.v0.setFaceVertDir(faceVDirections[this.faceDir][0]);
 
         setUV(attr.v1, 1);
         attr.v1.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
+        attr.v1.setFaceVertDir(faceVDirections[this.faceDir][1]);
 
         setUV(attr.v2, 2);
         attr.v2.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
+        attr.v2.setFaceVertDir(faceVDirections[this.faceDir][2]);
 
         setUV(attr.v3, 3);
         attr.v3.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-        
+        attr.v3.setFaceVertDir(faceVDirections[this.faceDir][3]);
+        attr.put(buffer, offset);
+        if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
+            int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
+            attr.setTex(sideOverlay);
+            c = block.getColorFromSide(Dir.DIR_POS_Y);
+            b = (c & 0xFF) / 255F;
+            c >>= 8;
+            g = (c & 0xFF) / 255F;
+            c >>= 8;
+            r = (c & 0xFF) / 255F;
+            for (int i = 0; i < 4; i++) {
+                attr.v[i].setColorRGBAF(b * m, g * m, r * m, alpha);
+            }
+            attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
+            return 2;
+        }
+        if (block.id >= Block.leaves_acacia.id) {
+            attr.setReverse((this.bs.face&1)!=1);
+            attr.setNormal(-this.normal[0], -this.normal[1], -this.normal[2]);
+            attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
+            return 2;
+        }
+        return 1;
     }
 
     private void setUV(BlockFaceVert tess, int idx) {

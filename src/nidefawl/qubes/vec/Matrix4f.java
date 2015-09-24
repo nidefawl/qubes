@@ -19,6 +19,29 @@ public class Matrix4f {
         load(src);
     }
 
+    public Matrix4f(Vector4f q1, Vector3f t1, float s)
+    {
+      this.m00 = ((float)(s * (1.0D - 2.0D * q1.getY() * q1.getY() - 2.0D * q1.getZ() * q1.getZ())));
+      this.m10 = ((float)(s * (2.0D * (q1.getX() * q1.getY() + q1.getW() * q1.getZ()))));
+      this.m20 = ((float)(s * (2.0D * (q1.getX() * q1.getZ() - q1.getW() * q1.getY()))));
+
+      this.m01 = ((float)(s * (2.0D * (q1.getX() * q1.getY() - q1.getW() * q1.getZ()))));
+      this.m11 = ((float)(s * (1.0D - 2.0D * q1.getX() * q1.getX() - 2.0D * q1.getZ() * q1.getZ())));
+      this.m21 = ((float)(s * (2.0D * (q1.getY() * q1.getZ() + q1.getW() * q1.getX()))));
+
+      this.m02 = ((float)(s * (2.0D * (q1.getX() * q1.getZ() + q1.getW() * q1.getY()))));
+      this.m12 = ((float)(s * (2.0D * (q1.getY() * q1.getZ() - q1.getW() * q1.getX()))));
+      this.m22 = ((float)(s * (1.0D - 2.0D * q1.getX() * q1.getX() - 2.0D * q1.getY() * q1.getY())));
+
+      this.m03 = t1.getX();
+      this.m13 = t1.getY();
+      this.m23 = t1.getZ();
+
+      this.m30 = 0.0F;
+      this.m31 = 0.0F;
+      this.m32 = 0.0F;
+      this.m33 = 1.0F;
+    }
     /**
      * Returns a string representation of this matrix
      */
@@ -844,4 +867,66 @@ public class Matrix4f {
 
         return dest;
     }
+
+    public final void transformVec(Vector3f normal)
+    {
+      float x = this.m00 * normal.x + this.m01 * normal.y + this.m02 * normal.z;
+      float y = this.m10 * normal.x + this.m11 * normal.y + this.m12 * normal.z;
+      normal.setZ(this.m20 * normal.x + this.m21 * normal.y + this.m22 * normal.z);
+      normal.setX(x);
+      normal.setY(y);
+    }
+
+    public final void mulMat(Matrix4f m1)
+    {
+      float lm00 = this.m00 * m1.m00 + this.m01 * m1.m10 + this.m02 * m1.m20 + this.m03 * m1.m30;
+
+      float lm01 = this.m00 * m1.m01 + this.m01 * m1.m11 + this.m02 * m1.m21 + this.m03 * m1.m31;
+
+      float lm02 = this.m00 * m1.m02 + this.m01 * m1.m12 + this.m02 * m1.m22 + this.m03 * m1.m32;
+
+      float lm03 = this.m00 * m1.m03 + this.m01 * m1.m13 + this.m02 * m1.m23 + this.m03 * m1.m33;
+
+      float lm10 = this.m10 * m1.m00 + this.m11 * m1.m10 + this.m12 * m1.m20 + this.m13 * m1.m30;
+
+      float lm11 = this.m10 * m1.m01 + this.m11 * m1.m11 + this.m12 * m1.m21 + this.m13 * m1.m31;
+
+      float lm12 = this.m10 * m1.m02 + this.m11 * m1.m12 + this.m12 * m1.m22 + this.m13 * m1.m32;
+
+      float lm13 = this.m10 * m1.m03 + this.m11 * m1.m13 + this.m12 * m1.m23 + this.m13 * m1.m33;
+
+      float lm20 = this.m20 * m1.m00 + this.m21 * m1.m10 + this.m22 * m1.m20 + this.m23 * m1.m30;
+
+      float lm21 = this.m20 * m1.m01 + this.m21 * m1.m11 + this.m22 * m1.m21 + this.m23 * m1.m31;
+
+      float lm22 = this.m20 * m1.m02 + this.m21 * m1.m12 + this.m22 * m1.m22 + this.m23 * m1.m32;
+
+      float lm23 = this.m20 * m1.m03 + this.m21 * m1.m13 + this.m22 * m1.m23 + this.m23 * m1.m33;
+
+      float lm30 = this.m30 * m1.m00 + this.m31 * m1.m10 + this.m32 * m1.m20 + this.m33 * m1.m30;
+
+      float lm31 = this.m30 * m1.m01 + this.m31 * m1.m11 + this.m32 * m1.m21 + this.m33 * m1.m31;
+
+      float lm32 = this.m30 * m1.m02 + this.m31 * m1.m12 + this.m32 * m1.m22 + this.m33 * m1.m32;
+
+      float lm33 = this.m30 * m1.m03 + this.m31 * m1.m13 + this.m32 * m1.m23 + this.m33 * m1.m33;
+
+      this.m00 = lm00;
+      this.m01 = lm01;
+      this.m02 = lm02;
+      this.m03 = lm03;
+      this.m10 = lm10;
+      this.m11 = lm11;
+      this.m12 = lm12;
+      this.m13 = lm13;
+      this.m20 = lm20;
+      this.m21 = lm21;
+      this.m22 = lm22;
+      this.m23 = lm23;
+      this.m30 = lm30;
+      this.m31 = lm31;
+      this.m32 = lm32;
+      this.m33 = lm33;
+    }
+
 }

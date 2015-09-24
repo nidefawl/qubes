@@ -1,7 +1,7 @@
 package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.*;
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -11,12 +11,14 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Frustum;
@@ -39,8 +41,10 @@ public class WorldRenderer {
     private boolean startup = true;
 
 
+    public int                  texWaterNormals;
     public Shader       terrainShader;
     public Shader       skyShader;
+    public Shader       waterShader;
     
     private TesselatorState skybox1;
     private TesselatorState skybox2;
@@ -51,6 +55,10 @@ public class WorldRenderer {
             terrainShader.release();
             terrainShader = null;
         }
+        if (waterShader != null) {
+            waterShader.release();
+            waterShader = null;
+        }
         if (skyShader != null) {
             skyShader.release();
             skyShader = null;
@@ -60,11 +68,22 @@ public class WorldRenderer {
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
+            Shader new_waterShader = assetMgr.loadShader("shaders/basic/water");
             Shader terrain = assetMgr.loadShader("shaders/basic/terrain");
             Shader sky = assetMgr.loadShader("shaders/basic/sky");
             releaseShaders();
             terrainShader = terrain;
             skyShader = sky;
+            waterShader = new_waterShader;
+            
+            terrainShader.enable();
+            terrainShader.setProgramUniform1i("blockTextures", 0);
+            terrainShader.setProgramUniform1i("noisetex", 1);
+            
+            waterShader.enable();
+            waterShader.setProgramUniform1i("blockTextures", 0);
+            waterShader.setProgramUniform1i("waterNormals", 1);
+            Shader.disable();
             startup = false;
         } catch (ShaderCompileError e) {
             System.out.println("shader " + e.getName() + " failed to compile");
@@ -83,6 +102,8 @@ public class WorldRenderer {
         initShaders();
         skybox1 = new TesselatorState();
         skybox2 = new TesselatorState();
+        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/normals.png");
+        texWaterNormals = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
     }
 
     public void renderWorld(World world, float fTime) {
@@ -106,51 +127,56 @@ public class WorldRenderer {
 
         if (Game.DO_TIMING)
             TimingHelper.endStart("testShader");
+        
         terrainShader.enable();
-        terrainShader.setProgramUniform1i("blockTextures", 0);
         if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("test shader");
+            Engine.checkGLError("terrain shader");
         
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
+        
         Engine.regionRenderer.rendered = 0;
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
-        glDisable(GL_BLEND);
+//        glDisable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
+        
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderSecondPass");
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        waterShader.enable();
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
         Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
         glDisable(GL_BLEND);
         this.rendered = Engine.regionRenderer.rendered;
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
+        
         Shader.disable();
-        //        if (!Main.useShaders) {
-        //            glDisable(GL_LIGHTING);
-        //        }
+
         if (Game.DO_TIMING)
             TimingHelper.endSec();
     }
 
     public void renderNormals(World world, float fTime) {
-        Shaders.normals.enable();
-        glLineWidth(3.0F);
-        Engine.checkGLError("glLineWidth");
-        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_LINES_ADJACENCY_ARB);
-        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.setDrawMode(GL_QUADS);
-        glLineWidth(2.0F);
-
-        Shaders.colored.enable();
-        Engine.regionRenderer.renderDebug(world, fTime);
-        Shader.disable();
+//        Shaders.normals.enable();
+//        glLineWidth(3.0F);
+//        Engine.checkGLError("glLineWidth");
+////        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
+//        Engine.regionRenderer.setDrawMode(-1);
+//        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.setDrawMode(-1);
+////        glLineWidth(2.0F);
+//
+////        Shaders.colored.enable();
+////        Engine.regionRenderer.renderDebug(world, fTime);
+//        Shader.disable();
         
     }
 
@@ -174,7 +200,6 @@ public class WorldRenderer {
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_DEPTH_TEST);
             glDisable(GL_CULL_FACE);
-            //        glEnable(GL_CULL_FACE);
             glDisable(GL_TEXTURE_2D);
             Shaders.colored.enable();
             for (Integer i : debugBBs.keySet()) {

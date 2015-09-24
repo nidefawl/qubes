@@ -22,4 +22,7 @@ public class BlockWater extends Block {
     public float getAlpha() {
         return 0.8f;
     }
+    public boolean isOccluding() {
+        return false;
+    }
 }

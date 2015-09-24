@@ -1,4 +1,4 @@
-package nidefawl.qubes.worldgen;
+package nidefawl.qubes.worldgen.terrain;
 
 
 import java.util.Random;
@@ -10,7 +10,7 @@ import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.World;
 
-public class TerrainGenerator extends AbstractGen {
+public class TerrainGenerator implements ITerrainGen {
 
     private World world;
     private long  seed;

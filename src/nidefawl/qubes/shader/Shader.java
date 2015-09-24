@@ -175,6 +175,7 @@ public class Shader {
         GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
         GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
         GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
+        GL30.glBindFragDataLocation(this.shader, 3, "out_Light");
         linkProgram();
 //        final int blockSize = glGetActiveUniformBlocki(this.shader, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE);
     
@@ -192,7 +193,7 @@ public class Shader {
         Engine.checkGLError("getLog");
         if (getStatus(this.shader, GL_OBJECT_LINK_STATUS_ARB) != 1) {
             Engine.checkGLError("getStatus");
-            throw new GameError("Failed linking shader program\n"+log);
+            throw new ShaderCompileError((ShaderSource)null, "Failed linking shader program\n", log);
         }
         glUseProgramObjectARB(this.shader);
         Engine.checkGLError("glUseProgramObjectARB\n"+log);

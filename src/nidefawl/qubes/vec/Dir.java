@@ -19,4 +19,12 @@ public class Dir {
     public static final int getDirY(int s) {
         return s == 4 ? -1 : s == 5 ? 1 : 0;
     }
+
+    /**
+     * @param faceDir
+     * @return
+     */
+    public static boolean isTopBottom(int faceDir) {
+        return faceDir == DIR_POS_Y || faceDir == DIR_NEG_Y;
+    }
 }

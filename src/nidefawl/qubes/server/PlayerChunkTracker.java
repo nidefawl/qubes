@@ -448,7 +448,7 @@ public class PlayerChunkTracker {
             }
             this.flaggedInstances.add(e);
         } else {
-            System.err.println("missing player instance while flagging lights");
+//            System.err.println("missing player instance while flagging lights");
         }
     }
 

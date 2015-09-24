@@ -15,17 +15,19 @@ public class PacketSSpawnInWorld extends Packet {
     public long  seed;
     public int   time;
     public int flags;
+    public String worldName;
 
     public PacketSSpawnInWorld() {
     }
 
-    public PacketSSpawnInWorld(int id, Vec3D pos, int flags, UUID uuid, long seed, int time) {
+    public PacketSSpawnInWorld(int id, Vec3D pos, int flags, UUID uuid, String name, long seed, int time) {
         this.id = id;
         this.pos = new Vec3D(pos);
         this.uuid = uuid;
         this.seed = seed;
         this.time = time;
         this.flags = flags;
+        this.worldName = name;
     }
 
     @Override
@@ -33,6 +35,7 @@ public class PacketSSpawnInWorld extends Packet {
         this.id = stream.readInt();
         pos = new Vec3D(stream.readDouble(), stream.readDouble(), stream.readDouble());
         uuid = new UUID(stream.readLong(), stream.readLong());
+        worldName = readString(stream);
         seed = stream.readLong();
         time = stream.readInt();
         flags = stream.readInt();
@@ -46,6 +49,7 @@ public class PacketSSpawnInWorld extends Packet {
         stream.writeDouble(this.pos.z);
         stream.writeLong(this.uuid.getMostSignificantBits());
         stream.writeLong(this.uuid.getLeastSignificantBits());
+        writeString(this.worldName, stream);
         stream.writeLong(this.seed);
         stream.writeInt(this.time);
         stream.writeInt(this.flags);

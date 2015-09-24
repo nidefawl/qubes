@@ -30,7 +30,7 @@ public class ShaderSource {
         BufferedReader reader = null;
         try {
             String fpath = path + "/" + name;
-            is = assetManager.findResource(fpath);
+            is = assetManager.findResource(fpath, true);
             while (is == null && resolve) {
                 int a = path.lastIndexOf("/");
                 if (a > 0) {
@@ -39,7 +39,7 @@ public class ShaderSource {
                     break;
                 }
                 fpath = path + "/" + name;
-                is = assetManager.findResource(path + "/" + name);
+                is = assetManager.findResource(path + "/" + name, false);
             }
             if (is != null) {
                 reader = new BufferedReader(new InputStreamReader(is));

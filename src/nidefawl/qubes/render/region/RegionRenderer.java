@@ -5,6 +5,7 @@ import static nidefawl.qubes.render.WorldRenderer.*;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.*;
 
 import org.lwjgl.BufferUtils;
@@ -17,6 +18,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.WorldRenderer;
@@ -63,6 +65,29 @@ public class RegionRenderer {
     
     
     TesselatorState                 debug           = new TesselatorState();
+    protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
+    protected static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
+    protected static ByteBuffer[] idxByteBuffers = new ByteBuffer[NUM_PASSES];
+    protected static IntBuffer[] idxShortBuffers = new IntBuffer[NUM_PASSES];
+//    = BufferUtils.createByteBuffer(1024*1024*32);
+    static void reallocBuffer(int pass, int len) {
+        if (buffers[pass] == null || buffers[pass].capacity() < len) {
+            int align = ((len+8)/8)*8;
+            System.out.println("realloc buffer "+pass+" with "+len+" bytes (aligned to "+align+"  bytes)");
+            buffers[pass] = BufferUtils.createByteBuffer(align);
+            intbuffers[pass] = buffers[pass].asIntBuffer();
+        }
+    }
+    static void reallocIndexBuffers(int pass, int len) {
+        if (BlockFaceAttr.USE_TRIANGLES) {
+            if (idxByteBuffers[pass] == null || idxByteBuffers[pass].capacity() < len) {
+                int align = ((len+8)/8)*8;
+                System.out.println("realloc idx buffer "+pass+" with "+len+" bytes (aligned to "+align+"  bytes)");
+                idxByteBuffers[pass] = BufferUtils.createByteBuffer(align);
+                idxShortBuffers[pass] = idxByteBuffers[pass].asIntBuffer();
+            }
+        }
+    }
 
     public void init() {
         this.regions = create();
@@ -211,7 +236,7 @@ public class RegionRenderer {
             }
         }
     }
-    int drawMode = GL11.GL_QUADS;
+    int drawMode = -1;
     int drawInstances = 0;
     
     public void setDrawMode(int i) {
@@ -223,31 +248,13 @@ public class RegionRenderer {
     
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
         int size = renderList.size();
-
-        if (isMergedRender) { //NOT faster
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, BATCH_VBO[pass]);
-            MeshedRegion.enableVertexPtrs(pass);
-        }
+        int drawMode = this.drawMode < 0 ? (BlockFaceAttr.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         for (int i = 0; i < size; i++) {
             MeshedRegion r = renderList.get(i);
             if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
-                if (isMergedRender) {
-//                    r.
-                    if (drawInstances > 0) {
-                        GL31.glDrawArraysInstanced(drawMode, r.vertexIndex[pass], r.vertexCount[pass], drawInstances);
-                    } else {
-                        GL11.glDrawArrays(drawMode, r.vertexIndex[pass], r.vertexCount[pass]);
-                    }
-                } else {
-                    r.renderRegion(fTime, pass, this.drawMode, this.drawInstances);    
-                }
+                r.renderRegion(fTime, pass, drawMode, this.drawInstances);
                 this.rendered++;  
             }
-        }
-
-        if (isMergedRender) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            MeshedRegion.disableVertexPtrs(pass);
         }
     }
 
@@ -260,80 +267,10 @@ public class RegionRenderer {
         renderList.add(r);
     }
 
-    boolean         isMergedRender = false;
     private boolean dirty = true;
 
     private static int[] BATCH_VBO;
 
-    private static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
-    private static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
-//    = BufferUtils.createByteBuffer(1024*1024*32);
-    void reallocBuffer(int pass, int len) {
-        if (buffers[pass] == null || buffers[pass].capacity() < len) {
-            int align = ((len+8)/8)*8;
-            System.out.println("realloc buffer "+pass+" with "+len+" bytes");
-            buffers[pass] = BufferUtils.createByteBuffer(align);
-            intbuffers[pass] = buffers[pass].asIntBuffer();
-        }
-    }
-    public void merge() {
-        isMergedRender = !isMergedRender;
-        if (isMergedRender) {
-            if (BATCH_VBO == null) {
-                BATCH_VBO = new int[NUM_PASSES];
-                IntBuffer intbuf = Engine.glGenBuffers(NUM_PASSES);
-                for (int i = 0; i < NUM_PASSES; i++) {
-                    BATCH_VBO[i] = intbuf.get(i);
-                }
-            }
-            if (dirty) {
-                dirty = false;
-                for (int pass = 0; pass < NUM_PASSES; pass++) {
-                    int len = 0;
-                    for (int i = 0; i < this.regions.length; i++) {
-                        MeshedRegion[] regions = this.regions[i];
-                        for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
-                            len += regions[yy].buffer[pass].length;
-                        }
-                    }
-                    int[] data = new int[len];
-                    int vIndex = 0;
-                    int bIndex = 0;
-                    for (int i = 0; i < this.regions.length; i++) {
-                        MeshedRegion[] regions = this.regions[i];
-                        for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
-                            MeshedRegion m = regions[yy];
-                            int[] regionBuf = m.buffer[pass];
-                            System.arraycopy(regionBuf, 0, data, bIndex, regionBuf.length);
-                            m.vertexIndex[pass] = vIndex;
-                            bIndex += regionBuf.length;
-                            vIndex += m.vertexCount[pass];
-                        }
-                    }
-                    
-                    reallocBuffer(pass, len*4);
-                    ByteBuffer buf = buffers[pass];
-                    IntBuffer intBuffer = intbuffers[pass];
-                    if (len > intBuffer.capacity()) {
-                        System.err.println("OVER CAPACTIY: "+(len*4)+" bytes");
-                    } else {
-                        intBuffer.clear();
-                        intBuffer.put(data, 0, len);
-                        buf.position(0).limit(len * 4);
-                        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, BATCH_VBO[pass]);
-                        if (Game.GL_ERROR_CHECKS)
-                            Engine.checkGLError("glBindBuffer " + BATCH_VBO[pass]);
-                        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len * 4L, buf, GL15.GL_STATIC_DRAW);
-                        if (Game.GL_ERROR_CHECKS)
-                            Engine.checkGLError("glBufferData /" + intBuffer);
-        
-                        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-                        System.out.println("pass " + pass + " size: " + len + " ints - vertex count "+vIndex);
-                    }
-                }
-            }
-        }
-    }
     public void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         flushRegions();
         int rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
@@ -353,9 +290,7 @@ public class RegionRenderer {
         
         if (reposition) {
             needsSorting = true;
-            TimingHelper.startSilent(1);;
             reposition(rChunkX, rChunkZ);
-            System.out.println(TimingHelper.stopSilent(1));
         }
         for (int i = 0; i < this.regions.length; i++) {
             MeshedRegion[] regions = this.regions[i];
@@ -363,7 +298,7 @@ public class RegionRenderer {
                 MeshedRegion m = regions[yy];
                 if (m != null) {
                     updateFrustum(m);
-                    if (m.isRenderable) {
+                    if (m.isRenderable && m.hasAnyPass()) {
                         putRegion(m);
                     }
                     if (m.needsUpdate && !m.isUpdating) {
@@ -403,15 +338,13 @@ public class RegionRenderer {
         for (int i = 0; i < 4; i++) {
             m.frustumStates[i] = -1;
         }
-        if (m.isRenderable && m.hasAnyPass()) {
-            m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb);
-            for (int i = 0; i < 3; i++) {
-                int state = Engine.shadowProj.checkFrustum(2-i, m.aabb);
-                if (state < 0) {
-                    break;
-                }
-                m.frustumStates[3-i] = state;
+        m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb);
+        for (int i = 0; i < 3; i++) {
+            int state = Engine.shadowProj.checkFrustum(2-i, m.aabb);
+            if (state < 0) {
+                break;
             }
+            m.frustumStates[3-i] = state;
         }
     }
     public void tickUpdate() {

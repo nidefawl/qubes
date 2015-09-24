@@ -107,15 +107,27 @@ public class UniformBuffer {
         uboBuffer.put(Engine.getMatSceneNormal().get());
         uboBuffer.put(Engine.getMatSceneMV().getInv());
         uboBuffer.put(Engine.getMatSceneP().getInv());
-        uboBuffer.put(Engine.shadowProj.getSMVP(0));
-        uboBuffer.put(Engine.shadowProj.getSMVP(1));
-        uboBuffer.put(Engine.shadowProj.getSMVP(2));
-        uboBuffer.put(Engine.shadowProj.getSMVP(2));
-        
-        uboBuffer.put(Engine.shadowProj.shadowSplitDepth[0]);
-        uboBuffer.put(Engine.shadowProj.shadowSplitDepth[1]);
-        uboBuffer.put(Engine.shadowProj.shadowSplitDepth[2]);
-        uboBuffer.put(1F);
+        if (Engine.initRenderers) {
+            uboBuffer.put(Engine.shadowProj.getSMVP(0));
+            uboBuffer.put(Engine.shadowProj.getSMVP(1));
+            uboBuffer.put(Engine.shadowProj.getSMVP(2));
+            uboBuffer.put(Engine.shadowProj.getSMVP(2));
+            
+            uboBuffer.put(Engine.shadowProj.shadowSplitDepth[0]);
+            uboBuffer.put(Engine.shadowProj.shadowSplitDepth[1]);
+            uboBuffer.put(Engine.shadowProj.shadowSplitDepth[2]);
+            uboBuffer.put(1F);
+        } else {
+            uboBuffer.put(Engine.getMatSceneMVP().get());
+            uboBuffer.put(Engine.getMatSceneMVP().get());
+            uboBuffer.put(Engine.getMatSceneMVP().get());
+            uboBuffer.put(Engine.getMatSceneMVP().get());
+
+            uboBuffer.put(1F);
+            uboBuffer.put(1F);
+            uboBuffer.put(1F);
+            uboBuffer.put(1F);
+        }
         
         Engine.camera.getPosition().store(uboBuffer);
         uboBuffer.put(1F);
@@ -159,9 +171,9 @@ public class UniformBuffer {
         uboBuffer.put(Engine.lightDirection.y);
         uboBuffer.put(Engine.lightDirection.z);
         uboBuffer.put(1F);
-        float ambIntens = 0.14F;
-        float diffIntens = 0.54F;
-        float specIntens = 0.38F;
+        float ambIntens = 0.08F;
+        float diffIntens = 0.52F;
+        float specIntens = 0.12F;
         uboBuffer.put(ambIntens);
         uboBuffer.put(ambIntens);
         uboBuffer.put(ambIntens);

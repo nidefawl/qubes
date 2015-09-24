@@ -49,7 +49,7 @@ public class Mesher {
 
     BlockSurface bs1 = null;
     BlockSurface bs2 = null;
-    private void setMask2(int n) {
+    private void setMask2(int n, int[] x, int[] dir, int axis) {
         // first handle everything inside of region
         if (bs1 != null && bs2 != null) {
             if (bs1 == air && bs2 == air) {
@@ -75,10 +75,63 @@ public class Mesher {
                 mask2[n] = bs2;
                 return;
             }
-            if (bs1.pass == bs2.pass) {
+//            if (bs1.pass == bs2.pass && ((!bs1.transparent && !bs2.transparent)  || bs1.pass > 0)) {
+//                mask2[n] = null;
+//                return;
+//            }
+            if (this.strategy == 0) {
+                if (bs1.pass == 0 && !bs1.transparent && bs2.isLeaves) {
+                    mask2[n] = bs1;
+                    return;
+                }
+                if (bs2.pass == 0 && !bs2.transparent && bs1.isLeaves) {
+                    mask2[n] = bs2;
+                    return;
+                }
+                if (bs1.isLeaves) {
+                    BlockSurface sf2 = getBlockSurface(x[0] + dir[0]*2, x[1] + dir[1]*2, x[2] + dir[2]*2, 1, axis);
+                    if (sf2 == null || !sf2.isLeaves) {
+//                        System.out.println("air");
+                        mask2[n] = bs1;
+                        return;
+                    }
+                     sf2 = getBlockSurface(x[0] + dir[0]*-1, x[1] + dir[1]*-1, x[2] + dir[2]*-1, 0, axis);
+                     if (sf2 == null || !sf2.isLeaves) {
+//                       System.out.println("air");
+                       mask2[n] = bs1;
+                       return;
+                   }
+                    mask2[n] = null;
+                    return;
+                }
+//                if (bs2.isLeaves) {
+//                    System.out.println("bs2.isLeaves");
+//                    BlockSurface sf2 = getBlockSurface(x[0] - dir[0]*2, x[1] - dir[1]*2, x[2] - dir[2]*2, 0, axis);
+//                    if (sf2 == null || !sf2.isLeaves) {
+//                        System.out.println("air");
+//                        mask2[n] = bs2;
+//                        return;
+//                    }
+//                    mask2[n] = null;
+//                    return;
+//                }
+            }
+            
+            if (bs1.pass == bs2.pass && bs1.transparent == bs2.transparent) {
                 mask2[n] = null;
                 return;
             }
+            
+            if (bs1.pass == 0 && !bs1.transparent) {
+                mask2[n] = bs1;
+                return;
+            }
+            
+            if (bs2.pass == 0 && !bs2.transparent) {
+                mask2[n] = bs2;
+                return;
+            }
+            
             if (bs1.pass == 0) {
                 mask2[n] = bs1;
                 return;
@@ -87,7 +140,10 @@ public class Mesher {
                 mask2[n] = bs2;
                 return;
             }
+            
             System.err.println("transition from non-air to non-air, non of both have pass == 0, UNDEFINED STATE!");
+            System.err.println(bs1.type+"/"+bs2.type+"/"+bs1.transparent+"/"+bs2.transparent+"/"+bs1.pass+"/"+bs2.pass);
+            
             return;
         }
         if (bs1 == null && bs2 == null) {
@@ -168,7 +224,7 @@ public class Mesher {
                             bs2 = getBlockSurface(x[0] + dir[0], x[1] + dir[1], x[2] + dir[2], 1, axis);
                             if (MEASURE) TimingHelper2.endSec();
                         }
-                        setMask2(n);
+                        setMask2(n, x, dir, axis);
                         n++;
                     }
                 }
@@ -262,8 +318,10 @@ public class Mesher {
             if (strategy == 1) {
                 surface.type = 1;
                 surface.pass = 2;
+                surface.transparent = false;
             } else {
                 surface.calcLight = true;
+                surface.isLeaves = surface.transparent && surface.pass == 0;
             }
             return surface;
         }

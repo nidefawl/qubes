@@ -7,9 +7,11 @@ public class WorldSettingsClient implements IWorldSettings {
     long seed;
     int time;
     private int id;
-    public WorldSettingsClient(int id, UUID uuid, long seed, int time) {
+    private String worldName;
+    public WorldSettingsClient(int id, UUID uuid, String name, long seed, int time) {
         this.id = id;
         this.uuid = uuid;
+        this.worldName = name;
         this.seed = seed;
         this.time = time;
     }
@@ -32,6 +34,11 @@ public class WorldSettingsClient implements IWorldSettings {
     @Override
     public int getId() {
         return this.id;
+    }
+    
+    @Override
+    public String getName() {
+        return this.worldName;
     }
 
 }

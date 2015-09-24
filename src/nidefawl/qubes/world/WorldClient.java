@@ -111,10 +111,5 @@ public class WorldClient extends World {
     }
 
 
-    public int getHeight(int x, int z) {
-        return 0;
-    }
-
-
 
 }

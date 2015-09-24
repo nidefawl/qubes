@@ -210,6 +210,11 @@ public class Tess extends TesselatorState {
         this.draw(mode, this);
     }
     
+    
+    public void drawQuads() {
+        this.draw(GL11.GL_QUADS, this);
+    }
+    
 
 
     public void resetState() {

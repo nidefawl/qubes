@@ -198,6 +198,9 @@ public class LightChunkCache {
     public void flagUsed() {
         nUse++;
     }
+    public Chunk getCenter() {
+        return this.chunks[NEXT*WIDTH+NEXT];
+    }
 
     /**
      * @return

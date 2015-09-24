@@ -16,7 +16,8 @@ public class ShaderCompileError extends GameError {
 
         this.name = string;
         this.log = log;
-        this.log = shader.decorateErrors(log);
+        if (shader != null)
+            this.log = shader.decorateErrors(log);
         this.code = shader;
     }
 

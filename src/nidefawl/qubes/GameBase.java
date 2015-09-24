@@ -33,10 +33,11 @@ public abstract class GameBase implements Runnable {
     public static int     displayWidth;
     public static int     displayHeight;
     public static boolean glDebug         = false;
-    public static boolean GL_ERROR_CHECKS = false;
+    public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
     static int            initWidth       = 1024;
     static int            initHeight      = 512;
+    public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
     private GLFWErrorCallback       errorCallback;
@@ -75,7 +76,7 @@ public abstract class GameBase implements Runnable {
     }
 
     public GameBase() {
-        this.timer = new Timer(20);
+        this.timer = new Timer(TICKS_PER_SEC);
         displayWidth = initWidth;
         displayHeight = initHeight;
         outStream = new LogBufferStream(System.out);
@@ -142,6 +143,7 @@ public abstract class GameBase implements Runnable {
             public void invoke(long window, double xoffset, double yoffset) {
                 Mouse.scrollDX += xoffset;
                 Mouse.scrollDY += yoffset;
+                onWheelScroll(window, xoffset, yoffset);
             }
 
         };
@@ -164,6 +166,7 @@ public abstract class GameBase implements Runnable {
             }
         };
     }
+
 
     public void initDisplay(boolean debugContext) {
         try {
@@ -359,8 +362,10 @@ public abstract class GameBase implements Runnable {
         }
         if (Game.DO_TIMING)
             TimingHelper.check();
+        
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.startFrame();
+        
         if (isCloseRequested()) {
             shutdown();
             return;
@@ -639,6 +644,8 @@ public abstract class GameBase implements Runnable {
     protected abstract void onKeyPress(long window, int key, int scancode, int action, int mods);
 
     protected abstract void onMouseClick(long window, int button, int action, int mods);
+
+    protected abstract void onWheelScroll(long window, double xoffset, double yoffset);
 
     public abstract void render(float f);
 

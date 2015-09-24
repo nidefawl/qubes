@@ -11,6 +11,7 @@ public class EditBlockTask {
     private BlockPos p1;
     private BlockPos p2;
     private int block;
+    public boolean hollow = false;
 
     public EditBlockTask(BlockPos p1, BlockPos p2, int selBlock) {
         this.p1 = p1;
@@ -19,21 +20,72 @@ public class EditBlockTask {
     }
     
     public void apply(World world) {
-        Game.instance.sendPacket(new PacketCSetBlocks(world.getId(), p1, p2, this.block));
+        Game.instance.sendPacket(new PacketCSetBlocks(world.getId(), p1, p2, this.block, this.hollow));
 
         int w = p2.x-p1.x+1;
         int h = p2.y-p1.y+1;
         int l = p2.z-p1.z+1;
-        for (int x = 0; x < w; x++) {
-            for (int y = 0; y < h; y++) {
-                for (int z = 0; z < l; z++) {
-                    int blockX = p1.x+x;
-                    int blockY = p1.y+y;
-                    int blockZ = p1.z+z;
-                    world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+        if (hollow) {
+            for (int x = 0; x < w; x++) {
+                for (int y = 0; y < h; y++) {
+                    {
+                        int blockX = p1.x+x;
+                        int blockY = p1.y+y;
+                        int blockZ = p1.z ;
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                    }
+                    {
+                        int blockX = p1.x + x;
+                        int blockY = p1.y + y;
+                        int blockZ = p1.z + l-1;
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                    }
                 }
             }
-            
+            for (int z = 0; z < l; z++) {
+                for (int y = 0; y < h; y++) {
+                    {
+                        int blockX = p1.x;
+                        int blockY = p1.y+y;
+                        int blockZ = p1.z+z;
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                    }
+                    {
+                        int blockX = p1.x + w-1;
+                        int blockY = p1.y + y;
+                        int blockZ = p1.z + z;
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                    }
+                }
+            }
+            for (int x = 0; x < w; x++) {
+                for (int z = 0; z < l; z++) {
+//                    {
+//                        int blockX = p1.x+x;
+//                        int blockY = p1.y;
+//                        int blockZ = p1.z+z;
+//                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+//                    }
+                    {
+                        int blockX = p1.x + x;
+                        int blockY = p1.y + h-1;
+                        int blockZ = p1.z + z;
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                    }
+                }
+            }} else {
+            for (int x = 0; x < w; x++) {
+                for (int z = 0; z < l; z++) {
+                    for (int y = 0; y < h; y++) {
+                        int blockX = p1.x+x;
+                        int blockY = p1.y+y;
+                        int blockZ = p1.z+z;
+                        
+                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                    }
+                }
+                
+            }
         }
     }
 

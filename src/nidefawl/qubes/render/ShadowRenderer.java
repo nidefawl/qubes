@@ -160,7 +160,7 @@ public class ShadowRenderer {
         //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_CULL_FACE);
-        Engine.regionRenderer.setDrawMode(GL_QUADS);
+        Engine.regionRenderer.setDrawMode(-1);
     }
 
     public void renderInstancedDraw(World world, float fTime) {
@@ -202,7 +202,7 @@ public class ShadowRenderer {
         Engine.regionRenderer.setDrawInstances(0);
     }
     public void renderMultiPass(World world, float fTime) {
-        //      glDisable(GL_CULL_FACE);
+//              glDisable(GL_CULL_FACE);
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
@@ -211,7 +211,6 @@ public class ShadowRenderer {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         shadowShader.enable();
-        shadowShader.setProgramUniform1i("blockTextures", 0);
         shadowShader.setProgramUniform1i("shadowSplit", 0);
 
         this.fbShadow.bind();
@@ -237,8 +236,9 @@ public class ShadowRenderer {
         Shader.disable();
 
         glViewport(0, 0, Game.displayWidth, Game.displayHeight);
-        glCullFace(GL_BACK);
+//        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
+//        glEnable(GL_CULL_FACE);
     }
 
     public void renderShadowPass(World world, float fTime) {

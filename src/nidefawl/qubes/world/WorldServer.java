@@ -20,9 +20,10 @@ import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Dir;
-import nidefawl.qubes.worldgen.AbstractGen;
-import nidefawl.qubes.worldgen.TerrainGenerator2;
-import nidefawl.qubes.worldgen.TestTerrain2;
+import nidefawl.qubes.worldgen.populator.IChunkPopulator;
+import nidefawl.qubes.worldgen.terrain.ITerrainGen;
+import nidefawl.qubes.worldgen.terrain.TerrainGenerator2;
+import nidefawl.qubes.worldgen.terrain.TestTerrain2;
 
 public class WorldServer extends World {
 
@@ -30,7 +31,8 @@ public class WorldServer extends World {
     private final PlayerChunkTracker chunkTracker     = new PlayerChunkTracker(this);
     private final List<Player>       players          = Lists.newArrayList();
     private final ChunkManagerServer chunkServer;
-    private AbstractGen              generator;
+    private final ITerrainGen              generator;
+    private final IChunkPopulator populator;
 //    private Queue<Long> lightUpdateQueue = Queues.newConcurrentLinkedQueue();
     private Set<Long> lightUpdateQueue = Sets.newConcurrentHashSet();
     private final BlockLightThread lightUpdater;
@@ -41,6 +43,7 @@ public class WorldServer extends World {
         this.server = server;
         this.chunkServer = (ChunkManagerServer) getChunkManager();
         this.generator = settings.getGenerator(this);
+        this.populator = settings.getPopulator(this);
         this.lightUpdater = new BlockLightThread(this);
     }
     public void onLeave() {
@@ -59,7 +62,7 @@ public class WorldServer extends World {
     
     
     
-    public AbstractGen getGenerator() {
+    public ITerrainGen getGenerator() {
         return generator;
     }
 
@@ -77,6 +80,7 @@ public class WorldServer extends World {
         return this.server;
     }
 
+    Iterator<Chunk> updateIt = null;
     public void updateChunks() {
         if (!this.lightUpdateQueue.isEmpty()) {
             Iterator<Long> it = lightUpdateQueue.iterator();
@@ -84,10 +88,16 @@ public class WorldServer extends World {
                 long l = it.next();
                 int x = GameMath.lhToX(l);
                 int z = GameMath.lhToZ(l);
+//                System.out.println("wait "+x+"/"+z);
+                Chunk self = getChunk(x, z);
+                if (self == null || !self.isValid) {
+                    System.out.println("remove missing chunk from queue");
+                    it.remove();
+                    continue;
+                }
                 Chunk c = getChunkIfNeightboursLoaded(x, z);
                 if (c != null) {
                     it.remove();
-                    System.out.println("calc sun "+x+"/"+z);
                     this.calcSunLight(c);
                 }
             }
@@ -96,8 +106,38 @@ public class WorldServer extends World {
             this.chunkTracker.update(players.get(i));
         }
         this.chunkTracker.recheckIfRequiredChunksLoaded();
+        if (updateIt == null || !updateIt.hasNext()) {
+            updateIt = this.chunkServer.newUpdateIterator();
+        }
+        int maxChunks = 10;
+        Iterator<Chunk> it = this.updateIt;
+        while (it.hasNext()) {
+            Chunk c = it.next();
+            if (!c.isUnloading && c.isValid) {
+                if (c.isLit && !c.isPopulated) {
+                    Chunk cPopulate = getChunkIfNeightboursLoaded(c.x, c.z);
+                    if (cPopulate == c) {
+                        c.isPopulated = true;
+                        getChunkPopulator().populate(this, cPopulate);   
+                        this.calcSunLight(cPopulate); 
+                    }
+                }
+            }
+            maxChunks--;
+            if (maxChunks <= 0) {
+                break;
+            }
+        }
+        
         this.chunkTracker.sendBlockChanges();
-        this.chunkServer.saveAndUnloadChunks(10);
+    }
+    public void updateGeneratedChunks() {
+        // TODO Auto-generated method stub
+        
+    }
+    public void unloadUnused() {
+
+        this.chunkServer.saveAndUnloadChunks(200);
     }
 
     public void addPlayer(Player player) {
@@ -157,5 +197,11 @@ public class WorldServer extends World {
 
     public void flagChunkLightUpdate(int x, int z) {
         this.lightUpdateQueue.add(GameMath.toLong(x, z));
+    }
+    /**
+     * @return
+     */
+    public IChunkPopulator getChunkPopulator() {
+        return this.populator;
     }
 }

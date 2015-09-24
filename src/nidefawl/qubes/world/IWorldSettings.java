@@ -16,4 +16,6 @@ public interface IWorldSettings {
      * @return a consistent world-id at runtime only
      */
     public int getId();
+    
+    public String getName();
 }

@@ -1,5 +1,6 @@
 package nidefawl.qubes.network.server;
 
+import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
@@ -31,8 +32,9 @@ public class ServerHandlerPlay extends ServerHandler {
             if (this.player.flying) {
                 flags |= 1;
             }
-            sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getSeed(), world.getTime()));
+            sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getName(), world.getSeed(), world.getTime()));
             world.addPlayer(player);
+            sendPacket(new PacketChatChannels(this.player.getJoinedChannels()));
         }
         super.update();
     }
@@ -49,7 +51,7 @@ public class ServerHandlerPlay extends ServerHandler {
         if (this.player.flying) {
             flags |= 1;
         }
-        sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getSeed(), world.getTime()));
+        sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getName(), world.getSeed(), world.getTime()));
         world.addPlayer(player);
     }
 
@@ -66,14 +68,14 @@ public class ServerHandlerPlay extends ServerHandler {
     @Override
     public void onDisconnect(int from, String reason) {
         try {
-            if (this.player != null) {
-                PlayerManager mgr = this.server.getPlayerManager();
-                mgr.removePlayer(this.player);
-                WorldServer world = (WorldServer) this.player.world;
-                if (world != null) {
-                    world.removePlayer(this.player);
-                }
+            PlayerManager mgr = this.server.getPlayerManager();
+            mgr.removePlayer(this.player);
+            WorldServer world = (WorldServer) this.player.world;
+            if (world != null) {
+                world.removePlayer(this.player);
             }
+            ChannelManager mgr2 = this.server.getChatChannelMgr();
+            mgr2.removeUser(player);
         } catch (Exception e) {
             ErrorHandler.setException(new GameError("Failed removing player", e));
         }
@@ -101,19 +103,79 @@ public class ServerHandlerPlay extends ServerHandler {
 
     public void handleSetBlocks(PacketCSetBlocks p1) {
 
+        boolean hollow = (p1.flags & 0x1) != 0;
         int w = p1.x2 - p1.x + 1;
         int h = p1.y2 - p1.y + 1;
         int l = p1.z2 - p1.z + 1;
-        for (int x = 0; x < w; x++) {
-            for (int y = 0; y < h; y++) {
-                for (int z = 0; z < l; z++) {
-                    int blockX = p1.x + x;
-                    int blockY = p1.y + y;
-                    int blockZ = p1.z + z;
-                    this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+        if (hollow) {
+            for (int x = 0; x < w; x++) {
+                for (int y = 0; y < h; y++) {
+                    {
+                        int blockX = p1.x+x;
+                        int blockY = p1.y+y;
+                        int blockZ = p1.z ;
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                    }
+                    {
+                        int blockX = p1.x + x;
+                        int blockY = p1.y + y;
+                        int blockZ = p1.z + l-1;
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                    }
                 }
             }
+            for (int z = 0; z < l; z++) {
+                for (int y = 0; y < h; y++) {
+                    {
+                        int blockX = p1.x;
+                        int blockY = p1.y+y;
+                        int blockZ = p1.z+z;
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                    }
+                    {
+                        int blockX = p1.x + w-1;
+                        int blockY = p1.y + y;
+                        int blockZ = p1.z + z;
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                    }
+                }
+            }
+            for (int x = 0; x < w; x++) {
+                for (int z = 0; z < l; z++) {
+//                    {
+//                        int blockX = p1.x+x;
+//                        int blockY = p1.y;
+//                        int blockZ = p1.z+z;
+//                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+//                    }
+                    {
+                        int blockX = p1.x + x;
+                        int blockY = p1.y + h-1;
+                        int blockZ = p1.z + z;
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                    }
+                }
+            }
+        } else {
+            for (int x = 0; x < w; x++) {
+                for (int z = 0; z < l; z++) {
+                    for (int y = 0; y < h; y++) {
+                        if (hollow) {
+                            if (x != 0 && x != w-1)
+                                continue;
+                            if (y != 0 && y != h-1)
+                                continue;
+                            if (z != 0 && z != l-1)
+                                continue;
+                        }
+                        int blockX = p1.x + x;
+                        int blockY = p1.y + y;
+                        int blockZ = p1.z + z;
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                    }
+                }
 
+            }
         }
     }
 
@@ -126,4 +188,14 @@ public class ServerHandlerPlay extends ServerHandler {
         return this.player;
     }
 
+    public void handleChat(PacketChatMessage c) {
+        String channel = c.channel.trim();
+        String msg = c.message.trim();
+        if (msg.startsWith("/")) {
+            msg = msg.substring(1);
+            this.server.getCommandHandler().handle(this.player, msg);
+            return;
+        }
+        this.server.getChatChannelMgr().handlePlayerChat(this.player, channel, msg);
+    }
 }

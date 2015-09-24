@@ -12,11 +12,9 @@ import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.*;
-import nidefawl.qubes.worldgen.AbstractGen;
-import nidefawl.qubes.worldgen.TerrainGenerator2;
-import nidefawl.qubes.worldgen.TestTerrain2;
+import nidefawl.qubes.worldgen.*;
 
-public abstract class World {
+public abstract class World implements IBlockWorld {
     public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;
     public static final float MIN_XZ     = -MAX_XZ;
     HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
@@ -39,6 +37,7 @@ public abstract class World {
     private final UUID         uuid;
     private int                id;
     public IWorldSettings settings;
+    private final String name;
     public static final int    MAX_WORLDHEIGHT = 256;
 
     public World(IWorldSettings settings) {
@@ -46,6 +45,7 @@ public abstract class World {
         this.id = settings.getId();
         this.chunkMgr = makeChunkManager();
         this.seed = settings.getSeed();
+        this.name = settings.getName();
         this.uuid = settings.getUUID();
         this.time = settings.getTime();
         this.rand = new Random(seed);
@@ -69,8 +69,8 @@ public abstract class World {
 //                time = (int) (System.currentTimeMillis()/50L);
 //                fTime = 0;
 //        dayLen = 211500;
-//        time = 53000;
-        time = 133000;
+        time = 138000;
+//        time = 133000;
         fTime=0;
       dayLen = 211500;
         float timeOffset = (this.time) % dayLen;
@@ -111,6 +111,10 @@ public abstract class World {
 //        }
     }
 
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.world.IBlockWorld#getType(int, int, int)
+     */
+    @Override
     public int getType(int x, int y, int z) {
         if (y >= this.worldHeight)
             return 0;
@@ -123,6 +127,10 @@ public abstract class World {
         return c.getTypeId(x & 0xF, y, z & 0xF);
     }
     
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.world.IBlockWorld#setType(int, int, int, int, int)
+     */
+    @Override
     public boolean setType(int x, int y, int z, int type, int render) {
         if (y >= this.worldHeight)
             return false;
@@ -190,9 +198,9 @@ public abstract class World {
         float r = 1;
         float b = 1;
         float g = 1;
-        float intens = 10+this.rand.nextInt(10);
+        float intens = 0.5f+this.rand.nextFloat();
 //        if (this.rand.nextInt(10) == 0) {
-            intens+=200;
+//            intens+=1;
 //            intens = 2.7f;
 //        }
         DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
@@ -205,12 +213,13 @@ public abstract class World {
             int range = 210;
             int x = block.x+this.rand.nextInt(range*2)-range;
             int z = block.z+this.rand.nextInt(range*2)-range;
-            int y = getHighestBlockAt(x, z);
+            int y = getHeight(x, z);
             addLight(new Vector3f(x+0.5F, y+1.2f+rand.nextFloat()*3.0f, z+0.5F));
         }
     }
 
-    private int getHighestBlockAt(int x, int z) {
+    @Override
+    public int getHeight(int x, int z) {
         Chunk c = this.getChunk(x>>Chunk.SIZE_BITS, z>>Chunk.SIZE_BITS);
         if (c != null) {
             return c.getTopBlock(x&Chunk.MASK, z&Chunk.MASK);
@@ -273,7 +282,10 @@ public abstract class World {
         return c == null ? false : !Block.isOpaque(c.getTypeId(x & Chunk.MASK, y, z & Chunk.MASK));
     }
 
-    public int getHeight(int x, int z) {
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.world.IBlockWorld#getHeight(int, int)
+     */
+    public int getHeightMap(int x, int z) {
         Chunk c = getChunk(x >> Chunk.SIZE_BITS, z >> Chunk.SIZE_BITS);
         return c == null ? 0 : c.getHeightMap(x & Chunk.MASK, z & Chunk.MASK);
     }
@@ -286,5 +298,9 @@ public abstract class World {
     }
 
     public void flagChunkLightUpdate(int x, int z) {
+    }
+    
+    public String getName() {
+        return this.name;
     }
 }

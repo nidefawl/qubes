@@ -9,11 +9,11 @@ public class WorkingEnv {
 
     static File workingDir = new File(".");
     static File assetDir;
+    static File packsDir;
     static File worlds;
     static File config;
     static File playerdata;
-    private static boolean loadAssetsFromClassPath;
-	
+    
 	public static void init(Side side, String basePath) {
         Locale.setDefault(Locale.US);
         workingDir = new File(basePath);
@@ -21,11 +21,8 @@ public class WorkingEnv {
         config = new File(workingDir, "config");
         worlds = new File(workingDir, "worlds");
         playerdata = new File(workingDir, "playerdata");
-		if (!loadAssetsFromClassPath && new File("res").isDirectory()) {
-		    assetDir = new File("res");
-		} else {
-		    assetDir = new File(workingDir, "res");
-		}
+        assetDir = new File(workingDir, "res");
+        packsDir = new File(workingDir, "packs");
         if (side == Side.CLIENT) {
             assetDir.mkdirs();
         }
@@ -39,6 +36,9 @@ public class WorkingEnv {
     public static File getAssetFolder() {
         return assetDir;
     }
+    public static File getPacksFolder() {
+        return packsDir;
+    }
     public static File getConfigFolder() {
         return config;
     }
@@ -50,11 +50,11 @@ public class WorkingEnv {
         return playerdata;
     }
 
-    public static boolean loadAssetsFromClassPath() {
-        return loadAssetsFromClassPath;
-    }
-    public static void setClassPathAssets() {
-        loadAssetsFromClassPath = true;
+    /**
+     * @return
+     */
+    public static File getWorkingDir() {
+        return workingDir;
     }
 
 }

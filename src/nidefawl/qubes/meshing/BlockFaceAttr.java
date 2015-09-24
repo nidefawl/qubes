@@ -1,14 +1,17 @@
 package nidefawl.qubes.meshing;
 
 public class BlockFaceAttr {
+    public static boolean USE_TRIANGLES = true;
     public final static int BLOCK_VERT_INT_SIZE = 12;
     public final static int BLOCK_VERT_BYTE_SIZE = BLOCK_VERT_INT_SIZE<<2;
     public final static int BLOCK_FACE_INT_SIZE = BLOCK_VERT_INT_SIZE*4;
     public final static int BLOCK_FACE_BYTE_SIZE = BLOCK_FACE_INT_SIZE<<2;
+    
     public final static int PASS_2_BLOCK_VERT_INT_SIZE = 4;
     public final static int PASS_2_BLOCK_VERT_BYTE_SIZE = PASS_2_BLOCK_VERT_INT_SIZE<<2;
     public final static int PASS_2_BLOCK_FACE_INT_SIZE = PASS_2_BLOCK_VERT_INT_SIZE*4;
     public final static int PASS_2_BLOCK_FACE_BYTE_SIZE = PASS_2_BLOCK_FACE_INT_SIZE<<2;
+    
     final public static String[] attributes = new String[] {
             "in_blockinfo",
             "in_light",
@@ -27,6 +30,8 @@ public class BlockFaceAttr {
     private int lightMaskSky;
     private int lightMaskBlock;
     private int type;
+    private boolean reverse = false;
+    private int faceDir;
 
     public void setTex(int tex) {
         this.tex = tex;
@@ -38,7 +43,7 @@ public class BlockFaceAttr {
         this.zOff = zOff;
     }
 
-    public void setNormal(byte x, byte y, byte z) {
+    public void setNormal(int x, int y, int z) {
         byte byte0 = (byte)(int)(x * 127F);
         byte byte1 = (byte)(int)(y * 127F);
         byte byte2 = (byte)(int)(z * 127F);
@@ -50,9 +55,10 @@ public class BlockFaceAttr {
         this.lightMaskBlock = block;
     }
     
-    public void put(int[] rawBuffer, int index, int pass) {
+    public void put(int[] rawBuffer, int index) {
         for (int i = 0; i < 4; i++) {
-            BlockFaceVert v = this.v[i % 4];
+            int idx = this.reverse ? 3-(i % 4) : i % 4;
+            BlockFaceVert v = this.v[idx];
             rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
             rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
             rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
@@ -62,17 +68,18 @@ public class BlockFaceAttr {
             rawBuffer[index + 6] = Float.floatToRawIntBits(v.v);
             rawBuffer[index + 7] = v.rgba;
             rawBuffer[index + 8] = tex|this.type<<16; //2x SHORT
-            rawBuffer[index + 9] = this.aoMask; // lower 8 bit = AO
+            rawBuffer[index + 9] = this.aoMask|this.faceDir<<16; // lower 8 bit = AO
             rawBuffer[index + 10] = this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16; 
-            rawBuffer[index + 11] = 0;
+            rawBuffer[index + 11] = v.dirOffset;
             index += BLOCK_VERT_INT_SIZE;
         }
         
     }
 
-    public void putBasic(int[] rawBuffer, int index, int pass) {
+    public void putBasic(int[] rawBuffer, int index) {
         for (int i = 0; i < 4; i++) {
-            BlockFaceVert v = this.v[i];
+            int idx = this.reverse ? 3-(i % 4) : i % 4;
+            BlockFaceVert v = this.v[idx];
             rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
             rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
             rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
@@ -87,6 +94,20 @@ public class BlockFaceAttr {
     
     public void setType(int type) {
         this.type = type;
+    }
+    
+    /**
+     * @param reverse the reverse to set
+     */
+    public void setReverse(boolean reverse) {
+        this.reverse = reverse;
+    }
+
+    /**
+     * @param faceDir2
+     */
+    public void setFaceDir(int faceDir) {
+        this.faceDir = faceDir;
     }
 
 }

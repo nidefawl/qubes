@@ -2,12 +2,12 @@ package nidefawl.qubes.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.collect.MapMaker;
 
+import nidefawl.qubes.chat.ChatUser;
+import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.nbt.Tag;
@@ -69,6 +69,9 @@ public class PlayerManager {
             world = this.server.getSpawnWorld();
         }
         data.world = world.getUUID();
+        if (data.joinedChannels.isEmpty()) {
+            data.joinedChannels.add(GlobalChannel.TAG);
+        }
         player.load(data);
         this.players.put(name, player);
         this.playersLowerCase.put(name.toLowerCase(), player);
@@ -96,7 +99,15 @@ public class PlayerManager {
         }
     }
     public Player getPlayer(String string) {
-        return this.playersLowerCase.get(string);
+        System.out.println("players");
+        for (String s : this.players.keySet()) {
+            System.out.println(s);
+        }
+        System.out.println("playersLowerCase");
+        for (String s : this.playersLowerCase.keySet()) {
+            System.out.println(s);
+        }
+        return this.playersLowerCase.get(string.toLowerCase());
     }
 
     public Player matchPlayer(String string) {
@@ -112,5 +123,12 @@ public class PlayerManager {
                 match = entry.getValue();
         }
         return match;
+    }
+
+    /**
+     * @return
+     */
+    public Collection<Player> getPlayers() {
+        return players.values();
     }
 }

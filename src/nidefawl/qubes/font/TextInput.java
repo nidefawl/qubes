@@ -393,11 +393,11 @@ public class TextInput {
                 i += 2;
                 continue;
             }
-            totalwidth += (rect.width - trueType.correctL);
-
-            if (getLeft() + totalwidth >= mX) {
+            float charw=(rect.width - trueType.correctL);
+            if (getLeft() + totalwidth+charw/3.0f >= mX) {
                 return i;
             }
+            totalwidth += charw;
         }
         return editText.length();
     }
@@ -410,7 +410,7 @@ public class TextInput {
         if (mouseDownLeft) {
             if (!did) {
                 if (mouseDown) {
-                    if (mouseX <= getLeft()) {
+                    if (mouseX <= getLeft()-4) {
                         if (selEnd > 0) {
                             selEnd--;
                             mpos = selEnd;
@@ -424,8 +424,8 @@ public class TextInput {
                         mpos = selEnd;
                         makeCursorVisible();
                     }
-                } else if (getRight()+11 > mouseX&&getLeft() < mouseX && overTextBoxY) {
-                    selStart = getCharPositionFromXCoord(mouseX);
+                } else if (getRight()+11 > mouseX&&getLeft()-4 < mouseX && overTextBoxY) {
+                    selStart = selEnd = getCharPositionFromXCoord(mouseX);
                     mpos = selStart;
                     mouseDown = true;
                 } else {

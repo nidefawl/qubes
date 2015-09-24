@@ -12,7 +12,7 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
-import nidefawl.qubes.worldgen.AbstractGen;
+import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 
 public class ChunkManagerServer extends ChunkManager {
     final ChunkLoadThread thread;
@@ -51,15 +51,21 @@ public class ChunkManagerServer extends ChunkManager {
         return new ChunkTable(MAX_CHUNK * 2);
     }
 
+    int ntotal = 0;
     public void loadOrGenerate(int x, int z) {
         synchronized (this.syncObj2) {
             Chunk c = this.reader.loadChunk(this.world, x, z);
             if (c == null) {
-                AbstractGen gen = worldServer.getGenerator();
+                ITerrainGen gen = this.worldServer.getGenerator();
                 long l = System.nanoTime();
                 c = gen.generateChunk(x, z);
                 c.postGenerate();
                 Stats.timeWorldGen += (System.nanoTime()-l) / 1000000.0D;
+                ntotal++;
+                if (ntotal%10==0) {
+                    double per = Stats.timeWorldGen/ntotal;
+                    System.out.printf("%d chunks generated (%.2fms/chunk)\n", ntotal, per);
+                }
             } else {
                 c.postLoad();
             }
@@ -134,5 +140,11 @@ public class ChunkManagerServer extends ChunkManager {
     }
     public boolean isRunning() {
         return ((WorldServer)this.world).getServer().isRunning();
+    }
+    /**
+     * @return
+     */
+    public Iterator<Chunk> newUpdateIterator() {
+        return this.table.iterator();
     }
 }

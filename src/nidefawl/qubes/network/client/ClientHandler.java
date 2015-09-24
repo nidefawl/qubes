@@ -7,6 +7,7 @@ import java.util.zip.Inflater;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
@@ -134,7 +135,7 @@ public class ClientHandler extends Handler {
         }
         this.state = STATE_CONNECTED;
         this.time = System.currentTimeMillis();
-        this.world = new WorldClient(new WorldSettingsClient(packetJoinGame.id, packetJoinGame.uuid, packetJoinGame.seed, packetJoinGame.time));
+        this.world = new WorldClient(new WorldSettingsClient(packetJoinGame.id, packetJoinGame.uuid, packetJoinGame.worldName, packetJoinGame.seed, packetJoinGame.time));
         this.chunkManager = (ChunkManagerClient) this.world.getChunkManager();
         this.player.setFly((packetJoinGame.flags & 0x1) != 0);
         this.world.addEntity(player);
@@ -245,7 +246,7 @@ public class ClientHandler extends Handler {
         if (c.setLights(decompressed, box)) {
             Engine.regionRenderer.flagChunk(c.x, c.z); //TODO: do not flag whole y-slice
         } else {
-            System.out.println("not flagging empty light update "+packet.coordX+"/"+packet.coordZ+" - "+box);  
+//            System.out.println("not flagging empty light update "+packet.coordX+"/"+packet.coordZ+" - "+box);  
         }
 
     }
@@ -256,4 +257,12 @@ public class ClientHandler extends Handler {
         }
     }
 
+    public void handleChat(PacketChatMessage packetChatMessage) {
+        ChatManager.getInstance().receiveMessage(packetChatMessage.channel, packetChatMessage.message);
+    }
+
+    public void handleChannels(PacketChatChannels packetChatChannels) {
+        ChatManager.getInstance().syncChannels(packetChatChannels.list);
+
+    }
 }

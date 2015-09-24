@@ -55,14 +55,14 @@ public class ChunkLoadThread extends Thread {
                     ErrorHandler.setException(new GameError("Exception in " + getName(), e));
                     break;
                 }
-                try {
-                    if (sleepTime > 0) {
-                        Thread.sleep(did ? sleepTime : sleepTime * 3);
+                if (!did && sleepTime > 0) {
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        if (!isRunning)
+                            break;
+                        onInterruption();
                     }
-                } catch (InterruptedException e) {
-                    if (!isRunning)
-                        break;
-                    onInterruption();
                 }
             }
             System.out.println(getName() + " ended");

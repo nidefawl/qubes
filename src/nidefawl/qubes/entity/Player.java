@@ -5,16 +5,24 @@ import java.util.*;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
+import nidefawl.qubes.chat.ChatUser;
+import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.network.packet.PacketSTrackChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.player.PlayerData;
+import nidefawl.qubes.server.GameServer;
+import nidefawl.qubes.server.commands.Command;
+import nidefawl.qubes.server.commands.CommandException;
+import nidefawl.qubes.server.commands.ICommandSource;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.WorldServer;
 
-public class Player extends Entity {
+public class Player extends Entity implements ChatUser, ICommandSource {
 
     public String        name;
     public ServerHandlerPlay netHandler;
@@ -27,6 +35,7 @@ public class Player extends Entity {
      int lastLight = 0;
     public UUID spawnWorld;
     private int chunkLoadDistance;
+    private Set<String> joinedChannels = Sets.newConcurrentHashSet();
      
     public Player() {
         super();
@@ -38,13 +47,16 @@ public class Player extends Entity {
         this.flying = data.flying;
         this.spawnWorld = data.world;
         this.chunkLoadDistance = data.chunkLoadDistance;
+        this.joinedChannels.clear();
+        this.joinedChannels.addAll(data.joinedChannels);
     }
 
     public PlayerData save() {
         PlayerData data = new PlayerData();
         data.pos = new Vector3f(this.pos);
         data.flying = this.flying;
-        data.world = this.world != null ? this.world.getUUID() : null; 
+        data.world = this.world != null ? this.world.getUUID() : null;
+        data.joinedChannels = new HashSet<String>(this.joinedChannels);
         return data;
     }
 
@@ -138,4 +150,50 @@ public class Player extends Entity {
         this.chunkLoadDistance = distance;
     }
 
+
+    @Override
+    public Collection<String> getJoinedChannels() {
+        return this.joinedChannels;
+    }
+
+
+    @Override
+    public void preExecuteCommand(Command c) {
+    }
+
+    @Override
+    public void onError(Command c, CommandException e) {
+        
+        if (e.getCause() != null) {
+            sendMessage("An exception occured while executing '"+c.getName()+"': "+e.getMessage());
+            e.getCause().printStackTrace();
+        } else {
+            sendMessage(e.getMessage());
+        }
+    }
+
+    @Override
+    public void onUnknownCommand(String cmd, String line) {
+        sendMessage("Unknown command '"+cmd+"'");
+    }
+
+    @Override
+    public GameServer getServer() {
+        return ((WorldServer) this.world).getServer();
+    }
+
+    @Override
+    public void sendMessage(String string) {
+        this.netHandler.sendPacket(new PacketChatMessage(GlobalChannel.TAG, string));
+    }
+    
+    @Override
+    public String getChatName() {
+        return getName();
+    }
+
+    @Override
+    public void sendMessage(String channel, String string) {
+        this.netHandler.sendPacket(new PacketChatMessage(channel, string));
+    }
 }

@@ -9,6 +9,8 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gui.controls.Button;
+import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 
@@ -17,6 +19,10 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     final public FontRenderer font;
     final FontRenderer fontSmall;
     private TextField field;
+    private TextField fieldN;
+    private Button connect;
+    private Button settings;
+    private Button quit;
 
     public GuiMainMenu() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -25,28 +31,45 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     @Override
     public void initGui(boolean first) {
         this.buttons.clear();
+        int w1 = 300;
+        int h = 30;
+        int left = this.posX+this.width/2-w1/2;
         {
-            this.buttons.add(new Button(1, "Connect"));
-            int w = 200;
-            int h = 30;
-            this.buttons.get(0).setPos(this.posX+this.width/2-w/2, this.posY+this.height/2+40);
-            this.buttons.get(0).setSize(w, h);
+            connect = new Button(1, "Connect");
+            this.buttons.add(connect);
+            connect.setPos(left+200, this.posY+this.height/2-20);
+            connect.setSize(100, h);
         }
         {
 
-            int w = 200;
-            int h = 30;
             this.field = new TextField(this, 2, "debian:21087");
-            field.setPos(this.posX+this.width/2-w/2, this.posY+this.height/2);
-            field.setSize(w, h);
+            field.setPos(left, this.posY+this.height/2-20);
+            field.setSize(w1-110, h);
 //            field.
             this.buttons.add(field);
         }
+        {
+
+            this.fieldN = new TextField(this, 10, Game.instance.getProfile().getName());
+            fieldN.setPos(left, this.posY+this.height/2-60);
+            fieldN.setSize(w1, h);
+//            field.
+            this.buttons.add(fieldN);
+        }
+        {
+            settings = new Button(3, "Settings");
+            this.buttons.add(settings);
+            settings.setPos(left, this.posY+this.height/2+20);
+            settings.setSize(w1, h);
+        }
+        {
+            quit = new Button(4, "Quit Game");
+            this.buttons.add(quit);
+            quit.setPos(left, this.posY+this.height/2+120);
+            quit.setSize(w1, h);
+        }
     }
     public boolean onMouseClick(int button, int action) {
-        if (action == GLFW.GLFW_PRESS) {
-            this.buttons.get(1).focused = false;
-        }
         return super.onMouseClick(button, action);
     }
 
@@ -73,24 +96,36 @@ public class GuiMainMenu extends Gui implements ITextEdit {
 //        if (element.posX+element.width>this.width) {
 //            element.posX = 0;
 //        }
-        if (element instanceof Button) {
-            String s = field.getText();
-            if (!s.isEmpty()) {
-                Game.instance.connectTo(s);    
-            }
+        if (element == this.connect) {
+            connect();
+        }
+        if (element == this.settings) {
+            Game.instance.showGUI(new GuiSettings());
+        }
+        if (element == this.quit) {
+            Game.instance.shutdown();
         }
         return true;
     }
     @Override
     public void submit(TextInput textInputRenderer, String text) {
+        connect();
+    }
+    /**
+     * 
+     */
+    private void connect() {
         String s = field.getText();
-        if (!s.isEmpty()) {
+        String s2 = fieldN.getText();
+        if (!s.isEmpty() && !s2.isEmpty()) {
+            Game.instance.getProfile().setName(s2);
             Game.instance.connectTo(s);    
         }
     }
     @Override
     public void onEscape(TextInput textInput) {
         this.field.focused = false;
+        this.fieldN.focused = false;
     }
 
 

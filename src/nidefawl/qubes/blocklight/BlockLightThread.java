@@ -1,8 +1,10 @@
 package nidefawl.qubes.blocklight;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.world.WorldServer;
@@ -48,7 +50,9 @@ public class BlockLightThread extends Thread {
                     int l = 0;
                     work.clear();
                     if ((l=this.queue.drainTo(work)) > 0) {
-                        for (Long task : work) {
+                        Iterator<Long> tasks = work.iterator();
+                        while (tasks.hasNext()) {
+                            Long task = tasks.next();
                             int x = getX(task);
                             int y = getY(task);
                             int z = getZ(task);
@@ -56,8 +60,20 @@ public class BlockLightThread extends Thread {
                             int type = flags&0x1;
                             if ((flags & 0x2) != 0) {
                                 LightChunkCache cache = getCache(world, x >> 4, z >> 4);
-                                if (cache != null)
+                                if (cache != null) {
+//                                    Chunk c = cache.getCenter();
+//                                    if (c != null) {
+//                                        c.numLightUpdates++;
+//                                        if (c.numLightUpdates>1000) {
+//                                            c.numLightUpdates = 0;
+//                                            System.out.println("flagging full update on chunk "+c);
+//                                            this.lightUpdater.updateChunk(cache, x>>4, z>>4, type);
+//                                            did = true;
+//                                            continue;
+//                                        }
+//                                    }
                                     this.lightUpdater.updateBlock(cache, x, y, z, type);
+                                }
                             } else {
                                 LightChunkCache cache = getCache(world, x, z);
                                 if (cache != null)
@@ -119,8 +135,10 @@ public class BlockLightThread extends Thread {
             }
         }
         cache.drainFlagged(world.getPlayerChunkTracker());
-        if (cache.cache(world, x, z))
+        if (cache.cache(world, x, z)) {
+            cache.flagUsed();
             return cache;
+        }
         return null;
     }
 
@@ -177,6 +195,7 @@ public class BlockLightThread extends Thread {
 
     public void queueBlock(int x, int y, int z, int i) {
         long l = toHash(x, y, z, 0b10|(i&0x1));
+//        long l = toHash(x>>4, 0, z>>4, 0b00|(i&0x1));
         this.queue.add(l);
     }
 

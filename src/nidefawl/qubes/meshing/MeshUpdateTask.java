@@ -109,23 +109,25 @@ public class MeshUpdateTask {
 //                        tess.setBrightness(0xf00000);
 //                    }
                     attr.setOffset(xOff, yOff, zOff);
-                    int size = mesh.size();
-                    final int SIZE = i == 2 ? PASS_2_BLOCK_FACE_INT_SIZE : BLOCK_FACE_INT_SIZE; 
-                    checkBufferSize(i, size * SIZE);
+                    int numMeshedFaces = mesh.size();
+                    final int FACE_INT_SIZE = i == 2 ? PASS_2_BLOCK_FACE_INT_SIZE : BLOCK_FACE_INT_SIZE;
+                    final int extraBufferLen = (int)(numMeshedFaces*3.3);
+                    int len = checkBufferSize(i, extraBufferLen * FACE_INT_SIZE);
+                    int numFaces = 0;
                     int[] buffer = this.buffers[i];
-                    for (int m = 0; m < size; m++) {
+                    for (int m = 0; m < numMeshedFaces; m++) {
                         BlockFace face = mesh.get(m);
                         if (i == 2) {
-//                            attr.putBasic(buffer, m*blockFaceBuffSize, i);
-                            face.drawBasic(attr);
-                            attr.putBasic(buffer, m*SIZE, i);
+                            numFaces += face.drawBasic(attr, buffer, numFaces*FACE_INT_SIZE);
                         } else {
-                            face.draw(attr);
-                            attr.put(buffer, m*SIZE, i);
+                            numFaces += face.draw(attr, buffer, numFaces*FACE_INT_SIZE);
+                        }
+                        if (numFaces >= extraBufferLen) {
+                            System.err.println("EXCEEDING BUFFER SIZE, IMPL REALLOC WITH ARRAY COPY");
                         }
                     }
-                    this.bufferIdx[i] = size*SIZE;
-                    this.vertexCount[i] = size*4;
+                    this.bufferIdx[i] = numFaces*FACE_INT_SIZE;
+                    this.vertexCount[i] = numFaces*4;
                 }
             
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -139,12 +141,13 @@ public class MeshUpdateTask {
         return false;
     }
 
-    private void checkBufferSize(int bufferIdx, int length) {
+    private int checkBufferSize(int bufferIdx, int length) {
         if (this.buffers[bufferIdx] == null || this.buffers[bufferIdx].length < length) {
             int newSize = (length+2048);
             System.out.println("realloc buffer to length "+newSize);
             this.buffers[bufferIdx] = new int[newSize];
         }
+        return this.buffers[bufferIdx].length;
     }
 
     public MeshedRegion getRegion() {

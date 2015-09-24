@@ -2,6 +2,8 @@ package nidefawl.qubes.input;
 
 import static org.lwjgl.opengl.GL11.*;
 
+import org.lwjgl.glfw.GLFW;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
@@ -164,6 +166,16 @@ public class Selection {
     }
 
     public void clicked(int button, boolean isDown) {
+        if (button == 2) {
+            System.out.println("!!!");
+            BlockPos p = selection[0];
+            World world = Game.instance.getWorld();
+            if (p != null && world != null) {
+                int type = world.getType(p.x, p.y, p.z);
+                Game.instance.selBlock = type;
+            }
+            return;
+        }
         this.mouseDown = isDown;
         this.mouseStateChanged = this.mouseDown != isDown;
         if (!this.mouseDown && !Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL)) {
@@ -232,6 +244,7 @@ public class Selection {
                 BlockPos p2 = Engine.selection.getMax();
 
                 EditBlockTask task = new EditBlockTask(p1, p2, Game.instance.selBlock);
+                task.hollow = Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT);
                 Game.instance.edits.add(task);
                 Game.instance.step = 0;
                 task.apply(world);

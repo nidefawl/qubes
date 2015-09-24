@@ -4,6 +4,10 @@ import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Lists;
+
+import nidefawl.qubes.nbt.Tag.StringTag;
+import nidefawl.qubes.nbt.Tag.TagList;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -413,6 +417,20 @@ public abstract class Tag {
         public boolean getBoolean(String string) {
             return getByte(string) > 0;
         }
+
+        public List getList(String string) {
+            Tag t = this.data.get(string);
+            return t instanceof Tag.TagList ? ((Tag.TagList) t).getList() : Collections.emptyList();
+        }
+
+        /**
+         * @param string
+         * @param joinedChannels
+         * @param tagType
+         */
+        public void setList(String string, TagList list) {
+            this.data.put(string, list);
+        }
     }
 
     public static class Float extends Tag {
@@ -704,6 +722,7 @@ public abstract class Tag {
         return null;
     }
 
+
     public static String readString(DataInput stream) throws IOException {
         int len = stream.readShort();
         if (len >= MAX_STR_LEN) {
@@ -726,5 +745,29 @@ public abstract class Tag {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * @param joinedChannels
+     * @return 
+     */
+    public static TagList wrapStringList(Collection<String> ta) {
+        TagList taglist = new TagList();
+        for (String s : ta) {
+            taglist.add(new StringTag(s));
+        }
+        return taglist;
+    }
+
+    /**
+     * @param list
+     * @return
+     */
+    public static ArrayList<String> unwrapStringList(Collection<StringTag> ta) {
+        ArrayList<String> list = Lists.newArrayListWithCapacity(ta.size());
+        for (StringTag s : ta) {
+            list.add(s.getString());
+        }
+        return list;
     }
 }

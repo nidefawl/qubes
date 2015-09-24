@@ -4,8 +4,10 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
@@ -20,6 +22,8 @@ import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class FinalRenderer {
@@ -28,13 +32,16 @@ public class FinalRenderer {
     public Shader shaderBlur;
     public Shader shaderDeferred;
     public Shader shaderThreshold;
+    public Shader shaderSSR;
 
     private FrameBuffer sceneFB;
-    private FrameBuffer deferred;
+    public FrameBuffer ssrpass;
+    public FrameBuffer deferred;
     private FrameBuffer blur1;
     private FrameBuffer blur2;
     private int         blurTexture;
     private boolean startup = true;
+    private boolean ssr = false;
     
     /** deferred shader uniform array for lights
      * Layout:
@@ -51,16 +58,9 @@ public class FinalRenderer {
     private Uniform1f[] lightSize = new Uniform1f[256];
 
     public void renderDeferred(World world, float fTime) {
-
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("bindFramebuffer");
         deferred.bind();
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("clearFrameBuffer");
         deferred.clearFrameBuffer();
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("enableShader");
         shaderDeferred.enable();
         ArrayList<DynamicLight> lights = world.lights;
         shaderDeferred.setProgramUniform1i("numLights", Math.min(256, lights.size()));
@@ -68,8 +68,8 @@ public class FinalRenderer {
             DynamicLight light = lights.get(a);
             float constant = 1.0f;
             float linear = 0.7f;
-            float quadratic = 1.8f;
-            float lightThreshold = 1.0f;
+            float quadratic = 0.8f;
+            float lightThreshold = 0.01f;
             float maxBrightness = Math.max(Math.max(light.color.x, light.color.y), light.color.z);
             float lightL = (float) (linear * linear - 4 * quadratic * (constant - (256.0 / lightThreshold) * maxBrightness));
             float radius = (-linear + GameMath.sqrtf(lightL)) / (2 * quadratic);
@@ -82,29 +82,20 @@ public class FinalRenderer {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("bindTextures");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
         GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
-        GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, TMgr.getNoise());
+        GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("drawFullscreenQuad");
         Engine.drawFullscreenQuad();
-
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
 
         if (Game.show) {
             Shader.disable();
             FrameBuffer.unbindFramebuffer();
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
-            if (Game.DO_TIMING)
-                TimingHelper.startSec("DebugOverlayDef");
             dbg.preDbgFB(false);
             dbg.drawDbgTexture(0, 0, 0, Engine.getSceneFB().getTexture(0), "texColor");
             dbg.drawDbgTexture(0, 0, 1, Engine.getSceneFB().getTexture(1), "texNormals");
@@ -112,10 +103,9 @@ public class FinalRenderer {
             dbg.drawDbgTexture(0, 0, 3, Engine.getSceneFB().getDepthTex(), "texDepth");
             dbg.drawDbgTexture(0, 0, 4, Engine.shadowRenderer.getDepthTex(), "texShadow");
             dbg.drawDbgTexture(0, 0, 5, TMgr.getNoise(), "noiseTex");
+            dbg.drawDbgTexture(0, 0, 6, Engine.getSceneFB().getTexture(3), "light");
             dbg.drawDbgTexture(0, 1, 0, this.deferred.getTexture(0), "DeferredOut");
             dbg.postDbgFB();
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
         }
 
     }
@@ -126,45 +116,37 @@ public class FinalRenderer {
         {0, 1, 2, 3, 4, 4, 5},
         {0, 1, 2, 3, 4, 5, 7, 8, 9, 10},
     };
+    private FloatBuffer scaleMatBuf;
     
     public void renderBlur(World world, float fTime) {
         int kawaseKernSizeSetting = 2;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
         
-        int input = this.deferred.getTexture(0);
+        int input = ssr ? this.ssrpass.getTexture(0) : this.deferred.getTexture(0);
         FrameBuffer buffer = blur1;
 
-        if (Game.DO_TIMING) TimingHelper.startSec("enableShader");
         shaderBlur.enable();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("enable shaderBlur");
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
+        GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
         shaderThreshold.enable();
-        if (Game.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
         buffer.bind();
-        if (Game.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
         buffer.clearFrameBuffer();
-        if (Game.DO_TIMING)  TimingHelper.endStart("bindTexture");
         float w, h;
         w = deferred.getWidth();
         h = deferred.getHeight();
 //        if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
             GL11.glViewport(0, 0, buffer.getWidth(), buffer.getHeight());
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
-        if (Game.DO_TIMING) TimingHelper.endStart("drawFullscreenQuad");
         Engine.drawFullscreenQuad();
         input = buffer.getTexture(0);
         buffer = buffer == blur1 ? blur2 : blur1;
         shaderBlur.enable();
         for (int p = 0; p < kawaseKernPasses.length; p++) {
-            if (Game.DO_TIMING) TimingHelper.endStart("setuniforms");
             shaderBlur.setProgramUniform3f("blurPassProp", 1.0F/w, 1.0F/h, kawaseKernPasses[p]);
-            if (Game.DO_TIMING) TimingHelper.endStart("bindFramebuffer");
             buffer.bind();
-            if (Game.DO_TIMING) TimingHelper.endStart("clearFrameBuffer");
             buffer.clearFrameBuffer();
-            if (Game.DO_TIMING)  TimingHelper.endStart("bindTexture");
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
-            if (Game.DO_TIMING) TimingHelper.endStart("drawFullscreenQuad");
             Engine.drawFullscreenQuad();
             
 
@@ -175,14 +157,10 @@ public class FinalRenderer {
                 FrameBuffer.unbindFramebuffer();
                 Shader.disable();
                 GuiOverlayDebug dbg = Game.instance.debugOverlay;
-                if (Game.DO_TIMING)
-                    TimingHelper.startSec("DebugOverlayBlur");
                 dbg.preDbgFB(false);
                 dbg.drawDbgTexture(1, 0, p+1, input, "pass"+p+" in");
                 dbg.drawDbgTexture(1, 1, p+1, buffer.getTexture(0), "pass"+p+" out");
                 dbg.postDbgFB();
-                if (Game.DO_TIMING)
-                    TimingHelper.endSec();
                 shaderBlur.enable();
 //                if (buffer.getHeight() != deferred.getHeight() || buffer.getWidth() != deferred.getWidth())
                     GL11.glViewport(0, 0, buffer.getWidth(), buffer.getHeight());
@@ -199,17 +177,12 @@ public class FinalRenderer {
             GL11.glViewport(0, 0, deferred.getWidth(), deferred.getHeight());
         if (Game.show) {
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
-            if (Game.DO_TIMING)
-                TimingHelper.startSec("DebugOverlayBlur");
             dbg.preDbgFB(false);
             dbg.drawDbgTexture(1, 0, 0, deferred.getTexture(0), "texColor");
             dbg.drawDbgTexture(1, 1, 0, input, "blured");
             dbg.postDbgFB();
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
         }
         this.blurTexture = input;
-        if (Game.DO_TIMING) TimingHelper.endSec();
     }
 
 
@@ -221,11 +194,19 @@ public class FinalRenderer {
             dbg.drawDebug();
             dbg.postDbgFB();
         }
+        
         if (Game.DO_TIMING)
             TimingHelper.startSec("Deferred");
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred");
         renderDeferred(world, fTime);
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        if (ssr) {
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("SSR");
+            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SSR");
+            renderReflection(world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        }
         if (Game.DO_TIMING)
             TimingHelper.endStart("Blur");
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Blur");
@@ -233,41 +214,62 @@ public class FinalRenderer {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         if (Game.DO_TIMING)
             TimingHelper.endSec();
+        
         FrameBuffer.unbindFramebuffer();
 
+    }
+
+
+    /**
+     * @param world
+     * @param fTime
+     */
+    private void renderReflection(World world, float fTime) {
+        
+        ssrpass.bind();
+        ssrpass.clearFrameBuffer();
+        shaderSSR.enable();
+        
+        shaderSSR.setProgramUniformMatrix4ARB("inverseProj", false, Engine.getMatSceneP().getInv(), false);
+        shaderSSR.setProgramUniformMatrix4ARB("pixelProj", false, scaleMatBuf, false);
+        shaderSSR.setProgramUniformMatrix4ARB("worldMVP", false, Engine.getMatSceneMVP().get(), false);
+        shaderSSR.setProgramUniform1i("texColor", 0);
+        shaderSSR.setProgramUniform1i("texNormals", 1);
+        shaderSSR.setProgramUniform1i("texMaterial", 2);
+        shaderSSR.setProgramUniform1i("texDepth", 3);
+        shaderSSR.setProgramUniform1i("texShadow", 4);
+        shaderSSR.setProgramUniform1i("texShadow2", 6);
+        shaderSSR.setProgramUniform1i("noisetex", 5);
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, deferred.getTexture(0));
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
+        GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
+        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
+        GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
+//        GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
+        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, TMgr.getNoise());
+        Engine.drawFullscreenQuad();
+        Shader.disable();
     }
 
 
     public void renderFinal(World world, float fTime) {
         if (Game.show) {
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
-            if (Game.DO_TIMING)
-                TimingHelper.startSec("DebugOverlayFinal");
             dbg.preDbgFB(false);
-            dbg.drawDbgTexture(2, 0, 0, deferred.getTexture(0), "texColor");
+            dbg.drawDbgTexture(2, 0, 0, (ssr ? ssrpass.getTexture(0) : deferred.getTexture(0)), "texColor");
             dbg.drawDbgTexture(2, 0, 1, blurTexture, "texBlur");
             dbg.postDbgFB();
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
         }
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("enableShader");
         shaderFinal.enable();
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderBlur");
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("bindTexture");
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, deferred.getTexture(0));
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, (ssr ? ssrpass.getTexture(0) : deferred.getTexture(0)));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, blurTexture);
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("drawFullscreenQuad");
         Engine.drawFullscreenQuad();
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("disableShader");
         Shader.disable();
 
     }
@@ -276,6 +278,7 @@ public class FinalRenderer {
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
+            Shader new_shaderSSR = assetMgr.loadShader("shaders/basic/ssr");
             Shader new_shaderDef = assetMgr.loadShader("shaders/basic/deferred");
             Shader new_shaderBlur = assetMgr.loadShader("shaders/basic/blur_kawase");
             Shader new_shaderFinal = assetMgr.loadShader("shaders/basic/finalstage");
@@ -285,6 +288,8 @@ public class FinalRenderer {
             shaderBlur = new_shaderBlur;
             shaderDeferred = new_shaderDef;
             shaderThreshold = new_shaderThresh;
+            shaderSSR = new_shaderSSR;
+            shaderSSR.enable();
             shaderFinal.enable();
             shaderFinal.setProgramUniform1i("texColor", 0);
             shaderFinal.setProgramUniform1i("texBlur", 1);
@@ -292,14 +297,15 @@ public class FinalRenderer {
             shaderBlur.setProgramUniform1i("texColor", 0);
             shaderThreshold.enable();
             shaderThreshold.setProgramUniform1i("texColor", 0);
+            shaderThreshold.setProgramUniform1i("texLight", 6);
             shaderDeferred.enable();
             shaderDeferred.setProgramUniform1i("texColor", 0);
             shaderDeferred.setProgramUniform1i("texNormals", 1);
             shaderDeferred.setProgramUniform1i("texMaterial", 2);
             shaderDeferred.setProgramUniform1i("texDepth", 3);
             shaderDeferred.setProgramUniform1i("texShadow", 4);
-            shaderDeferred.setProgramUniform1i("texShadow2", 6);
             shaderDeferred.setProgramUniform1i("noisetex", 5);
+            shaderDeferred.setProgramUniform1i("texLight", 6);
             for (int i = 0; i < lightColors.length; i++) {
                 this.lightPos[i] = shaderDeferred.getUniform("lights["+i+"].Position", Uniform3f.class);
                 this.lightColors[i] = shaderDeferred.getUniform("lights["+i+"].Color", Uniform3f.class);
@@ -327,10 +333,12 @@ public class FinalRenderer {
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB16F);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
+        sceneFB.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
         sceneFB.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
         sceneFB.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
         sceneFB.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
         sceneFB.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
+        sceneFB.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
         sceneFB.setHasDepthAttachment();
         sceneFB.setup();
         Engine.setSceneFB(sceneFB);
@@ -360,6 +368,27 @@ public class FinalRenderer {
         deferred.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
         deferred.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
         deferred.setup();
+        
+        
+        
+
+        ssrpass = new FrameBuffer(displayWidth, displayHeight);
+        ssrpass.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        ssrpass.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        ssrpass.setup();
+        
+        Matrix4f trs = new Matrix4f();
+        trs.translate(0.5f, 0.5f, 0);
+        trs.scale(new Vector3f(0.5f, 0.5f, 1.0F));
+        Matrix4f scale = new Matrix4f();
+        scale.scale(new Vector3f(Game.displayWidth, Game.displayHeight, 1));
+        Matrix4f.mul(scale, trs, scale);
+        Matrix4f.mul(scale, Engine.getMatSceneP(), scale);
+        this.scaleMatBuf=BufferUtils.createFloatBuffer(16);
+        this.scaleMatBuf.position(0);
+        scale.store(scaleMatBuf);
+        scaleMatBuf.flip();
+        
     }
 
     void releaseShaders() {
@@ -375,6 +404,10 @@ public class FinalRenderer {
             shaderFinal.release();
             shaderFinal = null;
         }
+        if (shaderSSR != null) {
+            shaderSSR.release();
+            shaderSSR = null;
+        }
     }
 
     void releaseFrameBuffers() {
@@ -385,6 +418,10 @@ public class FinalRenderer {
         if (deferred != null) {
             deferred.cleanUp();
             deferred = null;
+        }
+        if (ssrpass != null) {
+            ssrpass.cleanUp();
+            ssrpass = null;
         }
         if (blur1 != null) {
             blur1.cleanUp();

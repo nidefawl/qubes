@@ -25,9 +25,10 @@ public class Chunk {
     public boolean          needsSave       = false;
     boolean                 isEmpty         = false;
     private int             top;
-    public boolean          needsLightInit  = true;
-    public boolean          isValid  = true;
-    public boolean          isUnloading  = false;
+    public boolean          isLit           = false;
+    public boolean          isValid         = true;
+    public boolean          isUnloading     = false;
+    public boolean          isPopulated     = false;
 
     public Chunk(World world, int x, int z, int heightBits) {
         this.blockLight = new byte[1 << (heightBits + SIZE_BITS * 2)];
@@ -212,7 +213,6 @@ public class Chunk {
     }
 
     public void initLight() {
-        this.needsLightInit = false;
         //Zero out all light
         for (int i = 0, len = this.blockLight.length; i < len; i++)
             this.blockLight[i] = 0;
@@ -256,7 +256,7 @@ public class Chunk {
     }
 
     public void postLoad() {
-        if (this.needsLightInit) {
+        if (!this.isLit) {
             initLight();
         } else {
             initHeightMap();   
@@ -319,5 +319,13 @@ public class Chunk {
             }
         }
         return changed;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "Chunk["+this.world.getName()+","+x+","+z+"]";
     }
 }

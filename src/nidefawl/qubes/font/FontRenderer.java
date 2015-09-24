@@ -63,7 +63,7 @@ public class FontRenderer {
             this.lineHeight = (int) (this.trueTypeFont.getLineHeight() * 0.8);
     }
 
-    public int drawString(final String chatline, final int x, final int y, final int color, final boolean shadow, final float alpha) {
+    public int drawString(final String chatline, final float x, final float y, final int color, final boolean shadow, final float alpha) {
         return this.drawString(chatline, x, y, color, shadow, alpha, TrueTypeFont.ALIGN_LEFT);
     }
 
