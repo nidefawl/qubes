@@ -5,7 +5,7 @@ import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;
 
-public class BootClient1 {
+public class BootClient {
     public static void main(String[] args) {
         try {
             WorkingEnv.init(Side.CLIENT, ".");
