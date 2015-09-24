@@ -40,6 +40,7 @@ struct SurfaceProperties {
     vec4    sunSpotColor;
     float   sunSpotDens;
     float   sunProximity;
+    vec4   light;
 } prop;
 
 
@@ -49,7 +50,7 @@ uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
 uniform sampler2D texDepth;
 uniform sampler2DShadow texShadow;
-uniform sampler2D texShadow2;
+uniform sampler2D texLight;
 uniform sampler2D noisetex;
 
 
@@ -130,6 +131,14 @@ void setSunSpotDens() {
 }
 
 
+vec3 applyFog(vec3 albedo, float dist, vec3 rayOrigin, vec3 rayDirection){
+    float fogDensity = 0.00006;
+    float vFalloff = 20.0;
+    vec3 fogColor = vec3(0.88, 0.92, 0.999);
+    float fog = exp((-rayOrigin.y*vFalloff)*fogDensity) * (1.0-exp(-dist*rayDirection.y*vFalloff*fogDensity))/(rayDirection.y*vFalloff);
+    return mix(albedo, fogColor, clamp(fog, 0.0, 1.0));
+}
+
 
 
 void main() {
@@ -137,12 +146,15 @@ void main() {
 
 	prop.albedo = texture(texColor, pass_texcoord).rgb;
 #ifdef DO_SHADING
-	prop.albedo = pow(prop.albedo, vec3(1/2.2));
-    prop.albedo = pow(prop.albedo, vec3(2.2));
-    prop.albedo = mix(prop.albedo, vec3(dot(prop.albedo, vec3(0.3333f))), vec3(0.15f));
+	// prop.albedo = pow(prop.albedo, vec3(1.4));
+ //    prop.albedo = pow(prop.albedo, vec3(2.2));
+    float lum = dot(prop.albedo, vec3(0.3333f));
+    prop.albedo = mix(prop.albedo, vec3(lum), vec3(0.05f));
 
 
-	prop.normal = texture(texNormals, pass_texcoord).rgb * 2.0f - 1.0f;
+    vec4 nl = texture(texNormals, pass_texcoord);
+	prop.normal = nl.rgb * 2.0f - 1.0f;
+    prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
     prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
 	prop.linearDepth = expToLinearDepth(prop.depth);
@@ -150,50 +162,73 @@ void main() {
     prop.worldposition = in_matrix.mv_inv * prop.position;
     prop.viewVector = normalize(in_matrix.cameraPosition.xyz - prop.worldposition.xyz);
     prop.NdotL = dot( prop.normal, SkyLight.lightDir.xyz );
+    float isSky = float(prop.blockinfo.y==0u);
+    float isWater = float(prop.blockinfo.y==4u);
+    float isLight = float(prop.blockinfo.y==6u);
 
-    vec3 reflectDir = normalize(reflect(-SkyLight.lightDir.xyz, prop.normal));  
-    float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), 2.2);
+    vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
+    float roughness = 1.4+isWater*100;
+    float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness);
+    float theta = max(dot(prop.viewVector, prop.normal), 0.0);
+    float minRefl = 0.02;
+    float amtRefl = minRefl + (1.0 - minRefl) * pow(1.0 - theta, 5.0);
 
-	vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
+    vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
+    vec3 skySunScat2 = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
 
     setSunSpotDens();
-  	float directShading = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
-    float shadow = getShadow()*0.8+0.2;
-	float isSky = float(prop.blockinfo.y==0u);
-	float isWater = float(prop.blockinfo.y==4u||prop.blockinfo.y==6u);
-	float isLight = float(prop.blockinfo.y==6u);
+    float fNight = smoothstep(0, 1, clamp(nightNoon-isLight, 0, 1));
+    float skyLightLvl = prop.light.x;
+    float blockLightLvl = prop.light.y;
+    float occlusion = prop.light.z;
+    float shadow = getShadow();
+  	float nDotL = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
+    float sunLight = skyLightLvl * nDotL * shadow * dayLightIntens;
+    sunLight *= (1-blockLightLvl); //TODO: test + remove
+    // prop.albedo*=mix(prop.light.z, 1, clamp(isSky+nDotL+(1-prop.light.x)*0.3,0,1));
+
+    float blockLight = (1-pow(1-blockLightLvl,0.35));
+    vec3 lightColor = mix(vec3(1), vec3(1.0)*0.18, fNight);
+    vec3 lightColor2 = mix(vec3(1), vec3(0.56, 0.56, 1.0)*0.06, fNight);
+	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
+    vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
+    vec3 Iamb = SkyLight.La.rgb * lightColor;
+
+    vec3 finalLight = vec3(0);
+    finalLight += Iamb * occlusion * skyLightLvl;
+    finalLight += vec3(0.863)* (1.0-isLight*0.7)* (mix(1, occlusion, 0.19)) * blockLight;
+    lum = (clamp(pow(0.6+lum, 2)-1, 0, 1))*isLight*3;
+    finalLight += lum* (mix(1, occlusion, 0.19)) * blockLight;
+    finalLight += Ispec * sunLight;
+    finalLight += Idiff * sunLight;
+    // finalLight = mix (finalLight, vec3(1), lum*);
 
 
-	vec3 Ispec = SkyLight.Ls.rgb * directShading * spec;
-	vec3 Idiff = SkyLight.Ld.rgb * directShading;     
-	vec3 finalLight = vec3(0);
-	float fNight = smoothstep(0, 1, clamp(nightNoon-isLight, 0, 1));
-	finalLight = SkyLight.La.rgb*(1-fNight*0.28);
-	finalLight += shadow * Idiff*dayLightIntens;
-	finalLight += shadow * Ispec*dayLightIntens;
-	finalLight *= clamp(dayLightIntens, 0.5, 1.0)*1.0;
-	finalLight.rg *= 1.0-fNight*0.23;
-	// finalLight *= isLight*24+1;
-	finalLight *= 1.0-fNight*0.63;
-    finalLight = mix(finalLight, vec3(24.0), isLight);
+	// finalLight += SkyLight.La.rgb*prop.light.z*(1-clamp(fNight*0.48, 0, 1));
+	// finalLight += shadow * Idiff*dayLightIntens*(1-fNight*0.78);
+	// finalLight += shadow * Ispec*dayLightIntens;
+	// finalLight *= clamp(dayLightIntens, 0.5, 1.0)*1.0;
+	// finalLight.rg *= 1.0-fNight*0.23;
+	// finalLight *= 1.0-fNight*0.73;
+ //    finalLight = mix(finalLight, vec3(0.56), prop.light.y);
 
     for(int i = 1; i < numLights; ++i)
     {
         // Calculate distance between light source and current fragment
         float fDist = length(lights[i].Position - prop.worldposition.xyz);
-        if(fDist < lights[i].Radius)
+        if(fDist < lights[i].Radius && occlusion > 0) //executed anyways
         {
             // Diffuse
             vec3 lightDir = normalize(lights[i].Position - prop.worldposition.xyz);
             vec3 diffuse = max(dot(prop.normal, lightDir), 0.0) * SkyLight.Ld.rgb * lights[i].Color;
             // Specular
             vec3 halfwayDir = normalize(lightDir + prop.viewVector);  
-            float spec = pow(max(dot(prop.normal, halfwayDir), 0.0), 32.0);
-            vec3 specular = lights[i].Color * spec * SkyLight.Ls.rgb;
+            float spec = pow(max(dot(prop.normal, halfwayDir), 0.0), 2.0);
+            vec3 specular = lights[i].Color * spec * SkyLight.Ls.rgb * 2.2;
             // Attenuation
             float attenuation = 1.0 / (1.0 + lights[i].Linear * fDist + lights[i].Quadratic * fDist * fDist);
-            diffuse *= attenuation;
-            specular *= attenuation;
+            diffuse *= attenuation * occlusion;
+            specular *= attenuation * occlusion;
             finalLight += diffuse;
             finalLight += specular;
         }
@@ -213,21 +248,27 @@ void main() {
 	// sky += prop.sunSpotColor.rgb*prop.sunSpotDens;
 	// sky += vSky*0.9f*(1-fNight);
 	vec3 terr=prop.albedo*finalLight;
-
+    spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
+    vec3 waterAlb = mix(prop.albedo*finalLight, vec3(0.)+spec*vec3(0.9), isWater*theta);
+    terr = mix (terr, waterAlb, isWater);
 	
 	float finalLightbr = clamp((finalLight.r+finalLight.b+finalLight.g) / 2.0f, 0, 1);
-	vec3 fogColor = vec3(0.82f, 0.82f, 0.92f)*(1-fNight*0.8)*finalLightbr;
+	
+    vec3 fogColor = vec3(0.82f, 0.82f, 0.92f)*(1-fNight*0.8)*finalLightbr;
 	//distance
 	float dist = length(prop.position);
 
+    
     float fogFactor = clamp( (dist - 35.0f) /  1429.0f, 0.0f, 0.94f );
+
 	prop.albedo = mix(terr, sky, isSky);
 	prop.albedo = mix(prop.albedo, fogColor, clamp(fogFactor-prop.sunSpotDens*1.2, 0, 0.05));
 
-	if (length(debugcolor) > 0) {
-		prop.albedo = mix(prop.albedo, debugcolor, 0.3);
-	}
-
+	// if (length(debugcolor) > 0) {
+	// 	prop.albedo = mix(prop.albedo, debugcolor, 0.3);
+	// }
+#else 
+    prop.albedo *= 0.25;
 #endif
-	out_Color = vec4(prop.albedo, 1);
+    out_Color = vec4(prop.albedo, 1);
 }

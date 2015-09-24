@@ -6,16 +6,18 @@
 uniform vec4 linecolor;
 out vec4 color;
 out vec3 vposition;
+out vec3 normal;
+out float ftime;
 out highp vec3 triangle;
 
 void main() {
 	gl_Position = in_matrix.mvp * in_position;
 	vposition = (in_matrix.mv * in_position).xyz;
+	ftime = in_matrix.frameTime*0.05;
+	normal  = in_normal.xyz;
 	color = linecolor;
 	int vertexID = int(mod(gl_VertexID, 4));
-	if (vertexID == 0) {
-    	triangle = vec3(0, 0, 255);
-	}
+	triangle = vec3(0, 0, 255);
 	if (vertexID == 1) {
     	triangle = vec3(0, 255, 0);
 	}

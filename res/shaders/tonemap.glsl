@@ -1,13 +1,13 @@
 
 const float A = 0.15; // Shoulder Strength
 const float B = 0.50; // Linear Strength
-const float C = 0.10; // Linear Angle
+const float C = 0.15; // Linear Angle
 const float D = 0.20; // Toe Strength
 const float E = 0.02; // Toe Numerator
 const float F = 0.30; // Toe Denominator
 
-const float fMiddleGray = 0.23f;
-const float fWhitePoint = 2.0f;
+const float fMiddleGray = 0.2f;
+const float fWhitePoint = 1.7f;
 
 #define RGB_TO_LUMINANCE vec3(0.212671, 0.715160, 0.072169)
 #define AUTO_EXPOSURE 0
@@ -22,7 +22,7 @@ vec3 Uncharted2Tonemap(vec3 x)
 
 float GetAverageSceneLuminance()
 {
-    float fAveLogLum =  0.1;
+    float fAveLogLum =  0.08;
     fAveLogLum = max(0.05, fAveLogLum); // Average luminance is an approximation to the key of the scene
     return fAveLogLum;
 }
