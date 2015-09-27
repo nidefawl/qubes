@@ -3,7 +3,7 @@ package nidefawl.qubes.vec;
 import java.nio.FloatBuffer;
 
 public class Vector3f {
-
+    final public static Vector3f ZERO = new Vector3f();
     public float x, y, z;
 
     /**

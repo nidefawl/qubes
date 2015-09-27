@@ -34,4 +34,12 @@ public abstract class ChunkManager {
 
     public void queueLoadChecked(long l) {
     }
+
+    /**
+     * Deletes all chunks so world can regenerate
+     * @return 
+     */
+    public int deleteAllChunks() {
+        return 0;
+    }
 }

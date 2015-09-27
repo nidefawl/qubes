@@ -30,16 +30,25 @@ public class TextField extends AbstractUI implements Renderable {
     }
 
     @Override
+    public void setPos(int x, int y) {
+        super.setPos(x, y);
+        this.inputRenderer.xPos = this.posX + 4;
+        this.inputRenderer.yPos = this.posY + 4;
+    }
+
+    @Override
+    public void setSize(int w, int h) {
+        super.setSize(w, h);
+        this.inputRenderer.width = this.width - 8;
+        this.inputRenderer.height = this.height - 8;
+    }
+    @Override
     public void render(float fTime, double mX, double mY) {
         this.hovered = this.mouseOver(mX, mY);
         Shaders.colored.enable();
         renderOutlinedBox();
         Shaders.textured.enable();
         GL11.glDisable(GL11.GL_CULL_FACE);
-        this.inputRenderer.xPos = this.posX + 4;
-        this.inputRenderer.yPos = this.posY + 4;
-        this.inputRenderer.width = this.width - 8;
-        this.inputRenderer.height = this.height - 8;
         this.inputRenderer.focused = this.focused;
 
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
@@ -88,6 +97,13 @@ public class TextField extends AbstractUI implements Renderable {
 
     public String getText() {
         return this.inputRenderer.editText;
+    }
+
+    /**
+     * @return
+     */
+    public TextInput getTextInput() {
+        return this.inputRenderer;
     }
 
 }

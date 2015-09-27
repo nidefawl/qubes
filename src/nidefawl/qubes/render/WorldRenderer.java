@@ -182,6 +182,7 @@ public class WorldRenderer {
 
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
+        Shaders.wireframe.setProgramUniform1f("maxDistance", 10);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);

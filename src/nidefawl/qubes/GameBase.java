@@ -33,7 +33,7 @@ public abstract class GameBase implements Runnable {
     public static int     displayWidth;
     public static int     displayHeight;
     public static boolean glDebug         = false;
-    public static boolean GL_ERROR_CHECKS = true;
+    public static boolean GL_ERROR_CHECKS = false;
     public static long    windowId        = 0;
     static int            initWidth       = 1024;
     static int            initHeight      = 512;
@@ -218,7 +218,6 @@ public abstract class GameBase implements Runnable {
             glfwSetCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
             glfwSetCallback(windowId, cbCursorPos);
-            glfwSetCallback(windowId, cbText);
 
             int major, minor, rev;
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
@@ -636,6 +635,13 @@ public abstract class GameBase implements Runnable {
 
     public long getTime() {
         return timer.absTime;
+    }
+    public void setTextHook(boolean state) {
+        if (state) {
+            glfwSetCharCallback(windowId, cbText);
+        } else {
+            glfwSetCharCallback(windowId, null);
+        }
     }
 
 

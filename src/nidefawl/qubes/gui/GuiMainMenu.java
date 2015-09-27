@@ -128,5 +128,8 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         this.fieldN.focused = false;
     }
 
+    public boolean requiresTextInput() {
+        return true;
+    }
 
 }

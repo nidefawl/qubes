@@ -51,7 +51,7 @@ public abstract class AbstractChannel {
     public abstract void removeUser(ChatUser p);
 
     /**
-     * @param player
+     * @param players
      * @return
      */
     public boolean containsUser(ChatUser user) {

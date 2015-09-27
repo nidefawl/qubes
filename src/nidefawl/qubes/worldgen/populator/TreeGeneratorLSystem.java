@@ -72,10 +72,8 @@ public class TreeGeneratorLSystem implements IWorldGen {
         rotation = rotation.rotate(GameMath.PI_OVER_180*-90, 0, 0, 1);
         float angleOffset = -4+rand.nextFloat()*4*2;
         angleOffset*=1.2f;
-        System.out.println("tree start");
         recurse(c, rand, x, y, z, angleOffset, new CharSequenceIterator(initialAxiom),
                 position, rotation, 0);
-        System.out.println("tree end");
 
         return true;
     }

@@ -8,6 +8,7 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.network.packet.PacketSTrackChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
@@ -20,6 +21,7 @@ import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
 public class Player extends Entity implements ChatUser, ICommandSource {
@@ -195,5 +197,17 @@ public class Player extends Entity implements ChatUser, ICommandSource {
     @Override
     public void sendMessage(String channel, String string) {
         this.netHandler.sendPacket(new PacketChatMessage(channel, string));
+    }
+
+    public void sendPacket(Packet packet) {
+        this.netHandler.sendPacket(packet);
+    }
+
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.server.commands.ICommandSource#getWorld()
+     */
+    @Override
+    public World getWorld() {
+        return this.world;
     }
 }

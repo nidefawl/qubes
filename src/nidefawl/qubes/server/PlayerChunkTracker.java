@@ -418,9 +418,9 @@ public class PlayerChunkTracker {
     /**
      * Recheck if required chunks loaded.
      */
-    public void recheckIfRequiredChunksLoaded() {
+    public void recheckIfRequiredChunksLoaded(boolean force) {
         ticksLastCheck++;
-        if (ticksLastCheck > 100) {
+        if (ticksLastCheck > 100 || force) {
             ticksLastCheck = 0;
             ChunkManagerServer mgr = (ChunkManagerServer) worldServer.getChunkManager();
             for (Entry e : this.map.values()) {

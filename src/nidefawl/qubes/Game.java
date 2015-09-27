@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL13.glActiveTexture;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -15,6 +16,7 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
@@ -80,7 +82,7 @@ public class Game extends GameBase implements IErrorHandler {
 
     public boolean updateRenderers = true;
 
-    private int grassSide;
+    public final Selection selection = new Selection();
 
     static public Game instance;
     public void connectTo(String host) {
@@ -101,28 +103,11 @@ public class Game extends GameBase implements IErrorHandler {
     
     public Game() {
         super();
-//        TimingHelper.setName(0, "Final_Prepare");
-//        TimingHelper.setName(1, "Final_Stage0");
-//        TimingHelper.setName(2, "Final_Stage1");
-//        TimingHelper.setName(3, "Final_Stage2");
-////        TimingHelper.setName(4, "Final_Stage3");
-//        TimingHelper.setName(5, "Final_StageLast");
-//        TimingHelper.setName(6, "RenderScene");
-//        TimingHelper.setName(7, "PreFinalStage");
-//        TimingHelper.setName(8, "PostFinalStage");
-//        TimingHelper.setName(9, "GUIStats");
-//        TimingHelper.setName(10, "UpdateTimer");
-//        TimingHelper.setName(11, "PreRenderUpdate");
-//        TimingHelper.setName(12, "Input");
-//        TimingHelper.setName(13, "EngineUpdate");
-//        TimingHelper.setName(15, "DisplayUpdate");
-//        TimingHelper.setName(16, "CalcFPS");
-//        TimingHelper.setName(17, "Final_Stage0to1Mipmap");
-//        TimingHelper.setName(18, "Final_Stage1to2Mipmap");
     }
 
     @Override
     public void initGame() {
+        selection.init();
         AssetManager.getInstance().init();
         Engine.init();
         TextureManager.getInstance().init();
@@ -145,17 +130,160 @@ public class Game extends GameBase implements IErrorHandler {
     }
     public void lateInitGame() {
         BlockTextureArray.getInstance().reload();
-//        setWorld(new WorldClient(null));
-//        this.entSelf.move(-800, 222, 1540);
-//        this.entSelf.yaw=6.72F;
-//        this.entSelf.pitch=38.50F;
-//        this.entSelf.move(-870.42F, 103.92F-1.3F, 1474.25F);
-//        this.entSelf.toggleFly();
-         AssetTexture grassSide = AssetManager.getInstance().loadPNGAsset("textures/blocks/grass_side.png");
-        this.grassSide = TextureManager.getInstance().makeNewTexture(grassSide);
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F8) {
+            public void onDown() {
+                setVSync(!getVSync());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F9) {
+            public void onDown() {
+                Engine.toggleWireFrame();
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_R) {
+            public void onDown() {
+                updateRenderers=!updateRenderers;
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_ENTER) {
+            public void onDown() {
+                if (world != null)
+                    showGUI(new GuiChatInput());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_T) {
+            public void onDown() {
+                if (world != null)
+                    showGUI(new GuiChatInput());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_Z) {
+            public void onDown() {
+                Engine.flushRenderTasks();
+                Engine.regionRenderer.resetAll();
+                BlockFaceAttr.USE_TRIANGLES=!BlockFaceAttr.USE_TRIANGLES;
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F3) {
+            public void onDown() {
+                show = !show;
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F5) {
+            public void onDown() {
+//              setWorld(new WorldClient(null));
+//              Engine.worldRenderer.flush();
+//              Engine.textures.refreshNoiseTextures();
+              PlayerSelf p = getPlayer();
+              if (p != null) {
+                  Random rand = new Random();
+                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
+              }
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F2) {
+            public void onDown() {
+                BlockTextureArray.getInstance().reload();
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F1) {
+            public void onDown() {
+                Engine.regionRenderer.reRender();
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F11) {
+            public void onDown() {
+                toggleTiming = true;
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F12) {
+            public void onDown() {
+                TimingHelper.dump();
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F6) {
+            public void onDown() {
+                TimingHelper2.dump();
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_ESCAPE) {
+            public void onDown() {
+                if (world != null) {
+                    setWorld(null);
+                }
+                if (client != null) {
+                    client.disconnect("Quit");
+                }
+                if (gui == null)
+                    showGUI(new GuiMainMenu());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_N) {
+            public void onDown() {
+                showGUI(new GuiSelectWorld());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_U) {
+            public void onDown() {
+                edits.clear();
+                step = 0;
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_I) {
+            public void onDown() {
+                if (step-1 >= 0) {
+                    step--;
+                    if (edits.size()>step)
+                    edits.get(step).apply(world);
+                }
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_O) {
+            public void onDown() {
+                if (step+1 < edits.size()) {
+                    step++;
+                    edits.get(step).apply(world);
+                }
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_H) {
+            public void onDown() {
+                if (player != null) {
+                    player.toggleFly();
+                }
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_SUBTRACT) {
+            public void onDown() {
+                if (world != null)
+                for (int i = 0; i < 22; i++) {
+
+                    world.removeLight(0);
+                }
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_ADD) {
+            public void onDown() {
+                if (player != null)
+                    world.addLight(new Vector3f(player.pos).translate(0, 1, 0));
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_MULTIPLY) {
+            public void onDown() {
+                if (player != null)
+                    world.spawnLights(player.pos.toBlock());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_M) {
+            public void onDown() {
+                selection.toggleMode();
+            }
+        });
+        ChatManager.getInstance().loadInputHistory();
         
     }
     public void setWorld(WorldClient world) {
+        this.selection.reset();
         if (this.world != null) {
             this.world.onLeave();
             Engine.flushRenderTasks();
@@ -171,177 +299,53 @@ public class Game extends GameBase implements IErrorHandler {
     public void shutdown() {
         super.shutdown();
         setWorld(null);
+        ChatManager.getInstance().saveInputHistory();
     }
-
+    
     protected void onTextInput(long window, int codepoint) {
+        Keybinding k = Keyboard.getKeyBinding(codepoint);
+        if (k != null && k.isEnabled() && k.isPressed()) {
+            return;
+        }
         if (this.gui != null) {
             if (this.gui.onTextInput(codepoint)) {
                 return;
             }
         }
     }
+    int skipChars = 0;
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
-
+          Keybinding k = Keyboard.getKeyBinding(key);
+          if (k != null && k.isEnabled() && k.isPressed()) {
+              k.update(action);
+              return;
+          }
             if (this.gui != null) {
                 if (this.gui.onKeyPress(key, scancode, action, mods)) {
                     return;
                 }
             }
+            if (k != null && k.isEnabled() && !k.isPressed()) {
+                k.update(action);
+                return;
+            }
             boolean isDown = Keyboard.getState(action);
-            switch (key) {
-                case Keyboard.KEY_F8:
-                    if (isDown) {
-                        setVSync(!getVSync());
-                    }
-                    break;
-                case Keyboard.KEY_F9:
-                    if (isDown) {
-                        Engine.toggleWireFrame();
-                    }
-                    break;
-                case Keyboard.KEY_R:
-                    if (isDown) {
-                        updateRenderers=!updateRenderers;
-                    }
-                    break;
-                case Keyboard.KEY_ENTER:
-                    if (isDown) {
-                        showGUI(new GuiChatInput());
-                    }
-                    break;
-                case Keyboard.KEY_T:
-                    if (isDown) {
-                        Engine.flushRenderTasks();
-                        Engine.regionRenderer.resetAll();
-                        BlockFaceAttr.USE_TRIANGLES=!BlockFaceAttr.USE_TRIANGLES;
-                    }
-                    break;
-                case Keyboard.KEY_F3:
-                    if (isDown) {
-                        show = !show;
-                    }
-                    break;
-                case Keyboard.KEY_F5:
-                    if (isDown) {
-//                        setWorld(new WorldClient(null));
-//                        Engine.worldRenderer.flush();
-//                        Engine.textures.refreshNoiseTextures();
-                        PlayerSelf p = getPlayer();
-                        if (p != null) {
-                            Random rand = new Random();
-                            p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
-                        }
-                    }
-                    break;
-                case Keyboard.KEY_F2:
-                    if (isDown) {
-//                        this.follow = !this.follow;
-                        BlockTextureArray.getInstance().reload();
-                    }
-                    break;
-                case Keyboard.KEY_F1:
-                    if (isDown) {
-                        Engine.regionRenderer.reRender();
-                    }
-                    break;
-                case Keyboard.KEY_F11:
-                    if (isDown) {
-                        toggleTiming = true;
-                    }
-                    break;
-                case Keyboard.KEY_F12:
-                    if (isDown) {
-                        TimingHelper.dump();
-                    }
-                    break;
-                case Keyboard.KEY_F6:
-                    if (isDown) {
-                        TimingHelper2.dump();
-                    }
-                    break;
-                case Keyboard.KEY_ESCAPE:
-                    if (this.world != null) {
-                        setWorld(null);
-                    }
-                    if (this.client != null) {
-                        this.client.disconnect("Quit");
-                    }
-                    if (this.gui == null)
-                        showGUI(new GuiMainMenu());
-                    break;
+            if (!isDown) {
+                return;
             }
-            if (this.world != null) {
-
-                switch (key) {
-                    case Keyboard.KEY_M:
-                        if (isDown) {
-                        }
-                        break;
-                    case Keyboard.KEY_N:
-                        if (isDown) {
-                            showGUI(new GuiSelectWorld());
-                        }
-                        break;
-                    case Keyboard.KEY_U:
-                        if (isDown) {
-                            this.edits.clear();
-                            step = 0;
-                        }
-                        break;
-                    case Keyboard.KEY_I:
-                        if (isDown) {
-                            if (step-1 >= 0) {
-                                step--;
-                                if (edits.size()>step)
-                                edits.get(step).apply(world);
-                            }
-                        }
-                        break;
-                    case Keyboard.KEY_O:
-                        if (isDown) {
-                            if (step+1 < edits.size()) {
-                                step++;
-                                edits.get(step).apply(world);
-                            }
-                        }
-                        break;
-                    case Keyboard.KEY_H:
-                        if (isDown & this.player != null) {
-                            this.player.toggleFly();
-                        }
-                        break;
-                    case Keyboard.KEY_KP_SUBTRACT:
-                        if (isDown)
-                            for (int i = 0; i < 22; i++) {
-
-                                this.world.removeLight(0);
-                            }
-                        break;
-                    case Keyboard.KEY_KP_ADD:
-                        if (isDown && this.player != null)
-                            this.world.addLight(new Vector3f(this.player.pos).translate(0, 1, 0));
-                        break;
-                    case Keyboard.KEY_KP_MULTIPLY:
-                        if (isDown && this.player != null)
-                            this.world.spawnLights(this.player.pos.toBlock());
-                        break;
-                }
-            }
-            if (key == Keyboard.KEY_0) {
+            if (key == GLFW.GLFW_KEY_0) {
                 this.selBlock = 0;
-            } else if (key >= Keyboard.KEY_1 && key <= Keyboard.KEY_9) {
-                this.selBlock = key - Keyboard.KEY_1;
+            } else if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
+                this.selBlock = key - GLFW.GLFW_KEY_1;
                 if (!Block.isValid(this.selBlock)) {
                     this.selBlock = 0;
                 }
             }
         }
     }
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.GameBase#onWheelScroll(long, double, double)
-     */
+    
     @Override
     protected void onWheelScroll(long window, double xoffset, double yoffset) {
         if (this.gui != null) {
@@ -357,7 +361,6 @@ public class Game extends GameBase implements IErrorHandler {
             }
             
         }
-        // TODO Auto-generated method stub
         
     }
     public void onMouseClick(long window, int button, int action, int mods) {
@@ -371,7 +374,7 @@ public class Game extends GameBase implements IErrorHandler {
             long timeSinceLastClick = System.currentTimeMillis() - lastClickTime;
             switch (button) {
                 case 0:
-                    Engine.selection.clicked(button, isDown);
+                    selection.clicked(button, isDown);
                     break;
                 case 1:
                     if (isDown ) {
@@ -380,12 +383,12 @@ public class Game extends GameBase implements IErrorHandler {
                     }
                     break;
                 case 2:
-                    Engine.selection.clicked(button, isDown);
+                    selection.clicked(button, isDown);
                     break;
             }
             if (b != this.movement.grabbed()) {
                 setGrabbed(b);
-                Engine.selection.resetSelection();
+                selection.resetSelection();
             }
         }
     }
@@ -438,7 +441,7 @@ public class Game extends GameBase implements IErrorHandler {
                 TimingHelper.endStart("renderBlockHighlight");
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderBlockHighlight");
-                Engine.selection.renderBlockHighlight(this.world, fTime);
+                selection.renderBlockHighlight(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
             
@@ -563,56 +566,10 @@ public class Game extends GameBase implements IErrorHandler {
           if (Game.DO_TIMING) TimingHelper.endSec();
           Shader.disable();
       }
-//      Shaders.textured.enable();
-//      glBindTexture(GL_TEXTURE_2D, grassSide);
-//      Engine.drawFullscreenQuad();
-//      {
-//          int x = 33;
-//          float s = 1.4f;
-//          int tw = 256;
-//          int th = tw;
-//          int y = displayHeight-(th)-30;
-//          Tess.instance.setColor(0xFFFFFF, 0xff);
-//          {
-//
-//              Tess.instance.add(x + tw, y, 0, 1, 1);
-//              Tess.instance.add(x, y, 0, 0, 1);
-//              Tess.instance.add(x, y + th, 0, 0, 0);
-//              Tess.instance.add(x + tw, y + th, 0, 1, 0);
-//              Tess.instance.draw(GL_QUADS);
-//          }
-//          x+=tw;
-//          Tess.instance.setColor(0xFFFFFF, 0xff);
-//          {
-//
-//              Tess.instance.add(x + tw, y, 0, 1, 1);
-//              Tess.instance.add(x, y, 0, 0, 1);
-//              Tess.instance.add(x, y + th, 0, 0, 0);
-//              Tess.instance.add(x + tw, y + th, 0, 1, 0);
-//              Tess.instance.draw(GL_QUADS);
-//          }
-//          y-=th;
-//          Tess.instance.setColor(0xFFFFFF, 0xff);
-//          {
-//
-//              Tess.instance.add(x + tw, y, 0, 1, 1);
-//              Tess.instance.add(x, y, 0, 0, 1);
-//              Tess.instance.add(x, y + th, 0, 0, 0);
-//              Tess.instance.add(x + tw, y + th, 0, 1, 0);
-//              Tess.instance.draw(GL_QUADS);
-//          } 
-//          x-=tw;
-//          Tess.instance.setColor(0xFFFFFF, 0xff);
-//          {
-//
-//              Tess.instance.add(x + tw, y, 0, 1, 1);
-//              Tess.instance.add(x, y, 0, 0, 1);
-//              Tess.instance.add(x, y + th, 0, 0, 0);
-//              Tess.instance.add(x + tw, y + th, 0, 1, 0);
-//              Tess.instance.draw(GL_QUADS);
-//          }
-//      }
-//      Shader.disable();
+//    Shaders.textured.enable();
+//    glBindTexture(GL_TEXTURE_2D, grassSide);
+//    Engine.drawFullscreenQuad();
+//    Shader.disable();
 
       if (this.gui != null) {
           this.gui.render(fTime, Mouse.getX(), Mouse.getY());
@@ -649,7 +606,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 1200/* && Keyboard.isKeyDown(Keyboard.KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >22200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -737,7 +694,7 @@ public class Game extends GameBase implements IErrorHandler {
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
             Engine.updateMouseOverView(winX, winY);
-            Engine.selection.update(world, px, py, pz);
+            selection.update(world, px, py, pz);
         }
         
         if (this.world != null && updateRenderers) {
@@ -765,12 +722,12 @@ public class Game extends GameBase implements IErrorHandler {
 //            if (!startRender)
 //            startRender = nRegions > 4;
         }
-//        boolean releaseMouse = !this.mouseClicked || (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL) ? !Mouse.isButtonDown(0) : true);
+//        boolean releaseMouse = !this.mouseClicked || (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) ? !Mouse.isButtonDown(0) : true);
 //                
 //        if (releaseMouse) {
 //        }
     }
-    
+    boolean reinittexthook = false;
     public void showGUI(Gui gui) {
 
         if (this.gui != null) {
@@ -779,13 +736,28 @@ public class Game extends GameBase implements IErrorHandler {
         }
         this.gui = gui;
         if (this.gui != null) {
-
             this.gui.setPos(0, 0);
             this.gui.setSize(displayWidth, displayHeight);
             this.gui.initGui(this.gui.firstOpen);
             this.gui.firstOpen = false;
             if (Mouse.isGrabbed())
                 setGrabbed(false);
+        } else {
+        }
+        reinittexthook = true;
+            
+    }
+    
+    @Override
+    public void updateInput() {
+        super.updateInput();
+        if (reinittexthook) {
+            reinittexthook = false;
+            if (this.gui != null && this.gui.requiresTextInput()) {
+                setTextHook(true);
+            } else {
+                setTextHook(false);
+            }
         }
     }
 
@@ -818,6 +790,7 @@ public class Game extends GameBase implements IErrorHandler {
        if (this.gui != null) {
            this.gui.update();
        }
+       ChatManager.getInstance().saveInputHistory();
        Engine.regionRenderer.tickUpdate();
 //       if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
 //           this.setWorld(null);

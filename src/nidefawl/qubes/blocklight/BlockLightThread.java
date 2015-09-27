@@ -49,7 +49,7 @@ public class BlockLightThread extends Thread {
                 try {
                     int l = 0;
                     work.clear();
-                    if ((l=this.queue.drainTo(work)) > 0) {
+                    if ((l=this.queue.drainTo(work)) > 0) { //TODO: this isn't blocking, figure out somthing better 
                         Iterator<Long> tasks = work.iterator();
                         while (tasks.hasNext()) {
                             Long task = tasks.next();
@@ -202,5 +202,13 @@ public class BlockLightThread extends Thread {
     public void queueChunk(int x, int z, int i) {
         long l = toHash(x, 0, z, 0b00|(i&0x1));
         this.queue.add(l);
+    }
+
+    /**
+     * The thread might still be working on several items after calling this
+     */
+    public void ensureEmpty() {
+        this.queue.clear();
+        
     }
 }

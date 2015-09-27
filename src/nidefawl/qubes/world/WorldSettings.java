@@ -1,11 +1,12 @@
 package nidefawl.qubes.world;
 
-import java.io.File;
+import java.io.*;
 import java.util.UUID;
 
 import nidefawl.qubes.config.AbstractYMLConfig;
+import nidefawl.qubes.config.InvalidConfigException;
+import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.util.StringUtil;
-import nidefawl.qubes.worldgen.*;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
@@ -13,13 +14,41 @@ import nidefawl.qubes.worldgen.terrain.*;
 
 public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 
-    public int  time;
+    public long  time;
+    public long  dayLen = 120000;
+    public boolean isFixedTime;
     public long seed;
     public UUID uuid;
     private final File dir;
     private int id;
     private int generator;
     private String worldName;
+
+    @Override
+    public long getDayLen() {
+        return dayLen;
+    }
+
+    @Override
+    public boolean isFixedTime() {
+        return isFixedTime;
+    }
+    @Override
+    public void read(DataInput in) throws IOException {
+        throw new UnsupportedOperationException("This method should not be called");
+    }
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeInt(this.id);
+        out.writeLong(this.uuid.getMostSignificantBits());
+        out.writeLong(this.uuid.getLeastSignificantBits());
+        out.writeLong(this.seed);
+        out.writeLong(this.time);
+        out.writeLong(this.dayLen);
+        out.writeByte(this.isFixedTime ? 1 : 0);
+        Packet.writeString(this.worldName, out);
+        
+    }
 
     public WorldSettings(File worldDirectory) {
         super(true);
@@ -37,9 +66,11 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     @Override
     public void load() {
         String strseed = getString("seed", "0");
-        this.seed = StringUtil.parseLong(strseed, 0);
-        this.time = getInt("time", this.time);
+        this.seed = StringUtil.parseLong(strseed, 0, 16);
         this.generator = getInt("generator", this.generator);
+        this.time = getLong("time", this.time);
+        this.dayLen = getLong("dayLength", this.dayLen);
+        this.isFixedTime = getBoolean("isFixedTime", this.isFixedTime);
         String strUUID = getString("uuid", "");
         this.uuid = StringUtil.parseUUID(strUUID, this.uuid);
     }
@@ -50,10 +81,12 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 
     @Override
     public void save() {
-        setString("uuid", this.uuid.toString());
         setString("seed", Long.toHexString(this.seed));
-        setInt("time", this.time);
         setInt("generator", this.generator);
+        setLong("time", this.time);
+        setLong("dayLength", this.dayLen);
+        setBoolean("isFixedTime", this.isFixedTime);
+        setString("uuid", this.uuid.toString());
     }
 
     @Override
@@ -67,7 +100,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     }
 
     @Override
-    public int getTime() {
+    public long getTime() {
         return this.time;
     }
 
@@ -116,5 +149,31 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
                 return new EmptyChunkPopulator();
         }
         return new ChunkPopulator();
+    }
+
+    /**
+     * 
+     */
+    public void saveFile() {
+        try {
+            write(new File(this.dir, "world.yml"));
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void setTime(long l) {
+        this.time = l;
+    }
+
+    @Override
+    public void setFixedTime(boolean b) {
+        this.isFixedTime = b;
+    }
+
+    @Override
+    public void setDayLen(long dayLen) {
+        this.dayLen = dayLen;
     }
 }

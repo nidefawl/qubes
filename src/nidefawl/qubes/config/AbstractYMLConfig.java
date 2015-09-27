@@ -3,6 +3,7 @@ package nidefawl.qubes.config;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -49,7 +50,6 @@ public abstract class AbstractYMLConfig {
             options.setIndent(4);
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             options.setPrettyFlow(true);
-            
             Yaml yaml = new Yaml(new SafeConstructor(),new Representer(),options);
             yaml.dump(this.map, writer);
         } catch (Exception e) {
@@ -96,10 +96,24 @@ public abstract class AbstractYMLConfig {
         return def;
     }
 
+    protected Boolean getBoolean(String s, boolean def) {
+        Object o = this.map.get(s);
+        if (o instanceof Boolean)
+            return (Boolean) o;
+        return def;
+    }
+
     protected int getInt(String s, int def) {
         Object o = this.map.get(s);
         if (o instanceof Number)
-            return (int) (Number) o;
+            return (int) ((Number) o).intValue();
+        return def;
+    }
+
+    protected long getLong(String s, long def) {
+        Object o = this.map.get(s);
+        if (o instanceof Number)
+            return (long) ((Number) o).longValue();
         return def;
     }
 
@@ -117,8 +131,15 @@ public abstract class AbstractYMLConfig {
     protected void setDouble(String string, double nr) {
         this.map.put(string, nr);
     }
+    protected void setBoolean(String string, boolean nr) {
+        this.map.put(string, nr);
+    }
 
     protected void setInt(String string, int nr) {
+        this.map.put(string, nr);
+    }
+
+    protected void setLong(String string, long nr) {
         this.map.put(string, nr);
     }
 

@@ -101,6 +101,24 @@ public class RegionFile {
 		int h = getLastUsedSec();
 //		System.out.println("opened region file, highest used sector: " + h);
 	}
+    public int deleteChunks() {
+        int n = 0;
+        for (int a = 0; a < this.header.chunks.length; a++) {
+            DataChunkMeta m = this.header.chunks[a];
+            if (m.offset > -1)
+                n++;
+            this.header.chunks[a] = new DataChunkMeta(FILE_META_SIZE + a * CHUNK_META_SIZE);
+        }
+        this.header.usedSectors.clear();
+        try {
+            this.randomAccess.seek(0);
+            this.header.write(this.randomAccess);
+        } catch (Exception e) {
+            // TODO: report + handle;
+            e.printStackTrace();
+        }
+        return n;
+    }
 
 	public byte[] readChunk(int x, int z) throws IOException {
 		x &= CHUNK_MASK;
@@ -258,4 +276,5 @@ public class RegionFile {
 	public String getFileName() {
 		return this.name;
 	}
+
 }

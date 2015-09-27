@@ -144,7 +144,7 @@ public class MeshUpdateTask {
     private int checkBufferSize(int bufferIdx, int length) {
         if (this.buffers[bufferIdx] == null || this.buffers[bufferIdx].length < length) {
             int newSize = (length+2048);
-            System.out.println("realloc buffer to length "+newSize);
+//            System.out.println("realloc buffer to length "+newSize);
             this.buffers[bufferIdx] = new int[newSize];
         }
         return this.buffers[bufferIdx].length;

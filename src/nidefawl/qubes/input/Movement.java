@@ -1,5 +1,7 @@
 package nidefawl.qubes.input;
 
+import org.lwjgl.glfw.GLFW;
+
 public class Movement {
     public float strafe, forward;
     boolean grabbed = false;
@@ -15,26 +17,26 @@ public class Movement {
         this.sneak = 0;
         if (this.grabbed) {
             float mult = 1.0F;
-            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL))
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
                 mult = 0.01F;
-            if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_W)) {
                 this.forward += mult;
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_S)) {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_S)) {
                 this.forward-=mult;
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_D)) {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_D)) {
                 this.strafe-=mult;
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_A)) {
                 this.strafe+=mult;
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL))
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
                 mult = 0.03F;
-            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT_SHIFT)) {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT)) {
                 this.sneak+=mult;
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_SPACE)) {
                 this.jump+=mult;
             }
             this.mX += mdX;

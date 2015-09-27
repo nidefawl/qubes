@@ -60,6 +60,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
             int xP = 8;
             int yP = 8;
             this.field = new TextField(this, 2, "");
+            this.field.getTextInput().setHistory(ChatManager.getInstance());
             field.setPos(xP, Game.displayHeight-h-yP);
             field.setSize(Game.displayWidth/2, h);
             field.focused = true;
@@ -72,6 +73,16 @@ public class GuiChatInput extends Gui implements ITextEdit {
     @Override
     public boolean onGuiClicked(AbstractUI element) {
         return super.onGuiClicked(element);
+    }
+
+    @Override
+    public boolean onKeyPress(int key, int scancode, int action, int mods) {
+        if (super.onKeyPress(key, scancode, action, mods))
+            return true;
+        if (key == GLFW.GLFW_KEY_ESCAPE) {
+            Game.instance.showGUI(null);
+        }
+        return true;
     }
 
     @Override
@@ -97,8 +108,10 @@ public class GuiChatInput extends Gui implements ITextEdit {
         return mouseRes;
     }
 
+    
     @Override
     public void render(float fTime, double mX, double mY) {
+        field.focused = true;
         Shaders.textured.enable();
         if (this.mouseResize == 1) {
             this.overlay.width = (int) (mX-this.overlay.posX+4);
@@ -117,6 +130,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
         int asdf = this.overlay.posY-this.overlay.height+insetY;
 //        System.out.println(mX+"/"+(this.overlay.posX+this.overlay.width-insetX-h)+"/"+asdf+"/"+mY+"/"+overlay.mouseRes);
         this.overlay.renderAt(this.field.posY-10, true);
+//        System.err.println(this.field.getText());
         super.renderButtons(fTime, mX, mY);
     }
 
@@ -140,5 +154,8 @@ public class GuiChatInput extends Gui implements ITextEdit {
         if (wasGrab) {
             Game.instance.setGrabbed(true);
         }
+    }
+    public boolean requiresTextInput() {
+        return true;
     }
 }

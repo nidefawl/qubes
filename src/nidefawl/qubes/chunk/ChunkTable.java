@@ -146,8 +146,10 @@ public class ChunkTable implements Iterable<Chunk> {
         return true;
 	}
 
-	public void clear() {
+	public Chunk[][] clear() {
+	    Chunk[][] c = this.values;
         this.values = new Chunk[size][];
+        return c;
     }
 
     public Chunk remove(long chunkcoordinates) {

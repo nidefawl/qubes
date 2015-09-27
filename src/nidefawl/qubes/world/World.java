@@ -1,24 +1,24 @@
 package nidefawl.qubes.world;
 
-import java.io.File;
 import java.util.*;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.*;
+import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.lighting.DynamicLight;
-import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.vec.*;
-import nidefawl.qubes.worldgen.*;
+import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Vector3f;
 
 public abstract class World implements IBlockWorld {
     public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;
     public static final float MIN_XZ     = -MAX_XZ;
     HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
     ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
+    ArrayList<Entity>         players = new ArrayList<>();                                           // use fast array list
     public ArrayList<DynamicLight>         lights = new ArrayList<>();                                           // use fast array list
 
     public final int worldHeight;
@@ -28,10 +28,7 @@ public abstract class World implements IBlockWorld {
     public final int worldSeaLevel;
 
     private long seed;
-
-    public int dayLen = 1000;
-    public int time;
-
+    
     private final ChunkManager chunkMgr;
     private final Random       rand;
     private final UUID         uuid;
@@ -47,7 +44,6 @@ public abstract class World implements IBlockWorld {
         this.seed = settings.getSeed();
         this.name = settings.getName();
         this.uuid = settings.getUUID();
-        this.time = settings.getTime();
         this.rand = new Random(seed);
         this.worldHeightBits = 8;
         this.worldHeightBitsPlusFour = worldHeightBits + 4;
@@ -69,11 +65,16 @@ public abstract class World implements IBlockWorld {
 //                time = (int) (System.currentTimeMillis()/50L);
 //                fTime = 0;
 //        dayLen = 211500;
-        time = 138000;
-//        time = 133000;
-        fTime=0;
-      dayLen = 211500;
-        float timeOffset = (this.time) % dayLen;
+//        time = 138000;
+////        time = 133000;
+//        fTime=0;
+//      dayLen = 4100;
+        if (this.settings.isFixedTime()) {
+            fTime = 0;
+        }
+      long time = this.settings.getTime();
+      long dayLen = this.settings.getDayLen();
+        float timeOffset = (time) % dayLen;
         float fSun = (timeOffset + fTime) / (float) dayLen + 0.25F;
         if (fSun < 0)
             fSun++;
@@ -91,7 +92,9 @@ public abstract class World implements IBlockWorld {
 //    long lastCheck = System.currentTimeMillis();
 //    int lastTime = this.time;
     public void tickUpdate() {
-        this.time++;
+        if (!this.settings.isFixedTime()) {
+            this.settings.setTime(this.settings.getTime()+1L);
+        }
         //        int offset = time%dayLen;
         //        if (offset < dayLen/3) {
         //            time += dayLen/3;
@@ -172,6 +175,9 @@ public abstract class World implements IBlockWorld {
         if (e != null) {
             throw new GameError("Entity with id " + ent.id + " already exists");
         }
+        if (ent instanceof Player) {
+            this.players.add(ent);
+        }
         this.entityList.add(ent);
         ent.world = this;
         addLight(new Vector3f(ent.pos));
@@ -180,6 +186,9 @@ public abstract class World implements IBlockWorld {
     public void removeEntity(Entity ent) {
         Entity e = this.entities.remove(ent.id);
         if (e != null) {
+            if (e instanceof Player) {
+                this.players.remove(ent);
+            }
             this.entityList.remove(e);
             ent.world = null;
         }
@@ -239,8 +248,18 @@ public abstract class World implements IBlockWorld {
         return this.seed;
     }
 
-    public int getTime() {
-        return this.time;
+    public long getTime() {
+        return this.settings.getTime();
+    }
+
+    public long getDayLength() {
+        return this.settings.getDayLen();
+    }
+    
+    public long getDayTime() {
+        long time = this.settings.getTime();
+        long dayLen = this.settings.getDayLen();
+        return time % dayLen;
     }
 
     /** dynamically generated at boot time 
@@ -302,5 +321,13 @@ public abstract class World implements IBlockWorld {
     
     public String getName() {
         return this.name;
+    }
+
+
+    /**
+     * @return the worlds settings (time, seed, name, ...)
+     */
+    public IWorldSettings getSettings() {
+        return this.settings;
     }
 }

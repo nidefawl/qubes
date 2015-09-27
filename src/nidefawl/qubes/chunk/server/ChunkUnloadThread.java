@@ -77,6 +77,14 @@ public class ChunkUnloadThread extends Thread {
 
     private void onInterruption() {
     }
+    
+    /**
+     * The thread might still be working on an item after calling this
+     */
+    public void ensureEmpty() {
+        this.queue.clear();
+        while ((mgr.isRunning() && this.isRunning) && !this.queue.isEmpty());
+    }
 
 
     public void queueUnloadChecked(Long l) {

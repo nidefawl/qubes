@@ -3,6 +3,7 @@ package nidefawl.qubes.shader;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.vec.Vector3f;
 
 public class Shaders {
     private static boolean startup = true;
@@ -64,6 +65,11 @@ public class Shaders {
             Shaders.textured = new_textured;
             Shaders.colored = new_colored;
             Shaders.renderUINT = new_uint;
+            Shaders.colored.enable();
+            Shaders.colored.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.wireframe.enable();
+            Shaders.wireframe.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shader.disable();
         } catch (ShaderCompileError e) {
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());

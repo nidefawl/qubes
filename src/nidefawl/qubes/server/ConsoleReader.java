@@ -7,6 +7,8 @@ import jline.console.UserInterruptException;
 import nidefawl.qubes.server.commands.Command;
 import nidefawl.qubes.server.commands.CommandException;
 import nidefawl.qubes.server.commands.ICommandSource;
+import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldServer;
 
 public class ConsoleReader implements Runnable, ICommandSource {
 
@@ -102,6 +104,11 @@ public class ConsoleReader implements Runnable, ICommandSource {
     public void sendMessage(String string) {
         out.println(string);
         out.flush();
+    }
+
+    @Override
+    public World getWorld() {
+        return this.server.getSpawnWorld();
     }
 
 }

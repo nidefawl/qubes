@@ -31,6 +31,7 @@ public abstract class Packet {
         register(PacketCSwitchWorld.class, 15, false, true);
         register(PacketChatMessage.class, 16, true, true);
         register(PacketChatChannels.class, 17, true, false);
+        register(PacketSWorldTime.class, 18, true, false);
     }
     public Packet() {
     }

@@ -73,7 +73,7 @@ public class RegionRenderer {
     static void reallocBuffer(int pass, int len) {
         if (buffers[pass] == null || buffers[pass].capacity() < len) {
             int align = ((len+8)/8)*8;
-            System.out.println("realloc buffer "+pass+" with "+len+" bytes (aligned to "+align+"  bytes)");
+//            System.out.println("realloc buffer "+pass+" with "+len+" bytes (aligned to "+align+"  bytes)");
             buffers[pass] = BufferUtils.createByteBuffer(align);
             intbuffers[pass] = buffers[pass].asIntBuffer();
         }
@@ -82,7 +82,7 @@ public class RegionRenderer {
         if (BlockFaceAttr.USE_TRIANGLES) {
             if (idxByteBuffers[pass] == null || idxByteBuffers[pass].capacity() < len) {
                 int align = ((len+8)/8)*8;
-                System.out.println("realloc idx buffer "+pass+" with "+len+" bytes (aligned to "+align+"  bytes)");
+//                System.out.println("realloc idx buffer "+pass+" with "+len+" bytes (aligned to "+align+"  bytes)");
                 idxByteBuffers[pass] = BufferUtils.createByteBuffer(align);
                 idxShortBuffers[pass] = idxByteBuffers[pass].asIntBuffer();
             }

@@ -147,4 +147,27 @@ public class ChunkManagerServer extends ChunkManager {
     public Iterator<Chunk> newUpdateIterator() {
         return this.table.iterator();
     }
+    /**
+     * Deletes all chunks so world can regenerate
+     * @return the number of chunks deleted
+     */
+    public int deleteAllChunks() {
+        this.thread.ensureEmpty();
+        this.unloadThread.ensureEmpty();
+        Chunk[][] c = this.table.clear();
+        for (int x = 0; x < c.length; x++) {
+            Chunk[] zRow = c[x];
+            if (zRow != null) {
+                for (int z = 0; z < zRow.length; z++) {
+                    Chunk chunk = zRow[z];
+                    if (chunk != null) {
+                        chunk.isValid = false;
+                        chunk.isUnloading = true;
+                    }
+                }
+            }
+        }
+        int n = this.reader.fileCache.deleteChunks();
+        return n;
+    }
 }

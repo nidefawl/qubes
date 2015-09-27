@@ -138,6 +138,7 @@ public class GameServer implements Runnable, IErrorHandler {
         }
         long start2 = System.currentTimeMillis();
         if (start2-this.lastSaveTick > 10000) {
+            resyncTime();
             this.lastSaveTick = start2;
             this.saveAndUnloadData();
         }
@@ -159,6 +160,15 @@ public class GameServer implements Runnable, IErrorHandler {
                 Thread.sleep(lSleep);
         }
 	}
+    private void resyncTime() {
+        for (int i = 0; i < this.worlds.length; i++) {
+            try {
+                this.worlds[i].resyncTime();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private void updateTick() {
         for (int i = 0; i < this.worlds.length; i++) {

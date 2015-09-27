@@ -17,6 +17,8 @@ public class CommandHandler {
         this.register(CommandKick.class);
         this.register(CommandList.class);
         this.register(CommandStats.class);
+        this.register(CommandSetTime.class);
+        this.register(CommandDebug.class);
     }
 
     private void register(Class<? extends Command> class1) {

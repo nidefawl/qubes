@@ -32,7 +32,7 @@ public class ServerHandlerPlay extends ServerHandler {
             if (this.player.flying) {
                 flags |= 1;
             }
-            sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getName(), world.getSeed(), world.getTime()));
+            sendPacket(new PacketSSpawnInWorld(world.settings, this.player.pos, flags));
             world.addPlayer(player);
             sendPacket(new PacketChatChannels(this.player.getJoinedChannels()));
         }
@@ -51,7 +51,7 @@ public class ServerHandlerPlay extends ServerHandler {
         if (this.player.flying) {
             flags |= 1;
         }
-        sendPacket(new PacketSSpawnInWorld(world.getId(), this.player.pos, flags, world.getUUID(), world.getName(), world.getSeed(), world.getTime()));
+        sendPacket(new PacketSSpawnInWorld(world.settings, this.player.pos, flags));
         world.addPlayer(player);
     }
 

@@ -70,7 +70,6 @@ public class Engine {
     public static FinalRenderer  outRenderer;
     public static RegionRenderer regionRenderer;
     public static MeshThread     regionRenderThread;
-    public static Selection      selection;
     public static int            vaoId        = 0;
     public static int            vaoTerrainId = 0;
     private static float         aspectRatio;
@@ -126,7 +125,6 @@ public class Engine {
             regionRenderer = new RegionRenderer();
             regionRenderThread = new MeshThread(3);
         }
-        selection = new Selection();
     }
     
     public static void init() {
@@ -140,7 +138,6 @@ public class Engine {
         if (initRenderers) {
             regionRenderThread.init();
             regionRenderer.init();
-            selection.init();
             reloadRenderer(true);
         }
         GL30.glBindVertexArray(vaoId);

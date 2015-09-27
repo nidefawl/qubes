@@ -59,8 +59,8 @@ public class GuiOverlayStats extends Gui {
             info1.add( String.format("RenderMode: %s", BlockFaceAttr.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
 
             this.stats5 = "";
-            BlockPos p = Engine.selection.selection[0];
-            BlockPos p2 = Engine.selection.selection[1];
+            BlockPos p = Game.instance.selection.pos[0];
+            BlockPos p2 = Game.instance.selection.pos[1];
             if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
             }

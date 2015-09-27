@@ -105,4 +105,8 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         }
         return false;
     }
+
+    public boolean requiresTextInput() {
+        return false;
+    }
 }

@@ -1,7 +1,5 @@
 package nidefawl.qubes.network.client;
 
-import java.util.Arrays;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -9,9 +7,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
-import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.network.Connection;
@@ -20,8 +16,7 @@ import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.TripletShortHash;
 import nidefawl.qubes.vec.BlockBoundingBox;
-import nidefawl.qubes.vec.Vec3D;
-import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldSettingsClient;
 
@@ -135,7 +130,7 @@ public class ClientHandler extends Handler {
         }
         this.state = STATE_CONNECTED;
         this.time = System.currentTimeMillis();
-        this.world = new WorldClient(new WorldSettingsClient(packetJoinGame.id, packetJoinGame.uuid, packetJoinGame.worldName, packetJoinGame.seed, packetJoinGame.time));
+        this.world = new WorldClient((WorldSettingsClient) packetJoinGame.worldSettings);
         this.chunkManager = (ChunkManagerClient) this.world.getChunkManager();
         this.player.setFly((packetJoinGame.flags & 0x1) != 0);
         this.world.addEntity(player);
@@ -264,5 +259,15 @@ public class ClientHandler extends Handler {
     public void handleChannels(PacketChatChannels packetChatChannels) {
         ChatManager.getInstance().syncChannels(packetChatChannels.list);
 
+    }
+
+    /**
+     * @param p
+     */
+    public void handleWorldTime(PacketSWorldTime p) {
+        IWorldSettings settings = this.world.getSettings();
+        settings.setTime(p.time);
+        settings.setDayLen(p.daylen);
+        settings.setFixedTime(p.isFixed);
     }
 }

@@ -14,6 +14,8 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.network.packet.Packet;
+import nidefawl.qubes.network.packet.PacketSWorldTime;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.Flags;
@@ -39,7 +41,6 @@ public class WorldServer extends World {
 
     public WorldServer(WorldSettings settings, GameServer server) {
         super(settings);
-        System.out.println("World directory at "+settings.getWorldDirectory().getAbsolutePath());
         this.server = server;
         this.chunkServer = (ChunkManagerServer) getChunkManager();
         this.generator = settings.getGenerator(this);
@@ -70,7 +71,18 @@ public class WorldServer extends World {
         super.tickUpdate();
         updateChunks();
     }
-
+    public void resyncTime() {
+        PacketSWorldTime wTime = new PacketSWorldTime(this.getId(), this.getTime(), this.getDayLength(), this.settings.isFixedTime());
+        this.broadcastPacket(wTime);
+        
+    }
+    public void broadcastPacket(Packet p) {
+        int l = this.players.size();
+        for (int i = 0; i < l; i++) {
+            Player player = this.players.get(i);
+            player.sendPacket(p);
+        }
+    }
     @Override
     public ChunkManager makeChunkManager() {
         return new ChunkManagerServer(this, ((WorldSettings) this.settings).getWorldDirectory());
@@ -88,7 +100,6 @@ public class WorldServer extends World {
                 long l = it.next();
                 int x = GameMath.lhToX(l);
                 int z = GameMath.lhToZ(l);
-//                System.out.println("wait "+x+"/"+z);
                 Chunk self = getChunk(x, z);
                 if (self == null || !self.isValid) {
                     System.out.println("remove missing chunk from queue");
@@ -105,7 +116,7 @@ public class WorldServer extends World {
         for (int i = 0; i < players.size(); i++) {
             this.chunkTracker.update(players.get(i));
         }
-        this.chunkTracker.recheckIfRequiredChunksLoaded();
+        this.chunkTracker.recheckIfRequiredChunksLoaded(false);
         if (updateIt == null || !updateIt.hasNext()) {
             updateIt = this.chunkServer.newUpdateIterator();
         }
@@ -154,6 +165,9 @@ public class WorldServer extends World {
 
     public void save(boolean b) {
         getChunkManager().saveAll();
+        if (b) {
+            ((WorldSettings)this.settings).saveFile();
+        }
     }
 
     public void flagBlock(int x, int y, int z) {
@@ -203,5 +217,24 @@ public class WorldServer extends World {
      */
     public IChunkPopulator getChunkPopulator() {
         return this.populator;
+    }
+    /**
+     * @return
+     */
+    public int deleteAllChunks() {
+        PlayerChunkTracker tr = getPlayerChunkTracker();
+        int l = this.players.size();
+        for (int i = 0; i < l; i++) {
+            Player player = this.players.get(i);
+            tr.removePlayer(player);
+        }
+        this.lightUpdateQueue.clear();
+        this.lightUpdater.ensureEmpty();
+        int n = getChunkManager().deleteAllChunks();
+        for (int i = 0; i < l; i++) {
+            Player player = this.players.get(i);
+            tr.addPlayer(player);
+        }
+        return n;
     }
 }

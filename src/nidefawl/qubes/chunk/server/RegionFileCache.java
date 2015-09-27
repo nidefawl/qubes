@@ -1,10 +1,15 @@
 package nidefawl.qubes.chunk.server;
 
-import java.io.File;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import nidefawl.qubes.util.StringUtil;
 
 public class RegionFileCache {
+    final static public Pattern FILE_PATTERN = Pattern.compile("region\\.(-?[0-9]+)\\.(-?[0-9]+)\\.dat");
 	private final File dir;
 
 	public RegionFileCache(File dir) {
@@ -55,18 +60,46 @@ public class RegionFileCache {
 		String name = RegionFile.getName(regionX, regionZ);
 		return new File(dir, name);
 	}
-	
-	public synchronized void closeAll() {
-		Iterator<RegionFile> it = this.map.values().iterator();
-		while (it.hasNext()) {
-			RegionFile file = it.next();
-			try {
-				file.close();
-			} catch (Exception e) {
-				System.err.println("While closing "+file.getFileName()+": "+e.getMessage());
-				e.printStackTrace();
-			}
-		}
-		this.map.clear();
-	}
+    
+    public synchronized void closeAll() {
+        Iterator<RegionFile> it = this.map.values().iterator();
+        while (it.hasNext()) {
+            RegionFile file = it.next();
+            try {
+                file.close();
+            } catch (Exception e) {
+                System.err.println("While closing "+file.getFileName()+": "+e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        this.map.clear();
+    }
+    
+    public synchronized int deleteChunks() {
+        closeAll();
+        File[] regionFiles = dir.listFiles(new FileFilter() {
+            
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isFile() && pathname.getName().endsWith(".dat");
+            }
+        });
+        int n = 0;
+        for (int i = 0; regionFiles != null && i < regionFiles.length; i++) {
+            File f = regionFiles[i];
+            Matcher m = FILE_PATTERN.matcher(f.getName());
+            if (m.matches()) {
+                int x = StringUtil.parseInt(m.group(1), 0);
+                int z = StringUtil.parseInt(m.group(1), 0);
+                try {
+                    RegionFile rf = new RegionFile(f, x, z);
+                    n += rf.deleteChunks();
+                    rf.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return n;
+    }
 }

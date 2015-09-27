@@ -18,7 +18,26 @@ import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.World;
 
 public class Selection {
+    
+    public static enum SelectionMode {
+        EDIT, SELECT
+    }
+    private SelectionMode mode = SelectionMode.EDIT;
+
+    /**
+     * @return the mode
+     */
+    public SelectionMode getMode() {
+        return this.mode;
+    }
+    /**
+     * @param mode the mode to set
+     */
+    public void setMode(SelectionMode mode) {
+        this.mode = mode;
+    }
     private TesselatorState highlightSelection;
+    private TesselatorState highlightBlockOver;
     boolean                 mouseDown         = false;
     boolean                 mouseStateChanged = false;
     private RayTrace rayTrace;
@@ -26,10 +45,12 @@ public class Selection {
     public void init() {
 
         highlightSelection = new TesselatorState();
+        highlightBlockOver = new TesselatorState();
         this.rayTrace = new RayTrace(); 
+        renderBlockOver();
     }
 
-    public BlockPos[] selection = new BlockPos[] {
+    public BlockPos[] pos = new BlockPos[] {
             new BlockPos(), new BlockPos()
     };
 
@@ -40,36 +61,58 @@ public class Selection {
     }
 
     public boolean hasSelection() {
-        return selection[0] != null && selection[1] != null;
+        return pos[0] != null && pos[1] != null;
     }
 
     boolean updateBB = false;
+    private BlockPos mouseOver;
 
     public void renderBlockHighlight(World world, float fTime) {
-
+        boolean b = false;
         if (hasSelection()) {
             if (updateBB) {
                 renderBB();
+                updateBB = false;
             }
+
             glEnable(GL_BLEND);
-            glDisable(GL_CULL_FACE);
             Shaders.colored.enable();
-            //            Shaders.colored.setProgramUniform3f("in_offset", this.highlight.x, this.highlight.y, this.highlight.z);
+            b = true;
             highlightSelection.drawQuads();
-            //            Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_CULL_FACE);
+            Shaders.wireframe.enable();
+            Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
+            Shaders.wireframe.setProgramUniform1f("maxDistance", 1000);
+            highlightSelection.drawQuads();
+            glEnable(GL_DEPTH_TEST);
+        }
+        if (mouseOver != null) {
+            if (!b) {
+                glEnable(GL_BLEND);
+                glDisable(GL_CULL_FACE);
+            }
+            b = true;
+            Shaders.colored.enable();
+            Shaders.colored.setProgramUniform3f("in_offset", this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
+            highlightBlockOver.drawQuads();
+            Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
+
+        }
+        if (b) {
+
             Shader.disable();
             glEnable(GL_CULL_FACE);
             glDisable(GL_BLEND);
         }
     }
-
-    public void renderBB() {
+    public void renderBlockOver() {
 
         float ext = 1 / 32F;
         Tess tesselator = Tess.instance;
         tesselator.setColorRGBAF(1, 1, 1, 0.2F);
-        BlockPos sel1 = selection[0];
-        BlockPos sel2 = selection[1];
+        BlockPos sel1 = new BlockPos();
+        BlockPos sel2 = new BlockPos();
         float minX = Math.min(sel1.x, sel2.x) - ext;
         float minY = Math.min(sel1.y, sel2.y) - ext;
         float minZ = Math.min(sel1.z, sel2.z) - ext;
@@ -112,6 +155,59 @@ public class Selection {
         tesselator.add(maxX, maxY, maxZ);
         tesselator.add(maxX, maxY, minZ);
 
+        tesselator.draw(GL_QUADS, highlightBlockOver);
+        tesselator.resetState();
+    }
+
+    public void renderBB() {
+
+        float ext = 1 / 32F;
+        Tess tesselator = Tess.instance;
+        tesselator.setColorRGBAF(1, 1, 1, 0.2F);
+        BlockPos sel1 = pos[0];
+        BlockPos sel2 = pos[1];
+        float minX = Math.min(sel1.x, sel2.x) - ext;
+        float minY = Math.min(sel1.y, sel2.y) - ext;
+        float minZ = Math.min(sel1.z, sel2.z) - ext;
+        float maxX = Math.max(sel1.x, sel2.x) + ext + 1;
+        float maxY = Math.max(sel1.y, sel2.y) + ext + 1;
+        float maxZ = Math.max(sel1.z, sel2.z) + ext + 1;
+        tesselator.setNormals(0, 0, -1);
+        tesselator.add(minX, maxY, minZ);
+        tesselator.add(maxX, maxY, minZ);
+        tesselator.add(maxX, minY, minZ);
+        tesselator.add(minX, minY, minZ);
+
+        tesselator.setNormals(0, 0, 1);
+        tesselator.add(minX, minY, maxZ);
+        tesselator.add(maxX, minY, maxZ);
+        tesselator.add(maxX, maxY, maxZ);
+        tesselator.add(minX, maxY, maxZ);
+
+        tesselator.setNormals(0, 1, 0);
+        tesselator.add(minX, maxY, maxZ);
+        tesselator.add(maxX, maxY, maxZ);
+        tesselator.add(maxX, maxY, minZ);
+        tesselator.add(minX, maxY, minZ);
+
+        tesselator.setNormals(0, -1, 0);
+        tesselator.add(minX, minY, minZ);
+        tesselator.add(maxX, minY, minZ);
+        tesselator.add(maxX, minY, maxZ);
+        tesselator.add(minX, minY, maxZ);
+
+        tesselator.setNormals(-1, 0, 0);
+        tesselator.add(minX, minY, minZ);
+        tesselator.add(minX, minY, maxZ);
+        tesselator.add(minX, maxY, maxZ);
+        tesselator.add(minX, maxY, minZ);
+
+        tesselator.setNormals(1, 0, 0);
+        tesselator.add(maxX, maxY, minZ);
+        tesselator.add(maxX, maxY, maxZ);
+        tesselator.add(maxX, minY, maxZ);
+        tesselator.add(maxX, minY, minZ);
+
         tesselator.draw(GL_QUADS, highlightSelection);
         tesselator.resetState();
     }
@@ -125,8 +221,20 @@ public class Selection {
         }
         if (Engine.vDir != null) {
             this.rayTrace.doRaytrace(world, Engine.vOrigin, Engine.vDir, extendReach() ? 200 : 55);
-
             BlockPos p = rayTrace.getColl();
+            this.mouseOver = p;
+            if (this.mode == SelectionMode.SELECT) {
+                if (p != null) {
+                    if (mouseStateChanged && this.mouseDown) { // first call after mousedown
+                        set(0, p);
+                        set(1, p);
+                    } else if (this.mouseDown) {
+                        set(1, p);
+                    }
+                }
+                this.mouseStateChanged = false;
+                return;
+            }
             //      if (p != null) {
             //          if (this.mouseClicked && !mouseDown) {
             //              setBlock();
@@ -134,7 +242,7 @@ public class Selection {
             //      }
             //TODO: add some better logic for highlighting, don't render "into" camera
             if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
-                if (!mouseDown ||(Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL))) {
+                if (!mouseDown ||(Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))) {
                     set(0, p);
                     set(1, p);
                 } else if (mouseStateChanged) {
@@ -144,19 +252,19 @@ public class Selection {
                 }
             } else {
                 if (!mouseDown) {
-                    set(1, selection[0]);
+                    set(1, pos[0]);
                 }
                 //          System.err.println("fail "+p);
             }
             this.mouseStateChanged = false;
-            if (this.mouseDown && Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL)) {
+            if (this.mouseDown && Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
                 onRelease();
             }
         }
     }
 
     private void set(int i, BlockPos p2) {
-        BlockPos p = selection[i];
+        BlockPos p = pos[i];
         if (p.x != p2.x || p.z != p2.z || p.y != p2.y) {
             p.x = p2.x;
             p.y = p2.y;
@@ -167,8 +275,7 @@ public class Selection {
 
     public void clicked(int button, boolean isDown) {
         if (button == 2) {
-            System.out.println("!!!");
-            BlockPos p = selection[0];
+            BlockPos p = pos[0];
             World world = Game.instance.getWorld();
             if (p != null && world != null) {
                 int type = world.getType(p.x, p.y, p.z);
@@ -176,9 +283,9 @@ public class Selection {
             }
             return;
         }
-        this.mouseDown = isDown;
         this.mouseStateChanged = this.mouseDown != isDown;
-        if (!this.mouseDown && !Keyboard.isKeyDown(Keyboard.KEY_LEFT_CONTROL)) {
+        this.mouseDown = isDown;
+        if (!this.mouseDown && !Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
             onRelease();
         }
     }
@@ -188,11 +295,11 @@ public class Selection {
     }
 
     public BlockPos getMin() {
-        return new BlockPos(Math.min(this.selection[0].x, this.selection[1].x), Math.min(this.selection[0].y, this.selection[1].y), Math.min(this.selection[0].z, this.selection[1].z));
+        return new BlockPos(Math.min(this.pos[0].x, this.pos[1].x), Math.min(this.pos[0].y, this.pos[1].y), Math.min(this.pos[0].z, this.pos[1].z));
     }
 
     public BlockPos getMax() {
-        return new BlockPos(Math.max(this.selection[0].x, this.selection[1].x), Math.max(this.selection[0].y, this.selection[1].y), Math.max(this.selection[0].z, this.selection[1].z));
+        return new BlockPos(Math.max(this.pos[0].x, this.pos[1].x), Math.max(this.pos[0].y, this.pos[1].y), Math.max(this.pos[0].z, this.pos[1].z));
     }
 
     public int getNumBlocks() {
@@ -204,9 +311,12 @@ public class Selection {
     
 
     private void onRelease() {
+        if (this.mode == SelectionMode.SELECT) {
+            return;
+        }
         World world = Game.instance.getWorld();
         if (world != null) {
-            int blocks = Engine.selection.getNumBlocks();
+            int blocks = getNumBlocks();
 //            System.out.println(blocks);
             if (blocks == 1) {
                 BlockPos blockPos = rayTrace.getColl();
@@ -240,8 +350,8 @@ public class Selection {
                     }
                 }
             } else {
-                BlockPos p1 = Engine.selection.getMin();
-                BlockPos p2 = Engine.selection.getMax();
+                BlockPos p1 = getMin();
+                BlockPos p2 = getMax();
 
                 EditBlockTask task = new EditBlockTask(p1, p2, Game.instance.selBlock);
                 task.hollow = Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT);
@@ -251,5 +361,22 @@ public class Selection {
                 
             }
         }
+    }
+    /**
+     * 
+     */
+    public void toggleMode() {
+        if (this.mode == SelectionMode.EDIT) {
+            this.mode = SelectionMode.SELECT;
+        } else {
+            this.mode = SelectionMode.EDIT;
+        }
+    }
+    /**
+     * 
+     */
+    public void reset() {
+        pos[0] = new BlockPos();
+        pos[1] = new BlockPos();
     }
 }

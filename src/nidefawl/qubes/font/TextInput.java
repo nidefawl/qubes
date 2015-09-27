@@ -29,8 +29,7 @@ public class TextInput {
     public int          mpos;
     public int          tick           = 0;
     public String       prevText       = null;
-    public List<String> history        = Collections.emptyList();
-    public boolean      hasHistory     = false;
+    public IStringHistory history        = null;
     public int          commandScroll  = 0;
     public boolean      focused       = false;
     public FontRenderer font;
@@ -72,11 +71,11 @@ public class TextInput {
 
     public void calculatePreview() {
         this.prevText = null;
-        if (hasHistory) {
+        if (this.history != null) {
             int s = 0;
             boolean fullmatch = false;
-            while (s < history.size()) {
-                String sCmd = history.get(history.size() - 1 - s);
+            while (s < history.getHistorySize()) {
+                String sCmd = history.getHistory(history.getHistorySize() - 1 - s);
                 if (sCmd.equals(editText)) {
                     fullmatch = true;
                     break;
@@ -85,8 +84,8 @@ public class TextInput {
             }
             if (!fullmatch) {
                 s = 0;
-                while (s < history.size()) {
-                    String sCmd = history.get(history.size() - 1 - s);
+                while (s < history.getHistorySize()) {
+                    String sCmd = history.getHistory(history.getHistorySize() - 1 - s);
                     if (sCmd.startsWith(editText)) {
                         this.prevText = sCmd;
                         return;
@@ -121,6 +120,7 @@ public class TextInput {
         if (action != GLFW.GLFW_PRESS && action != GLFW.GLFW_REPEAT) {
             return true;
         }
+        
         int cursorPos = mpos;
         boolean shiftDown = (mods & GLFW.GLFW_MOD_SHIFT) != 0;
         boolean control = (mods & GLFW.GLFW_MOD_CONTROL) != 0;
@@ -130,13 +130,13 @@ public class TextInput {
             return true;
         }
         if ((key == GLFW.GLFW_KEY_ENTER) || (key == GLFW.GLFW_KEY_KP_ENTER)) {// return/enter
-            if (hasHistory) {
-                int index = history.indexOf(this.editText);
+            if (this.history != null) {
+                int index = history.indexOfHistory(this.editText);
                 if (index == -1) {
-                    history.add(this.editText);
+                    history.addHistory(this.editText);
                 } else {
-                    history.remove(index);
-                    history.add(history.size(), this.editText);
+                    history.removeHistory(index);
+                    history.addHistory(history.getHistorySize(), this.editText);
                 }
             }
             commandScroll = 0;
@@ -152,30 +152,30 @@ public class TextInput {
             //        } else if ((Keyboard.isKeyDown(Keyboard.KEY_PAGE_DOWN)) && (chat.currentTab().getChatScroll() > 0)) {
             //            chat.currentTab().setChatScroll(chat.currentTab().getChatScroll() - (control ? 10 : 1));
             //            shiftDown = false;
-        } else if (hasHistory && key == GLFW.GLFW_KEY_UP && (commandScroll < history.size())) {// chat history up
+        } else if (this.history != null && key == GLFW.GLFW_KEY_UP && (commandScroll < history.getHistorySize())) {// chat history up
             commandScroll += 1;
-            this.editText = history.get(history.size() - commandScroll);
+            this.editText = history.getHistory(history.getHistorySize() - commandScroll);
             this.mpos = this.editText.length();
             this.shiftPX = 0;
             clearPreview();
             shiftDown = false;
-        } else if (hasHistory && key == GLFW.GLFW_KEY_DOWN && (commandScroll > 0)) {// chat history down
+        } else if (this.history != null && key == GLFW.GLFW_KEY_DOWN && (commandScroll > 0)) {// chat history down
             commandScroll -= 1;
             if (commandScroll == 0)
                 this.editText = "";
             else
-                this.editText = history.get(history.size() - commandScroll);
+                this.editText = history.getHistory(history.getHistorySize() - commandScroll);
             this.mpos = this.editText.length();
             this.shiftPX = 0;
             clearPreview();
             shiftDown = false;
-        } else if (hasHistory && !(control) && key == GLFW.GLFW_KEY_TAB && (history.size() > 0)) {// auto completion
+        } else if (this.history != null && !(control) && key == GLFW.GLFW_KEY_TAB && (history.getHistorySize() > 0)) {// auto completion
             if (commandScroll == 0) {
                 this.searchPattern = this.editText.trim();
             }
             if (shiftDown) {
                 while (--commandScroll > 0) {
-                    String a = history.get(history.size() - commandScroll);
+                    String a = history.getHistory(history.getHistorySize() - commandScroll);
                     if (!a.isEmpty() && a.startsWith(this.searchPattern)) {
                         this.editText = a;
                         this.mpos = this.selEnd = this.selStart = this.editText.length();
@@ -186,8 +186,8 @@ public class TextInput {
                 if (commandScroll < 0)
                     commandScroll = 0;
             } else
-                while (++commandScroll < history.size()) {
-                    String a = history.get(history.size() - commandScroll);
+                while (++commandScroll < history.getHistorySize()) {
+                    String a = history.getHistory(history.getHistorySize() - commandScroll);
                     if (!a.isEmpty() && a.startsWith(this.searchPattern)) {
                         this.editText = a;
                         this.mpos = this.selEnd = this.selStart = this.editText.length();
@@ -311,7 +311,7 @@ public class TextInput {
     private void submit(String text) {
         itextedit.submit(this, text);
     }
-
+    
     public void makeCursorVisible() {
         int cursorPosPX = editText.isEmpty() ? 0 : trueType.getWidth(editText.substring(0, mpos));
         int boxWidthPX = getWidth()-2;
@@ -676,5 +676,12 @@ public class TextInput {
     }
     public int getBottom() {
         return getTop()+getHeight();
+    }
+
+    /**
+     * @param history2
+     */
+    public void setHistory(IStringHistory history) {
+        this.history = history;
     }
 }

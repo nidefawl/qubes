@@ -53,7 +53,7 @@ public class WorldClient extends World {
     public void updateFrame(float fTime) {
         float sunPathRotation = -15.0F;
         float moonPathRotation = -50.0F;
-        float ca = this.getSunAngle(fTime);
+        float ca = getSunAngle(fTime);
         {
             float angle = ca * 360.0F;
             sunModelView.setIdentity();

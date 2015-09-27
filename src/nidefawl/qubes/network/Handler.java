@@ -104,4 +104,12 @@ public abstract class Handler {
         // TODO Auto-generated method stub
         
     }
+
+    /**
+     * @param packetSWorldTime
+     */
+    public void handleWorldTime(PacketSWorldTime packetSWorldTime) {
+        // TODO Auto-generated method stub
+        
+    }
 }

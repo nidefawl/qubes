@@ -18,10 +18,11 @@ public class StringUtil {
         return arr;
     }
 
-    public static long parseLong(String strseed, long l) {
+    public static long parseLong(String strseed, long l, int radix) {
         try {
-            return new java.math.BigInteger(strseed, 16).longValue();
+            return new java.math.BigInteger(strseed, radix).longValue();
         } catch (Exception e) {
+//            e.printStackTrace();
             return l;
         }
     }
