@@ -5,6 +5,7 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
+	<property name="cryptfilepath" value="..\" />
 	<property name="targetfile" value="U:/game/server.jar" />
     <path id="CraftlandLauncherLoader.classpath">
         <pathelement location="bin"/>
@@ -50,11 +51,13 @@
 	        <manifest>
             	<attribute name="Main-Class" value="nidefawl.qubes.BootClient"/>
 	        </manifest>
-			<fileset file="../game_deps.jar" />
 		</jar>
-        <copy includeemptydirs="false" todir="../qubes">
-            <fileset file="../game.jar" />
-        </copy>
+    	<exec executable="${cryptfilepath}/CryptFile.exe">
+  		  <arg value="-i"/>
+		  <arg value="../game.jar"/>
+  		  <arg value="-o"/>
+  		  <arg value="U:/qubes/files/game.jar"/>
+    	</exec>
     </target>
     <target name="build_game_exe">
     	<launch4j configFile="../launch4j_game.xml" />
@@ -79,7 +82,6 @@
 	    <delete file="../game_deps.jar" failonerror="no"/>
 	    <delete dir="compile/deps" failonerror="no"/>
         <mkdir dir="compile/deps"/>
-		<copy file="lib/jline/jline-2.13.jar" tofile="compile/deps/jline.jar"/>
 		<copy file="lib/lwjgl_dbg/lwjgl.jar" tofile="compile/deps/lwjgl.jar"/>
 		<copy file="lib/guava/guava-18.0.jar" tofile="compile/deps/guava.jar"/>
 		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="compile/deps/snakeyaml.jar"/>
@@ -93,7 +95,7 @@
 		<jar destfile="../game_deps.jar" compress="false">
 	        <fileset dir="compile/deps" includes="**/*" /> 
 		</jar>
-        <copy includeemptydirs="false" todir="../qubes">
+        <copy includeemptydirs="false" todir="U:/qubes/files">
             <fileset file="../game_deps.jar" />
         </copy>
 	</target>
