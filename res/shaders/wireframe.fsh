@@ -11,6 +11,9 @@ in highp vec3 triangle;
 in float ftime; 
 
 out vec4 out_Color;
+
+uniform float maxDistance;
+
 float edgeFactor(){
     vec3 d = fwidth(triangle);
     vec3 a3 = smoothstep(vec3(0.0), d*1.5, triangle);
@@ -29,7 +32,7 @@ void main() {
     float dist = length(vposition);
     // if (dist > 200)
     //     discard;
-    float fdistscale = 1.0f-clamp((dist - 4.0f) / 15.0f, 0.0f, 1.0f);
+    float fdistscale = 1.0f-clamp((dist - maxDistance) / 15.0f, 0.0f, 1.0f);
     vec3 d = fwidth(triangle)*fdistscale;
     vec3 tdist = smoothstep(vec3(0.0), d*2.0f, triangle);
     float mixF = min(min(tdist.x, tdist.y), tdist.z);
