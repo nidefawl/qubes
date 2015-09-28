@@ -8,7 +8,6 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.shader.UniformBuffer;
 
 public class GuiOverlayDebug extends Gui {
 
@@ -31,36 +30,19 @@ public class GuiOverlayDebug extends Gui {
             Engine.fbDbg.clearFrameBuffer();
         }
         glPushAttrib(-1);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.bind");
-        glMatrixMode(5888);
-        glPushMatrix();
-        glLoadIdentity();
-        glMatrixMode(5889);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0.0D, width, height, 0.0D, 0.0D, 1.0D);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.ortho");
         glDisable(3008);
         glDepthFunc(519);
         glDepthMask(false);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     public void postDbgFB() {
         glEnable(GL_TEXTURE_2D);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
-        glMatrixMode(5889);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
-        glPopMatrix();
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
-        glMatrixMode(5888);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glMatrixMode");
-        glPopMatrix();
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopMatrix");
         glPopAttrib();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopAttrib");
         FrameBuffer.unbindFramebuffer();
@@ -84,7 +66,7 @@ public class GuiOverlayDebug extends Gui {
         w1-=5;
         mat.translate(gap/2+(w1+gap/2)*side, 0, 0);
         mat.translate(0, gapy+(gapy+h)*num, 0);
-        UniformBuffer.pushMat(mat);
+        Engine.setOrthoMV(mat);
         glEnable(GL_BLEND);
         GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, texture);
         Tess.tessFont.setColor(-1, 255);
@@ -119,7 +101,7 @@ public class GuiOverlayDebug extends Gui {
         fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
         fontSmall.drawString(""+texture+"", w1-2, h-2, -1, true, 1.0F, 1);
         Shader.disable();
-        UniformBuffer.popMat();
+        Engine.restoreOrtho();
     }
     TesselatorState state = new TesselatorState();
     public void drawDebug() {
@@ -129,7 +111,7 @@ public class GuiOverlayDebug extends Gui {
                     "Final",
             };
         mat.setIdentity();
-        UniformBuffer.pushMat(mat);
+        Engine.setOrthoMV(mat);
             int w1 = 120;
             int gap = 24;
             int wCol = w1 * 2 + gap;
@@ -146,10 +128,10 @@ public class GuiOverlayDebug extends Gui {
             for (int i = 0; i < names.length; i++) {
                 state.drawQuads();
                 mat.translate(wCol + gap, 0, 0);
-                UniformBuffer.pushMat(mat);
+                Engine.setOrthoMV(mat);
             }
             mat.setIdentity();
-            UniformBuffer.pushMat(mat);
+            Engine.setOrthoMV(mat);
             Tess.tessFont.setColorRGBAF(.4F, .4F, .4F, 0.8F);
             Tess.tessFont.add(b, yCol + hCol - b, 0);
             Tess.tessFont.add(wCol - b, yCol + hCol - b, 0);
@@ -159,10 +141,10 @@ public class GuiOverlayDebug extends Gui {
             for (int i = 0; i < names.length; i++) {
                 state.drawQuads();
                 mat.translate(wCol + gap, 0, 0);
-                UniformBuffer.pushMat(mat);
+                Engine.setOrthoMV(mat);
             }
             mat.setIdentity();
-            UniformBuffer.pushMat(mat);
+            Engine.setOrthoMV(mat);
             glEnable(GL_BLEND);
             Shaders.textured.enable();
             for (int i = 0; i < names.length; i++) {
@@ -170,10 +152,10 @@ public class GuiOverlayDebug extends Gui {
                 fontSmall.drawString("INPUT", 12, yCol+50, -1, true, 1.0F);
                 fontSmall.drawString("OUTPUT", 8+w1+gap/2, yCol+50, -1, true, 1.0F);
                 mat.translate(wCol + gap, 0, 0);
-                UniformBuffer.pushMat(mat);
+                Engine.setOrthoMV(mat);
             }
             Shader.disable();
-        UniformBuffer.popMat();
+            Engine.restoreOrtho();
     }
 
     @Override

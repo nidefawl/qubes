@@ -12,6 +12,7 @@ import nidefawl.qubes.gl.Engine;
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"");
+    static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
 
@@ -21,6 +22,7 @@ public class ShaderSource {
 
     private String processed;
     int nInclude = 0;
+    private String attrTypes = "default";
 
     void load(AssetManager assetManager, String path, String name) throws IOException {
         this.processed = readParse(assetManager, path, name, false);
@@ -76,6 +78,8 @@ public class ShaderSource {
                             String define = m.group(1);
                             String replace = Engine.getDefinition(define);
                             code += replace + "\r\n";
+                        } else if ((m = patternAttr.matcher(line)).matches()) {
+                            this.attrTypes = m.group(1);
                         } else {
                             throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
                         }
@@ -147,5 +151,8 @@ public class ShaderSource {
         }
     
         return errLog;
+    }
+    public String getAttrTypes() {
+        return this.attrTypes;
     }
 }

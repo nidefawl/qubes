@@ -87,7 +87,7 @@ public class Selection {
             highlightSelection.drawQuads();
             glEnable(GL_DEPTH_TEST);
         }
-        if (mouseOver != null) {
+        if (mouseOver != null && this.mode == SelectionMode.SELECT) {
             if (!b) {
                 glEnable(GL_BLEND);
                 glDisable(GL_CULL_FACE);

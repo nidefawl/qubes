@@ -1,4 +1,5 @@
-layout(std140) uniform scenedata
+
+layout(std140) uniform uboMatrix3D
 {
     mat4 mvp;
     mat4 mv;
@@ -7,9 +8,22 @@ layout(std140) uniform scenedata
     mat4 normal;
     mat4 mv_inv;
     mat4 proj_inv;
+} in_matrix_3D;
+
+layout(std140) uniform uboMatrix2D
+{
+    mat4 mvp;
+} in_matrix_2D;
+
+layout(std140) uniform uboMatrixShadow
+{
     mat4 shadow_split_mvp[4];
     vec4 shadow_split_depth;
+} in_matrix_shadow;
+
+layout(std140) uniform uboSceneData
+{
     vec4 cameraPosition;
     float frameTime;
     vec4 viewport;
-} in_matrix;
+} in_scene;

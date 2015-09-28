@@ -60,7 +60,7 @@ vec4 lookupNoiseTex(in vec2 noisePos)
 	return texture2D_smooth(waterNormals, noisePos, noiseTexRes);
 }
 float waterDist(vec2 worldpos, vec2 offset) {
-	float timeF = in_matrix.frameTime;
+	float timeF = in_scene.frameTime;
 	float waterScale;
 	float waterSpeed;
 	float wave = 0;
@@ -101,7 +101,7 @@ float waterDist(vec2 worldpos, vec2 offset) {
 
 
 vec4 getNoise(vec2 uv){
-	float timeF = in_matrix.frameTime*0.01;
+	float timeF = in_scene.frameTime*0.006;
     vec2 uv0 = (uv/103.0)+vec2(timeF/17.0, timeF/29.0);
     vec2 uv1 = uv/107.0-vec2(timeF/-19.0, timeF/31.0)+vec2(0.23);
     vec2 uv2 = uv/vec2(897.0, 983.0)+vec2(timeF/101.0, timeF/97.0)+vec2(0.51);
@@ -153,29 +153,29 @@ void main() {
     vec4 noise = getNoise(vw*2.5);
     vec3 nd = normalize(noise.xzy*vec3(2.0, clamp(dist, 2.0, 100.0), 2.0));
 	normal_out = nd;
-
-
-	vec4 tex = texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
+	vec2 texCoord2 = texcoord.st;
+	texCoord2.st+=nd.xz*2.2;
+	vec4 tex = texture(blockTextures, vec3(texCoord2, float(blockinfo.x)));
 	float xPos2 = texPos.x;
 	float xPos = 1-texPos.x;
 	float yPos2 = texPos.y;
 	float yPos = 1-texPos.y;
-	float lightSky =  0.0;
-	lightSky += faceLight.x * xPos  * yPos;
-	lightSky += faceLight.y * xPos2 * yPos;
-	lightSky += faceLight.z * xPos2 * yPos2;
-	lightSky += faceLight.w * xPos  * yPos2;
-	float lightBlock =  0.0;
-	lightBlock += faceLightSky.x * xPos  * yPos;
-	lightBlock += faceLightSky.y * xPos2 * yPos;
-	lightBlock += faceLightSky.z * xPos2 * yPos2;
-	lightBlock += faceLightSky.w * xPos  * yPos2;
+	float lightLevelBlock =  0.0;
+	lightLevelBlock += faceLight.x * xPos  * yPos;
+	lightLevelBlock += faceLight.y * xPos2 * yPos;
+	lightLevelBlock += faceLight.z * xPos2 * yPos2;
+	lightLevelBlock += faceLight.w * xPos  * yPos2;
+	float lightLevelSky =  0.0;
+	lightLevelSky += faceLightSky.x * xPos  * yPos;
+	lightLevelSky += faceLightSky.y * xPos2 * yPos;
+	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
+	lightLevelSky += faceLightSky.w * xPos  * yPos2;
 	vec3 color_adj = tex.rgb;
 	color_adj *= color.rgb;
 	// color_adj *= lightAdj(lightSky, lightBlock);
-    out_Color = vec4(color_adj, tex.a*color.a);
+    out_Color = vec4(color_adj, 0.7);
     out_Normal = vec4((normal_out) * 0.5f + 0.5f, 1);
     out_Material = blockinfo;
-    out_Light = vec4(lightSky, lightBlock, 1, 0);
+    out_Light = vec4(lightLevelSky, lightLevelBlock, 0.5, 1);
     // gl_FragData[0] = vec4(0,1,1,1);
 }

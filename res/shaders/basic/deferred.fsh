@@ -1,6 +1,6 @@
 #version 150 core
 #define DO_SHADING
-#define FRAME_TIME in_matrix.frameTime
+#define FRAME_TIME in_scene.frameTime
 
 #pragma include "ubo_scene.glsl"
 #pragma include "sky_scatter.glsl"
@@ -43,6 +43,7 @@ struct SurfaceProperties {
     vec4   light;
 } prop;
 
+uniform int pass;
 
 
 uniform sampler2D texColor;
@@ -67,11 +68,11 @@ out vec4 out_Color;
 
 float expToLinearDepth(in float depth)
 {
-    return 2.0f * in_matrix.viewport.z * in_matrix.viewport.w / (in_matrix.viewport.w + in_matrix.viewport.z - (2.0f * depth - 1.0f) * (in_matrix.viewport.w - in_matrix.viewport.z));
+    return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
 }
 
 vec4 unprojectPos(in vec2 coord, in float depth) { 
-    vec4 fragposition = in_matrix.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
+    vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
     fragposition /= fragposition.w;
     return fragposition;
 }
@@ -87,9 +88,9 @@ const float clampmax = 1-clampmin;
 float getShadow() {
 
     float gdistance = max((length(prop.position.xyz)-26.0f)/17.0f, 0);
-    vec4 v = getShadowTexcoord(in_matrix.shadow_split_mvp[0], prop.worldposition);
-    vec4 v2 = getShadowTexcoord(in_matrix.shadow_split_mvp[1], prop.worldposition);
-    vec4 v3 = getShadowTexcoord(in_matrix.shadow_split_mvp[2], prop.worldposition);
+    vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], prop.worldposition);
+    vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], prop.worldposition);
+    vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], prop.worldposition);
 
     // float depth = prop.worldposition.z/prop.worldposition.w;
     // if (prop.linearDepth > 2) {
@@ -100,18 +101,18 @@ float getShadow() {
     float weight = max(0.68, 1.3-dst);
     // weight = 0.98;
 	    // debugcolor = vec3(weight, 0,0);
-    if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && prop.linearDepth<in_matrix.shadow_split_depth.x*weight) {
+    if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && prop.linearDepth<in_matrix_shadow.shadow_split_depth.x*weight) {
     	v.z-=0.00004f;
 	    // debugcolor = vec3(v.xy,1);
 		return texture(texShadow, vec3(v.xy*0.5, v.z));
     }
-    if (clamp(v2.x, clampmin, clampmax) == v2.x && clamp(v2.z, clampmin, clampmax) == v2.z && prop.linearDepth<in_matrix.shadow_split_depth.y*weight) {
+    if (clamp(v2.x, clampmin, clampmax) == v2.x && clamp(v2.z, clampmin, clampmax) == v2.z && prop.linearDepth<in_matrix_shadow.shadow_split_depth.y*weight) {
     // v.z *= (1.0f-0.001f * gdistance);
     	v2.z-=0.00007f;
 	    // debugcolor = vec3(0,1,0);
 	    return texture(texShadow, vec3(v2.xy*0.5+vec2(0.5,0),v2.z));
     }
-    if (clamp(v3.x, clampmin, clampmax) == v3.x && clamp(v3.z, clampmin, clampmax) == v3.z && prop.linearDepth<in_matrix.shadow_split_depth.z) {
+    if (clamp(v3.x, clampmin, clampmax) == v3.x && clamp(v3.z, clampmin, clampmax) == v3.z && prop.linearDepth<in_matrix_shadow.shadow_split_depth.z) {
     // v.z *= (1.0f-0.001f * gdistance);
     	// v3.z-=bias;
     	v2.z-=0.00007f;
@@ -145,26 +146,31 @@ void main() {
 
 
 	prop.albedo = texture(texColor, pass_texcoord).rgb;
+    float alpha = 1.0f;
 #ifdef DO_SHADING
+
 	// prop.albedo = pow(prop.albedo, vec3(1.4));
  //    prop.albedo = pow(prop.albedo, vec3(2.2));
     float lum = dot(prop.albedo, vec3(0.3333f));
     prop.albedo = mix(prop.albedo, vec3(lum), vec3(0.05f));
-
 
     vec4 nl = texture(texNormals, pass_texcoord);
 	prop.normal = nl.rgb * 2.0f - 1.0f;
     prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
     prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
-	prop.linearDepth = expToLinearDepth(prop.depth);
+    prop.linearDepth = expToLinearDepth(prop.depth);
     prop.position = unprojectPos(pass_texcoord, prop.depth);
-    prop.worldposition = in_matrix.mv_inv * prop.position;
-    prop.viewVector = normalize(in_matrix.cameraPosition.xyz - prop.worldposition.xyz);
+    prop.worldposition = in_matrix_3D.mv_inv * prop.position;
+    prop.viewVector = normalize(in_scene.cameraPosition.xyz - prop.worldposition.xyz);
     prop.NdotL = dot( prop.normal, SkyLight.lightDir.xyz );
     float isSky = float(prop.blockinfo.y==0u);
     float isWater = float(prop.blockinfo.y==4u);
     float isLight = float(prop.blockinfo.y==6u);
+    if (pass == 1 && isWater < 1) {
+        discard;
+    }
+    alpha -= float(pass)*.3f;
 
     vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
     float roughness = 1.4+isWater*100;
@@ -184,6 +190,7 @@ void main() {
     float shadow = getShadow();
   	float nDotL = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
     float sunLight = skyLightLvl * nDotL * shadow * dayLightIntens;
+    // sunLight*=10;
     sunLight *= (1-blockLightLvl); //TODO: test + remove
     // prop.albedo*=mix(prop.light.z, 1, clamp(isSky+nDotL+(1-prop.light.x)*0.3,0,1));
 
@@ -195,12 +202,16 @@ void main() {
     vec3 Iamb = SkyLight.La.rgb * lightColor;
 
     vec3 finalLight = vec3(0);
-    finalLight += Iamb * occlusion * skyLightLvl;
-    finalLight += vec3(0.863)* (1.0-isLight*0.7)* (mix(1, occlusion, 0.19)) * blockLight;
-    lum = (clamp(pow(0.6+lum, 2)-1, 0, 1))*isLight*3;
+    finalLight += Iamb * mix(occlusion, 1, 0.4) * skyLightLvl;
+    // finalLight += vec3(0.663)* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
+    finalLight += vec3(1, 0.9, 0.7)*0.363* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
+    lum = (clamp(pow(0.6+lum, 3)-1, 0, 1)+0.33)*isLight*0.82;
     finalLight += lum* (mix(1, occlusion, 0.19)) * blockLight;
+    // finalLight += clamp((1-lum), 0, 1)*vec3(0,1,4.3)*isLight;
     finalLight += Ispec * sunLight;
     finalLight += Idiff * sunLight;
+
+    alpha += float(pass)*0.2*(1-clamp(sunLight, 0, 1));
     // finalLight = mix (finalLight, vec3(1), lum*);
 
 
@@ -212,19 +223,21 @@ void main() {
 	// finalLight *= 1.0-fNight*0.73;
  //    finalLight = mix(finalLight, vec3(0.56), prop.light.y);
 
-    for(int i = 1; i < numLights; ++i)
+    for(int i = 0; i < numLights; ++i)
     {
         // Calculate distance between light source and current fragment
         float fDist = length(lights[i].Position - prop.worldposition.xyz);
         if(fDist < lights[i].Radius && occlusion > 0) //executed anyways
         {
             // Diffuse
+
+            vec3 colorLight = clamp(lights[i].Color, vec3(0), vec3(12));
             vec3 lightDir = normalize(lights[i].Position - prop.worldposition.xyz);
-            vec3 diffuse = max(dot(prop.normal, lightDir), 0.0) * SkyLight.Ld.rgb * lights[i].Color;
+            vec3 diffuse = max(dot(prop.normal, lightDir), 0.0) * SkyLight.Ld.rgb * colorLight;
             // Specular
             vec3 halfwayDir = normalize(lightDir + prop.viewVector);  
-            float spec = pow(max(dot(prop.normal, halfwayDir), 0.0), 2.0);
-            vec3 specular = lights[i].Color * spec * SkyLight.Ls.rgb * 2.2;
+            float spec = max(pow(max(dot(prop.normal, halfwayDir), 0.0), 1.4), 0.0);
+            vec3 specular = colorLight * spec * SkyLight.Ls.rgb * 2.2;
             // Attenuation
             float attenuation = 1.0 / (1.0 + lights[i].Linear * fDist + lights[i].Quadratic * fDist * fDist);
             diffuse *= attenuation * occlusion;
@@ -270,5 +283,5 @@ void main() {
 #else 
     prop.albedo *= 0.25;
 #endif
-    out_Color = vec4(prop.albedo, 1);
+    out_Color = vec4(prop.albedo, alpha);
 }

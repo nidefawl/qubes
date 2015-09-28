@@ -68,8 +68,8 @@ public class ServerHandlerLogin extends ServerHandler {
             }
             
             Player player = mgr.addPlayer(this.name);
-            player.setChunkLoadDistance(packet.chunkLoadDistance);
             player.netHandler = new ServerHandlerPlay(player, this);
+            player.setChunkLoadDistance(packet.chunkLoadDistance);
             
             this.netServer.addServerHandlerPlay(player, this, player.netHandler);
             ChannelManager mgr2 = this.server.getChatChannelMgr();

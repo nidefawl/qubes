@@ -32,9 +32,10 @@ public class ShadowRenderer {
     // the geom shader mode uses geometry shader to instanciate the terrain
     // reducing 3*(terrain_in_furstum slices) draw+bind loops to 1 draw + bind loop for the biggest frustum
     public static final int MULTI_DRAW             = 0; // FASTES, GL 3.x 
-    public static final int GEOM_SHADER            = 1; // GL 4.x ONLY, SLOWEST
-    public static final int INSTANCED_DRAW         = 2; // AMD ONLY, SLOW 
-    public static final int MAX_SHADOW_RENDER_MODE = 3;
+    public static final int MULTI_DRAW_TEXUTED     = 1; // as 0 + textures to discard transparent pixels, GL 3.x 
+    public static final int GEOM_SHADER            = 2; // GL 4.x ONLY, SLOWEST
+    public static final int INSTANCED_DRAW         = 3; // AMD ONLY, SLOW 
+    public static final int MAX_SHADOW_RENDER_MODE = 4;
     
 
     private int renderMode = -1;
@@ -44,6 +45,7 @@ public class ShadowRenderer {
     public final boolean[] availableRenderModes = new boolean[MAX_SHADOW_RENDER_MODE];
     public final String[] shaderNames = new String[] {
             "shaders/basic/shadow_multi",
+            "shaders/basic/shadow_textured",
             "shaders/basic/shadow_instanced_gs",
             "shaders/basic/shadow_instanced_draw",
     };
@@ -64,6 +66,9 @@ public class ShadowRenderer {
             Shader shadow = assetMgr.loadShader(shaderNames[renderMode]);
             releaseShaders();
             shadowShader = shadow;
+            shadowShader.enable();
+            shadowShader.setProgramUniform1i("blockTextures", 0);
+            Shader.disable();
             this.uploadViewport = true;
         } catch (ShaderCompileError e) {
             System.out.println("shader " + e.getName() + " failed to compile");
@@ -79,6 +84,7 @@ public class ShadowRenderer {
     public void setAvaialbeRenderModes() {
         Arrays.fill(availableRenderModes, false);
         availableRenderModes[MULTI_DRAW] = true;
+        availableRenderModes[MULTI_DRAW_TEXUTED] = true;
         if (GL.getCaps().GL_ARB_viewport_array && GL.getCaps().GL_EXT_geometry_shader4) {
             Shader shadow=null;
             try {
@@ -109,7 +115,7 @@ public class ShadowRenderer {
         }
     }
 
-    private void setRenderMode(int renderMode) {
+    public void setRenderMode(int renderMode) {
         if (availableRenderModes[renderMode]) {
             this.renderMode = renderMode;
         } else {
@@ -120,7 +126,7 @@ public class ShadowRenderer {
     public void init() {
         //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         setAvaialbeRenderModes();
-        setRenderMode(MULTI_DRAW);
+        setRenderMode(Game.instance.settings.shadowDrawMode);
         viewports_buf = BufferUtils.createFloatBuffer(viewports.length*4);
         initShaders();
     }
@@ -208,8 +214,6 @@ public class ShadowRenderer {
         glPolygonOffset(1.1f, 2.f);
         glDisable(GL_BLEND);
         glViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
 
@@ -241,11 +245,56 @@ public class ShadowRenderer {
 //        glEnable(GL_CULL_FACE);
     }
 
+    public void renderMultiPassTextured(World world, float fTime) {
+//              glDisable(GL_CULL_FACE);
+        //      glCullFace(GL_FRONT);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.1f, 2.f);
+        glEnable(GL_BLEND);
+        glViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        shadowShader.enable();
+        shadowShader.setProgramUniform1i("shadowSplit", 0);
+        shadowShader.setProgramUniform1i("blockTextures", 0);
+
+        this.fbShadow.bind();
+        this.fbShadow.clearFrameBuffer();
+        final int shadowPass = 2;
+        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 1, Frustum.FRUSTUM_INSIDE);
+        shadowShader.setProgramUniform1i("shadowSplit", 1);
+
+        glPolygonOffset(1.2f, 2.f);
+
+        glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 2, Frustum.FRUSTUM_INSIDE);
+        shadowShader.setProgramUniform1i("shadowSplit", 2);
+
+        glPolygonOffset(2.4f, 2.f);
+
+        glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 3, Frustum.FRUSTUM_INSIDE);
+
+        FrameBuffer.unbindFramebuffer();
+
+        Shader.disable();
+
+        glViewport(0, 0, Game.displayWidth, Game.displayHeight);
+//        glCullFace(GL_BACK);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        glDisable(GL_BLEND);
+//        glEnable(GL_CULL_FACE);
+    }
+
     public void renderShadowPass(World world, float fTime) {
         if (this.renderMode == GEOM_SHADER) {
             renderGeomShader(world, fTime);
         } else if (this.renderMode == INSTANCED_DRAW) {
             renderInstancedDraw(world, fTime);
+        } else if (this.renderMode == MULTI_DRAW_TEXUTED) {
+            renderMultiPassTextured(world, fTime);
         } else {
             renderMultiPass(world, fTime);
         }

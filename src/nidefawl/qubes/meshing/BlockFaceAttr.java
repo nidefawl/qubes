@@ -12,6 +12,11 @@ public class BlockFaceAttr {
     public final static int PASS_2_BLOCK_FACE_INT_SIZE = PASS_2_BLOCK_VERT_INT_SIZE*4;
     public final static int PASS_2_BLOCK_FACE_BYTE_SIZE = PASS_2_BLOCK_FACE_INT_SIZE<<2;
     
+    public final static int PASS_3_BLOCK_VERT_INT_SIZE = 7;
+    public final static int PASS_3_BLOCK_VERT_BYTE_SIZE = PASS_3_BLOCK_VERT_INT_SIZE<<2;
+    public final static int PASS_3_BLOCK_FACE_INT_SIZE = PASS_3_BLOCK_VERT_INT_SIZE*4;
+    public final static int PASS_3_BLOCK_FACE_BYTE_SIZE = PASS_3_BLOCK_FACE_INT_SIZE<<2;
+    
     final public static String[] attributes = new String[] {
             "in_blockinfo",
             "in_light",
@@ -85,6 +90,22 @@ public class BlockFaceAttr {
             rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
             rawBuffer[index + 3] = Float.floatToRawIntBits(1);
             index += PASS_2_BLOCK_VERT_INT_SIZE;
+        }
+    }
+
+
+    public void putShadowTextured(int[] rawBuffer, int index) {
+        for (int i = 0; i < 4; i++) {
+            int idx = this.reverse ? 3-(i % 4) : i % 4;
+            BlockFaceVert v = this.v[idx];
+            rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
+            rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
+            rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
+            rawBuffer[index + 3] = Float.floatToRawIntBits(1);
+            rawBuffer[index + 4] = Float.floatToRawIntBits(v.u);
+            rawBuffer[index + 5] = Float.floatToRawIntBits(v.v);
+            rawBuffer[index + 6] = tex|this.type<<16; //2x SHORT
+            index += PASS_3_BLOCK_VERT_INT_SIZE;
         }
     }
 

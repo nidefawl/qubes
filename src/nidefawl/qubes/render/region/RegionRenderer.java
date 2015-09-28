@@ -37,11 +37,10 @@ public class RegionRenderer {
     public static final int SLICE_HEIGHT_BLOCKS         = 1 << SLICE_HEIGHT_BLOCK_BITS;
     public static final int SLICE_HEIGHT_BLOCK_MASK     = SLICE_HEIGHT_BLOCKS - 1;
     
-    public static final int RENDER_DISTANCE = 12;
-    public static final int LENGTH          = RENDER_DISTANCE * 2 + 1;
-    public static final int OFFS_OVER       = 2;
-    public static final int LENGTH_OVER     = (RENDER_DISTANCE + OFFS_OVER) * 2 + 1;
-    public static final int HEIGHT_SLICES   = World.MAX_WORLDHEIGHT >> RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
+    public static int RENDER_DISTANCE = 12;
+    public static int OFFS_OVER       = 2;
+    public static int LENGTH_OVER     = (RENDER_DISTANCE + OFFS_OVER) * 2 + 1;
+    public static int HEIGHT_SLICES   = World.MAX_WORLDHEIGHT >> RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
 
     
     
@@ -90,7 +89,7 @@ public class RegionRenderer {
     }
 
     public void init() {
-        this.regions = create();
+        setRenderDistance(Game.instance.settings.chunkLoadDistance>>REGION_SIZE_BITS);
     }
     
     MeshedRegion[][] regions;
@@ -174,7 +173,7 @@ public class RegionRenderer {
         this.regionsToUpdate.clear();
         this.renderChunkX = this.renderChunkY = this.renderChunkZ = 0;
 
-        for (int i = 0; i < this.regions.length; i++) {
+        for (int i = 0; this.regions != null && i < this.regions.length; i++) {
             MeshedRegion[] m = this.regions[i];
             for (int y = 0; y < HEIGHT_SLICES; y++) {
                 MeshedRegion r = m[y];
@@ -185,6 +184,12 @@ public class RegionRenderer {
             }
         }
         this.regions = create();
+    }
+    
+    public void setRenderDistance(int i) {
+        resetAll();
+        RENDER_DISTANCE = i;
+        create();
     }
 
     public void reRender() {
@@ -320,7 +325,6 @@ public class RegionRenderer {
                 if (m.failedCached > 0) {
                     continue;
                 }
-//                System.out.println("put "+m);
                 if (thread.offer(world, m, renderChunkX, renderChunkZ)) {
                     m.needsUpdate = false;
                     m.failedCached = 0;

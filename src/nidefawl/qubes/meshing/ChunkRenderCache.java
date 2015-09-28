@@ -66,7 +66,10 @@ public class ChunkRenderCache {
             for (int z = -1; z < WIDTH+1; z++) {
                 Chunk c = mgr.get(basechunkX+x, basechunkZ+z);
                 if (c == null) {
-//                    System.out.println("c == null @"+(basechunkX+x)+", "+(basechunkZ+z));
+//                    boolean dbg = mr.rX==-7&&mr.rZ==-1;
+//                  System.err.println("render");
+//                    if (dbg) 
+//                        System.out.println("c == null @"+(basechunkX+x)+", "+(basechunkZ+z));
                     if (x >= 0 && x < WIDTH && z >= 0 && z < WIDTH) {
                         return false;
                     }

@@ -79,7 +79,7 @@ public class Mesher {
 //                mask2[n] = null;
 //                return;
 //            }
-            if (this.strategy == 0) {
+            if (this.strategy >= 0) {
                 if (bs1.pass == 0 && !bs1.transparent && bs2.isLeaves) {
                     mask2[n] = bs1;
                     return;
@@ -316,7 +316,9 @@ public class Mesher {
             surface.axis = axis;
             surface.pass = pass;
             if (strategy == 1) {
-                surface.type = 1;
+                if (!surface.transparent) {
+                    surface.type = 1;
+                }
                 surface.pass = 2;
                 surface.transparent = false;
             } else {

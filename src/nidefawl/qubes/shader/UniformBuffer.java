@@ -11,217 +11,227 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
-    final static int NUM_MATRIXES = 11;
-    final static int SIZE_STRUCT = NUM_MATRIXES*64+16+16+16+16;
-
-    private static FloatBuffer uboBuffer;
-    public static int uboMatrix;
-    public static int uboLight;
+    static int nextIdx = 0;
+    static UniformBuffer[] buffers = new UniformBuffer[5];
+    String name;
+    private int buffer;
+    private int len;
+    private FloatBuffer floatBuffer;
+    UniformBuffer(String name) {
+        buffers[nextIdx++] = this;
+        this.name = name;
+    }
+    UniformBuffer addMat4() {
+        this.len+=16;
+        return this;
+    }
+    UniformBuffer addVec4() {
+        this.len+=4;
+        return this;
+    }
+    UniformBuffer addFloat() {
+        this.len+=4;
+        return this;
+    }
+    private void reset() {
+        this.floatBuffer.position(0).limit(this.len);
+    }
+    private void put(FloatBuffer floatBuffer) {
+        this.floatBuffer.put(floatBuffer);
+    }
+    private void put(float f) {
+        this.floatBuffer.put(f);
+    }
+    void update() {
+        GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
+        this.floatBuffer.position(0).limit(this.len);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
+        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, this.floatBuffer);
+        
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
+    }
+    public void setup() {
+        this.floatBuffer = BufferUtils.createByteBuffer(this.len << 2).asFloatBuffer();
+        this.buffer = Engine.glGenBuffers(1).get();
+        GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("UBO Engine.glGenBuffers");
+        GL15.glBufferData(GL_UNIFORM_BUFFER, this.len*4, GL15.GL_DYNAMIC_DRAW);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("UBO Matrix");
+        GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+    static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D")
+            .addMat4() //mvp
+            .addMat4() //mv
+            .addMat4() //view
+            .addMat4() //vp
+            .addMat4() //normal
+            .addMat4() //mv_inv
+            .addMat4(); // proj_inv
+    static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
+            .addMat4(); //mvp
+//            .addMat4() //proj
+//            .addMat4(); //mv
+    static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow")
+            .addMat4() //shadow_split_mvp
+            .addMat4() //shadow_split_mvp
+            .addMat4() //shadow_split_mvp
+            .addMat4() //shadow_split_mvp
+            .addVec4(); //shadow_split_depth
+    static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData")
+            .addMat4() //vp
+            .addVec4() //cameraPosition
+            .addFloat() //frameTime
+            .addVec4(); //viewport
+    static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
+            .addVec4() //dayLightTime
+            .addVec4() //posSun
+            .addVec4() //lightDir
+            .addVec4() // Ambient light intensity
+            .addVec4() // Diffuse light intensity
+            .addVec4(); // Specular light intensity
     
     public static void init() {
-        uboBuffer = BufferUtils.createFloatBuffer(SIZE_STRUCT);
-        if (uboMatrix == 0) {
-            int blockSize = SIZE_STRUCT;
-            uboMatrix = Engine.glGenBuffers(1).get();
-            GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-            GL15.glBufferData(GL_UNIFORM_BUFFER, blockSize, GL15.GL_DYNAMIC_DRAW);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("UBO Matrix");
-        }
-        if (uboLight == 0) {
-            int blockSize = 128;
-            uboLight = Engine.glGenBuffers(1).get();
-            GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
-            GL15.glBufferData(GL_UNIFORM_BUFFER, blockSize, GL15.GL_DYNAMIC_DRAW);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("UBO Matrix");
+        for (int i = 0; i < buffers.length; i++) {
+            buffers[i].setup();
         }
     }
     public static void reinit() {
-        uboMatrix = 0;
-        uboLight = 0;
-        uboBuffer = null;
         init();
     }
 
 
-    public static void pushMat(BufferedMatrix mat) {
-        pushdmv=mat;
-        Matrix4f.mul(Engine.getMatOrthoP(), mat, pushdmvp);
-        pushdmvp.update();
-        uboBuffer.position(0).limit(128);
-        uboBuffer.put(pushdmvp.get());
-        uboBuffer.put(pushdmv.get());
-        uboBuffer.flip();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
-        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
+    public static void bindBuffers(Shader shader) {
+        for (int i = 0; i < buffers.length; i++) {
+            final int blockIndex = glGetUniformBlockIndex(shader.shader, buffers[i].name);
+            if (blockIndex != -1) {
+                glBindBufferBase(GL_UNIFORM_BUFFER, shader.bufBindIdx, buffers[i].buffer);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
+                glUniformBlockBinding(shader.shader, blockIndex, shader.bufBindIdx);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
+                shader.bufBindIdx++;
+            }
+        }
     }
-    public static void popMat() {
-        bindOrthoUBO();
-    }
-    static BufferedMatrix pushdmv;
-    static BufferedMatrix pushdmvp = new BufferedMatrix();
-    public static void bindOrthoUBO() {
-        if (Game.DO_TIMING) TimingHelper.startSec("bindOrthoUBO");
-        uboBuffer.position(0).limit(128);
-        uboBuffer.put(Engine.getMatOrthoP().get());
-        uboBuffer.put(Engine.getMatOrthoMV().get());
-        uboBuffer.flip();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
-        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
-        if (Game.DO_TIMING) TimingHelper.endSec();
-    }
-    public static void bindProjUBO() {
-        if (Game.DO_TIMING) TimingHelper.startSec("bindOrthoUBO");
-        uboBuffer.position(0).limit(128);
-        uboBuffer.put(Engine.getMatSceneMVP().get());
-        uboBuffer.put(Engine.getMatSceneMV().get());
-        uboBuffer.flip();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
-        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
-        if (Game.DO_TIMING) TimingHelper.endSec();
-    }
+
     public static void updateUBO(WorldClient world, float f) {
         if (Game.DO_TIMING) TimingHelper.startSec("updateUBO");
-        uboBuffer.position(0).limit(SIZE_STRUCT);
-        uboBuffer.put(Engine.getMatSceneMVP().get());
-        uboBuffer.put(Engine.getMatSceneMV().get());
-        uboBuffer.put(Engine.getMatSceneV().get());
-        uboBuffer.put(Engine.getMatSceneVP().get());
-        uboBuffer.put(Engine.getMatSceneNormal().get());
-        uboBuffer.put(Engine.getMatSceneMV().getInv());
-        uboBuffer.put(Engine.getMatSceneP().getInv());
-        if (Engine.initRenderers) {
-            uboBuffer.put(Engine.shadowProj.getSMVP(0));
-            uboBuffer.put(Engine.shadowProj.getSMVP(1));
-            uboBuffer.put(Engine.shadowProj.getSMVP(2));
-            uboBuffer.put(Engine.shadowProj.getSMVP(2));
-            
-            uboBuffer.put(Engine.shadowProj.shadowSplitDepth[0]);
-            uboBuffer.put(Engine.shadowProj.shadowSplitDepth[1]);
-            uboBuffer.put(Engine.shadowProj.shadowSplitDepth[2]);
-            uboBuffer.put(1F);
-        } else {
-            uboBuffer.put(Engine.getMatSceneMVP().get());
-            uboBuffer.put(Engine.getMatSceneMVP().get());
-            uboBuffer.put(Engine.getMatSceneMVP().get());
-            uboBuffer.put(Engine.getMatSceneMVP().get());
+        Shaders.colored.enable();
+        Shaders.colored.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
+        Shaders.textured.enable();
+        Shaders.textured.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
+        Shader.disable();
+        
+        updateOrtho();
+        
+        uboMatrix3D.reset();
+        uboMatrix3D.put(Engine.getMatSceneMVP().get());
+        uboMatrix3D.put(Engine.getMatSceneMV().get());
+        uboMatrix3D.put(Engine.getMatSceneV().get());
+        uboMatrix3D.put(Engine.getMatSceneVP().get());
+        uboMatrix3D.put(Engine.getMatSceneNormal().get());
+        uboMatrix3D.put(Engine.getMatSceneMV().getInv());
+        uboMatrix3D.put(Engine.getMatSceneP().getInv());
+        uboMatrix3D.update();
 
-            uboBuffer.put(1F);
-            uboBuffer.put(1F);
-            uboBuffer.put(1F);
-            uboBuffer.put(1F);
-        }
+        uboMatrixShadow.reset();
         
-        Engine.camera.getPosition().store(uboBuffer);
-        uboBuffer.put(1F);
-        
-        uboBuffer.put(Game.ticksran+f);
-        uboBuffer.put(1F);
-        uboBuffer.put(1F);
-        uboBuffer.put(1F);
-        
-        uboBuffer.put(Game.displayWidth);
-        uboBuffer.put(Game.displayHeight);
-        uboBuffer.put(Engine.znear);
-        uboBuffer.put(Engine.zfar);
-        uboBuffer.flip();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
-        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+uboMatrix+"/"+uboBuffer);
-        //    System.out.println(name+"/"+blockIndex);
-        // Uniform A
-        uboBuffer.position(0).limit(96);
-        if (world != null) {
-            uboBuffer.put(world.getDayNoonFloat()); // dayTime
-            uboBuffer.put(world.getNightNoonFloat()); // nightlight
-            uboBuffer.put(world.getDayLightIntensity()); // dayLightIntens
-            uboBuffer.put(world.getLightAngleUp()); // lightAngleUp
+        if (Engine.initRenderers) {
+            uboMatrixShadow.put(Engine.shadowProj.getSMVP(0));
+            uboMatrixShadow.put(Engine.shadowProj.getSMVP(1));
+            uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));
+            uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));
+            
+            uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[0]);
+            uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[1]);
+            uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[2]);
+            uboMatrixShadow.put(1F);
         } else {
-            uboBuffer.put(0);
-            uboBuffer.put(0);
-            uboBuffer.put(0);
-            uboBuffer.put(0);
+            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+
+            uboMatrixShadow.put(1F);
+            uboMatrixShadow.put(1F);
+            uboMatrixShadow.put(1F);
+            uboMatrixShadow.put(1F);
+        }
+        uboMatrixShadow.update();
+        
+
+        uboSceneData.reset();
+        Engine.camera.getPosition().store(uboSceneData.floatBuffer);
+        uboSceneData.put(1F); // camera w component
+        
+        uboSceneData.put(Game.ticksran+f);
+        uboSceneData.put(1F);
+        uboSceneData.put(1F);
+        uboSceneData.put(1F);
+        
+        uboSceneData.put(Game.displayWidth);
+        uboSceneData.put(Game.displayHeight);
+        uboSceneData.put(Engine.znear);
+        uboSceneData.put(Engine.zfar);
+        uboSceneData.update();
+        
+        LightInfo.reset();
+        if (world != null) {
+            LightInfo.put(world.getDayNoonFloat()); // dayTime
+            LightInfo.put(world.getNightNoonFloat()); // nightlight
+            LightInfo.put(world.getDayLightIntensity()); // dayLightIntens
+            LightInfo.put(world.getLightAngleUp()); // lightAngleUp
+        } else {
+            LightInfo.put(0);
+            LightInfo.put(0);
+            LightInfo.put(0);
+            LightInfo.put(0);
         }
         
-        uboBuffer.put(Engine.lightPosition.x);
-        uboBuffer.put(Engine.lightPosition.y);
-        uboBuffer.put(Engine.lightPosition.z);
-        uboBuffer.put(1F);
-        uboBuffer.put(Engine.lightDirection.x);
-        uboBuffer.put(Engine.lightDirection.y);
-        uboBuffer.put(Engine.lightDirection.z);
-        uboBuffer.put(1F);
+        LightInfo.put(Engine.lightPosition.x);
+        LightInfo.put(Engine.lightPosition.y);
+        LightInfo.put(Engine.lightPosition.z);
+        LightInfo.put(1F);
+        LightInfo.put(Engine.lightDirection.x);
+        LightInfo.put(Engine.lightDirection.y);
+        LightInfo.put(Engine.lightDirection.z);
+        LightInfo.put(1F);
         float ambIntens = 0.08F;
         float diffIntens = 0.52F;
         float specIntens = 0.12F;
-        uboBuffer.put(ambIntens);
-        uboBuffer.put(ambIntens);
-        uboBuffer.put(ambIntens);
-        uboBuffer.put(1);
+        LightInfo.put(ambIntens);
+        LightInfo.put(ambIntens);
+        LightInfo.put(ambIntens);
+        LightInfo.put(1);
         for (int a = 0; a < 3; a++) {
-            uboBuffer.put(diffIntens);
+            LightInfo.put(diffIntens);
         }
-        uboBuffer.put(1);
+        LightInfo.put(1);
         for (int a = 0; a < 3; a++) {
-            uboBuffer.put(specIntens);
+            LightInfo.put(specIntens);
         }
-        uboBuffer.put(0);
-        uboBuffer.flip();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
-        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, uboBuffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData GL_UNIFORM_BUFFER");
+        LightInfo.put(0);
+        LightInfo.update();
         if (Game.DO_TIMING) TimingHelper.endSec();
-        
+        GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     }
-    public static void bindBuffers(Shader shader) {
-        // Get uniform block index and data size
-        final int blockIndex = glGetUniformBlockIndex(shader.shader, "scenedata");
-        if (blockIndex != -1) {
-//            System.out.println(name+"/"+blockIndex);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 0, UniformBuffer.uboMatrix);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-            glUniformBlockBinding(shader.shader, blockIndex, 0);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
-
-        }
-        // Get uniform block index and data size
-        final int light = glGetUniformBlockIndex(shader.shader, "LightInfo");
-        if (light != -1) {
-//            final int blockSize = glGetActiveUniformBlocki(shader.shader, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE);
-//            System.out.println(name+"/"+light+" light, size "+blockSize);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 1, UniformBuffer.uboLight);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-            glUniformBlockBinding(shader.shader, light, 1);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glUniformBlockBinding blockIndex "+light);
-
-        }
+    
+    /**
+     * @param mat
+     */
+    public static void updateOrtho() {
+        uboMatrix2D.reset();
+        uboMatrix2D.put(Engine.getMatOrthoMVP().get());
+        uboMatrix2D.update();
+        // unbind Uniform buffer?!
     }
-
 }

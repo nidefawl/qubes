@@ -3,6 +3,7 @@ package nidefawl.qubes.meshing;
 import static nidefawl.qubes.meshing.BlockFaceAttr.BLOCK_FACE_INT_SIZE;
 
 import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_2_BLOCK_FACE_INT_SIZE;
+import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_3_BLOCK_FACE_INT_SIZE;
 
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
 
@@ -30,6 +31,7 @@ public class MeshUpdateTask {
     final int[][] buffers = new int[NUM_PASSES][];
     final int[] vertexCount = new int[NUM_PASSES];
     final int[] bufferIdx = new int[NUM_PASSES];
+    private int shadowDrawMode;
     
     public MeshUpdateTask() {
 //        for (int i = 0; i < this.tess.length; i++) {
@@ -41,6 +43,7 @@ public class MeshUpdateTask {
         this.ccache.flush();
         if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
             this.mr = mr;
+            this.shadowDrawMode = Game.instance.settings.shadowDrawMode;
             return true;
         } else {
 //            System.out.println("cannot render "+mr.rX+"/"+mr.rZ);
@@ -59,7 +62,7 @@ public class MeshUpdateTask {
             this.mr.preUploadBuffers();
 
             for (int i = 0; i < NUM_PASSES; i++) {
-                this.mr.uploadBuffer(i, this.buffers[i], this.bufferIdx[i], this.vertexCount[i]);
+                this.mr.uploadBuffer(i, this.buffers[i], this.bufferIdx[i], this.vertexCount[i], this.shadowDrawMode);
             }
 //            this.mr.compileDisplayList(this.tess);
             Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -110,7 +113,10 @@ public class MeshUpdateTask {
 //                    }
                     attr.setOffset(xOff, yOff, zOff);
                     int numMeshedFaces = mesh.size();
-                    final int FACE_INT_SIZE = i == 2 ? PASS_2_BLOCK_FACE_INT_SIZE : BLOCK_FACE_INT_SIZE;
+                    int FACE_INT_SIZE = i == 2 ? PASS_2_BLOCK_FACE_INT_SIZE : BLOCK_FACE_INT_SIZE;
+                    if (i == 2 && shadowDrawMode > 0) {
+                        FACE_INT_SIZE = PASS_3_BLOCK_FACE_INT_SIZE;
+                    }
                     final int extraBufferLen = (int)(numMeshedFaces*3.3);
                     int len = checkBufferSize(i, extraBufferLen * FACE_INT_SIZE);
                     int numFaces = 0;
@@ -118,7 +124,10 @@ public class MeshUpdateTask {
                     for (int m = 0; m < numMeshedFaces; m++) {
                         BlockFace face = mesh.get(m);
                         if (i == 2) {
-                            numFaces += face.drawBasic(attr, buffer, numFaces*FACE_INT_SIZE);
+                            if (shadowDrawMode == 0)
+                                numFaces += face.drawBasic(attr, buffer, numFaces*FACE_INT_SIZE);
+                            else
+                                numFaces += face.drawShadowTextured(attr, buffer, numFaces*FACE_INT_SIZE);
                         } else {
                             numFaces += face.draw(attr, buffer, numFaces*FACE_INT_SIZE);
                         }

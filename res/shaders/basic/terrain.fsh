@@ -83,30 +83,32 @@ void main() {
 	ao += faceAO.z * xPos2 * yPos2;
 	ao += faceAO.w * xPos  * yPos2;
 
-	float lightSky =  0.0;
-	lightSky += faceLight.x * xPos  * yPos;
-	lightSky += faceLight.y * xPos2 * yPos;
-	lightSky += faceLight.z * xPos2 * yPos2;
-	lightSky += faceLight.w * xPos  * yPos2;
+	float lightLevelBlock =  0.0;
+	lightLevelBlock += faceLight.x * xPos  * yPos;
+	lightLevelBlock += faceLight.y * xPos2 * yPos;
+	lightLevelBlock += faceLight.z * xPos2 * yPos2;
+	lightLevelBlock += faceLight.w * xPos  * yPos2;
 
-	float lightBlock =  0.0;
-	lightBlock += faceLightSky.x * xPos  * yPos;
-	lightBlock += faceLightSky.y * xPos2 * yPos;
-	lightBlock += faceLightSky.z * xPos2 * yPos2;
-	lightBlock += faceLightSky.w * xPos  * yPos2;
+	float lightLevelSky =  0.0;
+	lightLevelSky += faceLightSky.x * xPos  * yPos;
+	lightLevelSky += faceLightSky.y * xPos2 * yPos;
+	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
+	lightLevelSky += faceLightSky.w * xPos  * yPos2;
 
-	// int timeW = mod(floor(in_matrix.frameTime), 20) > 10 ? 1 : 0;
+	// int timeW = mod(floor(in_scene.frameTime), 20) > 10 ? 1 : 0;
 	float ambientOccl = 1 - clamp(ao, 0,1);
 	vec3 color_adj = tex.rgb;
 	color_adj *= color.rgb;
 
 
 		float f = float(blockinfo.y);
-	if (f >= 12) {
+	if (f >= 12) { //EXPENSIVE LEAVE
 		f-=12;
 
 	    float sampleDist = 0.4;
 	    vec2 p0 = position.xz *0.008;
+	    // float fSin = sin(in_scene.frameTime*0.0003)*0.5+0.5;
+	    // p0 += vec2(fSin*110.3);
 	    vec2 p1 = p0 + vec2(1, 0)*sampleDist;
 	    vec2 p2 = p0 + vec2(0, 1)*sampleDist;
 	    float s0 = snoise(p0);
@@ -129,6 +131,6 @@ void main() {
     out_Color = vec4(color_adj, alpha);
     out_Normal = vec4((normal) * 0.5f + 0.5f, 1);
     out_Material = blockinfo;
-    out_Light = vec4(lightSky, lightBlock, ambientOccl, 1);
+    out_Light = vec4(lightLevelSky, lightLevelBlock, ambientOccl, 1);
     // gl_FragData[0] = vec4(0,1,1,1);
 }

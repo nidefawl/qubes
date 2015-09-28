@@ -42,7 +42,41 @@ out vec4 out_Color;
 float getBrightness(vec2 b) {
 	return (1-pow(1-b.x, 2))*(1-pow(1-b.y, 2));
 }
+#pragma define "SSR"
 
+#ifdef SSR_1
+const float _Iterations = 16;							// maximum ray iterations 
+const float _PixelStride = 18;							// number of pixels per ray step close to camera
+const float _PixelStrideZCuttoff = 152;					// ray origin Z at this distance will have a pixel stride of 1.0
+const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
+const float _PixelZSize = 32.0f;							// Z size in camera space of a pixel in the depth buffer
+const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
+const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
+
+#endif
+#ifdef SSR_2
+const float _Iterations = 32;							// maximum ray iterations 
+const float _PixelStride = 12;							// number of pixels per ray step close to camera
+const float _PixelStrideZCuttoff = 62;					// ray origin Z at this distance will have a pixel stride of 1.0
+const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
+const float _PixelZSize = 32.0f;							// Z size in camera space of a pixel in the depth buffer
+const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
+const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
+
+#endif
+
+
+// aka "CANT PLAY"
+#ifdef SSR_3 
+const float _Iterations = 512;							// maximum ray iterations 
+const float _PixelStride = 4;							// number of pixels per ray step close to camera
+const float _PixelStrideZCuttoff = 1;					// ray origin Z at this distance will have a pixel stride of 1.0
+const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
+const float _PixelZSize = 32.f;							// Z size in camera space of a pixel in the depth buffer
+const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
+const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
+
+#endif
 /*
 
 const float _Iterations = 8;							// maximum ray iterations
@@ -65,15 +99,8 @@ const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ra
 
 
 
+// NEEDS BLUR, LOTS OF
 
-
-const float _Iterations = 48;							// maximum ray iterations 
-const float _PixelStride = 18;							// number of pixels per ray step close to camera
-const float _PixelStrideZCuttoff = 422;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
-const float _PixelZSize = 2.0f;							// Z size in camera space of a pixel in the depth buffer
-const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
-const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
 
 
 float lastcameraz=0;
@@ -229,10 +256,10 @@ float calculateAlphaForIntersection( bool intersect,
 
 	// Fade ray hits that approach the maximum iterations
 	float distBlend = pow((iterationCount / _Iterations), 1);
-	// alpha *= 1.0 - clamp(distBlend*0.85, 0, 1);
+	alpha *= 1.0 - clamp(distBlend*0.85, 0, 1);
 
 	// Fade ray hits based on distance from ray origin
-	// alpha *= 1.0 - clamp( distance( vsRayOrigin, hitPoint) / _MaxRayDistance, 0.0, 1.0);
+	alpha *= 1.0 - clamp( distance( vsRayOrigin, hitPoint) / _MaxRayDistance, 0.0, 1.0);
 
 	alpha = max(0.01, alpha);
 	alpha = min( 1.0, alpha*specularStrength * 1.0);
@@ -267,7 +294,7 @@ void main(void) {
 
 	float3 vsRayOrigin = camRay3.xyz;
 	// vsRayOrigin.y-=2.51;
-	vec4 normal4 = in_matrix.view *  vec4(normal.xyz, 1);
+	vec4 normal4 = in_matrix_3D.view *  vec4(normal.xyz, 1);
 	normal4.xyz/=normal4.w;
 	float3 nvsRayOrigin = normalize( vsRayOrigin);
 	float3 vsRayDirection = normalize( reflect( nvsRayOrigin, normalize(normal4.xyz)));

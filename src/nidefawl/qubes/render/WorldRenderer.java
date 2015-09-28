@@ -6,13 +6,13 @@ import static org.lwjgl.opengl.GL13.*;
 import java.awt.Color;
 import java.util.HashMap;
 
-import org.lwjgl.opengl.ARBGeometryShader4;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
@@ -138,29 +138,51 @@ public class WorldRenderer {
         Engine.regionRenderer.rendered = 0;
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
-//        glDisable(GL_BLEND);
+      glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_BLEND);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
         
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("renderSecondPass");
-
-        waterShader.enable();
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+//
+//        if (Game.DO_TIMING)
+//            TimingHelper.endStart("renderSecondPass");
+//        waterShader.enable();
+//
+//        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
+//        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+//        glDisable(GL_BLEND);
+//        Engine.checkGLError("renderRegions");
+//        this.rendered = Engine.regionRenderer.rendered;
+//        if (Game.GL_ERROR_CHECKS)
+//            Engine.checkGLError("renderSecondPass");
+//        
         glDisable(GL_BLEND);
-        this.rendered = Engine.regionRenderer.rendered;
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("renderSecondPass");
-        
         Shader.disable();
 
         if (Game.DO_TIMING)
             TimingHelper.endSec();
+    }
+
+    public void renderTransparent(World world, float fTime) {
+//      glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (Game.DO_TIMING)
+            TimingHelper.startSec("renderSecondPass");
+        waterShader.enable();
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
+        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+        glDisable(GL_BLEND);
+        Engine.checkGLError("renderRegions");
+        this.rendered = Engine.regionRenderer.rendered;
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderSecondPass");
+
+        Shader.disable();
+        if (Game.DO_TIMING)
+            TimingHelper.endSec();
+
     }
 
     public void renderNormals(World world, float fTime) {
@@ -182,7 +204,7 @@ public class WorldRenderer {
 
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
-        Shaders.wireframe.setProgramUniform1f("maxDistance", 10);
+        Shaders.wireframe.setProgramUniform1f("maxDistance", 210);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);

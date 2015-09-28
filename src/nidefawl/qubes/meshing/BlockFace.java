@@ -183,6 +183,34 @@ public class BlockFace {
         attr.putBasic(buffer, offset);
         return 1;
     }
+
+    /**
+     * Draw shadow-textured block face
+     *
+     * @param attr the attr
+     * @param buffer the buffer
+     * @param offset the offset
+     * @return the number of faces drawn (vertex count / 4)
+     */
+    public int drawShadowTextured(BlockFaceAttr attr, int[] buffer, int offset) {
+        Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
+        int tex = block.getTextureFromSide(this.faceDir);
+        this.faceDir = this.bs.axis<<1|this.bs.face;
+        attr.setFaceDir(faceDir);
+        attr.setTex(tex);
+        attr.setType(this.bs.type);
+        attr.setReverse((this.bs.face&1)!=0);
+        setUV(attr.v0, 0);
+        attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
+        setUV(attr.v1, 1);
+        attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
+        setUV(attr.v2, 2);
+        attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
+        setUV(attr.v3, 3);
+        attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
+        attr.putShadowTextured(buffer, offset);
+        return 1;
+    }
     
     public int draw(BlockFaceAttr attr, int[] buffer, int offset) {
         attr.setNormal(this.normal[0], this.normal[1], this.normal[2]);

@@ -46,6 +46,7 @@ public class Engine {
     private static BufferedMatrix normalMatrix;
     private static BufferedMatrix orthoP;
     private static BufferedMatrix orthoMV;
+    private static BufferedMatrix orthoMVP;
 
     private static FloatBuffer depthRead;
     private static FloatBuffer fog;
@@ -109,6 +110,7 @@ public class Engine {
         normalMatrix = new BufferedMatrix();
         orthoP = new BufferedMatrix();
         orthoMV = new BufferedMatrix();
+        orthoMVP = new BufferedMatrix();
         depthRead = BufferUtils.createFloatBuffer(16);
         fog = BufferUtils.createFloatBuffer(16);
         camFrustum = new Frustum();
@@ -201,11 +203,11 @@ public class Engine {
     public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
         orthoMV.setIdentity();
         orthoMV.update();
-        orthoMV.update();
         orthoP.setZero();
+        orthoMVP.setZero();
         Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
-        Matrix4f.mul(orthoP, orthoMV, orthoP);
-        orthoP.update();
+        Matrix4f.mul(orthoP, orthoMV, orthoMVP);
+        orthoMVP.update();
         orthoP.update();
     }
     
@@ -246,6 +248,9 @@ public class Engine {
     }
     public static BufferedMatrix getMatOrthoMV() {
         return orthoMV;
+    }
+    public static BufferedMatrix getMatOrthoMVP() {
+        return orthoMVP;
     }
 
 
@@ -436,6 +441,11 @@ public class Engine {
     }
 
     public static String getDefinition(String define) {
+        
+        if ("SSR".equals(define)) {
+            int ssr = Game.instance.settings.ssr;
+            return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
+        }
 //        if ("RENDER_WIREFRAME".equals(define)) {
 //            return renderWireFrame ? "#define RENDER_WIREFRAME" : "";
 //        }
@@ -446,6 +456,24 @@ public class Engine {
     public static void toggleWireFrame() {
         renderWireFrame = !renderWireFrame;
         worldRenderer.initShaders();
+    }
+
+    /**
+     * @param mat2
+     */
+    public static void setOrthoMV(BufferedMatrix mv) {
+        Matrix4f.mul(orthoP, mv, orthoMVP);
+        orthoMVP.update();
+        UniformBuffer.updateOrtho();
+    }
+
+    /**
+     * 
+     */
+    public static void restoreOrtho() {
+        Matrix4f.mul(orthoP, orthoMV, orthoMVP);
+        orthoMVP.update();
+        UniformBuffer.updateOrtho();
     }
 
 

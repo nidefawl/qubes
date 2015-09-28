@@ -80,7 +80,7 @@ public class ClientHandler extends Handler {
             PlayerProfile profile = Game.instance.getProfile();
             profile.setIngameName(packetAuth.name);
             this.player = new PlayerSelf(this, profile);
-            this.sendPacket(new PacketCSettings(12));
+            this.sendPacket(new PacketCSettings(Game.instance.settings.chunkLoadDistance));
         } else {
             this.client.onKick(Connection.REMOTE, "Invalid auth");
         }

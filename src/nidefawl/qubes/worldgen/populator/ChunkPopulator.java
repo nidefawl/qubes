@@ -19,6 +19,7 @@ public class ChunkPopulator implements IChunkPopulator {
     @Override
     public void populate(WorldServer world, Chunk c) {
         Random rand = new Random();
+        if (rand.nextInt(3) == 0)
         for (int i = 0; i < 1; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);

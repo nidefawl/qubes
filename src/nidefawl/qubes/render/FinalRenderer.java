@@ -41,7 +41,7 @@ public class FinalRenderer {
     private FrameBuffer blur2;
     private int         blurTexture;
     private boolean startup = true;
-    private boolean ssr = false;
+    private int ssr = 0;
     
     /** deferred shader uniform array for lights
      * Layout:
@@ -57,12 +57,11 @@ public class FinalRenderer {
     private Uniform1f[] lightExp = new Uniform1f[256];
     private Uniform1f[] lightSize = new Uniform1f[256];
 
-    public void renderDeferred(World world, float fTime) {
-        deferred.bind();
-        deferred.clearFrameBuffer();
+    public void renderDeferred(World world, float fTime, int pass) {
 
         shaderDeferred.enable();
         ArrayList<DynamicLight> lights = world.lights;
+        shaderDeferred.setProgramUniform1i("pass", pass);
         shaderDeferred.setProgramUniform1i("numLights", Math.min(256, lights.size()));
         for (int a = 0; a < lights.size() && a < 256; a++) {
             DynamicLight light = lights.get(a);
@@ -101,13 +100,19 @@ public class FinalRenderer {
             dbg.drawDbgTexture(0, 0, 1, Engine.getSceneFB().getTexture(1), "texNormals");
             dbg.drawDbgTexture(0, 0, 2, Engine.getSceneFB().getTexture(2), "texMaterial");
             dbg.drawDbgTexture(0, 0, 3, Engine.getSceneFB().getDepthTex(), "texDepth");
-            dbg.drawDbgTexture(0, 0, 4, Engine.shadowRenderer.getDepthTex(), "texShadow");
+            dbg.drawDbgTexture(0, 0, 4, Engine.shadowRenderer.getDebugTexture(), "texShadow");
             dbg.drawDbgTexture(0, 0, 5, TMgr.getNoise(), "noiseTex");
             dbg.drawDbgTexture(0, 0, 6, Engine.getSceneFB().getTexture(3), "light");
             dbg.drawDbgTexture(0, 1, 0, this.deferred.getTexture(0), "DeferredOut");
             dbg.postDbgFB();
         }
 
+    }
+    public void bindFB() {
+        deferred.bind();
+    }
+    public void clearFrameBuffer() {
+        deferred.clearFrameBuffer();
     }
     final int[][] kawaseKernelSizePasses = new int[] [] {
         {0,0},
@@ -122,7 +127,7 @@ public class FinalRenderer {
         int kawaseKernSizeSetting = 2;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
         
-        int input = ssr ? this.ssrpass.getTexture(0) : this.deferred.getTexture(0);
+        int input = ssr > 0 ? this.ssrpass.getTexture(0) : this.deferred.getTexture(0);
         FrameBuffer buffer = blur1;
 
         shaderBlur.enable();
@@ -186,7 +191,7 @@ public class FinalRenderer {
     }
 
 
-    public void render(World world, float fTime) {
+    public void renderDefa(World world, float fTime) {
 
         if (Game.show) {
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
@@ -198,9 +203,9 @@ public class FinalRenderer {
         if (Game.DO_TIMING)
             TimingHelper.startSec("Deferred");
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred");
-        renderDeferred(world, fTime);
+        renderDeferred(world, fTime, 0);
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-        if (ssr) {
+        if (ssr > 0) {
             if (Game.DO_TIMING)
                 TimingHelper.endStart("SSR");
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SSR");
@@ -219,6 +224,32 @@ public class FinalRenderer {
 
     }
 
+    public void render(World world, float fTime, int pass) {
+
+        if (Game.DO_TIMING)
+            TimingHelper.startSec("Deferred");
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred");
+        renderDeferred(world, fTime, pass);
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+
+    }
+
+    public void renderReflAndBlur(World world, float fTime) {
+        if (ssr > 0) {
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("SSR");
+            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SSR");
+            renderReflection(world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        }
+        if (Game.DO_TIMING)
+            TimingHelper.endStart("Blur");
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Blur");
+        renderBlur(world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        if (Game.DO_TIMING)
+            TimingHelper.endSec();
+    }
 
     /**
      * @param world
@@ -256,7 +287,7 @@ public class FinalRenderer {
         if (Game.show) {
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
             dbg.preDbgFB(false);
-            dbg.drawDbgTexture(2, 0, 0, (ssr ? ssrpass.getTexture(0) : deferred.getTexture(0)), "texColor");
+            dbg.drawDbgTexture(2, 0, 0, (ssr > 0 ? ssrpass.getTexture(0) : deferred.getTexture(0)), "texColor");
             dbg.drawDbgTexture(2, 0, 1, blurTexture, "texBlur");
             dbg.postDbgFB();
         }
@@ -265,7 +296,7 @@ public class FinalRenderer {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderBlur");
 
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, (ssr ? ssrpass.getTexture(0) : deferred.getTexture(0)));
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, (ssr > 0 ? ssrpass.getTexture(0) : deferred.getTexture(0)));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, blurTexture);
 
         Engine.drawFullscreenQuad();
@@ -442,6 +473,14 @@ public class FinalRenderer {
 
 
     public void init() {
+        initShaders();
+        setSSR(Game.instance.settings.ssr);
+    }
+    /**
+     * @param id
+     */
+    public void setSSR(int ssr) {
+        this.ssr = ssr;
         initShaders();
     }
 }

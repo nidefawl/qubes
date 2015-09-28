@@ -68,14 +68,16 @@ public abstract class AbstractYMLConfig {
     
     public void load(File f) throws InvalidConfigException {
         setDefaults();
-        InputStream is = null;
-        try {
-            is = new BufferedInputStream(new FileInputStream(f));
-            load(is);
-        } catch (Exception e) {
-            throw new InvalidConfigException("Cannot read " + f, e);
-        } finally {
-            Closeables.closeQuietly(is);
+        if (f.exists()) {
+            InputStream is = null;
+            try {
+                is = new BufferedInputStream(new FileInputStream(f));
+                load(is);
+            } catch (Exception e) {
+                throw new InvalidConfigException("Cannot read " + f, e);
+            } finally {
+                Closeables.closeQuietly(is);
+            }
         }
     }
 

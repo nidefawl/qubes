@@ -32,6 +32,7 @@ public class Shader {
     int geometryShader = -1;
     int shader = -1;
     final String name;
+    public int bufBindIdx = 0;
     private final IntBuffer buffer;
     
     HashMap<String, Integer> locations    = new HashMap<String, Integer>();
@@ -162,16 +163,26 @@ public class Shader {
             glAttachObjectARB(this.shader, this.geometryShader);
             Engine.checkGLError("glAttachObjectARB");
         }
-        for (int i = 0; i < Tess.attributes.length; i++) {
-            glBindAttribLocationARB(this.shader, i, Tess.attributes[i]);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+Tess.attributes[i]+" = "+i);
+        String attr = vertCode.getAttrTypes();
+        if ("shadow".equals(attr)) {
+            System.out.println("bind shadow attributes");
+            glBindAttribLocationARB(this.shader, 0, "in_position");
+            glBindAttribLocationARB(this.shader, 1, "in_texcoord");
+            glBindAttribLocationARB(this.shader, 2, "in_blockinfo");
+        } else {
+            for (int i = 0; i < Tess.attributes.length; i++) {
+                glBindAttribLocationARB(this.shader, i, Tess.attributes[i]);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+Tess.attributes[i]+" = "+i);
+            }
+            for (int i = 0; i < BlockFaceAttr.attributes.length; i++) {
+                glBindAttribLocationARB(this.shader, i+Tess.attributes.length, BlockFaceAttr.attributes[i]);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
+            }
         }
-        for (int i = 0; i < BlockFaceAttr.attributes.length; i++) {
-            glBindAttribLocationARB(this.shader, i+Tess.attributes.length, BlockFaceAttr.attributes[i]);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
-        }
+
+
         GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
         GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
         GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
@@ -347,6 +358,14 @@ public class Shader {
         int calls = setProgramUniformCalls;
         setProgramUniformCalls = 0;
         return calls;
+    }
+
+
+    /**
+     * @return shader program gl name
+     */
+    public int get() {
+        return this.shader;
     }
 
 }

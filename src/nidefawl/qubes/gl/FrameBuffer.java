@@ -220,11 +220,18 @@ public class FrameBuffer {
             glClear(GL_DEPTH_BUFFER_BIT);
         }
     }
+
+    
+    public void clearColor() {
+        GL20.glDrawBuffers(GL_COLOR_ATTACHMENT0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        GL20.glDrawBuffers(this.drawBufAtt);
+    }
     
     
     public void setDrawAll() {
         if (this.numColorTextures > 0)
-        GL20.glDrawBuffers(this.drawBufAtt);
+            GL20.glDrawBuffers(this.drawBufAtt);
     }
     
     public void clearFrameBuffer() {

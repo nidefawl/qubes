@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -18,6 +19,8 @@ import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.config.ClientSettings;
+import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
@@ -47,44 +50,35 @@ import nidefawl.qubes.world.WorldClient;
 
 public class Game extends GameBase implements IErrorHandler {
 
-
-    public static boolean  show               = false;
-    
-    long         lastClickTime = System.currentTimeMillis() - 5000L;
-    private long lastTimeLoad  = System.currentTimeMillis();
+    static public Game instance;
+    public static boolean show    = false;
+    PlayerProfile         profile = new PlayerProfile();
+    public final ClientSettings          settings  = new ClientSettings();
 
     public GuiOverlayStats statsOverlay;
-    public GuiCached statsCached;
+    public GuiCached       statsCached;
     public GuiOverlayDebug debugOverlay;
-    public GuiOverlayChat chatOverlay;
+    public GuiOverlayChat  chatOverlay;
     private Gui            gui;
 
-    FontRenderer       fontSmall;
-    public Movement  movement           = new Movement();
-    WorldClient      world              = null;
-    public boolean   follow             = true;
-    private float      lastCamX;
-    private float      lastCamY;
-    private float      lastCamZ;
-    private RayTrace   rayTrace;
-    public int         selBlock           = 0;
-    long               lastShaderLoadTime = System.currentTimeMillis();
-    private boolean    doLoad             = true;
-    PlayerProfile profile = new PlayerProfile();
-    private ThreadConnect connect;
+    private ThreadConnect  connect;
+    private NetworkClient  client;
+    WorldClient            world              = null;
+    PlayerSelf             player;
+    public Movement        movement           = new Movement();
+    public final Selection selection          = new Selection();
+    public boolean         follow             = true;
+    private float          lastCamX;
+    private float          lastCamY;
+    private float          lastCamZ;
+    public int             selBlock           = 0;
+    long                   lastShaderLoadTime = System.currentTimeMillis();
+    float                  px, py, pz;
 
-    private NetworkClient client;
-    float px, py, pz;
-    PlayerSelf player;
+    public ArrayList<EditBlockTask> edits           = Lists.newArrayList();
+    public int                      step            = 0;
+    public boolean                  updateRenderers = true;
 
-    public ArrayList<EditBlockTask> edits = Lists.newArrayList();
-    public int step = 0;
-
-    public boolean updateRenderers = true;
-
-    public final Selection selection = new Selection();
-
-    static public Game instance;
     public void connectTo(String host) {
         try {
             String[] split = host.split(":");
@@ -107,6 +101,7 @@ public class Game extends GameBase implements IErrorHandler {
 
     @Override
     public void initGame() {
+        loadSettings();
         selection.init();
         AssetManager.getInstance().init();
         Engine.init();
@@ -371,7 +366,6 @@ public class Game extends GameBase implements IErrorHandler {
 
             boolean b = Mouse.isGrabbed();
             boolean isDown = Mouse.getState(action);
-            long timeSinceLastClick = System.currentTimeMillis() - lastClickTime;
             switch (button) {
                 case 0:
                     selection.clicked(button, isDown);
@@ -469,19 +463,52 @@ public class Game extends GameBase implements IErrorHandler {
       
 
       glActiveTexture(GL_TEXTURE0);
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("bindOrthoUBO");
-      UniformBuffer.bindOrthoUBO();
       if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       if (this.world != null) {
-//        glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-          glDisable(GL_BLEND);
-          glEnable(GL_DEPTH_TEST);
-          glDepthFunc(GL_ALWAYS);
-//          glEnable(GL_TEXTURE_2D);
           if (Game.DO_TIMING) TimingHelper.endStart("final");
-
+          glDisable(GL_BLEND);
+          glDepthFunc(GL_ALWAYS);
+          glEnable(GL_DEPTH_TEST);
           glDepthMask(false);
-          Engine.outRenderer.render(this.world, fTime);
+
+          if (show) {
+              GuiOverlayDebug dbg = Game.instance.debugOverlay;
+              dbg.preDbgFB(true);
+              dbg.drawDebug();
+              dbg.postDbgFB();
+          }
+          Engine.outRenderer.bindFB();
+          Engine.outRenderer.clearFrameBuffer();
+          Engine.outRenderer.render(this.world, fTime, 0);
+          
+
+          glDepthMask(true);
+          glDepthFunc(GL_LEQUAL);
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          Engine.getSceneFB().bind();
+          Engine.getSceneFB().clearColor();
+          Engine.worldRenderer.renderTransparent(world, fTime);
+//          glDisable(GL_BLEND);
+          glDepthFunc(GL_ALWAYS);
+          glDepthMask(false);
+          
+          
+          Engine.outRenderer.bindFB();
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          Engine.outRenderer.render(this.world, fTime, 1);
+
+//        glDisable(GL_CULL_FACE);
+          Engine.outRenderer.renderReflAndBlur(this.world, fTime);
+
+
+          FrameBuffer.unbindFramebuffer();
+
+          
+          
+          
+          
           if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
           Engine.outRenderer.renderFinal(this.world, fTime);
           if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
@@ -493,12 +520,18 @@ public class Game extends GameBase implements IErrorHandler {
           if (pass) {
               if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("forwardPass");
 
-              glDisable(GL_CULL_FACE);
               if (Game.DO_TIMING) TimingHelper.endStart("forwardPass");
+             
+
+              
               Engine.getSceneFB().bindRead();
-//              GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+//             
+              GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
               FrameBuffer.unbindReadFramebuffer();
-              UniformBuffer.bindProjUBO();
+              Engine.worldRenderer.renderTransparent(world, fTime);
+              glDisable(GL_CULL_FACE);
+              
+              
               
               if (!Engine.worldRenderer.debugBBs.isEmpty()) {
 
@@ -537,7 +570,6 @@ public class Game extends GameBase implements IErrorHandler {
                     if (Game.DO_TIMING)
                         TimingHelper.endSec();
               }
-              UniformBuffer.bindOrthoUBO();
               glEnable(GL_CULL_FACE);
               if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
           }
@@ -567,8 +599,8 @@ public class Game extends GameBase implements IErrorHandler {
           Shader.disable();
       }
 //    Shaders.textured.enable();
-//    glBindTexture(GL_TEXTURE_2D, grassSide);
-//    Engine.drawFullscreenQuad();
+//    glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
+////    Engine.drawFullscreenQuad();
 //    Shader.disable();
 
       if (this.gui != null) {
@@ -606,7 +638,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >22200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2222200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -665,8 +697,8 @@ public class Game extends GameBase implements IErrorHandler {
                 l.loc.y = py;
                 l.loc.z = pz;
 //                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
-                l.intensity = 7.6F;
-                l.color = new Vector3f(1*l.intensity);
+//                l.intensity = 2.6F;
+//                l.color = new Vector3f(1*l.intensity);
 //                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
 //                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
 //                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
@@ -698,34 +730,13 @@ public class Game extends GameBase implements IErrorHandler {
         }
         
         if (this.world != null && updateRenderers) {
-//            Engine.regionLoader.finishTasks();
             float renderRegionX = follow ? px : lastCamX;
 //            float renderRegionY = follow ? py : lastCamY;
             float renderRegionZ = follow ? pz : lastCamZ;
             int xPosP = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
             int zPosP = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-            int xPosC = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS);
-            int zPosC = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS);
-            if (doLoad && System.currentTimeMillis() >= lastTimeLoad) {
-                int halflen = (RegionRenderer.RENDER_DISTANCE+1)*RegionRenderer.REGION_SIZE;
-//                world.getChunkManager().ensureLoaded(xPosC, zPosC, halflen);
-//                world.getChunkManager().unloadUnused(xPosC, zPosC, halflen+2);
-//                int i = Engine.regionLoader.updateRegions(xPosP, zPosP, follow);
-//                if (i != 0) {
-//                    System.out.println("Queued "+i+" regions for load");
-//                }
-                lastTimeLoad += 122L;
-            }
-            //HACKY
-//            int nRegions = 0;
             Engine.regionRenderer.update(this.world, px, py, pz, xPosP, zPosP, f);
-//            if (!startRender)
-//            startRender = nRegions > 4;
         }
-//        boolean releaseMouse = !this.mouseClicked || (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) ? !Mouse.isButtonDown(0) : true);
-//                
-//        if (releaseMouse) {
-//        }
     }
     boolean reinittexthook = false;
     public void showGUI(Gui gui) {
@@ -835,5 +846,27 @@ public class Game extends GameBase implements IErrorHandler {
 
     public PlayerProfile getProfile() {
         return this.profile;
+    }
+
+    /**
+     * 
+     */
+    public void saveSettings() {
+        try {
+            File f = new File("settings.yml");
+            settings.write(f);
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
+    }
+    public void loadSettings() {
+        try {
+            File f = new File("settings.yml");
+            settings.load(f);
+            if (!f.exists())
+                settings.write(f);
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
     }
 }
