@@ -12,7 +12,7 @@ public class BlockGrass extends Block {
     
     @Override
     public int getColorFromSide(int side) {
-        return side == Dir.DIR_POS_Y ? 0x74800E : super.getColorFromSide(side);
+        return side == Dir.DIR_POS_Y ? 0x44600E : super.getColorFromSide(side);
     }
 
     public int getTextureFromSide(int faceDir) {

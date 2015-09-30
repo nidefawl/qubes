@@ -17,14 +17,20 @@ public class Mesher {
 
     private final int[]    dims;
     private BlockSurface[] mask2;
-    final static BlockSurfaceAir air = new BlockSurfaceAir();
-    private final BlockSurface[] scratchPad = new BlockSurface[1000000];
+    private final static BlockSurfaceAir air = new BlockSurfaceAir();
+    
+ // THIS WILL NOT WORK WITH REGIONS > 32x32x32 (needs to be bigger data type + bigger array size)
+    private final static short[] renderTypeBlocks = new short[1<<16]; 
+    private int nextBlockIDX = 0;
+    
+    //TODO: implement cache to make memory efficient
+//    private final BlockSurface[] scratchPad = new BlockSurface[1000000];
     int scratchpadidx = 0;
     @SuppressWarnings("rawtypes")
     List[] meshes = new List[WorldRenderer.NUM_PASSES];
     public Mesher() {
-        for (int i = 0; i < scratchPad.length; i++)
-            this.scratchPad[i] = new BlockSurface();
+//        for (int i = 0; i < scratchPad.length; i++)
+//            this.scratchPad[i] = new BlockSurface();
         for (int i = 0; i < meshes.length; i++)
             this.meshes[i] = new ArrayList<>();
         this.dims = new int[3];
@@ -173,6 +179,7 @@ public class Mesher {
     private int ySlice;
     final static boolean MEASURE = false;
     public void mesh(World world, ChunkRenderCache ccache, int rY) {
+        this.nextBlockIDX = 0;
         this.ySlice = rY;
         this.yPos = rY<<RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
         this.cache = ccache;
@@ -187,9 +194,7 @@ public class Mesher {
         if (MEASURE) TimingHelper2.endSec();
     }
 
-    final int[] min = new int[] {-1, 0, -1};
-    final int[] max = new int[] {0, -1, 0};
-    public void meshRound(World world, ChunkRenderCache ccache) {
+    private void meshRound(World world, ChunkRenderCache ccache) {
         scratchpadidx = 0;
         dims[0] = RegionRenderer.REGION_SIZE_BLOCKS;
         dims[1] = RegionRenderer.SLICE_HEIGHT_BLOCKS;
@@ -302,6 +307,18 @@ public class Mesher {
         if (type > 0) {
             Block block = Block.block[type];
             int pass = block.getRenderPass();
+            int renderType = block.getRenderType();
+            if (renderType != 0) {
+                if (center && strategy == 0 && axis == 0) {
+                    if ((k&REGION_SIZE_BLOCKS_MASK) != k)
+                        System.err.println("k ");
+                    if ((i&REGION_SIZE_BLOCKS_MASK) != i)
+                        System.err.println("i ");
+                    renderTypeBlocks[this.nextBlockIDX++] = 
+                            (short) (j<<(REGION_SIZE_BLOCK_SIZE_BITS*2)|i<<(REGION_SIZE_BLOCK_SIZE_BITS)|k);
+                }
+                return air;
+            }
             if (strategy == 1 && pass > 0) {
                 return air;
             }
@@ -330,16 +347,35 @@ public class Mesher {
         return air;
     }
 
-
-    private BlockSurface next() {
-        BlockSurface surface = scratchPad[scratchpadidx++];
-        surface.reset();
-        return surface;
-    }
+//
+//    private BlockSurface next() {
+//        BlockSurface surface = scratchPad[scratchpadidx++];
+//        surface.reset();
+//        return surface;
+//    }
 
 
 
     public List<BlockFace> getMeshes(int pass) {
         return this.meshes[pass];
+    }
+
+
+
+    /**
+     * @return
+     */
+    public int getRenderType1Blocks() {
+        return this.nextBlockIDX;
+    }
+
+
+
+    /**
+     * @param j
+     * @return 
+     */
+    public short getBlockPos(int j) {
+        return renderTypeBlocks[j];
     }
 }

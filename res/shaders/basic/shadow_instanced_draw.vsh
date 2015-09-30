@@ -7,6 +7,6 @@
 uniform int shadowSplit;
 
 void main() {
-	gl_Position = in_matrix.shadow_split_mvp[gl_InstanceID] * in_position;
+	gl_Position = in_matrix_shadow.shadow_split_mvp[gl_InstanceID] * in_position;
 	gl_ViewportIndex = gl_InstanceID;
 }

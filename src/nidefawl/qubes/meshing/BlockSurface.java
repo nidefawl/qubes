@@ -28,7 +28,7 @@ public class BlockSurface {
     public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
         return ((ao3&0x3)<<6)|((ao2&0x3)<<4)|((ao1&0x3)<<2)|(ao0&0x3);
     }
-    private int mix_light(int br0, int br1, int br2, int br3) {
+    public static int mix_light(int br0, int br1, int br2, int br3) {
       // shift the upper nibble up by 4 bits so the overflow (bit 4-7) can be masked out later
       br0 = (br0&0xF) | (br0&0xF0)<<4;
       br1 = (br1&0xF) | (br1&0xF0)<<4;

@@ -27,7 +27,11 @@ import nidefawl.qubes.world.World;
 
 public class WorldRenderer {
 
-    public static final int   NUM_PASSES      = 3;
+    public static final int NUM_PASSES        = 4;
+    public static final int PASS_SOLID        = 0;
+    public static final int PASS_TRANSPARENT  = 1;
+    public static final int PASS_SHADOW_SOLID = 2;
+    public static final int PASS_LOD          = 3;
 
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
 //    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
@@ -138,9 +142,10 @@ public class WorldRenderer {
         Engine.regionRenderer.rendered = 0;
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
-      glEnable(GL_BLEND);
+        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
         
         if (Game.GL_ERROR_CHECKS)
@@ -172,7 +177,7 @@ public class WorldRenderer {
             TimingHelper.startSec("renderSecondPass");
         waterShader.enable();
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
         glDisable(GL_BLEND);
         Engine.checkGLError("renderRegions");
         this.rendered = Engine.regionRenderer.rendered;
@@ -186,29 +191,32 @@ public class WorldRenderer {
     }
 
     public void renderNormals(World world, float fTime) {
-//        Shaders.normals.enable();
-//        glLineWidth(3.0F);
-//        Engine.checkGLError("glLineWidth");
-////        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
-//        Engine.regionRenderer.setDrawMode(-1);
-//        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.setDrawMode(-1);
-////        glLineWidth(2.0F);
-//
-////        Shaders.colored.enable();
-////        Engine.regionRenderer.renderDebug(world, fTime);
-//        Shader.disable();
+        Shaders.normals.enable();
+        glLineWidth(3.0F);
+        Engine.checkGLError("glLineWidth");
+//        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
+        Engine.regionRenderer.setDrawMode(-1);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.setDrawMode(-1);
+//        glLineWidth(2.0F);
+
+//        Shaders.colored.enable();
+//        Engine.regionRenderer.renderDebug(world, fTime);
+        Shader.disable();
         
     }
 
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
         Shaders.wireframe.setProgramUniform1f("maxDistance", 210);
-        Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
-        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
+//        Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
+//        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+//        Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         Shader.disable();
     }
     

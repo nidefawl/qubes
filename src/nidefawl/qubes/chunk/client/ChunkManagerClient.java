@@ -32,6 +32,7 @@ public class ChunkManagerClient extends ChunkManager {
     public void remove(int x, int z) {
         Chunk c = this.table.remove(x, z);
         if (c != null) {
+            System.out.println("REMOVE CHUNK");
             c.isValid = false;
         }
     }

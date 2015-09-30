@@ -165,7 +165,6 @@ public class Shader {
         }
         String attr = vertCode.getAttrTypes();
         if ("shadow".equals(attr)) {
-            System.out.println("bind shadow attributes");
             glBindAttribLocationARB(this.shader, 0, "in_position");
             glBindAttribLocationARB(this.shader, 1, "in_texcoord");
             glBindAttribLocationARB(this.shader, 2, "in_blockinfo");

@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
+import static nidefawl.qubes.render.WorldRenderer.*;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -26,6 +27,7 @@ import nidefawl.qubes.world.World;
 
 public class ShadowRenderer {
     public Shader   shadowShader;
+    public Shader   shadowShaderLOD;
     private boolean startup = true;
 
     //results between those 2 modes are equal
@@ -58,16 +60,24 @@ public class ShadowRenderer {
             shadowShader.release();
             shadowShader = null;
         }
+        if (shadowShaderLOD != null) {
+            shadowShaderLOD.release();
+            shadowShaderLOD = null;
+        }
     }
 
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
             Shader shadow = assetMgr.loadShader(shaderNames[renderMode]);
+            Shader sshadowShaderLOD = assetMgr.loadShader("shaders/basic/shadow_lod");
             releaseShaders();
             shadowShader = shadow;
+            shadowShaderLOD = sshadowShaderLOD;
             shadowShader.enable();
             shadowShader.setProgramUniform1i("blockTextures", 0);
+            shadowShaderLOD.enable();
+            shadowShaderLOD.setProgramUniform1i("blockTextures", 0);
             Shader.disable();
             this.uploadViewport = true;
         } catch (ShaderCompileError e) {
@@ -158,7 +168,7 @@ public class ShadowRenderer {
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
@@ -197,7 +207,7 @@ public class ShadowRenderer {
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
-        Engine.regionRenderer.renderRegions(world, fTime, 2, 3, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         FrameBuffer.unbindFramebuffer();
         Shader.disable();
 
@@ -214,26 +224,28 @@ public class ShadowRenderer {
         glPolygonOffset(1.1f, 2.f);
         glDisable(GL_BLEND);
         glViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
-        shadowShader.enable();
-        shadowShader.setProgramUniform1i("shadowSplit", 0);
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
+        shadowShader.enable();
+        shadowShader.setProgramUniform1i("shadowSplit", 0);
         final int shadowPass = 2;
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 1, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
+//      Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 1, Frustum.FRUSTUM_INSIDE);
+      Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
         glPolygonOffset(1.2f, 2.f);
 
         glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 2, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
-        glPolygonOffset(2.4f, 2.f);
+        glPolygonOffset(1.8f, 2.f);
 
         glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 3, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
 
         FrameBuffer.unbindFramebuffer();
 
@@ -258,24 +270,23 @@ public class ShadowRenderer {
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
-        final int shadowPass = 2;
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 1, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
         glPolygonOffset(1.2f, 2.f);
 
         glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 2, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
         glPolygonOffset(2.4f, 2.f);
 
         glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
-        Engine.regionRenderer.renderRegions(world, fTime, shadowPass, 3, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
 
         FrameBuffer.unbindFramebuffer();
 

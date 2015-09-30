@@ -13,7 +13,7 @@ in vec4 position;
 out vec4 out_Color;
  
 void main2(void) {
-	vec3 eye = in_matrix.cameraPosition.xyz;
+	vec3 eye = in_scene.cameraPosition.xyz;
 	vec3 rayDirection = normalize(position.xyz);
     vec3 atmosphere = applyFog(atmosphereColor(rayDirection), 100000.0, eye, rayDirection); 
     out_Color = vec4(atmosphere, 1.0);
@@ -38,7 +38,7 @@ void main(void) {
 	vec3 sky = vec3(horizonColor);
 
 	float l = clamp(lightIntens/1.0,0,1);
-	vec3 eye = in_matrix.cameraPosition.xyz;
+	vec3 eye = in_scene.cameraPosition.xyz;
 	vec3 viewVector = normalize(position.xyz-eye);
 	intensity = 0.4+l*0.014;
 	rayleigh_strength = 0.139;
@@ -65,7 +65,7 @@ void main(void) {
 	float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
 	sky = mix(sky, sky*skySunScat, clamp(0.24f+sunTheta, 0, 1));
 	sky += skySunScat*0.5f;
-	float zfar = in_matrix.viewport.w;
+	float zfar = in_scene.viewport.w;
 	float l2 = clamp(1-pow(1-(lightIntens+0.4), 4), 1, 0);
 	sky = applyFog(sky, zfar*3.5, eye, rayDirection)*l2; 
 

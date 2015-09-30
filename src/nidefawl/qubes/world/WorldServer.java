@@ -187,9 +187,16 @@ public class WorldServer extends World {
         for (int y = min; y < max; y++) {
             chunk.setLight(x, y, z, 1, add ? 0xF: 0);
         }
+        while (!add && min > 0) {
+            min--;
+            int lvl = chunk.getLight(x, min, z, 1);
+            if (lvl > 0) {
+                chunk.setLight(x, min, z, 1, 0);
+            } else break;
+        }
         int blockX = chunk.x<<SIZE_BITS | x;
         int blockZ = chunk.z<<SIZE_BITS | z;
-        this.chunkTracker.flagLights(chunk.x, chunk.z, x, min, z, x, max, z);
+        this.chunkTracker.flagLights(chunk.x, chunk.z, x, min-1, z, x, max, z);
         
         //run from max y to min y, check if a neighbour can receive light and doesn't see the sky
         // if so, trigger a sun light update on that block

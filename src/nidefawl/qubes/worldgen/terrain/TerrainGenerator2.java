@@ -14,14 +14,14 @@ public class TerrainGenerator2 implements ITerrainGen {
 
     private World world;
     private long  seed;
-    private final TerrainNoiseScale noise3;
-    private final TerrainNoiseScale noise;
-    private final TerrainNoise2D noiseM2;
-    private final TerrainNoiseScale noise2;
-    private final TerrainNoiseScale noise4;
-    private final TerrainNoise2D noise2D;
-    private final RiverNoise2D r2D;
-    private final RiverNoise2D r2D2;
+    private  TerrainNoiseScale noise3;
+    private  TerrainNoiseScale noise;
+    private  TerrainNoise2D noiseM2;
+    private  TerrainNoiseScale noise2;
+    private  TerrainNoiseScale noise4;
+    private  TerrainNoise2D noise2D;
+    private  RiverNoise2D r2D;
+    private  RiverNoise2D r2D2;
     private TerrainNoiseScale noise5;
 //    private TerrainNoiseScale nois234234e;
 
@@ -109,6 +109,34 @@ public class TerrainGenerator2 implements ITerrainGen {
     }
 
     private double[][] generateNoise(int cX, int cZ) {
+        {
+
+
+            Random rand = new Random(this.seed);
+            double scaleMixXZ = 4.80D;
+            double scaleMixY = scaleMixXZ*0.4D;
+            double scaleMix2XZ = 1.1D;
+            double scaleMix2Y = scaleMix2XZ;
+            double scaleT1XZ = 0.3D;
+            double scaleT1Y = scaleT1XZ*0.3D;
+            double scaleT2XZ = 4.3D;
+            double scaleT2Y = scaleT1XZ*0.3D;
+            double scaleT4XZ = 3.3D;
+            double scaleT4Y = scaleT4XZ*0.1D;
+            double scaleT5XZ = 3.6D;
+            double scaleT5Y = scaleT5XZ*3.4D;
+            this.noise = new TerrainNoiseScale(rand.nextLong(), scaleMixXZ, scaleMixY, scaleMixXZ, 3);
+            this.noiseM2 = new TerrainNoise2D(rand.nextLong(), scaleMix2XZ, scaleMix2XZ, 2);
+            this.noise2 = new TerrainNoiseScale(rand.nextLong(), scaleT1XZ, scaleT1Y, scaleT1XZ, 3);
+            this.noise5 = new TerrainNoiseScale(rand.nextLong(), scaleT5XZ, scaleT5Y, scaleT5XZ, 3);
+            this.noise3 = new TerrainNoiseScale(rand.nextLong(), scaleT2XZ, scaleT2Y, scaleT2XZ, 3);
+            this.noise4 = new TerrainNoiseScale(rand.nextLong(), scaleT4XZ, scaleT4Y, scaleT4XZ, 3);
+            this.noise2D = new TerrainNoise2D(rand.nextLong(), 1, 1, 1);
+            double dRScale = 0.23D;
+            this.r2D = new RiverNoise2D(rand.nextLong(), dRScale, 8);
+             dRScale = 0.14D;
+            this.r2D2 = new RiverNoise2D(rand.nextLong(), dRScale, 8);
+        }
 //        Random rand = new Random(this.seed);
         int wh = this.world.worldHeight;
         

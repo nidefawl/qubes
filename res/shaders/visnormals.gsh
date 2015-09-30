@@ -19,11 +19,11 @@ void main(){
     middle.w = 1.0;
     vec3 normal = normalize((vdata[0].normal + vdata[1].normal + vdata[2].normal)/3);
 
-    gl_Position = in_matrix.mvp * middle;
+    gl_Position = in_matrix_3D.mvp * middle;
     gdata.color = vec3(0);
     EmitVertex();
     
-    gl_Position = in_matrix.mvp * (middle + vec4(normal*0.4, 0));
+    gl_Position = in_matrix_3D.mvp * (middle + vec4(normal*0.4, 0));
     gdata.color = normal*0.5+0.5;
     
     EmitVertex();

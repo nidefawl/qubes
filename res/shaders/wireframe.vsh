@@ -14,9 +14,9 @@ uniform vec3 in_offset;
 void main() {
 	vec4 vPos = in_position;
 	vPos.xyz += in_offset;
-	gl_Position = in_matrix.mvp * vPos;
-	vposition = (in_matrix.mv * vPos).xyz;
-	ftime = in_matrix.frameTime*0.05;
+	gl_Position = in_matrix_3D.mvp * vPos;
+	vposition = (in_matrix_3D.mv * vPos).xyz;
+	ftime = in_scene.frameTime*0.05;
 	normal  = in_normal.xyz;
 	color = linecolor;
 	int vertexID = int(mod(gl_VertexID, 4));

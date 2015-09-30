@@ -7,6 +7,7 @@ import java.util.Random;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.world.WorldServer;
 
 /**
@@ -19,17 +20,23 @@ public class ChunkPopulator implements IChunkPopulator {
     @Override
     public void populate(WorldServer world, Chunk c) {
         Random rand = new Random();
-        if (rand.nextInt(3) == 0)
-        for (int i = 0; i < 1; i++) {
+        int a = 0;
+        for (int i = 0; i < 255; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                TreeGenerators.rand(rand).generate(world, x, h+1, z, rand);
-            }
-//            tree.generate(world, x, h, z, rand);
+                if ( a == 0 && rand.nextInt(16) == 0) {
+                    TreeGenerators.rand(rand).generate(world, x, h+1, z, rand);
+                } else {
+                    world.setType(x, h+1, z, Block.longgrass.id, Flags.MARK);
+                }
+                a++;
+            }   
+            
+//                tree.generate(world, x, h, z, rand);
         }
     }
     /**

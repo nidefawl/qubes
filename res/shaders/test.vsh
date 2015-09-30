@@ -9,5 +9,5 @@ out vec2 pass_texcoord;
 void main(void) {
     pass_Color = in_color;
     pass_texcoord = in_texcoord.st;
-    gl_Position = in_matrix.mvp * in_position;
+    gl_Position = in_matrix_2D.mvp * in_position;
 }

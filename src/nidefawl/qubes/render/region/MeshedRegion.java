@@ -89,7 +89,7 @@ public class MeshedRegion {
         int ptrSetting = pass;
         if (ptrSetting == 2) {
             if (this.shadowDrawMode == 1) {
-                ptrSetting++;
+                ptrSetting = 4;
             }
         }
         enableVertexPtrs(ptrSetting);
@@ -122,6 +122,7 @@ public class MeshedRegion {
         switch (pass) {
             case 0:
             case 1:
+            case 3:
                 enabledDefaultBlockPtrs();
                 return;
             case 2:
@@ -130,7 +131,7 @@ public class MeshedRegion {
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("AttribPtr " + 0);
                 return;
-            case 3:
+            case 4:
                 {
                     GL20.glEnableVertexAttribArray(0);
                     GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, PASS_3_BLOCK_VERT_BYTE_SIZE, 0);
@@ -161,7 +162,7 @@ public class MeshedRegion {
      * @param ptrSetting
      */
     public static void disableVertexPtrs(int ptrSetting) {
-        if (ptrSetting < 2) {
+        if (ptrSetting < 2 || ptrSetting == 3) {
             for (int i = 0; i < 7; i++)
                 GL20.glDisableVertexAttribArray(i);
         } else {

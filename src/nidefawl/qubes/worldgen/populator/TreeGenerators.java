@@ -41,7 +41,7 @@ public class TreeGenerators {
     public static IWorldGen oakVariationTree() {
         return new TreeGeneratorLSystem(
             "FFFFFFA", ImmutableMap.<Character, TreeRule>builder()
-            .put('A', new TreeRule("[&FFBFA]////[&BFFFA]////[&FBFFAFFA]", 1.0f))
+            .put('A', new TreeRule("[&FFFFBFA]////[&BFFFFFA]////[&FBFFFFAFFA]", 1.0f))
             .put('B', new TreeRule("[&FFFAFFFF]////[&FFFAFFF]////[&FFFAFFAA]", 0.8f)).build(),
             4, (float) Math.toRadians(35))
             .setLeafType(Block.leaves_jungle.id)
@@ -51,7 +51,7 @@ public class TreeGenerators {
     public static IWorldGen pineTree() {
         return new TreeGeneratorLSystem(
             "FFFFAFFFFFFFAFFFFA", ImmutableMap.<Character, TreeRule>builder()
-            .put('A', new TreeRule("[&FFFFFA]////[&FFFFFA]////[&FFFFFA]", 1.0f)).build(),
+            .put('A', new TreeRule("[&FFFFFFFFFA]////[&FFFFFA]////[&FFFFFA]", 1.0f)).build(),
             4, (float) Math.toRadians(35))
             .setLeafType(Block.leaves_spruce.id)
             .setBarkType(Block.log_spruce.id);

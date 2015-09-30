@@ -4,8 +4,9 @@ import static nidefawl.qubes.meshing.BlockFaceAttr.BLOCK_FACE_INT_SIZE;
 
 import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_2_BLOCK_FACE_INT_SIZE;
 import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_3_BLOCK_FACE_INT_SIZE;
+import static nidefawl.qubes.render.region.RegionRenderer.*;
 
-import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+import static nidefawl.qubes.render.WorldRenderer.*;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ import nidefawl.qubes.world.WorldClient;
 
 public class MeshUpdateTask {
     public final Mesher     mesher = new Mesher();
+    public final BlockRenderer     blockRenderer = new BlockRenderer();
     public final ChunkRenderCache ccache = new ChunkRenderCache();
 //    final Tess[] tess  = new Tess[NUM_PASSES];
     final BlockFaceAttr attr = new BlockFaceAttr();
@@ -62,6 +64,8 @@ public class MeshUpdateTask {
             this.mr.preUploadBuffers();
 
             for (int i = 0; i < NUM_PASSES; i++) {
+                if (this.buffers[i] == null) 
+                    this.buffers[i] = new int[0];
                 this.mr.uploadBuffer(i, this.buffers[i], this.bufferIdx[i], this.vertexCount[i], this.shadowDrawMode);
             }
 //            this.mr.compileDisplayList(this.tess);
@@ -101,29 +105,28 @@ public class MeshUpdateTask {
                 this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
-                for (int i = 0; i < NUM_PASSES && this.mr.isValid; i++) {
+                for (int i = 0; i < PASS_LOD && this.mr.isValid; i++) {
                     this.vertexCount[i] = 0;
                     this.bufferIdx[i] = 0;
-//                    Tess tess = this.tess[i];
                     List<BlockFace> mesh = this.mesher.getMeshes(i);
-//                    tess.resetState();
-//                    if (i != 2) {
-//                        tess.setColor(-1, 255);
-//                        tess.setBrightness(0xf00000);
-//                    }
-                    attr.setOffset(xOff, yOff, zOff);
+                    
                     int numMeshedFaces = mesh.size();
-                    int FACE_INT_SIZE = i == 2 ? PASS_2_BLOCK_FACE_INT_SIZE : BLOCK_FACE_INT_SIZE;
-                    if (i == 2 && shadowDrawMode > 0) {
-                        FACE_INT_SIZE = PASS_3_BLOCK_FACE_INT_SIZE;
+                    int FACE_INT_SIZE = BLOCK_FACE_INT_SIZE;
+                    if (i == PASS_SHADOW_SOLID) { 
+                        if (shadowDrawMode > 0) {
+                            FACE_INT_SIZE = PASS_3_BLOCK_FACE_INT_SIZE;
+                        } else {
+                            FACE_INT_SIZE = PASS_2_BLOCK_FACE_INT_SIZE;    
+                        }
                     }
-                    final int extraBufferLen = (int)(numMeshedFaces*3.3);
-                    int len = checkBufferSize(i, extraBufferLen * FACE_INT_SIZE);
+                    int extraBufferLen = (int)(numMeshedFaces*3.3);
+                    checkBufferSize(i, extraBufferLen * FACE_INT_SIZE);
                     int numFaces = 0;
                     int[] buffer = this.buffers[i];
+                    attr.setOffset(xOff, yOff, zOff);
                     for (int m = 0; m < numMeshedFaces; m++) {
                         BlockFace face = mesh.get(m);
-                        if (i == 2) {
+                        if (i == PASS_SHADOW_SOLID) {
                             if (shadowDrawMode == 0)
                                 numFaces += face.drawBasic(attr, buffer, numFaces*FACE_INT_SIZE);
                             else
@@ -132,11 +135,47 @@ public class MeshUpdateTask {
                             numFaces += face.draw(attr, buffer, numFaces*FACE_INT_SIZE);
                         }
                         if (numFaces >= extraBufferLen) {
-                            System.err.println("EXCEEDING BUFFER SIZE, IMPL REALLOC WITH ARRAY COPY");
+                            extraBufferLen = (int)(extraBufferLen*2.3);
+                            reallocBuffer(i, extraBufferLen * FACE_INT_SIZE);
+//                            throw new RuntimeException("EXCEEDING BUFFER SIZE, IMPL REALLOC WITH ARRAY COPY");
+                            
                         }
                     }
+                    
+                   
                     this.bufferIdx[i] = numFaces*FACE_INT_SIZE;
                     this.vertexCount[i] = numFaces*4;
+                }
+                this.vertexCount[PASS_LOD] = 0;
+                this.bufferIdx[PASS_LOD] = 0;
+                int n = this.mesher.getRenderType1Blocks();
+                if (n > 0) {
+                    int extraBufferLen = (int)(n*4);
+                    int FACE_INT_SIZE = BLOCK_FACE_INT_SIZE;
+                    checkBufferSize(PASS_LOD, extraBufferLen * FACE_INT_SIZE);
+                    int numFaces = 0;
+                    attr.setOffset(0, 0, 0);
+                    blockRenderer.preRender(w, this.buffers[PASS_LOD], this.ccache, attr);
+                    for (int j = 0; j < n; j++) {
+                        short c = this.mesher.getBlockPos(j);
+                        int z = (c) & REGION_SIZE_BLOCKS_MASK;
+                        c >>= REGION_SIZE_BLOCK_SIZE_BITS;
+                        int x = (c) & REGION_SIZE_BLOCKS_MASK;
+                        c >>= REGION_SIZE_BLOCK_SIZE_BITS;
+                        int y = (c&SLICE_HEIGHT_BLOCK_MASK);
+                        x += xOff;
+                        y += yOff;
+                        z += zOff;
+                        int faces = blockRenderer.render(PASS_LOD, x, y, z, numFaces*FACE_INT_SIZE);
+                        numFaces += faces;
+                        if (numFaces >= extraBufferLen) {
+                            extraBufferLen = (int)(extraBufferLen*2.3);
+                            reallocBuffer(PASS_LOD, extraBufferLen * FACE_INT_SIZE);
+                        }   
+                    }
+                   
+                    this.bufferIdx[PASS_LOD] = numFaces*FACE_INT_SIZE;
+                    this.vertexCount[PASS_LOD] = numFaces*4;
                 }
             
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -155,6 +194,16 @@ public class MeshUpdateTask {
             int newSize = (length+2048);
 //            System.out.println("realloc buffer to length "+newSize);
             this.buffers[bufferIdx] = new int[newSize];
+        }
+        return this.buffers[bufferIdx].length;
+    }
+    private int reallocBuffer(int bufferIdx, int length) {
+        if (this.buffers[bufferIdx] == null || this.buffers[bufferIdx].length < length) {
+            int newSize = (length+2048);
+            System.out.println("realloc buffer to length "+newSize);
+            int newBuffer[] = new int[newSize];
+            System.arraycopy(this.buffers[bufferIdx], 0, newBuffer, 0, this.buffers[bufferIdx].length);
+            this.buffers[bufferIdx] = newBuffer;
         }
         return this.buffers[bufferIdx].length;
     }

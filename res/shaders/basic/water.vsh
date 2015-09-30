@@ -24,12 +24,12 @@ out vec4 vwpos;
 
 void main() {
 	texcoord = in_texcoord;
-	vec4 camNormal = in_matrix.normal * vec4(in_normal.xyz, 1);
+	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
 	camNormal.xyz/=camNormal.w;
 
 	normal = normalize(camNormal.xyz);
 
-	normalMat = mat3(in_matrix.normal);
+	normalMat = mat3(in_matrix_3D.normal);
 	if (in_normal.x > 0.5) {
 		//  1.0,  0.0,  0.0
 		tangent  = normalize(normalMat * vec3( 0.0,  0.0, -1.0));
@@ -81,8 +81,8 @@ void main() {
 	
 
 	blockinfo = in_blockinfo;
-	vpos = in_matrix.mv * in_position;
+	vpos = in_matrix_3D.mv * in_position;
 	vwpos = in_position;
-	// gl_Position = in_matrix.mvp * (in_position+terroffset);
-	gl_Position = in_matrix.mvp * in_position;
+	// gl_Position = in_matrix_3D.mvp * (in_position+terroffset);
+	gl_Position = in_matrix_3D.mvp * in_position;
 }

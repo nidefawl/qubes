@@ -1,5 +1,8 @@
 package nidefawl.qubes.meshing;
 
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.util.GameMath;
+
 public class BlockFaceAttr {
     public static boolean USE_TRIANGLES = true;
     public final static int BLOCK_VERT_INT_SIZE = 12;
@@ -29,8 +32,7 @@ public class BlockFaceAttr {
             v0, v1, v2, v3
     };
     private int tex;
-    private int normal;
-    int xOff, yOff, zOff;
+    float xOff, yOff, zOff;
     private int aoMask;
     private int lightMaskSky;
     private int lightMaskBlock;
@@ -52,9 +54,12 @@ public class BlockFaceAttr {
         byte byte0 = (byte)(int)(x * 127F);
         byte byte1 = (byte)(int)(y * 127F);
         byte byte2 = (byte)(int)(z * 127F);
-        normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+        int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+        for (int i = 0; i < 4; i++) {
+            this.v[i].normal = normal;
+        }
     }
-    
+
     public void setLight(int sky, int block) {
         this.lightMaskSky = sky;
         this.lightMaskBlock = block;
@@ -68,7 +73,7 @@ public class BlockFaceAttr {
             rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
             rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
             rawBuffer[index + 3] = Float.floatToRawIntBits(1);
-            rawBuffer[index + 4] = normal;
+            rawBuffer[index + 4] = v.normal;
             rawBuffer[index + 5] = Float.floatToRawIntBits(v.u);
             rawBuffer[index + 6] = Float.floatToRawIntBits(v.v);
             rawBuffer[index + 7] = v.rgba;
@@ -129,6 +134,40 @@ public class BlockFaceAttr {
      */
     public void setFaceDir(int faceDir) {
         this.faceDir = faceDir;
+    }
+
+    /**
+     * 
+     */
+    public int calcNormal() {
+        float uX = v1.x - v0.x;
+        float uY = v1.y - v0.y;
+        float uZ = v1.z - v0.z;
+        float vX = v2.x - v0.x;
+        float vY = v2.y - v0.y;
+        float vZ = v2.z - v0.z;
+        float nX = uY*vZ - uZ*vY;
+        float nY = uZ*vX - uX*vZ;
+        float nZ = uX*vY - uY*vX;
+        if (reverse) {
+            nX = -nX;
+            nY = -nY;
+            nZ = -nZ;
+        }
+
+        // normalize !
+        float len = nX*nX+nY*nY+nZ*nZ;
+        if (len > 1E-6F) {
+            len = 1.0f / GameMath.sqrtf(len);
+            nX *= len;
+            nY *= len;
+            nZ *= len;
+        }
+        byte byte0 = (byte)(int)(nX * 127F);
+        byte byte1 = (byte)(int)(nY * 127F);
+        byte byte2 = (byte)(int)(nZ * 127F);
+        int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+        return normal;
     }
 
 }

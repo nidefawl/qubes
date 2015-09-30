@@ -38,11 +38,19 @@ public class AssetManager {
                 
                 @Override
                 public boolean accept(File dir, String name) {
-                    return dir.isDirectory();
+                    return dir.isDirectory() || (dir.isFile() && dir.getName().endsWith(".zip"));
                 }
             });
             for (int i = 0;fPackList != null &&  i < fPackList.length; i++) {
-                assetPacks.add(new AssetPackFolder(fPackList[i]));
+                if (fPackList[i].isDirectory())
+                    assetPacks.add(new AssetPackFolder(fPackList[i]));
+                else {
+                    try {
+                        assetPacks.add(new AssetPackZip(fPackList[i]));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
         Collections.reverse(assetPacks);

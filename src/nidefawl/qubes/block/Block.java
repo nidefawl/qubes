@@ -25,6 +25,7 @@ public class Block {
     public final static Block leaves_jungle = new BlockLeaves(14).setName("leaves_jungle");
     public final static Block leaves_spruce = new BlockLeaves(15).setName("leaves_spruce");
     public final static Block leaves_oak = new BlockLeaves(16).setName("leaves_oak");
+    public final static Block longgrass = new BlockPlant(17).setName("longgrass").setTextures("tallgrass");
 //    public final static Block ligth = new BlockSolidColor(6).setName("solid").setTextures("blank");
     public final int id;
     private String name;
@@ -81,6 +82,9 @@ public class Block {
         }
     }
     public int getRenderPass() {
+        return 0;
+    }
+    public int getRenderType() {
         return 0;
     }
     public static boolean isValid(int i) {

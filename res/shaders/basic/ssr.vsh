@@ -24,10 +24,10 @@ flat out float farPlaneZ;
 
 void main() {
 
-	clipInfo = computeClipInfo(in_matrix.viewport.z, in_matrix.viewport.w);
-	nearPlaneZ = in_matrix.viewport.z;
-	farPlaneZ = in_matrix.viewport.w;
+	clipInfo = computeClipInfo(in_scene.viewport.z, in_scene.viewport.w);
+	nearPlaneZ = in_scene.viewport.z;
+	farPlaneZ = in_scene.viewport.w;
 	pass_texcoord = in_texcoord.st;
-	renderBufferSize = in_matrix.viewport.xy;
-	gl_Position = in_matrix.mvp * in_position;
+	renderBufferSize = in_scene.viewport.xy;
+	gl_Position = in_matrix_2D.mvp * in_position;
 }

@@ -33,6 +33,7 @@ public class RegionRenderer {
     public static final int REGION_SIZE_MASK            = REGION_SIZE - 1;
     public static final int REGION_SIZE_BLOCK_SIZE_BITS = Chunk.SIZE_BITS + REGION_SIZE_BITS;
     public static final int REGION_SIZE_BLOCKS          = 1 << REGION_SIZE_BLOCK_SIZE_BITS;
+    public static final int REGION_SIZE_BLOCKS_MASK     = REGION_SIZE_BLOCKS - 1;
     public static final int SLICE_HEIGHT_BLOCK_BITS     = 5;
     public static final int SLICE_HEIGHT_BLOCKS         = 1 << SLICE_HEIGHT_BLOCK_BITS;
     public static final int SLICE_HEIGHT_BLOCK_MASK     = SLICE_HEIGHT_BLOCKS - 1;
@@ -257,6 +258,13 @@ public class RegionRenderer {
         for (int i = 0; i < size; i++) {
             MeshedRegion r = renderList.get(i);
             if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
+                if (pass == PASS_LOD) { // put somewhere else?!
+
+                    int dist1 = GameMath.distSq3Di(r.rX, r.rY, r.rZ, renderChunkX, renderChunkY, renderChunkZ);
+                    if (dist1 > 40)
+                        continue;
+//                        System.out.println(dist1);
+                }
                 r.renderRegion(fTime, pass, drawMode, this.drawInstances);
                 this.rendered++;  
             }
@@ -368,6 +376,8 @@ public class RegionRenderer {
         }
     }
     
+    
+    // maybe this is faster if we calculate the distance per region once and saving the result _before calling sort_
     protected int sortCompare(MeshedRegion o1, MeshedRegion o2) {
         boolean frustum = o1.frustumStates[0] > -1;
         boolean frustum2 = o2.frustumStates[0] > -1;

@@ -51,7 +51,7 @@ void main(void){
     for (int segment = 0; segment < 3; ++segment) {
     	for (int i = 0; i < 4; i++) {
     		int idx = vIdx[i];
-    		tmp[i] = in_matrix.shadow_split_mvp[segment] * vdata[idx].position;
+    		tmp[i] = in_matrix_shadow.shadow_split_mvp[segment] * vdata[idx].position;
     	}
 #ifdef CULL_GEOMETRY
         vec2 start_Pos = getWindowPos(tmp[0], segment);

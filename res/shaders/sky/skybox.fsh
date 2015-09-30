@@ -13,7 +13,7 @@ in vec4 position;
 out vec4 out_Color;
  
 void main2(void) {
-	vec3 eye = in_matrix.cameraPosition.xyz;
+	vec3 eye = in_scene.cameraPosition.xyz;
 	vec3 rayDirection = normalize(position.xyz);
     vec3 atmosphere = applyFog(atmosphereColor(rayDirection), 100000.0, eye, rayDirection); 
     out_Color = vec4(atmosphere, 1.0);
@@ -35,7 +35,7 @@ float intensity = 0.75;
 const int step_count = 4;
 */
 void main(void) {
-	vec3 eye = in_matrix.cameraPosition.xyz;
+	vec3 eye = in_scene.cameraPosition.xyz;
 	vec3 viewVector = normalize(position.xyz-eye);
 	// intensity += 0.4;
  //    intensity -= lightIntens*0.1;
@@ -60,7 +60,7 @@ void main(void) {
 	sky = mix(sky, sky*skySunScat, 0.2f+sunTheta);
 	sky += skySunScat*0.5f;
 	// sky += sky*(1.0-scatbr)*1.1f;
-	float zfar = in_matrix.viewport.w;
+	float zfar = in_scene.viewport.w;
 	sky = applyFog(sky, zfar*2.5, eye, rayDirection); 
 
 

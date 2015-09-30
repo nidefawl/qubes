@@ -528,7 +528,6 @@ public class Game extends GameBase implements IErrorHandler {
 //             
               GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
               FrameBuffer.unbindReadFramebuffer();
-              Engine.worldRenderer.renderTransparent(world, fTime);
               glDisable(GL_CULL_FACE);
               
               
@@ -558,7 +557,7 @@ public class Game extends GameBase implements IErrorHandler {
                     glEnable(GL_POLYGON_OFFSET_FILL);
                     glPolygonOffset(-1.4f, 2.f);
                     glDisable(GL_CULL_FACE);
-                    glDisable(GL_DEPTH_TEST);
+//                    glDisable(GL_DEPTH_TEST);
                     glEnable(GL_BLEND);
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
@@ -599,8 +598,8 @@ public class Game extends GameBase implements IErrorHandler {
           Shader.disable();
       }
 //    Shaders.textured.enable();
-//    glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
-////    Engine.drawFullscreenQuad();
+//    glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
+//    Engine.drawFullscreenQuad();
 //    Shader.disable();
 
       if (this.gui != null) {
@@ -638,7 +637,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2222200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >6200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();

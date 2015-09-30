@@ -23,7 +23,7 @@ public class BlockFace {
         byte byte0 = (byte)i;
         byte byte1 = (byte)j;
         byte byte2 = (byte)k;
-        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16 | (0x01000000);
     }
     
     final static int[][] faceVDirections = new int[6][];
@@ -104,7 +104,7 @@ public class BlockFace {
                 this.v3[i] = fPos + fdv[i];
             }
 
-        } else {
+        } else { //extension happens in shader
             for (int i = 0; i < 3; i++) {
                 float fPos = this.pos[i];
                 this.v0[i] = fPos;

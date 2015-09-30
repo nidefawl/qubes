@@ -2,7 +2,7 @@
 
 
 // vec4 unprojectPos(in vec2 coord, in float depth) { 
-//     vec4 fragposition = in_matrix.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
+//     vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
 //     fragposition /= fragposition.w;
 //     return fragposition;
 // }

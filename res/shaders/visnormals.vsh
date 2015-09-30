@@ -13,7 +13,7 @@ out Data{
 void main(){
     vdata.position = in_position;
 	// vdata.normal = normalize(gl_NormalMatrix * in_normal.xyz);
-	vec4 camNormal = in_matrix.normal * vec4(in_normal.xyz, 1);
+	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
 	camNormal.xyz/=camNormal.w;
 	vdata.normal = normalize(camNormal.xyz);
     // gl_Position = gl_ModelViewProjectionMatrix * in_position;

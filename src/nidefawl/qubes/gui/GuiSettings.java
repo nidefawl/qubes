@@ -69,6 +69,7 @@ public class GuiSettings extends Gui {
         list.add(new Setting("Chunk load distance", Game.instance.settings.chunkLoadDistance, values) {
             void callback(int id) {
                 Game.instance.settings.chunkLoadDistance = values[id];
+                Engine.regionRenderer.init();
                 Game.instance.saveSettings();
             }
         });
@@ -76,7 +77,7 @@ public class GuiSettings extends Gui {
         list.add(new Setting("Shadows", shadowSettings[Game.instance.settings.shadowDrawMode & 1], shadowSettings) {
             void callback(int id) {
                 Game.instance.settings.shadowDrawMode = id;
-                Engine.regionRenderer.init();
+                Engine.shadowRenderer.init();
                 Game.instance.saveSettings();
             }
         });

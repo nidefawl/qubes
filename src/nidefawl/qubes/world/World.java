@@ -180,7 +180,7 @@ public abstract class World implements IBlockWorld {
         }
         this.entityList.add(ent);
         ent.world = this;
-        addLight(new Vector3f(ent.pos));
+//        addLight(new Vector3f(ent.pos));
     }
 
     public void removeEntity(Entity ent) {
