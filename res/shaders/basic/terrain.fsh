@@ -102,11 +102,14 @@ void main() {
 
 
 		float f = float(blockinfo.y);
-	if (f >= 12) { //EXPENSIVE LEAVE
+
+		//TODO: figure out something better 
+	if (f >= 12&&f <=16) { //EXPENSIVE LEAVE
+
 		f-=12;
 
-	    float sampleDist = 0.4;
-	    vec2 p0 = position.xz *0.008;
+	    float sampleDist = 4.4;
+	    vec2 p0 = position.xz *0.02;
 	    // float fSin = sin(in_scene.frameTime*0.0003)*0.5+0.5;
 	    // p0 += vec2(fSin*110.3);
 	    vec2 p1 = p0 + vec2(1, 0)*sampleDist;
@@ -115,9 +118,9 @@ void main() {
 	    float s1 = snoise(p1);
 	    float s2 = snoise(p2);
 	    color_adj*=pal((s0+s1+s2)/3.0, 
-              vec3(0.3+(f/5.0)*0.5,0.78,0.1)*(0.2+(f/10.0)),
+              vec3(0.4+(f/5.0)*0.5,0.78,0.1)*(0.27+(f/10.0)),
               vec3(0.15-clamp(1-f/4.0,0,1)*0.07),
-              vec3(0.5),
+              vec3(0.15),
               vec3(0.15)  )*1.2;
 	}
 

@@ -55,7 +55,7 @@ void main() {
 	blockinfo = in_blockinfo;
 	vec4 pos = in_position;
 	float distCam = length(in_position-in_scene.cameraPosition);
-	vec4 dir = in_direction;
+	vec4 dir = in_direction*in_direction.w;
 	const float face_offset = 1/32.0;
 	float distScale = face_offset*clamp(pow((distCam+10)/220, 1.7), 0.0008, 1);
 	pos.x += dir.x*distScale;
