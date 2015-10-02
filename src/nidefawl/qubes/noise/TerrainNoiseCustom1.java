@@ -1,7 +1,5 @@
 package nidefawl.qubes.noise;
 
-import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
-
 public class TerrainNoiseCustom1 extends AbstractNoiseGen {
     private final OpenSimplexNoise noise;
     private final double scaleX;
@@ -10,7 +8,7 @@ public class TerrainNoiseCustom1 extends AbstractNoiseGen {
     private final int nOctaves;
 
     public TerrainNoiseCustom1(long seed, double scaleX, double scaleY, double scaleZ, int nOctaves) {
-        this.noise = new OpenSimplexNoise(seed);
+        this.noise = NoiseLib.makeGenerator(seed);
         this.scaleX = scaleX/gScale;
         this.scaleY = scaleY/gScale;
         this.scaleZ = scaleZ/gScale;

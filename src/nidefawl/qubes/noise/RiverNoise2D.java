@@ -1,7 +1,5 @@
 package nidefawl.qubes.noise;
 
-import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
-
 public class RiverNoise2D extends AbstractNoiseGen {
     public final static class RiverNoiseResult {
         private final double[] dNoise;
@@ -56,15 +54,11 @@ public class RiverNoise2D extends AbstractNoiseGen {
         }
     }
     private final OpenSimplexNoise n1;
-    private final OpenSimplexNoise n2;
-    private final OpenSimplexNoise n3;
     private final double           scale;
     private int maxI;
     private int size;
     public RiverNoise2D(long seed, double scaleX, int maxI) {
-        this.n1 = new OpenSimplexNoise(seed);
-        this.n2 = new OpenSimplexNoise(seed * 43);
-        this.n3 = new OpenSimplexNoise(seed * 19);
+        this.n1 = NoiseLib.makeGenerator(seed);
         this.scale = scaleX / gScale;
         int w = CHUNK_SIZE;
         int size = w+maxI*2;
