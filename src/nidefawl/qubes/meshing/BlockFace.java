@@ -225,7 +225,6 @@ public class BlockFace {
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        initDir();
         int tex = block.getTextureFromSide(this.faceDir);
         attr.setTex(tex);
         attr.setFaceDir(faceDir);
