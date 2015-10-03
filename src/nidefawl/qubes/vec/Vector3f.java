@@ -368,4 +368,17 @@ public class Vector3f {
         this.y+=dir.y;
         this.z+=dir.z;
     }
+
+    /**
+     * @param camX
+     * @param camY
+     * @param camZ
+     * @return
+     */
+    public float distanceSq(float camX, float camY, float camZ) {
+        camX -= this.x;
+        camY -= this.y;
+        camZ -= this.z;
+        return camX*camX+camY*camY+camZ*camZ;
+    }
 }

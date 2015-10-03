@@ -5,11 +5,13 @@ import java.nio.FloatBuffer;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gl.Memory;
 
 public class UniformMat4 extends AbstractUniform {
 
     private final float[] last = new float[16];
     boolean transpose = false;
+    private FloatBuffer buf;
     public UniformMat4(String name, int loc) {
         super(name, loc);
     }
@@ -40,7 +42,9 @@ public class UniformMat4 extends AbstractUniform {
     @Override
     public boolean set() {
         if (validLoc()) {
-            FloatBuffer buf = Engine.getFloatBuffer();
+            if (buf == null) {
+                buf = Memory.createFloatBuffer(16);
+            }
             buf.clear();
             buf.put(last);
             buf.position(0).limit(16);
@@ -48,6 +52,12 @@ public class UniformMat4 extends AbstractUniform {
             return true;
         }
         return false;
+    }
+    public void release() {
+        if (buf != null) {
+            Memory.free(buf);
+            buf = null;
+        }
     }
 
 }

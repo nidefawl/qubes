@@ -16,9 +16,7 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
@@ -33,12 +31,10 @@ public class Shader {
     int shader = -1;
     final String name;
     public int bufBindIdx = 0;
-    private final IntBuffer buffer;
     
     HashMap<String, Integer> locations    = new HashMap<String, Integer>();
     HashMap<String, AbstractUniform> uniforms    = new HashMap<String, AbstractUniform>();
     HashMap<String, Integer> missinglocations    = new HashMap<String, Integer>();
-    private final FloatBuffer tmp         = BufferUtils.createFloatBuffer(16);
     private int setProgramUniformCalls;
     private int numUses;
     void incUniformCalls() {
@@ -67,18 +63,17 @@ public class Shader {
     
     public Shader(String name) {
         this.name = name;
-        this.buffer = BufferUtils.createIntBuffer(1);
     }
 
-    public void load(AssetManager assetManager, String path, String fname) throws IOException {
+    public void load(AssetManager assetManager, String path, String fname, IShaderDef def) throws IOException {
 
         ShaderSource vertCode = new ShaderSource();
         ShaderSource fragCode = new ShaderSource();
         ShaderSource geomCode = new ShaderSource();
         
-        vertCode.load(assetManager, path, fname + ".vsh");
-        fragCode.load(assetManager, path, fname + ".fsh");
-        geomCode.load(assetManager, path, fname + ".gsh");
+        vertCode.load(assetManager, path, fname + ".vsh", def);
+        fragCode.load(assetManager, path, fname + ".fsh", def);
+        geomCode.load(assetManager, path, fname + ".gsh", def);
         if (vertCode.isEmpty() && fragCode.isEmpty()) {
             throw new GameError("Failed reading shader source: "+name);
         }
@@ -216,22 +211,17 @@ public class Shader {
         UniformBuffer.bindBuffers(this);
 
     }
-
+    static IntBuffer buf = Memory.createIntBuffer(1);
     public int getStatus(int obj, int a) {
-        buffer.position(0).limit(1);
-        GL.glGetObjectParameterivARB(obj, a, buffer);
-        return buffer.get();
+        buf.clear();
+        GL.glGetObjectParameterivARB(obj, a, buf);
+        return buf.get();
     }
 
     public String getLog(int obj) {
         int length = getStatus(obj, GL_OBJECT_INFO_LOG_LENGTH_ARB);
         if (length > 1) {
-            ByteBuffer infoLog = BufferUtils.createByteBuffer(length);
-            buffer.flip();
-            glGetInfoLogARB(obj, buffer, infoLog);
-            byte[] infoBytes = new byte[length];
-            infoLog.get(infoBytes);
-            String out = new String(infoBytes);
+            String out = glGetInfoLogARB(obj, length);
             out = out.trim() + "\n";
             out = out.replace("\n\n", "\n");
             out = out.replace("\n\n", "\n");
@@ -241,23 +231,23 @@ public class Shader {
     }
     public void enable() {
         if (this.shader >= 0) {
-//            if (lastBoundShader != this.shader) {
-//                lastBoundShader = this.shader;
+            if (lastBoundShader != this.shader) {
+                lastBoundShader = this.shader;
                 glUseProgramObjectARB(this.shader);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
-                numUses++;
-                if (numUses < 2) {
-                    reuploadUniforms();
-                }
-//            }
+//                numUses++;
+//                if (numUses < 2) {
+//                    reuploadUniforms();
+//                }
+            }
         }
     }
-//    static int lastBoundShader = -1;
+    static int lastBoundShader = -1;
     public static void disable() {
-//        if (lastBoundShader != 0)
+        if (lastBoundShader != 0)
             glUseProgramObjectARB(0);
-//        lastBoundShader = 0;
+        lastBoundShader = 0;
     }
     public void release() {
         if (this.shader >= 0) {
@@ -269,8 +259,13 @@ public class Shader {
                 glDeleteObjectARB(this.vertShader);
             if (this.fragShader >= 0)
                 glDeleteObjectARB(this.fragShader);
+            
             glDeleteObjectARB(this.shader);
             this.shader = this.vertShader = this.fragShader = -1;
+            for (AbstractUniform uni : this.uniforms.values()) {
+                uni.release();
+            }
+            this.uniforms.clear();
         }
     }
 
@@ -318,9 +313,9 @@ public class Shader {
         }
         return type.cast(uni);
     }
+
     public void setProgramUniform4f(String name, float x, float y, float z, float w) {
         Uniform4f uni = getUniform(name, Uniform4f.class);
-        Lists.newArrayList();
         if (uni.set(x, y, z, w)) {
             incUniformCalls();
         }
@@ -337,15 +332,11 @@ public class Shader {
 
     public void setProgramUniformMatrix4ARB(String name, boolean transpose, FloatBuffer matrix, boolean invert) {
         UniformMat4 uni = getUniform(name, UniformMat4.class);
-        if (invert) {
-            GameMath.invertMat4x(matrix, tmp);
-            matrix = tmp;
-            matrix.position(0).limit(16);
-        }
         if (uni.set(matrix, transpose)) {
             incUniformCalls();
         }
     }
+    
     public void reuploadUniforms() {
         for (AbstractUniform uni : uniforms.values()) {
             uni.set();

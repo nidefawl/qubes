@@ -504,6 +504,9 @@ public class BlockSurface {
         this.type = 0;
         this.transparent = false;
         this.extraFace = false;
+        this.isLeaves = false;
+        this.resolved = false;
+        this.isAirAbove = false;
         this.calcLight = false;
         this.type = 0;
         this.face = 0;

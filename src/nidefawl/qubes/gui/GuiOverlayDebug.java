@@ -12,6 +12,7 @@ import nidefawl.qubes.shader.Shaders;
 public class GuiOverlayDebug extends Gui {
 
     final FontRenderer fontSmall;
+    final static BufferedMatrix mat = new BufferedMatrix();
 
 	
 	public GuiOverlayDebug() {
@@ -51,7 +52,7 @@ public class GuiOverlayDebug extends Gui {
     public void drawDbgTexture(int stage, int side, int num, int texture, String string) {
         drawDbgTexture(stage, side, num, texture, string, null, 0, 0);
     }
-    BufferedMatrix mat = new BufferedMatrix();
+    
     public void drawDbgTexture(int stage, int side, int num, int texture, String string, Shader depthBufShader, float f1, float f2) {
         int w1 = 120;
         int gap = 24;

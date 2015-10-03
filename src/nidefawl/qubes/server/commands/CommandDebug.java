@@ -1,6 +1,8 @@
 package nidefawl.qubes.server.commands;
 
+import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.server.GameServer;
+import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.world.WorldServer;
 
 public class CommandDebug extends Command {

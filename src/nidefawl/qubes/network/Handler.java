@@ -112,4 +112,12 @@ public abstract class Handler {
         // TODO Auto-generated method stub
         
     }
+
+    /**
+     * @param packetSTeleport
+     */
+    public void handleTeleport(PacketSTeleport packetSTeleport) {
+        // TODO Auto-generated method stub
+        
+    }
 }

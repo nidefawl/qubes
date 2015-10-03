@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL15;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.WorldClient;
 
@@ -56,7 +57,8 @@ public class UniformBuffer {
             Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
     }
     public void setup() {
-        this.floatBuffer = BufferUtils.createByteBuffer(this.len << 2).asFloatBuffer();
+        this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
+        System.err.println(this.floatBuffer+"/"+this.len);
         this.buffer = Engine.glGenBuffers(1).get();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
         if (Game.GL_ERROR_CHECKS)
@@ -234,4 +236,5 @@ public class UniformBuffer {
         uboMatrix2D.update();
         // unbind Uniform buffer?!
     }
+    
 }

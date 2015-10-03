@@ -35,4 +35,11 @@ public class BlockLeaves extends Block {
         // TODO Auto-generated method stub
         return super.getColorFromSide(side);
     }
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.block.Block#applyAO()
+     */
+    @Override
+    public boolean applyAO() {
+        return true;
+    }
 }

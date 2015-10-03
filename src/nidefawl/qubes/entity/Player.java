@@ -8,9 +8,7 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.network.packet.Packet;
-import nidefawl.qubes.network.packet.PacketChatMessage;
-import nidefawl.qubes.network.packet.PacketSTrackChunk;
+import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.player.PlayerData;
 import nidefawl.qubes.server.GameServer;
@@ -20,6 +18,7 @@ import nidefawl.qubes.server.commands.ICommandSource;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
@@ -209,5 +208,17 @@ public class Player extends Entity implements ChatUser, ICommandSource {
     @Override
     public World getWorld() {
         return this.world;
+    }
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.entity.Entity#move(double, double, double)
+     */
+    @Override
+    public void move(double x, double y, double z) {
+        super.move(x, y, z);
+        int flags = 0;
+        if (this.flying) {
+            flags |= 1;
+        }
+        this.sendPacket(new PacketSTeleport(this.pos, this.yaw, this.pitch, flags));
     }
 }

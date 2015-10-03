@@ -7,8 +7,7 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Camera;
-import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
@@ -35,7 +34,7 @@ public class GuiOverlayStats extends Gui {
     private String stats5;
     public GuiOverlayStats() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
-        this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
+        this.fontSmall = FontRenderer.get("Arial", 16, 0, 18);
     }
 
 
@@ -44,7 +43,7 @@ public class GuiOverlayStats extends Gui {
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
                 Stats.avgFrameTime, (int)Math.round(Game.instance.tick/Stats.fpsInteval));
-        statsRight = String.format("Memory used: %.2fMb / %.2fMb", memJVMUsed, memJVMTotal);
+        statsRight = String.format("Mem: %.2fMb / %.2fMb (%d bytes)", memJVMUsed, memJVMTotal, Memory.mallocd);
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
         Game.instance.tick = 0;
@@ -111,6 +110,18 @@ public class GuiOverlayStats extends Gui {
                 font.drawString(stats5, GameBase.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
                 y += font.getLineHeight() * 1.2F;
             }
+            float totalHeight = (fontSmall.getLineHeight() * 1.2F)*info.size();
+            float maxW = 300;
+            y-=fontSmall.getLineHeight()*1.2f;
+            Tess.instance.setColorF(0, 0.8f);
+            Tess.instance.add(0, y+totalHeight+4);
+            Tess.instance.add(maxW, y+totalHeight+4);
+            Tess.instance.add(maxW, y-4);
+            Tess.instance.add(0, y-4);
+            Shaders.colored.enable();
+            Tess.instance.drawQuads();
+            y+=fontSmall.getLineHeight()*1.2f;
+            Shaders.textured.enable();
             for (String st : info) {
                 fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
                 y += fontSmall.getLineHeight() * 1.2F;

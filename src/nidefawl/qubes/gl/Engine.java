@@ -1,29 +1,30 @@
 package nidefawl.qubes.gl;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.GL_RGBA8;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
-import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.render.*;
+import nidefawl.qubes.render.FinalRenderer;
+import nidefawl.qubes.render.ShadowRenderer;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Project;
 import nidefawl.qubes.vec.*;
 
 public class Engine {
@@ -33,9 +34,7 @@ public class Engine {
 
     private static IntBuffer   viewport;
     private static FloatBuffer position;
-    private static FloatBuffer mat;
-    private static ByteBuffer  buffer;
-    private static IntBuffer   intbuffer;
+    private static IntBuffer   allocBuffer;
 
     private static BufferedMatrix projection;
     private static BufferedMatrix view;
@@ -48,7 +47,6 @@ public class Engine {
     private static BufferedMatrix orthoMV;
     private static BufferedMatrix orthoMVP;
 
-    private static FloatBuffer depthRead;
     private static FloatBuffer fog;
 
     public static FrameBuffer fbScene;
@@ -96,11 +94,9 @@ public class Engine {
     public static void baseInit() {
         vaoId = GL30.glGenVertexArrays();
         vaoTerrainId = GL30.glGenVertexArrays();
-        viewport = BufferUtils.createIntBuffer(16);
-        mat = BufferUtils.createFloatBuffer(16);
-        buffer = BufferUtils.createByteBuffer(1024*1024*32);
-        intbuffer = buffer.asIntBuffer();
-        position = BufferUtils.createFloatBuffer(3);
+        viewport = Memory.createIntBufferHeap(16);
+        position = Memory.createFloatBufferHeap(3);
+        allocBuffer = Memory.createIntBuffer(8);
         projection = new BufferedMatrix();
         view = new BufferedMatrix();
         viewprojection = new BufferedMatrix();
@@ -111,8 +107,6 @@ public class Engine {
         orthoP = new BufferedMatrix();
         orthoMV = new BufferedMatrix();
         orthoMVP = new BufferedMatrix();
-        depthRead = BufferUtils.createFloatBuffer(16);
-        fog = BufferUtils.createFloatBuffer(16);
         camFrustum = new Frustum();
         up = new Vector3f();
         lightPosition = new Vector3f();
@@ -215,12 +209,6 @@ public class Engine {
         fullscreenquad.drawQuads();
     }
 
-    public static float readDepth(int x, int y) {
-        depthRead.clear();
-        GL11.glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depthRead);
-        return depthRead.get(0);
-    }
-
 
     public static BufferedMatrix getMatSceneP() {
         return projection;
@@ -277,17 +265,6 @@ public class Engine {
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
     }
 
-    public static void setFog(Vector3f fogColor, float alpha) {
-        fog.position(0);
-        fog.put(fogColor.x);
-        fog.put(fogColor.y);
-        fog.put(fogColor.z);
-        fog.put(1);
-        fog.flip();
-        GL.glFogv(GL_FOG_COLOR, fog);
-
-    }
-
     public static FrameBuffer getSceneFB() {
         return fbScene;
     }
@@ -324,13 +301,6 @@ public class Engine {
         regionRenderThread.init();
     }
 
-    public static void readMat(int type, BufferedMatrix out) {
-        mat.position(0).limit(16);
-        GL.glGetFloatv(type, mat);
-        mat.position(0).limit(16);
-        out.load(mat);
-        mat.position(0).limit(16);
-    }
 
     public static void setLightPosition(Vector3f v) {
         lightPosition.set(v);
@@ -410,46 +380,24 @@ public class Engine {
         fbScene = fb;
     }
 
-    public static ByteBuffer getBuffer() {
-        return buffer;
-    }
-
-    public static IntBuffer getIntBuffer() {
-        return intbuffer;
-    }
-
-    public static FloatBuffer getFloatBuffer() {
-        return fog;
-    }
-
     public static IntBuffer glGenBuffers(int i) {
-        ByteBuffer buf = Engine.getBuffer();
-        buf.clear();
-        IntBuffer intbuf = Engine.getIntBuffer();
-        intbuf.clear();
-        GL15.glGenBuffers(i, buf);
-        return intbuf;
+        if (i < 1) {
+            throw new IllegalArgumentException("i < 1");
+        }
+        allocBuffer.clear();
+        allocBuffer.position(0);
+        allocBuffer.limit(i);
+        GL15.glGenBuffers(allocBuffer);
+        allocBuffer.position(0);
+        allocBuffer.limit(i);
+        return allocBuffer;
     }
 
     public static void deleteBuffers(int ...buffers) {
-        ByteBuffer buf = Engine.getBuffer();
-        IntBuffer intbuf = Engine.getIntBuffer();
-        intbuf.clear();
-        intbuf.put(buffers);
-        buf.position(0).limit(buffers.length*4);
-        GL15.glDeleteBuffers(buffers.length, buf);
-    }
-
-    public static String getDefinition(String define) {
-        
-        if ("SSR".equals(define)) {
-            int ssr = Game.instance.settings.ssr;
-            return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
-        }
-//        if ("RENDER_WIREFRAME".equals(define)) {
-//            return renderWireFrame ? "#define RENDER_WIREFRAME" : "";
-//        }
-        return "";
+        allocBuffer.clear();
+        allocBuffer.put(buffers);
+        allocBuffer.flip();
+        GL15.glDeleteBuffers(allocBuffer);
     }
 
 

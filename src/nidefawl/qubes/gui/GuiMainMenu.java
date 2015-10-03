@@ -23,6 +23,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     private Button connect;
     private Button settings;
     private Button quit;
+    private Button crash;
 
     public GuiMainMenu() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -68,6 +69,12 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             quit.setPos(left, this.posY+this.height/2+120);
             quit.setSize(w1, h);
         }
+        {
+            crash = new Button(5, "Crash");
+            this.buttons.add(crash);
+            crash.setPos(left, this.posY+this.height/2+150);
+            crash.setSize(w1, h);
+        }
     }
     public boolean onMouseClick(int button, int action) {
         return super.onMouseClick(button, action);
@@ -98,6 +105,10 @@ public class GuiMainMenu extends Gui implements ITextEdit {
 //        }
         if (element == this.connect) {
             connect();
+        }
+        if (element == this.crash) {
+            String s = null;
+            int a = s.length();
         }
         if (element == this.settings) {
             Game.instance.showGUI(new GuiSettings());

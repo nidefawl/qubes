@@ -265,10 +265,13 @@ public class GameServer implements Runnable, IErrorHandler {
     }
 
     public void save(boolean b) {
-        this.playerManager.savePlayers();
-        for (int i = 0; i < this.worlds.length; i++) {
-            this.worlds[i].save(b);
-        }
+        if (this.playerManager != null)
+            this.playerManager.savePlayers();
+        if (this.worlds != null)
+            for (int i = 0; i < this.worlds.length; i++) {
+                if (this.worlds[i] != null)
+                    this.worlds[i].save(b);
+            }
     }
 
     public NetworkServer getNetwork() {

@@ -16,6 +16,7 @@ import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
@@ -132,6 +133,9 @@ public class MeshUpdateTask {
                             else
                                 numFaces += face.drawShadowTextured(attr, buffer, numFaces*FACE_INT_SIZE);
                         } else {
+//                            int fdir = face.bs.axis<<1|face.bs.face;
+//                            if (fdir==Dir.DIR_POS_X||fdir==Dir.DIR_POS_Z)
+//                                continue;
                             numFaces += face.draw(attr, buffer, numFaces*FACE_INT_SIZE);
                         }
                         if (numFaces >= extraBufferLen) {

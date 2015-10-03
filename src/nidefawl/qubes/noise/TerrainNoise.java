@@ -1,5 +1,7 @@
 package nidefawl.qubes.noise;
 
+import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
+
 public class TerrainNoise extends AbstractNoiseGen {
     private final OpenSimplexNoise noise;
     private final double scaleX;

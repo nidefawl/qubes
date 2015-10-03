@@ -16,9 +16,7 @@ import org.lwjgl.opengl.GL41;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
@@ -137,7 +135,7 @@ public class ShadowRenderer {
         //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         setAvaialbeRenderModes();
         setRenderMode(Game.instance.settings.shadowDrawMode);
-        viewports_buf = BufferUtils.createFloatBuffer(viewports.length*4);
+        viewports_buf = Memory.createFloatBuffer(viewports.length*4);
         initShaders();
     }
     public void renderGeomShader(World world, float fTime) {

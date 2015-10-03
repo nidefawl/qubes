@@ -74,6 +74,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
         rotation = rotation.rotate(GameMath.PI_OVER_180*-90, 0, 0, 1);
         float angleOffset = -4+rand.nextFloat()*4*2;
         angleOffset*=1.2f;
+        dir.x = 0.6f;
         recurse(c, rand, x, y, z, (float)Math.toRadians(angleOffset), new CharSequenceIterator(initialAxiom),
                 position, rotation, 0, 0);
 
@@ -86,100 +87,217 @@ public class TreeGeneratorLSystem implements IWorldGen {
     private void recurse(IBlockWorld view, Random rand, int posX, int posY, int posZ, float angleOffset,
             CharSequenceIterator axiomIterator, Vector3f position, Matrix4f rotation, int depth, int trunkDepth) {
         float randAngle = -angle+rand.nextFloat()*angle*2;
+        angleOffset*=0.1;
+        randAngle*=1;
+        float radAngle = angle;//(float) (Math.PI*2/360)*25;
+        Vector3f down = new Vector3f(0, -1, 0);
         while (axiomIterator.hasNext()) {
             char c = axiomIterator.nextChar();
-            switch (c) {
-                case 'G':
-                case 'F':
-                    // Tree trunk
-                    safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z, this.log);
-//                    if (depth < 2) {
-//                        safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z + 1, this.log);
-//                        safelySetBlock(view, posX + (int) position.x + 1, posY + (int) position.y, posZ + (int) position.z + 1, this.log);
-//                        safelySetBlock(view, posX + (int) position.x + 1, posY + (int) position.y, posZ + (int) position.z, this.log);
-                    //
-//                  }
-                  // Generate leaves
-                  if (depth > 1 && trunkDepth > 2) {
-                      int size = depth > 2 && trunkDepth > 3 ? 1 : 0;
+            if (c == ' ') {
+                continue;
+            }
+            int repeat = 1;
+            if (c >= '0' && c <= '9' && axiomIterator.hasNext()) {
+                repeat = (int) c - '0';
+                c = axiomIterator.nextChar();
+            }
 
-                      for (int x = -size; x <= size; x++) {
-                          for (int y = -size; y <= size; y++) {
-                              for (int z = -size; z <= size; z++) {
-                                  if (size > 0 && Math.abs(x) == size && Math.abs(y) == size && Math.abs(z) == size) {
-                                      continue;
+            for (int i = 0; i < repeat; i++)
+            {
+
+                int size = 1;
+                switch (c) {
+                    case '?':
+                        if (rand.nextInt(4)==0 && axiomIterator.hasNext()) {
+                            char cNext = axiomIterator.nextChar();
+                            if (cNext == '[') {
+                                while (axiomIterator.hasNext()) {
+                                    cNext = axiomIterator.nextChar();
+                                    if (cNext == ']')
+                                        break;
+                                }
+                            }
+                        }
+                        break;
+                    case 'Q':
+                        safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z, this.log);
+                        safelySetBlock(view, posX + (int) position.x+1, posY + (int) position.y, posZ + (int) position.z, this.log);
+                        safelySetBlock(view, posX + (int) position.x+1, posY + (int) position.y, posZ + (int) position.z+1, this.log);
+                        safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z+1, this.log);
+                        dir2.set(1, 0, 0);
+                        rotation.transformVec(dir2);
+                        position.addVec(dir2);
+                        trunkDepth++;
+                        break;
+                    case 'T':
+                        safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z, this.log);
+                        dir2.set(1, 0, 0);
+                        rotation.transformVec(dir2);
+                        position.addVec(dir2);
+                        trunkDepth++;
+                        break;
+                    case 'Z':
+
+                        dir2.set(dir);
+                        rotation.transformVec(dir2);
+//                        float n = Vector3f.dot(dir2, down);
+//                        n = Math.min(1, Math.max(1 - n*3, 0));
+//                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
+                        position.addVec(dir2);
+                        trunkDepth++;
+                        break;
+                    case 'X':
+                        size+=1;
+                    case 'W':
+                        size++;
+                        // Generate leaves
+                        for (int x = -size; x <= size; x++) {
+                            for (int y = -1; y <= 1; y++) {
+                                for (int z = -size; z <= size; z++) {
+                                    int ds = x*x+y*y+z*z;
+                                    if (ds > size*size-2-Math.abs(y)*3) {
+                                        continue;
                                     }
-
-//                                    if (depth >= maxDepth -1) {
-//                                        safelySetBlock(view, posX + (int) position.x + x + 1, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
-//                                        safelySetBlock(view, posX + (int) position.x + x - 1, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
-//                                        safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z + 1, leaves);
-//                                        safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z - 1, leaves);
-//
-//                                    }
+                                    if (size > 0 && Math.abs(x) == size && Math.abs(y) == size && Math.abs(z) == size) {
+                                        continue;
+                                    }
+                                    safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x + 1, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x - 1, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z + 1, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z - 1, leaves);
+                                }
+                            }
+                        }
+                        dir2.set(dir);
+                        rotation.transformVec(dir2);
+//                        float n = Vector3f.dot(dir2, down);
+//                        n = Math.min(1, Math.max(1 - n*3, 0));
+//                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
+                        position.addVec(dir2);
+                        trunkDepth++;
+                        break;
+                    case 'S':
+                        size = 2;
+                    case 'P':
+                        // Generate leaves
+                        for (int x = -size; x <= size; x++) {
+                            for (int y = -size; y <= size; y++) {
+                                for (int z = -size; z <= size; z++) {
+                                    if (size > 0 && Math.abs(x) == size && Math.abs(y) == size && Math.abs(z) == size) {
+                                        continue;
+                                    }
+                                    safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x + 1, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x - 1, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z + 1, leaves);
+                                  safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z - 1, leaves);
+                                }
+                            }
+                        }
+                        dir2.set(dir);
+                        rotation.transformVec(dir2);
+//                        float n = Vector3f.dot(dir2, down);
+//                        n = Math.min(1, Math.max(1 - n*3, 0));
+//                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
+                        position.addVec(dir2);
+                        trunkDepth++;
+                        break;
+                    case 'U':
+                        size = 0;
+                    case 'L':
+                        // Generate leaves
+                        for (int x = -size; x <= size; x++) {
+                            for (int y = -size; y <= size; y++) {
+                                for (int z = -size; z <= size; z++) {
+                                    if (size > 0 && Math.abs(x) == size && Math.abs(y) == size && Math.abs(z) == size) {
+                                        continue;
+                                    }
                                     safelySetBlock(view, posX + (int) position.x + x, posY + (int) position.y + y, posZ + z + (int) position.z, leaves);
                                 }
                             }
                         }
-                    }
-                    dir2.set(dir);
-                    Vector3f down = new Vector3f(0, -1, 0);
-                    rotation.transformVec(dir2);
-                    float n = Vector3f.dot(dir2, down);
-                    n = Math.min(1, Math.max(1 - n*3, 0));
-                    dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
-                    position.addVec(dir2);
-                    trunkDepth++;
-                    break;
-                case '[':
-                    recurse(view, rand, posX, posY, posZ, angleOffset, axiomIterator, new Vector3f(position), new Matrix4f(rotation), depth, 0);
-                    break;
-                case ']':
-                    return;
-                case '+':
-                    rotation.mulMat(tempRotation.setIdentity().rotate((angleOffset+randAngle), 0, 0, 1F));
-                    break;
-                case '-':
-                    rotation.mulMat(tempRotation.setIdentity().rotate((angleOffset+randAngle), 0, 0, -1F));
-                    break;
-                case '&':
-                    rotation.mulMat(tempRotation.setIdentity().rotate((angleOffset+randAngle), 0, 1F, 0));
-                    break;
-                case '^':
-                    rotation.mulMat(tempRotation.setIdentity().rotate((angleOffset+randAngle), 0, -1F, 0));
-                    break;
-                case '*':
-                    rotation.mulMat(tempRotation.setIdentity().rotate((angleOffset+randAngle), 1F, 0, 0));
-                    break;
-                case '/':
-                    rotation.mulMat(tempRotation.setIdentity().rotate((angleOffset+randAngle), -1F, 0, 0));
-                    break;
-                default:
-                    // If we have already reached the maximum depth, don't ever bother to lookup in the map
-                    if (depth >= maxDepth) {
+                        dir2.set(dir);
+                        rotation.transformVec(dir2);
+//                        float n = Vector3f.dot(dir2, down);
+//                        n = Math.min(1, Math.max(1 - n*3, 0));
+//                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
+                        position.addVec(dir2);
+                        trunkDepth++;
                         break;
-                    }
-                    TreeRule rule = ruleSet.get(c);
-                    if (rule == null) {
+                    case 'G':
+                    case 'F':
+                        // Tree trunk
+                        safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z, this.log);
+//                        if (depth < 2) {
+//                            safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z + 1, this.log);
+//                            safelySetBlock(view, posX + (int) position.x + 1, posY + (int) position.y, posZ + (int) position.z + 1, this.log);
+//                            safelySetBlock(view, posX + (int) position.x + 1, posY + (int) position.y, posZ + (int) position.z, this.log);
+//                        //
+//                      }
+                        dir2.set(dir);
+                        rotation.transformVec(dir2);
+//                        float n = Vector3f.dot(dir2, down);
+//                        n = Math.min(1, Math.max(1 - n*3, 0));
+//                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
+                        position.addVec(dir2);
+                        trunkDepth++;
                         break;
-                    }
+                    case '[':
+                        dir.x+=0.2f;
+                        recurse(view, rand, posX, posY, posZ, angleOffset, axiomIterator, new Vector3f(position), new Matrix4f(rotation), depth, 0);
+                        break;
+                    case ']':
+                        dir.x-=0.2f;
+                        return;
+                    case '+':
+                        rotation.mulMat(tempRotation.setIdentity().rotate((radAngle), 0, 0, 1F));
+                        break;
+                    case '-':
+                        rotation.mulMat(tempRotation.setIdentity().rotate((radAngle), 0, 0, -1F));
+                        break;
+                    case '&':
+                        rotation.mulMat(tempRotation.setIdentity().rotate((radAngle), 0, 1F, 0));
+                        break;
+                    case '^':
+                        rotation.mulMat(tempRotation.setIdentity().rotate((radAngle), 0, -1F, 0));
+                        break;
+                    case '*':
+                        rotation.mulMat(tempRotation.setIdentity().rotate((radAngle), 1F, 0, 0));
+                        break;
+                    case '/':
+                        rotation.mulMat(tempRotation.setIdentity().rotate((radAngle), -1F, 0, 0));
+                        break;
+                    case '~':
+                        rotation.mulMat(tempRotation.setIdentity().rotate(rand.nextFloat()*(float)Math.PI*2.0f, -1F, 0, 0));
+                        break;
+                    default:
+                        // If we have already reached the maximum depth, don't ever bother to lookup in the map
+                        if (depth >= maxDepth) {
+                            break;
+                        }
+                        TreeRule rule = ruleSet.get(c);
+                        if (rule == null) {
+                            break;
+                        }
 
-                    float weightedFailureProbability = GameMath.pow(1f - rule.getWeight(), maxDepth - depth);
-                    if (rand.nextFloat() < weightedFailureProbability) {
-                        break;
-                    }
-                    float randAngle2 = -angleOffset+rand.nextFloat()*angleOffset*2;
-                    randAngle2 *= 0.25;
-                    rotation.mulMat(tempRotation.setIdentity().rotate((randAngle2), 1, 0, 0));
-                    randAngle2 = -angleOffset+rand.nextFloat()*angleOffset*2;
-                   randAngle2 *= 0.25;
-                   rotation.mulMat(tempRotation.setIdentity().rotate((randAngle2), 0, 0, 1));
-                   randAngle2 = -angleOffset+rand.nextFloat()*angleOffset*2;
-                  randAngle2 *= 0.25;
-                  rotation.mulMat(tempRotation.setIdentity().rotate((randAngle2), 0, 1, 0));
+                        float weightedFailureProbability = GameMath.pow(1f - rule.getWeight(), maxDepth - depth);
+                        if (rand.nextFloat() < weightedFailureProbability) {
+                            break;
+                        }
+//                        float randAngle2 = -angleOffset+rand.nextFloat()*angleOffset*2;
+//                        randAngle2 *= 0.25;
+//                        rotation.mulMat(tempRotation.setIdentity().rotate((randAngle2), 1, 0, 0));
+//                        randAngle2 = -angleOffset+rand.nextFloat()*angleOffset*2;
+//                       randAngle2 *= 0.25;
+//                       rotation.mulMat(tempRotation.setIdentity().rotate((randAngle2), 0, 0, 1));
+//                       randAngle2 = -angleOffset+rand.nextFloat()*angleOffset*2;
+//                      randAngle2 *= 0.25;
+//                      rotation.mulMat(tempRotation.setIdentity().rotate((randAngle2), 0, 1, 0));
 
-                    recurse(view, rand, posX, posY, posZ, angleOffset, new CharSequenceIterator(rule.getRule()),
-                            position, rotation, depth + 1, 0);
+                        recurse(view, rand, posX, posY, posZ, angleOffset, new CharSequenceIterator(rule.getRule()),
+                                position, rotation, depth + 1, trunkDepth);
+                }   
             }
         }
 

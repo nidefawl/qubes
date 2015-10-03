@@ -7,6 +7,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.ChunkTable;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
@@ -59,12 +60,18 @@ public class ChunkManagerServer extends ChunkManager {
                 ITerrainGen gen = this.worldServer.getGenerator();
                 long l = System.nanoTime();
                 c = gen.generateChunk(x, z);
+                long chunkGenTIme = (System.nanoTime()-l);
+//                System.out.println(chunkGenTIme);
                 c.postGenerate();
                 Stats.timeWorldGen += (System.nanoTime()-l) / 1000000.0D;
                 ntotal++;
                 if (ntotal%10==0) {
+                    if (ntotal > 1000) {
+                        ntotal = 0;
+                        Stats.timeWorldGen = 0;
+                    }
                     double per = Stats.timeWorldGen/ntotal;
-                    System.out.printf("%d chunks generated (%.2fms/chunk)\n", ntotal, per);
+                    System.out.printf("%d chunks generated (NOISEGEN = "+(NoiseLib.isLibPresent()?"C":"Java")+") (%.2fms/chunk)\n", ntotal, per);
                 }
             } else {
                 c.postLoad();

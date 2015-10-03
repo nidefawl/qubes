@@ -266,14 +266,14 @@ void main() {
     // prop.albedo*=mix(prop.light.z, 1, clamp(isSky+nDotL+(1-prop.light.x)*0.3,0,1));
 
     float blockLight = (1-pow(1-blockLightLvl,0.35));
-    vec3 lightColor = mix(vec3(1), vec3(1.0)*0.18, fNight);
-    vec3 lightColor2 = mix(vec3(1), vec3(0.56, 0.56, 1.0)*0.06, fNight);
+    vec3 lightColor = mix(vec3(1), vec3(1.0)*0.05, fNight);
+    vec3 lightColor2 = mix(vec3(1), vec3(0.56, 0.56, 1.0)*0.05, fNight);
 	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
     vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
     vec3 Iamb = SkyLight.La.rgb * lightColor;
 
     vec3 finalLight = vec3(0);
-    finalLight += Iamb * mix(occlusion, 1, 0.4) * skyLightLvl;
+    finalLight += Iamb * mix(occlusion, 1, 0.1) * (skyLightLvl+0.25);
     // finalLight += vec3(0.663)* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
     finalLight += vec3(1, 0.9, 0.7)*0.363* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
     lum = (clamp(pow(0.6+lum, 3)-1, 0, 1)+0.33)*isLight*0.82;
@@ -281,6 +281,7 @@ void main() {
     // finalLight += clamp((1-lum), 0, 1)*vec3(0,1,4.3)*isLight;
     finalLight += Ispec * sunLight;
     finalLight += Idiff * sunLightMin;
+    // finalLight *= occlusion;
 
     alpha += float(pass)*0.2*(1-clamp(sunLight, 0, 1));
     // finalLight = mix (finalLight, vec3(1), lum*);

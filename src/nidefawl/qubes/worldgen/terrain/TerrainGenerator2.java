@@ -30,29 +30,55 @@ public class TerrainGenerator2 implements ITerrainGen {
         this.seed = seed;
 
         Random rand = new Random(this.seed);
-        double scaleMixXZ = 4.80D;
-        double scaleMixY = scaleMixXZ*0.4D;
-        double scaleMix2XZ = 1.1D;
-        double scaleMix2Y = scaleMix2XZ;
-        double scaleT1XZ = 1.3D;
-        double scaleT1Y = scaleT1XZ*0.3D;
-        double scaleT2XZ = 4.3D;
-        double scaleT2Y = scaleT1XZ*0.3D;
-        double scaleT4XZ = 3.3D;
-        double scaleT4Y = scaleT4XZ*0.1D;
-        double scaleT5XZ = 3.6D;
-        double scaleT5Y = scaleT5XZ*3.4D;
-        this.noise = new TerrainNoiseScale(rand.nextLong(), scaleMixXZ, scaleMixY, scaleMixXZ, 3);
-        this.noiseM2 = new TerrainNoise2D(rand.nextLong(), scaleMix2XZ, scaleMix2XZ, 2);
-        this.noise2 = new TerrainNoiseScale(rand.nextLong(), scaleT1XZ, scaleT1Y, scaleT1XZ, 3);
-        this.noise5 = new TerrainNoiseScale(rand.nextLong(), scaleT5XZ, scaleT5Y, scaleT5XZ, 3);
-        this.noise3 = new TerrainNoiseScale(rand.nextLong(), scaleT2XZ, scaleT2Y, scaleT2XZ, 3);
-        this.noise4 = new TerrainNoiseScale(rand.nextLong(), scaleT4XZ, scaleT4Y, scaleT4XZ, 3);
-        this.noise2D = new TerrainNoise2D(rand.nextLong(), 1, 1, 1);
-        double dRScale = 0.23D;
-        this.r2D = new RiverNoise2D(rand.nextLong(), dRScale, 8);
-         dRScale = 0.14D;
-        this.r2D2 = new RiverNoise2D(rand.nextLong(), dRScale, 8);
+
+        {
+
+            double scaleMixXZ = 4.80D;
+            double scaleMixY = scaleMixXZ*0.4D;
+            double scaleMix2XZ = 1.1D;
+            double scaleMix2Y = scaleMix2XZ;
+            double scaleT1XZ = 0.3D;
+            double scaleT1Y = scaleT1XZ*0.3D;
+            double scaleT2XZ = 4.3D;
+            double scaleT2Y = scaleT1XZ*0.3D;
+            double scaleT4XZ = 3.3D;
+            double scaleT4Y = scaleT4XZ*0.1D;
+            double scaleT5XZ = 3.6D;
+            double scaleT5Y = scaleT5XZ*3.4D;
+            this.noise = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleMixXZ, scaleMixY, scaleMixXZ)
+                    .setOctavesFreq(3, 2.0);
+//            this.noiseM2 = new TerrainNoise2D(rand.nextLong())
+//                    .setUpsampleFactor(4)
+//                    .setScale(scaleMix2XZ, scaleMix2XZ)
+//                    .setOctavesFreq(2);
+            this.noiseM2 = new TerrainNoise2D(rand.nextLong(), scaleMix2XZ, scaleMix2XZ, 2);
+            this.noise2 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT1XZ, scaleT1Y, scaleT1XZ)
+                    .setOctavesFreq(3, 1.97D + 0.01);
+            this.noise5 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT5XZ, scaleT5Y, scaleT5XZ)
+                    .setOctavesFreq(3, 2.59D);
+            this.noise3 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT2XZ, scaleT2Y, scaleT2XZ)
+                    .setOctavesFreq(3, 2D);
+            this.noise4 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT4XZ, scaleT4Y, scaleT4XZ)
+                    .setOctavesFreq(3, 2D);
+            
+            this.noise2D = new TerrainNoise2D(rand.nextLong(), 1, 1, 1);
+            double dRScale = 0.23D;
+            this.r2D = new RiverNoise2D(rand.nextLong(), dRScale, 8);
+//             dRScale = 0.14D;
+//            this.r2D2 = new RiverNoise2D(rand.nextLong(), dRScale, 8);
+             dRScale = 2.14D;
+            this.r2D2 = new RiverNoise2D(33, dRScale, 8);
+        }
     }
 
     @Override
@@ -84,12 +110,13 @@ public class TerrainGenerator2 implements ITerrainGen {
                     double d = dNoise[y << 8 | xz];
                     double d2 = dNoise2[y << 8 | xz];
                     if (d >= 0D) {
-                        if (a < 0) {
-                            curBlock = top;
-                        } else if (a < 3) {
-                            curBlock = earth;
-                        } else {
-                            curBlock = stone;
+                        curBlock = stone;
+                        if (d2<=0) {
+                            if (a < 0) {
+                                curBlock = top;
+                            } else if (a < 3) {
+                                curBlock = earth;
+                            }
                         }
                         a++;
                     } else {
@@ -99,7 +126,7 @@ public class TerrainGenerator2 implements ITerrainGen {
 //                            curBlock = Block.water.id;
 //                        }
                         if (d2 > 0.5 || y <=93) {
-                            curBlock = Block.water.id;
+//                            curBlock = Block.water.id;
                         }
                     }
                     blocks[y << 8 | xz] = (short) curBlock;
@@ -109,34 +136,6 @@ public class TerrainGenerator2 implements ITerrainGen {
     }
 
     private double[][] generateNoise(int cX, int cZ) {
-        {
-
-
-            Random rand = new Random(this.seed);
-            double scaleMixXZ = 4.80D;
-            double scaleMixY = scaleMixXZ*0.4D;
-            double scaleMix2XZ = 1.1D;
-            double scaleMix2Y = scaleMix2XZ;
-            double scaleT1XZ = 0.3D;
-            double scaleT1Y = scaleT1XZ*0.3D;
-            double scaleT2XZ = 4.3D;
-            double scaleT2Y = scaleT1XZ*0.3D;
-            double scaleT4XZ = 3.3D;
-            double scaleT4Y = scaleT4XZ*0.1D;
-            double scaleT5XZ = 3.6D;
-            double scaleT5Y = scaleT5XZ*3.4D;
-            this.noise = new TerrainNoiseScale(rand.nextLong(), scaleMixXZ, scaleMixY, scaleMixXZ, 3);
-            this.noiseM2 = new TerrainNoise2D(rand.nextLong(), scaleMix2XZ, scaleMix2XZ, 2);
-            this.noise2 = new TerrainNoiseScale(rand.nextLong(), scaleT1XZ, scaleT1Y, scaleT1XZ, 3);
-            this.noise5 = new TerrainNoiseScale(rand.nextLong(), scaleT5XZ, scaleT5Y, scaleT5XZ, 3);
-            this.noise3 = new TerrainNoiseScale(rand.nextLong(), scaleT2XZ, scaleT2Y, scaleT2XZ, 3);
-            this.noise4 = new TerrainNoiseScale(rand.nextLong(), scaleT4XZ, scaleT4Y, scaleT4XZ, 3);
-            this.noise2D = new TerrainNoise2D(rand.nextLong(), 1, 1, 1);
-            double dRScale = 0.23D;
-            this.r2D = new RiverNoise2D(rand.nextLong(), dRScale, 8);
-             dRScale = 0.14D;
-            this.r2D2 = new RiverNoise2D(rand.nextLong(), dRScale, 8);
-        }
 //        Random rand = new Random(this.seed);
         int wh = this.world.worldHeight;
         
@@ -147,11 +146,11 @@ public class TerrainGenerator2 implements ITerrainGen {
         RiverNoiseResult r2Dn = r2D.generate(cX, cZ);
         RiverNoiseResult r2Dn2 = r2D2.generate(cX, cZ);
         if (time) TimingHelper.end(1);
-        double[] dNoise2_ = noise2.gen(cX, cZ, 1.97D + 0.01);
-        double[] dnoise5_ = noise5.gen(cX, cZ, 2.59D);
-        double[] dnoise_ = noise.gen(cX, cZ, 2D);
-        double[] dnoise3_ = noise3.gen(cX, cZ, 2D);
-        double[] dnoise4_ = noise4.gen(cX, cZ, 2D);
+        double[] dNoise2_ = noise2.gen(cX, cZ);
+        double[] dnoise5_ = noise5.gen(cX, cZ);
+        double[] dnoise_ = noise.gen(cX, cZ);
+        double[] dnoise3_ = noise3.gen(cX, cZ);
+        double[] dnoise4_ = noise4.gen(cX, cZ);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<4|x;
@@ -215,15 +214,19 @@ public class TerrainGenerator2 implements ITerrainGen {
                     double dRiverH = func2(riverY -dBaseHeight*2, y, 12);
                     double riverY2 = riverY+22;
                     double dRiverH2 = y>=riverY2?1:func2(riverY2, y, 23); 
-                    double xr = dRiverH*dBlurred2*dStr;
-                    xr+=dRiverH2*dBlurred*dStr;
+                    double xr = 0;
+//                    xr+=dRiverH*dBlurred2*dStr;
+//                    xr+=dRiverH2*dBlurred*dStr;
+                    double dt = func2(44+dN1*4, y, 9+0.4*dN2-dN4);
+                    double dt2 = func2(44+dN1*4, y, 12+0.4*dN2-dN4);
+                    double cavestr = dt*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2);
+                  xr+=cavestr*36;
 
                     dBase -= xr;
-                    double dt = func2(44+dN1*4, y, 14+0.4*dN2-dN4);
-//                    dBase -= dt*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2)*20;
                     dBase += dN7*1.7*dh2;
                     dNoise[y<<8|xz] = dBase;
                     dNoise2[y<<8|xz] = y<riverY-4?xr:0;
+                    dNoise2[y<<8|xz] = dt2*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2)*55;
                 }   
             }    
         }

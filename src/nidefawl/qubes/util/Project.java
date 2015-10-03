@@ -5,6 +5,7 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 
+import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -18,9 +19,9 @@ public class Project {
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f };
 
-    private static final FloatBuffer finalMatrix = BufferUtils.createFloatBuffer(16);
-
-    private static final FloatBuffer tempMatrix = BufferUtils.createFloatBuffer(16);
+    private static final FloatBuffer finalMatrix = Memory.createFloatBufferHeap(16);
+    private static final FloatBuffer tempMatrix = Memory.createFloatBufferHeap(16);
+    
     private static final float[] in = new float[4];
     private static final float[] out = new float[4];
 

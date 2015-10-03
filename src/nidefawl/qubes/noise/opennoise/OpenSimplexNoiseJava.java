@@ -15,8 +15,6 @@ package nidefawl.qubes.noise.opennoise;
  *   will be the same when ported to other languages.
  */
 
-import nidefawl.qubes.noise.OpenSimplexNoise;
-
 public class OpenSimplexNoiseJava extends OpenSimplexNoise {
 
 	private static final double STRETCH_CONSTANT_2D = -0.211324865405187;    //(1/Math.sqrt(2+1)-1)/2;

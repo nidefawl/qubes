@@ -1,5 +1,7 @@
 package nidefawl.qubes.noise;
 
+import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
+
 public class RiverNoise2D extends AbstractNoiseGen {
     public final static class RiverNoiseResult {
         private final double[] dNoise;

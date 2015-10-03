@@ -14,9 +14,7 @@ import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
@@ -47,6 +45,7 @@ public class WorldRenderer {
 
     public int                  texWaterNormals;
     public Shader       terrainShader;
+    public Shader       terrainShaderFar;
     public Shader       skyShader;
     public Shader       waterShader;
     
@@ -74,15 +73,30 @@ public class WorldRenderer {
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_waterShader = assetMgr.loadShader("shaders/basic/water");
             Shader terrain = assetMgr.loadShader("shaders/basic/terrain");
+            Shader terrainFar = assetMgr.loadShader("shaders/basic/terrain", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("FAR_BLOCKFACE".equals(define)) {
+                        return "#define FAR_BLOCKFACE";
+                    }
+                    return null;
+                }
+                
+            });
             Shader sky = assetMgr.loadShader("shaders/basic/sky");
             releaseShaders();
             terrainShader = terrain;
+            terrainShaderFar = terrainFar;
             skyShader = sky;
             waterShader = new_waterShader;
             
             terrainShader.enable();
             terrainShader.setProgramUniform1i("blockTextures", 0);
             terrainShader.setProgramUniform1i("noisetex", 1);
+            
+            terrainShaderFar.enable();
+            terrainShaderFar.setProgramUniform1i("blockTextures", 0);
+            terrainShaderFar.setProgramUniform1i("noisetex", 1);
             
             waterShader.enable();
             waterShader.setProgramUniform1i("blockTextures", 0);
@@ -139,13 +153,14 @@ public class WorldRenderer {
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
         
-        Engine.regionRenderer.rendered = 0;
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("pre renderMain");
+        Engine.regionRenderer.renderMain(world, fTime, this);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
         
         if (Game.GL_ERROR_CHECKS)
@@ -179,8 +194,6 @@ public class WorldRenderer {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
         glDisable(GL_BLEND);
-        Engine.checkGLError("renderRegions");
-        this.rendered = Engine.regionRenderer.rendered;
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
 
@@ -191,32 +204,32 @@ public class WorldRenderer {
     }
 
     public void renderNormals(World world, float fTime) {
-        Shaders.normals.enable();
-        glLineWidth(3.0F);
-        Engine.checkGLError("glLineWidth");
-//        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
-        Engine.regionRenderer.setDrawMode(-1);
+//        Shaders.normals.enable();
+//        glLineWidth(3.0F);
+//        Engine.checkGLError("glLineWidth");
+////        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
+//        Engine.regionRenderer.setDrawMode(-1);
 //        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
 //        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.setDrawMode(-1);
-//        glLineWidth(2.0F);
-
-//        Shaders.colored.enable();
-//        Engine.regionRenderer.renderDebug(world, fTime);
-        Shader.disable();
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.setDrawMode(-1);
+////        glLineWidth(2.0F);
+//
+////        Shaders.colored.enable();
+////        Engine.regionRenderer.renderDebug(world, fTime);
+//        Shader.disable();
         
     }
 
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
         Shaders.wireframe.setProgramUniform1f("maxDistance", 210);
-//        Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
-//        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
+        Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
+        Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
 //        Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         Shader.disable();
     }
     

@@ -139,6 +139,15 @@ public class ClientHandler extends Handler {
         Game.instance.setPlayer(player);
     }
 
+    /**
+     * @param packetSTeleport
+     */
+    public void handleTeleport(PacketSTeleport packetSTeleport) {
+        this.player.setFly((packetSTeleport.flags & 0x1) != 0);
+        this.player.move(packetSTeleport.pos);
+        this.player.setYawPitch(packetSTeleport.yaw, packetSTeleport.pitch);
+    }
+
     public void sendPacket(Packet packet) {
         this.client.sendPacket(packet);
     }

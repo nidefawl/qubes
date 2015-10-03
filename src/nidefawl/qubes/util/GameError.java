@@ -8,8 +8,12 @@ public class GameError extends RuntimeException {
         super(string);
     }
 
-    public GameError(String string, Exception e) {
-        super(string, e);
+    public GameError(String string, Throwable t) {
+        super(string, t);
+    }
+
+    public GameError(String string, Exception t) {
+        super(string, t);
     }
 
 }

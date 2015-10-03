@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.noise;
+package nidefawl.qubes.noise.opennoise;
 
 /**
  * @author Michael Hept 2015

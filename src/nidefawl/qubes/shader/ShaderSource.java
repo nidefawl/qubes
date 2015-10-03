@@ -24,10 +24,10 @@ public class ShaderSource {
     int nInclude = 0;
     private String attrTypes = "default";
 
-    void load(AssetManager assetManager, String path, String name) throws IOException {
-        this.processed = readParse(assetManager, path, name, false);
+    void load(AssetManager assetManager, String path, String name, IShaderDef def) throws IOException {
+        this.processed = readParse(assetManager, path, name, def, false);
     }
-    private String readParse(AssetManager assetManager, String path, String name, boolean resolve) throws IOException {
+    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, boolean resolve) throws IOException {
         InputStream is = null;
         BufferedReader reader = null;
         try {
@@ -67,7 +67,7 @@ public class ShaderSource {
                         Matcher m;
                         if ((m = patternInclude.matcher(line)).matches()) {
                             String filename = m.group(1);
-                            String include = readParse(assetManager, path, filename, true);
+                            String include = readParse(assetManager, path, filename, def, true);
                             if (include == null) {
                                 throw new ShaderCompileError(line, name, "Preprocessor error: Failed loading include \"" + filename + "\"");
                             }
@@ -76,7 +76,11 @@ public class ShaderSource {
                             insertLine = true;
                         } else if ((m = patternDefine.matcher(line)).matches()) {
                             String define = m.group(1);
-                            String replace = Engine.getDefinition(define);
+                            String s = null;
+                            if (def != null) {
+                                s = def.getDefinition(define);
+                            }
+                            String replace = s == null ? "" : s;
                             code += replace + "\r\n";
                         } else if ((m = patternAttr.matcher(line)).matches()) {
                             this.attrTypes = m.group(1);

@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import nidefawl.qubes.config.WorkingEnv;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.shader.ShaderSource;
+import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.GameError;
 
 public class AssetManager {
@@ -108,6 +106,9 @@ public class AssetManager {
     }
 
     public Shader loadShader(String name) {
+        return loadShader(name, null);
+    }
+    public Shader loadShader(String name, IShaderDef def) {
         Shader shader = new Shader(name);
         try {
             int idx = name.lastIndexOf("/");
@@ -120,7 +121,7 @@ public class AssetManager {
                 path = name.substring(0, idx);
                 fname = name.substring(idx+1);
             }
-            shader.load(this, path, fname);
+            shader.load(this, path, fname, def);
         } catch (ShaderCompileError e) {
             this.lastFailedShader = e.getShaderSource();
             throw e;

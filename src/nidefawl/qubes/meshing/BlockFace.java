@@ -271,11 +271,11 @@ public class BlockFace {
             attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
             return 2;
         }
-        if (block.id >= Block.leaves_acacia.id) {
-            attr.setReverse((this.bs.face&1)!=1);
-            attr.setNormal(-this.normal[0], -this.normal[1], -this.normal[2]);
-            attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
-            return 2;
+        if (block.id >= Block.leaves_acacia.id && block.id <= Block.leaves_oak.id) {
+//            attr.setReverse((this.bs.face&1)!=1);
+//            attr.setNormal(-this.normal[0], -this.normal[1], -this.normal[2]);
+//            attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
+//            return 2;
         }
         return 1;
     }

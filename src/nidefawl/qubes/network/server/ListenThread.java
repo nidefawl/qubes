@@ -9,6 +9,7 @@ public class ListenThread extends Thread {
     private final ServerSocket serverSocket;
     private final NetworkServer       server;
 	private boolean finished;
+	private boolean started;
 
     public ListenThread(final NetworkServer server, final int port) throws IOException {
         setName("ListenThread");
@@ -20,6 +21,7 @@ public class ListenThread extends Thread {
     @Override
     public void run() {
     	try {
+    	    started = true;
             while (this.server.isRunning) {
                 try {
                     final Socket s = this.serverSocket.accept();
@@ -37,7 +39,7 @@ public class ListenThread extends Thread {
     	}
     }
 	public void halt() {
-        if (!this.finished) {
+        if (!this.finished&&started) {
             try {
             	this.serverSocket.close();
             } catch (Exception e) {

@@ -9,6 +9,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.gl.Memory;
 
 public class Mouse {
     public final static boolean DISABLE_MOUSE_INPUT = false; 
@@ -25,8 +26,8 @@ public class Mouse {
     static DoubleBuffer by;
 	public static void init() {
 
-        bx = BufferUtils.createDoubleBuffer(1);
-        by = BufferUtils.createDoubleBuffer(1);
+        bx = Memory.createDoubleBuffer(1);
+        by = Memory.createDoubleBuffer(1);
         lastX = lastY = -1;
         setLastPos();
 	}

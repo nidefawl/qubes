@@ -12,9 +12,7 @@ import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -228,9 +226,7 @@ public class FinalRenderer {
 
         if (Game.DO_TIMING)
             TimingHelper.startSec("Deferred");
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred");
         renderDeferred(world, fTime, pass);
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
 
     }
 
@@ -309,7 +305,17 @@ public class FinalRenderer {
     public void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_shaderSSR = assetMgr.loadShader("shaders/basic/ssr");
+            Shader new_shaderSSR = assetMgr.loadShader("shaders/basic/ssr", new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("SSR".equals(define)) {
+                        int ssr = Game.instance.settings.ssr;
+                        return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
+                    }
+                    return null;
+                }
+            });
             Shader new_shaderDef = assetMgr.loadShader("shaders/basic/deferred");
             Shader new_shaderBlur = assetMgr.loadShader("shaders/basic/blur_kawase");
             Shader new_shaderFinal = assetMgr.loadShader("shaders/basic/finalstage");
@@ -415,7 +421,8 @@ public class FinalRenderer {
         scale.scale(new Vector3f(Game.displayWidth, Game.displayHeight, 1));
         Matrix4f.mul(scale, trs, scale);
         Matrix4f.mul(scale, Engine.getMatSceneP(), scale);
-        this.scaleMatBuf=BufferUtils.createFloatBuffer(16);
+        if (this.scaleMatBuf == null)
+            this.scaleMatBuf=Memory.createFloatBuffer(16);
         this.scaleMatBuf.position(0);
         scale.store(scaleMatBuf);
         scaleMatBuf.flip();

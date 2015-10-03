@@ -19,6 +19,7 @@ public class CommandHandler {
         this.register(CommandStats.class);
         this.register(CommandSetTime.class);
         this.register(CommandDebug.class);
+        this.register(CommandToCoord.class);
     }
 
     private void register(Class<? extends Command> class1) {

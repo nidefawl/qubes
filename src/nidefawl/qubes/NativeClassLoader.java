@@ -16,6 +16,11 @@ public class NativeClassLoader extends ClassLoader {
     native byte[] cppLoadClass ( String name );
     native byte[] cppLoadResource ( String name );
     
+    
+    protected Class<?> loadClassRedirect(String name) throws ClassNotFoundException {
+        return loadClass(name);
+    }
+    
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         if (!name.startsWith("java")) {

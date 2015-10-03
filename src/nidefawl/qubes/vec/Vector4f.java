@@ -318,5 +318,24 @@ public class Vector4f {
         normalise(this);
         return this;
     }
+    /**
+     * @param f
+     * @param g
+     * @param h
+     * @param i
+     * @return 
+     */
+    public boolean setChecked(float x, float y, float z, float w) {
+        float l = (float) Math.sqrt(x*x+y*y+z*z+w*w);
+        x /= l;
+        y /= l;
+        z /= l;
+        w /= l;
+        boolean changed = x != this.x; this.x = x;
+        changed |= y != this.y; this.y = y;
+        changed |= z != this.z; this.z = z;
+        changed |= w != this.w; this.w = w;
+        return changed;
+    }
 
 }

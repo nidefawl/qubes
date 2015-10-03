@@ -13,4 +13,7 @@ public abstract class AbstractUniform {
         return this.loc >= 0;
     }
     public abstract boolean set();
+    
+    public void release() {
+    }
 }

@@ -28,7 +28,7 @@ public class ChunkPopulator implements IChunkPopulator {
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a == 0 && rand.nextInt(16) == 0) {
+                if ( a <= 5 && rand.nextInt(3) == 0) {
                     TreeGenerators.rand(rand).generate(world, x, h+1, z, rand);
                 } else {
                     world.setType(x, h+1, z, Block.longgrass.id, Flags.MARK);

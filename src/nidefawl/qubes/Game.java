@@ -23,9 +23,7 @@ import nidefawl.qubes.config.ClientSettings;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.lighting.DynamicLight;
@@ -78,6 +76,8 @@ public class Game extends GameBase implements IErrorHandler {
     public ArrayList<EditBlockTask> edits           = Lists.newArrayList();
     public int                      step            = 0;
     public boolean                  updateRenderers = true;
+    private TesselatorState debugChunks;
+    static boolean showGrid=false;
 
     public void connectTo(String host) {
         try {
@@ -101,6 +101,8 @@ public class Game extends GameBase implements IErrorHandler {
 
     @Override
     public void initGame() {
+
+        debugChunks = new TesselatorState();
         loadSettings();
         selection.init();
         AssetManager.getInstance().init();
@@ -178,7 +180,7 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F2) {
             public void onDown() {
-                BlockTextureArray.getInstance().reload();
+                showGrid = !showGrid;
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F1) {
@@ -436,8 +438,8 @@ public class Game extends GameBase implements IErrorHandler {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderBlockHighlight");
                 selection.renderBlockHighlight(this.world, fTime);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
             
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("renderBlockHighlight");
@@ -463,7 +465,6 @@ public class Game extends GameBase implements IErrorHandler {
       
 
       glActiveTexture(GL_TEXTURE0);
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
       if (this.world != null) {
           if (Game.DO_TIMING) TimingHelper.endStart("final");
           glDisable(GL_BLEND);
@@ -477,11 +478,16 @@ public class Game extends GameBase implements IErrorHandler {
               dbg.drawDebug();
               dbg.postDbgFB();
           }
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pre0");
           Engine.outRenderer.bindFB();
           Engine.outRenderer.clearFrameBuffer();
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pass0");
           Engine.outRenderer.render(this.world, fTime, 0);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
           
 
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderTransparent");
           glDepthMask(true);
           glDepthFunc(GL_LEQUAL);
           glEnable(GL_BLEND);
@@ -492,15 +498,22 @@ public class Game extends GameBase implements IErrorHandler {
 //          glDisable(GL_BLEND);
           glDepthFunc(GL_ALWAYS);
           glDepthMask(false);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pre1");
           
           
           Engine.outRenderer.bindFB();
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pass1");
           Engine.outRenderer.render(this.world, fTime, 1);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred ReflAndBlur");
 
 //        glDisable(GL_CULL_FACE);
           Engine.outRenderer.renderReflAndBlur(this.world, fTime);
+          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
 
 
           FrameBuffer.unbindFramebuffer();
@@ -555,11 +568,11 @@ public class Game extends GameBase implements IErrorHandler {
                         TimingHelper.startSec("renderNormals");
                     Engine.worldRenderer.renderNormals(this.world, fTime);
                     glEnable(GL_POLYGON_OFFSET_FILL);
-                    glPolygonOffset(-1.4f, 2.f);
+                    glPolygonOffset(-3.4f, 2.f);
                     glDisable(GL_CULL_FACE);
 //                    glDisable(GL_DEPTH_TEST);
-                    glEnable(GL_BLEND);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//                    glEnable(GL_BLEND);
+//                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
                     glEnable(GL_DEPTH_TEST);
                     glEnable(GL_CULL_FACE);
@@ -591,9 +604,7 @@ public class Game extends GameBase implements IErrorHandler {
       if (this.world != null && this.gui == null && this.movement.grabbed()) {
           Shaders.colored.enable();
           if (Game.DO_TIMING) TimingHelper.startSec("crosshair");
-          glDisable(GL_TEXTURE_2D);
           Tess.instance.setColor(-1, 100);
-          glEnable(GL_TEXTURE_2D);
           if (Game.DO_TIMING) TimingHelper.endSec();
           Shader.disable();
       }
@@ -606,6 +617,53 @@ public class Game extends GameBase implements IErrorHandler {
           this.gui.render(fTime, Mouse.getX(), Mouse.getY());
       } else if (this.world != null) {
 
+          if (showGrid) {
+              int ipX = GameMath.floor(px);
+              int ipY = GameMath.floor(py);
+              int ipZ = GameMath.floor(pz);
+              int icX = ipX>>4;
+              int icZ = ipZ>>4;
+              int chunksW = RegionRenderer.LENGTH_OVER * RegionRenderer.REGION_SIZE;
+              int chunkHalfW = ((RegionRenderer.LENGTH_OVER-1)/2) * RegionRenderer.REGION_SIZE;
+//              int minChunkX = (ipX)-chunkW;
+//              int minChunkZ = (ipZ)-chunkW;
+//              int maxChunkX = (ipX)+chunkW;
+//              int maxChunkZ = (ipZ)+chunkW;
+              Tess t = Tess.instance;
+              float chunkWPx=12.0f;
+              float screenX = 140;
+              float screenZ = 140;
+              for (int cX = 0; cX < chunksW; cX++) {
+                  for (int cZ = 0; cZ < chunksW; cZ++) {
+                      t.setOffset(screenX+chunkWPx*cX, screenZ+chunkWPx*cZ, 0);
+                      int worldChunkX = icX-chunkHalfW+cX;
+                      int worldChunkZ = icZ-chunkHalfW+cZ;
+                      Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
+                      t.setColorF(0, 1);
+                      float border = 2;
+                      t.add(0, chunkWPx);
+                      t.add(chunkWPx, chunkWPx);
+                      t.add(chunkWPx, 0);
+                      t.add(0, 0);
+                      if (c == null) {
+                          t.setColorF(0x993333, 1);
+                      } else if (!c.isValid){
+                          t.setColorF(0x999933, 1);
+                      } else if (worldChunkX==icX&&worldChunkZ==icZ) {
+                          t.setColorF(0x333399, 1);
+                      } else {
+                          t.setColorF(0x339933, 1);
+                      }
+                      t.add(border, chunkWPx-border);
+                      t.add(chunkWPx-border, chunkWPx-border);
+                      t.add(chunkWPx-border, border);
+                      t.add(border, border);
+                  }   
+              }
+              Shaders.colored.enable();
+              t.drawQuads();
+              Shader.disable();
+          }
           if (show) {
               if (Game.DO_TIMING) TimingHelper.startSec("debugOverlay");
               if (this.debugOverlay != null) {
@@ -637,10 +695,11 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >6200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
+            Engine.regionRenderer.initShaders();
             Engine.shadowRenderer.initShaders();
             Engine.outRenderer.initShaders();
             TextureManager.getInstance().reload();
@@ -650,9 +709,11 @@ public class Game extends GameBase implements IErrorHandler {
 
     @Override
     public void postRenderUpdate(float f) {
+        Engine.worldRenderer.rendered = Engine.regionRenderer.rendered;
     }
     @Override
     public void preRenderUpdate(float f) {
+        Engine.regionRenderer.rendered = 0;
         if (this.client != null) {
             String reason = this.client.getClient().getDisconnectReason();
             if (reason!=null) {
@@ -691,10 +752,10 @@ public class Game extends GameBase implements IErrorHandler {
             py = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
             pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
             if (this.world.lights.size() > 0) {
-                DynamicLight l = this.world.lights.get(0);
-                l.loc.x = px;
-                l.loc.y = py;
-                l.loc.z = pz;
+//                DynamicLight l = this.world.lights.get(0);
+//                l.loc.x = px;
+//                l.loc.y = py;
+//                l.loc.z = pz;
 //                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
 //                l.intensity = 2.6F;
 //                l.color = new Vector3f(1*l.intensity);

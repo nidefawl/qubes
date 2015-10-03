@@ -3,6 +3,7 @@ package nidefawl.qubes.texture;
 import java.util.Arrays;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseTileable3D;
 import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
@@ -26,10 +27,10 @@ public class TextureUtil {
         int noct = 8;
         long seed = 0xdeadbeefL;
         seed--;
-        OpenSimplexNoise n4d2 = new OpenSimplexNoise(42);
-        OpenSimplexNoise n4d = new OpenSimplexNoise(5);
-        OpenSimplexNoise n4d3 = new OpenSimplexNoise(6);
-        OpenSimplexNoise n4d5 = new OpenSimplexNoise(7);
+        OpenSimplexNoise n4d2 = NoiseLib.makeGenerator(42);
+        OpenSimplexNoise n4d = NoiseLib.makeGenerator(5);
+        OpenSimplexNoise n4d3 = NoiseLib.makeGenerator(6);
+        OpenSimplexNoise n4d5 = NoiseLib.makeGenerator(7);
         byte[] data = new byte[w * h * 3];
         TimingHelper.startSilent(123);
 //        float f1 = Client.ticksran + Main.instance.partialTick;

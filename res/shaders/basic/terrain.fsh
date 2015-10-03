@@ -1,6 +1,7 @@
 #version 150 core
 
 
+#pragma define "FAR_BLOCKFACE"
 #pragma include "ubo_scene.glsl"
 
 uniform sampler2DArray blockTextures;
@@ -15,6 +16,7 @@ in vec2 light;
 flat in vec4 faceAO;
 flat in vec4 faceLight;
 flat in vec4 faceLightSky;
+in float blockside;
 
 in vec2 texPos;
 flat in uvec4 blockinfo;
@@ -65,13 +67,13 @@ vec3 pal( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
 {
     return a + b*cos( 6.28318*(c*t+d) );
 }
-void main() {
+void main2(void) {
 
 	// vec4 tex=textureLod(blockTextures, vec3(texcoord.st, float(blockinfo.x)), 0 );
-	vec4 tex=texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
+	// vec4 tex=texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
 	// tex = vec4(vec3(1),1);
-	if (tex.a<1)
-		discard;
+	// if (tex.a<1)
+	// 	discard;
 	float xPos2 = texPos.x;
 	float xPos = 1-texPos.x;
 	float yPos2 = texPos.y;
@@ -97,8 +99,75 @@ void main() {
 
 	// int timeW = mod(floor(in_scene.frameTime), 20) > 10 ? 1 : 0;
 	float ambientOccl = 1 - clamp(ao, 0,1);
+	vec3 color_adj = vec3(0.8);
+	color_adj *= color.rgb;
+
+	//MINECRAFTISH BLOCK LIGHTING
+	// color_adj *= 0.5+abs(dir.z)*0.3+(dir.y)*0.2;
+	color_adj *= blockside;
+
+
+
+	// float lightLvl = lightAdj(lightSky, lightBlock);
+	// color_adj *= ambientOccl;
+	// color_adj *= lightLvl;
+	float alpha = 1*1;
+	// if (alpha<1)
+	// 	discard;
+    out_Color = vec4(color_adj, alpha);
+    out_Normal = vec4((normal) * 0.5f + 0.5f, 1);
+    out_Material = blockinfo;
+    out_Light = vec4(lightLevelSky, lightLevelBlock, ambientOccl, 1);
+    // gl_FragData[0] = vec4(0,1,1,1);
+}
+void main(void) {
+
+	// vec4 tex=textureLod(blockTextures, vec3(texcoord.st, float(blockinfo.x)), 0 );
+	vec4 tex=texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
+	// tex = vec4(vec3(1),1);
+#ifndef FAR_BLOCKFACE
+#endif
+	if (tex.a<1)
+		discard;
 	vec3 color_adj = tex.rgb;
 	color_adj *= color.rgb;
+
+	//MINECRAFTISH BLOCK LIGHTING
+	// color_adj *= 0.5+abs(dir.z)*0.3+(dir.y)*0.2;
+
+
+	float xPos2 = texPos.x;
+	float xPos = 1-texPos.x;
+	float yPos2 = texPos.y;
+	float yPos = 1-texPos.y;
+
+	// color_adj *= blockside;
+	float ao =  0.0;
+	ao += faceAO.x * xPos  * yPos;
+	ao += faceAO.y * xPos2 * yPos;
+	ao += faceAO.z * xPos2 * yPos2;
+	ao += faceAO.w * xPos  * yPos2;
+	float ambientOccl = 1 - clamp(ao, 0,1);
+	ambientOccl*=blockside;
+#ifndef FAR_BLOCKFACE
+#else //FAR_BLOCKFACE
+	// color_adj=mix(color_adj, vec3(1, 0, 0), 0.4);
+#endif
+
+
+	float lightLevelBlock =  0.0;
+	lightLevelBlock += faceLight.x * xPos  * yPos;
+	lightLevelBlock += faceLight.y * xPos2 * yPos;
+	lightLevelBlock += faceLight.z * xPos2 * yPos2;
+	lightLevelBlock += faceLight.w * xPos  * yPos2;
+
+	float lightLevelSky =  0.0;
+	lightLevelSky += faceLightSky.x * xPos  * yPos;
+	lightLevelSky += faceLightSky.y * xPos2 * yPos;
+	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
+	lightLevelSky += faceLightSky.w * xPos  * yPos2;
+
+	// int timeW = mod(floor(in_scene.frameTime), 20) > 10 ? 1 : 0;
 
 
 		float f = float(blockinfo.y);

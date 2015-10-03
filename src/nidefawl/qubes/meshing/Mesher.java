@@ -24,13 +24,13 @@ public class Mesher {
     private int nextBlockIDX = 0;
     
     //TODO: implement cache to make memory efficient
-//    private final BlockSurface[] scratchPad = new BlockSurface[1000000];
+    private final BlockSurface[] scratchPad = new BlockSurface[1000000];
     int scratchpadidx = 0;
     @SuppressWarnings("rawtypes")
     List[] meshes = new List[WorldRenderer.NUM_PASSES];
     public Mesher() {
-//        for (int i = 0; i < scratchPad.length; i++)
-//            this.scratchPad[i] = new BlockSurface();
+        for (int i = 0; i < scratchPad.length; i++)
+            this.scratchPad[i] = new BlockSurface();
         for (int i = 0; i < meshes.length; i++)
             this.meshes[i] = new ArrayList<>();
         this.dims = new int[3];
@@ -85,7 +85,7 @@ public class Mesher {
 //                mask2[n] = null;
 //                return;
 //            }
-            if (this.strategy >= 0) {
+            if (this.strategy >= 044) {
                 if (bs1.pass == 0 && !bs1.transparent && bs2.isLeaves) {
                     mask2[n] = bs1;
                     return;
@@ -179,6 +179,7 @@ public class Mesher {
     private int ySlice;
     final static boolean MEASURE = false;
     public void mesh(World world, ChunkRenderCache ccache, int rY) {
+        scratchpadidx = 0;
         this.nextBlockIDX = 0;
         this.ySlice = rY;
         this.yPos = rY<<RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
@@ -195,7 +196,6 @@ public class Mesher {
     }
 
     private void meshRound(World world, ChunkRenderCache ccache) {
-        scratchpadidx = 0;
         dims[0] = RegionRenderer.REGION_SIZE_BLOCKS;
         dims[1] = RegionRenderer.SLICE_HEIGHT_BLOCKS;
         dims[2] = RegionRenderer.REGION_SIZE_BLOCKS;
@@ -322,7 +322,7 @@ public class Mesher {
             if (strategy == 1 && pass > 0) {
                 return air;
             }
-            BlockSurface surface = new BlockSurface();
+            BlockSurface surface = next();
             surface.type = type;
             surface.transparent = block.isTransparent();
             surface.x = i;
@@ -347,12 +347,12 @@ public class Mesher {
         return air;
     }
 
-//
-//    private BlockSurface next() {
-//        BlockSurface surface = scratchPad[scratchpadidx++];
-//        surface.reset();
-//        return surface;
-//    }
+
+    private BlockSurface next() {
+        BlockSurface surface = scratchPad[scratchpadidx++];
+        surface.reset();
+        return surface;
+    }
 
 
 

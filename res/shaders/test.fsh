@@ -46,7 +46,7 @@ vec3 pal( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
     return a + b*cos( 6.28318*(c*t+d) );
 }
 
-void main(void) 
+void main4(void) 
 {
 	vec2 p = pass_texcoord*1.7;
 	// p+=vec2(4);
@@ -81,13 +81,16 @@ float pow4(float x) {
 float pow3(float x) {
 	return x * x * x;
 }
+void main(void) {
+	vec4 tex = texture(tex0, pass_texcoord.st);
+    out_Color = vec4(tex.rgb,1);
+}
  
 void main3(void) 
 {
-	vec4 tex = texture(tex0, pass_texcoord.st);
-	const int len = 1024;
-	int a = int(tex.y*3);
-	for (int i = 0; i < len; i++) {
+	// const int len = 1024;
+	// int a = int(tex.y*3);
+	// for (int i = 0; i < len; i++) {
 		// tex.x = mod(tex.x*i, 1.0f); //slow 4.35ms
 		// tex.x = sqrt(tex.x*i); //slow 4.35ms
 		// tex.x = mix(tex.x*i, i, 0.5); //fast 2.5ms
@@ -142,10 +145,10 @@ void main3(void)
 		// tex.x = uint(tex.x)+i; //6.42ms
 		// tex.x = int(tex.x)+i; //4.36ms
 
-	}
-	tex /= float(len);
-    out_Color = tex*pass_Color*noise1(pass_texcoord);
-    // out_Color = vec4(vec3(1),0);
+	// }
+	// tex /= float(len);
+ //    out_Color = tex*pass_Color*noise1(pass_texcoord);
+    // out_Color = vec4(tex.rgb,1);
 }
 // void main2(void) {
 //     int i=0;

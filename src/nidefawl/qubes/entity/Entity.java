@@ -136,5 +136,14 @@ public abstract class Entity {
         this.lastPos.set(this.pos);
         this.aabb.centerXZ(x, y, z);
     }
+    /**
+     * @param yaw
+     * @param pitch
+     */
+    public void setYawPitch(float yaw, float pitch) {
+        this.yaw = yaw;
+        this.pitch = pitch;
+    }
+
 	
 }

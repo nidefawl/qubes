@@ -1,5 +1,6 @@
 #version 150 core
 
+#pragma define "FAR_BLOCKFACE"
 #pragma include "ubo_scene.glsl"
 #pragma include "vertex_layout.glsl"
 
@@ -12,29 +13,41 @@ flat out uvec4 blockinfo;
 flat out vec4 faceAO;
 flat out vec4 faceLight;
 flat out vec4 faceLightSky;
-
+out float blockside;
 out vec2 texPos;
+
 
 #define MAX_AO 3.0
 
 const vec4 aoLevels = normalize(vec4(0, 0.2, 0.4, 0.6));
 #define LIGHT_MASK 0xFu
 #define AO_MASK 0x3u
+#define DEBUG_MODE2
+#define BR_0 0.4f
+#define BR_1 0.7f
+#define BR_2 0.9f
+#define BR_3 1.0f
+float blocksidebrightness[6] = float[6](BR_2, BR_2, BR_3, BR_0, BR_1, BR_1);
 void main() {
-	texcoord = in_texcoord;
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
 	camNormal.xyz/=camNormal.w;
-
 	normal = normalize(camNormal.xyz);
-
 	color = in_color;
+	blockinfo = in_blockinfo;
 
+	vec4 pos = in_position;
+	texcoord = in_texcoord;
+	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
+
+	blockside = blocksidebrightness[blockinfo.w];
+// #ifndef FAR_BLOCKFACE
 	faceAO = vec4(
 		aoLevels[in_blockinfo.z&AO_MASK],
 		aoLevels[(in_blockinfo.z>>2)&AO_MASK],
 		aoLevels[(in_blockinfo.z>>4)&AO_MASK],
 		aoLevels[(in_blockinfo.z>>6)&AO_MASK]
 		);
+// #endif
 
 	faceLightSky = vec4(
 		float(in_light.y&LIGHT_MASK)/15.0,
@@ -50,14 +63,11 @@ void main() {
 		float((in_light.x>>12)&LIGHT_MASK)/15.0
 		);
 	
-	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 
-	blockinfo = in_blockinfo;
-	vec4 pos = in_position;
 	float distCam = length(in_position-in_scene.cameraPosition);
 	vec4 dir = in_direction*in_direction.w;
 	const float face_offset = 1/32.0;
-	float distScale = face_offset*clamp(pow((distCam+10)/220, 1.7), 0.0008, 1);
+	float distScale = face_offset*clamp(pow((distCam+8)/200, 1.45), 0.0008, 1);
 	pos.x += dir.x*distScale;
 	pos.y += dir.y*distScale;
 	pos.z += dir.z*distScale;

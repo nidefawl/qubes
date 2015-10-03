@@ -119,50 +119,77 @@ public abstract class GameBase implements Runnable {
                     displayHeight = 1;
                 }
                 System.out.println("resize " + displayWidth + "/" + displayHeight);
-
-                if (isRunning())
-                    GL11.glViewport(0, 0, displayWidth, displayHeight);
-                onResize(displayWidth, displayHeight);
+                try {
+                    if (isRunning())
+                        GL11.glViewport(0, 0, displayWidth, displayHeight);
+                    onResize(displayWidth, displayHeight);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWWindowSizeCallback", t));
+                }
             }
         };
         cbKeyboard = new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                onKeyPress(window, key, scancode, action, mods);
+                try {
+                    onKeyPress(window, key, scancode, action, mods);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWKeyCallback", t));
+                }
             }
         };
         cbMouseButton = new GLFWMouseButtonCallback() {
 
             @Override
             public void invoke(long window, int button, int action, int mods) {
-                onMouseClick(window, button, action, mods);
+                try {
+                    onMouseClick(window, button, action, mods);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWMouseButtonCallback", t));
+                }
             }
         };
         cbScrollCallback = new GLFWScrollCallback() {
             @Override
             public void invoke(long window, double xoffset, double yoffset) {
-                Mouse.scrollDX += xoffset;
-                Mouse.scrollDY += yoffset;
-                onWheelScroll(window, xoffset, yoffset);
+                try {
+                    Mouse.scrollDX += xoffset;
+                    Mouse.scrollDY += yoffset;
+                    onWheelScroll(window, xoffset, yoffset);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWScrollCallback", t));
+                }
             }
 
         };
         cbWindowFocus = new GLFWWindowFocusCallback() {
             @Override
             public void invoke(long window, int focused) {
-                Mouse.setGrabbed(false);
+                try {
+                    Mouse.setGrabbed(false);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWWindowFocusCallback", t));
+                }
             }
         };
         cbCursorPos = new GLFWCursorPosCallback() {
             @Override
             public void invoke(long window, double xpos, double ypos) {
-                Mouse.update(xpos, ypos);
+                try {
+                    Mouse.update(xpos, ypos);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWCursorPosCallback", t));
+                }
             }
         };
         cbText = new GLFWCharCallback() {
             @Override
             public void invoke(long window, int codepoint) {
-                onTextInput(window, codepoint);
+                try {
+                    onTextInput(window, codepoint);
+                } catch (Throwable t) {
+                    setException(new GameError("GLFWCharCallback", t));
+                }
             }
         };
     }
@@ -467,7 +494,7 @@ public abstract class GameBase implements Runnable {
                 runFrame();
             }
         } catch (Throwable t) {
-            showErrorScreen("The game crashed", Arrays.asList(new String[] { "The game has crashed" }), t, true);
+            showErrorScreen("The game crashed", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
         } finally {
             if (this.wasrunning) {
                 onDestroy();
@@ -534,6 +561,15 @@ public abstract class GameBase implements Runnable {
             destroyContext();
             String buf1 = outStream.getLogString();
             String buf2 = errStream.getLogString();
+            if (NativeInterface.isPresent()) {
+                this.sysExit = false;
+                CrashInfo info = new CrashInfo(title, desc);
+                info.setLogBuf(buf1);
+                info.setErrBuf(buf2);
+                info.setException(throwable);
+                NativeInterface.getInstance().gameCrashed(info);
+                return;
+            }
             TextDialog dlg = new TextDialog(title, desc, throwable, b);
             dlg.prepend(buf1);
             dlg.prepend(buf2);

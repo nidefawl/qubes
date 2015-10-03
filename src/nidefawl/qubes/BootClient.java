@@ -31,7 +31,9 @@ public class BootClient {
         Game.instance.startGame();
         GameContext.setMainThread(Game.instance.getMainThread());
         if (GameContext.getMainThread().isAlive()) {
-            NativeInterface.getInstance().gameAlive();
+            if (NativeInterface.isPresent()) {
+                NativeInterface.getInstance().gameAlive();
+            }
         }
         while(GameContext.getMainThread().isAlive()) {
             try {

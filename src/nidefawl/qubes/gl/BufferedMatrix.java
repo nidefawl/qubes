@@ -2,17 +2,15 @@ package nidefawl.qubes.gl;
 
 import java.nio.FloatBuffer;
 
-import org.lwjgl.BufferUtils;
-
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 
 public class BufferedMatrix extends Matrix4f {
     
-    FloatBuffer cur = BufferUtils.createFloatBuffer(16);
-    FloatBuffer last = BufferUtils.createFloatBuffer(16);
-    FloatBuffer curInv = BufferUtils.createFloatBuffer(16);
-    FloatBuffer lastInv = BufferUtils.createFloatBuffer(16);
+    FloatBuffer cur = Memory.createFloatBuffer(16);
+    FloatBuffer last = Memory.createFloatBuffer(16);
+    FloatBuffer curInv = Memory.createFloatBuffer(16);
+    FloatBuffer lastInv = Memory.createFloatBuffer(16);
     public BufferedMatrix() {
         super();
         setIdentity();
@@ -59,6 +57,16 @@ public class BufferedMatrix extends Matrix4f {
     public FloatBuffer getPrev() {
         last.rewind();
         return last;
+    }
+
+    /**
+     * 
+     */
+    public void free() {
+        Memory.free(this.cur);
+        Memory.free(this.last);
+        Memory.free(this.curInv);
+        Memory.free(this.lastInv);
     }
 
 }

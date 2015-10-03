@@ -12,6 +12,7 @@ import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryUtil;
 
 public class FrameBuffer {
     private static final int MAX_COLOR_ATT    = 8;
@@ -93,8 +94,10 @@ public class FrameBuffer {
             throw new IllegalStateException("No textures defined");
         }
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenFramebuffers");
-        this.drawBufAtt = BufferUtils.createIntBuffer(this.numColorTextures);
-        IntBuffer colorTextures = BufferUtils.createIntBuffer(numTextures);
+        this.drawBufAtt = Memory.createIntBufferGC(this.numColorTextures);
+
+        IntBuffer colorTextures = Memory.createIntBufferGC(numTextures);
+        
         glGenTextures(colorTextures);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenTextures");
         colorTextures.rewind();
@@ -258,7 +261,7 @@ public class FrameBuffer {
             GL30.glDeleteFramebuffers(this.fb);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteFramebuffers");
         }
-        IntBuffer colorTextures = BufferUtils.createIntBuffer(MAX_COLOR_ATT+1);
+        IntBuffer colorTextures = Memory.createIntBufferGC(MAX_COLOR_ATT+1);
         for (int i = 0; i < colorAttTextures.length; i++) {
             if (colorAttTextures[i] != 0) {
                 colorTextures.put(colorAttTextures[i]);

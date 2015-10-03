@@ -1,8 +1,11 @@
 package nidefawl.qubes;
 
-import jline.console.ConsoleReader;
+import java.io.File;
+
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.logging.ErrorHandler;
+import nidefawl.qubes.noise.NoiseLib;
+import nidefawl.qubes.noise.TerrainNoiseScale;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;
@@ -13,6 +16,20 @@ public class StartServer {
 
 	public static void main(String[] args) {
 		try {
+		    boolean b = NoiseLib.isLibPresent();
+		    if (b) {
+		        System.out.println("Using native library for OpenSimplexNoise");
+	            double scaleMixXZ = 4.80D;
+	            double scaleMixY = scaleMixXZ*0.4D;
+	            TerrainNoiseScale noise = NoiseLib.newNoiseScale(4)
+	                    .setUpsampleFactor(8)
+	                    .setScale(scaleMixXZ, scaleMixY, scaleMixXZ)
+	                    .setOctavesFreq(3, 2);
+	            double[] data = noise.gen(0, 0);
+		        System.out.println(data[0]+"/"+data[1]);
+		    } else {
+		        System.err.println("Native library for OpenSimplexNoise not found");
+		    }
 			WorkingEnv.init(Side.SERVER, ".");
 			final GameServer instance = new GameServer();
 	        Runtime.getRuntime().addShutdownHook(new Thread(

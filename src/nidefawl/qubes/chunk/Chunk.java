@@ -71,7 +71,8 @@ public class Chunk {
     public int getTopBlock(int i, int k) {
         int y = 1 << worldHeightBits;
         while (y > 0) {
-            if (this.blocks[--y << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] != 0) {
+            int block = this.blocks[--y << (SIZE_BITS * 2) | k << (SIZE_BITS) | i]&Block.BLOCK_MASK;
+            if (block > 0 && (Block.isOpaque(block) || block == Block.water.id)) {
                 return y;
             }
         }

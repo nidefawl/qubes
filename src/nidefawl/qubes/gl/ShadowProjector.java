@@ -133,6 +133,9 @@ public class ShadowProjector {
             shadowSplitProj[i] = new Matrix4f();
         }
         for (i = 0; i < shadowSplitMVP.length; i++) {
+            if (shadowSplitMVP[i] != null) {
+                shadowSplitMVP[i].free();
+            }
             shadowSplitMVP[i] = new BufferedMatrix();
         }
         for (i = 0; i < shadowCamFrustum.length; i++) {

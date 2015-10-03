@@ -14,6 +14,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.vec.AABBInt;
+import nidefawl.qubes.vec.Vector3f;
 
 public class MeshedRegion {
 
@@ -29,6 +30,7 @@ public class MeshedRegion {
     public boolean    zNeg;
     public final AABBInt aabb          = new AABBInt();
     public int[]      frustumStates = new int[Engine.NUM_PROJECTIONS];
+    
     public boolean    needsUpdate   = true;
     public boolean    isUpdating   = false;
     public boolean    isRenderable  = false;
@@ -41,7 +43,12 @@ public class MeshedRegion {
     
     public int[]     vboIndices;
     private int shadowDrawMode;
-    
+    public boolean frustumStateChanged;
+    int occlusionQueryState = 0; //0 init, 1 waiting, 2 waiting + drop result
+    public int occlusionResult = 0;//0 no result, 1 visible, 2 occluded
+    public int occlFrameSkips = 0;
+    public int distance;
+    Vector3f queryPos = new Vector3f();
 
     public MeshedRegion() {
         Arrays.fill(frustumStates, -2);
