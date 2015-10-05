@@ -106,6 +106,10 @@ public class MeshUpdateTask {
                 this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
+                int FACE_SHADOW_INT_SIZE = PASS_2_BLOCK_FACE_INT_SIZE;
+                if (shadowDrawMode > 0) {
+                    FACE_SHADOW_INT_SIZE = PASS_3_BLOCK_FACE_INT_SIZE;
+                }
                 for (int i = 0; i < PASS_LOD && this.mr.isValid; i++) {
                     this.vertexCount[i] = 0;
                     this.bufferIdx[i] = 0;
@@ -114,11 +118,7 @@ public class MeshUpdateTask {
                     int numMeshedFaces = mesh.size();
                     int FACE_INT_SIZE = BLOCK_FACE_INT_SIZE;
                     if (i == PASS_SHADOW_SOLID) { 
-                        if (shadowDrawMode > 0) {
-                            FACE_INT_SIZE = PASS_3_BLOCK_FACE_INT_SIZE;
-                        } else {
-                            FACE_INT_SIZE = PASS_2_BLOCK_FACE_INT_SIZE;    
-                        }
+                        FACE_INT_SIZE = FACE_SHADOW_INT_SIZE;
                     }
                     int extraBufferLen = (int)(numMeshedFaces*3.3);
                     checkBufferSize(i, extraBufferLen * FACE_INT_SIZE);
@@ -154,12 +154,17 @@ public class MeshUpdateTask {
                 this.bufferIdx[PASS_LOD] = 0;
                 int n = this.mesher.getRenderType1Blocks();
                 if (n > 0) {
-                    int extraBufferLen = (int)(n*4);
+                    int approxFaces = (int)(n*10);
                     int FACE_INT_SIZE = BLOCK_FACE_INT_SIZE;
-                    checkBufferSize(PASS_LOD, extraBufferLen * FACE_INT_SIZE);
+                    int lodBufferSize = checkBufferSize(PASS_LOD, approxFaces * FACE_INT_SIZE);
+                    int shadowBufferSize = this.buffers[PASS_SHADOW_SOLID].length;
+                    int shadowBufferIndex = this.bufferIdx[PASS_SHADOW_SOLID];
+                    int requiredShadowBufferSize = shadowBufferIndex + approxFaces * FACE_SHADOW_INT_SIZE;
+                    reallocBuffer(PASS_SHADOW_SOLID, requiredShadowBufferSize);
                     int numFaces = 0;
                     attr.setOffset(0, 0, 0);
-                    blockRenderer.preRender(w, this.buffers[PASS_LOD], this.ccache, attr);
+                    blockRenderer.setShadowBuffer(this.buffers[PASS_SHADOW_SOLID], shadowBufferIndex, this.shadowDrawMode, FACE_SHADOW_INT_SIZE);
+                    blockRenderer.preRender(w, this.buffers[PASS_LOD], 0, FACE_INT_SIZE, this.ccache, attr);
                     for (int j = 0; j < n; j++) {
                         short c = this.mesher.getBlockPos(j);
                         int z = (c) & REGION_SIZE_BLOCKS_MASK;
@@ -170,16 +175,17 @@ public class MeshUpdateTask {
                         x += xOff;
                         y += yOff;
                         z += zOff;
-                        int faces = blockRenderer.render(PASS_LOD, x, y, z, numFaces*FACE_INT_SIZE);
+                        int faces = blockRenderer.render(PASS_LOD, x, y, z);
                         numFaces += faces;
-                        if (numFaces >= extraBufferLen) {
-                            extraBufferLen = (int)(extraBufferLen*2.3);
-                            reallocBuffer(PASS_LOD, extraBufferLen * FACE_INT_SIZE);
+                        if (numFaces*FACE_INT_SIZE >= lodBufferSize) {
+                            throw new GameError("BUFFER INDEX OUT OF BOUNDS, some block is drawing too many faces. implement logic to handle reallocation of buffer");
                         }   
                     }
                    
                     this.bufferIdx[PASS_LOD] = numFaces*FACE_INT_SIZE;
                     this.vertexCount[PASS_LOD] = numFaces*4;
+                    this.bufferIdx[PASS_SHADOW_SOLID] += this.blockRenderer.numShadowFaces*FACE_SHADOW_INT_SIZE;
+                    this.vertexCount[PASS_SHADOW_SOLID] += this.blockRenderer.numShadowFaces*4;
                 }
             
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;

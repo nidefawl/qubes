@@ -91,35 +91,35 @@ public abstract class AbstractYMLConfig {
         load();
     }
 
-    protected String getString(String s, String def) {
+    public String getString(String s, String def) {
         Object o = this.map.get(s);
         if (o instanceof String)
             return (String) o;
         return def;
     }
 
-    protected Boolean getBoolean(String s, boolean def) {
+    public Boolean getBoolean(String s, boolean def) {
         Object o = this.map.get(s);
         if (o instanceof Boolean)
             return (Boolean) o;
         return def;
     }
 
-    protected int getInt(String s, int def) {
+    public int getInt(String s, int def) {
         Object o = this.map.get(s);
         if (o instanceof Number)
             return (int) ((Number) o).intValue();
         return def;
     }
 
-    protected long getLong(String s, long def) {
+    public long getLong(String s, long def) {
         Object o = this.map.get(s);
         if (o instanceof Number)
             return (long) ((Number) o).longValue();
         return def;
     }
 
-    protected double getDouble(String s, double def) {
+    public double getDouble(String s, double def) {
         Object o = this.map.get(s);
         if (o instanceof Number)
             return (double) (Number) o;

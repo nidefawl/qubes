@@ -2,7 +2,9 @@ package nidefawl.qubes.chunk.server;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.TagReader;
@@ -50,6 +52,9 @@ public class ChunkReader {
         cmp.setInt("z", c.z);
         short[] blocks = c.getBlocks();
         byte[] byteBlocks = shortToByteArray(blocks);
+        Tag.Compound blockDataCompound = c.blockData.writeToTag();
+        if (blockDataCompound != null)
+            cmp.set("blockdata", blockDataCompound);
         cmp.setByteArray("blocks", byteBlocks);
         byte[] blockLight = c.getBlockLight();
         byte[] blockLight2 = new byte[blockLight.length];
@@ -60,7 +65,7 @@ public class ChunkReader {
         return cmp;
     }
 
-    private Chunk readChunk(World world, int x, int z, Compound t) {
+    private Chunk readChunk(World world, int x, int z, Compound t) throws IOException {
         int version = t.getInt("version");
         if (version != 2) {
             System.err.println("Not loading version "+version+" chunk at "+x+"/"+z);
@@ -69,7 +74,12 @@ public class ChunkReader {
         Chunk c = new Chunk(world, x, z, world.worldHeightBits);
         Tag.ByteArray bytearray = t.getByteArray("blocks");
         byte[] byteBlocks = bytearray.getArray();
-        byteToShortArray(byteBlocks, c.getBlocks());
+        readBlocks(byteBlocks, c.getBlocks());
+        Tag blockDataCompound = t.get("blockdata");
+        if (blockDataCompound != null) {
+            c.blockData.readFromTag((Tag.Compound) blockDataCompound);    
+        }
+        
         Tag.ByteArray blockLightArr = t.getByteArray("blockLight");
         byte[] blockLight = blockLightArr.getArray();
         System.arraycopy(blockLight, 0, c.getBlockLight(), 0, blockLight.length);
@@ -81,6 +91,17 @@ public class ChunkReader {
     public static void byteToShortArray(byte[] blocks, short[] dst) {
         for (int i = 0; i < dst.length; i++) {
             dst[i] = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
+        }
+    }
+    public static void readBlocks(byte[] blocks, short[] dst) {
+        for (int i = 0; i < dst.length; i++) {
+            short block = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
+            int iblock = block & Block.BLOCK_MASK;
+            if (Block.get(iblock) == null) {
+                dst[i] = 0;
+            } else {
+                dst[i] = block;
+            }
         }
     }
 

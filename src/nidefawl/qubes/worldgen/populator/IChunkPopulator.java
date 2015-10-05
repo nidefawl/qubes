@@ -15,6 +15,6 @@ public interface IChunkPopulator {
     /**
      * @param c
      */
-    void populate(WorldServer world, Chunk c);
+    void populate(Chunk c);
 
 }

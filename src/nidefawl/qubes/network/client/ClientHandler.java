@@ -7,6 +7,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.ChunkDataSliced2;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
@@ -14,6 +15,7 @@ import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.util.Flags;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.TripletShortHash;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.IWorldSettings;
@@ -167,14 +169,11 @@ public class ClientHandler extends Handler {
             decompressed = inflate(packet.blocks);
         }
         int offset = 0;
-        int singleChunkByteSize = packet.chunkLen;
         for (int i = 0; i < len; i++) {
             int[] pos = coords[i];
             Chunk c = this.chunkManager.getOrMake(pos[0], pos[1]);
             if (c == null) {
-                System.err.println("Failed recv. getOrMake returned null for chunk position "+pos[0]+"/"+pos[1]);
-                offset += singleChunkByteSize;
-                continue;
+                throw new GameError("Failed recv. getOrMake returned null for chunk position "+pos[0]+"/"+pos[1]);
             }
             short[] dst = c.getBlocks();
             byteToShortArray(decompressed, dst, offset);
@@ -183,6 +182,17 @@ public class ClientHandler extends Handler {
                 byte[] light = c.getBlockLight();
                 System.arraycopy(decompressed, offset, light, 0, light.length);
                 offset += light.length;
+            }
+            int heightSlices = 0;
+            heightSlices |= decompressed[offset+0]&0xFF;
+            heightSlices |= (decompressed[offset+1]&0xFF)<<8;
+            offset+=2;
+            for (int j = 0; j < ChunkDataSliced2.DATA_HEIGHT_SLICES; j++) {
+                if ((heightSlices&(1<<j))!=0) {
+                    short[] dataArray = c.blockData.getArray(j, true);
+                    byteToShortArray(decompressed, dataArray, offset);
+                    offset+=dataArray.length*2;
+                }
             }
             Engine.regionRenderer.flagChunk(c.x, c.z);
         }
@@ -225,16 +235,19 @@ public class ClientHandler extends Handler {
         short[] positions = p.positions;
         short[] blocks = p.blocks;
         byte[] lights = p.lights;
+        short[] datas = p.data;
         int len = positions.length;
         for (int i = 0; i < len; i++) {
             short pos = positions[i];
             short type = blocks[i];
+            short data = datas[i];
             byte light = lights[i];
             int x = TripletShortHash.getX(pos);
             int y = TripletShortHash.getY(pos);
             int z = TripletShortHash.getZ(pos);
             c.setType(x&Chunk.MASK, y, z&Chunk.MASK, type);
             c.setLight(x&Chunk.MASK, y, z&Chunk.MASK, -1, light&0xFF);
+            c.setFullData(x&Chunk.MASK, y, z&Chunk.MASK, data);
             this.world.flagBlock(p.chunkX<<Chunk.SIZE_BITS|x, y, p.chunkZ<<Chunk.SIZE_BITS|z);      
         }
     }

@@ -7,12 +7,13 @@
     <property name="source" value="1.7"/>
 	<property name="cryptfilepath" value="..\" />
 	<property name="targetfile" value="U:/game/server.jar" />
-    <path id="CraftlandLauncherLoader.classpath">
+    <path id="Game.classpath">
         <pathelement location="bin"/>
         <pathelement location="lib/jline/jline-2.13.jar"/>
         <pathelement location="lib/lwjgl_dbg/lwjgl.jar"/>
         <pathelement location="lib/guava/guava-18.0.jar"/>
         <pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
+        <pathelement location="lib/fast-classpath-scanner/fast-classpath-scanner.jar"/>
     </path>
 	<property name="launch4j.dir" location="C:/Program Files (x86)/Launch4j" />
 	<taskdef name="launch4j"
@@ -42,7 +43,7 @@
     <target name="build_game_compile">
         <javac debug="true" debuglevel="${debuglevel}" destdir="compile/game" source="${source}" target="${target}">
             <src path="src"/>
-            <classpath refid="CraftlandLauncherLoader.classpath"/>
+            <classpath refid="Game.classpath"/>
         </javac>
     </target>
     <target name="build_game_jar">
@@ -112,7 +113,7 @@
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="compileserver" source="${source}" target="${target}">
             <src path="src"/>
-            <classpath refid="CraftlandLauncherLoader.classpath"/>
+            <classpath refid="Game.classpath"/>
         </javac>
     </target>
 	<target name="jarserver" depends="buildserver">

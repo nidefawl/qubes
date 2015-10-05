@@ -6,6 +6,7 @@ package nidefawl.qubes.meshing;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 
@@ -17,22 +18,47 @@ import static nidefawl.qubes.render.WorldRenderer.*;
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
 public class BlockRenderer {
-
+    final static int[][] faceVDirections = BlockFace.faceVDirections;
+    BlockSurface bs = new BlockSurface();
     private ChunkRenderCache ccache;
     private World            w;
     private BlockFaceAttr    attr;
     int[]                    buffer;
+    int bufferIdx;
+    int faceSize;
+    final private AABBFloat bb = new AABBFloat();
+    
+    int[]       bufferShadow;
+    int         shadowBufferIndex;
+    private int shadowDrawMode;
+    private int shadowFaceSize;
+    public int  numShadowFaces;
+    
+    public void setDefaultBounds() {
+        bb.set(0, 0, 0, 1, 1, 1);
+    }
 
     /**
      * @param w
      * @param buffer 
+     * @param faceSize 
      * @param ccache
      */
-    public void preRender(World w, int[] buffer, ChunkRenderCache ccache, BlockFaceAttr attr) {
+    public void preRender(World w, int[] buffer, int bufferIdx, int faceSize, ChunkRenderCache ccache, BlockFaceAttr attr) {
         this.w = w;
         this.ccache = ccache;
         this.attr = attr;
         this.buffer = buffer;
+        this.faceSize = faceSize;
+        this.bufferIdx = bufferIdx;
+    }
+
+    public void setShadowBuffer(int[] bufferShadow, int shadowBufferIndex, int shadowDrawMode, int shadowFaceSize) {
+        this.bufferShadow = bufferShadow;
+        this.shadowBufferIndex = shadowBufferIndex;
+        this.shadowFaceSize = shadowFaceSize;
+        this.shadowDrawMode = shadowDrawMode;
+        this.numShadowFaces = 0;
     }
 
     public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
@@ -82,7 +108,7 @@ public class BlockRenderer {
         return chunk.getLight(i & 0xF, iy, k & 0xF);
     }
 
-    public int render(int renderPass, int ix, int iy, int iz, int bufferIdx) {
+    public int render(int renderPass, int ix, int iy, int iz) {
         //        ccache
         int i = ix & REGION_SIZE_BLOCKS_MASK;
         int j = iy & SLICE_HEIGHT_BLOCK_MASK;
@@ -109,13 +135,369 @@ public class BlockRenderer {
         if (renderPass == PASS_LOD) {
             switch (renderType) {
                 case 1:
-                    return renderPlant(block, ix, iy, iz, bufferIdx);
+                    return renderPlant(block, ix, iy, iz);
+                case 2:
+                    return renderSlab(block, ix, iy, iz);
+                case 3:
+                    return renderStairs(block, ix, iy, iz);
             }
         }
         return 0;
     }
 
-    int renderPlant(Block block, int ix, int iy, int iz, int bufferIdx) {
+
+    void renderXNeg(Block block, float x, float y, float z) {
+        attr.setNormal(-1, 0, 0);
+        attr.v2.setUV(bb.maxZ, bb.maxY);
+        attr.v3.setUV(bb.maxZ, bb.minY);
+        attr.v0.setUV(bb.minZ, bb.minY);
+        attr.v1.setUV(bb.minZ, bb.maxY);
+        attr.v0.setPos(x + bb.minX, y + bb.minY, z + bb.minZ);
+        attr.v1.setPos(x + bb.minX, y + bb.maxY, z + bb.minZ);
+        attr.v2.setPos(x + bb.minX, y + bb.maxY, z + bb.maxZ);
+        attr.v3.setPos(x + bb.minX, y + bb.minY, z + bb.maxZ);
+    }
+
+    void renderXPos(Block block, float x, float y, float z) {
+        attr.setNormal(1, 0, 0);
+        attr.v0.setUV(bb.maxZ, bb.minY);
+        attr.v1.setUV(bb.maxZ, bb.maxY);
+        attr.v2.setUV(bb.minZ, bb.maxY);
+        attr.v3.setUV(bb.minZ, bb.minY);
+        attr.v0.setPos(x + bb.maxX, y + bb.minY, z + bb.minZ);
+        attr.v1.setPos(x + bb.maxX, y + bb.maxY, z + bb.minZ);
+        attr.v2.setPos(x + bb.maxX, y + bb.maxY, z + bb.maxZ);
+        attr.v3.setPos(x + bb.maxX, y + bb.minY, z + bb.maxZ);
+    }
+    void renderZNeg(Block block, float x, float y, float z) {
+        attr.setNormal(0, 0, -1);
+        attr.v0.setUV(bb.maxX, bb.maxY);
+        attr.v1.setUV(bb.maxX, bb.minY);
+        attr.v2.setUV(bb.minX, bb.minY);
+        attr.v3.setUV(bb.minX, bb.maxY);
+        attr.v0.setPos(x + bb.minX, y + bb.maxY, z + bb.minZ);
+        attr.v1.setPos(x + bb.minX, y + bb.minY, z + bb.minZ);
+        attr.v2.setPos(x + bb.maxX, y + bb.minY, z + bb.minZ);
+        attr.v3.setPos(x + bb.maxX, y + bb.maxY, z + bb.minZ);
+    }
+    void renderZPos(Block block, float x, float y, float z) {
+        attr.setNormal(0, 0, 1);
+        attr.v0.setUV(bb.minX, bb.maxY);
+        attr.v1.setUV(bb.minX, bb.minY);
+        attr.v2.setUV(bb.maxX, bb.minY);
+        attr.v3.setUV(bb.maxX, bb.maxY);
+        attr.v0.setPos(x + bb.minX, y + bb.maxY, z + bb.maxZ);
+        attr.v1.setPos(x + bb.minX, y + bb.minY, z + bb.maxZ);
+        attr.v2.setPos(x + bb.maxX, y + bb.minY, z + bb.maxZ);
+        attr.v3.setPos(x + bb.maxX, y + bb.maxY, z + bb.maxZ);
+    }
+    void renderYPos(Block block, float x, float y, float z) {
+        attr.setNormal(0, 1, 0);// set upward normal
+        //TODO: handle uv rotation
+        attr.v0.setUV(bb.maxX, bb.minZ);
+        attr.v1.setUV(bb.minX, bb.minZ);
+        attr.v2.setUV(bb.minX, bb.maxZ);
+        attr.v3.setUV(bb.maxX, bb.maxZ);
+        
+        attr.v0.setPos(x + bb.maxX, y + bb.maxY, z + bb.minZ);
+        attr.v1.setPos(x + bb.minX, y + bb.maxY, z + bb.minZ);
+        attr.v2.setPos(x + bb.minX, y + bb.maxY, z + bb.maxZ);
+        attr.v3.setPos(x + bb.maxX, y + bb.maxY, z + bb.maxZ);
+    }
+
+
+    void renderYNeg(Block block, float x, float y, float z) {
+        attr.setNormal(0, -1, 0);// set downward normal
+        attr.v0.setUV(bb.maxX, bb.minZ);
+        attr.v1.setUV(bb.minX, bb.minZ);
+        attr.v2.setUV(bb.minX, bb.maxZ);
+        attr.v3.setUV(bb.maxX, bb.maxZ);
+        attr.v0.setPos(x + bb.maxX, y + bb.minY, z + bb.minZ);
+        attr.v1.setPos(x + bb.minX, y + bb.minY, z + bb.minZ);
+        attr.v2.setPos(x + bb.minX, y + bb.minY, z + bb.maxZ);
+        attr.v3.setPos(x + bb.maxX, y + bb.minY, z + bb.maxZ);
+    }
+    
+    int renderFace(Block block, int faceDir, float x, float y, float z) {
+        switch (faceDir) {
+            case 1:
+                renderXNeg(block, x, y, z);
+                break;
+            case 0:
+                renderXPos(block, x, y, z);
+                break;
+            case 3:
+                renderYNeg(block, x, y, z);
+                break;
+            case 2:
+                renderYPos(block, x, y, z);
+                break;
+            case 5:
+                renderZNeg(block, x, y, z);
+                break;
+            case 4:
+                renderZPos(block, x, y, z);
+                break;
+        }
+        attr.put(buffer, bufferIdx);
+        bufferIdx += this.faceSize;
+        if (this.shadowDrawMode == 1) {
+            attr.putShadowTextured(bufferShadow, this.shadowBufferIndex);
+        } else {
+            attr.putBasic(bufferShadow, this.shadowBufferIndex);
+        }
+        this.shadowBufferIndex += this.shadowFaceSize;
+        this.numShadowFaces++;
+        return 1;
+    }
+    private int renderStairs(Block block, int ix, int iy, int iz) {
+        float x = ix;
+        float y = iy;
+        float z = iz;
+        int data = this.w.getData(ix, iy, iz);
+        int rot = data&3;
+        int topBottom = (data&0x4)>>2;
+//      
+        int axis = (rot%2)==0?0:2;
+        int side = rot/2;
+        setBounds(0,0,0,1,1,1);
+        int f = 0;
+        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        setBounds(0,0,0,1,0.5f,1);
+        if (topBottom>0){
+
+            bb.minY+=0.5f;
+            bb.maxY+=0.5f;
+        }
+        side = 1-side;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+//        side = 1-side;
+        axis = 2-axis;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        side = 1-side;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        side = 1-topBottom;
+        axis = 1;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        switch (rot) {
+            case 0:
+                setBounds(0,0,0,0.5f,0.5f,1);
+                break;
+            case 1:
+                setBounds(0,0,0,1,0.5f,0.5f);
+                break;
+            case 2:
+                setBounds(0.5f,0,0,1,0.5f,1);
+                break;
+            default:
+            case 3:
+                setBounds(0,0,0.5f,1,0.5f,1);
+                break;
+        }
+        if (topBottom != 0) {
+            bb.minY+=0.5f;
+            bb.maxY+=0.5f;   
+        }
+        side = topBottom;
+        axis = 1;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        switch ((rot+2)&3) {
+            case 0:
+                setBounds(0,0,0,0.5f,0.5f,1);
+                break;
+            case 1:
+                setBounds(0,0,0,1,0.5f,0.5f);
+                break;
+            case 2:
+                setBounds(0.5f,0,0,1,0.5f,1);
+                break;
+            default:
+            case 3:
+                setBounds(0,0,0.5f,1,0.5f,1);
+                break;
+        }
+        if (topBottom == 0) {
+            bb.minY+=0.5f;
+            bb.maxY+=0.5f;
+
+        }
+        side = topBottom;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        axis = (rot%2)==0?0:2;
+        side = 1-(rot/2);
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        axis = 2-axis;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+        side = 1-side;
+        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            f += renderFace(block, faceDir, ix, iy, iz);    
+        }
+//        setBlockBounds(block, ix, iy, iz);
+//        int f = 0;
+//        f += renderBlock(block, ix, iy, iz, bufferIdx);
+//        bufferIdx += f* this.faceSize;
+//        if ((data&1) == 0) {
+//            this.bb.minY+=0.5f;
+//            this.bb.maxY+=0.5f;
+//        } else {
+//
+//            this.bb.minY-=0.5f;
+//            this.bb.maxY-=0.5f;
+//        }
+//        this.bb.minZ+=0.5;
+//        f += renderBlock(block, ix, iy, iz, bufferIdx);
+        return f;
+    }
+    /**
+     * @param i
+     * @param j
+     * @param k
+     * @param l
+     * @param m
+     */
+    private void setBounds(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
+        this.bb.minX = minX;
+        this.bb.minY = minY;
+        this.bb.minZ = minZ;
+        this.bb.maxX = maxX;
+        this.bb.maxY = maxY;
+        this.bb.maxZ = maxZ;
+    }
+
+    int renderBlock(Block block, int ix, int iy, int iz) {
+        int f = 0;
+        for (int n = 0; n < 6; n++) {
+            BlockSurface blockFace = getSingleBlockSurface(block, ix, iy, iz, n/2, n%2);
+            if (blockFace != null) {
+                setFaceColor(block, n, ix, iy, iz);
+                f += renderFace(block, n, ix, iy, iz);
+            }
+        }
+        return f;
+    }
+    int renderSlab(Block block, int ix, int iy, int iz) {
+        setBlockBounds(block, ix, iy, iz);
+        return renderBlock(block, ix, iy, iz);
+    }
+
+    /**
+     * @param n
+     */
+    private void setFaceColor(Block block, int faceDir, float x, float y, float z) {
+        float m = 1F;
+        float alpha = block.getAlpha();
+        int c = block.getColorFromSide(faceDir);
+        float b = (c & 0xFF) / 255F;
+        c >>= 8;
+        float g = (c & 0xFF) / 255F;
+        c >>= 8;
+        float r = (c & 0xFF) / 255F;
+        int tex = block.getTextureFromSide(faceDir);
+        attr.setTex(tex);
+        attr.setFaceDir(faceDir);
+        attr.setReverse((this.bs.face&1)!=0);
+        attr.setAO(bs.maskedAO);
+        attr.setLight(bs.maskedLightSky, bs.maskedLightBlock);
+        attr.setType(bs.type);
+        for (int v = 0; v < 4; v++) {
+            attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
+            int idx = v;
+            if (faceDir/2>0) {
+                idx = (idx + 3) % 4;
+            }
+            attr.v[v].setFaceVertDir(faceVDirections[faceDir][idx]);
+        }
+        
+    }
+
+    /**
+     * @param block
+     * @param ix
+     * @param iy
+     * @param iz
+     */
+    private void setBlockBounds(Block block, int ix, int iy, int iz) {
+        AABBFloat f = block.getRenderBlockBounds(w, ix, iy, iz, this.bb);
+        if (f == null) {
+            setDefaultBounds();
+        }
+    }
+    
+    private BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side) {
+        int offx = axis == 0 ? 1-side*2 : 0;
+        int offy = axis == 1 ? 1-side*2 : 0;
+        int offz = axis == 2 ? 1-side*2 : 0;
+        int neighbour = this.w.getType(ix+offx, iy+offy, iz+offz);
+        Block b = Block.get(neighbour);
+        if (b != null && !b.isFaceVisible(this.w, ix+offx, iy+offy, iz+offz, axis, side, block, bb)) {
+            return null;
+        }
+        int data = this.w.getData(ix, iy, iz); //TODO: this is queried multiple times
+        bs.x = ix & REGION_SIZE_BLOCKS_MASK;
+        bs.y = iy;
+        bs.z = iz & REGION_SIZE_BLOCKS_MASK;
+        bs.axis = axis;
+        bs.face = side;
+        bs.type = block.id;
+        bs.data = data;
+        bs.transparent = block.isTransparent();
+        bs.pass = block.getRenderPass();
+        bs.extraFace = false;
+        bs.calcLight = true;
+        bs.isLeaves = false;
+        bs.calcAO(this.ccache);
+        return bs;
+    }
+
+    int renderPlant(Block block, int ix, int iy, int iz) {
         int brigthness = getLight(ix, iy, iz);
 
         float m = 1F;
@@ -196,7 +578,7 @@ public class BlockRenderer {
         }
         
         attr.put(buffer, bufferIdx);
-        bufferIdx += BlockFaceAttr.BLOCK_FACE_INT_SIZE;
+        bufferIdx += this.faceSize;
 //        return 1;
         
         attr.setReverse(true);
@@ -209,7 +591,7 @@ public class BlockRenderer {
         
         
         attr.put(buffer, bufferIdx);
-        bufferIdx += BlockFaceAttr.BLOCK_FACE_INT_SIZE;
+        bufferIdx += this.faceSize;
 
         attr.v0.setUV(sideOffset, 0);
         attr.v0.setPos(x + 1 - sideOffset, y, z + sideOffset);
@@ -233,7 +615,7 @@ public class BlockRenderer {
         
         
         attr.put(buffer, bufferIdx);
-        bufferIdx += BlockFaceAttr.BLOCK_FACE_INT_SIZE;
+        bufferIdx += this.faceSize;
         attr.setReverse(true);
         {
             float nx=-nside;
@@ -244,7 +626,7 @@ public class BlockRenderer {
 
         
         attr.put(buffer, bufferIdx);
-        bufferIdx += BlockFaceAttr.BLOCK_FACE_INT_SIZE;
+        bufferIdx += this.faceSize;
         return 4;
     }
 }

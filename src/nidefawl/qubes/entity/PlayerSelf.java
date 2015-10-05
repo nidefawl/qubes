@@ -149,7 +149,7 @@ public class PlayerSelf extends Entity {
         if (this.fly) {
             flags |= 2;
         }
-        this.clientHandler.sendPacket(new PacketCMovement(this.pos, flags));
+        this.clientHandler.sendPacket(new PacketCMovement(this.pos, this.yaw, this.pitch, flags));
     }
 
     public float getGravity() {

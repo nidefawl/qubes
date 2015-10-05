@@ -1,5 +1,6 @@
 package nidefawl.qubes.network.server;
 
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.logging.ErrorHandler;
@@ -8,6 +9,8 @@ import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.server.PlayerManager;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.world.BlockPlacer;
+import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
 public class ServerHandlerPlay extends ServerHandler {
@@ -53,6 +56,7 @@ public class ServerHandlerPlay extends ServerHandler {
         }
         sendPacket(new PacketSSpawnInWorld(world.settings, this.player.pos, flags));
         world.addPlayer(player);
+        player.sendMessage("You are now in world "+world.getName());
     }
 
     @Override
@@ -88,6 +92,8 @@ public class ServerHandlerPlay extends ServerHandler {
         boolean fly = (packetMovement.flags & 0x2) != 0;
         this.player.hitGround = hitground;
         this.player.flying = fly;
+        this.player.yaw = packetMovement.yaw;
+        this.player.pitch = packetMovement.pitch;
     }
 
     public void sendPacket(Packet packet) {
@@ -95,10 +101,8 @@ public class ServerHandlerPlay extends ServerHandler {
     }
 
     public void handleSetBlock(PacketCSetBlock p) {
-        if (p.y < 0 || p.y >= this.player.world.worldHeight)
-            return;
-        this.player.world.setType(p.x, p.y, p.z, p.type, Flags.MARK);
-
+        player.blockPlace.tryPlace(p.pos, p.fpos, p.type, p.data, p.face);
+        
     }
 
     public void handleSetBlocks(PacketCSetBlocks p1) {
@@ -172,6 +176,7 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setData(blockX, blockY, blockZ, 2, Flags.MARK);
                     }
                 }
 

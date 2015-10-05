@@ -288,16 +288,26 @@ public class BlockFace {
         if (this.bs.axis==0) {
             idx = (idx+1)&0x3;
         }
+        if (this.bs.axis==1) {
+            idx = (idx+2)&0x3;
+        }
         int y = idx>>1;
         int x = (idx&1)^y;
+        if (this.bs.axis==1) {
+            y = 1 - y;
+            x = 1 - x;
+        }
+        else if (this.bs.face==1) {
+            x = 1 - x;
+        }
         switch (this.bs.axis) {
             case 0:
                 u = this.dv[2]*x;
                 v = this.du[1]*y;
                 break;
             case 1:
-                u = this.du[2]*x;
-                v = this.dv[0]*y;
+                v = this.du[2]*x;
+                u = this.dv[0]*y;
                 break;
             case 2:
                 u = this.du[0]*x;

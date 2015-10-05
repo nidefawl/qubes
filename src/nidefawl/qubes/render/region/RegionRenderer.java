@@ -322,6 +322,7 @@ public class RegionRenderer {
 //        PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE
         int drawMode = this.drawMode < 0 ? (BlockFaceAttr.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         this.numRegions=0;
+        int LOD_DISTANCE = 6; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
         for (int dist = 0; dist < 2; dist++)  {
             for (int i = 0; i < size; i++) {
@@ -332,7 +333,7 @@ public class RegionRenderer {
                 if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
                     continue;
                 }
-                if ((dist == 0) != (r.distance < 8)) continue;
+                if ((dist == 0) != (r.distance < LOD_DISTANCE)) continue;
                 if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
                         && r.distance > MIN_DIST_OCCL 
                         && r.frustumStates[0] >= MIN_STATE_OCCL) {

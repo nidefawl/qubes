@@ -11,12 +11,14 @@ public class Chunk {
     public static final int SIZE_BITS       = 4;
     public static final int SIZE            = 1 << SIZE_BITS;
     public static final int MASK            = SIZE - 1;
+    public static final int DATA_BITS = (1<<8)-1;
     public World            world;
     public final int        x;
     public final int        z;
     public final int        worldHeightBits;
     private final int       height;
-    public final short[]    blocks;
+    public final short[]    blocks; //TODO: split up in height slices to reduce memory usage of air space
+    public final ChunkDataSliced2 blockData;
     public final byte[]     blockLight;
     public final int[]      heightMap       = new int[SIZE * SIZE];
     public int              facesRendered;
@@ -37,7 +39,7 @@ public class Chunk {
         this.height = 1 << this.worldHeightBits;
         this.x = x;
         this.z = z;
-        
+        this.blockData = new ChunkDataSliced2();
         this.world = world;
     }
 
@@ -64,8 +66,32 @@ public class Chunk {
         return this.z << SIZE_BITS;
     }
 
+    public short[] g() {
+        return this.blocks;
+    }
     public int getTypeId(int i, int j, int k) {
         return this.blocks[j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] & Block.BLOCK_MASK;
+    }
+    public int getData(int i, int j, int k) {
+        return this.blockData.get(i, j, k)&DATA_BITS;
+    }
+
+    /**
+     * @param x2
+     * @param y
+     * @param z2
+     * @return
+     */
+    public short getFullData(int i, int j, int k) {
+        return this.blockData.get(i, j, k);
+    }
+
+    public boolean setFullData(int i, int j, int k, short data) {
+        return this.blockData.set(i, j, k, data);
+    }
+    
+    public boolean setData(int i, int j, int k, int data) {
+        return this.blockData.setLower(i, j, k, data);
     }
 
     public int getTopBlock(int i, int k) {
@@ -78,6 +104,41 @@ public class Chunk {
         }
         return -1;
     }
+    /**
+     * @param i
+     * @param y
+     * @param j
+     * @param type
+     * @param data
+     * @return
+     */
+    public boolean setTypeData(int i, int j, int k, int type, int data) {
+        int xz = k << (SIZE_BITS) | i;
+        int idx = j << (SIZE_BITS * 2) | xz;
+        int cur = this.blocks[idx] & Block.BLOCK_MASK;
+        int dataV = this.blockData.get(i, j, k) & DATA_BITS;
+        if (cur == type && dataV == data) {
+            return false;
+        }
+        boolean b = false;
+        if (dataV != data) {
+            this.blockData.setLower(i, j, k, data);
+            b = true;
+        }
+        if (cur != type) {
+            this.blocks[idx] = (short) type;
+            int curHeight = heightMap[xz];
+            if (j >= curHeight - 1) {
+                updateHeightMap(i, k);
+            }
+            b = true;
+        }
+        if (b) {
+            flagModified();
+            return true;
+        }
+        return false;
+    }
 
     public boolean setType(int i, int j, int k, int type) {
         int xz = k << (SIZE_BITS) | i;
@@ -85,6 +146,7 @@ public class Chunk {
         int cur = this.blocks[idx] & Block.BLOCK_MASK;
         if (cur != type) {
             this.blocks[idx] = (short) type;
+            this.blockData.setLower(i, j, k, 0);
             int curHeight = heightMap[xz];
             if (j >= curHeight-1) {
                 updateHeightMap(i, k);
@@ -329,4 +391,5 @@ public class Chunk {
     public String toString() {
         return "Chunk["+this.world.getName()+","+x+","+z+"]";
     }
+
 }

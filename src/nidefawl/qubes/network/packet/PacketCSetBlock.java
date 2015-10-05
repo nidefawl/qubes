@@ -4,40 +4,52 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.Handler;
+import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.World;
 
 public class PacketCSetBlock extends AbstractPacketWorldRef {
     public PacketCSetBlock() {
     }
-
-    public int x, y, z;
+    public final BlockPos pos = new BlockPos();
+    public final Vector3f fpos = new Vector3f();
+    public int face;
     public int type;
+    public int data;
 
-    public PacketCSetBlock(int id, int x, int y, int z, int type) {
+    public PacketCSetBlock(int id, BlockPos blockPos, int face, int type, int data) {
+        this(id, blockPos, Vector3f.ZERO, face, type, data);
+    }
+    public PacketCSetBlock(int id, BlockPos blockPos, Vector3f pos, int face, int type, int data) {
         super(id);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.pos.set(blockPos);
+        this.fpos.set(pos);
+        this.face = face;
         this.type = type;
+        this.data = data;
     }
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
         super.readPacket(stream);
-        x = stream.readInt();
-        y = stream.readInt();
-        z = stream.readInt();
+        this.pos.read(stream);
+        this.fpos.read(stream);
+        face = stream.readInt();
         type = stream.readInt();
+        data = stream.readInt();
 
     }
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
         super.writePacket(stream);
-        stream.writeInt(x);
-        stream.writeInt(y);
-        stream.writeInt(z);
+        this.pos.write(stream);
+        this.fpos.write(stream);
+        stream.writeInt(face);
         stream.writeInt(type);
+        stream.writeInt(data);
     }
 
     @Override

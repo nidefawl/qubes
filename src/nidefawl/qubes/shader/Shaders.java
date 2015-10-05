@@ -34,6 +34,7 @@ public class Shaders {
     public static Shader wireframe;
     public static Shader textured;
     public static Shader colored;
+    public static Shader colored3D;
     public static Shader renderUINT;
 
 
@@ -45,6 +46,7 @@ public class Shaders {
             Shader new_normals = assetMgr.loadShader("shaders/visnormals");
             Shader new_textured = assetMgr.loadShader("shaders/textured");
             Shader new_colored = assetMgr.loadShader("shaders/colored");
+            Shader new_colored3D = assetMgr.loadShader("shaders/colored_3D");
             Shader new_wireframe = assetMgr.loadShader("shaders/wireframe");
             Shader new_uint = assetMgr.loadShader("shaders/render_uint_texture");
             if (Shaders.depthBufShader != null)
@@ -55,6 +57,8 @@ public class Shaders {
                 Shaders.textured.release();
             if (Shaders.colored != null)
                 Shaders.colored.release();
+            if (Shaders.colored3D != null)
+                Shaders.colored3D.release();
             if (Shaders.wireframe != null)
                 Shaders.wireframe.release();
             if (Shaders.renderUINT != null)
@@ -64,9 +68,12 @@ public class Shaders {
             Shaders.normals = new_normals;
             Shaders.textured = new_textured;
             Shaders.colored = new_colored;
+            Shaders.colored3D = new_colored3D;
             Shaders.renderUINT = new_uint;
             Shaders.colored.enable();
             Shaders.colored.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.colored3D.enable();
+            Shaders.colored3D.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.wireframe.enable();
             Shaders.wireframe.setProgramUniform3f("offset", Vector3f.ZERO);
             Shader.disable();

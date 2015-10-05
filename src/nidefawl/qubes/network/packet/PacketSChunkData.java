@@ -12,7 +12,6 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
     public byte[] blocks;
     public int flags;
     public int[][] coords;
-    public int chunkLen;
     public PacketSChunkData() {
     }
     public PacketSChunkData(int id) {
@@ -28,7 +27,6 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
         for (int i = 0; i < len; i++) {
             this.coords[i] = new int[] { stream.readInt(), stream.readInt() };
         }
-        chunkLen = stream.readInt();
         int len = stream.readInt();
         this.blocks = new byte[len];
         stream.readFully(this.blocks);
@@ -43,7 +41,6 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
             stream.writeInt(this.coords[i][0]);
             stream.writeInt(this.coords[i][1]);
         }
-        stream.writeInt(this.chunkLen);
         stream.writeInt(this.blocks.length);
         stream.write(this.blocks);
     }

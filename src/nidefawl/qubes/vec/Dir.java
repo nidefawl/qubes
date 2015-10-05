@@ -9,15 +9,15 @@ public class Dir {
     public final static int DIR_NEG_Z = 5;
 
     public static final int getDirX(int s) {
-        return s == 0 ? -1 : s == 1 ? 1 : 0;
+        return s == 1 ? -1 : s == 0 ? 1 : 0;
     }
 
     public static final int getDirZ(int s) {
-        return s == 2 ? -1 : s == 3 ? 1 : 0;
+        return s == 5 ? -1 : s == 4 ? 1 : 0;
     }
 
     public static final int getDirY(int s) {
-        return s == 4 ? -1 : s == 5 ? 1 : 0;
+        return s == 3 ? -1 : s == 2 ? 1 : 0;
     }
 
     /**
@@ -26,5 +26,44 @@ public class Dir {
      */
     public static boolean isTopBottom(int faceDir) {
         return faceDir == DIR_POS_Y || faceDir == DIR_NEG_Y;
+    }
+
+    /**
+     * @param x
+     * @param y
+     * @param z
+     * @return
+     */
+    public static int toInt(int x, int y, int z) {
+        if (x < 0)
+            return DIR_NEG_X;
+        if (x > 0)
+            return DIR_POS_X;
+        if (y < 0)
+            return DIR_NEG_Y;
+        if (y > 0)
+            return DIR_POS_Y;
+        if (z < 0)
+            return DIR_NEG_Z;
+        if (z > 0)
+            return DIR_POS_Z;
+        return 0;
+    }
+    public static String toFaceName(int i) {
+        switch (i) {
+            case DIR_POS_X:
+                return "X Positive";
+            case DIR_NEG_X:
+                return "X Negative";
+            case DIR_POS_Y:
+                return "Y Positive";
+            case DIR_NEG_Y:
+                return "Y Negative";
+            case DIR_POS_Z:
+                return "Z Positive";
+            case DIR_NEG_Z:
+                return "Z Negative";
+        }
+        return "No direction";
     }
 }

@@ -9,10 +9,15 @@ import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldServer;
+import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.populator.ChunkPopulator;
+import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
-public class TerrainGenerator implements ITerrainGen {
+public class TerrainGeneratorOther implements ITerrainGen {
+    final static String GENERATOR_NAME = "terrain_other";
 
-    private World world;
+    private WorldServer world;
     private long  seed;
     private final TerrainNoise noise3;
     private final TerrainNoise noise;
@@ -24,7 +29,7 @@ public class TerrainGenerator implements ITerrainGen {
     private final RiverNoise2D r2D2;
     private TerrainNoiseCustom1 noise5;
 
-    public TerrainGenerator(World world, long seed) {
+    public TerrainGeneratorOther(WorldServer world, long seed, WorldSettings settings) {
         this.world = world;
         this.seed = seed;
         Random rand = new Random(this.seed);
@@ -301,5 +306,10 @@ public class TerrainGenerator implements ITerrainGen {
         x = x-x2;
         z = z-z2;
         return x*x+z+z;
+    }
+
+    @Override
+    public Class<? extends IChunkPopulator> getPopulator() {
+        return ChunkPopulator.class;
     }
 }

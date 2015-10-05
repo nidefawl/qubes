@@ -25,4 +25,8 @@ public class BlockWater extends Block {
     public boolean isOccluding() {
         return false;
     }
+
+    public boolean isReplaceable() {
+        return true;
+    }
 }

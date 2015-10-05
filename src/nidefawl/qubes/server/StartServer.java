@@ -1,4 +1,4 @@
-package nidefawl.qubes;
+package nidefawl.qubes.server;
 
 import java.io.File;
 
@@ -6,7 +6,6 @@ import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.noise.TerrainNoiseScale;
-import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;
 import sun.misc.Signal;
@@ -31,6 +30,8 @@ public class StartServer {
 		        System.err.println("Native library for OpenSimplexNoise not found");
 		    }
 			WorkingEnv.init(Side.SERVER, ".");
+            PluginLoader.loadPlugins(new File(WorkingEnv.getWorkingDir(), "plugins"));
+            PluginLoader.registerModules();
 			final GameServer instance = new GameServer();
 	        Runtime.getRuntime().addShutdownHook(new Thread(
 	        	new Runnable() {

@@ -4,13 +4,19 @@ import java.util.Random;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldServer;
+import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.populator.ChunkPopulator;
+import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
+import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
-public class TestTerrain implements ITerrainGen {
+public class TerrainGenBlockTest implements ITerrainGen {
+    final static String GENERATOR_NAME = "block_test";
 
-    private World world;
+    private WorldServer world;
     private long  seed;
 
-    public TestTerrain(World world, long seed) {
+    public TerrainGenBlockTest(WorldServer world, long seed, WorldSettings settings) {
         this.world = world;
         this.seed = seed;
     }
@@ -50,6 +56,11 @@ public class TestTerrain implements ITerrainGen {
                 }
             }
         }
+    }
+
+    @Override
+    public Class<? extends IChunkPopulator> getPopulator() {
+        return EmptyChunkPopulator.class;
     }
 
 }

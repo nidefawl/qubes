@@ -8,10 +8,12 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.input.Selection.SelectionMode;
 import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
@@ -60,21 +62,26 @@ public class GuiOverlayStats extends Gui {
             this.stats5 = "";
             BlockPos p = Game.instance.selection.pos[0];
             BlockPos p2 = Game.instance.selection.pos[1];
+            if (Game.instance.selection.getMode() == SelectionMode.PLAY) {
+                p = Game.instance.selection.mouseOver;
+                p2 = null;
+            }
             if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
             }
             else if (p != null) {
                 int lvl = world.getLight(p.x, p.y, p.z);
                 int lvl1 = world.getLight(p.x, p.y+1, p.z);
+                int bData = world.getData(p.x, p.y, p.z);
                 int block1 = lvl&0xF;
                 int sky1 = (lvl>>4)&0xF;
                 int block2 = lvl1&0xF;
                 int sky2 = (lvl1>>4)&0xF;
                 int h = world.getHeight(p.x, p.z);
-                this.stats5 = String.format("%d %d %d (Region %d %d)\nLight: %d/%d (+1: %d/%d)\nHeight: %d", p.x, p.y, p.z, 
+                this.stats5 = String.format("%d %d %d (Region %d %d)\nLight: %d/%d (+1: %d/%d) - Data: %d\nHeight: %d", p.x, p.y, p.z, 
                         p.x>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), 
                         p.z>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), 
-                        sky1, block1, sky2, block2,
+                        sky1, block1, sky2, block2, bData,
                         h);
             }
         }
@@ -148,5 +155,19 @@ public class GuiOverlayStats extends Gui {
     }
     @Override
     public void initGui(boolean first) {
+    }
+
+
+    /**
+     * @param is
+     */
+    public void blockClicked(RayTraceIntersection is) {
+        String msg = "";
+        msg += String.format("Coordinate:  %d %d %d\n", is.blockPos.x, is.blockPos.y, is.blockPos.z);
+        msg += String.format("Block:           %d\n", is.blockId);
+        //            msg += String.format("Biome:          %s\n", BiomeGenBase.byId[i].biomeName);
+        msg += String.format("Chunk:          %d/%d", is.blockPos.x >> 4, is.blockPos.z >> 4);
+
+        setMessage(msg);
     }
 }

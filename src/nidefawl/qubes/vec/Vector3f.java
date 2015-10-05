@@ -1,8 +1,13 @@
 package nidefawl.qubes.vec;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.nio.FloatBuffer;
 
-public class Vector3f {
+import nidefawl.qubes.network.StreamIO;
+
+public class Vector3f implements StreamIO {
     final public static Vector3f ZERO = new Vector3f();
     public float x, y, z;
 
@@ -380,5 +385,24 @@ public class Vector3f {
         camY -= this.y;
         camZ -= this.z;
         return camX*camX+camY*camY+camZ*camZ;
+    }
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeFloat(this.x);
+        out.writeFloat(this.y);
+        out.writeFloat(this.z);
+    }
+    @Override
+    public void read(DataInput in) throws IOException {
+        this.x = in.readFloat();
+        this.y = in.readFloat();
+        this.z = in.readFloat();
+    }
+
+    /**
+     * @return
+     */
+    public Vector3f copy() {
+        return new Vector3f(this);
     }
 }

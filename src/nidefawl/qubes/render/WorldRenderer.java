@@ -204,20 +204,20 @@ public class WorldRenderer {
     }
 
     public void renderNormals(World world, float fTime) {
-//        Shaders.normals.enable();
-//        glLineWidth(3.0F);
-//        Engine.checkGLError("glLineWidth");
-////        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
-//        Engine.regionRenderer.setDrawMode(-1);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.setDrawMode(-1);
-////        glLineWidth(2.0F);
-//
-////        Shaders.colored.enable();
-////        Engine.regionRenderer.renderDebug(world, fTime);
-//        Shader.disable();
+        Shaders.normals.enable();
+        glLineWidth(3.0F);
+        Engine.checkGLError("glLineWidth");
+//        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
+        Engine.regionRenderer.setDrawMode(-1);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.regionRenderer.setDrawMode(-1);
+//        glLineWidth(2.0F);
+
+//        Shaders.colored.enable();
+//        Engine.regionRenderer.renderDebug(world, fTime);
+        Shader.disable();
         
     }
 

@@ -21,7 +21,8 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     public UUID uuid;
     private final File dir;
     private int id;
-    private int generator;
+    String generatorName;
+    String generatorSettings;
     private String worldName;
 
     @Override
@@ -67,7 +68,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     public void load() {
         String strseed = getString("seed", "0");
         this.seed = StringUtil.parseLong(strseed, 0, 16);
-        this.generator = getInt("generator", this.generator);
+        this.generatorName = getString("terraingen", this.generatorName);
         this.time = getLong("time", this.time);
         this.dayLen = getLong("dayLength", this.dayLen);
         this.isFixedTime = getBoolean("isFixedTime", this.isFixedTime);
@@ -82,7 +83,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     @Override
     public void save() {
         setString("seed", Long.toHexString(this.seed));
-        setInt("generator", this.generator);
+        setString("terraingen", this.generatorName);
         setLong("time", this.time);
         setLong("dayLength", this.dayLen);
         setBoolean("isFixedTime", this.isFixedTime);
@@ -113,22 +114,6 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
         this.id = id;
     }
 
-    /**
-     * @return
-     */
-    public ITerrainGen getGenerator(WorldServer w) {
-        switch (this.generator) {
-            case 0:
-                return new TestTerrain2(w, this.getSeed());
-            case 1:
-                return new TerrainGenerator2(w, this.getSeed());
-            case 2:
-                return new TestTerrain(w, this.getSeed());
-            case 3:
-                return new TerrainGenerator(w, this.getSeed());
-        }
-        return new TestTerrain2(w, this.getSeed());
-    }
 
     /* (non-Javadoc)
      * @see nidefawl.qubes.world.IWorldSettings#getName()
@@ -136,19 +121,6 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     @Override
     public String getName() {
         return this.worldName;
-    }
-
-    /**
-     * @param worldServer
-     * @return
-     */
-    public IChunkPopulator getPopulator(WorldServer worldServer) {
-        switch (this.generator) {
-            case 0:
-            case 2:
-                return new EmptyChunkPopulator();
-        }
-        return new ChunkPopulator();
     }
 
     /**

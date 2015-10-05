@@ -10,6 +10,7 @@ import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -114,9 +115,23 @@ public abstract class World implements IBlockWorld {
 //        }
     }
 
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.world.IBlockWorld#getType(int, int, int)
+    /**
+     * Wrapper method for getType(int, int, int)
+     * @param pos
+     * @return block type id
      */
+    public int getType(BlockPos pos) {
+        return this.getType(pos.x, pos.y, pos.z);
+    }
+
+    /**
+     * Wrapper method for getData(int, int, int)
+     * @param pos
+     * @return block data
+     */
+    public int getData(BlockPos pos) {
+        return this.getData(pos.x, pos.y, pos.z);
+    }
     @Override
     public int getType(int x, int y, int z) {
         if (y >= this.worldHeight)
@@ -128,6 +143,40 @@ public abstract class World implements IBlockWorld {
             return 0;
         }
         return c.getTypeId(x & 0xF, y, z & 0xF);
+    }
+
+
+    public int getData(int x, int y, int z) {
+        if (y >= this.worldHeight)
+            return 0;
+        if (y < 0)
+            return 0;
+        Chunk c = getChunk(x >> 4, z >> 4);
+        if (c == null) {
+            return 0;
+        }
+        return c.getData(x & 0xF, y, z & 0xF);
+    }
+    /* (non-Javadoc)
+     * @see nidefawl.qubes.world.IBlockWorld#setType(int, int, int, int, int)
+     */
+    @Override
+    public boolean setData(int x, int y, int z, int type, int render) {
+        if (y >= this.worldHeight)
+            return false;
+        if (y < 0)
+            return false;
+        Chunk c = getChunk(x >> 4, z >> 4);
+        if (c == null) {
+            return false;
+        }
+        if (c.setData(x & 0xF, y, z & 0xF, type)) {
+            updateLight(x, y, z);
+            if ((render & Flags.MARK) != 0) {
+                flagBlock(x, y, z);
+            }   
+        }
+        return true;
     }
     
     /* (non-Javadoc)
@@ -144,6 +193,24 @@ public abstract class World implements IBlockWorld {
             return false;
         }
         if (c.setType(x & 0xF, y, z & 0xF, type)) {
+            updateLight(x, y, z);
+            if ((render & Flags.MARK) != 0) {
+                flagBlock(x, y, z);
+            }   
+        }
+        return true;
+    }
+    @Override
+    public boolean setTypeData(int x, int y, int z, int type, int data, int render) {
+        if (y >= this.worldHeight)
+            return false;
+        if (y < 0)
+            return false;
+        Chunk c = getChunk(x >> 4, z >> 4);
+        if (c == null) {
+            return false;
+        }
+        if (c.setTypeData(x & 0xF, y, z & 0xF, type, data)) {
             updateLight(x, y, z);
             if ((render & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
@@ -330,5 +397,15 @@ public abstract class World implements IBlockWorld {
      */
     public IWorldSettings getSettings() {
         return this.settings;
+    }
+
+
+    @Override
+    public boolean isNormalBlock(int ix, int iy, int iz, int offsetId) {
+        if (offsetId < 0) {
+            offsetId = this.getType(ix, iy, iz);
+        }
+        Block block = Block.block[offsetId];
+        return block.isNormalBlock(this, ix, iy, iz);
     }
 }

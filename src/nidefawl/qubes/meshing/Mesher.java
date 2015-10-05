@@ -11,6 +11,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
+import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.World;
 
 public class Mesher {
@@ -18,6 +19,7 @@ public class Mesher {
     private final int[]    dims;
     private BlockSurface[] mask2;
     private final static BlockSurfaceAir air = new BlockSurfaceAir();
+    private final static BlockSurfaceHidden hidden = new BlockSurfaceHidden();
     
  // THIS WILL NOT WORK WITH REGIONS > 32x32x32 (needs to be bigger data type + bigger array size)
     private final static short[] renderTypeBlocks = new short[1<<16]; 
@@ -55,10 +57,15 @@ public class Mesher {
 
     BlockSurface bs1 = null;
     BlockSurface bs2 = null;
+    final private AABBFloat fullBB = new AABBFloat(0, 0, 0, 1, 1, 1);
     private void setMask2(int n, int[] x, int[] dir, int axis) {
         // first handle everything inside of region
         if (bs1 != null && bs2 != null) {
             if (bs1 == air && bs2 == air) {
+                mask2[n] = null;
+                return;
+            }
+            if (bs1 == hidden && bs2 == hidden) {
                 mask2[n] = null;
                 return;
             }
@@ -79,6 +86,19 @@ public class Mesher {
                     mask2[n] = null;
                 } else
                 mask2[n] = bs2;
+                return;
+            }
+            if ((bs1.renderTypeTransition || bs2.renderTypeTransition)) {
+                BlockSurface from = bs1.renderTypeTransition ? bs2 : bs1;
+                BlockSurface to = from == bs1 ? bs2 : bs1;
+                int side = from == bs1 ? 0 : 1;
+                Block b = Block.get(to.type);
+                Block bfrom = Block.get(from.type);
+                if (b != null && !b.isFaceVisible(this.cache, to.x, to.y, to.z, axis, side, bfrom, fullBB)) {
+                    mask2[n] = null;
+                    return;
+                }
+                mask2[n] = from;
                 return;
             }
 //            if (bs1.pass == bs2.pass && ((!bs1.transparent && !bs2.transparent)  || bs1.pass > 0)) {
@@ -148,7 +168,7 @@ public class Mesher {
             }
             
             System.err.println("transition from non-air to non-air, non of both have pass == 0, UNDEFINED STATE!");
-            System.err.println(bs1.type+"/"+bs2.type+"/"+bs1.transparent+"/"+bs2.transparent+"/"+bs1.pass+"/"+bs2.pass);
+            System.err.println(this.strategy+" - "+bs1.type+"/"+bs2.type+"/"+bs1.transparent+"/"+bs2.transparent+"/"+bs1.pass+"/"+bs2.pass);
             
             return;
         }
@@ -240,7 +260,7 @@ public class Mesher {
                 for (int j = 0; j < dims[v]; ++j) {
                     for (int i = 0; i < dims[u];) {
                         BlockSurface c = mask2[n];
-                        if (c != null && c != air && (!c.extraFace)) {
+                        if (c != null && c != air && c != hidden && (!c.extraFace) && (!c.renderTypeTransition)) {
                             // Compute width
                             int w = 1;
                             while (n + w < masklen && (mask2[n + w] != null && mask2[n + w].mergeWith(ccache, c)) && i + w < dims[u]) {
@@ -308,6 +328,7 @@ public class Mesher {
             Block block = Block.block[type];
             int pass = block.getRenderPass();
             int renderType = block.getRenderType();
+            boolean renderTypeTransition = false;
             if (renderType != 0) {
                 if (center && strategy == 0 && axis == 0) {
                     if ((k&REGION_SIZE_BLOCKS_MASK) != k)
@@ -317,7 +338,12 @@ public class Mesher {
                     renderTypeBlocks[this.nextBlockIDX++] = 
                             (short) (j<<(REGION_SIZE_BLOCK_SIZE_BITS*2)|i<<(REGION_SIZE_BLOCK_SIZE_BITS)|k);
                 }
-                return air;
+                if (block.isTransparent()) {
+                    return air;
+                }
+//                if (strategy == 1)
+//                    return hidden;
+                renderTypeTransition = true;
             }
             if (strategy == 1 && pass > 0) {
                 return air;
@@ -332,8 +358,9 @@ public class Mesher {
             surface.face = l;
             surface.axis = axis;
             surface.pass = pass;
+            surface.renderTypeTransition = renderTypeTransition;
             if (strategy == 1) {
-                if (!surface.transparent) {
+                if (!surface.transparent && !renderTypeTransition) {
                     surface.type = 1;
                 }
                 surface.pass = 2;

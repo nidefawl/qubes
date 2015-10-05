@@ -13,20 +13,21 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
     public PacketSSetBlocks() {
     }
 
-    public PacketSSetBlocks(int id, int x, int z, short[] pos, short[] blocks, byte[] lights) {
+    public PacketSSetBlocks(int id, int x, int z, short[] pos, short[] blocks, byte[] lights, short[] data) {
         super(id);
         this.chunkX = x;
         this.chunkZ = z;
         this.positions = pos;
         this.blocks = blocks;
         this.lights = lights;
-
+        this.data = data;
     }
 
     public int     chunkX, chunkZ;
     public short[] positions;
     public short[] blocks;
     public byte[]  lights;
+    public short[]  data;
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
@@ -36,10 +37,12 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
         int len = stream.readInt();
         positions = new short[len];
         blocks = new short[len];
+        data = new short[len];
         lights = new byte[len];
         for (int i = 0; i < len; i++) {
             positions[i] = stream.readShort();
             blocks[i] = stream.readShort();
+            data[i] = stream.readShort();
             lights[i] = stream.readByte();
         }
     }
@@ -54,6 +57,7 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
         for (int i = 0; i < len; i++) {
             stream.writeShort(this.positions[i]);
             stream.writeShort(this.blocks[i]);
+            stream.writeShort(this.data[i]);
             stream.writeByte(this.lights[i]);
         }
     }

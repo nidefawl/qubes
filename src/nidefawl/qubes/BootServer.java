@@ -8,12 +8,13 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 
+import nidefawl.qubes.server.StartServer;
+
 public class BootServer {
 
     public static void addURLs(URL[] u) throws IOException {
         URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         Class sysclass = URLClassLoader.class;
-
         try {
             Method method = sysclass.getDeclaredMethod("addURL", URL.class);
             method.setAccessible(true);
@@ -24,7 +25,6 @@ public class BootServer {
             t.printStackTrace();
             throw new IOException("Error, could not add URL to system classloader");
         }
-
     }
 
     public static void main(String[] args) throws Exception {

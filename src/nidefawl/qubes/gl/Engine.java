@@ -156,7 +156,7 @@ public class Engine {
         projection.update();
         projection.update();
         if (initRenderers) {
-            shadowProj.setSplits(new float[] {znear, 20, 80, 620}, fieldOfView, aspectRatio);
+            shadowProj.setSplits(new float[] {znear, 14, 64, 420}, fieldOfView, aspectRatio);
         }
 
 

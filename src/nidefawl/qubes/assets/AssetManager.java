@@ -25,11 +25,8 @@ public class AssetManager {
 
     public void init() {
         folder = WorkingEnv.getAssetFolder();
-        assetPacks.add(new AssetPackClassPath());
 //        if (!WorkingEnv.loadAssetsFromClassPath()) {
 //        }
-        if (folder.exists())
-        assetPacks.add(new AssetPackFolder(folder));
         File f = WorkingEnv.getPacksFolder();
         if (f.isDirectory()) {
             File[] fPackList = f.listFiles(new FilenameFilter() {
@@ -51,6 +48,9 @@ public class AssetManager {
                 }
             }
         }
+        if (folder.exists())
+        assetPacks.add(new AssetPackFolder(folder));
+        assetPacks.add(new AssetPackClassPath());
         Collections.reverse(assetPacks);
         System.out.println("Found "+assetPacks.size()+" asset packs");
     }

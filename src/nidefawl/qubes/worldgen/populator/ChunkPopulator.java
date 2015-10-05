@@ -9,16 +9,24 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.world.WorldServer;
+import nidefawl.qubes.world.WorldSettings;
 
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
 public class ChunkPopulator implements IChunkPopulator {
+    final static String POPULATOR_NAME = "default";
 
+    private final WorldServer world;
     final TreeGen1 tree = new TreeGen1();
+    
+    public ChunkPopulator(WorldServer world, long l, WorldSettings settings) {
+        this.world = world;
+    }
+    
     @Override
-    public void populate(WorldServer world, Chunk c) {
+    public void populate(Chunk c) {
         Random rand = new Random();
         int a = 0;
         for (int i = 0; i < 255; i++) {

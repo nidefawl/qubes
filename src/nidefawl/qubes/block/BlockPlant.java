@@ -49,4 +49,12 @@ public class BlockPlant extends Block {
     public AABB getCollisionBB(World world, int x, int y, int z, AABB aabb) {
         return null;
     }
+
+    public boolean isReplaceable() {
+        return true;
+    }
+    @Override
+    public boolean isFullBB() {
+        return false;
+    }
 }

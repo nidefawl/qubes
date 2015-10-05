@@ -14,7 +14,6 @@ public class CompressChunks implements ICompressTask {
     private Collection<Chunk> chunks;
     private int worldid;
     private int[][] coords;
-    private int chunkLen;
     private ServerHandlerPlay[] handlers;
     private boolean hasLight;
 
@@ -37,7 +36,6 @@ public class CompressChunks implements ICompressTask {
     public int fill(byte[] tmpBuffer) {
         int offset = 0;
         int idx = 0;
-        this.chunkLen = -1;
         this.coords = new int[chunks.size()][];
         for (Chunk c : chunks) {
             this.coords[idx++] = new int[] { c.x, c.z};
@@ -48,10 +46,25 @@ public class CompressChunks implements ICompressTask {
                 byte[] light = c.getBlockLight();
                 System.arraycopy(light, 0, tmpBuffer, offset, light.length);
 //              Arrays.fill(tmpBuffer, offset, offset+light.length, (byte)0xFF);
-              offset += light.length;
+                offset += light.length;
             }
-            if (idx == 1) {
-                this.chunkLen = offset;
+            short[][] heightArrays = c.blockData.getArrays();
+            short slices = 0;
+            for (int i = 0; i < heightArrays.length; i++) {
+                short[] slice = heightArrays[i];
+                if (slice != null) {
+                    slices |= (1<<i);
+                }
+            }
+            tmpBuffer[offset+0] = (byte) (slices&0xFF);
+            tmpBuffer[offset+1] = (byte) ((slices>>8)&0xFF);
+            offset+=2;
+            for (int i = 0; i < heightArrays.length; i++) {
+                short[] slice = heightArrays[i];
+                if (slice != null) {
+                    shortToByteArray(slice, tmpBuffer, offset);
+                    offset += slice.length*2;
+                }
             }
         }
         return offset;
@@ -62,7 +75,6 @@ public class CompressChunks implements ICompressTask {
         PacketSChunkData packet = new PacketSChunkData(this.worldid);
         packet.blocks = compressed;
         packet.len = this.chunks.size();
-        packet.chunkLen = this.chunkLen;
         packet.coords = this.coords;
         packet.flags |= 1;
         if (this.hasLight)

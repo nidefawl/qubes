@@ -4,10 +4,12 @@ import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
 
 import java.util.Arrays;
 
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
@@ -16,7 +18,7 @@ import nidefawl.qubes.world.WorldClient;
  * @author Michael
  *
  */
-public class ChunkRenderCache {
+public class ChunkRenderCache implements IBlockWorld {
     public final static int WIDTH = RegionRenderer.REGION_SIZE;
     public final static int WIDTH_EXTRA = WIDTH+2;
     public final static int WIDTH_BLOCKS = WIDTH_EXTRA*Chunk.SIZE;
@@ -34,7 +36,16 @@ public class ChunkRenderCache {
         Arrays.fill(this.chunks, null);
     }
     /** call with relative coords */
-    public int getTypeId(int i, int j, int k) {
+    public int getData(int i, int j, int k) {
+        if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
+            return 0;
+        }
+        Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
+        return region != null ? region.getData(i&0xF, j, k&0xF) : 0;
+    }
+    
+    /** call with relative coords */
+    public int getType(int i, int j, int k) {
 
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return 0;
@@ -101,5 +112,34 @@ public class ChunkRenderCache {
     public Chunk getSouth() {
         return get(0, WIDTH);
     }
-    
+
+    @Override
+    public boolean setType(int x, int y, int z, int type, int flags) {
+        return false;
+    }
+
+    @Override
+    public int getHeight(int x, int z) {
+        return 0;
+    }
+
+    @Override
+    public boolean setData(int x, int y, int z, int type, int render) {
+        return false;
+    }
+
+    @Override
+    public boolean isNormalBlock(int ix, int iy, int iz, int offsetId) {
+        if (offsetId < 0) {
+            offsetId = this.getType(ix, iy, iz);
+        }
+        Block block = Block.block[offsetId];
+        return block != null && block.isNormalBlock(this, ix, iy, iz);
+    }
+
+    @Override
+    public boolean setTypeData(int x, int y, int z, int type, int data, int render) {
+        return false;
+    }
+
 }

@@ -18,8 +18,10 @@ import nidefawl.qubes.server.commands.ICommandSource;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
@@ -37,6 +39,7 @@ public class Player extends Entity implements ChatUser, ICommandSource {
     public UUID spawnWorld;
     private int chunkLoadDistance;
     private Set<String> joinedChannels = Sets.newConcurrentHashSet();
+    public BlockPlacer blockPlace = new BlockPlacer(this);
      
     public Player() {
         super();
@@ -220,5 +223,20 @@ public class Player extends Entity implements ChatUser, ICommandSource {
             flags |= 1;
         }
         this.sendPacket(new PacketSTeleport(this.pos, this.yaw, this.pitch, flags));
+    }
+
+    /**
+     * @return
+     */
+    public int getLookDir() {
+        float f = (this.yaw%360.0F)/90.0f;
+        int dir = GameMath.floor(f+0.5f)&3;
+        if (dir == 1)
+            return Dir.DIR_POS_Z;
+        if (dir == 2)
+            return Dir.DIR_NEG_X;
+        if (dir == 3)
+            return Dir.DIR_NEG_Z;
+        return Dir.DIR_POS_X;
     }
 }

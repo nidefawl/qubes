@@ -32,6 +32,7 @@ import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
+import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
@@ -42,6 +43,7 @@ import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
@@ -350,7 +352,13 @@ public class Game extends GameBase implements IErrorHandler {
         } else {
             this.selBlock += yoffset > 0 ? -1 : 1;
             if (!Block.isValid(this.selBlock)) {
-                this.selBlock = this.selBlock< 0?16:0;
+                int maxBlock = 0;
+                for (int b = 0; this.selBlock< 0&&b < Block.HIGHEST_BLOCK_ID+1; b++) {
+                    if (Block.block[b] != null) {
+                        maxBlock = b;
+                    }
+                }
+                this.selBlock = this.selBlock< 0?maxBlock:0;
             }
             if (statsCached != null) {
 
@@ -433,16 +441,6 @@ public class Game extends GameBase implements IErrorHandler {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("renderWorld");
             
-            if (Game.DO_TIMING)
-                TimingHelper.endStart("renderBlockHighlight");
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("renderBlockHighlight");
-                selection.renderBlockHighlight(this.world, fTime);
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-            
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("renderBlockHighlight");
             
             if (Game.DO_TIMING)
                 TimingHelper.endStart("unbindCurrentFrameBuffer");
@@ -529,7 +527,7 @@ public class Game extends GameBase implements IErrorHandler {
           glDepthFunc(GL_LEQUAL);
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          boolean pass = Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
+          boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
           if (pass) {
               if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("forwardPass");
 
@@ -582,6 +580,18 @@ public class Game extends GameBase implements IErrorHandler {
                     if (Game.DO_TIMING)
                         TimingHelper.endSec();
               }
+              if (Game.DO_TIMING)
+                  TimingHelper.startSec("renderBlockHighlight");
+              if (GPUProfiler.PROFILING_ENABLED)
+                  GPUProfiler.start("renderBlockHighlight");
+                  selection.renderBlockHighlight(this.world, fTime);
+              if (GPUProfiler.PROFILING_ENABLED)
+                  GPUProfiler.end();
+              
+              if (Game.GL_ERROR_CHECKS)
+                  Engine.checkGLError("renderBlockHighlight");
+              if (Game.DO_TIMING)
+                  TimingHelper.endSec();
               glEnable(GL_CULL_FACE);
               if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
           }
@@ -604,7 +614,21 @@ public class Game extends GameBase implements IErrorHandler {
       if (this.world != null && this.gui == null && this.movement.grabbed()) {
           Shaders.colored.enable();
           if (Game.DO_TIMING) TimingHelper.startSec("crosshair");
+          glDisable(GL_TEXTURE_2D);
           Tess.instance.setColor(-1, 100);
+          Tess.instance.setOffset(displayWidth/2, displayHeight/2, 0);
+          float height = 1;
+          float w = 8;
+          Tess.instance.add(-w, height, 0);
+          Tess.instance.add(w, height, 0);
+          Tess.instance.add(w, -height, 0);
+          Tess.instance.add(-w, -height, 0);
+          Tess.instance.add(-height, w, 0);
+          Tess.instance.add(height, w, 0);
+          Tess.instance.add(height, -w, 0);
+          Tess.instance.add(-height, -w, 0);
+          Tess.instance.draw(GL_QUADS);
+          glEnable(GL_TEXTURE_2D);
           if (Game.DO_TIMING) TimingHelper.endSec();
           Shader.disable();
       }
@@ -695,7 +719,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2222200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -928,5 +952,18 @@ public class Game extends GameBase implements IErrorHandler {
         } catch (InvalidConfigException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @param intersect
+     */
+    public void blockClicked(RayTraceIntersection intersect) {
+        if (this.statsOverlay != null) {
+            this.statsOverlay.blockClicked(intersect);
+        }
+        int faceHit = intersect.face;
+        int blockInUse = this.selBlock;
+        sendPacket(new PacketCSetBlock(world.getId(), intersect.blockPos, intersect.pos, faceHit, blockInUse, 0));
+        
     }
 }

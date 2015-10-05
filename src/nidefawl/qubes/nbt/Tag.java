@@ -368,7 +368,7 @@ public abstract class Tag {
             return (ByteArray) t;
         }
 
-        private Tag get(String string) {
+        public Tag get(String string) {
             return this.data.get(string);
         }
 

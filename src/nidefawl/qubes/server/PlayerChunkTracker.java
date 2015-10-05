@@ -162,7 +162,12 @@ public class PlayerChunkTracker {
         int chunkZ = pos.z >> Chunk.SIZE_BITS;
         int dx = chunkX - lastX;
         int dz = chunkZ - lastZ;
-        if (Math.abs(dx)>2||Math.abs(dz)>2) {
+        int moveDist = 0;
+        if (dist > 6)
+            moveDist++;
+        if (dist > 12)
+            moveDist++;
+        if (Math.abs(dx)>moveDist||Math.abs(dz)>moveDist) {
             for (int x = -dist; x <= dist; x++) {
                 for (int z = -dist; z <= dist; z++) {
                     int rX = x + lastX;
@@ -332,6 +337,7 @@ public class PlayerChunkTracker {
                         }
                         short[] pos = new short[blocksToSend.size()];
                         short[] blocks = new short[pos.length];
+                        short[] data = new short[pos.length];
                         byte[] lights = new byte[pos.length];
                         for (int i = 0; i < pos.length; i++) {
                             short s = pos[i] = blocksToSend.get(i);
@@ -340,8 +346,9 @@ public class PlayerChunkTracker {
                             int z = TripletShortHash.getZ(s);
                             blocks[i] = (short) c.getTypeId(x, y, z);
                             lights[i] = (byte) c.getLight(x, y, z);
+                            data[i] = (short) c.getFullData(x, y, z);
                         }
-                        PacketSSetBlocks packet = new PacketSSetBlocks(this.worldServer.getId(), e.x, e.z, pos, blocks, lights);
+                        PacketSSetBlocks packet = new PacketSSetBlocks(this.worldServer.getId(), e.x, e.z, pos, blocks, lights, data);
                         for (Player p : e.players) {
                             p.netHandler.sendPacket(packet);
                         }

@@ -4,33 +4,42 @@
 
 package nidefawl.qubes.util;
 
-import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.vec.*;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 
 public class RayTrace {
+    public static enum HitType {
+        BLOCK, NONE
+    }
+    public final static class RayTraceIntersection {
+        public HitType hit = HitType.NONE;
+        public int blockId;
+        public final BlockPos blockPos = new BlockPos();
+        public final Vector3f pos = new Vector3f();
+        public float distance;
+        public int face;
+    }
     private static final float MIN_X = World.MIN_XZ;
     private static final float MIN_Y = 0;
     private static final float MIN_Z = World.MIN_XZ;
     private static final float MAX_X = World.MAX_XZ;
     private static final float MAX_Y = World.MAX_WORLDHEIGHT;
     private static final float MAX_Z = World.MAX_XZ;
-    
-    private BlockPos coll;
-    private int collType;
-    private BlockPos face;
+
+    // Buffer for reporting faces to the callback.
+    private Vector3f dirFrac = new Vector3f();
+    private AABBFloat bb = new AABBFloat();
+    private final RayTraceIntersection intersection = new RayTraceIntersection();
 
 
     public void reset() {
-        coll = null;
-        collType = 0;
-        face = null;
+        intersection.hit = HitType.NONE;
     }
 
     public void doRaytrace(World world, Vector3f origin, Vector3f direction, int maxDist) {
-        coll = null;
-        collType = 0;
-        face = null;
+        intersection.hit = HitType.NONE;
         // From "A Fast Voxel Traversal Algorithm for Ray Tracing"
         // by John Amanatides and Andrew Woo, 1987
         // <http://www.cse.yorku.ca/~amana/research/grid.pdf>
@@ -59,6 +68,7 @@ public class RayTrace {
         float dx = direction.x;
         float dy = direction.y;
         float dz = direction.z;
+        dirFrac.set(1.0f/(GameMath.isNormalFloat(dx)?dx:1.0E-5F), 1.0f/(GameMath.isNormalFloat(dy)?dy:1.0E-5F), 1.0f/(GameMath.isNormalFloat(dz)?dz:1.0E-5F));
         // Direction to increment x,y,z when stepping.
         float stepX = GameMath.signum(dx);
         float stepY = GameMath.signum(dy);
@@ -72,8 +82,6 @@ public class RayTrace {
         float tDeltaX = stepX/dx;
         float tDeltaY = stepY/dy;
         float tDeltaZ = stepZ/dz;
-        // Buffer for reporting faces to the callback.
-        BlockPos face = new BlockPos();
         
         // Avoids an infinite loop.
         
@@ -90,13 +98,12 @@ public class RayTrace {
         while (/* ray has not gone past bounds of world */
                (stepX > 0 ? x < MAX_X : x >= MIN_X) &&
                (stepY > 0 ? y < MAX_Y : y >= MIN_Y) &&
-               (stepZ > 0 ? z < MAX_X : z >= MIN_Z) && maxSteps-- > 0) {
+               (stepZ > 0 ? z < MAX_Z : z >= MIN_Z) && maxSteps-- > 0) {
           
           // Invoke the callback, unless we are not *yet* within the bounds of the
           // world.
-          if (!(x < MIN_X || y < MIN_Y || z < MIN_Z || x >= MAX_X || y >= MAX_Y || z >= MAX_Z))
-            if (callback(world, x, y, z, face))
-              break;
+          if (callback(world, x, y, z, origin, direction))
+            break;
           
           // tMaxX stores the t-value at which we cross a cube boundary along the
           // X axis, and similarly for Y and Z. Therefore, choosing the least tMax
@@ -110,47 +117,38 @@ public class RayTrace {
               // Adjust tMaxX to the next X-oriented boundary crossing.
               tMaxX += tDeltaX;
               // Record the normal vector of the cube face we entered.
-              face.x = -GameMath.signum(stepX);
-              face.y = 0;
-              face.z = 0;
             } else {
               if (tMaxZ > radius) break;
               z += stepZ;
               tMaxZ += tDeltaZ;
-              face.x = 0;
-              face.y = 0;
-              face.z = -GameMath.signum(stepZ);
             }
           } else {
             if (tMaxY < tMaxZ) {
               if (tMaxY > radius) break;
               y += stepY;
               tMaxY += tDeltaY;
-              face.x = 0;
-              face.y = -GameMath.signum(stepY);
-              face.z = 0;
             } else {
               // Identical to the second case, repeated for simplicity in
               // the conditionals.
               if (tMaxZ > radius) break;
               z += stepZ;
               tMaxZ += tDeltaZ;
-              face.x = 0;
-              face.y = 0;
-              face.z = -GameMath.signum(stepZ);
             }
           }
         }
     }
 
     
-    private boolean callback(World world, int x, int y, int z, BlockPos face) {
+    private boolean callback(World world, int x, int y, int z, Vector3f origin, Vector3f direction) {
         int type = world.getType(x, y, z);
         if (type != 0) {
-            this.coll = new BlockPos(x, y, z);
-            this.face = face;
-            this.collType = type;
-            return true;
+            Block block = Block.get(type);
+            if (block.raytrace(this, world, x, y, z, origin, direction, dirFrac)) {
+                this.intersection.hit = HitType.BLOCK;
+                this.intersection.blockId = type;
+                this.intersection.blockPos.set(x, y, z);
+                return true;
+            }
         }
         return false;
     }
@@ -167,15 +165,35 @@ public class RayTrace {
         return (float) ((ds > 0? Math.ceil(s)-s: s-Math.floor(s)) / Math.abs(ds));
     }
     
-    public BlockPos getColl() {
-        return coll;
+
+    public boolean hasHit() {
+        return this.intersection.hit != HitType.NONE;
     }
-    public int getCollType() {
-        return collType;
+    public RayTraceIntersection getHit() {
+        return this.intersection;
     }
-    
-    public BlockPos getFace() {
-        return face;
+
+    /**
+     * @param i
+     * @return 
+     */
+    public AABBFloat getTempBB() {
+        return this.bb;
+    }
+
+    /**
+     * @param direction 
+     * @param origin 
+     * @param tmin
+     * @param iMin
+     */
+    public void setIntersection(Vector3f origin, Vector3f direction, float distance, int iMin) {
+        Vector3f hitPoint = this.intersection.pos;
+        hitPoint.set(direction);
+        hitPoint.scale(distance);
+        hitPoint.addVec(origin);
+        this.intersection.distance = distance;
+        this.intersection.face = iMin;
     }
     
 }

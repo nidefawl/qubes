@@ -16,6 +16,7 @@ import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketSWorldTime;
+import nidefawl.qubes.server.GameRegistry;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.Flags;
@@ -24,8 +25,8 @@ import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
-import nidefawl.qubes.worldgen.terrain.TerrainGenerator2;
-import nidefawl.qubes.worldgen.terrain.TestTerrain2;
+import nidefawl.qubes.worldgen.terrain.TerrainGeneratorRivers;
+import nidefawl.qubes.worldgen.terrain.TerrainGenFlatSand128;
 
 public class WorldServer extends World {
 
@@ -43,8 +44,8 @@ public class WorldServer extends World {
         super(settings);
         this.server = server;
         this.chunkServer = (ChunkManagerServer) getChunkManager();
-        this.generator = settings.getGenerator(this);
-        this.populator = settings.getPopulator(this);
+        this.generator = GameRegistry.newGenerator(this, settings);
+        this.populator = GameRegistry.newPopulator(this, this.generator, settings);
         this.lightUpdater = new BlockLightThread(this);
     }
     public void onLeave() {
@@ -129,7 +130,7 @@ public class WorldServer extends World {
                     Chunk cPopulate = getChunkIfNeightboursLoaded(c.x, c.z);
                     if (cPopulate == c) {
                         c.isPopulated = true;
-                        getChunkPopulator().populate(this, cPopulate);   
+                        getChunkPopulator().populate(cPopulate);   
                         this.calcSunLight(cPopulate); 
                     }
                 }
