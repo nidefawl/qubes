@@ -131,6 +131,7 @@ void main(void) {
 		discard;
 	vec3 color_adj = tex.rgb;
 	color_adj *= color.rgb;
+	float lum = dot(color_adj, vec3(0.3));
 
 	//MINECRAFTISH BLOCK LIGHTING
 	// color_adj *= 0.5+abs(dir.z)*0.3+(dir.y)*0.2;
@@ -149,6 +150,7 @@ void main(void) {
 	ao += faceAO.w * xPos  * yPos2;
 	float ambientOccl = 1 - clamp(ao, 0,1);
 	ambientOccl*=blockside;
+	// ambientOccl += 0.3*lum*4;
 #ifndef FAR_BLOCKFACE
 #else //FAR_BLOCKFACE
 	// color_adj=mix(color_adj, vec3(1, 0, 0), 0.4);

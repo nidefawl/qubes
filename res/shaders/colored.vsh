@@ -3,7 +3,6 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "vertex_layout.glsl"
 
-uniform mat4 matortho;
 uniform vec3 in_offset;
 out vec4 pass_Color;
  
