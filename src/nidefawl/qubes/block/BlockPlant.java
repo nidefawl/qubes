@@ -4,6 +4,7 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.vec.AABB;
+import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 
@@ -46,8 +47,8 @@ public class BlockPlant extends Block {
      * @see nidefawl.qubes.block.Block#getCollisionBB(nidefawl.qubes.world.World, int, int, int, nidefawl.qubes.vec.AABB)
      */
     @Override
-    public AABB getCollisionBB(World world, int x, int y, int z, AABB aabb) {
-        return null;
+    public int getBBs(World world, int x, int y, int z, AABBFloat[] aabb) {
+        return 0;
     }
 
     public boolean isReplaceable() {

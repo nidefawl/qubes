@@ -77,6 +77,11 @@ public class AABB {
     public void set(AABB b) {
         this.set(b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ);
     }
+
+    public void set(AABBFloat b) {
+        this.set(b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ);
+    }
+
     
     public double getCenterX() {
         return this.minX+getWidth()/2.0D;

@@ -4,6 +4,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
+import nidefawl.qubes.world.IBlockWorld;
 
 public class BlockSurface {
 
@@ -107,36 +108,51 @@ public class BlockSurface {
         }
     }
 
-    int vertexAO(int side1, int side2, int corner) {
+    int vertexAO(boolean side1, boolean side2, boolean corner) {
         int ao = 3;
-        if (!isOccluding(side1)) 
+        if (!(side1)) 
             ao--;
-        if (!isOccluding(side2)) 
+        if (!(side2)) 
             ao--;
-        if (!isOccluding(corner)) 
+        if (!(corner)) 
             ao--;
         return ao;
     }
 
-    private boolean isOccluding(int id) {
-        return id > 0 && Block.block[id].isOccluding();
+    /**
+     * @param side2
+     * @return
+     */
+    private boolean isOccludingId(int id) {
+        Block b = Block.get(id);
+        return b != null && b.isOccluding();
+    }
+    private boolean isOccludingAt(IBlockWorld w, int x, int y, int z) {
+        int id = w.getType(x, y, z);
+        Block b = Block.get(id);
+        if (b != null) {
+            if (b.isOccluding() && b.isNormalBlock(w, x, y, z)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void calcPosZ(ChunkRenderCache cache) {
         int x = this.x;
         int y = this.y;
         int z = this.z+1;
-        if (isOccluding(cache.getType(x, y, z))) {
+        if (isOccludingAt(cache, x, y, z)) {
             return;
         }
-        int pp = cache.getType(x+1, y+1, z);
-        int np = cache.getType(x-1, y+1, z);
-        int pn = cache.getType(x+1, y-1, z);
-        int nn = cache.getType(x-1, y-1, z);
-        int cn = cache.getType(x, y-1, z);
-        int nc = cache.getType(x-1, y, z);
-        int cp = cache.getType(x, y+1, z);
-        int pc = cache.getType(x+1, y, z);
+        boolean pp = isOccludingAt(cache, x+1, y+1, z);
+        boolean np = isOccludingAt(cache, x-1, y+1, z);
+        boolean pn = isOccludingAt(cache, x+1, y-1, z);
+        boolean nn = isOccludingAt(cache, x-1, y-1, z);
+        boolean cn = isOccludingAt(cache, x, y-1, z);
+        boolean nc = isOccludingAt(cache, x-1, y, z);
+        boolean cp = isOccludingAt(cache, x, y+1, z);
+        boolean pc = isOccludingAt(cache, x+1, y, z);
         
 
         int brigthness = cache.getLight(x, y, z);
@@ -148,16 +164,16 @@ public class BlockSurface {
         int br_pn = br_pc;
         int br_nn = br_nc;
         int br_np = br_nc;
-        if (!isOccluding(cp) || !isOccluding(pc)) {
+        if (!(cp) || !(pc)) {
             br_pp = cache.getLight(x + 1, y + 1, z);
         }
-        if (!isOccluding(cp) || !isOccluding(nc)) {
+        if (!(cp) || !(nc)) {
             br_pn = cache.getLight(x + 1, y - 1, z);
         }
-        if (!isOccluding(cn) || !isOccluding(nc)) {
+        if (!(cn) || !(nc)) {
             br_nn = cache.getLight(x - 1, y - 1, z);
         }
-        if (!isOccluding(cn) || !isOccluding(pc)) {
+        if (!(cn) || !(pc)) {
             br_np = cache.getLight(x - 1, y + 1, z);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -179,19 +195,19 @@ public class BlockSurface {
         int x = this.x;
         int y = this.y;
         int z = this.z - 1;
-        if (isOccluding(cache.getType(x, y, z))) {
+        if (isOccludingAt(cache, x, y, z)) {
             return;
         }
 
         
-        int pp = cache.getType(x + 1, y + 1, z);
-        int np = cache.getType(x - 1, y + 1, z);
-        int pn = cache.getType(x + 1, y - 1, z);
-        int nn = cache.getType(x - 1, y - 1, z);
-        int cn = cache.getType(x, y - 1, z);
-        int nc = cache.getType(x - 1, y, z);
-        int cp = cache.getType(x, y + 1, z);
-        int pc = cache.getType(x + 1, y, z);
+        boolean pp = isOccludingAt(cache, x + 1, y + 1, z);
+        boolean np = isOccludingAt(cache, x - 1, y + 1, z);
+        boolean pn = isOccludingAt(cache, x + 1, y - 1, z);
+        boolean nn = isOccludingAt(cache, x - 1, y - 1, z);
+        boolean cn = isOccludingAt(cache, x, y - 1, z);
+        boolean nc = isOccludingAt(cache, x - 1, y, z);
+        boolean cp = isOccludingAt(cache, x, y + 1, z);
+        boolean pc = isOccludingAt(cache, x + 1, y, z);
         
         int brigthness = cache.getLight(x, y, z);
         int br_cn = cache.getLight(x, y - 1, z);
@@ -202,16 +218,16 @@ public class BlockSurface {
         int br_pn = br_pc;
         int br_nn = br_nc;
         int br_np = br_nc;
-        if (!isOccluding(cp) || !isOccluding(pc)) {
+        if (!cp || !pc) {
             br_pp = cache.getLight(x + 1, y + 1, z);
         }
-        if (!isOccluding(cp) || !isOccluding(nc)) {
+        if (!cp || !nc) {
             br_pn = cache.getLight(x + 1, y - 1, z);
         }
-        if (!isOccluding(cn) || !isOccluding(nc)) {
+        if (!cn || !nc) {
             br_nn = cache.getLight(x - 1, y - 1, z);
         }
-        if (!isOccluding(cn) || !isOccluding(pc)) {
+        if (!cn || !pc) {
             br_np = cache.getLight(x - 1, y + 1, z);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -233,17 +249,17 @@ public class BlockSurface {
         int x = this.x+1;
         int y = this.y;
         int z = this.z;
-        if (isOccluding(cache.getType(x, y, z))) {
+        if (isOccludingAt(cache, x, y, z)) {
             return;
         }
-        int pp = cache.getType(x, y+1, z+1);
-        int pn = cache.getType(x, y+1, z-1);
-        int np = cache.getType(x, y-1, z+1);
-        int nn = cache.getType(x, y-1, z-1);
-        int nc = cache.getType(x, y-1, z);
-        int cn = cache.getType(x, y, z-1);
-        int pc = cache.getType(x, y+1, z);
-        int cp = cache.getType(x, y, z+1);
+        boolean pp = isOccludingAt(cache, x, y+1, z+1);
+        boolean pn = isOccludingAt(cache, x, y+1, z-1);
+        boolean np = isOccludingAt(cache, x, y-1, z+1);
+        boolean nn = isOccludingAt(cache, x, y-1, z-1);
+        boolean nc = isOccludingAt(cache, x, y-1, z);
+        boolean cn = isOccludingAt(cache, x, y, z-1);
+        boolean pc = isOccludingAt(cache, x, y+1, z);
+        boolean cp = isOccludingAt(cache, x, y, z+1);
         
         int brigthness = cache.getLight(x, y, z);
         int br_nc = cache.getLight(x, y-1, z);
@@ -254,16 +270,16 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOccluding(cp) || !isOccluding(pc)) {
+        if (!cp || !pc) {
             br_pp = cache.getLight(x, y+1, z+1);
         }
-        if (!isOccluding(cp) || !isOccluding(nc)) {
+        if (!cp || !nc) {
             br_np = cache.getLight(x, y-1, z+1);
         }
-        if (!isOccluding(cn) || !isOccluding(nc)) {
+        if (!cn || !nc) {
             br_nn = cache.getLight(x, y-1, z-1);
         }
-        if (!isOccluding(cn) || !isOccluding(pc)) {
+        if (!cn || !pc) {
             br_pn = cache.getLight(x, y+1, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -284,17 +300,17 @@ public class BlockSurface {
         int x = this.x-1;
         int y = this.y;
         int z = this.z;
-        if (isOccluding(cache.getType(x, y, z))) {
+        if (isOccludingAt(cache, x, y, z)) {
             return;
         }
-        int pp = cache.getType(x, y+1, z+1);
-        int pn = cache.getType(x, y+1, z-1);
-        int np = cache.getType(x, y-1, z+1);
-        int nn = cache.getType(x, y-1, z-1);
-        int nc = cache.getType(x, y-1, z);
-        int cn = cache.getType(x, y, z-1);
-        int pc = cache.getType(x, y+1, z);
-        int cp = cache.getType(x, y, z+1);
+        boolean pp = isOccludingAt(cache, x, y+1, z+1);
+        boolean pn = isOccludingAt(cache, x, y+1, z-1);
+        boolean np = isOccludingAt(cache, x, y-1, z+1);
+        boolean nn = isOccludingAt(cache, x, y-1, z-1);
+        boolean nc = isOccludingAt(cache, x, y-1, z);
+        boolean cn = isOccludingAt(cache, x, y, z-1);
+        boolean pc = isOccludingAt(cache, x, y+1, z);
+        boolean cp = isOccludingAt(cache, x, y, z+1);
         
         int brigthness = cache.getLight(x, y, z);
         int br_nc = cache.getLight(x, y-1, z);
@@ -305,16 +321,16 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOccluding(cp) || !isOccluding(pc)) {
+        if (!cp || !pc) {
             br_pp = cache.getLight(x, y+1, z+1);
         }
-        if (!isOccluding(cp) || !isOccluding(nc)) {
+        if (!cp || !nc) {
             br_np = cache.getLight(x, y-1, z+1);
         }
-        if (!isOccluding(cn) || !isOccluding(nc)) {
+        if (!cn || !nc) {
             br_nn = cache.getLight(x, y-1, z-1);
         }
-        if (!isOccluding(cn) || !isOccluding(pc)) {
+        if (!cn || !pc) {
             br_pn = cache.getLight(x, y+1, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -336,17 +352,17 @@ public class BlockSurface {
         int x = this.x;
         int y = this.y+1;
         int z = this.z;
-        if (isOccluding(cache.getType(x, y, z))) {
+        if (isOccludingAt(cache, x, y, z)) {
             return;
         }
-        int pp = cache.getType(x+1, y, z+1);
-        int pn = cache.getType(x+1, y, z-1);
-        int np = cache.getType(x-1, y, z+1);
-        int nn = cache.getType(x-1, y, z-1);
-        int nc = cache.getType(x-1, y, z);
-        int cn = cache.getType(x, y, z-1);
-        int pc = cache.getType(x+1, y, z);
-        int cp = cache.getType(x, y, z+1);
+        boolean pp = isOccludingAt(cache, x+1, y, z+1);
+        boolean pn = isOccludingAt(cache, x+1, y, z-1);
+        boolean np = isOccludingAt(cache, x-1, y, z+1);
+        boolean nn = isOccludingAt(cache, x-1, y, z-1);
+        boolean nc = isOccludingAt(cache, x-1, y, z);
+        boolean cn = isOccludingAt(cache, x, y, z-1);
+        boolean pc = isOccludingAt(cache, x+1, y, z);
+        boolean cp = isOccludingAt(cache, x, y, z+1);
         
 
         int brigthness = cache.getLight(x, y, z);
@@ -358,16 +374,16 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOccluding(cp) || !isOccluding(pc)) {
+        if (!cp || !pc) {
             br_pp = cache.getLight(x+1, y, z+1);
         }
-        if (!isOccluding(cp) || !isOccluding(nc)) {
+        if (!cp || !nc) {
             br_np = cache.getLight(x-1, y, z+1);
         }
-        if (!isOccluding(cn) || !isOccluding(nc)) {
+        if (!cn || !nc) {
             br_nn = cache.getLight(x-1, y, z-1);
         }
-        if (!isOccluding(cn) || !isOccluding(pc)) {
+        if (!cn || !pc) {
             br_pn = cache.getLight(x+1, y, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -389,17 +405,17 @@ public class BlockSurface {
         int x = this.x;
         int y = this.y-1;
         int z = this.z;
-        if (isOccluding(cache.getType(x, y, z))) {
+        if (isOccludingAt(cache, x, y, z)) {
             return;
         }
-        int pp = cache.getType(x+1, y, z+1);
-        int pn = cache.getType(x+1, y, z-1);
-        int np = cache.getType(x-1, y, z+1);
-        int nn = cache.getType(x-1, y, z-1);
-        int nc = cache.getType(x-1, y, z);
-        int cn = cache.getType(x, y, z-1);
-        int pc = cache.getType(x+1, y, z);
-        int cp = cache.getType(x, y, z+1);
+        boolean pp = isOccludingAt(cache, x+1, y, z+1);
+        boolean pn = isOccludingAt(cache, x+1, y, z-1);
+        boolean np = isOccludingAt(cache, x-1, y, z+1);
+        boolean nn = isOccludingAt(cache, x-1, y, z-1);
+        boolean nc = isOccludingAt(cache, x-1, y, z);
+        boolean cn = isOccludingAt(cache, x, y, z-1);
+        boolean pc = isOccludingAt(cache, x+1, y, z);
+        boolean cp = isOccludingAt(cache, x, y, z+1);
         
         int brigthness = cache.getLight(x, y, z);
         int br_nc = cache.getLight(x-1, y, z);
@@ -410,16 +426,16 @@ public class BlockSurface {
         int br_pn = br_cn;
         int br_nn = br_cn;
         int br_np = br_cp;
-        if (!isOccluding(cp) || !isOccluding(pc)) {
+        if (!cp || !pc) {
             br_pp = cache.getLight(x+1, y, z+1);
         }
-        if (!isOccluding(cp) || !isOccluding(nc)) {
+        if (!cp || !nc) {
             br_np = cache.getLight(x-1, y, z+1);
         }
-        if (!isOccluding(cn) || !isOccluding(nc)) {
+        if (!cn || !nc) {
             br_nn = cache.getLight(x-1, y, z-1);
         }
-        if (!isOccluding(cn) || !isOccluding(pc)) {
+        if (!cn || !pc) {
             br_pn = cache.getLight(x+1, y, z-1);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);

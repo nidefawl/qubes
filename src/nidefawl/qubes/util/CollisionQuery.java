@@ -4,13 +4,19 @@ import java.util.ArrayList;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.vec.AABB;
+import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.World;
 
 public class CollisionQuery {
     ArrayList<BlockColl> collisions = new ArrayList<BlockColl>();
+    ArrayList<BlockColl> tempList = new ArrayList<BlockColl>();
+    final AABBFloat[] tmpBBs = new AABBFloat[16];
     int numCollisions = 0;
-    final AABB tmpBB = new AABB(0, 0, 0, 0, 0, 0);
+    final AABBFloat tmpBB = new AABBFloat(0, 0, 0, 0, 0, 0);
     public CollisionQuery() {
+        for (int i = 0; i < tmpBBs.length; i++) {
+            tmpBBs[i] = new AABBFloat();
+        }
     }
 
     private BlockColl get() {
@@ -31,34 +37,32 @@ public class CollisionQuery {
         if (maxY < 0) {//out of world
             return;
         }
-        int nBlocks = 0;
+        AABBFloat[] tmp = this.tmpBBs;
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                
-
                 for (int y = minY; y <= maxY; y++) {
-                    nBlocks++;
                     int type = world.getType(x, y, z);
                     Block b = Block.get(type);
                     if (b != null) {
-                        AABB bb = b.getCollisionBB(world, x, y, z, tmpBB);
-                        if (bb != null) {
-                            if (bb.intersects(aabb)) {
-                                BlockColl coll = get();
-                                coll.blockBB.set(bb);
-                                coll.type = type;
-                                coll.x = x;
-                                coll.y = y;
-                                coll.z = z;
-                                numCollisions++;
+                        int boxes = b.getBBs(world, x, y, z, tmp);
+                        if (boxes > 0) {
+                            for (int i = 0; i < boxes; i++) {
+                                AABBFloat bb = tmp[i];
+                                if (bb.intersects(aabb)) {
+                                    BlockColl coll = get();
+                                    coll.blockBB.set(bb);
+                                    coll.type = type;
+                                    coll.x = x;
+                                    coll.y = y;
+                                    coll.z = z;
+                                    numCollisions++;
+                                }
                             }
                         }
-                        
                     }
                 }
             }
         }
-//        System.err.println(nBlocks);
     }
     
     public int getNumCollisions() {

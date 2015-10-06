@@ -176,7 +176,7 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
-                        this.player.world.setData(blockX, blockY, blockZ, 2, Flags.MARK);
+//                        this.player.world.setData(blockX, blockY, blockZ, 2, Flags.MARK);
                     }
                 }
 

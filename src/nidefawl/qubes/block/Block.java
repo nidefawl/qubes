@@ -48,13 +48,16 @@ public class Block {
         for (Block b : bs){
             new BlockSlab(idx++, b).setName(b.getName()+"_slab").setTextures(new String[0]);
         }
+        for (Block b : bs){
+            new BlockStairs(idx++, b).setName(b.getName()+"_stairs").setTextures(new String[0]);
+        }
     }
 
     public final int id;
     private String name;
     private final boolean transparent;
     String[] textures;
-    final AABB blockBounds = new AABB(0, 0, 0, 1, 1, 1);
+    final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
 
     Block(int id, boolean transparent) {
         this.id = id;
@@ -125,10 +128,11 @@ public class Block {
         return true;
     }
     
-    public AABB getCollisionBB(World world, int x, int y, int z, AABB aabb) {
-        aabb.set(this.blockBounds);
-        aabb.offset(x, y, z);
-        return aabb;
+    public int getBBs(World world, int x, int y, int z, AABBFloat[] tmp) {
+        AABBFloat bb = tmp[0];
+        bb.set(this.blockBounds);
+        bb.offset(x, y, z);
+        return 1;
     }
     public float getAlpha() {
         return 1;
@@ -144,8 +148,7 @@ public class Block {
         bb.set(0, 0, 0, 1, 1, 1);
         return bb;
     }
-    
-    public boolean isFaceVisible(IBlockWorld w, int ix, int iy, int iz, int axis, int side, Block block, AABBFloat bb) {
+    public boolean isVisibleBounds(IBlockWorld w, int axis, int side, AABBFloat bb) {
         if (axis == 0) {
             if (side == 1 && bb.minX>0) {
                 return true;
@@ -169,6 +172,13 @@ public class Block {
             if (side == 0 && bb.maxZ<1) {
                 return true;
             }
+        }
+        return false;
+        
+    }
+    public boolean isFaceVisible(IBlockWorld w, int ix, int iy, int iz, int axis, int side, Block block, AABBFloat bb) {
+        if (isVisibleBounds(w, axis, side, bb)) {
+            return true;
         }
         return !w.isNormalBlock(ix, iy, iz, -1);
     }

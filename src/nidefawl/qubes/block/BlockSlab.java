@@ -52,8 +52,9 @@ public class BlockSlab extends Block {
     }
 
     @Override
-    public AABB getCollisionBB(World w, int ix, int iy, int iz, AABB bb) {
+    public int getBBs(World w, int ix, int iy, int iz, AABBFloat[] tmp) {
         int data = w.getData(ix, iy, iz)&0x3;
+        AABBFloat bb = tmp[0];
         bb.set(0f, 0f, 0f, 1f, 0.5f, 1f);
         if (data == 1) {
             bb.offset(0, 0.5f, 0);
@@ -61,7 +62,7 @@ public class BlockSlab extends Block {
             bb.set(0, 0, 0, 1, 1, 1);
         }
         bb.offset(ix, iy, iz);
-        return bb;
+        return 1;
     }
 
     @Override
@@ -155,30 +156,17 @@ public class BlockSlab extends Block {
                 }
                 return data == dataAdj; // render face if other is not directly connected to this one (=not same level)
             }
+            return true;// show face, the code below is for neighbours other than slab
+        }
+        if (isVisibleBounds(w, axis, side, bb)) {
             return true;
         }
-        if (axis == 1) {
-            return false;
-        }
-        return true;
-//        if (axis != 1) {
-//            System.out.println("axis "+axis+", data "+data);
-//            return data != 2;
-//        }
-//        return data == side && super.isFaceVisible(w, ix, iy, iz, axis, side, block, bb);
-//        return super.isFaceVisible(w, ix, iy, iz, axis, side, block, bb);
-//        int type = w.getType(ix - offx, iy - offy, iz - offz);
-//        boolean b = w.isNormalBlock(ix - offx, iy - offy, iz - offz, -1);
-//        System.out.printf("%d %d %d = %d = normal="+b+"\n", offx, offy, offz, type);
-//        if (b) {
-//
-//            System.out.printf("hide "+ix+","+iy+","+iz+" axis "+axis+", side "+side+"\n");
-//        }
-//        return !b;
+     // hide if y axis (the visible case was handled above)
+        return axis != 1;// show if xz axis (the fullslab case was handled above)
     }
     @Override
     public boolean isNormalBlock(IBlockWorld w, int ix, int iy, int iz) {
-      int data = w.getData(ix, iy, iz) & 0x3;
+        int data = w.getData(ix, iy, iz) & 0x3;
         return data == 2;
 //        return false;
     }

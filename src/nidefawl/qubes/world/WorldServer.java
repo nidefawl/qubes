@@ -203,8 +203,10 @@ public class WorldServer extends World {
         // if so, trigger a sun light update on that block
         for (int y3 = max; y3 >= min; y3--) {
             for (int i = 0; i < 4; i++) {
-                int bX = Dir.getDirX(i) + blockX;
-                int bZ = Dir.getDirZ(i) + blockZ;
+                int offx = i==0?-1:i==2?1:0;
+                int offz = i==1?-1:i==3?1:0;
+                int bX = offx + blockX;
+                int bZ = offz + blockZ;
                 if (isTransparent(bX, y3, bZ) && !canSeeSky(bX, y3, bZ)) {
                     this.lightUpdater.queueBlock(bX, y3, bZ, 1);
                 }

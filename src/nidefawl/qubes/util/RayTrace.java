@@ -143,8 +143,8 @@ public class RayTrace {
         int type = world.getType(x, y, z);
         if (type != 0) {
             Block block = Block.get(type);
+            this.intersection.hit = HitType.NONE;
             if (block.raytrace(this, world, x, y, z, origin, direction, dirFrac)) {
-                this.intersection.hit = HitType.BLOCK;
                 this.intersection.blockId = type;
                 this.intersection.blockPos.set(x, y, z);
                 return true;
@@ -188,12 +188,15 @@ public class RayTrace {
      * @param iMin
      */
     public void setIntersection(Vector3f origin, Vector3f direction, float distance, int iMin) {
-        Vector3f hitPoint = this.intersection.pos;
-        hitPoint.set(direction);
-        hitPoint.scale(distance);
-        hitPoint.addVec(origin);
-        this.intersection.distance = distance;
-        this.intersection.face = iMin;
+        if (this.intersection.hit == HitType.NONE || distance < this.intersection.distance) {
+            this.intersection.hit = HitType.BLOCK;
+            Vector3f hitPoint = this.intersection.pos;
+            hitPoint.set(direction);
+            hitPoint.scale(distance);
+            hitPoint.addVec(origin);
+            this.intersection.distance = distance;
+            this.intersection.face = iMin;
+        }
     }
     
 }

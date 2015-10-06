@@ -4,6 +4,7 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockStairs;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABBFloat;
@@ -137,7 +138,7 @@ public class BlockRenderer {
                 case 1:
                     return renderPlant(block, ix, iy, iz);
                 case 2:
-                    return renderSlab(block, ix, iy, iz);
+                    return renderBlock(block, ix, iy, iz); //SLAB
                 case 3:
                     return renderStairs(block, ix, iy, iz);
             }
@@ -160,10 +161,10 @@ public class BlockRenderer {
 
     void renderXPos(Block block, float x, float y, float z) {
         attr.setNormal(1, 0, 0);
-        attr.v0.setUV(bb.maxZ, bb.minY);
-        attr.v1.setUV(bb.maxZ, bb.maxY);
-        attr.v2.setUV(bb.minZ, bb.maxY);
-        attr.v3.setUV(bb.minZ, bb.minY);
+        attr.v0.setUV(1-bb.minZ, bb.minY);
+        attr.v1.setUV(1-bb.minZ, bb.maxY);
+        attr.v2.setUV(1-bb.maxZ, bb.maxY);
+        attr.v3.setUV(1-bb.maxZ, bb.minY);
         attr.v0.setPos(x + bb.maxX, y + bb.minY, z + bb.minZ);
         attr.v1.setPos(x + bb.maxX, y + bb.maxY, z + bb.minZ);
         attr.v2.setPos(x + bb.maxX, y + bb.maxY, z + bb.maxZ);
@@ -171,10 +172,10 @@ public class BlockRenderer {
     }
     void renderZNeg(Block block, float x, float y, float z) {
         attr.setNormal(0, 0, -1);
-        attr.v0.setUV(bb.maxX, bb.maxY);
-        attr.v1.setUV(bb.maxX, bb.minY);
-        attr.v2.setUV(bb.minX, bb.minY);
-        attr.v3.setUV(bb.minX, bb.maxY);
+        attr.v0.setUV(1-bb.minX, bb.maxY);
+        attr.v1.setUV(1-bb.minX, bb.minY);
+        attr.v2.setUV(1-bb.maxX, bb.minY);
+        attr.v3.setUV(1-bb.maxX, bb.maxY);
         attr.v0.setPos(x + bb.minX, y + bb.maxY, z + bb.minZ);
         attr.v1.setPos(x + bb.minX, y + bb.minY, z + bb.minZ);
         attr.v2.setPos(x + bb.maxX, y + bb.minY, z + bb.minZ);
@@ -251,9 +252,6 @@ public class BlockRenderer {
         return 1;
     }
     private int renderStairs(Block block, int ix, int iy, int iz) {
-        float x = ix;
-        float y = iy;
-        float z = iz;
         int data = this.w.getData(ix, iy, iz);
         int rot = data&3;
         int topBottom = (data&0x4)>>2;
@@ -262,12 +260,7 @@ public class BlockRenderer {
         int side = rot/2;
         setBounds(0,0,0,1,1,1);
         int f = 0;
-        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         setBounds(0,0,0,1,0.5f,1);
         if (topBottom>0){
 
@@ -275,125 +268,28 @@ public class BlockRenderer {
             bb.maxY+=0.5f;
         }
         side = 1-side;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
-//        side = 1-side;
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         axis = 2-axis;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         side = 1-side;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         side = 1-topBottom;
         axis = 1;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
-        switch (rot) {
-            case 0:
-                setBounds(0,0,0,0.5f,0.5f,1);
-                break;
-            case 1:
-                setBounds(0,0,0,1,0.5f,0.5f);
-                break;
-            case 2:
-                setBounds(0.5f,0,0,1,0.5f,1);
-                break;
-            default:
-            case 3:
-                setBounds(0,0,0.5f,1,0.5f,1);
-                break;
-        }
-        if (topBottom != 0) {
-            bb.minY+=0.5f;
-            bb.maxY+=0.5f;   
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        BlockStairs.setStairBB(this.bb, (rot+2)&3, 1-topBottom, 0);
         side = topBottom;
         axis = 1;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
-        switch ((rot+2)&3) {
-            case 0:
-                setBounds(0,0,0,0.5f,0.5f,1);
-                break;
-            case 1:
-                setBounds(0,0,0,1,0.5f,0.5f);
-                break;
-            case 2:
-                setBounds(0.5f,0,0,1,0.5f,1);
-                break;
-            default:
-            case 3:
-                setBounds(0,0,0.5f,1,0.5f,1);
-                break;
-        }
-        if (topBottom == 0) {
-            bb.minY+=0.5f;
-            bb.maxY+=0.5f;
-
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        BlockStairs.setStairBB(this.bb, rot, topBottom, 1);
         side = topBottom;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         axis = (rot%2)==0?0:2;
         side = 1-(rot/2);
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         axis = 2-axis;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         side = 1-side;
-        surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
-        if (surface != null) {
-            int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            f += renderFace(block, faceDir, ix, iy, iz);    
-        }
-//        setBlockBounds(block, ix, iy, iz);
-//        int f = 0;
-//        f += renderBlock(block, ix, iy, iz, bufferIdx);
-//        bufferIdx += f* this.faceSize;
-//        if ((data&1) == 0) {
-//            this.bb.minY+=0.5f;
-//            this.bb.maxY+=0.5f;
-//        } else {
-//
-//            this.bb.minY-=0.5f;
-//            this.bb.maxY-=0.5f;
-//        }
-//        this.bb.minZ+=0.5;
-//        f += renderBlock(block, ix, iy, iz, bufferIdx);
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         return f;
     }
     /**
@@ -413,19 +309,12 @@ public class BlockRenderer {
     }
 
     int renderBlock(Block block, int ix, int iy, int iz) {
+        setBlockBounds(block, ix, iy, iz);
         int f = 0;
         for (int n = 0; n < 6; n++) {
-            BlockSurface blockFace = getSingleBlockSurface(block, ix, iy, iz, n/2, n%2);
-            if (blockFace != null) {
-                setFaceColor(block, n, ix, iy, iz);
-                f += renderFace(block, n, ix, iy, iz);
-            }
+            f += getAndRenderBlockFace(block, ix, iy, iz, n/2, n%2);
         }
         return f;
-    }
-    int renderSlab(Block block, int ix, int iy, int iz) {
-        setBlockBounds(block, ix, iy, iz);
-        return renderBlock(block, ix, iy, iz);
     }
 
     /**
@@ -469,6 +358,15 @@ public class BlockRenderer {
         if (f == null) {
             setDefaultBounds();
         }
+    }
+    private int getAndRenderBlockFace(Block block, int ix, int iy, int iz, int axis, int side) {
+        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+        if (surface != null) {
+            int faceDir = axis<<1|side;
+            setFaceColor(block, faceDir, ix, iy, iz);
+            return renderFace(block, faceDir, ix, iy, iz);    
+        }
+        return 0;
     }
     
     private BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side) {

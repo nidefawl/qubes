@@ -108,6 +108,19 @@ public class AABBFloat {
         if (this.maxZ < b.minZ) return false;
         return true;
     }
+    /**
+     * @param aabb
+     * @return
+     */
+    public boolean intersects(AABB b) {
+        if (b.maxX < this.minX) return false;
+        if (b.maxY < this.minY) return false;
+        if (b.maxZ < this.minZ) return false;
+        if (this.maxX < b.minX) return false;
+        if (this.maxY < b.minY) return false;
+        if (this.maxZ < b.minZ) return false;
+        return true;
+    }
 
 
     @Override
@@ -199,5 +212,6 @@ public class AABBFloat {
         }
         return (a >= b);
     }
+
 }
 
