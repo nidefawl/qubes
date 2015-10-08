@@ -119,12 +119,24 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockY = p1.y+y;
                         int blockZ = p1.z ;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        int data = 0;
+                        if (Block.get(p1.type).isStairs()) {
+                            data = player.world.getRand().nextInt(8);
+                        }
+                        if (data > 0)
+                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
                     }
                     {
                         int blockX = p1.x + x;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + l-1;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        int data = 0;
+                        if (Block.get(p1.type).isStairs()) {
+                            data = player.world.getRand().nextInt(8);
+                        }
+                        if (data > 0)
+                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
                     }
                 }
             }
@@ -135,12 +147,24 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockY = p1.y+y;
                         int blockZ = p1.z+z;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        int data = 0;
+                        if (Block.get(p1.type).isStairs()) {
+                            data = player.world.getRand().nextInt(8);
+                        }
+                        if (data > 0)
+                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
                     }
                     {
                         int blockX = p1.x + w-1;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        int data = 0;
+                        if (Block.get(p1.type).isStairs()) {
+                            data = player.world.getRand().nextInt(8);
+                        }
+                        if (data > 0)
+                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
                     }
                 }
             }
@@ -157,6 +181,12 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockY = p1.y + h-1;
                         int blockZ = p1.z + z;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        int data = 0;
+                        if (Block.get(p1.type).isStairs()) {
+                            data = player.world.getRand().nextInt(8);
+                        }
+                        if (data > 0)
+                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
                     }
                 }
             }
@@ -176,7 +206,12 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
                         this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
-//                        this.player.world.setData(blockX, blockY, blockZ, 2, Flags.MARK);
+                        int data = 0;
+                        if (Block.get(p1.type).isStairs()) {
+                            data = player.world.getRand().nextInt(8);
+                        }
+                        if (data > 0)
+                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
                     }
                 }
 

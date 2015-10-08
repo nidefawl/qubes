@@ -176,9 +176,9 @@ public class BlockLightUpdate {
         int id = cache.getTypeId(i, j, k);
         int lvl = 0;
         if (type == 0) {
-            lvl = id != 0 ? Block.block[id].getLightValue() : 0;
+            lvl = Block.get(id).getLightValue();
         }
-        if (id != 0 && !Block.block[id].isTransparent()) {
+        if (!Block.get(id).isTransparent()) {
             return lvl;
         }
 

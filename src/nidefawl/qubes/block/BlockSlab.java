@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.block;
 
+import java.util.Arrays;
+
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
@@ -12,7 +14,7 @@ import nidefawl.qubes.world.World;
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
-public class BlockSlab extends Block {
+public class BlockSlab extends BlockSliced {
 
     /**
      * @param id
@@ -22,6 +24,7 @@ public class BlockSlab extends Block {
 
     public BlockSlab(int id, Block baseBlock) {
         super(id, baseBlock.isTransparent());
+        setTextures(new String[0]);
         this.baseBlock = baseBlock;
     }
 
@@ -185,5 +188,22 @@ public class BlockSlab extends Block {
     }
     public boolean isFullBB() {
         return false;
+    }
+    public boolean isOccludingBlock(IBlockWorld w, int x, int y, int z) {
+        return isNormalBlock(w, x, y, z);
+    }
+    
+
+    public void getQuarters(IBlockWorld w, int x, int y, int z, int[] quarters) {
+        int data = w.getData(x, y, z) & 0x3;
+        int start = data * 4;
+        int end = start + 4;
+        if (data == 2) {
+            start = 0;
+            end = quarters.length;
+        }
+        for (int i = 0; i < 8; i++) {
+            quarters[i] = i >= start && i < end ? this.id : 0;
+        }
     }
 }

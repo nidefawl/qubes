@@ -36,6 +36,7 @@ import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
+import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -354,7 +355,7 @@ public class Game extends GameBase implements IErrorHandler {
             if (!Block.isValid(this.selBlock)) {
                 int maxBlock = 0;
                 for (int b = 0; this.selBlock< 0&&b < Block.HIGHEST_BLOCK_ID+1; b++) {
-                    if (Block.block[b] != null) {
+                    if (Block.get(b) != null) {
                         maxBlock = b;
                     }
                 }
@@ -490,31 +491,35 @@ public class Game extends GameBase implements IErrorHandler {
           glDepthFunc(GL_LEQUAL);
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          Engine.getSceneFB().bind();
-          Engine.getSceneFB().clearColor();
-          Engine.worldRenderer.renderTransparent(world, fTime);
-//          glDisable(GL_BLEND);
-          glDepthFunc(GL_ALWAYS);
-          glDepthMask(false);
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pre1");
-          
-          
-          Engine.outRenderer.bindFB();
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pass1");
-          Engine.outRenderer.render(this.world, fTime, 1);
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred ReflAndBlur");
 
-//        glDisable(GL_CULL_FACE);
-          Engine.outRenderer.renderReflAndBlur(this.world, fTime);
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          boolean secondPass = true;
+          if (secondPass) {
+              Engine.getSceneFB().bind();
+              Engine.getSceneFB().clearColor();
+              Engine.worldRenderer.renderTransparent(world, fTime);
+//              glDisable(GL_BLEND);
+              glDepthFunc(GL_ALWAYS);
+              glDepthMask(false);
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pre1");
+              
+              
+              Engine.outRenderer.bindFB();
+              glEnable(GL_BLEND);
+              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pass1");
+              Engine.outRenderer.render(this.world, fTime, 1);
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred ReflAndBlur");
 
+//            glDisable(GL_CULL_FACE);
+              Engine.outRenderer.renderReflAndBlur(this.world, fTime);
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+          }
 
           FrameBuffer.unbindFramebuffer();
+
 
           
           
@@ -527,6 +532,10 @@ public class Game extends GameBase implements IErrorHandler {
           glDepthFunc(GL_LEQUAL);
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//          Shaders.textured.enable();
+//          glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
+//          Engine.drawFullscreenQuad();
+          Shader.disable();
           boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
           if (pass) {
               if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("forwardPass");
@@ -632,10 +641,6 @@ public class Game extends GameBase implements IErrorHandler {
           if (Game.DO_TIMING) TimingHelper.endSec();
           Shader.disable();
       }
-//    Shaders.textured.enable();
-//    glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
-//    Engine.drawFullscreenQuad();
-//    Shader.disable();
 
       if (this.gui != null) {
           this.gui.render(fTime, Mouse.getX(), Mouse.getY());
@@ -647,8 +652,10 @@ public class Game extends GameBase implements IErrorHandler {
               int ipZ = GameMath.floor(pz);
               int icX = ipX>>4;
               int icZ = ipZ>>4;
-              int chunksW = RegionRenderer.LENGTH_OVER * RegionRenderer.REGION_SIZE;
-              int chunkHalfW = ((RegionRenderer.LENGTH_OVER-1)/2) * RegionRenderer.REGION_SIZE;
+              int lenOver = RegionRenderer.LENGTH_OVER;
+              lenOver+=8;
+              int chunksW = lenOver * RegionRenderer.REGION_SIZE;
+              int chunkHalfW = ((lenOver-1)/2) * RegionRenderer.REGION_SIZE;
 //              int minChunkX = (ipX)-chunkW;
 //              int minChunkZ = (ipZ)-chunkW;
 //              int maxChunkX = (ipX)+chunkW;
@@ -663,8 +670,22 @@ public class Game extends GameBase implements IErrorHandler {
                       int worldChunkX = icX-chunkHalfW+cX;
                       int worldChunkZ = icZ-chunkHalfW+cZ;
                       Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
-                      t.setColorF(0, 1);
+                      
                       float border = 2;
+                      MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
+                      if (region == null) {
+                          t.setColorF(0xff0000, 1);    
+                      } else
+//                          if (!region.isRenderable) {
+//                          t.setColorF(0x555500, 1);
+//                      } else
+                          {
+                          int r = 0x777777;
+                          if (region.rX%2==region.rZ%2)
+                              r = 0;
+                              
+                          t.setColorF(r, 1);
+                      }
                       t.add(0, chunkWPx);
                       t.add(chunkWPx, chunkWPx);
                       t.add(chunkWPx, 0);
@@ -719,7 +740,8 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2222200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2222222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+            System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();
@@ -776,7 +798,7 @@ public class Game extends GameBase implements IErrorHandler {
             py = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
             pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
             if (this.world.lights.size() > 0) {
-//                DynamicLight l = this.world.lights.get(0);
+                DynamicLight l = this.world.lights.get(0);
 //                l.loc.x = px;
 //                l.loc.y = py;
 //                l.loc.z = pz;

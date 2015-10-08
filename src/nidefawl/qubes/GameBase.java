@@ -101,6 +101,10 @@ public abstract class GameBase implements Runnable {
         }
 
         initGLContext();
+        GameContext.lateInit();
+        if (this.showError == null) {
+            this.showError = GameContext.getInitError();
+        }
         mainLoop();
     }
 
@@ -205,6 +209,7 @@ public abstract class GameBase implements Runnable {
 
             // Configure our window
             glfwDefaultWindowHints();// optional, the current window hints are already the default
+            glfwWindowHint(GLFW_SAMPLES, 0);
             glfwWindowHint(GLFW_VISIBLE, GL_FALSE);// the window will stay hidden after creation
             glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);// the window will be resizable
             if (!debugContext) {
@@ -514,16 +519,15 @@ public abstract class GameBase implements Runnable {
         glColorMask(true, true, true, true);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-        glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
-        glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
-        glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
-        glHint(GL_FOG_HINT, GL_FASTEST);
-        glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, GL_FASTEST);
-        glHint(GL14.GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
-        glHint(GL20.GL_FRAGMENT_SHADER_DERIVATIVE_HINT, GL_FASTEST);
-        //        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-        //        GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
+        int fastNice = GL_NICEST;//GL_FASTEST;
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, fastNice);
+        glHint(GL_POINT_SMOOTH_HINT, fastNice);
+        glHint(GL_LINE_SMOOTH_HINT, fastNice);
+        glHint(GL_POLYGON_SMOOTH_HINT, fastNice);
+        glHint(GL_FOG_HINT, fastNice);
+        glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, fastNice);
+        glHint(GL14.GL_GENERATE_MIPMAP_HINT, fastNice);
+        glHint(GL20.GL_FRAGMENT_SHADER_DERIVATIVE_HINT, fastNice);
         setVSync(true);
         try {
             List<String> list = GL.validateCaps();

@@ -1,6 +1,7 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameMath;
 
 public class BlockFaceAttr {
@@ -39,6 +40,7 @@ public class BlockFaceAttr {
     private int type;
     private boolean reverse = false;
     private int faceDir;
+    private int pass;
 
     public void setTex(int tex) {
         this.tex = tex;
@@ -65,53 +67,56 @@ public class BlockFaceAttr {
         this.lightMaskBlock = block;
     }
     
-    public void put(int[] rawBuffer, int index) {
+    public void put(VertexBuffer vertexBuffer) {
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
-            rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
-            rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
-            rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
-            rawBuffer[index + 3] = Float.floatToRawIntBits(1);
-            rawBuffer[index + 4] = v.normal;
-            rawBuffer[index + 5] = Float.floatToRawIntBits(v.u);
-            rawBuffer[index + 6] = Float.floatToRawIntBits(v.v);
-            rawBuffer[index + 7] = v.rgba;
-            rawBuffer[index + 8] = tex|this.type<<16; //2x SHORT
-            rawBuffer[index + 9] = this.aoMask|this.faceDir<<16; // lower 8 bit = AO
-            rawBuffer[index + 10] = this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16; 
-            rawBuffer[index + 11] = v.dirOffset;
-            index += BLOCK_VERT_INT_SIZE;
+            vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+            vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+            vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+            vertexBuffer.put(Float.floatToRawIntBits(1));
+            vertexBuffer.put(v.normal);
+            vertexBuffer.put(Float.floatToRawIntBits(v.u));
+            vertexBuffer.put(Float.floatToRawIntBits(v.v));
+            vertexBuffer.put(v.rgba);
+            vertexBuffer.put(tex | this.type << 16 | this.pass << (16+12)); //2x SHORT
+            vertexBuffer.put(this.aoMask|this.faceDir<<16); // lower 8 bit = AO
+            vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16); 
+            vertexBuffer.put(v.dirOffset);
+            vertexBuffer.increaseVert();
         }
+        vertexBuffer.increaseFace();
         
     }
 
-    public void putBasic(int[] rawBuffer, int index) {
+    public void putBasic(VertexBuffer vertexBuffer) {
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
-            rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
-            rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
-            rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
-            rawBuffer[index + 3] = Float.floatToRawIntBits(1);
-            index += PASS_2_BLOCK_VERT_INT_SIZE;
+            vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+            vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+            vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+            vertexBuffer.put(Float.floatToRawIntBits(1));
+            vertexBuffer.increaseVert();
         }
+        vertexBuffer.increaseFace();
     }
 
 
-    public void putShadowTextured(int[] rawBuffer, int index) {
+    public void putShadowTextured(VertexBuffer vertexBuffer) {
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
-            rawBuffer[index + 0] = Float.floatToRawIntBits(this.xOff+v.x);
-            rawBuffer[index + 1] = Float.floatToRawIntBits(this.yOff+v.y);
-            rawBuffer[index + 2] = Float.floatToRawIntBits(this.zOff+v.z);
-            rawBuffer[index + 3] = Float.floatToRawIntBits(1);
-            rawBuffer[index + 4] = Float.floatToRawIntBits(v.u);
-            rawBuffer[index + 5] = Float.floatToRawIntBits(v.v);
-            rawBuffer[index + 6] = tex|this.type<<16; //2x SHORT
-            index += PASS_3_BLOCK_VERT_INT_SIZE;
+            vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+            vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+            vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+            vertexBuffer.put(Float.floatToRawIntBits(1));
+            vertexBuffer.put(Float.floatToRawIntBits(v.u));
+            vertexBuffer.put(Float.floatToRawIntBits(v.v));
+            vertexBuffer.put(tex|this.type<<16); //2x SHORT
+            vertexBuffer.increaseVert();
         }
+        vertexBuffer.increaseFace();
     }
 
     public void setAO(int aoMask) {
@@ -120,6 +125,10 @@ public class BlockFaceAttr {
     
     public void setType(int type) {
         this.type = type;
+        this.pass = Block.get(type).getRenderPass();
+    }
+    public void setPass(int pass) {
+        this.pass = pass;
     }
     
     /**

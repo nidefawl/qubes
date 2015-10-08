@@ -1,5 +1,8 @@
 package nidefawl.qubes.network.server;
 
+import java.util.Arrays;
+
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.logging.ErrorHandler;
@@ -45,7 +48,7 @@ public class ServerHandlerLogin extends ServerHandler {
         }
         this.name = packetAuth.name;
         this.time = System.currentTimeMillis();
-        this.state = STATE_CLIENT_SETTINGS;
+        this.state = STATE_SYNC;
         this.sendPacket(new PacketAuth(name, true));
     }
     
@@ -60,7 +63,6 @@ public class ServerHandlerLogin extends ServerHandler {
             PlayerManager mgr = this.server.getPlayerManager();
             System.out.println(this.name);
             Player exist = mgr.getPlayer(this.name);
-            System.out.println(this.name+"/"+exist);
             if (exist != null) {
                 exist.kick("Another player is using your account");
                 this.kick("Another player is using your account");
@@ -97,6 +99,23 @@ public class ServerHandlerLogin extends ServerHandler {
     @Override
     public void handleDisconnect(PacketDisconnect packetDisconnect) {
         this.conn.disconnect(Connection.REMOTE, packetDisconnect.message);
+    }
+    @Override
+    public void handleSync(PacketSyncBlocks packetAuth) {
+        if (this.state != STATE_SYNC) {
+            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            return;
+        }
+        this.time = System.currentTimeMillis();
+        this.state = STATE_CLIENT_SETTINGS;
+        short[] recvd = packetAuth.blockIds;
+        short[] data = Block.getAllRegistered();
+        if (!Arrays.equals(recvd, data)) {
+            this.conn.disconnect(Connection.LOCAL, "Registered blocks mismatch");
+            return;
+        }
+        PacketSyncBlocks p = new PacketSyncBlocks(data);
+        this.sendPacket(p);
     }
 
 }

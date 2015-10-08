@@ -3,6 +3,7 @@ package nidefawl.qubes.config;
 import java.io.File;
 import java.util.Locale;
 
+import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;
 
 public class WorkingEnv {
@@ -14,7 +15,8 @@ public class WorkingEnv {
     static File config;
     static File playerdata;
     
-	public static void init(Side side, String basePath) {
+	public static void init(String basePath) {
+	    Side side = GameContext.getSide();
         Locale.setDefault(Locale.US);
         workingDir = new File(basePath);
         workingDir.mkdirs();

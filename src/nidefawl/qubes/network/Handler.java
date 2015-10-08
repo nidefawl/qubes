@@ -7,9 +7,10 @@ import nidefawl.qubes.network.packet.*;
 public abstract class Handler {
     public final static int STATE_HANDSHAKE = 0;
     public final static int STATE_AUTH      = 1;
-    public final static int STATE_CLIENT_SETTINGS = 2;
-    public final static int STATE_CONNECTED = 3;
-    public final static int STATE_PLAYING = 4;
+    public final static int STATE_SYNC = 2;
+    public final static int STATE_CLIENT_SETTINGS = 3;
+    public final static int STATE_CONNECTED = 4;
+    public final static int STATE_PLAYING = 5;
 
     public abstract boolean isServerSide();
 
@@ -119,5 +120,11 @@ public abstract class Handler {
     public void handleTeleport(PacketSTeleport packetSTeleport) {
         // TODO Auto-generated method stub
         
+    }
+
+    /**
+     * @param packetSyncBlocks
+     */
+    public void handleSync(PacketSyncBlocks packetSyncBlocks) {
     }
 }

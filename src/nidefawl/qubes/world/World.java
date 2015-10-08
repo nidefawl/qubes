@@ -262,7 +262,7 @@ public abstract class World implements IBlockWorld {
     }
 
     public void removeLight(int i) {
-        if (this.lights.size() > 1) {
+        if (this.lights.size() > 0) {
             this.lights.remove(this.lights.size()-1);
         }
     }
@@ -279,7 +279,7 @@ public abstract class World implements IBlockWorld {
 //            intens+=1;
 //            intens = 2.7f;
 //        }
-      intens += 142.7f;
+      intens += 4.7f;
         DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
         this.lights.add(light);
     }
@@ -405,7 +405,9 @@ public abstract class World implements IBlockWorld {
         if (offsetId < 0) {
             offsetId = this.getType(ix, iy, iz);
         }
-        Block block = Block.block[offsetId];
-        return block.isNormalBlock(this, ix, iy, iz);
+        return Block.get(offsetId).isNormalBlock(this, ix, iy, iz);
+    }
+    public Random getRand() {
+        return this.rand;
     }
 }

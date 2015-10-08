@@ -21,6 +21,6 @@ public class BlockSand extends Block {
      */
     @Override
     public int getColorFromSide(int side) {
-        return 0x989898;
+        return super.getColorFromSide(side);//0x989898
     }
 }

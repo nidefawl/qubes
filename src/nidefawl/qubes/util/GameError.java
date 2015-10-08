@@ -4,6 +4,12 @@ public class GameError extends RuntimeException {
 
     private static final long serialVersionUID = -4621355890152198087L;
 
+    public GameError(Throwable t) {
+        super(t);
+    }
+    public GameError(Exception t) {
+        super(t);
+    }
     public GameError(String string) {
         super(string);
     }

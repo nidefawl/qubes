@@ -22,7 +22,7 @@ public class CommandHandler {
         this.register(CommandToCoord.class);
     }
 
-    private void register(Class<? extends Command> class1) {
+    public void register(Class<? extends Command> class1) {
         try {
             Command c = (Command) class1.getConstructors()[0].newInstance();
             commands.add(c);

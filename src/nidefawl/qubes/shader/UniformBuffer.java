@@ -206,9 +206,9 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.y);
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
-        float ambIntens = 0.08F;
+        float ambIntens = 0.18F;
         float diffIntens = 0.52F;
-        float specIntens = 0.12F;
+        float specIntens = 0.42F;
         LightInfo.put(ambIntens);
         LightInfo.put(ambIntens);
         LightInfo.put(ambIntens);

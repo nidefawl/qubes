@@ -9,15 +9,15 @@ public class Dir {
     public final static int DIR_NEG_Z = 5;
 
     public static final int getDirX(int s) {
-        return s == 1 ? -1 : s == 0 ? 1 : 0;
+        return s == DIR_NEG_X ? -1 : s == DIR_POS_X ? 1 : 0;
     }
 
     public static final int getDirZ(int s) {
-        return s == 5 ? -1 : s == 4 ? 1 : 0;
+        return s == DIR_NEG_Z ? -1 : s == DIR_POS_Z ? 1 : 0;
     }
 
     public static final int getDirY(int s) {
-        return s == 3 ? -1 : s == 2 ? 1 : 0;
+        return s == DIR_NEG_Y ? -1 : s == DIR_POS_Y ? 1 : 0;
     }
 
     /**

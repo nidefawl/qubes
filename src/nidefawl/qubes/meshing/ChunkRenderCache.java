@@ -133,8 +133,7 @@ public class ChunkRenderCache implements IBlockWorld {
         if (offsetId < 0) {
             offsetId = this.getType(ix, iy, iz);
         }
-        Block block = Block.block[offsetId];
-        return block != null && block.isNormalBlock(this, ix, iy, iz);
+        return Block.get(offsetId).isNormalBlock(this, ix, iy, iz);
     }
 
     @Override

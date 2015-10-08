@@ -12,7 +12,8 @@ public class AssetTexture extends Asset {
     private int width;
     private int height;
     private byte[] data;
-
+    int slot = -1;
+    
     public AssetTexture() {
     }
 
@@ -78,5 +79,13 @@ public class AssetTexture extends Asset {
         }
         this.data = newData;
         this.height = this.width;
+    }
+
+    public void setSlot(int slot) {
+        this.slot = slot;
+    }
+
+    public int getSlot() {
+        return slot;
     }
 }

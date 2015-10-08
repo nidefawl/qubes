@@ -11,7 +11,9 @@ import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.ServerConfig;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.event.Events;
 import nidefawl.qubes.logging.IErrorHandler;
+import nidefawl.qubes.modules.ModuleLoader;
 import nidefawl.qubes.network.server.NetworkServer;
 import nidefawl.qubes.network.server.ServerHandlerLogin;
 import nidefawl.qubes.server.commands.CommandHandler;
@@ -28,7 +30,7 @@ public class GameServer implements Runnable, IErrorHandler {
 	Thread handshakeThread;
 	NetworkServer networkServer;
 	private boolean running;
-	private boolean finished;
+	private boolean finished = false;
     private WorldServer[] worlds;
     private HashMap<UUID, WorldServer> worldsMap = new HashMap<>();
     static final long TICK_LEN_MS = 50;
@@ -53,7 +55,8 @@ public class GameServer implements Runnable, IErrorHandler {
 		try {
 			this.running = true;
 			load();
-			CompressThread.startNewThread(this);
+            Events.onServerStarted(this);
+            CompressThread.startNewThread(this);
 			networkServer.startListener();
 			System.out.println("server is running");
 			while (this.running) {
@@ -65,6 +68,7 @@ public class GameServer implements Runnable, IErrorHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
+		    onShutdown();
 			System.out.println("server ended");
 			this.finished = true;
 		}
@@ -195,23 +199,23 @@ public class GameServer implements Runnable, IErrorHandler {
         this.running = false;
     }
 
-	public void halt() {
-		if (this.running) {
-			this.running = false;
+	private void onShutdown() {
+		if (!this.finished) {
+			this.finished = true;
 			System.out.println("Shutting down server...");
             try {
                 save(true);
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-			if (this.worlds != null) {
-	            for (int i = 0; i < this.worlds.length; i++) {
-	                try {
-	                    this.worlds[i].onLeave();
-	                } catch (Throwable t) {
-	                    t.printStackTrace();
-	                }
-	            }
+            if (this.worlds != null) {
+                for (int i = 0; i < this.worlds.length; i++) {
+                    try {
+                        this.worlds[i].onLeave();
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                    }
+                }
             }
             if (this.networkServer != null) {
                 try {

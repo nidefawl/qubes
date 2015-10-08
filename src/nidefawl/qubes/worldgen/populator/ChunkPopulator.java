@@ -16,7 +16,7 @@ import nidefawl.qubes.world.WorldSettings;
  * Copyright: Michael Hept
  */
 public class ChunkPopulator implements IChunkPopulator {
-    final static String POPULATOR_NAME = "default";
+    public final static String POPULATOR_NAME = "default";
 
     private final WorldServer world;
     final TreeGen1 tree = new TreeGen1();

@@ -11,7 +11,7 @@ import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
 public class TerrainGenBlockTest implements ITerrainGen {
-    final static String GENERATOR_NAME = "block_test";
+    public final static String GENERATOR_NAME = "block_test";
 
     private WorldServer world;
     private long  seed;

@@ -57,8 +57,10 @@ public class BlockTextureArray {
         int maxTextures = 0;
         String maxTexture = null;
         HashMap<Integer, ArrayList<AssetTexture>> text = new HashMap<>();
-        for (int i = 0; i < Block.block.length; i++) {
-            Block b = Block.block[i];
+        Block[] blocks = Block.block;
+        int len = blocks.length;
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
             if (b != null) {
                 String[] textures = b.getTextures();
                 if (textures != null) {
@@ -122,26 +124,33 @@ public class BlockTextureArray {
             ArrayList<AssetTexture> blockTexture = entry.getValue();
             for (int i = 0; i < blockTexture.size(); i++) {
                 AssetTexture tex = blockTexture.get(i);
-                byte[] data = tex.getData();
-                TextureUtil.clampAlpha(data, this.tileSize, this.tileSize);
-                directBuf = put(directBuf, data);
-                int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
-                int mipmapSize = this.tileSize;
-                for (int m = 0; m < w; m++) {
+                int reuseslot = tex.getSlot();
+                if (reuseslot < 0) {
+                    byte[] data = tex.getData();
+                    TextureUtil.clampAlpha(data, this.tileSize, this.tileSize);
                     directBuf = put(directBuf, data);
-//                  System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
-                    GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m,                     //Mipmap number
-                          0, 0, slot,                 //xoffset, yoffset, zoffset
-                          mipmapSize, mipmapSize, 1,                 //width, height, depth
-                          GL_RGBA,                //format
-                          GL_UNSIGNED_BYTE,      //type
-                          directBuf);                //pointer to data
-                    Engine.checkGLError("GL12.glTexSubImage3D");
-                    mipmapSize /= 2;
-                    data = TextureUtil.makeMipMap(data, mipmapSize, mipmapSize, avg);
+                    int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
+                    int mipmapSize = this.tileSize;
+                    for (int m = 0; m < w; m++) {
+                        directBuf = put(directBuf, data);
+//                      System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
+                        GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m,                     //Mipmap number
+                              0, 0, slot,                 //xoffset, yoffset, zoffset
+                              mipmapSize, mipmapSize, 1,                 //width, height, depth
+                              GL_RGBA,                //format
+                              GL_UNSIGNED_BYTE,      //type
+                              directBuf);                //pointer to data
+                        Engine.checkGLError("GL12.glTexSubImage3D");
+                        mipmapSize /= 2;
+                        data = TextureUtil.makeMipMap(data, mipmapSize, mipmapSize, avg);
+                    }
+                    tex.setSlot(slot);
+                    textures[blockId << 4 | i] = slot;
+                    slot++;
+                } else {
+
+                    textures[blockId << 4 | i] = reuseslot;
                 }
-                textures[blockId << 4 | i] = slot;
-                slot++;
             }
         }
         boolean useAnisotrophic = true;

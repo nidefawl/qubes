@@ -2,8 +2,11 @@ package nidefawl.qubes.block;
 
 import java.util.ArrayList;
 
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.meshing.ChunkRenderCache;
+import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.vec.*;
@@ -16,7 +19,10 @@ public class Block {
     public static final int BLOCK_MASK = 0xFF;
     public static final int NUM_BLOCKS = 256;
     public static int HIGHEST_BLOCK_ID = 0;
+    private static short[] registeredblocks;
     public static final Block[] block = new Block[NUM_BLOCKS];
+    public final static String[] NO_TEXTURES = new String[0];
+    public final static Block air = new BlockAir(0).setName("air");
     public final static Block stone = new Block(1).setName("stone");
     public final static Block grass = new BlockGrass(2).setName("grass").setTextures("grass_top", "grass_side", "grass_side_overlay");
     public final static Block dirt = new Block(3).setName("dirt");
@@ -33,24 +39,48 @@ public class Block {
     public final static Block leaves_jungle = new BlockLeaves(14).setName("leaves_jungle");
     public final static Block leaves_spruce = new BlockLeaves(15).setName("leaves_spruce");
     public final static Block leaves_oak = new BlockLeaves(16).setName("leaves_oak");
-    public final static Block longgrass = new BlockPlant(17).setName("longgrass").setTextures("tallgrass");
+    public final static Block longgrass = new BlockLongGrass(17).setName("longgrass").setTextures("tallgrass");
     public final static Block slab = new BlockSlab(18, stone).setName("stoneslab").setTextures("stone_slab_side", "stone_slab_top");
-    public final static Block stairs = new BlockStairs(19, stone).setName("stonestairs").setTextures(new String[0]);
-    static {
-        ArrayList<Block> bs = new ArrayList<>();
-        for (Block b : block) {
+    public final static Block stairs = new BlockStairs(19, stone).setName("stonestairs");
+
+    public static void preInit() {
+//        ArrayList<Block> bs = new ArrayList<>();
+//        for (Block b : block) {
+//            if (b != null) {
+//                if (b.isFullBB() && b.getRenderType() == 0 && b.getRenderPass() == 0)
+//                    bs.add(b);
+//            }
+//        }
+//        int idx = HIGHEST_BLOCK_ID+1;
+//        for (Block b : bs){
+//            new BlockSlab(idx++, b).setName(b.getName()+"_slab").setTextures(new String[0]);
+//        }
+//        for (Block b : bs){
+//            new BlockStairs(idx++, b).setName(b.getName()+"_stairs").setTextures(new String[0]);
+//        }
+    
+    }
+    public static void postInit() {
+        for (int i = 0; i < Block.block.length; i++) {
+            Block b = Block.block[i];
             if (b != null) {
-                if (b.isFullBB() && b.getRenderType() == 0 && b.getRenderPass() == 0)
-                    bs.add(b);
+                if (b.textures == null) {
+                    b.textures = new String[] { "textures/blocks/"+b.name+".png" };
+                }
             }
         }
-        int idx = HIGHEST_BLOCK_ID+1;
-        for (Block b : bs){
-            new BlockSlab(idx++, b).setName(b.getName()+"_slab").setTextures(new String[0]);
+
+        ArrayList<Short> list = Lists.newArrayList();
+        for (int i = 0; i < block.length; i++) {
+            if (i == 0 || block[i] != null) {
+                list.add(Short.valueOf((short)i));
+            }
         }
-        for (Block b : bs){
-            new BlockStairs(idx++, b).setName(b.getName()+"_stairs").setTextures(new String[0]);
+        short[] data = new short[list.size()];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = list.get(i);
         }
+        registeredblocks = data;
     }
 
     public final int id;
@@ -59,18 +89,21 @@ public class Block {
     String[] textures;
     final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
 
-    Block(int id, boolean transparent) {
+    protected Block(int id, boolean transparent) {
+        if (id < 0) {
+            id = HIGHEST_BLOCK_ID+1;
+        }
         this.id = id;
         if (this.id > HIGHEST_BLOCK_ID)
             HIGHEST_BLOCK_ID = this.id;
         block[id] = this;
         this.transparent = transparent;
     }
-    Block(int id) {
+    public Block(int id) {
         this(id, false);
     }
     
-    Block setName(String name) {
+    public Block setName(String name) {
         this.name = name;
         return this;
     }
@@ -80,8 +113,13 @@ public class Block {
 
     public Block setTextures(String...list) {
         for (int a = 0; a < list.length; a++) {
-            list[a] = "textures/blocks/" + list[a] + ".png";
+             list[a] = "textures/blocks/" + list[a] + ".png";
         }
+        this.textures = list;
+        return this;
+    }
+
+    public Block setAbsTextures(String...list) {
         this.textures = list;
         return this;
     }
@@ -99,27 +137,18 @@ public class Block {
     public int getTextureFromSide(int faceDir) {
         return BlockTextureArray.getInstance().getTextureIdx(this.id, 0);
     }
-    static {
-        for (int i = 0; i < Block.block.length; i++) {
-            Block b = Block.block[i];
-            if (b != null) {
-                if (b.textures == null) {
-                    b.textures = new String[] { "textures/blocks/"+b.name+".png" };
-                }
-            }
-        }
-    }
+    
     public int getRenderPass() {
         return 0;
     }
     public int getRenderType() {
         return 0;
     }
-    public static boolean isValid(int i) {
+    public final static boolean isValid(int i) {
         return i > 0 && i < block.length && block[i] != null;
     }
-    public static Block get(int i) {
-        return isValid(i) ? block[i] : null;
+    public final static Block get(int i) {
+        return block[i];
     }
     public boolean applyAO() {
         return true;
@@ -141,7 +170,7 @@ public class Block {
         return 0;
     }
     public final static boolean isOpaque(int typeId) {
-        return typeId != 0 && !block[typeId].isTransparent();
+        return !block[typeId].isTransparent();
     }
     
     public AABBFloat getRenderBlockBounds(IBlockWorld w, int ix, int iy, int iz, AABBFloat bb) {
@@ -284,5 +313,20 @@ public class Block {
     }
     public boolean isFullBB() {
         return true;
+    }
+    public boolean isOccludingBlock(IBlockWorld w, int x, int y, int z) {
+        return isOccluding();
+    }
+    /**
+     * @return
+     */
+    public static short[] getAllRegistered() {
+        return registeredblocks;
+    }
+    
+    public void getQuarters(IBlockWorld w, int x, int y, int z, int[] quarters) {
+        for (int i = 0; i < quarters.length; i++) {
+            quarters[i] = this.id;
+        }
     }
 }

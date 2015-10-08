@@ -8,6 +8,7 @@ import java.util.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import nidefawl.qubes.GameRegistry;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.blocklight.BlockLightThread;
 import nidefawl.qubes.chunk.Chunk;
@@ -16,7 +17,6 @@ import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketSWorldTime;
-import nidefawl.qubes.server.GameRegistry;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.Flags;
@@ -197,12 +197,12 @@ public class WorldServer extends World {
         }
         int blockX = chunk.x<<SIZE_BITS | x;
         int blockZ = chunk.z<<SIZE_BITS | z;
-        this.chunkTracker.flagLights(chunk.x, chunk.z, x, Math.max(min-1, 0), z, x, max, z);
+        this.chunkTracker.flagLights(chunk.x, chunk.z, x, Math.max(min-1, 0), z, x, Math.min(max+1, worldHeightMinusOne), z);
         
         //run from max y to min y, check if a neighbour can receive light and doesn't see the sky
         // if so, trigger a sun light update on that block
         for (int y3 = max; y3 >= min; y3--) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) { // < 5 because we also want center update (offx == 0 and offz == 0)
                 int offx = i==0?-1:i==2?1:0;
                 int offz = i==1?-1:i==3?1:0;
                 int bX = offx + blockX;

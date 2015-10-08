@@ -5,6 +5,7 @@ import java.util.zip.Inflater;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkDataSliced2;
@@ -71,18 +72,31 @@ public class ClientHandler extends Handler {
         this.client.sendPacket(new PacketAuth(Game.instance.getProfile().getName()));
     }
     @Override
-    public void handleAuth(PacketAuth packetAuth) {
-        if (this.state != STATE_AUTH) {
+    public void handleSync(PacketSyncBlocks packetAuth) {
+        if (this.state != STATE_SYNC) {
             this.client.disconnect("Invalid packet");
             return;
         }
         this.state = STATE_CLIENT_SETTINGS;
         this.time = System.currentTimeMillis();
+        PlayerProfile profile = Game.instance.getProfile();
+        this.player = new PlayerSelf(this, profile);
+        this.sendPacket(new PacketCSettings(Game.instance.settings.chunkLoadDistance));
+    }
+    @Override
+    public void handleAuth(PacketAuth packetAuth) {
+        if (this.state != STATE_AUTH) {
+            this.client.disconnect("Invalid packet");
+            return;
+        }
+        this.state = STATE_SYNC;
+        this.time = System.currentTimeMillis();
         if (packetAuth.success) {
             PlayerProfile profile = Game.instance.getProfile();
             profile.setIngameName(packetAuth.name);
-            this.player = new PlayerSelf(this, profile);
-            this.sendPacket(new PacketCSettings(Game.instance.settings.chunkLoadDistance));
+            short[] data = Block.getAllRegistered();
+            PacketSyncBlocks p = new PacketSyncBlocks(data);
+            this.sendPacket(p);
         } else {
             this.client.onKick(Connection.REMOTE, "Invalid auth");
         }

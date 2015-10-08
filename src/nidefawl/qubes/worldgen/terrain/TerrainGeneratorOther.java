@@ -15,7 +15,7 @@ import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
 public class TerrainGeneratorOther implements ITerrainGen {
-    final static String GENERATOR_NAME = "terrain_other";
+    public final static String GENERATOR_NAME = "terrain_other";
 
     private WorldServer world;
     private long  seed;

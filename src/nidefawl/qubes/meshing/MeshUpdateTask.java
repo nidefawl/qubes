@@ -12,6 +12,7 @@ import java.util.List;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
@@ -31,15 +32,14 @@ public class MeshUpdateTask {
     public int              worldInstance;
     private boolean         meshed;
     private MeshedRegion mr;
-    final int[][] buffers = new int[NUM_PASSES][];
-    final int[] vertexCount = new int[NUM_PASSES];
-    final int[] bufferIdx = new int[NUM_PASSES];
+    final VertexBuffer[] vbuffer = new VertexBuffer[NUM_PASSES];
+    
     private int shadowDrawMode;
     
     public MeshUpdateTask() {
-//        for (int i = 0; i < this.tess.length; i++) {
-//            this.tess[i] = new Tess(true);
-//        }
+        for (int i = 0; i < this.vbuffer.length; i++) {
+            this.vbuffer[i] = new VertexBuffer(1024*1024*2);
+        }
     }
 
     public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
@@ -65,9 +65,7 @@ public class MeshUpdateTask {
             this.mr.preUploadBuffers();
 
             for (int i = 0; i < NUM_PASSES; i++) {
-                if (this.buffers[i] == null) 
-                    this.buffers[i] = new int[0];
-                this.mr.uploadBuffer(i, this.buffers[i], this.bufferIdx[i], this.vertexCount[i], this.shadowDrawMode);
+                this.mr.uploadBuffer(i, this.vbuffer[i], this.shadowDrawMode);
             }
 //            this.mr.compileDisplayList(this.tess);
             Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -97,6 +95,7 @@ public class MeshUpdateTask {
 //            return true;
 //        }
         World w = Game.instance.getWorld();
+        
         if (w != null) {
             try {
               int xOff = this.mr.rX << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS);
@@ -106,65 +105,29 @@ public class MeshUpdateTask {
                 this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
-                int FACE_SHADOW_INT_SIZE = PASS_2_BLOCK_FACE_INT_SIZE;
-                if (shadowDrawMode > 0) {
-                    FACE_SHADOW_INT_SIZE = PASS_3_BLOCK_FACE_INT_SIZE;
-                }
                 for (int i = 0; i < PASS_LOD && this.mr.isValid; i++) {
-                    this.vertexCount[i] = 0;
-                    this.bufferIdx[i] = 0;
+                    vbuffer[i].reset();
                     List<BlockFace> mesh = this.mesher.getMeshes(i);
-                    
                     int numMeshedFaces = mesh.size();
-                    int FACE_INT_SIZE = BLOCK_FACE_INT_SIZE;
-                    if (i == PASS_SHADOW_SOLID) { 
-                        FACE_INT_SIZE = FACE_SHADOW_INT_SIZE;
-                    }
-                    int extraBufferLen = (int)(numMeshedFaces*3.3);
-                    checkBufferSize(i, extraBufferLen * FACE_INT_SIZE);
-                    int numFaces = 0;
-                    int[] buffer = this.buffers[i];
                     attr.setOffset(xOff, yOff, zOff);
                     for (int m = 0; m < numMeshedFaces; m++) {
                         BlockFace face = mesh.get(m);
                         if (i == PASS_SHADOW_SOLID) {
                             if (shadowDrawMode == 0)
-                                numFaces += face.drawBasic(attr, buffer, numFaces*FACE_INT_SIZE);
+                                face.drawBasic(attr, vbuffer[i]);
                             else
-                                numFaces += face.drawShadowTextured(attr, buffer, numFaces*FACE_INT_SIZE);
+                                face.drawShadowTextured(attr, vbuffer[i]);
                         } else {
-//                            int fdir = face.bs.axis<<1|face.bs.face;
-//                            if (fdir==Dir.DIR_POS_X||fdir==Dir.DIR_POS_Z)
-//                                continue;
-                            numFaces += face.draw(attr, buffer, numFaces*FACE_INT_SIZE);
-                        }
-                        if (numFaces >= extraBufferLen) {
-                            extraBufferLen = (int)(extraBufferLen*2.3);
-                            reallocBuffer(i, extraBufferLen * FACE_INT_SIZE);
-//                            throw new RuntimeException("EXCEEDING BUFFER SIZE, IMPL REALLOC WITH ARRAY COPY");
-                            
+                            face.draw(attr, vbuffer[i]);
                         }
                     }
-                    
-                   
-                    this.bufferIdx[i] = numFaces*FACE_INT_SIZE;
-                    this.vertexCount[i] = numFaces*4;
                 }
-                this.vertexCount[PASS_LOD] = 0;
-                this.bufferIdx[PASS_LOD] = 0;
+                vbuffer[PASS_LOD].reset();
                 int n = this.mesher.getRenderType1Blocks();
                 if (n > 0) {
-                    int approxFaces = (int)(n*10);
-                    int FACE_INT_SIZE = BLOCK_FACE_INT_SIZE;
-                    int lodBufferSize = checkBufferSize(PASS_LOD, approxFaces * FACE_INT_SIZE);
-                    int shadowBufferSize = this.buffers[PASS_SHADOW_SOLID].length;
-                    int shadowBufferIndex = this.bufferIdx[PASS_SHADOW_SOLID];
-                    int requiredShadowBufferSize = shadowBufferIndex + approxFaces * FACE_SHADOW_INT_SIZE;
-                    reallocBuffer(PASS_SHADOW_SOLID, requiredShadowBufferSize);
-                    int numFaces = 0;
                     attr.setOffset(0, 0, 0);
-                    blockRenderer.setShadowBuffer(this.buffers[PASS_SHADOW_SOLID], shadowBufferIndex, this.shadowDrawMode, FACE_SHADOW_INT_SIZE);
-                    blockRenderer.preRender(w, this.buffers[PASS_LOD], 0, FACE_INT_SIZE, this.ccache, attr);
+                    blockRenderer.setBuffers(this.vbuffer, this.shadowDrawMode);
+                    blockRenderer.preRender(w, this.ccache, attr);
                     for (int j = 0; j < n; j++) {
                         short c = this.mesher.getBlockPos(j);
                         int z = (c) & REGION_SIZE_BLOCKS_MASK;
@@ -175,17 +138,8 @@ public class MeshUpdateTask {
                         x += xOff;
                         y += yOff;
                         z += zOff;
-                        int faces = blockRenderer.render(PASS_LOD, x, y, z);
-                        numFaces += faces;
-                        if (numFaces*FACE_INT_SIZE >= lodBufferSize) {
-                            throw new GameError("BUFFER INDEX OUT OF BOUNDS, some block is drawing too many faces. implement logic to handle reallocation of buffer");
-                        }   
+                        blockRenderer.render(PASS_LOD, x, y, z);
                     }
-                   
-                    this.bufferIdx[PASS_LOD] = numFaces*FACE_INT_SIZE;
-                    this.vertexCount[PASS_LOD] = numFaces*4;
-                    this.bufferIdx[PASS_SHADOW_SOLID] += this.blockRenderer.numShadowFaces*FACE_SHADOW_INT_SIZE;
-                    this.vertexCount[PASS_SHADOW_SOLID] += this.blockRenderer.numShadowFaces*4;
                 }
             
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
@@ -199,24 +153,6 @@ public class MeshUpdateTask {
         return false;
     }
 
-    private int checkBufferSize(int bufferIdx, int length) {
-        if (this.buffers[bufferIdx] == null || this.buffers[bufferIdx].length < length) {
-            int newSize = (length+2048);
-//            System.out.println("realloc buffer to length "+newSize);
-            this.buffers[bufferIdx] = new int[newSize];
-        }
-        return this.buffers[bufferIdx].length;
-    }
-    private int reallocBuffer(int bufferIdx, int length) {
-        if (this.buffers[bufferIdx] == null || this.buffers[bufferIdx].length < length) {
-            int newSize = (length+2048);
-            System.out.println("realloc buffer to length "+newSize);
-            int newBuffer[] = new int[newSize];
-            System.arraycopy(this.buffers[bufferIdx], 0, newBuffer, 0, this.buffers[bufferIdx].length);
-            this.buffers[bufferIdx] = newBuffer;
-        }
-        return this.buffers[bufferIdx].length;
-    }
 
     public MeshedRegion getRegion() {
         return this.mr;

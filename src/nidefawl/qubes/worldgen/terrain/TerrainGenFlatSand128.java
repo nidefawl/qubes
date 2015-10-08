@@ -8,7 +8,7 @@ import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
 public class TerrainGenFlatSand128 implements ITerrainGen {
-    final static String GENERATOR_NAME = "flat_sand";
+    public final static String GENERATOR_NAME = "flat_sand";
 
     private WorldServer world;
 

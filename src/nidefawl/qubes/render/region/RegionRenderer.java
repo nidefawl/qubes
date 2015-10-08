@@ -212,7 +212,21 @@ public class RegionRenderer {
         
     }
 
-    private MeshedRegion getByRegionCoord(int x, int y, int z) {
+    public MeshedRegion getByChunkCoord(int x, int y, int z) {
+        if (y < 0) {
+            y = renderChunkY;
+        }
+        x>>=REGION_SIZE_BITS;
+        z>>=REGION_SIZE_BITS;
+        x -= this.renderChunkX-RENDER_DISTANCE;
+        z -= this.renderChunkZ-RENDER_DISTANCE;
+        x+=OFFS_OVER;
+        z+=OFFS_OVER;
+        if (x>=0&&x<LENGTH_OVER&&z>=0&&z<LENGTH_OVER && y >= 0 && y < HEIGHT_SLICES)
+            return this.regions[z*LENGTH_OVER+x][y];
+        return null;
+    }
+    public MeshedRegion getByRegionCoord(int x, int y, int z) {
         x -= this.renderChunkX-RENDER_DISTANCE;
         z -= this.renderChunkZ-RENDER_DISTANCE;
         x+=OFFS_OVER;
@@ -322,7 +336,7 @@ public class RegionRenderer {
 //        PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE
         int drawMode = this.drawMode < 0 ? (BlockFaceAttr.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         this.numRegions=0;
-        int LOD_DISTANCE = 6; //TODO: move solid/slab blocks out of LOD PASS
+        int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
         for (int dist = 0; dist < 2; dist++)  {
             for (int i = 0; i < size; i++) {
@@ -368,11 +382,12 @@ public class RegionRenderer {
                     continue;
                 }
                 if (r.hasPass(PASS_SOLID)) {
-                    r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
-                }
-                if (dist==0&&r.hasPass(PASS_LOD)) {
-                    r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
-                }
+//                  System.out.println(glGetInteger(GL_DEPTH_FUNC));
+                  r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+              }
+              if (dist==0&&r.hasPass(PASS_LOD)) {
+                  r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+              }
             }
             if (dist == 0) {
                 cur = worldRenderer.terrainShaderFar;

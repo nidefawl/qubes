@@ -52,9 +52,13 @@ public class BlockPlacer {
         }
 //        int x, int y, int z, float fx, float fy, float fz
         Block b = Block.get(type);
+        if (b == null) {
+            this.player.kick("Invalid block received");
+            return;
+        }
         int typeAt = getWorld().getType(pos);
         Block bAgainst = Block.get(typeAt);
-        if (b == null) {
+        if (b == Block.air) {
             tryHarvest(pos.x, pos.y, pos.z);
         } else {
             int offset = bAgainst == null ? -1 : bAgainst.placeOffset(this, pos, fpos, face, type, data);

@@ -11,12 +11,12 @@ import nidefawl.qubes.world.World;
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
-public class BlockPlant extends Block {
+public class BlockPlantCrossedSquares extends Block {
 
     /**
      * @param id
      */
-    BlockPlant(int id) {
+    public BlockPlantCrossedSquares(int id) {
         super(id, true);
     }
 
@@ -56,6 +56,9 @@ public class BlockPlant extends Block {
     }
     @Override
     public boolean isFullBB() {
+        return false;
+    }
+    public boolean applyRandomOffset() {
         return false;
     }
 }

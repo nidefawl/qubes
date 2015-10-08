@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.server;
+package nidefawl.qubes;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -9,6 +9,8 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
+import nidefawl.qubes.modules.ModuleLoader;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
@@ -39,7 +41,7 @@ public class GameRegistry {
             ITerrainGen igen = cstr.newInstance(worldServer, settings.getSeed(), settings);
             return igen;
         } catch (Exception e) {
-            throw new RuntimeException("Cannot create terrain generator "+gen, e);
+            throw new GameError("Cannot create terrain generator "+gen, e);
         }
     }
 
@@ -60,7 +62,38 @@ public class GameRegistry {
             IChunkPopulator igen = cstr.newInstance(worldServer, settings.getSeed(), settings);
             return igen;
         } catch (Exception e) {
-            throw new RuntimeException("Cannot create terrain populator "+gen, e);
+            throw new GameError("Cannot create terrain populator "+gen, e);
         }
+    }
+
+    /**
+     * @param name
+     * @return
+     */
+    public static Class<? extends ITerrainGen> getTerrainGen(String name) {
+        return terrainGenerators.get(name);
+    }
+
+    /**
+     * @param name
+     * @return
+     */
+    public static Class<? extends IChunkPopulator> getTerrainPop(String name) {
+        return terrainPopulators.get(name);
+    }
+    
+    public static void registerChunkPopulator(String name, Class<? extends IChunkPopulator> implementingClass) {
+        Class<? extends IChunkPopulator> alreadyDef = GameRegistry.getTerrainPop(name);
+        if (alreadyDef != null) {
+            throw new GameError("Generator with name '" + name + "' already defined (" + alreadyDef + ")");
+        }
+        terrainPopulators.put(name, implementingClass);
+    }
+    public static void registerTerrainGenerator(String name, Class<? extends ITerrainGen> implementingClass) {
+        Class<? extends ITerrainGen> alreadyDef = GameRegistry.getTerrainGen(name);
+        if (alreadyDef != null) {
+            throw new GameError("Generator with name '"+name+"' already defined ("+alreadyDef+")");
+        }
+        terrainGenerators.put(name, implementingClass);
     }
 }

@@ -33,6 +33,7 @@ public abstract class Packet {
         register(PacketChatChannels.class, 17, true, false);
         register(PacketSWorldTime.class, 18, true, false);
         register(PacketSTeleport.class, 19, true, false);
+        register(PacketSyncBlocks.class, 20, true, true);
     }
     public Packet() {
     }

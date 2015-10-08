@@ -3,37 +3,34 @@
  */
 package nidefawl.qubes.meshing;
 
-import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockStairs;
+import static nidefawl.qubes.render.WorldRenderer.*;
+import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCKS_MASK;
+import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MASK;
+
+import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 
-import static nidefawl.qubes.meshing.BlockFaceAttr.*;
-import static nidefawl.qubes.render.region.RegionRenderer.*;
-import static nidefawl.qubes.render.WorldRenderer.*;
-
 /**
- * @author Michael Hept 2015 Copyright: Michael Hept
+ * @author Michael Hept 2015 
+ * Copyright: Michael Hept
  */
 public class BlockRenderer {
     final static int[][] faceVDirections = BlockFace.faceVDirections;
-    BlockSurface bs = new BlockSurface();
+    final BlockSurface bs = new BlockSurface();
     private ChunkRenderCache ccache;
     private World            w;
     private BlockFaceAttr    attr;
-    int[]                    buffer;
-    int bufferIdx;
-    int faceSize;
+    
     final private AABBFloat bb = new AABBFloat();
     
-    int[]       bufferShadow;
-    int         shadowBufferIndex;
     private int shadowDrawMode;
-    private int shadowFaceSize;
-    public int  numShadowFaces;
+    
+    boolean extendFaces = true;
+    private VertexBuffer[] vbuffer;
     
     public void setDefaultBounds() {
         bb.set(0, 0, 0, 1, 1, 1);
@@ -41,25 +38,21 @@ public class BlockRenderer {
 
     /**
      * @param w
-     * @param buffer 
-     * @param faceSize 
      * @param ccache
      */
-    public void preRender(World w, int[] buffer, int bufferIdx, int faceSize, ChunkRenderCache ccache, BlockFaceAttr attr) {
+    public void preRender(World w, ChunkRenderCache ccache, BlockFaceAttr attr) {
         this.w = w;
         this.ccache = ccache;
         this.attr = attr;
-        this.buffer = buffer;
-        this.faceSize = faceSize;
-        this.bufferIdx = bufferIdx;
+        this.extendFaces = true;
     }
-
-    public void setShadowBuffer(int[] bufferShadow, int shadowBufferIndex, int shadowDrawMode, int shadowFaceSize) {
-        this.bufferShadow = bufferShadow;
-        this.shadowBufferIndex = shadowBufferIndex;
-        this.shadowFaceSize = shadowFaceSize;
+    /**
+     * @param vbuffer
+     * @param shadowDrawMode2
+     */
+    public void setBuffers(VertexBuffer[] vbuffer, int shadowDrawMode) {
+        this.vbuffer = vbuffer;
         this.shadowDrawMode = shadowDrawMode;
-        this.numShadowFaces = 0;
     }
 
     public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
@@ -96,10 +89,6 @@ public class BlockRenderer {
         attr.setLight(sky, blockLight);
     }
 
-    private boolean isOccluding(int id) {
-        return id > 0 && Block.block[id].isOccluding();
-    }
-
     int getLight(int ix, int iy, int iz) {
         int i = ix & REGION_SIZE_BLOCKS_MASK;
         int k = iz & REGION_SIZE_BLOCKS_MASK;
@@ -127,20 +116,22 @@ public class BlockRenderer {
         }
         int type = chunk.getTypeId(i & 0xF, iy, k & 0xF);
         if (type < 1) {
+            //happens when chunk data gets changed by main thread
             System.err.println("type == " + type + " should not happen (" + i + "," + j + "," + k + " - " + ix + "," + iy + "," + iz + ")");
             return 0;
         }
         //        light = chunk.getTypeId(i & 0xF, iy, k & 0xF);
-        Block block = Block.block[type];
+        Block block = Block.get(type);
         int renderType = block.getRenderType();
         if (renderPass == PASS_LOD) {
             switch (renderType) {
                 case 1:
-                    return renderPlant(block, ix, iy, iz);
+                    return renderPlant((BlockPlantCrossedSquares) block, ix, iy, iz);
                 case 2:
-                    return renderBlock(block, ix, iy, iz); //SLAB
+//                    return renderBlock(block, ix, iy, iz); //SLAB
                 case 3:
-                    return renderStairs(block, ix, iy, iz);
+//                    return renderStairs(block, ix, iy, iz);
+                    return renderSlicedFaces((BlockSliced) block, ix, iy, iz);
             }
         }
         return 0;
@@ -219,7 +210,7 @@ public class BlockRenderer {
         attr.v3.setPos(x + bb.maxX, y + bb.minY, z + bb.maxZ);
     }
     
-    int renderFace(Block block, int faceDir, float x, float y, float z) {
+    int renderFace(Block block, int faceDir, float x, float y, float z, int targetBuffer) {
         switch (faceDir) {
             case 1:
                 renderXNeg(block, x, y, z);
@@ -240,56 +231,212 @@ public class BlockRenderer {
                 renderZPos(block, x, y, z);
                 break;
         }
-        attr.put(buffer, bufferIdx);
-        bufferIdx += this.faceSize;
+        attr.put(this.vbuffer[targetBuffer]);
         if (this.shadowDrawMode == 1) {
-            attr.putShadowTextured(bufferShadow, this.shadowBufferIndex);
+            attr.putShadowTextured(this.vbuffer[PASS_SHADOW_SOLID]);
         } else {
-            attr.putBasic(bufferShadow, this.shadowBufferIndex);
+            attr.putBasic(this.vbuffer[PASS_SHADOW_SOLID]);
         }
-        this.shadowBufferIndex += this.shadowFaceSize;
-        this.numShadowFaces++;
         return 1;
     }
+
+
+    final int[] quarters = new int[8];
+    final int[] quarters2 = new int[8];
+    final AABBFloat[] boxes = new AABBFloat[] {
+            new AABBFloat(0, 0, 0, 0.5f, 0.5f, 0.5f),
+            new AABBFloat(0.5f, 0, 0, 1f, 0.5f, 0.5f),
+            new AABBFloat(0.5f, 0, 0.5f, 1f, 0.5f, 1f),
+            new AABBFloat(0, 0, 0.5f, 0.5f, 0.5f, 1f),
+            new AABBFloat(0, 0.5f, 0, 0.5f, 1f, 0.5f),
+            new AABBFloat(0.5f, 0.5f, 0, 1f, 1f, 0.5f),
+            new AABBFloat(0.5f, 0.5f, 0.5f, 1f, 1f, 1f),
+            new AABBFloat(0, 0.5f, 0.5f, 0.5f, 1f, 1f),
+    };
+    final BlockSurface[] qSurfacesS = new BlockSurface[] {
+            new BlockSurface(),
+            new BlockSurface(),
+            new BlockSurface(),
+            new BlockSurface(),
+            new BlockSurface(),
+            new BlockSurface(),
+    };
+    final BlockSurface[] qSurfaces = new BlockSurface[6];
+    final static int[][] offsets = new int[3*2][];
+    static {
+        for (int n = 0; n < 6; n++) {
+            int axis = n / 2;
+            int side = n % 2;
+            int offx = axis == 0 ? 1-side*2 : 0;
+            int offy = axis == 1 ? 1-side*2 : 0;
+            int offz = axis == 2 ? 1-side*2 : 0;
+            offsets[n] = new int[] {
+                    offx, offy, offz
+                };
+        }
+    }
+    private int renderSlicedFaces(BlockSliced block, int ix, int iy, int iz) {
+        int f = 0;
+        extendFaces = false;
+        block.getQuarters(this.w, ix, iy, iz, quarters);
+        for (int n = 0; n < 6; n++) {
+            qSurfaces[n] = null;
+        }
+        for (int x = 0; x < 2; x++) {
+            for (int y = 0; y < 2; y++) {
+                for (int z = 0; z < 2; z++) {
+                    int q = y*4+z*2+(z>0?1-x:x);
+                    if (quarters[q] > 0) {
+                        this.bb.set(boxes[q]);
+                        for (int n = 0; n < 6; n++) {
+                            int axis = n / 2;
+                            int side = n % 2;
+                            int offset[] = offsets[n];
+                            int offx = x + offset[0];
+                            int offy = y + offset[1];
+                            int offz = z + offset[2];
+                            int wX = 0;
+                            int wY = 0;
+                            int wZ = 0;
+                            if (offx < 0) {
+                                wX--;
+                                offx += 2;
+                            } else if (offx > 1) {
+                                wX++;
+                                offx -= 2;
+                            }
+                            if (offz < 0) {
+                                wZ--;
+                                offz += 2;
+                            } else if (offz > 1) {
+                                wZ++;
+                                offz -= 2;
+                            }
+                            if (offy < 0) {
+                                wY--;
+                                offy += 2;
+                            } else if (offy > 1) {
+                                wY++;
+                                offy -= 2;
+                            }
+                            int[] adjArr = quarters;
+                            if (wX != 0 || wY != 0 || wZ != 0) {
+                                Block nextFull = Block.get(this.w.getType(ix+wX, iy+wY, iz+wZ));
+                                nextFull.getQuarters(this.w, ix+wX, iy+wY, iz+wZ, quarters2);
+                                adjArr = quarters2;
+                            }
+                            int qInnerAdjIdx = offy*4+offz*2+(offz>0?1-offx:offx);
+                            int nAdjId = adjArr[qInnerAdjIdx];
+                            
+                            if (!Block.get(nAdjId).isTransparent()) {
+                                continue;
+                            }
+                            if (qSurfaces[n] == null) {
+                                qSurfaces[n] = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, qSurfacesS[n]);
+                            }
+                            setFaceColor(block, qSurfaces[n], n);
+                            f += renderFace(block, n, ix, iy, iz, PASS_SOLID);
+                        }
+                    }
+                }
+            }
+        }
+
+        extendFaces = true;
+        return f;
+    }
     private int renderStairs(Block block, int ix, int iy, int iz) {
-        int data = this.w.getData(ix, iy, iz);
-        int rot = data&3;
-        int topBottom = (data&0x4)>>2;
+        extendFaces = false;
+        final int data = this.w.getData(ix, iy, iz);
+        final int rot = data&3;
+        final int topBottom = (data&0x4)>>2;
 //      
         int axis = (rot%2)==0?0:2;
         int side = rot/2;
-        setBounds(0,0,0,1,1,1);
+        int type = BlockStairs.stairTypeAt(this.w, ix, iy, iz);
+        int skipSide = -1;
         int f = 0;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        boolean contract=false;
+        boolean extend=false;
+        int targetBuffer = PASS_SOLID;
+        if (type>0 && (type>>1)>=2) {
+            setBounds(0,0,0,1,0.5f,1);
+            if (topBottom>0){
+                bb.minY+=0.5f;
+                bb.maxY+=0.5f;
+            }
+            f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
+            contract = true;
+            BlockStairs.setStairBB(this.bb, rot, 1-topBottom, type, 3);
+            f+=getAndRenderBlockFace(block, ix, iy, iz, 1, topBottom, targetBuffer);
+            BlockStairs.setStairBB(this.bb, rot, 1-topBottom, type, 4);
+            f+=getAndRenderBlockFace(block, ix, iy, iz, 1, topBottom, targetBuffer);
+        } else {
+            setBounds(0,0,0,1,1,1);
+            f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
+        }
+        if (type>0 && (type>>1)<2) {
+            int trot = type>>1;
+            int lrot = rot%2;
+            extend = true;
+            if (rot/2!=trot) {
+                skipSide = 1-lrot;
+            } else{
+                skipSide = lrot;
+            }
+            f+=getAndRenderBlockFace(block, ix, iy, iz, 2-axis, skipSide, lrot);
+        } 
+        f+=getAndRenderBlockFace(block, ix, iy, iz, 1, 1-topBottom, targetBuffer);
         setBounds(0,0,0,1,0.5f,1);
         if (topBottom>0){
-
             bb.minY+=0.5f;
             bb.maxY+=0.5f;
         }
         side = 1-side;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
         axis = 2-axis;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        if (side != skipSide)
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
         side = 1-side;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        if (side != skipSide)
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
         side = 1-topBottom;
         axis = 1;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
-        BlockStairs.setStairBB(this.bb, (rot+2)&3, 1-topBottom, 0);
+        if (!contract) {
+            BlockStairs.setStairBB(this.bb, (rot+2)&3, 1-topBottom, 0, 0);
+            side = topBottom;
+            if (!extend) {
+                f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
+            }
+        }
+        BlockStairs.setStairBB(this.bb, rot, topBottom, type, 1);
         side = topBottom;
-        axis = 1;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
-        BlockStairs.setStairBB(this.bb, rot, topBottom, 1);
-        side = topBottom;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
         axis = (rot%2)==0?0:2;
-        side = 1-(rot/2);
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
-        axis = 2-axis;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        side = (rot/2);
+//        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
         side = 1-side;
-        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side);
+        f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
+        axis = 2-axis;
+        if (side != skipSide)
+            f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
+        side = 1-side;
+        if (side != skipSide)
+            f+=getAndRenderBlockFace(block, ix, iy, iz, axis, side, targetBuffer);
+        if (extend) {
+            BlockStairs.setStairBB(this.bb, rot, topBottom, type, 2);
+            f += getAndRenderBlockFace(block, ix, iy, iz, axis, 1-skipSide, targetBuffer);
+
+            //this side can be skipped in most cases
+            f += getAndRenderBlockFace(block, ix, iy, iz, 2-axis, skipSide, targetBuffer);
+            //this side can be skipped in most cases
+            f += getAndRenderBlockFace(block, ix, iy, iz, 2-axis, 1-skipSide, targetBuffer);
+            f += getAndRenderBlockFace(block, ix, iy, iz, 1, topBottom, targetBuffer);
+            BlockStairs.setStairBB(this.bb, rot, 1-topBottom, type, 3);
+            f+=getAndRenderBlockFace(block, ix, iy, iz, 1, topBottom, targetBuffer);
+
+        }
+        extendFaces = true;
         return f;
     }
     /**
@@ -308,11 +455,11 @@ public class BlockRenderer {
         this.bb.maxZ = maxZ;
     }
 
-    int renderBlock(Block block, int ix, int iy, int iz) {
+    int renderBlock(Block block, int ix, int iy, int iz, int targetBuffer) {
         setBlockBounds(block, ix, iy, iz);
         int f = 0;
         for (int n = 0; n < 6; n++) {
-            f += getAndRenderBlockFace(block, ix, iy, iz, n/2, n%2);
+            f += getAndRenderBlockFace(block, ix, iy, iz, n/2, n%2, targetBuffer);
         }
         return f;
     }
@@ -320,7 +467,7 @@ public class BlockRenderer {
     /**
      * @param n
      */
-    private void setFaceColor(Block block, int faceDir, float x, float y, float z) {
+    private void setFaceColor(Block block, BlockSurface bs, int faceDir) {
         float m = 1F;
         float alpha = block.getAlpha();
         int c = block.getColorFromSide(faceDir);
@@ -332,17 +479,22 @@ public class BlockRenderer {
         int tex = block.getTextureFromSide(faceDir);
         attr.setTex(tex);
         attr.setFaceDir(faceDir);
-        attr.setReverse((this.bs.face&1)!=0);
+        attr.setReverse((bs.face&1)!=0);
         attr.setAO(bs.maskedAO);
         attr.setLight(bs.maskedLightSky, bs.maskedLightBlock);
         attr.setType(bs.type);
         for (int v = 0; v < 4; v++) {
             attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
-            int idx = v;
-            if (faceDir/2>0) {
-                idx = (idx + 3) % 4;
+            if (extendFaces) {
+                int idx = v;
+                if (faceDir/2>0) {
+                    idx = (idx + 3) % 4;
+                }
+                attr.v[v].setFaceVertDir(faceVDirections[faceDir][idx]);
+            } else {
+
+                attr.v[v].setFaceVertDir(0);
             }
-            attr.v[v].setFaceVertDir(faceVDirections[faceDir][idx]);
         }
         
     }
@@ -359,45 +511,48 @@ public class BlockRenderer {
             setDefaultBounds();
         }
     }
-    private int getAndRenderBlockFace(Block block, int ix, int iy, int iz, int axis, int side) {
-        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side);
+
+    private int getAndRenderBlockFace(Block block, int ix, int iy, int iz, int axis, int side, int targetBuffer) {
+        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs);
         if (surface != null) {
             int faceDir = axis<<1|side;
-            setFaceColor(block, faceDir, ix, iy, iz);
-            return renderFace(block, faceDir, ix, iy, iz);    
+            setFaceColor(block, surface, faceDir);
+            return renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
         }
         return 0;
     }
     
-    private BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side) {
-        int offx = axis == 0 ? 1-side*2 : 0;
-        int offy = axis == 1 ? 1-side*2 : 0;
-        int offz = axis == 2 ? 1-side*2 : 0;
-        int neighbour = this.w.getType(ix+offx, iy+offy, iz+offz);
-        Block b = Block.get(neighbour);
-        if (b != null && !b.isFaceVisible(this.w, ix+offx, iy+offy, iz+offz, axis, side, block, bb)) {
-            return null;
+    //TODO: cache this by ix,iy,iz,axis,side (for stairs)
+    private BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side, boolean checkVisibility, BlockSurface out) {
+        if (checkVisibility) {
+            int offx = axis == 0 ? 1-side*2 : 0;
+            int offy = axis == 1 ? 1-side*2 : 0;
+            int offz = axis == 2 ? 1-side*2 : 0;
+            int neighbour = this.w.getType(ix+offx, iy+offy, iz+offz);
+            Block b = Block.get(neighbour);
+            if (b != null && !b.isFaceVisible(this.w, ix+offx, iy+offy, iz+offz, axis, side, block, bb)) {
+                return null;
+            }
         }
         int data = this.w.getData(ix, iy, iz); //TODO: this is queried multiple times
-        bs.x = ix & REGION_SIZE_BLOCKS_MASK;
-        bs.y = iy;
-        bs.z = iz & REGION_SIZE_BLOCKS_MASK;
-        bs.axis = axis;
-        bs.face = side;
-        bs.type = block.id;
-        bs.data = data;
-        bs.transparent = block.isTransparent();
-        bs.pass = block.getRenderPass();
-        bs.extraFace = false;
-        bs.calcLight = true;
-        bs.isLeaves = false;
-        bs.calcAO(this.ccache);
-        return bs;
+        out.x = ix & REGION_SIZE_BLOCKS_MASK;
+        out.y = iy;
+        out.z = iz & REGION_SIZE_BLOCKS_MASK;
+        out.axis = axis;
+        out.face = side;
+        out.type = block.id;
+        out.data = data;
+        out.transparent = block.isTransparent();
+        out.pass = block.getRenderPass();
+        out.extraFace = false;
+        out.calcLight = true;
+        out.isLeaves = false;
+        out.calcAO(this.ccache);
+        return out;
     }
 
-    int renderPlant(Block block, int ix, int iy, int iz) {
+    int renderPlant(BlockPlantCrossedSquares block, int ix, int iy, int iz) {
         int brigthness = getLight(ix, iy, iz);
-
         float m = 1F;
         float alpha = block.getAlpha();
         int c = block.getColorFromSide(Dir.DIR_POS_Y);
@@ -435,13 +590,15 @@ public class BlockRenderer {
         float x = ix;
         float y = iy;
         float z = iz;
-        long seed = (ix * 5591 + iy * 19 + iz * 7919);
-        long iR = ((multiplier * seed + addend) & mask);
-        float fR = 0.6F;
-        int n = 12;
-        int ma = (1 << n) - 1;
-        x += ((iR & ma) / (float) (ma)) * fR - 0.5f * fR;
-        z += (((iR >> n) & ma) / (float) (ma)) * fR - 0.5f * fR;
+        if (block.applyRandomOffset()) {
+            long seed = (ix * 5591 + iy * 19 + iz * 7919);
+            long iR = ((multiplier * seed + addend) & mask);
+            float fR = 0.6F;
+            int n = 12;
+            int ma = (1 << n) - 1;
+            x += ((iR & ma) / (float) (ma)) * fR - 0.5f * fR;
+            z += (((iR >> n) & ma) / (float) (ma)) * fR - 0.5f * fR;
+        }
 
         float h = 1f;
         float w = 1f;
@@ -475,9 +632,7 @@ public class BlockRenderer {
             attr.v2.setNormal(nx, ny, nz); // set upward normal
         }
         
-        attr.put(buffer, bufferIdx);
-        bufferIdx += this.faceSize;
-//        return 1;
+        attr.put(this.vbuffer[PASS_LOD]);
         
         attr.setReverse(true);
         {
@@ -487,9 +642,8 @@ public class BlockRenderer {
             attr.v2.setNormal(nx, ny, nz); // set upward normal
         }
         
-        
-        attr.put(buffer, bufferIdx);
-        bufferIdx += this.faceSize;
+
+        attr.put(this.vbuffer[PASS_LOD]);
 
         attr.v0.setUV(sideOffset, 0);
         attr.v0.setPos(x + 1 - sideOffset, y, z + sideOffset);
@@ -511,9 +665,8 @@ public class BlockRenderer {
             attr.v2.setNormal(nx, ny, nz); // set upward normal
         }
         
-        
-        attr.put(buffer, bufferIdx);
-        bufferIdx += this.faceSize;
+
+        attr.put(this.vbuffer[PASS_LOD]);
         attr.setReverse(true);
         {
             float nx=-nside;
@@ -522,9 +675,9 @@ public class BlockRenderer {
             attr.v2.setNormal(nx, ny, nz); // set upward normal
         }
 
-        
-        attr.put(buffer, bufferIdx);
-        bufferIdx += this.faceSize;
+
+        attr.put(this.vbuffer[PASS_LOD]);
         return 4;
     }
+
 }

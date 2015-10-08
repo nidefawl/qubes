@@ -131,7 +131,7 @@ public class BlockSurface {
         int id = w.getType(x, y, z);
         Block b = Block.get(id);
         if (b != null) {
-            if (b.isOccluding() && b.isNormalBlock(w, x, y, z)) {
+            if (b.isOccludingBlock(w, x, y, z)) {
                 return true;
             }
         }
@@ -180,9 +180,9 @@ public class BlockSurface {
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP, Block.block[this.type]);
+        maskLight(brNN, brPN, brPP, brNP, Block.get(this.type));
 
-        if (Block.block[this.type].applyAO()) {
+        if (Block.get(this.type).applyAO()) {
             int ao0 = vertexAO(cn, nc, nn);
             int ao1 = vertexAO(cn, pc, pn);
             int ao2 = vertexAO(cp, pc, pp);
@@ -234,9 +234,9 @@ public class BlockSurface {
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brPN, brNN, brNP, brPP, Block.block[this.type]);
+        maskLight(brPN, brNN, brNP, brPP, Block.get(this.type));
 
-        if (Block.block[this.type].applyAO()) {
+        if (Block.get(this.type).applyAO()) {
             int ao0 = vertexAO(cn, pc, pn);
             int ao1 = vertexAO(cn, nc, nn);
             int ao2 = vertexAO(cp, nc, np);
@@ -286,9 +286,9 @@ public class BlockSurface {
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNP, brNN, brPN, brPP, Block.block[this.type]);
+        maskLight(brNP, brNN, brPN, brPP, Block.get(this.type));
 
-        if (Block.block[this.type].applyAO()) {
+        if (Block.get(this.type).applyAO()) {
             int ao1 = vertexAO(cn, nc, nn);//bottom right
             int ao2 = vertexAO(cn, pc, pn); //top right
             int ao3 = vertexAO(cp, pc, pp); //top left
@@ -337,9 +337,9 @@ public class BlockSurface {
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brNP, brPP, brPN, Block.block[this.type]);
+        maskLight(brNN, brNP, brPP, brPN, Block.get(this.type));
 
-        if (Block.block[this.type].applyAO()) {
+        if (Block.get(this.type).applyAO()) {
             int ao3 = vertexAO(cn, pc, pn);//top left
             int ao0 = vertexAO(cn, nc, nn);//bottom left
             int ao1 = vertexAO(cp, nc, np); //bottom right
@@ -390,10 +390,10 @@ public class BlockSurface {
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP, Block.block[this.type]);
+        maskLight(brNN, brPN, brPP, brNP, Block.get(this.type));
         
 
-        if (Block.block[this.type].applyAO()) {
+        if (Block.get(this.type).applyAO()) {
             int ao0 = vertexAO(cn, nc, nn);
             int ao3 = vertexAO(cp, nc, np);
             int ao2 = vertexAO(cp, pc, pp);
@@ -442,10 +442,10 @@ public class BlockSurface {
         int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
         int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP, Block.block[this.type]);
+        maskLight(brNN, brPN, brPP, brNP, Block.get(this.type));
         
 
-        if (Block.block[this.type].applyAO()) {
+        if (Block.get(this.type).applyAO()) {
             int ao0 = vertexAO(cn, nc, nn);
             int ao3 = vertexAO(cp, nc, np);
             int ao2 = vertexAO(cp, pc, pp);

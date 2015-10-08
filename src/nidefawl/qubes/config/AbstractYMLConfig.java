@@ -1,9 +1,7 @@
 package nidefawl.qubes.config;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -15,7 +13,7 @@ import com.google.common.io.Closeables;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class AbstractYMLConfig {
 
-    private Map map = new HashMap<>();
+    protected Map map = new HashMap<>();
 
     public AbstractYMLConfig(boolean setDefaults) {
         if (setDefaults)
@@ -51,6 +49,11 @@ public abstract class AbstractYMLConfig {
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             options.setPrettyFlow(true);
             Yaml yaml = new Yaml(new SafeConstructor(),new Representer(),options);
+//            Iterator it = map.entrySet().iterator();
+//            while (it.hasNext()) {
+//                Map.Entry entry = (Map.Entry) it.next();
+//                System.out.println(entry.getKey()+"="+entry.getValue());
+//            }
             yaml.dump(this.map, writer);
         } catch (Exception e) {
             e.printStackTrace();

@@ -99,14 +99,6 @@ public class PlayerManager {
         }
     }
     public Player getPlayer(String string) {
-        System.out.println("players");
-        for (String s : this.players.keySet()) {
-            System.out.println(s);
-        }
-        System.out.println("playersLowerCase");
-        for (String s : this.playersLowerCase.keySet()) {
-            System.out.println(s);
-        }
         return this.playersLowerCase.get(string.toLowerCase());
     }
 

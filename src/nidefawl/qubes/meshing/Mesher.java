@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockLeaves;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.WorldRenderer;
@@ -105,7 +106,7 @@ public class Mesher {
 //                mask2[n] = null;
 //                return;
 //            }
-            if (this.strategy >= 044) {
+            if (this.strategy == 0) {
                 if (bs1.pass == 0 && !bs1.transparent && bs2.isLeaves) {
                     mask2[n] = bs1;
                     return;
@@ -325,12 +326,12 @@ public class Mesher {
         }
         int type = chunk.getTypeId(i&0xF, j, k&0xF);
         if (type > 0) {
-            Block block = Block.block[type];
+            Block block = Block.get(type);
             int pass = block.getRenderPass();
             int renderType = block.getRenderType();
             boolean renderTypeTransition = false;
             if (renderType != 0) {
-                if (center && strategy == 0 && axis == 0) {
+                if (center && strategy == 0 && axis == 0 && l == 0) {
                     if ((k&REGION_SIZE_BLOCKS_MASK) != k)
                         System.err.println("k ");
                     if ((i&REGION_SIZE_BLOCKS_MASK) != i)
@@ -367,7 +368,7 @@ public class Mesher {
                 surface.transparent = false;
             } else {
                 surface.calcLight = true;
-                surface.isLeaves = surface.transparent && surface.pass == 0;
+                surface.isLeaves = false;// Block.get(surface.type) instanceof BlockLeaves;
             }
             return surface;
         }

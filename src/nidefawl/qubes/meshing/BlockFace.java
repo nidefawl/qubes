@@ -2,7 +2,9 @@ package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockGrass;
+import nidefawl.qubes.block.BlockLeaves;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
 
@@ -20,13 +22,29 @@ public class BlockFace {
     public int w;
     public int h;
     public static int encNormal(int i, int j, int k) {
+//        int d = 1;
+//        i *= d;
+//        j *= d;
+//        k *= d;
         byte byte0 = (byte)i;
         byte byte1 = (byte)j;
         byte byte2 = (byte)k;
         return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16 | (0x01000000);
     }
-    
+
+    public static int encNegNormal(int i, int j, int k) {
+        int d = 4;
+        i *= -d;
+        j *= -d;
+        k *= -d;
+        byte byte0 = (byte)i;
+        byte byte1 = (byte)j;
+        byte byte2 = (byte)k;
+        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16 | (0x01000000);
+    }
+
     final static int[][] faceVDirections = new int[6][];
+    final static int[][] faceVDirectionsNeg = new int[6][];
     static void initDir() {
         faceVDirections[Dir.DIR_NEG_Y] = new int[] {
                 encNormal(-1,  0, -1),
@@ -63,6 +81,46 @@ public class BlockFace {
                 encNormal( 1, -1, 0), 
                 encNormal( 1,  1, 0), 
                 encNormal(-1,  1, 0), 
+            };
+        
+        
+        
+
+        faceVDirectionsNeg[Dir.DIR_NEG_Y] = new int[] {
+                encNegNormal(-1,  0, -1),
+                encNegNormal(-1,  0,  1), 
+                encNegNormal( 1,  0,  1), 
+                encNegNormal( 1,  0, -1), 
+            };
+        faceVDirectionsNeg[Dir.DIR_POS_Y] = new int[] {
+                encNegNormal(-1,  0, -1),
+                encNegNormal(-1,  0,  1), 
+                encNegNormal( 1,  0,  1), 
+                encNegNormal( 1,  0, -1), 
+            };
+        faceVDirectionsNeg[Dir.DIR_NEG_X] = new int[] {
+                encNegNormal(0, -1, -1),
+                encNegNormal(0,  1, -1), 
+                encNegNormal(0,  1,  1), 
+                encNegNormal(0, -1,  1), 
+            };
+        faceVDirectionsNeg[Dir.DIR_POS_X] = new int[] {
+                encNegNormal(0, -1, -1),
+                encNegNormal(0,  1, -1), 
+                encNegNormal(0,  1,  1), 
+                encNegNormal(0, -1,  1), 
+            };
+        faceVDirectionsNeg[Dir.DIR_NEG_Z] = new int[] {
+                encNegNormal(-1, -1, 0),
+                encNegNormal( 1, -1, 0),  
+                encNegNormal( 1,  1, 0), 
+                encNegNormal(-1,  1, 0),
+            };
+        faceVDirectionsNeg[Dir.DIR_POS_Z] = new int[] {
+                encNegNormal(-1, -1, 0),
+                encNegNormal( 1, -1, 0), 
+                encNegNormal( 1,  1, 0), 
+                encNegNormal(-1,  1, 0), 
             };
     }
     static {
@@ -174,13 +232,13 @@ public class BlockFace {
      * @param offset the offset
      * @return the number of faces drawn (vertex count / 4)
      */
-    public int drawBasic(BlockFaceAttr attr, int[] buffer, int offset) {
+    public int drawBasic(BlockFaceAttr attr, VertexBuffer vertexBuffer) {
         attr.setReverse((this.bs.face&1)!=0);
         attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
         attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
         attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-        attr.putBasic(buffer, offset);
+        attr.putBasic(vertexBuffer);
         return 1;
     }
 
@@ -192,8 +250,8 @@ public class BlockFace {
      * @param offset the offset
      * @return the number of faces drawn (vertex count / 4)
      */
-    public int drawShadowTextured(BlockFaceAttr attr, int[] buffer, int offset) {
-        Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
+    public int drawShadowTextured(BlockFaceAttr attr, VertexBuffer vertexBuffer) {
+        Block block = Block.get(this.bs.type);
         int tex = block.getTextureFromSide(this.faceDir);
         this.faceDir = this.bs.axis<<1|this.bs.face;
         attr.setFaceDir(faceDir);
@@ -208,13 +266,13 @@ public class BlockFace {
         attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
         setUV(attr.v3, 3);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
-        attr.putShadowTextured(buffer, offset);
+        attr.putShadowTextured(vertexBuffer);
         return 1;
     }
     
-    public int draw(BlockFaceAttr attr, int[] buffer, int offset) {
+    public int draw(BlockFaceAttr attr, VertexBuffer vertexBuffer) {
         attr.setNormal(this.normal[0], this.normal[1], this.normal[2]);
-        Block block = Block.block[this.bs.type & Block.BLOCK_MASK];
+        Block block = Block.get(this.bs.type);
         this.faceDir = this.bs.axis<<1|this.bs.face;
         float m = 1F;
         float alpha = block.getAlpha();
@@ -254,7 +312,7 @@ public class BlockFace {
         attr.v3.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
         attr.v3.setFaceVertDir(faceVDirections[this.faceDir][3]);
-        attr.put(buffer, offset);
+        attr.put(vertexBuffer);
         if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
             int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
             attr.setTex(sideOverlay);
@@ -267,14 +325,22 @@ public class BlockFace {
             for (int i = 0; i < 4; i++) {
                 attr.v[i].setColorRGBAF(b * m, g * m, r * m, alpha);
             }
-            attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
+            attr.put(vertexBuffer);
             return 2;
         }
-        if (block.id >= Block.leaves_acacia.id && block.id <= Block.leaves_oak.id) {
-//            attr.setReverse((this.bs.face&1)!=1);
-//            attr.setNormal(-this.normal[0], -this.normal[1], -this.normal[2]);
-//            attr.put(buffer, offset+BlockFaceAttr.BLOCK_FACE_INT_SIZE);
-//            return 2;
+        if (block instanceof BlockLeaves) {
+//            initDir();
+            int face = 1-this.bs.face;
+            this.faceDir = this.bs.axis<<1|face;
+            for (int i = 0; i < 4; i++) {
+                attr.v[i].setFaceVertDir(faceVDirectionsNeg[this.faceDir][i]);
+            }
+            attr.setPass(3);
+            attr.setFaceDir(faceDir);
+            attr.setReverse((face&1)!=0);
+            attr.setNormal(-this.normal[0], -this.normal[1], -this.normal[2]);
+            attr.put(vertexBuffer);
+            return 2;
         }
         return 1;
     }

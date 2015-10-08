@@ -12,7 +12,7 @@ import nidefawl.qubes.world.WorldSettings;
  * Copyright: Michael Hept
  */
 public class EmptyChunkPopulator implements IChunkPopulator {
-    final static String POPULATOR_NAME = "empty";
+    public final static String POPULATOR_NAME = "empty";
     
     public EmptyChunkPopulator(WorldServer world, long l, WorldSettings settings) {
         

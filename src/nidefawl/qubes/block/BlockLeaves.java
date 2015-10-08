@@ -11,14 +11,19 @@ import nidefawl.qubes.vec.Dir;
  * Copyright: Michael Hept
  */
 public class BlockLeaves extends Block {
-
+    
+    final int leavesColor;
     /**
      * @param id
      */
-    BlockLeaves(int id) {
-        super(id, true);
+    public BlockLeaves(int id) {
+        this(id, -1);
     }
 
+    public BlockLeaves(int id, int rgb) {
+        super(id, true);
+        this.leavesColor = rgb;
+    }
     /* (non-Javadoc)
      * @see nidefawl.qubes.block.Block#getTextureFromSide(int)
      */
@@ -32,8 +37,7 @@ public class BlockLeaves extends Block {
      */
     @Override
     public int getColorFromSide(int side) {
-        // TODO Auto-generated method stub
-        return super.getColorFromSide(side);
+        return leavesColor;
     }
     /* (non-Javadoc)
      * @see nidefawl.qubes.block.Block#applyAO()
@@ -41,5 +45,10 @@ public class BlockLeaves extends Block {
     @Override
     public boolean applyAO() {
         return true;
+    }
+    @Override
+    public boolean isOccluding() {
+        // TODO Auto-generated method stub
+        return true;//super.isOccluding();
     }
 }

@@ -13,6 +13,7 @@ import org.lwjgl.opengl.*;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -201,9 +202,12 @@ public class MeshedRegion {
         Arrays.fill(this.elementCount, 0);
         this.hasAnyPass = false;
     }
-    public void uploadBuffer(int pass, int[] buffer, int len, int numV, int shadowDrawMode) {
+    public void uploadBuffer(int pass, VertexBuffer buffer, int shadowDrawMode) {
+        int numV = buffer.getVertexCount();
+        int numF = buffer.getFaceCount();
+        int len = buffer.getIndex();
         this.vertexCount[pass] = numV;
-        this.elementCount[pass] = (numV/4)*2;
+        this.elementCount[pass] = numF*2;
         this.hasPass[pass] |= numV > 0;
         this.hasAnyPass |= numV > 0;
         this.shadowDrawMode = shadowDrawMode;
@@ -213,7 +217,7 @@ public class MeshedRegion {
         ByteBuffer buf = RegionRenderer.buffers[pass];
         IntBuffer intBuffer = RegionRenderer.intbuffers[pass];
         intBuffer.clear();
-        intBuffer.put(buffer, 0, len);
+        intBuffer.put(buffer.get(), 0, len);
         buf.position(0).limit(len * 4);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo[pass]);
         if (Game.GL_ERROR_CHECKS)
