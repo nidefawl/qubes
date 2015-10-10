@@ -28,7 +28,6 @@ import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.logging.IErrorHandler;
-import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
@@ -140,6 +139,13 @@ public class Game extends GameBase implements IErrorHandler {
                 Engine.toggleWireFrame();
             }
         });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F10) {
+            public void onDown() {
+                Engine.flushRenderTasks();
+                Engine.regionRenderer.resetAll();
+                Engine.toggleDrawMode();
+            }
+        });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_R) {
             public void onDown() {
                 updateRenderers=!updateRenderers;
@@ -161,7 +167,7 @@ public class Game extends GameBase implements IErrorHandler {
             public void onDown() {
                 Engine.flushRenderTasks();
                 Engine.regionRenderer.resetAll();
-                BlockFaceAttr.USE_TRIANGLES=!BlockFaceAttr.USE_TRIANGLES;
+                Engine.USE_TRIANGLES=!Engine.USE_TRIANGLES;
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F3) {
@@ -681,7 +687,7 @@ public class Game extends GameBase implements IErrorHandler {
 //                      } else
                           {
                           int r = 0x777777;
-                          if (region.rX%2==region.rZ%2)
+                          if (Math.abs(region.rX)%2==Math.abs(region.rZ)%2)
                               r = 0;
                               
                           t.setColorF(r, 1);
@@ -740,8 +746,8 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2222222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
-            System.out.println("initShaders");
+        if (System.currentTimeMillis()-lastShaderLoadTime >2221567/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+//            System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
             Shaders.initShaders();
             Engine.worldRenderer.initShaders();

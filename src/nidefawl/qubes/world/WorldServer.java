@@ -23,6 +23,8 @@ import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Dir;
+import nidefawl.qubes.vec.Vec3D;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 import nidefawl.qubes.worldgen.terrain.TerrainGeneratorRivers;
@@ -103,7 +105,7 @@ public class WorldServer extends World {
                 int z = GameMath.lhToZ(l);
                 Chunk self = getChunk(x, z);
                 if (self == null || !self.isValid) {
-                    System.out.println("remove missing chunk from queue");
+//                    System.out.println("remove missing chunk from queue");
                     it.remove();
                     continue;
                 }
@@ -153,12 +155,25 @@ public class WorldServer extends World {
     }
 
     public void addPlayer(Player player) {
+        Vector3f position = player.worldPositions.get(this.getUUID());
+        if (position == null) {
+            position = new Vector3f(this.getSpawnPosition());
+            player.worldPositions.put(this.getUUID(), position);
+        }
+        player.world = this;
+        player.move(position);
         addEntity(player);
         this.players.add(player);
         this.chunkTracker.addPlayer(player);
     }
 
+    private Vector3f getSpawnPosition() {
+        return new Vector3f(0, 200, 0);
+    }
+    
     public void removePlayer(Player player) {
+        Vector3f position = new Vector3f(player.pos);
+        player.worldPositions.put(this.getUUID(), position);
         removeEntity(player);
         this.players.remove(player);
         this.chunkTracker.removePlayer(player);
@@ -180,6 +195,7 @@ public class WorldServer extends World {
     }
 
     public void calcSunLight(Chunk c) {
+        lightUpdater.queueChunk(c.x, c.z, 0);
         lightUpdater.queueChunk(c.x, c.z, 1);
     }
 

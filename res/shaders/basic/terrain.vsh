@@ -1,7 +1,10 @@
 #version 150 core
 
 #pragma define "FAR_BLOCKFACE"
+#pragma define "TERRAIN_DRAW_MODE"
+
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_constants.glsl"
 #pragma include "vertex_layout.glsl"
 
 // uniform vec4 terroffset;
@@ -27,6 +30,10 @@ const vec4 aoLevels = normalize(vec4(0, 0.2, 0.4, 0.6));
 #define BR_1 0.7f
 #define BR_2 0.9f
 #define BR_3 1.0f
+// #define BR_0 0.6f
+// #define BR_1 0.8f
+// #define BR_2 0.9f
+// #define BR_3 1.0f
 float blocksidebrightness[6] = float[6](BR_2, BR_2, BR_3, BR_0, BR_1, BR_1);
 void main() {
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
@@ -38,8 +45,23 @@ void main() {
 	vec4 pos = in_position;
 	texcoord = in_texcoord;
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
+	float distCam = length(in_position-in_scene.cameraPosition);
+#if TERRAIN_DRAW_MODE == 0
+	uint faceDir = blockinfo.w&0x7u;
+	uint vertDir = (blockinfo.w >> 3u) & 0x3Fu;
+	vec3 dir = vertexDir.dir[vertDir].xyz;
+#else 
+	uint faceDir = blockinfo.w;
+	vec3 dir = in_direction.xyz*in_direction.w;
+#endif
+	const float face_offset = 1/32.0;
+	float distScale = face_offset*clamp(pow((distCam+8)/200, 1.35), 0.0008, 1);
+	pos.x += dir.x*distScale;
+	pos.y += dir.y*distScale;
+	pos.z += dir.z*distScale;
 
-	blockside = blocksidebrightness[blockinfo.w];
+
+	blockside = blocksidebrightness[faceDir];
 // #ifndef FAR_BLOCKFACE
 	faceAO = vec4(
 		aoLevels[in_blockinfo.z&AO_MASK],
@@ -64,16 +86,6 @@ void main() {
 		);
 	
 
-	float distCam = length(in_position-in_scene.cameraPosition);
-	vec4 dir = in_direction*in_direction.w;
-	const float face_offset = 1/32.0;
-	float distScale = face_offset*clamp(pow((distCam+8)/200, 1.45), 0.0008, 1);
-	pos.x += dir.x*distScale;
-	pos.y += dir.y*distScale;
-	pos.z += dir.z*distScale;
-	// pos.x+=(-1+texPos.y*texPos.x)*0.1;
-	// pos.z-=(-1+texPos.y*2)*0.05;
-	// gl_Position = in_matrix_3D.mvp * (in_position+terroffset);
 	position = pos;
 	gl_Position = in_matrix_3D.mvp * pos;
 }

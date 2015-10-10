@@ -34,6 +34,7 @@ public abstract class Packet {
         register(PacketSWorldTime.class, 18, true, false);
         register(PacketSTeleport.class, 19, true, false);
         register(PacketSyncBlocks.class, 20, true, true);
+        register(PacketCTeleportAck.class, 21, false, true);
     }
     public Packet() {
     }

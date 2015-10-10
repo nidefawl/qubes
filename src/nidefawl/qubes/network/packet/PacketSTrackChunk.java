@@ -12,7 +12,8 @@ public class PacketSTrackChunk extends AbstractPacketWorldRef {
 	public PacketSTrackChunk() {
 	}
 
-	public PacketSTrackChunk(int x, int z, boolean add) {
+	public PacketSTrackChunk(int id, int x, int z, boolean add) {
+	    super(id);
 		this.x = x;
 		this.z = z;
 		this.add = add;

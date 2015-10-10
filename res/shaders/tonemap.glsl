@@ -1,17 +1,44 @@
+const float A = 0.15;
+const float B = 0.50;
+const float C = 0.10;
+const float D = 0.20;
+const float E = 0.02;
+const float F = 0.30;
+const float W = 11.2;
 
-const float A = 0.15; // Shoulder Strength
-const float B = 0.50; // Linear Strength
-const float C = 0.15; // Linear Angle
-const float D = 0.20; // Toe Strength
-const float E = 0.02; // Toe Numerator
-const float F = 0.30; // Toe Denominator
 
-const float fMiddleGray = 0.2f;
-const float fWhitePoint = 1.7f;
 
-#define RGB_TO_LUMINANCE vec3(0.212671, 0.715160, 0.072169)
-#define AUTO_EXPOSURE 0
- 
+void srgb(inout float v)
+{
+    v = clamp(v, 0.0, 1.0);
+    float K0 = 0.03928;
+    float a = 0.055;
+    float phi = 12.92;
+    float gamma = 2.4;
+    v = v <= K0 / phi ? v * phi : (1.0 + a) * pow(v, 1.0 / gamma) - a;
+}
+
+void linear(inout float v)
+{
+    v = clamp(v, 0.0, 1.0);
+    float K0 = 0.03928;
+    float a = 0.055;
+    float phi = 12.92;
+    float gamma = 2.4;
+    v = v <= K0 ? v / phi : pow((v + a) / (1.0 + a), gamma);
+}
+
+void srgbToLin(inout vec3 srgb) {
+    linear(srgb.x);
+    linear(srgb.y);
+    linear(srgb.z);
+}
+void linToSrgb(inout vec3 linear) {
+    srgb(linear.x);
+    srgb(linear.y);
+    srgb(linear.z);
+}
+
 vec3 Uncharted2Tonemap(vec3 x)
 {
     // http://www.gdcvault.com/play/1012459/Uncharted_2__HDR_Lighting
@@ -26,36 +53,18 @@ float GetAverageSceneLuminance()
     fAveLogLum = max(0.05, fAveLogLum); // Average luminance is an approximation to the key of the scene
     return fAveLogLum;
 }
-vec3 ToneMap(in vec3 f3Color)
+vec3 ToneMap( in vec3 texColor )
 {
-    float fAveLogLum = GetAverageSceneLuminance();
-    
-    //const float middleGray = 1.03 - 2 / (2 + log10(fAveLogLum+1));
-    const float middleGray = fMiddleGray;
-    // Compute scale factor such that average luminance maps to middle gray
-    float fLumScale = middleGray / fAveLogLum;
-    
-    f3Color = max(f3Color, 0);
-    float fInitialPixelLum = max(dot(RGB_TO_LUMINANCE, f3Color), 1e-10);
-    float fScaledPixelLum = fInitialPixelLum * fLumScale;
-    vec3 f3ScaledColor = f3Color * fLumScale;
+   // float3 texColor = tex2D(Texture0, texCoord );
+   texColor *= 16;  // Hardcoded Exposure Adjustment
 
-    float whitePoint = fWhitePoint;
-    // http://filmicgames.com/archives/75
-    float ExposureBias = 2.0f;
-    vec3 curr = Uncharted2Tonemap(ExposureBias*f3ScaledColor);
-    vec3 whiteScale = 1.0f/Uncharted2Tonemap(vec3(whitePoint));
-    return curr*whiteScale;
+   float ExposureBias = 2.0f;
+   vec3 curr = Uncharted2Tonemap(ExposureBias*texColor);
+
+   vec3 whiteScale = 1.0f/Uncharted2Tonemap(vec3(W));
+   vec3 color = curr*whiteScale;
+
+   // vec3 retColor = pow(color,vec3(1/2.2));
+   linToSrgb(color);
+   return color;
 }
-// vec3 ToneMap(vec3 color) {
-//     vec3 toneMappedColor;
-    
-//     toneMappedColor = color;
-//     toneMappedColor = Uncharted2Tonemap(toneMappedColor);
-    
-//     // float sunfade = 1.0-clamp(1.0-exp(-(sunPos.z/500.0)),0.0,1.0);
-//     float sunfade = 1.0;
-//     toneMappedColor = pow(toneMappedColor,vec3(1.0f/2.2f));
-    
-//     return toneMappedColor;
-// }

@@ -24,31 +24,18 @@ public class BlockLeaves extends Block {
         super(id, true);
         this.leavesColor = rgb;
     }
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.block.Block#getTextureFromSide(int)
-     */
-    @Override
-    public int getTextureFromSide(int faceDir) {
-        return super.getTextureFromSide(faceDir);
-    }
     
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.block.Block#getColorFromSide(int)
-     */
     @Override
     public int getColorFromSide(int side) {
         return leavesColor;
     }
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.block.Block#applyAO()
-     */
+
     @Override
     public boolean applyAO() {
         return true;
     }
     @Override
     public boolean isOccluding() {
-        // TODO Auto-generated method stub
         return true;//super.isOccluding();
     }
 }

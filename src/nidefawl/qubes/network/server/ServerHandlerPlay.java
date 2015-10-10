@@ -9,12 +9,15 @@ import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.server.PlayerManager;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
 public class ServerHandlerPlay extends ServerHandler {
     protected final Player player;
+    private int posSyncSent;
+    private int posSyncRecv;
 
     public ServerHandlerPlay(Player player, ServerHandlerLogin login) {
         super(login.server, login.netServer, login.conn);
@@ -85,17 +88,6 @@ public class ServerHandlerPlay extends ServerHandler {
         }
     }
 
-    @Override
-    public void handleMovement(PacketCMovement packetMovement) {
-        this.player.pos = packetMovement.pos;
-        boolean hitground = (packetMovement.flags & 0x1) != 0;
-        boolean fly = (packetMovement.flags & 0x2) != 0;
-        this.player.hitGround = hitground;
-        this.player.flying = fly;
-        this.player.yaw = packetMovement.yaw;
-        this.player.pitch = packetMovement.pitch;
-    }
-
     public void sendPacket(Packet packet) {
         this.conn.sendPacket(packet);
     }
@@ -111,6 +103,7 @@ public class ServerHandlerPlay extends ServerHandler {
         int w = p1.x2 - p1.x + 1;
         int h = p1.y2 - p1.y + 1;
         int l = p1.z2 - p1.z + 1;
+        int flags = Flags.MARK|Flags.LIGHT;
         if (hollow) {
             for (int x = 0; x < w; x++) {
                 for (int y = 0; y < h; y++) {
@@ -118,25 +111,25 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockX = p1.x+x;
                         int blockY = p1.y+y;
                         int blockZ = p1.z ;
-                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
                         int data = 0;
                         if (Block.get(p1.type).isStairs()) {
                             data = player.world.getRand().nextInt(8);
                         }
                         if (data > 0)
-                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
+                            this.player.world.setData(blockX, blockY, blockZ, data, flags);
                     }
                     {
                         int blockX = p1.x + x;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + l-1;
-                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
                         int data = 0;
                         if (Block.get(p1.type).isStairs()) {
                             data = player.world.getRand().nextInt(8);
                         }
                         if (data > 0)
-                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
+                            this.player.world.setData(blockX, blockY, blockZ, data, flags);
                     }
                 }
             }
@@ -146,25 +139,25 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockX = p1.x;
                         int blockY = p1.y+y;
                         int blockZ = p1.z+z;
-                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
                         int data = 0;
                         if (Block.get(p1.type).isStairs()) {
                             data = player.world.getRand().nextInt(8);
                         }
                         if (data > 0)
-                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
+                            this.player.world.setData(blockX, blockY, blockZ, data, flags);
                     }
                     {
                         int blockX = p1.x + w-1;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
-                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
                         int data = 0;
                         if (Block.get(p1.type).isStairs()) {
                             data = player.world.getRand().nextInt(8);
                         }
                         if (data > 0)
-                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
+                            this.player.world.setData(blockX, blockY, blockZ, data, flags);
                     }
                 }
             }
@@ -174,19 +167,19 @@ public class ServerHandlerPlay extends ServerHandler {
 //                        int blockX = p1.x+x;
 //                        int blockY = p1.y;
 //                        int blockZ = p1.z+z;
-//                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+//                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
 //                    }
                     {
                         int blockX = p1.x + x;
                         int blockY = p1.y + h-1;
                         int blockZ = p1.z + z;
-                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
                         int data = 0;
                         if (Block.get(p1.type).isStairs()) {
                             data = player.world.getRand().nextInt(8);
                         }
                         if (data > 0)
-                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
+                            this.player.world.setData(blockX, blockY, blockZ, data, flags);
                     }
                 }
             }
@@ -205,13 +198,13 @@ public class ServerHandlerPlay extends ServerHandler {
                         int blockX = p1.x + x;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
-                        this.player.world.setType(blockX, blockY, blockZ, p1.type, Flags.MARK);
+                        this.player.world.setType(blockX, blockY, blockZ, p1.type, flags);
                         int data = 0;
                         if (Block.get(p1.type).isStairs()) {
                             data = player.world.getRand().nextInt(8);
                         }
                         if (data > 0)
-                            this.player.world.setData(blockX, blockY, blockZ, data, Flags.MARK);
+                            this.player.world.setData(blockX, blockY, blockZ, data, flags);
                     }
                 }
 
@@ -237,5 +230,37 @@ public class ServerHandlerPlay extends ServerHandler {
             return;
         }
         this.server.getChatChannelMgr().handlePlayerChat(this.player, channel, msg);
+    }
+
+    @Override
+    public void handleMovement(PacketCMovement packetMovement) {
+        if (this.posSyncRecv == this.posSyncSent) {
+            this.player.pos = packetMovement.pos;
+            boolean hitground = (packetMovement.flags & 0x1) != 0;
+            boolean fly = (packetMovement.flags & 0x2) != 0;
+            this.player.hitGround = hitground;
+            this.player.flying = fly;
+            this.player.yaw = packetMovement.yaw;
+            this.player.pitch = packetMovement.pitch;
+        }
+    }
+
+    public void handleTeleportAck(PacketCTeleportAck packetCTeleportAck) {
+        this.posSyncRecv = packetCTeleportAck.sync;
+    }
+
+    public void resyncPosition() {
+        this.posSyncSent++;
+        int flags = 0;
+        if (this.player.flying) {
+            flags |= 1;
+        }
+        this.sendPacket(new PacketSTeleport(
+                this.player.world.getId(), 
+                this.posSyncSent,
+                this.player.pos, 
+                this.player.yaw, 
+                this.player.pitch, 
+                flags));
     }
 }

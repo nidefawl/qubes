@@ -127,4 +127,11 @@ public abstract class Handler {
      */
     public void handleSync(PacketSyncBlocks packetSyncBlocks) {
     }
+
+    /**
+     * @param packetCTeleportAck
+     */
+    public void handleTeleportAck(PacketCTeleportAck packetCTeleportAck) {
+        
+    }
 }

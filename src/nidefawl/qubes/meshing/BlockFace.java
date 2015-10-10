@@ -252,7 +252,7 @@ public class BlockFace {
      */
     public int drawShadowTextured(BlockFaceAttr attr, VertexBuffer vertexBuffer) {
         Block block = Block.get(this.bs.type);
-        int tex = block.getTextureFromSide(this.faceDir);
+        int tex = block.getTexture(this.faceDir, 0);
         this.faceDir = this.bs.axis<<1|this.bs.face;
         attr.setFaceDir(faceDir);
         attr.setTex(tex);
@@ -283,7 +283,7 @@ public class BlockFace {
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        int tex = block.getTextureFromSide(this.faceDir);
+        int tex = block.getTexture(this.faceDir, 0);
         attr.setTex(tex);
         attr.setFaceDir(faceDir);
         attr.setReverse((this.bs.face&1)!=0);
@@ -297,21 +297,26 @@ public class BlockFace {
         attr.v0.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
         attr.v0.setFaceVertDir(faceVDirections[this.faceDir][0]);
+        attr.v0.setDirection(this.faceDir, 0, false);
 
         setUV(attr.v1, 1);
         attr.v1.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
         attr.v1.setFaceVertDir(faceVDirections[this.faceDir][1]);
+        attr.v1.setDirection(this.faceDir, 1, false);
 
         setUV(attr.v2, 2);
         attr.v2.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
         attr.v2.setFaceVertDir(faceVDirections[this.faceDir][2]);
+        attr.v2.setDirection(this.faceDir, 2, false);
 
         setUV(attr.v3, 3);
         attr.v3.setColorRGBAF(b * m, g * m, r * m, alpha);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
         attr.v3.setFaceVertDir(faceVDirections[this.faceDir][3]);
+        attr.v3.setDirection(this.faceDir, 3, false);
+        
         attr.put(vertexBuffer);
         if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
             int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
@@ -334,6 +339,7 @@ public class BlockFace {
             this.faceDir = this.bs.axis<<1|face;
             for (int i = 0; i < 4; i++) {
                 attr.v[i].setFaceVertDir(faceVDirectionsNeg[this.faceDir][i]);
+                attr.v0.setDirection(this.faceDir, 3, true);
             }
             attr.setPass(3);
             attr.setFaceDir(faceDir);

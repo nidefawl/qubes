@@ -159,9 +159,12 @@ public class ClientHandler extends Handler {
      * @param packetSTeleport
      */
     public void handleTeleport(PacketSTeleport packetSTeleport) {
-        this.player.setFly((packetSTeleport.flags & 0x1) != 0);
-        this.player.move(packetSTeleport.pos);
-        this.player.setYawPitch(packetSTeleport.yaw, packetSTeleport.pitch);
+        if (isValidWorld(packetSTeleport)) {
+            this.player.setFly((packetSTeleport.flags & 0x1) != 0);
+            this.player.move(packetSTeleport.pos);
+            this.player.setYawPitch(packetSTeleport.yaw, packetSTeleport.pitch);
+        }
+        this.sendPacket(new PacketCTeleportAck(packetSTeleport.getWorldId(), packetSTeleport.sync));
     }
 
     public void sendPacket(Packet packet) {
@@ -237,7 +240,7 @@ public class ClientHandler extends Handler {
     }
 
     public void handleBlock(PacketSSetBlock p) {
-        this.world.setType(p.x, p.y, p.z, p.type, Flags.MARK);
+        this.world.setType(p.x, p.y, p.z, p.type, Flags.MARK|Flags.LIGHT);
     }
 
     public void handleMultiBlock(PacketSSetBlocks p) {

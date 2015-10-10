@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.ARBUniformBufferObject.*;
 import java.nio.FloatBuffer;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
@@ -12,18 +13,23 @@ import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.perf.TimingHelper;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
     static int nextIdx = 0;
-    static UniformBuffer[] buffers = new UniformBuffer[5];
+    static UniformBuffer[] buffers = new UniformBuffer[6];
     String name;
     private int buffer;
-    private int len;
+    protected int len;
     private FloatBuffer floatBuffer;
     UniformBuffer(String name) {
+        this(name, 0);
+    }
+    UniformBuffer(String name, int len) {
         buffers[nextIdx++] = this;
         this.name = name;
+        this.len = len;
     }
     UniformBuffer addMat4() {
         this.len+=16;
@@ -37,14 +43,27 @@ public class UniformBuffer {
         this.len+=4;
         return this;
     }
-    private void reset() {
+    void setPosition(int n) {
+        this.floatBuffer.position(n);
+    }
+    void reset() {
         this.floatBuffer.position(0).limit(this.len);
     }
-    private void put(FloatBuffer floatBuffer) {
+    void put(FloatBuffer floatBuffer) {
         this.floatBuffer.put(floatBuffer);
     }
-    private void put(float f) {
+    void put(float f) {
         this.floatBuffer.put(f);
+    }
+
+    void put(float x, float y, float z) {
+        this.floatBuffer.put(x);
+        this.floatBuffer.put(y);
+        this.floatBuffer.put(z);
+        this.floatBuffer.put(1);
+    }
+    void putNeg(float x, float y, float z) {
+        put(-x, -y, -z);
     }
     void update() {
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
@@ -98,11 +117,15 @@ public class UniformBuffer {
             .addVec4() // Ambient light intensity
             .addVec4() // Diffuse light intensity
             .addVec4(); // Specular light intensity
+    static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4);
     
     public static void init() {
+        int size = GL11.glGetInteger(GL_MAX_UNIFORM_BLOCK_SIZE);
+        System.out.println("GL_MAX_UNIFORM_BLOCK_SIZE: "+size);
         for (int i = 0; i < buffers.length; i++) {
             buffers[i].setup();
         }
+        updateVertDir();
     }
     public static void reinit() {
         init();
@@ -113,26 +136,26 @@ public class UniformBuffer {
         for (int i = 0; i < buffers.length; i++) {
             final int blockIndex = glGetUniformBlockIndex(shader.shader, buffers[i].name);
             if (blockIndex != -1) {
-                glBindBufferBase(GL_UNIFORM_BUFFER, shader.bufBindIdx, buffers[i].buffer);
+                glBindBufferBase(GL_UNIFORM_BUFFER, i, buffers[i].buffer);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-                glUniformBlockBinding(shader.shader, blockIndex, shader.bufBindIdx);
+                glUniformBlockBinding(shader.shader, blockIndex, i);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
-                shader.bufBindIdx++;
             }
         }
     }
 
     public static void updateUBO(WorldClient world, float f) {
         if (Game.DO_TIMING) TimingHelper.startSec("updateUBO");
-        Shaders.colored.enable();
-        Shaders.colored.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
-        Shaders.textured.enable();
-        Shaders.textured.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
-        Shader.disable();
-        
+//        Shaders.colored.enable();
+//        Shaders.colored.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
+//        Shaders.textured.enable();
+//        Shaders.textured.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
+//        Shader.disable();
+
         updateOrtho();
+//        updateVertDir();
         
         uboMatrix3D.reset();
         uboMatrix3D.put(Engine.getMatSceneMVP().get());
@@ -206,12 +229,12 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.y);
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
-        float ambIntens = 0.18F;
-        float diffIntens = 0.52F;
-        float specIntens = 0.42F;
-        LightInfo.put(ambIntens);
-        LightInfo.put(ambIntens);
-        LightInfo.put(ambIntens);
+        float ambIntens = 0.07F;
+        float diffIntens = 0.55F;
+        float specIntens = 0.45F;
+        for (int a = 0; a < 3; a++) {
+            LightInfo.put(ambIntens);
+        }
         LightInfo.put(1);
         for (int a = 0; a < 3; a++) {
             LightInfo.put(diffIntens);
@@ -220,13 +243,89 @@ public class UniformBuffer {
         for (int a = 0; a < 3; a++) {
             LightInfo.put(specIntens);
         }
-        LightInfo.put(0);
+        LightInfo.put(1);
         LightInfo.update();
         if (Game.DO_TIMING) TimingHelper.endSec();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     }
     
+    /**
+     * 
+     */
+    private static void updateVertDir() {
+        UniformBuffer buf = VertexDirections;
+        buf.reset();
+//
+        buf.put(0, 0, 0);
+        
+        //Dir.DIR_POS_X
+        buf.put(0, -1, -1);
+        buf.put(0,  1, -1); 
+        buf.put(0,  1,  1); 
+        buf.put(0, -1,  1); 
+        //Dir.DIR_NEG_X
+        buf.put(0, -1, -1);
+        buf.put(0,  1, -1); 
+        buf.put(0,  1,  1); 
+        buf.put(0, -1,  1); 
+        //Dir.DIR_POS_Y
+        buf.put(-1,  0, -1);
+        buf.put(-1,  0,  1); 
+        buf.put( 1,  0,  1); 
+        buf.put( 1,  0, -1); 
+        //Dir.DIR_NEG_Y
+        buf.put(-1,  0, -1);
+        buf.put(-1,  0,  1); 
+        buf.put( 1,  0,  1); 
+        buf.put( 1,  0, -1); 
+        //Dir.DIR_POS_Z
+        buf.put(-1, -1, 0);
+        buf.put( 1, -1, 0); 
+        buf.put( 1,  1, 0); 
+        buf.put(-1,  1, 0); 
+        //Dir.DIR_NEG_Z
+        buf.put(-1, -1, 0);
+        buf.put( 1, -1, 0);  
+        buf.put( 1,  1, 0); 
+        buf.put(-1,  1, 0);
+        
+        
+        buf.setPosition(32*4); //POS IN FLOATS
+        buf.put(0, 0, 0);
+        
+        //Dir.DIR_POS_X
+        buf.putNeg(0, -1, -1);
+        buf.putNeg(0,  1, -1); 
+        buf.putNeg(0,  1,  1); 
+        buf.putNeg(0, -1,  1); 
+        //Dir.DIR_NEG_X
+        buf.putNeg(0, -1, -1);
+        buf.putNeg(0,  1, -1); 
+        buf.putNeg(0,  1,  1); 
+        buf.putNeg(0, -1,  1); 
+        //Dir.DIR_POS_Y
+        buf.putNeg(-1,  0, -1);
+        buf.putNeg(-1,  0,  1); 
+        buf.putNeg( 1,  0,  1); 
+        buf.putNeg( 1,  0, -1); 
+        //Dir.DIR_NEG_Y
+        buf.putNeg(-1,  0, -1);
+        buf.putNeg(-1,  0,  1); 
+        buf.putNeg( 1,  0,  1); 
+        buf.putNeg( 1,  0, -1); 
+        //Dir.DIR_POS_Z
+        buf.putNeg(-1, -1, 0);
+        buf.putNeg( 1, -1, 0); 
+        buf.putNeg( 1,  1, 0); 
+        buf.putNeg(-1,  1, 0); 
+        //Dir.DIR_NEG_Z
+        buf.putNeg(-1, -1, 0);
+        buf.putNeg( 1, -1, 0);  
+        buf.putNeg( 1,  1, 0); 
+        buf.putNeg(-1,  1, 0);
+        buf.update();
+    }
     /**
      * @param mat
      */

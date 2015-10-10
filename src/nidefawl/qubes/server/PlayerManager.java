@@ -3,6 +3,7 @@ package nidefawl.qubes.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import com.google.common.collect.MapMaker;
 
@@ -14,6 +15,8 @@ import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.nbt.TagReader;
 import nidefawl.qubes.player.PlayerData;
+import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
 public class PlayerManager {
@@ -61,6 +64,14 @@ public class PlayerManager {
         Player player = new Player();
         player.name = name;
         PlayerData data = loadPlayer(name);
+        Iterator<Map.Entry<UUID, Vector3f>> wpos = data.worldPositions.entrySet().iterator();
+        while (wpos.hasNext()) {
+            Entry<UUID, Vector3f> d = wpos.next();
+            WorldServer w = this.server.getWorld(data.world);
+            if (w == null) {
+                wpos.remove();
+            }
+        }
         WorldServer world = null;
         if (data.world != null) {
             world = this.server.getWorld(data.world);
@@ -79,6 +90,7 @@ public class PlayerManager {
     }
 
     public void removePlayer(Player p) {
+        World world = p.world;
         this.players.remove(p.name);
         this.playersLowerCase.remove(p.name.toLowerCase());
         PlayerData data = p.save();

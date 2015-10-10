@@ -15,7 +15,6 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
@@ -62,7 +61,7 @@ public class RegionRenderer {
 
 
     public int                      rendered;
-    public int                      numRegions;
+    public int                      occlCulled;
     public int                      renderChunkX;
     public int                      renderChunkY;
     public int                      renderChunkZ;
@@ -87,6 +86,7 @@ public class RegionRenderer {
     MeshedRegion[][] regions;
     int drawMode = -1;
     int drawInstances = 0;
+    public int numV;
     
     protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
     protected static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
@@ -104,7 +104,7 @@ public class RegionRenderer {
         }
     }
     static void reallocIndexBuffers(int pass, int len) {
-        if (BlockFaceAttr.USE_TRIANGLES) {
+        if (Engine.USE_TRIANGLES) {
             if (idxByteBuffers[pass] == null || idxByteBuffers[pass].capacity() < len) {
                 if (idxByteBuffers[pass] != null) {
                     idxByteBuffers[pass] = Memory.reallocByteBufferAligned(idxByteBuffers[pass], 64, len);
@@ -259,7 +259,7 @@ public class RegionRenderer {
         resetAll();
         RENDER_DISTANCE = i;
         LENGTH_OVER     = (RENDER_DISTANCE + OFFS_OVER) * 2 + 1;
-        create();
+        this.regions = create();
     }
 
     public void reRender() {
@@ -334,8 +334,9 @@ public class RegionRenderer {
     public void renderMain(World world, float fTime, WorldRenderer worldRenderer) {
         int size = renderList.size();
 //        PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE
-        int drawMode = this.drawMode < 0 ? (BlockFaceAttr.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
-        this.numRegions=0;
+        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
+        this.occlCulled=0;
+        this.numV = 0;
         int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
         for (int dist = 0; dist < 2; dist++)  {
@@ -378,15 +379,19 @@ public class RegionRenderer {
                 }
                 this.rendered++;  
                 if (ENABLE_OCCL && r.distance > MIN_DIST_OCCL && r.occlusionResult == 1) {
-                    this.numRegions++;
+                    this.occlCulled++;
                     continue;
                 }
                 if (r.hasPass(PASS_SOLID)) {
 //                  System.out.println(glGetInteger(GL_DEPTH_FUNC));
                   r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                  this.numV += r.getNumVertices(PASS_SOLID);
               }
-              if (dist==0&&r.hasPass(PASS_LOD)) {
-                  r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+              if (numV < 1000000 ) {
+                  if (dist==0&&r.hasPass(PASS_LOD)) {
+                      r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                      this.numV += r.getNumVertices(PASS_LOD);
+                  }
               }
             }
             if (dist == 0) {
@@ -399,7 +404,7 @@ public class RegionRenderer {
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
-        int drawMode = this.drawMode < 0 ? (BlockFaceAttr.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
+        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         for (int i = 0; i < size; i++) {
             MeshedRegion r = list.get(i);
             if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
@@ -411,7 +416,7 @@ public class RegionRenderer {
     }
 
      void flushRegions() {
-        this.numRegions = 0;
+        this.occlCulled = 0;
         renderList.clear();
         shadowRenderList.clear();
     }

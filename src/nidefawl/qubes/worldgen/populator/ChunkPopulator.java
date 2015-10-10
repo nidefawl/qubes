@@ -29,16 +29,17 @@ public class ChunkPopulator implements IChunkPopulator {
     public void populate(Chunk c) {
         Random rand = new Random();
         int a = 0;
-        for (int i = 0; i < 255; i++) {
+        for (int i = 0; i < 5; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= 5 && rand.nextInt(3) == 0) {
+                if ( a <= 2 && rand.nextInt(34) == 0) {
                     TreeGenerators.rand(rand).generate(world, x, h+1, z, rand);
                 } else {
+
                     world.setType(x, h+1, z, Block.longgrass.id, Flags.MARK);
                 }
                 a++;

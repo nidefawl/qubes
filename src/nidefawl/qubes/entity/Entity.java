@@ -5,6 +5,7 @@ import nidefawl.qubes.util.CollisionQuery;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Vec3D;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public abstract class Entity {
@@ -127,6 +128,10 @@ public abstract class Entity {
     }
 
     public void move(Vec3D v) {
+        move(v.x, v.y, v.z);
+    }
+
+    public void move(Vector3f v) {
         move(v.x, v.y, v.z);
     }
     public void move(double x, double y, double z) {

@@ -30,7 +30,6 @@ public class Shader {
     int geometryShader = -1;
     int shader = -1;
     final String name;
-    public int bufBindIdx = 0;
     
     HashMap<String, Integer> locations    = new HashMap<String, Integer>();
     HashMap<String, AbstractUniform> uniforms    = new HashMap<String, AbstractUniform>();

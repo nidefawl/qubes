@@ -25,6 +25,7 @@ public class EditBlockTask {
         int w = p2.x-p1.x+1;
         int h = p2.y-p1.y+1;
         int l = p2.z-p1.z+1;
+        int flags = Flags.MARK|Flags.LIGHT;
         if (hollow) {
             for (int x = 0; x < w; x++) {
                 for (int y = 0; y < h; y++) {
@@ -32,13 +33,13 @@ public class EditBlockTask {
                         int blockX = p1.x+x;
                         int blockY = p1.y+y;
                         int blockZ = p1.z ;
-                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, flags);
                     }
                     {
                         int blockX = p1.x + x;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + l-1;
-                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, flags);
                     }
                 }
             }
@@ -48,13 +49,13 @@ public class EditBlockTask {
                         int blockX = p1.x;
                         int blockY = p1.y+y;
                         int blockZ = p1.z+z;
-                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, flags);
                     }
                     {
                         int blockX = p1.x + w-1;
                         int blockY = p1.y + y;
                         int blockZ = p1.z + z;
-                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, flags);
                     }
                 }
             }
@@ -64,13 +65,13 @@ public class EditBlockTask {
 //                        int blockX = p1.x+x;
 //                        int blockY = p1.y;
 //                        int blockZ = p1.z+z;
-//                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+//                        world.setType(blockX, blockY, blockZ, block, flags);
 //                    }
                     {
                         int blockX = p1.x + x;
                         int blockY = p1.y + h-1;
                         int blockZ = p1.z + z;
-                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, flags);
                     }
                 }
             }} else {
@@ -81,7 +82,7 @@ public class EditBlockTask {
                         int blockY = p1.y+y;
                         int blockZ = p1.z+z;
                         
-                        world.setType(blockX, blockY, blockZ, block, Flags.MARK);
+                        world.setType(blockX, blockY, blockZ, block, flags);
                     }
                 }
                 

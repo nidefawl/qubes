@@ -29,7 +29,7 @@ public class BlockQuarterLog extends Block {
 
     
     @Override
-    public int getTextureFromSide(int faceDir) {
+    public int getTexture(int faceDir, int dataVal) {
         int idx = 0;
         switch (faceDir) {
             case Dir.DIR_POS_Z:

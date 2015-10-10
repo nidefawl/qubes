@@ -30,6 +30,19 @@ public class WorldRenderer {
     public static final int PASS_TRANSPARENT  = 1;
     public static final int PASS_SHADOW_SOLID = 2;
     public static final int PASS_LOD          = 3;
+    public static final String getPassName(int i) {
+        switch (i) {
+            case PASS_SOLID:
+                return "Main";
+            case PASS_TRANSPARENT:
+                return "Transparent";
+            case PASS_SHADOW_SOLID:
+                return "Shadow";
+            case PASS_LOD:
+                return "LOD";
+        }
+        return "PASS_"+i;
+    }
 
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
 //    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
@@ -72,10 +85,22 @@ public class WorldRenderer {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_waterShader = assetMgr.loadShader("shaders/basic/water");
-            Shader terrain = assetMgr.loadShader("shaders/basic/terrain");
+            Shader terrain = assetMgr.loadShader("shaders/basic/terrain", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("TERRAIN_DRAW_MODE".equals(define)) {
+                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
+                    }
+                    return null;
+                }
+                
+            });
             Shader terrainFar = assetMgr.loadShader("shaders/basic/terrain", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
+                    if ("TERRAIN_DRAW_MODE".equals(define)) {
+                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
+                    }
                     if ("FAR_BLOCKFACE".equals(define)) {
                         return "#define FAR_BLOCKFACE";
                     }

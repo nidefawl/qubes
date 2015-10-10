@@ -42,7 +42,7 @@ public class Selection {
     private TesselatorState highlightBlockOver;
     boolean                 mouseDown         = false;
     boolean                 mouseStateChanged = false;
-    private RayTrace rayTrace;
+    public RayTrace rayTrace;
 
     public void init() {
 
@@ -477,5 +477,14 @@ public class Selection {
         this.mouseStateChanged = false;
         pos[0] = new BlockPos();
         pos[1] = new BlockPos();
+    }
+    /**
+     * @return
+     */
+    public RayTraceIntersection getHit() {
+        if (this.rayTrace.hasHit()) {
+            return this.rayTrace.getHit();
+        }
+        return null;
     }
 }

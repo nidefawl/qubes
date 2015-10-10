@@ -15,7 +15,7 @@ public class BlockGrass extends Block {
         return side == Dir.DIR_POS_Y ? 0x44600E : super.getColorFromSide(side);
     }
 
-    public int getTextureFromSide(int faceDir) {
+    public int getTexture(int faceDir, int dataVal) {
         
         int idx = 0;
         if (faceDir == Dir.DIR_NEG_Y) {

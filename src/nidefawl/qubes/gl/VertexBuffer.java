@@ -51,7 +51,6 @@ public class VertexBuffer {
         this.buffer[this.index++] = val;
         left--;
         if (left < 100) {
-            System.out.println("need to incr buf size (cur: "+this.buffer.length+")");
             int incr = this.buffer.length <= 1024 ? 512 : this.buffer.length>>1;
             int newSize = (this.buffer.length+incr);
             realloc(newSize);

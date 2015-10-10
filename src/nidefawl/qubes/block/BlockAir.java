@@ -32,7 +32,7 @@ public class BlockAir extends Block {
         return this;
     }
     
-    public int getTextureFromSide(int faceDir) {
+    public int getTexture(int faceDir, int dataVal) {
         return 0;
     }
     

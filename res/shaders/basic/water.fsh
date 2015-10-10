@@ -3,6 +3,7 @@
 #define NOISE_TEX_SIZE 64
 
 #pragma include "ubo_scene.glsl"
+#pragma include "tonemap.glsl"
 
 uniform sampler2DArray blockTextures;
 uniform sampler2D waterNormals;
@@ -60,7 +61,7 @@ vec4 lookupNoiseTex(in vec2 noisePos)
 	return texture2D_smooth(waterNormals, noisePos, noiseTexRes);
 }
 float waterDist(vec2 worldpos, vec2 offset) {
-	float timeF = in_scene.frameTime;
+	float timeF = in_scene.frameTime.x;
 	float waterScale;
 	float waterSpeed;
 	float wave = 0;
@@ -101,7 +102,7 @@ float waterDist(vec2 worldpos, vec2 offset) {
 
 
 vec4 getNoise(vec2 uv){
-	float timeF = in_scene.frameTime*0.006;
+	float timeF = in_scene.frameTime.x*0.006;
     vec2 uv0 = (uv/103.0)+vec2(timeF/17.0, timeF/29.0);
     vec2 uv1 = uv/107.0-vec2(timeF/-19.0, timeF/31.0)+vec2(0.23);
     vec2 uv2 = uv/vec2(897.0, 983.0)+vec2(timeF/101.0, timeF/97.0)+vec2(0.51);
@@ -148,14 +149,15 @@ vec4 getNoise(vec2 uv){
 */
 void main() {
 	vec3 normal_out = normal;
+	vec2 texCoord2 = texcoord.st;
 	float dist = (14+length(vpos)/122);
 	vec2 vw = vec2(vwpos.x, vwpos.z);
     vec4 noise = getNoise(vw*2.5);
     vec3 nd = normalize(noise.xzy*vec3(2.0, clamp(dist, 2.0, 100.0), 2.0));
 	normal_out = nd;
-	vec2 texCoord2 = texcoord.st;
 	texCoord2.st+=nd.xz*2.2;
 	vec4 tex = texture(blockTextures, vec3(texCoord2, float(blockinfo.x)));
+	srgbToLin(tex.xyz);
 	float xPos2 = texPos.x;
 	float xPos = 1-texPos.x;
 	float yPos2 = texPos.y;

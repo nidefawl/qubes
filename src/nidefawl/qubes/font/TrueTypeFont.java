@@ -522,14 +522,10 @@ public class TrueTypeFont {
         int totalwidth = 0;
         int i = startIndex, d, c;
         float startY = -2;
+        int offset = 0;
+        final String colorFreeString = this.trimColorChars(whatchars);
 
         switch (format) {
-            case ALIGN_RIGHT: {
-                d = 1;
-                c = this.correctL;
-                totalwidth -= getWidth(whatchars) + c;
-                break;
-            }
             case 3: {
                 totalwidth = getWidth(whatchars);
                 totalwidth /= -2;
@@ -537,10 +533,9 @@ public class TrueTypeFont {
             d = 1;
             c = this.correctL;
             break;
+            case ALIGN_RIGHT:
             case ALIGN_CENTER: {
                 totalwidth = 0;
-                final String colorFreeString = this.trimColorChars(whatchars);
-                int offset = 0;
                 for (int l = i + offset; l <= Math.min(endIndex, colorFreeString.length() - offset - 1); l++) {
                     charCurrent = colorFreeString.charAt(l);
                     if (charCurrent == '\n')
@@ -566,7 +561,11 @@ public class TrueTypeFont {
                     if (rect != null)
                         totalwidth += rect.width - this.correctL;
                 }
-                totalwidth /= -2;
+                if (format != ALIGN_RIGHT)
+                    totalwidth /= -2;
+                else {
+                    totalwidth = -totalwidth;
+                }
             }
             case ALIGN_LEFT:
             default: {
@@ -588,16 +587,37 @@ public class TrueTypeFont {
                 startY += this.fontHeight * d;
                 this.drawedHeight += this.fontHeight * d;
                 totalwidth = 0;
-                if (format == ALIGN_CENTER) {
+                if (format == ALIGN_CENTER || format == ALIGN_RIGHT) {
                     for (int l = i + 1; l <= endIndex; l++) {
                         Character c2 = whatchars.charAt(l);
                         if (c2 == '\n')
                             break;
+                        if (c2 == ' ') {
+                            final int spaceWidth = Math.min(this.fontMetrics.charWidth(c2) + this.correctL, (int) (this.fontMetrics.getHeight() * 0.2D));
+                            totalwidth += spaceWidth;
+                        }
+
+                        if (c2 == '\u00A7' && l + 1 < whatchars.length()) {
+                            char c3 = whatchars.charAt(l + 1);
+                            if (c3 == 's') {
+                                final int spaceWidth = Math.min(this.fontMetrics.charWidth(c2) + this.correctL, (int) (this.fontMetrics.getHeight() * 0.2D));
+                                totalwidth += spaceWidth;
+                            }
+                            if (c3 == 'u') {
+                                l+=6;
+                            }
+                            l++;
+                            continue;
+                        }
                         rect = this.getRect(c2);
                         if (rect != null)
-                            totalwidth += rect.width - this.correctL;
+                            totalwidth += rect.width - this.correctL;                    
                     }
-                    totalwidth /= -2;
+                    if (format != ALIGN_RIGHT)
+                        totalwidth /= -2;
+                    else {
+                        totalwidth = -totalwidth;
+                    }
                 }
                 // if center get next lines total width/2;
             }

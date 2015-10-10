@@ -1,6 +1,5 @@
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.world.World;
 
 public class BlockSliced extends Block {
     public BlockSliced(int id) {
@@ -8,5 +7,10 @@ public class BlockSliced extends Block {
     }
     public BlockSliced(int id, boolean b) {
         super(id, b);
+    }
+
+    @Override
+    public int getRenderType() {
+        return 3;
     }
 }

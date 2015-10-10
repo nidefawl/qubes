@@ -90,8 +90,11 @@ public class BlockLightThread extends Thread {
                         last = System.currentTimeMillis();
                         int n = this.lightUpdater.numBlocksUpdate;
                         this.lightUpdater.numBlocksUpdate = 0;
-                        float perSec = n*1000 / (float) lT;
-                        System.out.printf("%.2f Light updates/s, Queue len %d, Cache: %d hits, %d misses\n", perSec, queue.size(), hits, misses);                            
+                        if (n > 0) {
+                            double perSec = n / (double) lT;
+                            perSec*=1000;
+                            System.out.printf("%.2f Light updates/s, Queue len %d, Cache: %d hits, %d misses\n", perSec, queue.size(), hits, misses);                            
+                        }
                     }
                 } catch (Exception e) {
                     ErrorHandler.setException(new GameError("Exception in " + getName(), e));

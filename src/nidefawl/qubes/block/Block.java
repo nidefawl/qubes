@@ -7,7 +7,9 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.meshing.ChunkRenderCache;
 import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
@@ -28,7 +30,7 @@ public class Block {
     public final static Block dirt = new Block(3).setName("dirt");
     public final static Block water = new BlockWater(4).setName("water");
     public final static Block sand = new BlockSand(5).setName("sand");
-    public final static Block glowstone = new BlockGlowStone(6).setName("glowstone").setTextures("glowstone");
+    public final static Block glowstone = new BlockLit(6).setName("glowstone").setTextures("glowstone");
     public final static Block log_acacia = new BlockLog(7).setName("log_acacia").setTextures("log_acacia", "log_acacia_top");
     public final static Block log_birch = new BlockLog(8).setName("log_birch").setTextures("log_birch", "log_birch_top");
     public final static Block log_jungle = new BlockLog(9).setName("log_jungle").setTextures("log_jungle", "log_jungle_top");
@@ -40,7 +42,7 @@ public class Block {
     public final static Block leaves_spruce = new BlockLeaves(15).setName("leaves_spruce");
     public final static Block leaves_oak = new BlockLeaves(16).setName("leaves_oak");
     public final static Block longgrass = new BlockLongGrass(17).setName("longgrass").setTextures("tallgrass");
-    public final static Block slab = new BlockSlab(18, stone).setName("stoneslab").setTextures("stone_slab_side", "stone_slab_top");
+    public final static Block slab = new BlockSlab(18, stone).setName("stoneslab").setTextureMode(BlockTextureMode.TOP_BOTTOM).setTextures("stone_slab_side", "stone_slab_top", "stone_slab_top");
     public final static Block stairs = new BlockStairs(19, stone).setName("stonestairs");
 
     public static void preInit() {
@@ -67,6 +69,9 @@ public class Block {
                 if (b.textures == null) {
                     b.textures = new String[] { "textures/blocks/"+b.name+".png" };
                 }
+                if (b.getLODPass() == WorldRenderer.PASS_LOD && b.getRenderType() == 0) {
+                    throw new GameError("Block cannot be in LOD pass and be meshed (rendertype = 0)");
+                }
             }
         }
 
@@ -86,10 +91,11 @@ public class Block {
     public final int id;
     private String name;
     private final boolean transparent;
-    String[] textures;
+    protected String[] textures;
     final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
+    private BlockTextureMode textureMode = BlockTextureMode.DEFAULT;
 
-    protected Block(int id, boolean transparent) {
+    public Block(int id, boolean transparent) {
         if (id < 0) {
             id = HIGHEST_BLOCK_ID+1;
         }
@@ -134,10 +140,28 @@ public class Block {
     public int getColorFromSide(int side) {
         return 0xFFFFFF;
     }
-    public int getTextureFromSide(int faceDir) {
+    /**
+     * @param textureMode the textureMode to set
+     * @return 
+     */
+    public Block setTextureMode(BlockTextureMode textureMode) {
+        this.textureMode = textureMode;
+        return this;
+    }
+    public int getTexture(int faceDir, int dataVal) {
+        switch (this.textureMode) {
+            case TOP:
+                return BlockTextureArray.getInstance().getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : 0);
+            case TOP_BOTTOM:
+                return BlockTextureArray.getInstance().getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : faceDir == Dir.DIR_NEG_Y ? 2 : 0);
+            case DEFAULT:
+                break;
+        }
         return BlockTextureArray.getInstance().getTextureIdx(this.id, 0);
     }
-    
+    public int getLODPass() {
+        return WorldRenderer.PASS_SOLID;
+    }
     public int getRenderPass() {
         return 0;
     }
@@ -328,5 +352,9 @@ public class Block {
         for (int i = 0; i < quarters.length; i++) {
             quarters[i] = this.id;
         }
+    }
+    
+    public int getRenderShadow() {
+        return 1;
     }
 }

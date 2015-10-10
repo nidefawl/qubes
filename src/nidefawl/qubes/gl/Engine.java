@@ -47,8 +47,6 @@ public class Engine {
     private static BufferedMatrix orthoMV;
     private static BufferedMatrix orthoMVP;
 
-    private static FloatBuffer fog;
-
     public static FrameBuffer fbScene;
     public static FrameBuffer fbDbg;
     public static float znear;
@@ -75,6 +73,8 @@ public class Engine {
     private static int           fieldOfView;
 
     public static boolean renderWireFrame = false;
+    public static boolean USE_TRIANGLES = false;
+    public static int terrainVertexAttributeFormat = 0;
     
     
 
@@ -403,6 +403,13 @@ public class Engine {
 
     public static void toggleWireFrame() {
         renderWireFrame = !renderWireFrame;
+        worldRenderer.initShaders();
+    }
+
+
+
+    public static void toggleDrawMode() {
+        terrainVertexAttributeFormat = 1 - terrainVertexAttributeFormat;
         worldRenderer.initShaders();
     }
 

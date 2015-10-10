@@ -8,6 +8,8 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
@@ -56,41 +58,70 @@ public class MeshedRegion {
     }
     
     public static void enabledDefaultBlockPtrs() {
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, BLOCK_VERT_BYTE_SIZE, 0);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 0);
-        int offset = 4;
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 1);
-        offset += 1; //5
-        GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 2);
-        offset += 2; //7
-        GL20.glEnableVertexAttribArray(3);
-        GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, BLOCK_VERT_BYTE_SIZE, offset * 4);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 3);
-        offset += 1; //8
-        GL20.glEnableVertexAttribArray(4);
-        GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, BLOCK_VERT_BYTE_SIZE, offset * 4);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 4);
-        offset += 2;//10
-        GL20.glEnableVertexAttribArray(5);
-        GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, BLOCK_VERT_BYTE_SIZE, offset * 4);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 5);
-        offset += 1;//11
-        GL20.glEnableVertexAttribArray(6); //TODO: this is not set in shader (glBindAttribLocationARB)
-        GL20.glVertexAttribPointer(6, 4, GL11.GL_BYTE, false, BLOCK_VERT_BYTE_SIZE, offset * 4);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("AttribPtr " + 6);
-        offset += 1; //12
+        
+        if (Engine.terrainVertexAttributeFormat == 1) {
+            final int VERT_LEN = (BLOCK_VERT_INT_SIZE+3)<<2;
+            //POS
+            GL20.glEnableVertexAttribArray(0);
+            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, VERT_LEN, 0);
+            int offset = 4;
+            //NORMAL
+            GL20.glEnableVertexAttribArray(1);
+            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
+            offset += 1;
+            
+            //1 BYTE UNUSED (normal has 3 bytes)
+            
+            //TEXCOORD
+            GL20.glEnableVertexAttribArray(2);
+            GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, VERT_LEN, offset * 4);
+            offset += 2; 
+            //COLOR
+            GL20.glEnableVertexAttribArray(3);
+            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
+            offset += 1; 
+            //BLOCKINFO
+            GL20.glEnableVertexAttribArray(4);
+            GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
+            offset += 2;
+            //LIGHTINFO
+            GL20.glEnableVertexAttribArray(5);
+            GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
+            offset += 1;
+            //DIRECTIOn
+            GL20.glEnableVertexAttribArray(6); //TODO: this is not set in shader (glBindAttribLocationARB)
+            GL20.glVertexAttribPointer(6, 4, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
+            offset += 1; 
+        } else {
+            final int VERT_LEN = (BLOCK_VERT_INT_SIZE)<<2;
+            //POS
+            GL20.glEnableVertexAttribArray(0);
+            GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, VERT_LEN, 0);
+            int offset = 3;
+            //NORMAL
+            GL20.glEnableVertexAttribArray(1);
+            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
+            offset += 1; 
+            
+            //1 BYTE UNUSED (normal has 3 bytes)
+            
+            //TEXCOORD
+            GL20.glEnableVertexAttribArray(2);
+            GL20.glVertexAttribPointer(2, 2, GL30.GL_HALF_FLOAT, false, VERT_LEN, offset * 4);
+            offset += 1; 
+            //COLOR
+            GL20.glEnableVertexAttribArray(3);
+            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
+            offset += 1; 
+            //BLOCKINFO
+            GL20.glEnableVertexAttribArray(4);
+            GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
+            offset += 2;
+            //LIGHTINFO
+            GL20.glEnableVertexAttribArray(5);
+            GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
+            offset += 1;
+        }
     }
     public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo[pass]);
@@ -101,7 +132,7 @@ public class MeshedRegion {
             }
         }
         enableVertexPtrs(ptrSetting);
-        if (USE_TRIANGLES) {
+        if (Engine.USE_TRIANGLES) {
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIndices[pass]);
             if (drawInstances > 0) {
                 GL31.glDrawElementsInstanced(drawMode, this.elementCount[pass]*3, GL11.GL_UNSIGNED_SHORT, 0, drawInstances);
@@ -157,7 +188,7 @@ public class MeshedRegion {
                     GL30.glVertexAttribIPointer(2, 2, GL11.GL_UNSIGNED_SHORT, PASS_3_BLOCK_VERT_BYTE_SIZE, offset * 4);
                     if (Game.GL_ERROR_CHECKS)
                         Engine.checkGLError("AttribPtr " + 2);
-                    offset += 1;//10
+                    offset += 1;
 
                 }
                 return;
@@ -171,7 +202,7 @@ public class MeshedRegion {
      */
     public static void disableVertexPtrs(int ptrSetting) {
         if (ptrSetting < 2 || ptrSetting == 3) {
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 6+Engine.terrainVertexAttributeFormat; i++)
                 GL20.glDisableVertexAttribArray(i);
         } else {
             GL20.glDisableVertexAttribArray(0);
@@ -202,6 +233,9 @@ public class MeshedRegion {
         Arrays.fill(this.elementCount, 0);
         this.hasAnyPass = false;
     }
+    public static long totalBytes = 0;
+    long alloc[] = new long[NUM_PASSES];
+    public static long totalBytesPass[] = new long[NUM_PASSES];
     public void uploadBuffer(int pass, VertexBuffer buffer, int shadowDrawMode) {
         int numV = buffer.getVertexCount();
         int numF = buffer.getFaceCount();
@@ -211,22 +245,105 @@ public class MeshedRegion {
         this.hasPass[pass] |= numV > 0;
         this.hasAnyPass |= numV > 0;
         this.shadowDrawMode = shadowDrawMode;
-        
-        
         RegionRenderer.reallocBuffer(pass, len*4);
         ByteBuffer buf = RegionRenderer.buffers[pass];
         IntBuffer intBuffer = RegionRenderer.intbuffers[pass];
         intBuffer.clear();
         intBuffer.put(buffer.get(), 0, len);
         buf.position(0).limit(len * 4);
+        
+        if (pass == 0 && numF > 44444 && false) {
+            byte[] data = new byte[BLOCK_FACE_BYTE_SIZE];
+            buf.get(data);
+            buf.position(0).limit(len * 4);
+            String hex = DatatypeConverter.printHexBinary(data);
+            String cur = "";
+            int curDataLen = 0;
+            int curAttrib = 0;
+            int face = 0;
+            int lastface = -1;
+            for (int i = 0; i < BLOCK_FACE_BYTE_SIZE; i++) {
+                if (face != lastface) {
+                    System.out.printf("Face: %d (%d/%d)\n", face, i, data.length);
+                    lastface = face;
+                    curAttrib = 0;
+                }
+                if (curDataLen == 0) {
+                    cur = "";
+                }
+                int bHexIdx = i*2;
+                cur+=hex.charAt(bHexIdx);
+                cur+=hex.charAt(bHexIdx+1);
+                curDataLen++;
+                switch (curAttrib) {
+                    case 0://pos
+                        if (curDataLen == 4*4) {
+                            System.out.printf("%-20s: %s\n", "Pos", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                        }
+                        break;
+                    case 1://pos
+                        if (curDataLen == 1*4) {
+                            System.out.printf("%-20s: %s\n", "in_normal", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                        }
+                        break;
+                    case 2://pos
+                        if (curDataLen == 2*4) {
+                            System.out.printf("%-20s: %s\n", "in_texcoord", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                        }
+                        break;
+                    case 3://pos
+                        if (curDataLen == 1*4) {
+                            System.out.printf("%-20s: %s\n", "in_color", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                        }
+                        break;
+                    case 4://pos
+                        if (curDataLen == 2*4) {
+                            System.out.printf("%-20s: %s\n", "in_blockinfo", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                        }
+                        break;
+                    case 5://pos
+                        if (curDataLen == 1*4) {
+                            System.out.printf("%-20s: %s\n", "in_light", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                        }
+                        break;
+                    case 6://pos
+                        if (curDataLen == 1*4) {
+                            System.out.printf("%-20s: %s\n", "in_direction", cur);
+                            curDataLen = 0;
+                            curAttrib++;
+                            face++;
+                        }
+                        break;
+                }
+            }
+        }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo[pass]);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer " + vbo[pass]);
+        if (alloc[pass] != len * 4) {
+            totalBytes -= this.alloc[pass];
+            totalBytesPass[pass] -= this.alloc[pass];
+            this.alloc[pass] = len * 4L;
+            totalBytes += this.alloc[pass];
+            totalBytesPass[pass] += this.alloc[pass];
+        }
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len * 4L, buf, GL15.GL_STATIC_DRAW);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData /" + intBuffer);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        if (USE_TRIANGLES) {
+        if (Engine.USE_TRIANGLES) {
             int numTriangles = this.elementCount[pass];
             int numQuads = numTriangles/2;
             int byteSizeIDX = 4;
@@ -274,6 +391,10 @@ public class MeshedRegion {
         this.isValid = false;
         this.isRenderable = false;
         Arrays.fill(frustumStates, -2);
+        for (int a = 0; a < NUM_PASSES; a++) {
+            totalBytes-=this.alloc[a];
+            totalBytesPass[a]-=this.alloc[a];
+        }
     }
 
     public int getNumVertices(int i) {

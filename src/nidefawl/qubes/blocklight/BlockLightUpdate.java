@@ -11,6 +11,8 @@ import nidefawl.qubes.world.WorldServer;
 
 public class BlockLightUpdate {
 
+    //TODO: use world.getHeight or World.MAX_HEIGHT
+    //TODO: use CHunk.size instead of 16
     final static int STACK_SIZE = 1024*128;
     final long[] stackRemove = new long[STACK_SIZE];
     final long[] stackAdd = new long[STACK_SIZE];
@@ -26,24 +28,37 @@ public class BlockLightUpdate {
         Chunk c = cache.get(cx, cz);
         cx <<= Chunk.SIZE_BITS;
         cz <<= Chunk.SIZE_BITS;
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                int x2 = x + cx;
-                int z2 = z + cz;
-                int y = c.getHeightMap(x, z);
-                updateBlock(cache, x2, y, z2, type);
-                for (int y3 = cache.worldHeightMin1; y3 > 0; y3--) {
-                    for (int i = 0; i < 4; i++) {
-                        int bX = Dir.getDirX(i) + x2;
-                        int bZ = Dir.getDirZ(i) + z2;
-                        if (cache.isTransparent(bX, y3, bZ) && !cache.canSeeSky(bX, y3, bZ)) {
-                            updateBlock(cache, bX, y3, bZ, type);
+        if (type == 0) {
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    for (int y = 0; y < 256; y++) {
+                        int x2 = x + cx;
+                        int z2 = z + cz;
+                        if (Block.get(cache.getTypeId(x2, y, z2)).getLightValue() > 0)
+                            updateBlock(cache, x2, y, z2, type);
+                    }
+                }
+            }
+        } else { //SKYLIGHT
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    int x2 = x + cx;
+                    int z2 = z + cz;
+                    int y = c.getHeightMap(x, z);
+                    updateBlock(cache, x2, y-1, z2, type);
+                    for (int y3 = cache.worldHeightMin1; y3 > 0; y3--) {
+                        for (int i = 0; i < 4; i++) {
+                            int bX = Dir.getDirX(i) + x2;
+                            int bZ = Dir.getDirZ(i) + z2;
+                            if (cache.isTransparent(bX, y3, bZ) && !cache.canSeeSky(bX, y3, bZ)) {
+                                updateBlock(cache, bX, y3, bZ, type);
+                            }
                         }
                     }
                 }
             }
+            c.isLit = true;
         }
-        c.isLit = true;
     }
 
 
@@ -64,6 +79,7 @@ public class BlockLightUpdate {
         } else if (current < newLevel) {
             stackAdd[idxAdd++] = TripletLongHash.toHash(x, y, z);
         } else {
+            
         }
         setLight(cache, x, y, z, type, newLevel, 0);
 

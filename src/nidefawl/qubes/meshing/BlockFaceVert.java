@@ -3,6 +3,7 @@ package nidefawl.qubes.meshing;
 import java.nio.ByteOrder;
 
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.Dir;
 
 public class BlockFaceVert {
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
@@ -14,6 +15,7 @@ public class BlockFaceVert {
     float                        z;
     int dirOffset;
     int normal;
+    int direction;
 
     public void setColorRGBAF(float r, float g, float b, float a) {
         int iR = (int) (r * 255.0F);
@@ -42,6 +44,15 @@ public class BlockFaceVert {
 
     public void setFaceVertDir(int n) {
         dirOffset = n;
+    }
+    public void setDirection(int side, int vertex, boolean negative) {
+        direction = (side*4+vertex)+1;
+        if (negative) {
+            direction += 32;
+        }
+    }
+    public void setNoDirection() {
+        direction = 0;
     }
     public void setNormal(float x, float y, float z) {
 

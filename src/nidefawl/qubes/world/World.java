@@ -171,7 +171,9 @@ public abstract class World implements IBlockWorld {
             return false;
         }
         if (c.setData(x & 0xF, y, z & 0xF, type)) {
-            updateLight(x, y, z);
+            if ((render & Flags.LIGHT) != 0) {
+                updateLight(x, y, z);
+            }
             if ((render & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
             }   
@@ -193,7 +195,9 @@ public abstract class World implements IBlockWorld {
             return false;
         }
         if (c.setType(x & 0xF, y, z & 0xF, type)) {
-            updateLight(x, y, z);
+            if ((render & Flags.LIGHT) != 0) {
+                updateLight(x, y, z);
+            }
             if ((render & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
             }   

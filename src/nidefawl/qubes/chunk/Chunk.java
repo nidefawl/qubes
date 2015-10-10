@@ -264,6 +264,16 @@ public class Chunk {
                 break;
             }
         }
+        /*
+         * 
+        for (; y > 0; y--) {
+            short block = y == 0 ? 1 : this.blocks[(y-1) << (SIZE_BITS * 2) | xz];
+            if (block != 0||y-1==0) {
+                heightMap[xz] = y-1;
+                break;
+            }
+        }
+         */
         if (prevH != y) {
             boolean add = prevH > y;
             int min = Math.min(prevH, y);
@@ -284,7 +294,7 @@ public class Chunk {
 
         //Propagate sunlight down
         for (int xz = 0; xz < SIZE * SIZE; xz++) {
-            for (int y = this.heightMap[xz] + 1; y < this.height; y++) {
+            for (int y = this.heightMap[xz]; y < this.height; y++) {
                 this.setLight(xz & MASK, y, (xz >> SIZE_BITS) & MASK, 1, 15);
             }
         }
@@ -293,7 +303,7 @@ public class Chunk {
     
     public void initHeightMap() {
         //Zero out height map
-        Arrays.fill(this.heightMap, (byte) 0);
+        Arrays.fill(this.heightMap, (int) 0);
 
         //Calculate new heightmap
         for (int x = 0; x < SIZE; x++) {

@@ -15,7 +15,7 @@ public class BlockLog extends Block {
     /**
      * @param id
      */
-    BlockLog(int id) {
+    public BlockLog(int id) {
         super(id, false);
     }
 
@@ -23,7 +23,7 @@ public class BlockLog extends Block {
      * @see nidefawl.qubes.block.Block#getTextureFromSide(int)
      */
     @Override
-    public int getTextureFromSide(int faceDir) {
+    public int getTexture(int faceDir, int dataVal) {
         return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
     }
 }

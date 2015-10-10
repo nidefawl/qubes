@@ -105,8 +105,10 @@ public class MeshUpdateTask {
                 this.mesher.mesh(w, this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
+                for (int a = 0; a < this.vbuffer.length; a++) {
+                    vbuffer[a].reset();
+                }
                 for (int i = 0; i < PASS_LOD && this.mr.isValid; i++) {
-                    vbuffer[i].reset();
                     List<BlockFace> mesh = this.mesher.getMeshes(i);
                     int numMeshedFaces = mesh.size();
                     attr.setOffset(xOff, yOff, zOff);
@@ -122,7 +124,6 @@ public class MeshUpdateTask {
                         }
                     }
                 }
-                vbuffer[PASS_LOD].reset();
                 int n = this.mesher.getRenderType1Blocks();
                 if (n > 0) {
                     attr.setOffset(0, 0, 0);
@@ -138,7 +139,7 @@ public class MeshUpdateTask {
                         x += xOff;
                         y += yOff;
                         z += zOff;
-                        blockRenderer.render(PASS_LOD, x, y, z);
+                        blockRenderer.render(x, y, z);
                     }
                 }
             

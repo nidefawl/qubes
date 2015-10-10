@@ -98,7 +98,7 @@ public class BlockRenderer {
         return chunk.getLight(i & 0xF, iy, k & 0xF);
     }
 
-    public int render(int renderPass, int ix, int iy, int iz) {
+    public int render(int ix, int iy, int iz) {
         //        ccache
         int i = ix & REGION_SIZE_BLOCKS_MASK;
         int j = iy & SLICE_HEIGHT_BLOCK_MASK;
@@ -123,16 +123,13 @@ public class BlockRenderer {
         //        light = chunk.getTypeId(i & 0xF, iy, k & 0xF);
         Block block = Block.get(type);
         int renderType = block.getRenderType();
-        if (renderPass == PASS_LOD) {
-            switch (renderType) {
-                case 1:
-                    return renderPlant((BlockPlantCrossedSquares) block, ix, iy, iz);
-                case 2:
-//                    return renderBlock(block, ix, iy, iz); //SLAB
-                case 3:
-//                    return renderStairs(block, ix, iy, iz);
-                    return renderSlicedFaces((BlockSliced) block, ix, iy, iz);
-            }
+        switch (renderType) {
+            case 1:
+                return renderPlant(block, ix, iy, iz);
+            case 2:
+                return renderBlock(block, ix, iy, iz); //Normal block with custom bounds 
+            case 3:
+                return renderSlicedFaces((BlockSliced) block, ix, iy, iz);
         }
         return 0;
     }
@@ -232,10 +229,12 @@ public class BlockRenderer {
                 break;
         }
         attr.put(this.vbuffer[targetBuffer]);
-        if (this.shadowDrawMode == 1) {
-            attr.putShadowTextured(this.vbuffer[PASS_SHADOW_SOLID]);
-        } else {
-            attr.putBasic(this.vbuffer[PASS_SHADOW_SOLID]);
+        if (block.getRenderShadow()>0) {
+            if (this.shadowDrawMode == 1) {
+                attr.putShadowTextured(this.vbuffer[PASS_SHADOW_SOLID]);
+            } else {
+                attr.putBasic(this.vbuffer[PASS_SHADOW_SOLID]);
+            }   
         }
         return 1;
     }
@@ -276,6 +275,7 @@ public class BlockRenderer {
         }
     }
     private int renderSlicedFaces(BlockSliced block, int ix, int iy, int iz) {
+        int targetBuffer = block.getLODPass();
         int f = 0;
         extendFaces = false;
         block.getQuarters(this.w, ix, iy, iz, quarters);
@@ -335,7 +335,7 @@ public class BlockRenderer {
                                 qSurfaces[n] = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, qSurfacesS[n]);
                             }
                             setFaceColor(block, qSurfaces[n], n);
-                            f += renderFace(block, n, ix, iy, iz, PASS_SOLID);
+                            f += renderFace(block, n, ix, iy, iz, targetBuffer);
                         }
                     }
                 }
@@ -346,7 +346,8 @@ public class BlockRenderer {
         return f;
     }
 
-    int renderBlock(Block block, int ix, int iy, int iz, int targetBuffer) {
+    int renderBlock(Block block, int ix, int iy, int iz) {
+        int targetBuffer = block.getLODPass();
         setBlockBounds(block, ix, iy, iz);
         int f = 0;
         for (int n = 0; n < 6; n++) {
@@ -367,7 +368,7 @@ public class BlockRenderer {
         float g = (c & 0xFF) / 255F;
         c >>= 8;
         float r = (c & 0xFF) / 255F;
-        int tex = block.getTextureFromSide(faceDir);
+        int tex = block.getTexture(faceDir, 0);
         attr.setTex(tex);
         attr.setFaceDir(faceDir);
         attr.setReverse((bs.face&1)!=0);
@@ -376,16 +377,16 @@ public class BlockRenderer {
         attr.setType(bs.type);
         for (int v = 0; v < 4; v++) {
             attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
-            if (extendFaces) {
-                int idx = v;
-                if (faceDir/2>0) {
-                    idx = (idx + 3) % 4;
-                }
-                attr.v[v].setFaceVertDir(faceVDirections[faceDir][idx]);
-            } else {
-
-                attr.v[v].setFaceVertDir(0);
-            }
+//            if (extendFaces) {
+//                int idx = v;
+//                if (faceDir/2>0) {
+//                    idx = (idx + 3) % 4;
+//                }
+//                attr.v[v].setFaceVertDir(faceVDirections[faceDir][idx]);
+//                attr.v[v].setDirection(faceDir, idx, false);
+//            } else {
+                attr.v[v].setNoDirection();
+//            }
         }
         
     }
@@ -442,7 +443,8 @@ public class BlockRenderer {
         return out;
     }
 
-    int renderPlant(BlockPlantCrossedSquares block, int ix, int iy, int iz) {
+    int renderPlant(Block block, int ix, int iy, int iz) {
+        int targetBuffer = block.getLODPass();
         int brigthness = getLight(ix, iy, iz);
         float m = 1F;
         float alpha = block.getAlpha();
@@ -453,7 +455,8 @@ public class BlockRenderer {
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        int tex = block.getTextureFromSide(Dir.DIR_POS_Y);
+        int tex = block.getTexture(Dir.DIR_POS_Y, this.bs.data);
+        
         attr.setAO(0);
         attr.setTex(tex);
         attr.setFaceDir(Dir.DIR_POS_Y);
@@ -472,7 +475,7 @@ public class BlockRenderer {
         int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
         maskLight(brNN, brPN, brPP, brNP, block);
         attr.setType(block.id);
-      attr.setNormal(0, 1, 0); // set upward normal
+        attr.setNormal(0, 1, 0); // set upward normal
 
         final long multiplier = 0x5DEECE66DL;
         final long addend = 0xBL;
@@ -481,7 +484,7 @@ public class BlockRenderer {
         float x = ix;
         float y = iy;
         float z = iz;
-        if (block.applyRandomOffset()) {
+        if (block instanceof BlockPlantCrossedSquares && ((BlockPlantCrossedSquares)block).applyRandomOffset()) {
             long seed = (ix * 5591 + iy * 19 + iz * 7919);
             long iR = ((multiplier * seed + addend) & mask);
             float fR = 0.6F;
@@ -497,6 +500,7 @@ public class BlockRenderer {
         for (int v = 0; v < 4; v++) {
             attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
             attr.v[v].setFaceVertDir(0);
+            attr.v[v].setNoDirection();
         }
 
         attr.v0.setUV(sideOffset, 0);
@@ -523,7 +527,7 @@ public class BlockRenderer {
             attr.v2.setNormal(nx, ny, nz); // set upward normal
         }
         
-        attr.put(this.vbuffer[PASS_LOD]);
+        attr.put(this.vbuffer[targetBuffer]);
         
         attr.setReverse(true);
         {
@@ -534,7 +538,7 @@ public class BlockRenderer {
         }
         
 
-        attr.put(this.vbuffer[PASS_LOD]);
+        attr.put(this.vbuffer[targetBuffer]);
 
         attr.v0.setUV(sideOffset, 0);
         attr.v0.setPos(x + 1 - sideOffset, y, z + sideOffset);
@@ -557,7 +561,7 @@ public class BlockRenderer {
         }
         
 
-        attr.put(this.vbuffer[PASS_LOD]);
+        attr.put(this.vbuffer[targetBuffer]);
         attr.setReverse(true);
         {
             float nx=-nside;
@@ -567,7 +571,7 @@ public class BlockRenderer {
         }
 
 
-        attr.put(this.vbuffer[PASS_LOD]);
+        attr.put(this.vbuffer[targetBuffer]);
         return 4;
     }
 

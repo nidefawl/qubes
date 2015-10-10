@@ -3,6 +3,7 @@
 
 #pragma define "FAR_BLOCKFACE"
 #pragma include "ubo_scene.glsl"
+#pragma include "tonemap.glsl"
 
 uniform sampler2DArray blockTextures;
 uniform sampler2D noisetex;
@@ -97,7 +98,7 @@ void main2(void) {
 	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
 	lightLevelSky += faceLightSky.w * xPos  * yPos2;
 
-	// int timeW = mod(floor(in_scene.frameTime), 20) > 10 ? 1 : 0;
+	// int timeW = mod(floor(in_scene.frameTime.x), 20) > 10 ? 1 : 0;
 	float ambientOccl = 1 - clamp(ao, 0,1);
 	vec3 color_adj = vec3(0.8);
 	color_adj *= color.rgb;
@@ -124,16 +125,19 @@ void main(void) {
 
 	// vec4 tex=textureLod(blockTextures, vec3(texcoord.st, float(blockinfo.x)), 0 );
 	vec4 tex=texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
+	srgbToLin(tex.xyz);
 	// tex = vec4(vec3(1),1);
 #ifndef FAR_BLOCKFACE
 #endif
 	if (tex.a<1)
 		discard;
+	 // tex = vec4(vec3(1),1);
 	vec3 color_adj = tex.rgb;
 	color_adj *= color.rgb;
-	float lum = dot(color_adj, vec3(0.3));
+	// float lum = dot(color_adj, vec3(0.3));
 
 	//MINECRAFTISH BLOCK LIGHTING
+	color_adj *= blockside;
 	// color_adj *= 0.5+abs(dir.z)*0.3+(dir.y)*0.2;
 
 
@@ -142,12 +146,12 @@ void main(void) {
 	float yPos2 = texPos.y;
 	float yPos = 1-texPos.y;
 
-	// color_adj *= blockside;
 	float ao =  0.0;
 	ao += faceAO.x * xPos  * yPos;
 	ao += faceAO.y * xPos2 * yPos;
 	ao += faceAO.z * xPos2 * yPos2;
 	ao += faceAO.w * xPos  * yPos2;
+	// ao*=1;
 	float ambientOccl = 1 - clamp(ao, 0,1);
 	ambientOccl*=blockside;
 	// ambientOccl += 0.3*lum*4;
@@ -169,10 +173,10 @@ void main(void) {
 	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
 	lightLevelSky += faceLightSky.w * xPos  * yPos2;
 
-	// int timeW = mod(floor(in_scene.frameTime), 20) > 10 ? 1 : 0;
+	// int timeW = mod(floor(in_scene.frameTime.x), 20) > 10 ? 1 : 0;
 
 
-		float f = float(blockinfo.y);
+		float f = float(blockinfo.y&0xFFFu);
 
 		//TODO: figure out something better 
 	if (f >= 12&&f <=16) { //EXPENSIVE LEAVE
@@ -181,7 +185,7 @@ void main(void) {
 
 	    float sampleDist = 4.4;
 	    vec2 p0 = position.xz *0.02;
-	    // float fSin = sin(in_scene.frameTime*0.0003)*0.5+0.5;
+	    // float fSin = sin(in_scene.frameTime.x*0.0003)*0.5+0.5;
 	    // p0 += vec2(fSin*110.3);
 	    vec2 p1 = p0 + vec2(1, 0)*sampleDist;
 	    vec2 p2 = p0 + vec2(0, 1)*sampleDist;

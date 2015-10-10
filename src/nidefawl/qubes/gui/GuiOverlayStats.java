@@ -9,13 +9,15 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.input.Selection.SelectionMode;
-import nidefawl.qubes.meshing.BlockFaceAttr;
+import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
@@ -23,7 +25,7 @@ import nidefawl.qubes.world.WorldClient;
 public class GuiOverlayStats extends Gui {
 
     final public FontRenderer font;
-    final FontRenderer fontSmall;
+    FontRenderer fontSmall;
 
     ArrayList<String>  info1        = new ArrayList<String>();
     ArrayList<String>  info        = new ArrayList<String>();
@@ -41,64 +43,80 @@ public class GuiOverlayStats extends Gui {
 
 
     public void refresh() {
-        float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F;
+        int smallSize = 12;
+        this.fontSmall = FontRenderer.get("Arial", smallSize, 1, smallSize+2);
+        float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
                 Stats.avgFrameTime, (int)Math.round(Game.instance.tick/Stats.fpsInteval));
-        statsRight = String.format("Mem: %.2fMb / %.2fMb (%d bytes)", memJVMUsed, memJVMTotal, Memory.mallocd);
+        statsRight = String.format("JHeap: %.0fMB/%.0fGB\nBuffers: %dMB\nGPU: %dMB", 
+                memJVMUsed, memJVMTotal, Memory.mallocd/1024/1024, MeshedRegion.totalBytes/1024/1024);
+        for (int i = 0; i < WorldRenderer.NUM_PASSES; i++) {
+            statsRight += "\n"+WorldRenderer.getPassName(i)+": "+(MeshedRegion.totalBytesPass[i]/1024/1024)+"MB";
+        }
         Camera cam = Engine.camera;
         Vector3f v = cam.getPosition();
         Game.instance.tick = 0;
         info1.clear();
-        info1.add( String.format("%d setUniform/frame ", Stats.uniformCalls) );
+//        info1.add( String.format("%d setUniform/frame ", Stats.uniformCalls) );
         WorldClient world = (WorldClient) Game.instance.getWorld();
+        info.clear();
         if (world != null) {
             int numChunks = world.getChunkManager().getChunksLoaded();
-            info1.add( String.format("Chunks %d - R %d/%d", numChunks, Engine.worldRenderer.rendered, Engine.regionRenderer.numRegions) );
-            info1.add( String.format("Follow: %s", Game.instance.follow ? "On" : "Off") );
-            info1.add( String.format("UpdateRenderers: %s", Game.instance.updateRenderers ? "On" : "Off") );
-            info1.add( String.format("RenderMode: %s", BlockFaceAttr.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
+            info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
+                    Engine.regionRenderer.occlCulled,
+                    Engine.regionRenderer.numV/1000000.0) );
+            info.add( String.format("UpdateRenderers: %s", Game.instance.updateRenderers ? "On" : "Off") );
+            info.add( String.format("Primitive: %s", Engine.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
+            info.add( String.format("DrawMode: %d", Engine.terrainVertexAttributeFormat ) );
 
             this.stats5 = "";
             BlockPos p = Game.instance.selection.pos[0];
             BlockPos p2 = Game.instance.selection.pos[1];
+            RayTraceIntersection intersect = null;
             if (Game.instance.selection.getMode() == SelectionMode.PLAY) {
-                p = Game.instance.selection.mouseOver;
+                p = null;
                 p2 = null;
+                intersect = Game.instance.selection.getHit();
+                if (intersect != null) {
+                    p = intersect.blockPos;
+                }
             }
             if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
             }
             else if (p != null) {
                 int lvl = world.getLight(p.x, p.y, p.z);
-                int lvl1 = world.getLight(p.x, p.y+1, p.z);
+                int lvlNX = intersect != null ? Dir.getDirX(intersect.face) : 0;
+                int lvlNY = intersect != null ? Dir.getDirY(intersect.face) : 1;
+                int lvlNZ = intersect != null ? Dir.getDirZ(intersect.face) : 0;
+                int lvl1 = world.getLight(p.x+lvlNX, p.y+lvlNY, p.z+lvlNZ);
+                int bType = world.getType(p.x, p.y, p.z);
                 int bData = world.getData(p.x, p.y, p.z);
                 int block1 = lvl&0xF;
                 int sky1 = (lvl>>4)&0xF;
                 int block2 = lvl1&0xF;
                 int sky2 = (lvl1>>4)&0xF;
                 int h = world.getHeight(p.x, p.z);
-                this.stats5 = String.format("%d %d %d (Region %d %d)\nLight: %d/%d (+1: %d/%d) - Data: %d\nHeight: %d", p.x, p.y, p.z, 
-                        p.x>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), 
-                        p.z>>(RegionRenderer.REGION_SIZE_BITS+Chunk.SIZE_BITS), 
-                        sky1, block1, sky2, block2, bData,
-                        h);
+                this.stats5 = String.format("Light: %d/%d ("+(intersect!=null?"Face":"+1")+": %d/%d)\n %d/%d/%d = %d:%d",  
+                        sky1, block1, sky2, block2, p.x, p.y, p.z, bType, bData);
             }
         }
 
-        info.clear();
-        info.add(String.format("Meshing: %.2fms (%d %.2f)", Stats.timeMeshing, Stats.regionUpdates, Stats.timeMeshing/(float)(Stats.regionUpdates+1)));
-        info.add(String.format("Rendering: %.2fms", Stats.timeRendering));
-        info.add(String.format("TerrainGen: %.2fms", Stats.timeWorldGen));
-        info.add(String.format("yaw/pitch: %.2f, %.2f", cam.getYaw(), cam.getPitch()));
+        info.add(String.format("M: %.1fs (%.2fk calls %.2fms/call)", (Stats.timeMeshing)/1000.0, Stats.regionUpdates/1000.0, Stats.timeMeshing/(float)(Stats.regionUpdates+1)));
+        info.add(String.format("GPU-upload: %.2fms", Stats.timeRendering));
+        if (world != null) {
+            info.add(String.format("World: %s", world.getName()));
+        }
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
         info.addAll(Game.instance.glProfileResults);
         
         Block b = Block.get(Game.instance.selBlock);
-        
+
         info.add(String.format("Selected: %s", b == null ? "destroy" : b.getName()));
+        info.add(String.format("Mode: %s", Game.instance.selection.getMode().toString()));
         render = true;
     }
 
@@ -118,8 +136,8 @@ public class GuiOverlayStats extends Gui {
                 y += font.getLineHeight() * 1.2F;
             }
             float totalHeight = (fontSmall.getLineHeight() * 1.2F)*info.size();
-            float maxW = 300;
-            y-=fontSmall.getLineHeight()*1.2f;
+            float maxW = 250;
+            y-=font.getLineHeight()*1.7f;
             Tess.instance.setColorF(0, 0.8f);
             Tess.instance.add(0, y+totalHeight+4);
             Tess.instance.add(maxW, y+totalHeight+4);

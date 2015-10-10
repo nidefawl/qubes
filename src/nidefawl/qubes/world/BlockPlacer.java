@@ -88,7 +88,7 @@ public class BlockPlacer {
         int type = getWorld().getType(x, y, z);
         Block block = Block.get(type);
         if (block != null) {
-            getWorld().setType(x, y, z, 0, Flags.MARK);
+            getWorld().setType(x, y, z, 0, Flags.MARK|Flags.LIGHT);
         }
     }
     /**

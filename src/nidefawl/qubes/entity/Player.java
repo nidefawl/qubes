@@ -3,6 +3,7 @@ package nidefawl.qubes.entity;
 import java.util.*;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.chat.ChatUser;
@@ -40,26 +41,30 @@ public class Player extends Entity implements ChatUser, ICommandSource {
     private int chunkLoadDistance;
     private Set<String> joinedChannels = Sets.newConcurrentHashSet();
     public BlockPlacer blockPlace = new BlockPlacer(this);
+    public HashMap<UUID, Vector3f> worldPositions = Maps.newHashMap();
      
     public Player() {
         super();
     }
 
     public void load(PlayerData data) {
-        this.pos.set(data.pos);
-        this.lastPos.set(data.pos);
         this.flying = data.flying;
         this.spawnWorld = data.world;
         this.chunkLoadDistance = data.chunkLoadDistance;
         this.joinedChannels.clear();
         this.joinedChannels.addAll(data.joinedChannels);
+        this.worldPositions.clear();
+        this.worldPositions.putAll(data.worldPositions);
     }
 
     public PlayerData save() {
         PlayerData data = new PlayerData();
-        data.pos = new Vector3f(this.pos);
-        data.flying = this.flying;
         data.world = this.world != null ? this.world.getUUID() : null;
+        if (data.world != null) {
+            this.worldPositions.put(data.world, new Vector3f(this.pos));
+        }
+        data.worldPositions.putAll(this.worldPositions);
+        data.flying = this.flying;
         data.joinedChannels = new HashSet<String>(this.joinedChannels);
         return data;
     }
@@ -125,14 +130,17 @@ public class Player extends Entity implements ChatUser, ICommandSource {
     public void watchingChunk(long hash, int x, int z) {
         if (this.chunks.add(hash)) {
             this.sendChunks.add(hash);
-            this.netHandler.sendPacket(new PacketSTrackChunk(x, z, true));
+            this.netHandler.sendPacket(new PacketSTrackChunk(this.world.getId(), x, z, true));
         }
     }
 
     public void unwatchingChunk(long hash, int x, int z) {
         if (this.chunks.remove(hash)) {
             this.sendChunks.remove(hash);
-            this.netHandler.sendPacket(new PacketSTrackChunk(x, z, false));
+            if (this.world != null)
+                this.netHandler.sendPacket(new PacketSTrackChunk(this.world.getId(), x, z, false));
+        } else {
+            System.err.println("Expected chunk set to contain "+x+","+z+" ("+hash+")");
         }
     }
 
@@ -218,11 +226,7 @@ public class Player extends Entity implements ChatUser, ICommandSource {
     @Override
     public void move(double x, double y, double z) {
         super.move(x, y, z);
-        int flags = 0;
-        if (this.flying) {
-            flags |= 1;
-        }
-        this.sendPacket(new PacketSTeleport(this.pos, this.yaw, this.pitch, flags));
+        this.netHandler.resyncPosition();
     }
 
     /**

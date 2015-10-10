@@ -24,6 +24,6 @@ layout(std140) uniform uboMatrixShadow
 layout(std140) uniform uboSceneData
 {
     vec4 cameraPosition;
-    float frameTime;
+    vec4 frameTime;
     vec4 viewport;
 } in_scene;

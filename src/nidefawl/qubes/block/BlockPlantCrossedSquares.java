@@ -25,7 +25,7 @@ public class BlockPlantCrossedSquares extends Block {
      */
     @Override
     public int getColorFromSide(int side) {
-        return Block.grass.getColorFromSide(Dir.DIR_POS_Y);
+        return super.getColorFromSide(side);
     }
 
     public int getRenderType() {

@@ -33,11 +33,6 @@ public class BlockStairs extends BlockSliced {
     }
 
     @Override
-    public int getRenderType() {
-        return 3;
-    }
-
-    @Override
     public boolean isOccluding() {
         return this.baseBlock.isOccluding();
     }
@@ -199,9 +194,9 @@ public class BlockStairs extends BlockSliced {
     }
     
     @Override
-    public int getTextureFromSide(int faceDir) {
+    public int getTexture(int faceDir, int dataVal) {
         if (this.textures.length == 0)
-            return baseBlock.getTextureFromSide(faceDir);
+            return baseBlock.getTexture(faceDir, 0);
         return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
     }
     public boolean isFullBB() {

@@ -29,11 +29,6 @@ public class BlockSlab extends BlockSliced {
     }
 
     @Override
-    public int getRenderType() {
-        return 2;
-    }
-
-    @Override
     public boolean isOccluding() {
         return this.baseBlock.isOccluding();
     }
@@ -181,10 +176,10 @@ public class BlockSlab extends BlockSliced {
     }
     
     @Override
-    public int getTextureFromSide(int faceDir) {
+    public int getTexture(int faceDir, int dataVal) {
         if (this.textures.length == 0)
-            return baseBlock.getTextureFromSide(faceDir);
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
+            return baseBlock.getTexture(faceDir, 0);
+        return super.getTexture(faceDir, dataVal);
     }
     public boolean isFullBB() {
         return false;
