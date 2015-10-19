@@ -27,7 +27,8 @@ public class StartServer {
 		    } else {
 		        System.err.println("Native library for OpenSimplexNoise not found");
 		    }
-			GameContext.earlyInit(Side.SERVER, ".");
+			GameContext.setSideAndPath(Side.SERVER, ".");
+			GameContext.earlyInit();
 			GameError err = GameContext.getInitError();
 			if (err != null) {
 			    throw err;

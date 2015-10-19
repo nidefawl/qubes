@@ -26,6 +26,7 @@ public class CoreModule extends Module {
             GameRegistry.registerTerrainGenerator(TerrainGeneratorOther.GENERATOR_NAME, TerrainGeneratorOther.class);
             GameRegistry.registerTerrainGenerator(TerrainGeneratorRivers.GENERATOR_NAME, TerrainGeneratorRivers.class);
             GameRegistry.registerTerrainGenerator(TerrainGenFlatSand128.GENERATOR_NAME, TerrainGenFlatSand128.class);
+            GameRegistry.registerTerrainGenerator(TerrainGenQTest.GENERATOR_NAME, TerrainGenQTest.class);
             GameRegistry.registerChunkPopulator(ChunkPopulator.POPULATOR_NAME, ChunkPopulator.class);
             GameRegistry.registerChunkPopulator(EmptyChunkPopulator.POPULATOR_NAME, EmptyChunkPopulator.class);
         }

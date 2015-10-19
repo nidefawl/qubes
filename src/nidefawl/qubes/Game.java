@@ -26,6 +26,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.*;
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.network.client.NetworkClient;
@@ -41,9 +42,11 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.ColorMap;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
+import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
@@ -71,7 +74,7 @@ public class Game extends GameBase implements IErrorHandler {
     private float          lastCamX;
     private float          lastCamY;
     private float          lastCamZ;
-    public int             selBlock           = 0;
+    public Stack           selBlock           = new Stack(0);
     long                   lastShaderLoadTime = System.currentTimeMillis();
     float                  px, py, pz;
 
@@ -111,6 +114,12 @@ public class Game extends GameBase implements IErrorHandler {
         Engine.init();
         TextureManager.getInstance().init();
         BlockTextureArray.getInstance().init();
+
+        AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
+        ColorMap.grass.set(tex_map_grass);
+        AssetTexture tex_map_foliage = AssetManager.getInstance().loadPNGAsset("textures/colormap_foliage.png");
+        ColorMap.foliage.set(tex_map_foliage);
+        
         SysInfo info = new SysInfo();
         String title = "LWJGL "+info.lwjglVersion+" - "+info.openGLVersion;
         setTitle(title);
@@ -212,6 +221,11 @@ public class Game extends GameBase implements IErrorHandler {
                 TimingHelper2.dump();
             }
         });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_Q) {
+            public void onDown() {
+                selection.quarterMode = !selection.quarterMode;
+            }
+        });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_ESCAPE) {
             public void onDown() {
                 if (world != null) {
@@ -227,6 +241,11 @@ public class Game extends GameBase implements IErrorHandler {
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_N) {
             public void onDown() {
                 showGUI(new GuiSelectWorld());
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_B) {
+            public void onDown() {
+                showGUI(new GuiSelectBlock());
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_U) {
@@ -342,12 +361,13 @@ public class Game extends GameBase implements IErrorHandler {
                 return;
             }
             if (key == GLFW.GLFW_KEY_0) {
-                this.selBlock = 0;
+                this.selBlock.id = 0;
+                this.selBlock.data = 0;
             } else if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
-                this.selBlock = key - GLFW.GLFW_KEY_1;
-                if (!Block.isValid(this.selBlock)) {
-                    this.selBlock = 0;
-                }
+                this.selBlock.id = key - GLFW.GLFW_KEY_1;
+                this.selBlock.data = 0;
+                if (!Block.isValid(this.selBlock.id)) 
+                    this.selBlock.id = 0;
             }
         }
     }
@@ -357,15 +377,15 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.gui != null) {
 //            this.gui.onMouseClick(button, action);
         } else {
-            this.selBlock += yoffset > 0 ? -1 : 1;
-            if (!Block.isValid(this.selBlock)) {
+            this.selBlock.id += yoffset > 0 ? -1 : 1;
+            if (!Block.isValid(this.selBlock.id)) {
                 int maxBlock = 0;
-                for (int b = 0; this.selBlock< 0&&b < Block.HIGHEST_BLOCK_ID+1; b++) {
+                for (int b = 0; this.selBlock.id< 0&&b < Block.HIGHEST_BLOCK_ID+1; b++) {
                     if (Block.get(b) != null) {
                         maxBlock = b;
                     }
                 }
-                this.selBlock = this.selBlock< 0?maxBlock:0;
+                this.selBlock.id = this.selBlock.id< 0?maxBlock:0;
             }
             if (statsCached != null) {
 
@@ -501,7 +521,7 @@ public class Game extends GameBase implements IErrorHandler {
           boolean secondPass = true;
           if (secondPass) {
               Engine.getSceneFB().bind();
-              Engine.getSceneFB().clearColor();
+              Engine.getSceneFB().clearColorBlack();
               Engine.worldRenderer.renderTransparent(world, fTime);
 //              glDisable(GL_BLEND);
               glDepthFunc(GL_ALWAYS);
@@ -582,13 +602,13 @@ public class Game extends GameBase implements IErrorHandler {
                     Engine.worldRenderer.renderNormals(this.world, fTime);
                     glEnable(GL_POLYGON_OFFSET_FILL);
                     glPolygonOffset(-3.4f, 2.f);
-                    glDisable(GL_CULL_FACE);
+//                    glDisable(GL_CULL_FACE);
 //                    glDisable(GL_DEPTH_TEST);
 //                    glEnable(GL_BLEND);
 //                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-                    glEnable(GL_DEPTH_TEST);
-                    glEnable(GL_CULL_FACE);
+//                    glEnable(GL_DEPTH_TEST);
+//                    glEnable(GL_CULL_FACE);
                     glDisable(GL_POLYGON_OFFSET_FILL);
                     if (Game.GL_ERROR_CHECKS)
                         Engine.checkGLError("renderNormals");
@@ -619,7 +639,8 @@ public class Game extends GameBase implements IErrorHandler {
 //          glActiveTexture(GL_TEXTURE0);
       }
 
-      
+
+      glClear(GL11.GL_DEPTH_BUFFER_BIT);
 
       if (Game.DO_TIMING) TimingHelper.endStart("gui");
       
@@ -746,16 +767,27 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2221567/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
-//            System.out.println("initShaders");
-            lastShaderLoadTime = System.currentTimeMillis();
-            Shaders.initShaders();
-            Engine.worldRenderer.initShaders();
-            Engine.regionRenderer.initShaders();
-            Engine.shadowRenderer.initShaders();
-            Engine.outRenderer.initShaders();
-            TextureManager.getInstance().reload();
-//            Engine.textures.refreshNoiseTextures();
+        if (System.currentTimeMillis()-lastShaderLoadTime >4444/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+//          System.out.println("initShaders");
+          lastShaderLoadTime = System.currentTimeMillis();
+//          Shaders.initShaders();
+//          Engine.worldRenderer.initShaders();
+//            Engine.regionRenderer.initShaders();
+//            Engine.shadowRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
+//            
+//          BlockTextureArray.getInstance().reloadTexture("images/log.png");
+//          BlockTextureArray.getInstance().reloadTexture("images/log_top.png");
+          BlockTextureArray.getInstance().reloadTexture("images/tallgrass.png");
+//          BlockTextureArray.getInstance().reloadTexture("images/dirt.png");
+//          BlockTextureArray.getInstance().reloadTexture("images/grass.png");
+//          BlockTextureArray.getInstance().reloadTexture("images/grass_side.png");
+//          BlockTextureArray.getInstance().reloadTexture("images/grass_side_overlay.png");
+//          Engine.textures.refreshNoiseTextures();
+//          AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
+//          ColorMap.grass.set(tex_map_grass);
+//          AssetTexture tex_map_foliage = AssetManager.getInstance().loadPNGAsset("textures/colormap_foliage.png");
+//          ColorMap.foliage.set(tex_map_foliage);
         }
     }
 
@@ -837,8 +869,10 @@ public class Game extends GameBase implements IErrorHandler {
                 if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
-            Engine.updateMouseOverView(winX, winY);
-            selection.update(world, px, py, pz);
+            if (this.gui == null) {
+                Engine.updateMouseOverView(winX, winY);
+                selection.update(world, px, py, pz);
+            }
         }
         
         if (this.world != null && updateRenderers) {
@@ -851,11 +885,17 @@ public class Game extends GameBase implements IErrorHandler {
         }
     }
     boolean reinittexthook = false;
+    boolean wasGrabbed = false;
     public void showGUI(Gui gui) {
 
+        if (gui != null && this.gui == null) {
+            if (Mouse.isGrabbed()) {
+                setGrabbed(false);
+                wasGrabbed = true;
+            }
+        }
         if (this.gui != null) {
             this.gui.onClose();
-
         }
         this.gui = gui;
         if (this.gui != null) {
@@ -863,9 +903,15 @@ public class Game extends GameBase implements IErrorHandler {
             this.gui.setSize(displayWidth, displayHeight);
             this.gui.initGui(this.gui.firstOpen);
             this.gui.firstOpen = false;
-            if (Mouse.isGrabbed())
+            if (Mouse.isGrabbed()) {
                 setGrabbed(false);
+                wasGrabbed = true;
+            }
         } else {
+            if (wasGrabbed) {
+                Game.instance.setGrabbed(true);
+            }
+            wasGrabbed = false;
         }
         reinittexthook = true;
             
@@ -984,14 +1030,36 @@ public class Game extends GameBase implements IErrorHandler {
 
     /**
      * @param intersect
+     * @param quarterMode 
      */
-    public void blockClicked(RayTraceIntersection intersect) {
+    public void blockClicked(RayTraceIntersection intersect, boolean quarterMode) {
         if (this.statsOverlay != null) {
             this.statsOverlay.blockClicked(intersect);
         }
         int faceHit = intersect.face;
-        int blockInUse = this.selBlock;
-        sendPacket(new PacketCSetBlock(world.getId(), intersect.blockPos, intersect.pos, faceHit, blockInUse, 0));
+        BlockPos pos = intersect.blockPos;
+        if (quarterMode) {
+            faceHit |= 0x8;
+            pos = new BlockPos();
+            pos.set(intersect.blockPos);
+            pos.x*=2;
+            pos.y*=2;
+            pos.z*=2;
+            pos.x+=intersect.q.x;
+            pos.y+=intersect.q.y;
+            pos.z+=intersect.q.z;
+        }
+        sendPacket(new PacketCSetBlock(world.getId(), pos, intersect.pos, faceHit, this.selBlock.copy()));
         
+    }
+
+    /**
+     * @param ix
+     * @param iy
+     * @param iz
+     * @return
+     */
+    public boolean isInSelection(int ix, int iy, int iz) {
+        return this.selection.contains(ix, iy, iz);
     }
 }

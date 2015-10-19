@@ -40,19 +40,19 @@ public class AABBFloat {
         this.maxZ += z;
     }
     
-    public void expandTo(float x, float y, float z) {
-        if (x < 0)
-        this.minX += x;
-        if (x > 0)
-        this.maxX += x;
-        if (y < 0)
-        this.minY += y;
-        if (y > 0)
-        this.maxY += y;
-        if (z < 0)
-        this.minZ += z;
-        if (z > 0)
-        this.maxZ += z;
+    public void expandBounds(float x, float y, float z) {
+        if (this.minX > x)
+            this.minX = x;
+        if (this.minY > y)
+            this.minY = y;
+        if (this.minZ > z)
+            this.minZ = z;
+        if (this.maxX < x)
+            this.maxX = x;
+        if (this.maxY < y)
+            this.maxY = y;
+        if (this.maxZ < z)
+            this.maxZ = z;
     }
 
     

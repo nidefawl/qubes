@@ -3,6 +3,8 @@ package nidefawl.qubes.chunk;
 import java.util.Arrays;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.blockdata.BlockData;
+import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.World;
@@ -18,7 +20,8 @@ public class Chunk {
     public final int        worldHeightBits;
     private final int       height;
     public final short[]    blocks; //TODO: split up in height slices to reduce memory usage of air space
-    public final ChunkDataSliced2 blockData;
+    public final ChunkDataSliced2 blockMetadata;
+    public final BlockDataSliced blockData;
     public final byte[]     blockLight;
     public final int[]      heightMap       = new int[SIZE * SIZE];
     public int              facesRendered;
@@ -39,7 +42,8 @@ public class Chunk {
         this.height = 1 << this.worldHeightBits;
         this.x = x;
         this.z = z;
-        this.blockData = new ChunkDataSliced2();
+        this.blockMetadata = new ChunkDataSliced2();
+        this.blockData = new BlockDataSliced();
         this.world = world;
     }
 
@@ -72,8 +76,12 @@ public class Chunk {
     public int getTypeId(int i, int j, int k) {
         return this.blocks[j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] & Block.BLOCK_MASK;
     }
+
+    public BlockData getBlockData(int i, int j, int k) {
+        return this.blockData.get(i, j, k);
+    }
     public int getData(int i, int j, int k) {
-        return this.blockData.get(i, j, k)&DATA_BITS;
+        return this.blockMetadata.get(i, j, k)&DATA_BITS;
     }
 
     /**
@@ -83,15 +91,18 @@ public class Chunk {
      * @return
      */
     public short getFullData(int i, int j, int k) {
-        return this.blockData.get(i, j, k);
+        return this.blockMetadata.get(i, j, k);
     }
 
     public boolean setFullData(int i, int j, int k, short data) {
-        return this.blockData.set(i, j, k, data);
+        return this.blockMetadata.set(i, j, k, data);
     }
     
     public boolean setData(int i, int j, int k, int data) {
-        return this.blockData.setLower(i, j, k, data);
+        return this.blockMetadata.setLower(i, j, k, data);
+    }
+    public boolean setBlockData(int i, int j, int k, BlockData bd) {
+        return this.blockData.set(i, j, k, bd);
     }
 
     public int getTopBlock(int i, int k) {
@@ -116,13 +127,13 @@ public class Chunk {
         int xz = k << (SIZE_BITS) | i;
         int idx = j << (SIZE_BITS * 2) | xz;
         int cur = this.blocks[idx] & Block.BLOCK_MASK;
-        int dataV = this.blockData.get(i, j, k) & DATA_BITS;
+        int dataV = this.blockMetadata.get(i, j, k) & DATA_BITS;
         if (cur == type && dataV == data) {
             return false;
         }
         boolean b = false;
         if (dataV != data) {
-            this.blockData.setLower(i, j, k, data);
+            this.blockMetadata.setLower(i, j, k, data);
             b = true;
         }
         if (cur != type) {
@@ -146,7 +157,7 @@ public class Chunk {
         int cur = this.blocks[idx] & Block.BLOCK_MASK;
         if (cur != type) {
             this.blocks[idx] = (short) type;
-            this.blockData.setLower(i, j, k, 0);
+            this.blockMetadata.setLower(i, j, k, 0);
             int curHeight = heightMap[xz];
             if (j >= curHeight-1) {
                 updateHeightMap(i, k);

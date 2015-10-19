@@ -3,6 +3,11 @@
  */
 package nidefawl.qubes.gl;
 
+import java.nio.IntBuffer;
+
+import nidefawl.qubes.chunk.blockdata.BlockData;
+import nidefawl.qubes.render.region.RegionRenderer;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -91,5 +96,41 @@ public class VertexBuffer {
      */
     public int[] get() {
         return this.buffer;
+    }
+
+    /**
+     * @param i
+     * @param vboIdxBuf
+     * @return
+     */
+    public static int createIndex(int elementCount, ReallocIntBuffer vboIdxBuf) {
+        int numTriangles = elementCount;
+        int numQuads = numTriangles/2;
+        int numIdx = numQuads*6;
+        int[] idx = new int[numIdx];
+        int nTriangleIdx = 0;
+        for (int i = 0; i < numQuads; i++) {
+            int vIdx = i*4;
+            idx[nTriangleIdx++] = vIdx+0;
+            idx[nTriangleIdx++] = vIdx+1;
+            idx[nTriangleIdx++] = vIdx+2;
+            idx[nTriangleIdx++] = vIdx+2;
+            idx[nTriangleIdx++] = vIdx+3;
+            idx[nTriangleIdx++] = vIdx+0;
+        }
+        vboIdxBuf.reallocBuffer(numIdx);
+        vboIdxBuf.put(idx);
+        return numIdx;
+    }
+
+    /**
+     * @param vboBuf
+     * @return 
+     */
+    public int putIn(ReallocIntBuffer vboBuf) {
+        int intLen = this.index;
+        vboBuf.reallocBuffer(intLen);
+        vboBuf.put(this.buffer, 0, intLen);
+        return intLen;
     }
 }

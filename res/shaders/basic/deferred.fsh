@@ -49,6 +49,7 @@ uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
 uniform sampler2D texDepth;
 uniform sampler2DShadow texShadow;
+uniform sampler2D texShadow2;
 uniform sampler2D texLight;
 uniform sampler2D noisetex;
 
@@ -77,7 +78,7 @@ vec4 unprojectPos(in vec2 coord, in float depth) {
 
 vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
     vec4 v2 = shadowMVP * worldpos;
-    v2 = v2 * 0.5f + 0.5f;
+    v2 = v2 * 0.5 + 0.5;
     return v2;
 }
 vec3 debugcolor = vec3(0);
@@ -95,7 +96,6 @@ float getShadow() {
     vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], prop.worldposition);
     vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], prop.worldposition);
     vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], prop.worldposition);
-
     // float depth = prop.worldposition.z/prop.worldposition.w;
     // if (prop.linearDepth > 2) {
     // 	debugcolor = vec3(1,0,0);
@@ -118,24 +118,88 @@ float getShadow() {
         return shadow.y;
     }
     if (canLookup(v3, prop.linearDepth, mapZSplits.z)) {
-        v3.z-=0.001f;
         // debugcolor = vec3(1,0,0);
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5)+offs,v3.z));   
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
-        // shadow.z = texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5), v3.z));
-        // shadow.w += 1;
-        // return shadow.z;
+        // float s = 0;
+        // for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
+        //     for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
+        //         vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
+        //         s += texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5)+offs,v3.z));   
+        //     }
+        // }
+        // s /= SOFT_SHADOW_WEIGHT;
+        // return s;
+        shadow.z = texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5), v3.z));
+        shadow.w += 1;
+        return shadow.z;
     }
     return 1;
 }
 
+float getShadow2() {
+
+    float gdistance = max((length(prop.position.xyz)-26.0f)/17.0f, 0);
+    vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], prop.worldposition);
+    vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], prop.worldposition);
+    vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], prop.worldposition);
+    vec2 cPos = pass_texcoord*2.0-1.0;
+    float dst = sqrt(cPos.x*cPos.x+cPos.y*cPos.y);
+    float weight = max(0.68, 1.3-dst);
+    vec4 mapZSplits = in_matrix_shadow.shadow_split_depth;
+    vec4 shadow = vec4(1);
+    shadow.xyz = vec3(0.5);
+    if (canLookup(v, prop.linearDepth, mapZSplits.x*weight)) {
+        v.z*=0.999;
+        // shadow.x = texture(texShadow2, v.xy*0.5).r;
+        // shadow.w += 1;
+        // return v.z > shadow.x ? 0 : 1;
+        float s = 0;
+        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
+            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
+                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
+                s += texture(texShadow2, v.xy*0.5+offs).r;   
+            }
+        }
+        s /= SOFT_SHADOW_WEIGHT;
+        // shadow.x = v.z > s ? 0 : 1;
+        // shadow.w += 1;
+        return v.z > s ? 0 : 1;
+    }
+    if (canLookup(v2, prop.linearDepth, mapZSplits.y*weight)) {
+        v2.z*=0.999;
+        // shadow.y = texture(texShadow2, v2.xy*0.5+vec2(0.5,0)).r;
+        // shadow.w += 1;
+        // return v2.z > shadow.y ? 0 : 1;
+        float s = 0;
+        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
+            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
+                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
+                s += texture(texShadow2, v2.xy*0.5+vec2(0.5,0)+offs).r;   
+            }
+        }
+        s /= SOFT_SHADOW_WEIGHT;
+        // shadow.y += v2.z > s ? 0 : 1;
+        // shadow.w += 1;
+        return v2.z > s ? 0 : 1;
+    }
+    if (canLookup(v3, prop.linearDepth, mapZSplits.z)) {
+        v3.z*=0.9997;
+        float s = 0;
+        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
+            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
+                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
+                s += texture(texShadow2, v3.xy*0.5+vec2(0,0.5)+offs).r;   
+            }
+        }
+        s /= SOFT_SHADOW_WEIGHT;
+        // shadow.z = v3.z > s ? 0 : 1;
+        // shadow.w += 1;
+        // shadow.z = texture(texShadow2, v3.xy*0.5+vec2(0,0.5)).r;
+        // shadow.w += 1;
+        return v3.z > s ? 0 : 1;
+    }
+    // return (shadow.x+shadow.y+shadow.z) / shadow.w;
+    return 1;
+}
 float getSoftShadow() {
 
     float gdistance = max((length(prop.position.xyz)-26.0f)/17.0f, 0);
@@ -212,9 +276,8 @@ vec3 applyFoga(vec3 albedo, float dist, vec3 rayOrigin, vec3 rayDirection){
 
 void main() {
 
-
-	prop.albedo = texture(texColor, pass_texcoord).rgb;
-    float alpha = 1.0f;
+    vec4 sceneColor = texture(texColor, pass_texcoord);
+	prop.albedo = sceneColor.rgb;
 #ifdef DO_SHADING
 
 
@@ -245,14 +308,16 @@ void main() {
     float isWater = float(blockid==4u);
     float isLight = float(blockid==6u);
     float isBackface = float(renderpass==3);
-    if (pass > 0 && renderpass != 1) {
-        discard;
+    float alpha = mix(1, sceneColor.a, float(pass));
+    if (pass > 0) {
+        if(renderpass != 1)
+            discard;
+        if(sceneColor.a < 0.1)
+            discard;
     }
-#ifndef DO_SOMETHING_AWEFUL
-    alpha -= float(pass)*.3f;
 
     vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-    float roughness = 1.4+isWater*100;
+    float roughness = 1.4+isWater*50;
     float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness);
     float theta = max(dot(prop.viewVector, prop.normal), 0.0);
     float minRefl = 0.02;
@@ -270,7 +335,7 @@ void main() {
     float skyLightLvl = prop.light.x;
     float blockLightLvl = prop.light.y;
     float occlusion = prop.light.z;
-    float shadow = getShadow()*(1-isBackface);
+    float shadow = getShadow2()*(1-isBackface);
     // float shadow = mix(getSoftShadow(), 1, 0.04);
   	float nDotL = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
     float sunLight = skyLightLvl * nDotL * shadow * dayLightIntens;
@@ -286,26 +351,27 @@ void main() {
     // sunLight += 0.6;
     // prop.albedo*=mix(prop.light.z, 1, clamp(isSky+nDotL+(1-prop.light.x)*0.3,0,1));
 
-    float blockLight = (1-pow(1-blockLightLvl,0.35))*1.4;
-    vec3 lightColor = mix(vec3(1), vec3(1.0)*0.005, fNight);
+    float blockLight = (1-pow(1-blockLightLvl,0.05))*1.1;
+    vec3 lightColor = mix(vec3(1), vec3(1.0)*0.02, fNight);
     vec3 lightColor2 = mix(vec3(1), vec3(0.56, 0.56, 1.0)*0.005, fNight);
 	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
     vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
     vec3 Iamb = SkyLight.La.rgb * lightColor;
-    if (occlusion > 1)
-        prop.albedo = vec3(1, 0, 0);
     vec3 finalLight = vec3(0);
     finalLight += Iamb * mix(occlusion, 1, 0.03) * (max(skyLightLvl, 0.03));
     // finalLight += vec3(0.663)* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
-    finalLight += vec3(1, 0.9, 0.7)*0.363* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
-    lum = (clamp(pow(0.6+lum, 3)-1, 0, 1)+0.33)*isLight*0.82;
-    finalLight += lum* (mix(1, occlusion, 0.19)) * blockLight;
-    // finalLight += clamp((1-lum), 0, 1)*vec3(0,1,4.3)*isLight;
+    // finalLight += vec3(1, 0.9, 0.7)*0.363* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
+    // lum = (clamp(pow(0.6+lum, 3)-1, 0, 1)+0.33)*isLight*0.82;
+    finalLight += lum* (mix(1, occlusion, 0.19)) * blockLight*isLight*0.6;
+    float fl=blockLightLvl/15.0f;
     finalLight += Ispec * sunLight;
     finalLight += Idiff * sunLight;
+    const float blockLightConst = 60;
+    finalLight += vec3(1, 0.9, 0.7) * pow(blockLightLvl/8.0,2)*((1.0-isLight*0.8)*blockLightConst);
+    finalLight *= mix(1, 0.75,isWater);
     // finalLight *= occlusion;
 
-    alpha += float(pass)*0.2*(1-clamp(sunLight, 0, 1));
+    alpha = clamp(alpha+float(pass)*0.2*(1-clamp(sunLight, 0, 1)), 0, 1);
     // finalLight = mix (finalLight, vec3(1), lum*);
 
 
@@ -340,7 +406,6 @@ void main() {
             finalLight += specular;
         }
     }
-#endif
 
 
 	vec3 sky=mix(prop.albedo, vec3(0.04), fNight)*0.23;
@@ -365,7 +430,7 @@ void main() {
     // float fogFactor = clamp( (dist - 135.0f) /  344.0f, 0.0f, 0.94f );
     // terr = applyFog(terr, 20, in_scene.cameraPosition.xyz, prop.worldposition.xyz-in_scene.cameraPosition.xyz);
     // float fogAmount = getFogDensity(dist, in_scene.cameraPosition.xyz, prop.viewVector);
-    float fogAmount = clamp(1.0 - exp( -dist*0.0001 ), 0, 1);
+    float fogAmount = clamp(1.0 - exp( -dist*0.00004 ), 0, 1);
     // vec3  fogColor  = vec3(0.5,0.6,0.7);
 
     // terr =  mix( terr, fogColor, fogAmount );

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.lwjgl.glfw.GLFW;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.gui.controls.AbstractUIOverlay;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.input.Mouse;
@@ -83,6 +84,10 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     public boolean onKeyPress(int key, int scancode, int action, int mods) {
+        if (key == GLFW.GLFW_KEY_ESCAPE && Game.instance.getWorld() != null) {
+            Game.instance.showGUI(null);
+            return true;
+        }
         for (int i = 0; i < this.buttons.size(); i++) {
             AbstractUI b = this.buttons.get(i);
             if (b.enabled && b.draw) {

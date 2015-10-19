@@ -31,26 +31,17 @@ public class GameContext {
         return side;
     }
 
-
-    /**
-     * 
-     */
-    public static void earlyInit() {
-        // TODO Auto-generated method stub
-        
+    public static void setSideAndPath(Side s, String path) {
+        side = s;
+        WorkingEnv.init(path);
     }
-
-
     /**
      * @param server
      * @param string
      */
-    public static void earlyInit(Side s, String path) {
-        side = s;
+    public static void earlyInit() {
         try {
-
-            WorkingEnv.init(path);
-            ModuleLoader.scanModules(new File(WorkingEnv.getWorkingDir(), "modules"));
+            ModuleLoader.scanModules(WorkingEnv.getModulesDir());
         } catch (GameError e) {
             initError = e;
         } catch (Exception e) {

@@ -63,12 +63,18 @@ public class Shader {
     public Shader(String name) {
         this.name = name;
     }
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return this.name;
+    }
 
     public void load(AssetManager assetManager, String path, String fname, IShaderDef def) throws IOException {
 
-        ShaderSource vertCode = new ShaderSource();
-        ShaderSource fragCode = new ShaderSource();
-        ShaderSource geomCode = new ShaderSource();
+        ShaderSource vertCode = new ShaderSource(this);
+        ShaderSource fragCode = new ShaderSource(this);
+        ShaderSource geomCode = new ShaderSource(this);
         
         vertCode.load(assetManager, path, fname + ".vsh", def);
         fragCode.load(assetManager, path, fname + ".fsh", def);
@@ -93,7 +99,7 @@ public class Shader {
             Engine.checkGLError("getLog");
             if (getStatus(this.fragShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(fragCode, this.name+" fragment", log);
+                throw new ShaderCompileError(this, fragCode, this.name+" fragment", log);
             } else if (!log.isEmpty()) {
                 System.out.println(this.name+" fragment");
                 System.out.println(log);
@@ -115,7 +121,7 @@ public class Shader {
             Engine.checkGLError("getLog");
             if (getStatus(this.vertShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(vertCode, this.name+" vertex", log);
+                throw new ShaderCompileError(this, vertCode, this.name+" vertex", log);
             } else if (!log.isEmpty()) {
                 System.out.println(this.name+" vertex");
                 System.out.println(log);
@@ -137,7 +143,7 @@ public class Shader {
             Engine.checkGLError("getLog");
             if (getStatus(this.geometryShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(geomCode, this.name+" geometry", log);
+                throw new ShaderCompileError(this, geomCode, this.name+" geometry", log);
             } else if (!log.isEmpty()) {
                 System.out.println(this.name+" geometryShader");
                 System.out.println(log);
@@ -197,7 +203,7 @@ public class Shader {
         Engine.checkGLError("getLog");
         if (getStatus(this.shader, GL_OBJECT_LINK_STATUS_ARB) != 1) {
             Engine.checkGLError("getStatus");
-            throw new ShaderCompileError((ShaderSource)null, "Failed linking shader program\n", log);
+            throw new ShaderCompileError(this, (ShaderSource)null, "Failed linking shader program\n", log);
         }
         glUseProgramObjectARB(this.shader);
         Engine.checkGLError("glUseProgramObjectARB\n"+log);

@@ -6,8 +6,6 @@ uniform sampler2D texColor;
 uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
 uniform sampler2D texDepth;
-uniform sampler2DShadow texShadow;
-uniform sampler2D texShadow2;
 uniform sampler2D noisetex;
 uniform mat4 inverseProj;
 uniform mat4 pixelProj;
@@ -312,7 +310,8 @@ void main(void) {
 	// jitter = 0;
 	bool hit = traceScreenSpaceRay( vsRayOrigin, vsRayDirection, jitter, angle, hitPixel, hitPoint, iterationCount);
 
-	float isWater = float(blockinfo.y==4u);
+	uint blockidPixel = (blockinfo.y&0xFFFu);
+	float isWater = float(blockidPixel==4u);
 	float specularStrength = isWater;
 	float alpha = calculateAlphaForIntersection( hit, iterationCount, specularStrength, hitPixel, hitPoint, vsRayOrigin, vsRayDirection);
 	// float alpha = specularStrength;
@@ -325,12 +324,13 @@ void main(void) {
 		} else {
  			// angle *= angle;
 			uvec4 type = texelFetch(texMaterial, int2(hitPixel), 0);
-			if (type.y!=0u) {
-			vec4 refl = texelFetch(texColor, int2(hitPixel), 0);
-			alpha = mix(alpha, 0, float(type.y==0u));
-			cOut = mix(cOut, refl,alpha*angle);// isWater*float(type.y!=0u)*0.7);
-			// cOut = vec4(vec3(jitter),1);
-			// cOut = vec4(1,1,0,1);
+  			uint blockidHit = (type.y&0xFFFu);
+			if (blockidHit!=0u) {
+				vec4 refl = texelFetch(texColor, int2(hitPixel), 0);
+				//alpha = mix(alpha, 0, float(blockid==0u));
+				cOut = mix(cOut, refl, alpha*angle);// isWater*float(type.y!=0u)*0.7);
+				// cOut = vec4(vec3(jitter),1);
+				// cOut = vec4(1,1,0,1);
 			} else {
 			// cOut = vec4(1,0,1,1);
 			}
@@ -339,5 +339,5 @@ void main(void) {
 			// cOut = vec4(1,0,0,1);
 	}
 	}
-	out_Color =  cOut;
+	out_Color = cOut;
 }

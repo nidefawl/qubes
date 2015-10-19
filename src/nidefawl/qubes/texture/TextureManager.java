@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import org.lwjgl.opengl.*;
@@ -37,7 +38,7 @@ public class TextureManager {
         texEmpty = makeNewTexture(new byte[16*16*4], 16, 16, true, false, 0);
         int[] normalBumpMap = new int[16*16*4];
         Arrays.fill(normalBumpMap, 0xff7f7fff);
-        byte[] ndata = TextureManager.getRGBA(normalBumpMap);
+        byte[] ndata = TextureUtil.toBytesRGBA(normalBumpMap);
         texEmptyNormal = makeNewTexture(ndata, 16, 16, true, false, 0);
     }
 
@@ -62,7 +63,7 @@ public class TextureManager {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glBindTexture(GL11.GL_TEXTURE_2D, i)");
 
-        byte[] data = getRGBA(image);
+        byte[] data = TextureUtil.toBytesRGBA(image);
         uploadTexture(data, image.getWidth(), image.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevels);
         return i;
     }
@@ -82,41 +83,6 @@ public class TextureManager {
     public int makeNewTexture(AssetTexture tex) {
         return makeNewTexture(tex, false, true, 0);
     }
-    public static byte[] getRGBA(int[] irgba) {
-        byte textureData[] = new byte[irgba.length * 4];
-        for (int k1 = 0; k1 < irgba.length; k1++) {
-            if (irgba[k1] >> 24 == 0) {
-                for (int a = 0; a < 4; a++) 
-                    textureData[k1 * 4 + a] = 0;
-            } else {
-                textureData[k1 * 4 + 0] = (byte)(irgba[k1] >> 16 & 0xff);
-                textureData[k1 * 4 + 1] = (byte)(irgba[k1] >> 8 & 0xff);
-                textureData[k1 * 4 + 2] = (byte)(irgba[k1] >> 0 & 0xff);
-                textureData[k1 * 4 + 3] = (byte)(irgba[k1] >> 24 & 0xff);
-            }
-        }
-        return textureData;
-    }
-    public static byte[] getRGBA(BufferedImage bufferedImage) {
-        int j = bufferedImage.getWidth();
-        int l = bufferedImage.getHeight();
-        int rgba[] = new int[j * l];
-        bufferedImage.getRGB(0, 0, j, l, rgba, 0, j);
-        byte textureData[] = new byte[rgba.length * 4];
-        for (int k1 = 0; k1 < rgba.length; k1++) {
-            if (rgba[k1] >> 24 == 0) {
-                for (int a = 0; a < 4; a++) 
-                    textureData[k1 * 4 + a] = 0;
-            } else {
-                textureData[k1 * 4 + 0] = (byte)(rgba[k1] >> 16 & 0xff);
-                textureData[k1 * 4 + 1] = (byte)(rgba[k1] >> 8 & 0xff);
-                textureData[k1 * 4 + 2] = (byte)(rgba[k1] >> 0 & 0xff);
-                textureData[k1 * 4 + 3] = (byte)(rgba[k1] >> 24 & 0xff);
-            }
-        }
-        return textureData;
-    }
-
     /**
      * Copy the supplied image onto the specified OpenGL texture
      */

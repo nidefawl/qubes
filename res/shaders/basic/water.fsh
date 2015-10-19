@@ -25,6 +25,7 @@ in mat3 normalMat;
 in vec4 vpos;
 in vec4 vwpos;
 in mat3 tbnMatrix;
+in float isWater;
 
 
 out vec4 out_Color;
@@ -150,14 +151,15 @@ vec4 getNoise(vec2 uv){
 void main() {
 	vec3 normal_out = normal;
 	vec2 texCoord2 = texcoord.st;
-	float dist = (14+length(vpos)/122);
-	vec2 vw = vec2(vwpos.x, vwpos.z);
-    vec4 noise = getNoise(vw*2.5);
-    vec3 nd = normalize(noise.xzy*vec3(2.0, clamp(dist, 2.0, 100.0), 2.0));
-	normal_out = nd;
-	texCoord2.st+=nd.xz*2.2;
+    if (isWater > 0) {
+		float dist = (14+length(vpos)/122);
+		vec2 vw = vec2(vwpos.x, vwpos.z);
+	    vec4 noise = getNoise(vw*2.5);
+	    vec3 nd = normalize(noise.xzy*vec3(2.0, clamp(dist, 2.0, 100.0), 2.0));
+		normal_out = nd;
+		texCoord2.st+=nd.xz*2.2;
+    }
 	vec4 tex = texture(blockTextures, vec3(texCoord2, float(blockinfo.x)));
-	srgbToLin(tex.xyz);
 	float xPos2 = texPos.x;
 	float xPos = 1-texPos.x;
 	float yPos2 = texPos.y;
@@ -172,10 +174,10 @@ void main() {
 	lightLevelSky += faceLightSky.y * xPos2 * yPos;
 	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
 	lightLevelSky += faceLightSky.w * xPos  * yPos2;
-	vec3 color_adj = tex.rgb;
-	color_adj *= color.rgb;
+	vec3 color_adj = tex.rgb * color.rgb;
 	// color_adj *= lightAdj(lightSky, lightBlock);
-    out_Color = vec4(color_adj, 0.7);
+	srgbToLin(color_adj.rgb);
+    out_Color = vec4(color_adj.rgb, color.a*tex.a);
     out_Normal = vec4((normal_out) * 0.5f + 0.5f, 1);
     out_Material = blockinfo;
     out_Light = vec4(lightLevelSky, lightLevelBlock, 0.5, 1);

@@ -96,7 +96,8 @@ public class UniformBuffer {
             .addMat4() //mv_inv
             .addMat4(); // proj_inv
     static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
-            .addMat4(); //mvp
+            .addMat4() //mvp
+            .addMat4(); //mvp3DOrtho
 //            .addMat4() //proj
 //            .addMat4(); //mv
     static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow")
@@ -230,8 +231,8 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
         float ambIntens = 0.07F;
-        float diffIntens = 0.55F;
-        float specIntens = 0.45F;
+        float diffIntens = 0.5F;
+        float specIntens = 0.4F;
         for (int a = 0; a < 3; a++) {
             LightInfo.put(ambIntens);
         }
@@ -332,6 +333,7 @@ public class UniformBuffer {
     public static void updateOrtho() {
         uboMatrix2D.reset();
         uboMatrix2D.put(Engine.getMatOrthoMVP().get());
+        uboMatrix2D.put(Engine.getMatOrtho3DMVP().get());
         uboMatrix2D.update();
         // unbind Uniform buffer?!
     }

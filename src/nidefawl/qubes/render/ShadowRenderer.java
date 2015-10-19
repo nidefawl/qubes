@@ -240,7 +240,7 @@ public class ShadowRenderer {
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
-        glPolygonOffset(1.8f, 2.f);
+        glPolygonOffset(1.4f, 2.f);
 
         glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);

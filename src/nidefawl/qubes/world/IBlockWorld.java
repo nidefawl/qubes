@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.world;
 
+import nidefawl.qubes.chunk.blockdata.BlockData;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -52,5 +54,24 @@ public interface IBlockWorld {
      * @return
      */
     boolean setTypeData(int x, int y, int z, int type, int data, int render);
+
+    /**
+     * Returns the full 8 bit light value (msb = sky, lsb = block)
+     * @param x
+     * @param y
+     * @param i
+     * @return
+     */
+    public int getLight(int x, int y, int i);
+
+    /**
+     * @param x
+     * @param y
+     * @param z
+     * @return
+     */
+    public BlockData getBlockData(int x, int y, int z);
+
+    boolean setBlockData(int x, int y, int z, BlockData bd, int flags);
 
 }

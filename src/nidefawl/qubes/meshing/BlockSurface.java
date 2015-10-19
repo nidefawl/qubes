@@ -26,8 +26,9 @@ public class BlockSurface {
     public int maskedLightBlock = 0;
     public int maskedAO = 0;
     boolean isAirAbove;
-    public int data;
+    public int texture;
     public boolean renderTypeTransition;
+    public int faceColor;
     public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
         return ((ao3&0x3)<<6)|((ao2&0x3)<<4)|((ao1&0x3)<<2)|(ao0&0x3);
     }
@@ -84,7 +85,7 @@ public class BlockSurface {
                 },
     };
 
-    public void calcAO(ChunkRenderCache cache) {
+    public void calcAO(IBlockWorld cache) {
         int face = this.axis<<1|this.face;
         switch (face) {
             case 0:
@@ -138,7 +139,7 @@ public class BlockSurface {
         return false;
     }
 
-    private void calcPosZ(ChunkRenderCache cache) {
+    private void calcPosZ(IBlockWorld cache) {
         int x = this.x;
         int y = this.y;
         int z = this.z+1;
@@ -191,7 +192,7 @@ public class BlockSurface {
         }
     }
     
-    private void calcNegZ(ChunkRenderCache cache) {
+    private void calcNegZ(IBlockWorld cache) {
         int x = this.x;
         int y = this.y;
         int z = this.z - 1;
@@ -245,7 +246,7 @@ public class BlockSurface {
         }
     }
 
-    private void calcPosX(ChunkRenderCache cache) {
+    private void calcPosX(IBlockWorld cache) {
         int x = this.x+1;
         int y = this.y;
         int z = this.z;
@@ -296,7 +297,7 @@ public class BlockSurface {
             this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
         }
     }
-    private void calcNegX(ChunkRenderCache cache) {
+    private void calcNegX(IBlockWorld cache) {
         int x = this.x-1;
         int y = this.y;
         int z = this.z;
@@ -348,7 +349,7 @@ public class BlockSurface {
         }
     }
 
-    private void calcPosY(ChunkRenderCache cache) {
+    private void calcPosY(IBlockWorld cache) {
         int x = this.x;
         int y = this.y+1;
         int z = this.z;
@@ -401,7 +402,7 @@ public class BlockSurface {
             this.maskedAO = maskAO(ao0, ao1, ao2, ao3);
         }
     }
-    private void calcNegY(ChunkRenderCache cache) {
+    private void calcNegY(IBlockWorld cache) {
         int x = this.x;
         int y = this.y-1;
         int z = this.z;
@@ -473,6 +474,12 @@ public class BlockSurface {
             if (this.calcLight && this.maskedLightSky != c.maskedLightSky) {
                 return false;
             }
+            if (c.texture != this.texture) {
+                return false;
+            }
+            if (c.faceColor != this.faceColor) {
+                return false;
+            }
 //            if (this.hasAO) {
 //                if (this.ao0 != )
 //            }
@@ -490,8 +497,12 @@ public class BlockSurface {
             this.calcAO(cache);
         }
         if (this.type == Block.water.id) {
-            this.isAirAbove = cache.getType(x, y+1, z) == 0;
+            this.isAirAbove = Block.get(cache.getType(x, y+1, z)).isTransparent();
         }
+        Block block = Block.get(this.type);
+        int dataVal = cache.getData(x, y, z);
+        this.texture = block.getTexture(this.axis<<1|this.face, dataVal);
+        this.faceColor = block.getFaceColor(cache, x, y, z, this.axis<<1|this.face);
     }
 
     public void reset() {
@@ -510,7 +521,7 @@ public class BlockSurface {
         this.face = 0;
         this.pass = 0;
         x = y = z = 0;
-        data = 0;
+        texture = 0;
         axis = 0;
 
     }

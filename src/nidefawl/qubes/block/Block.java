@@ -1,16 +1,21 @@
 package nidefawl.qubes.block;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.meshing.ChunkRenderCache;
 import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.RayTrace;
+import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
@@ -18,32 +23,37 @@ import nidefawl.qubes.world.World;
 
 public class Block {
 
-    public static final int BLOCK_MASK = 0xFF;
-    public static final int NUM_BLOCKS = 256;
+    public static final int BLOCK_MASK = 0x1FF;
+    public static final int NUM_BLOCKS = 512;
     public static int HIGHEST_BLOCK_ID = 0;
-    private static short[] registeredblocks;
+    private static Block[] registeredblocks;
+    private static short[] registeredblockIds;
     public static final Block[] block = new Block[NUM_BLOCKS];
     public final static String[] NO_TEXTURES = new String[0];
     public final static Block air = new BlockAir(0).setName("air");
-    public final static Block stone = new Block(1).setName("stone");
-    public final static Block grass = new BlockGrass(2).setName("grass").setTextures("grass_top", "grass_side", "grass_side_overlay");
-    public final static Block dirt = new Block(3).setName("dirt");
-    public final static Block water = new BlockWater(4).setName("water");
+    public final static Block stone = new Block(1).setName("stone").setTextures("images/stone");
+    public final static Block grass = new BlockGrass(2).setName("grass").setTextures("images/grass", "images/grass_side", "images/grass_side_overlay");
+    public final static Block dirt = new Block(3).setName("dirt").setTextures("images/dirt");
+    public final static Block water = new BlockWater(4).setName("water_still");
     public final static Block sand = new BlockSand(5).setName("sand");
     public final static Block glowstone = new BlockLit(6).setName("glowstone").setTextures("glowstone");
     public final static Block log_acacia = new BlockLog(7).setName("log_acacia").setTextures("log_acacia", "log_acacia_top");
     public final static Block log_birch = new BlockLog(8).setName("log_birch").setTextures("log_birch", "log_birch_top");
     public final static Block log_jungle = new BlockLog(9).setName("log_jungle").setTextures("log_jungle", "log_jungle_top");
     public final static Block log_spruce = new BlockLog(10).setName("log_spruce").setTextures("log_spruce", "log_spruce_top");
-    public final static Block log_oak = new BlockLog(11).setName("log_oak").setTextures("log_oak", "log_oak_top");
+    public final static Block log_oak = new BlockLog(11).setName("log_oak").setTextures("images/log", "images/log_top");
     public final static Block leaves_acacia = new BlockLeaves(12).setName("leaves_acacia");
     public final static Block leaves_birch = new BlockLeaves(13).setName("leaves_birch");
     public final static Block leaves_jungle = new BlockLeaves(14).setName("leaves_jungle");
     public final static Block leaves_spruce = new BlockLeaves(15).setName("leaves_spruce");
     public final static Block leaves_oak = new BlockLeaves(16).setName("leaves_oak");
-    public final static Block longgrass = new BlockLongGrass(17).setName("longgrass").setTextures("tallgrass");
+    public final static Block longgrass = new BlockLongGrass(17).setName("longgrass").setTextures("images/tallgrass");
     public final static Block slab = new BlockSlab(18, stone).setName("stoneslab").setTextureMode(BlockTextureMode.TOP_BOTTOM).setTextures("stone_slab_side", "stone_slab_top", "stone_slab_top");
     public final static Block stairs = new BlockStairs(19, stone).setName("stonestairs");
+    public final static Block vines = new BlockVine(20).setName("vine");
+    public final static Block fence = new BlockFence(21, log_acacia).setName("fence").setAbsTextures(NO_TEXTURES);
+    public final static Block log = new BlockLog(22).setName("log_oak").setTextures("log_oak", "log_oak_top");
+    public final static Block quarter = new BlockQuarterBlock(22).setName("quarter");
 
     public static void preInit() {
 //        ArrayList<Block> bs = new ArrayList<>();
@@ -70,29 +80,29 @@ public class Block {
                     b.textures = new String[] { "textures/blocks/"+b.name+".png" };
                 }
                 if (b.getLODPass() == WorldRenderer.PASS_LOD && b.getRenderType() == 0) {
-                    throw new GameError("Block cannot be in LOD pass and be meshed (rendertype = 0)");
+                    throw new GameError("Block cannot be in LOD pass and be meshed (rendertype = 0): "+b.toString());
                 }
             }
         }
 
-        ArrayList<Short> list = Lists.newArrayList();
+        ArrayList<Block> list = Lists.newArrayList();
         for (int i = 0; i < block.length; i++) {
-            if (i == 0 || block[i] != null) {
-                list.add(Short.valueOf((short)i));
+            if (block[i] != null) {
+                list.add(block[i]);
             }
         }
-        short[] data = new short[list.size()];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = list.get(i);
+        registeredblocks = list.toArray(new Block[list.size()]);
+        registeredblockIds = new short[registeredblocks.length];
+        for (int i = 0; i < registeredblockIds.length; i++) {
+            registeredblockIds[i] = (short) registeredblocks[i].id;
         }
-        registeredblocks = data;
     }
 
     public final int id;
     private String name;
     private final boolean transparent;
     protected String[] textures;
-    final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
+    protected final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
     private BlockTextureMode textureMode = BlockTextureMode.DEFAULT;
 
     public Block(int id, boolean transparent) {
@@ -104,6 +114,10 @@ public class Block {
             HIGHEST_BLOCK_ID = this.id;
         block[id] = this;
         this.transparent = transparent;
+        init();
+    }
+    
+    public void init() {
     }
     public Block(int id) {
         this(id, false);
@@ -137,7 +151,7 @@ public class Block {
     public boolean isTransparent() {
         return transparent;
     }
-    public int getColorFromSide(int side) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
         return 0xFFFFFF;
     }
     /**
@@ -150,6 +164,8 @@ public class Block {
     }
     public int getTexture(int faceDir, int dataVal) {
         switch (this.textureMode) {
+            case SUBTYPED_TEX_PER_TYPE:
+                return BlockTextureArray.getInstance().getTextureIdx(this.id, dataVal % this.textures.length);
             case TOP:
                 return BlockTextureArray.getInstance().getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : 0);
             case TOP_BOTTOM:
@@ -198,7 +214,7 @@ public class Block {
     }
     
     public AABBFloat getRenderBlockBounds(IBlockWorld w, int ix, int iy, int iz, AABBFloat bb) {
-        bb.set(0, 0, 0, 1, 1, 1);
+        bb.set(this.blockBounds);
         return bb;
     }
     public boolean isVisibleBounds(IBlockWorld w, int axis, int side, AABBFloat bb) {
@@ -260,15 +276,16 @@ public class Block {
     
     /**
      * @param blockPlacer
+     * @param against TODO
+     * @param type 
+     * @param data 
      * @param x
      * @param y
      * @param z
-     * @param type 
-     * @param data 
      * @return
      */
-    public boolean canPlaceAt(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
-        return blockPlacer.canPlaceDefault(pos, offset, type, data);
+    public boolean canPlaceAt(BlockPlacer blockPlacer, BlockPos against, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
+        return blockPlacer.canPlaceDefault(this, against, pos, offset, type, data);
     }
     /**
      * @param blockPlacer
@@ -344,7 +361,14 @@ public class Block {
     /**
      * @return
      */
-    public static short[] getAllRegistered() {
+    public static short[] getRegisteredIDs() {
+        return registeredblockIds;
+    }
+
+    /**
+     * @return
+     */
+    public static Block[] getRegisteredBlocks() {
         return registeredblocks;
     }
     
@@ -355,6 +379,42 @@ public class Block {
     }
     
     public int getRenderShadow() {
+        return 1;
+    }
+    
+    @Override
+    public String toString() {
+        String blockInfo = this.getClass().getName()+"[ID "+this.id;
+        blockInfo += ", "+this.getName()+"]";
+        return blockInfo;
+    }
+
+    public int setSelectionBB(World world, RayTraceIntersection r, BlockPos hitPos, AABBFloat selBB) {
+        if (isFullBB()) {
+            return 0;
+        }
+        getRenderBlockBounds(world, hitPos.x, hitPos.y, hitPos.z, selBB);
+        return 1;
+    }
+
+    public boolean canBlockConnect(IBlockWorld w, int ix, int iy, int iz, BlockConnect connect, int axis, int i) {
+        return isFullBB() && !isReplaceable() && !isTransparent();
+    }
+    
+    public int getItems(List<Stack> l) {
+        l.add(new Stack(this.id));
+        return 1;
+    }
+    
+    public int getMeshedColor(BlockSurface bs) {
+        return bs.faceColor;
+    }
+    
+    public int getTextureByIdx(int idx) {
+        return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+    }
+    
+    public int getLightLoss(LightChunkCache c, int i, int j, int k, int type) {
         return 1;
     }
 }

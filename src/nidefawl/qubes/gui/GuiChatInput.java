@@ -49,10 +49,6 @@ public class GuiChatInput extends Gui implements ITextEdit {
 
     @Override
     public void initGui(boolean first) {
-        if (first) {
-            wasGrab = Game.instance.movement.grabbed();
-            Game.instance.movement.setGrabbed(false);
-        }
         this.buttons.clear();
         {
 
@@ -79,9 +75,6 @@ public class GuiChatInput extends Gui implements ITextEdit {
     public boolean onKeyPress(int key, int scancode, int action, int mods) {
         if (super.onKeyPress(key, scancode, action, mods))
             return true;
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
-            Game.instance.showGUI(null);
-        }
         return true;
     }
 
@@ -146,15 +139,6 @@ public class GuiChatInput extends Gui implements ITextEdit {
         Game.instance.showGUI(null);
     }
 
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.gui.Gui#onClose()
-     */
-    @Override
-    public void onClose() {
-        if (wasGrab) {
-            Game.instance.setGrabbed(true);
-        }
-    }
     public boolean requiresTextInput() {
         return true;
     }

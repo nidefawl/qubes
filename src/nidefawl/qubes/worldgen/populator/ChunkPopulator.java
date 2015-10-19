@@ -3,9 +3,13 @@
  */
 package nidefawl.qubes.worldgen.populator;
 
+import java.util.ArrayList;
 import java.util.Random;
 
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockLeaves;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.world.WorldServer;
@@ -29,18 +33,35 @@ public class ChunkPopulator implements IChunkPopulator {
     public void populate(Chunk c) {
         Random rand = new Random();
         int a = 0;
-        for (int i = 0; i < 5; i++) {
+        Random r = new Random();
+        ArrayList<Block> bl = Lists.newArrayList();
+        for (Block b : Block.block) {
+            if (b != null && b.getRenderType() == 1) {
+                if (b.getName().toLowerCase().contains("web"))
+                    continue;
+                if (b.getName().toLowerCase().contains("sap"))
+                    continue;
+                bl.add(b);
+            }
+        }
+        IWorldGen g = TreeGenerators.rand(rand);
+        int b = 0;
+        for (int i = 0; i < 33; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= 2 && rand.nextInt(34) == 0) {
-                    TreeGenerators.rand(rand).generate(world, x, h+1, z, rand);
+                if ( a <= 14 && rand.nextInt(14) == 0) {
+                    g.generate(world, x, h+1, z, rand);
                 } else {
-
-                    world.setType(x, h+1, z, Block.longgrass.id, Flags.MARK);
+                    Block bg = Block.longgrass;
+//                    if (b>10&&rand.nextInt(10) == 0) {
+//                        bg = bl.get(r.nextInt(bl.size()));
+//                    }
+                    world.setType(x, h+1, z, bg.id, Flags.MARK);
+                    b++;
                 }
                 a++;
             }   

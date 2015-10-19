@@ -17,6 +17,7 @@ public class RayTrace {
         public HitType hit = HitType.NONE;
         public int blockId;
         public final BlockPos blockPos = new BlockPos();
+        public final BlockPos q = new BlockPos();
         public final Vector3f pos = new Vector3f();
         public float distance;
         public int face;
@@ -32,6 +33,8 @@ public class RayTrace {
     private Vector3f dirFrac = new Vector3f();
     private AABBFloat bb = new AABBFloat();
     private final RayTraceIntersection intersection = new RayTraceIntersection();
+    public BlockPos quarter= new BlockPos();
+    public boolean quarterMode;
 
 
     public void reset() {
@@ -145,6 +148,18 @@ public class RayTrace {
             Block block = Block.get(type);
             this.intersection.hit = HitType.NONE;
             if (block.raytrace(this, world, x, y, z, origin, direction, dirFrac)) {
+                if (this.quarterMode && block != Block.quarter) {
+                    this.intersection.q.set(0, 0, 0);
+                    if (this.intersection.face == Dir.DIR_POS_X || this.intersection.pos.x-x >= 0.5f) {
+                        this.intersection.q.x++;
+                    }
+                    if (this.intersection.face == Dir.DIR_POS_Y || this.intersection.pos.y-y >= 0.5f) {
+                        this.intersection.q.y++;
+                    }
+                    if (this.intersection.face == Dir.DIR_POS_Z || this.intersection.pos.z-z >= 0.5f) {
+                        this.intersection.q.z++;
+                    }
+                }
                 this.intersection.blockId = type;
                 this.intersection.blockPos.set(x, y, z);
                 return true;
@@ -194,6 +209,8 @@ public class RayTrace {
             hitPoint.set(direction);
             hitPoint.scale(distance);
             hitPoint.addVec(origin);
+            
+            this.intersection.q.set(this.quarter);
             this.intersection.distance = distance;
             this.intersection.face = iMin;
         }

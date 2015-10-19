@@ -15,6 +15,7 @@ import org.lwjgl.opengl.*;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.ReallocIntBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
@@ -344,33 +345,13 @@ public class MeshedRegion {
             Engine.checkGLError("glBufferData /" + intBuffer);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         if (Engine.USE_TRIANGLES) {
-            int numTriangles = this.elementCount[pass];
-            int numQuads = numTriangles/2;
-            int byteSizeIDX = 4;
-            int numIdx = numQuads*6;
-            int byteSizeBuffer=byteSizeIDX*numIdx;
-            RegionRenderer.reallocIndexBuffers(pass, byteSizeBuffer);
-             buf = RegionRenderer.idxByteBuffers[pass];
-            IntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
-            int[] idx = new int[numIdx];
-            int nTriangleIdx = 0;
-            for (int i = 0; i < numQuads; i++) {
-                int vIdx = i*4;
-                idx[nTriangleIdx++] = vIdx+0;
-                idx[nTriangleIdx++] = vIdx+1;
-                idx[nTriangleIdx++] = vIdx+2;
-                idx[nTriangleIdx++] = vIdx+2;
-                idx[nTriangleIdx++] = vIdx+3;
-                idx[nTriangleIdx++] = vIdx+0;
-            }
-            shBuffer.clear();
-            shBuffer.put(idx, 0, numIdx);
-            buf.position(0).limit(byteSizeBuffer);
+           ReallocIntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
+            int intLen = VertexBuffer.createIndex(this.elementCount[pass], shBuffer);
 //            System.out.println(byteSizeBuffer+"/"+(nTriangleIdx*2));
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices[pass]);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBindBuffer " + vboIndices[pass]);
-            GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, byteSizeBuffer, buf, GL15.GL_STATIC_DRAW);
+            GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, intLen*4, shBuffer.getByteBuf(), GL15.GL_STATIC_DRAW);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBufferData /" + intBuffer);
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);

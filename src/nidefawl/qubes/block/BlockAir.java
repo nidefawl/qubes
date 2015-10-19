@@ -3,8 +3,13 @@
  */
 package nidefawl.qubes.block;
 
+import java.util.List;
+
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.util.RayTrace;
+import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
+import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
@@ -83,6 +88,20 @@ public class BlockAir extends Block {
     }
     public boolean isFullBB() {
         return true;
+    }
+    
+    @Override
+    public int setSelectionBB(World world, RayTraceIntersection r, BlockPos hitPos, AABBFloat selBB) {
+        return 0;
+    }
+
+    public int getItems(List<Stack> l) {
+        return 0;
+    }
+    
+    @Override
+    public boolean canBlockConnect(IBlockWorld w, int ix, int iy, int iz, BlockConnect connect, int axis, int i) {
+        return false;
     }
 
 }

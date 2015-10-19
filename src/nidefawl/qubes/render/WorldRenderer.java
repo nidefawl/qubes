@@ -267,10 +267,8 @@ public class WorldRenderer {
             glPushAttrib(-1);
             glEnable(GL_BLEND);
             glDepthFunc(GL_LEQUAL);
-            glEnable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
-            glDisable(GL_TEXTURE_2D);
-            Shaders.colored.enable();
+          glDisable(GL_DEPTH_TEST);
+            Shaders.colored3D.enable();
             for (Integer i : debugBBs.keySet()) {
                 AABB bb = debugBBs.get(i);
                 int iColor = GameMath.randomI(i*19)%33;

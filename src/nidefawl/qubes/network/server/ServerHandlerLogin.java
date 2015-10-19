@@ -24,7 +24,7 @@ public class ServerHandlerLogin extends ServerHandler {
     @Override
     public void handleHandshake(final PacketHandshake packetHandshake) {
         if (this.state != STATE_HANDSHAKE) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            this.conn.disconnect(Connection.LOCAL, "Invalid packet (CLIENT STATE_HANDSHAKE)");
             return;
         }
         if (packetHandshake.version != this.netServer.netVersion) {
@@ -43,7 +43,7 @@ public class ServerHandlerLogin extends ServerHandler {
     @Override
     public void handleAuth(PacketAuth packetAuth) {
         if (this.state != STATE_AUTH) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            this.conn.disconnect(Connection.LOCAL, "Invalid packet (CLIENT STATE_AUTH)");
             return;
         }
         this.name = packetAuth.name;
@@ -55,7 +55,7 @@ public class ServerHandlerLogin extends ServerHandler {
     @Override
     public void handleClientSettings(PacketCSettings packet) {
         if (this.state != STATE_CLIENT_SETTINGS) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            this.conn.disconnect(Connection.LOCAL, "Invalid packet (CLIENT STATE_CLIENT_SETTINGS)");
             return;
         }
         this.state = STATE_CONNECTED;
@@ -103,13 +103,13 @@ public class ServerHandlerLogin extends ServerHandler {
     @Override
     public void handleSync(PacketSyncBlocks packetAuth) {
         if (this.state != STATE_SYNC) {
-            this.conn.disconnect(Connection.LOCAL, "Invalid packet");
+            this.conn.disconnect(Connection.LOCAL, "Invalid packet (CLIENT STATE_SYNC)");
             return;
         }
         this.time = System.currentTimeMillis();
         this.state = STATE_CLIENT_SETTINGS;
         short[] recvd = packetAuth.blockIds;
-        short[] data = Block.getAllRegistered();
+        short[] data = Block.getRegisteredIDs();
         if (!Arrays.equals(recvd, data)) {
             this.conn.disconnect(Connection.LOCAL, "Registered blocks mismatch");
             return;

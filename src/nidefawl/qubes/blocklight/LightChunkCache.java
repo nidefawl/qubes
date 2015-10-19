@@ -17,6 +17,7 @@ import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.util.TripletShortHash;
 import nidefawl.qubes.vec.BlockBoundingBox;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 

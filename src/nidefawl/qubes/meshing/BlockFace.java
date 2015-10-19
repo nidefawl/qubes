@@ -252,7 +252,7 @@ public class BlockFace {
      */
     public int drawShadowTextured(BlockFaceAttr attr, VertexBuffer vertexBuffer) {
         Block block = Block.get(this.bs.type);
-        int tex = block.getTexture(this.faceDir, 0);
+        int tex = block.getTexture(this.faceDir, this.bs.texture);
         this.faceDir = this.bs.axis<<1|this.bs.face;
         attr.setFaceDir(faceDir);
         attr.setTex(tex);
@@ -276,15 +276,14 @@ public class BlockFace {
         this.faceDir = this.bs.axis<<1|this.bs.face;
         float m = 1F;
         float alpha = block.getAlpha();
-        int c = block.getColorFromSide(this.faceDir);
+        int c =  block.getMeshedColor(this.bs);// block.getFaceColor(w, 0, 0, 0, this.faceDir);
         float b = (c & 0xFF) / 255F;
         c >>= 8;
         float g = (c & 0xFF) / 255F;
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        int tex = block.getTexture(this.faceDir, 0);
-        attr.setTex(tex);
+        attr.setTex(this.bs.texture);
         attr.setFaceDir(faceDir);
         attr.setReverse((this.bs.face&1)!=0);
 //
@@ -321,7 +320,7 @@ public class BlockFace {
         if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
             int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
             attr.setTex(sideOverlay);
-            c = block.getColorFromSide(Dir.DIR_POS_Y);
+            c = this.bs.faceColor;
             b = (c & 0xFF) / 255F;
             c >>= 8;
             g = (c & 0xFF) / 255F;

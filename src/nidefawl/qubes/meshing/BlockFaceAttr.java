@@ -47,7 +47,7 @@ public class BlockFaceAttr {
         this.tex = tex;
     }
 
-    public void setOffset(int xOff, int yOff, int zOff) {
+    public void setOffset(float xOff, float yOff, float zOff) {
         this.xOff = xOff;
         this.yOff = yOff;
         this.zOff = zOff;
@@ -67,8 +67,50 @@ public class BlockFaceAttr {
         this.lightMaskSky = sky;
         this.lightMaskBlock = block;
     }
-    
+    public void rotateUV(int num) {
+//        System.out.println("pre");
+//        for (int i = 0; i < 4; i++)
+//            System.out.printf("%d %.2f %.2f\n", i, this.v[i].u, this.v[i].v);
+        for (int a = 0; a < num; a++) {
+            for (int v = 0; v < 3; v++) {
+                BlockFaceVert v1 = this.v[(v+1) % 4];
+                BlockFaceVert v2 = this.v[v];
+                float vertex1_u = v1.u;
+                float vertex1_v = v1.v;
+                v1.u = v2.u;
+                v1.v = v2.v;
+                v2.u = vertex1_u;
+                v2.v = vertex1_v;
+                int direction = v1.direction;
+                v1.direction = v2.direction;
+                v2.direction = direction;
+            }
+            {
+                int msb = this.lightMaskBlock&0xF000;
+                msb >>= (3*4);
+                this.lightMaskBlock <<= 4;
+                this.lightMaskBlock |= msb&0xF;
+            }
+            {
+                int msb = this.lightMaskSky&0xF000;
+                msb >>= (3*4);
+                this.lightMaskSky <<= 4;
+                this.lightMaskSky |= msb&0xF;
+            }
+            {
+                int msb = this.aoMask&0xC0;
+                msb >>= 6;
+                this.aoMask <<= 2;
+                this.aoMask |= msb&0x3;
+            }
+            
+        }
+//        System.out.println("post");
+//        for (int i = 0; i < 4; i++)
+//            System.out.printf("%d %.2f %.2f\n", i, this.v[i].u, this.v[i].v);
+    }
     public void put(VertexBuffer vertexBuffer) {
+//        rotateUV(1);
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
@@ -158,6 +200,12 @@ public class BlockFaceAttr {
      */
     public void setFaceDir(int faceDir) {
         this.faceDir = faceDir;
+    }
+    /**
+     * @return the faceDir
+     */
+    public int getFaceDir() {
+        return this.faceDir;
     }
 
     /**

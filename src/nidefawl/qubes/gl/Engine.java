@@ -15,6 +15,8 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.meshing.SingleBlockRenderer;
+import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.FinalRenderer;
@@ -46,6 +48,9 @@ public class Engine {
     private static BufferedMatrix orthoP;
     private static BufferedMatrix orthoMV;
     private static BufferedMatrix orthoMVP;
+    private static BufferedMatrix ortho3DP;
+    private static BufferedMatrix ortho3DMV;
+    private static BufferedMatrix ortho3DMVP;
 
     public static FrameBuffer fbScene;
     public static FrameBuffer fbDbg;
@@ -53,6 +58,7 @@ public class Engine {
     public static float zfar;
 
     static TesselatorState fullscreenquad;
+    static TesselatorState quad;
 
     public static Frustum        camFrustum;
     public static Vector3f       up;
@@ -75,7 +81,8 @@ public class Engine {
     public static boolean renderWireFrame = false;
     public static boolean USE_TRIANGLES = false;
     public static int terrainVertexAttributeFormat = 0;
-    
+    public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
+    public final static SingleBlockDraw blockDraw = new SingleBlockDraw();
     
 
     public static void generateLightMapTexture() {
@@ -107,6 +114,9 @@ public class Engine {
         orthoP = new BufferedMatrix();
         orthoMV = new BufferedMatrix();
         orthoMVP = new BufferedMatrix();
+        ortho3DP = new BufferedMatrix();
+        ortho3DMV = new BufferedMatrix();
+        ortho3DMVP = new BufferedMatrix();
         camFrustum = new Frustum();
         up = new Vector3f();
         lightPosition = new Vector3f();
@@ -127,6 +137,7 @@ public class Engine {
         glActiveTexture(GL_TEXTURE0);
 
         baseInit();
+        GL30.glBindVertexArray(vaoId);
         UniformBuffer.reinit();
         Shaders.reinit();
         
@@ -136,7 +147,7 @@ public class Engine {
             regionRenderer.init();
             reloadRenderer(true);
         }
-        GL30.glBindVertexArray(vaoId);
+        blockDraw.init();
     }
     
     public static void resize(int displayWidth, int displayHeight) {
@@ -173,6 +184,9 @@ public class Engine {
         if (fullscreenquad == null) {
             fullscreenquad = new TesselatorState();
         }
+        if (quad == null) {
+            quad = new TesselatorState();
+        }
         Tess.instance.resetState();
         int tw = Game.displayWidth;
         int th = Game.displayHeight;
@@ -184,6 +198,13 @@ public class Engine {
         Tess.instance.add(x, y + th, 0, 0, 0);
         Tess.instance.add(x + tw, y + th, 0, 1, 0);
         Tess.instance.draw(GL_QUADS, fullscreenquad);
+        Tess.instance.resetState();
+        Tess.instance.setColor(0xFFFFFF, 0xff);
+        Tess.instance.add(1, 0, 0, 1, 0);
+        Tess.instance.add(0, 0, 0, 0, 0);
+        Tess.instance.add(0, 1, 0, 0, 1);
+        Tess.instance.add(1, 1, 0, 1, 1);
+        Tess.instance.draw(GL_QUADS, quad);
         if (worldRenderer != null) {
             worldRenderer.resize(displayWidth, displayHeight);
         }
@@ -198,15 +219,31 @@ public class Engine {
         orthoMV.setIdentity();
         orthoMV.update();
         orthoP.setZero();
-        orthoMVP.setZero();
         Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
+        orthoP.update();
         Matrix4f.mul(orthoP, orthoMV, orthoMVP);
         orthoMVP.update();
-        orthoP.update();
+        
+        ortho3DMV.setIdentity();
+        float size = 32;
+        Project.lookAt(-10, 5, -10, 0, 0, 0, 0, 1, 0, ortho3DMV);
+        ortho3DMV.update();
+        ortho3DP.setZero();
+//        Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
+        float h = displayHeight/displayWidth;
+        h*=size;
+        Project.orthoMat(-size, size, h, -h, -200, 200, ortho3DP);
+        ortho3DP.update();
+        Matrix4f.mul(ortho3DP, ortho3DMV, ortho3DMVP);
+        ortho3DMVP.update();
     }
-    
+
     public static void drawFullscreenQuad() {
         fullscreenquad.drawQuads();
+    }
+
+    public static void drawQuad() {
+        quad.drawQuads();
     }
 
 
@@ -240,6 +277,9 @@ public class Engine {
     public static BufferedMatrix getMatOrthoMVP() {
         return orthoMVP;
     }
+    public static BufferedMatrix getMatOrtho3DMVP() {
+        return ortho3DMVP;
+    }
 
 
     public static void updateCamera() {
@@ -263,6 +303,7 @@ public class Engine {
         normalMatrix.update();
         camFrustum.set(modelviewprojection);
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
+        updateOrthoMatrix(Game.displayWidth, Game.displayHeight);
     }
 
     public static FrameBuffer getSceneFB() {

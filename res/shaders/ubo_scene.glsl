@@ -13,6 +13,7 @@ layout(std140) uniform uboMatrix3D
 layout(std140) uniform uboMatrix2D
 {
     mat4 mvp;
+    mat4 mvp3DOrtho;
 } in_matrix_2D;
 
 layout(std140) uniform uboMatrixShadow

@@ -6,6 +6,7 @@ package nidefawl.qubes.block;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 
 /**
@@ -24,8 +25,8 @@ public class BlockPlantCrossedSquares extends Block {
      * @see nidefawl.qubes.block.Block#getColorFromSide(int)
      */
     @Override
-    public int getColorFromSide(int side) {
-        return super.getColorFromSide(side);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+        return super.getFaceColor(w, x, y, z, faceDir);
     }
 
     public int getRenderType() {
@@ -60,5 +61,17 @@ public class BlockPlantCrossedSquares extends Block {
     }
     public boolean applyRandomOffset() {
         return false;
+    }
+    @Override
+    public AABBFloat getRenderBlockBounds(IBlockWorld w, int ix, int iy, int iz, AABBFloat bb) {
+        float size = 8/16f;
+        size/=2.0f;
+        bb.set(size, 0, size, 1-size, 1-1*size, 1-size);
+        return bb;
+    }
+
+    
+    public int getRenderShadow() {
+        return 0;
     }
 }

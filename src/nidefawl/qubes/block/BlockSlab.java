@@ -6,6 +6,7 @@ package nidefawl.qubes.block;
 import java.util.Arrays;
 
 import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
@@ -40,6 +41,16 @@ public class BlockSlab extends BlockSliced {
     }
 
     @Override
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+        return this.baseBlock.getFaceColor(w, x, y, z, faceDir);
+    }
+
+    @Override
+    public float getAlpha() {
+        return this.baseBlock.getAlpha();
+    }
+
+    @Override
     public boolean applyAO() {
         return this.baseBlock.applyAO();
     }
@@ -69,16 +80,6 @@ public class BlockSlab extends BlockSliced {
     }
 
     @Override
-    public int getColorFromSide(int side) {
-        return this.baseBlock.getColorFromSide(side);
-    }
-
-    @Override
-    public float getAlpha() {
-        return this.baseBlock.getAlpha();
-    }
-
-    @Override
     public AABBFloat getRenderBlockBounds(IBlockWorld w, int ix, int iy, int iz, AABBFloat bb) {
         int data = w.getData(ix, iy, iz)&0x3;
         bb.set(0f, 0f, 0f, 1f, 0.5f, 1f);
@@ -91,8 +92,8 @@ public class BlockSlab extends BlockSliced {
     }
 
     @Override
-    public boolean canPlaceAt(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
-        return super.canPlaceAt(blockPlacer, pos, fpos, offset, type, data) || (type == this.id && data != 2);
+    public boolean canPlaceAt(BlockPlacer blockPlacer, BlockPos against, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
+        return super.canPlaceAt(blockPlacer, against, pos, fpos, offset, type, data) || (type == this.id && data != 2);
     }
     @Override
     public int prePlace(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
@@ -106,8 +107,9 @@ public class BlockSlab extends BlockSliced {
         if (offset == Dir.DIR_NEG_Y) // placed against a bottom face
             return 1;
         float yOff = (fpos.y%1.0f);
+        System.out.println(yOff);
         Block b = Block.get(idAt);
-        if (b != null && b.isReplaceable())
+        if (b != Block.air && b.isReplaceable())
             return 0;
         return yOff >= 0.5 ? 1 : 0;
     }
@@ -178,7 +180,7 @@ public class BlockSlab extends BlockSliced {
     @Override
     public int getTexture(int faceDir, int dataVal) {
         if (this.textures.length == 0)
-            return baseBlock.getTexture(faceDir, 0);
+            return baseBlock.getTexture(faceDir, dataVal);
         return super.getTexture(faceDir, dataVal);
     }
     public boolean isFullBB() {

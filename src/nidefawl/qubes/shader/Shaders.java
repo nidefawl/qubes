@@ -36,6 +36,8 @@ public class Shaders {
     public static Shader colored;
     public static Shader colored3D;
     public static Shader renderUINT;
+    public static Shader singleblock;
+    public static Shader gui;
 
 
     public static void initShaders() {
@@ -49,6 +51,8 @@ public class Shaders {
             Shader new_colored3D = assetMgr.loadShader("shaders/colored_3D");
             Shader new_wireframe = assetMgr.loadShader("shaders/wireframe");
             Shader new_uint = assetMgr.loadShader("shaders/render_uint_texture");
+            Shader new_singleblock = assetMgr.loadShader("shaders/singleblock");
+            Shader new_gui = assetMgr.loadShader("shaders/gui");
             if (Shaders.depthBufShader != null)
                 Shaders.depthBufShader.release();
             if (Shaders.normals != null)
@@ -63,6 +67,10 @@ public class Shaders {
                 Shaders.wireframe.release();
             if (Shaders.renderUINT != null)
                 Shaders.renderUINT.release();
+            if (Shaders.singleblock != null)
+                Shaders.singleblock.release();
+            if (Shaders.gui != null)
+                Shaders.gui.release();
             Shaders.wireframe = new_wireframe;
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
@@ -70,8 +78,17 @@ public class Shaders {
             Shaders.colored = new_colored;
             Shaders.colored3D = new_colored3D;
             Shaders.renderUINT = new_uint;
+            Shaders.singleblock = new_singleblock;
+            Shaders.gui = new_gui;
             Shaders.colored.enable();
             Shaders.colored.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.gui.enable();
+            Shaders.gui.setProgramUniform3f("offset", Vector3f.ZERO);
+            singleblock.enable();
+            singleblock.setProgramUniform3f("in_offset", Vector3f.ZERO);
+            singleblock.setProgramUniform1f("in_scale", 1);
+            singleblock.setProgramUniform1i("blockTextures", 0);
+            singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();
             Shaders.colored3D.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.wireframe.enable();

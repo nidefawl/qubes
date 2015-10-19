@@ -18,9 +18,10 @@ public class BlockFaceVert {
     int direction;
 
     public void setColorRGBAF(float r, float g, float b, float a) {
-        int iR = (int) (r * 255.0F);
-        int iG = (int) (g * 255.0F);
-        int iB = (int) (b * 255.0F);
+        float scale = 255;
+        int iR = (int) (r * scale);
+        int iG = (int) (g * scale);
+        int iB = (int) (b * scale);
         int iA = (int) (a * 255.0F);
         int rgb;
         if (!littleEndian) {

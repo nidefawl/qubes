@@ -1,5 +1,6 @@
 package nidefawl.qubes.network.client;
 
+import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -9,15 +10,15 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkDataSliced2;
+import nidefawl.qubes.chunk.blockdata.BlockData;
+import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.*;
-import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.TripletShortHash;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldClient;
@@ -60,7 +61,7 @@ public class ClientHandler extends Handler {
     @Override
     public void handleHandshake(PacketHandshake packetHandshake) {
         if (this.state != STATE_HANDSHAKE) {
-            this.client.disconnect("Invalid packet");
+            this.client.disconnect("Invalid packet (STATE_HANDSHAKE)");
             return;
         }
         if (packetHandshake.version != this.client.netVersion) {
@@ -74,7 +75,7 @@ public class ClientHandler extends Handler {
     @Override
     public void handleSync(PacketSyncBlocks packetAuth) {
         if (this.state != STATE_SYNC) {
-            this.client.disconnect("Invalid packet");
+            this.client.disconnect("Invalid packet (STATE_SYNC)");
             return;
         }
         this.state = STATE_CLIENT_SETTINGS;
@@ -86,7 +87,7 @@ public class ClientHandler extends Handler {
     @Override
     public void handleAuth(PacketAuth packetAuth) {
         if (this.state != STATE_AUTH) {
-            this.client.disconnect("Invalid packet");
+            this.client.disconnect("Invalid packet (STATE_AUTH)");
             return;
         }
         this.state = STATE_SYNC;
@@ -94,7 +95,7 @@ public class ClientHandler extends Handler {
         if (packetAuth.success) {
             PlayerProfile profile = Game.instance.getProfile();
             profile.setIngameName(packetAuth.name);
-            short[] data = Block.getAllRegistered();
+            short[] data = Block.getRegisteredIDs();
             PacketSyncBlocks p = new PacketSyncBlocks(data);
             this.sendPacket(p);
         } else {
@@ -141,7 +142,7 @@ public class ClientHandler extends Handler {
     @Override
     public void handleSpawnInWorld(PacketSSpawnInWorld packetJoinGame) {
         if (this.state < STATE_CLIENT_SETTINGS) {
-            this.client.disconnect("Invalid packet");
+            this.client.disconnect("Invalid packet (STATE_CLIENT_SETTINGS)");
             return;
         }
         this.state = STATE_CONNECTED;
@@ -177,6 +178,8 @@ public class ClientHandler extends Handler {
         }
     }
 
+    
+    //TODO: PUT IN THREAD
     @Override
     public void handleChunkDataMulti(PacketSChunkData packet, int flags) {
         int[][] coords = packet.coords;
@@ -206,9 +209,42 @@ public class ClientHandler extends Handler {
             offset+=2;
             for (int j = 0; j < ChunkDataSliced2.DATA_HEIGHT_SLICES; j++) {
                 if ((heightSlices&(1<<j))!=0) {
-                    short[] dataArray = c.blockData.getArray(j, true);
+                    short[] dataArray = c.blockMetadata.getArray(j, true);
                     byteToShortArray(decompressed, dataArray, offset);
                     offset+=dataArray.length*2;
+                }
+            }
+            heightSlices = 0;
+            heightSlices |= decompressed[offset+0]&0xFF;
+            heightSlices |= (decompressed[offset+1]&0xFF)<<8;
+            offset+=2;
+            for (int j = 0; j < BlockDataSliced.DATA_HEIGHT_SLICES; j++) {
+                if ((heightSlices&(1<<j))!=0) {
+                    ByteArrIO.readInt(decompressed, offset);
+                    offset+=4;
+                    int sliceElements = ByteArrIO.readShort(decompressed, offset);
+                    offset+=2;
+                    BlockData[] sData = c.blockData.getArray(j, true);
+                    for (int k = 0; k < sliceElements; k++) {
+                        int idx = ByteArrIO.readShort(decompressed, offset);
+                        offset+=2;
+                        int type = ByteArrIO.readUnsignedByte(decompressed, offset);
+                        offset+=1;
+                        int lenElement = ByteArrIO.readUnsignedByte(decompressed, offset)*4;
+                        offset+=1;
+                        BlockData bdata = BlockData.fromType(type);
+                        if (bdata == null) {
+                            offset += len;
+                            continue;
+                        }
+                        int dataRead = bdata.readData(decompressed, offset);
+                        if (dataRead != lenElement) {
+                            System.err.println("header/read missmatch");
+                            break;
+                        }
+                        offset+=dataRead;
+                        sData[idx] = bdata;
+                    }
                 }
             }
             Engine.regionRenderer.flagChunk(c.x, c.z);
@@ -217,7 +253,7 @@ public class ClientHandler extends Handler {
 
     //TODO: move decompression to thread
     final Inflater inflate = new Inflater();
-    final int i10Meg = 10*1024*1024;
+    final int i10Meg = 20*1024*1024;
 
     byte[] tmpBuffer = new byte[i10Meg];
     private byte[] inflate(byte[] blocks) {
@@ -253,18 +289,21 @@ public class ClientHandler extends Handler {
         short[] blocks = p.blocks;
         byte[] lights = p.lights;
         short[] datas = p.data;
+        BlockData[] bdatas = p.bdata;
         int len = positions.length;
         for (int i = 0; i < len; i++) {
             short pos = positions[i];
-            short type = blocks[i];
+            int type = blocks[i]&Block.BLOCK_MASK;
             short data = datas[i];
             byte light = lights[i];
+            BlockData bdata = bdatas == null ? null : bdatas[i]; 
             int x = TripletShortHash.getX(pos);
             int y = TripletShortHash.getY(pos);
             int z = TripletShortHash.getZ(pos);
             c.setType(x&Chunk.MASK, y, z&Chunk.MASK, type);
             c.setLight(x&Chunk.MASK, y, z&Chunk.MASK, -1, light&0xFF);
             c.setFullData(x&Chunk.MASK, y, z&Chunk.MASK, data);
+            c.setBlockData(x&Chunk.MASK, y, z&Chunk.MASK, bdata);
             this.world.flagBlock(p.chunkX<<Chunk.SIZE_BITS|x, y, p.chunkZ<<Chunk.SIZE_BITS|z);      
         }
     }

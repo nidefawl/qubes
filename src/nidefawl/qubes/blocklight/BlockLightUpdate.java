@@ -189,22 +189,22 @@ public class BlockLightUpdate {
 
 
     private int getNewLightLevel(LightChunkCache cache, int i, int j, int k, int type) {
-        int id = cache.getTypeId(i, j, k);
+        Block block = Block.get(cache.getTypeId(i, j, k));
         int lvl = 0;
         if (type == 0) {
-            lvl = Block.get(id).getLightValue();
+            lvl = block.getLightValue();
         }
-        if (!Block.get(id).isTransparent()) {
+        if (!block.isTransparent()) {
             return lvl;
         }
 
-        int lightLoss = 1;
+        int lightLoss = block.getLightLoss(cache, i, j, k, type);
 
         if (lightLoss < 1)
             lightLoss = 1;
         int h = cache.getHeight(i, k);
         if (type == 1 && j + 1 >= h) {
-            return id == 0 ? 0xF : 0xF - lightLoss;
+            return block == Block.air ? 0xF : 0xF - lightLoss;
         }
         for (int s = 0; s < 6; s++) {
             int dirX = Dir.getDirX(s) + i;

@@ -21,7 +21,7 @@ import org.lwjgl.opengl.*;
 public class BlockTextureArray {
     public static final int BLOCK_TEXTURE_BITS = 4;
     static final BlockTextureArray instance = new BlockTextureArray();
-
+    HashMap<Integer, ArrayList<AssetTexture>> lastLoaded = new HashMap<>();
     public static BlockTextureArray getInstance() {
         return instance;
     }
@@ -31,6 +31,7 @@ public class BlockTextureArray {
     public int glid;
     public int tileSize = 0;
     private int maxTextures;
+    private int numMipmaps;
 
     BlockTextureArray() {
     }
@@ -39,6 +40,58 @@ public class BlockTextureArray {
         glid = GL11.glGenTextures();
     }
 
+    public void reloadTexture(String path) {
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindTexture(GL30.GL_TEXTURE_2D_ARRAY)");
+        Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = lastLoaded.entrySet().iterator();
+        ByteBuffer directBuf = null;
+        while (it.hasNext()) {
+            Entry<Integer, ArrayList<AssetTexture>> entry = it.next();
+            ArrayList<AssetTexture> blockTexture = entry.getValue();
+            for (int i = 0; i < blockTexture.size(); i++) {
+                AssetTexture tex = blockTexture.get(i);
+                if (tex.getName().endsWith(path)) {
+                    System.out.println("need reload slot "+tex.getSlot());
+                    tex.reload();
+                    if (tex.getWidth() != tex.getHeight()) {
+                        if (tex.getHeight()>tex.getWidth()) {
+                            tex.cutH();
+                        }else 
+                        throw new GameError("Block tiles must be width == height");
+                    }
+                    if (tex.getWidth() < this.tileSize) {
+                        tex.rescale(this.tileSize);
+                    }
+                    byte[] data = tex.getData();
+                    TextureUtil.clampAlpha(data, this.tileSize, this.tileSize);
+                    directBuf = put(directBuf, data);
+                    int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
+                    int mipmapSize = this.tileSize;
+                    for (int m = 0; m < numMipmaps; m++) {
+                        directBuf = put(directBuf, data);
+//                      System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
+                        GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m,                     //Mipmap number
+                              0, 0, tex.getSlot(),                 //xoffset, yoffset, zoffset
+                              mipmapSize, mipmapSize, 1,                 //width, height, depth
+                              GL_RGBA,                //format
+                              GL_UNSIGNED_BYTE,      //type
+                              directBuf);                //pointer to data
+                        Engine.checkGLError("GL12.glTexSubImage3D");
+                        if (mipmapSize > 1) {
+                            mipmapSize /= 2;
+                            data = TextureUtil.makeMipMap(data, mipmapSize, mipmapSize, avg);
+                        }
+                    }
+//                    AssetTexture tex = AssetManager.getInstance().loadPNGAsset(s);
+                }
+            }
+        }
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindTexture(GL30.GL_TEXTURE_2D_ARRAY)");
+        
+    }
     public void reload() {
         ByteBuffer directBuf = null;
         boolean firstInit = textures == null;
@@ -90,10 +143,10 @@ public class BlockTextureArray {
         this.tileSize = maxTileW;
         this.maxTextures = maxTextures;
         this.textures = new int[Block.NUM_BLOCKS<<BLOCK_TEXTURE_BITS];
-        int w = 1+GameMath.log2(this.tileSize);
+        this.numMipmaps = 1+GameMath.log2(this.tileSize);
 
         if (firstInit)
-        nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, w, GL_RGBA8,              //Internal format
+        nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, GL_RGBA8,              //Internal format
                 this.tileSize, this.tileSize,   //width,height
                 this.maxTextures       //Number of layers
         );
@@ -131,7 +184,7 @@ public class BlockTextureArray {
                     directBuf = put(directBuf, data);
                     int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
                     int mipmapSize = this.tileSize;
-                    for (int m = 0; m < w; m++) {
+                    for (int m = 0; m < numMipmaps; m++) {
                         directBuf = put(directBuf, data);
 //                      System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
                         GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m,                     //Mipmap number
@@ -153,6 +206,7 @@ public class BlockTextureArray {
                 }
             }
         }
+        lastLoaded = text;
         boolean useAnisotrophic = true;
         if (useAnisotrophic) {
 

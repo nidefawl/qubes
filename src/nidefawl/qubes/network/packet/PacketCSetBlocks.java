@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.vec.BlockPos;
 
@@ -11,12 +12,12 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
 
     public int x, y, z;
     public int x2, y2, z2;
-    public int type;
+    public Stack stack;
     public int flags;
     public PacketCSetBlocks() {
     }
 
-    public PacketCSetBlocks(int id, BlockPos pos1, BlockPos pos2, int type, boolean hollow) {
+    public PacketCSetBlocks(int id, BlockPos pos1, BlockPos pos2, Stack stack, boolean hollow) {
         super(id);
         this.x = pos1.x;
         this.y = pos1.y;
@@ -24,7 +25,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         this.x2 = pos2.x;
         this.y2 = pos2.y;
         this.z2 = pos2.z;
-        this.type = type;
+        this.stack = stack;
         this.flags |= hollow ? 1 : 0;
     }
 
@@ -37,8 +38,9 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         x2 = stream.readInt();
         y2 = stream.readInt();
         z2 = stream.readInt();
-        type = stream.readInt();
         flags = stream.readInt();
+        this.stack = new Stack();
+        this.stack.read(stream);
 
     }
 
@@ -51,8 +53,8 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         stream.writeInt(x2);
         stream.writeInt(y2);
         stream.writeInt(z2);
-        stream.writeInt(type);
         stream.writeInt(flags);
+        this.stack.write(stream);
     }
 
     @Override

@@ -341,6 +341,7 @@ public class FinalRenderer {
             shaderDeferred.setProgramUniform1i("texMaterial", 2);
             shaderDeferred.setProgramUniform1i("texDepth", 3);
             shaderDeferred.setProgramUniform1i("texShadow", 4);
+            shaderDeferred.setProgramUniform1i("texShadow2", 4);
             shaderDeferred.setProgramUniform1i("noisetex", 5);
             shaderDeferred.setProgramUniform1i("texLight", 6);
             for (int i = 0; i < lightColors.length; i++) {
@@ -367,7 +368,7 @@ public class FinalRenderer {
     public void resize(int displayWidth, int displayHeight) {
         releaseFrameBuffers();
         sceneFB = new FrameBuffer(displayWidth, displayHeight);
-        sceneFB.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        sceneFB.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB16F);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
         sceneFB.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);

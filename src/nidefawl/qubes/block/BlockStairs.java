@@ -106,8 +106,8 @@ public class BlockStairs extends BlockSliced {
     }
 
     @Override
-    public int getColorFromSide(int side) {
-        return this.baseBlock.getColorFromSide(side);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+        return this.baseBlock.getFaceColor(w, x, y, z, faceDir);
     }
 
     @Override
@@ -127,10 +127,7 @@ public class BlockStairs extends BlockSliced {
         return bb;
     }
 
-    @Override
-    public boolean canPlaceAt(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
-        return super.canPlaceAt(blockPlacer, pos, fpos, offset, type, data) || (type == this.id && data != 2);
-    }
+
     @Override
     public int prePlace(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
         int sData = 0;
@@ -196,7 +193,7 @@ public class BlockStairs extends BlockSliced {
     @Override
     public int getTexture(int faceDir, int dataVal) {
         if (this.textures.length == 0)
-            return baseBlock.getTexture(faceDir, 0);
+            return baseBlock.getTexture(faceDir, dataVal);
         return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
     }
     public boolean isFullBB() {

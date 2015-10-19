@@ -265,7 +265,11 @@ public abstract class Tag {
             if (len > MAX_LIST_LEN) {
                 throw new IOException("Maximum list length exceeded (" + len + " >= " + MAX_LIST_LEN + ")");
             }
-            this.tagType = TagType.fromID(in.readByte() & 0xFF);
+            int d = in.readByte() & 0xFF;
+            this.tagType = TagType.fromID(d);
+            if (this.tagType == null) {
+                throw new IOException("Unknown tag type  "+d);
+            }
             limit.add(1);
             limit.push();
             for (int a = 0; a < len; a++) {

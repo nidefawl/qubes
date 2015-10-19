@@ -29,7 +29,7 @@ public class ModuleLoader {
     final static Set<Module> modules = Sets.newHashSet();
     static Module[] modulesArray;
 
-    public static void addURLs(URL[] u) throws IOException {
+    public static void addURLs(URL...u) throws IOException {
         URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         Class sysclass = URLClassLoader.class;
         try {
@@ -45,35 +45,32 @@ public class ModuleLoader {
     }
 
     public static void scanModules(File file) {
-        if (!file.isDirectory()) {
-            System.err.println("modules directory not found");
-            return;
-        }
-        ArrayList<URL> list = new ArrayList<URL>();
-        File[] fList = file.listFiles(new FileFilter() {
+        if (file.isDirectory()) {
+            ArrayList<URL> list = new ArrayList<URL>();
+            File[] fList = file.listFiles(new FileFilter() {
 
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isFile() && pathname.getName().endsWith(".jar");
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.isFile() && pathname.getName().endsWith(".jar");
+                }
+            });
+            if (fList == null || fList.length <= 0) {
+                System.err.println("modules directory is empty");
+                return;
             }
-        });
-        if (fList == null || fList.length <= 0) {
-            System.err.println("modules directory is empty");
-            return;
-        }
-        System.out.println("Loading " + fList.length + " module"+(fList.length!=1?"s":"")+"!");
-        for (int i = 0; i < fList.length; i++) {
-            File f = fList[i];
+            for (int i = 0; i < fList.length; i++) {
+                File f = fList[i];
+                try {
+                    list.add(f.toURI().toURL());
+                } catch (Exception e) {
+                    throw new GameError("Failed loading module file "+f, e);
+                }
+            }
             try {
-                list.add(f.toURI().toURL());
+                addURLs(list.toArray(new URL[list.size()]));
             } catch (Exception e) {
-                throw new GameError("Failed loading module file "+f, e);
+                throw new GameError("Failed loading modules", e);
             }
-        }
-        try {
-            addURLs(list.toArray(new URL[list.size()]));
-        } catch (Exception e) {
-            throw new GameError("Failed loading modules", e);
         }
         scanModules();
         

@@ -18,7 +18,7 @@ out mat3 normalMat;
 out mat3 tbnMatrix;
 out vec4 vpos;
 out vec4 vwpos;
-
+out float isWater;
 
 #define LIGHT_MASK 0xFu
 
@@ -59,7 +59,8 @@ void main() {
 	tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
                           tangent.y, binormal.y, normal.y,
                           tangent.z, binormal.z, normal.z);
-
+    uint blockid = (in_blockinfo.y&0xFFFu);
+    isWater = float(blockid==4u);
 
 
 	color = in_color;

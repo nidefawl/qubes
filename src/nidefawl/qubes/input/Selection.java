@@ -5,9 +5,13 @@ import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.chunk.blockdata.BlockData;
+import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -15,6 +19,7 @@ import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
+import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
@@ -39,17 +44,21 @@ public class Selection {
         this.mode = mode;
     }
     private TesselatorState highlightSelection;
-    private TesselatorState highlightBlockOver;
+    private TesselatorState fullBlock;
+    private TesselatorState customBB;
+    public boolean                 quarterMode       = false;
     boolean                 mouseDown         = false;
     boolean                 mouseStateChanged = false;
+    private TesselatorState renderBB;
     public RayTrace rayTrace;
 
     public void init() {
 
         highlightSelection = new TesselatorState();
-        highlightBlockOver = new TesselatorState();
+        fullBlock = new TesselatorState();
+        customBB = new TesselatorState();
         this.rayTrace = new RayTrace(); 
-        renderBlockOver();
+        renderBlockOver(this.fullBlock, new AABBFloat(0, 0, 0, 1, 1, 1));
     }
 
     public BlockPos[] pos = new BlockPos[] {
@@ -69,6 +78,7 @@ public class Selection {
     boolean updateBB = false;
     public BlockPos mouseOver;
     private BlockPos lastMouseOver;
+    private AABBFloat selBB = new AABBFloat();
 
     public void renderBlockHighlight(World world, float fTime) {
         if (mouseOver != null) {
@@ -105,31 +115,28 @@ public class Selection {
      * 
      */
     private void renderMouseOver() {
-        glDepthFunc(GL_LESS);
-        renderBlockOver();
-        Shaders.colored3D.setProgramUniform3f("in_offset", this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
-        highlightBlockOver.drawQuads();
-        Shaders.colored3D.setProgramUniform3f("in_offset", 0, 0, 0);
-        glDepthFunc(GL_LEQUAL);
+        if (this.renderBB != null) {
+            glDepthFunc(GL_LESS);
+            Shaders.colored3D.setProgramUniform3f("in_offset", this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
+            this.renderBB.drawQuads();
+            Shaders.colored3D.setProgramUniform3f("in_offset", 0, 0, 0);
+            glDepthFunc(GL_LEQUAL);
+        }
         
     }
-    public void renderBlockOver() {
+    public void renderBlockOver(TesselatorState out, AABBFloat box) {
 
         float ext = 1 / 96F;
         float w = 1/32f;
         Tess tesselator = Tess.instance;
         float br = 0.6f;
         tesselator.setColorRGBAF(br,br,br, 0.5f);
-        BlockPos sel1 = new BlockPos();
-        BlockPos sel2 = new BlockPos();
-//        BlockPos sel1 = pos[0];
-//        BlockPos sel2 = pos[1];
-        float minX = Math.min(sel1.x, sel2.x) - ext;
-        float minY = Math.min(sel1.y, sel2.y) - ext;
-        float minZ = Math.min(sel1.z, sel2.z) - ext;
-        float maxX = Math.max(sel1.x, sel2.x) + ext + 1;
-        float maxY = Math.max(sel1.y, sel2.y) + ext + 1;
-        float maxZ = Math.max(sel1.z, sel2.z) + ext + 1;
+        float minX = box.minX - ext;
+        float minY = box.minY - ext;
+        float minZ = box.minZ - ext;
+        float maxX = box.maxX + ext;
+        float maxY = box.maxY + ext;
+        float maxZ = box.maxZ + ext;
         tesselator.setNormals(0, 0, -1);
         tesselator.add(minX, maxY, minZ);
         tesselator.add(minX+w, maxY, minZ);
@@ -238,7 +245,7 @@ public class Selection {
         tesselator.add(maxX, maxY, maxZ-w);
         tesselator.add(maxX, maxY, minZ+w);
 
-        tesselator.draw(GL_QUADS, highlightBlockOver);
+        tesselator.draw(GL_QUADS, out);
         tesselator.resetState();
     }
 
@@ -304,11 +311,12 @@ public class Selection {
             return;
         }
         if (Engine.vDir != null) {
+            this.rayTrace.quarterMode = this.quarterMode;
             this.rayTrace.doRaytrace(world, Engine.vOrigin, Engine.vDir, extendReach() ? 200 : 55);
             if (this.rayTrace.hasHit()) {
                 RayTraceIntersection hit = this.rayTrace.getHit();
                 BlockPos p = hit.blockPos.copy();
-                this.mouseOver = p;
+                setMouseOver(hit);
                 if (this.mode == SelectionMode.PLAY) {
                     return;
                 }
@@ -326,7 +334,7 @@ public class Selection {
                 //EDIT MODE
                 //TODO: add some better logic for highlighting, don't render "into" camera
                 if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
-                    if (Game.instance.selBlock != 0) {
+                    if (Game.instance.selBlock.id != 0) {
                         p = p.copy();
                         p.offset(hit.face);
                     }
@@ -352,6 +360,44 @@ public class Selection {
         }
     }
 
+    /**
+     * @param hit
+     */
+    private void setMouseOver(RayTraceIntersection hit) {
+        this.mouseOver = hit.blockPos.copy();
+        World world = Game.instance.getWorld();
+        if (this.mouseOver != null && world != null) {
+            int type = world.getType(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
+            int bbType = Block.get(type).setSelectionBB(world, hit, this.mouseOver, this.selBB);
+            if (bbType != 2 && this.quarterMode) {
+
+                int x = hit.q.x;
+                int y = hit.q.y;
+                int z = hit.q.z;
+                selBB.set(x*0.5f, y*0.5f, z*0.5f, x*0.5f+0.5f, y*0.5f+0.5f, z*0.5f+0.5f);
+//                System.out.println(hit.pos.x);
+//                this.selBB.set(0, 0, 0, 0.5f, 0.5f, 0.5f);
+//                if (hit.face == Dir.DIR_POS_X || hit.pos.x-this.mouseOver.x >= 0.5f) {
+//                    this.selBB.offset(0.5f, 0, 0);
+//                }
+//                if (hit.face == Dir.DIR_POS_Y || hit.pos.y-this.mouseOver.y >= 0.5f) {
+//                    this.selBB.offset(0, 0.5f, 0);
+//                }
+//                if (hit.face == Dir.DIR_POS_Z || hit.pos.z-this.mouseOver.z >= 0.5f) {
+//                    this.selBB.offset(0, 0, 0.5f);
+//                }
+                renderBlockOver(this.customBB, this.selBB);
+                this.renderBB = customBB;
+                return;
+            }
+            if (bbType > 0) {
+                renderBlockOver(this.customBB, this.selBB);
+                this.renderBB = customBB;
+            } else {
+                this.renderBB = fullBlock;
+            }
+        }
+    }
     private void set(int i, BlockPos p2) {
         BlockPos p = pos[i];
         if (p.x != p2.x || p.z != p2.z || p.y != p2.y) {
@@ -369,8 +415,21 @@ public class Selection {
             BlockPos p = this.mouseOver;
             World world = Game.instance.getWorld();
             if (p != null && world != null) {
-                int type = world.getType(p.x, p.y, p.z);
-                Game.instance.selBlock = type;
+                int type = world.getType(p);
+                int d = world.getData(p);
+                if (type == Block.quarter.id) {
+                    
+                    BlockDataQuarterBlock q = (BlockDataQuarterBlock) world.getBlockData(p.x, p.y, p.z);
+                    if (q != null) {
+                        type = q.getType(this.getHit().q.x, this.getHit().q.y, this.getHit().q.z);
+                        d = q.getData(this.getHit().q.x, this.getHit().q.y, this.getHit().q.z);
+                        Game.instance.selBlock.id = type;
+                        Game.instance.selBlock.data = d;
+                    }
+                    return;
+                }
+                Game.instance.selBlock.id = type;
+                Game.instance.selBlock.data = d;
             }
             return;
         }
@@ -411,7 +470,7 @@ public class Selection {
         if (this.mode == SelectionMode.PLAY) {
             if (rayTrace.hasHit()) {
                 RayTraceIntersection intersect = rayTrace.getHit();
-                Game.instance.blockClicked(intersect);
+                Game.instance.blockClicked(intersect, this.quarterMode);
                 
             }
             return;
@@ -427,18 +486,16 @@ public class Selection {
                 if (blocks == 1) {
                     RayTraceIntersection intersect = rayTrace.getHit();
                     int offset = intersect.face;
-                    int block = Game.instance.selBlock;
+                    Stack block = Game.instance.selBlock;
                     BlockPos p = intersect.blockPos.copy();
-                    if (block > 0) {
+                    if (block.id > 0) {
                         if (mode == SelectionMode.SELECT || (mode == SelectionMode.EDIT && blocks > 1)) {
                             p.x += Dir.getDirX(offset);
                             p.y += Dir.getDirY(offset);
                             p.z += Dir.getDirZ(offset);
                         }
-                        Game.instance.sendPacket(new PacketCSetBlock(world.getId(), p, offset, block, 0));
-                    } else {
-                        Game.instance.sendPacket(new PacketCSetBlock(world.getId(), p, offset, 0, 0));
                     }
+                    Game.instance.sendPacket(new PacketCSetBlock(world.getId(), p, offset, block));
                 } else {
                     BlockPos p1 = getMin();
                     BlockPos p2 = getMax();
@@ -486,5 +543,25 @@ public class Selection {
             return this.rayTrace.getHit();
         }
         return null;
+    }
+    /**
+     * @param ix
+     * @param iy
+     * @param iz
+     * @return
+     */
+    public boolean contains(int ix, int iy, int iz) {
+        if (this.pos[0] == null || this.pos[1] == null) {
+            return false;
+        }
+        BlockPos sel1 = pos[0];
+        BlockPos sel2 = pos[1];
+        int minX = Math.min(sel1.x, sel2.x);
+        int minY = Math.min(sel1.y, sel2.y);
+        int minZ = Math.min(sel1.z, sel2.z);
+        int maxX = Math.max(sel1.x, sel2.x);
+        int maxY = Math.max(sel1.y, sel2.y);
+        int maxZ = Math.max(sel1.z, sel2.z);        
+        return ix >= minX && ix <= maxX && iy >= minY && iy <= maxY && iz >= minZ && iz <= maxZ;
     }
 }

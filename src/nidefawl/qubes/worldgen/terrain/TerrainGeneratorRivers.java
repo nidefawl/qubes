@@ -38,7 +38,7 @@ public class TerrainGeneratorRivers implements ITerrainGen {
 
         {
 
-            double scaleMixXZ = 4.80D;
+            double scaleMixXZ = 12.80D;
             double scaleMixY = scaleMixXZ*0.4D;
             double scaleMix2XZ = 1.1D;
             double scaleMix2Y = scaleMix2XZ;
@@ -100,6 +100,42 @@ public class TerrainGeneratorRivers implements ITerrainGen {
     }
 
     private void generateTerrain(Chunk c, short[] blocks) {
+        {
+
+            double scaleMixXZ = 3.80D;
+            double scaleMixY = scaleMixXZ*0.4D;
+            double scaleMix2XZ = 1.1D;
+            double scaleMix2Y = scaleMix2XZ;
+            double scaleT1XZ = 1D;
+            double scaleT1Y = scaleT1XZ*0.1D;
+            double scaleT2XZ = 4.3D;
+            double scaleT2Y = scaleT1XZ*0.3D;
+            double scaleT4XZ = 3.3D;
+            double scaleT4Y = scaleT4XZ*0.1D;
+            double scaleT5XZ = 1.5D;
+            double scaleT5Y = scaleT5XZ*1.33D;
+            this.noise.setScale(scaleMixXZ, scaleMixY, scaleMixXZ);
+            this.noise2.setScale(scaleT1XZ, scaleT1Y, scaleT1XZ);
+            this.noise5.setScale(scaleT5XZ, scaleT5Y, scaleT5XZ);
+            this.noise3.setScale(scaleT2XZ, scaleT2Y, scaleT2XZ);
+            this.noise4.setScale(scaleT4XZ, scaleT4Y, scaleT4XZ);
+//            this.noise2 = NoiseLib.newNoiseScale(rand.nextLong())
+//            .setUpsampleFactor(4)
+//            .setScale(scaleT1XZ, scaleT1Y, scaleT1XZ)
+//            .setOctavesFreq(3, 1.97D + 0.01);
+//    this.noise5 = NoiseLib.newNoiseScale(rand.nextLong())
+//            .setUpsampleFactor(4)
+//            .setScale(scaleT5XZ, scaleT5Y, scaleT5XZ)
+//            .setOctavesFreq(3, 2.59D);
+//    this.noise3 = NoiseLib.newNoiseScale(rand.nextLong())
+//            .setUpsampleFactor(4)
+//            .setScale(scaleT2XZ, scaleT2Y, scaleT2XZ)
+//            .setOctavesFreq(3, 2D);
+//    this.noise4 = NoiseLib.newNoiseScale(rand.nextLong())
+//            .setUpsampleFactor(4)
+//            .setScale(scaleT4XZ, scaleT4Y, scaleT4XZ)
+//            .setOctavesFreq(3, 2D);
+        }
         double[][] dn = generateNoise(c.getBlockX(), c.getBlockZ());
         double[] dNoise = dn[0];
         double[] dNoise2 = dn[1];
@@ -116,13 +152,13 @@ public class TerrainGeneratorRivers implements ITerrainGen {
                     double d2 = dNoise2[y << 8 | xz];
                     if (d >= 0D) {
                         curBlock = stone;
-                        if (d2<=0) {
+//                        if (d2<=0) {
                             if (a < 0) {
                                 curBlock = top;
                             } else if (a < 3) {
                                 curBlock = earth;
                             }
-                        }
+//                        }
                         a++;
                     } else {
                         a = -1;
@@ -131,7 +167,7 @@ public class TerrainGeneratorRivers implements ITerrainGen {
 //                            curBlock = Block.water.id;
 //                        }
                         if (d2 > 0.5 || y <=93) {
-//                            curBlock = Block.water.id;
+                            curBlock = Block.water.id;
                         }
                     }
                     blocks[y << 8 | xz] = (short) curBlock;
@@ -170,7 +206,7 @@ public class TerrainGeneratorRivers implements ITerrainGen {
                 if (time) TimingHelper.start(4);
                 double dStr = 12.0D;
                 double dBlurred = (clamp10(Math.pow(1+r2Dn.getBlur(x, z, 8), 1.3)-1))*44;
-                double dBlurredA = (clamp10(Math.pow(1+r2Dn2.getBlur(x, z, 8), 1.3)-1))*23;
+                double dBlurredA = (clamp10(Math.pow(1+r2Dn2.getBlur(x, z, 8), 0.8)-1))*4;
                 double dBlurred2 = r2Dn.getBlur(x, z, 2)*1.8D;//r2D.getBlur(x, z, 4);
                 double df = wh;
                 if (time) TimingHelper.end(4);
@@ -183,13 +219,14 @@ public class TerrainGeneratorRivers implements ITerrainGen {
                         dz = 1-dz;
                         dz*=dz*(0.23D);
                         dz = 1-dz;
-                        dz /=4;
+                        dz /=2;
                         dYH+=dz;
 //                        if (dYH < 0.5)
 //                            dYH = 0.5;
                     }
-                    dYH-=func2(144, y, 15)*0.02;
-                    dYH+=func2(104, y, 25)*0.08;
+//                    dYH+=func2(144, y, 15)*0.2;
+//                    dYH+=func2(104, y, 25)*0.08;
+//                    dYH+=func2(114, y, 25)*0.08;
 //                    dYH-=func2(92, y, 12)*0.08;
 //                    dYH-=func2(149, y, 12)*0.3;
 //                    dYH-=func2(157, y, 12)*0.7;
@@ -202,7 +239,7 @@ public class TerrainGeneratorRivers implements ITerrainGen {
                     dBase = dBase+dBaseHeight;
                     if (time) TimingHelper.start(5);
                     int idx = idx_xz+y;
-                    double dN = dNoise2_[idx];
+                    double dN = dNoise2_[idx]-1;
                     double dN7 = dnoise5_[idx];
                     double dN1 = dnoise_[idx]*3.0D;
                     double dN2 = dnoise3_[idx]*3.0D;
@@ -213,25 +250,25 @@ public class TerrainGeneratorRivers implements ITerrainGen {
                     }
 //                    if (dN7 < 0)
 //                        dN7*=0.01D;
-                    dN*=34D*clamp10(func2(128, y, 55)*0.8);
-                    dBase += dN*dh2;
+//                    dN*=34D*clamp10(func2(128, y, 85)*0.8);
+                    dBase += dN*3.7*dh2;
+                    dBase += dN7*8.7*dh2;
                     double riverY = 98;
                     double dRiverH = func2(riverY -dBaseHeight*2, y, 12);
                     double riverY2 = riverY+22;
                     double dRiverH2 = y>=riverY2?1:func2(riverY2, y, 23); 
                     double xr = 0;
-//                    xr+=dRiverH*dBlurred2*dStr;
-//                    xr+=dRiverH2*dBlurred*dStr;
-                    double dt = func2(44+dN1*4, y, 9+0.4*dN2-dN4);
+                    xr+=dRiverH*dBlurred2*dStr;
+                    xr+=dRiverH2*dBlurred*dStr;
+                    double dt = func2(114+dN1*2, y, 7)*0.3;
                     double dt2 = func2(44+dN1*4, y, 12+0.4*dN2-dN4);
-                    double cavestr = dt*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2);
+                    double cavestr = dt*dStr*dBlurredA*(0.5D+dN1*0.2D+0.2*dN2);
                   xr+=cavestr*36;
 
                     dBase -= xr;
-                    dBase += dN7*1.7*dh2;
                     dNoise[y<<8|xz] = dBase;
                     dNoise2[y<<8|xz] = y<riverY-4?xr:0;
-                    dNoise2[y<<8|xz] = dt2*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2)*55;
+//                    dNoise2[y<<8|xz] = dt2*dStr*dBlurredA*(1.0D+dN1*0.2D+0.2*dN2)*55;
                 }   
             }    
         }

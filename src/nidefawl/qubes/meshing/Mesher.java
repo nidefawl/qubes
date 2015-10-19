@@ -167,9 +167,17 @@ public class Mesher {
                 mask2[n] = bs2;
                 return;
             }
+            if (bs1.type == Block.water.id && bs2.type != Block.water.id) {
+                mask2[n] = bs2;
+                return;
+            }
+            if (bs2.type == Block.water.id && bs1.type != Block.water.id) {
+                mask2[n] = bs1;
+                return;
+            }
             
             System.err.println("transition from non-air to non-air, non of both have pass == 0, UNDEFINED STATE!");
-            System.err.println(this.strategy+" - "+bs1.type+"/"+bs2.type+"/"+bs1.transparent+"/"+bs2.transparent+"/"+bs1.pass+"/"+bs2.pass);
+            System.err.println(this.strategy+" - "+Block.get(bs1.type)+"/"+Block.get(bs2.type)+"/"+bs1.transparent+"/"+bs2.transparent+"/"+bs1.pass+"/"+bs2.pass);
             
             return;
         }
@@ -268,7 +276,7 @@ public class Mesher {
                                 w++;
                             }
                             int h = computeHeight(i, j, n, w, v, u, c);
-                            // Compute height (this is slightly awkward
+                            
                             boolean add = true;
 
                             int du[] = new int[] { 0, 0, 0 };
@@ -346,7 +354,7 @@ public class Mesher {
 //                    return hidden;
                 renderTypeTransition = true;
             }
-            if (strategy == 1 && pass > 0) {
+            if (strategy == 1 && block.getRenderShadow()<1) {
                 return air;
             }
             BlockSurface surface = next();

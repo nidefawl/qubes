@@ -7,6 +7,7 @@ import java.util.Arrays;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
+import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.world.IBlockWorld;
@@ -42,6 +43,15 @@ public class ChunkRenderCache implements IBlockWorld {
         }
         Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
         return region != null ? region.getData(i&0xF, j, k&0xF) : 0;
+    }
+
+    @Override
+    public BlockData getBlockData(int i, int j, int k) {
+        if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
+            return null;
+        }
+        Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
+        return region != null ? region.getBlockData(i&0xF, j, k&0xF) : null;
     }
     
     /** call with relative coords */
@@ -138,6 +148,10 @@ public class ChunkRenderCache implements IBlockWorld {
 
     @Override
     public boolean setTypeData(int x, int y, int z, int type, int data, int render) {
+        return false;
+    }
+    @Override
+    public boolean setBlockData(int x, int y, int z, BlockData bd, int flags){
         return false;
     }
 

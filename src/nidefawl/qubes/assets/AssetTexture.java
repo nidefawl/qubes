@@ -13,12 +13,17 @@ public class AssetTexture extends Asset {
     private int height;
     private byte[] data;
     int slot = -1;
+    private String name;
     
     public AssetTexture() {
+        this.name = "";
+    }
+    
+    public AssetTexture(String name) {
+        this.name = name;
     }
 
     public void load(InputStream is) throws Exception {
-
         PNGDecoder dec = new PNGDecoder(is);
         this.width = dec.getWidth();
         this.height = dec.getHeight();
@@ -87,5 +92,19 @@ public class AssetTexture extends Asset {
 
     public int getSlot() {
         return slot;
+    }
+
+    /**
+     * @return the texture path
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
+     * 
+     */
+    public void reload() {
+        AssetManager.getInstance().reloadPNGAsset(this);
     }
 }

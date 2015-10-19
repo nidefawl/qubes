@@ -6,6 +6,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.input.Selection.SelectionMode;
@@ -92,14 +93,16 @@ public class GuiOverlayStats extends Gui {
                 int lvlNZ = intersect != null ? Dir.getDirZ(intersect.face) : 0;
                 int lvl1 = world.getLight(p.x+lvlNX, p.y+lvlNY, p.z+lvlNZ);
                 int bType = world.getType(p.x, p.y, p.z);
-                int bData = world.getData(p.x, p.y, p.z);
+                int bMETA = world.getData(p.x, p.y, p.z);
+                BlockData bData = world.getBlockData(p.x, p.y, p.z);
                 int block1 = lvl&0xF;
                 int sky1 = (lvl>>4)&0xF;
                 int block2 = lvl1&0xF;
                 int sky2 = (lvl1>>4)&0xF;
                 int h = world.getHeight(p.x, p.z);
-                this.stats5 = String.format("Light: %d/%d ("+(intersect!=null?"Face":"+1")+": %d/%d)\n %d/%d/%d = %d:%d",  
-                        sky1, block1, sky2, block2, p.x, p.y, p.z, bType, bData);
+                this.stats5 = String.format("Light: %d/%d ("+(intersect!=null?"Face":"+1")+": %d/%d)\n %d/%d/%d = %d:%d" + 
+                        (bData == null ?" -" :(" "+bData.toString())),  
+                        sky1, block1, sky2, block2, p.x, p.y, p.z, bType, bMETA);
             }
         }
 
@@ -113,10 +116,11 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("z: %.2f", v.z));
         info.addAll(Game.instance.glProfileResults);
         
-        Block b = Block.get(Game.instance.selBlock);
+        Block b = Game.instance.selBlock.getBlock();
 
         info.add(String.format("Selected: %s", b == null ? "destroy" : b.getName()));
         info.add(String.format("Mode: %s", Game.instance.selection.getMode().toString()));
+        info.add(Game.instance.selection.quarterMode ? "Quarter" : "Full");
         render = true;
     }
 

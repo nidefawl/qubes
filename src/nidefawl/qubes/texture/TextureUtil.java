@@ -1,5 +1,6 @@
 package nidefawl.qubes.texture;
 
+import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
 import nidefawl.qubes.Game;
@@ -260,6 +261,72 @@ public class TextureUtil {
                     data[idx+3] = 0;
                 }
             }
+    }
+
+    public static byte[] toBytesRGBA(int[] irgba) {
+        byte textureData[] = new byte[irgba.length * 4];
+        for (int k1 = 0; k1 < irgba.length; k1++) {
+            if (irgba[k1] >> 24 == 0) {
+                for (int a = 0; a < 4; a++) 
+                    textureData[k1 * 4 + a] = 0;
+            } else {
+                textureData[k1 * 4 + 0] = (byte)(irgba[k1] >> 16 & 0xff);
+                textureData[k1 * 4 + 1] = (byte)(irgba[k1] >> 8 & 0xff);
+                textureData[k1 * 4 + 2] = (byte)(irgba[k1] >> 0 & 0xff);
+                textureData[k1 * 4 + 3] = (byte)(irgba[k1] >> 24 & 0xff);
+            }
+        }
+        return textureData;
+    }
+
+    public static int[] toIntRGBA(byte[] rgba) {
+        int textureData[] = new int[rgba.length / 4];
+        for (int k1 = 0; k1 < rgba.length; k1+=4) {
+            int irgba = 0;
+            irgba |= (rgba[k1+0]&0xFF)<<16;
+            irgba |= (rgba[k1+1]&0xFF)<<8;
+            irgba |= (rgba[k1+0]&0xFF)<<0;
+            irgba |= (rgba[k1+3]&0xFF)<<24;
+            textureData[k1/4] = irgba;
+        }
+        return textureData;
+    }
+
+    public static byte[] toBytesRGBA(BufferedImage bufferedImage) {
+        int j = bufferedImage.getWidth();
+        int l = bufferedImage.getHeight();
+        int rgba[] = new int[j * l];
+        bufferedImage.getRGB(0, 0, j, l, rgba, 0, j);
+        byte textureData[] = new byte[rgba.length * 4];
+        for (int k1 = 0; k1 < rgba.length; k1++) {
+            if (rgba[k1] >> 24 == 0) {
+                for (int a = 0; a < 4; a++) 
+                    textureData[k1 * 4 + a] = 0;
+            } else {
+                textureData[k1 * 4 + 0] = (byte)(rgba[k1] >> 16 & 0xff);
+                textureData[k1 * 4 + 1] = (byte)(rgba[k1] >> 8 & 0xff);
+                textureData[k1 * 4 + 2] = (byte)(rgba[k1] >> 0 & 0xff);
+                textureData[k1 * 4 + 3] = (byte)(rgba[k1] >> 24 & 0xff);
+            }
+        }
+        return textureData;
+    }
+
+    /**
+     * @param rgba
+     * @return
+     */
+    public static float getA(int rgba) {
+        return ((rgba>>24)&0xFF)/255.0f;
+    }
+    public static float getR(int rgba) {
+        return ((rgba>>16)&0xFF)/255.0f;
+    }
+    public static float getG(int rgba) {
+        return ((rgba>>8)&0xFF)/255.0f;
+    }
+    public static float getB(int rgba) {
+        return (rgba&0xFF)/255.0f;
     }
 
 }

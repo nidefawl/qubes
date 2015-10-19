@@ -22,7 +22,7 @@ public class PacketSyncBlocks extends Packet {
 	public void readPacket(DataInput stream) throws IOException {
         int len = stream.readInt();
         if (len > Block.NUM_BLOCKS) {
-            throw new IOException("Invalid packet");
+            throw new IOException("Invalid packet len >= NUM_BLOCKS ("+len+")");
         }
         this.blockIds = new short[len];
         byte[] byteData = new byte[this.blockIds.length*2];

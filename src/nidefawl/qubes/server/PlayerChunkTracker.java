@@ -5,6 +5,7 @@ import java.util.*;
 import com.google.common.collect.*;
 
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.packet.PacketSSetBlocks;
@@ -334,11 +335,13 @@ public class PlayerChunkTracker {
                         while (it.hasNext()) {
                             blocksToSend.add(it.next());
                             it.remove();
-                        }
+                        } 
                         short[] pos = new short[blocksToSend.size()];
                         short[] blocks = new short[pos.length];
                         short[] data = new short[pos.length];
                         byte[] lights = new byte[pos.length];
+//                        ArrayList<BlockData> bdata = new ArrayList<>();
+                        BlockData[] bdata = new BlockData[pos.length];
                         for (int i = 0; i < pos.length; i++) {
                             short s = pos[i] = blocksToSend.get(i);
                             int x = TripletShortHash.getX(s);
@@ -347,8 +350,9 @@ public class PlayerChunkTracker {
                             blocks[i] = (short) c.getTypeId(x, y, z);
                             lights[i] = (byte) c.getLight(x, y, z);
                             data[i] = (short) c.getFullData(x, y, z);
+                            bdata[i] = c.getBlockData(x, y, z);
                         }
-                        PacketSSetBlocks packet = new PacketSSetBlocks(this.worldServer.getId(), e.x, e.z, pos, blocks, lights, data);
+                        PacketSSetBlocks packet = new PacketSSetBlocks(this.worldServer.getId(), e.x, e.z, pos, blocks, lights, data, bdata);
                         for (Player p : e.players) {
                             p.netHandler.sendPacket(packet);
                         }

@@ -19,7 +19,7 @@ public class BlockWater extends Block {
 
     @Override
     public float getAlpha() {
-        return 1f;
+        return 0.9f;
     }
 
     @Override
@@ -34,6 +34,11 @@ public class BlockWater extends Block {
 
     @Override
     public int getBBs(World world, int x, int y, int z, AABBFloat[] tmp) {
+        return 0;
+    }
+    
+    @Override
+    public int getRenderShadow() {
         return 0;
     }
 }

@@ -81,12 +81,34 @@ public class AssetManager {
         throw new RuntimeException("Missing resource "+name);
     }
 
+    public void reloadPNGAsset(AssetTexture asset) {
+        String name = asset.getName();
+        InputStream is = null;
+        try {
+            is = findResource(name, false);
+            if (is != null) {
+                asset.load(is);
+                return;
+            }
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new GameError("Error while closing inputstream", e);
+                }
+            }
+        }
+        throw new GameError("Cannot load asset '" + name + "': File does not exist");
+    }
     public AssetTexture loadPNGAsset(String name) {
         InputStream is = null;
         try {
             is = findResource(name, false);
             if (is != null) {
-                AssetTexture asset = new AssetTexture();
+                AssetTexture asset = new AssetTexture(name);
                 asset.load(is);
                 assets.add(asset);
                 return asset;

@@ -91,7 +91,12 @@ public class RegionRenderer {
     protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
     protected static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
     protected static ByteBuffer[] idxByteBuffers = new ByteBuffer[NUM_PASSES];
-    protected static IntBuffer[] idxShortBuffers = new IntBuffer[NUM_PASSES];
+    protected static ReallocIntBuffer[] idxShortBuffers = new ReallocIntBuffer[NUM_PASSES];
+    static {
+        for (int i = 0; i < idxShortBuffers.length; i++) {
+            idxShortBuffers[i] = new ReallocIntBuffer();
+        }
+    }
     
     static void reallocBuffer(int pass, int len) {
         if (buffers[pass] == null || buffers[pass].capacity() < len) {
@@ -101,18 +106,6 @@ public class RegionRenderer {
                 buffers[pass] = Memory.createByteBufferAligned(64, len);
             }
             intbuffers[pass] = buffers[pass].asIntBuffer();
-        }
-    }
-    static void reallocIndexBuffers(int pass, int len) {
-        if (Engine.USE_TRIANGLES) {
-            if (idxByteBuffers[pass] == null || idxByteBuffers[pass].capacity() < len) {
-                if (idxByteBuffers[pass] != null) {
-                    idxByteBuffers[pass] = Memory.reallocByteBufferAligned(idxByteBuffers[pass], 64, len);
-                } else {
-                    idxByteBuffers[pass] = Memory.createByteBufferAligned(64, len);
-                }
-                idxShortBuffers[pass] = idxByteBuffers[pass].asIntBuffer();
-            }
         }
     }
 

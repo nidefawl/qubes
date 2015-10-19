@@ -3,8 +3,10 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
+import nidefawl.qubes.world.IBlockWorld;
 
 /**
  * @author Michael Hept 2015
@@ -26,7 +28,7 @@ public class BlockLeaves extends Block {
     }
     
     @Override
-    public int getColorFromSide(int side) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
         return leavesColor;
     }
 
@@ -34,8 +36,13 @@ public class BlockLeaves extends Block {
     public boolean applyAO() {
         return true;
     }
+    
     @Override
     public boolean isOccluding() {
-        return true;//super.isOccluding();
+        return true;
+    }
+    
+    public int getLightLoss(LightChunkCache c, int i, int j, int k, int type) {
+        return 3;
     }
 }

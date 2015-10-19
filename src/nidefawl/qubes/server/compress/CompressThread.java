@@ -17,9 +17,9 @@ public class CompressThread implements Runnable {
     public void run() {
 
         final Deflater deflate = new Deflater(this.server.getConfig().chunkCompressionLevel);
-        final int i10Meg = 10*1024*1024;
-        final byte[] tmpBuffer = new byte[i10Meg];
-        final byte[] tmpBuffer2 = new byte[i10Meg];
+        final int i20Meg = 20*1024*1024;
+        final byte[] tmpBuffer = new byte[i20Meg];
+        final byte[] tmpBuffer2 = new byte[i20Meg];
         while (server.isRunning()) {
             try {
                 ICompressTask task = queue.take();

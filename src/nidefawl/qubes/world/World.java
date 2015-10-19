@@ -5,6 +5,7 @@ import java.util.*;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
+import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.lighting.DynamicLight;
@@ -123,6 +124,7 @@ public abstract class World implements IBlockWorld {
     public int getType(BlockPos pos) {
         return this.getType(pos.x, pos.y, pos.z);
     }
+    
 
     /**
      * Wrapper method for getData(int, int, int)
@@ -131,6 +133,18 @@ public abstract class World implements IBlockWorld {
      */
     public int getData(BlockPos pos) {
         return this.getData(pos.x, pos.y, pos.z);
+    }
+    @Override
+    public BlockData getBlockData(int x, int y, int z) {
+        if (y >= this.worldHeight)
+            return null;
+        if (y < 0)
+            return null;
+        Chunk c = getChunk(x >> 4, z >> 4);
+        if (c == null) {
+            return null;
+        }
+        return c.getBlockData(x & 0xF, y, z & 0xF);
     }
     @Override
     public int getType(int x, int y, int z) {
@@ -185,7 +199,7 @@ public abstract class World implements IBlockWorld {
      * @see nidefawl.qubes.world.IBlockWorld#setType(int, int, int, int, int)
      */
     @Override
-    public boolean setType(int x, int y, int z, int type, int render) {
+    public boolean setType(int x, int y, int z, int type, int flags) {
         if (y >= this.worldHeight)
             return false;
         if (y < 0)
@@ -195,15 +209,40 @@ public abstract class World implements IBlockWorld {
             return false;
         }
         if (c.setType(x & 0xF, y, z & 0xF, type)) {
-            if ((render & Flags.LIGHT) != 0) {
+            if ((flags & Flags.LIGHT) != 0) {
                 updateLight(x, y, z);
             }
-            if ((render & Flags.MARK) != 0) {
+            if ((flags & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
             }   
         }
         return true;
     }
+    @Override
+    public boolean setBlockData(int x, int y, int z, BlockData bd, int flags) {
+        if (y >= this.worldHeight)
+            return false;
+        if (y < 0)
+            return false;
+        Chunk c = getChunk(x >> 4, z >> 4);
+        if (c == null) {
+            return false;
+        }
+        if (c.setBlockData(x & 0xF, y, z & 0xF, bd)) {
+            if ((flags & Flags.LIGHT) != 0) {
+                updateLight(x, y, z);
+            }
+            if ((flags & Flags.MARK) != 0) {
+                flagBlock(x, y, z);
+            }   
+        }
+        return true;
+    }
+
+    public boolean setBlockData(BlockPos pos, BlockData bd, int flags) {
+        return setBlockData(pos.x, pos.y, pos.z, bd, flags);
+    }
+    
     @Override
     public boolean setTypeData(int x, int y, int z, int type, int data, int render) {
         if (y >= this.worldHeight)

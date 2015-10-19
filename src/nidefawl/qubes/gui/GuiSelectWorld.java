@@ -69,12 +69,14 @@ public class GuiSelectWorld extends Gui {
     }
 
     public boolean onKeyPress(int key, int scancode, int action, int mods) {
+        if (super.onKeyPress(key, scancode, action, mods)) {
+            return true;
+        }
         if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
             int world = key - GLFW.GLFW_KEY_1;
             Game.instance.sendPacket(new PacketCSwitchWorld(world));
             Game.instance.showGUI(null);
-            return true;
         }
-        return super.onKeyPress(key, scancode, action, mods);
+        return true;
     }
 }

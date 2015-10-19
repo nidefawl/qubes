@@ -1,6 +1,5 @@
 package nidefawl.qubes.block;
 
-
 public class BlockSliced extends Block {
     public BlockSliced(int id) {
         this(id, true);
