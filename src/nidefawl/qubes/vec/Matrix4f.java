@@ -522,6 +522,30 @@ public class Matrix4f {
     }
 
     /**
+     * Scales this matrix
+     * @param f The vector to scale by
+     * @return this
+     */
+    public Matrix4f scale(float s) {
+        return scale(s, s, s);
+    }
+    public Matrix4f scale(float x, float y, float z) {
+        this.m00 = this.m00 * x;
+        this.m01 = this.m01 * x;
+        this.m02 = this.m02 * x;
+        this.m03 = this.m03 * x;
+        this.m10 = this.m10 * y;
+        this.m11 = this.m11 * y;
+        this.m12 = this.m12 * y;
+        this.m13 = this.m13 * y;
+        this.m20 = this.m20 * z;
+        this.m21 = this.m21 * z;
+        this.m22 = this.m22 * z;
+        this.m23 = this.m23 * z;
+        return this;
+    }
+
+    /**
      * Scales the source matrix and put the result in the destination matrix
      * @param vec The vector to scale by
      * @param src The source matrix

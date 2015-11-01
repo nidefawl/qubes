@@ -8,14 +8,15 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.*;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
-public class FrameBuffer {
+public class FrameBuffer implements IManagedResource {
     private static final int MAX_COLOR_ATT    = 8;
+    public static int FRAMEBUFFERS = 0;
     private final int        renderWidth;
     private final int        renderHeight;
     private int              fb;
@@ -30,6 +31,20 @@ public class FrameBuffer {
     private final int[]      colorAttMagFilters = new int[MAX_COLOR_ATT];
     private final boolean[]      clearBuffer = new boolean[MAX_COLOR_ATT];
     private final float[][]      clearColor = new float[MAX_COLOR_ATT][];
+    private int colorTexExtFmt=GL12.GL_BGRA;
+    private int colorTexExtType=GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
+    /**
+     * @param colorTexExtFmt the colorTexExtFmt to set
+     */
+    public void setColorTexExtFmt(int colorTexExtFmt) {
+        this.colorTexExtFmt = colorTexExtFmt;
+    }
+    /**
+     * @param colorTexExtType the colorTexExtType to set
+     */
+    public void setColorTexExtType(int colorTexExtType) {
+        this.colorTexExtType = colorTexExtType;
+    }
 
     public FrameBuffer(int renderWidth, int renderHeight) {
         this.renderWidth = renderWidth;
@@ -37,6 +52,15 @@ public class FrameBuffer {
         for (int a = 0; a < clearColor.length; a++) {
             clearColor[a] = new float[4];
         }
+        FRAMEBUFFERS++;
+    }
+    public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type) {
+        FrameBuffer f = new FrameBuffer(renderWidth, renderHeight);
+        f.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        f.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
+        f.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
+        f.setup(resMgr);
+        return f;
     }
 
     public void setColorAtt(int att, int fmt) {
@@ -79,7 +103,9 @@ public class FrameBuffer {
         isShadowDepthBuffer = true;
     }
 
-    public void setup() {
+    public void setup(IResourceManager resMgr) {
+        if (resMgr != null)
+        resMgr.addResource(this);
         int numTextures = 0;
         for (int i = 0; i < colorAttFormats.length; i++) {
             if (colorAttFormats[i] != 0) {
@@ -160,10 +186,11 @@ public class FrameBuffer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
         if (format == GL_RGBA16UI) {
             glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGRA_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
         } else {
-            glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (ByteBuffer) null);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, colorTexExtFmt, colorTexExtType, (ByteBuffer) null);
         }
         
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
@@ -265,7 +292,7 @@ public class FrameBuffer {
         }
     }
 
-    public void cleanUp() {
+    public void release() {
         if (this.fb != 0) {
             GL30.glDeleteFramebuffers(this.fb);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteFramebuffers");
@@ -284,6 +311,7 @@ public class FrameBuffer {
             glDeleteTextures(colorTextures);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
         }
+        FRAMEBUFFERS--;
     }
 
     public int getWidth() {
@@ -292,5 +320,15 @@ public class FrameBuffer {
 
     public int getHeight() {
         return this.renderHeight;
+    }
+    /**
+     * @return
+     */
+    public int getFB() {
+        return this.fb;
+    }
+    @Override
+    public EResourceType getType() {
+        return EResourceType.FRAMEBUFFER;
     }
 }

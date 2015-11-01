@@ -26,11 +26,15 @@ import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Project;
 import nidefawl.qubes.vec.*;
 
 public class Engine {
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
+
+    public final static BlockPos GLOBAL_OFFSET = new BlockPos();
+    private final static BlockPos LAST_REPOS = new BlockPos();
 
     public static boolean initRenderers = true;
 
@@ -51,6 +55,9 @@ public class Engine {
     private static BufferedMatrix ortho3DP;
     private static BufferedMatrix ortho3DMV;
     private static BufferedMatrix ortho3DMVP;
+    private static BufferedMatrix tempMatrix;
+    private static BufferedMatrix tempMatrix2;
+    private static BufferedMatrix identity;
 
     public static FrameBuffer fbScene;
     public static FrameBuffer fbDbg;
@@ -80,7 +87,9 @@ public class Engine {
 
     public static boolean renderWireFrame = false;
     public static boolean USE_TRIANGLES = false;
-    public static int terrainVertexAttributeFormat = 0;
+    public static int terrainVertexAttributeFormat = 0; //TODO: IMPORTANT: get rid of the old vertex format (now broken anyways)
+
+    public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
     public final static SingleBlockDraw blockDraw = new SingleBlockDraw();
     
@@ -117,6 +126,12 @@ public class Engine {
         ortho3DP = new BufferedMatrix();
         ortho3DMV = new BufferedMatrix();
         ortho3DMVP = new BufferedMatrix();
+        tempMatrix = new BufferedMatrix();
+        tempMatrix2 = new BufferedMatrix();
+        identity = new BufferedMatrix();
+        identity.setIdentity();
+        identity.update();
+        identity.update();
         camFrustum = new Frustum();
         up = new Vector3f();
         lightPosition = new Vector3f();
@@ -175,11 +190,11 @@ public class Engine {
         
 
         if (fbDbg != null)
-            fbDbg.cleanUp();
+            fbDbg.release();
         fbDbg = new FrameBuffer(displayWidth, displayHeight);
         fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
         fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
-        fbDbg.setup();
+        fbDbg.setup(null);
 
         if (fullscreenquad == null) {
             fullscreenquad = new TesselatorState();
@@ -214,6 +229,7 @@ public class Engine {
         if (shadowRenderer != null) {
             shadowRenderer.resize(displayWidth, displayHeight);
         }
+        UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
     }
     public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
         orthoMV.setIdentity();
@@ -281,6 +297,17 @@ public class Engine {
         return ortho3DMVP;
     }
 
+    public static BufferedMatrix getTempMatrix() {
+        return tempMatrix;
+    }
+
+    public static BufferedMatrix getTempMatrix2() {
+        return tempMatrix2;
+    }
+    public static BufferedMatrix getIdentityMatrix() {
+        return identity;
+    }
+
 
     public static void updateCamera() {
         up.set(0, 100, 0);
@@ -290,8 +317,11 @@ public class Engine {
         view.update();
         
         Vector3f vec = camera.getPosition();
+        updateRenderOffset = updateGlobalRenderOffset(vec.x, vec.y, vec.z);
         modelview.setIdentity();
         modelview.translate(-vec.x, -vec.y, -vec.z);
+        modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
+//        modelview.scale(getRenderScale());
         Matrix4f.mul(view, modelview, modelview);
         Matrix4f.mul(projection, modelview, modelviewprojection);
         Matrix4f.mul(projection, view, viewprojection);
@@ -306,6 +336,33 @@ public class Engine {
         updateOrthoMatrix(Game.displayWidth, Game.displayHeight);
     }
 
+    
+    private static boolean updateGlobalRenderOffset(float x, float y, float z) {
+        final int OFFSET_BITS = 5;//= 100;
+        final int OFFSET_REPOS_DIST = 512;
+        int ix = GameMath.floor(x);
+        int iz = GameMath.floor(z);
+//        int dbgX = -(3<<OFFSET_BITS);
+//        if (1==1){
+//            boolean update = !GLOBAL_OFFSET.isEqualTo(dbgX,0,0);
+//            GLOBAL_OFFSET.set(dbgX, 0, 0);
+//            return update;
+//        }
+        final int distSq3D = GameMath.distSq3Di(ix, 0, iz, LAST_REPOS.x, 0, LAST_REPOS.z);
+        if (distSq3D < 0/*INTEGER OVERFLOW*/ || distSq3D > OFFSET_REPOS_DIST*OFFSET_REPOS_DIST) {
+            int offX = (ix>>OFFSET_BITS<<OFFSET_BITS);
+            int offZ = (iz>>OFFSET_BITS<<OFFSET_BITS);
+            boolean update = !GLOBAL_OFFSET.isEqualTo(offX, 0, offZ);
+            GLOBAL_OFFSET.set(offX, 0, offZ);
+//            GLOBAL_OFFSET.set(0, 0, 0);
+            LAST_REPOS.set(ix, 0, iz);
+            if (update)
+                System.out.println("REPOS "+GLOBAL_OFFSET);
+            return update;
+        }
+        return false;
+    }
+
     public static FrameBuffer getSceneFB() {
         return fbScene;
     }
@@ -315,7 +372,7 @@ public class Engine {
     public static void flushRenderTasks() {
         if (regionRenderThread != null) {
             regionRenderThread.flush();
-            while (regionRenderThread.hasTasks()) {
+            while (regionRenderThread.hasTasks() && regionRenderThread.isRunning()) {
                 regionRenderThread.finishTask();
                 try {
                     Thread.sleep(20);
@@ -375,9 +432,9 @@ public class Engine {
         if (!Project.gluUnProject(winX, winY, 1F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
             System.err.println("unproject fail 1");
         }
-        vTarget.x = position.get(0);
-        vTarget.y = position.get(1);
-        vTarget.z = position.get(2);
+        vTarget.x = position.get(0)+Engine.GLOBAL_OFFSET.x;
+        vTarget.y = position.get(1)+Engine.GLOBAL_OFFSET.y;
+        vTarget.z = position.get(2)+Engine.GLOBAL_OFFSET.z;
 //        Vector4f zdepth = new Vector4f(0,0,-100, 0);
 //        Matrix4f.transform(view, zdepth, zdepth);
 //        System.out.println(vTarget); 
@@ -387,9 +444,9 @@ public class Engine {
         if (!Project.gluUnProject(winX, winY, 0F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
             System.err.println("unproject fail 2");
         }
-        vOrigin.x = position.get(0);
-        vOrigin.y = position.get(1);
-        vOrigin.z = position.get(2);
+        vOrigin.x = position.get(0)+Engine.GLOBAL_OFFSET.x;
+        vOrigin.y = position.get(1)+Engine.GLOBAL_OFFSET.y;
+        vOrigin.z = position.get(2)+Engine.GLOBAL_OFFSET.z;
         Vector3f.sub(vTarget, vOrigin, vDirTmp);
         vDir = vDirTmp.normaliseNull();
         if (vDir != null) {

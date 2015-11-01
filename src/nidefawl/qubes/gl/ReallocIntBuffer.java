@@ -38,6 +38,13 @@ public class ReallocIntBuffer {
             intbuffers = buffers.asIntBuffer();
         }
     }
+    public void release() {
+        if (this.buffers != null) {
+            Memory.free(this.buffers);
+            this.buffers = null;
+            this.intbuffers = null;
+        }
+    }
 
     /**
      * @param idx

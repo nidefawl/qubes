@@ -168,13 +168,13 @@ public class BlockSurface {
         if (!(cp) || !(pc)) {
             br_pp = cache.getLight(x + 1, y + 1, z);
         }
-        if (!(cp) || !(nc)) {
+        if (!(pc) || !(cn)) {
             br_pn = cache.getLight(x + 1, y - 1, z);
         }
         if (!(cn) || !(nc)) {
             br_nn = cache.getLight(x - 1, y - 1, z);
         }
-        if (!(cn) || !(pc)) {
+        if (!(nc) || !(cp)) {
             br_np = cache.getLight(x - 1, y + 1, z);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -222,13 +222,13 @@ public class BlockSurface {
         if (!cp || !pc) {
             br_pp = cache.getLight(x + 1, y + 1, z);
         }
-        if (!cp || !nc) {
+        if (!cn || !pc) {
             br_pn = cache.getLight(x + 1, y - 1, z);
         }
         if (!cn || !nc) {
             br_nn = cache.getLight(x - 1, y - 1, z);
         }
-        if (!cn || !pc) {
+        if (!cp || !nc) {
             br_np = cache.getLight(x - 1, y + 1, z);
         }
         int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
@@ -497,7 +497,8 @@ public class BlockSurface {
             this.calcAO(cache);
         }
         if (this.type == Block.water.id) {
-            this.isAirAbove = Block.get(cache.getType(x, y+1, z)).isTransparent();
+            Block b = Block.get(cache.getType(x, y+1, z));
+            this.isAirAbove = b != Block.water && b.isTransparent();
         }
         Block block = Block.get(this.type);
         int dataVal = cache.getData(x, y, z);

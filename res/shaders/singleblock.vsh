@@ -46,7 +46,7 @@ void main() {
 	vec4 pos = in_position;
 	texcoord = in_texcoord;
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
-	float distCam = length(in_position-in_scene.cameraPosition);
+	float distCam = length(in_position.xyz - CAMERA_POS);
 #if TERRAIN_DRAW_MODE == 0
 	uint faceDir = blockinfo.w&0x7u;
 	uint vertDir = (blockinfo.w >> 3u) & 0x3Fu;

@@ -91,6 +91,7 @@ public class ChunkRenderCache implements IBlockWorld {
 //                  System.err.println("render");
 //                    if (dbg) 
 //                        System.out.println("c == null @"+(basechunkX+x)+", "+(basechunkZ+z));
+//                    System.out.println(c);
                     if (x >= 0 && x < WIDTH && z >= 0 && z < WIDTH) {
                         return false;
                     }

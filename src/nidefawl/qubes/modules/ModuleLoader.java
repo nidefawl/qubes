@@ -26,8 +26,9 @@ import nidefawl.qubes.util.GameError;
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
 public class ModuleLoader {
-    final static Set<Module> modules = Sets.newHashSet();
-    static Module[] modulesArray;
+    final static Set<Module> modules         = Sets.newHashSet();
+    static Module[]          modulesArray;
+    static String            overrideModules = null;
 
     public static void addURLs(URL...u) throws IOException {
         URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
@@ -46,7 +47,6 @@ public class ModuleLoader {
 
     public static void scanModules(File file) {
         if (file.isDirectory()) {
-            ArrayList<URL> list = new ArrayList<URL>();
             File[] fList = file.listFiles(new FileFilter() {
 
                 @Override
@@ -56,20 +56,21 @@ public class ModuleLoader {
             });
             if (fList == null || fList.length <= 0) {
                 System.err.println("modules directory is empty");
-                return;
-            }
-            for (int i = 0; i < fList.length; i++) {
-                File f = fList[i];
-                try {
-                    list.add(f.toURI().toURL());
-                } catch (Exception e) {
-                    throw new GameError("Failed loading module file "+f, e);
+            } else {
+                ArrayList<URL> list = new ArrayList<URL>();
+                for (int i = 0; i < fList.length; i++) {
+                    File f = fList[i];
+                    try {
+                        list.add(f.toURI().toURL());
+                    } catch (Exception e) {
+                        throw new GameError("Failed loading module file "+f, e);
+                    }
                 }
-            }
-            try {
-                addURLs(list.toArray(new URL[list.size()]));
-            } catch (Exception e) {
-                throw new GameError("Failed loading modules", e);
+                try {
+                    addURLs(list.toArray(new URL[list.size()]));
+                } catch (Exception e) {
+                    throw new GameError("Failed loading modules", e);
+                }
             }
         }
         scanModules();
@@ -77,14 +78,30 @@ public class ModuleLoader {
     }
     static void scanModules() {
         final Set<Class<? extends Module>> module = Sets.newHashSet();
-        FastClasspathScanner scanner = new FastClasspathScanner();
-        scanner.matchSubclassesOf(Module.class, new SubclassMatchProcessor<Module>() {
-            @Override
-            public void processMatch(Class<? extends Module> arg0) {
-                module.add(arg0);
+
+        if (overrideModules == null) {
+            FastClasspathScanner scanner = new FastClasspathScanner();
+            scanner.matchSubclassesOf(Module.class, new SubclassMatchProcessor<Module>() {
+                @Override
+                public void processMatch(Class<? extends Module> arg0) {
+                    module.add(arg0);
+                }
+            });
+            scanner.scan();
+        } else {
+            String[] split = overrideModules.split(";");
+            for (int i = 0; i < split.length; i++) {
+                try {
+                    Class clazz = ModuleLoader.class.getClassLoader().loadClass(split[i]);
+                    if (Module.class.isAssignableFrom(clazz)) {
+                        module.add(clazz);
+                    }
+                } catch (ClassNotFoundException e1) {
+                    System.err.println("Module "+split[i]+" not in classpath");
+                }
             }
-        });
-        scanner.scan();
+        }
+        module.add(CoreModule.class);
 
         for (Class<? extends Module> e : module) {
             try {
@@ -134,5 +151,12 @@ public class ModuleLoader {
      */
     public static Module[] getModulesArray() {
         return modulesArray;
+    }
+
+    /**
+     * @param path
+     */
+    public static void setOverrideModules(String path) {
+        overrideModules = path;
     }
 }

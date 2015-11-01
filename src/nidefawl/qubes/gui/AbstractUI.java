@@ -4,8 +4,10 @@ import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 import org.lwjgl.opengl.GL11;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.Renderable;
 
 public abstract class AbstractUI implements Renderable {
@@ -33,7 +35,7 @@ public abstract class AbstractUI implements Renderable {
     }
 
     public boolean mouseOver(double mX, double mY) {
-        return mX >= this.posX && mX <= this.posX + this.width && mY >= this.posY && mY <= this.posY + this.height;
+        return this.enabled && mX >= this.posX && mX <= this.posX + this.width && mY >= this.posY && mY <= this.posY + this.height;
     }
 
     public boolean handleMouseUp(Gui gui, int action) {
@@ -50,7 +52,7 @@ public abstract class AbstractUI implements Renderable {
     }
     
     public void setFocus() {
-        this.focused = true;
+        this.focused = this.enabled;
     }
     
 
@@ -62,46 +64,54 @@ public abstract class AbstractUI implements Renderable {
     public float        alpha3  = 1.0F;
     public int          color4 = 0x888888;
     public float        alpha4 = 0.8F;
-
+    public float boxSigma = 0.25f;
+    public float shadowSigma = 4;
+    public float round = 15;
+    public int extendx = 3;
+    public int extendy = 0;
+    
+    public void renderRoundedBoxShadow(float x, float y, float z, float w, float h, int rgba, float alpha, boolean drawShadow) {
+        float r = TextureUtil.getR(rgba);
+        float g = TextureUtil.getG(rgba);
+        float b = TextureUtil.getB(rgba);
+        x-=extendx;
+        w+=extendx*2;
+        y-=extendy;
+        h+=extendy*2;
+        if (drawShadow) {
+            Shaders.gui.setProgramUniform1f("zpos", z-1);
+            Shaders.gui.setProgramUniform4f("box", x, y+1, x+w, y+h);
+//            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
+            Shaders.gui.setProgramUniform4f("color", 0,0,0, alpha);
+            Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
+            Shaders.gui.setProgramUniform1f("corner", round);
+            GL11.glDepthMask(false);
+            Engine.drawQuad();
+            GL11.glDepthMask(true);
+        }
+        Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
+        Shaders.gui.setProgramUniform1f("zpos", z);
+        Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);
+        Shaders.gui.setProgramUniform1f("sigma", boxSigma);
+        Engine.drawQuad();
+    }
     public void renderOutlinedBox() {
         color3 = 0xbababa;
         color4 = 0x888888;
         int c1 = this.hovered || this.focused ? this.color3 : this.color;
         int c2 = this.hovered || this.focused ? this.color4 : this.color2;
-        Tess.instance.setColorF(c1, 0.6f);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
+        Shaders.gui.enable();
         this.posX -= 1;
         this.width += 2;
         this.posY -= 1;
         this.height += 2;
-        int inset = 2;
-        Tess.instance.setColorF(c1, 1f);
-        Tess.instance.add(this.posX, this.posY + inset);
-        Tess.instance.add(this.posX + this.width, this.posY + inset);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height - inset);
-        Tess.instance.add(this.posX, this.posY + this.height - inset);
-
-        Tess.instance.add(this.posX + inset, this.posY + inset);
-        Tess.instance.add(this.posX, this.posY + inset);
-        Tess.instance.add(this.posX, this.posY + this.height - inset);
-        Tess.instance.add(this.posX + inset, this.posY + this.height - inset);
-
-        Tess.instance.add(this.posX + this.width, this.posY + inset);
-        Tess.instance.add(this.posX + this.width - inset, this.posY + inset);
-        Tess.instance.add(this.posX + this.width - inset, this.posY + this.height - inset);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height - inset);
+        Shaders.gui.enable();
+        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, 0.6f, true);
         this.width -= 2;
         this.posX += 1;
         this.height -= 2;
         this.posY += 1;
-        Tess.instance.draw(GL_QUADS);
+        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, 1f, false);
     }
     public void renderBox() {
         color3 = 0xbababa;
@@ -116,33 +126,13 @@ public abstract class AbstractUI implements Renderable {
         this.width += 2;
         this.posY -= 1;
         this.height += 2;
-        Tess.instance.setColorF(c2, this.alpha2);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
+        Shaders.gui.enable();
+        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, true);
         this.width -= 2;
         this.posX += 1;
         this.height -= 2;
         this.posY += 1;
-        Tess.instance.setColorF(c1, this.alpha);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.draw(GL_QUADS);
-        GL11.glLineWidth(2);
-        Tess tessellator = Tess.instance;
-        tessellator.setColorRGBAF(0,0,0,0.6F);
-        tessellator.add(this.posX + this.width, this.posY, 0.0f);
-        tessellator.add(this.posX-1, this.posY, 0.0f);
-        tessellator.add(this.posX, this.posY, 0.0f);
-        tessellator.add(this.posX, this.posY + this.height, 0.0f);
-        tessellator.setColorRGBAF(1,1,1,0.2F);
-        tessellator.add(this.posX, this.posY + this.height, 0.0f);
-        tessellator.add(this.posX + this.width, this.posY + this.height, 0.0f);
-        tessellator.add(this.posX + this.width, this.posY + this.height, 0.0f);
-        tessellator.add(this.posX + this.width, this.posY, 0.0f);
-        tessellator.draw(GL11.GL_LINES);
+
+        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
     }
 }

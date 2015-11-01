@@ -3,22 +3,23 @@ package nidefawl.qubes.shader;
 import static org.lwjgl.opengl.ARBUniformBufferObject.*;
 
 import java.nio.FloatBuffer;
+import java.util.List;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.Game;
-import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.vec.Dir;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
     static int nextIdx = 0;
-    static UniformBuffer[] buffers = new UniformBuffer[6];
+    static UniformBuffer[] buffers = new UniformBuffer[7];
     String name;
     private int buffer;
     protected int len;
@@ -52,6 +53,9 @@ public class UniformBuffer {
     void put(FloatBuffer floatBuffer) {
         this.floatBuffer.put(floatBuffer);
     }
+    private void put(float[] mat4x4) {
+        this.floatBuffer.put(mat4x4);
+    }
     void put(float f) {
         this.floatBuffer.put(f);
     }
@@ -77,7 +81,6 @@ public class UniformBuffer {
     }
     public void setup() {
         this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
-        System.err.println(this.floatBuffer+"/"+this.len);
         this.buffer = Engine.glGenBuffers(1).get();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
         if (Game.GL_ERROR_CHECKS)
@@ -119,34 +122,61 @@ public class UniformBuffer {
             .addVec4() // Diffuse light intensity
             .addVec4(); // Specular light intensity
     static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4);
+    static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6);
     
     public static void init() {
-        int size = GL11.glGetInteger(GL_MAX_UNIFORM_BLOCK_SIZE);
-        System.out.println("GL_MAX_UNIFORM_BLOCK_SIZE: "+size);
+//        int size = GL11.glGetInteger(GL_MAX_UNIFORM_BLOCK_SIZE);
+//        System.out.println("GL_MAX_UNIFORM_BLOCK_SIZE: "+size);
         for (int i = 0; i < buffers.length; i++) {
             buffers[i].setup();
         }
         updateVertDir();
+        updateTBNMatrices();
     }
     public static void reinit() {
         init();
     }
 
+    public static void rebindShaders() {
+        for (int i = 0; i < buffers.length; i++) {
+            for (Shader shader : buffers[i].shaders) {
+                if (shader.valid) {
+                    bindBuffers(shader);
+                }
+            }
+        }
+    }
 
     public static void bindBuffers(Shader shader) {
         for (int i = 0; i < buffers.length; i++) {
             final int blockIndex = glGetUniformBlockIndex(shader.shader, buffers[i].name);
             if (blockIndex != -1) {
+//                System.out.println("bind blockidx "+blockIndex+" of buffer "+buffers[i].name+"/"+i+"/"+buffers[i].buffer+" to shader "+shader.name);
                 glBindBufferBase(GL_UNIFORM_BUFFER, i, buffers[i].buffer);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
                 glUniformBlockBinding(shader.shader, blockIndex, i);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
+                buffers[i].addShader(shader);
             }
         }
     }
 
+    List<Shader> shaders = Lists.newArrayList();
+    /**
+     * @param shader
+     */
+    private void addShader(Shader shader) {
+        if (this.shaders.contains(shader)) return;
+        for (int i = 0; i < this.shaders.size(); i++) {
+            Shader s = this.shaders.get(i);
+            if (!s.valid) {
+                this.shaders.remove(i--);
+            }
+        }
+        this.shaders.add(shader);
+    }
     public static void updateUBO(WorldClient world, float f) {
         if (Game.DO_TIMING) TimingHelper.startSec("updateUBO");
 //        Shaders.colored.enable();
@@ -157,14 +187,15 @@ public class UniformBuffer {
 
         updateOrtho();
 //        updateVertDir();
+        updateTBNMatrices();
         
         uboMatrix3D.reset();
-        uboMatrix3D.put(Engine.getMatSceneMVP().get());
-        uboMatrix3D.put(Engine.getMatSceneMV().get());
-        uboMatrix3D.put(Engine.getMatSceneV().get());
-        uboMatrix3D.put(Engine.getMatSceneVP().get());
-        uboMatrix3D.put(Engine.getMatSceneNormal().get());
-        uboMatrix3D.put(Engine.getMatSceneMV().getInv());
+        uboMatrix3D.put(Engine.getMatSceneMVP().get());//0
+        uboMatrix3D.put(Engine.getMatSceneMV().get());//1
+        uboMatrix3D.put(Engine.getMatSceneV().get());//2
+        uboMatrix3D.put(Engine.getMatSceneVP().get());//3
+        uboMatrix3D.put(Engine.getMatSceneNormal().get());//4
+        uboMatrix3D.put(Engine.getMatSceneMV().getInv());//5
         uboMatrix3D.put(Engine.getMatSceneP().getInv());
         uboMatrix3D.update();
 
@@ -175,7 +206,6 @@ public class UniformBuffer {
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(1));
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));
-            
             uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[0]);
             uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[1]);
             uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[2]);
@@ -195,13 +225,16 @@ public class UniformBuffer {
         
 
         uboSceneData.reset();
-        Engine.camera.getPosition().store(uboSceneData.floatBuffer);
+        Vector3f vCam = Engine.camera.getPosition();
+        uboSceneData.put(vCam.x-Engine.GLOBAL_OFFSET.x);
+        uboSceneData.put(vCam.y-Engine.GLOBAL_OFFSET.y);
+        uboSceneData.put(vCam.z-Engine.GLOBAL_OFFSET.z);
         uboSceneData.put(1F); // camera w component
-        
+
+        uboSceneData.put(Engine.GLOBAL_OFFSET.x);
+        uboSceneData.put(Engine.GLOBAL_OFFSET.y);
+        uboSceneData.put(Engine.GLOBAL_OFFSET.z);
         uboSceneData.put(Game.ticksran+f);
-        uboSceneData.put(1F);
-        uboSceneData.put(1F);
-        uboSceneData.put(1F);
         
         uboSceneData.put(Game.displayWidth);
         uboSceneData.put(Game.displayHeight);
@@ -230,9 +263,9 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.y);
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
-        float ambIntens = 0.07F;
-        float diffIntens = 0.5F;
-        float specIntens = 0.4F;
+        float ambIntens = 0.02F;
+        float diffIntens = 0.45F;
+        float specIntens = 0.55F;
         for (int a = 0; a < 3; a++) {
             LightInfo.put(ambIntens);
         }
@@ -250,7 +283,72 @@ public class UniformBuffer {
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     }
-    
+
+    private static void updateTBNMatrices() {
+        // our terrain normal mat is constant!
+        // thats good, so we only calculate this matrices once
+        // BufferedMatrix normalMat = Engine.getMatSceneNormal(); <-- not required (is identity)
+        Vector3f normal = new Vector3f();
+        Vector3f tangent = new Vector3f();
+        Vector3f bitangent = new Vector3f();
+        UniformBuffer buf = TBNMat;
+        buf.reset();
+        for (int i = 0; i < 6; i++) {
+            int x = Dir.getDirX(i);
+            int y = Dir.getDirY(i);
+            int z = Dir.getDirZ(i);
+            normal.set(x, y, z);
+            
+            /*
+            +y
+            |
+            |     +z
+            |    /
+            |   /
+            |  /
+            | /
+            |/_____________ +x
+            */
+
+            //there might be a smarter way to do this, but we only have 6 cases
+            if (x > 0) { //POS X face
+                //  1.0,  0.0,  0.0
+                tangent.set(0, 0, -1);
+                bitangent.set(0, -1, 0);
+            } else if (x < -0.5) { //NEG X face
+                //  -1.0,  0.0,  0.0
+                tangent.set(0, 0, 1);
+                bitangent.set(0, -1, 0);
+            } else if (y > 0.5) { //POS Y face
+                //  0.0,  0.0,  1.0
+                tangent.set(0, 0, 1);
+                bitangent.set(1, 0, 0);
+            } else if (y < -0.5) { //NEG Y face
+                //  0.0, -1.0,  0.0
+                tangent.set(0, 0, -1);
+                bitangent.set(-1, 0, 0);
+            } else if (z > 0.5) {  //POS Z face
+                //  0.0, -1.0,  0.0
+                tangent.set(-1, 0, 0);
+                bitangent.set(-1, 0, 0);
+            } else if (z < -0.5) { // NEG Z face
+                //  0.0,  0.0, -1.0
+                tangent.set(1, 0, 0);
+                bitangent.set(-1, 0, 0);
+            }
+            
+            float[] mat4x4 = new float[] {
+                bitangent.x, bitangent.y, bitangent.z, 0,
+                normal.x, normal.y, normal.z, 0,
+                tangent.x, tangent.y, tangent.z, 0,
+                0, 0, 0, 1
+            };
+            
+            buf.setPosition(16*i);
+            buf.put(mat4x4);
+        }
+        TBNMat.update();
+    }
     /**
      * 
      */
@@ -338,4 +436,9 @@ public class UniformBuffer {
         // unbind Uniform buffer?!
     }
     
+    public static void setNormalMat(FloatBuffer mat) {
+        uboMatrix3D.setPosition(4*16);
+        uboMatrix3D.put(mat);//4
+        uboMatrix3D.update();
+    }
 }

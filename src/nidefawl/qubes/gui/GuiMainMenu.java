@@ -72,7 +72,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         {
             crash = new Button(5, "Crash");
             this.buttons.add(crash);
-            crash.setPos(left, this.posY+this.height/2+150);
+            crash.setPos(left, this.posY+this.height/2+160);
             crash.setSize(w1, h);
         }
     }
@@ -85,19 +85,10 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     }
 
     public void render(float fTime, double mX, double mY) {
-        Shaders.colored.enable();
-        Tess.instance.setColor(2, 255);
-        Tess.instance.add(this.posX, this.posY+this.height);
-        Tess.instance.add(this.posX+this.width, this.posY+this.height);
-        Tess.instance.add(this.posX+this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.draw(GL_QUADS);
-//        Shaders.textured.enable();
-//        Shader.disable();
+        renderBackground(fTime, mX, mY, true);
         super.renderButtons(fTime, mX, mY);
  
     }
-
     public boolean onGuiClicked(AbstractUI element) {
 //        element.posX+=30;
 //        if (element.posX+element.width>this.width) {

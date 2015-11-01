@@ -45,13 +45,7 @@ public class GuiConnecting extends Gui {
     }
 
     public void render(float fTime, double mX, double mY) {
-        Shaders.colored.enable();
-        Tess.instance.setColor(2, 255);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.draw(GL_QUADS);
+        renderBackground(fTime, mX, mY, true);
         Shaders.textured.enable();
         font.drawString(this.stateStr, this.width / 2, this.height / 2 - 20, -1, true, 1, 2);
         //        Shader.disable();

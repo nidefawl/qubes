@@ -24,6 +24,8 @@ public class Button extends AbstractUI implements Renderable {
     @Override
     public void render(float fTime, double mX, double mY) {
         this.hovered = this.mouseOver(mX, mY);
+        if (!draw)
+            return;
         Shaders.colored.enable();
         renderBox();
         Shaders.textured.enable();

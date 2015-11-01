@@ -764,7 +764,7 @@ public abstract class Tag {
     }
 
     /**
-     * @param list
+     * @param globalShaders
      * @return
      */
     public static ArrayList<String> unwrapStringList(Collection<StringTag> ta) {

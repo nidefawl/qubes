@@ -47,7 +47,7 @@ public class Block {
     public final static Block leaves_jungle = new BlockLeaves(14).setName("leaves_jungle");
     public final static Block leaves_spruce = new BlockLeaves(15).setName("leaves_spruce");
     public final static Block leaves_oak = new BlockLeaves(16).setName("leaves_oak");
-    public final static Block longgrass = new BlockLongGrass(17).setName("longgrass").setTextures("images/tallgrass");
+    public final static Block longgrass = new BlockLongGrass(17).setName("longgrass").setTextures("tallgrass");
     public final static Block slab = new BlockSlab(18, stone).setName("stoneslab").setTextureMode(BlockTextureMode.TOP_BOTTOM).setTextures("stone_slab_side", "stone_slab_top", "stone_slab_top");
     public final static Block stairs = new BlockStairs(19, stone).setName("stonestairs");
     public final static Block vines = new BlockVine(20).setName("vine");

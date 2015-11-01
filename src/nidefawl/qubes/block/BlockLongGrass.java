@@ -4,6 +4,7 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
 
@@ -30,6 +31,8 @@ public class BlockLongGrass extends BlockPlantCrossedSquares {
     }
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
-        return Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y);
+        int rgb = Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y);
+//        System.out.printf("vec3(%.3f, %.3f, %.3f)\n", TextureUtil.getR(rgb), TextureUtil.getG(rgb), TextureUtil.getB(rgb));
+        return rgb;
     }
 }

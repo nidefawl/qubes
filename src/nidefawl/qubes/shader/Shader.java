@@ -1,33 +1,30 @@
 package nidefawl.qubes.shader;
 
-import static org.lwjgl.opengl.ARBFragmentShader.*;
-import static org.lwjgl.opengl.ARBShaderObjects.*;
-import static org.lwjgl.opengl.ARBVertexShader.*;
-import java.io.*;
-import java.nio.ByteBuffer;
+import static org.lwjgl.opengl.GL20.*;
+
+import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
-import org.lwjgl.BufferUtils;
+
 import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
-
-import com.google.common.collect.Lists;
+import org.lwjgl.opengl.GL43;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.BlockFaceAttr;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
-public class Shader {
+public class Shader implements IManagedResource {
+    public static int SHADERS = 0;
     int fragShader = -1;
     int vertShader = -1;
     int geometryShader = -1;
+    int computeShader = -1;
     int shader = -1;
     final String name;
     
@@ -35,7 +32,7 @@ public class Shader {
     HashMap<String, AbstractUniform> uniforms    = new HashMap<String, AbstractUniform>();
     HashMap<String, Integer> missinglocations    = new HashMap<String, Integer>();
     private int setProgramUniformCalls;
-    private int numUses;
+    public boolean valid = true;
     void incUniformCalls() {
         Stats.uniformCalls++;
     }
@@ -50,7 +47,7 @@ public class Shader {
         if (blub != null) {
             return -1;
         }
-        blub = glGetUniformLocationARB(this.shader, name);
+        blub = glGetUniformLocation(this.shader, name);
         Engine.checkGLError("glGetUniformLocationARB "+name);
         if (blub < 0) {
             missinglocations.put(name, blub);
@@ -70,122 +67,163 @@ public class Shader {
         return this.name;
     }
 
+    static HashMap<String, Integer> map = new HashMap<>();
+
     public void load(AssetManager assetManager, String path, String fname, IShaderDef def) throws IOException {
 
+        ShaderSource computeCode = new ShaderSource(this);
         ShaderSource vertCode = new ShaderSource(this);
         ShaderSource fragCode = new ShaderSource(this);
         ShaderSource geomCode = new ShaderSource(this);
-        
         vertCode.load(assetManager, path, fname + ".vsh", def);
         fragCode.load(assetManager, path, fname + ".fsh", def);
         geomCode.load(assetManager, path, fname + ".gsh", def);
-        if (vertCode.isEmpty() && fragCode.isEmpty()) {
-            throw new GameError("Failed reading shader source: "+name);
-        }
-//        System.out.println("frag: "+fragCode);
-//        System.out.println();
-//        System.out.println("vert: "+vertCode);
-        if (!fragCode.isEmpty()) {
-            this.fragShader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-            Engine.checkGLError("glCreateShaderObjectARB");
-            if (fragShader == 0) {
-                throw new GameError("Failed creating fragment shader");
+        computeCode.load(assetManager, path, fname + ".csh", def);
+        if (!computeCode.isEmpty()) {
+
+            this.computeShader = glCreateShader(GL43.GL_COMPUTE_SHADER);
+            Engine.checkGLError("glCreateShader");
+            if (computeShader == 0) {
+                throw new GameError("Failed creating compute shader");
             }
 
-            glShaderSourceARB(this.fragShader, fragCode.getSource());
+            glShaderSource(this.computeShader, computeCode.getSource());
             Engine.checkGLError("glShaderSourceARB");
-            glCompileShaderARB(this.fragShader);
-            String log = getLog(this.fragShader);
+            glCompileShader(this.computeShader);
+            String log = getLog(0, this.computeShader);
             Engine.checkGLError("getLog");
-            if (getStatus(this.fragShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
+            if (getStatus(this.computeShader, GL_COMPILE_STATUS) != 1) {
                 Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(this, fragCode, this.name+" fragment", log);
+                throw new ShaderCompileError(this, computeCode, this.name+" compute", log);
             } else if (!log.isEmpty()) {
-                System.out.println(this.name+" fragment");
+                System.out.println(this.name+" compute");
                 System.out.println(log);
             }
+        } else {
+
+            if (vertCode.isEmpty() && fragCode.isEmpty()) {
+                throw new GameError("Failed reading shader source: "+name);
+            }
+            if (!fragCode.isEmpty()) {
+                this.fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+                Engine.checkGLError("glCreateShader");
+                if (fragShader == 0) {
+                    throw new GameError("Failed creating fragment shader");
+                }
+
+                glShaderSource(this.fragShader, fragCode.getSource());
+                Engine.checkGLError("glShaderSourceARB");
+                glCompileShader(this.fragShader);
+                String log = getLog(0, this.fragShader);
+                Engine.checkGLError("getLog");
+                if (getStatus(this.fragShader, GL_COMPILE_STATUS) != 1) {
+                    Engine.checkGLError("getStatus");
+                    throw new ShaderCompileError(this, fragCode, this.name+" fragment", log);
+                } else if (!log.isEmpty()) {
+                    System.out.println(this.name+" fragment");
+                    System.out.println(log);
+                }
+            }
+
+
+            if (!vertCode.isEmpty()) {
+                this.vertShader = glCreateShader(GL_VERTEX_SHADER);
+                Engine.checkGLError("glCreateShader");
+                if (this.vertShader == 0) {
+                    throw new GameError("Failed creating vertex shader");
+                }
+
+                glShaderSource(this.vertShader, vertCode.getSource());
+                Engine.checkGLError("glShaderSourceARB");
+                glCompileShader(this.vertShader);
+                String log = getLog(0, this.vertShader);
+                Engine.checkGLError("getLog");
+                if (getStatus(this.vertShader, GL_COMPILE_STATUS) != 1) {
+                    Engine.checkGLError("getStatus");
+                    throw new ShaderCompileError(this, vertCode, this.name+" vertex", log);
+                } else if (!log.isEmpty()) {
+                    System.out.println(this.name+" vertex");
+                    System.out.println(log);
+                }
+            }
+
+
+            if (!geomCode.isEmpty()) {
+                this.geometryShader = glCreateShader(ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);
+                Engine.checkGLError("glCreateShader");
+                if (this.geometryShader == 0) {
+                    throw new GameError("Failed creating geometry shader");
+                }
+
+                glShaderSource(this.geometryShader, geomCode.getSource());
+                Engine.checkGLError("glShaderSourceARB");
+                glCompileShader(this.geometryShader);
+                String log = getLog(0, this.geometryShader);
+                Engine.checkGLError("getLog");
+                if (getStatus(this.geometryShader, GL_COMPILE_STATUS) != 1) {
+                    Engine.checkGLError("getStatus");
+                    throw new ShaderCompileError(this, geomCode, this.name+" geometry", log);
+                } else if (!log.isEmpty()) {
+                    System.out.println(this.name+" geometryShader");
+                    System.out.println(log);
+                }
+            }   
         }
-
-
-        if (!vertCode.isEmpty()) {
-            this.vertShader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
-            Engine.checkGLError("glCreateShaderObjectARB");
-            if (this.vertShader == 0) {
-                throw new GameError("Failed creating vertex shader");
-            }
-
-            glShaderSourceARB(this.vertShader, vertCode.getSource());
-            Engine.checkGLError("glShaderSourceARB");
-            glCompileShaderARB(this.vertShader);
-            String log = getLog(this.vertShader);
-            Engine.checkGLError("getLog");
-            if (getStatus(this.vertShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
-                Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(this, vertCode, this.name+" vertex", log);
-            } else if (!log.isEmpty()) {
-                System.out.println(this.name+" vertex");
-                System.out.println(log);
-            }
-        }
-
-
-        if (!geomCode.isEmpty()) {
-            this.geometryShader = glCreateShaderObjectARB(ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);
-            Engine.checkGLError("glCreateShaderObjectARB");
-            if (this.geometryShader == 0) {
-                throw new GameError("Failed creating geometry shader");
-            }
-
-            glShaderSourceARB(this.geometryShader, geomCode.getSource());
-            Engine.checkGLError("glShaderSourceARB");
-            glCompileShaderARB(this.geometryShader);
-            String log = getLog(this.geometryShader);
-            Engine.checkGLError("getLog");
-            if (getStatus(this.geometryShader, GL_OBJECT_COMPILE_STATUS_ARB) != 1) {
-                Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(this, geomCode, this.name+" geometry", log);
-            } else if (!log.isEmpty()) {
-                System.out.println(this.name+" geometryShader");
-                System.out.println(log);
-            }
-        }
-        this.shader = glCreateProgramObjectARB();
+        this.shader = glCreateProgram();
+        SHADERS++;
+//        {
+//            Integer i = map.get(this.name);
+//            if (i == null)
+//            {
+//                i=0;
+//            }
+//            if (i > 0)
+//            {
+//                System.err.println(this.name +" - "+ i);
+//            }
+//            i++;
+//            map.put(this.name, i);
+//        }
         Engine.checkGLError("glCreateProgramObjectARB");
         if (this.fragShader > 0) {
-            glAttachObjectARB(this.shader, this.fragShader);
+            glAttachShader(this.shader, this.fragShader);
             Engine.checkGLError("glAttachObjectARB");
         }
         if (this.vertShader > 0) {
-            glAttachObjectARB(this.shader, this.vertShader);
+            glAttachShader(this.shader, this.vertShader);
             Engine.checkGLError("glAttachObjectARB");
         }
         if (this.geometryShader > 0) {
-            glAttachObjectARB(this.shader, this.geometryShader);
+            glAttachShader(this.shader, this.geometryShader);
             Engine.checkGLError("glAttachObjectARB");
         }
-        String attr = vertCode.getAttrTypes();
-        if ("shadow".equals(attr)) {
-            glBindAttribLocationARB(this.shader, 0, "in_position");
-            glBindAttribLocationARB(this.shader, 1, "in_texcoord");
-            glBindAttribLocationARB(this.shader, 2, "in_blockinfo");
-        } else {
-            for (int i = 0; i < Tess.attributes.length; i++) {
-                glBindAttribLocationARB(this.shader, i, Tess.attributes[i]);
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+Tess.attributes[i]+" = "+i);
-            }
-            for (int i = 0; i < BlockFaceAttr.attributes.length; i++) {
-                glBindAttribLocationARB(this.shader, i+Tess.attributes.length, BlockFaceAttr.attributes[i]);
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
-            }
+        if (this.computeShader > 0) {
+            glAttachShader(this.shader, this.computeShader);
+            Engine.checkGLError("glAttachObjectARB");
         }
-
-
-        GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
-        GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
-        GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
-        GL30.glBindFragDataLocation(this.shader, 3, "out_Light");
+        if (this.computeShader <= 0) {
+            String attr = vertCode.getAttrTypes();
+            if ("shadow".equals(attr)) {
+                glBindAttribLocation(this.shader, 0, "in_position");
+                glBindAttribLocation(this.shader, 1, "in_texcoord");
+                glBindAttribLocation(this.shader, 2, "in_blockinfo");
+            } else {
+                for (int i = 0; i < Tess.attributes.length; i++) {
+                    glBindAttribLocation(this.shader, i, Tess.attributes[i]);
+                    if (Game.GL_ERROR_CHECKS)
+                        Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+Tess.attributes[i]+" = "+i);
+                }
+                for (int i = 0; i < BlockFaceAttr.attributes.length; i++) {
+                    glBindAttribLocation(this.shader, i+Tess.attributes.length, BlockFaceAttr.attributes[i]);
+                    if (Game.GL_ERROR_CHECKS)
+                        Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
+                }
+            }
+            GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
+            GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
+            GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
+            GL30.glBindFragDataLocation(this.shader, 3, "out_Light");
+        }
         linkProgram();
 //        final int blockSize = glGetActiveUniformBlocki(this.shader, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE);
     
@@ -193,26 +231,29 @@ public class Shader {
 
 
     public void bindAttribute(int attr, String attrName) {
-        glBindAttribLocationARB(this.shader, attr, attrName);
+        glBindAttribLocation(this.shader, attr, attrName);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+attrName+" = "+attr);
     }
+
     void linkProgram() {
-        glLinkProgramARB(this.shader);
-        String log = getLog(this.shader);
-        Engine.checkGLError("getLog");
-        if (getStatus(this.shader, GL_OBJECT_LINK_STATUS_ARB) != 1) {
+        String log = getLog(0, this.shader);
+        if (!log.isEmpty())
+            System.out.println(this.name +": "+log);
+        glLinkProgram(this.shader);
+        log = getLog(1, this.shader);
+        if (!log.isEmpty())
+            System.out.println(this.name +": "+log);
+        if (getStatus(this.shader, GL_LINK_STATUS) != 1) {
             Engine.checkGLError("getStatus");
-            throw new ShaderCompileError(this, (ShaderSource)null, "Failed linking shader program\n", log);
+            throw new ShaderCompileError(this, (ShaderSource) null, "Failed linking shader program\n", log);
         }
-        glUseProgramObjectARB(this.shader);
-        Engine.checkGLError("glUseProgramObjectARB\n"+log);
-        glValidateProgramARB(this.shader);
-        Engine.checkGLError("glValidateProgramARB\n"+log);
-        glUseProgramObjectARB(0);
-        Engine.checkGLError("glUseProgramObjectARB 0");
-        
-        
+        glUseProgram(this.shader);
+        glValidateProgram(this.shader);
+        log = getLog(1, this.shader);
+        if (!log.isEmpty())
+            System.out.println(this.name +": "+log);
+        glUseProgram(0);
         UniformBuffer.bindBuffers(this);
 
     }
@@ -223,22 +264,22 @@ public class Shader {
         return buf.get();
     }
 
-    public String getLog(int obj) {
-        int length = getStatus(obj, GL_OBJECT_INFO_LOG_LENGTH_ARB);
+    public String getLog(int logtype, int obj) {
+        int length = getStatus(obj, GL_INFO_LOG_LENGTH);
         if (length > 1) {
-            String out = glGetInfoLogARB(obj, length);
+            String out = logtype == 0 ? glGetShaderInfoLog(obj, length) : glGetProgramInfoLog(obj, length);
             out = out.trim() + "\n";
             out = out.replace("\n\n", "\n");
             out = out.replace("\n\n", "\n");
-            return out;
+            return out.trim();
         }
         return "";
     }
     public void enable() {
-        if (this.shader >= 0) {
+        if (this.shader > 0) {
             if (lastBoundShader != this.shader) {
                 lastBoundShader = this.shader;
-                glUseProgramObjectARB(this.shader);
+                glUseProgram(this.shader);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
 //                numUses++;
@@ -251,27 +292,50 @@ public class Shader {
     static int lastBoundShader = -1;
     public static void disable() {
         if (lastBoundShader != 0)
-            glUseProgramObjectARB(0);
+            glUseProgram(0);
         lastBoundShader = 0;
     }
     public void release() {
-        if (this.shader >= 0) {
-            if (this.vertShader >= 0)
-                glDetachObjectARB(this.shader, this.vertShader);
-            if (this.fragShader >= 0)
-                glDetachObjectARB(this.shader, this.fragShader);
-            if (this.vertShader >= 0)
-                glDeleteObjectARB(this.vertShader);
-            if (this.fragShader >= 0)
-                glDeleteObjectARB(this.fragShader);
+        this.valid = false;
+        if (this.shader > 0) {
+            if (this.vertShader > 0)
+                glDetachShader(this.shader, this.vertShader);
+            if (this.fragShader > 0)
+                glDetachShader(this.shader, this.fragShader);
+            if (this.geometryShader > 0)
+                glDetachShader(this.shader, this.geometryShader);
+            if (this.computeShader > 0)
+                glDetachShader(this.shader, this.computeShader);
+            if (this.fragShader > 0)
+                glDeleteShader(this.fragShader);
+            if (this.vertShader > 0)
+                glDeleteShader(this.vertShader);
+            if (this.geometryShader > 0)
+                glDeleteShader(this.geometryShader);
+            if (this.computeShader > 0)
+                glDeleteShader(this.computeShader);
             
-            glDeleteObjectARB(this.shader);
+            glDeleteProgram(this.shader);
             this.shader = this.vertShader = this.fragShader = -1;
             for (AbstractUniform uni : this.uniforms.values()) {
                 uni.release();
             }
             this.uniforms.clear();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("release Shader "+this.name +" ("+this.shader+")");
         }
+        SHADERS--;
+//        {
+//            Integer i = map.get(this.name);
+//            if (i == null)
+//            {
+//                i=0;
+//            }
+//            if (i > 0) {
+//                i--;
+//                map.put(this.name, i);
+//            }
+//        }
     }
 
     public void setProgramUniform1i(String name, int x) {
@@ -335,7 +399,7 @@ public class Shader {
     }
 
 
-    public void setProgramUniformMatrix4ARB(String name, boolean transpose, FloatBuffer matrix, boolean invert) {
+    public void setProgramUniformMatrix4(String name, boolean transpose, FloatBuffer matrix, boolean invert) {
         UniformMat4 uni = getUniform(name, UniformMat4.class);
         if (uni.set(matrix, transpose)) {
             incUniformCalls();
@@ -361,6 +425,12 @@ public class Shader {
      */
     public int get() {
         return this.shader;
+    }
+
+
+    @Override
+    public EResourceType getType() {
+        return EResourceType.SHADER;
     }
 
 }

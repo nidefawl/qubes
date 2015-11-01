@@ -156,6 +156,14 @@ public class GameMath {
         return x*x+y*y+z*z;
     }
     /**
+     * @param base
+     * @param f
+     * @return
+     */
+    public static final float powf(float base, float f) {
+        return (float) Math.pow(base, f);
+    }
+    /**
      * @param f
      * @param i
      * @return

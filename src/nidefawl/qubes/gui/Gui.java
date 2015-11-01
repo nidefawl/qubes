@@ -1,13 +1,18 @@
 package nidefawl.qubes.gui;
 
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+
 import java.util.ArrayList;
 
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.AbstractUIOverlay;
+import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.input.Mouse;
+import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
@@ -51,7 +56,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             }
         }
         if (selectedButton != null && action == 0) {
-            if (selectedButton.enabled && selectedButton.draw && selectedButton.mouseOver(Mouse.getX(), Mouse.getY())) {
+            if (selectedButton.enabled && selectedButton.mouseOver(Mouse.getX(), Mouse.getY())) {
                 selectedButton.handleMouseUp(this, action);
             }
             selectedButton = null;
@@ -67,7 +72,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             }
             for (int i = 0; i < this.buttons.size(); i++) {
                 AbstractUI b = this.buttons.get(i);
-                if (b.enabled && b.draw && b.mouseOver(Mouse.getX(), Mouse.getY())) {
+                if (b.enabled && b.mouseOver(Mouse.getX(), Mouse.getY())) {
                     if (!b.handleMouseDown(this, action)) {
                         selectedButton = b;    
                     }
@@ -88,9 +93,14 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             Game.instance.showGUI(null);
             return true;
         }
+        if (this.popup != null) {
+            if (this.popup.onKeyPress(key, scancode, action, mods)) {
+                return true;
+            }
+        }
         for (int i = 0; i < this.buttons.size(); i++) {
             AbstractUI b = this.buttons.get(i);
-            if (b.enabled && b.draw) {
+            if (b.enabled) {
                 if (b.onKeyPress(key, scancode, action, mods)) {
                     return true;
                 }
@@ -102,7 +112,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public boolean onTextInput(int codepoint) {
         for (int i = 0; i < this.buttons.size(); i++) {
             AbstractUI b = this.buttons.get(i);
-            if (b.enabled && b.draw) {
+            if (b.enabled) {
                 if (b.onTextInput(codepoint)) {
                     return true;
                 }
@@ -113,5 +123,14 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
 
     public boolean requiresTextInput() {
         return false;
+    }
+    public void renderBackground(float fTime, double mX, double mY, boolean b) {
+        Shaders.colored.enable();
+        Tess.instance.setColor(0x1f1f1f, 255);
+        Tess.instance.add(this.posX, this.posY+this.height);
+        Tess.instance.add(this.posX+this.width, this.posY+this.height);
+        Tess.instance.add(this.posX+this.width, this.posY);
+        Tess.instance.add(this.posX, this.posY);
+        Tess.instance.draw(GL_QUADS);
     }
 }

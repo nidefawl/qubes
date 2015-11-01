@@ -45,9 +45,10 @@ public class TimingHelper {
         
         if (!start(idx)) {
 
-            System.err.println("ALREADY ON: "+o);
-            Thread.dumpStack();
+            System.out.println("ALREADY ON: "+o);
+//            Thread.dumpStack();
         }
+//        System.out.println("+"+o);
     }
     public static void endSec() {
         String o = stackToString();
@@ -56,6 +57,7 @@ public class TimingHelper {
         if (idx != null) {
             end(idx);
         }
+//        System.out.println("-"+o);
     }
     public static boolean start(int i) {
         if (!init) {
@@ -145,7 +147,7 @@ public class TimingHelper {
                     entries.put(i, entry);
                 }
                 String thisName = hasName(i) ? names[i] : ""+i;
-                String pre = String.format("%2d %-40s %7d calls", i, thisName, calls[i]);
+                String pre = String.format("%2d %-48s %7d calls", i, thisName, calls[i]);
                 String perCallS = String.format("%.5f ms/call", perCall);
                 String totals = String.format("%d ms total", millis[i]);
                 System.out.println(String.format("%-50s %20s %20s", pre, perCallS, totals));   
@@ -164,7 +166,7 @@ public class TimingHelper {
         System.out.println("-------------     HOTSPOTS     --------------");
         while (it.hasNext()) {
             TimingEntry entry = it.next();
-            String pre = String.format("%2d %-40s %7d calls", entry.idx, hasName(entry.idx) ? names[entry.idx] : ""+entry.idx, calls[entry.idx]);
+            String pre = String.format("%2d %-48s %7d calls", entry.idx, hasName(entry.idx) ? names[entry.idx] : ""+entry.idx, calls[entry.idx]);
             String perCallS = String.format("%.5f ms/call", entry.perCall);
             String totals = String.format("%d ms total", millis[entry.idx]);
             System.out.println(String.format("%-50s %20s %20s", pre, perCallS, totals));
@@ -194,9 +196,9 @@ public class TimingHelper {
     }
     public static void check() {
         if (!stack.isEmpty()) {
-            System.err.println("stack was expected to be empty");
+            System.out.println("stack was expected to be empty");
             String o = stackToString();
-            System.err.println(o);
+            System.out.println(o);
             stack.clear();
         }
     }

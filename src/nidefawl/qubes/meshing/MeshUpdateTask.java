@@ -12,6 +12,7 @@ import java.util.List;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -40,6 +41,7 @@ public class MeshUpdateTask {
         for (int i = 0; i < this.vbuffer.length; i++) {
             this.vbuffer[i] = new VertexBuffer(1024*1024*2);
         }
+        this.attr.setUseGlobalRenderOffset(true);
     }
 
     public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
@@ -98,11 +100,11 @@ public class MeshUpdateTask {
         
         if (w != null) {
             try {
-              int xOff = this.mr.rX << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS);
+              int xOff = (this.mr.rX << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS));
               int yOff = this.mr.rY << (RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
-              int zOff = this.mr.rZ << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS);
+              int zOff = (this.mr.rZ << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS));
                 long l = System.nanoTime();
-                this.mesher.mesh(w, this.ccache, this.mr.rY);
+                this.mesher.mesh(this.ccache, this.mr.rY);
                 Stats.timeMeshing += (System.nanoTime()-l) / 1000000.0D;
                 l = System.nanoTime();
                 for (int a = 0; a < this.vbuffer.length; a++) {

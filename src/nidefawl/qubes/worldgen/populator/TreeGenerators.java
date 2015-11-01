@@ -44,11 +44,12 @@ public class TreeGenerators {
 
     public static IWorldGen oakVariationTree() {
         Random r = new Random();
-        int a = r.nextInt(7);
+        int a = r.nextInt(4);
         ArrayList<Block> bl = Lists.newArrayList();
         for (Block b : Block.block) {
             if (b instanceof BlockLeaves) {
                 bl.add(b);
+                break;
             }
         }
         Block b = bl.get(r.nextInt(bl.size()));

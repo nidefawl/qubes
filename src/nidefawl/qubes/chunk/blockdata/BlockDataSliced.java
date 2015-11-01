@@ -118,7 +118,7 @@ public class BlockDataSliced {
     }
 
     /**
-     * @param list
+     * @param globalShaders
      * @throws IOException 
      */
     public void readFromTag(Tag.Compound data) throws IOException {

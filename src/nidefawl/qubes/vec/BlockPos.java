@@ -79,4 +79,19 @@ public class BlockPos implements StreamIO {
         this.y = blockPos.y;
         this.z = blockPos.z;
     }
+    /**
+     * @return
+     */
+    public int getVolume() {
+        return this.x*this.y*this.z;
+    }
+    /**
+     * @param offX
+     * @param offY
+     * @param offZ
+     * @return
+     */
+    public boolean isEqualTo(int x, int y, int z) {
+        return this.x == x && this.y == y && this.z == z;
+    }
 }

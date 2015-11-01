@@ -46,14 +46,14 @@ public class ChunkPopulator implements IChunkPopulator {
         }
         IWorldGen g = TreeGenerators.rand(rand);
         int b = 0;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 133; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= 14 && rand.nextInt(14) == 0) {
+                if ( a <= 4 && rand.nextInt(24) == 0) {
                     g.generate(world, x, h+1, z, rand);
                 } else {
                     Block bg = Block.longgrass;

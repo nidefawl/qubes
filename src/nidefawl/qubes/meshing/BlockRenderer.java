@@ -11,6 +11,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -1021,7 +1022,13 @@ public class BlockRenderer {
         float x = ix;
         float y = iy;
         float z = iz;
+        float h = 1f;
+        float w = 1f;
+        float rot = 0.25f;
+        int num = 2;
         if (block instanceof BlockPlantCrossedSquares && ((BlockPlantCrossedSquares)block).applyRandomOffset()) {
+            int rotBits = 2;
+            
             final long multiplier = 0x5DEECE66DL;
             final long addend = 0xBL;
             final long mask = (1L << 48) - 1;
@@ -1032,86 +1039,117 @@ public class BlockRenderer {
             int ma = (1 << n) - 1;
             x += ((iR & ma) / (float) (ma)) * fR - 0.5f * fR;
             z += (((iR >> n) & ma) / (float) (ma)) * fR - 0.5f * fR;
+            int wBits = (int) ((iR>>4)&0x7);
+            float fw = wBits / 7.0f;
+            w = 0.9f+ fw*0.2f;
+
+            int rBits = (int) ((iR>>7)&((1<<rotBits)-1));
+            rot = rBits / ((float)(1<<rotBits));
+            int nBits = (int) ((iR>>15)&0x3);
+            int nBits2 = (int) ((iR>>17)&0x3);
+            nBits &= nBits2;
+            num+=nBits;
+            int hBits = (int) ((iR>>22)&0x3);
+            float fh = hBits / 3.0f;
+            h = 0.5f+ fh*0.3f;
         }
+        float incr = 1/(float)num;
+        for (int i = 0; i < num; i++) {
 
-        float h = 1f;
-        float w = 1f;
-        float sideOffset = 1 - w;
-        for (int v = 0; v < 4; v++) {
-            attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
-            attr.v[v].setFaceVertDir(0);
-            attr.v[v].setNoDirection();
+            float frot = rot*GameMath.PI_OVER_180*180;
+            float sin = GameMath.sin(frot);
+            float cos = GameMath.cos(frot);
+//            System.out.println("rot "+rot+" =" +sin+","+cos);
+
+            float sideOffset = 1 - w;
+            float sideTexOffset = 1 - Math.min(1, w);
+            for (int v = 0; v < 4; v++) {
+                attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
+                attr.v[v].setFaceVertDir(0);
+                attr.v[v].setNoDirection();
+            }
+            sideOffset  = 0;
+            sideTexOffset = 0;
+            float halfw = w/2.0f;
+            float minX = 0.5f-halfw*sin;
+            float maxX = 0.5f+halfw*sin;
+            float minZ = 0.5f-halfw*cos;
+            float maxZ = 0.5f+halfw*cos;
+            minX+=x;
+            maxX+=x;
+            minZ+=z;
+            maxZ+=z;
+            attr.v0.setUV(sideTexOffset, 0);
+            attr.v0.setPos(minX + sideOffset, y, minZ + sideOffset);
+
+            attr.v1.setUV(sideTexOffset, 1);
+            attr.v1.setPos(minX + sideOffset, y + h, minZ + sideOffset);
+
+            attr.v2.setUV(1 - sideTexOffset, 1);
+            attr.v2.setPos(maxX - sideOffset, y + h, maxZ - sideOffset);
+
+            attr.v3.setUV(1 - sideTexOffset, 0);
+            attr.v3.setPos(maxX - sideOffset, y, maxZ - sideOffset);
+            
+            
+            attr.setReverse(false);
+            float nup=0.9f;
+            float nside=0.3f;
+            float ny=nup;
+            {
+                float nx=nside;
+                float nz=-nside;
+                attr.v1.setNormal(nx, ny, nz); // set upward normal
+                attr.v2.setNormal(nx, ny, nz); // set upward normal
+            }
+            
+            putBuffer(block, targetBuffer);
+            
+            attr.setReverse(true);
+            {
+                float nx=-nside;
+                float nz=nside;
+                attr.v1.setNormal(nx, ny, nz); // set upward normal
+                attr.v2.setNormal(nx, ny, nz); // set upward normal
+            }
+            
+
+            putBuffer(block, targetBuffer);
+            rot+=incr;
         }
-
-        attr.v0.setUV(sideOffset, 0);
-        attr.v0.setPos(x + sideOffset, y, z + sideOffset);
-
-        attr.v1.setUV(sideOffset, h);
-        attr.v1.setPos(x + sideOffset, y + h, z + sideOffset);
-
-        attr.v2.setUV(1 - sideOffset, h);
-        attr.v2.setPos(x + 1 - sideOffset, y + h, z + 1 - sideOffset);
-
-        attr.v3.setUV(1 - sideOffset, 0);
-        attr.v3.setPos(x + 1 - sideOffset, y, z + 1 - sideOffset);
-        
-        
-        attr.setReverse(false);
-        float nup=0.9f;
-        float nside=0.3f;
-        float ny=nup;
-        {
-            float nx=nside;
-            float nz=-nside;
-            attr.v1.setNormal(nx, ny, nz); // set upward normal
-            attr.v2.setNormal(nx, ny, nz); // set upward normal
-        }
-        
-        putBuffer(block, targetBuffer);
-        
-        attr.setReverse(true);
-        {
-            float nx=-nside;
-            float nz=nside;
-            attr.v1.setNormal(nx, ny, nz); // set upward normal
-            attr.v2.setNormal(nx, ny, nz); // set upward normal
-        }
-        
-
-        putBuffer(block, targetBuffer);
-
-        attr.v0.setUV(sideOffset, 0);
-        attr.v0.setPos(x + 1 - sideOffset, y, z + sideOffset);
-
-        attr.v1.setUV(sideOffset, h);
-        attr.v1.setPos(x + 1 - sideOffset, y + h, z + sideOffset);
-
-        attr.v2.setUV(1 - sideOffset, h);
-        attr.v2.setPos(x + sideOffset, y + h, z + 1 - sideOffset);
-
-        attr.v3.setUV(1 - sideOffset, 0);
-        attr.v3.setPos(x + sideOffset, y, z + 1 - sideOffset);
-
-        attr.setReverse(false);
-        {
-            float nx=nside;
-            float nz=nside;
-            attr.v1.setNormal(nx, ny, nz); // set upward normal
-            attr.v2.setNormal(nx, ny, nz); // set upward normal
-        }
-        
-
-        putBuffer(block, targetBuffer);
-        attr.setReverse(true);
-        {
-            float nx=-nside;
-            float nz=-nside;
-            attr.v1.setNormal(nx, ny, nz); // set upward normal
-            attr.v2.setNormal(nx, ny, nz); // set upward normal
-        }
-
-
-        putBuffer(block, targetBuffer);
+//
+//        attr.v0.setUV(sideTexOffset, 0);
+//        attr.v0.setPos(x + 1 - sideOffset, y, z + sideOffset);
+//
+//        attr.v1.setUV(sideTexOffset, h);
+//        attr.v1.setPos(x + 1 - sideOffset, y + h, z + sideOffset);
+//
+//        attr.v2.setUV(1 - sideTexOffset, h);
+//        attr.v2.setPos(x + sideOffset, y + h, z + 1 - sideOffset);
+//
+//        attr.v3.setUV(1 - sideTexOffset, 0);
+//        attr.v3.setPos(x + sideOffset, y, z + 1 - sideOffset);
+//
+//        attr.setReverse(false);
+//        {
+//            float nx=nside;
+//            float nz=nside;
+//            attr.v1.setNormal(nx, ny, nz); // set upward normal
+//            attr.v2.setNormal(nx, ny, nz); // set upward normal
+//        }
+//        
+//
+//        putBuffer(block, targetBuffer);
+//        attr.setReverse(true);
+//        {
+//            float nx=-nside;
+//            float nz=-nside;
+//            attr.v1.setNormal(nx, ny, nz); // set upward normal
+//            attr.v2.setNormal(nx, ny, nz); // set upward normal
+//        }
+//
+//
+//        putBuffer(block, targetBuffer);
         return 4;
     }
 

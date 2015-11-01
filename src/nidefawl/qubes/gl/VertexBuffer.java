@@ -17,8 +17,8 @@ public class VertexBuffer {
     int[] buffer = new int[0];
     int index;
     int left = 0;
-    int vertexCount;
-    int faceCount;
+    public int vertexCount;
+    public int faceCount;
     /**
      * @param i
      */
@@ -42,6 +42,7 @@ public class VertexBuffer {
      * @return 
      */
     public int realloc(int newSize) {
+        if(buffer.length!=0)
         System.out.println("realloc buffer to length "+newSize);
         int newBuffer[] = new int[newSize];
         System.arraycopy(this.buffer, 0, newBuffer, 0, this.buffer.length);

@@ -68,6 +68,8 @@ public abstract class GameBase implements Runnable {
     protected volatile boolean wasrunning  = false;
     protected volatile boolean sysExit     = true;
     private Thread             thread;
+    private int newWidth = initWidth;
+    private int newHeight = initHeight;
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -114,22 +116,8 @@ public abstract class GameBase implements Runnable {
 
             @Override
             public void invoke(long window, int width, int height) {
-                displayWidth = width;
-                displayHeight = height;
-                if (displayWidth <= 0) {
-                    displayWidth = 1;
-                }
-                if (displayHeight <= 0) {
-                    displayHeight = 1;
-                }
-                System.out.println("resize " + displayWidth + "/" + displayHeight);
-                try {
-                    if (isRunning())
-                        GL11.glViewport(0, 0, displayWidth, displayHeight);
-                    onResize(displayWidth, displayHeight);
-                } catch (Throwable t) {
-                    setException(new GameError("GLFWWindowSizeCallback", t));
-                }
+                newWidth = width;
+                newHeight = height;
             }
         };
         cbKeyboard = new GLFWKeyCallback() {
@@ -255,9 +243,11 @@ public abstract class GameBase implements Runnable {
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
             minor = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
             rev = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_REVISION);
-            System.out.printf("OpenGL version recieved: %d.%d.%d\n", major, minor, rev);
-            System.out.printf("Supported OpenGL is %s\n", GL11.glGetString(GL11.GL_VERSION));
-            System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
+            if (GL_ERROR_CHECKS) {
+                System.out.printf("OpenGL version recieved: %d.%d.%d\n", major, minor, rev);
+                System.out.printf("Supported OpenGL is %s\n", GL11.glGetString(GL11.GL_VERSION));
+                System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
+            }
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
             if (GL_ERROR_CHECKS)
                 _checkGLError("Pre startup");
@@ -289,6 +279,26 @@ public abstract class GameBase implements Runnable {
     }
 
     protected void checkResize() {
+        if (newWidth != displayWidth || newHeight != displayHeight) {
+            System.out.println("1 resize " + newWidth + "/" + newHeight);
+            System.out.println("2 resize " + displayWidth + "/" + displayHeight);
+            displayWidth = newWidth;
+            displayHeight = newHeight;
+            if (displayWidth <= 0) {
+                displayWidth = 1;
+            }
+            if (displayHeight <= 0) {
+                displayHeight = 1;
+            }
+            System.out.println("resize " + displayWidth + "/" + displayHeight);
+            try {
+                if (isRunning())
+                    GL11.glViewport(0, 0, displayWidth, displayHeight);
+                onResize(displayWidth, displayHeight);
+            } catch (Throwable t) {
+                setException(new GameError("GLFWWindowSizeCallback", t));
+            }
+        }
     }
 
     public abstract void onStatsUpdated();
@@ -443,11 +453,11 @@ public abstract class GameBase implements Runnable {
             Engine.checkGLError("render");
         if (Game.DO_TIMING)
             TimingHelper.startSec("Display.update");
-        float took = (System.nanoTime() - frameTime) / 1000000F;
-        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("updateDisplay");
         updateDisplay();
+        float took = (System.nanoTime() - frameTime) / 1000000F;
+        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F; //TODO: add second counter so we can use this one for frame time based calculation
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         frameTime = System.nanoTime();
@@ -484,6 +494,8 @@ public abstract class GameBase implements Runnable {
 
     public ArrayList<String> glProfileResults = new ArrayList<>();
 
+    public void loadRender(int step, float f) {
+    }
     public void mainLoop() {
         try {
             this.running = true;

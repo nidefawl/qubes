@@ -136,4 +136,7 @@ public class MeshThread extends Thread {
         isRunning = false;
         this.interrupt(); // maybe it will end..
     }
+    public boolean isRunning() {
+        return this.isRunning;
+    }
 }

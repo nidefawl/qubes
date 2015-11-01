@@ -317,12 +317,12 @@ public abstract class World implements IBlockWorld {
         float r = 1;
         float b = 1;
         float g = 1;
-        float intens = 0.5f+this.rand.nextFloat();
+        float intens = (0.5f+this.rand.nextFloat())*0.1f;
 //        if (this.rand.nextInt(10) == 0) {
 //            intens+=1;
 //            intens = 2.7f;
 //        }
-      intens += 4.7f;
+      intens += 10.7f;
         DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
         this.lights.add(light);
     }

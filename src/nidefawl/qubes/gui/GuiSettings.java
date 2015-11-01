@@ -2,6 +2,7 @@ package nidefawl.qubes.gui;
 
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -13,6 +14,7 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ComboBox;
 import nidefawl.qubes.gui.controls.ComboBox.ComboBoxList;
+import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiSettings extends Gui {
@@ -24,10 +26,11 @@ public class GuiSettings extends Gui {
 
         /**
          * @param string
+         * @param g 
          * @param string2
          */
-        public Setting(String string, Object current, Object[] vals) {
-            this.box = new ComboBox(nextID++, string);
+        public Setting(Gui g, String string, Object current, Object[] vals) {
+            this.box = new ComboBox(g, nextID++, string);
             this.box.setValue(current);
             this.vals = vals;
         }
@@ -46,6 +49,7 @@ public class GuiSettings extends Gui {
     final public FontRenderer font;
     private Button            back;
     List<Setting>             list = Lists.newArrayList();
+    private Setting smaaQSetting;
 
     public GuiSettings() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -56,7 +60,13 @@ public class GuiSettings extends Gui {
         this.buttons.clear();
         int w1 = 160;
         int h = 30;
-        list.add(new Setting("String test", "Please pick", new String[] { "Awesome!!!", "Well, pretty Okay", "Man, this sucks" }) {
+        List<String> l = Lists.newArrayList();
+        l.addAll(Arrays.asList(new String[] { "Awesome!!!", "Well, pretty Okay", "Man, this sucks" }));
+        for (int j = 0; j < 20; j++) {
+            l.add("Option "+(j+1));
+        }
+        String[] arr = l.toArray(new String[l.size()]);
+        list.add(new Setting(this, "String test", "Please pick", arr) {
             void callback(int id) {
 
             }
@@ -66,7 +76,7 @@ public class GuiSettings extends Gui {
             clist.add(i);
         }
         final Integer[] values = clist.toArray(new Integer[clist.size()]);
-        list.add(new Setting("Chunk load distance", Game.instance.settings.chunkLoadDistance, values) {
+        list.add(new Setting(this, "Chunk load distance", Game.instance.settings.chunkLoadDistance, values) {
             void callback(int id) {
                 Game.instance.settings.chunkLoadDistance = values[id];
                 Engine.regionRenderer.init();
@@ -74,7 +84,7 @@ public class GuiSettings extends Gui {
             }
         });
         final String[] shadowSettings = new String[] { "Basic", "Detailed" };
-        list.add(new Setting("Shadows", shadowSettings[Game.instance.settings.shadowDrawMode & 1], shadowSettings) {
+        list.add(new Setting(this, "Shadows", shadowSettings[Game.instance.settings.shadowDrawMode & 1], shadowSettings) {
             void callback(int id) {
                 Game.instance.settings.shadowDrawMode = id;
                 Engine.shadowRenderer.init();
@@ -82,13 +92,29 @@ public class GuiSettings extends Gui {
             }
         });
         final String[] reflections = new String[] { "Disabled", "Basic", "Detailed", "Can't play" };
-        list.add(new Setting("Reflections", reflections[Game.instance.settings.ssr & 3], reflections) {
+        list.add(new Setting(this, "Reflections", reflections[Game.instance.settings.ssr & 3], reflections) {
             void callback(int id) {
                 Game.instance.settings.ssr = id;
                 Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
             }
         });
+        final String[] smaa = new String[] { "Disabled", "1x SMAA" };
+        list.add(new Setting(this, "Anti-Aliasing", smaa[Game.instance.settings.aa & 1], smaa) {
+            void callback(int id) {
+                Game.instance.settings.aa = id;
+                Game.instance.saveSettings();
+            }
+        });
+        
+        final String[] smaaQ = SMAA.qualDesc;
+        list.add((this.smaaQSetting = new Setting(this, "SMAA Quality", smaaQ[Game.instance.settings.smaaQuality%smaaQ.length], smaaQ) {
+            void callback(int id) {
+                Game.instance.settings.smaaQuality = id;
+                Game.instance.saveSettings();
+                Engine.outRenderer.initAA();
+            }
+        }));
         int left = this.posX + this.width / 2 - w1 / 2;
         int y = this.posY + this.height / 6 + 40;
         for (Setting s : list) {
@@ -115,16 +141,10 @@ public class GuiSettings extends Gui {
     }
 
     public void render(float fTime, double mX, double mY) {
+        renderBackground(fTime, mX, mY, true);
+        Shaders.textured.enable();
         this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f);
-        Shaders.colored.enable();
-        Tess.instance.setColor(2, 255);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.draw(GL_QUADS);
-        //        Shaders.textured.enable();
-        //        Shader.disable();
+        this.smaaQSetting.box.enabled = Game.instance.settings.aa==1;
         super.renderButtons(fTime, mX, mY);
 
     }

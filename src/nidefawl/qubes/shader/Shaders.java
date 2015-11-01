@@ -3,9 +3,13 @@ package nidefawl.qubes.shader;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.SimpleResourceManager;
 import nidefawl.qubes.vec.Vector3f;
 
 public class Shaders {
+    static SimpleResourceManager shaders = new SimpleResourceManager();
+    static SimpleResourceManager newshaders = new SimpleResourceManager();
+
     private static boolean startup = true;
 
     public static void reinit() {
@@ -24,17 +28,18 @@ public class Shaders {
             Engine.checkGLError("setProgramUniform3f");
         Shaders.textured.enable();
         textured.setProgramUniform1i("tex0", 0);
+        textured.setProgramUniform3f("in_offset", 0, 0, 0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("setProgramUniform1i");
         Shader.disable();
     }
-
     public static Shader depthBufShader;
     public static Shader normals;
     public static Shader wireframe;
     public static Shader textured;
     public static Shader colored;
     public static Shader colored3D;
+    public static Shader model;
     public static Shader renderUINT;
     public static Shader singleblock;
     public static Shader gui;
@@ -43,34 +48,20 @@ public class Shaders {
     public static void initShaders() {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
-
-            Shader new_depthBufShader = assetMgr.loadShader("shaders/renderdepth");
-            Shader new_normals = assetMgr.loadShader("shaders/visnormals");
-            Shader new_textured = assetMgr.loadShader("shaders/textured");
-            Shader new_colored = assetMgr.loadShader("shaders/colored");
-            Shader new_colored3D = assetMgr.loadShader("shaders/colored_3D");
-            Shader new_wireframe = assetMgr.loadShader("shaders/wireframe");
-            Shader new_uint = assetMgr.loadShader("shaders/render_uint_texture");
-            Shader new_singleblock = assetMgr.loadShader("shaders/singleblock");
-            Shader new_gui = assetMgr.loadShader("shaders/gui");
-            if (Shaders.depthBufShader != null)
-                Shaders.depthBufShader.release();
-            if (Shaders.normals != null)
-                Shaders.normals.release();
-            if (Shaders.textured != null)
-                Shaders.textured.release();
-            if (Shaders.colored != null)
-                Shaders.colored.release();
-            if (Shaders.colored3D != null)
-                Shaders.colored3D.release();
-            if (Shaders.wireframe != null)
-                Shaders.wireframe.release();
-            if (Shaders.renderUINT != null)
-                Shaders.renderUINT.release();
-            if (Shaders.singleblock != null)
-                Shaders.singleblock.release();
-            if (Shaders.gui != null)
-                Shaders.gui.release();
+            Shader new_depthBufShader = assetMgr.loadShader(newshaders, "debug/renderdepth");
+            Shader new_normals = assetMgr.loadShader(newshaders, "debug/visnormals");
+            Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");
+            Shader new_uint = assetMgr.loadShader(newshaders, "debug/render_uint_texture");
+            Shader new_textured = assetMgr.loadShader(newshaders, "textured");
+            Shader new_colored = assetMgr.loadShader(newshaders, "colored");
+            Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
+            Shader new_model = assetMgr.loadShader(newshaders, "model/model");
+            Shader new_singleblock = assetMgr.loadShader(newshaders, "singleblock");
+            Shader new_gui = assetMgr.loadShader(newshaders, "gui");
+            shaders.release();
+            SimpleResourceManager tmp = shaders;
+            shaders = newshaders;
+            newshaders = tmp;
             Shaders.wireframe = new_wireframe;
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
@@ -80,6 +71,7 @@ public class Shaders {
             Shaders.renderUINT = new_uint;
             Shaders.singleblock = new_singleblock;
             Shaders.gui = new_gui;
+            Shaders.model = new_model;
             Shaders.colored.enable();
             Shaders.colored.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.gui.enable();
@@ -95,6 +87,7 @@ public class Shaders {
             Shaders.wireframe.setProgramUniform3f("offset", Vector3f.ZERO);
             Shader.disable();
         } catch (ShaderCompileError e) {
+            newshaders.release();
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
             if (startup) {

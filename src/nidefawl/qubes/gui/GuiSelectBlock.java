@@ -30,6 +30,8 @@ public class GuiSelectBlock extends Gui {
 
     final public FontRenderer font;
     private List<Stack> blocks;
+    private Button fakeButton;
+    private Stack sel;
 
     public GuiSelectBlock() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -44,6 +46,11 @@ public class GuiSelectBlock extends Gui {
             int h = 30;
             this.buttons.get(0).setPos(this.posX + this.width / 2 - w / 2, this.posY + this.height - 60);
             this.buttons.get(0).setSize(w, h);
+            this.fakeButton = new Button(2, "NOOOO");
+            this.buttons.add(this.fakeButton);
+            this.fakeButton.draw = false;
+            this.fakeButton.setPos(-1000, -1000);
+            this.fakeButton.setSize(32, 32);
         }
         this.blocks = Lists.newArrayList();
         for (Block b : Block.getRegisteredBlocks()) {
@@ -60,27 +67,7 @@ public class GuiSelectBlock extends Gui {
     public void update() {
     }
 
-    public void renderRoundedBoxShadow(float x, float y, float z, float w, float h, int rgba, float alpha) {
-        y = y;
-        float boxSigma = 0.25f;
-        float shadowSigma = 5;
-        float round = 3;
-        float r = TextureUtil.getR(rgba);
-        float g = TextureUtil.getG(rgba);
-        float b = TextureUtil.getB(rgba);
-        Shaders.gui.setProgramUniform1f("zpos", z-1);
-        Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
-        Shaders.gui.setProgramUniform4f("color", 0, 0, 0, alpha);
-        Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
-        Shaders.gui.setProgramUniform1f("corner", round);
-        GL11.glDepthMask(false);
-        Engine.drawQuad();
-        GL11.glDepthMask(true);
-        Shaders.gui.setProgramUniform1f("zpos", z);
-        Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);
-        Shaders.gui.setProgramUniform1f("sigma", boxSigma);
-        Engine.drawQuad();
-    }
+
     public void render(float fTime, double mX, double mY) {
         Shaders.colored.enable();
         Tess.instance.setColor(2, 128);
@@ -113,8 +100,14 @@ public class GuiSelectBlock extends Gui {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
         
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-        Stack sel = null;
+         sel = null;
+         this.fakeButton.setPos(-1000, -1000);
+         this.fakeButton.setSize(32, 32);
         int rendered = 0;
+        int e = this.extendx;
+        float r = this.round;
+        this.round = 3;
+        this.extendx = 0;
         for (int i = 0; i < blocks.size(); i++) {
             Stack stack = blocks.get(i);
             Block block = stack.getBlock();
@@ -129,6 +122,9 @@ public class GuiSelectBlock extends Gui {
                 if (mX > pX1 && mX < pX2 && mY > pY1 && mY < pY2) {
                     m = true;
                     sel = stack;
+
+                    fakeButton.setPos((int)pX1, (int)pY1);
+                    fakeButton.setSize((int)(pX2-pX1), (int)(pY2-pY1));
                 } else {
                 }
                 int zz = -30;
@@ -145,8 +141,8 @@ public class GuiSelectBlock extends Gui {
                         pY1-=4;
                     }
                     Shaders.gui.enable();
-                    renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1);
-                Shaders.singleblock.enable();
+                    renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1, true);
+                    Shaders.singleblock.enable();
                 }
 //                if (m || stack.isEqualId(Game.instance.selBlock)) {
 //                    Shaders.colored.enable();
@@ -179,6 +175,8 @@ public class GuiSelectBlock extends Gui {
             }
             
         }
+        this.round = r;
+        this.extendx = e;
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         Shader.disable();
 
@@ -186,13 +184,6 @@ public class GuiSelectBlock extends Gui {
             Shaders.textured.enable();
             font.drawString(""+sel.getBlock().getName(), this.width / 2, 50, -1, true, 1, 2);
             Shader.disable();
-            //HACKY
-            if (Mouse.isButtonDown(0)) {
-
-                Game.instance.selBlock = sel;
-                Game.instance.showGUI(null);
-                
-            }
         }
         
 //        Tess.instance.setColor(2, 255);
@@ -211,6 +202,10 @@ public class GuiSelectBlock extends Gui {
 
     public boolean onGuiClicked(AbstractUI element) {
         if (element.id == 1) {
+            Game.instance.showGUI(null);
+        }
+        if (element.id == 2 && this.sel != null) {
+            Game.instance.selBlock = sel;
             Game.instance.showGUI(null);
         }
         return true;

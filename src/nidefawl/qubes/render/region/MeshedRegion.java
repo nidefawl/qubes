@@ -394,7 +394,10 @@ public class MeshedRegion {
         this.aabb.maxX = this.aabb.minX + RegionRenderer.REGION_SIZE_BLOCKS;
         this.aabb.maxY = this.aabb.minY + RegionRenderer.SLICE_HEIGHT_BLOCKS;
         this.aabb.maxZ = this.aabb.minZ + RegionRenderer.REGION_SIZE_BLOCKS;
-
+        this.aabb.minX -= Engine.GLOBAL_OFFSET.x;
+        this.aabb.minZ -= Engine.GLOBAL_OFFSET.z;
+        this.aabb.maxX -= Engine.GLOBAL_OFFSET.x;
+        this.aabb.maxZ -= Engine.GLOBAL_OFFSET.z;
     }
 
     @Override

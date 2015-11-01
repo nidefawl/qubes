@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.GameError;
 
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
@@ -40,6 +41,14 @@ public class ShaderSource {
         try {
             String fpath = path + "/" + name;
             is = assetManager.findResource(fpath, true);
+            ArrayList<String> pathChecked = new ArrayList<>();
+            //if we should resolve then check the include path first 
+            if (is == null && resolve) {
+                fpath = "shaders/include/" + name;
+                pathChecked.add(fpath);
+                is = assetManager.findResource(fpath, true);
+            }
+            //if file wasn't resolved (not in include) then traverse path up and check each parent directory
             while (is == null && resolve) {
                 int a = path.lastIndexOf("/");
                 if (a > 0) {
@@ -48,7 +57,8 @@ public class ShaderSource {
                     break;
                 }
                 fpath = path + "/" + name;
-                is = assetManager.findResource(path + "/" + name, false);
+                pathChecked.add(fpath);
+                is = assetManager.findResource(path + "/" + name, true);
             }
             if (is != null) {
                 reader = new BufferedReader(new InputStreamReader(is));
@@ -68,11 +78,11 @@ public class ShaderSource {
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
                     if (line.startsWith("#pragma")) {
-                        if (resolve) {
-                            throw new ShaderCompileError(this.shader, line, name, "Recursive inlcudes are not supported");
-                        }
                         Matcher m;
                         if ((m = patternInclude.matcher(line)).matches()) {
+                            if (resolve) {
+                                throw new ShaderCompileError(this.shader, line, name, "Recursive inlcudes are not supported");
+                            }
                             String filename = m.group(1);
                             String include = readParse(assetManager, path, filename, def, true);
                             if (include == null) {
@@ -105,7 +115,12 @@ public class ShaderSource {
                     nLineOffset++;
                 }
                 return code;
-            } else {
+            } else if (resolve) {
+                String p = "";
+                for (String s : pathChecked) {
+                    p+=s+"\n";
+                }
+                throw new GameError("Missing shader resource "+name+"\nFile not found:\n"+p);
                 //                System.err.println("missing code for "+path+" - "+name);
             }
         } finally {

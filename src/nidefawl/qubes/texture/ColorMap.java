@@ -51,7 +51,7 @@ public class ColorMap {
         
         int ix = this.w-1-GameMath.floor(x*this.w);
         int iy = this.w-1-GameMath.floor(y*this.w);
-        return this.data[iy*this.w+ix];
+        return Color.HSBtoRGB(0.27f, 0.8f, 0.5f);//this.data[iy*this.w+ix];
     }
 
 }

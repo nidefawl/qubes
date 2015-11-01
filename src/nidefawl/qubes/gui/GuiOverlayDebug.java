@@ -21,8 +21,10 @@ public class GuiOverlayDebug extends Gui {
 
 	public void render(float fTime, double mx, double mY) {
 	    Shaders.textured.enable();
+	    Shaders.textured.setProgramUniform3f("in_offset", 250, -280, 0);
         glBindTexture(GL_TEXTURE_2D, Engine.fbDbg.getTexture(0));
         Engine.drawFullscreenQuad();
+        Shaders.textured.setProgramUniform3f("in_offset", 0, 0, 0);
         Shader.disable();
 	}
     public void preDbgFB(boolean clear) {
@@ -68,7 +70,6 @@ public class GuiOverlayDebug extends Gui {
         mat.translate(gap/2+(w1+gap/2)*side, 0, 0);
         mat.translate(0, gapy+(gapy+h)*num, 0);
         Engine.setOrthoMV(mat);
-        glEnable(GL_BLEND);
         GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, texture);
         Tess.tessFont.setColor(-1, 255);
         Tess.tessFont.add(0, 0 + h, 0, 0, 0);
@@ -99,6 +100,7 @@ public class GuiOverlayDebug extends Gui {
         Tess.tessFont.add(0, 0 + h-20, 0, 0, 1);
         Tess.tessFont.draw(7);
         Shaders.textured.enable();
+        glEnable(GL_BLEND);
         fontSmall.drawString(string, 2, h-2, -1, true, 1.0F);
         fontSmall.drawString(""+texture+"", w1-2, h-2, -1, true, 1.0F, 1);
         Shader.disable();
@@ -110,6 +112,7 @@ public class GuiOverlayDebug extends Gui {
                     "Deferred",
                     "Blur",
                     "Final",
+                    "AA EdgeDetect",
             };
         mat.setIdentity();
         Engine.setOrthoMV(mat);

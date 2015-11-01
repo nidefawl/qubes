@@ -7,6 +7,7 @@ import java.util.Collections;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.IResourceManager;
 
 public class AssetManager {
     final static AssetManager instance = new AssetManager();
@@ -126,11 +127,36 @@ public class AssetManager {
         }
         throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
-
-    public Shader loadShader(String name) {
-        return loadShader(name, null);
+    public AssetVoxModel loadVoxModel(String name) {
+        InputStream is = null;
+        try {
+            is = findResource(name, false);
+            if (is != null) {
+                AssetVoxModel asset = new AssetVoxModel(name);
+                asset.load(is);
+//                assets.add(asset);
+                return asset;
+            }
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new GameError("Error while closing inputstream", e);
+                }
+            }
+        }
+        throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
-    public Shader loadShader(String name, IShaderDef def) {
+
+    public Shader loadShader(IResourceManager mgr, String name) {
+        return loadShader(mgr, name, null);
+    }
+    public Shader loadShader(IResourceManager mgr, String name, IShaderDef def) {
+        if (!name.startsWith("/"))
+            name = "shaders/" + name;
         Shader shader = new Shader(name);
         try {
             int idx = name.lastIndexOf("/");
@@ -143,6 +169,8 @@ public class AssetManager {
                 path = name.substring(0, idx);
                 fname = name.substring(idx+1);
             }
+            if (mgr != null)
+            mgr.addResource(shader);
             shader.load(this, path, fname, def);
         } catch (ShaderCompileError e) {
             this.lastFailedShader = e.getShaderSource();
@@ -153,6 +181,28 @@ public class AssetManager {
             throw new GameError("Cannot load asset '" + name + "': " + e, e);
         }
         return shader;
+    }
+    public AssetBinary loadBin(String name) {
+        InputStream is = null;
+        try {
+            is = findResource(name, false);
+            if (is != null) {
+                AssetBinary asset = new AssetBinary(name);
+                asset.load(is);
+                return asset;
+            }
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new GameError("Error while closing inputstream", e);
+                }
+            }
+        }
+        throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
 
     public ShaderSource getLastFailedShaderSource() {

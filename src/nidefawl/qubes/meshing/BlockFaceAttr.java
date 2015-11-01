@@ -33,6 +33,7 @@ public class BlockFaceAttr {
     public final BlockFaceVert[] v = new BlockFaceVert[] {
             v0, v1, v2, v3
     };
+    private boolean useGlobalRenderOffset = false;
     private int tex;
     float xOff, yOff, zOff;
     private int aoMask;
@@ -42,6 +43,13 @@ public class BlockFaceAttr {
     private boolean reverse = false;
     private int faceDir;
     private int pass;
+    
+    /**
+     * @param useGlobalRenderOffset the useGlobalRenderOffset to set
+     */
+    public void setUseGlobalRenderOffset(boolean useGlobalRenderOffset) {
+        this.useGlobalRenderOffset = useGlobalRenderOffset;
+    }
 
     public void setTex(int tex) {
         this.tex = tex;
@@ -51,6 +59,10 @@ public class BlockFaceAttr {
         this.xOff = xOff;
         this.yOff = yOff;
         this.zOff = zOff;
+        if (useGlobalRenderOffset) {
+            this.xOff-=Engine.GLOBAL_OFFSET.x;
+            this.zOff-=Engine.GLOBAL_OFFSET.z;
+        }
     }
 
     public void setNormal(int x, int y, int z) {

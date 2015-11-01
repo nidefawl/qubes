@@ -96,6 +96,14 @@ public class Memory {
         MemoryUtil.memFree(buf);
     }
 
+    /**
+     * @param buf
+     */
+    public static void free(ByteBuffer buf) {
+        mallocd -= buf.capacity();
+        MemoryUtil.memFree(buf);
+    }
+
     public static IntBuffer createIntBufferHeap(int i) {
         mallocd += i*4;
         return IntBuffer.allocate(i);

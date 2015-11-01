@@ -43,7 +43,7 @@ void main(void) {
 
 	    float sampleDist = 4.4;
 	    vec2 p0 = position.xz *0.02;
-	    // float fSin = sin(in_scene.frameTime.x*0.0003)*0.5+0.5;
+	    // float fSin = sin(FRAME_TIME*0.0003)*0.5+0.5;
 	    // p0 += vec2(fSin*110.3);
 	    vec2 p1 = p0 + vec2(1, 0)*sampleDist;
 	    vec2 p2 = p0 + vec2(0, 1)*sampleDist;

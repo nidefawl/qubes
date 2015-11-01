@@ -70,7 +70,7 @@ public class BlockTextureArray {
                     int mipmapSize = this.tileSize;
                     for (int m = 0; m < numMipmaps; m++) {
                         directBuf = put(directBuf, data);
-//                      System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
+                      System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
                         GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m,                     //Mipmap number
                               0, 0, tex.getSlot(),                 //xoffset, yoffset, zoffset
                               mipmapSize, mipmapSize, 1,                 //width, height, depth
@@ -112,6 +112,9 @@ public class BlockTextureArray {
         HashMap<Integer, ArrayList<AssetTexture>> text = new HashMap<>();
         Block[] blocks = Block.block;
         int len = blocks.length;
+        float progress = 0f;
+        int totalBlocks = Block.getRegisteredIDs().length;
+        int nBlock = 0;
         for (int i = 0; i < len; i++) {
             Block b = blocks[i];
             if (b != null) {
@@ -136,7 +139,14 @@ public class BlockTextureArray {
                     }
                     text.put(b.id, blockTextures);
                 }
+                if (firstInit) {
+                    progress = ++nBlock/(float)totalBlocks;
+                    Game.instance.loadRender(1, progress, b.getName());
+                }
             }
+        }
+        if (firstInit) {
+            Game.instance.loadRender(1, 1);
         }
         System.out.println("maxTileW = "+maxTileW);
         System.out.println("maxTexture = "+maxTexture);
@@ -152,6 +162,8 @@ public class BlockTextureArray {
         );
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("GL42.glTexStorage3D");
+        totalBlocks = text.size();
+        nBlock = 0;
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = text.entrySet().iterator();
         int slot = 0;
         while (it.hasNext()) {
@@ -205,7 +217,12 @@ public class BlockTextureArray {
                     textures[blockId << 4 | i] = reuseslot;
                 }
             }
+            if (firstInit) {
+                progress = ++nBlock/(float)totalBlocks;
+                Game.instance.loadRender(2, progress);
+            }
         }
+        Game.instance.loadRender(2, 1);
         lastLoaded = text;
         boolean useAnisotrophic = true;
         if (useAnisotrophic) {

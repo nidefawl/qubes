@@ -64,6 +64,7 @@ public class GuiOverlayStats extends Gui {
         info.clear();
         if (world != null) {
             int numChunks = world.getChunkManager().getChunksLoaded();
+            info.add( String.format("Shaders %d - FBOs %d", Shader.SHADERS, FrameBuffer.FRAMEBUFFERS));
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );

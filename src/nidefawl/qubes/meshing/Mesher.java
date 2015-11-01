@@ -207,7 +207,7 @@ public class Mesher {
     private int yPos;
     private int ySlice;
     final static boolean MEASURE = false;
-    public void mesh(World world, ChunkRenderCache ccache, int rY) {
+    public void mesh(ChunkRenderCache ccache, int rY) {
         scratchpadidx = 0;
         this.nextBlockIDX = 0;
         this.ySlice = rY;
@@ -217,14 +217,14 @@ public class Mesher {
             this.meshes[i].clear();
         this.strategy = 0;
         if (MEASURE) TimingHelper2.startSec("mesh0");
-        this.meshRound(world, ccache);
+        this.meshRound(ccache);
         this.strategy = 1;
         if (MEASURE) TimingHelper2.endStart("mesh1");
-        this.meshRound(world, ccache);
+        this.meshRound(ccache);
         if (MEASURE) TimingHelper2.endSec();
     }
 
-    private void meshRound(World world, ChunkRenderCache ccache) {
+    private void meshRound(ChunkRenderCache ccache) {
         dims[0] = RegionRenderer.REGION_SIZE_BLOCKS;
         dims[1] = RegionRenderer.SLICE_HEIGHT_BLOCKS;
         dims[2] = RegionRenderer.REGION_SIZE_BLOCKS;

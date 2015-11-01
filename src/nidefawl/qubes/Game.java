@@ -4,9 +4,11 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.UUID;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -16,12 +18,14 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.config.ClientSettings;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.entity.PlayerSelf;
+import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
@@ -29,6 +33,7 @@ import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.logging.IErrorHandler;
+import nidefawl.qubes.models.loader.ModelVox;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
@@ -36,20 +41,18 @@ import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
+import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.texture.ColorMap;
-import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.texture.*;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
+import nidefawl.qubes.world.*;
 
 public class Game extends GameBase implements IErrorHandler {
 
@@ -104,21 +107,50 @@ public class Game extends GameBase implements IErrorHandler {
         super();
     }
 
+    final float[] loadProgress = new float[4];
     @Override
     public void initGame() {
-
         debugChunks = new TesselatorState();
         loadSettings();
         selection.init();
         AssetManager.getInstance().init();
         Engine.init();
+        loadRender(0, 0);
         TextureManager.getInstance().init();
+        loadRender(0, 0.1f);
         BlockTextureArray.getInstance().init();
-
+        loadRender(0, 0.2f);
         AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
         ColorMap.grass.set(tex_map_grass);
+        loadRender(0, 0.4f);
         AssetTexture tex_map_foliage = AssetManager.getInstance().loadPNGAsset("textures/colormap_foliage.png");
         ColorMap.foliage.set(tex_map_foliage);
+        loadRender(0, 0.6f);
+
+        
+        
+
+        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normalmaptest.png");
+        byte[] rgba = tex.getData();
+        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
+        int w = tex.getWidth();
+        int h = tex.getWidth();
+        for (int x = 0; x < 10; x++) {
+
+            for (int y = 0; y < 10; y++) {
+                int idx = y*w+x;
+                int pixel = rgba_int[idx];
+                String s = Integer.toHexString(pixel);
+                while(s.length()<8) {
+                    s = "0"+s;
+                }
+                float nx = (((pixel>>16)&0xFF) / 255.0f) * 2.0f - 1.0f;
+                float ny = (((pixel>>8)&0xFF) / 255.0f) * 2.0f - 1.0f;
+                float nz = (((pixel>>0)&0xFF) / 255.0f) * 2.0f - 1.0f;
+                System.out.println(""+x+","+y+" = 0x"+s+" = "+String.format("%.2f %.2f %.2f", nx, ny, nz));
+            }
+        }
+        
         
         SysInfo info = new SysInfo();
         String title = "LWJGL "+info.lwjglVersion+" - "+info.openGLVersion;
@@ -135,8 +167,77 @@ public class Game extends GameBase implements IErrorHandler {
         this.debugOverlay.setSize(displayWidth, displayHeight);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 4");
         Engine.checkGLError("Post startup");
+        loadRender(0, 0.8f);
+    }
+    @Override
+    public void loadRender(int step, float f) {
+        loadRender(step, f, "");
+    }
+    public void loadRender(int step, float f, String string) {
+        int tw = Game.displayWidth;
+        int th = Game.displayHeight;
+        int oldW = (int) (tw*0.6f*loadProgress[step]);
+        loadProgress[step] = f;
+        int newW = (int) (tw*0.6f*loadProgress[step]);
+        if (oldW == newW) return;
+        float x = 0;
+        float y = 0;
+        float l = tw*0.2f;
+        float barh = 8;
+        float barsH = (barh*1.2f) * (loadProgress.length-1);
+        float barsTop = (th-barsH)/2.0f;
+        if (isCloseRequested()) {
+            shutdown();
+            return;
+        }
+        checkResize();
+        updateTime();
+        updateInput();
+        Engine.updateOrthoMatrix(displayWidth, displayHeight);
+        UniformBuffer.updateOrtho();
+        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        Shaders.colored.enable();
+        Tess.instance.resetState();
+        Tess.instance.setColor(0x0, 0xff);
+        Tess.instance.add(x + tw, y, 0, 1, 1);
+        Tess.instance.add(x, y, 0, 0, 1);
+        Tess.instance.add(x, y + th, 0, 0, 0);
+        Tess.instance.add(x + tw, y + th, 0, 1, 0);
+        Tess.instance.drawQuads();
+        float p = 0;
+        for (int i = 0; i < 3; i++) {
+            p+=loadProgress[i];
+        }
+        p/=3f;
+        float w = tw*0.6f*p;
+        Tess.instance.setColor(0xffffff, 0xff);
+        Tess.instance.add(x + l + w, y + barsTop-2, 0, 1, 1);
+        Tess.instance.add(x + l, y + barsTop-2, 0, 0, 1);
+        Tess.instance.add(x + l, y + barsTop+barsH+2, 0, 0, 0);
+        Tess.instance.add(x + l + w, y + barsTop+barsH+2, 0, 1, 0);
+        Tess.instance.drawQuads();
+        FontRenderer font = FontRenderer.get("Arial", 16, 1, 18);
+        if (font != null) {
+            Shaders.textured.enable();
+            font.drawString("Loading... "+string, x+l+2, y+barsTop+barsH+10+font.getLineHeight(), -1, true, 1.0f);
+        }
+//        for (int i = 0; i < loadProgress.length; i++) {
+//            
+//             w = tw*0.6f*loadProgress[i];
+//            Tess.instance.setColor(0x666666, 0xff);
+//            Tess.instance.add(x + l + w, y + barsTop, 0, 1, 1);
+//            Tess.instance.add(x + l, y + barsTop, 0, 0, 1);
+//            Tess.instance.add(x + l, y + barsTop+barh, 0, 0, 0);
+//            Tess.instance.add(x + l + w, y + barsTop+barh, 0, 1, 0);
+//            Tess.instance.drawQuads();
+//            barsTop+=barh+2;
+//        }
+        Shader.disable();
+        updateDisplay();
     }
     public void lateInitGame() {
+        loadRender(0, 1f);
         BlockTextureArray.getInstance().reload();
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F8) {
             public void onDown() {
@@ -184,16 +285,33 @@ public class Game extends GameBase implements IErrorHandler {
                 show = !show;
             }
         });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F4) {
+            public void onDown() {
+                toggleTestMode();
+            }
+        });
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F) {
+            public void onDown() {
+                reposModel();
+            }
+        });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F5) {
             public void onDown() {
 //              setWorld(new WorldClient(null));
 //              Engine.worldRenderer.flush();
 //              Engine.textures.refreshNoiseTextures();
-              PlayerSelf p = getPlayer();
-              if (p != null) {
-                  Random rand = new Random();
-                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
-              }
+//              PlayerSelf p = getPlayer();
+//              if (p != null) {
+//                  Random rand = new Random();
+//                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
+//              }
+                lastShaderLoadTime = System.currentTimeMillis();
+//                Shaders.initShaders();
+                Engine.worldRenderer.initShaders();
+//                Engine.worldRenderer.reloadModel();
+//                  Engine.regionRenderer.initShaders();
+//                  Engine.shadowRenderer.initShaders();
+                  Engine.outRenderer.initShaders();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F2) {
@@ -265,10 +383,12 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_O) {
             public void onDown() {
-                if (step+1 < edits.size()) {
-                    step++;
-                    edits.get(step).apply(world);
-                }
+//                if (step+1 < edits.size()) {
+//                    step++;
+//                    edits.get(step).apply(world);
+//                }
+                if (player != null)
+                    world.addLight(new Vector3f(player.pos).translate(0, 1, 0));
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_H) {
@@ -289,8 +409,8 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_ADD) {
             public void onDown() {
-                if (player != null)
-                    world.addLight(new Vector3f(player.pos).translate(0, 1, 0));
+
+                Engine.worldRenderer.reloadModel();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_MULTIPLY) {
@@ -307,6 +427,38 @@ public class Game extends GameBase implements IErrorHandler {
         ChatManager.getInstance().loadInputHistory();
         
     }
+    boolean testMode = false;
+    PlayerSelf remotePlayer;
+    PlayerSelf testPlayer;
+    WorldClient remoteWorld;
+    WorldClient testWorld;
+    protected void toggleTestMode() {
+        if (testMode) {
+            testMode = false;
+            setWorld(remoteWorld);
+            setPlayer(remotePlayer);
+        } else {
+            remoteWorld = world;
+            remotePlayer = player;
+            testMode = true;
+            testWorld = new WorldClientBenchmark();
+            testPlayer = new PlayerSelfBenchmark();
+            testWorld.addEntity(testPlayer);
+            setWorld(testWorld);
+            setPlayer(testPlayer);
+        }
+    }
+
+    /**
+     * 
+     */
+    protected void reposModel() {
+        int x = GameMath.floor(lastCamX);
+        int y = GameMath.floor(lastCamY)-1;
+        int z = GameMath.floor(lastCamZ);
+        Engine.worldRenderer.setModelPos((float)x, (float)y, (float)z);
+    }
+
     public void setWorld(WorldClient world) {
         this.selection.reset();
         if (this.world != null) {
@@ -440,11 +592,11 @@ public class Game extends GameBase implements IErrorHandler {
 
 
     public void render(float fTime) {
-//      fogColor.scale(0.4F);
-
+        //      fogColor.scale(0.4F);
         if (Game.DO_TIMING)
             TimingHelper.startSec("world");
         if (this.world != null) {
+            glDisable(GL_BLEND);
             if (Game.DO_TIMING)
                 TimingHelper.startSec("ShadowPass");
             if (GPUProfiler.PROFILING_ENABLED)
@@ -452,26 +604,27 @@ public class Game extends GameBase implements IErrorHandler {
             Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             Engine.getSceneFB().bind();
             Engine.getSceneFB().clearFrameBuffer();
-            
+
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-            
+
             if (Game.DO_TIMING)
                 TimingHelper.endStart("renderWorld");
-            
+
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderWorld");
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             Engine.worldRenderer.renderWorld(this.world, fTime);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-            
+
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("renderWorld");
-            
-            
+
             if (Game.DO_TIMING)
                 TimingHelper.endStart("unbindCurrentFrameBuffer");
-            
+
             FrameBuffer.unbindFramebuffer();
             if (Game.DO_TIMING)
                 TimingHelper.endSec();
@@ -483,304 +636,323 @@ public class Game extends GameBase implements IErrorHandler {
         if (Game.DO_TIMING)
             TimingHelper.startSec("prepare");
 
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("glClear");
-      glClearColor(0.71F, 0.82F, 1.00F, 1F);
-      glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-      
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("glClear");
+        glDisable(GL_BLEND);
+        
+        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
 
-      glActiveTexture(GL_TEXTURE0);
-      if (this.world != null) {
-          if (Game.DO_TIMING) TimingHelper.endStart("final");
-          glDisable(GL_BLEND);
-          glDepthFunc(GL_ALWAYS);
-          glEnable(GL_DEPTH_TEST);
-          glDepthMask(false);
+        if (this.world != null) {
+            if (Game.DO_TIMING)
+                TimingHelper.endStart("final");
 
-          if (show) {
-              GuiOverlayDebug dbg = Game.instance.debugOverlay;
-              dbg.preDbgFB(true);
-              dbg.drawDebug();
-              dbg.postDbgFB();
-          }
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pre0");
-          Engine.outRenderer.bindFB();
-          Engine.outRenderer.clearFrameBuffer();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pass0");
-          Engine.outRenderer.render(this.world, fTime, 0);
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("HBAO");
 
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderTransparent");
-          glDepthMask(true);
-          glDepthFunc(GL_LEQUAL);
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            HBAOPlus.renderAO();
 
-          boolean secondPass = true;
-          if (secondPass) {
-              Engine.getSceneFB().bind();
-              Engine.getSceneFB().clearColorBlack();
-              Engine.worldRenderer.renderTransparent(world, fTime);
-//              glDisable(GL_BLEND);
-              glDepthFunc(GL_ALWAYS);
-              glDepthMask(false);
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pre1");
-              
-              
-              Engine.outRenderer.bindFB();
-              glEnable(GL_BLEND);
-              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred Pass1");
-              Engine.outRenderer.render(this.world, fTime, 1);
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Deferred ReflAndBlur");
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("GLNativeLib.renderAO");
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
 
-//            glDisable(GL_CULL_FACE);
-              Engine.outRenderer.renderReflAndBlur(this.world, fTime);
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          }
+            if (show) {
+                GuiOverlayDebug dbg = Game.instance.debugOverlay;
+                dbg.preDbgFB(true);
+                dbg.drawDebug();
+                dbg.postDbgFB();
+            }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("Deferred Pre0");
+            Engine.outRenderer.bindFB();
+            Engine.outRenderer.clearFrameBuffer();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("Deferred Pass0");
+            Engine.outRenderer.render(this.world, fTime, 0);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
 
-          FrameBuffer.unbindFramebuffer();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("TransparentPass");
 
+            boolean secondPass = true;
+            if (secondPass) {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                Engine.getSceneFB().bind();
+                Engine.getSceneFB().clearColorBlack();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("World");
+                Engine.worldRenderer.renderTransparent(world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
 
-          
-          
-          
-          
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("renderFinal");
-          Engine.outRenderer.renderFinal(this.world, fTime);
-          if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          glDepthMask(true);
-          glDepthFunc(GL_LEQUAL);
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//          Shaders.textured.enable();
-//          glBindTexture(GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
-//          Engine.drawFullscreenQuad();
-          Shader.disable();
-          boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
-          if (pass) {
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("forwardPass");
+                Engine.outRenderer.bindFB();
 
-              if (Game.DO_TIMING) TimingHelper.endStart("forwardPass");
-             
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("Deferred");
 
-              
-              Engine.getSceneFB().bindRead();
-//             
-              GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-              FrameBuffer.unbindReadFramebuffer();
-              glDisable(GL_CULL_FACE);
-              
-              
-              
-              if (!Engine.worldRenderer.debugBBs.isEmpty()) {
+                Engine.outRenderer.render(this.world, fTime, 1);
 
-                  
-                  if (Game.DO_TIMING)
-                      TimingHelper.startSec("renderDebugBB");
-                  
-                  if (GPUProfiler.PROFILING_ENABLED)
-                      GPUProfiler.start("renderDebugBB");
-                  Engine.worldRenderer.renderDebugBB(this.world, fTime);
-                  if (GPUProfiler.PROFILING_ENABLED)
-                      GPUProfiler.end();
-                  
-                  if (Game.GL_ERROR_CHECKS)
-                      Engine.checkGLError("renderDebugBB");
-                  if (Game.DO_TIMING)
-                  TimingHelper.endSec();
-              }
-              
-              if (Engine.renderWireFrame) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+            }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("Deferred ReflAndBlur");
+
+            glDisable(GL_BLEND); // don't blend ssr
+            Engine.outRenderer.renderReflAndBlur(this.world, fTime);
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("renderFinal");
+            Engine.outRenderer.renderFinal(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
+            
+            boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
+            if (pass) {
+                glDisable(GL_CULL_FACE);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("forwardPass");
+
+                if (Game.DO_TIMING)
+                    TimingHelper.endStart("forwardPass");
+
+                Engine.getSceneFB().bindRead();
+                //             
+                GL30.glBlitFramebuffer(0, 0, displayWidth, displayHeight, 0, 0, displayWidth, displayHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                FrameBuffer.unbindReadFramebuffer();
+
+                if (!Engine.worldRenderer.debugBBs.isEmpty()) {
+
+                    if (Game.DO_TIMING)
+                        TimingHelper.startSec("renderDebugBB");
+
+                    if (GPUProfiler.PROFILING_ENABLED)
+                        GPUProfiler.start("renderDebugBB");
+                    Engine.worldRenderer.renderDebugBB(this.world, fTime);
+                    if (GPUProfiler.PROFILING_ENABLED)
+                        GPUProfiler.end();
+
+                    if (Game.GL_ERROR_CHECKS)
+                        Engine.checkGLError("renderDebugBB");
+                    if (Game.DO_TIMING)
+                        TimingHelper.endSec();
+                }
+
+                if (Engine.renderWireFrame) {
                     if (Game.DO_TIMING)
                         TimingHelper.startSec("renderNormals");
                     Engine.worldRenderer.renderNormals(this.world, fTime);
                     glEnable(GL_POLYGON_OFFSET_FILL);
                     glPolygonOffset(-3.4f, 2.f);
-//                    glDisable(GL_CULL_FACE);
-//                    glDisable(GL_DEPTH_TEST);
-//                    glEnable(GL_BLEND);
-//                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-//                    glEnable(GL_DEPTH_TEST);
-//                    glEnable(GL_CULL_FACE);
                     glDisable(GL_POLYGON_OFFSET_FILL);
                     if (Game.GL_ERROR_CHECKS)
                         Engine.checkGLError("renderNormals");
                     if (Game.DO_TIMING)
                         TimingHelper.endSec();
-              }
-              if (Game.DO_TIMING)
-                  TimingHelper.startSec("renderBlockHighlight");
-              if (GPUProfiler.PROFILING_ENABLED)
-                  GPUProfiler.start("renderBlockHighlight");
-                  selection.renderBlockHighlight(this.world, fTime);
-              if (GPUProfiler.PROFILING_ENABLED)
-                  GPUProfiler.end();
-              
-              if (Game.GL_ERROR_CHECKS)
-                  Engine.checkGLError("renderBlockHighlight");
-              if (Game.DO_TIMING)
-                  TimingHelper.endSec();
-              glEnable(GL_CULL_FACE);
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-          }
-          glDisable(GL_DEPTH_TEST);
-      } else {
+                }
+                if (Game.DO_TIMING)
+                    TimingHelper.startSec("renderBlockHighlight");
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("renderBlockHighlight");
+                selection.renderBlockHighlight(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
 
-//          glDepthFunc(GL_LEQUAL);
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//          glActiveTexture(GL_TEXTURE0);
-      }
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("renderBlockHighlight");
+                if (Game.DO_TIMING)
+                    TimingHelper.endSec();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+                if (Game.DO_TIMING)
+                    TimingHelper.endSec();
+                glEnable(GL_CULL_FACE);
+                glDisable(GL_BLEND);
+            }
+        }
+        if (GL_ERROR_CHECKS) {
+            if (glGetInteger(GL_DEPTH_FUNC) != GL_LEQUAL) {
+                System.err.println("Expected GL_DEPTH_FUNC == GL_LEQUAL post render: "+glGetInteger(GL_DEPTH_FUNC));
+            }
+            if (!glGetBoolean(GL_DEPTH_TEST)) {
+                System.err.println("Expected GL_DEPTH_TEST == true post render");
+            }
+            if (!glGetBoolean(GL_DEPTH_WRITEMASK)) {
+                System.err.println("Expected GL_DEPTH_WRITEMASK == true post render");
+            }
+            if (glGetBoolean(GL_BLEND)) {
+                System.err.println("Expected GL_BLEND == false post render");
+            }
+        }
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
 
+        if (Game.DO_TIMING)
+            TimingHelper.endStart("gui");
 
-      glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("gui");
 
-      if (Game.DO_TIMING) TimingHelper.endStart("gui");
-      
-      if (GPUProfiler.PROFILING_ENABLED) 
-          GPUProfiler.start("gui");
-      
-      if (this.world != null && this.gui == null && this.movement.grabbed()) {
-          Shaders.colored.enable();
-          if (Game.DO_TIMING) TimingHelper.startSec("crosshair");
-          glDisable(GL_TEXTURE_2D);
-          Tess.instance.setColor(-1, 100);
-          Tess.instance.setOffset(displayWidth/2, displayHeight/2, 0);
-          float height = 1;
-          float w = 8;
-          Tess.instance.add(-w, height, 0);
-          Tess.instance.add(w, height, 0);
-          Tess.instance.add(w, -height, 0);
-          Tess.instance.add(-w, -height, 0);
-          Tess.instance.add(-height, w, 0);
-          Tess.instance.add(height, w, 0);
-          Tess.instance.add(height, -w, 0);
-          Tess.instance.add(-height, -w, 0);
-          Tess.instance.draw(GL_QUADS);
-          glEnable(GL_TEXTURE_2D);
-          if (Game.DO_TIMING) TimingHelper.endSec();
-          Shader.disable();
-      }
+        if (this.world != null && this.gui == null && this.movement.grabbed()) {
+            Shaders.colored.enable();
+            if (Game.DO_TIMING)
+                TimingHelper.startSec("crosshair");
+            Tess.instance.setColor(-1, 100);
+            Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
+            float height = 1;
+            float w = 8;
+            Tess.instance.add(-w, height, 0);
+            Tess.instance.add(w, height, 0);
+            Tess.instance.add(w, -height, 0);
+            Tess.instance.add(-w, -height, 0);
+            Tess.instance.add(-height, w, 0);
+            Tess.instance.add(height, w, 0);
+            Tess.instance.add(height, -w, 0);
+            Tess.instance.add(-height, -w, 0);
+            Tess.instance.draw(GL_QUADS);
+            if (Game.DO_TIMING)
+                TimingHelper.endSec();
+            Shader.disable();
+        }
 
-      if (this.gui != null) {
-          this.gui.render(fTime, Mouse.getX(), Mouse.getY());
-      } else if (this.world != null) {
+        if (this.gui != null) {
+            this.gui.render(fTime, Mouse.getX(), Mouse.getY());
+        } else if (this.world != null) {
 
-          if (showGrid) {
-              int ipX = GameMath.floor(px);
-              int ipY = GameMath.floor(py);
-              int ipZ = GameMath.floor(pz);
-              int icX = ipX>>4;
-              int icZ = ipZ>>4;
-              int lenOver = RegionRenderer.LENGTH_OVER;
-              lenOver+=8;
-              int chunksW = lenOver * RegionRenderer.REGION_SIZE;
-              int chunkHalfW = ((lenOver-1)/2) * RegionRenderer.REGION_SIZE;
-//              int minChunkX = (ipX)-chunkW;
-//              int minChunkZ = (ipZ)-chunkW;
-//              int maxChunkX = (ipX)+chunkW;
-//              int maxChunkZ = (ipZ)+chunkW;
-              Tess t = Tess.instance;
-              float chunkWPx=12.0f;
-              float screenX = 140;
-              float screenZ = 140;
-              for (int cX = 0; cX < chunksW; cX++) {
-                  for (int cZ = 0; cZ < chunksW; cZ++) {
-                      t.setOffset(screenX+chunkWPx*cX, screenZ+chunkWPx*cZ, 0);
-                      int worldChunkX = icX-chunkHalfW+cX;
-                      int worldChunkZ = icZ-chunkHalfW+cZ;
-                      Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
-                      
-                      float border = 2;
-                      MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
-                      if (region == null) {
-                          t.setColorF(0xff0000, 1);    
-                      } else
-//                          if (!region.isRenderable) {
-//                          t.setColorF(0x555500, 1);
-//                      } else
-                          {
-                          int r = 0x777777;
-                          if (Math.abs(region.rX)%2==Math.abs(region.rZ)%2)
-                              r = 0;
-                              
-                          t.setColorF(r, 1);
-                      }
-                      t.add(0, chunkWPx);
-                      t.add(chunkWPx, chunkWPx);
-                      t.add(chunkWPx, 0);
-                      t.add(0, 0);
-                      if (c == null) {
-                          t.setColorF(0x993333, 1);
-                      } else if (!c.isValid){
-                          t.setColorF(0x999933, 1);
-                      } else if (worldChunkX==icX&&worldChunkZ==icZ) {
-                          t.setColorF(0x333399, 1);
-                      } else {
-                          t.setColorF(0x339933, 1);
-                      }
-                      t.add(border, chunkWPx-border);
-                      t.add(chunkWPx-border, chunkWPx-border);
-                      t.add(chunkWPx-border, border);
-                      t.add(border, border);
-                  }   
-              }
-              Shaders.colored.enable();
-              t.drawQuads();
-              Shader.disable();
-          }
-          if (show) {
-              if (Game.DO_TIMING) TimingHelper.startSec("debugOverlay");
-              if (this.debugOverlay != null) {
-                  this.debugOverlay.render(fTime, 0, 0);
-              }
-              if (Game.DO_TIMING) TimingHelper.endSec();
-          }
-          if (this.chatOverlay != null) {
-              this.chatOverlay.render(fTime, 0, 0);
-          }
-          if (Game.DO_TIMING) TimingHelper.startSec("statsOverlay");
+            if (showGrid) {
+                int ipX = GameMath.floor(px);
+                int ipY = GameMath.floor(py);
+                int ipZ = GameMath.floor(pz);
+                int icX = ipX >> 4;
+                int icZ = ipZ >> 4;
+                int lenOver = RegionRenderer.LENGTH_OVER;
+                lenOver += 8;
+                int chunksW = lenOver * RegionRenderer.REGION_SIZE;
+                int chunkHalfW = ((lenOver - 1) / 2) * RegionRenderer.REGION_SIZE;
+//                int minChunkX = (ipX) - chunkW;
+//                int minChunkZ = (ipZ) - chunkW;
+//                int maxChunkX = (ipX) + chunkW;
+//                int maxChunkZ = (ipZ) + chunkW;
+                Tess t = Tess.instance;
+                float chunkWPx = 12.0f;
+                float screenX = 140;
+                float screenZ = 140;
+                for (int cX = 0; cX < chunksW; cX++) {
+                    for (int cZ = 0; cZ < chunksW; cZ++) {
+                        t.setOffset(screenX + chunkWPx * cX, screenZ + chunkWPx * cZ, 0);
+                        int worldChunkX = icX - chunkHalfW + cX;
+                        int worldChunkZ = icZ - chunkHalfW + cZ;
+                        Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
 
-          if (this.statsCached != null) {
-              this.statsCached.render(fTime, 0, 0);
-          }
-      }
-      if (Game.DO_TIMING) TimingHelper.endSec();
-      
-      if (Game.DO_TIMING) TimingHelper.endSec();
-      glEnable(GL_DEPTH_TEST);
+                        float border = 2;
+                        MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
+                        if (region == null) {
+                            t.setColorF(0xff0000, 1);
+                        } else /*if (!region.isRenderable) {
+                            t.setColorF(0x555500, 1);
+                        } else*/
+                        {
+                            int r = 0x777777;
+                            if (Math.abs(region.rX) % 2 == Math.abs(region.rZ) % 2)
+                                r = 0;
 
-      if (Game.DO_TIMING) TimingHelper.endSec();
-      if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-      
-  }
+                            t.setColorF(r, 1);
+                        }
+                        t.add(0, chunkWPx);
+                        t.add(chunkWPx, chunkWPx);
+                        t.add(chunkWPx, 0);
+                        t.add(0, 0);
+                        if (c == null) {
+                            t.setColorF(0x993333, 1);
+                        } else if (!c.isValid) {
+                            t.setColorF(0x999933, 1);
+                        } else if (worldChunkX == icX && worldChunkZ == icZ) {
+                            t.setColorF(0x333399, 1);
+                        } else {
+                            t.setColorF(0x339933, 1);
+                        }
+                        t.add(border, chunkWPx - border);
+                        t.add(chunkWPx - border, chunkWPx - border);
+                        t.add(chunkWPx - border, border);
+                        t.add(border, border);
+                    }
+                }
+                Shaders.colored.enable();
+                t.drawQuads();
+                Shader.disable();
+            }
+            if (show) {
+                if (Game.DO_TIMING)
+                    TimingHelper.startSec("debugOverlay");
+                if (this.debugOverlay != null) {
+                    this.debugOverlay.render(fTime, 0, 0);
+                }
+                if (Game.DO_TIMING)
+                    TimingHelper.endSec();
+            }
+            if (this.chatOverlay != null) {
+                this.chatOverlay.render(fTime, 0, 0);
+            }
+            if (Game.DO_TIMING)
+                TimingHelper.startSec("statsOverlay");
+
+            if (this.statsCached != null) {
+                this.statsCached.render(fTime, 0, 0);
+            }
+            if (Game.DO_TIMING)
+                TimingHelper.endSec();
+        }
+
+        if (Game.DO_TIMING)
+            TimingHelper.endSec();
+        glEnable(GL_DEPTH_TEST);
+
+        if (Game.DO_TIMING)
+            TimingHelper.endSec();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+    }
 
     @Override
     public void onStatsUpdated() {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >4444/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime > 4000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
           lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
 //          Engine.worldRenderer.initShaders();
+          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();
 //            
 //          BlockTextureArray.getInstance().reloadTexture("images/log.png");
 //          BlockTextureArray.getInstance().reloadTexture("images/log_top.png");
-          BlockTextureArray.getInstance().reloadTexture("images/tallgrass.png");
+//          BlockTextureArray.getInstance().reloadTexture("images/tallgrass.png");
 //          BlockTextureArray.getInstance().reloadTexture("images/dirt.png");
-//          BlockTextureArray.getInstance().reloadTexture("images/grass.png");
+          BlockTextureArray.getInstance().reloadTexture("images/stone.png");
 //          BlockTextureArray.getInstance().reloadTexture("images/grass_side.png");
 //          BlockTextureArray.getInstance().reloadTexture("images/grass_side_overlay.png");
 //          Engine.textures.refreshNoiseTextures();
@@ -837,15 +1009,15 @@ public class Game extends GameBase implements IErrorHandler {
             pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
             if (this.world.lights.size() > 0) {
                 DynamicLight l = this.world.lights.get(0);
-//                l.loc.x = px;
-//                l.loc.y = py;
-//                l.loc.z = pz;
-//                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
-//                l.intensity = 2.6F;
-//                l.color = new Vector3f(1*l.intensity);
-//                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
-//                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
-//                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
+                l.loc.x = px;
+                l.loc.y = py;
+                l.loc.z = pz;
+                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
+                l.intensity = 0.4F;
+                l.color = new Vector3f(1*l.intensity);
+                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
+                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
+                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
             }
           float yaw = player.yaw;
           float pitch = player.pitch;
@@ -881,6 +1053,9 @@ public class Game extends GameBase implements IErrorHandler {
             float renderRegionZ = follow ? pz : lastCamZ;
             int xPosP = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
             int zPosP = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+            if (Engine.updateRenderOffset) {
+                Engine.regionRenderer.reRender();
+            }
             Engine.regionRenderer.update(this.world, px, py, pz, xPosP, zPosP, f);
         }
     }
@@ -961,6 +1136,7 @@ public class Game extends GameBase implements IErrorHandler {
        }
        ChatManager.getInstance().saveInputHistory();
        Engine.regionRenderer.tickUpdate();
+       Engine.worldRenderer.tickUpdate();
 //       if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
 //           this.setWorld(null);
 //           showGUI(new GuiMainMenu());

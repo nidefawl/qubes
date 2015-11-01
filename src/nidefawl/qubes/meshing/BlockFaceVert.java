@@ -2,6 +2,7 @@ package nidefawl.qubes.meshing;
 
 import java.nio.ByteOrder;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 
@@ -16,6 +17,7 @@ public class BlockFaceVert {
     int dirOffset;
     int normal;
     int direction;
+    
 
     public void setColorRGBAF(float r, float g, float b, float a) {
         float scale = 255;
@@ -30,6 +32,10 @@ public class BlockFaceVert {
             rgb = iR << 16 | iG << 8 | iB;
         }
         rgba = rgb | iA << 24;
+    }
+
+    public void setColorRGBA(int a) {
+        rgba = a;
     }
 
     public void setUV(float u, float v) {

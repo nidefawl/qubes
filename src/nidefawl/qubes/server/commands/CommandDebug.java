@@ -3,6 +3,7 @@ package nidefawl.qubes.server.commands;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.StringUtil;
+import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
 
 public class CommandDebug extends Command {
@@ -18,6 +19,10 @@ public class CommandDebug extends Command {
                 case "deletechunks":
                     int n = ((WorldServer)source.getWorld()).deleteAllChunks();
                     source.sendMessage("Deleted "+n+" chunks");
+                    return;
+                case "pos":
+                    Vec3D pos = ((Player)source).pos;
+                    System.out.println(String.format("%.0f %.0f %.0f", pos.x, pos.y, pos.z));
                     return;
             }
         }

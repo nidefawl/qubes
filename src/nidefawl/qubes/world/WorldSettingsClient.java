@@ -9,13 +9,13 @@ import nidefawl.qubes.network.StreamIO;
 import nidefawl.qubes.network.packet.Packet;
 
 public class WorldSettingsClient implements IWorldSettings {
-    UUID           uuid;
-    long           seed;
-    long           time;
-    private int    id;
-    private String worldName;
-    long           dayLen;
-    boolean        isFixedTime;
+    public UUID           uuid;
+    public long           seed;
+    public long           time;
+    public int    id;
+    public String worldName;
+    public long           dayLen;
+    public boolean        isFixedTime;
 
     @Override
     public void read(DataInput in) throws IOException {

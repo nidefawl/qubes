@@ -42,8 +42,7 @@ public class BootClient {
                 switch (arg) {
                     case "modules": {
                         String path = getValue(args, i, arg);
-                        WorkingEnv.setModulePath(path);
-                        System.err.println("loading modules from "+WorkingEnv.getModulesDir());
+                        ModuleLoader.setOverrideModules(path);
                         break;
                     }
                     case "moduledir": {

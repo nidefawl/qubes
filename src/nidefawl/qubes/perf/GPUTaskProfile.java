@@ -99,7 +99,11 @@ public class GPUTaskProfile implements Poolable {
         for (int i = 0; i < indentation; i++) {
             s+="  ";
         }
-        s+= name + " : " + getTimeTaken() / 1000 / 1000f + "ms";
+        float f = getTimeTaken() / 1000 / 1000f;
+        s+= name + " : " + f + "ms";
+        if (name.startsWith("Frame ")) {
+            s+=" ("+(int)(1000.0f/f)+")";
+        }
         to.add(s);
         for (int i = 0; i < children.size(); i++) {
             children.get(i).dump(to, indentation + 1);

@@ -4,26 +4,31 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileFilter;
 import java.util.HashMap;
 
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.assets.AssetVoxModel;
+import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.models.loader.ModelVox;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.vec.AABB;
-import nidefawl.qubes.vec.Frustum;
-import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.util.IManagedResource;
+import nidefawl.qubes.util.IResourceManager;
+import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
 
-public class WorldRenderer {
+public class WorldRenderer extends AbstractRenderer {
 
     public static final int NUM_PASSES        = 4;
     public static final int PASS_SOLID        = 0;
@@ -56,36 +61,25 @@ public class WorldRenderer {
     private boolean startup = true;
 
 
-    public int                  texWaterNormals;
+    public int                  texWaterNoise;
     public Shader       terrainShader;
     public Shader       terrainShaderFar;
     public Shader       skyShader;
     public Shader       waterShader;
+    public Shader       model;
     
     private TesselatorState skybox1;
     private TesselatorState skybox2;
+    ModelVox vox;
+    private Shader shaderZPre;
 
 
-    private void releaseShaders() {
-        if (terrainShader != null) {
-            terrainShader.release();
-            terrainShader = null;
-        }
-        if (waterShader != null) {
-            waterShader.release();
-            waterShader = null;
-        }
-        if (skyShader != null) {
-            skyShader.release();
-            skyShader = null;
-        }
-    }
-    
     public void initShaders() {
         try {
+            pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_waterShader = assetMgr.loadShader("shaders/basic/water");
-            Shader terrain = assetMgr.loadShader("shaders/basic/terrain", new IShaderDef() {
+            Shader new_waterShader = assetMgr.loadShader(this, "terrain/water");
+            Shader terrain = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
                     if ("TERRAIN_DRAW_MODE".equals(define)) {
@@ -95,7 +89,7 @@ public class WorldRenderer {
                 }
                 
             });
-            Shader terrainFar = assetMgr.loadShader("shaders/basic/terrain", new IShaderDef() {
+            Shader terrainFar = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
                     if ("TERRAIN_DRAW_MODE".equals(define)) {
@@ -108,27 +102,62 @@ public class WorldRenderer {
                 }
                 
             });
-            Shader sky = assetMgr.loadShader("shaders/basic/sky");
-            releaseShaders();
-            terrainShader = terrain;
-            terrainShaderFar = terrainFar;
-            skyShader = sky;
-            waterShader = new_waterShader;
+
+            Shader shaderZPre = assetMgr.loadShader(this, "terrain/terrain_pre", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("TERRAIN_DRAW_MODE".equals(define)) {
+                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
+                    }
+                    return null;
+                }
+                
+            });
+            Shader model = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("TERRAIN_DRAW_MODE".equals(define)) {
+                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
+                    }
+                    if ("MODEL_RENDER".equals(define)) {
+                        return "#define MODEL_RENDER";
+                    }
+                    return null;
+                }
+                
+            });
+            Shader sky = assetMgr.loadShader(this, "sky/sky");
+            popNewShaders();
+            this.terrainShader = terrain;
+            this.terrainShaderFar = terrainFar;
+            this.skyShader = sky;
+            this.waterShader = new_waterShader;
+            this.model = model;
+            this.shaderZPre = shaderZPre;
             
-            terrainShader.enable();
-            terrainShader.setProgramUniform1i("blockTextures", 0);
-            terrainShader.setProgramUniform1i("noisetex", 1);
+            this.shaderZPre.enable();
+            this.shaderZPre.setProgramUniform1i("blockTextures", 0);
             
-            terrainShaderFar.enable();
-            terrainShaderFar.setProgramUniform1i("blockTextures", 0);
-            terrainShaderFar.setProgramUniform1i("noisetex", 1);
+            this.terrainShader.enable();
+            this.terrainShader.setProgramUniform1i("blockTextures", 0);
+            this.terrainShader.setProgramUniform1i("noisetex", 1);
+            this.terrainShader.setProgramUniform1i("normalTest", 2);
             
-            waterShader.enable();
-            waterShader.setProgramUniform1i("blockTextures", 0);
-            waterShader.setProgramUniform1i("waterNormals", 1);
+            
+            this.terrainShaderFar.enable();
+            this.terrainShaderFar.setProgramUniform1i("blockTextures", 0);
+            this.terrainShaderFar.setProgramUniform1i("noisetex", 1);
+
+            this.waterShader.enable();
+            this.waterShader.setProgramUniform1i("blockTextures", 0);
+            this.waterShader.setProgramUniform1i("waterNoiseTexture", 1);
+            this.model.enable();
+            this.model.setProgramUniform1i("blockTextures", 0);
+            this.model.setProgramUniform1i("waterNormals", 1);
             Shader.disable();
             startup = false;
         } catch (ShaderCompileError e) {
+            releaseNewShaders();
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
             if (startup) {
@@ -139,14 +168,122 @@ public class WorldRenderer {
         }
         startup = false;
     }
+    int idx = -1;
+    private int texNormalTest;
+    public void reloadModel() {
+//        File[] list = (new File(WorkingEnv.getAssetFolder(), "models")).listFiles(new FileFilter() {
+//            
+//            @Override
+//            public boolean accept(File pathname) {
+//                return pathname.isFile()&&pathname.getName().endsWith(".vox");
+//            }
+//        });
+//        if (list != null&&list.length>0) {
+//            
+//            idx++;
+//            if (idx >= list.length) {
+//                idx = 0;
+//            }
+//            String mName = list[idx].getName();
+//
+//            AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/" + mName);
+//            if (this.vox != null)
+//                this.vox.release();
+//            vox = new ModelVox(asset);   
+//        }
+        if (this.texNormalTest  > 0)
+            glDeleteTextures(this.texNormalTest);
+        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
+        AssetTexture tex1 = AssetManager.getInstance().loadPNGAsset("textures/heightmap_03.png");
+        
+        if (tex.getWidth() == tex1.getWidth() && tex.getHeight() == tex1.getHeight()) {
+            for (int x = 0; x < tex.getWidth(); x++) {
+                for (int y = 0; y < tex.getHeight(); y++) {
+                    int idx = y*tex.getWidth()+x;
+                    int height = tex1.getData()[idx*4+0]&0xFF;
+                    height-=118;
+                    height*=2;
+                    if (height < 0 || height > 255)
+                    System.out.println(height);
+                    if (height > 255) {
+                        height = 255;
+                    }
+                    if (height < 0) height = 0;
+                    tex.getData()[idx*4+3] = (byte) height;
+                }
+            }
+            System.err.println("copied alpha channel");
+        } else {
+            System.err.println("!");
+        }
+        this.texNormalTest = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
+        
+
+//        byte[] rgba = tex.getData();
+//        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
+//        int w = tex.getWidth();
+//        int h = tex.getWidth();
+//        for (int x = 0; x < 10; x++) {
+//
+//            for (int y = 0; y < 10; y++) {
+//                int idx = y*w+x;
+//                int pixel = rgba_int[idx];
+//                String s = Integer.toHexString(pixel);
+//                while(s.length()<8) {
+//                    s = "0"+s;
+//                }
+//                float a = (((pixel>>24)&0xFF) / 255.0f);
+//                float nx = (((pixel>>16)&0xFF) / 255.0f) * 2.0f - 1.0f;
+//                float ny = (((pixel>>8)&0xFF) / 255.0f) * 2.0f - 1.0f;
+//                float nz = (((pixel>>0)&0xFF) / 255.0f) * 2.0f - 1.0f;
+//                System.out.println(""+x+","+y+" = 0x"+s+" = "+String.format("%.2f %.2f %.2f %.2f", nx, ny, nz, a));
+////                break;
+//            }
+//        }
+//        
+        
+    }
 
     public void init() {
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         initShaders();
         skybox1 = new TesselatorState();
         skybox2 = new TesselatorState();
-        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/normals.png");
-        texWaterNormals = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
+        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/noise.png");
+        texWaterNoise = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
+//        reloadModel();
+        
+
+        AssetTexture texNormalTest = AssetManager.getInstance().loadPNGAsset("textures/normalmaptest.png");
+        
+        this.texNormalTest = TextureManager.getInstance().makeNewTexture(texNormalTest, true, true, 10);
+
+//        byte[] rgba = tex.getData();
+//        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
+//        int w = tex.getWidth();
+//        int h = tex.getWidth();
+//        for (int x = 0; x < 10; x++) {
+//
+//            for (int y = 0; y < 10; y++) {
+//                int idx = y*w+x;
+//                int pixel = rgba_int[idx];
+//                String s = Integer.toHexString(pixel);
+//                while(s.length()<8) {
+//                    s = "0"+s;
+//                }
+//                float nx = (((pixel>>16)&0xFF) / 255.0f) * 2.0f - 1.0f;
+//                float ny = (((pixel>>8)&0xFF) / 255.0f) * 2.0f - 1.0f;
+//                float nz = (((pixel>>0)&0xFF) / 255.0f) * 2.0f - 1.0f;
+//                System.out.println(""+x+","+y+" = 0x"+s+" = "+String.format("%.2f %.2f %.2f", nx, ny, nz));
+//            }
+//        }
+//        
+        
+        
+
+        AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/dragon.vox");
+        if (this.vox != null) this.vox.release();
+        vox = new ModelVox(asset);
     }
 
     public void renderWorld(World world, float fTime) {
@@ -170,13 +307,13 @@ public class WorldRenderer {
 
         if (Game.DO_TIMING)
             TimingHelper.endStart("testShader");
-        
-        terrainShader.enable();
+
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("terrain shader");
         
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
+        GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, this.texNormalTest);
         
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
@@ -184,7 +321,23 @@ public class WorldRenderer {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("pre renderMain");
-        Engine.regionRenderer.renderMain(world, fTime, this);
+        boolean zPre = false; //sucks, not faster
+        if (zPre) {
+            glColorMask(false, false, false, false);
+            glDepthFunc(GL_LESS);
+            shaderZPre.enable();
+            Engine.regionRenderer.renderMainPre(world, fTime, this);
+            glColorMask(true, true, true, true);
+            glDepthFunc(GL_EQUAL);
+            glDepthMask(false);
+            terrainShader.enable();
+            Engine.regionRenderer.renderMainPost(world, fTime, this);
+            glDepthFunc(GL_LEQUAL);
+            glDepthMask(true);
+        } else {
+            terrainShader.enable();
+            Engine.regionRenderer.renderMain(world, fTime, this);
+        }
 //        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
         
@@ -204,10 +357,43 @@ public class WorldRenderer {
 //            Engine.checkGLError("renderSecondPass");
 //        
         glDisable(GL_BLEND);
+        model.enable();
+        renderModels(model, PASS_SOLID, fTime);
         Shader.disable();
 
         if (Game.DO_TIMING)
             TimingHelper.endSec();
+    }
+
+    /**
+     * @param pass
+     * @param fTime 
+     */
+    public void renderModels(Shader modelShader, int pass, float fTime) {
+        if (vox != null) {
+            BufferedMatrix mat = Engine.getTempMatrix();
+            BufferedMatrix mat2 = Engine.getTempMatrix2();
+            float modelScale = 1 / 16f;
+            mat.setIdentity();
+            mat.translate(mPos.x, mPos.y, mPos.z);
+            mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
+            float w = (vox.size.x);
+            float l = (vox.size.z);
+            mat.translate(w * 0.5f * modelScale, 0, l * 0.5f * modelScale);
+            mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+
+            mat.translate(-w * 0.5f * modelScale, 0, -l * 0.5f * modelScale);
+            mat.scale(modelScale);
+            mat.update();
+            modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+            mat2.setIdentity();
+            mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+            mat2.invert().transpose();
+            mat2.update();
+            UniformBuffer.setNormalMat(mat2.get());
+            vox.render(pass);
+            UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
+        }
     }
 
     public void renderTransparent(World world, float fTime) {
@@ -216,9 +402,8 @@ public class WorldRenderer {
         if (Game.DO_TIMING)
             TimingHelper.startSec("renderSecondPass");
         waterShader.enable();
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNoise);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-        glDisable(GL_BLEND);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
 
@@ -237,13 +422,15 @@ public class WorldRenderer {
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        renderModels(Shaders.normals, PASS_SOLID, fTime);
+        BufferedMatrix mat = Engine.getIdentityMatrix();
+        Shaders.normals.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         Engine.regionRenderer.setDrawMode(-1);
 //        glLineWidth(2.0F);
 
 //        Shaders.colored.enable();
 //        Engine.regionRenderer.renderDebug(world, fTime);
         Shader.disable();
-        
     }
 
     public void renderTerrainWireFrame(World world, float fTime) {
@@ -310,10 +497,6 @@ public class WorldRenderer {
             Shader.disable();
             glPopAttrib();
         }
-    }
-
-    public void release() {
-        releaseShaders();
     }
 
     public void resize(int displayWidth, int displayHeight) {
@@ -389,6 +572,25 @@ public class WorldRenderer {
         //    tesselator.draw(GL_TRIANGLES);
         tesselator.draw(GL_QUADS, skybox2);
         
+    }
+
+    /**
+     * @param x
+     * @param y
+     * @param z
+     */
+    Vector3f mPos = new Vector3f();
+    public void setModelPos(float x, float y, float z) {
+        mPos.set(x, y, z);;
+    }
+    float modelRot, lastModelRot;
+    public void tickUpdate() {
+        this.lastModelRot = modelRot;
+        this.modelRot+=3.8f;
+        if (this.modelRot > 180) {
+            this.modelRot -= 360;
+            this.lastModelRot-=360;
+        }
     }
 
 }

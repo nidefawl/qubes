@@ -11,6 +11,8 @@ import java.util.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.Chunk;
@@ -18,6 +20,7 @@ import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
+import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
@@ -28,7 +31,7 @@ import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
-public class RegionRenderer {
+public class RegionRenderer extends AbstractRenderer {
     public static final int REGION_SIZE_BITS            = 1;
     public static final int REGION_SIZE                 = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK            = REGION_SIZE - 1;
@@ -76,7 +79,7 @@ public class RegionRenderer {
     final static int MAX_OCCL_QUERIES = 8;
     final static int MIN_DIST_OCCL = 1;
     final static int MIN_STATE_OCCL = Frustum.FRUSTUM_INSIDE_FULLY;
-    final static boolean ENABLE_OCCL = !GPUProfiler.PROFILING_ENABLED;
+    final static boolean ENABLE_OCCL = false;//!GPUProfiler.PROFILING_ENABLED;
     private int[] occlQueries = new int[MAX_OCCL_QUERIES];
     private MeshedRegion[] occlQueriesRunning = new MeshedRegion[MAX_OCCL_QUERIES];
     int queriesRunning = 0;
@@ -115,21 +118,17 @@ public class RegionRenderer {
         IntBuffer intbuf = Engine.glGenBuffers(this.occlQueries.length);
         intbuf.get(this.occlQueries);
     }
-    private void releaseShaders() {
-        if (occlQueryShader != null) {
-            occlQueryShader.release();
-            occlQueryShader = null;
-        }
-    }
     
     public void initShaders() {
         try {
+            pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_occlQueryShader = assetMgr.loadShader("shaders/basic/occlusion_query");
-            releaseShaders();
+            Shader new_occlQueryShader = assetMgr.loadShader(this, "terrain/occlusion_query");
+            popNewShaders();
             occlQueryShader = new_occlQueryShader;
             startup = false;
         } catch (ShaderCompileError e) {
+            releaseNewShaders();
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
             if (startup) {
@@ -266,6 +265,7 @@ public class RegionRenderer {
                 r.isUpdating = false;
                 r.occlusionResult = 0;
                 r.occlusionQueryState = 0;
+                r.updateBB();
             }
         }
         for (int i = 0; i < occlQueriesRunning.length; i++) {
@@ -277,6 +277,9 @@ public class RegionRenderer {
             occlQueriesRunning[i] = null;
         }        
         queriesRunning = 0;
+        this.occlCulled = 0;
+        renderList.clear();
+        shadowRenderList.clear();
     }
     public void flagBlock(int x, int y, int z) {
 //        int toRegionX = x >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
@@ -323,6 +326,88 @@ public class RegionRenderer {
         this.drawInstances = i;
     }
 
+    ArrayList<MeshedRegion> justrendered = Lists.newArrayList();
+    public void renderMainPost(World world, float fTime, WorldRenderer worldRenderer) {
+        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
+        for (MeshedRegion r : this.justrendered) {
+
+            if (r.hasPass(PASS_SOLID)) {
+                //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
+                r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                this.numV += r.getNumVertices(PASS_SOLID);
+            }
+            if (numV < 1000000) {
+                if (r.hasPass(PASS_LOD)) {
+                    r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                    this.numV += r.getNumVertices(PASS_LOD);
+                }
+            }
+        }
+    }
+    public void renderMainPre(World world, float fTime, WorldRenderer worldRenderer) {
+        justrendered.clear();
+        int size = renderList.size();
+//        PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE
+        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
+        this.occlCulled=0;
+        this.numV = 0;
+        int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
+        Shader cur = worldRenderer.terrainShader;
+        for (int dist = 0; dist < 1; dist++)  {
+            for (int i = 0; i < size; i++) {
+                MeshedRegion r = renderList.get(i);
+                if (!r.hasAnyPass()) {
+                    continue;
+                }
+                if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
+                    continue;
+                }
+//                if ((dist == 0) != (r.distance < LOD_DISTANCE)) continue;
+                if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
+                        && r.distance > MIN_DIST_OCCL 
+                        && r.frustumStates[0] >= MIN_STATE_OCCL) {
+                    if (r.occlusionQueryState == 0 && r.occlusionResult < 1) {
+                        int idx = -1;
+                        int j = 0;
+                        for (; j < this.occlQueriesRunning.length; j++) {
+                            if (this.occlQueriesRunning[j] == null) {
+                                idx = j;
+                                break;
+                            }
+                        }
+                        r.occlusionQueryState = 1;
+                        occlQueriesRunning[idx] = r;
+                        r.queryPos.set(camX, camY, camZ);
+                        occlQueryShader.enable();
+                        GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
+                        GL11.glColorMask(false, false, false, false);
+                        GL11.glDepthMask(false);
+                        r.renderRegion(fTime, PASS_SHADOW_SOLID, drawMode, this.drawInstances);
+                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        cur.enable();
+                        GL11.glColorMask(true, true, true, true);
+                        GL11.glDepthMask(true);
+                        GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
+                        queriesRunning++;
+                    }
+                }
+                this.rendered++;  
+                if (ENABLE_OCCL && r.distance > MIN_DIST_OCCL && r.occlusionResult == 1) {
+                    this.occlCulled++;
+                    continue;
+                }
+                if (r.hasPass(PASS_SOLID) || r.hasPass(PASS_LOD)) {
+                    justrendered.add(r);
+                }
+//                r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+            }
+//            if (dist == 0) {
+//                cur = worldRenderer.terrainShaderFar;
+//                cur.enable();
+//                GL11.glDisable(GL11.GL_BLEND);
+//            }
+        }
+    }
 
     public void renderMain(World world, float fTime, WorldRenderer worldRenderer) {
         int size = renderList.size();
@@ -332,7 +417,7 @@ public class RegionRenderer {
         this.numV = 0;
         int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
-        for (int dist = 0; dist < 2; dist++)  {
+        for (int dist = 0; dist < 1; dist++)  {
             for (int i = 0; i < size; i++) {
                 MeshedRegion r = renderList.get(i);
                 if (!r.hasAnyPass()) {
@@ -376,16 +461,16 @@ public class RegionRenderer {
                     continue;
                 }
                 if (r.hasPass(PASS_SOLID)) {
-//                  System.out.println(glGetInteger(GL_DEPTH_FUNC));
-                  r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
-                  this.numV += r.getNumVertices(PASS_SOLID);
-              }
-              if (numV < 1000000 ) {
-                  if (dist==0&&r.hasPass(PASS_LOD)) {
-                      r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
-                      this.numV += r.getNumVertices(PASS_LOD);
-                  }
-              }
+                    //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
+                    r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                    this.numV += r.getNumVertices(PASS_SOLID);
+                }
+                if (numV < 1000000) {
+                    if (r.hasPass(PASS_LOD)) {
+                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        this.numV += r.getNumVertices(PASS_LOD);
+                    }
+                }
             }
             if (dist == 0) {
                 cur = worldRenderer.terrainShaderFar;
