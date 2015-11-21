@@ -143,18 +143,16 @@ public class ModelLoaderQModel {
 				for (int j = 0; j < numBones; j++) {
 					int boneIdx = readUByte();
 					float f = readFloat();
-					if (f > 1E-2F) {
-	                    v.addBoneWeight(boneIdx, f);
-	                    if (boneIdx > maxBoneIDFromVertexWeight) {
-	                        maxBoneIDFromVertexWeight = boneIdx;
-	                    }   
-					}
-				}
-                if (v.numBones == 1) {
-                    if (v.weights[0] > 0) {
-                        v.weights[0] = 1;
+                    v.addBoneWeight(boneIdx, f);
+                    if (boneIdx > maxBoneIDFromVertexWeight) {
+                        maxBoneIDFromVertexWeight = boneIdx;
                     }
-                }
+				}
+//                if (v.numBones == 1) {
+//                    if (v.weights[0] > 0) {
+//                        v.weights[0] = 1;
+//                    }
+//                }
 				v.refCount = readUByte();
 				listVertex.add(v);
 			}
@@ -225,93 +223,83 @@ public class ModelLoaderQModel {
 				jt.name = readString(32);
 				jt.parentName = readString(32);
 				float[] mat = new float[16];
-				jt.modelMat = new Matrix4f();
+				jt.matRest = new Matrix4f();
 				for (int j = 0; j < 16; j++) {
 				    mat[j] = readFloat();
 				}
-                jt.modelMat.load(mat);
-				jt.rotation = readQuaternion();
-                jt.position = readVec3();
-                jt.direction = readVec3();
-//                if (jt.idx == 0) {
-//                    jt.modelMat.translate(jt.position.negate());
-//                    jt.modelMat.rotate(90*GameMath.PI_OVER_180, 0, 0, 1);
-//                    System.out.println(jt.name);
-//                    jt.modelMat.translate(jt.position.negate());
-//                }
-				int numRotFrames = readUShort();
-				int numTranslationFrames = readUShort();
-				jt.animation = new QJointAnimation(numRotFrames, numTranslationFrames);
-                for (int j = 0; j < numRotFrames; j++) {
+                jt.matRest.load(mat);
+                jt.tail = readVec3();
+				int numFrames = readUShort();
+				jt.animation = new QJointAnimation(numFrames);
+                for (int j = 0; j < numFrames; j++) {
                     float time = readFloat();
-                    Quaternion q = readQuaternion();
-                    QModelKeyframeRot frame = new QModelKeyframeRot(j, time, q);
+                    Matrix4f matAnim = new Matrix4f();
+                    for (int k = 0; k < 16; k++) {
+                        mat[k] = readFloat();
+                    }
+                    matAnim.load(mat);
+                    QModelKeyFrameMatrix frame = new QModelKeyFrameMatrix(j, time, matAnim);
                     jt.animation.addFrame(frame);
                 }
-                for (int j = 0; j < numTranslationFrames; j++) {
-                    float time = readFloat();
-                    Vector3f q = readVec3();
-                    QModelKeyframeTrans frame = new QModelKeyframeTrans(j, time, q);
-                    jt.animation.addFrame(frame);
-                }
+                Matrix4f.invert(jt.matRest, jt.matRestInv);
+                Matrix4f.transform(jt.matRestInv, jt.tail, jt.tailLocal);
 				listJoints.add(jt);
 			}
             for (int i = 0; i < numJoints; i++) {
 
                 QModelJoint jt = listJoints.get(i);
-//                System.out.println(jt.name);
                 jt.parent = findJoint(jt.parentName);
-                jt.matLocal = new Matrix4f();
-                jt.matAbs = new Matrix4f();
-                jt.matFinal = new Matrix4f();
-                jt.matFinal2 = new Matrix4f();
-                jt.matLocal.setIdentity();
-                jt.matFinal.setIdentity();
-                jt.matAbs.setIdentity();
-//                if (jt.parent != null)
-                    jt.matLocal.translate(jt.position);
-                jt.matLocal.setFromQuat(jt.rotation.x, jt.rotation.y,jt.rotation.z, jt.rotation.w);
-//                jt.matLocal.load(jt.modelMat);
+//                System.out.println(jt.name+" = "+jt.parentName+"/"+(jt.parent!=null));
                 if (jt.parent != null) {
-                    if (jt.parent.matAbs == null) {
-                        throw new GameError("joints out of order!");
-                    }
-                    jt.matAbs.load(jt.matLocal);
-                    jt.matAbs.mulMat(jt.parent.matAbs);
                     jt.parent.addChild(jt);
-                } else {
-                    jt.matAbs.load(jt.matLocal);
                 }
-                jt.matFinal.load( jt.matAbs );
-                jt.matFinal2.load( jt.matAbs );
             }
             Matrix4f rootInverse = new Matrix4f();
-            rootInverse.load(listJoints.get(0).matAbs);
-            rootInverse.invert();
+            rootInverse.load(listJoints.get(0).matRestInv);
+            ModelQModel m = buildModel();
+            m.animate(0);
+            Vector3f tmp = new Vector3f();
 			for (int i = 0; i < numVertices; i++) {
 			    QModelVertex v = this.listVertex.get(i);
+                Vector3f v2 = new Vector3f();
+                Vector3f v3 = new Vector3f();
 			    if (v.numBones == 0) {
-                    v.matModelToBoneSpace=rootInverse;
-//                    Matrix4f.transform(rootInverse, v, v);
-			    } else {
-			        Matrix4f m = new Matrix4f();
-			        m.setZero();
-			        float total = 0;
+                    Matrix4f.transform(rootInverse, v, v);
+                } else {
+                    Matrix4f m2 = new Matrix4f();
+                    m2.setZero();
+                    Matrix4f m3 = new Matrix4f();
+                    m3.setZero();
+                    float total = 0;
+                    for (int j = 0; j < v.numBones; j++) {
+                        float weight = v.weights[j];
+                        total += weight;
+                    }
+                    float n = 1.0f / total;
+                    total = 0;
                     for (int j = 0; j < v.numBones; j++) {
                         QModelJoint jt = this.listJoints.get(v.bones[j]);
-                        float weight = v.weights[j];
-                        total+=weight;
-                        if (j == v.numBones-1) {
-                            if (total < 1) {
-                                weight += 1-total;
-                            }
+                        if ((jt.flags & 2) == 0) {
+                            throw new GameError("Invalid joint weight");
                         }
-                        m.addWeighted(jt.matAbs, weight);
+                        v.weights[j] *= n;
+                        total += v.weights[j];
+                        Matrix4f.transform(jt.matRestInv, v, v3);
+                        v3.scale(v.weights[j]);
+                        v2.addVec(v3);
+                        m2.addWeighted(jt.matRest, v.weights[j]);
+                        m3.addWeighted(jt.matRestInv, v.weights[j]);
+
                     }
-                    m.invert();
-                    v.matModelToBoneSpace = m;
-                    Matrix4f.transform(m, v, v);
-			    }
+                    v.local = v2;
+//                    Matrix4f.invert(m2, m2);
+//                    Matrix4f.transform(m3, v, v.local);
+                    m.transform(v, tmp);
+                    tmp.subtract(v);
+                    double d = tmp.length();
+                    if (d > 1)
+                        System.out.println("v v fail at " + v.idx + " dist is " + d);
+                }
 			}
 			if (maxBoneIDFromVertexWeight+1 > numJoints) {
 				throw new GameError("Bone weight idx does not match number of joints");

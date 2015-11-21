@@ -10,16 +10,14 @@ package nidefawl.qubes.models.qmodel;
 public class QJointAnimation {
     public KeyFrame[][] frames = new KeyFrame[2][];
     public float[] animLength = new float[2];
-    public float totalFrameTimeTranslate;
-    public float totalFrameTimeRot;
+    public float totalFrameTime;
 
     /**
      * @param numRotFrames
      * @param numTranslationFrames
      */
-    public QJointAnimation(int numRotFrames, int numTranslationFrames) {
+    public QJointAnimation(int numRotFrames) {
         this.frames[0] = new KeyFrame[numRotFrames];
-        this.frames[1] = new KeyFrame[numTranslationFrames];
         
     }
     public KeyFrame[] getFrames(int type) {

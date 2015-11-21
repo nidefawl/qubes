@@ -22,7 +22,7 @@ public class QModelVertex extends Vector3f {
     public int bones[] = new int[MAX_BONES];
 	public float weights[] = new float[MAX_BONES];
 	public int numBones = 0;
-    public Matrix4f matModelToBoneSpace;
+    public Vector3f local = new Vector3f();
 	public QModelVertex() {
 	}
 	/**

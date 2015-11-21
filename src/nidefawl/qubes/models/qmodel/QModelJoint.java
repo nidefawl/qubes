@@ -21,18 +21,15 @@ public class QModelJoint {
 	public int flags;
 	public String name;
 	public String parentName;
-	public Quaternion rotation;
-	public Vector3f position;
-	QJointAnimation animation;
+    public Matrix4f matRest;
+    public Matrix4f matDeform;
+    QJointAnimation animation;
 	public Vector3f color = Vector3f.ONE;
-    public QModelJoint parent;
-    public Matrix4f matLocal;
-    public Matrix4f matAbs;
-    public Matrix4f matFinal;
-    public Matrix4f matFinal2;
     private List<QModelJoint> children = Lists.newArrayList();
-    public Matrix4f modelMat;
-    public Vector3f direction;
+    public Vector3f tail;
+    public Vector3f tailLocal = new Vector3f();
+    public Matrix4f matRestInv = new Matrix4f();
+    public QModelJoint parent;
     /**
      * @param jt
      */
