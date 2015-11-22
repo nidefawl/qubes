@@ -2,6 +2,7 @@
 #define DO_SHADING
 
 #pragma include "ubo_scene.glsl"
+#pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 
 layout(std140) uniform LightInfo {
@@ -304,14 +305,15 @@ void main() {
     
     float sunTheta = max( dot(-prop.viewVector, normalize(SkyLight.lightDir.xyz)), 0.0 );
     prop.sunSpotDens = pow(sunTheta, 32.0)*1;
-    uint blockid = (prop.blockinfo.y&0xFFFu);
-    float renderpass = float((prop.blockinfo.y&0xF000u)>>12u);
+    uint blockid = BLOCK_ID(prop.blockinfo);
+    float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
 
     float isSky = float(blockid==0u);
     float isWater = float(blockid==4u);
     float isLight = float(blockid==6u);
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
+    float isEntity = float(renderpass==5);
     float alpha = mix(1, sceneColor.a, float(pass));
     if (pass > 0) {
         if(renderpass != 1)
@@ -319,13 +321,18 @@ void main() {
         if(sceneColor.a < 0.1)
             discard;
     }
+    float roughness = 1.3+isWater*30;
+
     const vec3 ambLight1 = normalize(vec3(50, 100, 50));
-    const vec3 ambLight2 = normalize(vec3(-50, -30, -50));
+    const vec3 ambLight2 = normalize(vec3(-50, -70, -50));
     float NdotLAmb1 = max(dot( prop.normal, ambLight1 ), 0);
     float NdotLAmb2 = max(dot( prop.normal, ambLight2 ), 0);
+    vec3 reflectDirAmb1 = (reflect(-ambLight1, prop.normal));  
+    vec3 reflectDirAmb2 = (reflect(-ambLight2, prop.normal));  
+    float specAmb1 = pow(max(dot(prop.viewVector, reflectDirAmb1), 0.0), 2);
+    float specAmb2 = pow(max(dot(prop.viewVector, reflectDirAmb2), 0.0), 2);
 
     vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-    float roughness = 1.3+isWater*30;
     float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness);
     float theta = max(dot(prop.viewVector, prop.normal), 0.0);
     float minRefl = 0.02;
@@ -374,9 +381,12 @@ void main() {
     vec3 lightColor2 = mix(vec3(1), vec3(0.56, 0.56, 1.0)*0.005, fNight);
 	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
     vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
-    vec3 Iamb = SkyLight.La.rgb * lightColor * ((NdotLAmb1+NdotLAmb2)*0.5f*0.2+0.8);
+    vec3 Iamb = SkyLight.La.rgb * lightColor * mix(((NdotLAmb1+NdotLAmb2)*0.5f), 1.2, isEntity*0.8);
+    // vec3 Iamb = SkyLight.La.rgb * lightColor * ((NdotLAmb1+NdotLAmb2)*0.5f);
     vec3 finalLight = vec3(0);
     finalLight += Iamb * (0.04+occlusion*(1-0.04)) * (0.04+skyLightLvl*(1-0.04));
+    // finalLight += NdotLAmb1 * SkyLight.Ld.rgb * lightColor2 * 0.02;
+    // finalLight += NdotLAmb2 * SkyLight.Ld.rgb * lightColor2 * 0.02;
     // finalLight += vec3(0.663)* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
     // finalLight += vec3(1, 0.9, 0.7)*0.363* (1.0-isLight*0.7)* (mix(1, occlusion, 0.79)) * blockLight;
     // lum = (clamp(pow(0.6+lum, 3)-1, 0, 1)+0.33)*isLight*0.82;
@@ -454,7 +464,11 @@ void main() {
     // terr =  mix( terr, fogColor, fogAmount );
     prop.albedo = mix(terr, sky, isSky);
     prop.albedo =  mix( prop.albedo, fogColor, fogAmount );
-
+    // if (isEntity == 1) {
+    //     if (length(prop.normal) < 0.8) {
+    //         prop.albedo = vec3(1,0,0);
+    //     }
+    // }
     // prop.albedo = mix(prop.albedo, fogged, clamp(1-prop.sunSpotDens*1.2, 0, 0.55));
 
     // if (length(debugcolor) > 0) {

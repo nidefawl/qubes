@@ -58,23 +58,24 @@ void main() {
     }
 #else
 
-    float fMod = floor(mod(ftime, 3));
+    // float fMod = floor(mod(ftime, 3));
     vec3 acolor = vec3(0);
-    if (abs(normal.x)+abs(normal.z) < 0.1) {
-        // if (fMod != 0)
-        //     discard;
-        acolor+=vec3(1, 0, 0);
-    }
-    else if (abs(normal.y)+abs(normal.z) < 0.1) {
-        // if (fMod != 1)
-        //     discard;
-        acolor+=vec3(0, 1, 0);
-    }
-    else if (abs(normal.x)+abs(normal.y) < 0.1) {
-        // if (fMod != 2)
-        //     discard;
+    // if (abs(normal.x)+abs(normal.z) < 0.1) {
+    //     // if (fMod != 0)
+    //     //     discard;
+    //     acolor+=vec3(1, 0, 0);
+    // }
+    // else if (abs(normal.y)+abs(normal.z) < 0.1) {
+    //     // if (fMod != 1)
+    //     //     discard;
+    //     acolor+=vec3(0, 1, 0);
+    // }
+    // else if (abs(normal.x)+abs(normal.y) < 0.1) {
+    //     // if (fMod != 2)
+    //     //     discard;
+    //     acolor+=vec3(0, 0, 1);
+    // }
         acolor+=vec3(0, 0, 1);
-    }
 #endif
     out_Color = vec4(vec3(acolor), color.a*fdistscale);
 }

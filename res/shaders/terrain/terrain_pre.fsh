@@ -6,6 +6,7 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "tonemap.glsl"
 #pragma include "util.glsl"
+#pragma include "blockinfo.glsl"
 
 uniform sampler2DArray blockTextures;
 
@@ -21,7 +22,7 @@ out uvec4 out_Material;
 out vec4 out_Light;
 
 void main(void) {
-	vec4 tex=texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
+	vec4 tex=texture(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)));
 	if (tex.a<1)
 		discard;
     out_Color = vec4(vec3(1), 1);

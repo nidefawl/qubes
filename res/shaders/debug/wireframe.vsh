@@ -10,6 +10,7 @@ out vec3 normal;
 out float ftime;
 out highp vec3 triangle;
 uniform vec3 in_offset;
+uniform int num_vertex;
 
 void main() {
 	vec4 vPos = in_position;
@@ -19,7 +20,7 @@ void main() {
 	ftime = FRAME_TIME*0.05;
 	normal  = in_normal.xyz;
 	color = linecolor;
-	int vertexID = int(mod(gl_VertexID, 4));
+	int vertexID = int(mod(gl_VertexID, num_vertex));
 	triangle = vec3(0, 0, 255);
 	if (vertexID == 1) {
     	triangle = vec3(0, 255, 0);

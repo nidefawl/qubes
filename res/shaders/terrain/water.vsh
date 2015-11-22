@@ -1,6 +1,7 @@
 #version 150 core
 
 #pragma include "ubo_scene.glsl"
+#pragma include "blockinfo.glsl"
 #pragma include "vertex_layout.glsl"
 
 out vec4 color;
@@ -20,8 +21,8 @@ out float isWater;
 
 void main() {
 	blockinfo = in_blockinfo;
-	faceDir = blockinfo.w&0x7u;
-    uint blockid = (in_blockinfo.y&0xFFFu);
+	faceDir = BLOCK_FACEDIR(blockinfo);
+    uint blockid = BLOCK_ID(blockinfo);
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
 	camNormal.xyz/=camNormal.w;// not required? (3x3 does not w)
 	normal = normalize(camNormal.xyz);

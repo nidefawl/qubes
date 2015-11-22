@@ -7,10 +7,11 @@
 #pragma include "ubo_constants.glsl"
 #pragma include "tonemap.glsl"
 #pragma include "util.glsl"
+#pragma include "blockinfo.glsl"
 
 uniform sampler2DArray blockTextures;
 uniform sampler2D noisetex;
-uniform sampler2D normalTest; // needs to be another array later one (I guess)
+uniform sampler2DArray normalTextures; // needs to be another array later one (I guess)
 
 
 in vec4 color;
@@ -38,11 +39,11 @@ void main(void) {
 	vec4 tex = vec4(vec3(1), 1);
 	// const float texScale = 1.0/16.0;
 	// vec2 xzPos = mod(position.xz, vec2(1.0));
-	// vec4 tex=texture(blockTextures, vec3((texcoord.st)*texScale + xzPos, float(blockinfo.x)));
+	// vec4 tex=texture(blockTextures, vec3((texcoord.st)*texScale + xzPos, BLOCK_TEX_SLOT(blockinfo)));
 	// tex.rgb *= vec3(0.267, 0.451, 0.208)*1.5f;
 #else
-	// vec4 tex=textureLod(blockTextures, vec3(texcoord.st, float(blockinfo.x)), 0 );
-	vec4 tex=texture(blockTextures, vec3(texcoord.st, float(blockinfo.x)));
+	// vec4 tex=textureLod(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)), 0 );
+	vec4 tex=texture(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)));
 	// tex = vec4(vec3(1),1);
 #ifndef FAR_BLOCKFACE
 #endif
@@ -104,42 +105,31 @@ void main(void) {
 #ifndef MODEL_RENDER
 
 		//TODO: figure out something better 
-	if (blockid >= 12&&blockid <=16) { //EXPENSIVE LEAVE
-
-		float idOffset = blockid - 12;
-
-	    float sampleDist = 4.4;
-	    vec2 p0 = position.xz *0.02;
-	    // float fSin = sin(FRAME_TIME*0.0003)*0.5+0.5;
-	    // p0 += vec2(fSin*110.3);
-	    vec2 p1 = p0 + vec2(1, 0)*sampleDist;
-	    vec2 p2 = p0 + vec2(0, 1)*sampleDist;
-	    float s0 = snoise(p0);
-	    float s1 = snoise(p1);
-	    float s2 = snoise(p2);
-	    color_adj*=pal((s0+s1+s2)/3.0, 
-              vec3(0.4+(idOffset/5.0)*0.5,0.78,0.1)*(0.27+(idOffset/10.0)),
-              vec3(0.15-clamp(1-idOffset/4.0,0,1)*0.07),
-              vec3(0.15),
-              vec3(0.15)  )*1.2;
+	if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
+		colorizeLeaves(color_adj, position.xyz);
 	}
-	if (blockid == 1) {
- 		vec2 newCoords = texcoord.st;//
+	// if (blockid == 1) {
+ 		// vec2 newCoords = texcoord.st;//
 		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir]);
-		float height = texture(normalTest, texcoord.st).a;
+		// float height = texture(normalTextures, texcoord.st).a;
 		 //Our heightmap only has one color channel.
-		 const vec2 scaleBias = vec2(0.04, 0.02);
-		 float v = height * scaleBias.r - scaleBias.g; 
-		vec3 eye = normalize(tbnMat * (CAMERA_POS-position.xyz));
+		 // const vec2 scaleBias = vec2(0.04, 0.02);
+		 // float v = height * scaleBias.r - scaleBias.g; 
+		// vec3 eye = normalize(tbnMat * (CAMERA_POS-position.xyz));
  		// newCoords = texcoord.st + (eye.xy * v);
-		 tex=texture(blockTextures, vec3(newCoords, float(blockinfo.x)));
-		 color_adj = tex.rgb;
-		color_adj *= color.rgb;
-		srgbToLin(color_adj.rgb);
+		//  tex=texture(blockTextures, vec3(newCoords, BLOCK_TEX_SLOT(blockinfo)));
+		//  color_adj = tex.rgb;
+		// color_adj *= color.rgb;
+		// srgbToLin(color_adj.rgb);
+		vec3 normalMapTex=texture(normalTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo))).xzy * 2.0 - 1.0; // swizzling is important here
+		// normalMapTex *= 1/1.1;
 
-		vec3 normalMapTex = texture(normalTest, newCoords).xzy * 2.0 - 1.0; // swizzling is important here
+		// vec3 normalMapTex = texture(normalTest, newCoords).xzy * 2.0 - 1.0; // swizzling is important here
 		outNormal = normalize((tbnMat * normalMapTex));
-	}	
+		// if (length(outNormal) > 1) {
+		// 	color_adj=vec3(1,0,0);
+		// }
+	// }	
 
 #endif
 

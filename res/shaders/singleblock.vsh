@@ -1,10 +1,10 @@
 #version 150 core
 
-#pragma define "TERRAIN_DRAW_MODE"
 
 #pragma include "ubo_scene.glsl"
 #pragma include "ubo_constants.glsl"
 #pragma include "vertex_layout.glsl"
+#pragma include "blockinfo.glsl"
 
 uniform vec3 in_offset;
 uniform float in_scale;
@@ -47,14 +47,11 @@ void main() {
 	texcoord = in_texcoord;
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 	float distCam = length(in_position.xyz - CAMERA_POS);
-#if TERRAIN_DRAW_MODE == 0
-	uint faceDir = blockinfo.w&0x7u;
-	uint vertDir = (blockinfo.w >> 3u) & 0x3Fu;
+
+	uint faceDir = BLOCK_FACEDIR(blockinfo);
+	uint vertDir = BLOCK_VERTDIR(blockinfo);
 	vec3 dir = vertexDir.dir[vertDir].xyz;
-#else 
-	uint faceDir = blockinfo.w;
-	vec3 dir = in_direction.xyz*in_direction.w;
-#endif
+
 	const float face_offset = 1/32.0;
 	float distScale = face_offset*clamp(pow((distCam+8)/200, 1.35), 0.0008, 1);
 	pos.x += dir.x*distScale;
@@ -63,28 +60,7 @@ void main() {
 	// pos.xyz *= 1/32.0;
 
 	blockside = blocksidebrightness[faceDir];
-// // #ifndef FAR_BLOCKFACE
-// 	faceAO = vec4(
-// 		aoLevels[in_blockinfo.z&AO_MASK],
-// 		aoLevels[(in_blockinfo.z>>2)&AO_MASK],
-// 		aoLevels[(in_blockinfo.z>>4)&AO_MASK],
-// 		aoLevels[(in_blockinfo.z>>6)&AO_MASK]
-// 		);
-// // #endif
 
-// 	faceLightSky = vec4(
-// 		float(in_light.y&LIGHT_MASK)/15.0,
-// 		float((in_light.y>>4)&LIGHT_MASK)/15.0,
-// 		float((in_light.y>>8)&LIGHT_MASK)/15.0,
-// 		float((in_light.y>>12)&LIGHT_MASK)/15.0
-// 		);
-
-// 	faceLight = vec4(
-// 		float(in_light.x&LIGHT_MASK)/15.0,
-// 		float((in_light.x>>4)&LIGHT_MASK)/15.0,
-// 		float((in_light.x>>8)&LIGHT_MASK)/15.0,
-// 		float((in_light.x>>12)&LIGHT_MASK)/15.0
-// 		);
 	
 
 	position = pos;

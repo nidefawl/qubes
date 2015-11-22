@@ -1,12 +1,12 @@
 #version 150 core
 
 #pragma define "FAR_BLOCKFACE"
-#pragma define "TERRAIN_DRAW_MODE"
 #pragma define "MODEL_RENDER"
 
 #pragma include "ubo_scene.glsl"
 #pragma include "ubo_constants.glsl"
 #pragma include "vertex_layout.glsl"
+#pragma include "blockinfo.glsl"
 #pragma include "util.glsl"
 
 #ifdef MODEL_RENDER
@@ -50,20 +50,17 @@ void main() {
 	normal = normalize(camNormal.xyz);
 	color = in_color;
 	blockinfo = in_blockinfo;
-	blockid = float(blockinfo.y&0xFFFu);
+	blockid = BLOCK_ID(blockinfo);
 
 	vec4 pos = in_position;
 	texcoord = in_texcoord;
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 	float distCam = length(in_position.xyz - CAMERA_POS);
-#if TERRAIN_DRAW_MODE == 0
-	faceDir = blockinfo.w&0x7u;
-	uint vertDir = (blockinfo.w >> 3u) & 0x3Fu;
+
+	faceDir = BLOCK_FACEDIR(blockinfo);
+	uint vertDir = BLOCK_VERTDIR(blockinfo);
 	vec3 dir = vertexDir.dir[vertDir].xyz;
-#else 
-	faceDir = blockinfo.w;
-	vec3 dir = in_direction.xyz*in_direction.w;
-#endif
+
 	if (blockid == 17) {
 
 		float f = mod(gl_VertexID+1.0, 4.0f);
@@ -98,10 +95,10 @@ void main() {
 	blockside = blocksidebrightness[faceDir];
 // #ifndef FAR_BLOCKFACE
 	faceAO = vec4(
-		aoLevels[in_blockinfo.z&AO_MASK],
-		aoLevels[(in_blockinfo.z>>2)&AO_MASK],
-		aoLevels[(in_blockinfo.z>>4)&AO_MASK],
-		aoLevels[(in_blockinfo.z>>6)&AO_MASK]
+		aoLevels[BLOCK_AO_IDX_0(in_blockinfo)],
+		aoLevels[BLOCK_AO_IDX_1(in_blockinfo)],
+		aoLevels[BLOCK_AO_IDX_2(in_blockinfo)],
+		aoLevels[BLOCK_AO_IDX_3(in_blockinfo)]
 		);
 // #endif
 

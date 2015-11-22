@@ -5,6 +5,7 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "tonemap.glsl"
 #pragma include "ubo_constants.glsl"
+#pragma include "blockinfo.glsl"
 
 uniform sampler2DArray blockTextures;
 uniform sampler2D waterNoiseTexture;
@@ -111,9 +112,9 @@ void main() {
 		normal_out = normalize(tbnMat*nd);
 		texCoord2.st+=nd.xz*2.2;
     }
-	vec4 tex = texture(blockTextures, vec3(texCoord2, float(blockinfo.x)));
-    uint blockid = (blockinfo.y&0xFFFu);
-    float isWater = float(blockid==4u);
+	vec4 tex = texture(blockTextures, vec3(texCoord2, BLOCK_TEX_SLOT(blockinfo)));
+    uint blockid = BLOCK_ID(blockinfo);
+    float isWater = IS_WATER(blockid);
     // tex = mix(tex, vec4(0.2, 0.32, 0.43, 1)*1.1, isWater);
     tex.a=1;
 	// tex.a=1;

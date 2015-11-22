@@ -1,6 +1,7 @@
 #version 150 core
 
 #pragma include "ubo_scene.glsl"
+#pragma include "blockinfo.glsl"
 
 uniform sampler2D texColor;
 uniform sampler2D texNormals;
@@ -310,8 +311,8 @@ void main(void) {
 	// jitter = 0;
 	bool hit = traceScreenSpaceRay( vsRayOrigin, vsRayDirection, jitter, angle, hitPixel, hitPoint, iterationCount);
 
-	uint blockidPixel = (blockinfo.y&0xFFFu);
-	float isWater = float(blockidPixel==4u);
+	uint blockidPixel = BLOCK_ID(blockinfo);
+	float isWater = IS_WATER(blockidPixel);
 	float specularStrength = isWater;
 	float alpha = calculateAlphaForIntersection( hit, iterationCount, specularStrength, hitPixel, hitPoint, vsRayOrigin, vsRayDirection);
 	// float alpha = specularStrength;

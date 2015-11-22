@@ -5,10 +5,19 @@
 #pragma include "tonemap.glsl"
 
 uniform mat4 model_matrix;
-out vec4 pass_Color;
+
+out vec4 color;
+out vec3 normal;
+out vec4 texcoord;
+out vec4 position;
  
 void main(void) {
-    pass_Color = in_color;
-	srgbToLin(pass_Color.rgb);
+	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
+	camNormal.xyz/=camNormal.w;
+	normal = normalize(camNormal.xyz);
+	color = in_color;
+	vec4 pos = in_position;
+	texcoord = in_texcoord;
+	position = model_matrix * pos;
     gl_Position = in_matrix_3D.mvp * model_matrix * in_position;
 }
