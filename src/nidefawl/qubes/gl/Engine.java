@@ -87,7 +87,6 @@ public class Engine {
 
     public static boolean renderWireFrame = false;
     public static boolean USE_TRIANGLES = false;
-    public static int terrainVertexAttributeFormat = 0; //TODO: IMPORTANT: get rid of the old vertex format (now broken anyways)
 
     public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
@@ -507,7 +506,6 @@ public class Engine {
 
 
     public static void toggleDrawMode() {
-        terrainVertexAttributeFormat = 1 - terrainVertexAttributeFormat;
         worldRenderer.initShaders();
     }
 

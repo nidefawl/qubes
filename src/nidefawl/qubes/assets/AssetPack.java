@@ -16,6 +16,6 @@ public abstract class AssetPack {
      * @param name
      * @throws IOException 
      */
-    public abstract InputStream getInputStream(String name) throws IOException;
+    public abstract AssetInputStream getInputStream(String name) throws IOException;
 
 }

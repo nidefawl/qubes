@@ -99,7 +99,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
 //        Engine.worldRenderer.re
-        Engine.worldRenderer.renderModels(shadowShader, PASS_SHADOW_SOLID, fTime);
+        Engine.worldRenderer.renderModelsUsingProgram(shadowShader, PASS_SHADOW_SOLID, fTime);
         BufferedMatrix mat = Engine.getIdentityMatrix();
         shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
@@ -109,7 +109,7 @@ public class ShadowRenderer extends AbstractRenderer {
         glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
-        Engine.worldRenderer.renderModels(shadowShader, PASS_SHADOW_SOLID, fTime);
+        Engine.worldRenderer.renderModelsUsingProgram(shadowShader, PASS_SHADOW_SOLID, fTime);
         shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
@@ -117,7 +117,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
         glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
-        Engine.worldRenderer.renderModels(shadowShader, PASS_SHADOW_SOLID, fTime);
+        Engine.worldRenderer.renderModelsUsingProgram(shadowShader, PASS_SHADOW_SOLID, fTime);
         shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
 
         FrameBuffer.unbindFramebuffer();

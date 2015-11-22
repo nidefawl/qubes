@@ -38,8 +38,8 @@ public class TreeGenerators {
             .put('A', new TreeRule("[&FFBFA]////[&BFFFA]////[&FBFFA]", 1.0f))
             .put('B', new TreeRule("[&FFFA]////[&FFFA]////[&FFFA]", 0.8f)).build(),
             4, (float) Math.toRadians(30))
-            .setLeafType(Block.leaves_oak.id)
-            .setBarkType(Block.log_oak.id);
+            .setLeafType(Block.leaves.id)
+            .setBarkType(Block.log.id);
     }
 
     public static IWorldGen oakVariationTree() {
@@ -67,7 +67,7 @@ public class TreeGenerators {
 //                        .put('E', new TreeRule("LU", 1f)).build(),
 //                        5, (float) Math.toRadians(9))
 //                        .setLeafType(Block.leaves_jungle.id)
-//                        .setBarkType(Block.log_jungle.id);
+//                        .setBarkType(Block.log.id);
             case 1:
 //
 //                    return new TreeGeneratorLSystem(
@@ -82,7 +82,7 @@ public class TreeGenerators {
 //                            .put('C', new TreeRule("~X&&~X", 1f)).build(),
 //                            6, (float) Math.toRadians(7))
 //                            .setLeafType(Block.leaves_jungle.id)
-//                            .setBarkType(Block.log_jungle.id);
+//                            .setBarkType(Block.log.id);
             case 2:
 
 //                
@@ -98,7 +98,7 @@ public class TreeGenerators {
 //                      .put('C', new TreeRule("~W&&~W", 1f)).build(),
 //                      6, (float) Math.toRadians(7))
 //                      .setLeafType(Block.leaves_jungle.id)
-//                      .setBarkType(Block.log_jungle.id);
+//                      .setBarkType(Block.log.id);
             case 3:
                 //
 //              
@@ -114,7 +114,7 @@ public class TreeGenerators {
                       .put('C', new TreeRule("[~XX]&&[~XX]", 1f)).build(),
                       6, (float) Math.toRadians(7))
                       .setLeafType(b.id)
-                      .setBarkType(Block.log_jungle.id);
+                      .setBarkType(Block.log.id);
             case 4:
 
 //              
@@ -128,7 +128,7 @@ public class TreeGenerators {
                       .put('E', new TreeRule("LU", 1f)).build(),
                       6, (float) Math.toRadians(9))
                       .setLeafType(b.id)
-                      .setBarkType(Block.log_jungle.id);
+                      .setBarkType(Block.log.id);
             case 5:
 
 
@@ -141,7 +141,7 @@ public class TreeGenerators {
                         .put('E', new TreeRule("TPLDDLDD", 0.5f)).build(),
                         6, (float) Math.toRadians(12))
                         .setLeafType(b.id)
-                        .setBarkType(Block.log_jungle.id);
+                        .setBarkType(Block.log.id);
         }
 
       return new TreeGeneratorLSystem(
@@ -153,7 +153,7 @@ public class TreeGenerators {
               .put('E', new TreeRule("PSLDDLDD", 0.5f)).build(),
               6, (float) Math.toRadians(7))
               .setLeafType(b.id)
-              .setBarkType(Block.log_jungle.id);
+              .setBarkType(Block.log.id);
         
 
 //        
@@ -165,7 +165,7 @@ public class TreeGenerators {
 //                .put('B', new TreeRule("[&FFFAFFFF]////[&FFFAFFF]////[&FFFAFFAA]", 0.8f)).build(),
 //                4, (float) Math.toRadians(35))
 //                .setLeafType(Block.leaves_jungle.id)
-//                .setBarkType(Block.log_jungle.id);
+//                .setBarkType(Block.log.id);
     }
 
     public static IWorldGen pineTree() {
@@ -173,8 +173,8 @@ public class TreeGenerators {
             "FFFFAFFFFFFFAFFFFA", ImmutableMap.<Character, TreeRule>builder()
             .put('A', new TreeRule("[&FFFFFFFFFA]////[&FFFFFA]////[&FFFFFA]", 1.0f)).build(),
             4, (float) Math.toRadians(35))
-            .setLeafType(Block.leaves_spruce.id)
-            .setBarkType(Block.log_spruce.id);
+            .setLeafType(Block.leaves.id)
+            .setBarkType(Block.log.id);
     }
 
     public static IWorldGen birchTree() {
@@ -182,15 +182,15 @@ public class TreeGenerators {
             "FFFFAFFFFBFFFFAFFFFBFFFFAFFFFBFF", ImmutableMap.<Character, TreeRule>builder()
             .put('A', new TreeRule("[&FFFAFFF]////[&FFAFFF]////[&FFFAFFF]", 1.0f))
             .put('B', new TreeRule("[&FAF]////[&FAF]////[&FAF]", 0.8f)).build(), 4, (float) Math.toRadians(35))
-            .setLeafType(Block.leaves_birch.id)
-            .setBarkType(Block.log_birch.id);
+            .setLeafType(Block.leaves.id)
+            .setBarkType(Block.log.id);
     }
 
     public static IWorldGen redTree() {
         return new TreeGeneratorLSystem("FFFFFAFAFAF", ImmutableMap.<Character, TreeRule>builder()
             .put('A', new TreeRule("[&FFAFF]////[&FFAFF]////[&FFAFF]", 1.0f)).build(),
             4, (float) Math.toRadians(40))
-            .setLeafType(Block.leaves_acacia.id)
-            .setBarkType(Block.log_acacia.id);
+            .setLeafType(Block.leaves.id)
+            .setBarkType(Block.log.id);
     }
 }

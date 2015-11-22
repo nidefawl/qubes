@@ -35,17 +35,17 @@ public class AssetPackZip extends AssetPack {
      * @see nidefawl.qubes.assets.AssetPack#getInputStream(java.lang.String)
      */
     @Override
-    public InputStream getInputStream(String name) throws IOException {
+    public AssetInputStream getInputStream(String name) throws IOException {
         ZipEntry e = map.get(name);
         if (e != null) {
-            return this.zip.getInputStream(e);
+            return new AssetInputStream(this, this.zip.getInputStream(e));
         }
         if (name.startsWith("textures/")) {
             name = "assets/minecraft/"+name;
         }
         e = map.get(name);
         if (e != null) {
-            return this.zip.getInputStream(e);
+            return new AssetInputStream(this, this.zip.getInputStream(e));
         }
         return null;
     }
@@ -63,6 +63,6 @@ public class AssetPackZip extends AssetPack {
 
     @Override
     public String toString() {
-        return "Asset Pack "+this.zip;
+        return "Asset Pack "+this.zipFile;
     }
 }

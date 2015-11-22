@@ -39,7 +39,7 @@ public class Shaders {
     public static Shader textured;
     public static Shader colored;
     public static Shader colored3D;
-    public static Shader model;
+    public static Shader textured3D;
     public static Shader renderUINT;
     public static Shader singleblock;
     public static Shader gui;
@@ -53,9 +53,9 @@ public class Shaders {
             Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");
             Shader new_uint = assetMgr.loadShader(newshaders, "debug/render_uint_texture");
             Shader new_textured = assetMgr.loadShader(newshaders, "textured");
+            Shader new_textured3D = assetMgr.loadShader(newshaders, "textured_3D");
             Shader new_colored = assetMgr.loadShader(newshaders, "colored");
             Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
-            Shader new_model = assetMgr.loadShader(newshaders, "model/model");
             Shader new_singleblock = assetMgr.loadShader(newshaders, "singleblock");
             Shader new_gui = assetMgr.loadShader(newshaders, "gui");
             shaders.release();
@@ -66,12 +66,12 @@ public class Shaders {
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
             Shaders.textured = new_textured;
+            Shaders.textured3D = new_textured3D;
             Shaders.colored = new_colored;
             Shaders.colored3D = new_colored3D;
             Shaders.renderUINT = new_uint;
             Shaders.singleblock = new_singleblock;
             Shaders.gui = new_gui;
-            Shaders.model = new_model;
             Shaders.colored.enable();
             Shaders.colored.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.gui.enable();
@@ -83,8 +83,11 @@ public class Shaders {
             singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();
             Shaders.colored3D.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.textured3D.enable();
+            Shaders.textured3D.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.wireframe.enable();
             Shaders.wireframe.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
             Shader.disable();
         } catch (ShaderCompileError e) {
             newshaders.release();

@@ -22,8 +22,9 @@ public class AssetBinary extends Asset {
         this.name = name;
     }
 
-    public void load(InputStream is) throws Exception {
-        DataInputStream stream = new DataInputStream(is);
+    public void load(AssetInputStream is) throws Exception {
+        setPack(is.source);
+        DataInputStream stream = new DataInputStream(is.inputStream);
         ArrayList<Byte> data = Lists.newArrayList();
         int n;
         while ((n = stream.available())>0) { // VERY inefficient, Do not use for large amounts of bin data

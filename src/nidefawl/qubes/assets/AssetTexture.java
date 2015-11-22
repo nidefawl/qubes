@@ -23,8 +23,9 @@ public class AssetTexture extends Asset {
         this.name = name;
     }
 
-    public void load(InputStream is) throws Exception {
-        PNGDecoder dec = new PNGDecoder(is);
+    public void load(AssetInputStream is) throws Exception {
+        setPack(is.source);
+        PNGDecoder dec = new PNGDecoder(is.inputStream);
         this.width = dec.getWidth();
         this.height = dec.getHeight();
         ByteBuffer buffer = ByteBuffer.allocate(width*height*4); 

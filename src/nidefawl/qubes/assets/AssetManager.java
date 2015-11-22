@@ -28,9 +28,6 @@ public class AssetManager {
         folder = WorkingEnv.getAssetFolder();
 //        if (!WorkingEnv.loadAssetsFromClassPath()) {
 //        }
-        if (folder.exists())
-        assetPacks.add(new AssetPackFolder(folder));
-        assetPacks.add(new AssetPackClassPath());
         File f = WorkingEnv.getPacksFolder();
         if (f.isDirectory()) {
             File[] fPackList = f.listFiles(new FilenameFilter() {
@@ -52,17 +49,20 @@ public class AssetManager {
                 }
             }
         }
+        assetPacks.add(new AssetPackClassPath());
+        if (folder.exists())
+        assetPacks.add(new AssetPackFolder(folder));
         Collections.reverse(assetPacks);
         System.out.println("Found "+assetPacks.size()+" asset packs");
     }
     
-    public InputStream findResource(String name, boolean optional) {
-        InputStream is = null;
+    public AssetInputStream findResource(String name, boolean optional) {
+        AssetInputStream is = null;
         for (int i = 0; i < assetPacks.size(); i++) {
             AssetPack pack = assetPacks.get(i);
             try {
                 is = pack.getInputStream(name);
-                if (is != null) {
+                if (is != null && is != null && is.inputStream != null) {
                     return is;
                 }
             } catch (IOException e1) {
@@ -84,10 +84,10 @@ public class AssetManager {
 
     public void reloadPNGAsset(AssetTexture asset) {
         String name = asset.getName();
-        InputStream is = null;
+        AssetInputStream is = null;
         try {
             is = findResource(name, false);
-            if (is != null) {
+            if (is != null && is.inputStream != null) {
                 asset.load(is);
                 return;
             }
@@ -105,10 +105,13 @@ public class AssetManager {
         throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
     public AssetTexture loadPNGAsset(String name) {
-        InputStream is = null;
+        return loadPNGAsset(name, false);
+    }
+    public AssetTexture loadPNGAsset(String name, boolean optional) {
+        AssetInputStream is = null;
         try {
-            is = findResource(name, false);
-            if (is != null) {
+            is = findResource(name, optional);
+            if (is != null && is.inputStream != null) {
                 AssetTexture asset = new AssetTexture(name);
                 asset.load(is);
                 assets.add(asset);
@@ -125,13 +128,15 @@ public class AssetManager {
                 }
             }
         }
+        if (optional) 
+            return null;
         throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
     public AssetVoxModel loadVoxModel(String name) {
-        InputStream is = null;
+        AssetInputStream is = null;
         try {
             is = findResource(name, false);
-            if (is != null) {
+            if (is != null && is.inputStream != null) {
                 AssetVoxModel asset = new AssetVoxModel(name);
                 asset.load(is);
 //                assets.add(asset);
@@ -183,10 +188,10 @@ public class AssetManager {
         return shader;
     }
     public AssetBinary loadBin(String name) {
-        InputStream is = null;
+        AssetInputStream is = null;
         try {
             is = findResource(name, false);
-            if (is != null) {
+            if (is != null && is.inputStream != null) {
                 AssetBinary asset = new AssetBinary(name);
                 asset.load(is);
                 return asset;

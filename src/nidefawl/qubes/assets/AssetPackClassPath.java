@@ -18,11 +18,11 @@ public class AssetPackClassPath extends AssetPack {
     }
 
     @Override
-    public InputStream getInputStream(String name) {
+    public AssetInputStream getInputStream(String name) {
         byte[] data = NativeClassLoader.loadGameResource("/res/"+name);
         if (data != null)
-            return new ByteArrayInputStream(data);
-        return getClass().getResourceAsStream("/res/"+name);
+            return new AssetInputStream(this, new ByteArrayInputStream(data));
+        return new AssetInputStream(this, getClass().getResourceAsStream("/res/"+name));
     }
 
     /* (non-Javadoc)

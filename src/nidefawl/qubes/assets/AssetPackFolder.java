@@ -24,12 +24,12 @@ public class AssetPackFolder extends AssetPack {
      * @see nidefawl.qubes.assets.AssetPack#getInputStream(java.lang.String)
      */
     @Override
-    public InputStream getInputStream(String name) throws IOException {
+    public AssetInputStream getInputStream(String name) throws IOException {
         File f = new File(this.directory, name);
         if (f.exists()) {
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bif = new BufferedInputStream(fis);
-            return bif;
+            return new AssetInputStream(this, bif);
         }
         return null;
     }

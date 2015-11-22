@@ -59,70 +59,36 @@ public class MeshedRegion {
     }
     
     public static void enabledDefaultBlockPtrs() {
+
+        final int VERT_LEN = (BLOCK_VERT_INT_SIZE)<<2;
+        //POS
+        GL20.glEnableVertexAttribArray(0);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, VERT_LEN, 0);
+        int offset = 3;
+        //NORMAL
+        GL20.glEnableVertexAttribArray(1);
+        GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
+        offset += 1; 
         
-        if (Engine.terrainVertexAttributeFormat == 1) {
-            final int VERT_LEN = (BLOCK_VERT_INT_SIZE+3)<<2;
-            //POS
-            GL20.glEnableVertexAttribArray(0);
-            GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, VERT_LEN, 0);
-            int offset = 4;
-            //NORMAL
-            GL20.glEnableVertexAttribArray(1);
-            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
-            offset += 1;
-            
-            //1 BYTE UNUSED (normal has 3 bytes)
-            
-            //TEXCOORD
-            GL20.glEnableVertexAttribArray(2);
-            GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, VERT_LEN, offset * 4);
-            offset += 2; 
-            //COLOR
-            GL20.glEnableVertexAttribArray(3);
-            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
-            offset += 1; 
-            //BLOCKINFO
-            GL20.glEnableVertexAttribArray(4);
-            GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
-            offset += 2;
-            //LIGHTINFO
-            GL20.glEnableVertexAttribArray(5);
-            GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
-            offset += 1;
-            //DIRECTIOn
-            GL20.glEnableVertexAttribArray(6); //TODO: this is not set in shader (glBindAttribLocationARB)
-            GL20.glVertexAttribPointer(6, 4, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
-            offset += 1; 
-        } else {
-            final int VERT_LEN = (BLOCK_VERT_INT_SIZE)<<2;
-            //POS
-            GL20.glEnableVertexAttribArray(0);
-            GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, VERT_LEN, 0);
-            int offset = 3;
-            //NORMAL
-            GL20.glEnableVertexAttribArray(1);
-            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
-            offset += 1; 
-            
-            //1 BYTE UNUSED (normal has 3 bytes)
-            
-            //TEXCOORD
-            GL20.glEnableVertexAttribArray(2);
-            GL20.glVertexAttribPointer(2, 2, GL30.GL_HALF_FLOAT, false, VERT_LEN, offset * 4);
-            offset += 1; 
-            //COLOR
-            GL20.glEnableVertexAttribArray(3);
-            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
-            offset += 1; 
-            //BLOCKINFO
-            GL20.glEnableVertexAttribArray(4);
-            GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
-            offset += 2;
-            //LIGHTINFO
-            GL20.glEnableVertexAttribArray(5);
-            GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
-            offset += 1;
-        }
+        //1 BYTE UNUSED (normal has 3 bytes)
+        
+        //TEXCOORD
+        GL20.glEnableVertexAttribArray(2);
+        GL20.glVertexAttribPointer(2, 2, GL30.GL_HALF_FLOAT, false, VERT_LEN, offset * 4);
+        offset += 1; 
+        //COLOR
+        GL20.glEnableVertexAttribArray(3);
+        GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
+        offset += 1; 
+        //BLOCKINFO
+        GL20.glEnableVertexAttribArray(4);
+        GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
+        offset += 2;
+        //LIGHTINFO
+        GL20.glEnableVertexAttribArray(5);
+        GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
+        offset += 1;
+    
     }
     public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo[pass]);
@@ -193,6 +159,31 @@ public class MeshedRegion {
 
                 }
                 return;
+            case 5:
+            {
+
+                final int VERT_LEN = (6)<<2;
+                //POS
+                GL20.glEnableVertexAttribArray(0);
+                GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, VERT_LEN, 0);
+                int offset = 3;
+                //NORMAL
+                GL20.glEnableVertexAttribArray(1);
+                GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
+                offset += 1; 
+                
+                //1 BYTE UNUSED (normal has 3 bytes)
+                
+                //TEXCOORD
+                GL20.glEnableVertexAttribArray(2);
+                GL20.glVertexAttribPointer(2, 2, GL30.GL_HALF_FLOAT, false, VERT_LEN, offset * 4);
+                offset += 1; 
+                //COLOR
+                GL20.glEnableVertexAttribArray(3);
+                GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
+                offset += 1; 
+            }
+                return;
                 
         }
     }
@@ -203,13 +194,16 @@ public class MeshedRegion {
      */
     public static void disableVertexPtrs(int ptrSetting) {
         if (ptrSetting < 2 || ptrSetting == 3) {
-            for (int i = 0; i < 6+Engine.terrainVertexAttributeFormat; i++)
+            for (int i = 0; i < 6; i++)
                 GL20.glDisableVertexAttribArray(i);
         } else {
             GL20.glDisableVertexAttribArray(0);
-            if (ptrSetting == 3) {
+            if (ptrSetting == 3||ptrSetting == 5) {
                 GL20.glDisableVertexAttribArray(1);
                 GL20.glDisableVertexAttribArray(2);
+            }
+            if (ptrSetting == 5) {
+                GL20.glDisableVertexAttribArray(3);
             }
         }
     }

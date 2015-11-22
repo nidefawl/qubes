@@ -8,7 +8,7 @@ public class TMgr {
     }
 
     public static int getBlocks() {
-        return BlockTextureArray.getInstance().glid;
+        return BlockTextureArray.getInstance().glid_color;
     }
 
     public static int getEmptyNormalMap() {
@@ -21,5 +21,9 @@ public class TMgr {
 
     public static int getEmptySpecularMap() {
         return TextureManager.getInstance().texEmpty;
+    }
+
+    public static int getNormals() {
+        return BlockTextureArray.getInstance().glid_normalmaps;
     }
 }

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.models.loader;
+package nidefawl.qubes.models.voxel;
 
 import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.block.Block;

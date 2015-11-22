@@ -2,6 +2,8 @@ package nidefawl.qubes.vec;
 
 import java.nio.FloatBuffer;
 
+import nidefawl.qubes.util.GameMath;
+
 public class Matrix4f {
 
     public float m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33;
@@ -188,6 +190,31 @@ public class Matrix4f {
 
         return this;
     }
+    /**
+     * @param mat
+     * @return 
+     */
+    public Matrix4f load(float[] mat) {
+        int i = 0;
+        m00 = mat[i++];
+        m10 = mat[i++];
+        m20 = mat[i++];
+        m30 = mat[i++];
+        m01 = mat[i++];
+        m11 = mat[i++];
+        m21 = mat[i++];
+        m31 = mat[i++];
+        m02 = mat[i++];
+        m12 = mat[i++];
+        m22 = mat[i++];
+        m32 = mat[i++];
+        m03 = mat[i++];
+        m13 = mat[i++];
+        m23 = mat[i++];
+        m33 = mat[i++];
+
+        return this;
+    }
 
     /**
      * Load from a float buffer. The buffer stores the matrix in row major
@@ -240,6 +267,32 @@ public class Matrix4f {
         buf.put(m31);
         buf.put(m32);
         buf.put(m33);
+        return this;
+    }
+
+    /**
+     * Store this matrix in a float buffer. The matrix is stored in column
+     * major (openGL) order.
+     * @param buf The buffer to store this matrix in
+     */
+    public Matrix4f store(float[] buf) {
+        int idx = 0;
+        buf[idx++] = (m00);
+        buf[idx++] = (m01);
+        buf[idx++] = (m02);
+        buf[idx++] = (m03);
+        buf[idx++] = (m10);
+        buf[idx++] = (m11);
+        buf[idx++] = (m12);
+        buf[idx++] = (m13);
+        buf[idx++] = (m20);
+        buf[idx++] = (m21);
+        buf[idx++] = (m22);
+        buf[idx++] = (m23);
+        buf[idx++] = (m30);
+        buf[idx++] = (m31);
+        buf[idx++] = (m32);
+        buf[idx++] = (m33);
         return this;
     }
 
@@ -513,6 +566,15 @@ public class Matrix4f {
     }
 
     /**
+     * Translate this matrix
+     * @param vec The vector to translate by
+     * @return this
+     */
+    public Matrix4f translate(Vector3f v) {
+        return translate(v.x, v.y, v.z, this);
+    }
+
+    /**
      * Scales this matrix
      * @param vec The vector to scale by
      * @return this
@@ -590,7 +652,63 @@ public class Matrix4f {
     public Matrix4f rotate(float angle, float x, float y, float z, Matrix4f dest) {
         return rotate(angle, x, y, z, this, dest);
     }
+    public static Matrix4f convertQuaternionToMatrix4f(Quaternion q)
+    {
+        Matrix4f matrix = new Matrix4f();
+        matrix.m00 = 1.0f - 2.0f * ( q.getY() * q.getY() + q.getZ() * q.getZ() );
+        matrix.m01 = 2.0f * (q.getX() * q.getY() + q.getZ() * q.getW());
+        matrix.m02 = 2.0f * (q.getX() * q.getZ() - q.getY() * q.getW());
+        matrix.m03 = 0.0f;
+ 
+        matrix.m10 = 2.0f * ( q.getX() * q.getY() - q.getZ() * q.getW() );
+        matrix.m11 = 1.0f - 2.0f * ( q.getX() * q.getX() + q.getZ() * q.getZ() );
+        matrix.m12 = 2.0f * (q.getZ() * q.getY() + q.getX() * q.getW() );
+        matrix.m13 = 0.0f;
+ 
+        matrix.m20 = 2.0f * ( q.getX() * q.getZ() + q.getY() * q.getW() );
+        matrix.m21 = 2.0f * ( q.getY() * q.getZ() - q.getX() * q.getW() );
+        matrix.m22 = 1.0f - 2.0f * ( q.getX() * q.getX() + q.getY() * q.getY() );
+        matrix.m23 = 0.0f;
+ 
+        matrix.m30 = 0;
+        matrix.m31 = 0;
+        matrix.m32 = 0;
+        matrix.m33 = 1.0f;
+  
+        return matrix;
+    }
+    /**
+     * Builds a rotation matrix.
+     * 
+     * @param tup
+     * 
+     * @return itself
+     */
+    public final Matrix4f setRotation( Vector3f tup )
+    {
+        final float cx = GameMath.cos( tup.getX() );
+        final float sx = GameMath.sin( tup.getX() );
+        final float cy = GameMath.cos( tup.getY() );
+        final float sy = GameMath.sin( tup.getY() );
+        final float cz = GameMath.cos( tup.getZ() );
+        final float sz = GameMath.sin( tup.getZ() );
 
+        this.m00=( cy * cz );
+        this.m01=( cy * sz );
+        this.m02=( -sy );
+        
+        this.m10=( sx * sy * cz - cx * sz );
+        this.m11=( sx * sy * sz + cx * cz );
+        this.m12=( sx * cy );
+        
+        this.m20=( cx * sy * cz + sx * sz );
+        this.m21=( cx * sy * sz - sx * cz );
+        this.m22=( cx * cy );
+
+        this.m33=( 1.0f );
+        
+        return ( this );
+    }
     /**
      * Rotates the source matrix around the given axis the specified angle and
      * put the result in the destination matrix.
@@ -788,6 +906,51 @@ public class Matrix4f {
      * @param dest The destination matrix, or null if a new matrix is to be created
      * @return The inverted matrix if successful, null otherwise
      */
+    public static Matrix4f invert2(Matrix4f src, Matrix4f dest) {
+        float values[] = new float[16];
+        src.store(values);
+        float determinant = src.determinant();
+
+        if (determinant == 0) {
+            dest.load(values);
+            return dest;
+        }
+        determinant = 1.0f / determinant;
+        dest.m00 = values[5] * (values[10] * values[15] - values[11] * values[14]) + values[6] * (values[11] * values[13] - values[9] * values[15])
+                + values[7] * (values[9] * values[14] - values[10] * values[13]);
+        dest.m01 = values[9] * (values[2] * values[15] - values[3] * values[14]) + values[10] * (values[3] * values[13] - values[1] * values[15])
+                + values[11] * (values[1] * values[14] - values[2] * values[13]);
+        dest.m02 = values[13] * (values[2] * values[7] - values[3] * values[6]) + values[14] * (values[3] * values[5] - values[1] * values[7])
+                + values[15] * (values[1] * values[6] - values[2] * values[5]);
+        dest.m03 = values[1] * (values[7] * values[10] - values[6] * values[11]) + values[2] * (values[5] * values[11] - values[7] * values[9])
+                + values[3] * (values[6] * values[9] - values[5] * values[10]);
+        dest.m10 = values[6] * (values[8] * values[15] - values[11] * values[12]) + values[7] * (values[10] * values[12] - values[8] * values[14])
+                + values[4] * (values[11] * values[14] - values[10] * values[15]);
+        dest.m11 = values[10] * (values[0] * values[15] - values[3] * values[12]) + values[11] * (values[2] * values[12] - values[0] * values[14])
+                + values[8] * (values[3] * values[14] - values[2] * values[15]);
+        dest.m12 = values[14] * (values[0] * values[7] - values[3] * values[4]) + values[15] * (values[2] * values[4] - values[0] * values[6])
+                + values[12] * (values[3] * values[6] - values[2] * values[7]);
+        dest.m13 = values[2] * (values[7] * values[8] - values[4] * values[11]) + values[3] * (values[4] * values[10] - values[6] * values[8])
+                + values[0] * (values[6] * values[11] - values[7] * values[10]);
+        dest.m20 = values[7] * (values[8] * values[13] - values[9] * values[12]) + values[4] * (values[9] * values[15] - values[11] * values[13])
+                + values[5] * (values[11] * values[12] - values[8] * values[15]);
+        dest.m21 = values[11] * (values[0] * values[13] - values[1] * values[12]) + values[8] * (values[1] * values[15] - values[3] * values[13])
+                + values[9] * (values[3] * values[12] - values[0] * values[15]);
+        dest.m22 = values[15] * (values[0] * values[5] - values[1] * values[4]) + values[12] * (values[1] * values[7] - values[3] * values[5])
+                + values[13] * (values[3] * values[4] - values[0] * values[7]);
+        dest.m23 = values[3] * (values[5] * values[8] - values[4] * values[9]) + values[0] * (values[7] * values[9] - values[5] * values[11])
+                + values[1] * (values[4] * values[11] - values[7] * values[8]);
+        dest.m30 = values[4] * (values[10] * values[13] - values[9] * values[14]) + values[5] * (values[8] * values[14] - values[10] * values[12])
+                + values[6] * (values[9] * values[12] - values[8] * values[13]);
+        dest.m32 = values[8] * (values[2] * values[13] - values[1] * values[14]) + values[9] * (values[0] * values[14] - values[2] * values[12])
+                + values[10] * (values[1] * values[12] - values[0] * values[13]);
+        dest.m32 = values[12] * (values[2] * values[5] - values[1] * values[6]) + values[13] * (values[0] * values[6] - values[2] * values[4])
+                + values[14] * (values[1] * values[4] - values[0] * values[5]);
+        dest.m33 = values[0] * (values[5] * values[10] - values[6] * values[9]) + values[1] * (values[6] * values[8] - values[4] * values[10])
+                + values[2] * (values[4] * values[9] - values[5] * values[8]);
+        dest.mulFloat(determinant);
+        return dest;
+    }
     public static Matrix4f invert(Matrix4f src, Matrix4f dest) {
         float determinant = src.determinant();
 
@@ -951,6 +1114,126 @@ public class Matrix4f {
       this.m31 = lm31;
       this.m32 = lm32;
       this.m33 = lm33;
+    }
+    public static Matrix4f toRotationMatrix(Quaternion q, Matrix4f dest)
+    {
+        if (dest == null)
+            dest = new Matrix4f();
+        else
+            dest.setIdentity();
+
+        // Normalize the quaternion
+        q.normalise(q);
+
+        // The length of the quaternion
+        float s = 2f / q.length();
+
+        // Convert the quaternion to matrix
+        dest.m00 = 1 - s * (q.y * q.y + q.z * q.z);
+        dest.m10 = s * (q.x * q.y + q.w * q.z);
+        dest.m20 = s * (q.x * q.z - q.w * q.y);
+
+        dest.m01 = s * (q.x * q.y - q.w * q.z);
+        dest.m11 = 1 - s * (q.x * q.x + q.z * q.z);
+        dest.m21 = s * (q.y * q.z + q.w * q.x);
+
+        dest.m02 = s * (q.x * q.z + q.w * q.y);
+        dest.m12 = s * (q.y * q.z - q.w * q.x);
+        dest.m22 = 1 - s * (q.x * q.x + q.y * q.y);
+
+        return dest;
+    }
+    public static Matrix4f toMatrix4f(Quaternion q) {
+        Matrix4f matrix = new Matrix4f();
+        matrix.m00 = 1.0f - 2.0f * (q.getY() * q.getY() + q.getZ() * q.getZ());
+        matrix.m01 = 2.0f * (q.getX() * q.getY() + q.getZ() * q.getW());
+        matrix.m02 = 2.0f * (q.getX() * q.getZ() - q.getY() * q.getW());
+        matrix.m03 = 0.0f;
+
+        // Second row
+        matrix.m10 = 2.0f * (q.getX() * q.getY() - q.getZ() * q.getW());
+        matrix.m11 = 1.0f - 2.0f * (q.getX() * q.getX() + q.getZ() * q.getZ());
+        matrix.m12 = 2.0f * (q.getZ() * q.getY() + q.getX() * q.getW());
+        matrix.m13 = 0.0f;
+
+        // Third row
+        matrix.m20 = 2.0f * (q.getX() * q.getZ() + q.getY() * q.getW());
+        matrix.m21 = 2.0f * (q.getY() * q.getZ() - q.getX() * q.getW());
+        matrix.m22 = 1.0f - 2.0f * (q.getX() * q.getX() + q.getY() * q.getY());
+        matrix.m23 = 0.0f;
+
+        // Fourth row
+        matrix.m30 = 0;
+        matrix.m31 = 0;
+        matrix.m32 = 0;
+        matrix.m33 = 1.0f;
+
+        return matrix;
+     }
+    public final void setFromQuat(float a, float b, float c, float d) {
+        final float n = a * a + b * b + c * c + d * d;
+        final float s = (n > 0.0f) ? (2.0f / n) : 0.0f;
+
+        final float xs = a * s, ys = b * s, zs = c * s;
+        final float wx = d * xs, wy = d * ys, wz = d * zs;
+        final float xx = a * xs, xy = a * ys, xz = a * zs;
+        final float yy = b * ys, yz = b * zs, zz = c * zs;
+
+
+        this.m00 = 1.0f - (yy + zz);
+        this.m01 = xy - wz;
+        this.m02 = xz + wy;
+        this.m10 = xy + wz;
+        this.m11 = 1.0f - (xx + zz);
+        this.m12 = yz - wx;
+        this.m20 = xz - wy;
+        this.m21 = yz + wx;
+        this.m22 = 1.0f - (xx + yy);
+    }
+
+    /**
+     * @param matAbs
+     * @param f
+     */
+    public void addWeighted(Matrix4f m, float f) {
+
+
+        this.m00 += f * m.m00;
+        this.m01 += f * m.m01;
+        this.m02 += f * m.m02;
+        this.m03 += f * m.m03;
+        this.m10 += f * m.m10;
+        this.m11 += f * m.m11;
+        this.m12 += f * m.m12;
+        this.m13 += f * m.m13;
+        this.m20 += f * m.m20;
+        this.m21 += f * m.m21;
+        this.m22 += f * m.m22;
+        this.m23 += f * m.m23;
+        this.m30 += f * m.m30;
+        this.m31 += f * m.m31;
+        this.m32 += f * m.m32;
+        this.m33 += f * m.m33;
+    }
+
+    /**
+     * @param n
+     */
+    public void mulFloat(float f) {
+
+
+        this.m00 *= f;
+        this.m01 *= f;
+        this.m02 *= f;
+        this.m03 *= f;
+        this.m10 *= f;
+        this.m11 *= f;
+        this.m12 *= f;
+        this.m13 *= f;
+        this.m20 *= f;
+        this.m21 *= f;
+        this.m22 *= f;
+        this.m23 *= f;
     }
 
 }

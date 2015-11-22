@@ -9,6 +9,7 @@ import nidefawl.qubes.network.StreamIO;
 
 public class Vector3f implements StreamIO {
     final public static Vector3f ZERO = new Vector3f();
+    final public static Vector3f ONE = new Vector3f(1);
     public float x, y, z;
 
     /**
@@ -404,5 +405,12 @@ public class Vector3f implements StreamIO {
      */
     public Vector3f copy() {
         return new Vector3f(this);
+    }
+
+    /**
+     * @param param
+     */
+    public void subtract(Vector3f param) {
+        Vector3f.sub(this, param, this);
     }
 }

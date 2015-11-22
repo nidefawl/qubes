@@ -70,7 +70,6 @@ public class GuiOverlayStats extends Gui {
                     Engine.regionRenderer.numV/1000000.0) );
             info.add( String.format("UpdateRenderers: %s", Game.instance.updateRenderers ? "On" : "Off") );
             info.add( String.format("Primitive: %s", Engine.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
-            info.add( String.format("DrawMode: %d", Engine.terrainVertexAttributeFormat ) );
 
             this.stats5 = "";
             BlockPos p = Game.instance.selection.pos[0];

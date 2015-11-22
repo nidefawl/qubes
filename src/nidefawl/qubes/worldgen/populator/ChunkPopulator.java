@@ -56,7 +56,7 @@ public class ChunkPopulator implements IChunkPopulator {
                 if ( a <= 4 && rand.nextInt(24) == 0) {
                     g.generate(world, x, h+1, z, rand);
                 } else {
-                    Block bg = Block.longgrass;
+                    Block bg = Block.grassbush;
 //                    if (b>10&&rand.nextInt(10) == 0) {
 //                        bg = bl.get(r.nextInt(bl.size()));
 //                    }

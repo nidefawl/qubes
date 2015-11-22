@@ -263,7 +263,7 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.y);
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
-        float ambIntens = 0.02F;
+        float ambIntens = 0.05F;
         float diffIntens = 0.45F;
         float specIntens = 0.55F;
         for (int a = 0; a < 3; a++) {
@@ -330,11 +330,11 @@ public class UniformBuffer {
             } else if (z > 0.5) {  //POS Z face
                 //  0.0, -1.0,  0.0
                 tangent.set(-1, 0, 0);
-                bitangent.set(-1, 0, 0);
+                bitangent.set(0, -1, 0);
             } else if (z < -0.5) { // NEG Z face
                 //  0.0,  0.0, -1.0
                 tangent.set(1, 0, 0);
-                bitangent.set(-1, 0, 0);
+                bitangent.set(0, -1, 0);
             }
             
             float[] mat4x4 = new float[] {
@@ -441,4 +441,11 @@ public class UniformBuffer {
         uboMatrix3D.put(mat);//4
         uboMatrix3D.update();
     }
+    
+    public static void setMVP(FloatBuffer mat) {
+        uboMatrix3D.setPosition(0*16);
+        uboMatrix3D.put(mat);//0
+        uboMatrix3D.update();
+    }
+
 }

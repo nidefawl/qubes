@@ -129,28 +129,16 @@ public class BlockFaceAttr {
             vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
             vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
             vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
-            if (Engine.terrainVertexAttributeFormat == 1) {
-                vertexBuffer.put(Float.floatToRawIntBits(1));
-                vertexBuffer.put(v.normal);
-                vertexBuffer.put(Float.floatToRawIntBits(v.u));
-                vertexBuffer.put(Float.floatToRawIntBits(v.v));
-                vertexBuffer.put(v.rgba);
-                vertexBuffer.put(this.tex | this.type << 16 | this.pass << (16+12)); //2x SHORT
-                vertexBuffer.put(this.aoMask | this.faceDir << 16);
-                vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16); 
-                vertexBuffer.put(v.dirOffset);
-            } else {
-                vertexBuffer.put(v.normal);
-                int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
-                vertexBuffer.put(textureHalf2);
-                vertexBuffer.put(v.rgba);
-                vertexBuffer.put(this.tex | this.type << 16 | this.pass << (16+12)); //2x SHORT
-                // BIT 0-7: 8 bit AO
-                // BIT 16-18: 3 bit FACEDIR (aka blockside)
-                // BIT 19-24: 6 bit VERTEXDIR 
-                vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);    
-                vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16); 
-            }
+            vertexBuffer.put(v.normal);
+            int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
+            vertexBuffer.put(textureHalf2);
+            vertexBuffer.put(v.rgba);
+            vertexBuffer.put(this.tex | this.type << 16 | this.pass << (16+12)); //2x SHORT
+            // BIT 0-7: 8 bit AO
+            // BIT 16-18: 3 bit FACEDIR (aka blockside)
+            // BIT 19-24: 6 bit VERTEXDIR 
+            vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);    
+            vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16); 
              
             vertexBuffer.increaseVert();
         }

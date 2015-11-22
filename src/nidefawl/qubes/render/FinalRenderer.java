@@ -383,6 +383,9 @@ public class FinalRenderer extends AbstractRenderer {
             this.smaa.render(outputColor, 0);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         }
+//        Shaders.textured.enable();
+//        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.fbScene.getTexture(1));
+//        Engine.drawFullscreenQuad();
 
         this.frame++;
     }

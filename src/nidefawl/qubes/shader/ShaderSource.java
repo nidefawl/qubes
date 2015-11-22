@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nidefawl.qubes.assets.AssetInputStream;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameError;
@@ -36,7 +37,7 @@ public class ShaderSource {
         this.processed = readParse(assetManager, path, name, def, false);
     }
     private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, boolean resolve) throws IOException {
-        InputStream is = null;
+        AssetInputStream is = null;
         BufferedReader reader = null;
         try {
             String fpath = path + "/" + name;
@@ -61,7 +62,7 @@ public class ShaderSource {
                 is = assetManager.findResource(path + "/" + name, true);
             }
             if (is != null) {
-                reader = new BufferedReader(new InputStreamReader(is));
+                reader = new BufferedReader(new InputStreamReader(is.inputStream));
                 String line;
                 ArrayList<String> lines = new ArrayList<>();
                 String fullSource = "";

@@ -16,7 +16,9 @@ import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.models.loader.ModelVox;
+import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
+import nidefawl.qubes.models.qmodel.ModelQModel;
+import nidefawl.qubes.models.voxel.ModelVox;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
@@ -66,35 +68,25 @@ public class WorldRenderer extends AbstractRenderer {
     public Shader       terrainShaderFar;
     public Shader       skyShader;
     public Shader       waterShader;
-    public Shader       model;
+    public Shader       shaderModelVoxel;
+    public Shader       shaderModelQ;
     
     private TesselatorState skybox1;
     private TesselatorState skybox2;
-    ModelVox vox;
     private Shader shaderZPre;
 
+    ModelVox vox;
+    ModelQModel qmodel;
 
     public void initShaders() {
         try {
             pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_waterShader = assetMgr.loadShader(this, "terrain/water");
-            Shader terrain = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
-                @Override
-                public String getDefinition(String define) {
-                    if ("TERRAIN_DRAW_MODE".equals(define)) {
-                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
-                    }
-                    return null;
-                }
-                
-            });
+            Shader terrain = assetMgr.loadShader(this, "terrain/terrain");
             Shader terrainFar = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
-                    if ("TERRAIN_DRAW_MODE".equals(define)) {
-                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
-                    }
                     if ("FAR_BLOCKFACE".equals(define)) {
                         return "#define FAR_BLOCKFACE";
                     }
@@ -103,22 +95,10 @@ public class WorldRenderer extends AbstractRenderer {
                 
             });
 
-            Shader shaderZPre = assetMgr.loadShader(this, "terrain/terrain_pre", new IShaderDef() {
+            Shader shaderZPre = assetMgr.loadShader(this, "terrain/terrain_pre");
+            Shader modelVoxel = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
-                    if ("TERRAIN_DRAW_MODE".equals(define)) {
-                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
-                    }
-                    return null;
-                }
-                
-            });
-            Shader model = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
-                @Override
-                public String getDefinition(String define) {
-                    if ("TERRAIN_DRAW_MODE".equals(define)) {
-                        return "#define TERRAIN_DRAW_MODE "+Engine.terrainVertexAttributeFormat;
-                    }
                     if ("MODEL_RENDER".equals(define)) {
                         return "#define MODEL_RENDER";
                     }
@@ -126,13 +106,15 @@ public class WorldRenderer extends AbstractRenderer {
                 }
                 
             });
+            Shader modelQ = assetMgr.loadShader(this, "model/model");
             Shader sky = assetMgr.loadShader(this, "sky/sky");
             popNewShaders();
             this.terrainShader = terrain;
             this.terrainShaderFar = terrainFar;
             this.skyShader = sky;
             this.waterShader = new_waterShader;
-            this.model = model;
+            this.shaderModelVoxel = modelVoxel;
+            this.shaderModelQ = modelQ;
             this.shaderZPre = shaderZPre;
             
             this.shaderZPre.enable();
@@ -141,19 +123,20 @@ public class WorldRenderer extends AbstractRenderer {
             this.terrainShader.enable();
             this.terrainShader.setProgramUniform1i("blockTextures", 0);
             this.terrainShader.setProgramUniform1i("noisetex", 1);
-            this.terrainShader.setProgramUniform1i("normalTest", 2);
+            this.terrainShader.setProgramUniform1i("normalTextures", 2);
             
             
             this.terrainShaderFar.enable();
             this.terrainShaderFar.setProgramUniform1i("blockTextures", 0);
             this.terrainShaderFar.setProgramUniform1i("noisetex", 1);
+            this.terrainShader.setProgramUniform1i("normalTextures", 2);
 
             this.waterShader.enable();
             this.waterShader.setProgramUniform1i("blockTextures", 0);
             this.waterShader.setProgramUniform1i("waterNoiseTexture", 1);
-            this.model.enable();
-            this.model.setProgramUniform1i("blockTextures", 0);
-            this.model.setProgramUniform1i("waterNormals", 1);
+            this.shaderModelVoxel.enable();
+            this.shaderModelVoxel.setProgramUniform1i("blockTextures", 0);
+            this.shaderModelVoxel.setProgramUniform1i("waterNormals", 1);
             Shader.disable();
             startup = false;
         } catch (ShaderCompileError e) {
@@ -169,54 +152,67 @@ public class WorldRenderer extends AbstractRenderer {
         startup = false;
     }
     int idx = -1;
-    private int texNormalTest;
+    private int image;
     public void reloadModel() {
-//        File[] list = (new File(WorkingEnv.getAssetFolder(), "models")).listFiles(new FileFilter() {
-//            
-//            @Override
-//            public boolean accept(File pathname) {
-//                return pathname.isFile()&&pathname.getName().endsWith(".vox");
-//            }
-//        });
-//        if (list != null&&list.length>0) {
-//            
-//            idx++;
-//            if (idx >= list.length) {
-//                idx = 0;
-//            }
-//            String mName = list[idx].getName();
-//
-//            AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/" + mName);
-//            if (this.vox != null)
-//                this.vox.release();
-//            vox = new ModelVox(asset);   
-//        }
-        if (this.texNormalTest  > 0)
-            glDeleteTextures(this.texNormalTest);
-        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
-        AssetTexture tex1 = AssetManager.getInstance().loadPNGAsset("textures/heightmap_03.png");
-        
-        if (tex.getWidth() == tex1.getWidth() && tex.getHeight() == tex1.getHeight()) {
-            for (int x = 0; x < tex.getWidth(); x++) {
-                for (int y = 0; y < tex.getHeight(); y++) {
-                    int idx = y*tex.getWidth()+x;
-                    int height = tex1.getData()[idx*4+0]&0xFF;
-                    height-=118;
-                    height*=2;
-                    if (height < 0 || height > 255)
-                    System.out.println(height);
-                    if (height > 255) {
-                        height = 255;
-                    }
-                    if (height < 0) height = 0;
-                    tex.getData()[idx*4+3] = (byte) height;
-                }
+        File[] list = (new File(WorkingEnv.getAssetFolder(), "models")).listFiles(new FileFilter() {
+            
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isFile()&&pathname.getName().endsWith(".vox");
             }
-            System.err.println("copied alpha channel");
-        } else {
-            System.err.println("!");
+        });
+        if (list != null&&list.length>0) {
+            
+            idx++;
+            if (idx >= list.length) {
+                idx = 0;
+            }
+            String mName = list[idx].getName();
+
+            AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/" + mName);
+            if (this.vox != null)
+                this.vox.release();
+            vox = new ModelVox(asset);   
         }
-        this.texNormalTest = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
+
+        if (this.qmodel != null) {
+            this.qmodel.release();
+            this.qmodel = null;
+        }
+        ModelLoaderQModel l = new ModelLoaderQModel();
+        l.loadModel("models/test.qmodel");
+        this.qmodel = l.buildModel();
+        ModelLoaderQModel l2 = new ModelLoaderQModel();
+        l2.loadModel("models/animation.qmodel");
+        this.qmodel.addAnimation("walk", l2);
+        System.out.println(qmodel);
+        System.err.println("GOOD");
+        AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/test_tex0.png");
+        this.image = TextureManager.getInstance().makeNewTexture(t, false, true, 0);
+//        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
+//        AssetTexture tex1 = AssetManager.getInstance().loadPNGAsset("textures/heightmap_03.png");
+//        
+//        if (tex.getWidth() == tex1.getWidth() && tex.getHeight() == tex1.getHeight()) {
+//            for (int x = 0; x < tex.getWidth(); x++) {
+//                for (int y = 0; y < tex.getHeight(); y++) {
+//                    int idx = y*tex.getWidth()+x;
+//                    int height = tex1.getData()[idx*4+0]&0xFF;
+//                    height-=118;
+//                    height*=2;
+//                    if (height < 0 || height > 255)
+//                    System.out.println(height);
+//                    if (height > 255) {
+//                        height = 255;
+//                    }
+//                    if (height < 0) height = 0;
+//                    tex.getData()[idx*4+3] = (byte) height;
+//                }
+//            }
+//            System.err.println("copied alpha channel");
+//        } else {
+//            System.err.println("!");
+//        }
+//        this.texNormalTest = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
         
 
 //        byte[] rgba = tex.getData();
@@ -253,10 +249,10 @@ public class WorldRenderer extends AbstractRenderer {
         texWaterNoise = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
 //        reloadModel();
         
-
-        AssetTexture texNormalTest = AssetManager.getInstance().loadPNGAsset("textures/normalmaptest.png");
-        
-        this.texNormalTest = TextureManager.getInstance().makeNewTexture(texNormalTest, true, true, 10);
+//
+//        AssetTexture texNormalTest = AssetManager.getInstance().loadPNGAsset("textures/normalmaptest.png");
+//        
+//        this.texNormalTest = TextureManager.getInstance().makeNewTexture(texNormalTest, true, true, 10);
 
 //        byte[] rgba = tex.getData();
 //        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
@@ -278,9 +274,6 @@ public class WorldRenderer extends AbstractRenderer {
 //            }
 //        }
 //        
-        
-        
-
         AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/dragon.vox");
         if (this.vox != null) this.vox.release();
         vox = new ModelVox(asset);
@@ -313,7 +306,7 @@ public class WorldRenderer extends AbstractRenderer {
         
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
-        GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, this.texNormalTest);
+        GL.bindTexture(GL_TEXTURE2, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getNormals());
         
         if (Game.DO_TIMING)
             TimingHelper.endStart("renderFirstPass");
@@ -357,19 +350,19 @@ public class WorldRenderer extends AbstractRenderer {
 //            Engine.checkGLError("renderSecondPass");
 //        
         glDisable(GL_BLEND);
-        model.enable();
-        renderModels(model, PASS_SOLID, fTime);
-        Shader.disable();
+//        shaderModelVoxel.enable();
+//        renderVoxModels(shaderModelVoxel, PASS_SOLID, fTime);
+//        Shader.disable();
+        shaderModelQ.enable();
+        if (this.qmodel != null)
+            this.qmodel.animate(fTime);
+        renderQModels(shaderModelQ, PASS_SOLID, fTime);
 
         if (Game.DO_TIMING)
             TimingHelper.endSec();
     }
 
-    /**
-     * @param pass
-     * @param fTime 
-     */
-    public void renderModels(Shader modelShader, int pass, float fTime) {
+    public void renderVoxModels(Shader modelShader, int pass, float fTime) {
         if (vox != null) {
             BufferedMatrix mat = Engine.getTempMatrix();
             BufferedMatrix mat2 = Engine.getTempMatrix2();
@@ -392,6 +385,52 @@ public class WorldRenderer extends AbstractRenderer {
             mat2.update();
             UniformBuffer.setNormalMat(mat2.get());
             vox.render(pass);
+            UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
+        }
+    
+        
+        
+    }
+    /**
+     * @param pass
+     * @param fTime 
+     */
+    public void renderModelsUsingProgram(Shader modelShader, int pass, float fTime) {
+//        renderVoxModels(modelShader, pass, fTime);
+        renderQModels(modelShader, pass, fTime);
+    }
+
+    /**
+     * @param pass
+     * @param fTime 
+     */
+    public void renderQModels(Shader modelShader, int pass, float fTime) {
+        
+        if (qmodel != null) {
+            BufferedMatrix mat = Engine.getTempMatrix();
+            float modelScale = 1 / 4f;
+            mat.setIdentity();
+            mat.translate(mPos.x, mPos.y, mPos.z);
+            mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
+            mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+            mat.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
+            mat.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
+            mat.scale(modelScale);
+            mat.update();
+//            System.out.println(modelShader.getName());
+            modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+            if (modelShader == this.shaderModelQ) {
+                BufferedMatrix mat2 = Engine.getTempMatrix2();
+                mat2.setIdentity();
+                mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+                mat2.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
+                mat2.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
+                mat2.invert().transpose();
+                mat2.update();
+                UniformBuffer.setNormalMat(mat2.get());
+            }
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.image);
+            qmodel.render(Game.ticksran+fTime);
             UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
         }
     }
@@ -419,10 +458,10 @@ public class WorldRenderer extends AbstractRenderer {
         Engine.checkGLError("glLineWidth");
 //        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
         Engine.regionRenderer.setDrawMode(-1);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
-        renderModels(Shaders.normals, PASS_SOLID, fTime);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        renderModelsUsingProgram(Shaders.normals, PASS_SOLID, fTime);
         BufferedMatrix mat = Engine.getIdentityMatrix();
         Shaders.normals.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         Engine.regionRenderer.setDrawMode(-1);

@@ -33,7 +33,7 @@ import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.logging.IErrorHandler;
-import nidefawl.qubes.models.loader.ModelVox;
+import nidefawl.qubes.models.voxel.ModelVox;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
@@ -128,28 +128,6 @@ public class Game extends GameBase implements IErrorHandler {
         loadRender(0, 0.6f);
 
         
-        
-
-        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normalmaptest.png");
-        byte[] rgba = tex.getData();
-        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
-        int w = tex.getWidth();
-        int h = tex.getWidth();
-        for (int x = 0; x < 10; x++) {
-
-            for (int y = 0; y < 10; y++) {
-                int idx = y*w+x;
-                int pixel = rgba_int[idx];
-                String s = Integer.toHexString(pixel);
-                while(s.length()<8) {
-                    s = "0"+s;
-                }
-                float nx = (((pixel>>16)&0xFF) / 255.0f) * 2.0f - 1.0f;
-                float ny = (((pixel>>8)&0xFF) / 255.0f) * 2.0f - 1.0f;
-                float nz = (((pixel>>0)&0xFF) / 255.0f) * 2.0f - 1.0f;
-                System.out.println(""+x+","+y+" = 0x"+s+" = "+String.format("%.2f %.2f %.2f", nx, ny, nz));
-            }
-        }
         
         
         SysInfo info = new SysInfo();
@@ -251,9 +229,10 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F10) {
             public void onDown() {
-                Engine.flushRenderTasks();
-                Engine.regionRenderer.resetAll();
-                Engine.toggleDrawMode();
+//                Engine.flushRenderTasks();
+//                Engine.regionRenderer.resetAll();
+//                Engine.toggleDrawMode();
+                BlockTextureArray.getInstance().reload();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_R) {
@@ -306,7 +285,7 @@ public class Game extends GameBase implements IErrorHandler {
 //                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
 //              }
                 lastShaderLoadTime = System.currentTimeMillis();
-//                Shaders.initShaders();
+                Shaders.initShaders();
                 Engine.worldRenderer.initShaders();
 //                Engine.worldRenderer.reloadModel();
 //                  Engine.regionRenderer.initShaders();
@@ -943,18 +922,18 @@ public class Game extends GameBase implements IErrorHandler {
           lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
 //          Engine.worldRenderer.initShaders();
-          Engine.worldRenderer.reloadModel();
+//          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();
 //            
-//          BlockTextureArray.getInstance().reloadTexture("images/log.png");
-//          BlockTextureArray.getInstance().reloadTexture("images/log_top.png");
-//          BlockTextureArray.getInstance().reloadTexture("images/tallgrass.png");
-//          BlockTextureArray.getInstance().reloadTexture("images/dirt.png");
-          BlockTextureArray.getInstance().reloadTexture("images/stone.png");
-//          BlockTextureArray.getInstance().reloadTexture("images/grass_side.png");
-//          BlockTextureArray.getInstance().reloadTexture("images/grass_side_overlay.png");
+//          BlockTextureArray.getInstance().reloadTexture("log.png");
+//          BlockTextureArray.getInstance().reloadTexture("log_top.png");
+//          BlockTextureArray.getInstance().reloadTexture("tallgrass.png");
+//          BlockTextureArray.getInstance().reloadTexture("dirt.png");
+//          BlockTextureArray.getInstance().reloadTexture("stone.png");
+//          BlockTextureArray.getInstance().reloadTexture("grass_side.png");
+//          BlockTextureArray.getInstance().reloadTexture("grass_side_overlay.png");
 //          Engine.textures.refreshNoiseTextures();
 //          AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
 //          ColorMap.grass.set(tex_map_grass);
@@ -1012,12 +991,12 @@ public class Game extends GameBase implements IErrorHandler {
                 l.loc.x = px;
                 l.loc.y = py;
                 l.loc.z = pz;
-                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
-                l.intensity = 0.4F;
-                l.color = new Vector3f(1*l.intensity);
-                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
-                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
-                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
+//                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
+//                l.intensity = 0.4F;
+//                l.color = new Vector3f(1*l.intensity);
+//                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
+//                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
+//                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
             }
           float yaw = player.yaw;
           float pitch = player.pitch;

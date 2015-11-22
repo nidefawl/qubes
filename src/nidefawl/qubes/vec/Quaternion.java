@@ -2,6 +2,8 @@ package nidefawl.qubes.vec;
 
 import java.nio.FloatBuffer;
 
+import nidefawl.qubes.util.GameMath;
+
 public class Quaternion {
 
     public float x, y, z, w;
@@ -20,7 +22,7 @@ public class Quaternion {
      *
      */
     public Quaternion(float x, float y, float z, float w) {
-        set(x, y, z, w);
+        set(x,y,z,w);
     }
 
     /*
@@ -446,4 +448,89 @@ public class Quaternion {
     public final float length() {
         return (float) Math.sqrt(lengthSquared());
     }
+
+    /**
+     * @param readVec3
+     * @return
+     */
+    public static Quaternion fromVec3(Vector3f v) {
+        float x = 1*( v.x );
+        float y = -1*( v.z );
+        float z = -1*( v.y );
+//        Matrix4f.r
+        Matrix4f matrix = eulerToMatrix4f( x, y, z , new Matrix4f());
+        Quaternion quat = new Quaternion();
+        setFromMatrix(matrix, quat);
+        return quat;
+    }
+
+
+
+    /**
+     * Converts Euler angles to a Matrix3f.
+     * 
+     * @param eulerX the x-Euler-angle
+     * @param eulerY the y-Euler-angle
+     * @param eulerZ the z-Euler-angle
+     * @param matrix the Matrix3f instance to write rotational values to
+     * @return 
+     */
+    public static Matrix4f eulerToMatrix4f( float eulerX, float eulerY, float eulerZ, Matrix4f matrix )
+    {
+        if (matrix == null) {
+            matrix = new Matrix4f();
+        }
+        final float sx = GameMath.sin( eulerX );
+        final float sy = GameMath.sin( eulerY );
+        final float sz = GameMath.sin( eulerZ );
+        final float cx = GameMath.cos( eulerX );
+        final float cy = GameMath.cos( eulerY );
+        final float cz = GameMath.cos( eulerZ );
+        matrix.setIdentity();
+        matrix.m00= cy * cz ;
+        matrix.m01 = -( cx * sz ) + ( sx * sy * cz ) ;
+        matrix.m02 = ( sx * sz ) + ( cx * sy * cz ) ;
+        matrix.m10 = cy * sz ;
+        matrix.m11 = ( cx * cz ) + ( sx * sy * sz ) ;
+        matrix.m12 = -( sx * cz ) + ( cx * sy * sz ) ;
+        matrix.m20 = -sy ;
+        matrix.m21 = sx * cy ;
+        matrix.m22 = cx * cy ;
+        matrix.m33 = 1 ;
+        return matrix;
+    }
+
+
+    /**
+     * @param quatCur
+     */
+    public void set(Quaternion q) {
+        this.x = q.x;
+        this.y = q.y;
+        this.z = q.z;
+        this.w = q.w;
+    }
+
+
+    /**
+     * @param quatCur
+     */
+    public void sub(Quaternion q) {
+        this.x-=q.x;
+        this.y-=q.y;
+        this.z-=q.z;
+        this.w-=q.w;
+    }
+
+
+    /**
+     * @param quatCur
+     */
+    public void add(Quaternion q) {
+        this.x+=q.x;
+        this.y+=q.y;
+        this.z+=q.z;
+        this.w+=q.w;
+    }
+
 }

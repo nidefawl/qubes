@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.models.loader;
+package nidefawl.qubes.models.voxel;
 
 /**
  * @author Michael Hept 2015

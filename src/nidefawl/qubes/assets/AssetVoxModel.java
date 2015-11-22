@@ -5,7 +5,7 @@ package nidefawl.qubes.assets;
 
 import java.io.*;
 
-import nidefawl.qubes.models.loader.ModelVoxPalette;
+import nidefawl.qubes.models.voxel.ModelVoxPalette;
 import nidefawl.qubes.vec.BlockPos;
 
 /**
@@ -54,8 +54,9 @@ public class AssetVoxModel extends Asset
      * @param is
      * @throws IOException 
      */
-    public void load(InputStream is) throws IOException {
-        DataInputStream dis = new DataInputStream(is);
+    public void load(AssetInputStream is) throws IOException {
+        setPack(is.source);
+        DataInputStream dis = new DataInputStream(is.inputStream);
         byte[] header = new byte[4];
         dis.readFully(header);
         if (!headerCheck(header, VOX_HEADER)) {
