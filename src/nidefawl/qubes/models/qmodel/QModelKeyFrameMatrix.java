@@ -11,7 +11,7 @@ import nidefawl.qubes.vec.Matrix4f;
  */
 public class QModelKeyFrameMatrix extends KeyFrame {
 
-    public Matrix4f mat;
+    public final Matrix4f mat;
 
     /**
      * @param idx

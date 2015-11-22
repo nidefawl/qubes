@@ -7,7 +7,7 @@ package nidefawl.qubes.models.qmodel;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class QJointAnimation {
+public class QBoneAnimation {
     public KeyFrame[][] frames = new KeyFrame[2][];
     public float[] animLength = new float[2];
     public float totalFrameTime;
@@ -16,7 +16,7 @@ public class QJointAnimation {
      * @param numRotFrames
      * @param numTranslationFrames
      */
-    public QJointAnimation(int numRotFrames) {
+    public QBoneAnimation(int numRotFrames) {
         this.frames[0] = new KeyFrame[numRotFrames];
         
     }

@@ -3,23 +3,18 @@
  */
 package nidefawl.qubes.models.qmodel;
 
-import static nidefawl.qubes.meshing.BlockFaceAttr.BLOCK_VERT_INT_SIZE;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.lwjgl.opengl.*;
-
-import com.sun.org.apache.xalan.internal.xsltc.cmdline.Transform;
-
+import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Half;
 import nidefawl.qubes.vec.Matrix4f;
-import nidefawl.qubes.vec.Quaternion;
 import nidefawl.qubes.vec.Vector3f;
 
 /**
@@ -35,41 +30,46 @@ public class ModelQModel {
 //    public GLTriBuffer gpuShadowBuf = null;
     public boolean needsDraw = true;
     public long reRender=0;
-    public QModelJoint rootJoint;
-    private int lastFrame;
+    public QModelPoseBone rootJoint;
+    private ArrayList<QModelPoseBone> poseBones;
 	/**
 	 * @param qModelJoint 
 	 * 
 	 */
-	public ModelQModel(QModelJoint qModelJoint) {
-	    this.rootJoint = qModelJoint;
+	public ModelQModel(ModelLoaderQModel loader) {
+	    this.loader = loader;
+	    this.poseBones = Lists.newArrayList();
+        for (QModelBone b : loader.listBones) {
+            this.poseBones.add(new QModelPoseBone(b));
+        }
+        for (QModelPoseBone b : poseBones) {
+            QModelPoseBone parent = getPoseBone(b.restbone.parent);
+            b.parent = parent;
+            if (b.parent != null) {
+                b.parent.addChild(b);
+            }
+        }
+        this.rootJoint = this.poseBones.get(0);
 	}
 
-    int frameTicks1;
-    int frameTicks2;
-    long lastPrint = System.currentTimeMillis();
-    Vector3f translate = new Vector3f();
-    Quaternion rot = new Quaternion();
-    Matrix4f tmpAnimMat = new Matrix4f();
-	public void animate(float fTime) {
+	/**
+     * @param restbone
+     * @return
+     */
+    private QModelPoseBone getPoseBone(QModelBone restbone) {
+        for (QModelPoseBone b : poseBones) {
+            if (b.restbone == restbone)
+                return b;
+        }
+        return null;
+    }
+
+    public void animate(float fTime) {
 	    float f = 1.0f/this.loader.fps;
-	    float absTimeInSeconds = ((Game.ticksran+fTime)/(float)Game.TICKS_PER_SEC);
+	    float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC)*0.2f;
 	    float absTime = absTimeInSeconds / f;
-	    int curFrame = GameMath.floor(absTime);
-	    if (curFrame != lastFrame) {
-	        frameTicks1++;
-	        lastFrame = curFrame; 
-	    }
-//	    if (System.currentTimeMillis()-lastPrint>1000) {
-//	        lastPrint = System.currentTimeMillis();
-//	        System.out.println(fProgress);
-//	        frameTicks1 = 0;
-//	    }
-	    int frameIDx = 5;
-        for (QModelJoint joint : this.loader.listJoints) {
-            tmpAnimMat.setIdentity();
-            QJointAnimation jt = joint.animation;
-            
+        for (QModelPoseBone joint : this.poseBones) {
+            QBoneAnimation jt = joint.getAnimation();
             if (jt.frames[0].length > 0) {
                 float totalLen = jt.animLength[0];
                 QModelKeyFrameMatrix frame = (QModelKeyFrameMatrix) jt.getFrameAt(0, absTimeInSeconds);
@@ -77,71 +77,54 @@ public class ModelQModel {
                 //TODO: if nextframe < frame
                 float frameLen = nextframe.time - frame.time;
                 float frameInterpProgress = ((absTimeInSeconds % totalLen)- frame.time) / frameLen;
-                if (frameInterpProgress < 0) frameInterpProgress = 0;
-                if (frameInterpProgress > 1 ) frameInterpProgress = 1;
+                if (frameInterpProgress < 0) {
+                    joint.matDeform = frame.mat;
+                }
+                else if (frameInterpProgress > 1 ) {
 
-//                //interpolate distance with nlerp
-//                Quaternion quatCur = frame.param;
-//                Quaternion quatNext = nextframe.param;
-////                rot.set(quatCur);
-//                rot.set(quatNext);
-//                rot.sub(quatCur);
-//                rot.scale(frameInterpProgress);
-//                rot.add(quatCur);
-//                rot.normalise(rot);
-//                tmpAnimMat.setIdentity();
-//                if (joint.parent != null) {
-//                    tmpAnimMat.setFromQuat(rot.x, rot.y, rot.z, rot.w);
-//                }
-                joint.matDeform = frame.mat;
+                    joint.matDeform = nextframe.mat;
+                } else {
+                    joint.interpolateFrame(frame.mat, nextframe.mat, frameInterpProgress);
+                }
+
             } else {
-                joint.matDeform = joint.matRest;
+                joint.matDeform = joint.restbone.matRest;
             }
-//            if (jt.frames[1].length > 0) {
-//                float totalLen = jt.animLength[1];
-////                QModelKeyframeTrans frame = (QModelKeyframeTrans) jt.getFrameAt(1, absTimeInSeconds);
-//                QModelKeyframeTrans frame = (QModelKeyframeTrans) jt.getFrameAt(1, absTimeInSeconds);
-//                QModelKeyframeTrans nextframe = (QModelKeyframeTrans) frame.getNext();
-////              System.out.println(curFrame+"/"+frame.idx+" - "+frame.hashCode()+"/"+frame.getType()+"/"+frame.time);
-//              //TODO: if nextframe < frame
-//              float frameLen = nextframe.time - frame.time;
-//              float frameInterpProgress = ((absTimeInSeconds % totalLen)- frame.time) / frameLen;
-////            System.out.println(frameInterpProgress);
-//              translate.set(nextframe.param);
-//              translate.subtract(frame.param);
-//              translate.scale(frameInterpProgress);
-//              translate.addVec(frame.param);
-//              tmpAnimMat.translate(translate);
-//            }
-//            if (joint.parent != null) {
-//                joint.matFinal.load(tmpAnimMat);
-//                joint.matFinal.mulMat(joint.matLocal);
-//                joint.matFinal.mulMat(joint.parent.matFinal);
-//            }else {
-//
-//                joint.matFinal.load(tmpAnimMat);
-//                joint.matFinal.mulMat(joint.matLocal);
-//            }
-//          System.out.println(joint.matLocal.m30);
             this.needsDraw = true; //DONT! (DEBUG)
         }
 	}
     Matrix4f tmpMat1 = new Matrix4f();
     Matrix4f tmpMat2 = new Matrix4f();
-	/** DEBUG METHOD! SLOW! RUN IN SHADER! */
-    public void transform(QModelVertex v, Vector3f out) {
-        out.set(Vector3f.ZERO);
+	/** DEBUG METHOD! SLOW! RUN IN SHADER! 
+	 * @param tmpVec2 
+	 * @return */
+    public Matrix4f buildFinalPose(QModelVertex v) {
         Matrix4f m1 = tmpMat1;
         Matrix4f m2 = tmpMat2;
         m1.setZero();
         for (int j = 0; j < v.numBones; j++) {
-            QModelJoint jt = loader.listJoints.get(v.bones[j]);
-            m2.load(jt.matRestInv);
+            QModelPoseBone jt = poseBones.get(v.bones[j]);
+            m2.load(jt.restbone.matRestInv);
             m2.mulMat(jt.matDeform);
             m1.addWeighted(m2, v.weights[j]);
         }
-        Matrix4f.transform(m1, v, out);
+        return v.numBones > 0 ? m1 : null;
     }
+//    public void transform(QModelVertex v, Vector3f out, Vector3f tmpVec2) {
+////        out.set(Vector3f.ZERO);
+////        Matrix4f m1 = tmpMat1;
+////        Matrix4f m2 = tmpMat2;
+////        m1.setZero();
+////        for (int j = 0; j < v.numBones; j++) {
+////            QModelPoseBone jt = poseBones.get(v.bones[j]);
+////            m2.load(jt.restbone.matRestInv);
+////            m2.mulMat(jt.matDeform);
+////            m1.addWeighted(m2, v.weights[j]);
+////        }
+////        if (v.numBones>0)
+////            return m1;
+////        return null;
+////    }
    
 	Vector3f tmpVec = new Vector3f();
     public void render(float f) {
@@ -159,26 +142,44 @@ public class ModelQModel {
             Arrays.fill(vPos, -1);
             int pos = 0;
             for (QModelTriangle triangle : this.loader.listTri) {
-            	for (int i = 0; i < 3; i++) {
-            		int idx = triangle.vertIdx[i];
-//            		if (vPos[idx]<0) {
-            			vPos[idx] = vPosI++;
-            			QModelVertex v = this.loader.getVertex(idx);
-                        transform(v, tmpVec);
-        				buf.put(Float.floatToRawIntBits(tmpVec.x));
-        				buf.put(Float.floatToRawIntBits(tmpVec.y));
-        				buf.put(Float.floatToRawIntBits(tmpVec.z));
-        				int normal = packNormal(triangle.normal[i]);
-        				buf.put(normal);
-        	            int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
-        				buf.put(textureHalf2);
-        				buf.put(0xff999999);
-//            		}
-					idxArr[pos++] = vPos[idx];
-    	            buf.increaseVert();
-            	}
-            	buf.increaseFace();
-        	}
+                for (int i = 0; i < 3; i++) {
+                    int idx = triangle.vertIdx[i];
+//                  if (vPos[idx]<0) {
+                        vPos[idx] = vPosI++;
+                        QModelVertex v = this.loader.getVertex(idx);
+                        Matrix4f pose = buildFinalPose(v);
+                        if (pose != null) {
+                            Matrix4f.transform(pose, v, tmpVec);
+                        } else {
+                            tmpVec.set(v);
+                        }
+                        buf.put(Float.floatToRawIntBits(tmpVec.x));
+                        buf.put(Float.floatToRawIntBits(tmpVec.y));
+                        buf.put(Float.floatToRawIntBits(tmpVec.z));
+                        if (pose != null) {
+                            pose.m30=0;
+                            pose.m31=0;
+                            pose.m32=0;
+                            pose.m33=1;
+                            pose.m03=0;
+                            pose.m13=0;
+                            pose.m23=0;
+                            Matrix4f.transform(pose, triangle.normal[0], tmpVec);
+                            tmpVec.normalise();
+                        } else {
+                            tmpVec.set(triangle.normal[0]);
+                        }
+                        int normal = packNormal(tmpVec);
+                        buf.put(normal);
+                        int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
+                        buf.put(textureHalf2);
+                        buf.put(0xff999999);
+//                  }
+                    idxArr[pos++] = vPos[idx];
+                    buf.increaseVert();
+                }
+                buf.increaseFace();
+            }
             
             
             if (this.gpuBuf == null) {
@@ -221,11 +222,11 @@ public class ModelQModel {
      * @param l2
      */
     public void addAnimation(String string, ModelLoaderQModel l2) {
-        if (l2.listJoints.size() != this.loader.listJoints.size()) {
+        if (l2.listBones.size() != this.loader.listBones.size()) {
             throw new GameError("Joints do not match");
         }
-        for (QModelJoint jt : l2.listJoints) {
-            QModelJoint existingJt = this.loader.findJoint(jt.name);
+        for (QModelBone jt : l2.listBones) {
+            QModelBone existingJt = this.loader.findJoint(jt.name);
             if (existingJt == null) {
                 throw new GameError("Joints do not match");
             }
