@@ -75,6 +75,11 @@ public class ModelQModel {
         return null;
     }
 
+    public void rest() {
+        for (QModelPoseBone joint : this.poseBones) {
+            joint.matDeform = joint.restbone.matRest;
+        }
+    }
     public void animate(float fTime) {
 	    float f = 1.0f/this.loader.fps;
 	    float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC);

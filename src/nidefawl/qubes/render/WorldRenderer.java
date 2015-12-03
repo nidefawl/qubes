@@ -421,7 +421,11 @@ public class WorldRenderer extends AbstractRenderer {
                 Entity e = ents.get(i);
                 if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
                     continue;
-                this.qmodel.animate(fTime);
+                if (e.pos.distanceSq(e.lastPos) < 1.0E-4) {
+                    this.qmodel.rest();
+                } else {
+                    this.qmodel.animate(fTime);
+                }
                 Vector3f pos = e.getRenderPos(fTime);
                 Vector3f rot = e.getRenderRot(fTime);
                 float headYaw = rot.x;
