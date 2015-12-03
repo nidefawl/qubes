@@ -31,7 +31,7 @@ void main(void) {
 	vec3 toneMapped = ToneMap(tex.rgb+texBloom.rgb*0.4, autoExposure);
 
 #else
-	vec3 toneMapped = ToneMap(tex.rgb, 32f);
+	vec3 toneMapped = ToneMap(tex.rgb, 32.0f);
 #endif
 	out_Color = vec4(toneMapped, tex.a);
 	// out_Color = vec4(tex.rgb, tex.a);

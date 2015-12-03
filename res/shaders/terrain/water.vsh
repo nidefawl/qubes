@@ -35,15 +35,15 @@ void main() {
 
 	faceLightSky = vec4(
 		float(in_light.y&LIGHT_MASK)/15.0,
-		float((in_light.y>>4)&LIGHT_MASK)/15.0,
-		float((in_light.y>>8)&LIGHT_MASK)/15.0,
-		float((in_light.y>>12)&LIGHT_MASK)/15.0
+		float((in_light.y>>4u)&LIGHT_MASK)/15.0,
+		float((in_light.y>>8u)&LIGHT_MASK)/15.0,
+		float((in_light.y>>12u)&LIGHT_MASK)/15.0
 		);
 	faceLight = vec4(
 		float(in_light.x&LIGHT_MASK)/15.0,
-		float((in_light.x>>4)&LIGHT_MASK)/15.0,
-		float((in_light.x>>8)&LIGHT_MASK)/15.0,
-		float((in_light.x>>12)&LIGHT_MASK)/15.0
+		float((in_light.x>>4u)&LIGHT_MASK)/15.0,
+		float((in_light.x>>8u)&LIGHT_MASK)/15.0,
+		float((in_light.x>>12u)&LIGHT_MASK)/15.0
 		);
 
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));

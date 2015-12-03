@@ -35,10 +35,10 @@ void main(void) {
 	color_adj *= blockside;
 
 
-	float f = BLOCK_ID(blockinfo);
+	uint blockid = BLOCK_ID(blockinfo);
 
 	//TODO: figure out something better 
-	if (IS_LEAVES(f)) { //EXPENSIVE LEAVE
+	if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
 		colorizeLeaves(color_adj, position.xyz);
 	}
 
