@@ -134,4 +134,22 @@ public abstract class Handler {
     public void handleTeleportAck(PacketCTeleportAck packetCTeleportAck) {
         
     }
+
+    /**
+     * @param packetSEntityUnTrack
+     */
+    public void handleEntityUntrack(PacketSEntityUnTrack packetSEntityUnTrack) {
+    }
+
+    /**
+     * @param packetSEntityTrack
+     */
+    public void handleEntityTrack(PacketSEntityTrack packetSEntityTrack) {
+    }
+
+    /**
+     * @param packetSEntityMove
+     */
+    public void handleEntityMove(PacketSEntityMove packetSEntityMove) {
+    }
 }

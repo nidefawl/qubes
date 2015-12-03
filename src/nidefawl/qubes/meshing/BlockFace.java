@@ -252,7 +252,7 @@ public class BlockFace {
      */
     public int drawShadowTextured(BlockFaceAttr attr, VertexBuffer vertexBuffer) {
         Block block = Block.get(this.bs.type);
-        int tex = block.getTexture(this.faceDir, this.bs.texture);
+        int tex = block.getTexture(this.faceDir, this.bs.texture, 0);
         this.faceDir = this.bs.axis<<1|this.bs.face;
         attr.setFaceDir(faceDir);
         attr.setTex(tex);

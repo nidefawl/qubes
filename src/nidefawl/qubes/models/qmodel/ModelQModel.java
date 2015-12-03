@@ -13,8 +13,10 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Half;
 import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Quaternion;
 import nidefawl.qubes.vec.Vector3f;
 
 /**
@@ -32,6 +34,8 @@ public class ModelQModel {
     public long reRender=0;
     public QModelPoseBone rootJoint;
     private ArrayList<QModelPoseBone> poseBones;
+    private QModelPoseBone head;
+    private QModelPoseBone neck;
 	/**
 	 * @param qModelJoint 
 	 * 
@@ -48,8 +52,15 @@ public class ModelQModel {
             if (b.parent != null) {
                 b.parent.addChild(b);
             }
+            if (b.restbone.name.equalsIgnoreCase("head")) {
+                this.head = b;
+            }
+            if (b.restbone.name.equalsIgnoreCase("neck")) {
+                this.neck = b;
+            }
         }
         this.rootJoint = this.poseBones.get(0);
+//        this.head.animate = false;
 	}
 
 	/**
@@ -66,9 +77,13 @@ public class ModelQModel {
 
     public void animate(float fTime) {
 	    float f = 1.0f/this.loader.fps;
-	    float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC)*0.2f;
+	    float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC);
 	    float absTime = absTimeInSeconds / f;
         for (QModelPoseBone joint : this.poseBones) {
+            if (!joint.animate) {
+                joint.matDeform = joint.restbone.matRest;
+                continue;
+            }
             QBoneAnimation jt = joint.getAnimation();
             if (jt.frames[0].length > 0) {
                 float totalLen = jt.animLength[0];
@@ -92,7 +107,9 @@ public class ModelQModel {
             }
             this.needsDraw = true; //DONT! (DEBUG)
         }
+        
 	}
+    Quaternion q = new Quaternion();
     Matrix4f tmpMat1 = new Matrix4f();
     Matrix4f tmpMat2 = new Matrix4f();
 	/** DEBUG METHOD! SLOW! RUN IN SHADER! 
@@ -164,10 +181,10 @@ public class ModelQModel {
                             pose.m03=0;
                             pose.m13=0;
                             pose.m23=0;
-                            Matrix4f.transform(pose, triangle.normal[0], tmpVec);
+                            Matrix4f.transform(pose, triangle.normal[i], tmpVec);
                             tmpVec.normalise();
                         } else {
-                            tmpVec.set(triangle.normal[0]);
+                            tmpVec.set(triangle.normal[i]);
                         }
                         int normal = packNormal(tmpVec);
                         buf.put(normal);
@@ -222,16 +239,110 @@ public class ModelQModel {
      * @param l2
      */
     public void addAnimation(String string, ModelLoaderQModel l2) {
-        if (l2.listBones.size() != this.loader.listBones.size()) {
-            throw new GameError("Joints do not match");
-        }
+//        if (l2.listBones.size() != this.loader.listBones.size()) {
+//            throw new GameError("Joints do not match");
+//        }
         for (QModelBone jt : l2.listBones) {
             QModelBone existingJt = this.loader.findJoint(jt.name);
             if (existingJt == null) {
-                throw new GameError("Joints do not match");
+//                throw new GameError("Joints do not match");
+                continue;
             }
             existingJt.animation = jt.animation;
         }
         
+    }
+
+    /**
+     * @param yaw
+     * @param pitch
+     */
+    public void setHeadOrientation(float yaw, float pitch) {
+        //temp variable for head position in neck local space
+        Vector3f headParentLocal=new Vector3f();
+        {
+            QModelPoseBone b = this.head;
+            
+            //copy rest pose matrix to deform matrix
+            b.deformInterp.load(b.getMatDeform());
+            // alternative:
+            // should allow clamping of angles when not using restpose but already animated pose
+//            b.getMatRest().toEuler(tmpVec);
+//          tmpVec.x+=hyaw * GameMath.PI_OVER_180
+//          tmpVec.y+=-pitch * GameMath.PI_OVER_180
+//            if (tmpVec.x < -maxAngle || tmpVec.x > maxAngle ......)
+//              clamp
+//            b.deformInterp.setIdentity();
+//            
+//            b.deformInterp.rotate(tmpVec.z, 0f, 0f, 1f);
+//            b.deformInterp.rotate(tmpVec.y, 0f, 1f, 0f);
+//            b.deformInterp.rotate(tmpVec.x, 1f, 0f, 0f);
+            //
+            
+            //clamp max angle 
+            float hyaw = (yaw-270)*-1;
+            float max = 60;
+            if (hyaw < -max) {
+                hyaw = -max;
+            }
+            if (hyaw > max) {
+                hyaw = max;
+            }
+//            System.out.println(yaw+"/"+hyaw);
+            
+
+            //apply rotation on top of copied rest pose
+            b.deformInterp.rotate(hyaw * GameMath.PI_OVER_180, 0f, 1f, 0f);
+            b.deformInterp.rotate(-pitch * GameMath.PI_OVER_180, 1f, 0f, 0f);
+            
+            
+            b.matDeform = b.deformInterp;
+            
+            //keep the x,y,z translation from restpose
+//            b.matDeform.m30 = b.restbone.matRest.m30;
+//            b.matDeform.m31 = b.restbone.matRest.m31;
+//            b.matDeform.m32 = b.restbone.matRest.m32;
+
+            //calculate joint-root-position of the head-joint and transform it into neck joint space
+            tmpVec.set(0,0,0);
+            tmpMat1.load(b.restbone.matRest);
+            tmpMat1.mulMat(b.parent.restbone.matRestInv);
+            Matrix4f.transform(tmpMat1, tmpVec, headParentLocal);
+        }
+        {
+            QModelPoseBone b = this.neck;
+            //copy rest pose matrix to deform matrix
+            b.deformInterp.load(b.getMatDeform());
+            //clamp max angle 
+            float hyaw = (yaw);
+            float max = 60;
+            if (hyaw < -max) {
+                hyaw = -max;
+            }
+            if (hyaw > max) {
+                hyaw = max;
+            }
+            //apply rotation on top of copied rest pose
+            b.deformInterp.rotate(hyaw * 0.4f * GameMath.PI_OVER_180, 0f, 1f, 0f);
+            b.deformInterp.rotate(-pitch * 0.4f * GameMath.PI_OVER_180, 1f, 0f, 0f);
+            b.matDeform = b.deformInterp;
+            
+            //keep the x,y,z translation from restpose
+//            b.matDeform.m30 = b.restbone.matRest.m30;
+//            b.matDeform.m31 = b.restbone.matRest.m31;
+//            b.matDeform.m32 = b.restbone.matRest.m32;
+            
+
+            //calculate the new joint-root-position of the head-joint with the new neck matrix
+            Matrix4f.transform(b.matDeform, headParentLocal, tmpVec);
+            
+            //copy the new head position back to the head-joint pose matrix
+            b = this.head;
+            b.matDeform.m30 = tmpVec.x;
+            b.matDeform.m31 = tmpVec.y;
+            b.matDeform.m32 = tmpVec.z;
+        }
+        this.neck.animate = true;
+        this.head.animate = true;
     }
 }

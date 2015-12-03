@@ -17,6 +17,9 @@ public class ClientSettings extends AbstractYMLConfig {
     public int ssr;
     public int aa;
     public int smaaQuality;
+    public float thirdpersonDistance;
+    public boolean dirty;
+    private int saveTicks;
     
     @Override
     public void setDefaults() {
@@ -25,10 +28,12 @@ public class ClientSettings extends AbstractYMLConfig {
         this.ssr = 0;
         this.aa = 1;
         this.smaaQuality = 1;
+        this.thirdpersonDistance = 4.0f;
     }
 
     @Override
     public void load() {
+        thirdpersonDistance = getFloat("thirdpersonDistance", thirdpersonDistance);
         chunkLoadDistance = getInt("chunkLoadDistance", chunkLoadDistance);
         shadowDrawMode = getInt("shadowDrawMode", shadowDrawMode);
         smaaQuality = getInt("smaaQuality", smaaQuality);
@@ -43,6 +48,21 @@ public class ClientSettings extends AbstractYMLConfig {
         setInt("ssr", ssr);
         setInt("aa", aa);
         setInt("smaaQuality", smaaQuality);
+        setFloat("thirdpersonDistance", thirdpersonDistance);
+    }
+
+    /**
+     * @return 
+     * 
+     */
+    public boolean lazySave() {
+        if (this.dirty && this.saveTicks--<=0) {
+            this.saveTicks = 20;
+            this.dirty = false;
+            save();
+            return true;
+        }
+        return false;
     }
 
 }

@@ -12,7 +12,9 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
+import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Dir;
@@ -32,6 +34,9 @@ public class WorldClient extends World {
     private final Vector3f       lightPosition;
     private final Vector3f       lightDirection;
     private final Vector3f       tmp1;
+    HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
+    ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
+
 
     public WorldClient(WorldSettingsClient settings) {
         super(settings);
@@ -107,9 +112,51 @@ public class WorldClient extends World {
     
     @Override
     public void tickUpdate() {
-        super.tickUpdate();
+        if (!this.settings.isFixedTime()) {
+            this.settings.setTime(this.settings.getTime()+1L);
+        }
+        int size = this.entityList.size();
+        for (int i = 0; i < size; i++) {
+            Entity e = this.entityList.get(i);
+            e.tickUpdate();
+        }
     }
 
 
+
+    public void onLeave() {
+        this.entities.clear();
+        this.entityList.clear();
+    }
+
+    public boolean addEntity(Entity ent) {
+        Entity e = this.entities.put(ent.id, ent);
+        if (e != null) {
+            throw new GameError("Entity with id " + ent.id + " already exists: "+e);
+        }
+        this.entityList.add(ent);
+        ent.world = this;
+//        addLight(new Vector3f(ent.pos));
+        return true;
+    }
+
+    public boolean removeEntity(Entity ent) {
+        Entity e = this.entities.remove(ent.id);
+        if (e != null) {
+            this.entityList.remove(e);
+            ent.world = null;
+            return true;
+        }
+        return false;
+    }
+
+
+    public Entity getEntity(int entId) {
+        return this.entities.get(entId);
+    }
+
+    public List<Entity> getEntityList() {
+        return this.entityList;
+    }
 
 }

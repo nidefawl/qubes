@@ -18,12 +18,15 @@ import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gl.GPUVendor;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.logging.LogBufferStream;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.GPUTaskProfile;
 import nidefawl.qubes.perf.TimingHelper;
+import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.swing.TextDialog;
@@ -35,8 +38,8 @@ public abstract class GameBase implements Runnable {
     public static boolean glDebug         = false;
     public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
-    static int            initWidth       = (int) (1680*0.8);
-    static int            initHeight      = (int) (1050*0.8);
+    static int            initWidth       = (int) (1680*0.4);
+    static int            initHeight      = (int) (1050*0.4);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
@@ -70,6 +73,7 @@ public abstract class GameBase implements Runnable {
     private Thread             thread;
     private int newWidth = initWidth;
     private int newHeight = initHeight;
+    private GPUVendor vendor = GPUVendor.OTHER;
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -92,6 +96,10 @@ public abstract class GameBase implements Runnable {
     public boolean isRunning() {
         return running;
     }
+    
+    public GPUVendor getVendor() {
+        return this.vendor;
+    }
 
     @Override
     public final void run() {
@@ -101,11 +109,40 @@ public abstract class GameBase implements Runnable {
             t.printStackTrace();
             return;
         }
-
-        initGLContext();
-        GameContext.lateInit();
-        if (this.showError == null) {
-            this.showError = GameContext.getInitError();
+        try {
+            List<String> list = GL.validateCaps();
+            if (!list.isEmpty()) {
+                ArrayList<String> desc = new ArrayList<>();
+                desc.add("You graphics card does not support some of the required OpenGL features");
+                desc.add(GL11.glGetString(GL11.GL_VENDOR)+" "+GL11.glGetString(GL11.GL_RENDERER) +" "+GL11.glGetString(GL11.GL_VERSION));
+                for (String s : list) {
+                    desc.add(s);
+                }
+                showErrorScreen("Incompatible graphics card", desc, null, false);
+                return;
+            }
+        } catch (Throwable t) {
+            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
+            return;
+        }
+        try {
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("pre initGLContext");
+            initGLContext();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("initGLContext");
+            GameContext.lateInit();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("GameContext.lateInit");
+            if (this.showError == null) {
+                this.showError = GameContext.getInitError();
+            }
+        } catch (Throwable t) {
+            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
+            return;
+        }
+        if (this.showError != null) {
+            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), this.showError, true);
         }
         mainLoop();
     }
@@ -201,10 +238,10 @@ public abstract class GameBase implements Runnable {
             glfwWindowHint(GLFW_VISIBLE, GL_FALSE);// the window will stay hidden after creation
             glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);// the window will be resizable
             if (!debugContext) {
-                //              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-                //              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-                //              glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-                //              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+//                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             }
 
             glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, glDebug ? GL_TRUE : GL_FALSE);
@@ -243,6 +280,7 @@ public abstract class GameBase implements Runnable {
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
             minor = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
             rev = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_REVISION);
+            this.vendor = GPUVendor.parse(GL11.glGetString(GL11.GL_VENDOR));
             if (GL_ERROR_CHECKS) {
                 System.out.printf("OpenGL version recieved: %d.%d.%d\n", major, minor, rev);
                 System.out.printf("Supported OpenGL is %s\n", GL11.glGetString(GL11.GL_VERSION));
@@ -359,14 +397,16 @@ public abstract class GameBase implements Runnable {
     }
 
     protected void setVSync_impl(boolean b) {
-        int vsync = 0;
-        if (b) {
-            vsync = 1;
-            if (GL.getCaps().WGL_EXT_swap_control && GL.getCaps().WGL_EXT_swap_control_tear) {
-                vsync = -1;
+        if (this.vendor != GPUVendor.INTEL) {
+            int vsync = 0;
+            if (b) {
+                vsync = 1;
+                if (GL.getCaps().WGL_EXT_swap_control && GL.getCaps().WGL_EXT_swap_control_tear) {
+                    vsync = -1;
+                }
             }
+            glfwSwapInterval(vsync);
         }
-        glfwSwapInterval(vsync);
     }
 
     public void updateInput() {
@@ -500,13 +540,19 @@ public abstract class GameBase implements Runnable {
         try {
             this.running = true;
             this.wasrunning = true;
-            setVSync(this.vsync);
             initGame();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("initGame");
             onResize(displayWidth, displayHeight);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("initGame onResize");
             timer.calculate();
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
             lateInitGame();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("initGame lateInitGame");
+            setVSync(this.vsync);
             while (this.running) {
                 runFrame();
             }
@@ -522,41 +568,62 @@ public abstract class GameBase implements Runnable {
 
     public void initGLContext() {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glClearColor");
         glActiveTexture(GL_TEXTURE0);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glActiveTexture");
         glEnable(GL_BLEND);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glEnable(GL_BLEND)");
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)");
         glEnable(GL_DEPTH_TEST);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glEnable(GL_DEPTH_TEST)");
         glDepthFunc(GL_LEQUAL);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glDepthFunc(GL_LEQUAL)");
         glDepthMask(true);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glDepthMask(true)");
         glColorMask(true, true, true, true);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glColorMask(true, true, true, true)");
         glEnable(GL_CULL_FACE);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glEnable(GL_CULL_FACE)");
         glCullFace(GL_BACK);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glCullFace(GL_BACK)");
         int fastNice = GL_NICEST;//GL_FASTEST;
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL_PERSPECTIVE_CORRECTION_HINT, fastNice)");
         glHint(GL_POINT_SMOOTH_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL_POINT_SMOOTH_HINT, fastNice)");
         glHint(GL_LINE_SMOOTH_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL_LINE_SMOOTH_HINT, fastNice)");
         glHint(GL_POLYGON_SMOOTH_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL_POLYGON_SMOOTH_HINT, fastNice)");
         glHint(GL_FOG_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL_FOG_HINT, fastNice)");
         glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, fastNice)");
         glHint(GL14.GL_GENERATE_MIPMAP_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL14.GL_GENERATE_MIPMAP_HINT, fastNice)");
         glHint(GL20.GL_FRAGMENT_SHADER_DERIVATIVE_HINT, fastNice);
+        GL11.glGetError();
         setVSync(true);
-        try {
-            List<String> list = GL.validateCaps();
-            if (!list.isEmpty()) {
-                ArrayList<String> desc = new ArrayList<>();
-                desc.add("You graphics card does not support some of the required OpenGL features");
-                desc.add("");
-                for (String s : list) {
-                    desc.add(s);
-                }
-                showErrorScreen("Failed starting game", desc, null, false);
-                return;
-            }
-        } catch (Throwable t) {
-            t.printStackTrace();
-            return;
-        }
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("setVSync(true)");
     }
 
     public void updateTime() {
@@ -581,6 +648,14 @@ public abstract class GameBase implements Runnable {
                 this.sysExit = false;
                 CrashInfo info = new CrashInfo(title, desc);
                 info.setLogBuf(buf1);
+                if (throwable instanceof ShaderCompileError) {
+                    ShaderCompileError sce = (ShaderCompileError) throwable;
+                    ShaderSource src = sce.getShaderSource();
+                    if (src != null) {
+                        buf2 += src.getSource();
+                    }
+                    info.setErrBuf(buf2);
+                }
                 info.setErrBuf(buf2);
                 info.setException(throwable);
                 NativeInterface.getInstance().gameCrashed(info);

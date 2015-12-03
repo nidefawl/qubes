@@ -4,7 +4,9 @@
 package nidefawl.qubes.block;
 
 import java.util.Arrays;
+import java.util.List;
 
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace;
@@ -23,13 +25,18 @@ public class BlockStairs extends BlockSliced {
      * @param transparent
      */
     final Block baseBlock;
+    private final int overrideTextureIdx;
     static boolean isUpsideDown(int a) {
         return (a & 0x4) != 0;
     }
     public BlockStairs(int id, Block baseBlock) {
+        this(id, baseBlock, -1);
+    }
+    public BlockStairs(int id, Block baseBlock, int textureIdx) {
         super(id, baseBlock.isTransparent());
         setTextures(new String[0]);
         this.baseBlock = baseBlock;
+        this.overrideTextureIdx = textureIdx;
     }
 
     @Override
@@ -106,8 +113,8 @@ public class BlockStairs extends BlockSliced {
     }
 
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
-        return this.baseBlock.getFaceColor(w, x, y, z, faceDir);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+        return this.baseBlock.getFaceColor(w, x, y, z, faceDir, pass);
     }
 
     @Override
@@ -191,9 +198,13 @@ public class BlockStairs extends BlockSliced {
     }
     
     @Override
-    public int getTexture(int faceDir, int dataVal) {
+    public int getTexture(int faceDir, int dataVal, int pass) {
+        int idx = overrideTextureIdx;
+        if (idx >= 0) {
+            return BlockTextureArray.getInstance().getTextureIdx(baseBlock.id, idx);
+        }
         if (this.textures.length == 0)
-            return baseBlock.getTexture(faceDir, dataVal);
+            return baseBlock.getTexture(faceDir, 0, pass);
         return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
     }
     public boolean isFullBB() {

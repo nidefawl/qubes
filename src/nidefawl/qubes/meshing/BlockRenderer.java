@@ -154,35 +154,50 @@ public class BlockRenderer {
         //        light = chunk.getTypeId(i & 0xF, iy, k & 0xF);
         Block block = Block.get(type);
         int renderType = block.getRenderType();
-        switch (renderType) {
-            case 0: {
-                setDefaultBounds();
-                return renderBlock(block, ix, iy, iz, block.getLODPass()); //Normal block with default bounds 
+        int multi = block.getTexturePasses();
+        int n = 0;
+        for (int pass = 0; pass < multi; pass++) {
+            switch (renderType) {
+                case 0: {
+                    setDefaultBounds();
+                    n += renderBlock(block, ix, iy, iz, block.getLODPass()); //Normal block with default bounds 
+                    break;
+                }
+                case 1:
+                    n += renderPlant(block, ix, iy, iz, pass);
+                    break;
+                case 2: {
+                    setBlockBounds(block, ix, iy, iz);
+                    n += renderBlock(block, ix, iy, iz, block.getLODPass()); //Normal block with custom bounds 
+                    break;
+                }
+                case 3:
+                    n += renderSlicedFaces((BlockSliced) block, ix, iy, iz);
+                    break;
+                case 4:
+                    n += renderVines(block, ix, iy, iz);
+                    break;
+                case 5:
+                    n += renderFence(block, ix, iy, iz);
+                    break;
+                case 6:
+                    n += renderWall(block, ix, iy, iz);
+                    break;
+                case 7:
+                    n += renderDoublePlant(block, ix, iy, iz, pass);
+                    break;
+                case 8:
+                    n += renderTorch(block, ix, iy, iz);
+                    break;
+                case 9:
+                    n += renderPane(block, ix, iy, iz);
+                    break;
+                case 11:
+                    n += renderPlantFlat(block, ix, iy, iz);
+                    break;
             }
-            case 1:
-                return renderPlant(block, ix, iy, iz);
-            case 2: {
-                setBlockBounds(block, ix, iy, iz);
-                return renderBlock(block, ix, iy, iz, block.getLODPass()); //Normal block with custom bounds 
-            }
-            case 3:
-                return renderSlicedFaces((BlockSliced) block, ix, iy, iz);
-            case 4:
-                return renderVines(block, ix, iy, iz);
-            case 5:
-                return renderFence(block, ix, iy, iz);
-            case 6:
-                return renderWall(block, ix, iy, iz);
-            case 7:
-                return renderDoublePlant(block, ix, iy, iz);
-            case 8:
-                return renderTorch(block, ix, iy, iz);
-            case 9:
-                return renderPane(block, ix, iy, iz);
-            case 11:
-                return renderPlantFlat(block, ix, iy, iz);
         }
-        return 0;
+        return n;
     }
 
     protected int setPaneConnections(IBlockWorld w, int ix, int iy, int iz, int[] b) {
@@ -323,7 +338,7 @@ public class BlockRenderer {
         int brigthness = this.w.getLight(ix, iy, iz);
         float m = 1F;
         float alpha = block.getAlpha();
-        int c = block.getFaceColor(w, ix, iy, iz, Dir.DIR_POS_Y);
+        int c = block.getFaceColor(w, ix, iy, iz, Dir.DIR_POS_Y, 0);
         float b = (c & 0xFF) / 255F;
         c >>= 8;
         float g = (c & 0xFF) / 255F;
@@ -331,7 +346,7 @@ public class BlockRenderer {
         float r = (c & 0xFF) / 255F;
 
         int data = this.w.getData(ix, iy, iz);
-        int tex = block.getTexture(Dir.DIR_POS_Y, data);
+        int tex = block.getTexture(Dir.DIR_POS_Y, data, 0);
         
         attr.setAO(0);
         attr.setTex(tex);
@@ -830,7 +845,7 @@ public class BlockRenderer {
                             if (textureBlock instanceof BlockQuarterBlock) {
                                 textureBlock = Block.get(quarters[q]);
                             }
-                            int tex = textureBlock.getTexture(n, w.getData(ix, iy, iz));
+                            int tex = textureBlock.getTexture(n, w.getData(ix, iy, iz), 0);
                             setFaceColorTexture(block, ix, iy, iz, n, qSurfaces[n], tex);
                             f += renderFace(block, n, ix, iy, iz, targetBuffer);
                         }
@@ -874,9 +889,6 @@ public class BlockRenderer {
         return f;
     }
 
-    /**
-     * @param n
-     */
 
     protected void flipFace() {
         int dir = attr.getFaceDir();
@@ -887,10 +899,12 @@ public class BlockRenderer {
         attr.setFaceDir(dir);
         attr.setReverse((side&1)!=0);
     }
+
     protected void setFaceColorTexture(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs, int tex) {
         float m = 1F;
         float alpha = block.getAlpha();
-        int c = block.getFaceColor(w, ix, iy, iz, faceDir);
+        int pass = 0;
+        int c = block.getFaceColor(w, ix, iy, iz, faceDir, pass);
         float b = (c & 0xFF) / 255F;
         c >>= 8;
         float g = (c & 0xFF) / 255F;
@@ -918,7 +932,7 @@ public class BlockRenderer {
         
     }
     protected void setFaceColor(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs) {
-        int tex = block.getTexture(faceDir, w.getData(ix, iy, iz));
+        int tex = block.getTexture(faceDir, w.getData(ix, iy, iz), 0);
         setFaceColorTexture(block, ix, iy, iz, faceDir, bs, tex);
     }
 
@@ -981,22 +995,23 @@ public class BlockRenderer {
      * @param iz
      * @return
      */
-    private int renderDoublePlant(Block block, int ix, int iy, int iz) {
-        return renderPlant(block, ix, iy, iz);
+    private int renderDoublePlant(Block block, int ix, int iy, int iz, int pass) {
+        return renderPlant(block, ix, iy, iz, pass);
     }
-    int renderPlant(Block block, int ix, int iy, int iz) {
+    
+    int renderPlant(Block block, int ix, int iy, int iz, int pass) {
         int targetBuffer = block.getLODPass();
         int brigthness = this.w.getLight(ix, iy, iz);
         float m = 1F;
         float alpha = block.getAlpha();
-        int c = block.getFaceColor(w, ix, iy, iz, Dir.DIR_POS_Y);
+        int c = block.getFaceColor(w, ix, iy, iz, Dir.DIR_POS_Y, pass);
         float b = (c & 0xFF) / 255F;
         c >>= 8;
         float g = (c & 0xFF) / 255F;
         c >>= 8;
         float r = (c & 0xFF) / 255F;
 
-        int tex = block.getTexture(Dir.DIR_POS_Y, this.w.getData(ix, iy, iz));
+        int tex = block.getTexture(Dir.DIR_POS_Y, this.w.getData(ix, iy, iz), pass);
         
         attr.setAO(0);
         attr.setTex(tex);
@@ -1052,6 +1067,12 @@ public class BlockRenderer {
             int hBits = (int) ((iR>>22)&0x3);
             float fh = hBits / 3.0f;
             h = 0.5f+ fh*0.3f;
+        }
+        if (block.getTexturePasses() > 1) {
+            if (pass == 2)
+                num = 6;
+            if (pass == 0 && block.getTexturePasses() > 1)
+                num = 4;
         }
         float incr = 1/(float)num;
         for (int i = 0; i < num; i++) {

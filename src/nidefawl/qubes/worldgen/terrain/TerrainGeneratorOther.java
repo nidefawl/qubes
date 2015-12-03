@@ -233,7 +233,7 @@ public class TerrainGeneratorOther implements ITerrainGen {
             for (int z = 0; z < 16; z++) {
                 int top = Block.grass.id;
                 int earth = Block.dirt.id;
-                int stone = Block.stone.id;
+                int stone = Block.granite.id;
                 int a = -1;
                 int xz=z<<4|x;
                 int curBlock = 0;

@@ -13,6 +13,26 @@ public class GameMath {
     public static float sin(float f) {
         return (float)Math.sin(f);
     }
+    
+    public static final float atan( float x )
+    {
+        return ( (float)Math.atan( x ) );
+    }
+    
+    public static final float atan2( float y, float x )
+    {
+        return ( (float)Math.atan2( y, x ) );
+    }
+    
+    public static final float asin( float x )
+    {
+        return ( (float)Math.asin( x ) );
+    }
+    
+    public static final float sinh( float x )
+    {
+        return ( (float)Math.sinh( x ) );
+    }
     public static int floor(double d)
     {
         int x = (int) d;

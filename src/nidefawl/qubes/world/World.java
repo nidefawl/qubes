@@ -9,8 +9,7 @@ import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.lighting.DynamicLight;
-import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
@@ -18,9 +17,6 @@ import nidefawl.qubes.vec.Vector3f;
 public abstract class World implements IBlockWorld {
     public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;
     public static final float MIN_XZ     = -MAX_XZ;
-    HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
-    ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
-    ArrayList<Entity>         players = new ArrayList<>();                                           // use fast array list
     public ArrayList<DynamicLight>         lights = new ArrayList<>();                                           // use fast array list
 
     public final int worldHeight;
@@ -91,30 +87,7 @@ public abstract class World implements IBlockWorld {
         //        return a;
         ////        return 0.8f+a;
     }
-//    long lastCheck = System.currentTimeMillis();
-//    int lastTime = this.time;
-    public void tickUpdate() {
-        if (!this.settings.isFixedTime()) {
-            this.settings.setTime(this.settings.getTime()+1L);
-        }
-        //        int offset = time%dayLen;
-        //        if (offset < dayLen/3) {
-        //            time += dayLen/3;
-        //        }
-        int size = this.entityList.size();
-        for (int i = 0; i < size; i++) {
-            Entity e = this.entityList.get(i);
-            e.tickUpdate();
-        }
-//        long lPassed = System.currentTimeMillis()-lastCheck;
-//        
-//        if (lPassed >= 1000) {
-//            float perSec = (this.time-this.lastTime) / (lPassed/1000.0F);
-//            System.out.printf("%.2f ticks/s\n", perSec);
-//            lastTime = time;
-//            lastCheck = System.currentTimeMillis();
-//        }
-    }
+    public abstract void tickUpdate();
 
     /**
      * Wrapper method for getType(int, int, int)
@@ -271,37 +244,8 @@ public abstract class World implements IBlockWorld {
         return chunkMgr.get(x, z);
     }
 
-    public void onLeave() {
-        this.entities.clear();
-        this.entityList.clear();
-    }
-
 
     public void onLoad() {
-    }
-
-    public void addEntity(Entity ent) {
-        Entity e = this.entities.put(ent.id, ent);
-        if (e != null) {
-            throw new GameError("Entity with id " + ent.id + " already exists");
-        }
-        if (ent instanceof Player) {
-            this.players.add(ent);
-        }
-        this.entityList.add(ent);
-        ent.world = this;
-//        addLight(new Vector3f(ent.pos));
-    }
-
-    public void removeEntity(Entity ent) {
-        Entity e = this.entities.remove(ent.id);
-        if (e != null) {
-            if (e instanceof Player) {
-                this.players.remove(ent);
-            }
-            this.entityList.remove(e);
-            ent.world = null;
-        }
     }
 
     public void removeLight(int i) {
@@ -454,4 +398,8 @@ public abstract class World implements IBlockWorld {
     public Random getRand() {
         return this.rand;
     }
+
+    public abstract Entity getEntity(int entId);
+
+    public abstract List<Entity> getEntityList();
 }

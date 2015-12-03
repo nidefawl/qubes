@@ -167,7 +167,7 @@ public class FinalRenderer extends AbstractRenderer {
         Engine.drawFullscreenQuad();
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         shaderDownsample4x.enable();
-        FrameBuffer lastBound = null;
+        FrameBuffer lastBound = this.fbLuminanceDownsample[0];
         for (int i = 0; i < this.fbLuminanceDownsample.length-1; i++) {
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Luminance step "+(i));
 //            System.out.println("input w/h "+this.fbLuminance[i].getWidth()+", "+this.fbLuminance[i].getHeight());
@@ -378,14 +378,18 @@ public class FinalRenderer extends AbstractRenderer {
             }
             FrameBuffer.unbindFramebuffer();
             int outputColor = fbBloom.getTexture(0);
-            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
-            this.smaa.render(outputColor, 0);
-            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+            if (smaa != null) {
+                if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+                if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
+                this.smaa.render(outputColor, 0);
+                if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+            } else {
+              Shaders.textured.enable();
+              GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
+              Engine.drawFullscreenQuad();
+              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+            }
         }
-//        Shaders.textured.enable();
-//        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.fbScene.getTexture(1));
-//        Engine.drawFullscreenQuad();
 
         this.frame++;
     }
@@ -521,28 +525,36 @@ public class FinalRenderer extends AbstractRenderer {
         if (smaa != null) {
             this.smaa.releaseAll(null);
         }
-        smaa = new SMAA(Game.instance.settings.smaaQuality);
-        this.smaa.init(Game.displayWidth, Game.displayHeight);
+        if (Game.instance.getVendor() != GPUVendor.INTEL) {
+            smaa = new SMAA(Game.instance.settings.smaaQuality);
+            this.smaa.init(Game.displayWidth, Game.displayHeight);
+        }
     }
 
     public void resize(int displayWidth, int displayHeight) {
         if (hadContext) {
-            Engine.checkGLError("pre GLNativeLib.deleteContext");
-            HBAOPlus.deleteContext();
-            Engine.checkGLError("post GLNativeLib.deleteContext");
+            if (Game.instance.getVendor() != GPUVendor.INTEL) {
+                Engine.checkGLError("pre GLNativeLib.deleteContext");
+                HBAOPlus.deleteContext();
+                Engine.checkGLError("post GLNativeLib.deleteContext");
+            }
         }
         if (smaa != null) {
             smaa.releaseAll(EResourceType.FRAMEBUFFER);
         }
         releaseAll(EResourceType.FRAMEBUFFER);
-        Engine.checkGLError("pre GLNativeLib.createContext");
-        HBAOPlus.createContext(displayWidth, displayHeight);
-        Engine.checkGLError("post GLNativeLib.createContext");
-        hadContext = true;
-        if (smaa == null) {
-            smaa = new SMAA(Game.instance.settings.smaaQuality);
+        if (Game.instance.getVendor() != GPUVendor.INTEL) {
+            Engine.checkGLError("pre GLNativeLib.createContext");
+            HBAOPlus.createContext(displayWidth, displayHeight);
+            Engine.checkGLError("post GLNativeLib.createContext");
         }
-        this.smaa.init(displayWidth, displayHeight);
+        hadContext = true;
+        if (Game.instance.getVendor() != GPUVendor.INTEL) {
+            if (smaa == null) {
+                smaa = new SMAA(Game.instance.settings.smaaQuality);
+            }
+            this.smaa.init(displayWidth, displayHeight);
+        }
         fbScene = new FrameBuffer(displayWidth, displayHeight);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB16F);
@@ -649,19 +661,21 @@ public class FinalRenderer extends AbstractRenderer {
         this.scaleMatBuf.position(0);
         scale.store(scaleMatBuf);
         scaleMatBuf.flip();
-        HBAOPlus.setDepthTex(Engine.getSceneFB().getDepthTex());
-        HBAOPlus.setNormalTex(Engine.getSceneFB().getTexture(1));
-        long ptr = MemoryUtil.memAddress(Engine.getMatSceneP().get());
-        HBAOPlus.setProjMatrix(ptr);
-        HBAOPlus.setOutputFBO(fbSSAO.getFB());
-        HBAOPlus.setRadius(1);
-        HBAOPlus.setBias(0.2f);
-        HBAOPlus.setCoarseAO(1.2f);
-        HBAOPlus.setBlur(true, 8, 16.0f);
-        HBAOPlus.setBlurSharpen(false, 16, 0, 0);
-        HBAOPlus.setDetailAO(1f);
-        HBAOPlus.setPowerExponent(1);
-        HBAOPlus.setDepthThreshold(false, 220, 0.5f);
+        if (Game.instance.getVendor() != GPUVendor.INTEL) {
+            HBAOPlus.setDepthTex(Engine.getSceneFB().getDepthTex());
+            HBAOPlus.setNormalTex(Engine.getSceneFB().getTexture(1));
+            long ptr = MemoryUtil.memAddress(Engine.getMatSceneP().get());
+            HBAOPlus.setProjMatrix(ptr);
+            HBAOPlus.setOutputFBO(fbSSAO.getFB());
+            HBAOPlus.setRadius(1);
+            HBAOPlus.setBias(0.2f);
+            HBAOPlus.setCoarseAO(1.2f);
+            HBAOPlus.setBlur(true, 8, 16.0f);
+            HBAOPlus.setBlurSharpen(false, 16, 0, 0);
+            HBAOPlus.setDetailAO(1f);
+            HBAOPlus.setPowerExponent(1);
+            HBAOPlus.setDepthThreshold(false, 220, 0.5f);
+        }
     
     }
 

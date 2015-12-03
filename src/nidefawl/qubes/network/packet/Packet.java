@@ -8,6 +8,7 @@ import nidefawl.qubes.network.Handler;
 public abstract class Packet {
     public final static int                       MAX_ID       = 255;
     public final static int                       MAX_STR_LEN       = 32*1024;
+    public static final int NET_VERSION = 2;
     
     @SuppressWarnings("unchecked")
     public final static Class<? extends Packet>[] packets      = new Class[MAX_ID + 1];
@@ -35,10 +36,14 @@ public abstract class Packet {
         register(PacketSTeleport.class, 19, true, false);
         register(PacketSyncBlocks.class, 20, true, true);
         register(PacketCTeleportAck.class, 21, false, true);
+        register(PacketSEntityTrack.class, 22, true, false);
+        register(PacketSEntityUnTrack.class, 23, true, false);
+        register(PacketSEntityMove.class, 24, true, false);
     }
     public Packet() {
     }
 
+    static Packet lastSuccess = null;
     public static Packet read(final DataInput stream) throws IOException, InvalidPacketException {
         int t = stream.readUnsignedByte();
         Packet p;
@@ -48,8 +53,9 @@ public abstract class Packet {
                 throw new InvalidPacketException("Invalid packet "+t);
             }
             p.readPacket(stream);
+            lastSuccess = p;
         } catch (InvalidPacketException e) {
-            throw new InvalidPacketException("Invalid packet "+t+"/"+e.getClazz()+": "+e.getMessage(), e);
+            throw new InvalidPacketException("Invalid packet "+t+"/"+e.getClazz()+": "+e.getMessage()+ " Last success "+lastSuccess, e);
         }
         return p;
     }

@@ -35,17 +35,21 @@ public class ChunkPopulator implements IChunkPopulator {
         int a = 0;
         Random r = new Random();
         ArrayList<Block> bl = Lists.newArrayList();
-        for (Block b : Block.block) {
-            if (b != null && b.getRenderType() == 1) {
-                if (b.getName().toLowerCase().contains("web"))
-                    continue;
-                if (b.getName().toLowerCase().contains("sap"))
-                    continue;
-                bl.add(b);
-            }
-        }
+//        for (Block b : Block.block) {
+//            if (b != null && b.getRenderType() == 1) {
+//                if (b.getName().toLowerCase().contains("web"))
+//                    continue;
+//                if (b.getName().toLowerCase().contains("sap"))
+//                    continue;
+//                bl.add(b);
+//            }
+//        }
+        bl.add(Block.flower_violet);
+        bl.add(Block.flower_fmn_black);
+        bl.add(Block.flower_fmn_blue);
+        bl.add(Block.flower_compositae_camille);
+        bl.add(Block.flower_compositae_milkspice);
         IWorldGen g = TreeGenerators.rand(rand);
-        int b = 0;
         for (int i = 0; i < 133; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
@@ -61,12 +65,23 @@ public class ChunkPopulator implements IChunkPopulator {
 //                        bg = bl.get(r.nextInt(bl.size()));
 //                    }
                     world.setType(x, h+1, z, bg.id, Flags.MARK);
-                    b++;
                 }
                 a++;
             }   
-            
-//                tree.generate(world, x, h, z, rand);
+        }
+        int idx = r.nextInt(bl.size()*8);
+        if (idx < bl.size()) {
+            Block bg = bl.get(idx);
+            for (int i = 0; i < 20; i++) {
+                int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
+                int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
+                int h = world.getHeight(x, z);
+                int type = world.getType(x, h, z);
+                if (isSoil(type)) {
+                    world.setType(x, h+1, z, bg.id, Flags.MARK);
+                    a++;
+                }   
+            }
         }
     }
     /**

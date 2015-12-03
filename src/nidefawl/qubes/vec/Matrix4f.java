@@ -1235,5 +1235,31 @@ public class Matrix4f {
         this.m22 *= f;
         this.m23 *= f;
     }
+    /**
+     * Converts a Matrix4f to a Tuple3f with Euler angles.
+     * 
+     * @param matrix the Matrix4f to be converted
+     */
 
+    public void toEuler(Vector3f euler )
+    {
+        if ( this.m10 == 1.0f )
+        {
+            euler.setX( 0.0f );
+            euler.setY( GameMath.atan2( this.m02, this.m22 ) );
+            euler.setZ( GameMath.asin( -this.m10 ) );
+        }
+        else if ( this.m10 == -1.0f )
+        {
+            euler.setX( 0.0f );
+            euler.setY( GameMath.atan2( this.m02, this.m22 ) );
+            euler.setZ( GameMath.asin( -this.m10 ) );
+        }
+        else
+        {
+            euler.setX( GameMath.atan2( -this.m12, this.m11 ) );
+            euler.setY( GameMath.atan2( -this.m20, this.m00 ) );
+            euler.setZ( GameMath.asin( this.m10 ) );
+        }
+    }
 }

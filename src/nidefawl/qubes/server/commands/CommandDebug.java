@@ -24,6 +24,16 @@ public class CommandDebug extends Command {
                     Vec3D pos = ((Player)source).pos;
                     System.out.println(String.format("%.0f %.0f %.0f", pos.x, pos.y, pos.z));
                     return;
+                case "tp":
+                {
+                    Player other = server.getPlayerManager().getPlayer(args[1]);
+                    if (other == null) {
+                        source.sendMessage("Player not found");
+                        return;
+                    }
+                    ((Player)source).move(other.pos);
+                }
+                    return;
             }
         }
     }

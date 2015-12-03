@@ -13,8 +13,11 @@ import nidefawl.qubes.chunk.ChunkDataSliced2;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
+import nidefawl.qubes.entity.Entity;
+import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.*;
@@ -150,6 +153,7 @@ public class ClientHandler extends Handler {
         this.world = new WorldClient((WorldSettingsClient) packetJoinGame.worldSettings);
         this.chunkManager = (ChunkManagerClient) this.world.getChunkManager();
         this.player.setFly((packetJoinGame.flags & 0x1) != 0);
+        this.player.id = packetJoinGame.entId;
         this.world.addEntity(player);
         this.player.move(packetJoinGame.pos);
         Game.instance.setWorld(this.world);
@@ -347,5 +351,52 @@ public class ClientHandler extends Handler {
         settings.setTime(p.time);
         settings.setDayLen(p.daylen);
         settings.setFixedTime(p.isFixed);
+    }
+
+    /**
+     * @param packetSEntityUnTrack
+     */
+    public void handleEntityUntrack(PacketSEntityUnTrack p) {
+        Entity e = this.world.getEntity(p.entId);
+        if (e != null) {
+            this.world.removeEntity(e);
+        }
+    }
+
+    /**
+     * @param packetSEntityTrack
+     */
+    public void handleEntityTrack(PacketSEntityTrack p) {
+        Entity e = EntityType.newById(p.entType);
+        e.id = p.entId;
+        e.pitch = p.pitch;
+        e.yaw = p.yaw;
+        e.yawBodyOffset = p.yawbody;
+        e.pos.set(p.pos);
+        Tag tag = p.data;
+        if (tag != null)
+            e.readClientData(tag);
+        this.world.addEntity(e); 
+    }
+
+    /**
+     * @param packetSEntityMove
+     */
+    public void handleEntityMove(PacketSEntityMove p) {
+        Entity e = this.world.getEntity(p.entId);
+        if (e == this.player) {
+            System.err.println("wtf");
+        }
+        if (e != null) {
+            //TODO interpolate
+            if ((p.flags & 1) != 0) {
+                e.pos.set(p.pos);
+            }
+            if ((p.flags & 2) != 0) {
+                e.pitch = p.pitch;
+                e.yaw = p.yaw;
+                e.yawBodyOffset = p.yawBodyOffset;
+            }
+        }
     }
 }

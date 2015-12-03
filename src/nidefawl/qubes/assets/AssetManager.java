@@ -1,8 +1,9 @@
 package nidefawl.qubes.assets;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
 
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.*;
@@ -22,6 +23,14 @@ public class AssetManager {
 
     public static AssetManager getInstance() {
         return instance;
+    }
+    public Collection<AssetPath> collectAssets(String path, String extension) {
+        LinkedHashSet<AssetPath> assets = new LinkedHashSet<>();
+        for (int i = 0; i < assetPacks.size(); i++) {
+            AssetPack pack = assetPacks.get(i);
+            pack.collectAssets(path, extension, assets);
+        }
+        return assets;
     }
 
     public void init() {

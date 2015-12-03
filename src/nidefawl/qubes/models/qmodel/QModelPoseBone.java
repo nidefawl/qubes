@@ -20,6 +20,7 @@ public class QModelPoseBone {
     public final Matrix4f deformInterp = new Matrix4f();
     public final QModelBone restbone;
     public QModelPoseBone parent;
+    public boolean animate = true;
     /**
      * @param b
      * @param parent2 

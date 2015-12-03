@@ -24,6 +24,7 @@ import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.config.ClientSettings;
 import nidefawl.qubes.config.InvalidConfigException;
+import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
@@ -51,6 +52,7 @@ import nidefawl.qubes.texture.*;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.*;
 
@@ -86,6 +88,7 @@ public class Game extends GameBase implements IErrorHandler {
     public boolean                  updateRenderers = true;
     private TesselatorState debugChunks;
     static boolean showGrid=false;
+    public boolean thirdPerson = true;
 
     public void connectTo(String host) {
         try {
@@ -175,6 +178,8 @@ public class Game extends GameBase implements IErrorHandler {
         UniformBuffer.updateOrtho();
         glClearColor(0.71F, 0.82F, 1.00F, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("loadRender glClear");
         Shaders.colored.enable();
         Tess.instance.resetState();
         Tess.instance.setColor(0x0, 0xff);
@@ -213,6 +218,8 @@ public class Game extends GameBase implements IErrorHandler {
 //        }
         Shader.disable();
         updateDisplay();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("loadRender updateDisplay");
     }
     public void lateInitGame() {
         loadRender(0, 1f);
@@ -285,12 +292,13 @@ public class Game extends GameBase implements IErrorHandler {
 //                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
 //              }
                 lastShaderLoadTime = System.currentTimeMillis();
-                Shaders.initShaders();
-                Engine.worldRenderer.initShaders();
-//                Engine.worldRenderer.reloadModel();
-//                  Engine.regionRenderer.initShaders();
-//                  Engine.shadowRenderer.initShaders();
-                  Engine.outRenderer.initShaders();
+                thirdPerson = !thirdPerson;
+//                Shaders.initShaders();
+//                Engine.worldRenderer.initShaders();
+////                Engine.worldRenderer.reloadModel();
+////                  Engine.regionRenderer.initShaders();
+////                  Engine.shadowRenderer.initShaders();
+//                  Engine.outRenderer.initShaders();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F2) {
@@ -508,6 +516,17 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.gui != null) {
 //            this.gui.onMouseClick(button, action);
         } else {
+            if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+                this.settings.thirdpersonDistance += yoffset*-0.2f;
+                if (this.settings.thirdpersonDistance < 1) {
+                    this.settings.thirdpersonDistance = 1;
+                }
+                if (this.settings.thirdpersonDistance > 30) {
+                    this.settings.thirdpersonDistance = 30;
+                }
+                this.settings.save();
+                return;
+            }
             this.selBlock.id += yoffset > 0 ? -1 : 1;
             if (!Block.isValid(this.selBlock.id)) {
                 int maxBlock = 0;
@@ -631,7 +650,9 @@ public class Game extends GameBase implements IErrorHandler {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("HBAO");
 
-            HBAOPlus.renderAO();
+            if (getVendor() != GPUVendor.INTEL) {
+                HBAOPlus.renderAO();
+            }
 
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("GLNativeLib.renderAO");
@@ -972,20 +993,26 @@ public class Game extends GameBase implements IErrorHandler {
         PlayerSelf player = getPlayer();
         if (player != null) {
             player.updateInputDirect(movement);
-//          float sinY = GameMath.sin(GameMath.degreesToRadians(entSelf.yaw));
-//          float cosY = GameMath.cos(GameMath.degreesToRadians(entSelf.yaw));
-//          float forward = 1;
-//          float strafe = 0;
-//          float fx = -forward * sinY + strafe * cosY;
-//          float fz = forward * cosY + strafe * sinY;
+            float yaw = player.yaw;
+            float pitch = player.pitch;
+            Engine.camera.setOrientation(yaw, pitch, settings.thirdpersonDistance);
+
             if (follow) {
                 lastCamX = px;
                 lastCamY = py;
                 lastCamZ = pz;
             }
+            
             px = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
             py = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
             pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+            if (thirdPerson) {
+                Vector3f camPos = Engine.camera.getThirdPersonOffset();
+                px+=camPos.x;
+                py+=camPos.y;
+                pz+=camPos.z;
+            }
+            
             if (this.world.lights.size() > 0) {
                 DynamicLight l = this.world.lights.get(0);
                 l.loc.x = px;
@@ -998,10 +1025,9 @@ public class Game extends GameBase implements IErrorHandler {
 //                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
 //                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
             }
-          float yaw = player.yaw;
-          float pitch = player.pitch;
           Engine.camera.setPosition(px, py, pz);
-          Engine.camera.setOrientation(yaw, pitch);       
+//          if (Engine.worldRenderer.qmodel!=null)
+//          Engine.worldRenderer.qmodel.setHeadOrientation(yaw, pitch);
         }
 
         Engine.setLightPosition(this.world.getLightPosition());
@@ -1104,6 +1130,8 @@ public class Game extends GameBase implements IErrorHandler {
             this.chatOverlay = new GuiOverlayChat();
             this.chatOverlay.setPos(8, displayHeight-displayHeight/3-8);
             this.chatOverlay.setSize(displayWidth/2, displayHeight/3);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("onResize");
         }
     }
     @Override
@@ -1121,6 +1149,9 @@ public class Game extends GameBase implements IErrorHandler {
 //           showGUI(new GuiMainMenu());
 //       }
 //        matrixSetupMode = Main.ticksran%100<50;
+       if (this.settings.lazySave()) {
+           this.saveSettings();
+       }
     }
 
     public void addDebugOnScreen(String string) {
@@ -1166,7 +1197,7 @@ public class Game extends GameBase implements IErrorHandler {
      */
     public void saveSettings() {
         try {
-            File f = new File("settings.yml");
+            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
             settings.write(f);
         } catch (InvalidConfigException e) {
             e.printStackTrace();
@@ -1174,7 +1205,7 @@ public class Game extends GameBase implements IErrorHandler {
     }
     public void loadSettings() {
         try {
-            File f = new File("settings.yml");
+            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
             settings.load(f);
             if (!f.exists())
                 settings.write(f);

@@ -43,7 +43,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         }
         {
 
-            this.field = new TextField(this, 2, "debian:21087");
+            this.field = new TextField(this, 2, "nide.ddns.net:21087");
             field.setPos(left, this.posY+this.height/2-20);
             field.setSize(w1-110, h);
 //            field.

@@ -35,9 +35,9 @@ public class QModelTriangle {
         Vector3f faceNormal1 = loader.readVec3();
         Vector3f faceNormal2 = loader.readVec3();
         Vector3f faceNormal3 = loader.readVec3();
-        this.normal[0] = new Vector3f(faceNormal1.x, -faceNormal1.z, faceNormal1.y);
-        this.normal[1] = new Vector3f(faceNormal2.x, -faceNormal2.z, faceNormal2.y);
-        this.normal[2] = new Vector3f(faceNormal3.x, -faceNormal3.z, faceNormal3.y);
+        this.normal[0] = new Vector3f(faceNormal1.x, faceNormal1.y, faceNormal1.z);
+        this.normal[1] = new Vector3f(faceNormal2.x, faceNormal2.y, faceNormal2.z);
+        this.normal[2] = new Vector3f(faceNormal3.x, faceNormal3.y, faceNormal3.z);
         for (int j = 0; j < 2; j++) {
             this.texCoord[1-j] = new float[3];
             this.texCoord[1-j][0] = loader.readFloat();

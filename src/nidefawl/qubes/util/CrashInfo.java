@@ -16,11 +16,11 @@ import nidefawl.qubes.shader.ShaderCompileError;
  */
 public class CrashInfo {
 
-    private String title;
-    private String desc;
-    private String outBuf;
-    private String errBuf;
-    private String exc;
+    private String title = "";
+    private String desc = "";
+    private String outBuf = "";
+    private String errBuf = "";
+    private String exc = "";
 
     /**
      * @param title
@@ -30,6 +30,9 @@ public class CrashInfo {
         this.title = title;
         this.desc ="";
         for (String s : desc) {
+            if (!this.desc.isEmpty()) {
+                this.desc+="\n";
+            }
             this.desc += s;
         }
     }
@@ -38,6 +41,7 @@ public class CrashInfo {
      * @param buf1
      */
     public void setLogBuf(String buf1) {
+        if (buf1 != null)
         this.outBuf = buf1;
     }
 
@@ -45,6 +49,7 @@ public class CrashInfo {
      * @param buf2
      */
     public void setErrBuf(String buf2) {
+        if (buf2 != null)
         this.errBuf = buf2;
     }
 

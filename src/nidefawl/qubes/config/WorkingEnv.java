@@ -28,13 +28,11 @@ public class WorkingEnv {
         packsDir = new File(workingDir, "packs");
         modules = new File(workingDir, "modules");
         if (side == Side.CLIENT) {
-            assetDir.mkdirs();
         }
         if (side == Side.SERVER) {
             playerdata.mkdirs();
         }
 		config.mkdirs();
-		worlds.mkdirs();
 	}
 
     public static File getAssetFolder() {

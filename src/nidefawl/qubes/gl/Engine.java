@@ -149,9 +149,14 @@ public class Engine {
     
     public static void init() {
         glActiveTexture(GL_TEXTURE0);
-
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glActiveTexture(GL_TEXTURE0)");
         baseInit();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("baseInit");
         GL30.glBindVertexArray(vaoId);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("GL30.glBindVertexArray");
         UniformBuffer.reinit();
         Shaders.reinit();
         
@@ -320,7 +325,7 @@ public class Engine {
         modelview.setIdentity();
         modelview.translate(-vec.x, -vec.y, -vec.z);
         modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
-//        modelview.scale(getRenderScale());
+        
         Matrix4f.mul(view, modelview, modelview);
         Matrix4f.mul(projection, modelview, modelviewprojection);
         Matrix4f.mul(projection, view, viewprojection);

@@ -1,13 +1,12 @@
 package nidefawl.qubes.entity;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
 
-public class PlayerSelf extends Entity {
+public class PlayerSelf extends Player {
 
     private float   forward;
     private float   strafe;
@@ -24,6 +23,7 @@ public class PlayerSelf extends Entity {
         super();
         this.profile = profile;
         this.clientHandler = clientHandler;
+        this.name = this.profile.getIngameName();
     }
 
     public void updateInputDirect(Movement movement) {
@@ -162,6 +162,11 @@ public class PlayerSelf extends Entity {
     
     public void setFly(boolean fly) {
         this.fly = fly;
+    }
+    
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.PLAYER;
     }
 
 }

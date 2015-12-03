@@ -111,6 +111,9 @@ public class ModelLoaderQModel {
 		for (int i = 0; i < strBytes.length && strBytes[i] != 0; i++, strlen++);
         return new String(strBytes, 0, strlen);
     }
+    public void loadAnimation(String path) {
+        
+    }
 
 	public void loadModel(String path) {
 		try {

@@ -1,20 +1,25 @@
 package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE2;
 
 import java.awt.Color;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
+import java.util.List;
 
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
@@ -23,11 +28,10 @@ import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.IManagedResource;
-import nidefawl.qubes.util.IResourceManager;
-import nidefawl.qubes.vec.*;
+import nidefawl.qubes.vec.AABB;
+import nidefawl.qubes.vec.Frustum;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class WorldRenderer extends AbstractRenderer {
@@ -76,7 +80,7 @@ public class WorldRenderer extends AbstractRenderer {
     private Shader shaderZPre;
 
     ModelVox vox;
-    ModelQModel qmodel;
+    public ModelQModel qmodel;
 
     public void initShaders() {
         try {
@@ -187,7 +191,7 @@ public class WorldRenderer extends AbstractRenderer {
         this.qmodel.addAnimation("walk", l2);
         System.out.println(qmodel);
         System.err.println("GOOD");
-        AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/test_tex0.png");
+        AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/human_adj_uv.png");
         this.image = TextureManager.getInstance().makeNewTexture(t, false, true, 0);
 //        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
 //        AssetTexture tex1 = AssetManager.getInstance().loadPNGAsset("textures/heightmap_03.png");
@@ -277,6 +281,7 @@ public class WorldRenderer extends AbstractRenderer {
         AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/dragon.vox");
         if (this.vox != null) this.vox.release();
         vox = new ModelVox(asset);
+        reloadModel();
     }
 
     public void renderWorld(World world, float fTime) {
@@ -354,9 +359,9 @@ public class WorldRenderer extends AbstractRenderer {
 //        renderVoxModels(shaderModelVoxel, PASS_SOLID, fTime);
 //        Shader.disable();
         shaderModelQ.enable();
-        if (this.qmodel != null)
-            this.qmodel.animate(fTime);
-        renderQModels(shaderModelQ, PASS_SOLID, fTime);
+//        if (this.qmodel != null)
+//            this.qmodel.animate(fTime);
+        renderQModels(world, shaderModelQ, PASS_SOLID, fTime);
 
         if (Game.DO_TIMING)
             TimingHelper.endSec();
@@ -392,46 +397,68 @@ public class WorldRenderer extends AbstractRenderer {
         
     }
     /**
+     * @param world 
      * @param pass
      * @param fTime 
      */
-    public void renderModelsUsingProgram(Shader modelShader, int pass, float fTime) {
+    public void renderModelsUsingProgram(World world, Shader modelShader, int pass, float fTime) {
 //        renderVoxModels(modelShader, pass, fTime);
-        renderQModels(modelShader, pass, fTime);
+        renderQModels(world, modelShader, pass, fTime);
     }
 
     /**
+     * @param world 
      * @param pass
      * @param fTime 
      */
-    public void renderQModels(Shader modelShader, int pass, float fTime) {
+    public void renderQModels(World world, Shader modelShader, int pass, float fTime) {
         
         if (qmodel != null) {
-            BufferedMatrix mat = Engine.getTempMatrix();
-            float modelScale = 1 / 4f;
-            mat.setIdentity();
-            mat.translate(mPos.x, mPos.y, mPos.z);
-            mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
-            mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-            mat.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
-            mat.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
-            mat.scale(modelScale);
-            mat.update();
-//            System.out.println(modelShader.getName());
-            modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-            if (modelShader == this.shaderModelQ) {
-                BufferedMatrix mat2 = Engine.getTempMatrix2();
-                mat2.setIdentity();
-                mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-                mat2.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
-                mat2.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
-                mat2.invert().transpose();
-                mat2.update();
-                UniformBuffer.setNormalMat(mat2.get());
+            //TODO: IMPORTANT sort entities by renderer/model/shader client side
+            List<Entity> ents = world.getEntityList();
+            int size = ents.size();
+            for (int i = 0; i < size; i++) {
+                Entity e = ents.get(i);
+                if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
+                    continue;
+                this.qmodel.animate(fTime);
+                Vector3f pos = e.getRenderPos(fTime);
+                Vector3f rot = e.getRenderRot(fTime);
+                float headYaw = rot.x;
+                float yaw = rot.y;
+                float pitch = rot.z;
+//                float 
+                
+                this.qmodel.setHeadOrientation(270, pitch);
+                this.modelRot=this.lastModelRot=-1*yaw-90;
+//                System.out.println(e.yaw);
+                BufferedMatrix mat = Engine.getTempMatrix();
+                float modelScale = 1 / 4f;
+                mat.setIdentity();
+
+                mat.translate(pos.x, pos.y, pos.z);
+                mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
+                mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+                mat.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
+                mat.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
+                mat.scale(modelScale);
+                mat.update();
+//                System.out.println(modelShader.getName());
+                modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+                if (modelShader == this.shaderModelQ) {
+                    BufferedMatrix mat2 = Engine.getTempMatrix2();
+                    mat2.setIdentity();
+                    mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+                    mat2.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
+                    mat2.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
+                    mat2.invert().transpose();
+                    mat2.update();
+                    UniformBuffer.setNormalMat(mat2.get());
+                }
+                GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.image);
+                qmodel.render(Game.ticksran+fTime);
+                UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
             }
-            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.image);
-            qmodel.render(Game.ticksran+fTime);
-            UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
         }
     }
 
@@ -453,23 +480,25 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
     public void renderNormals(World world, float fTime) {
-        Shaders.normals.enable();
-        glLineWidth(3.0F);
-        Engine.checkGLError("glLineWidth");
-//        Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
-        Engine.regionRenderer.setDrawMode(-1);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
-        renderModelsUsingProgram(Shaders.normals, PASS_SOLID, fTime);
-        BufferedMatrix mat = Engine.getIdentityMatrix();
-        Shaders.normals.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-        Engine.regionRenderer.setDrawMode(-1);
-//        glLineWidth(2.0F);
+        if (Shaders.normals != null) {            
+            Shaders.normals.enable();
+            glLineWidth(3.0F);
+            Engine.checkGLError("glLineWidth");
+//            Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
+            Engine.regionRenderer.setDrawMode(-1);
+//            Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
+//            Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
+//            Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+            renderModelsUsingProgram(world, Shaders.normals, PASS_SOLID, fTime);
+            BufferedMatrix mat = Engine.getIdentityMatrix();
+            Shaders.normals.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+            Engine.regionRenderer.setDrawMode(-1);
+//            glLineWidth(2.0F);
 
-//        Shaders.colored.enable();
-//        Engine.regionRenderer.renderDebug(world, fTime);
-        Shader.disable();
+//            Shaders.colored.enable();
+//            Engine.regionRenderer.renderDebug(world, fTime);
+            Shader.disable();
+        }
     }
 
     public void renderTerrainWireFrame(World world, float fTime) {
@@ -625,7 +654,7 @@ public class WorldRenderer extends AbstractRenderer {
     float modelRot, lastModelRot;
     public void tickUpdate() {
         this.lastModelRot = modelRot;
-        this.modelRot+=3.8f;
+//        this.modelRot+=3.8f;
         if (this.modelRot > 180) {
             this.modelRot -= 360;
             this.lastModelRot-=360;

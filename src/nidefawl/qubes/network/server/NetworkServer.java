@@ -3,14 +3,12 @@ package nidefawl.qubes.network.server;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.Connection;
-import nidefawl.qubes.network.ReaderThread;
-import nidefawl.qubes.network.WriterThread;
+import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.server.GameServer;
 
 public class NetworkServer {
@@ -25,7 +23,7 @@ public class NetworkServer {
 
     public long pingDelay = 1000;
 
-    public int                                  netVersion    = 1;
+    public int                                  netVersion    = Packet.NET_VERSION;
     private final ArrayList<ServerHandlerPlay>  handlersPlay  = Lists.newArrayList();
     private final ArrayList<ServerHandlerLogin> handlersLogin = Lists.newArrayList();
 

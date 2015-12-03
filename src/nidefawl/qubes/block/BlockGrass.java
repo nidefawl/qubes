@@ -14,11 +14,11 @@ public class BlockGrass extends Block {
     }
     
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
         return ColorMap.grass.get(0.8, 0.4);
     }
 
-    public int getTexture(int faceDir, int dataVal) {
+    public int getTexture(int faceDir, int dataVal, int pass) {
         
         int idx = 0;
         if (faceDir == Dir.DIR_NEG_Y) {

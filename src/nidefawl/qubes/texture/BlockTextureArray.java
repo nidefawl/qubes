@@ -130,7 +130,7 @@ public class BlockTextureArray {
                         if (tex == null) {
                             throw new GameError("Failed loading block texture " + s);
                         }
-                        System.out.println(tex.getName()+" - "+tex.getWidth()+","+tex.getHeight()+ " from "+tex.getPack());
+//                        System.out.println(tex.getName()+" - "+tex.getWidth()+","+tex.getHeight()+ " from "+tex.getPack());
                         int texW = tex.getWidth();//Math.max(tex.getWidth(), tex.getHeight());
                         if (texW > maxTileW) {
                             maxTileW = texW;
@@ -147,11 +147,14 @@ public class BlockTextureArray {
                 if (firstInit) {
                     progress = ++nBlock/(float)totalBlocks;
                     Game.instance.loadRender(1, progress, b.getName());
+                    GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
+                    Engine.checkGLError("Game.instance.loadRender");
                 }
             }
         }
         if (firstInit) {
             Game.instance.loadRender(1, 1);
+            Engine.checkGLError("Game.instance.loadRender");
         }
         System.out.println("maxTileW = "+maxTileW);
         System.out.println("maxTexture = "+maxTexture);
@@ -160,15 +163,16 @@ public class BlockTextureArray {
         this.textures = new int[Block.NUM_BLOCKS<<BLOCK_TEXTURE_BITS];
         this.numMipmaps = 1+GameMath.log2(this.tileSize);
 
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
         if (firstInit) {
+            Engine.checkGLError("pre glTexStorage3D");
             nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, 
                     GL_RGBA8,              //Internal format
                     this.tileSize, this.tileSize,   //width,height
                     this.maxTextures       //Number of layers
             );
+            Engine.checkGLError("glTexStorage3D");
         }
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("GL42.glTexStorage3D");
         totalBlocks = text.size();
         nBlock = 0;
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = text.entrySet().iterator();
@@ -228,9 +232,11 @@ public class BlockTextureArray {
             if (firstInit) {
                 progress = ++nBlock/(float)totalBlocks;
                 Game.instance.loadRender(2, progress);
+                GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
             }
         }
         Game.instance.loadRender(2, 1);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
         lastLoaded = text;
         boolean useDefault = true;
         if (useDefault) {
@@ -251,11 +257,13 @@ public class BlockTextureArray {
         }
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_normalmaps);
         if (firstInit) {
+            Engine.checkGLError("pre glTexStorage3D normalmaps");
             nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, 
                     GL_RGBA8,              //Internal format
                     this.tileSize, this.tileSize,   //width,height
                     this.maxTextures       //Number of layers
             );
+            Engine.checkGLError("glTexStorage3D normalmaps");
         }
         Iterator<Entry<Integer, AssetTexture>> it2 = slotTextureMap.entrySet().iterator();
         byte[] defNormal = new byte[4*this.tileSize*this.tileSize];
@@ -275,7 +283,7 @@ public class BlockTextureArray {
             
 
             byte[] data = findNormalMapForColorTexture(mgr, texColor, defNormal);
-          System.out.println(texColor.getName());
+//          System.out.println(texColor.getName());
             TextureUtil.clampAlpha(data, this.tileSize, this.tileSize);
             directBuf = put(directBuf, data);
             int avg = 0xff7f7fff;
@@ -312,7 +320,7 @@ public class BlockTextureArray {
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
 //          GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
-      GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
+        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
     }
 

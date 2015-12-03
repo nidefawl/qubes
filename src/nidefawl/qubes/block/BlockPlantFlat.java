@@ -27,7 +27,7 @@ public class BlockPlantFlat extends Block {
      * @see nidefawl.qubes.block.Block#getColorFromSide(int)
      */
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
         return ColorMap.foliage.get(0.8, 0.4);
     }
 

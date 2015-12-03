@@ -14,11 +14,13 @@ public class PacketSSpawnInWorld extends Packet {
     public IWorldSettings worldSettings;
     public Vec3D          pos;
     public int            flags;
+    public int            entId;
 
     public PacketSSpawnInWorld() {
     }
 
-    public PacketSSpawnInWorld(IWorldSettings worldSettings, Vec3D pos, int flags) {
+    public PacketSSpawnInWorld(int id, IWorldSettings worldSettings, Vec3D pos, int flags) {
+        this.entId = id;
         this.worldSettings = worldSettings;
         this.pos = pos;
         this.flags = flags;
@@ -26,19 +28,21 @@ public class PacketSSpawnInWorld extends Packet {
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
+        this.entId = stream.readInt();
+        this.flags = stream.readInt();
+        pos = new Vec3D(stream.readDouble(), stream.readDouble(), stream.readDouble());
         worldSettings = new WorldSettingsClient();
         worldSettings.read(stream);
-        pos = new Vec3D(stream.readDouble(), stream.readDouble(), stream.readDouble());
-        this.flags = stream.readInt();
     }
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
-        this.worldSettings.write(stream);
+        stream.writeInt(this.entId);
+        stream.writeInt(this.flags);
         stream.writeDouble(this.pos.x);
         stream.writeDouble(this.pos.y);
         stream.writeDouble(this.pos.z);
-        stream.writeInt(this.flags);
+        this.worldSettings.write(stream);
     }
 
     @Override

@@ -59,8 +59,8 @@ public class BlockFence extends Block {
     }
 
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
-        return this.baseBlock.getFaceColor(w, x, y, z, faceDir);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+        return this.baseBlock.getFaceColor(w, x, y, z, faceDir, pass);
     }
 
     @Override
@@ -68,14 +68,14 @@ public class BlockFence extends Block {
         return this.baseBlock.getAlpha();
     }
     @Override
-    public int getTexture(int faceDir, int dataVal) {
+    public int getTexture(int faceDir, int dataVal, int pass) {
         int axis = faceDir>>1;
         if (axis == 1) {
             faceDir = 0|faceDir&1;
         }
         if (this.textures.length == 0)
-            return baseBlock.getTexture(faceDir, dataVal);
-        return super.getTexture(faceDir, dataVal);
+            return baseBlock.getTexture(faceDir, dataVal, pass);
+        return super.getTexture(faceDir, dataVal, pass);
     }
     @Override
     public int getRenderType() {

@@ -1,11 +1,10 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.util.BlockColl;
 import nidefawl.qubes.util.CollisionQuery;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.vec.AABB;
-import nidefawl.qubes.vec.Vec3D;
-import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
 
 public abstract class Entity {
@@ -17,15 +16,25 @@ public abstract class Entity {
 	public Vec3D mot = new Vec3D();
 	public Vec3D lastMot = new Vec3D();
 	public float yaw, lastYaw;
+    public float yawBodyOffset, lastYawBodyOffset;
 	public float pitch, lastPitch;
 	public boolean noclip;
+    public boolean hitGround;
     final AABB aabb = new AABB(0, 0, 0, 0, 0, 0);
     final AABB aabb2 = new AABB(0, 0, 0, 0, 0, 0);
+    AABB dbg = new AABB();
     final CollisionQuery coll = new CollisionQuery();
+    public Vector3f renderPos = new Vector3f();
+    public Vector3f renderRot = new Vector3f();
 	
     private double width;
     private double height;
     private double length;
+    
+    //debug vars
+    public float yawfloat1, yawfloat2;
+    public float yawfloat3, yawfloat4;
+    public int ticks1, ticks2, ticks3;
     
 	public Entity() {
 		this.width = 0.8D;
@@ -50,15 +59,14 @@ public abstract class Entity {
 	    if (this.yaw < 0)
 	        this.yaw += 360;
         this.lastYaw = this.yaw;
+        this.lastYawBodyOffset = this.yawBodyOffset;
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);
         this.lastPos.set(this.pos);
         this.step();
 	}
 
-    AABB dbg = new AABB();
-    public boolean hitGround;
-    private void step() {
+    protected void step() {
         if (this.noclip) {
             aabb.offset(this.mot.x, this.mot.y, this.mot.z);
             this.pos.x = aabb.getCenterX();
@@ -147,8 +155,74 @@ public abstract class Entity {
      */
     public void setYawPitch(float yaw, float pitch) {
         this.yaw = yaw;
+        this.yawBodyOffset = 0;
         this.pitch = pitch;
     }
 
-	
+    /**
+     * @return
+     */
+    public Tag writeClientData(boolean isUpdate) {
+        return null;
+    }
+
+    public void readClientData(Tag tag) {
+    }
+
+    public abstract EntityType getEntityType();
+
+
+    /**
+     * @return
+     */
+    public int getLookDir() {
+        float f = (this.yaw%360.0F)/90.0f;
+        int dir = GameMath.floor(f+0.5f)&3;
+        if (dir == 1)
+            return Dir.DIR_POS_Z;
+        if (dir == 2)
+            return Dir.DIR_NEG_X;
+        if (dir == 3)
+            return Dir.DIR_NEG_Z;
+        return Dir.DIR_POS_X;
+    }
+
+    public World getWorld() {
+        return this.world;
+    }
+
+    /**
+     * @param i
+     * @param fTime
+     * @return 
+     */
+    public Vector3f getRenderPos(float fTime) {
+        float px = (float) (this.lastPos.x + (this.pos.x - this.lastPos.x) * fTime) + 0;
+        float py = (float) (this.lastPos.y + (this.pos.y - this.lastPos.y) * fTime) + 0;
+        float pz = (float) (this.lastPos.z + (this.pos.z - this.lastPos.z) * fTime) + 0;
+        renderPos.set(px, py, pz);
+        return renderPos;
+    }
+
+    /**
+     * @param i
+     * @param fTime
+     * @return 
+     */
+    public Vector3f getRenderRot(float fTime) {
+        float difHeadYaw = (this.yawBodyOffset - this.lastYawBodyOffset);
+        difHeadYaw = difHeadYaw > 180 ? -(360-difHeadYaw) : difHeadYaw;
+        difHeadYaw = difHeadYaw < -180 ? (360+difHeadYaw) : difHeadYaw;
+        float eHeadYaw = (float) (this.lastYawBodyOffset + (difHeadYaw) * fTime) + 0;
+        float difYaw = (this.yaw - this.lastYaw);
+        difYaw = difYaw > 180 ? -(360-difYaw) : difYaw;
+        difYaw = difYaw < -180 ? (360+difYaw) : difYaw;
+        float eYaw = (float) (this.lastYaw + (difYaw) * fTime) + 0;
+        float difPitch = (this.pitch - this.lastPitch);
+        difPitch = difPitch > 180 ? -(360-difPitch) : difPitch;
+        difPitch = difPitch < -180 ? (360+difPitch) : difPitch;
+        float ePitch = (float) (this.lastPitch + (difPitch) * fTime) + 0;
+        renderRot.set(eHeadYaw, eYaw, ePitch);
+        return renderRot;
+    }
 }

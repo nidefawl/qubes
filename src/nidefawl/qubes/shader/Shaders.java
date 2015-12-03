@@ -3,6 +3,7 @@ package nidefawl.qubes.shader;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.util.SimpleResourceManager;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -49,7 +50,10 @@ public class Shaders {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_depthBufShader = assetMgr.loadShader(newshaders, "debug/renderdepth");
-            Shader new_normals = assetMgr.loadShader(newshaders, "debug/visnormals");
+            Shader new_normals = null;
+            if (GL.getCaps().GL_ARB_geometry_shader4) {
+                new_normals = assetMgr.loadShader(newshaders, "debug/visnormals");
+            }
             Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");
             Shader new_uint = assetMgr.loadShader(newshaders, "debug/render_uint_texture");
             Shader new_textured = assetMgr.loadShader(newshaders, "textured");

@@ -197,4 +197,15 @@ public class Vec3D {
         set(pos.x, pos.y, pos.z);
     }
 
+    /**
+     * @param pos
+     * @return
+     */
+    public double distanceSq(Vec3D pos) {
+        double xd = pos.x - this.x;
+        double yd = pos.y - this.y;
+        double zd = pos.z - this.z;
+        return xd*xd+yd*yd+zd*zd;
+    }
+
 }

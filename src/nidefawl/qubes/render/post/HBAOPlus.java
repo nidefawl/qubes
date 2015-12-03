@@ -101,7 +101,11 @@ public class HBAOPlus {
     native public static String[] getCallStack();
     
 	static {
-		System.load(new File("../Game/lib/hbaoplus/HBAOPlus.x64.dll").getAbsolutePath());
+	    File f = new File("HBAOPlus.x64.dll");
+	    if (!f.exists()) {
+	        f = new File("../Game/lib/hbaoplus/HBAOPlus.x64.dll");
+	    }
+		System.load(f.getAbsolutePath());
 	}
 	
 }

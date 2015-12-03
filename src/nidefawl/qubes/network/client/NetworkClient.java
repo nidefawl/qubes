@@ -12,7 +12,7 @@ public class NetworkClient {
 
     private final ClientHandler handler;
     private final Connection    conn;
-    public int netVersion = 1;
+    public int netVersion = Packet.NET_VERSION;
 
     public NetworkClient(final String host, final short port) throws UnknownHostException, IOException {
     	Socket s = new Socket();

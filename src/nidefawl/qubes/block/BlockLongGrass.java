@@ -30,8 +30,8 @@ public class BlockLongGrass extends BlockPlantCrossedSquares {
         return WorldRenderer.PASS_LOD;
     }
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
-        int rgb = Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+        int rgb = Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y, pass);
 //        System.out.printf("vec3(%.3f, %.3f, %.3f)\n", TextureUtil.getR(rgb), TextureUtil.getG(rgb), TextureUtil.getB(rgb));
         return rgb;
     }

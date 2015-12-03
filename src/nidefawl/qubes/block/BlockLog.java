@@ -23,7 +23,7 @@ public class BlockLog extends Block {
      * @see nidefawl.qubes.block.Block#getTextureFromSide(int)
      */
     @Override
-    public int getTexture(int faceDir, int dataVal) {
+    public int getTexture(int faceDir, int dataVal, int pass) {
         int rot = dataVal & 3;
         int topFace = Dir.DIR_POS_Y;
         int bottomFace = Dir.DIR_NEG_Y;

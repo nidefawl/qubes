@@ -6,9 +6,12 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetInputStream;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GPUVendor;
 import nidefawl.qubes.util.GameError;
 
 public class ShaderSource {
@@ -98,6 +101,8 @@ public class ShaderSource {
                             if (def != null) {
                                 s = def.getDefinition(define);
                             }
+                            if (s == null)
+                                s = getGlobalDef(define);
                             String replace = s == null ? "" : s;
                             code += replace + "\r\n";
                         } else if ((m = patternAttr.matcher(line)).matches()) {
@@ -115,6 +120,17 @@ public class ShaderSource {
                     }
                     nLineOffset++;
                 }
+                if (Game.instance!=null&&Game.instance.getVendor() == GPUVendor.INTEL) {
+                    Pattern p = Pattern.compile("\\b((0x)?[0-9a-fA-F]+)[uU]\\b");
+                    Matcher m = p.matcher(code);
+                    StringBuffer sb = new StringBuffer(code.length());
+                    while (m.find()) {
+                        m.appendReplacement(sb, "uint($1)");
+                    }
+                    m.appendTail(sb);
+                    code = sb.toString();
+                }
+                
                 return code;
             } else if (resolve) {
                 String p = "";
@@ -132,6 +148,28 @@ public class ShaderSource {
         return null;
     }
 
+    /**
+     * @param define
+     * @return
+     */
+    private String getGlobalDef(String define) {
+        if ("IS_SKY".equals(define)) {
+            return "#define IS_SKY(blockid) float(blockid=="+Block.air.id+"u)";
+        }
+        if ("IS_WATER".equals(define)) {
+            return "#define IS_WATER(blockid) float(blockid=="+Block.water.id+"u)";
+        }
+        if ("IS_LIGHT".equals(define)) {
+            return "#define IS_LIGHT(blockid) float(blockid==2222u)";
+        }
+        if ("IS_LEAVES".equals(define)) {
+            return "#define IS_LEAVES(blockid) (blockid=="+Block.leaves.id+"u)";
+        }
+        if ("IS_WAVING".equals(define)) {
+            return "#define IS_WAVING(blockid) (blockid=="+Block.grassbush.id+"u)";
+        }
+        return null;
+    }
     public boolean isEmpty() {
         return this.processed == null;
     }

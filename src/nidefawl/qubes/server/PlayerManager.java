@@ -10,7 +10,9 @@ import com.google.common.collect.MapMaker;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.config.WorkingEnv;
-import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.EntityType;
+import nidefawl.qubes.entity.PlayerServer;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.nbt.TagReader;
@@ -21,8 +23,8 @@ import nidefawl.qubes.world.WorldServer;
 
 public class PlayerManager {
     private File directory;
-    private Map<String, Player> players = new MapMaker().makeMap();
-    private Map<String, Player> playersLowerCase = new MapMaker().makeMap();
+    private Map<String, PlayerServer> players = new MapMaker().makeMap();
+    private Map<String, PlayerServer> playersLowerCase = new MapMaker().makeMap();
     private GameServer server;
 
     public PlayerManager(GameServer server) {
@@ -60,8 +62,8 @@ public class PlayerManager {
         }
     }
 
-    public Player addPlayer(String name) {
-        Player player = new Player();
+    public PlayerServer addPlayer(String name) {
+        PlayerServer player = (PlayerServer) EntityType.PLAYER.newInstance();
         player.name = name;
         PlayerData data = loadPlayer(name);
         Iterator<Map.Entry<UUID, Vector3f>> wpos = data.worldPositions.entrySet().iterator();
@@ -89,7 +91,7 @@ public class PlayerManager {
         return player;
     }
 
-    public void removePlayer(Player p) {
+    public void removePlayer(PlayerServer p) {
         World world = p.world;
         this.players.remove(p.name);
         this.playersLowerCase.remove(p.name.toLowerCase());
@@ -98,11 +100,11 @@ public class PlayerManager {
     }
 
     public void savePlayers() {
-        Iterator<Map.Entry<String, Player>> it = this.players.entrySet().iterator();
+        Iterator<Map.Entry<String, PlayerServer>> it = this.players.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry<String, Player> entry = it.next();
+            Map.Entry<String, PlayerServer> entry = it.next();
             try {
-                Player player = entry.getValue();
+                PlayerServer player = entry.getValue();
                 PlayerData data = player.save();
                 savePlayer(entry.getKey(), data);   
             } catch (Exception e) {
@@ -110,16 +112,16 @@ public class PlayerManager {
             }
         }
     }
-    public Player getPlayer(String string) {
+    public PlayerServer getPlayer(String string) {
         return this.playersLowerCase.get(string.toLowerCase());
     }
 
-    public Player matchPlayer(String string) {
-        Iterator<Map.Entry<String, Player>> it = this.playersLowerCase.entrySet().iterator();
+    public PlayerServer matchPlayer(String string) {
+        Iterator<Map.Entry<String, PlayerServer>> it = this.playersLowerCase.entrySet().iterator();
         String lowerStr = string.toLowerCase();
-        Player match = null;
+        PlayerServer match = null;
         while (it.hasNext()) {
-            Map.Entry<String, Player> entry = it.next();
+            Map.Entry<String, PlayerServer> entry = it.next();
             String pName = entry.getKey();
             if (pName.equals(lowerStr))
                 return entry.getValue();
@@ -132,7 +134,7 @@ public class PlayerManager {
     /**
      * @return
      */
-    public Collection<Player> getPlayers() {
+    public Collection<PlayerServer> getPlayers() {
         return players.values();
     }
 }

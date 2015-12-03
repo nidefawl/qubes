@@ -8,6 +8,7 @@ import nidefawl.qubes.block.BlockQuarterBlock;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.util.Flags;
@@ -22,13 +23,13 @@ import nidefawl.qubes.vec.Vector3f;
  */
 public class BlockPlacer {
 
-    private Player player;
+    private PlayerServer player;
     private Stack stack;
 
     /**
      * @param serverHandlerPlay
      */
-    public BlockPlacer(Player player) {
+    public BlockPlacer(PlayerServer player) {
         this.player = player;
     }
     /**

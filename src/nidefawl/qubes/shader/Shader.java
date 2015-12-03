@@ -118,6 +118,7 @@ public class Shader implements IManagedResource {
                 Engine.checkGLError("getLog");
                 if (getStatus(this.fragShader, GL_COMPILE_STATUS) != 1) {
                     Engine.checkGLError("getStatus");
+                    System.err.println(log);
                     throw new ShaderCompileError(this, fragCode, this.name+" fragment", log);
                 } else if (!log.isEmpty()) {
                     System.out.println(this.name+" fragment");

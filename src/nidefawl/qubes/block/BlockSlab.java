@@ -4,7 +4,9 @@
 package nidefawl.qubes.block;
 
 import java.util.Arrays;
+import java.util.List;
 
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.*;
@@ -22,11 +24,15 @@ public class BlockSlab extends BlockSliced {
      * @param transparent
      */
     final Block baseBlock;
-
+    private final int overrideTextureIdx;
     public BlockSlab(int id, Block baseBlock) {
+        this(id, baseBlock, -1);
+    }
+    public BlockSlab(int id, Block baseBlock, int textureIdx) {
         super(id, baseBlock.isTransparent());
         setTextures(new String[0]);
         this.baseBlock = baseBlock;
+        this.overrideTextureIdx = textureIdx;
     }
 
     @Override
@@ -41,8 +47,8 @@ public class BlockSlab extends BlockSliced {
     }
 
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
-        return this.baseBlock.getFaceColor(w, x, y, z, faceDir);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+        return this.baseBlock.getFaceColor(w, x, y, z, faceDir, pass);
     }
 
     @Override
@@ -98,7 +104,6 @@ public class BlockSlab extends BlockSliced {
     @Override
     public int prePlace(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
         int idAt = blockPlacer.getWorld().getType(pos);
-        
         if (idAt == this.id) {
             return 2;
         }
@@ -111,7 +116,7 @@ public class BlockSlab extends BlockSliced {
         Block b = Block.get(idAt);
         if (b != Block.air && b.isReplaceable())
             return 0;
-        return yOff >= 0.5 ? 1 : 0;
+        return (yOff >= 0.5 ? 1 : 0);
     }
     @Override
     public int placeOffset(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
@@ -178,10 +183,14 @@ public class BlockSlab extends BlockSliced {
     }
     
     @Override
-    public int getTexture(int faceDir, int dataVal) {
+    public int getTexture(int faceDir, int dataVal, int pass) {
+        int idx = overrideTextureIdx;
+        if (idx >= 0) {
+            return BlockTextureArray.getInstance().getTextureIdx(baseBlock.id, idx);
+        }
         if (this.textures.length == 0)
-            return baseBlock.getTexture(faceDir, dataVal);
-        return super.getTexture(faceDir, dataVal);
+            return baseBlock.getTexture(faceDir, 0, pass);
+        return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
     }
     public boolean isFullBB() {
         return false;
@@ -202,5 +211,11 @@ public class BlockSlab extends BlockSliced {
         for (int i = 0; i < 8; i++) {
             quarters[i] = i >= start && i < end ? this.id : 0;
         }
+    }
+    
+    @Override
+    public int getItems(List<Stack> l) {
+        l.add(new Stack(this.id));
+        return 1;
     }
 }

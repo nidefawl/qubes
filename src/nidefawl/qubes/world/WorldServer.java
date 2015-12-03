@@ -14,14 +14,13 @@ import nidefawl.qubes.blocklight.BlockLightThread;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
-import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.Entity;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketSWorldTime;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
-import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.TripletLongHash;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
@@ -34,13 +33,16 @@ public class WorldServer extends World {
 
     private final GameServer         server;
     private final PlayerChunkTracker chunkTracker     = new PlayerChunkTracker(this);
-    private final List<Player>       players          = Lists.newArrayList();
+    private final List<PlayerServer>       players          = Lists.newArrayList();
     private final ChunkManagerServer chunkServer;
     private final ITerrainGen              generator;
     private final IChunkPopulator populator;
 //    private Queue<Long> lightUpdateQueue = Queues.newConcurrentLinkedQueue();
     private Set<Long> lightUpdateQueue = Sets.newConcurrentHashSet();
     private final BlockLightThread lightUpdater;
+    public HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
+    public ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
+
 
     public WorldServer(WorldSettings settings, GameServer server) {
         super(settings);
@@ -71,7 +73,14 @@ public class WorldServer extends World {
     }
 
     public void tickUpdate() {
-        super.tickUpdate();
+        if (!this.settings.isFixedTime()) {
+            this.settings.setTime(this.settings.getTime()+1L);
+        }
+        int size = this.entityList.size();
+        for (int i = 0; i < size; i++) {
+            Entity e = this.entityList.get(i);
+            e.tickUpdate();
+        }
         updateChunks();
     }
     public void resyncTime() {
@@ -82,8 +91,8 @@ public class WorldServer extends World {
     public void broadcastPacket(Packet p) {
         int l = this.players.size();
         for (int i = 0; i < l; i++) {
-            Player player = this.players.get(i);
-            player.sendPacket(p);
+            PlayerServer PlayerServer = this.players.get(i);
+            PlayerServer.sendPacket(p);
         }
     }
     @Override
@@ -154,29 +163,61 @@ public class WorldServer extends World {
         this.chunkServer.saveAndUnloadChunks(200);
     }
 
-    public void addPlayer(Player player) {
-        Vector3f position = player.worldPositions.get(this.getUUID());
+    public void addPlayer(PlayerServer PlayerServer) {
+        Vector3f position = PlayerServer.worldPositions.get(this.getUUID());
         if (position == null) {
             position = new Vector3f(this.getSpawnPosition());
-            player.worldPositions.put(this.getUUID(), position);
+            PlayerServer.worldPositions.put(this.getUUID(), position);
         }
-        player.world = this;
-        player.move(position);
-        addEntity(player);
-        this.players.add(player);
-        this.chunkTracker.addPlayer(player);
-    }
-
-    private Vector3f getSpawnPosition() {
-        return new Vector3f(0, 200, 0);
+        PlayerServer.world = this;
+        PlayerServer.move(position);
+        addEntity(PlayerServer);
+        this.players.add(PlayerServer);
+        this.chunkTracker.addPlayer(PlayerServer);
+        PlayerServer.entTracker.joinWorld(this);
     }
     
-    public void removePlayer(Player player) {
-        Vector3f position = new Vector3f(player.pos);
-        player.worldPositions.put(this.getUUID(), position);
-        removeEntity(player);
-        this.players.remove(player);
-        this.chunkTracker.removePlayer(player);
+    public void removePlayer(PlayerServer PlayerServer) {
+        Vector3f position = new Vector3f(PlayerServer.pos);
+        PlayerServer.worldPositions.put(this.getUUID(), position);
+        removeEntity(PlayerServer);
+        this.players.remove(PlayerServer);
+        this.chunkTracker.removePlayer(PlayerServer);
+        PlayerServer.entTracker.leaveWorld();
+    }
+
+
+    public boolean addEntity(Entity ent) {
+        Entity e = this.entities.put(ent.id, ent);
+        if (e != null) {
+            throw new GameError("Entity with id " + ent.id + " already exists");
+        }
+        this.entityList.add(ent);
+        ent.world = this;
+        int size = this.players.size();
+        for (int i = 0; i < size; i++) {
+            PlayerServer p = this.players.get(i);
+            p.entTracker.track(ent);
+        }
+        return true;
+    }
+
+    public boolean removeEntity(Entity ent) {
+        Entity e = this.entities.remove(ent.id);
+        if (e != null) {
+            this.entityList.remove(e);
+            ent.world = null;
+            int size = this.players.size();
+            for (int i = 0; i < size; i++) {
+                PlayerServer p = this.players.get(i);
+                p.entTracker.untrack(ent);
+            }
+            return true;
+        }
+        return false;
+    }
+    private Vector3f getSpawnPosition() {
+        return new Vector3f(0, 200, 0);
     }
 
     public void save(boolean b) {
@@ -251,16 +292,24 @@ public class WorldServer extends World {
         PlayerChunkTracker tr = getPlayerChunkTracker();
         int l = this.players.size();
         for (int i = 0; i < l; i++) {
-            Player player = this.players.get(i);
-            tr.removePlayer(player);
+            PlayerServer PlayerServer = this.players.get(i);
+            tr.removePlayer(PlayerServer);
         }
         this.lightUpdateQueue.clear();
         this.lightUpdater.ensureEmpty();
         int n = getChunkManager().deleteAllChunks();
         for (int i = 0; i < l; i++) {
-            Player player = this.players.get(i);
-            tr.addPlayer(player);
+            PlayerServer PlayerServer = this.players.get(i);
+            tr.addPlayer(PlayerServer);
         }
         return n;
+    }
+
+    public Entity getEntity(int entId) {
+        return this.entities.get(entId);
+    }
+    
+    public List<Entity> getEntityList() {
+        return this.entityList;
     }
 }

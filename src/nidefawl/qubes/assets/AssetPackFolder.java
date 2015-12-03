@@ -4,6 +4,8 @@
 package nidefawl.qubes.assets;
 
 import java.io.*;
+import java.util.LinkedHashSet;
+import java.util.Stack;
 
 /**
  * @author Michael Hept 2015
@@ -37,5 +39,30 @@ public class AssetPackFolder extends AssetPack {
     @Override
     public String toString() {
         return "Asset Pack "+this.directory;
+    }
+
+    @Override
+    public void collectAssets(final String path, final String extension, LinkedHashSet<AssetPath> assets) {
+        if (this.directory.isDirectory()) {
+            Stack<File> stack = new Stack<File>();
+            stack.push(this.directory);
+            while (!stack.isEmpty()) {
+                File[] fList = this.directory.listFiles(new FileFilter() {
+                    
+                    @Override
+                    public boolean accept(File f) {
+                        return f.isDirectory() || (f.isFile() && f.getName().startsWith(path) && f.getName().endsWith(extension));
+                    }
+                });
+
+                for (int i = 0; fList != null && i < fList.length; i++) {
+                    if (fList[i].isDirectory()) {
+                        stack.push(fList[i]);
+                    } else if (fList[i].isFile()) {
+                        assets.add(new AssetPath(this, fList[i].getPath()));    
+                    }
+                }
+            }
+        }
     }
 }

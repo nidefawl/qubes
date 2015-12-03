@@ -5,8 +5,8 @@ package nidefawl.qubes.assets;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -64,5 +64,14 @@ public class AssetPackZip extends AssetPack {
     @Override
     public String toString() {
         return "Asset Pack "+this.zipFile;
+    }
+
+    @Override
+    public void collectAssets(String path, String extension, LinkedHashSet<AssetPath> assets) {
+        for (String s : this.map.keySet()) {
+            if (s.startsWith(path) && s.endsWith(extension)) {
+                assets.add(new AssetPath(this, s));
+            }
+        }
     }
 }

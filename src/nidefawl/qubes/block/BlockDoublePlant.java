@@ -24,12 +24,12 @@ public class BlockDoublePlant extends Block {
      * @see nidefawl.qubes.block.Block#getColorFromSide(int)
      */
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
         int d = w.getData(x, y, z)&7;
         if (d>1&&d<4) {
             return ColorMap.grass.get(0.8, 0.4);
         }
-        return super.getFaceColor(w, x, y, z, faceDir);
+        return super.getFaceColor(w, x, y, z, faceDir, pass);
     }
 
     public int getRenderType() {
@@ -72,8 +72,9 @@ public class BlockDoublePlant extends Block {
         bb.set(size, 0, size, 1-size, 1-1*size, 1-size);
         return bb;
     }
+
     @Override
-    public int getTexture(int faceDir, int dataVal) {
+    public int getTexture(int faceDir, int dataVal, int pass) {
         boolean upper=(dataVal&8)!=0;
         int idx = dataVal&7;
         if (upper) {

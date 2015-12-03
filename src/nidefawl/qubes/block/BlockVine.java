@@ -169,7 +169,7 @@ public class BlockVine extends Block {
     }
 
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
         return ColorMap.foliage.get(0.8, 0.4);
     }
 }

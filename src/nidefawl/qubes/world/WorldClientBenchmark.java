@@ -34,7 +34,7 @@ public class WorldClientBenchmark extends WorldClient {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                for (int y = 0; y < 160; y++) {
-                   chMgr.testChunk.blocks[y<<8|z<<4|x] = (short) Block.stone.id;           
+                   chMgr.testChunk.blocks[y<<8|z<<4|x] = (short) Block.granite.id;           
                }
             }
         }

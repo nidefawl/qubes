@@ -4,7 +4,7 @@
 package nidefawl.qubes.assets;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.util.LinkedHashSet;
 
 import nidefawl.qubes.NativeClassLoader;
 
@@ -31,5 +31,9 @@ public class AssetPackClassPath extends AssetPack {
     @Override
     public String toString() {
         return "Core Assets";
+    }
+
+    @Override
+    public void collectAssets(String path, String extension, LinkedHashSet<AssetPath> assets) {
     }
 }

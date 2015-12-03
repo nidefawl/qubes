@@ -1,13 +1,13 @@
 package nidefawl.qubes.nbt;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.nbt.Tag.StringTag;
-import nidefawl.qubes.nbt.Tag.TagList;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -422,6 +422,7 @@ public abstract class Tag {
             return getByte(string) > 0;
         }
 
+        @SuppressWarnings("rawtypes")
         public List getList(String string) {
             Tag t = this.data.get(string);
             return t instanceof Tag.TagList ? ((Tag.TagList) t).getList() : Collections.emptyList();
@@ -434,6 +435,23 @@ public abstract class Tag {
          */
         public void setList(String string, TagList list) {
             this.data.put(string, list);
+        }
+
+        /**
+         * @param string
+         * @param name
+         */
+        public void setString(String string, String str) {
+            this.data.put(string, new Tag.StringTag(str));
+        }
+
+        /**
+         * @param string
+         * @return
+         */
+        public String getString(String string) {
+            Tag t = this.data.get(string);
+            return t instanceof Tag.StringTag ? ((Tag.StringTag) t).getString() : null;
         }
     }
 

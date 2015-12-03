@@ -59,7 +59,11 @@ public class GuiSelectBlock extends Gui {
         Collections.sort(this.blocks, new Comparator<Stack>() {
             @Override
             public int compare(Stack s1, Stack s2) {
-                return s1.getBlock().getClass().getName().compareToIgnoreCase(s2.getBlock().getClass().getName());
+                int n= s1.getBlock().getClass().getName().compareToIgnoreCase(s2.getBlock().getClass().getName());
+                if (n == 0) {
+                    n= s1.getBlock().getName().compareToIgnoreCase(s2.getBlock().getName());
+                }
+                return n;
             }
         });
     }
@@ -93,7 +97,7 @@ public class GuiSelectBlock extends Gui {
         float bSize = 45;
         float g = 4;
         float out = 10;
-        int perRow1 = (int) ((this.width-50)/(bSize+out));
+        int perRow1 = Math.max(4, (int) ((this.width-50)/(bSize+out)));
         float xPos = this.width/2.0f-(perRow1*bSize+out)/2.0f;
         float yPos = xPos;
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());

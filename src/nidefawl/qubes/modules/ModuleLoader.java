@@ -16,14 +16,12 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
-import io.github.lukehutch.fastclasspathscanner.matchprocessor.SubclassMatchProcessor;
-import nidefawl.qubes.event.Events;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.GameError;
 
 /**
- * @author Michael Hept 2015 Copyright: Michael Hept
+ * @author Michael Hept 2015
+ * Copyright: Michael Hept
  */
 public class ModuleLoader {
     final static Set<Module> modules         = Sets.newHashSet();
@@ -79,16 +77,7 @@ public class ModuleLoader {
     static void scanModules() {
         final Set<Class<? extends Module>> module = Sets.newHashSet();
 
-        if (overrideModules == null) {
-            FastClasspathScanner scanner = new FastClasspathScanner();
-            scanner.matchSubclassesOf(Module.class, new SubclassMatchProcessor<Module>() {
-                @Override
-                public void processMatch(Class<? extends Module> arg0) {
-                    module.add(arg0);
-                }
-            });
-            scanner.scan();
-        } else {
+        if (overrideModules != null) {
             String[] split = overrideModules.split(";");
             for (int i = 0; i < split.length; i++) {
                 try {

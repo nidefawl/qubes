@@ -3,6 +3,7 @@ package nidefawl.qubes.network.server;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.packet.*;
@@ -15,11 +16,11 @@ import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
 public class ServerHandlerPlay extends ServerHandler {
-    protected final Player player;
+    protected final PlayerServer player;
     private int posSyncSent;
     private int posSyncRecv;
 
-    public ServerHandlerPlay(Player player, ServerHandlerLogin login) {
+    public ServerHandlerPlay(PlayerServer player, ServerHandlerLogin login) {
         super(login.server, login.netServer, login.conn);
         this.player = player;
         this.state = login.state;
@@ -38,7 +39,7 @@ public class ServerHandlerPlay extends ServerHandler {
             if (this.player.flying) {
                 flags |= 1;
             }
-            sendPacket(new PacketSSpawnInWorld(world.settings, this.player.pos, flags));
+            sendPacket(new PacketSSpawnInWorld(player.id, world.settings, this.player.pos, flags));
             world.addPlayer(player);
             sendPacket(new PacketChatChannels(this.player.getJoinedChannels()));
         }
@@ -57,7 +58,7 @@ public class ServerHandlerPlay extends ServerHandler {
         if (this.player.flying) {
             flags |= 1;
         }
-        sendPacket(new PacketSSpawnInWorld(world.settings, this.player.pos, flags));
+        sendPacket(new PacketSSpawnInWorld(player.id, world.settings, this.player.pos, flags));
         world.addPlayer(player);
         player.sendMessage("You are now in world "+world.getName());
     }

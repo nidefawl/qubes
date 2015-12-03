@@ -5,6 +5,7 @@ import java.util.Arrays;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.packet.*;
@@ -62,14 +63,14 @@ public class ServerHandlerLogin extends ServerHandler {
         try {
             PlayerManager mgr = this.server.getPlayerManager();
             System.out.println(this.name);
-            Player exist = mgr.getPlayer(this.name);
+            PlayerServer exist = mgr.getPlayer(this.name);
             if (exist != null) {
                 exist.kick("Another player is using your account");
                 this.kick("Another player is using your account");
                 return;
             }
             
-            Player player = mgr.addPlayer(this.name);
+            PlayerServer player = mgr.addPlayer(this.name);
             player.netHandler = new ServerHandlerPlay(player, this);
             player.setChunkLoadDistance(packet.chunkLoadDistance);
             

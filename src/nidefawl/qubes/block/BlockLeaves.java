@@ -28,7 +28,7 @@ public class BlockLeaves extends Block {
     }
     
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
         return leavesColor;
     }
 

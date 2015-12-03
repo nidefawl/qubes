@@ -4,7 +4,7 @@
 package nidefawl.qubes.assets;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.LinkedHashSet;
 
 /**
  * @author Michael Hept 2015
@@ -17,5 +17,12 @@ public abstract class AssetPack {
      * @throws IOException 
      */
     public abstract AssetInputStream getInputStream(String name) throws IOException;
+
+    /**
+     * @param path
+     * @param extension
+     * @param assets 
+     */
+    public abstract void collectAssets(String path, String extension, LinkedHashSet<AssetPath> assets);
 
 }

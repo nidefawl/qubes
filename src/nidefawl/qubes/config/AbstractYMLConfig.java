@@ -122,6 +122,13 @@ public abstract class AbstractYMLConfig {
         return def;
     }
 
+    public float getFloat(String s, float def) {
+        Object o = this.map.get(s);
+        if (o instanceof Number)
+            return (float) ((Double)(Number) o).floatValue();
+        return def;
+    }
+
     public double getDouble(String s, double def) {
         Object o = this.map.get(s);
         if (o instanceof Number)
@@ -142,6 +149,11 @@ public abstract class AbstractYMLConfig {
 
     protected void setInt(String string, int nr) {
         this.map.put(string, nr);
+    }
+
+
+    protected void setFloat(String string, float f) {
+        this.map.put(string, f);
     }
 
     protected void setLong(String string, long nr) {

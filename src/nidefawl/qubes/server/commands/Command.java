@@ -2,7 +2,7 @@ package nidefawl.qubes.server.commands;
 
 import java.util.HashSet;
 
-import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.server.GameServer;
 
 public abstract class Command {
@@ -40,8 +40,8 @@ public abstract class Command {
             throw new CommandException("Usage: "+string);
     }
 
-    static Player matchPlayer(GameServer server, String string) {
-        Player p = server.getPlayerManager().matchPlayer(string);
+    static PlayerServer matchPlayer(GameServer server, String string) {
+        PlayerServer p = server.getPlayerManager().matchPlayer(string);
         if (p == null) {
             throw new CommandException("Player not found");
         }

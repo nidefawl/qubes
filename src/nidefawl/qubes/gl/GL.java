@@ -2,47 +2,55 @@ package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.EXTDirectStateAccess.glBindMultiTextureEXT;
 import static org.lwjgl.opengl.EXTDirectStateAccess.glGenerateTextureMipmapEXT;
+import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
+import static org.lwjgl.opengl.GL20.glCreateShader;
+import static org.lwjgl.opengl.GL20.glDeleteShader;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lwjgl.opengl.ARBTextureStorage;
-import org.lwjgl.opengl.GLCapabilities;
-import org.lwjgl.opengl.GL42;
+import org.lwjgl.opengl.*;
+
 
 public class GL {
 
+    private static boolean directStateAccess;
     public static void bindTexture(int texunit, int target, int texture) {
-        glBindMultiTextureEXT(texunit, target, texture);
-    }
-    public static void generateTextureMipmap(int texture, int target) {
-        glGenerateTextureMipmapEXT(texture, target);
+        if (!directStateAccess) {
+            int i = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+            if (i != texunit) {
+                GL13.glActiveTexture(texunit);    
+            }
+            GL11.glBindTexture(target, texture);
+            if (i != texunit) {
+                GL13.glActiveTexture(i);    
+            }
+        } else {
+            glBindMultiTextureEXT(texunit, target, texture);    
+        }
     }
 
     public static List<String> validateCaps() {
         final GLCapabilities caps = getCaps();
         ArrayList<String> missingExt = new ArrayList<>();
-        if (!caps.OpenGL30) {
-            missingExt.add("OpenGL >= 3.0");
-        }
-        if (!caps.GL_EXT_direct_state_access) {
-            missingExt.add("GL_EXT_direct_state_access");
+        if (!caps.OpenGL32) {
+            missingExt.add("OpenGL >= 3.2");
         }
         if (!caps.GL_EXT_texture_array) {
             missingExt.add("GL_EXT_texture_array");
         }
         if (!caps.GL_ARB_fragment_shader) {
-            missingExt.add("GL_EXT_vertex_shader");
+            missingExt.add("GL_ARB_fragment_shader");
         }
         if (!caps.GL_ARB_vertex_shader) {
             missingExt.add("GL_EXT_vertex_shader");
         }
-        if (!(caps.OpenGL42 || caps.GL_ARB_texture_storage)) {
-            missingExt.add("OpenGL42 or GL_ARB_texture_storage");
+        if (!caps.GL_ARB_uniform_buffer_object) {
+            missingExt.add("GL_ARB_uniform_buffer_object");
         }
-        
+        directStateAccess = caps.GL_EXT_direct_state_access;
         return missingExt;
     }
 
@@ -73,6 +81,23 @@ public class GL {
             GL42.glTexStorage3D(target, levels, internalformat, width, height, depth);
         } else if (caps.GL_ARB_texture_storage) {
             ARBTextureStorage.glTexStorage3D(target, levels, internalformat, width, height, depth);
+        } else {
+            if (target == GL12.GL_TEXTURE_3D || target == GL12.GL_PROXY_TEXTURE_3D) {
+                for (int i = 0; i < levels; i++)
+                {
+                    GL12.glTexImage3D(target, i, internalformat, width, height, depth, 0, GL12.GL_BGRA, GL11.GL_UNSIGNED_INT, 0);
+                    width = Math.max(1, (width / 2));
+                    height = Math.max(1, (height / 2));
+                    depth = Math.max(1, (depth / 2));
+                }
+            } else {
+                for (int i = 0; i < levels; i++)
+                {
+                    GL12.glTexImage3D(target, i, internalformat, width, height, depth, 0, GL12.GL_BGRA, GL11.GL_UNSIGNED_INT, 0);
+                    width = Math.max(1, (width / 2));
+                    height = Math.max(1, (height / 2));
+                }
+            }
         }
     }
 }

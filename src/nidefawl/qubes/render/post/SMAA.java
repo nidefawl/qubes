@@ -82,6 +82,7 @@ public class SMAA {
             shaderAANeighborBlend.setProgramUniform1i("blendTex", 1);
             Shader.disable();
         } catch (ShaderCompileError e) {
+            e.printStackTrace();
             System.out.println("shader " + e.getName() + " failed to compile");
             System.out.println(e.getLog());
             throw new GameError(e);

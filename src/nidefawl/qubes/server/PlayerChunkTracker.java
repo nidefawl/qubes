@@ -7,7 +7,7 @@ import com.google.common.collect.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
-import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.PacketSSetBlocks;
 import nidefawl.qubes.network.packet.PacketSTrackChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
@@ -39,7 +39,7 @@ public class PlayerChunkTracker {
         final int          z;
         
         /** The players. */
-        final List<Player> players          = Lists.newArrayList();
+        final List<PlayerServer> players          = Lists.newArrayList();
         
         /** The hash. */
         public long        hash;
@@ -69,21 +69,21 @@ public class PlayerChunkTracker {
         }
 
         /**
-         * Adds the player.
+         * Adds the PlayerServer.
          *
-         * @param player the player
+         * @param PlayerServer the PlayerServer
          */
-        public void addPlayer(Player player) {
-            this.players.add(player);
+        public void addPlayer(PlayerServer PlayerServer) {
+            this.players.add(PlayerServer);
         }
 
         /**
-         * Removes the player.
+         * Removes the PlayerServer.
          *
-         * @param player the player
+         * @param PlayerServer the PlayerServer
          */
-        public void removePlayer(Player player) {
-            this.players.remove(player);
+        public void removePlayer(PlayerServer PlayerServer) {
+            this.players.remove(PlayerServer);
         }
 
         /**
@@ -138,7 +138,7 @@ public class PlayerChunkTracker {
     int                 ticksLastCheck = 0;
 
     /**
-     * Instantiates a new player chunk tracker.
+     * Instantiates a new PlayerServer chunk tracker.
      *
      * @param worldServer the world server
      */
@@ -149,16 +149,16 @@ public class PlayerChunkTracker {
     /**
      * Update.
      *
-     * @param player the player
+     * @param PlayerServer the PlayerServer
      */
-    public void update(Player player) {
-        if (!player.chunkTracked) {
-            throw new IllegalArgumentException("Player is not chunk tracked");
+    public void update(PlayerServer PlayerServer) {
+        if (!PlayerServer.chunkTracked) {
+            throw new IllegalArgumentException("PlayerServer is not chunk tracked");
         }
-        int dist = player.getChunkLoadDistance();
-        BlockPos pos = player.pos.toBlock();
-        int lastX = player.chunkX;
-        int lastZ = player.chunkZ;
+        int dist = PlayerServer.getChunkLoadDistance();
+        BlockPos pos = PlayerServer.pos.toBlock();
+        int lastX = PlayerServer.chunkX;
+        int lastZ = PlayerServer.chunkZ;
         int chunkX = pos.x >> Chunk.SIZE_BITS;
         int chunkZ = pos.z >> Chunk.SIZE_BITS;
         int dx = chunkX - lastX;
@@ -177,45 +177,45 @@ public class PlayerChunkTracker {
                     int aZ = z + chunkZ;
                     //if old position outside new boundaries: remove old 
                     if (rX < chunkX - dist || rZ < chunkZ - dist || rX > chunkX + dist || rZ > chunkZ + dist) {
-                        untrackPlayerChunk(player, rX, rZ);
+                        untrackPlayerChunk(PlayerServer, rX, rZ);
 
                         //if new position outside old boundaries: add new
                     }
                     if (aX < lastX - dist || aZ < lastZ - dist || aX > lastX + dist || aZ > lastZ + dist) {
-                        trackPlayerChunk(player, aX, aZ);
+                        trackPlayerChunk(PlayerServer, aX, aZ);
                     }
                 }
             }
-            player.chunkX = chunkX;
-            player.chunkZ = chunkZ;
+            PlayerServer.chunkX = chunkX;
+            PlayerServer.chunkZ = chunkZ;
         }
     }
 
     /**
-     * Track player chunk.
+     * Track PlayerServer chunk.
      *
-     * @param player the player
+     * @param PlayerServer the PlayerServer
      * @param x the x
      * @param z the z
      */
-    private void trackPlayerChunk(Player player, int x, int z) {
+    private void trackPlayerChunk(PlayerServer PlayerServer, int x, int z) {
         Entry entry = getEntry(x, z, true);
-        entry.addPlayer(player);
-        player.watchingChunk(entry.hash, x, z);
+        entry.addPlayer(PlayerServer);
+        PlayerServer.watchingChunk(entry.hash, x, z);
     }
 
     /**
-     * Untrack player chunk.
+     * Untrack PlayerServer chunk.
      *
-     * @param player the player
+     * @param PlayerServer the PlayerServer
      * @param x the x
      * @param z the z
      */
-    private void untrackPlayerChunk(Player player, int x, int z) {
+    private void untrackPlayerChunk(PlayerServer PlayerServer, int x, int z) {
         Entry e = getEntry(x, z, false);
         long l;
         if (e != null) {
-            e.removePlayer(player);
+            e.removePlayer(PlayerServer);
             l = e.hash;
             if (e.isEmpty()) {
                 this.map.remove(e.hash);
@@ -225,40 +225,40 @@ public class PlayerChunkTracker {
             Thread.dumpStack();
             l = GameMath.toLong(x, z);
         }
-        player.unwatchingChunk(l, x, z);
+        PlayerServer.unwatchingChunk(l, x, z);
     }
 
     /**
-     * Removes the player.
+     * Removes the PlayerServer.
      *
-     * @param player the player
+     * @param PlayerServer the PlayerServer
      */
-    public void removePlayer(Player player) {
-        if (!player.chunkTracked) {
-            throw new IllegalArgumentException("Player is not chunk tracked");
+    public void removePlayer(PlayerServer PlayerServer) {
+        if (!PlayerServer.chunkTracked) {
+            throw new IllegalArgumentException("PlayerServer is not chunk tracked");
         }
-        int dist = player.getChunkLoadDistance();
+        int dist = PlayerServer.getChunkLoadDistance();
         for (int x = -dist; x <= dist; x++) {
             for (int z = -dist; z <= dist; z++) {
-                untrackPlayerChunk(player, player.chunkX + x, player.chunkZ + z);
+                untrackPlayerChunk(PlayerServer, PlayerServer.chunkX + x, PlayerServer.chunkZ + z);
             }
         }
-        player.chunkTracked = false;
+        PlayerServer.chunkTracked = false;
     }
 
     /**
-     * Adds the player.
+     * Adds the PlayerServer.
      *
-     * @param player the player
+     * @param PlayerServer the PlayerServer
      */
-    public void addPlayer(Player player) {
-        if (player.chunkTracked) {
-            throw new IllegalArgumentException("Player is already chunk tracked");
+    public void addPlayer(PlayerServer PlayerServer) {
+        if (PlayerServer.chunkTracked) {
+            throw new IllegalArgumentException("PlayerServer is already chunk tracked");
         }
-        int dist = player.getChunkLoadDistance();
-        BlockPos pos = player.pos.toBlock();
-        player.chunkX = pos.x >> Chunk.SIZE_BITS;
-        player.chunkZ = pos.z >> Chunk.SIZE_BITS;
+        int dist = PlayerServer.getChunkLoadDistance();
+        BlockPos pos = PlayerServer.pos.toBlock();
+        PlayerServer.chunkX = pos.x >> Chunk.SIZE_BITS;
+        PlayerServer.chunkZ = pos.z >> Chunk.SIZE_BITS;
 
         SnakeIterator snakeit = new SnakeIterator();
         while (true) {
@@ -267,10 +267,10 @@ public class PlayerChunkTracker {
             if (dx < -dist || dx > dist || dz < -dist || dz > dist) {
                 break;
             }
-            trackPlayerChunk(player, player.chunkX + dx, player.chunkZ + dz);
+            trackPlayerChunk(PlayerServer, PlayerServer.chunkX + dx, PlayerServer.chunkZ + dz);
             snakeit.next();
         }
-        player.chunkTracked = true;
+        PlayerServer.chunkTracked = true;
     }
 
     /**
@@ -353,7 +353,7 @@ public class PlayerChunkTracker {
                             bdata[i] = c.getBlockData(x, y, z);
                         }
                         PacketSSetBlocks packet = new PacketSSetBlocks(this.worldServer.getId(), e.x, e.z, pos, blocks, lights, data, bdata);
-                        for (Player p : e.players) {
+                        for (PlayerServer p : e.players) {
                             p.netHandler.sendPacket(packet);
                         }
 
@@ -374,7 +374,7 @@ public class PlayerChunkTracker {
                             continue;
                         }
                         CompressThread.submit(new CompressLight(this.worldServer.getId(), c, bb, handlers));
-//                        System.out.println("send "+len.length+" bytes of light data to player");
+//                        System.out.println("send "+len.length+" bytes of light data to PlayerServer");
                     }
                 }
             
@@ -392,7 +392,7 @@ public class PlayerChunkTracker {
     private ServerHandlerPlay[] getHandlerArr(Entry e) {
         ServerHandlerPlay[] arr = new ServerHandlerPlay[e.players.size()];
         int i = 0;
-        for (Player p : e.players) {
+        for (PlayerServer p : e.players) {
             arr[i++] = p.netHandler;
         }
         return arr;
@@ -459,7 +459,7 @@ public class PlayerChunkTracker {
             }
             this.flaggedInstances.add(e);
         } else {
-//            System.err.println("missing player instance while flagging lights");
+//            System.err.println("missing PlayerServer instance while flagging lights");
         }
     }
 

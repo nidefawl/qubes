@@ -3,6 +3,7 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
@@ -14,19 +15,27 @@ import nidefawl.qubes.world.World;
  */
 public class BlockPlantCrossedSquares extends Block {
 
+    protected boolean multipass;
     /**
      * @param id
      */
     public BlockPlantCrossedSquares(int id) {
+        this(id, false);
+    }
+    public BlockPlantCrossedSquares(int id, boolean multipass) {
         super(id, true);
+        this.multipass=multipass;
     }
 
     /* (non-Javadoc)
      * @see nidefawl.qubes.block.Block#getColorFromSide(int)
      */
     @Override
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir) {
-        return super.getFaceColor(w, x, y, z, faceDir);
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+        if (multipass && pass == 0) {
+            return Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y, pass);    
+        }
+        return super.getFaceColor(w, x, y, z, faceDir, pass);
     }
 
     public int getRenderType() {
@@ -73,5 +82,15 @@ public class BlockPlantCrossedSquares extends Block {
     
     public int getRenderShadow() {
         return 0;
+    }
+    public int getTexturePasses() {
+        return multipass?2:1;
+    }
+    @Override
+    public int getTexture(int faceDir, int dataVal, int pass) {
+        if (multipass) {
+            return BlockTextureArray.getInstance().getTextureIdx(this.id, pass);
+        }
+        return super.getTexture(faceDir, dataVal, pass);
     }
 }
