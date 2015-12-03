@@ -314,6 +314,7 @@ void main() {
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
     float isEntity = float(renderpass==5);
+    float isFlower = float(blockid>=47u);
     float alpha = mix(1, sceneColor.a, float(pass));
     if (pass > 0) {
         if(renderpass != 1)
@@ -382,6 +383,11 @@ void main() {
 	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
     vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
     vec3 Iamb = SkyLight.La.rgb * lightColor * mix(((NdotLAmb1+NdotLAmb2)*0.5f), 1.2, isEntity*0.8);
+    // if (isFlower == 1) {
+    //     Idiff *= 0.0;
+    //     // Ispec *= 0.2;
+    //     // Iamb *= 0.2;
+    // }
     // vec3 Iamb = SkyLight.La.rgb * lightColor * ((NdotLAmb1+NdotLAmb2)*0.5f);
     vec3 finalLight = vec3(0);
     finalLight += Iamb * (0.04+occlusion*(1-0.04)) * (0.04+skyLightLvl*(1-0.04));
