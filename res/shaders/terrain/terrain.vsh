@@ -61,7 +61,7 @@ void main() {
 	uint vertDir = BLOCK_VERTDIR(blockinfo);
 	vec3 dir = vertexDir.dir[vertDir].xyz;
 
-	if (blockid == 17) {
+	if (IS_WAVING(blockid)) {
 
 		float f = mod(gl_VertexID+1.0, 4.0f);
 		f = step(2, f);
@@ -104,16 +104,16 @@ void main() {
 
 	faceLightSky = vec4(
 		float(in_light.y&LIGHT_MASK)/15.0,
-		float((in_light.y>>4)&LIGHT_MASK)/15.0,
-		float((in_light.y>>8)&LIGHT_MASK)/15.0,
-		float((in_light.y>>12)&LIGHT_MASK)/15.0
+		float((in_light.y>>4u)&LIGHT_MASK)/15.0,
+		float((in_light.y>>8u)&LIGHT_MASK)/15.0,
+		float((in_light.y>>12u)&LIGHT_MASK)/15.0
 		);
 
 	faceLight = vec4(
 		float(in_light.x&LIGHT_MASK)/15.0,
-		float((in_light.x>>4)&LIGHT_MASK)/15.0,
-		float((in_light.x>>8)&LIGHT_MASK)/15.0,
-		float((in_light.x>>12)&LIGHT_MASK)/15.0
+		float((in_light.x>>4u)&LIGHT_MASK)/15.0,
+		float((in_light.x>>8u)&LIGHT_MASK)/15.0,
+		float((in_light.x>>12u)&LIGHT_MASK)/15.0
 		);
 	
 
