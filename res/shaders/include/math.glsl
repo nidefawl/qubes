@@ -25,14 +25,6 @@ vec4 texture2DLod(sampler2D s , vec2 c, int L) { return texture2D(s, c); }
 #endif
 
 
-#if __VERSION__ > 120
-#   if G3D_SHADER_STAGE == G3D_VERTEX_SHADER
-#       define varying out
-#       define attribute in
-#   elif G3D_SHADER_STAGE == G3D_FRAGMENT_SHADER
-#       define varying in
-#   endif
-#endif
 
 // Some constants
 const float pi = 3.1415927;
