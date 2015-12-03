@@ -12,7 +12,7 @@ const float _BlurQuality = 7.0; //2.0 - 4.0
 in vec2 pass_texcoord;
 
 out vec4 out_Color;
-const float weights[8] = float[]( 0.071303, 0.131514, 0.189879, 0.321392, 0.452906,  0.584419, 0.715932, 0.847445 );
+float weights[8] = float[]( 0.071303, 0.131514, 0.189879, 0.321392, 0.452906,  0.584419, 0.715932, 0.847445 );
 
 
 void processSample( vec2 uv,
