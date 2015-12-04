@@ -30,6 +30,7 @@ public class PlayerRemote extends Player {
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);
         this.lastPos.set(this.pos);
+        updateTicks();
     }
 
 }

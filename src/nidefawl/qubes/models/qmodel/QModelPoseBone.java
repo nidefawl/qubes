@@ -88,7 +88,4 @@ public class QModelPoseBone {
     public String toString() {
         return "QModelPoseBone"+this.restbone.stringInfo();
     }
-    public QBoneAnimation getAnimation() {
-        return this.restbone.animation;
-    }
 }

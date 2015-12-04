@@ -60,7 +60,7 @@ public class PlayerSelf extends Player {
         movement.mX = 0;
         movement.mY = 0;
     }
-
+    
     @Override
     public void tickUpdate() {
         float vel = GameMath.sqrtf(this.forward * this.forward + this.strafe * this.strafe);
@@ -124,6 +124,27 @@ public class PlayerSelf extends Player {
                 this.mot.z += forward * cosY + strafe * sinY;
             }
         }
+        float fx = (float) (this.pos.x - this.lastPos.x);
+        float fz = (float) (this.pos.z - this.lastPos.z);
+        float dist = fx*fx+fz*fz;
+        if (dist > 0.01) {
+            //Crappy test code to set body offset when left/right strafing
+            float walkDir = 180-(GameMath.atan2(fx, fz)*GameMath.P_180_OVER_PI);;
+            float offset=walkDir-this.yaw;
+            if(offset>180)
+                offset=-(360-offset);
+            if(offset<-180)
+                offset=(360+offset);
+            offset*=-1;
+            int max = 60;
+            if (offset < -max) {
+                offset = -max;
+            }
+            if (offset > max) {
+                offset = max;
+            }
+            this.yawBodyOffset = offset;
+        }
         super.tickUpdate();
         this.mot.x *= slowdown;
         this.mot.z *= slowdown;
@@ -150,6 +171,7 @@ public class PlayerSelf extends Player {
             flags |= 2;
         }
         this.clientHandler.sendPacket(new PacketCMovement(this.pos, this.yaw, this.pitch, flags));
+        
     }
 
     public float getGravity() {
@@ -168,5 +190,15 @@ public class PlayerSelf extends Player {
     public EntityType getEntityType() {
         return EntityType.PLAYER;
     }
+
+    /**
+     * @param button
+     * @param isDown
+     */
+    public void clicked(int button, boolean isDown) {
+        if (isDown)
+        this.punchTicks = 8;
+    }
+    
 
 }

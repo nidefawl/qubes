@@ -20,6 +20,7 @@ import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.Entity;
+import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
@@ -186,9 +187,6 @@ public class WorldRenderer extends AbstractRenderer {
         ModelLoaderQModel l = new ModelLoaderQModel();
         l.loadModel("models/test.qmodel");
         this.qmodel = l.buildModel();
-        ModelLoaderQModel l2 = new ModelLoaderQModel();
-        l2.loadModel("models/animation.qmodel");
-        this.qmodel.addAnimation("walk", l2);
         System.out.println(qmodel);
         System.err.println("GOOD");
         AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/human_adj_uv.png");
@@ -415,25 +413,39 @@ public class WorldRenderer extends AbstractRenderer {
         
         if (qmodel != null) {
             //TODO: IMPORTANT sort entities by renderer/model/shader client side
+            //TODO: move in own render per-entity class
             List<Entity> ents = world.getEntityList();
             int size = ents.size();
+            float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC);
             for (int i = 0; i < size; i++) {
                 Entity e = ents.get(i);
                 if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
                     continue;
-                if (e.pos.distanceSq(e.lastPos) < 1.0E-4) {
-                    this.qmodel.rest();
-                } else {
-                    this.qmodel.animate(fTime);
+                int type = 0;
+                this.qmodel.setAction(0);
+                //TODO: abstract this per render/model class
+                //TODO: Add animation mixing (with bone mask + priority?!)
+                if (e instanceof Player && ((Player)e).punchTicks>0) {
+                    int maxTicks = 8;
+                    absTimeInSeconds = (maxTicks-(((Player)e).punchTicks-fTime))/((float)maxTicks-1);
+                    this.qmodel.setAction(1);
+                    type = 1;
+                } else if (e.pos.distanceSq(e.lastPos) > 1.0E-4) {
+                    this.qmodel.setAction(2);
+                    absTimeInSeconds *= 8;
+                    absTimeInSeconds %= 4f;
+                    absTimeInSeconds /= 4f;
+                    type = 1;
                 }
+                //TODO: Implement different animation timing types (continues/one-shot)
+                this.qmodel.animate(type, absTimeInSeconds);
                 Vector3f pos = e.getRenderPos(fTime);
                 Vector3f rot = e.getRenderRot(fTime);
                 float headYaw = rot.x;
                 float yaw = rot.y;
                 float pitch = rot.z;
-//                float 
-                
-                this.qmodel.setHeadOrientation(270, pitch);
+                this.qmodel.setHeadOrientation(270+headYaw, pitch);
+                yaw -= headYaw;
                 this.modelRot=this.lastModelRot=-1*yaw-90;
 //                System.out.println(e.yaw);
                 BufferedMatrix mat = Engine.getTempMatrix();

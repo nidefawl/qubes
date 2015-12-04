@@ -3,13 +3,15 @@
  */
 package nidefawl.qubes.models.qmodel;
 
+import nidefawl.qubes.util.GameMath;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
 public class QBoneAnimation {
-    public KeyFrame[][] frames = new KeyFrame[2][];
-    public float[] animLength = new float[2];
+    public KeyFrame[] frames;
+    public float animLength;
     public float totalFrameTime;
 
     /**
@@ -17,41 +19,39 @@ public class QBoneAnimation {
      * @param numTranslationFrames
      */
     public QBoneAnimation(int numRotFrames) {
-        this.frames[0] = new KeyFrame[numRotFrames];
+        this.frames = new KeyFrame[numRotFrames];
         
     }
-    public KeyFrame[] getFrames(int type) {
-        return frames[type];
-    }
-    public KeyFrame getFrame(int type, int frame) {
-        KeyFrame[] arr = getFrames(type);
-        return arr[frame];
-    }
+
     public KeyFrame getFrameAt(int type, float absTime) {
-        float fTime = this.animLength[type];
-        KeyFrame[] arr = getFrames(type);
-        float time = absTime%fTime;
+        if (type == 1) {
+            int pos = GameMath.floor(absTime);
+            if (pos >= this.frames.length) {
+                pos = this.frames.length-1;
+            }
+            return this.frames[pos];
+        }
+        float time = absTime%this.animLength;
         //TODO: too slow?
-        for (int i = 0; i < arr.length-1; i++) {
-            if (arr[i].time <= time && arr[i+1].time >= time) {
-                return arr[i];
+        for (int i = 0; i < this.frames.length-1; i++) {
+            if (this.frames[i].time <= time && this.frames[i+1].time >= time) {
+                return this.frames[i];
             }
         }
-        return arr[arr.length-1];
+        return this.frames[this.frames.length-1];
     }
     /**
      * @param frame
      */
     public void addFrame(KeyFrame frame) {
-        KeyFrame[] frames = getFrames(frame.getType());
         frames[frame.getIdx()] = frame;
         if (frame.getIdx() > 0) {
             frames[frame.getIdx()-1].next = frame;
         }
         frame.next = frames[0];
-        float f = this.animLength[frame.getType()];
+        float f = this.animLength;
         if (f < frame.time) {
-            this.animLength[frame.getType()] = frame.time;
+            this.animLength = frame.time;
         }
     }
 }

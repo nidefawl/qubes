@@ -36,6 +36,7 @@ public class ModelQModel {
     private ArrayList<QModelPoseBone> poseBones;
     private QModelPoseBone head;
     private QModelPoseBone neck;
+    private QModelAction action;
 	/**
 	 * @param qModelJoint 
 	 * 
@@ -60,7 +61,15 @@ public class ModelQModel {
             }
         }
         this.rootJoint = this.poseBones.get(0);
+        this.action = loader.listActions.get(0);
 //        this.head.animate = false;
+	}
+	public void setAction(int idx) {
+	    if (idx < 0) idx = 0;
+	    if (idx >= this.loader.listActions.size()) {
+	        idx = this.loader.listActions.size()-1;
+	    }
+        this.action = loader.listActions.get(idx);
 	}
 
 	/**
@@ -80,28 +89,36 @@ public class ModelQModel {
             joint.matDeform = joint.restbone.matRest;
         }
     }
-    public void animate(float fTime) {
-	    float f = 1.0f/this.loader.fps;
-	    float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC);
-	    float absTime = absTimeInSeconds / f;
+    public void animate(int animationType, float time) {
+//	    float f = 1.0f/this.loader.fps;
+//	    float absTime = absTimeInSeconds / f;
         for (QModelPoseBone joint : this.poseBones) {
-            if (!joint.animate) {
+            QBoneAnimation anim = this.action == null ? null :this.action.map.get(joint.restbone.name);
+            if (anim == null || !joint.animate) {
                 joint.matDeform = joint.restbone.matRest;
                 continue;
             }
-            QBoneAnimation jt = joint.getAnimation();
-            if (jt.frames[0].length > 0) {
-                float totalLen = jt.animLength[0];
-                QModelKeyFrameMatrix frame = (QModelKeyFrameMatrix) jt.getFrameAt(0, absTimeInSeconds);
+            
+            if (anim.frames.length > 0) {
+                float f = time;
+                if (animationType == 1) {
+                    f = time*anim.frames.length;
+                }
+                QModelKeyFrameMatrix frame = (QModelKeyFrameMatrix) anim.getFrameAt(animationType, f);
                 QModelKeyFrameMatrix nextframe = (QModelKeyFrameMatrix) frame.getNext();
                 //TODO: if nextframe < frame
-                float frameLen = nextframe.time - frame.time;
-                float frameInterpProgress = ((absTimeInSeconds % totalLen)- frame.time) / frameLen;
-                if (frameInterpProgress < 0) {
-                    joint.matDeform = frame.mat;
+                
+                float frameInterpProgress;
+                if (animationType == 1) {
+                    frameInterpProgress = f%1.0f;
+                } else {
+                    float totalLen = anim.animLength;
+                    float frameLen = nextframe.time - frame.time;
+                    frameInterpProgress = ((f % totalLen)- frame.time) / frameLen;
                 }
-                else if (frameInterpProgress > 1 ) {
-
+                if (frameInterpProgress <= 0) {
+                    joint.matDeform = frame.mat;
+                } else if (frameInterpProgress >= 1 ) {
                     joint.matDeform = nextframe.mat;
                 } else {
                     joint.interpolateFrame(frame.mat, nextframe.mat, frameInterpProgress);
@@ -238,24 +255,6 @@ public class ModelQModel {
             this.buf = null;
 //            this.shadowBuf = null;
         }
-    }
-    /**
-     * @param string
-     * @param l2
-     */
-    public void addAnimation(String string, ModelLoaderQModel l2) {
-//        if (l2.listBones.size() != this.loader.listBones.size()) {
-//            throw new GameError("Joints do not match");
-//        }
-        for (QModelBone jt : l2.listBones) {
-            QModelBone existingJt = this.loader.findJoint(jt.name);
-            if (existingJt == null) {
-//                throw new GameError("Joints do not match");
-                continue;
-            }
-            existingJt.animation = jt.animation;
-        }
-        
     }
 
     /**

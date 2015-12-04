@@ -74,7 +74,7 @@ public class WorldServer extends World {
 
     public void tickUpdate() {
         if (!this.settings.isFixedTime()) {
-            this.settings.setTime(this.settings.getTime()+1L);
+            this.settings.setTime(this.settings.getTime() + 1L);
         }
         int size = this.entityList.size();
         for (int i = 0; i < size; i++) {
@@ -83,11 +83,12 @@ public class WorldServer extends World {
         }
         updateChunks();
     }
+    
     public void resyncTime() {
         PacketSWorldTime wTime = new PacketSWorldTime(this.getId(), this.getTime(), this.getDayLength(), this.settings.isFixedTime());
         this.broadcastPacket(wTime);
-        
     }
+    
     public void broadcastPacket(Packet p) {
         int l = this.players.size();
         for (int i = 0; i < l; i++) {

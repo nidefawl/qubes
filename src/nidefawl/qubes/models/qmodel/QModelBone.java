@@ -23,7 +23,6 @@ public class QModelBone {
     public String parentName;
     public Matrix4f matRest;
     public Matrix4f matRestInv = new Matrix4f();
-    QBoneAnimation animation;
     private final List<QModelBone> children = Lists.newArrayList();
     public Vector3f tail;
     public Vector3f tailLocal = new Vector3f();
@@ -45,18 +44,6 @@ public class QModelBone {
         }
         this.matRest.load(mat);
         this.tail = loader.readVec3();
-        int numFrames = loader.readUShort();
-        this.animation = new QBoneAnimation(numFrames);
-        for (int j = 0; j < numFrames; j++) {
-            float time = loader.readFloat();
-            Matrix4f matAnim = new Matrix4f();
-            for (int k = 0; k < 16; k++) {
-                mat[k] = loader.readFloat();
-            }
-            matAnim.load(mat);
-            QModelKeyFrameMatrix frame = new QModelKeyFrameMatrix(j, time, matAnim);
-            this.animation.addFrame(frame);
-        }
         Matrix4f.invert(this.matRest, this.matRestInv);
         Matrix4f.transform(this.matRestInv, this.tail, this.tailLocal);
     }

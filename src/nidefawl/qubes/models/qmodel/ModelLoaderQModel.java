@@ -28,9 +28,6 @@ public class ModelLoaderQModel {
 
 	int offset = 0;
 	public AssetBinary asset;
-	public float fps;
-	public float curTime;
-	public int totalFrames;
 	final static String HEADER = "qmodel0000";
 
 	public List<QModelVertex> listVertex;
@@ -38,6 +35,7 @@ public class ModelLoaderQModel {
 	public List<QModelMesh> listMesh;
 	public List<QModelMaterial> listMaterials;
     public List<QModelBone> listBones;
+    public List<QModelAction> listActions;
 	private String path;
 
 	byte[] readBytes(int len) throws EOFException {
@@ -111,14 +109,10 @@ public class ModelLoaderQModel {
 		for (int i = 0; i < strBytes.length && strBytes[i] != 0; i++, strlen++);
         return new String(strBytes, 0, strlen);
     }
-    public void loadAnimation(String path) {
-        
-    }
 
 	public void loadModel(String path) {
 		try {
 			this.path = path;
-
 			resetOffset();
 			this.asset = AssetManager.getInstance().loadBin(path);
 			String header = readString(10);
@@ -154,9 +148,6 @@ public class ModelLoaderQModel {
 				QModelMaterial mat = new QModelMaterial(i, this);
 				listMaterials.add(mat);
 			}
-			this.fps = readFloat();
-			this.curTime = readFloat();
-			this.totalFrames = readInt();
 			
 			int numJoints = readUShort();
 			listBones = Lists.newArrayListWithCapacity(numJoints);
@@ -172,6 +163,13 @@ public class ModelLoaderQModel {
                     jt.parent.addChild(jt);
                 }
             }
+            int numActions = readUShort();
+            listActions = Lists.newArrayListWithCapacity(numActions);
+            for (int i = 0; i < numActions; i++) {
+                QModelAction jt = new QModelAction(i, this);
+                listActions.add(jt);
+            }
+            
             //normalize weights
 			for (int i = 0; i < numVertices; i++) {
 			    QModelVertex v = this.listVertex.get(i);
@@ -222,10 +220,8 @@ public class ModelLoaderQModel {
 		System.out.println("triangles: "+this.listTri.size());
 		System.out.println("meshes: "+this.listMesh.size());
 		System.out.println("materials: "+this.listMaterials.size());
-		System.out.println("Joints: "+this.listBones.size());
-		System.out.println("FPS: "+this.fps);
-		System.out.println("CurTime: "+this.curTime);
-		System.out.println("Frames: "+this.totalFrames);
+        System.out.println("Joints: "+this.listBones.size());
+        System.out.println("Action: "+this.listActions.size());
 	}
 
 	/**

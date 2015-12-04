@@ -556,6 +556,9 @@ public class Game extends GameBase implements IErrorHandler {
             switch (button) {
                 case 0:
                     selection.clicked(button, isDown);
+                    if (this.player != null) {
+                        this.player.clicked(button, isDown);
+                    }
                     break;
                 case 1:
                     if (isDown ) {
