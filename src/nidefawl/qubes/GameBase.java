@@ -496,7 +496,10 @@ public abstract class GameBase implements Runnable {
             GPUProfiler.start("updateDisplay");
         updateDisplay();
         float took = (System.nanoTime() - frameTime) / 1000000F;
-        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F; //TODO: add second counter so we can use this one for frame time based calculation
+        
+        
+      //TODO: add second counter that calculates frame time len without vsync so we can use this one for frame time based calculation
+        Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;  
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         frameTime = System.nanoTime();
