@@ -156,7 +156,6 @@ public class WorldServer extends World {
         this.chunkTracker.sendBlockChanges();
     }
     public void updateGeneratedChunks() {
-        // TODO Auto-generated method stub
         
     }
     public void unloadUnused() {

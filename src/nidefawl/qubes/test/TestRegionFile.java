@@ -162,7 +162,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -205,7 +204,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -246,7 +244,6 @@ public class TestRegionFile {
             }
             System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -271,7 +268,6 @@ public class TestRegionFile {
             }
             System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -296,7 +292,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -321,7 +316,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -346,7 +340,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -371,7 +364,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -396,7 +388,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -422,7 +413,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -458,7 +448,6 @@ public class TestRegionFile {
 			}
 			System.out.println("'"+readBack.getName()+"': '"+readBack.getValue()+"'");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -537,7 +526,6 @@ public class TestRegionFile {
 			System.out.printf("timeFindSec: %.2f\n", RegionFile.timeFindSec/1000000.0);
 			System.out.printf("timeWriteHeader: %.2f\n", RegionFile.timeWriteHeader/1000000.0);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -43,12 +43,6 @@ public class BlockPlantCrossedSquares extends Block {
     }
 
     @Override
-    public boolean applyAO() {
-        // TODO Auto-generated method stub
-        return super.applyAO();
-    }
-
-    @Override
     public boolean isOccluding() {
         return false;
     }

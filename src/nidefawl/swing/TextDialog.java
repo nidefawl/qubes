@@ -103,7 +103,6 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
         appendLine("");
         for (String s : desc2)
             appendLine(s);
-        // TODO Auto-generated constructor stub
     }
     public void setVisible(int w, int h) {
         this.setBounds(0, 0, w, h);

@@ -41,7 +41,6 @@ public class GuiChatInput extends Gui implements ITextEdit {
      */
     @Override
     public void setSize(int w, int h) {
-        // TODO Auto-generated method stub
         super.setSize(w, h);
         if (this.field != null)
         this.field.width = h;
@@ -84,7 +83,6 @@ public class GuiChatInput extends Gui implements ITextEdit {
             
             this.mouseResize = 0;
         }
-        // TODO Auto-generated method stub
         else if (action == GLFW.GLFW_PRESS && over(Mouse.getX(), Mouse.getY())) {
             
             this.mouseResize = 1;

@@ -72,7 +72,6 @@ public abstract class Handler {
      * @param packetSTrackChunk
      */
     public void handleTrackChunk(PacketSTrackChunk packetSTrackChunk) {
-        // TODO Auto-generated method stub
         
     }
 
@@ -86,7 +85,6 @@ public abstract class Handler {
      * @param packetCSwitchWorld
      */
     public void handleSwitchWorld(PacketCSwitchWorld packetCSwitchWorld) {
-        // TODO Auto-generated method stub
         
     }
 
@@ -94,7 +92,6 @@ public abstract class Handler {
      * @param packetChatMessage
      */
     public void handleChat(PacketChatMessage packetChatMessage) {
-        // TODO Auto-generated method stub
         
     }
 
@@ -102,7 +99,6 @@ public abstract class Handler {
      * @param packetChatChannels
      */
     public void handleChannels(PacketChatChannels packetChatChannels) {
-        // TODO Auto-generated method stub
         
     }
 
@@ -110,7 +106,6 @@ public abstract class Handler {
      * @param packetSWorldTime
      */
     public void handleWorldTime(PacketSWorldTime packetSWorldTime) {
-        // TODO Auto-generated method stub
         
     }
 
@@ -118,7 +113,6 @@ public abstract class Handler {
      * @param packetSTeleport
      */
     public void handleTeleport(PacketSTeleport packetSTeleport) {
-        // TODO Auto-generated method stub
         
     }
 

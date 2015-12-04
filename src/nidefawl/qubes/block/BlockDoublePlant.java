@@ -38,7 +38,6 @@ public class BlockDoublePlant extends Block {
 
     @Override
     public boolean applyAO() {
-        // TODO Auto-generated method stub
         return super.applyAO();
     }
 

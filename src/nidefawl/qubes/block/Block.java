@@ -339,7 +339,7 @@ public class Block {
     
     /**
      * @param blockPlacer
-     * @param against TODO
+     * @param against
      * @param type 
      * @param data 
      * @param x

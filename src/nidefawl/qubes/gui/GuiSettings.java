@@ -35,13 +35,6 @@ public class GuiSettings extends Gui {
             this.vals = vals;
         }
 
-        /**
-         * 
-         */
-        public Setting() {
-            // TODO Auto-generated constructor stub
-        }
-
         void callback(int id) {
         };
     }

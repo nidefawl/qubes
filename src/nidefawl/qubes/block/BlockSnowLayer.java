@@ -49,18 +49,7 @@ public class BlockSnowLayer extends Block {
 	
 	@Override
 	public boolean isOccluding() {
-		// TODO Auto-generated method stub
 		return false;// super.isOccluding();
-	}
-	@Override
-	public boolean applyAO() {
-		// TODO Auto-generated method stub
-		return super.applyAO();
-	}
-	@Override
-	public boolean isTransparent() {
-		// TODO Auto-generated method stub
-		return super.isTransparent();
 	}
 	
 	@Override

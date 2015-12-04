@@ -23,13 +23,6 @@ public class Keybinding {
     }
 
     /**
-     * 
-     */
-    public Keybinding() {
-        // TODO Auto-generated constructor stub
-    }
-
-    /**
      * @return the enabled
      */
     public boolean isEnabled() {

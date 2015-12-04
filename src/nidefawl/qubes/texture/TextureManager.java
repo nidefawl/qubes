@@ -137,7 +137,6 @@ public class TextureManager {
         return makeNewTexture(assetTexture.getData(), assetTexture.getWidth(), assetTexture.getHeight(), repeat, filter, mipmapLvls);
     }
     public void destroy() {
-        // TODO Auto-generated method stub
         
     }
 }

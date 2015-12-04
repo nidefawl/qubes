@@ -20,7 +20,6 @@ public class EmptyChunkPopulator implements IChunkPopulator {
     
     @Override
     public void populate(Chunk c) {
-        // TODO Auto-generated method stub
         
     }
 

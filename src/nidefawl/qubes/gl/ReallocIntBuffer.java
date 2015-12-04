@@ -14,9 +14,6 @@ public class ReallocIntBuffer {
 
     ByteBuffer buffers;
     IntBuffer intbuffers;
-    public ReallocIntBuffer() {
-        // TODO Auto-generated constructor stub
-    }
     
     /**
      * @param i
@@ -25,6 +22,12 @@ public class ReallocIntBuffer {
         if (i > 0) {
             reallocBuffer(i);
         }
+    }
+
+    /**
+     * 
+     */
+    public ReallocIntBuffer() {
     }
 
     public void reallocBuffer(int intLen) {
