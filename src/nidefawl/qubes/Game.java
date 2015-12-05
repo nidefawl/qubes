@@ -949,7 +949,7 @@ public class Game extends GameBase implements IErrorHandler {
 //          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 //            
 //          BlockTextureArray.getInstance().reloadTexture("log.png");
 //          BlockTextureArray.getInstance().reloadTexture("log_top.png");
@@ -998,7 +998,7 @@ public class Game extends GameBase implements IErrorHandler {
             player.updateInputDirect(movement);
             float yaw = player.yaw;
             float pitch = player.pitch;
-            Engine.camera.setOrientation(yaw, pitch, settings.thirdpersonDistance);
+            Engine.camera.setOrientation(yaw, pitch, thirdPerson, settings.thirdpersonDistance);
 
             if (follow) {
                 lastCamX = px;
@@ -1010,7 +1010,7 @@ public class Game extends GameBase implements IErrorHandler {
             py = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
             pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
             if (thirdPerson) {
-                Vector3f camPos = Engine.camera.getThirdPersonOffset();
+                Vector3f camPos = Engine.camera.getCameraOffset();
                 px+=camPos.x;
                 py+=camPos.y;
                 pz+=camPos.z;

@@ -40,7 +40,7 @@ public class Camera {
         this.position.set(v);
     }
 
-    public void setOrientation(float yaw, float pitch, float thirdPersonDistance) {
+    public void setOrientation(float yaw, float pitch, boolean thirdPerson, float thirdPersonDistance) {
         this.pitchAngle = pitch;
         this.bearingAngle = yaw;
 
@@ -48,11 +48,15 @@ public class Camera {
         this.viewMatrix.rotate(this.pitchAngle * GameMath.PI_OVER_180, 1f, 0f, 0f);
         this.viewMatrix.rotate(this.bearingAngle * GameMath.PI_OVER_180, 0f, 1f, 0f);
 
-        this.thirdPersonMat.setIdentity();
-        this.thirdPersonMat.rotate(-this.bearingAngle * GameMath.PI_OVER_180, 0.0F, 1.0F, 0.0F);
-        this.thirdPersonMat.rotate(-this.pitchAngle * GameMath.PI_OVER_180, 1.0F, 0.0F, 0.0F);
-        this.thirdPersonMat.translate(0.0f, 0.0f, thirdPersonDistance);
-        Matrix4f.transform(this.thirdPersonMat, Vector3f.ZERO, this.thirdPersonOffset);
+        if (thirdPerson) {
+            this.thirdPersonMat.setIdentity();
+            this.thirdPersonMat.rotate(-this.bearingAngle * GameMath.PI_OVER_180, 0.0F, 1.0F, 0.0F);
+            this.thirdPersonMat.rotate(-this.pitchAngle * GameMath.PI_OVER_180, 1.0F, 0.0F, 0.0F);
+            this.thirdPersonMat.translate(0.0f, 0.0f, thirdPersonDistance);
+            Matrix4f.transform(this.thirdPersonMat, Vector3f.ZERO, this.thirdPersonOffset);
+        } else {
+            this.thirdPersonOffset.set(0, 0, 0);
+        }
     }
 
     /**
@@ -81,7 +85,7 @@ public class Camera {
     /**
      * @return the thirdPersonOffset
      */
-    public Vector3f getThirdPersonOffset() {
+    public Vector3f getCameraOffset() {
         return this.thirdPersonOffset;
     }
 

@@ -122,24 +122,18 @@ public class BlockTextureArray {
         for (int i = 0; i < len; i++) {
             Block b = blocks[i];
             if (b != null) {
-                String[] textures = b.getTextures();
-                if (textures != null) {
-                    ArrayList<AssetTexture> blockTextures = new ArrayList<>();
-                    for (String s : textures) {
-                        AssetTexture tex = mgr.loadPNGAsset(s);
-                        if (tex == null) {
-                            throw new GameError("Failed loading block texture " + s);
-                        }
+                ArrayList<AssetTexture> blockTextures = b.resolveTextures(mgr);
+                if (!blockTextures.isEmpty()) {
+                    for (AssetTexture tex : blockTextures) {
 //                        System.out.println(tex.getName()+" - "+tex.getWidth()+","+tex.getHeight()+ " from "+tex.getPack());
                         int texW = tex.getWidth();//Math.max(tex.getWidth(), tex.getHeight());
                         if (texW > maxTileW) {
                             maxTileW = texW;
-                            maxTexture = s;
+                            maxTexture = tex.getName();
                         }
-                        blockTextures.add(tex);
                         maxTextures++;
                         if (maxTileW > 512) {
-                            throw new GameError("Maximum resolution must not exceed 512! (texture '"+s+"')");
+                            throw new GameError("Maximum resolution must not exceed 512! (texture '"+tex.getName()+"')");
                         }
                     }
                     text.put(b.id, blockTextures);
@@ -361,6 +355,14 @@ public class BlockTextureArray {
 
     public int getTextureIdx(int block, int texId) {
         return this.textures[block << 4 | texId];
+    }
+
+    /**
+     * @param id
+     * @return 
+     */
+    public int getNumTex(int id) {
+        return lastLoaded.get(id).size();
     }
 
 }

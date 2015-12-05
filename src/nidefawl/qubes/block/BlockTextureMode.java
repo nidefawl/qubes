@@ -9,5 +9,6 @@ package nidefawl.qubes.block;
  */
 public enum BlockTextureMode {
 
-    DEFAULT, TOP, TOP_BOTTOM, SUBTYPED_TEX_PER_TYPE
+    DEFAULT, TOP, TOP_BOTTOM, SUBTYPED_TEX_PER_TYPE, 
+//    ALTERNATING
 }

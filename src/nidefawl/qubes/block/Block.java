@@ -6,8 +6,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetPath;
+import nidefawl.qubes.assets.*;
 import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.item.Stack;
@@ -17,6 +16,7 @@ import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.*;
@@ -34,7 +34,11 @@ public class Block {
     public static final Block[] block = new Block[NUM_BLOCKS];
     public final static String[] NO_TEXTURES = new String[0];
     public final static Block air = new BlockAir(0).setName("air");
-    public final static Block granite = new Block(-1).setName("granite").setTextures("rocks/granite_var0", "rocks/granite_var1", "rocks/granite_var2").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
+    public final static Block granite = new Block(-1).setName("granite").setTextures("rocks/granite");//.setTextureMode(BlockTextureMode.ALTERNATING);
+    public final static Block basalt = new Block(-1).setName("basalt").setTextures("rocks/basalt");//.setTextureMode(BlockTextureMode.ALTERNATING);
+    public final static Block diorite = new Block(-1).setName("diorite").setTextures("rocks/diorite");//.setTextureMode(BlockTextureMode.ALTERNATING);
+    public final static Block marble = new Block(-1).setName("marble").setTextures("rocks/marble");//.setTextureMode(BlockTextureMode.ALTERNATING);
+    public final static Block sandstone = new Block(-1).setName("sandstone").setTextures("rocks/sandstone", "rocks/sandstone_red", "rocks/sandstone_darkred").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
     public final static Block grass = new BlockGrass(-1).setName("grass").setTextures("ground/grass", "ground/grass_side", "ground/grass_side_overlay");
     public final static Block dirt = new Block(-1).setName("dirt").setTextures("ground/dirt");
     public final static Block water = new BlockWater(-1).setName("water/water_still");
@@ -53,6 +57,8 @@ public class Block {
     public final static Block obsidian = new Block(-1).setName("obsidian").setTextures("rocks/obsidian");
     public final static Block bedrock = new Block(-1).setName("bedrock").setTextures("rocks/bedrock");
     public final static Block ore_diamond = new Block(-1).setName("ore_diamond").setTextures("rocks/ore_diamond");
+    public final static Block ore_gold = new Block(-1).setName("ore_gold").setTextures("rocks/ore_gold");
+    public final static Block ore_silver = new Block(-1).setName("ore_silver").setTextures("rocks/ore_silver");
     public final static Block brick = new Block(-1).setName("brick").setTextures("stones/brick_clay", "stones/brick_granite", "stones/brick_obsidian").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
     public final static Block smoothstone_granite = new Block(-1).setName("smoothstone").setTextures("stones/stone_granite_border","stones/stone_granite_smooth_border").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
     public final static Block stonebrick_granite = new Block(-1).setName("stonebrick_granite").setTextures("stones/stonebrick_granite_smooth","stones/stonebrick_granite_rough","stones/stonebrick_granite_rough_cracked","stones/stonebrick_granite_rough_cracked_mossy").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
@@ -82,36 +88,10 @@ public class Block {
     public final static Block wall_stonebrick_granite = new BlockWall(-1, stonebrick_granite).setName("wall_stonebrick_granite").setAbsTextures(NO_TEXTURES);
     public final static Block flower_fmn_black = new BlockFlowerFMN(-1).setName("forget_me_not_black").setTextures("flowers/bush_forget_me_not_black.layer0","flowers/bush_forget_me_not_black.layer1","flowers/bush_forget_me_not_black.layer2");
     public final static Block flower_fmn_blue = new BlockFlowerFMN(-1).setName("forget_me_not_blue").setTextures("flowers/bush_forget_me_not_blue.layer0","flowers/bush_forget_me_not_blue.layer1","flowers/bush_forget_me_not_blue.layer2");
-    public final static Block flower_cold_orchid = new BlockPlantCrossedSquares(-1).setName("cold_orchid").setTextures("flowers/cold_orchid");
-    public final static Block flower_compositae_camille = new BlockPlantCrossedSquares(-1, true).setName("compositae_camille").setTextures("flowers/compositae_camille.layer0", "flowers/compositae_camille.layer1");
-    public final static Block flower_compositae_milkspice = new BlockPlantCrossedSquares(-1, true).setName("compositae_milkspice").setTextures("flowers/compositae_milkspice.layer0", "flowers/compositae_milkspice.layer1");
-    public final static Block flower_compositae_pinkpanther = new BlockPlantCrossedSquares(-1).setName("compositae_pinkpanther").setTextures("flowers/compositae_pinkpanther");
-    public final static Block flower_compositae_teatime = new BlockPlantCrossedSquares(-1).setName("compositae_teatime").setTextures("flowers/compositae_teatime");
-    public final static Block flower_compositae_tigerteeth = new BlockPlantCrossedSquares(-1).setName("compositae_tigerteeth").setTextures("flowers/compositae_tigerteeth");
-    public final static Block flower_cup_black = new BlockPlantCrossedSquares(-1).setName("cup_black").setTextures("flowers/cup_black");
-    public final static Block flower_cup_butter = new BlockPlantCrossedSquares(-1).setName("cup_butter").setTextures("flowers/cup_butter");
-    public final static Block flower_cup_dark = new BlockPlantCrossedSquares(-1).setName("cup_dark").setTextures("flowers/cup_dark");
-    public final static Block flower_cup_night = new BlockPlantCrossedSquares(-1).setName("cup_night").setTextures("flowers/cup_night");
-    public final static Block flower_cup_red = new BlockPlantCrossedSquares(-1).setName("cup_red").setTextures("flowers/cup_red");
-    public final static Block flower_cup_shadow = new BlockPlantCrossedSquares(-1).setName("cup_shadow").setTextures("flowers/cup_shadow");
-    public final static Block flower_dandelion = new BlockPlantCrossedSquares(-1).setName("dandelion").setTextures("flowers/dandelion");
-    public final static Block flower_fangs_acid = new BlockPlantCrossedSquares(-1).setName("fangs_acid").setTextures("flowers/fangs_acid");
-    public final static Block flower_fangs_blood = new BlockPlantCrossedSquares(-1).setName("fangs_blood").setTextures("flowers/fangs_blood");
-    public final static Block flower_fangs_blue_flakes = new BlockPlantCrossedSquares(-1).setName("fangs_blue_flakes").setTextures("flowers/fangs_blue_flakes");
-    public final static Block flower_fangs_love_flakes = new BlockPlantCrossedSquares(-1).setName("fangs_love_flakes").setTextures("flowers/fangs_love_flakes");
-    public final static Block flower_fangs_lovely_blueflakes = new BlockPlantCrossedSquares(-1).setName("fangs_lovely_blueflakes").setTextures("flowers/fangs_lovely_blueflakes");
-    public final static Block flower_fangs_dark = new BlockPlantCrossedSquares(-1).setName("fangs_dark").setTextures("flowers/fangs_dark");
-    public final static Block flower_fangs_light = new BlockPlantCrossedSquares(-1).setName("fangs_light").setTextures("flowers/fangs_light");
-    public final static Block flower_fangs_night = new BlockPlantCrossedSquares(-1).setName("fangs_night").setTextures("flowers/fangs_night");
-    public final static Block flower_fangs_solar = new BlockPlantCrossedSquares(-1).setName("fangs_solar").setTextures("flowers/fangs_solar");
-    public final static Block flower_lavender = new BlockPlantCrossedSquares(-1).setName("lavender").setTextures("flowers/lavender");
-    public final static Block flower_light_in_the_dark = new BlockPlantCrossedSquares(-1).setName("light_in_the_dark").setTextures("flowers/light_in_the_dark");
-    public final static Block flower_lotus_narcotic = new BlockPlantCrossedSquares(-1).setName("lotus_narcotic").setTextures("flowers/lotus_narcotic");
-    public final static Block flower_nomades = new BlockPlantCrossedSquares(-1).setName("nomades").setTextures("flowers/nomades");
-    public final static Block flower_poppy = new BlockPlantCrossedSquares(-1).setName("poppy").setTextures("flowers/poppy");
-    public final static Block flower_star_discostars = new BlockPlantCrossedSquares(-1).setName("star_discostars").setTextures("flowers/star_discostars");
-    public final static Block flower_star_nautica = new BlockPlantCrossedSquares(-1).setName("star_nautica").setTextures("flowers/star_nautica");
-    public final static Block flower_star_witherbloom = new BlockPlantCrossedSquares(-1).setName("star_witherbloom").setTextures("flowers/star_witherbloom");
+    public final static Block flower_compositae_camille = new BlockPlantCrossedSquares(-1, true).setName("compositae_camille").setTextures("flowers/compositae_stem", "flowers/compositae_camille");
+    public final static Block flower_compositae_milkspice = new BlockPlantCrossedSquares(-1, true).setName("compositae_milkspice").setTextures("flowers/compositae_stem", "flowers/compositae_milkspice");
+    public final static Block flower_compositae_pinkpanther = new BlockPlantCrossedSquares(-1, true).setName("compositae_pinkpanther").setTextures("flowers/compositae_stem", "flowers/compositae_pinkpanther");
+    public final static Block flower_compositae_tigerteeth = new BlockPlantCrossedSquares(-1, true).setName("compositae_tigerteeth").setTextures("flowers/compositae_stem", "flowers/compositae_tigerteeth");
     public final static Block flower_violet = new BlockPlantCrossedSquares(-1, true).setName("violet").setTextures("flowers/violet.layer0", "flowers/violet.layer1");
 
     
@@ -211,7 +191,7 @@ public class Block {
     public boolean isTransparent() {
         return transparent;
     }
-    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+    public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int multiTexturePass) {
         return 0xFFFFFF;
     }
     /**
@@ -225,6 +205,21 @@ public class Block {
     public int getTexturePasses() {
         return 1;
     }
+//    public int getFaceTexture(IBlockWorld w, int x, int y, int z, int dataVal, int faceDir, int multiTexturePass) {
+//        if (this.textureMode == BlockTextureMode.ALTERNATING) {
+//            long l = x;
+//            l<<=27;
+//            l|=z;
+//            l<<=10;
+//            l|=y;
+//            long a = GameMath.randomI(l);
+//            int d = GameMath.randomI(a)&(Integer.MAX_VALUE);
+////            int l = GameMath.randomI(x<<(37)|x<<10|y)&(Integer.MAX_VALUE);
+//            int idx = ((int)d)%BlockTextureArray.getInstance().getNumTex(this.id);
+//            return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+//        }
+//        return getTexture(faceDir, dataVal, multiTexturePass);
+//    }
     public int getTexture(int faceDir, int dataVal, int pass) {
         switch (this.textureMode) {
             case SUBTYPED_TEX_PER_TYPE:
@@ -234,6 +229,7 @@ public class Block {
             case TOP_BOTTOM:
                 return BlockTextureArray.getInstance().getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : faceDir == Dir.DIR_NEG_Y ? 2 : 0);
             case DEFAULT:
+            default:
                 break;
         }
         return BlockTextureArray.getInstance().getTextureIdx(this.id, 0);
@@ -486,5 +482,31 @@ public class Block {
     
     public int getLightLoss(LightChunkCache c, int i, int j, int k, int type) {
         return 1;
+    }
+    /**
+     * @param mgr 
+     * @return
+     */
+    public ArrayList<AssetTexture> resolveTextures(AssetManager mgr) {
+        ArrayList<AssetTexture> textures = new ArrayList<>();
+//        if (this.textureMode == BlockTextureMode.ALTERNATING) {
+//            for (int i = 0; i < 16; i++) {
+//                String texPath = String.format("textures/blocks/%s_var%d.png", this.textures[0], i);
+//                AssetTexture tex = mgr.loadPNGAsset(texPath, i!=0);
+//                if (tex == null) {
+//                    break;
+//                }
+//                textures.add(tex);
+//            }
+//            if (textures.size() == 1) {
+//                throw new GameError("BlockTextureMode.ALTERNATING requires more than 1 texture!");
+//            }
+//            return textures;
+//        }
+        for (String s : this.textures) {
+            AssetTexture tex = mgr.loadPNGAsset(s, false);
+            textures.add(tex);
+        }
+        return textures;
     }
 }

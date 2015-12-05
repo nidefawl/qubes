@@ -38,8 +38,8 @@ public abstract class GameBase implements Runnable {
     public static boolean glDebug         = false;
     public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
-    static int            initWidth       = (int) (1680*0.4);
-    static int            initHeight      = (int) (1050*0.4);
+    static int            initWidth       = (int) (1680*0.8);
+    static int            initHeight      = (int) (1050*0.8);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.

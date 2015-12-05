@@ -454,6 +454,8 @@ public class Engine {
         Vector3f.sub(vTarget, vOrigin, vDirTmp);
         vDir = vDirTmp.normaliseNull();
         if (vDir != null) {
+            vOrigin.subtract(camera.getCameraOffset());
+            vDir.subtract(camera.getCameraOffset());
             t.set(vDir);
             t.scale(-0.1F);
             Vector3f.add(vOrigin, t, vOrigin);
