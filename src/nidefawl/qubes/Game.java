@@ -114,6 +114,7 @@ public class Game extends GameBase implements IErrorHandler {
     @Override
     public void initGame() {
         debugChunks = new TesselatorState();
+        loadProfile();
         loadSettings();
         selection.init();
         AssetManager.getInstance().init();
@@ -949,7 +950,7 @@ public class Game extends GameBase implements IErrorHandler {
 //          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
-            Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 //            
 //          BlockTextureArray.getInstance().reloadTexture("log.png");
 //          BlockTextureArray.getInstance().reloadTexture("log_top.png");
@@ -1202,6 +1203,24 @@ public class Game extends GameBase implements IErrorHandler {
         try {
             File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
             settings.write(f);
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
+    }
+    public void saveProfile() {
+        try {
+            File fProfile = new File(WorkingEnv.getConfigFolder(), "profile.yml");
+            profile.write(fProfile);
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
+    }
+    public void loadProfile() {
+        try {
+            File fProfile = new File(WorkingEnv.getConfigFolder(), "profile.yml");
+            if (fProfile.exists()) {
+                profile.load(fProfile);
+            }
         } catch (InvalidConfigException e) {
             e.printStackTrace();
         }

@@ -115,7 +115,23 @@ public class TextInput {
             commandScroll = 0;
         }
     }
-    
+    public void saveHistory() {
+        if (this.history != null) {
+            int index = history.indexOfHistory(this.editText);
+            if (index == -1) {
+                history.addHistory(this.editText);
+            } else {
+                history.removeHistory(index);
+                history.addHistory(history.getHistorySize(), this.editText);
+            }
+        }
+    }
+    public void resetInput() {
+        commandScroll = 0;
+        this.editText = "";
+        this.mpos = 0;
+        this.shiftPX = 0;
+    }
     public boolean onKeyPress(int key, int scanCode, int action, int mods) {
         if (action != GLFW.GLFW_PRESS && action != GLFW.GLFW_REPEAT) {
             return true;
@@ -130,22 +146,7 @@ public class TextInput {
             return true;
         }
         if ((key == GLFW.GLFW_KEY_ENTER) || (key == GLFW.GLFW_KEY_KP_ENTER)) {// return/enter
-            if (this.history != null) {
-                int index = history.indexOfHistory(this.editText);
-                if (index == -1) {
-                    history.addHistory(this.editText);
-                } else {
-                    history.removeHistory(index);
-                    history.addHistory(history.getHistorySize(), this.editText);
-                }
-            }
-            commandScroll = 0;
-            String text = this.editText;
-            this.editText = "";
-            this.mpos = 0;
-            this.shiftPX = 0;
-            submit(text);
-            clearPreview();
+            onSubmit();
             //        } else if ((Keyboard.isKeyDown(Keyboard.KEY_PAGE_UP)) && (chat.currentTab().getChatScroll() <= chat.currentTab().processed.size() - chat.linesToShow - 1)) {
             //            chat.currentTab().setChatScroll(chat.currentTab().getChatScroll() + (control ? 10 : 1));
             //            shiftDown = false;
@@ -308,8 +309,9 @@ public class TextInput {
         return true;
     }
 
-    private void submit(String text) {
-        itextedit.submit(this, text);
+    private void onSubmit() {
+        itextedit.submit(this);
+        clearPreview();
     }
     
     public void makeCursorVisible() {

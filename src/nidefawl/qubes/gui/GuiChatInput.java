@@ -126,10 +126,14 @@ public class GuiChatInput extends Gui implements ITextEdit {
     }
 
     @Override
-    public void submit(TextInput textInputRenderer, String text) {
-        Game.instance.showGUI(null);
-        if (text.length() > 0)
+    public void submit(TextInput textInput) {
+        String text = textInput.editText;
+        textInput.resetInput();
+        if (text.length() > 0) {
+            textInput.saveHistory();
             Game.instance.sendPacket(new PacketChatMessage(GlobalChannel.TAG, text));
+        }
+        Game.instance.showGUI(null);
     }
 
     @Override

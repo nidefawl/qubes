@@ -97,7 +97,7 @@ public class ClientHandler extends Handler {
         this.time = System.currentTimeMillis();
         if (packetAuth.success) {
             PlayerProfile profile = Game.instance.getProfile();
-            profile.setIngameName(packetAuth.name);
+            profile.setName(packetAuth.name);
             short[] data = Block.getRegisteredIDs();
             PacketSyncBlocks p = new PacketSyncBlocks(data);
             this.sendPacket(p);

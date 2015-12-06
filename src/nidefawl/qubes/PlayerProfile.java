@@ -1,28 +1,55 @@
 package nidefawl.qubes;
 
-public class PlayerProfile {
-    public String name = "me";
-    private String ingameName;
+import java.util.UUID;
 
-    public String getName() {
-        return name;
+import nidefawl.qubes.config.AbstractYMLConfig;
+import nidefawl.qubes.config.InvalidConfigException;
+
+public class PlayerProfile extends AbstractYMLConfig {
+    /**
+     * @param setDefaults
+     */
+    public PlayerProfile() {
+        super(true);
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public UUID uuid;
+    private String name;
+
+    @Override
+    public void setDefaults() {
+        uuid = UUID.randomUUID();
+        name = "Player";
     }
+
+    public UUID getUUID() {
+        return uuid;
+    }
+
 
     /**
      * @param name2
      */
-    public void setIngameName(String ingameName) {
-        this.ingameName = ingameName;
+    public void setName(String name) {
+        this.name = name;
     }
     
     /**
      * @return the ingameName
      */
-    public String getIngameName() {
-        return this.ingameName;
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public void load() throws InvalidConfigException {
+        this.uuid = UUID.fromString(getString("uuid", this.uuid.toString()));
+        this.name = getString("name", this.name);
+    }
+
+    @Override
+    public void save() {
+        setString("uuid", this.uuid.toString());
+        setString("name", this.name);
     }
 }

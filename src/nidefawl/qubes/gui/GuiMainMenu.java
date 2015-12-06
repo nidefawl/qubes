@@ -110,7 +110,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         return true;
     }
     @Override
-    public void submit(TextInput textInputRenderer, String text) {
+    public void submit(TextInput textInputRenderer) {
         connect();
     }
     /**
@@ -121,6 +121,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         String s2 = fieldN.getText();
         if (!s.isEmpty() && !s2.isEmpty()) {
             Game.instance.getProfile().setName(s2);
+            Game.instance.saveProfile();
             Game.instance.connectTo(s);    
         }
     }
