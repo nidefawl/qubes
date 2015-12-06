@@ -14,6 +14,7 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.*;
 
@@ -42,6 +43,20 @@ public class GameRegistry {
             return igen;
         } catch (Exception e) {
             throw new GameError("Cannot create terrain generator "+gen, e);
+        }
+    }
+
+    public static IBiomeManager newBiomeManager(WorldServer worldServer, ITerrainGen generator, WorldSettings settings) {
+        Class<? extends IBiomeManager> genKlass = generator.getBiomeManager();
+        if (genKlass == null) {
+            throw new IllegalArgumentException("Please define a biomemanager for terrain gen "+generator);
+        }
+        try {
+            Constructor<? extends IBiomeManager> cstr = genKlass.getDeclaredConstructor(WorldServer.class, long.class, WorldSettings.class);
+            IBiomeManager igen = cstr.newInstance(worldServer, settings.getSeed(), settings);
+            return igen;
+        } catch (Exception e) {
+            throw new GameError("Cannot create terrain populator "+genKlass, e);
         }
     }
 

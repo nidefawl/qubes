@@ -15,6 +15,8 @@ import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
@@ -385,6 +387,11 @@ public class TerrainGenQTest implements ITerrainGen {
     @Override
     public Class<? extends IChunkPopulator> getPopulator() {
         return EmptyChunkPopulator.class;
+    }
+
+    @Override
+    public Class<? extends IBiomeManager> getBiomeManager() {
+        return EmptyBiomeManager.class;
     }
 
 

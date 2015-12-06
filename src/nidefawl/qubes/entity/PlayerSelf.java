@@ -23,7 +23,7 @@ public class PlayerSelf extends Player {
         super();
         this.profile = profile;
         this.clientHandler = clientHandler;
-        this.name = this.profile.getIngameName();
+        this.name = this.profile.getName();
     }
 
     public void updateInputDirect(Movement movement) {

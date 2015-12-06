@@ -3,6 +3,7 @@ package nidefawl.qubes.worldgen.terrain;
 
 import java.util.Random;
 
+import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.noise.*;
@@ -11,6 +12,9 @@ import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
+import nidefawl.qubes.worldgen.biome.HexBiomes;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
@@ -139,8 +143,10 @@ public class TerrainGeneratorRivers implements ITerrainGen {
         double[][] dn = generateNoise(c.getBlockX(), c.getBlockZ());
         double[] dNoise = dn[0];
         double[] dNoise2 = dn[1];
+        IBiomeManager mgr = this.world.biomeManager;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
+//                Biome b = mgr.getBiome(c.getBlockX()+x, c.getBlockZ()+z);
                 int top = Block.grass.id;
                 int earth = Block.dirt.id;
                 int stone = Block.granite.id;
@@ -332,5 +338,10 @@ public class TerrainGeneratorRivers implements ITerrainGen {
     @Override
     public Class<? extends IChunkPopulator> getPopulator() {
         return ChunkPopulator.class;
+    }
+
+    @Override
+    public Class<? extends IBiomeManager> getBiomeManager() {
+        return HexBiomes.class;
     }
 }

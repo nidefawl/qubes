@@ -4,6 +4,8 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
@@ -39,6 +41,11 @@ public class TerrainGenFlatSand128 implements ITerrainGen {
     @Override
     public Class<? extends IChunkPopulator> getPopulator() {
         return EmptyChunkPopulator.class;
+    }
+
+    @Override
+    public Class<? extends IBiomeManager> getBiomeManager() {
+        return EmptyBiomeManager.class;
     }
 
 }

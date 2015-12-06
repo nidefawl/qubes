@@ -439,7 +439,7 @@ public abstract class Tag {
 
         /**
          * @param string
-         * @param name
+         * @param accountName
          */
         public void setString(String string, String str) {
             this.data.put(string, new Tag.StringTag(str));

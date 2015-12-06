@@ -11,6 +11,8 @@ import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
@@ -311,5 +313,10 @@ public class TerrainGeneratorOther implements ITerrainGen {
     @Override
     public Class<? extends IChunkPopulator> getPopulator() {
         return ChunkPopulator.class;
+    }
+
+    @Override
+    public Class<? extends IBiomeManager> getBiomeManager() {
+        return EmptyBiomeManager.class;
     }
 }
