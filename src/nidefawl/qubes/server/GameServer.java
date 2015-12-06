@@ -231,9 +231,9 @@ public class GameServer implements Runnable, IErrorHandler {
 		try {
 		    File f = new File(WorkingEnv.getConfigFolder(), "server.yml");
 		    if (f.exists()) {
-	            this.config.load();
-		    }
-            this.config.write(f);
+	            this.config.load(f);
+		    } else
+		        this.config.write(f);
 		} catch (InvalidConfigException e) {
 			e.printStackTrace();
 		}
