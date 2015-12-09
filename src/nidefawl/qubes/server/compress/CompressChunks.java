@@ -51,6 +51,9 @@ public class CompressChunks implements ICompressTask {
 //              Arrays.fill(tmpBuffer, offset, offset+light.length, (byte)0xFF);
                 offset += light.length;
             }
+            byte[] biomes = c.biomes;
+            System.arraycopy(biomes, 0, tmpBuffer, offset, biomes.length);
+            offset += biomes.length;
             short[][] heightArrays = c.blockMetadata.getArrays();
             short slices = 0;
             for (int i = 0; i < heightArrays.length; i++) {

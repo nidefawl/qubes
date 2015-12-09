@@ -17,4 +17,9 @@ public interface ITerrainGen {
      * @return
      */
     public Class<? extends IBiomeManager> getBiomeManager();
+
+    /**
+     * 
+     */
+    public void init();
 }

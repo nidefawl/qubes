@@ -105,9 +105,9 @@ void main(void) {
 #ifndef MODEL_RENDER
 
 		//TODO: figure out something better 
-	if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
-		colorizeLeaves(color_adj, position.xyz);
-	}
+	// if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
+	// 	colorizeLeaves(color_adj, position.xyz);
+	// }
 	// if (blockid == 1) {
  		// vec2 newCoords = texcoord.st;//
 		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir]);
@@ -132,7 +132,7 @@ void main(void) {
 	// }	
 
 #endif
-
+	// color_adj*=ambientOccl;
 	float alpha = tex.a*1;
     out_Color = vec4(color_adj, alpha);
     out_Normal = vec4((outNormal) * 0.5f + 0.5f, 1);

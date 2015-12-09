@@ -274,14 +274,8 @@ public class BlockFace {
         attr.setNormal(this.normal[0], this.normal[1], this.normal[2]);
         Block block = Block.get(this.bs.type);
         this.faceDir = this.bs.axis<<1|this.bs.face;
-        float m = 1F;
         float alpha = block.getAlpha();
-        int c =  block.getMeshedColor(this.bs);// block.getFaceColor(w, 0, 0, 0, this.faceDir);
-        float b = (c & 0xFF) / 255F;
-        c >>= 8;
-        float g = (c & 0xFF) / 255F;
-        c >>= 8;
-        float r = (c & 0xFF) / 255F;
+        int rgb =  block.getMeshedColor(this.bs);// TODO: generalize
 
         attr.setTex(this.bs.texture);
         attr.setFaceDir(faceDir);
@@ -293,45 +287,43 @@ public class BlockFace {
         attr.setType(this.bs.type);
         
         setUV(attr.v0, 0);
-        attr.v0.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v0.setColorRGBA(rgb, alpha);
         attr.v0.setPos(this.v0[0], this.v0[1], this.v0[2]);
         attr.v0.setFaceVertDir(faceVDirections[this.faceDir][0]);
         attr.v0.setDirection(this.faceDir, 0, false);
 
         setUV(attr.v1, 1);
-        attr.v1.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v1.setColorRGBA(rgb, alpha);
         attr.v1.setPos(this.v1[0], this.v1[1], this.v1[2]);
         attr.v1.setFaceVertDir(faceVDirections[this.faceDir][1]);
         attr.v1.setDirection(this.faceDir, 1, false);
 
         setUV(attr.v2, 2);
-        attr.v2.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v2.setColorRGBA(rgb, alpha);
         attr.v2.setPos(this.v2[0], this.v2[1], this.v2[2]);
         attr.v2.setFaceVertDir(faceVDirections[this.faceDir][2]);
         attr.v2.setDirection(this.faceDir, 2, false);
 
         setUV(attr.v3, 3);
-        attr.v3.setColorRGBAF(b * m, g * m, r * m, alpha);
+        attr.v3.setColorRGBA(rgb, alpha);
         attr.v3.setPos(this.v3[0], this.v3[1], this.v3[2]);
         attr.v3.setFaceVertDir(faceVDirections[this.faceDir][3]);
         attr.v3.setDirection(this.faceDir, 3, false);
         
         attr.put(vertexBuffer);
+        
+     // TODO: generalize
         if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
             int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
             attr.setTex(sideOverlay);
-            c = this.bs.faceColor;
-            b = (c & 0xFF) / 255F;
-            c >>= 8;
-            g = (c & 0xFF) / 255F;
-            c >>= 8;
-            r = (c & 0xFF) / 255F;
             for (int i = 0; i < 4; i++) {
-                attr.v[i].setColorRGBAF(b * m, g * m, r * m, alpha);
+                attr.v[i].setColorRGBA(this.bs.faceColor, alpha);
             }
             attr.put(vertexBuffer);
             return 2;
         }
+        
+        
         if (block instanceof BlockLeaves) {
 //            initDir();
             int face = 1-this.bs.face;

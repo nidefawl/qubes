@@ -33,6 +33,7 @@ public class BootClient {
     }
     public static void main(String[] args) {
         GameContext.setSideAndPath(Side.CLIENT, ".");
+        String serverAddr = "nide.ddns.net:21087";
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-") && args[i].length()>1) {
                 String arg = args[i].substring(1);
@@ -40,6 +41,10 @@ public class BootClient {
                     arg = arg.substring(1);
                 }
                 switch (arg) {
+                    case "server": {
+                        serverAddr = getValue(args, i, arg);
+                        break;
+                    }
                     case "modules": {
                         String path = getValue(args, i, arg);
                         ModuleLoader.setOverrideModules(path);
@@ -64,7 +69,7 @@ public class BootClient {
         GameBase.appName = "-";
         Game.instance = new Game();
         Game.instance.setException(GameContext.getInitError());
-        Game.instance.getProfile().setName("Player");
+        Game.instance.serverAddr = serverAddr;
         ErrorHandler.setHandler(Game.instance);
         Game.instance.startGame();
         GameContext.setMainThread(Game.instance.getMainThread());

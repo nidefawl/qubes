@@ -502,9 +502,9 @@ public class WorldRenderer extends AbstractRenderer {
             Engine.checkGLError("glLineWidth");
 //            Engine.regionRenderer.setDrawMode(ARBGeometryShader4.GL_T);
             Engine.regionRenderer.setDrawMode(-1);
-//            Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
+            Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
 //            Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-//            Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+            Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
             renderModelsUsingProgram(world, Shaders.normals, PASS_SOLID, fTime);
             BufferedMatrix mat = Engine.getIdentityMatrix();
             Shaders.normals.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);

@@ -27,8 +27,8 @@ import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
-import nidefawl.qubes.worldgen.terrain.TerrainGeneratorRivers;
 import nidefawl.qubes.worldgen.terrain.TerrainGenFlatSand128;
+import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
 
 public class WorldServer extends World {
 
@@ -38,7 +38,6 @@ public class WorldServer extends World {
     private final ChunkManagerServer chunkServer;
     private final ITerrainGen              generator;
     private final IChunkPopulator populator;
-    public final IBiomeManager biomeManager;
 
 //    private Queue<Long> lightUpdateQueue = Queues.newConcurrentLinkedQueue();
     private Set<Long> lightUpdateQueue = Sets.newConcurrentHashSet();
@@ -54,6 +53,7 @@ public class WorldServer extends World {
         this.generator = GameRegistry.newGenerator(this, settings);
         this.biomeManager = GameRegistry.newBiomeManager(this, this.generator, settings);
         this.populator = GameRegistry.newPopulator(this, this.generator, settings);
+        this.generator.init();
         this.lightUpdater = new BlockLightThread(this);
     }
     public void onLeave() {
@@ -158,6 +158,7 @@ public class WorldServer extends World {
         }
         
         this.chunkTracker.sendBlockChanges();
+        this.biomeManager.sendChanges();
     }
     public void updateGeneratedChunks() {
         
@@ -315,5 +316,17 @@ public class WorldServer extends World {
     
     public List<Entity> getEntityList() {
         return this.entityList;
+    }
+    /**
+     * @return
+     */
+    public int getWorldType() {
+        return this.biomeManager.getWorldType();
+    }
+    /**
+     * @return
+     */
+    public IBiomeManager getBiomeManager() {
+        return this.biomeManager;
     }
 }

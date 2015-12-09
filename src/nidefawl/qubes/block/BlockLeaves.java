@@ -3,6 +3,7 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
@@ -29,7 +30,7 @@ public class BlockLeaves extends Block {
     
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
-        return leavesColor;
+      return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.LEAVES);
     }
 
     @Override

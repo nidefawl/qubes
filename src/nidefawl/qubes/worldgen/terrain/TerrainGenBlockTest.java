@@ -70,4 +70,8 @@ public class TerrainGenBlockTest implements ITerrainGen {
         return EmptyBiomeManager.class;
     }
 
+    @Override
+    public void init() {
+    }
+
 }

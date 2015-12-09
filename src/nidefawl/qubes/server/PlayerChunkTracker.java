@@ -321,6 +321,7 @@ public class PlayerChunkTracker {
      */
     public void sendBlockChanges() {
         if (!this.flaggedInstances.isEmpty()) {
+            //TODO: drain atomic!
             for (Entry e : this.flaggedInstances) {
                 Chunk c = this.worldServer.getChunk(e.x, e.z);
                 ServerHandlerPlay[] handlers = null;

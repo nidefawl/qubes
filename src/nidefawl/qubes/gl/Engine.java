@@ -54,7 +54,6 @@ public class Engine {
     private static BufferedMatrix orthoMVP;
     private static BufferedMatrix ortho3DP;
     private static BufferedMatrix ortho3DMV;
-    private static BufferedMatrix ortho3DMVP;
     private static BufferedMatrix tempMatrix;
     private static BufferedMatrix tempMatrix2;
     private static BufferedMatrix identity;
@@ -124,7 +123,6 @@ public class Engine {
         orthoMVP = new BufferedMatrix();
         ortho3DP = new BufferedMatrix();
         ortho3DMV = new BufferedMatrix();
-        ortho3DMVP = new BufferedMatrix();
         tempMatrix = new BufferedMatrix();
         tempMatrix2 = new BufferedMatrix();
         identity = new BufferedMatrix();
@@ -239,23 +237,22 @@ public class Engine {
         orthoMV.setIdentity();
         orthoMV.update();
         orthoP.setZero();
-        Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
+        Project.orthoMat(-0, displayWidth, 0, displayHeight, -400, 400, orthoP);
         orthoP.update();
         Matrix4f.mul(orthoP, orthoMV, orthoMVP);
         orthoMVP.update();
         
         ortho3DMV.setIdentity();
         float size = 32;
-        Project.lookAt(-10, 5, -10, 0, 0, 0, 0, 1, 0, ortho3DMV);
+//        Project.lookAt(10, 5, 10, 0, 0, 0, 0, 1, 0, ortho3DMV);
+//        ortho3DMV.translate(0, 0, 0);
         ortho3DMV.update();
         ortho3DP.setZero();
 //        Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
         float h = displayHeight/displayWidth;
         h*=size;
-        Project.orthoMat(-size, size, h, -h, -200, 200, ortho3DP);
+        Project.orthoMat(0, displayWidth, 0, displayHeight, -400, 400, ortho3DP);
         ortho3DP.update();
-        Matrix4f.mul(ortho3DP, ortho3DMV, ortho3DMVP);
-        ortho3DMVP.update();
     }
 
     public static void drawFullscreenQuad() {
@@ -297,8 +294,12 @@ public class Engine {
     public static BufferedMatrix getMatOrthoMVP() {
         return orthoMVP;
     }
-    public static BufferedMatrix getMatOrtho3DMVP() {
-        return ortho3DMVP;
+    public static BufferedMatrix getMatOrtho3DMV() {
+        return ortho3DMV;
+    }
+
+    public static BufferedMatrix getMatOrtho3DP() {
+        return ortho3DP;
     }
 
     public static BufferedMatrix getTempMatrix() {

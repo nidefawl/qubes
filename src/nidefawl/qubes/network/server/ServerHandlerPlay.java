@@ -39,8 +39,13 @@ public class ServerHandlerPlay extends ServerHandler {
             if (this.player.flying) {
                 flags |= 1;
             }
-            sendPacket(new PacketSSpawnInWorld(player.id, world.settings, this.player.pos, flags));
+            sendPacket(new PacketSSpawnInWorld(player.id, world.getWorldType(), world.settings, this.player.pos, flags));
             world.addPlayer(player);
+            PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
+            if (biomes != null) {
+                biomes.worldID = world.getId();
+                sendPacket(biomes);
+            }
             sendPacket(new PacketChatChannels(this.player.getJoinedChannels()));
         }
         super.update();
@@ -58,9 +63,14 @@ public class ServerHandlerPlay extends ServerHandler {
         if (this.player.flying) {
             flags |= 1;
         }
-        sendPacket(new PacketSSpawnInWorld(player.id, world.settings, this.player.pos, flags));
+        sendPacket(new PacketSSpawnInWorld(player.id, world.getWorldType(), world.settings, this.player.pos, flags));
         world.addPlayer(player);
         player.sendMessage("You are now in world "+world.getName());
+        PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
+        if (biomes != null) {
+            biomes.worldID = world.getId();
+            sendPacket(biomes);
+        }
     }
 
     @Override

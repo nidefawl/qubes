@@ -100,9 +100,8 @@ public class UniformBuffer {
             .addMat4(); // proj_inv
     static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
             .addMat4() //mvp
-            .addMat4(); //mvp3DOrtho
-//            .addMat4() //proj
-//            .addMat4(); //mv
+            .addMat4() //3DOrthoP
+            .addMat4(); //3DOrthoMV
     static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow")
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
@@ -431,7 +430,8 @@ public class UniformBuffer {
     public static void updateOrtho() {
         uboMatrix2D.reset();
         uboMatrix2D.put(Engine.getMatOrthoMVP().get());
-        uboMatrix2D.put(Engine.getMatOrtho3DMVP().get());
+        uboMatrix2D.put(Engine.getMatOrtho3DP().get());
+        uboMatrix2D.put(Engine.getMatOrtho3DMV().get());
         uboMatrix2D.update();
         // unbind Uniform buffer?!
     }

@@ -9,6 +9,7 @@ import nidefawl.qubes.util.Side;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.*;
+import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
 
 /**
  * @author Michael Hept 2015
@@ -24,7 +25,7 @@ public class CoreModule extends Module {
         if (side == Side.SERVER) {
             GameRegistry.registerTerrainGenerator(TerrainGenBlockTest.GENERATOR_NAME, TerrainGenBlockTest.class);
             GameRegistry.registerTerrainGenerator(TerrainGeneratorOther.GENERATOR_NAME, TerrainGeneratorOther.class);
-            GameRegistry.registerTerrainGenerator(TerrainGeneratorRivers.GENERATOR_NAME, TerrainGeneratorRivers.class);
+            GameRegistry.registerTerrainGenerator(TerrainGeneratorMain.GENERATOR_NAME, TerrainGeneratorMain.class);
             GameRegistry.registerTerrainGenerator(TerrainGenFlatSand128.GENERATOR_NAME, TerrainGenFlatSand128.class);
             GameRegistry.registerTerrainGenerator(TerrainGenQTest.GENERATOR_NAME, TerrainGenQTest.class);
             GameRegistry.registerChunkPopulator(ChunkPopulator.POPULATOR_NAME, ChunkPopulator.class);

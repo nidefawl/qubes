@@ -48,4 +48,8 @@ public class TerrainGenFlatSand128 implements ITerrainGen {
         return EmptyBiomeManager.class;
     }
 
+    @Override
+    public void init() {
+    }
+
 }

@@ -3,7 +3,10 @@
  */
 package nidefawl.qubes.block;
 
+import java.util.List;
+
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
@@ -178,6 +181,19 @@ public class BlockWall extends Block {
             tmp[i].offset(x, y, z);
         }
         return idx;
+    }
+    
+    @Override
+    public int getItems(List<Stack> l) {
+        if (baseBlock.textureMode == BlockTextureMode.SUBTYPED_TEX_PER_TYPE) {
+            for (int i = 0; i < baseBlock.textures.length; i++) {
+                l.add(new Stack(this.id, i));
+            }
+            return baseBlock.textures.length;
+        } else {
+            l.add(new Stack(this.id));
+        }
+        return 1;
     }
 
 }

@@ -20,7 +20,7 @@ public class Tess extends TesselatorState {
     public final static Tess tessFont    = new Tess();
     public static boolean useClientStates;
 
-    public final static int BUF_INCR  = 1024;
+    public final static int BUF_INCR  = 1024*1024;
 
     public int[]         rawBuffer = new int[BUF_INCR];
     protected int           rgba;

@@ -1,9 +1,9 @@
 package nidefawl.qubes.meshing;
 
-import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
-
 import java.util.Arrays;
 
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -24,6 +24,9 @@ public class ChunkRenderCache implements IBlockWorld {
     public final static int WIDTH_EXTRA = WIDTH+2;
     public final static int WIDTH_BLOCKS = WIDTH_EXTRA*Chunk.SIZE;
     final public Chunk[] chunks = new Chunk[WIDTH_EXTRA*WIDTH_EXTRA]; //TODO: are corners required?
+    private WorldClient world;
+    private int baseX;
+    private int baseZ;
 
     public void set(int x, int z, Chunk region) {
         this.chunks[(x+1)*WIDTH_EXTRA+(z+1)] = region;
@@ -72,11 +75,20 @@ public class ChunkRenderCache implements IBlockWorld {
         return region != null ? region.getLight(i&0xF, j, k&0xF) : 0;
     }
 
+    @Override
+    public Biome getBiome(int i, int k) {
+        Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
+        return region != null ? region.getBiome(i&0xF, k&0xF) : Biome.MEADOW_GREEN;
+    }
+
     public boolean cache(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
+        this.world = world;
         int basechunkX = mr.rX<<RegionRenderer.REGION_SIZE_BITS;
         int basechunkZ = mr.rZ<<RegionRenderer.REGION_SIZE_BITS;
         int offsetX = mr.rX-renderChunkX;
         int offsetZ = mr.rZ-renderChunkZ;
+        this.baseX = mr.rX<<RegionRenderer.REGION_SIZE_BLOCK_SIZE_BITS;
+        this.baseZ = mr.rZ<<RegionRenderer.REGION_SIZE_BLOCK_SIZE_BITS;
         
         boolean minXReq = offsetX > 0;
         boolean maxXReq = offsetX < RegionRenderer.RENDER_DISTANCE-1;
@@ -154,6 +166,11 @@ public class ChunkRenderCache implements IBlockWorld {
     @Override
     public boolean setBlockData(int x, int y, int z, BlockData bd, int flags){
         return false;
+    }
+
+    @Override
+    public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
+        return this.world.getBiomeFaceColor(this.baseX+x, y, this.baseZ+z, faceDir, pass, colorType);
     }
 
 }

@@ -13,12 +13,12 @@ import nidefawl.qubes.util.GameMath;
  * 
  */
 public class HexagonGrid {
-	private final double radius;
-	private final double height;
-	private final double width;
-	private final double hwidth;
-	private final double ttheight;
-	private final double[] sinCos = new double[12];
+    public final double radius;
+	public final double height;
+	public final double width;
+	public final double hwidth;
+	public final double ttheight;
+	final double[] sinCos = new double[12];
 	private final static int[] offset = new int[] {
 			+1, 0, +1, -1, 0, -1,
 			-1, 0, -1, +1, 0, +1

@@ -14,9 +14,7 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.item.Stack;
@@ -25,6 +23,7 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureUtil;
+import nidefawl.qubes.util.GameMath;
 
 public class GuiSelectBlock extends Gui {
 
@@ -36,7 +35,6 @@ public class GuiSelectBlock extends Gui {
     public GuiSelectBlock() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
     }
-
     @Override
     public void initGui(boolean first) {
         this.buttons.clear();
@@ -68,11 +66,22 @@ public class GuiSelectBlock extends Gui {
         });
     }
 
+    float dir     = 0.2f;
+    float rot     = 0;
+    float lastRot = 0;
     public void update() {
+        this.lastRot = rot;
+        this.rot += 4*GameMath.PI_OVER_180;
+        if (this.rot>360*GameMath.PI_OVER_180) {
+            this.lastRot -= 360*GameMath.PI_OVER_180;
+            this.rot -= 360*GameMath.PI_OVER_180;
+        }
     }
 
 
     public void render(float fTime, double mX, double mY) {
+        float animRot = lastRot+(rot-lastRot)*fTime;
+        
         Shaders.colored.enable();
         Tess.instance.setColor(2, 128);
         Tess.instance.add(this.posX, this.posY + this.height);
@@ -81,9 +90,6 @@ public class GuiSelectBlock extends Gui {
         Tess.instance.add(this.posX, this.posY);
         Tess.instance.draw(GL_QUADS);
         
-        Shaders.singleblock.enable();
-        Shaders.singleblock.setProgramUniform3f("in_offset", this.posX + this.width/2.0f, this.posY + this.height/2.0f, 0);
-        Shaders.singleblock.setProgramUniform1f("in_scale", 2);
 //        Shaders.singleblock.setProgramUniform3f("in_offset", 2,0, 0);
 //        GL11.glDisable(GL_CULL_FACE);
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
@@ -91,12 +97,9 @@ public class GuiSelectBlock extends Gui {
 //        Engine.blockDraw.drawBlock(Block.glowstone, 0);
 //        glEnable(GL_CULL_FACE);
         
-        Shaders.singleblock.enable();
-        float blockscale = 1.0f;
-        Shaders.singleblock.setProgramUniform1f("in_scale", blockscale);
-        float bSize = 45;
+        float bSize = 74;
         float g = 4;
-        float out = 10;
+        float out = 20;
         int perRow1 = Math.max(4, (int) ((this.width-50)/(bSize+out)));
         float xPos = this.width/2.0f-(perRow1*bSize+out)/2.0f;
         float yPos = xPos;
@@ -106,12 +109,15 @@ public class GuiSelectBlock extends Gui {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
          sel = null;
          this.fakeButton.setPos(-1000, -1000);
-         this.fakeButton.setSize(32, 32);
+         this.fakeButton.setSize((int)bSize-10, (int)bSize-10);
         int rendered = 0;
         int e = this.extendx;
         float r = this.round;
-        this.round = 3;
+        this.round = 5;
         this.extendx = 0;
+        float sX, sZ;
+        sX = sZ = 0;
+        int color = 0xc0c0c0;
         for (int i = 0; i < blocks.size(); i++) {
             Stack stack = blocks.get(i);
             Block block = stack.getBlock();
@@ -129,55 +135,55 @@ public class GuiSelectBlock extends Gui {
 
                     fakeButton.setPos((int)pX1, (int)pY1);
                     fakeButton.setSize((int)(pX2-pX1), (int)(pY2-pY1));
-                } else {
+                    sX = bX;
+                    sZ = bY;
                 }
-                int zz = -30;
-
-                {
-                    float x = this.posX + this.width/2.0f;
-                    float y = this.posY + this.height/2.0f;
-                    int color = 0xc0c0c0;
-                    if (m || stack.isEqualId(Game.instance.selBlock)) {
-                        zz = -15;
-                        pX1-=4;
-                        pX2+=4;
-                        pY2+=4;
-                        pY1-=4;
-                    }
-                    Shaders.gui.enable();
-                    renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1, true);
-                    Shaders.singleblock.enable();
-                }
-//                if (m || stack.isEqualId(Game.instance.selBlock)) {
-//                    Shaders.colored.enable();
-//                    Tess t = Tess.instance;
-//                    if (m) {
-//                        t.setColorF(-1, 0.4f);
-//                    } else {
-//                        t.setColorF(-1, 0.8f);
-//                    }
-//                    pX1--;
-//                    pX2++;
-//                    pY2++;
-//                    pY1--;
-//                    t.add(pX1, pY2);
-//                    t.add(pX2, pY2);
-//                    t.add(pX2, pY1);
-//                    t.add(pX1, pY1);
-//                    t.drawQuads();
-//                    Shaders.singleblock.enable();
-//                }
-                if (m) {
-                    Shaders.singleblock.setProgramUniform1f("in_scale", blockscale*1.3f);
-                }
-                Shaders.singleblock.setProgramUniform3f("in_offset", bX, bY, zz+20);
-                Engine.blockDraw.drawBlock(block, stack.data, stack.getStackdata());
-                if (m) {
-                    Shaders.singleblock.setProgramUniform1f("in_scale", blockscale);
-                }
+                int zz = -200;
+                int z = 0;
+                float x = this.posX + this.width/2.0f;
+                float y = this.posY + this.height/2.0f;
+                Shaders.gui.enable();
+                renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1, true);
+                float fRot = block.getInvRenderRotation();
+                float blockscale = 1.333f;
+                int renderData = block.getInvRenderData(stack);
+                Engine.blockDraw.setOffset(bX, bY, zz+100);
+                Engine.blockDraw.setScale(blockscale);
+                Engine.blockDraw.setRotation(15, 90+45+fRot*GameMath.P_180_OVER_PI, 0);
+                Engine.blockDraw.drawBlock(block, renderData, stack.getStackdata());
                 rendered++;    
             }
             
+        }
+        if (this.sel != null) {
+            Block block = this.sel.getBlock();
+            float pX1 = sX-bSize/2.0f;
+            float pY1 = sZ-bSize/2.0f;
+            float pX2 = pX1+bSize;
+            float pY2 = pY1+bSize;
+            float zz = -50;
+            float offset = bSize/2.8f;
+            float fRot = block.getInvRenderRotation();
+            float blockscale = 1.333f;
+            fRot+=animRot;
+            blockscale*=2.0f;
+            int renderData = block.getInvRenderData(this.sel);
+            Shaders.gui.enable();
+            pX1-=offset;
+            pX2+=offset;
+            pY2+=offset;
+            pY1-=offset;
+            renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1, true);
+            pX1-=4;
+            pX2+=4;
+            pY2+=4;
+            pY1-=4;
+            renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 0.5f, true);
+            Engine.blockDraw.setOffset(sX, sZ, zz+100);
+            Engine.blockDraw.setScale(blockscale);
+            Engine.blockDraw.setRotation(15, 90+45+fRot*GameMath.P_180_OVER_PI, 0);
+            Engine.blockDraw.drawBlock(block, renderData, this.sel.getStackdata());
+            rendered++;    
         }
         this.round = r;
         this.extendx = e;
@@ -190,16 +196,6 @@ public class GuiSelectBlock extends Gui {
             Shader.disable();
         }
         
-//        Tess.instance.setColor(2, 255);
-//        int x1 = this.width / 5*2;
-//        int x2 = this.width - x1;
-//        int y1 = this.height / 5*2;
-//        int y2 = this.height - y1;
-//        Tess.instance.add(x1, y2);
-//        Tess.instance.add(x2, y2);
-//        Tess.instance.add(x2, y1);
-//        Tess.instance.add(x1, y1);
-//        Tess.instance.draw(GL_QUADS);
         super.renderButtons(fTime, mX, mY);
 
     }

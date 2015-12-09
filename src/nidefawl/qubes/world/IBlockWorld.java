@@ -2,7 +2,8 @@
  * 
  */
 package nidefawl.qubes.world;
-
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 
 /**
@@ -73,5 +74,23 @@ public interface IBlockWorld {
     public BlockData getBlockData(int x, int y, int z);
 
     boolean setBlockData(int x, int y, int z, BlockData bd, int flags);
+
+    /**
+     * @param x
+     * @param z
+     * @return
+     */
+    public Biome getBiome(int x, int z);
+
+    /**
+     * @param x
+     * @param y
+     * @param z
+     * @param faceDir
+     * @param pass
+     * @param colorType
+     * @return
+     */
+    public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType);
 
 }

@@ -2,6 +2,8 @@ package nidefawl.qubes.world;
 
 import java.util.*;
 
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -13,6 +15,7 @@ import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public abstract class World implements IBlockWorld {
     public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;
@@ -32,6 +35,7 @@ public abstract class World implements IBlockWorld {
     private final UUID         uuid;
     private int                id;
     public IWorldSettings settings;
+    public IBiomeManager biomeManager;
     private final String name;
     public static final int    MAX_WORLDHEIGHT = 256;
 
@@ -372,6 +376,15 @@ public abstract class World implements IBlockWorld {
         return c.getLight(i & Chunk.MASK, j, k & Chunk.MASK);
     }
 
+
+    @Override
+    public Biome getBiome(int i, int k) {
+        Chunk c = getChunk(i >> Chunk.SIZE_BITS, k >> Chunk.SIZE_BITS);
+        if (c == null)
+            return Biome.MEADOW_GREEN;
+        return c.getBiome(i & Chunk.MASK, k & Chunk.MASK);
+    }
+
     public void flagChunkLightUpdate(int x, int z) {
     }
     
@@ -402,4 +415,10 @@ public abstract class World implements IBlockWorld {
     public abstract Entity getEntity(int entId);
 
     public abstract List<Entity> getEntityList();
+
+
+    @Override
+    public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
+        return this.biomeManager.getBiomeFaceColor(this, x, y, z, faceDir, pass, colorType);
+    }
 }

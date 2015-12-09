@@ -3,6 +3,7 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -26,7 +27,7 @@ public class BlockFlowerFMN extends BlockPlantCrossedSquares {
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
         if (multipass && pass != 1) {
-            return Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y, pass);    
+            return w.getBiomeFaceColor(x, y, z, faceDir, pass, (multipass && pass == 2)?BiomeColor.GRASS:BiomeColor.FOLIAGE);
         }
         return super.getFaceColor(w, x, y, z, faceDir, pass);
     }

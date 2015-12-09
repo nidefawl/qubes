@@ -9,8 +9,8 @@ package nidefawl.qubes.hex;
  */
 public class Point2F {
 
-	public final float x;
-	public final float y;
+	public float x;
+	public float y;
 
 	/**
 	 * 

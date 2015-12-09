@@ -79,7 +79,7 @@ public class ModelVox {
                             int c = this.palette.table[v-1];
 //                            System.out.println(Integer.toHew xString(c));
                             for (int i = 0; i < 4; i++) {
-                                attr.v[i].setColorRGBA(c);
+                                attr.v[i].setColorRGB(c);
                                 attr.v[i].setNoDirection();
                             }
                             attr.setType(1);

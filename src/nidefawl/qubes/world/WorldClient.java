@@ -8,6 +8,8 @@ import java.util.*;
 
 import com.google.common.collect.Lists;
 
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -20,6 +22,9 @@ import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
+import nidefawl.qubes.worldgen.biome.HexBiomesClient;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public class WorldClient extends World {
     float dayLightIntensity;
@@ -37,8 +42,7 @@ public class WorldClient extends World {
     HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
     ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
 
-
-    public WorldClient(WorldSettingsClient settings) {
+    public WorldClient(WorldSettingsClient settings, int worldType) {
         super(settings);
         this.sunModelView = new Matrix4f();
         this.moonModelView = new Matrix4f();
@@ -47,6 +51,19 @@ public class WorldClient extends World {
         this.lightPosition = new Vector3f();
         this.lightDirection = new Vector3f();
         this.tmp1 = new Vector3f();
+        this.biomeManager = createBiomeManager(worldType);
+    }
+
+
+    /**
+     * @param worldType
+     * @return
+     */
+    private IBiomeManager createBiomeManager(int worldType) {
+        if (worldType == 0) {
+            return new EmptyBiomeManager(this, this.settings.getSeed(), this.settings);
+        }
+        return new HexBiomesClient(this, this.settings.getSeed(), this.settings);
     }
 
 

@@ -329,4 +329,42 @@ public class TextureUtil {
         return (rgba&0xFF)/255.0f;
     }
 
+    public static int mixRGB(int rgb1, int rgb2, float f) {
+        int r=0,g=0,b=0;
+        float f1=1-f;
+        b += (rgb1&0xff)*f1;
+        b += (rgb2&0xff)*f;
+        rgb1>>=8; rgb2>>=8;
+        g += (rgb1&0xff)*f1;
+        g += (rgb2&0xff)*f;
+        rgb1>>=8; rgb2>>=8;
+        r += (rgb1&0xff)*f1;
+        r += (rgb2&0xff)*f;
+        r = r>255?255:r<0?0:r;
+        g = g>255?255:g<0?0:g;
+        b = b>255?255:b<0?0:b;
+        return r<<16|g<<8|b;
+    }
+    public static int mix3RGB(int rgb1, int rgb2, int rgb3) {
+        int r,g,b;
+        b = rgb1&0xff;
+        b += rgb2&0xff;
+        b += rgb3&0xff;
+        rgb1>>=8; rgb2>>=8; rgb3>>=8;
+        g = rgb1&0xff;
+        g += rgb2&0xff;
+        g += rgb3&0xff;
+        rgb1>>=8; rgb2>>=8; rgb3>>=8;
+        r = rgb1&0xff;
+        r += rgb2&0xff;
+        r += rgb3&0xff;
+        r/=3;
+        g/=3;
+        b/=3;
+        r = r>255?255:r<0?0:r;
+        g = g>255?255:g<0?0:g;
+        b = b>255?255:b<0?0:b;
+        return r<<16|g<<8|b;
+    }
+
 }

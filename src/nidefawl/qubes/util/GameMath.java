@@ -2,6 +2,7 @@ package nidefawl.qubes.util;
 
 import java.nio.FloatBuffer;
 
+import nidefawl.qubes.hex.HexCell;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Quaternion;
 
@@ -211,5 +212,22 @@ public class GameMath {
         }
         return base;
 
+    }
+    public final static double getAngle(double x1, double y1, double x2, double y2) {
+        double len1 = x1*x1+y1*y1;
+        if (len1>1E-8F) {
+            len1 = Math.sqrt(len1);
+            x1/=len1;
+            y1/=len1;
+        }
+        double len2 = x2*x2+y2*y2;
+        if (len2>1E-8F) {
+            len2 = Math.sqrt(len2);
+            x2/=len2;
+            y2/=len2;
+        }
+        double dot = x1*x2+y1*y2;
+        double cross = x1*y2-y1*x2;
+        return Math.atan2(cross, dot);
     }
 }

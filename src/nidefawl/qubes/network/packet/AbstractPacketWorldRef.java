@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public abstract class AbstractPacketWorldRef extends Packet {
 
-    private int worldID;
+    public int worldID;
 
     public AbstractPacketWorldRef() {
     }

@@ -16,6 +16,7 @@ import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.GameMath;
 
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept
@@ -26,6 +27,14 @@ public class SingleBlockDraw {
     private int      vboIndices;
     ReallocIntBuffer vboBuf;
     ReallocIntBuffer vboIdxBuf;
+    private BufferedMatrix modelMatrix;
+    private float x;
+    private float y;
+    private float z;
+    private float scale;
+    private float rotX;
+    private float rotY;
+    private float rotZ;
 
     /**
      * 
@@ -42,7 +51,9 @@ public class SingleBlockDraw {
         this.vboIndices = buff.get(1);
         this.vboBuf = new ReallocIntBuffer(1024);
         this.vboIdxBuf = new ReallocIntBuffer(1024);
+        this.modelMatrix = new BufferedMatrix();
     }
+
 
     /**
      * @param stackData 
@@ -50,6 +61,17 @@ public class SingleBlockDraw {
      * @param i
      */
     public void drawBlock(Block block, int data, StackData stackData) {
+        Shaders.singleblock.enable();
+        this.modelMatrix.setIdentity();
+//        System.out.println(this.x);
+        this.modelMatrix.translate(this.x, this.y, this.z);
+        this.modelMatrix.scale(this.scale*32);
+        this.modelMatrix.scale(1, -1, 1);
+        this.modelMatrix.rotate(this.rotX*GameMath.PI_OVER_180, 1,0,0);
+        this.modelMatrix.rotate(this.rotY*GameMath.PI_OVER_180, 0,1,0);
+        this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
+        this.modelMatrix.update();
+        Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
         int numInts = buffer.putIn(this.vboBuf);
 
@@ -81,5 +103,35 @@ public class SingleBlockDraw {
         MeshedRegion.disableVertexPtrs(ptrSetting);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
+
+    /**
+     * @param f
+     * @param g
+     */
+    public void setOffset(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    /**
+     * @param i
+     */
+    public void setScale(float scale) {
+        this.scale = scale;
+    }
+    public void reset() {
+        this.modelMatrix.setIdentity();
+        this.modelMatrix.update();
+    }
+    /**
+     * @param fRot
+     */
+    public void setRotation(float x, float y, float z) {
+        this.rotX = x;
+        this.rotY = y;
+        this.rotZ = z;
+    }
+
 
 }

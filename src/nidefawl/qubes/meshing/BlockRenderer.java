@@ -8,12 +8,17 @@ import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCKS_MAS
 import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MASK;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.SingleBlockWorld;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 
@@ -160,7 +165,7 @@ public class BlockRenderer {
             switch (renderType) {
                 case 0: {
                     setDefaultBounds();
-                    n += renderBlock(block, ix, iy, iz, block.getLODPass()); //Normal block with default bounds 
+                    n += renderBlock(block, ix, iy, iz, pass, block.getLODPass()); //Normal block with default bounds 
                     break;
                 }
                 case 1:
@@ -168,20 +173,20 @@ public class BlockRenderer {
                     break;
                 case 2: {
                     setBlockBounds(block, ix, iy, iz);
-                    n += renderBlock(block, ix, iy, iz, block.getLODPass()); //Normal block with custom bounds 
+                    n += renderBlock(block, ix, iy, iz, pass, block.getLODPass()); //Normal block with custom bounds 
                     break;
                 }
                 case 3:
                     n += renderSlicedFaces((BlockSliced) block, ix, iy, iz);
                     break;
                 case 4:
-                    n += renderVines(block, ix, iy, iz);
+                    n += renderVines(block, ix, iy, iz, pass);
                     break;
                 case 5:
-                    n += renderFence(block, ix, iy, iz);
+                    n += renderFence(block, ix, iy, iz, pass);
                     break;
                 case 6:
-                    n += renderWall(block, ix, iy, iz);
+                    n += renderWall(block, ix, iy, iz, pass);
                     break;
                 case 7:
                     n += renderDoublePlant(block, ix, iy, iz, pass);
@@ -190,10 +195,10 @@ public class BlockRenderer {
                     n += renderTorch(block, ix, iy, iz);
                     break;
                 case 9:
-                    n += renderPane(block, ix, iy, iz);
+                    n += renderPane(block, ix, iy, iz, pass);
                     break;
                 case 11:
-                    n += renderPlantFlat(block, ix, iy, iz);
+                    n += renderPlantFlat(block, ix, iy, iz, pass);
                     break;
             }
         }
@@ -203,7 +208,7 @@ public class BlockRenderer {
     protected int setPaneConnections(IBlockWorld w, int ix, int iy, int iz, int[] b) {
         return BlockPane.setPaneConnections(w, ix, iy, iz, paneDir);
     }
-    private int renderPane(Block block, int ix, int iy, int iz) {
+    private int renderPane(Block block, int ix, int iy, int iz, int texturepass) {
         int f = 0;
         int targetBuffer = block.getLODPass();
         int tex = block.getTextureByIdx(1);
@@ -225,15 +230,15 @@ public class BlockRenderer {
         int yp = paneDir[Dir.DIR_POS_Y];
         int yn = paneDir[Dir.DIR_NEG_Y];
         int axis = 1;
-        BlockSurface yTopSurface = getSingleBlockSurface(block, ix, iy-1, iz, axis, 0, false, this.qSurfacesS[0]);
-        BlockSurface yBottomSurface = getSingleBlockSurface(block, ix, iy+1, iz, axis, 1, false, this.qSurfacesS[1]);
+        BlockSurface yTopSurface = getSingleBlockSurface(block, ix, iy-1, iz, axis, 0, false, this.qSurfacesS[0], texturepass);
+        BlockSurface yBottomSurface = getSingleBlockSurface(block, ix, iy+1, iz, axis, 1, false, this.qSurfacesS[1], texturepass);
         float o = 1 / 64f;
         float o2 = 1 / 16f;
         if (zp || zn) {
             this.attr.setOffset(0.5f, 0, 0);
             int faceDir = 0 << 1 | 1;
-            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, 0, 1, false, this.bs);
-            setFaceColor(block, ix, iy, iz, faceDir, surface);
+            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, 0, 1, false, this.bs, texturepass);
+            setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
             setDefaultBounds();
             if (!zn) {
                 this.bb.minZ = 0.5f;
@@ -251,7 +256,7 @@ public class BlockRenderer {
 
             //
             if (yp < 2) {
-                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 0, yTopSurface, tex);
+                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 0, yTopSurface, tex, texturepass);
                 renderYPos(block, ix, iy - o*yp, iz);
                 putBuffer(block, targetBuffer);
                 flipFace();
@@ -259,7 +264,7 @@ public class BlockRenderer {
             }
             //  
             if (yn < 2) {
-                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 1, yBottomSurface, tex);
+                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 1, yBottomSurface, tex, texturepass);
                 renderYNeg(block, ix, iy + o*yn, iz);
                 putBuffer(block, targetBuffer);
                 flipFace();
@@ -277,8 +282,8 @@ public class BlockRenderer {
         if (xp || xn) {
             this.attr.setOffset(0, 0, 0.5f);
             int faceDir = 2 << 1 | 1;
-            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, 2, 1, false, this.bs);
-            setFaceColor(block, ix, iy, iz, faceDir, surface);
+            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, 2, 1, false, this.bs, texturepass);
+            setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
             setDefaultBounds();
             if (!xn) {
                 this.bb.minX = 0.5f;
@@ -295,7 +300,7 @@ public class BlockRenderer {
             this.bb.maxZ = 0.5f+o2;
             if (yp < 2) {
                 float zOff = xn ? 0.5f : 0;
-                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 0, yTopSurface, tex);
+                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 0, yTopSurface, tex, texturepass);
                 renderYPos(block, ix, iy - o*yp, iz);
                 attr.rotateUV(3);
                 attr.v[0].setUV(this.bb.minZ, zOff);
@@ -308,7 +313,7 @@ public class BlockRenderer {
             }
             if (yn < 2) {
                 float zOff = xn ? 0.5f : 0;
-                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 1, yBottomSurface, tex);
+                setFaceColorTexture(block, ix, iy, iz, axis << 1 | 1, yBottomSurface, tex, texturepass);
                 renderYNeg(block, ix, iy + o*yn, iz);
                 attr.rotateUV(3);
                 attr.v[0].setUV(this.bb.minZ, zOff);
@@ -450,7 +455,7 @@ public class BlockRenderer {
     protected int setWallConnections(IBlockWorld w, int ix, int iy, int iz, boolean[] b) {
         return BlockWall.setWallConnections(w, ix, iy, iz, wallDir);
     }
-    protected int renderWall(Block block, int ix, int iy, int iz) {
+    protected int renderWall(Block block, int ix, int iy, int iz, int texturepass) {
         int f = 0;
         int targetBuffer = block.getLODPass();
         int n = setWallConnections(this.w, ix, iy, iz, wallDir);
@@ -478,7 +483,7 @@ public class BlockRenderer {
         }
         if (hasPost) {
             this.bb.set(postStart, 0, postStart, postEnd, 1, postEnd);
-            f += renderBlock(block, ix, iy, iz, targetBuffer);
+            f += renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
         } 
 
         this.bb.minY = 0;
@@ -487,7 +492,7 @@ public class BlockRenderer {
             this.bb.set(
                     fenceWStart*dir,         0,            fenceWStart*(1-dir), 
                     fenceWEnd*dir+(1-dir), this.bb.maxY, fenceWEnd*(1-dir)+dir );
-            f += renderBlock(block, ix, iy, iz, targetBuffer);
+            f += renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
         }
         for (int i = 0; hasPost && i < 6; i++) {
             if (wallDir[i]) {
@@ -524,7 +529,7 @@ public class BlockRenderer {
                         this.bb.maxX = fenceWEnd;
                         break;
                 }
-                f += renderBlock(block, ix, iy, iz, targetBuffer);
+                f += renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
             }
         }
         return f;
@@ -537,9 +542,10 @@ public class BlockRenderer {
      * @param ix
      * @param iy
      * @param iz
+     * @param texturepass 
      * @return
      */
-    protected int renderFence(Block block, int ix, int iy, int iz) {
+    protected int renderFence(Block block, int ix, int iy, int iz, int texturepass) {
         int f = 0;
         int targetBuffer = block.getLODPass();
         int n = setFenceConnections(this.w, ix, iy, iz, fenceDir);
@@ -552,7 +558,7 @@ public class BlockRenderer {
         float fenceWStart = (16-fenceWPx)/32F;
         float fenceWEnd = 1-fenceWStart;
         this.bb.set(postStart, 0, postStart, postEnd, 1, postEnd);
-        f += renderBlock(block, ix, iy, iz, targetBuffer);
+        f += renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
         
         for (int i = 0; i < 4; i++) {
             if (fenceDir[i]) {
@@ -588,9 +594,9 @@ public class BlockRenderer {
                         this.bb.maxX = fenceWEnd;
                         break;
                 }
-                f += renderBlock(block, ix, iy, iz, targetBuffer);
+                f += renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
                 this.bb.offset(0, -6/16f, 0);
-                f += renderBlock(block, ix, iy, iz, targetBuffer);
+                f += renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
             }
         }
         
@@ -602,9 +608,10 @@ public class BlockRenderer {
      * @param ix
      * @param iy
      * @param iz
+     * @param texturepass 
      * @return
      */
-    protected int renderVines(Block block, int ix, int iy, int iz) {
+    protected int renderVines(Block block, int ix, int iy, int iz, int texturepass) {
         int f = 0;
         int targetBuffer = block.getLODPass();
         setBlockBounds(block, ix, iy, iz);
@@ -642,10 +649,13 @@ public class BlockRenderer {
                         axis = 0; side = 1;
                         break;
                 }
-                BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, this.bs);
-                setFaceColor(block, ix, iy, iz, axis<<1|side, surface);
+                BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, this.bs, texturepass);
+                setFaceColor(block, ix, iy, iz, axis<<1|side, surface, texturepass);
                 f+= renderFace(block, axis<<1|side, ix, iy, iz, targetBuffer);
                 flipFace();
+                attr.setPass(3);
+                attr.flipNormal();
+//                attr.setNormal(-attr.v0.normal[0], -attr.normal[1], -attr.normal[2]);
                 putBuffer(block, targetBuffer);
                 f++;
             }
@@ -657,8 +667,8 @@ public class BlockRenderer {
             axis = 1; side = 1;
             this.bb.set(0, 1-thickness, 0, 1, 1, 1);
             this.bb.offset(0, -minOffset, 0);
-            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, this.bs);
-            setFaceColor(block, ix, iy, iz, axis<<1|side, surface);
+            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, this.bs, texturepass);
+            setFaceColor(block, ix, iy, iz, axis<<1|side, surface, texturepass);
             f+= renderFace(block, axis<<1|side, ix, iy, iz, targetBuffer);
 //            flipFace();
 //            putBuffer(block, targetBuffer);
@@ -838,16 +848,26 @@ public class BlockRenderer {
                             if (!Block.get(nAdjId).isTransparent()) {
                                 continue;
                             }
-                            if (qSurfaces[n] == null) {
-                                qSurfaces[n] = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, qSurfacesS[n]);
+                            if (qSurfaces[n] == null) {//STILL REQUIRED?!
+                                qSurfaces[n] = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, qSurfacesS[n], 0);
+
                             }
                             Block textureBlock = block;
                             if (textureBlock instanceof BlockQuarterBlock) {
                                 textureBlock = Block.get(quarters[q]);
                             }
-                            int tex = textureBlock.getTexture(n, w.getData(ix, iy, iz), 0);
-                            setFaceColorTexture(block, ix, iy, iz, n, qSurfaces[n], tex);
-                            f += renderFace(block, n, ix, iy, iz, targetBuffer);
+
+                            int nSubTexturePasses = textureBlock.getTexturePasses();
+                            for (int texPass = 0; texPass < nSubTexturePasses; texPass++) {
+                
+                                //TODO: figure out how to get cached getSingleBlockSurface for multipass textures
+                                if (textureBlock.skipTexturePassSide(axis, side, texPass)) {
+                                    continue;
+                                }
+                                int tex = textureBlock.getTexture(n, w.getData(ix, iy, iz), texPass);
+                                setFaceColorTexture(textureBlock, ix, iy, iz, n, qSurfaces[n], tex, texPass);
+                                f += renderFace(block, n, ix, iy, iz, targetBuffer);
+                            }
                         }
                     }
                 }
@@ -857,12 +877,12 @@ public class BlockRenderer {
         extendFaces = true;
         return f;
     }
-    private int renderPlantFlat(Block block, int ix, int iy, int iz) {
+    private int renderPlantFlat(Block block, int ix, int iy, int iz, int texturepass) {
         int targetBuffer = block.getLODPass();
         int f = 0;
         this.bb.set(0, 0, 0, 1, 0.05f, 1);
-        BlockSurface top = getSingleBlockSurface(block, ix, iy, iz, 1, 0, false, bs);
-        setFaceColor(block, ix, iy, iz, 1<<1|0, top);
+        BlockSurface top = getSingleBlockSurface(block, ix, iy, iz, 1, 0, false, bs, texturepass);
+        setFaceColor(block, ix, iy, iz, 1<<1|0, top, texturepass);
         final long multiplier = 0x5DEECE66DL;
         final long addend = 0xBL;
         final long mask = (1L << 48) - 1;
@@ -881,10 +901,10 @@ public class BlockRenderer {
         return f;
     }
 
-    protected int renderBlock(Block block, int ix, int iy, int iz, int targetBuffer) {
+    protected int renderBlock(Block block, int ix, int iy, int iz, int texturepass, int targetBuffer) {
         int f = 0;
         for (int n = 0; n < 6; n++) {
-            f += getAndRenderBlockFace(block, ix, iy, iz, n/2, n%2, targetBuffer);
+            f += getAndRenderBlockFace(block, ix, iy, iz, n/2, n%2, texturepass, targetBuffer);
         }
         return f;
     }
@@ -900,16 +920,10 @@ public class BlockRenderer {
         attr.setReverse((side&1)!=0);
     }
 
-    protected void setFaceColorTexture(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs, int tex) {
-        float m = 1F;
+    protected void setFaceColorTexture(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs, int tex, int texturepass) {
+
         float alpha = block.getAlpha();
-        int pass = 0;
-        int c = block.getFaceColor(w, ix, iy, iz, faceDir, pass);
-        float b = (c & 0xFF) / 255F;
-        c >>= 8;
-        float g = (c & 0xFF) / 255F;
-        c >>= 8;
-        float r = (c & 0xFF) / 255F;
+        int rgb = block.getFaceColor(w, ix, iy, iz, faceDir, texturepass);
         attr.setTex(tex);
         attr.setFaceDir(faceDir);
         attr.setReverse((bs.face&1)!=0);
@@ -917,7 +931,7 @@ public class BlockRenderer {
         attr.setLight(bs.maskedLightSky, bs.maskedLightBlock);
         attr.setType(bs.type);
         for (int v = 0; v < 4; v++) {
-            attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
+            attr.v[v].setColorRGBA(rgb, alpha);
 //            if (extendFaces) {
 //                int idx = v;
 //                if (faceDir/2>0) {
@@ -931,9 +945,9 @@ public class BlockRenderer {
         }
         
     }
-    protected void setFaceColor(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs) {
-        int tex = block.getTexture(faceDir, w.getData(ix, iy, iz), 0);
-        setFaceColorTexture(block, ix, iy, iz, faceDir, bs, tex);
+    protected void setFaceColor(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs, int texturepass) {
+        int tex = block.getTexture(faceDir, w.getData(ix, iy, iz), texturepass);
+        setFaceColorTexture(block, ix, iy, iz, faceDir, bs, tex, texturepass);
     }
 
     /**
@@ -949,18 +963,21 @@ public class BlockRenderer {
         }
     }
 
-    protected int getAndRenderBlockFace(Block block, int ix, int iy, int iz, int axis, int side, int targetBuffer) {
-        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs);
+    protected int getAndRenderBlockFace(Block block, int ix, int iy, int iz, int axis, int side, int texturepass, int targetBuffer) {
+        BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs, texturepass);
         if (surface != null) {
             int faceDir = axis<<1|side;
-            setFaceColor(block, ix, iy, iz, faceDir, surface);
+            setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
             return renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
         }
         return 0;
     }
     
     //TODO: cache this by ix,iy,iz,axis,side (for stairs)
-    protected BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side, boolean checkVisibility, BlockSurface out) {
+    protected BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side, boolean checkVisibility, BlockSurface out, int texturepass) {
+        if (block.skipTexturePassSide(axis, side, texturepass)) {
+            return null;
+        }
         if (checkVisibility) {
             int offx = axis == 0 ? 1-side*2 : 0;
             int offy = axis == 1 ? 1-side*2 : 0;
@@ -983,7 +1000,11 @@ public class BlockRenderer {
         out.extraFace = false;
         out.calcLight = true;
         out.isLeaves = false;
-        out.calcAO(this.w);
+        if (w instanceof SingleBlockWorld) {
+            out.maskedAO=BlockSurface.maskAO(2, 2, 2, 2);
+        } else {
+            out.calcAO(this.w);
+        }
         return out;
     }
 
@@ -999,21 +1020,18 @@ public class BlockRenderer {
         return renderPlant(block, ix, iy, iz, pass);
     }
     
+    Vector3f plantNormal = new Vector3f();
     int renderPlant(Block block, int ix, int iy, int iz, int pass) {
         int targetBuffer = block.getLODPass();
         int brigthness = this.w.getLight(ix, iy, iz);
-        float m = 1F;
         float alpha = block.getAlpha();
-        int c = block.getFaceColor(w, ix, iy, iz, Dir.DIR_POS_Y, pass);
-        float b = (c & 0xFF) / 255F;
-        c >>= 8;
-        float g = (c & 0xFF) / 255F;
-        c >>= 8;
-        float r = (c & 0xFF) / 255F;
-
-        int tex = block.getTexture(Dir.DIR_POS_Y, this.w.getData(ix, iy, iz), pass);
-        
-        attr.setAO(0);
+        int data = this.w.getData(ix, iy, iz);
+        int tex = block.getTexture(Dir.DIR_POS_Y, data, pass);
+        boolean isDoublePlant = block instanceof BlockDoublePlant;
+        boolean bendNormal = !(block instanceof BlockDoublePlant) || (data&0x8) != 0;
+        int topAO = !bendNormal?2:1;
+        int bottomAO = !bendNormal?2:2;
+        attr.setAO(maskAO(bottomAO,bottomAO,topAO,topAO));
         attr.setTex(tex);
         attr.setFaceDir(Dir.DIR_POS_Y);
 
@@ -1041,13 +1059,14 @@ public class BlockRenderer {
         float w = 1f;
         float rot = 0.25f;
         int num = 2;
-        if (block instanceof BlockPlantCrossedSquares && ((BlockPlantCrossedSquares)block).applyRandomOffset()) {
-            int rotBits = 2;
+        if (isDoublePlant|| (block instanceof BlockPlantCrossedSquares && ((BlockPlantCrossedSquares)block).applyRandomOffset())) {
+            int rotBits = isDoublePlant?4:2;
             
             final long multiplier = 0x5DEECE66DL;
             final long addend = 0xBL;
             final long mask = (1L << 48) - 1;
-            long seed = (ix * 5591 + iy * 19 + iz * 7919);
+            int ySeed = isDoublePlant?88:iy;
+            long seed = (ix * 5591 + ySeed * 19 + iz * 7919);
             long iR = ((multiplier * seed + addend) & mask);
             float fR = 0.6F;
             int n = 12;
@@ -1066,6 +1085,7 @@ public class BlockRenderer {
             num+=nBits;
             int hBits = (int) ((iR>>22)&0x3);
             float fh = hBits / 3.0f;
+            if (!isDoublePlant)
             h = 0.5f+ fh*0.3f;
         }
         if (block.getTexturePasses() > 1) {
@@ -1074,6 +1094,9 @@ public class BlockRenderer {
             if (pass == 0 && block.getTexturePasses() > 1)
                 num = 4;
         }
+
+//        int rgb2 = Biome.MEADOW_GREEN.getFaceColor(BiomeColor.FOLIAGE2);
+        int rgb2 = this.w.getBiomeFaceColor(ix, iy, iz, Dir.DIR_POS_Y, pass, BiomeColor.FOLIAGE2);
         float incr = 1/(float)num;
         for (int i = 0; i < num; i++) {
 
@@ -1084,10 +1107,28 @@ public class BlockRenderer {
 
             float sideOffset = 1 - w;
             float sideTexOffset = 1 - Math.min(1, w);
+            int rgb = block.getFaceColor(this.w, ix, iy, iz, i, pass);
             for (int v = 0; v < 4; v++) {
-                attr.v[v].setColorRGBAF(b * m, g * m, r * m, alpha);
+                attr.v[v].setColorRGB(rgb);
                 attr.v[v].setFaceVertDir(0);
                 attr.v[v].setNoDirection();
+            }
+            if (isDoublePlant) {
+                {
+                    int rgb3 = TextureUtil.mixRGB(rgb, rgb2, bendNormal ? 0.8f : 0.4f);
+                    attr.v2.setColorRGB(rgb3);
+                    attr.v1.setColorRGB(rgb3);
+                }
+                if (bendNormal)
+                {
+                    int rgb3 = TextureUtil.mixRGB(rgb, rgb2, 0.4f);
+                    attr.v3.setColorRGB(rgb3);
+                    attr.v0.setColorRGB(rgb3);
+                }
+            } else if ((rgb&0xFFFFFF) != 0xFFFFFF) {
+                int rgb3 = TextureUtil.mixRGB(rgb, rgb2, 0.8f);
+                attr.v1.setColorRGB(rgb3);
+                attr.v2.setColorRGB(rgb3);
             }
             sideOffset  = 0;
             sideTexOffset = 0;
@@ -1114,24 +1155,48 @@ public class BlockRenderer {
             
             
             attr.setReverse(false);
-            float nup=0.9f;
-            float nside=0.3f;
-            float ny=nup;
-            {
-                float nx=nside;
-                float nz=-nside;
-                attr.v1.setNormal(nx, ny, nz); // set upward normal
-                attr.v2.setNormal(nx, ny, nz); // set upward normal
+            
+            if (bendNormal) {
+                attr.calcNormal(plantNormal);
+                plantNormal.y+=0.2f;
+                plantNormal.normalise();
+                int normal = attr.packNormal(plantNormal);
+                for (int j = 0; j < 4; j++) {
+                    attr.v1.normal = normal;
+                    attr.v2.normal = normal;
+                }
+            }
+            attr.v1.setPass(6);
+            attr.v2.setPass(6);
+            if (bendNormal && isDoublePlant) {
+                attr.v1.setPass(7);
+                attr.v2.setPass(7);
+                attr.v0.setPass(6);
+                attr.v3.setPass(6);
             }
             
             putBuffer(block, targetBuffer);
-            
             attr.setReverse(true);
-            {
-                float nx=-nside;
-                float nz=nside;
-                attr.v1.setNormal(nx, ny, nz); // set upward normal
-                attr.v2.setNormal(nx, ny, nz); // set upward normal
+            if (bendNormal) {
+
+                attr.calcNormal(plantNormal);
+                plantNormal.y+=0.2f;
+                plantNormal.normalise();
+
+                int normal = attr.calcNormal();
+                 for (int j = 0; j < 4; j++) {
+                     attr.v1.normal = normal;
+                     attr.v2.normal = normal;
+                 }
+                
+            }
+            attr.v1.setPass(6);
+            attr.v2.setPass(6);
+            if (bendNormal && isDoublePlant) {
+                attr.v1.setPass(7);
+                attr.v2.setPass(7);
+                attr.v0.setPass(6);
+                attr.v3.setPass(6);
             }
             
 

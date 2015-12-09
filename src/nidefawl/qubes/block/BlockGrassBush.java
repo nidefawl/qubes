@@ -3,6 +3,7 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.vec.Dir;
@@ -12,12 +13,12 @@ import nidefawl.qubes.world.IBlockWorld;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class BlockLongGrass extends BlockPlantCrossedSquares {
+public class BlockGrassBush extends BlockPlantCrossedSquares {
 
     /**
      * @param id
      */
-    public BlockLongGrass(int id) {
+    public BlockGrassBush(int id) {
         super(id);
     }
 
@@ -31,8 +32,10 @@ public class BlockLongGrass extends BlockPlantCrossedSquares {
     }
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
-        int rgb = Block.grass.getFaceColor(w, x, y, z, Dir.DIR_POS_Y, pass);
-//        System.out.printf("vec3(%.3f, %.3f, %.3f)\n", TextureUtil.getR(rgb), TextureUtil.getG(rgb), TextureUtil.getB(rgb));
-        return rgb;
+        return w.getBiomeFaceColor(x, y, z, Dir.DIR_POS_Y, pass, faceDir%2==0?BiomeColor.FOLIAGE:BiomeColor.GRASS);
+    }
+    
+    public boolean isWaving() {
+        return true;
     }
 }

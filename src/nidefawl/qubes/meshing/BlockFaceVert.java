@@ -17,6 +17,7 @@ public class BlockFaceVert {
     int dirOffset;
     int normal;
     int direction;
+    public int pass;
     
 
     public void setColorRGBAF(float r, float g, float b, float a) {
@@ -25,17 +26,16 @@ public class BlockFaceVert {
         int iG = (int) (g * scale);
         int iB = (int) (b * scale);
         int iA = (int) (a * 255.0F);
-        int rgb;
-        if (!littleEndian) {
-            rgb = iB << 16 | iG << 8 | iR;
-        } else {
-            rgb = iR << 16 | iG << 8 | iB;
-        }
-        rgba = rgb | iA << 24;
+        rgba = iA << 24 | iB << 16 | iG << 8 | iR;
     }
 
-    public void setColorRGBA(int a) {
-        rgba = a;
+    public void setColorRGBA(int rgb, float a) {
+        int iA = (int) (a * 255.0F);
+        rgba = iA << 24|Integer.reverseBytes(rgb)>>8;
+    }
+
+    public void setColorRGB(int a) {
+        rgba = 0xFF000000|Integer.reverseBytes(a)>>8;
     }
 
     public void setUV(float u, float v) {
@@ -76,5 +76,22 @@ public class BlockFaceVert {
         byte byte2 = (byte)(int)(z * 127F);
         int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
         this.normal = normal;
+    }
+
+    /**
+     * @param i
+     */
+    public void setPass(int i) {
+        this.pass = i;
+    }
+
+    /**
+     * 
+     */
+    public void flipNormal() {
+        float bx = ((byte) (this.normal&0xff))/127.0f;
+        float by = ((byte) ((this.normal>>8)&0xff))/127.0f;
+        float bz = ((byte) ((this.normal>>16)&0xff))/127.0f;
+        setNormal(-bx, -by, -bz);
     }
 }

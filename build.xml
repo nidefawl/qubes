@@ -97,8 +97,8 @@
 		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="compile/deps/snakeyaml.jar"/>
         <mkdir dir="compile/deps/natives"/>
     	<copy includeemptydirs="false" todir="compile/deps/natives">
-    		<fileset dir="C:/lwjgl3/libs">
-    			<include name="*.*"/>
+    		<fileset dir="lib/lwjgl_dbg">
+    			<include name="*.dll"/>
     		</fileset>
     	</copy>
     	<copy includeemptydirs="false" todir="compile/deps/natives">

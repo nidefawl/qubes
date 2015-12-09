@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.util;
 
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.vec.BlockPos;
@@ -21,6 +23,7 @@ public class SingleBlockWorld implements IBlockWorld {
     private int airData;
     private int light;
     BlockData bdata=null;
+    Biome biome = Biome.MEADOW_GREEN;
     
     public SingleBlockWorld() {
     }
@@ -113,6 +116,17 @@ public class SingleBlockWorld implements IBlockWorld {
     public boolean setBlockData(int x, int y, int z, BlockData bd, int flags){
         return false;
     }
-    
+
+    @Override
+    public Biome getBiome(int x, int z) {
+        return this.biome;
+    }
+
+
+
+    @Override
+    public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
+        return this.biome.getFaceColor(colorType);
+    }
 
 }

@@ -39,6 +39,7 @@ public abstract class Packet {
         register(PacketSEntityTrack.class, 22, true, false);
         register(PacketSEntityUnTrack.class, 23, true, false);
         register(PacketSEntityMove.class, 24, true, false);
+        register(PacketSWorldBiomes.class, 25, true, false);
     }
     public Packet() {
     }

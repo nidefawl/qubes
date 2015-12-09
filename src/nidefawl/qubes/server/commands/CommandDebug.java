@@ -1,10 +1,13 @@
 package nidefawl.qubes.server.commands;
 
+import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
+import nidefawl.qubes.worldgen.biome.HexBiome;
+import nidefawl.qubes.worldgen.biome.HexBiomesServer;
 
 public class CommandDebug extends Command {
 
@@ -23,6 +26,13 @@ public class CommandDebug extends Command {
                 case "pos":
                     Vec3D pos = ((Player)source).pos;
                     System.out.println(String.format("%.0f %.0f %.0f", pos.x, pos.y, pos.z));
+                    return;
+                case "setbiome":
+                     pos = ((Player)source).pos;
+                     WorldServer wserv = (WorldServer) ((Player)source).world;
+                     HexBiome grid = ((HexBiomesServer)wserv.biomeManager).blockToHex((int)pos.x, (int)pos.z);
+                     Biome b = Biome.get(Integer.parseInt(args[1]));
+                     grid.biome = b;
                     return;
                 case "tp":
                 {

@@ -7,21 +7,22 @@
 #pragma include "blockinfo.glsl"
 
 uniform vec3 in_offset;
+uniform mat4 in_modelMatrix;
 uniform float in_scale;
 
 out vec4 color;
 out vec4 texcoord;
 out vec3 normal;
-out vec4 position;
 flat out uvec4 blockinfo;
-// flat out vec4 faceAO;
-// flat out vec4 faceLight;
-// flat out vec4 faceLightSky;
-out float blockside;
+out float Idiff;
 out vec2 texPos;
 
 
 #define MAX_AO 3.0
+
+const vec3 lightPos1 = normalize(vec3(1.2, 1.2, 0));
+const vec3 lightPos2 = normalize(vec3(0, 0.6, -1.2));
+
 
 const vec4 aoLevels = normalize(vec4(0, 0.2, 0.4, 0.6));
 #define LIGHT_MASK 0xFu
@@ -37,9 +38,14 @@ const vec4 aoLevels = normalize(vec4(0, 0.2, 0.4, 0.6));
 // #define BR_3 1.0f
 float blocksidebrightness[6] = float[6](BR_2, BR_2, BR_3, BR_0, BR_1, BR_1);
 void main() {
-	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
-	camNormal.xyz/=camNormal.w;
+
+
+
+	mat4 normalMat = transpose(inverse(in_modelMatrix));
+	vec4 camNormal = normalMat * vec4(in_normal.xyz, 1);
 	normal = normalize(camNormal.xyz);
+	vec4 lightPos1V = vec4(lightPos1, 1);
+	vec4 lightPos2V = vec4(lightPos2, 1);
 	color = in_color;
 	blockinfo = in_blockinfo;
 
@@ -48,9 +54,15 @@ void main() {
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 	float distCam = length(in_position.xyz - CAMERA_POS);
 
-	uint faceDir = BLOCK_FACEDIR(blockinfo);
+	// uint faceDir = BLOCK_FACEDIR(blockinfo);
 	uint vertDir = BLOCK_VERTDIR(blockinfo);
 	vec3 dir = vertexDir.dir[vertDir].xyz;
+
+	vec3 L1 = -normalize(lightPos1V.xyz);
+	vec3 L2 = -normalize(lightPos2V.xyz);
+	Idiff = max(dot(normal,L1), 0.03)*1.3;
+	Idiff+= max(dot(normal,L2), 0.03)*0.7;
+
 
 	const float face_offset = 1/32.0;
 	float distScale = face_offset*clamp(pow((distCam+8)/200, 1.35), 0.0008, 1);
@@ -59,17 +71,8 @@ void main() {
 	pos.z += dir.z*distScale;
 	// pos.xyz *= 1/32.0;
 
-	blockside = blocksidebrightness[faceDir];
 
-	
-
-	position = pos;
-	vec4 outpos = in_matrix_2D.mvp3DOrtho * pos;
-	vec2 off = in_offset.xy/in_scene.viewport.xy*2;
-	off.x -= 1;
-	off.y -= 1;
-	outpos.xyz *= in_scale;
-	outpos.x += off.x;
-	outpos.y -= off.y;
+	vec4 position = in_matrix_2D.mv3DOrtho * in_modelMatrix * pos;
+	vec4 outpos = in_matrix_2D.p3DOrtho * position;
 	gl_Position = outpos;
 }

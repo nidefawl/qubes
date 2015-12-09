@@ -3,8 +3,10 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.BiomeColor;
+import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.texture.ColorMap;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.*;
@@ -50,7 +52,6 @@ public class BlockVine extends Block {
         int side = offset & 1;
         int rotdata = 0;
         if (axis == 1) {
-
             int rot = blockPlacer.getPlayer().getLookDir();
             switch (rot) {
                 case Dir.DIR_NEG_X:
@@ -170,6 +171,16 @@ public class BlockVine extends Block {
 
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
-        return ColorMap.foliage.get(0.8, 0.4);
+        return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.FOLIAGE);
+    }
+    
+    public int getInvRenderData(Stack stack) {
+        return 4;
+    }
+    /**
+     * @return
+     */
+    public float getInvRenderRotation() {
+        return GameMath.PI_OVER_180*45;
     }
 }

@@ -4,19 +4,42 @@
 package nidefawl.qubes.worldgen.biome;
 
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.world.WorldServer;
-import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.biome.BiomeColor;
+import nidefawl.qubes.network.packet.PacketSWorldBiomes;
+import nidefawl.qubes.world.*;
 
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
 public class EmptyBiomeManager implements IBiomeManager {
-    public EmptyBiomeManager(WorldServer world, long seed, WorldSettings settings) {
+    public EmptyBiomeManager(World world, long seed, IWorldSettings settings) {
     }
 
     @Override
     public Biome getBiome(int x, int z) {
-        return Biome.BIOME1;
+        return Biome.MEADOW_GREEN;
+    }
+
+    @Override
+    public int getWorldType() {
+        return 0;
+    }
+
+    @Override
+    public int getBiomeFaceColor(World world, int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
+        return Biome.MEADOW_GREEN.getFaceColor(colorType);
+    }
+
+    @Override
+    public PacketSWorldBiomes getPacket() {
+        return null;
+    }
+    @Override
+    public void recvData(PacketSWorldBiomes packetSWorldBiomes) {
+    }
+
+    @Override
+    public void sendChanges() {
     }
 }

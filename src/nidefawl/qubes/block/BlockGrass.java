@@ -1,8 +1,8 @@
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.texture.ColorMap;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
 
@@ -15,11 +15,15 @@ public class BlockGrass extends Block {
     
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
-        return ColorMap.grass.get(0.8, 0.4);
+        if (pass < 0 || pass == 1 || faceDir == Dir.DIR_POS_Y) 
+            return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.GRASS);
+        return -1;
     }
 
     public int getTexture(int faceDir, int dataVal, int pass) {
-        
+        if (pass == 1) {
+            return BlockTextureArray.getInstance().getTextureIdx(this.id, 2);
+        }
         int idx = 0;
         if (faceDir == Dir.DIR_NEG_Y) {
             return BlockTextureArray.getInstance().getTextureIdx(Block.dirt.id, 0);
@@ -30,5 +34,13 @@ public class BlockGrass extends Block {
     }
     public int getMeshedColor(BlockSurface bs) {
         return bs.axis==1&&bs.face==0?bs.faceColor:-1;
+    }
+
+    public int getTexturePasses() {
+        return 2;
+    }
+    
+    public boolean skipTexturePassSide(int axis, int side, int texPass) {
+        return texPass == 1 && axis == 1;
     }
 }

@@ -28,8 +28,7 @@ void main() {
 	normal = normalize(camNormal.xyz);
 	texcoord = in_texcoord;
 
-    isWater = float(blockid==4u);
-
+    isWater = IS_WATER(blockid);
 
 	color = in_color;
 

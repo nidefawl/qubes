@@ -26,6 +26,7 @@ import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldSettingsClient;
+import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public class ClientHandler extends Handler {
 
@@ -150,7 +151,8 @@ public class ClientHandler extends Handler {
         }
         this.state = STATE_CONNECTED;
         this.time = System.currentTimeMillis();
-        this.world = new WorldClient((WorldSettingsClient) packetJoinGame.worldSettings);
+        int worldType = packetJoinGame.worldType;
+        this.world = new WorldClient((WorldSettingsClient) packetJoinGame.worldSettings, worldType);
         this.chunkManager = (ChunkManagerClient) this.world.getChunkManager();
         this.player.setFly((packetJoinGame.flags & 0x1) != 0);
         this.player.id = packetJoinGame.entId;
@@ -207,6 +209,10 @@ public class ClientHandler extends Handler {
                 System.arraycopy(decompressed, offset, light, 0, light.length);
                 offset += light.length;
             }
+            byte[] biomes = c.biomes;
+            System.arraycopy(decompressed, offset, biomes, 0, biomes.length);
+            offset += biomes.length;
+            
             int heightSlices = 0;
             heightSlices |= decompressed[offset+0]&0xFF;
             heightSlices |= (decompressed[offset+1]&0xFF)<<8;
@@ -398,5 +404,11 @@ public class ClientHandler extends Handler {
                 e.yawBodyOffset = p.yawBodyOffset;
             }
         }
+    }
+    
+    @Override
+    public void handleWorldBiomes(PacketSWorldBiomes packetSWorldBiomes) {
+        IBiomeManager mgr = this.world.biomeManager;
+        mgr.recvData(packetSWorldBiomes);
     }
 }

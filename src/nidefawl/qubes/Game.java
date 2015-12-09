@@ -89,6 +89,9 @@ public class Game extends GameBase implements IErrorHandler {
     private TesselatorState debugChunks;
     static boolean showGrid=false;
     public boolean thirdPerson = true;
+    boolean reinittexthook = false;
+    boolean wasGrabbed = false;
+    public String serverAddr;
 
     public void connectTo(String host) {
         try {
@@ -98,6 +101,8 @@ public class Game extends GameBase implements IErrorHandler {
                 port = StringUtil.parseInt(split[1], port);
             }
             host = split[0];
+            if (port >= 65535)
+                port = 21087;
             connect = new ThreadConnect(host, port);
             connect.startThread();
             showGUI(new GuiConnecting(connect));
@@ -274,7 +279,7 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F4) {
             public void onDown() {
-                toggleTestMode();
+//                toggleTestMode();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F) {
@@ -294,11 +299,11 @@ public class Game extends GameBase implements IErrorHandler {
 //              }
                 lastShaderLoadTime = System.currentTimeMillis();
                 thirdPerson = !thirdPerson;
-//                Shaders.initShaders();
-//                Engine.worldRenderer.initShaders();
-////                Engine.worldRenderer.reloadModel();
-////                  Engine.regionRenderer.initShaders();
-////                  Engine.shadowRenderer.initShaders();
+                Shaders.initShaders();
+                Engine.worldRenderer.initShaders();
+//////                Engine.worldRenderer.reloadModel();
+//////                  Engine.regionRenderer.initShaders();
+//////                  Engine.shadowRenderer.initShaders();
 //                  Engine.outRenderer.initShaders();
             }
         });
@@ -314,7 +319,8 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F11) {
             public void onDown() {
-                toggleTiming = true;
+//                toggleTiming = true;
+                AssetManager.getInstance().toggleExternalResources();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F12) {
@@ -942,10 +948,10 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime > 4000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >1000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
           lastShaderLoadTime = System.currentTimeMillis();
-//          Shaders.initShaders();
+          Shaders.initShaders();
 //          Engine.worldRenderer.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
@@ -1068,8 +1074,7 @@ public class Game extends GameBase implements IErrorHandler {
             Engine.regionRenderer.update(this.world, px, py, pz, xPosP, zPosP, f);
         }
     }
-    boolean reinittexthook = false;
-    boolean wasGrabbed = false;
+    
     public void showGUI(Gui gui) {
 
         if (gui != null && this.gui == null) {

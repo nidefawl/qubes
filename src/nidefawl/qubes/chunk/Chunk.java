@@ -2,6 +2,7 @@ package nidefawl.qubes.chunk;
 
 import java.util.Arrays;
 
+import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
@@ -14,26 +15,27 @@ public class Chunk {
     public static final int SIZE            = 1 << SIZE_BITS;
     public static final int MASK            = SIZE - 1;
     public static final int DATA_BITS = (1<<8)-1;
-    public World            world;
-    public final int        x;
-    public final int        z;
-    public final int        worldHeightBits;
-    private final int       height;
-    public final short[]    blocks; //TODO: split up in height slices to reduce memory usage of air space
+    public World                  world;
+    public final int              x;
+    public final int              z;
+    public final int              worldHeightBits;
+    private final int             height;
+    public final short[]          blocks; //TODO: split up in height slices to reduce memory usage of air space
     public final ChunkDataSliced2 blockMetadata;
-    public final BlockDataSliced blockData;
-    public final byte[]     blockLight;
-    public final int[]      heightMap       = new int[SIZE * SIZE];
-    public int              facesRendered;
-    public long             loadTime        = System.currentTimeMillis();
-    boolean                 updateHeightMap = true;
-    public boolean          needsSave       = false;
-    boolean                 isEmpty         = false;
-    private int             top;
-    public boolean          isLit           = false;
-    public boolean          isValid         = true;
-    public boolean          isUnloading     = false;
-    public boolean          isPopulated     = false;
+    public final BlockDataSliced  blockData;
+    public final byte[]           blockLight;
+    public final int[]            heightMap       = new int[SIZE * SIZE];
+    public final byte[]           biomes          = new byte[SIZE * SIZE];
+    public int                    facesRendered;
+    public long                   loadTime        = System.currentTimeMillis();
+    boolean                       updateHeightMap = true;
+    public boolean                needsSave       = false;
+    boolean                       isEmpty         = false;
+    private int                   top;
+    public boolean                isLit           = false;
+    public boolean                isValid         = true;
+    public boolean                isUnloading     = false;
+    public boolean                isPopulated     = false;
 
     public Chunk(World world, int x, int z, int heightBits) {
         this.blockLight = new byte[1 << (heightBits + SIZE_BITS * 2)];
@@ -75,6 +77,15 @@ public class Chunk {
     }
     public int getTypeId(int i, int j, int k) {
         return this.blocks[j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] & Block.BLOCK_MASK;
+    }
+
+    /**
+     * @param i
+     * @param j
+     * @return
+     */
+    public Biome getBiome(int i, int j) {
+        return Biome.get(this.biomes[j<<SIZE_BITS|i]&0xFF);
     }
 
     public BlockData getBlockData(int i, int j, int k) {

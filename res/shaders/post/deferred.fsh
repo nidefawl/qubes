@@ -308,13 +308,13 @@ void main() {
     uint blockid = BLOCK_ID(prop.blockinfo);
     float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
 
-    float isSky = float(blockid==0u);
-    float isWater = float(blockid==4u);
-    float isLight = float(blockid==6u);
+    float isSky = IS_SKY(blockid);
+    float isWater = IS_WATER(blockid);
+    float isLight = IS_LIGHT(blockid);
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
     float isEntity = float(renderpass==5);
-    float isFlower = float(blockid>=47u);
+    // float isFlower = float(blockid>=48u);
     float alpha = mix(1, sceneColor.a, float(pass));
     if (pass > 0) {
         if(renderpass != 1)
@@ -322,7 +322,7 @@ void main() {
         if(sceneColor.a < 0.1)
             discard;
     }
-    float roughness = 1.3+isWater*30;
+    float roughness = 1.3+isWater*40;
 
     const vec3 ambLight1 = normalize(vec3(50, 100, 50));
     const vec3 ambLight2 = normalize(vec3(-50, -70, -50));
@@ -453,7 +453,7 @@ void main() {
     sky *= 0.4;
     vec3 terr=prop.albedo*finalLight;
     spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
-    vec3 waterAlb = mix(prop.albedo*finalLight, vec3(0.)+spec*vec3(0.9), isWater*theta);
+    vec3 waterAlb = mix(prop.albedo*finalLight, spec*vec3(0.1), isWater*theta);
     terr = mix (terr, waterAlb, isWater);
 
     

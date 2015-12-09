@@ -319,4 +319,8 @@ public class TerrainGeneratorOther implements ITerrainGen {
     public Class<? extends IBiomeManager> getBiomeManager() {
         return EmptyBiomeManager.class;
     }
+
+    @Override
+    public void init() {
+    }
 }

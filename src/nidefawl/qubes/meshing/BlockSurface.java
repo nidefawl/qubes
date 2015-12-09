@@ -504,7 +504,7 @@ public class BlockSurface {
         int dataVal = cache.getData(x, y, z);
         this.texture = block.getTexture(this.axis<<1|this.face, dataVal, 0);
 //        this.texture = block.getFaceTexture(cache, x, y, z, dataVal, this.axis<<1|this.face, 0);
-        this.faceColor = block.getFaceColor(cache, x, y, z, this.axis<<1|this.face, 0);
+        this.faceColor = block.getFaceColor(cache, x, y, z, this.axis<<1|this.face, -1);
     }
 
     public void reset() {

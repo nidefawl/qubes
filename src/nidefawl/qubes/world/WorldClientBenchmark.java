@@ -28,7 +28,7 @@ public class WorldClientBenchmark extends WorldClient {
         return clSettings;
     }
     public WorldClientBenchmark() {
-        super(makeSettings());
+        super(makeSettings(), 0);
         ChunkManagerBenchmark chMgr = (ChunkManagerBenchmark) this.getChunkManager();
         chMgr.testChunk = new Chunk(this, 0, 0, 8);
         for (int x = 0; x < 16; x++) {

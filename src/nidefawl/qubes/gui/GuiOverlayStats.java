@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
@@ -68,8 +69,9 @@ public class GuiOverlayStats extends Gui {
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
-            info.add( String.format("UpdateRenderers: %s", Game.instance.updateRenderers ? "On" : "Off") );
-            info.add( String.format("Primitive: %s", Engine.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
+            info.add( String.format("UpdateRenderers (R): %s", Game.instance.updateRenderers ? "On" : "Off") );
+            info.add( String.format("Primitive (Z): %s", Engine.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
+            info.add( String.format("External resources (F11): %s", AssetManager.getInstance().isExternalResources() ? "On" : "Off") );
 
             this.stats5 = "";
             BlockPos p = Game.instance.selection.pos[0];

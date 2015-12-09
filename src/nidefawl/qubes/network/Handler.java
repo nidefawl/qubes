@@ -146,4 +146,10 @@ public abstract class Handler {
      */
     public void handleEntityMove(PacketSEntityMove packetSEntityMove) {
     }
+
+    /**
+     * @param packetSWorldBiomes
+     */
+    public void handleWorldBiomes(PacketSWorldBiomes packetSWorldBiomes) {
+    }
 }

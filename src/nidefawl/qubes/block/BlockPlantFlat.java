@@ -3,8 +3,9 @@
  */
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.texture.ColorMap;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
@@ -28,7 +29,7 @@ public class BlockPlantFlat extends Block {
      */
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
-        return ColorMap.foliage.get(0.8, 0.4);
+        return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.FOLIAGE);
     }
 
     public int getRenderType() {

@@ -1,9 +1,10 @@
 package nidefawl.qubes.block;
 
+import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.texture.ColorMap;
-import nidefawl.qubes.vec.AABBFloat;
+import nidefawl.qubes.vec.*;
+import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 
@@ -25,11 +26,13 @@ public class BlockDoublePlant extends Block {
      */
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
-        int d = w.getData(x, y, z)&7;
-        if (d>1&&d<4) {
-            return ColorMap.grass.get(0.8, 0.4);
-        }
-        return super.getFaceColor(w, x, y, z, faceDir, pass);
+        return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.FOLIAGE);
+    }
+    @Override
+    public void postPlace(BlockPlacer blockPlacer, BlockPos pos, Vector3f fpos, int offset, int type, int data) {
+        pos = pos.copy();
+        pos.offset(Dir.DIR_POS_Y);
+        blockPlacer.placeDefault(pos, offset, type, data|8);
     }
 
     public int getRenderType() {
@@ -77,7 +80,7 @@ public class BlockDoublePlant extends Block {
         boolean upper=(dataVal&8)!=0;
         int idx = dataVal&7;
         if (upper) {
-            idx+=6;
+            idx+=1;
         }
         return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
     }
@@ -85,5 +88,9 @@ public class BlockDoublePlant extends Block {
     
     public int getRenderShadow() {
         return 0;
+    }
+    
+    public boolean isWaving() {
+        return true;
     }
 }

@@ -5,6 +5,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Half;
+import nidefawl.qubes.vec.Vector3f;
 
 public class BlockFaceAttr {
     public final static int BLOCK_VERT_INT_SIZE = 9;
@@ -42,7 +43,6 @@ public class BlockFaceAttr {
     private int type;
     private boolean reverse = false;
     private int faceDir;
-    private int pass;
     
     /**
      * @param useGlobalRenderOffset the useGlobalRenderOffset to set
@@ -133,7 +133,7 @@ public class BlockFaceAttr {
             int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
             vertexBuffer.put(textureHalf2);
             vertexBuffer.put(v.rgba);
-            vertexBuffer.put(this.tex | this.type << 16 | this.pass << (16+12)); //2x SHORT
+            vertexBuffer.put(this.tex | this.type << 16 | v.pass << (16+12)); //2x SHORT
             // BIT 0-7: 8 bit AO
             // BIT 16-18: 3 bit FACEDIR (aka blockside)
             // BIT 19-24: 6 bit VERTEXDIR 
@@ -182,10 +182,19 @@ public class BlockFaceAttr {
     
     public void setType(int type) {
         this.type = type;
-        this.pass = Block.get(type).getRenderPass();
+        for (int i = 0; i < 4; i++) {
+            this.v[i].pass = Block.get(type).getRenderPass();
+        }
     }
     public void setPass(int pass) {
-        this.pass = pass;
+        for (int i = 0; i < 4; i++) {
+            this.v[i].pass = pass;
+        }
+    }
+    public void flipNormal() {
+        for (int i = 0; i < 4; i++) {
+            this.v[i].flipNormal();
+        }
     }
     
     /**
@@ -211,6 +220,23 @@ public class BlockFaceAttr {
     /**
      * 
      */
+    public void calcNormal(Vector3f to) {
+        float uX = v1.x - v0.x;
+        float uY = v1.y - v0.y;
+        float uZ = v1.z - v0.z;
+        float vX = v2.x - v0.x;
+        float vY = v2.y - v0.y;
+        float vZ = v2.z - v0.z;
+        float nX = uY*vZ - uZ*vY;
+        float nY = uZ*vX - uX*vZ;
+        float nZ = uX*vY - uY*vX;
+        if (reverse) {
+            nX = -nX;
+            nY = -nY;
+            nZ = -nZ;
+        }
+        to.set(nX, nY, nZ);
+    }
     public int calcNormal() {
         float uX = v1.x - v0.x;
         float uY = v1.y - v0.y;
@@ -240,6 +266,17 @@ public class BlockFaceAttr {
         byte byte2 = (byte)(int)(nZ * 127F);
         int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
         return normal;
+    }
+
+    /**
+     * @param plantNormal
+     * @return 
+     */
+    public int packNormal(Vector3f n) {
+        byte byte0 = (byte)(int)(n.x * 127F);
+        byte byte1 = (byte)(int)(n.y * 127F);
+        byte byte2 = (byte)(int)(n.z * 127F);
+        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
     }
 
 }

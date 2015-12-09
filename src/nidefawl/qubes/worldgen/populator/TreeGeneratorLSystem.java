@@ -83,6 +83,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
     Matrix4f tempRotation = new Matrix4f();
     Vector3f dir = new Vector3f(1f, 0f, 0f);
     Vector3f dir2 = new Vector3f(1f, 0f, 0f);
+    private int nPlaced;
 
     private void recurse(IBlockWorld view, Random rand, int posX, int posY, int posZ, float angleOffset,
             CharSequenceIterator axiomIterator, Vector3f position, Matrix4f rotation, int depth, int trunkDepth) {
@@ -312,6 +313,10 @@ public class TreeGeneratorLSystem implements IWorldGen {
      */
     private void safelySetBlock(IBlockWorld world, int x, int y, int z, int id) {
 //        System.out.println("set block "+x+","+y+","+z+" = "+id);
+//        nPlaced++;
+//        if (nPlaced >= 1000&&nPlaced%500==0) {
+//            System.err.println("Treegen placed "+nPlaced+" blocks: "+this.initialAxiom);
+//        }
         world.setType(x, y, z, id, Flags.MARK);
     }
 

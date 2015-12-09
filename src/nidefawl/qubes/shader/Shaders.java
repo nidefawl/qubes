@@ -83,6 +83,7 @@ public class Shaders {
             singleblock.enable();
             singleblock.setProgramUniform3f("in_offset", Vector3f.ZERO);
             singleblock.setProgramUniform1f("in_scale", 1);
+            singleblock.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
             singleblock.setProgramUniform1i("blockTextures", 0);
             singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();

@@ -11,9 +11,7 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.modules.ModuleLoader;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldServer;
-import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.world.*;
 import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.*;
@@ -52,7 +50,7 @@ public class GameRegistry {
             throw new IllegalArgumentException("Please define a biomemanager for terrain gen "+generator);
         }
         try {
-            Constructor<? extends IBiomeManager> cstr = genKlass.getDeclaredConstructor(WorldServer.class, long.class, WorldSettings.class);
+            Constructor<? extends IBiomeManager> cstr = genKlass.getDeclaredConstructor(World.class, long.class, IWorldSettings.class);
             IBiomeManager igen = cstr.newInstance(worldServer, settings.getSeed(), settings);
             return igen;
         } catch (Exception e) {

@@ -395,4 +395,8 @@ public class TerrainGenQTest implements ITerrainGen {
     }
 
 
+    @Override
+    public void init() {
+    }
+
 }

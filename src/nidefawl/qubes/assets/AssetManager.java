@@ -16,6 +16,14 @@ public class AssetManager {
     ArrayList<AssetPack>          assetPacks   = new ArrayList<>();
     private ShaderSource lastFailedShader;
     File                      folder;
+    private boolean externalResources;
+    public void toggleExternalResources() {
+        this.externalResources = !externalResources;
+        init();
+    }
+    public boolean isExternalResources() {
+        return this.externalResources;
+    }
 
     AssetManager() {
         
@@ -37,30 +45,32 @@ public class AssetManager {
         folder = WorkingEnv.getAssetFolder();
 //        if (!WorkingEnv.loadAssetsFromClassPath()) {
 //        }
-        File f = WorkingEnv.getPacksFolder();
-        if (f.isDirectory()) {
-            File[] fPackList = f.listFiles(new FilenameFilter() {
-                
-                @Override
-                public boolean accept(File dir, String name) {
-                    return dir.isDirectory() || (dir.isFile() && dir.getName().endsWith(".zip"));
-                }
-            });
-            for (int i = 0;fPackList != null &&  i < fPackList.length; i++) {
-                if (fPackList[i].isDirectory())
-                    assetPacks.add(new AssetPackFolder(fPackList[i]));
-                else {
-                    try {
-                        assetPacks.add(new AssetPackZip(fPackList[i]));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
+//        File f = WorkingEnv.getPacksFolder();
+//        if (f.isDirectory()) {
+//            File[] fPackList = f.listFiles(new FilenameFilter() {
+//                
+//                @Override
+//                public boolean accept(File dir, String name) {
+//                    return dir.isDirectory() || (dir.isFile() && dir.getName().endsWith(".zip"));
+//                }
+//            });
+//            for (int i = 0;fPackList != null &&  i < fPackList.length; i++) {
+//                if (fPackList[i].isDirectory())
+//                    assetPacks.add(new AssetPackFolder(fPackList[i]));
+//                else {
+//                    try {
+//                        assetPacks.add(new AssetPackZip(fPackList[i]));
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        }
         assetPacks.add(new AssetPackClassPath());
-        if (folder.exists())
-        assetPacks.add(new AssetPackFolder(folder));
+        if (!this.externalResources) {
+            if (folder.exists())
+                assetPacks.add(new AssetPackFolder(folder));
+        }
         Collections.reverse(assetPacks);
         System.out.println("Found "+assetPacks.size()+" asset packs");
     }

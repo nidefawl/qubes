@@ -165,9 +165,24 @@ public class ShaderSource {
         if ("IS_LEAVES".equals(define)) {
             return "#define IS_LEAVES(blockid) (blockid=="+Block.leaves.id+"u)";
         }
-        if ("IS_WAVING".equals(define)) {
-            return "#define IS_WAVING(blockid) (blockid=="+Block.grassbush.id+"u)";
-        }
+//        if ("IS_WAVING_VERTEX".equals(define)) {
+//            String def = "";
+//            for (int i = 0; i <= Block.HIGHEST_BLOCK_ID; i++) {
+//                Block block = Block.get(i);
+//                if (block != null && block.isWaving()) {
+//                    if (!def.isEmpty()) {
+//                        def += " || ";
+//                    }
+//                    def += "blockid=="+block.id+"u";
+//                }
+//            }
+//            if (def.isEmpty()) {
+//                def = "false";
+//            } else {
+//                def = "("+def+") && (step(2, mod(gl_VertexID+1.0, 4.0f)) != 0)";
+//            }
+//            return "#define IS_WAVING_VERTEX(blockid, vertex) ("+def+")";
+//        }
         return null;
     }
     public boolean isEmpty() {
