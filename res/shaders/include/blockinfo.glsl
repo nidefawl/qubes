@@ -12,7 +12,7 @@
 #pragma define "IS_WATER"
 #pragma define "IS_LEAVES"
 #pragma define "IS_LIGHT"
-#pragma define "IS_WAVING"
+#pragma define "IS_WAVING_VERTEX"
 #define IS_ILLUM(renderpass) float(renderpass==4)
 #define IS_BACKFACE(renderpass) float(renderpass==3)
 

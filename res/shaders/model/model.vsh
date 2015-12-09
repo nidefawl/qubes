@@ -13,7 +13,6 @@ out vec4 position;
  
 void main(void) {
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
-	camNormal.xyz/=camNormal.w;
 	normal = normalize(camNormal.xyz);
 	color = in_color;
 	vec4 pos = in_position;
