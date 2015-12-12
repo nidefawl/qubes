@@ -169,12 +169,16 @@ public class TerrainGeneratorMain implements ITerrainGen {
                         q = 0;
                     } else {
                         a = -1;
+                        boolean fromNonAir = curBlock != 0 && y+1<wh;
                         curBlock = 0;
 //                        if (y < 60) {
 //                            curBlock = Block.water.id;
 //                        }
                         if (d2 > 0.5 || y <=93) {
                             curBlock = Block.water.id;
+                            if (fromNonAir) {
+                                waterMask[(y+1) << 8 | xz] = 1;
+                            }
                             q++;
                         } else {
                             q = 0;
