@@ -11,7 +11,6 @@ public class ThreadConnect implements Runnable {
     String          host;
     int             port;
     private Thread  thread;
-    public IOException exception;
     public boolean finished;
     public boolean cancelled = false;
     public boolean connected;
@@ -45,7 +44,8 @@ public class ThreadConnect implements Runnable {
             }
         } catch (IOException e) {
             stateStr = "Failed connecting: "+e.getMessage();
-            this.exception = e;
+        } catch (IllegalArgumentException e) {
+            stateStr = "Illegal argument: "+e.getMessage();
         } catch (Exception e) {
             ErrorHandler.setException(new GameError("Exception in connect thread", e));
         } finally {
