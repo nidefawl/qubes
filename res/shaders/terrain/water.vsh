@@ -21,15 +21,16 @@ out float isWater;
 
 void main() {
 	blockinfo = in_blockinfo;
+	
 	faceDir = BLOCK_FACEDIR(blockinfo);
     uint blockid = BLOCK_ID(blockinfo);
+	
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
 	camNormal.xyz/=camNormal.w;// not required? (3x3 does not w)
+	
 	normal = normalize(camNormal.xyz);
 	texcoord = in_texcoord;
-
     isWater = IS_WATER(blockid);
-
 	color = in_color;
 
 	faceLightSky = vec4(

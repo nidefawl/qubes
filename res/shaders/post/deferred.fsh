@@ -340,7 +340,6 @@ void main() {
     float amtRefl = minRefl + (1.0 - minRefl) * pow(1.0 - theta, 5.0);
 
     vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
-    vec3 skySunScat2 = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);//whut?
 
 
     // if (prop.sunSpotDens < 0.7) {

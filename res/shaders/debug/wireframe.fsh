@@ -11,6 +11,7 @@ in highp vec3 triangle;
 in float ftime; 
 
 out vec4 out_Color;
+uniform float thickness;
 
 uniform float maxDistance;
 
@@ -36,7 +37,7 @@ void main() {
     vec3 d = fwidth(triangle)*fdistscale;
     vec3 tdist = smoothstep(vec3(0.0), d*2.0f, triangle);
     float mixF = min(min(tdist.x, tdist.y), tdist.z);
-    if (mixF > 0.3)
+    if (mixF > thickness)
         discard;
 #ifdef ALTERNATE 
     float fMod = floor(mod(ftime, 3));
@@ -75,7 +76,7 @@ void main() {
     //     //     discard;
     //     acolor+=vec3(0, 0, 1);
     // }
-        acolor+=vec3(0, 0, 1);
+        acolor+=color.rgb;
 #endif
     out_Color = vec4(vec3(acolor), color.a*fdistscale);
 }

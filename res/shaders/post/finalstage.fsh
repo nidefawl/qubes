@@ -24,10 +24,7 @@ void main(void) {
    float exposure = 100;
    float autoExposure = ((brightness-0.7f)) * -exposure;
    autoExposure = exposure*0.3f + autoExposure ;
-   if (autoExposure > 160)
-       autoExposure = 160;
-   if (autoExposure < 10)
-       autoExposure = 10;
+   autoExposure = clamp(autoExposure, 10, 160);
 	vec3 toneMapped = ToneMap(tex.rgb+texBloom.rgb*0.4, autoExposure);
 
 #else
