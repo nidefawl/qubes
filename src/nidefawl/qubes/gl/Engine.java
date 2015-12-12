@@ -237,7 +237,7 @@ public class Engine {
         orthoMV.setIdentity();
         orthoMV.update();
         orthoP.setZero();
-        Project.orthoMat(-0, displayWidth, 0, displayHeight, -400, 400, orthoP);
+        Project.orthoMat(0, displayWidth, 0, displayHeight, -400, 400, orthoP);
         orthoP.update();
         Matrix4f.mul(orthoP, orthoMV, orthoMVP);
         orthoMVP.update();
@@ -431,7 +431,7 @@ public class Engine {
     public static final Vector3f vTarget = new Vector3f();
     public static final Vector3f t = new Vector3f();
 
-    public static void updateMouseOverView(float winX, float winY) {
+    public static void updateMouseOverView(float winX, float winY, boolean cameraOffset) {
         viewport.position(0);
         position.position(0);
         if (!Project.gluUnProject(winX, winY, 1F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
@@ -455,8 +455,11 @@ public class Engine {
         Vector3f.sub(vTarget, vOrigin, vDirTmp);
         vDir = vDirTmp.normaliseNull();
         if (vDir != null) {
-            vOrigin.subtract(camera.getCameraOffset());
-            vDir.subtract(camera.getCameraOffset());
+            if (cameraOffset) {
+
+                vOrigin.subtract(camera.getCameraOffset());
+                vDir.subtract(camera.getCameraOffset());
+            }
             t.set(vDir);
             t.scale(-0.1F);
             Vector3f.add(vOrigin, t, vOrigin);

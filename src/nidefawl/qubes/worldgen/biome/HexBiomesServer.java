@@ -21,6 +21,7 @@ import nidefawl.qubes.server.PlayerChunkTracker.Entry;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.world.*;
+import nidefawl.qubes.worldgen.biome.HexBiomes.HexBiomeEnd;
 
 /**
  * @author Michael Hept 2015
@@ -50,16 +51,18 @@ public class HexBiomesServer extends HexBiomes {
                 return pathname.isFile() && pathname.getName().endsWith(".dat");
             }
         });
+        System.out.println("loading "+regionFiles.length+" biome files");
         int n = 0;
         for (int i = 0; regionFiles != null && i < regionFiles.length; i++) {
             File f = regionFiles[i];
             Matcher m = FILE_PATTERN.matcher(f.getName());
             if (m.matches()) {
                 int x = StringUtil.parseInt(m.group(1), 0);
-                int z = StringUtil.parseInt(m.group(1), 0);
+                int z = StringUtil.parseInt(m.group(2), 0);
                 HexBiome biome = new HexBiome(this, x, z);
                 try {
                     biome.load(f);
+                    putPos(GameMath.toLong(x, z), biome);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -80,20 +83,17 @@ public class HexBiomesServer extends HexBiomes {
     public HexBiome loadCell(int gridX, int gridY) {
         File file = new File(this.dir, String.format("hex.%d.%d.dat", gridX, gridY));
         HexBiome b = new HexBiome(this, gridX, gridY);
+        //This is really only for testing
+        int id = new Random(gridX * 89153 ^ gridY * 33199 + 1).nextInt(Biome.maxBiome);
+        System.out.println("biome at "+gridX+","+gridY+": "+id);
+        b.biome = Biome.biomes[id];
         try {
-            if (file.exists()) {
-                b.load(file);
-            } else {
-                //This is really only for testing
-                int id = new Random(gridX * 89153 ^ gridY * 33199 + 1).nextInt(Biome.maxBiome);
-                System.out.println("biome at "+gridX+","+gridY+": "+id);
-                b.biome = Biome.biomes[id];
-                b.save(file);
-                this.flagBiome(gridX, gridY);
-            }
+            b.save(file);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("save cell "+gridX+"/"+gridY);
+        this.flagBiome(gridX, gridY);
         return b;
     }
 
@@ -151,5 +151,9 @@ public class HexBiomesServer extends HexBiomes {
             PacketSWorldBiomes biomesPacket = makePacket(biomes);
             ((WorldServer)this.world).broadcastPacket(biomesPacket);
         }
+    }
+    @Override
+    public HexBiome oobCell(int x, int z) {
+        return new HexBiomeEnd(this, x, z);
     }
 }

@@ -69,9 +69,9 @@ public class TerrainGenQTest implements ITerrainGen {
         int i=16+nSide;
         int wh = this.world.worldHeight+nSide;
         double[] dNoise = generateNoise(c.getBlockX(), c.getBlockZ());
-        int top = Block.granite.id;
+        int top = Block.stones.granite.id;
         int earth = Block.dirt.id;
-        int stone = Block.granite.id;
+        int stone = Block.stones.granite.id;
         int water = Block.water.id;
         short[] blocksDouble = new short[18*18*258];
         for (int x = 0; x < 18; x++) {

@@ -3,13 +3,12 @@
  */
 package nidefawl.qubes.worldgen.populator;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.util.CharSequenceIterator;
-import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.IBlockWorld;
 
@@ -19,7 +18,6 @@ import nidefawl.qubes.world.IBlockWorld;
 public class TreeGeneratorLSystem implements IWorldGen {
 
     public static final float MAX_ANGLE_OFFSET = (float) Math.toRadians(5);
-    private static final Vector3f ZERO = new Vector3f();
     /* SETTINGS */
     private int maxDepth;
     private float angle;
@@ -28,6 +26,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
     /* RULES */
     private final String initialAxiom;
     private final Map<Character, TreeRule> ruleSet;
+    public final Map<Long, Integer> blocks;
     private int variation;
 
     /**
@@ -43,6 +42,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
         this.initialAxiom = initialAxiom;
         this.ruleSet = ruleSet;
         this.variation = new Random().nextInt(2);
+        this.blocks = new HashMap<>();
     }
 
     /**
@@ -312,12 +312,12 @@ public class TreeGeneratorLSystem implements IWorldGen {
      * @param log2
      */
     private void safelySetBlock(IBlockWorld world, int x, int y, int z, int id) {
-//        System.out.println("set block "+x+","+y+","+z+" = "+id);
-//        nPlaced++;
-//        if (nPlaced >= 1000&&nPlaced%500==0) {
-//            System.err.println("Treegen placed "+nPlaced+" blocks: "+this.initialAxiom);
-//        }
-        world.setType(x, y, z, id, Flags.MARK);
+        long l = TripletLongHash.toHash(x, y, z);
+        Integer i = blocks.get(l);
+        if (i==null||i != id) {
+            blocks.put(l, id);
+            world.setType(x, y, z, id, Flags.MARK);
+        }
     }
 
 }

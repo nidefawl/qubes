@@ -72,7 +72,7 @@ public class SubTerrainGen2 extends SubTerrainGen {
         data.dnoise5_ = noise5.gen(cX, cZ);
         return data;
     }
-    public double generate(int cX, int cZ, int x, int y, int z, HexBiome hex, SubTerrainData data) {
+    public int generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d) {
         
         NoiseData noise = (NoiseData) data;
         
@@ -97,7 +97,8 @@ public class SubTerrainGen2 extends SubTerrainGen {
 //        double hexScale1 = 1-(Math.max((distHex-gridRadius*0.9), 0)/(gridRadius*0.1));
 //        if (outerScale != 0)
 //        System.out.println(outerScale);
-        
+
+        for (int y = y1; y < y2; y++) {
             double dYH = clamp10((y+0+5*flattenScale)/(double)df);
             double dyoff = 0.8D;
             if (dYH >= dyoff) {
@@ -114,9 +115,11 @@ public class SubTerrainGen2 extends SubTerrainGen {
             int idx = idx_xz+y;
             double dN = noise.dNoise2_[idx]-1;
             double dN7 = noise.dnoise5_[idx];
-            dBase += dN*0.7*dh2*coreScale;;
-            dBase += dN7*1.7*dh2*coreScale;;
-        return dBase;
+            dBase += dN*0.7*dh2*coreScale;
+            dBase += dN7*1.7*dh2*coreScale;
+            d[y] = dBase;
+        }
+        return 1;
     }
 
 }

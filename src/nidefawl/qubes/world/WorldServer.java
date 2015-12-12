@@ -126,7 +126,11 @@ public class WorldServer extends World {
                 Chunk c = getChunkIfNeightboursLoaded(x, z);
                 if (c != null) {
                     it.remove();
+                    long l1 = System.nanoTime();
                     this.calcSunLight(c);
+                    long l2 = System.nanoTime();
+                    long took = l2-l1;
+                    ServerStats.add("calcSunlight.pre", took);
                 }
             }
         }
@@ -146,8 +150,14 @@ public class WorldServer extends World {
                     Chunk cPopulate = getChunkIfNeightboursLoaded(c.x, c.z);
                     if (cPopulate == c) {
                         c.isPopulated = true;
-                        getChunkPopulator().populate(cPopulate);   
+                        long l = System.nanoTime();
+                        getChunkPopulator().populate(cPopulate);
+                        long l2 = System.nanoTime();
+                        long took = l2-l;
+                        ServerStats.add("populate", took);
                         this.calcSunLight(cPopulate); 
+                        long took2 = System.nanoTime()-l2;
+                        ServerStats.add("calcSunlight.post", took2);
                     }
                 }
             }

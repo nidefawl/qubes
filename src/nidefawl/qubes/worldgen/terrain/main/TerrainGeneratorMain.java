@@ -13,6 +13,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.hex.HexCell;
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
+import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
@@ -70,12 +71,13 @@ public class TerrainGeneratorMain implements ITerrainGen {
             }
         }
         short[] blocks = c.getBlocks();
-        generateTerrain(c, blocks, hexs, h);
+        byte[] water = c.getWaterMask();
+        generateTerrain(c, blocks, water, hexs, h);
         c.checkIsEmtpy();
         return c;
     }
 
-    private void generateTerrain(Chunk c, short[] blocks, HexBiome[] hexs, ArrayList<HexBiome> h) {
+    private void generateTerrain(Chunk c, short[] blocks, byte[] waterMask, HexBiome[] hexs, ArrayList<HexBiome> h) {
         Map<HexBiome, SubTerrainData> map = Maps.newHashMap();
         for (HexBiome b : h) {
             SubTerrainGen g = this.map.get(b.biome);
@@ -88,6 +90,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
         double gridRadius = biomes.hwidth;
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
+        double[] dSlice = new double[wh];
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<Chunk.SIZE_BITS|x;
@@ -95,22 +98,26 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 double hx = hex.getCenterX();
                 double hz = hex.getCenterY();
                 double distHex = GameMath.dist2d(hx, hz, cX+x, cZ+z);
-                double outerDist2 = Math.min(Math.max(distHex, 0)/(gridRadius), 1);
                 double outerDist = Math.max(distHex-gridRadius*smoothScale, 0);
                 double outerScale = outerDist/(gridRadius*(1-smoothScale));
                 SubTerrainGen g = this.map.get(hex.biome);
                 SubTerrainData data = map.get(hex);
                 double dStr2 = 12.0D*2;
+                if (outerScale < 1)
+                    g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice);
                 for (int y = 0; y < wh; y++) {
                     double dYH2 = clamp10((y+0+5)/(double)wh);
                     double dBase2 = dStr2-dYH2*dStr2*2.0;
-                    double gen = g.generate(cX, cZ, x, y, z, hex, data);
-                    dNoise[y<<8|xz] = mix(gen, dBase2, outerScale);
+                    dNoise[y<<8|xz] = mix(dSlice[y], dBase2, outerScale);
                 }
             }
         }
 
         Random rand = new Random(0L);
+        OpenSimplexNoiseJava j = new OpenSimplexNoiseJava(seed*33703^31);
+        OpenSimplexNoiseJava j2 = new OpenSimplexNoiseJava(89153^23);
+        double noiseScale = 1/128.0D;
+        double noiseScale2 = 1/2.0D;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<Chunk.SIZE_BITS|x;
@@ -125,20 +132,41 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 int stone = 0xFFFFFF;
                 int a = -1;
                 int curBlock = 0;
-
+                int q = -1;
+                double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
+                double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
+                
+                    
                 for (int y = this.world.worldHeight - 1; y >= 0; y--) {
                     double d = dNoise[y << 8 | xz];
                     double d2 = dNoise2[y << 8 | xz];
+                    boolean wasWater = curBlock == Block.water.id;
                     if (d >= 0D) {
                         curBlock = stone;
 //                        if (d2<=0) {
                             if (a < 0) {
-                                curBlock = top.id;
+                                if (wasWater) {
+                                    if (blockNoise > 0.1) {
+                                        curBlock = Block.sand.id;
+                                        if (q > 3)
+                                            curBlock = earth.id;
+//                                    } else if (blockNoise < -0.4) {
+//                                        curBlock = stone;
+                                    } else {
+                                        curBlock = top.id;
+                                        if (q > 3)
+                                            curBlock = earth.id;
+                                    }
+                                } else {
+                                    curBlock = top.id;
+                                }
+                                    
                             } else if (a < 3) {
                                 curBlock = earth.id;
                             }
 //                        }
                         a++;
+                        q = 0;
                     } else {
                         a = -1;
                         curBlock = 0;
@@ -147,13 +175,41 @@ public class TerrainGeneratorMain implements ITerrainGen {
 //                        }
                         if (d2 > 0.5 || y <=93) {
                             curBlock = Block.water.id;
+                            q++;
+                        } else {
+                            q = 0;
                         }
                     }
                     int bid = curBlock;
                     if (curBlock == stone) {
                         bid = getStone(this.world, cX+x, y, cZ+z, hex, rand);
                     }
+                    if (curBlock == Block.water.id) {
+                        blocks[y << 8 | xz] = 0;
+                        waterMask[y << 8 | xz] = 1;
+                        continue;
+                    }
                     blocks[y << 8 | xz] = (short) bid;
+                }
+            }
+        }
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int xz=z<<Chunk.SIZE_BITS|x;
+                double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
+                double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
+                        
+                int y = 93;
+                if (blockNoise > 0.1 &&  waterMask[y << 8 | xz] == 0) {
+                    if (blocks[y << 8 | xz] != 0) {
+                        blocks[y << 8 | xz] =(short) Block.sand.id;
+                    }
+                    if (blocks[(y+1) << 8 | xz] != 0) {
+                        blocks[(y+1) << 8 | xz] =(short) Block.sand.id;
+                    }
+                    if (blocks[(y+2) << 8 | xz] != 0) {
+                        blocks[(y+2) << 8 | xz] =(short) Block.sand.id;
+                    }
                 }
             }
         }
@@ -175,15 +231,15 @@ public class TerrainGeneratorMain implements ITerrainGen {
         double angle = GameMath.getAngle(x-centerX+randX, z-centerY+randZ, fx-centerX, fy-centerY);
         int scaleTangent = (int) (6+6*(angle/Math.PI)); // 0 == points to corner, 1/-1 == points to half of side
         if (scaleTangent < 3) {
-            return Block.basalt.id;
+            return Block.stones.basalt.id;
         }
         if (scaleTangent < 6) {
-            return Block.diorite.id;
+            return Block.stones.diorite.id;
         }
         if (scaleTangent < 9) {
-            return Block.marble.id;
+            return Block.stones.marble.id;
         }
-        return Block.granite.id;
+        return Block.stones.granite.id;
     }
     
     public static double func2(double m, double n, double j) {

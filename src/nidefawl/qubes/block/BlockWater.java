@@ -1,4 +1,5 @@
 package nidefawl.qubes.block;
+import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.World;
 
@@ -19,7 +20,7 @@ public class BlockWater extends Block {
 
     @Override
     public float getAlpha() {
-        return 0.9f;
+        return 0.87f;
     }
 
     @Override
@@ -40,5 +41,9 @@ public class BlockWater extends Block {
     @Override
     public int getRenderShadow() {
         return 0;
+    }
+    @Override
+    public int getLightLoss(LightChunkCache c, int i, int j, int k, int type) {
+        return 2;
     }
 }

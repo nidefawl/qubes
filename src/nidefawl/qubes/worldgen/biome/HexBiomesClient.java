@@ -23,6 +23,10 @@ public class HexBiomesClient extends HexBiomes {
     public HexBiome loadCell(int gridX, int gridY) {
         return null;
     }
+    @Override
+    public HexBiome oobCell(int x, int z) {
+        return new HexBiomeEnd(this, x, z);
+    }
 
     @Override
     public PacketSWorldBiomes getPacket() {

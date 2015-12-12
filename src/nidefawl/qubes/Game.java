@@ -621,9 +621,12 @@ public class Game extends GameBase implements IErrorHandler {
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderWorld");
+
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
             Engine.worldRenderer.renderWorld(this.world, fTime);
+            
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
@@ -646,10 +649,11 @@ public class Game extends GameBase implements IErrorHandler {
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("glClear");
+
         glDisable(GL_BLEND);
-        
         glClearColor(0.71F, 0.82F, 1.00F, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 
@@ -948,28 +952,16 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >1000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
-          lastShaderLoadTime = System.currentTimeMillis();
-          Shaders.initShaders();
+            lastShaderLoadTime = System.currentTimeMillis();
+//          Shaders.initShaders();
 //          Engine.worldRenderer.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();
 //            
-//          BlockTextureArray.getInstance().reloadTexture("log.png");
-//          BlockTextureArray.getInstance().reloadTexture("log_top.png");
-//          BlockTextureArray.getInstance().reloadTexture("tallgrass.png");
-//          BlockTextureArray.getInstance().reloadTexture("dirt.png");
-//          BlockTextureArray.getInstance().reloadTexture("stone.png");
-//          BlockTextureArray.getInstance().reloadTexture("grass_side.png");
-//          BlockTextureArray.getInstance().reloadTexture("grass_side_overlay.png");
-//          Engine.textures.refreshNoiseTextures();
-//          AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
-//          ColorMap.grass.set(tex_map_grass);
-//          AssetTexture tex_map_foliage = AssetManager.getInstance().loadPNGAsset("textures/colormap_foliage.png");
-//          ColorMap.foliage.set(tex_map_foliage);
         }
     }
 
@@ -1057,7 +1049,7 @@ public class Game extends GameBase implements IErrorHandler {
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
             if (this.gui == null) {
-                Engine.updateMouseOverView(winX, winY);
+                Engine.updateMouseOverView(winX, winY, this.movement.grabbed());
                 selection.update(world, px, py, pz);
             }
         }

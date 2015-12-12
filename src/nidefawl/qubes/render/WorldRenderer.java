@@ -449,7 +449,7 @@ public class WorldRenderer extends AbstractRenderer {
                 this.modelRot=this.lastModelRot=-1*yaw-90;
 //                System.out.println(e.yaw);
                 BufferedMatrix mat = Engine.getTempMatrix();
-                float modelScale = 1 / 4f;
+                float modelScale = 1 / 3.7f;
                 mat.setIdentity();
 
                 mat.translate(pos.x, pos.y, pos.z);
@@ -519,7 +519,10 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
-        Shaders.wireframe.setProgramUniform1f("maxDistance", 210);
+        Shaders.wireframe.setProgramUniform3f("in_offset", Engine.GLOBAL_OFFSET.x, Engine.GLOBAL_OFFSET.y, Engine.GLOBAL_OFFSET.z);
+        Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
+        Shaders.wireframe.setProgramUniform1f("thickness", 0.2f);
+        Shaders.wireframe.setProgramUniform1f("maxDistance", 110);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);

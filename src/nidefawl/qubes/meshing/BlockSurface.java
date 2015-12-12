@@ -10,7 +10,6 @@ public class BlockSurface {
 
     public BlockSurface() {
     }
-    public boolean isLeaves;
     public boolean transparent;
     public int type;
     public int face;
@@ -498,7 +497,13 @@ public class BlockSurface {
         }
         if (this.type == Block.water.id) {
             Block b = Block.get(cache.getType(x, y+1, z));
-            this.isAirAbove = b != Block.water && b.isTransparent();
+            if (b == Block.air) {
+                if (cache.getWater(x,y+1,z)>0)
+                {
+                    b = Block.water;
+                }
+            }
+            this.isAirAbove = b != Block.water;
         }
         Block block = Block.get(this.type);
         int dataVal = cache.getData(x, y, z);
@@ -514,7 +519,6 @@ public class BlockSurface {
         this.type = 0;
         this.transparent = false;
         this.extraFace = false;
-        this.isLeaves = false;
         this.resolved = false;
         this.isAirAbove = false;
         this.renderTypeTransition = false;

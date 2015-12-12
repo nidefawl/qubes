@@ -20,6 +20,7 @@ import nidefawl.qubes.server.commands.CommandHandler;
 import nidefawl.qubes.server.commands.PreparedCommand;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.ServerStats;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 
@@ -145,6 +146,7 @@ public class GameServer implements Runnable, IErrorHandler {
             resyncTime();
             this.lastSaveTick = start2;
             this.saveAndUnloadData();
+            ServerStats.dump();
         }
         start2 = System.currentTimeMillis();
         PreparedCommand run;

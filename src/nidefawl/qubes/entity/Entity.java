@@ -1,9 +1,8 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.util.BlockColl;
-import nidefawl.qubes.util.CollisionQuery;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
 
@@ -22,11 +21,16 @@ public abstract class Entity {
     public boolean hitGround;
     final AABB aabb = new AABB(0, 0, 0, 0, 0, 0);
     final AABB aabb2 = new AABB(0, 0, 0, 0, 0, 0);
+    final AABB aabb3 = new AABB(0, 0, 0, 0, 0, 0);
+    final AABB aabb4 = new AABB(0, 0, 0, 0, 0, 0);
     AABB dbg = new AABB();
     final CollisionQuery coll = new CollisionQuery();
     public Vector3f renderPos = new Vector3f();
     public Vector3f renderRot = new Vector3f();
 	
+	public Vec3D remotePos = new Vec3D();
+    public Vector3f remoteRotation = new Vector3f();
+    int rotticks, posticks;
     private double width;
     private double height;
     private double length;
@@ -74,26 +78,32 @@ public abstract class Entity {
             this.pos.z = aabb.getCenterZ();
             return;
         }
-//        Engine.worldRenderer.debugBBs.clear();
-//        Engine.worldRenderer.debugBBs.put(0, aabb);
-//        dbg.set(aabb);
+//        boolean debug = GameContext.getSide()==Side.CLIENT;
+//        if (debug) {
+//            Engine.worldRenderer.debugBBs.clear();
+//            Engine.worldRenderer.debugBBs.put(0, aabb);
+//            dbg.set(aabb);
+//        }
 ////        aabb.set(dbg);
-        aabb2.set(this.aabb);
+        aabb3.set(this.aabb);
+        aabb2.set(this.aabb3);
         aabb2.expandTo(this.mot.x, this.mot.y, this.mot.z);
-//        Engine.worldRenderer.debugBBs.put(1, aabb2);
+//        if (debug) {
+//          Engine.worldRenderer.debugBBs.put(1, aabb2);
+//        }
         this.coll.query(this.world, aabb2);
         int a = this.coll.getNumCollisions();
         int i = 0;
-//        for (; i < a; i++) {
-//            BlockColl coll = this.coll.get(i);
-//            Engine.worldRenderer.debugBBs.put(2+i, coll.blockBB);
+//        if (debug) {
+//            for (; i < a; i++) {
+//                BlockColl coll = this.coll.get(i);
+//                Engine.worldRenderer.debugBBs.put(2+i, coll.blockBB);
+//            }
 //        }
 //
-        int y1=GameMath.floor(aabb.minY);
         double mx = this.mot.x;
         double my = this.mot.y;
         double mz = this.mot.z;
-        int n = 2;
         for (i=0; i < a; i++) {
             BlockColl coll = this.coll.get(i);
             my = coll.blockBB.getYOffset(this.aabb, my);
@@ -102,9 +112,6 @@ public abstract class Entity {
         for (i=0; i < a; i++) {
             BlockColl coll = this.coll.get(i);
             mx = coll.blockBB.getXOffset(this.aabb, mx);
-//            if (coll.y == y1)
-//              Engine.worldRenderer.debugBBs.put(n++, coll.blockBB);
-                
         }
         this.aabb.offset(mx, 0, 0);
         for (i=0; i < a; i++) {
@@ -112,6 +119,49 @@ public abstract class Entity {
             mz = coll.blockBB.getZOffset(this.aabb, mz);
         }
         this.aabb.offset(0, 0, mz);
+        if ((this.hitGround || (this.mot.y != my && this.mot.y < 0)) && (this.mot.x != mx||this.mot.z != mz)) {
+            double tmpx1 = mx;
+            double tmpy1 = my;
+            double tmpz1 = mz;
+            mx = this.mot.x;
+            my = 1;
+            mz = this.mot.z;
+            aabb4.set(aabb);
+            aabb.set(aabb3);
+            aabb2.set(aabb3);
+            aabb2.expandTo(mx, my, mz);
+            this.coll.query(this.world, aabb2);
+             a = this.coll.getNumCollisions();
+            for (i=0; i < a; i++) {
+                BlockColl coll = this.coll.get(i);
+                my = coll.blockBB.getYOffset(this.aabb, my);
+            }
+            this.aabb.offset(0, my, 0);
+            for (i=0; i < a; i++) {
+                BlockColl coll = this.coll.get(i);
+                mx = coll.blockBB.getXOffset(this.aabb, mx);
+            }
+            this.aabb.offset(mx, 0, 0);
+            for (i=0; i < a; i++) {
+                BlockColl coll = this.coll.get(i);
+                mz = coll.blockBB.getZOffset(this.aabb, mz);
+            }
+            this.aabb.offset(0, 0, mz);
+            if (my > 0) {
+                my *= -1;
+                for (i=0; i < a; i++) {
+                    BlockColl coll = this.coll.get(i);
+                    my = coll.blockBB.getYOffset(this.aabb, my);
+                }
+                this.aabb.offset(0, my, 0);
+            }
+            if ((tmpx1*tmpx1+tmpz1*tmpz1)-(mx*mx+mz*mz)>=0){
+                mx = tmpx1;
+                my = tmpy1;
+                mz = tmpz1;
+                this.aabb.set(aabb4);
+            }
+        }
         
         if (this.mot.x != mx) {
             this.mot.x = 0;
@@ -224,5 +274,23 @@ public abstract class Entity {
         float ePitch = (float) (this.lastPitch + (difPitch) * fTime) + 0;
         renderRot.set(eHeadYaw, eYaw, ePitch);
         return renderRot;
+    }
+
+    /**
+     * @param pos2
+     */
+    public void setRemotePos(Vec3D pos) {
+        remotePos.set(pos);
+        posticks=3;
+    }
+
+    /**
+     * @param pitch2
+     * @param yaw2
+     * @param yawBodyOffset2
+     */
+    public void setRemoteRotation(float pitch, float yaw, float yawBodyOffset) {
+        remoteRotation.set(yaw, yawBodyOffset, pitch);
+        rotticks=3;
     }
 }

@@ -173,30 +173,32 @@ public class BlockFace {
         }
         
         if (bs.type == Block.water.id && bs.isAirAbove) {
+            float fillLevel = 0.3f;
+            float offset = 1-fillLevel;
             switch (side) {
                 case Dir.DIR_NEG_Y:
                     break;
                 case Dir.DIR_POS_Y:
-                    this.v3[1]-=0.1f;
-                    this.v0[1]-=0.1f;
-                    this.v1[1]-=0.1f;
-                    this.v2[1]-=0.1f;
+                    this.v3[1]-=offset;
+                    this.v0[1]-=offset;
+                    this.v1[1]-=offset;
+                    this.v2[1]-=offset;
                     break;
                 case Dir.DIR_NEG_Z:
-                    this.v3[1]-=0.1f;
-                    this.v2[1]-=0.1f;
+                    this.v3[1]-=offset;
+                    this.v2[1]-=offset;
                     break;
                 case Dir.DIR_POS_Z:
-                    this.v3[1]-=0.1f;
-                    this.v2[1]-=0.1f;
+                    this.v3[1]-=offset;
+                    this.v2[1]-=offset;
                     break;
                 case Dir.DIR_NEG_X:
-                    this.v1[1]-=0.1f;
-                    this.v2[1]-=0.1f;
+                    this.v1[1]-=offset;
+                    this.v2[1]-=offset;
                     break;
                 case Dir.DIR_POS_X:
-                    this.v1[1]-=0.1f;
-                    this.v2[1]-=0.1f;
+                    this.v1[1]-=offset;
+                    this.v2[1]-=offset;
                     break;
             }
         }

@@ -1,5 +1,6 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.network.client.ClientHandler;
@@ -196,8 +197,9 @@ public class PlayerSelf extends Player {
      * @param isDown
      */
     public void clicked(int button, boolean isDown) {
-        if (isDown)
-        this.punchTicks = 8;
+        if (!isDown) {
+            this.punchTicks = 8;
+        }
     }
     
 

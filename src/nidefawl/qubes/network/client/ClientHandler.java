@@ -212,6 +212,9 @@ public class ClientHandler extends Handler {
             byte[] biomes = c.biomes;
             System.arraycopy(decompressed, offset, biomes, 0, biomes.length);
             offset += biomes.length;
+            byte[] waterMask = c.waterMask;
+            System.arraycopy(decompressed, offset, waterMask, 0, waterMask.length);
+            offset += waterMask.length;
             
             int heightSlices = 0;
             heightSlices |= decompressed[offset+0]&0xFF;
@@ -396,12 +399,10 @@ public class ClientHandler extends Handler {
         if (e != null) {
             //TODO interpolate
             if ((p.flags & 1) != 0) {
-                e.pos.set(p.pos);
+                e.setRemotePos(p.pos);
             }
             if ((p.flags & 2) != 0) {
-                e.pitch = p.pitch;
-                e.yaw = p.yaw;
-                e.yawBodyOffset = p.yawBodyOffset;
+                e.setRemoteRotation(p.pitch, p.yaw, p.yawBodyOffset);
             }
         }
     }

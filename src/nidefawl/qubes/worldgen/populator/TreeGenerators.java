@@ -13,7 +13,7 @@ import nidefawl.qubes.block.Block;
  */
 public class TreeGenerators {
     
-    public static IWorldGen get(int a) {
+    public static TreeGeneratorLSystem get(int a) {
         Block b = Block.leaves;
         Block log = Block.log;
         switch (a) {

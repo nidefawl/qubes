@@ -1,13 +1,9 @@
 package nidefawl.qubes.meshing;
 
-import java.nio.ByteOrder;
-
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.vec.Dir;
 
 public class BlockFaceVert {
-    private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
+    
     int                          rgba;
     float                        u;
     float                        v;
@@ -31,11 +27,11 @@ public class BlockFaceVert {
 
     public void setColorRGBA(int rgb, float a) {
         int iA = (int) (a * 255.0F);
-        rgba = iA << 24|Integer.reverseBytes(rgb)>>8;
+        rgba = (iA << 24)|(Integer.reverseBytes(rgb)>>8)&0x00FFFFFF;
     }
 
     public void setColorRGB(int a) {
-        rgba = 0xFF000000|Integer.reverseBytes(a)>>8;
+        rgba = 0xFF000000|(Integer.reverseBytes(a)>>8)&0x00FFFFFF;
     }
 
     public void setUV(float u, float v) {

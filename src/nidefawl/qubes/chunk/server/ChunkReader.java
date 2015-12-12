@@ -65,7 +65,11 @@ public class ChunkReader {
         byte[] blockLight = c.getBlockLight();
         byte[] blockLight2 = new byte[blockLight.length];
         System.arraycopy(blockLight, 0, blockLight2, 0, blockLight2.length);
-        cmp.setByteArray("blockLight", blockLight);
+        cmp.setByteArray("blockLight", blockLight2);
+        byte[] waterMask = c.getWaterMask();
+        byte[] waterMask2 = new byte[waterMask.length];
+        System.arraycopy(waterMask, 0, waterMask2, 0, waterMask2.length);
+        cmp.setByteArray("waterMask", waterMask2);
         cmp.setBoolean("isLit", c.isLit);
         cmp.setBoolean("isPopulated", c.isPopulated);
         return cmp;
@@ -89,6 +93,9 @@ public class ChunkReader {
         if (blockDataCompound != null) {
             c.blockData.readFromTag((Tag.Compound) blockDataCompound);    
         }
+        Tag.ByteArray waterMaskTag = t.getByteArray("waterMask");
+        byte[] waterMask = waterMaskTag.getArray();
+        System.arraycopy(waterMask, 0, c.getWaterMask(), 0, waterMask.length);
         
         Tag.ByteArray blockLightArr = t.getByteArray("blockLight");
         byte[] blockLight = blockLightArr.getArray();

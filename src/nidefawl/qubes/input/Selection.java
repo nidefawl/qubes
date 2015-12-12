@@ -3,6 +3,7 @@ package nidefawl.qubes.input;
 import static org.lwjgl.opengl.GL11.*;
 
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
@@ -13,6 +14,7 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.item.Stack;
 import nidefawl.qubes.network.packet.PacketCSetBlock;
+import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Flags;
@@ -95,18 +97,21 @@ public class Selection {
         if (hasSelection()) {
             int blocks = getNumBlocks();
             if (blocks > 1) {
-                Shaders.colored3D.enable();
                 if (updateBB) {
                     renderBB();
                     updateBB = false;
                 }
-                glDisable(GL_DEPTH_TEST);
+                Shaders.colored3D.enable();
                 highlightSelection.drawQuads();
                 Shaders.wireframe.enable();
-                Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
-                Shaders.wireframe.setProgramUniform1f("maxDistance", 1000);
+                Shaders.wireframe.setProgramUniform3f("in_offset", 0,0,0);
+                Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
+                Shaders.wireframe.setProgramUniform1f("thickness", 0.7f);
+                Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0f, 1f, 1);
+                Shaders.wireframe.setProgramUniform1f("maxDistance", 220);
+                glDisable(GL11.GL_DEPTH_TEST); 
                 highlightSelection.drawQuads();
-                glEnable(GL_DEPTH_TEST);
+                glEnable(GL11.GL_DEPTH_TEST); 
                 Shader.disable();
             }
         } 
@@ -436,7 +441,7 @@ public class Selection {
         this.mouseStateChanged = this.mouseDown != isDown;
         this.mouseDown = isDown;
         if (this.mode == SelectionMode.PLAY) {
-            if (isDown && this.mouseOver != null) {
+            if (!isDown && this.mouseOver != null) {
                 onRelease();
             }
             return;
@@ -478,33 +483,32 @@ public class Selection {
         if (this.mode == SelectionMode.SELECT) {
             return;
         }
+
+        if (quarterMode) {
+            return;
+        }
         World world = Game.instance.getWorld();
         if (world != null) {
             if (rayTrace.hasHit()) {
 
                 int blocks = getNumBlocks();
+                RayTraceIntersection intersect = rayTrace.getHit();
                 if (blocks == 1) {
-                    RayTraceIntersection intersect = rayTrace.getHit();
-                    int offset = intersect.face;
-                    Stack block = Game.instance.selBlock;
-                    BlockPos p = intersect.blockPos.copy();
-                    if (block.id > 0) {
-                        if (mode == SelectionMode.SELECT || (mode == SelectionMode.EDIT && blocks > 1)) {
-                            p.x += Dir.getDirX(offset);
-                            p.y += Dir.getDirY(offset);
-                            p.z += Dir.getDirZ(offset);
-                        }
-                    }
-                    Game.instance.sendPacket(new PacketCSetBlock(world.getId(), p, offset, block));
+                    Game.instance.blockClicked(intersect, this.quarterMode);
                 } else {
+                    int faceHit = intersect.face;
+                    BlockPos pos = intersect.blockPos;
                     BlockPos p1 = getMin();
                     BlockPos p2 = getMax();
+                    boolean hollow = Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT);
+                    Game.instance.sendPacket(new PacketCSetBlocks(world.getId(), p1, p2, intersect.pos, faceHit, Game.instance.selBlock.copy(), hollow));
 
-                    EditBlockTask task = new EditBlockTask(p1, p2, Game.instance.selBlock);
-                    task.hollow = Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT);
-                    Game.instance.edits.add(task);
-                    Game.instance.step = 0;
-                    task.apply(world);
+//                    Game.instance.sendPacket(new PacketCSetBlocks(world.getId(), p1, p2, stack, ));
+//
+//                    EditBlockTask task = new EditBlockTask(p1, p2, Game.instance.selBlock);
+//                    Game.instance.edits.add(task);
+//                    Game.instance.step = 0;
+//                    task.apply(world);
                     
                 }
             }

@@ -30,6 +30,28 @@ public class PlayerRemote extends Player {
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);
         this.lastPos.set(this.pos);
+        if (this.posticks>0) {
+            if (this.posticks==1) {
+                this.pos.set(this.remotePos);
+            } else {
+                this.pos.x+=(this.remotePos.x-this.pos.x)/3;
+                this.pos.y+=(this.remotePos.y-this.pos.y)/3;
+                this.pos.z+=(this.remotePos.z-this.pos.z)/3;
+            }
+            this.posticks--;
+        }
+        if (this.rotticks>0) {
+            if (this.rotticks==1) {
+                this.yaw = this.remoteRotation.x;
+                this.yawBodyOffset = this.remoteRotation.y;
+                this.pitch = this.remoteRotation.z;
+            } else {
+                this.yaw+=(this.remoteRotation.x-this.yaw)/3;
+                this.yawBodyOffset+=(this.remoteRotation.y-this.yawBodyOffset)/3;
+                this.pitch+=(this.remoteRotation.z-this.pitch)/3;
+            }
+            this.rotticks--;
+        }
         updateTicks();
     }
 

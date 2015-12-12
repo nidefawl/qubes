@@ -59,6 +59,8 @@ public class Mesher {
     BlockSurface bs1 = null;
     BlockSurface bs2 = null;
     final private AABBFloat fullBB = new AABBFloat(0, 0, 0, 1, 1, 1);
+    private BlockSurface[] extraWaterFaces = new BlockSurface[4500];
+    private int extraIdx;
     private void setMask2(int n, int[] x, int[] dir, int axis) {
         // first handle everything inside of region
         if (bs1 != null && bs2 != null) {
@@ -89,7 +91,20 @@ public class Mesher {
                 mask2[n] = bs2;
                 return;
             }
+            if (bs1.type == Block.water.id && bs2.type != Block.water.id) {
+                if (bs1.axis == 1 && bs1.face == 0)
+                    extraWaterFaces[extraIdx++]=bs1;
+                mask2[n] = bs2;
+                return;
+            }
+            if (bs2.type == Block.water.id && bs1.type != Block.water.id) {
+                if (bs2.axis == 1 && bs2.face == 0)
+                    extraWaterFaces[extraIdx++]=bs2;
+                mask2[n] = bs1;
+                return;
+            }
             if ((bs1.renderTypeTransition || bs2.renderTypeTransition)) {
+                
                 BlockSurface from = bs1.renderTypeTransition ? bs2 : bs1;
                 BlockSurface to = from == bs1 ? bs2 : bs1;
                 int side = from == bs1 ? 0 : 1;
@@ -106,43 +121,6 @@ public class Mesher {
 //                mask2[n] = null;
 //                return;
 //            }
-            if (this.strategy == 0) {
-                if (bs1.pass == 0 && !bs1.transparent && bs2.isLeaves) {
-                    mask2[n] = bs1;
-                    return;
-                }
-                if (bs2.pass == 0 && !bs2.transparent && bs1.isLeaves) {
-                    mask2[n] = bs2;
-                    return;
-                }
-                if (bs1.isLeaves) {
-                    BlockSurface sf2 = getBlockSurface(x[0] + dir[0]*2, x[1] + dir[1]*2, x[2] + dir[2]*2, 1, axis);
-                    if (sf2 == null || !sf2.isLeaves) {
-//                        System.out.println("air");
-                        mask2[n] = bs1;
-                        return;
-                    }
-                     sf2 = getBlockSurface(x[0] + dir[0]*-1, x[1] + dir[1]*-1, x[2] + dir[2]*-1, 0, axis);
-                     if (sf2 == null || !sf2.isLeaves) {
-//                       System.out.println("air");
-                       mask2[n] = bs1;
-                       return;
-                   }
-                    mask2[n] = null;
-                    return;
-                }
-//                if (bs2.isLeaves) {
-//                    System.out.println("bs2.isLeaves");
-//                    BlockSurface sf2 = getBlockSurface(x[0] - dir[0]*2, x[1] - dir[1]*2, x[2] - dir[2]*2, 0, axis);
-//                    if (sf2 == null || !sf2.isLeaves) {
-//                        System.out.println("air");
-//                        mask2[n] = bs2;
-//                        return;
-//                    }
-//                    mask2[n] = null;
-//                    return;
-//                }
-            }
             
             if (bs1.pass == bs2.pass && bs1.transparent == bs2.transparent) {
                 mask2[n] = null;
@@ -165,14 +143,6 @@ public class Mesher {
             }
             if (bs2.pass == 0) {
                 mask2[n] = bs2;
-                return;
-            }
-            if (bs1.type == Block.water.id && bs2.type != Block.water.id) {
-                mask2[n] = bs2;
-                return;
-            }
-            if (bs2.type == Block.water.id && bs1.type != Block.water.id) {
-                mask2[n] = bs1;
                 return;
             }
             
@@ -225,6 +195,7 @@ public class Mesher {
     }
 
     private void meshRound(ChunkRenderCache ccache) {
+        extraIdx=0;
         dims[0] = RegionRenderer.REGION_SIZE_BLOCKS;
         dims[1] = RegionRenderer.SLICE_HEIGHT_BLOCKS;
         dims[2] = RegionRenderer.REGION_SIZE_BLOCKS;
@@ -307,6 +278,23 @@ public class Mesher {
                         }
                     }
                 }
+                for (int j = 0; j < extraIdx; ++j) {
+                    BlockSurface c = extraWaterFaces[j];
+                    if (!c.resolved)
+                        c.resolve(ccache);
+                    int w = 1;
+                    int h = 1;
+                    int du[] = new int[] { 0, 0, 0 };
+                    int dv[] = new int[] { 0, 0, 0 };
+                    x[u] = c.z;
+                    x[v] = c.x;
+                    du[u] = w;
+                    dv[v] = h;
+                    BlockFace face = new BlockFace(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
+                    meshes[c.pass].add(face);
+                    
+                }
+                extraIdx = 0;
                 if (MEASURE) TimingHelper2.endSec();
             }
         }
@@ -326,13 +314,23 @@ public class Mesher {
         boolean center = chunkX >= 0 && chunkX < ChunkRenderCache.WIDTH && chunkZ >= 0 && chunkZ < ChunkRenderCache.WIDTH;
         Chunk chunk = this.cache.get(chunkX, chunkZ);
         if (chunk == null) {
-//            if (center) {
-//                System.err.println("CHUNK IS NULL SHOULD NOT HAPPEN");
-//            }
-//            System.err.println("adj missing on "+regionX+"/"+regionZ);
+//          if (center) {
+//          System.err.println("CHUNK IS NULL SHOULD NOT HAPPEN");
+//      }
+//      System.err.println("adj missing on "+regionX+"/"+regionZ);
             return null;
         }
         int type = chunk.getTypeId(i&0xF, j, k&0xF);
+        boolean a = chunk.getWater(i&0xF, j, k&0xF)>0;
+        if (a) {
+            if (type > 0) {
+                if (center && strategy == 0 && axis == 0 && l == 0) {
+                    renderTypeBlocks[this.nextBlockIDX++] = 
+                            (short) (j<<(REGION_SIZE_BLOCK_SIZE_BITS*2)|i<<(REGION_SIZE_BLOCK_SIZE_BITS)|k);
+                }
+            }
+            type = Block.water.id;
+        }
         if (type > 0) {
             Block block = Block.get(type);
             int pass = block.getRenderPass();
@@ -340,10 +338,6 @@ public class Mesher {
             boolean renderTypeTransition = false;
             if (renderType != 0) {
                 if (center && strategy == 0 && axis == 0 && l == 0) {
-                    if ((k&REGION_SIZE_BLOCKS_MASK) != k)
-                        System.err.println("k ");
-                    if ((i&REGION_SIZE_BLOCKS_MASK) != i)
-                        System.err.println("i ");
                     renderTypeBlocks[this.nextBlockIDX++] = 
                             (short) (j<<(REGION_SIZE_BLOCK_SIZE_BITS*2)|i<<(REGION_SIZE_BLOCK_SIZE_BITS)|k);
                 }
@@ -376,7 +370,6 @@ public class Mesher {
                 surface.transparent = false;
             } else {
                 surface.calcLight = true;
-                surface.isLeaves = false;// Block.get(surface.type) instanceof BlockLeaves;
             }
             return surface;
         }

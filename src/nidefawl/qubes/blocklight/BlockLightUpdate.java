@@ -156,10 +156,15 @@ public class BlockLightUpdate {
                 if (dirY > 0 && dirY </*=*/ cache.worldHeightMin1) {
                     int dirType = cache.getTypeId(dirX, dirY, dirZ);
                     boolean transparent = !Block.isOpaque(dirType);
-                    int lightLoss = 1;
                     if (transparent) {
+                        if (cache.getWater(dirX, dirY, dirZ) > 0) {
+                            dirType = Block.water.id;
+                        }
+                        int lightLoss = Block.get(dirType).getLightLoss(cache, dirX, dirY, dirZ, type);
                         int lvl1 = cache.getLight(dirX, dirY, dirZ, type);
-                        if (lvl1 + 2 <= lvl) {
+                        // 10 +2 <= 14
+                        // 10 <= 14-2
+                        if (lvl1 <= lvl-1-lightLoss) {
                             int setLight = dirType == 0 && type == 1 && dirY < 0 && lvl == 0xF ? lvl : lvl - lightLoss;
 //                            if (lvl1==15&&type==1&&!cache.canSeeSky(dirX, dirY, dirZ)) {
 //                                System.out.println("skip fully lit block that is not sky block");
@@ -190,6 +195,10 @@ public class BlockLightUpdate {
 
     private int getNewLightLevel(LightChunkCache cache, int i, int j, int k, int type) {
         Block block = Block.get(cache.getTypeId(i, j, k));
+        boolean dbg = false;
+        if (cache.getWater(i, j, k) > 0) {
+            block = Block.water;
+        }
         int lvl = 0;
         if (type == 0) {
             lvl = block.getLightValue();
@@ -214,6 +223,10 @@ public class BlockLightUpdate {
             if (lvl2 > lvl)
                 lvl = lvl2;
 
+        }
+        if (dbg) {
+
+//            System.out.println("water override "+(lvl)+"/ "+lightLoss);
         }
         return lvl;
     }

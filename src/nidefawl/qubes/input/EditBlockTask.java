@@ -22,7 +22,6 @@ public class EditBlockTask {
     }
     
     public void apply(World world) {
-        Game.instance.sendPacket(new PacketCSetBlocks(world.getId(), p1, p2, stack, this.hollow));
 
         int w = p2.x-p1.x+1;
         int h = p2.y-p1.y+1;

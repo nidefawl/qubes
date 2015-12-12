@@ -15,12 +15,12 @@ import nidefawl.qubes.world.WorldServer;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class HexBiome extends HexCell {
+public class HexBiome extends HexCell<HexBiome> {
 
     public int version;
     public Biome biome;
 
-    public HexBiome(HexagonGridStorage hexBiomes, int x, int z) {
+    public HexBiome(HexagonGridStorage<HexBiome> hexBiomes, int x, int z) {
         super(hexBiomes, x, z);
     }
 

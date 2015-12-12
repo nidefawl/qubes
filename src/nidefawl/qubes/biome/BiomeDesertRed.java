@@ -19,12 +19,12 @@ public class BiomeDesertRed extends BiomeDesert {
     
 
     public Block getStone() {
-        return Block.sandstone_red;
+        return Block.stones.sandstone_red;
     }
     public Block getTopBlock() {
         return Block.sand_red;
     }
     public Block getSoilBlock() {
-        return Block.sandstone_red;
+        return Block.stones.sandstone_red;
     }
 }

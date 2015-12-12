@@ -26,7 +26,7 @@ public class Chunk {
     public final byte[]           blockLight;
     public final int[]            heightMap       = new int[SIZE * SIZE];
     public final byte[]           biomes          = new byte[SIZE * SIZE];
-    public int                    facesRendered;
+    public final byte[]           waterMask;
     public long                   loadTime        = System.currentTimeMillis();
     boolean                       updateHeightMap = true;
     public boolean                needsSave       = false;
@@ -39,6 +39,7 @@ public class Chunk {
 
     public Chunk(World world, int x, int z, int heightBits) {
         this.blockLight = new byte[1 << (heightBits + SIZE_BITS * 2)];
+        this.waterMask = new byte[1 << (heightBits + SIZE_BITS * 2)];
         this.blocks = new short[1 << (heightBits + SIZE_BITS * 2)];
         this.worldHeightBits = heightBits;
         this.height = 1 << this.worldHeightBits;
@@ -72,9 +73,10 @@ public class Chunk {
         return this.z << SIZE_BITS;
     }
 
-    public short[] g() {
-        return this.blocks;
+    public int getWater(int i, int j, int k) {
+        return this.waterMask[j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] & 0xFF;
     }
+
     public int getTypeId(int i, int j, int k) {
         return this.blocks[j << (SIZE_BITS * 2) | k << (SIZE_BITS) | i] & Block.BLOCK_MASK;
     }
@@ -118,9 +120,14 @@ public class Chunk {
 
     public int getTopBlock(int i, int k) {
         int y = 1 << worldHeightBits;
+        int xz = k << (SIZE_BITS) | i;
         while (y > 0) {
-            int block = this.blocks[--y << (SIZE_BITS * 2) | k << (SIZE_BITS) | i]&Block.BLOCK_MASK;
+            int idx = --y << (SIZE_BITS * 2) | xz;
+            int block = this.blocks[idx]&Block.BLOCK_MASK;
             if (block > 0 && (Block.isOpaque(block) || block == Block.water.id)) {
+                return y;
+            }
+            if (this.waterMask[idx] != 0) {
                 return y;
             }
         }
@@ -280,8 +287,8 @@ public class Chunk {
         int prevH = heightMap[xz];
         int y = this.height - 1;
         for (; y >= 0; y--) {
-            short block = y == 0 ? 1 : this.blocks[(y-1) << (SIZE_BITS * 2) | xz];
-            if (block != 0) {
+            int idx = (y-1) << (SIZE_BITS * 2) | xz;
+            if (y == 0 || this.blocks[idx] != 0 || this.waterMask[idx] != 0) {
                 heightMap[xz] = y;
                 break;
             }
@@ -333,8 +340,11 @@ public class Chunk {
                 int y = this.height - 1;
                 int xz = z << (SIZE_BITS) | x;
                 for (; y > 0; y--) {
-                    short block = this.blocks[(y) << (SIZE_BITS * 2) | xz];
-                    if (block != 0) {
+                    int idx = (y) << (SIZE_BITS * 2) | xz;
+                    if (this.blocks[idx] != 0) {
+                        break;
+                    }
+                    if (this.waterMask[idx] != 0){
                         break;
                     }
                 }
@@ -422,6 +432,13 @@ public class Chunk {
     @Override
     public String toString() {
         return "Chunk["+this.world.getName()+","+x+","+z+"]";
+    }
+
+    /**
+     * @return
+     */
+    public byte[] getWaterMask() {
+        return this.waterMask;
     }
 
 }

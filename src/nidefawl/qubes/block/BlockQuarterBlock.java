@@ -147,7 +147,7 @@ public class BlockQuarterBlock extends BlockSliced {
             Stack st = new Stack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
-            qBlock.setTypeAndData(0, 0, 0, Block.granite.id, 0);
+            qBlock.setTypeAndData(0, 0, 0, Block.stones.granite.id, 0);
             data.setBlockData(qBlock);
             st.setStackdata(data);
             l.add(st);
@@ -157,10 +157,10 @@ public class BlockQuarterBlock extends BlockSliced {
             Stack st = new Stack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
-            qBlock.setTypeAndData(0, 0, 0, Block.granite.id, 0);
-            qBlock.setTypeAndData(0, 0, 1, Block.granite.id, 0);
-            qBlock.setTypeAndData(0, 1, 1, Block.granite.id, 0);
-            qBlock.setTypeAndData(0, 1, 0, Block.granite.id, 0);
+            qBlock.setTypeAndData(0, 0, 0, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(0, 0, 1, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(0, 1, 1, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(0, 1, 0, Block.stones.granite.id, 0);
             data.setBlockData(qBlock);
             st.setStackdata(data);
             l.add(st);
@@ -170,13 +170,13 @@ public class BlockQuarterBlock extends BlockSliced {
             Stack st = new Stack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
-            qBlock.setTypeAndData(0, 0, 0, Block.granite.id, 0);
-            qBlock.setTypeAndData(0, 1, 0, Block.granite.id, 0);
-            qBlock.setTypeAndData(0, 0, 1, Block.granite.id, 0);
-            qBlock.setTypeAndData(1, 0, 0, Block.granite.id, 0);
-            qBlock.setTypeAndData(1, 1, 0, Block.granite.id, 0);
-            qBlock.setTypeAndData(1, 0, 1, Block.granite.id, 0);
-            qBlock.setTypeAndData(1, 1, 1, Block.granite.id, 0);
+            qBlock.setTypeAndData(0, 0, 0, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(0, 1, 0, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(0, 0, 1, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(1, 0, 0, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(1, 1, 0, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(1, 0, 1, Block.stones.granite.id, 0);
+            qBlock.setTypeAndData(1, 1, 1, Block.stones.granite.id, 0);
             data.setBlockData(qBlock);
             st.setStackdata(data);
             l.add(st);
@@ -188,7 +188,7 @@ public class BlockQuarterBlock extends BlockSliced {
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
             for (int k = 0; k < 8; k++) {
 
-                qBlock.setTypeAndData((k>>2)&1, (k>>1)&1, (k>>0)&1, Block.granite.id, 0);
+                qBlock.setTypeAndData((k>>2)&1, (k>>1)&1, (k>>0)&1, Block.stones.granite.id, 0);
             }
             data.setBlockData(qBlock);
             st.setStackdata(data);

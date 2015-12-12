@@ -999,7 +999,6 @@ public class BlockRenderer {
         out.pass = block.getRenderPass();
         out.extraFace = false;
         out.calcLight = true;
-        out.isLeaves = false;
         if (w instanceof SingleBlockWorld) {
             out.maskedAO=BlockSurface.maskAO(2, 2, 2, 2);
         } else {

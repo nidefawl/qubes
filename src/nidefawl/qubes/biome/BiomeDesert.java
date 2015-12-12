@@ -19,12 +19,12 @@ public class BiomeDesert extends Biome {
     
 
     public Block getStone() {
-        return Block.sandstone;
+        return Block.stones.sandstone;
     }
     public Block getTopBlock() {
         return Block.sand;
     }
     public Block getSoilBlock() {
-        return Block.sandstone;
+        return Block.stones.sandstone;
     }
 }

@@ -96,13 +96,14 @@ public class GuiSelectBlock extends Gui {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
 //        Engine.blockDraw.drawBlock(Block.glowstone, 0);
 //        glEnable(GL_CULL_FACE);
-        
-        float bSize = 74;
+
+        float bSize = 44;
+        float bascale = (bSize/32.0f)*0.6f;
         float g = 4;
-        float out = 20;
-        int perRow1 = Math.max(4, (int) ((this.width-50)/(bSize+out)));
-        float xPos = this.width/2.0f-(perRow1*bSize+out)/2.0f;
-        float yPos = xPos;
+        int perRow1 = Math.max(4, (int) ((this.width-220)/(bSize+g)));
+        int rows = 1+(blocks.size()/perRow1);
+        float xPos = 0 + (this.width-perRow1*(bSize+g))/2.0f;
+        float yPos = Math.max(50, 0 + (this.height-rows*(bSize+g))/2.0f);
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
         
@@ -122,8 +123,8 @@ public class GuiSelectBlock extends Gui {
             Stack stack = blocks.get(i);
             Block block = stack.getBlock();
             if (block != null) {
-                float bX = this.posX+xPos + (rendered%perRow1)*(bSize+g);
-                float bY = this.posY+yPos + (rendered/perRow1)*(bSize+g);
+                float bX = this.posX+xPos+bSize/2.0f + (rendered%perRow1)*(bSize+g);
+                float bY = this.posY+yPos+bSize/2.0f+ (rendered/perRow1)*(bSize+g);
                 boolean m = false;
                 float pX1 = bX-bSize/2.0f;
                 float pY1 = bY-bSize/2.0f;
@@ -145,7 +146,7 @@ public class GuiSelectBlock extends Gui {
                 Shaders.gui.enable();
                 renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1, true);
                 float fRot = block.getInvRenderRotation();
-                float blockscale = 1.333f;
+                float blockscale = bascale;
                 int renderData = block.getInvRenderData(stack);
                 Engine.blockDraw.setOffset(bX, bY, zz+100);
                 Engine.blockDraw.setScale(blockscale);
@@ -162,7 +163,7 @@ public class GuiSelectBlock extends Gui {
             float pX2 = pX1+bSize;
             float pY2 = pY1+bSize;
             float zz = -50;
-            float offset = bSize/2.8f;
+            float offset = bSize*0.9f;
             float fRot = block.getInvRenderRotation();
             float blockscale = 1.333f;
             fRot+=animRot;
@@ -192,7 +193,7 @@ public class GuiSelectBlock extends Gui {
 
         if (sel != null) {
             Shaders.textured.enable();
-            font.drawString(""+sel.getBlock().getName(), this.width / 2, 50, -1, true, 1, 2);
+            font.drawString(""+sel.getBlock().getName(), this.width / 2, Math.max(30, yPos-50), -1, true, 1, 2);
             Shader.disable();
         }
         

@@ -7,6 +7,7 @@ import java.util.List;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
@@ -52,10 +53,15 @@ public class BlockWall extends Block {
         return connect == BlockConnect.WALL;
     }
 
+    private final int overrideTextureIdx;
     public BlockWall(int id, Block baseBlock) {
+        this(id, baseBlock, -1);
+    }
+    public BlockWall(int id, Block baseBlock, int overrideTextureIdx) {
         super(id, true);
         this.textures = NO_TEXTURES;
         this.baseBlock = baseBlock;
+        this.overrideTextureIdx = overrideTextureIdx;
     }
 
 
@@ -76,8 +82,9 @@ public class BlockWall extends Block {
     }
     @Override
     public int getTexture(int faceDir, int dataVal, int pass) {
-        int axis = faceDir>>1;
-        if (axis == 1) {
+        int idx = overrideTextureIdx;
+        if (idx >= 0) {
+            return BlockTextureArray.getInstance().getTextureIdx(baseBlock.id, idx);
         }
         if (this.textures.length == 0)
             return baseBlock.getTexture(faceDir, dataVal, pass);
@@ -185,14 +192,7 @@ public class BlockWall extends Block {
     
     @Override
     public int getItems(List<Stack> l) {
-        if (baseBlock.textureMode == BlockTextureMode.SUBTYPED_TEX_PER_TYPE) {
-            for (int i = 0; i < baseBlock.textures.length; i++) {
-                l.add(new Stack(this.id, i));
-            }
-            return baseBlock.textures.length;
-        } else {
-            l.add(new Stack(this.id));
-        }
+        l.add(new Stack(this.id));
         return 1;
     }
 

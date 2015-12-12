@@ -5,9 +5,7 @@ package nidefawl.qubes.worldgen.biome;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
-import nidefawl.qubes.hex.HexagonGrid;
-import nidefawl.qubes.hex.HexagonGridStorage;
-import nidefawl.qubes.hex.Point2F;
+import nidefawl.qubes.hex.*;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.IWorldSettings;
@@ -19,11 +17,17 @@ import nidefawl.qubes.world.WorldServer;
  * Copyright: Michael Hept
  */
 public abstract class HexBiomes extends HexagonGridStorage<HexBiome> implements IBiomeManager {
+    public static class HexBiomeEnd extends HexBiome {
+        public HexBiomeEnd(HexagonGridStorage<HexBiome> grid, int x, int z) {
+            super(grid, x, z);
+            this.biome = Biome.MEADOW_GREEN;
+        }
+    }
 
     final World world;
 
     public HexBiomes(World world, long seed, IWorldSettings settings) {
-        super(256);
+        super(256, 32);
         this.world = world;
     }
     

@@ -9,11 +9,11 @@ import nidefawl.qubes.worldgen.biome.HexBiome;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class HexCell {
+public class HexCell<T> {
     public int x;
     public int z;
-    private HexagonGridStorage<HexBiome> grid;
-    public HexCell(HexagonGridStorage<HexBiome> grid, int x, int z) {
+    private HexagonGridStorage<T> grid;
+    public HexCell(HexagonGridStorage<T> grid, int x, int z) {
         this.grid = grid;
         this.x = x;
         this.z = z;
@@ -33,22 +33,22 @@ public class HexCell {
     public double getCenterY() {
         return grid.getCenterY(this.x, this.z);
     }
-    public HexCell getRight() {
+    public T getRight() {
         return grid.getPos(HexagonGrid.right(this.x, this.z));
     }
-    public HexCell getLeft() {
+    public T getLeft() {
         return grid.getPos(HexagonGrid.left(this.x, this.z));
     }
-    public HexCell getTopLeft() {
+    public T getTopLeft() {
         return grid.getPos(HexagonGrid.topLeft(this.x, this.z));
     }
-    public HexCell getTopRight() {
+    public T getTopRight() {
         return grid.getPos(HexagonGrid.topRight(this.x, this.z));
     }
-    public HexCell getBottomLeft() {
+    public T getBottomLeft() {
         return grid.getPos(HexagonGrid.bottomLeft(this.x, this.z));
     }
-    public HexCell getBottomRight() {
+    public T getBottomRight() {
         return grid.getPos(HexagonGrid.bottomRight(this.x, this.z));
     }
     public int getClosesCorner(double x, double z) {

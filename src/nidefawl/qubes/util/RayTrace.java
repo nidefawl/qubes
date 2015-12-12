@@ -4,6 +4,7 @@
 
 package nidefawl.qubes.util;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.IBlockWorld;
@@ -146,6 +147,11 @@ public class RayTrace {
         int type = world.getType(x, y, z);
         if (type != 0) {
             Block block = Block.get(type);
+            if (block.isReplaceable()) {
+                if (Game.instance.selBlock != null && Game.instance.selBlock.id > 0) {
+                    return false;
+                }
+            }
             this.intersection.hit = HitType.NONE;
             if (block.raytrace(this, world, x, y, z, origin, direction, dirFrac)) {
                 if (this.quarterMode && block != Block.quarter) {

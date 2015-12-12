@@ -67,6 +67,16 @@ public class ChunkRenderCache implements IBlockWorld {
         return region != null ? region.getTypeId(i&0xF, j, k&0xF) : 0;
     }
 
+    public int getWater(int i, int j, int k) {
+
+        if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
+            return 0;
+        }
+        Chunk region = get(i>>Chunk.SIZE_BITS, k>>Chunk.SIZE_BITS);
+        return region != null ? region.getWater(i&0xF, j, k&0xF) : 0;
+    }
+
+
     public int getLight(int i, int j, int k) {
         if (j < 0 || j >= World.MAX_WORLDHEIGHT) {
             return 0xF0;
@@ -172,5 +182,4 @@ public class ChunkRenderCache implements IBlockWorld {
     public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
         return this.world.getBiomeFaceColor(this.baseX+x, y, this.baseZ+z, faceDir, pass, colorType);
     }
-
 }

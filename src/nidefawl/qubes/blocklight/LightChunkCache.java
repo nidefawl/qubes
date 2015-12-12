@@ -88,6 +88,12 @@ public class LightChunkCache {
             return 0;
         return c.getLight(i & MASK, j, k & MASK, type);
     }
+    public int getWater(int i, int j, int k) {
+        Chunk c = get(i >> SIZE_BITS, k >> SIZE_BITS);
+        if (c == null)
+            return 0;
+        return c.getWater(i & MASK, j, k & MASK);
+    }
 
 
     /** call with relative coords */
@@ -209,6 +215,7 @@ public class LightChunkCache {
     public int getNumUses() {
         return nUse;
     }
+
 
 //    public void getFlaggedBlocks(HashSet<Long> flaggedBlocks) {
 //        for (int x = -NEXT; x < NEXT + 1; x++) {

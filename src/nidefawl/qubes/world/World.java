@@ -136,6 +136,17 @@ public abstract class World implements IBlockWorld {
         return c.getTypeId(x & 0xF, y, z & 0xF);
     }
 
+    public int getWater(int x, int y, int z) {
+        if (y >= this.worldHeight)
+            return 0;
+        if (y < 0)
+            return 0;
+        Chunk c = getChunk(x >> 4, z >> 4);
+        if (c == null) {
+            return 0;
+        }
+        return c.getWater(x & 0xF, y, z & 0xF);
+    }
 
     public int getData(int x, int y, int z) {
         if (y >= this.worldHeight)
