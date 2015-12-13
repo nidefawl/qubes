@@ -14,7 +14,7 @@ import nidefawl.qubes.network.StreamIO;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class Stack implements StreamIO {
+public class BlockStack extends BaseStack {
 
     public int id;
     public int data;
@@ -33,32 +33,32 @@ public class Stack implements StreamIO {
     public StackData getStackdata() {
         return this.stackdata;
     }
-    public Stack(int id) {
+    public BlockStack(int id) {
         this(id, 0, 1);
     }
-    public Stack(Stack stack) {
+    public BlockStack(BlockStack stack) {
         this(stack.id, stack.data, stack.size);
         if (stack.stackdata != null) {
             this.stackdata = stack.stackdata.copy();
         }
     }
-    public Stack(int id, int data, int size) {
+    public BlockStack(int id, int data, int size) {
         this.id = id;
         this.data = data;
         this.size = size;
     }
-    public Stack(int id, int data) {
+    public BlockStack(int id, int data) {
         this(id, data, 1);
     }
     
     /**
      * 
      */
-    public Stack() {
+    public BlockStack() {
     }
     
-    public Stack copy() {
-        return new Stack(this);
+    public BlockStack copy() {
+        return new BlockStack(this);
     }
     /**
      * @return
@@ -90,17 +90,16 @@ public class Stack implements StreamIO {
             this.stackdata.write(out);
         }
     }
-    /**
-     * @param selBlock
-     * @return
-     */
-    public boolean isEqualId(Stack s) {
+
+    public boolean isEqualId(BlockStack s) {
         return this.id == s.id && this.data == s.data;
     }
-    public boolean isFullyEqual(Stack s) {
+    public boolean isFullyEqual(BlockStack s) {
         return this.id == s.id && this.data == s.data && this.size == s.size;
     }
-    
-    
 
+    @Override
+    public boolean isItem() {
+        return false;
+    }
 }

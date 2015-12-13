@@ -5,7 +5,7 @@ package nidefawl.qubes.block;
 
 import java.util.List;
 
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;

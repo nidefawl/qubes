@@ -6,7 +6,7 @@ package nidefawl.qubes.block;
 import java.util.Arrays;
 import java.util.List;
 
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.*;
@@ -214,8 +214,8 @@ public class BlockSlab extends BlockSliced {
     }
     
     @Override
-    public int getItems(List<Stack> l) {
-        l.add(new Stack(this.id));
+    public int getItems(List<BlockStack> l) {
+        l.add(new BlockStack(this.id));
         return 1;
     }
 }

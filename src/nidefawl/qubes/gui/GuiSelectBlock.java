@@ -17,7 +17,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.packet.PacketCSwitchWorld;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -28,9 +28,9 @@ import nidefawl.qubes.util.GameMath;
 public class GuiSelectBlock extends Gui {
 
     final public FontRenderer font;
-    private List<Stack> blocks;
+    private List<BlockStack> blocks;
     private Button fakeButton;
-    private Stack sel;
+    private BlockStack sel;
 
     public GuiSelectBlock() {
         this.font = FontRenderer.get("Arial", 18, 0, 20);
@@ -54,9 +54,9 @@ public class GuiSelectBlock extends Gui {
         for (Block b : Block.getRegisteredBlocks()) {
             b.getItems(this.blocks);
         }
-        Collections.sort(this.blocks, new Comparator<Stack>() {
+        Collections.sort(this.blocks, new Comparator<BlockStack>() {
             @Override
-            public int compare(Stack s1, Stack s2) {
+            public int compare(BlockStack s1, BlockStack s2) {
                 int n= s1.getBlock().getClass().getName().compareToIgnoreCase(s2.getBlock().getClass().getName());
                 if (n == 0) {
                     n= s1.getBlock().getName().compareToIgnoreCase(s2.getBlock().getName());
@@ -120,7 +120,7 @@ public class GuiSelectBlock extends Gui {
         sX = sZ = 0;
         int color = 0xc0c0c0;
         for (int i = 0; i < blocks.size(); i++) {
-            Stack stack = blocks.get(i);
+            BlockStack stack = blocks.get(i);
             Block block = stack.getBlock();
             if (block != null) {
                 float bX = this.posX+xPos+bSize/2.0f + (rendered%perRow1)*(bSize+g);

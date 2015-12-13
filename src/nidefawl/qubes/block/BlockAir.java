@@ -5,7 +5,7 @@ package nidefawl.qubes.block;
 
 import java.util.List;
 
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
@@ -95,7 +95,7 @@ public class BlockAir extends Block {
         return 0;
     }
 
-    public int getItems(List<Stack> l) {
+    public int getItems(List<BlockStack> l) {
         return 0;
     }
     

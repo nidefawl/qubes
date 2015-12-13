@@ -12,7 +12,7 @@ import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.shader.Shader;

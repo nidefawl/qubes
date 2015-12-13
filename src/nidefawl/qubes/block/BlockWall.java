@@ -6,7 +6,7 @@ package nidefawl.qubes.block;
 import java.util.List;
 
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
@@ -191,8 +191,8 @@ public class BlockWall extends Block {
     }
     
     @Override
-    public int getItems(List<Stack> l) {
-        l.add(new Stack(this.id));
+    public int getItems(List<BlockStack> l) {
+        l.add(new BlockStack(this.id));
         return 1;
     }
 

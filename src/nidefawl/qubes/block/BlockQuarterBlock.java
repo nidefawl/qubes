@@ -8,7 +8,7 @@ import java.util.List;
 
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.RayTrace;
@@ -140,11 +140,11 @@ public class BlockQuarterBlock extends BlockSliced {
     
 
     @Override
-    public int getItems(List<Stack> l) {
+    public int getItems(List<BlockStack> l) {
         int a = l.size();
         {
 
-            Stack st = new Stack(this.id);
+            BlockStack st = new BlockStack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
             qBlock.setTypeAndData(0, 0, 0, Block.stones.granite.id, 0);
@@ -154,7 +154,7 @@ public class BlockQuarterBlock extends BlockSliced {
         }
         {
 
-            Stack st = new Stack(this.id);
+            BlockStack st = new BlockStack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
             qBlock.setTypeAndData(0, 0, 0, Block.stones.granite.id, 0);
@@ -167,7 +167,7 @@ public class BlockQuarterBlock extends BlockSliced {
         }
         {
 
-            Stack st = new Stack(this.id);
+            BlockStack st = new BlockStack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
             qBlock.setTypeAndData(0, 0, 0, Block.stones.granite.id, 0);
@@ -183,7 +183,7 @@ public class BlockQuarterBlock extends BlockSliced {
         }
         {
 
-            Stack st = new Stack(this.id);
+            BlockStack st = new BlockStack(this.id);
             StackData data = new StackData();
             BlockDataQuarterBlock qBlock = new BlockDataQuarterBlock();
             for (int k = 0; k < 8; k++) {

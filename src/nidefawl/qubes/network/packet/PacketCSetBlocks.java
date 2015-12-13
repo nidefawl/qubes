@@ -4,7 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
@@ -13,7 +13,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
 
     public int x, y, z;
     public int x2, y2, z2;
-    public Stack stack;
+    public BlockStack stack;
     public int flags;
     public final Vector3f fpos = new Vector3f();
     public int face;
@@ -28,7 +28,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
      * @param copy
      * @param hollow
      */
-    public PacketCSetBlocks(int id, BlockPos pos1, BlockPos pos2, Vector3f pos, int face, Stack stack, boolean hollow) {
+    public PacketCSetBlocks(int id, BlockPos pos1, BlockPos pos2, Vector3f pos, int face, BlockStack stack, boolean hollow) {
         super(id);
         this.x = pos1.x;
         this.y = pos1.y;
@@ -54,7 +54,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         flags = stream.readInt();
         this.fpos.read(stream);
         face = stream.readInt();
-        this.stack = new Stack();
+        this.stack = new BlockStack();
         this.stack.read(stream);
 
     }

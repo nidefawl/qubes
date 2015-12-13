@@ -31,7 +31,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.*;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.*;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.models.voxel.ModelVox;
@@ -79,7 +79,7 @@ public class Game extends GameBase implements IErrorHandler {
     private float          lastCamX;
     private float          lastCamY;
     private float          lastCamZ;
-    public Stack           selBlock           = new Stack(0);
+    public BlockStack           selBlock           = new BlockStack(0);
     long                   lastShaderLoadTime = System.currentTimeMillis();
     float                  px, py, pz;
 
@@ -126,6 +126,7 @@ public class Game extends GameBase implements IErrorHandler {
         TextureManager.getInstance().init();
         loadRender(0, 0.1f);
         BlockTextureArray.getInstance().init();
+        ItemTextureArray.getInstance().init();
         loadRender(0, 0.2f);
         AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
         ColorMap.grass.set(tex_map_grass);
@@ -227,6 +228,7 @@ public class Game extends GameBase implements IErrorHandler {
     }
     public void lateInitGame() {
         loadRender(0, 1f);
+        ItemTextureArray.getInstance().reload();
         BlockTextureArray.getInstance().reload();
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F8) {
             public void onDown() {
@@ -243,6 +245,7 @@ public class Game extends GameBase implements IErrorHandler {
 //                Engine.flushRenderTasks();
 //                Engine.regionRenderer.resetAll();
 //                Engine.toggleDrawMode();
+                ItemTextureArray.getInstance().reload();
                 BlockTextureArray.getInstance().reload();
             }
         });
@@ -486,6 +489,7 @@ public class Game extends GameBase implements IErrorHandler {
         }
     }
     int skipChars = 0;
+    private BaseStack testStack = new ItemStack(Item.pickaxe);
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
@@ -852,7 +856,6 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.gui != null) {
             this.gui.render(fTime, Mouse.getX(), Mouse.getY());
         } else if (this.world != null) {
-
             if (showGrid) {
                 int ipX = GameMath.floor(px);
                 int ipY = GameMath.floor(py);
@@ -915,6 +918,7 @@ public class Game extends GameBase implements IErrorHandler {
                 t.drawQuads();
                 Shader.disable();
             }
+            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2);
             if (show) {
                 if (Game.DO_TIMING)
                     TimingHelper.startSec("debugOverlay");

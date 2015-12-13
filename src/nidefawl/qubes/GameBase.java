@@ -36,7 +36,7 @@ public abstract class GameBase implements Runnable {
     public static int     displayWidth;
     public static int     displayHeight;
     public static boolean glDebug         = false;
-    public static boolean GL_ERROR_CHECKS = false;
+    public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
     static int            initHeight      = (int) (1050*0.8);

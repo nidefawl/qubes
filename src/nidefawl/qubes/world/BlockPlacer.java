@@ -9,7 +9,7 @@ import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
@@ -24,7 +24,7 @@ import nidefawl.qubes.vec.Vector3f;
 public class BlockPlacer {
 
     private PlayerServer player;
-    private Stack stack;
+    private BlockStack stack;
 
     /**
      * @param serverHandlerPlay
@@ -45,7 +45,7 @@ public class BlockPlacer {
     /**
      * @return the stack
      */
-    public Stack getStack() {
+    public BlockStack getStack() {
         return this.stack;
     }
     
@@ -60,7 +60,7 @@ public class BlockPlacer {
      * @param data
      * @param face 
      */
-    public void tryPlace(BlockPos pos, Vector3f fpos, Stack stack, int face) {
+    public void tryPlace(BlockPos pos, Vector3f fpos, BlockStack stack, int face) {
         World w = this.player.world;
         this.stack = stack;
 //        int x, int y, int z, float fx, float fy, float fz

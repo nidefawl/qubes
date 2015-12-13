@@ -6,7 +6,7 @@ package nidefawl.qubes.block;
 import java.util.Arrays;
 import java.util.List;
 
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace;

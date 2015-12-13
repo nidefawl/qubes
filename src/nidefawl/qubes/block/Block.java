@@ -9,7 +9,7 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.assets.*;
 import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.entity.Player;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.meshing.ChunkRenderCache;
 import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
@@ -203,10 +203,6 @@ public class Block {
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int multiTexturePass) {
         return 0xFFFFFF;
     }
-    /**
-     * @param textureMode the textureMode to set
-     * @return 
-     */
     public Block setTextureMode(BlockTextureMode textureMode) {
         this.textureMode = textureMode;
         return this;
@@ -473,14 +469,14 @@ public class Block {
         return isFullBB() && !isReplaceable() && !isTransparent();
     }
     
-    public int getItems(List<Stack> l) {
+    public int getItems(List<BlockStack> l) {
         if (this.textureMode == BlockTextureMode.SUBTYPED_TEX_PER_TYPE) {
             for (int i = 0; i < this.textures.length; i++) {
-                l.add(new Stack(this.id, i));
+                l.add(new BlockStack(this.id, i));
             }
             return this.textures.length;
         } else {
-            l.add(new Stack(this.id));
+            l.add(new BlockStack(this.id));
         }
         return 1;
     }
@@ -531,7 +527,7 @@ public class Block {
         return false;
     }
     
-    public int getInvRenderData(Stack stack) {
+    public int getInvRenderData(BlockStack stack) {
         return stack.data;
     }
     /**

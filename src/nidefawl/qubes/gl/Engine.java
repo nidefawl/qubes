@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.SingleBlockRenderer;
 import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.meshing.MeshThread;
@@ -90,6 +91,7 @@ public class Engine {
     public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
     public final static SingleBlockDraw blockDraw = new SingleBlockDraw();
+    public final static ItemRenderer itemRender = new ItemRenderer();
     
 
     public static void generateLightMapTexture() {

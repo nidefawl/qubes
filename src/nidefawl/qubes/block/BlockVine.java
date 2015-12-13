@@ -4,7 +4,7 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
@@ -175,7 +175,7 @@ public class BlockVine extends Block {
         return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.FOLIAGE);
     }
     
-    public int getInvRenderData(Stack stack) {
+    public int getInvRenderData(BlockStack stack) {
         return 4;
     }
     /**

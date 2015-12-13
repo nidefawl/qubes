@@ -4,6 +4,7 @@ import java.io.File;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.item.Item;
 import nidefawl.qubes.modules.ModuleLoader;
 
 public class GameContext {
@@ -63,8 +64,10 @@ public class GameContext {
         initError = null;
         try {
             Block.preInit();
+            Item.preInit();
             ModuleLoader.loadModules();
             Block.postInit();
+            Item.postInit();
             
         } catch (GameError e) {
             initError = e;

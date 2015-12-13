@@ -2,7 +2,7 @@ package nidefawl.qubes.input;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.item.Stack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
@@ -12,10 +12,10 @@ public class EditBlockTask {
 
     private BlockPos p1;
     private BlockPos p2;
-    private Stack stack;
+    private BlockStack stack;
     public boolean hollow = false;
 
-    public EditBlockTask(BlockPos p1, BlockPos p2, Stack stack) {
+    public EditBlockTask(BlockPos p1, BlockPos p2, BlockStack stack) {
         this.p1 = p1;
         this.p2 = p2;
         this.stack = stack;
