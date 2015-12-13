@@ -124,9 +124,9 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public boolean requiresTextInput() {
         return false;
     }
-    public void renderBackground(float fTime, double mX, double mY, boolean b) {
+    public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
         Shaders.colored.enable();
-        Tess.instance.setColor(0x1f1f1f, 255);
+        Tess.instance.setColorF(0x1f1f1f, a);
         Tess.instance.add(this.posX, this.posY+this.height);
         Tess.instance.add(this.posX+this.width, this.posY+this.height);
         Tess.instance.add(this.posX+this.width, this.posY);

@@ -42,6 +42,11 @@ public class GuiSettings extends Gui {
     final public FontRenderer font;
     private Button            back;
     List<Setting>             list = Lists.newArrayList();
+    private Setting testSetting;
+    private Setting distanceSetting;
+    private Setting shadowSetting;
+    private Setting reflectionSetting;
+    private Setting smaaSetting;
     private Setting smaaQSetting;
 
     public GuiSettings() {
@@ -59,46 +64,46 @@ public class GuiSettings extends Gui {
             l.add("Option "+(j+1));
         }
         String[] arr = l.toArray(new String[l.size()]);
-        list.add(new Setting(this, "String test", "Please pick", arr) {
+        list.add((this.testSetting = new Setting(this, "String test", "Please pick", arr) {
             void callback(int id) {
 
             }
-        });
+        }));
         List<Integer> clist = Lists.newArrayList();
         for (int i = 4; i <= 24; i++) {
             clist.add(i);
         }
         final Integer[] values = clist.toArray(new Integer[clist.size()]);
-        list.add(new Setting(this, "Chunk load distance", Game.instance.settings.chunkLoadDistance, values) {
+        list.add((this.distanceSetting = new Setting(this, "Chunk load distance", Game.instance.settings.chunkLoadDistance, values) {
             void callback(int id) {
                 Game.instance.settings.chunkLoadDistance = values[id];
                 Engine.regionRenderer.init();
                 Game.instance.saveSettings();
             }
-        });
+        }));
         final String[] shadowSettings = new String[] { "Basic", "Detailed" };
-        list.add(new Setting(this, "Shadows", shadowSettings[Game.instance.settings.shadowDrawMode & 1], shadowSettings) {
+        list.add((this.shadowSetting = new Setting(this, "Shadows", shadowSettings[Game.instance.settings.shadowDrawMode & 1], shadowSettings) {
             void callback(int id) {
                 Game.instance.settings.shadowDrawMode = id;
                 Engine.shadowRenderer.init();
                 Game.instance.saveSettings();
             }
-        });
+        }));
         final String[] reflections = new String[] { "Disabled", "Basic", "Detailed", "Can't play" };
-        list.add(new Setting(this, "Reflections", reflections[Game.instance.settings.ssr & 3], reflections) {
+        list.add((this.reflectionSetting = new Setting(this, "Reflections", reflections[Game.instance.settings.ssr & 3], reflections) {
             void callback(int id) {
                 Game.instance.settings.ssr = id;
                 Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
             }
-        });
+        }));
         final String[] smaa = new String[] { "Disabled", "1x SMAA" };
-        list.add(new Setting(this, "Anti-Aliasing", smaa[Game.instance.settings.aa & 1], smaa) {
+        list.add((this.smaaSetting = new Setting(this, "Anti-Aliasing", smaa[Game.instance.settings.aa & 1], smaa) {
             void callback(int id) {
                 Game.instance.settings.aa = id;
                 Game.instance.saveSettings();
             }
-        });
+        }));
         
         final String[] smaaQ = SMAA.qualDesc;
         list.add((this.smaaQSetting = new Setting(this, "SMAA Quality", smaaQ[Game.instance.settings.smaaQuality%smaaQ.length], smaaQ) {
@@ -134,10 +139,17 @@ public class GuiSettings extends Gui {
     }
 
     public void render(float fTime, double mX, double mY) {
-        renderBackground(fTime, mX, mY, true);
-        Shaders.textured.enable();
+        if(Game.instance.isConnected())
+            renderBackground(fTime, mX, mY, true, 0.8f);
+        else
+            renderBackground(fTime, mX, mY, true, 1.0f);
         this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f);
         this.smaaQSetting.box.enabled = Game.instance.settings.aa==1;
+        
+        // Disable non-runtime options
+        if(Game.instance.isConnected()) {
+            this.distanceSetting.box.enabled = false;
+        }
         super.renderButtons(fTime, mX, mY);
 
     }
@@ -162,7 +174,10 @@ public class GuiSettings extends Gui {
             }
         }
         if (element == back) {
-            Game.instance.showGUI(new GuiMainMenu());
+            if(!Game.instance.isConnected())
+                Game.instance.showGUI(new GuiMainMenu());
+            else
+                Game.instance.showGUI(null);
         }
         return true;
     }

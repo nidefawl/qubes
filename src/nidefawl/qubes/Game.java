@@ -101,8 +101,6 @@ public class Game extends GameBase implements IErrorHandler {
                 port = StringUtil.parseInt(split[1], port);
             }
             host = split[0];
-            if (port >= 65535)
-                port = 21087;
             connect = new ThreadConnect(host, port);
             connect.startThread();
             showGUI(new GuiConnecting(connect));
@@ -340,7 +338,7 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_ESCAPE) {
             public void onDown() {
-                if (world != null) {
+                /*if (world != null) {
                     setWorld(null);
                 }
                 if (client != null) {
@@ -348,6 +346,9 @@ public class Game extends GameBase implements IErrorHandler {
                 }
                 if (gui == null)
                     showGUI(new GuiMainMenu());
+                    */
+                if( gui == null)
+                    showGUI(new GuiGameMenu());
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_N) {
@@ -1153,6 +1154,21 @@ public class Game extends GameBase implements IErrorHandler {
        if (this.settings.lazySave()) {
            this.saveSettings();
        }
+    }
+
+    public void returnToMenu() {
+        if (world != null) {
+            setWorld(null);
+        }
+        if (client != null) {
+            client.disconnect("Quit");
+        }
+        if (gui == null)
+            showGUI(new GuiMainMenu());  
+    }
+    
+    public boolean isConnected() {
+        return this.client!=null;
     }
 
     public void addDebugOnScreen(String string) {

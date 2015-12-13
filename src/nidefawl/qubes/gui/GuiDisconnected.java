@@ -38,7 +38,7 @@ public class GuiDisconnected extends Gui {
     }
 
     public void render(float fTime, double mX, double mY) {
-        renderBackground(fTime, mX, mY, true);
+        renderBackground(fTime, mX, mY, true, 1.0f);
         Shaders.textured.enable();
         font.drawString(this.reason, this.width / 2, this.height / 2 - 20, -1, true, 1, 2);
         //        Shader.disable();

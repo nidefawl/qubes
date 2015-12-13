@@ -85,7 +85,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     }
 
     public void render(float fTime, double mX, double mY) {
-        renderBackground(fTime, mX, mY, true);
+        renderBackground(fTime, mX, mY, true, 1.0f);
         super.renderButtons(fTime, mX, mY);
  
     }
