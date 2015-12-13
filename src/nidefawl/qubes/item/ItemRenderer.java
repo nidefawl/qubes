@@ -65,7 +65,7 @@ public class ItemRenderer {
             ItemStack blockStack = (ItemStack) stack;
             
             int tex = ItemTextureArray.getInstance().getTextureIdx(blockStack.id, 0);
-            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, tex);
             Tess.instance.setColorF(-1, 1);
             Tess.instance.add(x+32, y+0, 0);
             Tess.instance.add(x+0, y+0, 0);
