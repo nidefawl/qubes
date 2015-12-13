@@ -21,6 +21,7 @@ public class BlockLeaves extends Block {
      */
     public BlockLeaves(int id) {
         this(id, -1);
+        setCategory(BlockCategory.LEAVES);
     }
 
     public BlockLeaves(int id, int rgb) {

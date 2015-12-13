@@ -200,8 +200,37 @@ public class BlockRenderer {
                 case 11:
                     n += renderPlantFlat(block, ix, iy, iz, pass);
                     break;
+                case 12:
+                    n += renderWaterLily(block, ix, iy, iz, pass);
+                    break;
             }
         }
+        return n;
+    }
+
+    /**
+     * @param block
+     * @param ix
+     * @param iy
+     * @param iz
+     * @param pass
+     * @return
+     */
+    private int renderWaterLily(Block block, int ix, int iy, int iz, int pass) {
+        float yOffset = 0;
+        int water = this.w.getWater(ix, iy, iz);
+        
+
+        if (water > 0) {
+            if (this.w.getWater(ix, iy+1, iz) == 0) {
+                yOffset = 0.3f;
+            }
+        }
+        int n= 0;
+        n+= renderPlantFlat(Block.pad, ix, iy, iz, pass);
+        this.attr.yOff+=yOffset;
+        n += renderPlant(block, ix, iy, iz, pass);
+        this.attr.yOff-=yOffset;
         return n;
     }
 
@@ -881,6 +910,16 @@ public class BlockRenderer {
         int targetBuffer = block.getLODPass();
         int f = 0;
         this.bb.set(0, 0, 0, 1, 0.05f, 1);
+        int water = this.w.getWater(ix, iy, iz);
+        float yOffset = 0;
+
+        if (water > 0) {
+            if (this.w.getWater(ix, iy+1, iz) == 0) {
+                yOffset = 0.3f;
+            }
+        }
+        this.attr.yOff+=yOffset;
+        setBlockBounds(block, ix, iy, iz);
         BlockSurface top = getSingleBlockSurface(block, ix, iy, iz, 1, 0, false, bs, texturepass);
         setFaceColor(block, ix, iy, iz, 1<<1|0, top, texturepass);
         final long multiplier = 0x5DEECE66DL;
@@ -891,12 +930,23 @@ public class BlockRenderer {
         float y=iy;
         if (this.w.getType(ix, iy-1, iz) == Block.water.id)
             y-=0.1f;
-        renderYPos(block, ix, y, iz);
+        attr.setNormal(0, 1, 0);// set upward normal
+        //TODO: handle uv rotation
+        attr.v0.setUV(1, 0);
+        attr.v1.setUV(0, 0);
+        attr.v2.setUV(0, 1);
+        attr.v3.setUV(1, 1);
+        
+        attr.v0.setPos(ix + bb.maxX, y + bb.maxY, iz + bb.minZ);
+        attr.v1.setPos(ix + bb.minX, y + bb.maxY, iz + bb.minZ);
+        attr.v2.setPos(ix + bb.minX, y + bb.maxY, iz + bb.maxZ);
+        attr.v3.setPos(ix + bb.maxX, y + bb.maxY, iz + bb.maxZ);
         attr.rotateUV((int) (iR & 3));
         putBuffer(block, targetBuffer);
         flipFace();
         putBuffer(block, targetBuffer);
         f+=2;
+        this.attr.yOff-=yOffset;
         
         return f;
     }

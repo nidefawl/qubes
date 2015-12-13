@@ -20,6 +20,7 @@ public class BlockGroupStonePath extends BlockGroup {
             Block block = new Block(-1);
             block.setName(s+" stone path");
             block.setTextures("stones/stonepath_"+s);
+            block.setCategory(BlockCategory.STONE);
             addBlock(block);
         }
         

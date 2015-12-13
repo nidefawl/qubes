@@ -129,4 +129,9 @@ public class SingleBlockWorld implements IBlockWorld {
         return this.biome.getFaceColor(colorType);
     }
 
+    @Override
+    public int getWater(int x, int y, int z) {
+        return 0;
+    }
+
 }

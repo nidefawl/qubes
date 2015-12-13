@@ -19,6 +19,7 @@ public class BlockDoublePlant extends Block {
      */
     public BlockDoublePlant(int id) {
         super(id, true);
+        setCategory(BlockCategory.PLANT);
     }
 
     /* (non-Javadoc)

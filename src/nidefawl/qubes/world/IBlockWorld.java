@@ -93,4 +93,6 @@ public interface IBlockWorld {
      */
     public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType);
 
+    public int getWater(int x, int y, int z);
+
 }

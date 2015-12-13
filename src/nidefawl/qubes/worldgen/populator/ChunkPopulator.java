@@ -9,9 +9,7 @@ import java.util.Map.Entry;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockDoublePlant;
-import nidefawl.qubes.block.BlockLeaves;
+import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.TripletLongHash;
@@ -42,17 +40,12 @@ public class ChunkPopulator implements IChunkPopulator {
         int a = 0;
         Random r = new Random();
         ArrayList<Block> bl = Lists.newArrayList();
-
-        bl.add(Block.flower_violet);
-        bl.add(Block.flower_fmn_black);
-        bl.add(Block.flower_fmn_blue);
-        bl.add(Block.flower_compositae_camille);
-        bl.add(Block.flower_compositae_milkspice);
-        bl.add(Block.flower_oxmorina_blue);
-        bl.add(Block.flower_poppy);
-        bl.add(Block.flower_rose);
-        bl.add(Block.flower_compositae_pinkpanther);
-        bl.add(Block.flower_compositae_tigerteeth);
+        for (int i = 0; i < Block.HIGHEST_BLOCK_ID+1; i++) {
+            Block b1 = Block.get(i);
+            if (b1 != null && b1.getBlockCategory() == BlockCategory.FLOWER) {
+                bl.add(b1);
+            }
+        }
         ArrayList<Block> bl2 = Lists.newArrayList();
         bl2.add(Block.fern1);
         bl2.add(Block.fern2);

@@ -11,6 +11,7 @@ public class BlockGrass extends Block {
 
     BlockGrass(int id) {
         super(id);
+        setCategory(BlockCategory.GROUND);
     }
     
     @Override

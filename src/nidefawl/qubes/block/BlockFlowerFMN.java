@@ -20,6 +20,7 @@ public class BlockFlowerFMN extends BlockPlantCrossedSquares {
      */
     public BlockFlowerFMN(int id) {
         super(id, true);
+        setCategory(BlockCategory.FLOWER);
     }
     /* (non-Javadoc)
      * @see nidefawl.qubes.block.Block#getColorFromSide(int)

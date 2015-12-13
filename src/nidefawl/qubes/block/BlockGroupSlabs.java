@@ -27,12 +27,14 @@ public class BlockGroupSlabs extends BlockGroup {
                 for (int i = 0; i < block.textures.length; i++) {
                     BlockSlab slab = new BlockSlab(-1, block, i);
                     slab.setName(block.getName()+" slab");
-                    addBlock(block);
+                    slab.setCategory(BlockCategory.STONE);
+                    addBlock(slab);
                 }
             } else {
                 BlockSlab slab = new BlockSlab(-1, block);
                 slab.setName(block.getName()+" slab");
-                addBlock(block);
+                slab.setCategory(BlockCategory.STONE);
+                addBlock(slab);
             }
         }
         

@@ -29,12 +29,14 @@ public class BlockGroupWalls extends BlockGroup {
                 for (int i = 0; i < block.textures.length; i++) {
                     BlockWall slab = new BlockWall(-1, block, i);
                     slab.setName(block.getName()+" slab");
-                    addBlock(block);
+                    slab.setCategory(BlockCategory.STONE);
+                    addBlock(slab);
                 }
             } else {
                 BlockWall slab = new BlockWall(-1, block);
                 slab.setName(block.getName()+" slab");
-                addBlock(block);
+                slab.setCategory(BlockCategory.STONE);
+                addBlock(slab);
             }
         }
     }

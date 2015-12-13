@@ -22,6 +22,7 @@ public class BlockPlantFlat extends Block {
     public BlockPlantFlat(int id) {
         super(id, true);
         this.blockBounds.set(0, 0, 0, 1, 2/16f, 1);
+        setCategory(BlockCategory.PLANT);
     }
 
     /* (non-Javadoc)
@@ -56,11 +57,17 @@ public class BlockPlantFlat extends Block {
     public boolean applyRandomOffset() {
         return false;
     }
-//    @Override
-//    public AABBFloat getRenderBlockBounds(IBlockWorld w, int ix, int iy, int iz, AABBFloat bb) {
-//        float h = 2/16f;
-//        return bb;
-//    }
+    @Override
+    public AABBFloat getRenderBlockBounds(IBlockWorld w, int ix, int iy, int iz, AABBFloat bb) {
+        bb.set(this.blockBounds);
+        float h = 0.15f;
+        bb.minX = h;
+        bb.minY=bb.maxY=0.02f;
+        bb.maxX=1-h;
+        bb.minZ = h;
+        bb.maxZ=1-h;
+        return bb;
+    }
 
     
     public int getRenderShadow() {

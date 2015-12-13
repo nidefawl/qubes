@@ -20,6 +20,7 @@ public class BlockGrassBush extends BlockPlantCrossedSquares {
      */
     public BlockGrassBush(int id) {
         super(id);
+        setCategory(BlockCategory.PLANT);
     }
 
     @Override

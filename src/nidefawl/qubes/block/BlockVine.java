@@ -25,6 +25,7 @@ public class BlockVine extends Block {
      */
     public BlockVine(int id) {
         super(id, true);
+        setCategory(BlockCategory.VINE);
     }
 
     @Override

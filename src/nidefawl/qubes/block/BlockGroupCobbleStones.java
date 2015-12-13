@@ -20,6 +20,7 @@ public class BlockGroupCobbleStones extends BlockGroup {
             Block block = new Block(-1);
             block.setName(s+" cobblestone");
             block.setTextures("stones/cobblestone_"+s);
+            block.setCategory(BlockCategory.STONE);
             addBlock(block);
         }
         

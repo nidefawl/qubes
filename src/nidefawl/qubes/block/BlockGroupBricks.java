@@ -19,7 +19,7 @@ public class BlockGroupBricks extends BlockGroup {
         stoneNames.addAll(b.getNames());
         stoneNames.add("clay");
         for (String s : stoneNames) {
-            addBlock(new Block(-1).setName(s+" brick").setTextures("stones/brick_"+s));
+            addBlock(new Block(-1).setName(s+" brick").setTextures("stones/brick_"+s).setCategory(BlockCategory.STONE));
         }
         
     }

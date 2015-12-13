@@ -25,6 +25,7 @@ public class BlockGroupStoneBricks extends BlockGroup {
                     "stones/stonebrick_"+s+"_rough_cracked", 
                     "stones/stonebrick_"+s+"_rough_cracked_mossy");
             block.setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
+            block.setCategory(BlockCategory.STONE);
             addBlock(block);
         }
         

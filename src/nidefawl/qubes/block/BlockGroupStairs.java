@@ -29,11 +29,13 @@ public class BlockGroupStairs extends BlockGroup {
                 for (int i = 0; i < block.textures.length; i++) {
                     BlockStairs slab = new BlockStairs(-1, block, i);
                     slab.setName(block.getName()+" stairs");
+                    slab.setCategory(BlockCategory.STONE);
                     addBlock(block);
                 }
             } else {
                 BlockStairs slab = new BlockStairs(-1, block);
                 slab.setName(block.getName()+" stairs");
+                slab.setCategory(BlockCategory.STONE);
                 addBlock(block);
             }
         }

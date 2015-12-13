@@ -17,6 +17,7 @@ public class BlockLog extends Block {
      */
     public BlockLog(int id) {
         super(id, false);
+        setCategory(BlockCategory.LOG);
     }
 
     /* (non-Javadoc)

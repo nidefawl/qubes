@@ -27,6 +27,7 @@ public class BlockPlantCrossedSquares extends Block {
     public BlockPlantCrossedSquares(int id, boolean multipass) {
         super(id, true);
         this.multipass=multipass;
+        setCategory(BlockCategory.FLOWER);
     }
 
     /* (non-Javadoc)

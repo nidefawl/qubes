@@ -21,6 +21,7 @@ public class BlockGroupSmoothStones extends BlockGroup {
             block.setName(s+" smooth stone");
             block.setTextures("stones/stone_"+s+"_border", "stones/stone_"+s+"_smooth_border");
             block.setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
+            block.setCategory(BlockCategory.STONE);
             addBlock(block);
         }
         

@@ -16,5 +16,6 @@ public class BlockSand extends Block {
      */
     public BlockSand(int i) {
         super(i, false);
+        setCategory(BlockCategory.GROUND);
     }
 }

@@ -35,7 +35,7 @@ public class Block {
     public final static String[] NO_TEXTURES = new String[0];
     public final static Block air = new BlockAir(0).setName("air");
     public final static Block grass = new BlockGrass(-1).setName("grass").setTextures("ground/grass", "ground/grass_side", "ground/grass_side_overlay");
-    public final static Block dirt = new Block(-1).setName("dirt").setTextures("ground/dirt");
+    public final static Block dirt = new Block(-1).setName("dirt").setTextures("ground/dirt").setCategory(BlockCategory.GROUND);
     public final static BlockGroupStones stones = new BlockGroupStones();
     public final static Block water = new BlockWater(-1).setName("water/water_still");
     public final static Block sand = new BlockSand(-1).setName("sand").setTextures("ground/sand");
@@ -70,13 +70,20 @@ public class Block {
     public final static Block flower_compositae_tigerteeth = new BlockPlantCrossedSquares(-1, true).setName("compositae_tigerteeth").setTextures("flowers/compositae_stem", "flowers/compositae_tigerteeth");
     public final static Block flower_violet = new BlockPlantCrossedSquares(-1, true).setName("violet").setTextures("flowers/violet.layer0", "flowers/violet.layer1");
     public final static Block flower_rose = new BlockPlantCrossedSquares(-1, true).setName("rose").setTextures("flowers/rose_stem", "flowers/rose_red");
-    public final static Block flower_poppy = new BlockPlantCrossedSquares(-1, true).setName("poppy").setTextures("flowers/poppy_stem", "flowers/poppy_blood");
+    public final static Block flower_poppy1 = new BlockPlantCrossedSquares(-1, true).setName("poppy_blood").setTextures("flowers/poppy_stem", "flowers/poppy_blood");
+    public final static Block flower_poppy2 = new BlockPlantCrossedSquares(-1, true).setName("poppy_grey").setTextures("flowers/poppy_stem", "flowers/poppy_grey");
+    public final static Block flower_poppy3 = new BlockPlantCrossedSquares(-1, true).setName("poppy_blue").setTextures("flowers/poppy_stem", "flowers/poppy_blue");
     public final static Block flower_oxmorina_blue = new BlockPlantCrossedSquares(-1, true).setName("oxmorina").setTextures("flowers/oxmorina_stem", "flowers/oxmorina_blue");
     public final static Block flower_cup_corny = new BlockPlantCrossedSquares(-1, true).setName("cup_corny").setTextures("flowers/cup_stem", "flowers/cup_corny");
     public final static Block flower_cup_butter = new BlockPlantCrossedSquares(-1, true).setName("cup_butter").setTextures("flowers/cup_stem", "flowers/cup_butter");
     public final static Block flower_star_frost = new BlockPlantCrossedSquares(-1, true).setName("star_frost").setTextures("flowers/star_stem", "flowers/star_frost");
     public final static Block flower_star_sundown = new BlockPlantCrossedSquares(-1, true).setName("star_sundown").setTextures("flowers/star_stem", "flowers/star_sundown");
     public final static Block flower_dandelion = new BlockPlantCrossedSquares(-1, true).setName("dandelion").setTextures("flowers/dandelion_stem", "flowers/dandelion");
+    public final static Block flower_lotus = new BlockPlantCrossedSquares(-1, true).setName("lotus").setTextures("flowers/lotus_narcotic_stem", "flowers/lotus_narcotic");
+    public final static Block flower_lavender = new BlockPlantCrossedSquares(-1, true).setName("lavender").setTextures("flowers/lavender_stem", "flowers/lavender");
+    public final static Block flower_tulip1 = new BlockPlantCrossedSquares(-1, true).setName("tulip").setTextures("flowers/tulip_stem", "flowers/tulip_red");
+    public final static Block flower_tulip2 = new BlockPlantCrossedSquares(-1, true).setName("tulip").setTextures("flowers/tulip_stem", "flowers/tulip_lilac");
+    public final static Block flower_tulip3 = new BlockPlantCrossedSquares(-1, true).setName("tulip").setTextures("flowers/tulip_stem", "flowers/tulip_white");
 
     public final static Block fern1 = new BlockDoublePlant(-1).setName("fern1").setTextures("plants/double_plant_fern_1.lower", "plants/double_plant_fern_1.upper");
     public final static Block fern2 = new BlockDoublePlant(-1).setName("fern2").setTextures("plants/double_plant_fern_2.lower", "plants/double_plant_fern_2.upper");
@@ -84,7 +91,9 @@ public class Block {
     public final static Block fern4 = new BlockDoublePlant(-1).setName("fern4").setTextures("plants/double_plant_fern_4.lower", "plants/double_plant_fern_4.upper");
     public final static Block tallgrass1 = new BlockDoublePlant(-1).setName("tallgrass1").setTextures("plants/double_grass_1.lower", "plants/double_grass_1.upper");
     public final static Block tallgrass2 = new BlockDoublePlant(-1).setName("tallgrass2").setTextures("plants/double_grass_2.lower", "plants/double_grass_2.upper");
-
+    public final static Block pad = new BlockPlantFlat(-1).setName("pad").setTextures("plants/pad");
+    public final static Block waterlily = new BlockWaterLily(-1).setName("waterlily").setTextures("flowers/water_rose");
+    
     
     public static void preInit() {
         
@@ -135,6 +144,7 @@ public class Block {
     protected String[] textures;
     protected final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
     protected BlockTextureMode textureMode = BlockTextureMode.DEFAULT;
+    protected BlockCategory blockCategory = BlockCategory.UNASSIGNED;
 
     public Block(int id, boolean transparent) {
         if (id < 0) {
@@ -146,6 +156,14 @@ public class Block {
         block[id] = this;
         this.transparent = transparent;
         init();
+    }
+
+    protected Block setCategory(BlockCategory blockCategory) {
+        this.blockCategory = blockCategory;
+        return this;
+    }
+    public BlockCategory getBlockCategory() {
+        return this.blockCategory;
     }
     
     public void init() {
