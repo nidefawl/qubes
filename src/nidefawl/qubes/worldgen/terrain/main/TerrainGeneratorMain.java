@@ -91,6 +91,10 @@ public class TerrainGeneratorMain implements ITerrainGen {
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dSlice = new double[wh];
+        OpenSimplexNoiseJava j4 = new OpenSimplexNoiseJava(89153^23);
+        OpenSimplexNoiseJava j5 = new OpenSimplexNoiseJava(824112353^23);
+        double noiseScale4 = 1/32.0D;
+        double noiseScale6 = 1/256.0D;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<Chunk.SIZE_BITS|x;
@@ -103,11 +107,14 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 SubTerrainGen g = this.map.get(hex.biome);
                 SubTerrainData data = map.get(hex);
                 double dStr2 = 12.0D*2;
+                double blockNoise2 = j4.eval((cX+x)*noiseScale4, (cZ+z)*noiseScale4);
+                double blockNoise3 = j5.eval((cX+x)*noiseScale6, (cZ+z)*noiseScale6);
                 if (outerScale < 1)
                     g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice);
                 for (int y = 0; y < wh; y++) {
                     double dYH2 = clamp10((y+0+5)/(double)wh);
                     double dBase2 = dStr2-dYH2*dStr2*2.0;
+                    dBase2+=blockNoise2*blockNoise3*2.3;
                     dNoise[y<<8|xz] = mix(dSlice[y], dBase2, outerScale);
                 }
             }
@@ -122,7 +129,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<Chunk.SIZE_BITS|x;
                 rand.setSeed((cX+x) * 89153 ^ (cZ+z) * 33703  + 0);
-                int randRange = 32;
+                int randRange = 24;
                 int randX = -rand.nextInt(randRange)+rand.nextInt(randRange);
                 int randZ = -rand.nextInt(randRange)+rand.nextInt(randRange);
                 HexBiome hex = hexs[xz];

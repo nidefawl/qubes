@@ -152,9 +152,7 @@ public class SubTerrainGen1 extends SubTerrainGen {
             double dN1 = noise.dnoise_[idx] * 3.0D;
             double dN2 = noise.dnoise3_[idx] * 3.0D;
             dBase += dN * 3.7 * dh2 * coreScale;
-            ;
             dBase += dN7 * 5.7 * dh2 * coreScale;
-            ;
             double riverY = 100;
             double dRiverH = func2(riverY - dBaseHeight * 2, y, 12);
             double riverY2 = riverY + 12;

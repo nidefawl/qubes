@@ -143,6 +143,7 @@ public class GuiSettings extends Gui {
             renderBackground(fTime, mX, mY, true, 0.8f);
         else
             renderBackground(fTime, mX, mY, true, 1.0f);
+        Shaders.textured.enable();
         this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f);
         this.smaaQSetting.box.enabled = Game.instance.settings.aa==1;
         
