@@ -22,7 +22,7 @@ public class Biome {
             .setColor(BiomeColor.GRASS, 0x48AB73)
             .setColor(BiomeColor.LEAVES, 0x48AB73)
             .setColor(BiomeColor.FOLIAGE, 0x48AB73)
-            .setColor(BiomeColor.FOLIAGE2, 0x0000ff)
+            .setColor(BiomeColor.FOLIAGE2, 0x0000aa)
             .setDebugColor(0x3232dd);
     public final static Biome MEADOW_RED = new BiomeMeadow(2)
             .setColor(BiomeColor.GRASS, 0xE68245)
