@@ -63,7 +63,6 @@ public class SingleBlockDraw {
     public void drawBlock(Block block, int data, StackData stackData) {
         Shaders.singleblock.enable();
         this.modelMatrix.setIdentity();
-//        System.out.println(this.x);
         this.modelMatrix.translate(this.x, this.y, this.z);
         this.modelMatrix.scale(this.scale*32);
         this.modelMatrix.scale(1, -1, 1);

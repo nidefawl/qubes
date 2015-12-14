@@ -7,6 +7,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.ItemTextureArray;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -40,6 +43,20 @@ public class ItemStack extends BaseStack {
     @Override
     public boolean isItem() {
         return true;
+    }
+
+    /**
+     * @return
+     */
+    public int getItemTexture() {
+        return getItem().getTexture(this);
+    }
+
+    /**
+     * @return
+     */
+    private Item getItem() {
+        return Item.get(this.id);
     }
 
 }

@@ -61,16 +61,17 @@ public class ItemRenderer {
      */
     public void drawItem(BaseStack stack, float x, float y) {
         if (stack.isItem()) {
-            Shaders.textured.enable();
-            ItemStack blockStack = (ItemStack) stack;
-            
-            int tex = ItemTextureArray.getInstance().getTextureIdx(blockStack.id, 0);
-            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, tex);
+            Shaders.item.enable();
+            ItemStack itemStack = (ItemStack) stack;
+            int tex = itemStack.getItemTexture();
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getItems());
             Tess.instance.setColorF(-1, 1);
-            Tess.instance.add(x+32, y+0, 0);
-            Tess.instance.add(x+0, y+0, 0);
-            Tess.instance.add(x+0, y+32, 0);
-            Tess.instance.add(x+32, y+32, 0);
+            Tess.instance.setUIntLSB(tex);
+            int w = 32;
+            Tess.instance.add(x+w, y+0, 0, 1, 1);
+            Tess.instance.add(x+0, y+0, 0, 0, 1);
+            Tess.instance.add(x+0, y+w, 0, 0, 0);
+            Tess.instance.add(x+w, y+w, 0, 1, 0);
             Tess.instance.draw(GL11.GL_QUADS);
         } else {
             BlockStack blockStack = (BlockStack) stack;

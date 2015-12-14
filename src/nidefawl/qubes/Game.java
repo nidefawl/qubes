@@ -113,7 +113,7 @@ public class Game extends GameBase implements IErrorHandler {
         super();
     }
 
-    final float[] loadProgress = new float[4];
+    final float[] loadProgress = new float[5];
     @Override
     public void initGame() {
         debugChunks = new TesselatorState();
@@ -960,7 +960,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (System.currentTimeMillis()-lastShaderLoadTime >2222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
-//          Shaders.initShaders();
+          Shaders.initShaders();
 //          Engine.worldRenderer.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();

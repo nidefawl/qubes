@@ -44,6 +44,7 @@ public class Shaders {
     public static Shader renderUINT;
     public static Shader singleblock;
     public static Shader gui;
+    public static Shader item;
 
 
     public static void initShaders() {
@@ -62,6 +63,7 @@ public class Shaders {
             Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
             Shader new_singleblock = assetMgr.loadShader(newshaders, "singleblock");
             Shader new_gui = assetMgr.loadShader(newshaders, "gui");
+            Shader new_item = assetMgr.loadShader(newshaders, "item");
             shaders.release();
             SimpleResourceManager tmp = shaders;
             shaders = newshaders;
@@ -76,10 +78,15 @@ public class Shaders {
             Shaders.renderUINT = new_uint;
             Shaders.singleblock = new_singleblock;
             Shaders.gui = new_gui;
+            Shaders.item = new_item;
             Shaders.colored.enable();
             Shaders.colored.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.item.enable();
+            Shaders.item.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.item.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
             Shaders.gui.enable();
             Shaders.gui.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.gui.setProgramUniform1i("itemTextures", 0);
             singleblock.enable();
             singleblock.setProgramUniform3f("in_offset", Vector3f.ZERO);
             singleblock.setProgramUniform1f("in_scale", 1);

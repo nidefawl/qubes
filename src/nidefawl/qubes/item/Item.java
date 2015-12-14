@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.texture.ItemTextureArray;
 import nidefawl.qubes.vec.AABBFloat;
 
 /**
@@ -118,6 +119,17 @@ public class Item {
             textures.add(tex);
         }
         return textures;
+    }
+
+    public static Item get(int id) {
+        return item[id];
+    }
+    /**
+     * @param itemStack
+     * @return
+     */
+    public int getTexture(ItemStack itemStack) {
+        return ItemTextureArray.getInstance().getTextureIdx(this.id, 0);
     } 
     
 }
