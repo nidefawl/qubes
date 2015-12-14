@@ -20,8 +20,8 @@ public class GuiConnecting extends Gui {
     private ThreadConnect     thread;
 
     public GuiConnecting(ThreadConnect connect) {
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
-        this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
+        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.fontSmall = FontRenderer.get(null, 14, 0, 16);
         this.thread = connect;
     }
 

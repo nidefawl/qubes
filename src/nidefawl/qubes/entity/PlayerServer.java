@@ -121,6 +121,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         this.joinedChannels.addAll(data.joinedChannels);
         this.worldPositions.clear();
         this.worldPositions.putAll(data.worldPositions);
+        this.inventory = data.inv.copy();
     }
 
     public PlayerData save() {
@@ -132,6 +133,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         data.worldPositions.putAll(this.worldPositions);
         data.flying = this.flying;
         data.joinedChannels = new HashSet<String>(this.joinedChannels);
+        data.inv = this.inventory.copy();
         return data;
     }
 

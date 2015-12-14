@@ -51,7 +51,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         this.id = id;
         this.string = text;
         this.width = this.height = 18;
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.font = FontRenderer.get(null, 18, 0, 20);
         this.stringWidth = this.font.getStringWidth(this.string);
     }
     public void setValue(Object obj) {
@@ -61,7 +61,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         this.gui = gui;
         this.string = s;
         this.id = id;
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.font = FontRenderer.get(null, 18, 0, 20);
         this.height = this.font.getLineHeight()+4;
         this.stringWidth = this.font.getStringWidth(s);
         titleWidth=Math.max(stringWidth+6, titleWidth);

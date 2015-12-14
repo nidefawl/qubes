@@ -1,8 +1,15 @@
 package nidefawl.qubes.font;
 
 import java.awt.Font;
+import java.awt.FontFormatException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 
+import nidefawl.qubes.assets.AssetBinary;
+import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.assets.AssetPath;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameError;
@@ -10,8 +17,12 @@ import nidefawl.qubes.util.GameError;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteStreams;
+
 public class FontRenderer {
-	public static HashMap<String, FontRenderer> fonts = new HashMap<String, FontRenderer>();
+    public static HashMap<String, FontRenderer> fonts = new HashMap<String, FontRenderer>();
+    public static HashMap<String, Font> ttfMap = new HashMap<String, Font>();
 
 	public TrueTypeFont trueTypeFont;
 	private int lineHeight;
@@ -23,6 +34,9 @@ public class FontRenderer {
     public float shadowOffset = 0.8F;
 	
 	public static FontRenderer get(String fontName, float size, int style, int lineHeight) {
+	    if (fontName == null) {
+	        fontName = "Arial";
+	    }
 		String hashName = fontName.trim().toLowerCase()+","+size+","+style+","+lineHeight;
 		FontRenderer r = fonts.get(hashName);
 		if (r == null) {
@@ -30,6 +44,20 @@ public class FontRenderer {
 			fonts.put(hashName, r);
 		}
 		return r;
+	}
+	public static void init() {
+//	    for (String s : ttfFonts) {
+//	        AssetBinary bin = AssetManager.getInstance().loadBin("fonts/"+s+".ttf");
+//	        ByteArrayInputStream bis = new ByteArrayInputStream(bin.getData());
+//	        try {
+//                Font f = Font.createFont(Font.TRUETYPE_FONT, bis);
+//                ttfMap.put(s.toLowerCase(), f);
+//            } catch (FontFormatException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//	    }
 	}
 
 
@@ -46,6 +74,9 @@ public class FontRenderer {
     }
 
     public Font getFont() {
+//        Font font = ttfMap.get(fontName.toLowerCase());
+//        System.out.println(fontName+" - "+font);
+//        if (font == null)
         Font font = Font.decode(this.fontName);
         if (font == null) {
         	throw new GameError("Failed creating font "+this.fontName+", "+this.size+", "+this.style);

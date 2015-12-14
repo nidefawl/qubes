@@ -16,7 +16,7 @@ public class GuiOverlayDebug extends Gui {
 
 	
 	public GuiOverlayDebug() {
-        this.fontSmall = FontRenderer.get("Arial", 12, 1, 14);
+        this.fontSmall = FontRenderer.get("NotoSans-Bold", 12, 1, 14);
 	}
 
 	public void render(float fTime, double mx, double mY) {

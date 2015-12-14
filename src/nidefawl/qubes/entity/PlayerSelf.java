@@ -3,6 +3,7 @@ package nidefawl.qubes.entity;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
@@ -200,6 +201,13 @@ public class PlayerSelf extends Player {
         if (!isDown) {
             this.punchTicks = 8;
         }
+    }
+
+    /**
+     * @return
+     */
+    public PlayerInventory getInventory() {
+        return this.inventory;
     }
     
 

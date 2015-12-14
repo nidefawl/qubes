@@ -11,6 +11,7 @@ import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.render.region.MeshedRegion;
@@ -25,18 +26,7 @@ import nidefawl.qubes.util.GameMath;
  */
 public class ItemRenderer {
 
-    private int      vbo;
-    private int      vboIndices;
-    ReallocIntBuffer vboBuf;
-    ReallocIntBuffer vboIdxBuf;
-    private BufferedMatrix modelMatrix;
-    private float x;
-    private float y;
-    private float z;
-    private float scale;
-    private float rotX;
-    private float rotY;
-    private float rotZ;
+    private FontRenderer font;
 
     public ItemRenderer() {
     }
@@ -45,21 +35,10 @@ public class ItemRenderer {
      * 
      */
     public void init() {
-        IntBuffer buff = Engine.glGenBuffers(2);
-        this.vbo = buff.get(0);
-        this.vboIndices = buff.get(1);
-        this.vboBuf = new ReallocIntBuffer(1024);
-        this.vboIdxBuf = new ReallocIntBuffer(1024);
-        this.modelMatrix = new BufferedMatrix();
+        this.font = FontRenderer.get(null, 16, 1, 18);
     }
 
-
-    /**
-     * @param stackData 
-     * @param stone
-     * @param i
-     */
-    public void drawItem(BaseStack stack, float x, float y) {
+    public void drawItem(BaseStack stack, float x, float y, float w, float h) {
         if (stack.isItem()) {
             Shaders.item.enable();
             ItemStack itemStack = (ItemStack) stack;
@@ -67,45 +46,41 @@ public class ItemRenderer {
             GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getItems());
             Tess.instance.setColorF(-1, 1);
             Tess.instance.setUIntLSB(tex);
-            int w = 32;
             Tess.instance.add(x+w, y+0, 0, 1, 1);
             Tess.instance.add(x+0, y+0, 0, 0, 1);
-            Tess.instance.add(x+0, y+w, 0, 0, 0);
-            Tess.instance.add(x+w, y+w, 0, 1, 0);
+            Tess.instance.add(x+0, y+h, 0, 0, 0);
+            Tess.instance.add(x+w, y+h, 0, 1, 0);
             Tess.instance.draw(GL11.GL_QUADS);
         } else {
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
             BlockStack blockStack = (BlockStack) stack;
+//          float scale = w/32f;
+          float scale = w/45f;
+            Engine.blockDraw.setOffset(x+w/2.0f, y+h/2.0f, 20);
+            Engine.blockDraw.setScale(scale);
+            Engine.blockDraw.setRotation(18, 90+45, 0);
             Engine.blockDraw.drawBlock(blockStack.getBlock(), blockStack.data, blockStack.getStackdata());
         }
     }
 
     /**
+     * @param stack
      * @param f
      * @param g
-     */
-    public void setOffset(float x, float y, float z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    /**
+     * @param h
      * @param i
      */
-    public void setScale(float scale) {
-        this.scale = scale;
-    }
-    public void reset() {
-        this.modelMatrix.setIdentity();
-        this.modelMatrix.update();
-    }
-    /**
-     * @param fRot
-     */
-    public void setRotation(float x, float y, float z) {
-        this.rotX = x;
-        this.rotY = y;
-        this.rotZ = z;
+    public void drawItemOverlay(BaseStack stack, float x, float y, float w, float h) {
+        int stackSize = 0;
+        if (stack.isItem()) {
+            stackSize = ((ItemStack)stack).size;
+        } else {
+            stackSize = ((BlockStack)stack).size;
+        }
+        if (stackSize != 0)  {
+            int w2 = this.font.getStringWidth(""+stackSize);
+            this.font.drawString(""+stackSize, x+w-w2-1, y+h+2, 0xf0f0f0, true, 1.0f);
+        }
     }
 
 

@@ -1,9 +1,12 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.inventory.PlayerInventory;
+
 public abstract class Player extends Entity {
 
     public String        name;
     public int punchTicks;
+    PlayerInventory inventory = new PlayerInventory();
     public Player() {
         super();
     }

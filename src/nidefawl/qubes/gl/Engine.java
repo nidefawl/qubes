@@ -167,6 +167,7 @@ public class Engine {
             reloadRenderer(true);
         }
         blockDraw.init();
+        itemRender.init();
     }
     
     public static void resize(int displayWidth, int displayHeight) {

@@ -24,6 +24,7 @@ public class Item {
     private static short[] registereditemIds;
     public static final Item[] item = new Item[NUM_ITEMS];
     public static final Item pickaxe = new Item(1).setName("pickaxe").setTextures("tools/pick");
+    public static final Item axe = new Item(2).setName("axe").setTextures("tools/axe");
     /**
      * @return
      */

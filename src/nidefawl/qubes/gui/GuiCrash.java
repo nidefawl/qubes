@@ -13,8 +13,8 @@ import nidefawl.qubes.gl.Tess;
 import org.lwjgl.opengl.GL11;
 
 public class GuiCrash extends Gui {
-    FontRenderer         fontSmall = FontRenderer.get("Arial", 16, 1, 18);
-    FontRenderer         fontBig   = FontRenderer.get("Arial", 20, 0, 22);
+    FontRenderer         fontSmall = FontRenderer.get(null, 16, 1, 18);
+    FontRenderer         fontBig   = FontRenderer.get(null, 20, 0, 22);
     private List<String> desc;
     private List<String> desc2;
     private String       title;

@@ -39,14 +39,14 @@ public class GuiOverlayStats extends Gui {
     boolean render = false;
     private String stats5;
     public GuiOverlayStats() {
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
-        this.fontSmall = FontRenderer.get("Arial", 16, 0, 18);
+        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.fontSmall = FontRenderer.get(null, 16, 0, 18);
     }
 
 
     public void refresh() {
         int smallSize = 12;
-        this.fontSmall = FontRenderer.get("Arial", smallSize, 1, smallSize+2);
+        this.fontSmall = FontRenderer.get(null, smallSize, 1, smallSize+2);
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",

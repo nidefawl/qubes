@@ -83,8 +83,6 @@ public class Game extends GameBase implements IErrorHandler {
     long                   lastShaderLoadTime = System.currentTimeMillis();
     float                  px, py, pz;
 
-    public ArrayList<EditBlockTask> edits           = Lists.newArrayList();
-    public int                      step            = 0;
     public boolean                  updateRenderers = true;
     private TesselatorState debugChunks;
     static boolean showGrid=false;
@@ -121,6 +119,7 @@ public class Game extends GameBase implements IErrorHandler {
         loadSettings();
         selection.init();
         AssetManager.getInstance().init();
+        FontRenderer.init();
         Engine.init();
         loadRender(0, 0);
         TextureManager.getInstance().init();
@@ -205,7 +204,7 @@ public class Game extends GameBase implements IErrorHandler {
         Tess.instance.add(x + l, y + barsTop+barsH+2, 0, 0, 0);
         Tess.instance.add(x + l + w, y + barsTop+barsH+2, 0, 1, 0);
         Tess.instance.drawQuads();
-        FontRenderer font = FontRenderer.get("Arial", 16, 1, 18);
+        FontRenderer font = FontRenderer.get(null, 16, 1, 18);
         if (font != null) {
             Shaders.textured.enable();
             font.drawString("Loading... "+string, x+l+2, y+barsTop+barsH+10+font.getLineHeight(), -1, true, 1.0f);
@@ -364,21 +363,13 @@ public class Game extends GameBase implements IErrorHandler {
                 showGUI(new GuiSelectBlock());
             }
         });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_U) {
-            public void onDown() {
-                edits.clear();
-                step = 0;
-            }
-        });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_I) {
             public void onDown() {
-                if (step-1 >= 0) {
-                    step--;
-                    if (edits.size()>step)
-                    edits.get(step).apply(world);
-                }
+                Gui gui = new GuiInventory();
+                showGUI(gui);
             }
         });
+
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_O) {
             public void onDown() {
 //                if (step+1 < edits.size()) {
@@ -490,6 +481,7 @@ public class Game extends GameBase implements IErrorHandler {
     }
     int skipChars = 0;
     private BaseStack testStack = new ItemStack(Item.pickaxe);
+    private BaseStack testStack2 = new ItemStack(Item.axe);
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
@@ -918,7 +910,9 @@ public class Game extends GameBase implements IErrorHandler {
                 t.drawQuads();
                 Shader.disable();
             }
-            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2);
+            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2, 32, 32);
+            
+            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
             if (show) {
                 if (Game.DO_TIMING)
                     TimingHelper.startSec("debugOverlay");

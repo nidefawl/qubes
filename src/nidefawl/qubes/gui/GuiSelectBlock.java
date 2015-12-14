@@ -33,7 +33,7 @@ public class GuiSelectBlock extends Gui {
     private BlockStack sel;
 
     public GuiSelectBlock() {
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.font = FontRenderer.get(null, 18, 0, 20);
     }
     @Override
     public void initGui(boolean first) {

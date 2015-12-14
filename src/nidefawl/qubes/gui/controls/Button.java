@@ -18,7 +18,7 @@ public class Button extends AbstractUI implements Renderable {
     public Button(int id, String text) {
         this.id = id;
         this.text = text;
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.font = FontRenderer.get(null, 18, 0, 20);
     }
 
     @Override

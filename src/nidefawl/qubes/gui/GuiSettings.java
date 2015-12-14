@@ -50,7 +50,7 @@ public class GuiSettings extends Gui {
     private Setting smaaQSetting;
 
     public GuiSettings() {
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.font = FontRenderer.get(null, 18, 0, 20);
     }
 
     @Override

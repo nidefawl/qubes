@@ -95,6 +95,32 @@ public abstract class AbstractUI implements Renderable {
         Shaders.gui.setProgramUniform1f("sigma", boxSigma);
         Engine.drawQuad();
     }
+    public void renderRoundedBoxShadowInverse(float x, float y, float z, float w, float h, int rgba, float alpha, boolean drawShadow) {
+        float r = TextureUtil.getR(rgba);
+        float g = TextureUtil.getG(rgba);
+        float b = TextureUtil.getB(rgba);
+        Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
+        Shaders.gui.setProgramUniform1f("zpos", z);
+        Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);
+        Shaders.gui.setProgramUniform1f("sigma", 0.6f);
+        Shaders.gui.setProgramUniform1f("corner", round+2);
+        Engine.drawQuad();
+        if (drawShadow) {
+            x+=extendx;
+            w-=extendx*2;
+            y+=extendy;
+            h-=extendy*2;
+            Shaders.gui.setProgramUniform1f("zpos", z+2);
+            Shaders.gui.setProgramUniform4f("box", x, y+1, x+w, y+h);
+//            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
+            Shaders.gui.setProgramUniform4f("color", 0,0,0, alpha);
+            Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
+            Shaders.gui.setProgramUniform1f("corner", round);
+            GL11.glDepthMask(false);
+            Engine.drawQuad();
+            GL11.glDepthMask(true);
+        }
+    }
     public void renderOutlinedBox() {
         color3 = 0xbababa;
         color4 = 0x888888;

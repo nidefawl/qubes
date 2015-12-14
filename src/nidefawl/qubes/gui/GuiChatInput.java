@@ -33,7 +33,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
     private int mouseResize;
 
     public GuiChatInput() {
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
+        this.font = FontRenderer.get(null, 18, 0, 20);
         this.overlay = Game.instance.chatOverlay;
     }
     /* (non-Javadoc)

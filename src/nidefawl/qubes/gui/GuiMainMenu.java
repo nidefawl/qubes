@@ -26,8 +26,8 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     private Button crash;
 
     public GuiMainMenu() {
-        this.font = FontRenderer.get("Arial", 18, 0, 20);
-        this.fontSmall = FontRenderer.get("Arial", 14, 0, 16);
+        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.fontSmall = FontRenderer.get(null, 14, 0, 16);
     }
     @Override
     public void initGui(boolean first) {
