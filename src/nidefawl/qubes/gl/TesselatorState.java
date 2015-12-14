@@ -2,9 +2,7 @@ package nidefawl.qubes.gl;
 
 import java.nio.ByteBuffer;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 
@@ -14,6 +12,7 @@ public class TesselatorState {
     public boolean       useColorPtr;
     public boolean       useTexturePtr;
     public boolean       useNormalPtr;
+    public boolean       useUINTPtr;
     public int vboId = 0;
     public int vboSize = 0;
     
@@ -22,6 +21,7 @@ public class TesselatorState {
         out.useColorPtr = this.useColorPtr;
         out.useTexturePtr = this.useTexturePtr;
         out.useNormalPtr = this.useNormalPtr;
+        out.useUINTPtr = this.useUINTPtr;
     }
 
 
@@ -38,6 +38,8 @@ public class TesselatorState {
             stride+=3;
         if (useTexturePtr)
             stride+=2;
+        if (useUINTPtr)
+            stride+=4;
         return stride;
     }
 
@@ -97,6 +99,13 @@ public class TesselatorState {
             GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride*4, offset*4);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+3);
             offset+=1;
+        }
+        if (useUINTPtr) {
+            //BLOCKINFO
+            GL20.glEnableVertexAttribArray(4);
+            GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, stride*4, offset*4);
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+4);
+            offset+=2;
         }
     }
     public void drawVBO(int mode) {

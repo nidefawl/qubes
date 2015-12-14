@@ -11,6 +11,10 @@ public class TMgr {
         return BlockTextureArray.getInstance().glid_color;
     }
 
+    public static int getItems() {
+        return ItemTextureArray.getInstance().glid_color;
+    }
+
     public static int getEmptyNormalMap() {
         return TextureManager.getInstance().texEmptyNormal;
     }
@@ -25,5 +29,8 @@ public class TMgr {
 
     public static int getNormals() {
         return BlockTextureArray.getInstance().glid_normalmaps;
+    }
+    public static int getItemNormals() {
+        return ItemTextureArray.getInstance().glid_normalmaps;
     }
 }

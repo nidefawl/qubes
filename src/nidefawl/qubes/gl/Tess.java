@@ -24,6 +24,8 @@ public class Tess extends TesselatorState {
 
     public int[]         rawBuffer = new int[BUF_INCR];
     protected int           rgba;
+    protected int           uintLSB;
+    protected int           uintMSB;
     protected float         u, v;
     protected int           normal;
     protected float         offsetX;
@@ -101,9 +103,13 @@ public class Tess extends TesselatorState {
             rawBuffer[index++] = Float.floatToRawIntBits(u);
             rawBuffer[index++] = Float.floatToRawIntBits(v);
         }
-        
+
         if (useColorPtr) {
             rawBuffer[index++] = rgba;
+        }
+        if (useUINTPtr) {
+            rawBuffer[index++] = uintLSB;
+            rawBuffer[index++] = uintMSB;
         }
         vertexcount++;
     }
@@ -142,6 +148,20 @@ public class Tess extends TesselatorState {
         rgba = rgb|iA<<24;
     }
 
+    public void setUIntLSB(int i) {
+        if (!useUINTPtr && vertexcount > 0) {
+            throw new IllegalStateException("Cannot enable uint potr after a vertex has been added");
+        }
+        this.useUINTPtr = true;
+        uintLSB = i;  
+    }
+    public void setUIntMSB(int i) {
+        if (!useUINTPtr && vertexcount > 0) {
+            throw new IllegalStateException("Cannot enable uint potr after a vertex has been added");
+        }
+        this.useUINTPtr = true;
+        uintMSB = i;  
+    }
     public void setColor(int rgb, int i) {
         if (!useColorPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable color pointer after a vertex has been added");
