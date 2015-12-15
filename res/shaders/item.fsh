@@ -12,7 +12,8 @@ flat in uint idx;
 out vec4 out_Color;
  
 void main(void) {
-	vec4 tex = texture(itemTextures, vec3(texcoord.st, idx));
+	vec4 tex = textureLod(itemTextures, vec3(texcoord.st, idx), 0);
+	// vec4 tex = texture(itemTextures, vec3(texcoord.st, idx));
     if (tex.a < 1.0)
     	discard;
     out_Color = tex*color;

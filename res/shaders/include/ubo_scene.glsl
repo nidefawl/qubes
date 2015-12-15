@@ -5,6 +5,7 @@ layout(std140) uniform uboMatrix3D
     mat4 mv;
     mat4 view;
     mat4 vp;
+    mat4 p;
     mat4 normal;
     mat4 mv_inv;
     mat4 proj_inv;

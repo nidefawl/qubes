@@ -279,7 +279,11 @@ void main() {
 
     vec4 sceneColor = texture(texColor, pass_texcoord);
 	prop.albedo = sceneColor.rgb;
-    vec4 ssao = texture(texAO, pass_texcoord);
+    vec4 ssao = vec4(1);
+    float alpha = 1.0;
+    if (pass < 2) {
+        ssao=texture(texAO, pass_texcoord);
+    }
 #ifndef DO_SHADING
 #else
 
@@ -315,9 +319,9 @@ void main() {
     float isBackface = float(renderpass==3);
     float isEntity = float(renderpass==5);
     // float isFlower = float(blockid>=48u);
-    float alpha = mix(1, sceneColor.a, float(pass));
     if (pass > 0) {
-        if(renderpass != 1)
+        alpha = sceneColor.a;
+        if(renderpass != pass)
             discard;
         if(sceneColor.a < 0.1)
             discard;
@@ -406,7 +410,7 @@ void main() {
     finalLight *= max(0.3+ssao.r*0.7, isWater);
     // finalLight *= ssao.r;
     // fina
-    alpha = clamp(alpha+float(pass)*0.2*(1-clamp(sunLight, 0, 1)), 0, 1);
+    alpha = clamp(alpha+float(pass==1)*0.2*(1-clamp(sunLight, 0, 1)), 0, 1);
     // finalLight = mix (finalLight, vec3(1), lum*);
 
 
