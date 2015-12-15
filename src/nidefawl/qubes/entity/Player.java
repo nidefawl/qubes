@@ -1,6 +1,7 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.inventory.PlayerInventory;
+import nidefawl.qubes.item.BaseStack;
 
 public abstract class Player extends Entity {
 
@@ -28,6 +29,13 @@ public abstract class Player extends Entity {
         if (this.punchTicks > 0) {
             this.punchTicks--;
         }
+    }
+
+    /**
+     * 
+     */
+    public BaseStack getEquippedItem() {
+        return inventory.getItem(0);
     }
 
 }

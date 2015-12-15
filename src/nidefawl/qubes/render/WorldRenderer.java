@@ -22,8 +22,14 @@ import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.input.DigController;
+import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.item.Item;
+import nidefawl.qubes.item.ItemStack;
+import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
-import nidefawl.qubes.models.qmodel.ModelQModel;
+import nidefawl.qubes.models.qmodel.ModelRigged;
+import nidefawl.qubes.models.qmodel.ModelStatic;
 import nidefawl.qubes.models.voxel.ModelVox;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.*;
@@ -75,13 +81,15 @@ public class WorldRenderer extends AbstractRenderer {
     public Shader       waterShader;
     public Shader       shaderModelVoxel;
     public Shader       shaderModelQ;
+
+    public Shader       shaderModelfirstPerson;
     
     private TesselatorState skybox1;
     private TesselatorState skybox2;
     private Shader shaderZPre;
 
     ModelVox vox;
-    public ModelQModel qmodel;
+    public ModelRigged qmodel;
 
     public void initShaders() {
         try {
@@ -112,6 +120,7 @@ public class WorldRenderer extends AbstractRenderer {
                 
             });
             Shader modelQ = assetMgr.loadShader(this, "model/model");
+            Shader shaderModelfirstPerson = assetMgr.loadShader(this, "model/firstperson");
             Shader sky = assetMgr.loadShader(this, "sky/sky");
             popNewShaders();
             this.terrainShader = terrain;
@@ -120,6 +129,7 @@ public class WorldRenderer extends AbstractRenderer {
             this.waterShader = new_waterShader;
             this.shaderModelVoxel = modelVoxel;
             this.shaderModelQ = modelQ;
+            this.shaderModelfirstPerson = shaderModelfirstPerson;
             this.shaderZPre = shaderZPre;
             
             this.shaderZPre.enable();
@@ -184,11 +194,13 @@ public class WorldRenderer extends AbstractRenderer {
             this.qmodel.release();
             this.qmodel = null;
         }
+
         ModelLoaderQModel l = new ModelLoaderQModel();
         l.loadModel("models/test.qmodel");
-        this.qmodel = l.buildModel();
-        System.out.println(qmodel);
-        System.err.println("GOOD");
+        this.qmodel = (ModelRigged) l.buildModel();
+        if (this.image > 0) {
+            TextureManager.getInstance().releaseTexture(this.image); 
+        }
         AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/human_adj_uv.png");
         this.image = TextureManager.getInstance().makeNewTexture(t, false, true, 0);
 //        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
@@ -410,7 +422,7 @@ public class WorldRenderer extends AbstractRenderer {
      * @param fTime 
      */
     public void renderQModels(World world, Shader modelShader, int pass, float fTime) {
-        
+
         if (qmodel != null) {
             //TODO: IMPORTANT sort entities by renderer/model/shader client side
             //TODO: move in own render per-entity class
@@ -493,6 +505,109 @@ public class WorldRenderer extends AbstractRenderer {
         if (Game.DO_TIMING)
             TimingHelper.endSec();
 
+    }
+    //MOve somewhere else?!
+    public void renderFirstPerson(World world, float fTime) {
+        Player p = Game.instance.getPlayer();
+        if (p == null) {
+            return;
+        }
+        BaseStack stack = p.getEquippedItem();
+        if (stack == null) {
+            return;
+        }
+        if (!stack.isItem()) {
+            return;
+        }
+        ItemStack itemstack = (ItemStack) stack;
+        Item item = itemstack.getItem();
+        ItemModel model = item.getItemModel();
+        if (model == null) {
+            return;
+        }
+        shaderModelfirstPerson.enable();
+        this.modelRot=this.lastModelRot=4;
+//            System.out.println(e.yaw);
+        BufferedMatrix mat = Engine.getTempMatrix();
+        float modelScale = 1 / 2.8f;
+        float angle = 0;
+        float f1=0;
+        DigController dig = Game.instance.dig;
+        if (dig.isDigAnimation()) {
+            int ticks = Game.instance.dig.getTicks();
+            int iTicks = ticks;
+            int iStart = 4;
+            int iforward = 4;
+            int iback = 7;
+            if (iTicks+fTime <= iStart) {
+                float fTicks = (iTicks+fTime)/(float)iStart;
+                float progress = fTicks;
+                if (progress>0.5f) {
+                    progress = 1.0f-progress;
+                }
+                angle = -20*progress;
+                f1 = 0;
+            }
+            else if (iTicks+fTime <= iStart+iforward) {
+                iTicks -= iStart;
+                float fTicks = (iTicks+fTime)/(float)(iforward);
+                float progress = 1-fTicks;
+                progress=progress*progress;
+                progress=1-progress;
+                angle = 60*progress;
+                f1 = 0;
+            }
+            else if (iTicks+fTime <= iStart+iforward+iback) {
+                iTicks -= iStart;
+                iTicks -= iforward;
+                float fTicks = (iTicks+fTime)/(float)(iback);
+                float progress = fTicks;
+                progress=progress*progress;
+                angle = 60*(1-progress);
+                f1 = 0;
+            }
+//            if (p.punchTicks > 30)
+//            float progress = (Math.max(0, (maxTicks-p.punchTicks)+fTime))/((float)maxTicks);
+//            float forward = progress/
+//            progress=1-progress;
+//            progress=progress*progress*progress;
+//            progress=1-progress;
+//            progress = Math.min(1, progress);
+//            float updown = GameMath.sin(progress*2*GameMath.PI);
+//            if (updown<0)updown*=3.4f;
+//            else updown*=2.4f;
+//            angle = -updown*18;
+//            f1 = updown>0?-updown/5.0f:updown/5.0f;
+//            f1=0;
+        
+        }
+        
+        mat.setIdentity();
+//        mat.translate(0.8f-(f1*0.165f), -0.9f-(f1*0.765f), -0.8f-(f1*0.8f));
+        mat.translate(0.8f+(f1*0.565f), -0.9f-(f1*0.4f), -0.8f);
+        mat.rotate((-100-(angle*1.2f)) * GameMath.PI_OVER_180, 1, 0, 0);
+        mat.rotate((-220-(angle*-0.2f)) * GameMath.PI_OVER_180, 0, 0, 1);
+        mat.rotate((21+(angle*0.4f)) * GameMath.PI_OVER_180, 0, 0, 1);
+        mat.scale(modelScale);
+        mat.update();
+        shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+        if (true) { //TODO: fix me (Normal mat)
+
+            BufferedMatrix mat2 = Engine.getTempMatrix2();
+            mat2.load(Engine.getMatSceneV());
+            mat2.invert();
+            mat.mulMat(mat2);
+            mat.invert().transpose();
+            mat.update();
+            UniformBuffer.setNormalMat(mat.get());
+        }
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, model.loadedTextures[0]);
+        //first person needs clear depth buffer, move somewhere else
+//            glDisable(GL_DEPTH_TEST);
+        model.loadedModels[0].render(Game.ticksran+fTime);
+//            glEnable(GL_DEPTH_TEST);
+        UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
+           
     }
 
     public void renderNormals(World world, float fTime) {

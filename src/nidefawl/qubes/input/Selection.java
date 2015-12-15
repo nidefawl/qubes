@@ -28,23 +28,11 @@ import nidefawl.qubes.world.World;
 
 public class Selection {
     
-    public static enum SelectionMode {
-        PLAY, EDIT, SELECT
-    }
-    private SelectionMode mode = SelectionMode.PLAY;
 
-    /**
-     * @return the mode
-     */
-    public SelectionMode getMode() {
-        return this.mode;
+    public GameMode getMode() {
+        return Game.instance.getMode();
     }
-    /**
-     * @param mode the mode to set
-     */
-    public void setMode(SelectionMode mode) {
-        this.mode = mode;
-    }
+    
     private TesselatorState highlightSelection;
     private TesselatorState fullBlock;
     private TesselatorState customBB;
@@ -79,19 +67,21 @@ public class Selection {
 
     boolean updateBB = false;
     public BlockPos mouseOver;
-    private BlockPos lastMouseOver;
     private AABBFloat selBB = new AABBFloat();
 
     public void renderBlockHighlight(World world, float fTime) {
         if (mouseOver != null) {
 
-            if (!(this.mode == SelectionMode.SELECT && hasSelection())) {
+            if (!(getMode() == GameMode.SELECT && hasSelection())) {
                 Shaders.colored3D.enable();
                 renderMouseOver();
                 Shader.disable();
             }
         }
-        if (this.mode == SelectionMode.PLAY) {
+        if (getMode() == GameMode.PLAY) {
+            return;
+        }
+        if (getMode() == GameMode.BUILD) {
             return;
         }
         if (hasSelection()) {
@@ -322,10 +312,13 @@ public class Selection {
                 RayTraceIntersection hit = this.rayTrace.getHit();
                 BlockPos p = hit.blockPos.copy();
                 setMouseOver(hit);
-                if (this.mode == SelectionMode.PLAY) {
+                if (getMode() == GameMode.PLAY) {
                     return;
                 }
-                if (this.mode == SelectionMode.SELECT) {
+                if (getMode() == GameMode.BUILD) {
+                    return;
+                }
+                if (getMode() == GameMode.SELECT) {
                     if (mouseStateChanged && this.mouseDown) { // first call after mousedown
                         set(0, p);
                         set(1, p);
@@ -369,9 +362,11 @@ public class Selection {
      * @param hit
      */
     private void setMouseOver(RayTraceIntersection hit) {
-        this.mouseOver = hit.blockPos.copy();
+        BlockPos newMouseOver = hit.blockPos.copy();
         World world = Game.instance.getWorld();
-        if (this.mouseOver != null && world != null) {
+        if (newMouseOver != null && world != null) {
+            Game.instance.dig.setBlock(hit, newMouseOver);
+            this.mouseOver = newMouseOver;
             int type = world.getType(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
             int bbType = Block.get(type).setSelectionBB(world, hit, this.mouseOver, this.selBB);
             if (bbType != 2 && this.quarterMode) {
@@ -401,6 +396,8 @@ public class Selection {
             } else {
                 this.renderBB = fullBlock;
             }
+        } else {
+            this.mouseOver = null;
         }
     }
     private void set(int i, BlockPos p2) {
@@ -414,6 +411,9 @@ public class Selection {
     }
 
     public void clicked(int button, boolean isDown) {
+        if (getMode() == GameMode.PLAY) {
+            return;
+        }
         if (button == 2) {
             if (!isDown)
                 return;
@@ -440,7 +440,7 @@ public class Selection {
         }
         this.mouseStateChanged = this.mouseDown != isDown;
         this.mouseDown = isDown;
-        if (this.mode == SelectionMode.PLAY) {
+        if (getMode() == GameMode.BUILD) {
             if (!isDown && this.mouseOver != null) {
                 onRelease();
             }
@@ -472,7 +472,10 @@ public class Selection {
     
 
     private void onRelease() {
-        if (this.mode == SelectionMode.PLAY) {
+        if (getMode() == GameMode.PLAY) {
+            return;
+        }
+        if (getMode() == GameMode.BUILD) {
             if (rayTrace.hasHit()) {
                 RayTraceIntersection intersect = rayTrace.getHit();
                 Game.instance.blockClicked(intersect, this.quarterMode);
@@ -480,7 +483,7 @@ public class Selection {
             }
             return;
         }
-        if (this.mode == SelectionMode.SELECT) {
+        if (getMode() == GameMode.SELECT) {
             return;
         }
 
@@ -515,22 +518,7 @@ public class Selection {
                 
         }
     }
-    /**
-     * 
-     */
-    public void toggleMode() {
-        reset();
-        if (this.mode == SelectionMode.EDIT) {
-            this.mode = SelectionMode.SELECT;
-        } else if (this.mode == SelectionMode.SELECT) {
-            this.mode = SelectionMode.PLAY;
-        } else {
-            this.mode = SelectionMode.EDIT;
-        }
-    }
-    /**
-     * 
-     */
+
     public void reset() {
         this.rayTrace.reset();
         this.mouseOver = null;

@@ -23,15 +23,8 @@ import nidefawl.qubes.vec.Vector3f;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class ModelQModel {
+public class ModelRigged extends ModelQModel {
 
-	public ModelLoaderQModel loader;
-    public VertexBuffer buf = new VertexBuffer(1024*64);
-//    public VertexBuffer shadowBuf = new VertexBuffer(1024*16);
-    public GLTriBuffer gpuBuf = null;
-//    public GLTriBuffer gpuShadowBuf = null;
-    public boolean needsDraw = true;
-    public long reRender=0;
     public QModelPoseBone rootJoint;
     private ArrayList<QModelPoseBone> poseBones;
     private QModelPoseBone head;
@@ -41,8 +34,8 @@ public class ModelQModel {
 	 * @param qModelJoint 
 	 * 
 	 */
-	public ModelQModel(ModelLoaderQModel loader) {
-	    this.loader = loader;
+	public ModelRigged(ModelLoaderQModel loader) {
+	    super(loader);
 	    this.poseBones = Lists.newArrayList();
         for (QModelBone b : loader.listBones) {
             this.poseBones.add(new QModelPoseBone(b));
@@ -233,29 +226,6 @@ public class ModelQModel {
 
 
     }
-    /**
-	 * @param vector3f
-	 * @return
-	 */
-	private int packNormal(Vector3f v) {
-        byte byte0 = (byte)(int)(v.x * 127F);
-        byte byte1 = (byte)(int)(v.y * 127F);
-        byte byte2 = (byte)(int)(v.z * 127F);
-        int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
-		return normal;
-	}
-
-
-	public void release() {
-        if (this.gpuBuf != null) {
-            this.gpuBuf.release();
-            this.gpuBuf = null;
-//            this.gpuShadowBuf.release();
-//            this.gpuShadowBuf = null;
-            this.buf = null;
-//            this.shadowBuf = null;
-        }
-    }
 
     /**
      * @param yaw
@@ -348,5 +318,9 @@ public class ModelQModel {
         }
         this.neck.animate = true;
         this.head.animate = true;
+    }
+    @Override
+    public QModelType getType() {
+        return QModelType.RIGGED;
     }
 }

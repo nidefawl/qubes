@@ -10,7 +10,7 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.input.Selection.SelectionMode;
+import nidefawl.qubes.input.GameMode;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -57,7 +57,7 @@ public class GuiOverlayStats extends Gui {
             statsRight += "\n"+WorldRenderer.getPassName(i)+": "+(MeshedRegion.totalBytesPass[i]/1024/1024)+"MB";
         }
         Camera cam = Engine.camera;
-        Vector3f v = cam.getPosition();
+        Vector3f v = Game.instance.vPlayer;
         Game.instance.tick = 0;
         info1.clear();
 //        info1.add( String.format("%d setUniform/frame ", Stats.uniformCalls) );
@@ -77,7 +77,7 @@ public class GuiOverlayStats extends Gui {
             BlockPos p = Game.instance.selection.pos[0];
             BlockPos p2 = Game.instance.selection.pos[1];
             RayTraceIntersection intersect = null;
-            if (Game.instance.selection.getMode() == SelectionMode.PLAY) {
+            if (Game.instance.selection.getMode() == GameMode.PLAY) {
                 p = null;
                 p2 = null;
                 intersect = Game.instance.selection.getHit();

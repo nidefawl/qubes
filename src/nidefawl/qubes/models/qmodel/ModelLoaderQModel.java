@@ -18,7 +18,7 @@ import nidefawl.qubes.vec.*;
  */
 public class ModelLoaderQModel {
 
-	private ModelQModel model;
+	private ModelRigged model;
 
 	/**
 	 * 
@@ -37,6 +37,7 @@ public class ModelLoaderQModel {
     public List<QModelBone> listBones;
     public List<QModelAction> listActions;
 	private String path;
+    private QModelType modelType;
 
 	byte[] readBytes(int len) throws EOFException {
     	byte[] data = this.asset.getData();
@@ -110,11 +111,15 @@ public class ModelLoaderQModel {
         return new String(strBytes, 0, strlen);
     }
 
-	public void loadModel(String path) {
+    public void loadModel(String path) {
+        AssetBinary bin = AssetManager.getInstance().loadBin(path);
+        loadModel(bin);
+    }
+	public void loadModel(AssetBinary bin) {
 		try {
-			this.path = path;
+		    this.asset = bin;
+			this.path = bin.getPack()+":"+bin.getName();
 			resetOffset();
-			this.asset = AssetManager.getInstance().loadBin(path);
 			String header = readString(10);
 			if (!HEADER.equals(header)) {
 				throw new IOException("Invalid model header '"+header+"'");
@@ -123,6 +128,11 @@ public class ModelLoaderQModel {
 			if (version != 4) {
 				throw new IOException("version != 4");
 			}
+			int iModelType = readUByte();
+            this.modelType = QModelType.get(iModelType);
+            if (this.modelType == null) {
+                throw new IOException("Invalid modelType '"+iModelType+"'");
+            }
 			int numVertices = readUShort();
 			listVertex = Lists.newArrayListWithCapacity(numVertices);
 			for (int i = 0; i < numVertices; i++) {
@@ -197,7 +207,8 @@ public class ModelLoaderQModel {
 	}
 
 
-	/**
+
+    /**
      * @param parent
 	 * @return 
      */
@@ -232,8 +243,13 @@ public class ModelLoaderQModel {
 	}
 
 	public ModelQModel buildModel() {
-		ModelQModel model = new ModelQModel(this);
-		return model;
+	    switch (this.modelType) {
+	        case RIGGED:
+	            return new ModelRigged(this);
+	        case STATIC:
+            default:
+	            return new ModelStatic(this);
+	    }
 	}
 
 	/**

@@ -95,6 +95,7 @@ public class UniformBuffer {
             .addMat4() //mv
             .addMat4() //view
             .addMat4() //vp
+            .addMat4() //p
             .addMat4() //normal
             .addMat4() //mv_inv
             .addMat4(); // proj_inv
@@ -193,9 +194,10 @@ public class UniformBuffer {
         uboMatrix3D.put(Engine.getMatSceneMV().get());//1
         uboMatrix3D.put(Engine.getMatSceneV().get());//2
         uboMatrix3D.put(Engine.getMatSceneVP().get());//3
-        uboMatrix3D.put(Engine.getMatSceneNormal().get());//4
-        uboMatrix3D.put(Engine.getMatSceneMV().getInv());//5
-        uboMatrix3D.put(Engine.getMatSceneP().getInv());
+        uboMatrix3D.put(Engine.getMatSceneP().get());//4
+        uboMatrix3D.put(Engine.getMatSceneNormal().get());//5
+        uboMatrix3D.put(Engine.getMatSceneMV().getInv());//6
+        uboMatrix3D.put(Engine.getMatSceneP().getInv());//7
         uboMatrix3D.update();
 
         uboMatrixShadow.reset();
@@ -437,8 +439,8 @@ public class UniformBuffer {
     }
     
     public static void setNormalMat(FloatBuffer mat) {
-        uboMatrix3D.setPosition(4*16);
-        uboMatrix3D.put(mat);//4
+        uboMatrix3D.setPosition(5*16);
+        uboMatrix3D.put(mat);//5
         uboMatrix3D.update();
     }
     

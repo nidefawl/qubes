@@ -13,6 +13,7 @@ import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.SingleBlockWorld;
@@ -203,10 +204,14 @@ public class BlockRenderer {
                 case 12:
                     n += renderWaterLily(block, ix, iy, iz, pass);
                     break;
+                case 13:
+                    n += renderOre(block, ix, iy, iz, pass);
+                    break;
             }
         }
         return n;
     }
+
 
     /**
      * @param block
@@ -955,6 +960,21 @@ public class BlockRenderer {
         int f = 0;
         for (int n = 0; n < 6; n++) {
             f += getAndRenderBlockFace(block, ix, iy, iz, n/2, n%2, texturepass, targetBuffer);
+        }
+        return f;
+    }
+    private int renderOre(Block block, int ix, int iy, int iz, int texturepass) {
+        int f = 0;
+        setBlockBounds(block, ix, iy, iz);
+        for (int n = 0; n < 6; n++) {
+            int axis = n/2;
+            int side = n%2;
+            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs, texturepass);
+            if (surface != null) {
+                int faceDir = axis<<1|side;
+                setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
+                f+= renderFace(block, faceDir, ix, iy, iz, WorldRenderer.PASS_SOLID);    
+            }
         }
         return f;
     }

@@ -25,6 +25,13 @@ public class Camera {
     }
 
 
+    /**
+     * @param vCam
+     */
+    public void setPosition(Vector3f vCam) {
+        setPosition(vCam.x, vCam.y, vCam.z);
+    }
+
 
     public void setPosition(float x, float y, float z) {
         this.prevposition.set(this.position);

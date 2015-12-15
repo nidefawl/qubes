@@ -113,7 +113,8 @@ public abstract class AbstractUI implements Renderable {
             Shaders.gui.setProgramUniform1f("zpos", z+2);
             Shaders.gui.setProgramUniform4f("box", x, y+1, x+w, y+h);
 //            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
-            Shaders.gui.setProgramUniform4f("color", 0,0,0, alpha);
+            float br = 0.12f;
+            Shaders.gui.setProgramUniform4f("color", br,br,br, alpha);
             Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
             Shaders.gui.setProgramUniform1f("corner", round);
             GL11.glDepthMask(false);

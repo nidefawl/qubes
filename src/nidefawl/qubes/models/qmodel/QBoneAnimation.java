@@ -26,6 +26,9 @@ public class QBoneAnimation {
     public KeyFrame getFrameAt(int type, float absTime) {
         if (type == 1) {
             int pos = GameMath.floor(absTime);
+            if (pos < 0) {
+                pos = 0;
+            }
             if (pos >= this.frames.length) {
                 pos = this.frames.length-1;
             }

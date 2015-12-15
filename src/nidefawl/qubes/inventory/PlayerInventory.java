@@ -17,19 +17,16 @@ public class PlayerInventory extends BaseInventory {
     public BaseStack carried;
     
     public PlayerInventory() {
-        stacks[0] = new ItemStack(Item.axe);
-        stacks[1] = new ItemStack(Item.pickaxe);
+        stacks[1] = new ItemStack(Item.axe);
+        stacks[0] = new ItemStack(Item.pickaxe);
         stacks[2] = new BlockStack(Block.dirt);
         stacks[3] = new BlockStack(Block.grass);
     }
 
-    /**
-     * @return
-     */
-    public PlayerInventory copy() {
-        PlayerInventory inv = new PlayerInventory();
+    public PlayerInventory copy(PlayerInventory inv) {
         for (int i = 0; i < this.stacks.length; i++) {
-            inv.stacks[i] = this.stacks[i].copy();
+            if (this.stacks[i] != null)
+                inv.stacks[i] = this.stacks[i].copy();
         }
         return inv;
     }

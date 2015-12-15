@@ -247,4 +247,10 @@ public class ServerHandlerPlay extends ServerHandler {
                 this.player.pitch, 
                 flags));
     }
+
+    public void handleDigState(PacketCDigState p) {
+        if (p.stage == 3) {
+            this.player.sendMessage("+");
+        }
+    }
 }

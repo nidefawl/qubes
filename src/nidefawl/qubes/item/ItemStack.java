@@ -70,7 +70,7 @@ public class ItemStack extends BaseStack {
     /**
      * @return
      */
-    private Item getItem() {
+    public Item getItem() {
         return Item.get(this.id);
     }
 

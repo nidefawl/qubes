@@ -1,24 +1,15 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
 
-import java.awt.Color;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.UUID;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
-import com.google.common.collect.Lists;
-
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
@@ -32,9 +23,8 @@ import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.*;
-import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.logging.IErrorHandler;
-import nidefawl.qubes.models.voxel.ModelVox;
+import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
@@ -49,12 +39,15 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.*;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
+import nidefawl.qubes.util.StringUtil;
+import nidefawl.qubes.util.SysInfo;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.*;
+import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldClient;
+import nidefawl.qubes.world.WorldClientBenchmark;
 
 public class Game extends GameBase implements IErrorHandler {
 
@@ -74,14 +67,16 @@ public class Game extends GameBase implements IErrorHandler {
     WorldClient            world              = null;
     PlayerSelf             player;
     public Movement        movement           = new Movement();
+    public final DigController   dig           = new DigController();
     public final Selection selection          = new Selection();
     public boolean         follow             = true;
-    private float          lastCamX;
-    private float          lastCamY;
-    private float          lastCamZ;
+    
     public BlockStack           selBlock           = new BlockStack(0);
     long                   lastShaderLoadTime = System.currentTimeMillis();
-    float                  px, py, pz;
+    public final Vector3f vCam = new Vector3f();
+    public final Vector3f vPlayer = new Vector3f();
+    public final Vector3f vLastCam = new Vector3f();
+    public final Vector3f vLastPlayer = new Vector3f();
 
     public boolean                  updateRenderers = true;
     private TesselatorState debugChunks;
@@ -90,6 +85,10 @@ public class Game extends GameBase implements IErrorHandler {
     boolean reinittexthook = false;
     boolean wasGrabbed = false;
     public String serverAddr;
+    private GameMode mode = GameMode.PLAY;
+    public GameMode getMode() {
+        return this.mode;
+    }
 
     public void connectTo(String host) {
         try {
@@ -126,6 +125,7 @@ public class Game extends GameBase implements IErrorHandler {
         loadRender(0, 0.1f);
         BlockTextureArray.getInstance().init();
         ItemTextureArray.getInstance().init();
+        ItemModelManager.getInstance().init();
         loadRender(0, 0.2f);
         AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
         ColorMap.grass.set(tex_map_grass);
@@ -227,6 +227,7 @@ public class Game extends GameBase implements IErrorHandler {
     }
     public void lateInitGame() {
         loadRender(0, 1f);
+        ItemModelManager.getInstance().reload();
         ItemTextureArray.getInstance().reload();
         BlockTextureArray.getInstance().reload();
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F8) {
@@ -400,6 +401,7 @@ public class Game extends GameBase implements IErrorHandler {
             public void onDown() {
 
                 Engine.worldRenderer.reloadModel();
+                ItemModelManager.getInstance().reload();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_MULTIPLY) {
@@ -410,11 +412,24 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_M) {
             public void onDown() {
-                selection.toggleMode();
+                toggleGameMode();
             }
         });
         ChatManager.getInstance().loadInputHistory();
         
+    }
+
+    public void toggleGameMode() {
+        if (this.mode == GameMode.PLAY) {
+            this.mode = GameMode.BUILD;
+        } else if (this.mode == GameMode.BUILD) {
+            this.mode = GameMode.EDIT;
+        } else if (this.mode == GameMode.EDIT) {
+            this.mode = GameMode.SELECT;
+        } else {
+            this.mode = GameMode.PLAY;
+        }
+        this.selection.reset();
     }
     boolean testMode = false;
     PlayerSelf remotePlayer;
@@ -442,10 +457,7 @@ public class Game extends GameBase implements IErrorHandler {
      * 
      */
     protected void reposModel() {
-        int x = GameMath.floor(lastCamX);
-        int y = GameMath.floor(lastCamY)-1;
-        int z = GameMath.floor(lastCamZ);
-        Engine.worldRenderer.setModelPos((float)x, (float)y, (float)z);
+        Engine.worldRenderer.setModelPos(vPlayer.x, vPlayer.y-1, vPlayer.z);
     }
 
     public void setWorld(WorldClient world) {
@@ -557,6 +569,8 @@ public class Game extends GameBase implements IErrorHandler {
 
             boolean b = Mouse.isGrabbed();
             boolean isDown = Mouse.getState(action);
+            if (b)
+                dig.onMouseClick(button, isDown);
             switch (button) {
                 case 0:
                     selection.clicked(button, isDown);
@@ -592,6 +606,7 @@ public class Game extends GameBase implements IErrorHandler {
         this.movement.setGrabbed(b);
         Mouse.setCursorPosition(displayWidth / 2, displayHeight / 2);
         Mouse.setGrabbed(b);
+        this.dig.onGrabChange(this.movement.grabbed());
     }
 
 
@@ -715,6 +730,37 @@ public class Game extends GameBase implements IErrorHandler {
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
+            
+            
+
+            boolean firstPerson = !this.thirdPerson;
+            if (firstPerson) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("firstPerson");
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                Engine.getSceneFB().bind();
+                Engine.getSceneFB().clearFrameBuffer();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("World");
+                Engine.worldRenderer.renderFirstPerson(world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+
+                Engine.outRenderer.bindFB();
+
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("Deferred");
+
+                Engine.outRenderer.render(this.world, fTime, 2);
+
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+            }
+            
+            
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Deferred ReflAndBlur");
@@ -849,9 +895,9 @@ public class Game extends GameBase implements IErrorHandler {
             this.gui.render(fTime, Mouse.getX(), Mouse.getY());
         } else if (this.world != null) {
             if (showGrid) {
-                int ipX = GameMath.floor(px);
-                int ipY = GameMath.floor(py);
-                int ipZ = GameMath.floor(pz);
+                int ipX = GameMath.floor(vCam.x);
+                int ipY = GameMath.floor(vCam.y);
+                int ipZ = GameMath.floor(vCam.z);
                 int icX = ipX >> 4;
                 int icZ = ipZ >> 4;
                 int lenOver = RegionRenderer.LENGTH_OVER;
@@ -910,9 +956,12 @@ public class Game extends GameBase implements IErrorHandler {
                 t.drawQuads();
                 Shader.disable();
             }
-            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2, 32, 32);
+            Shaders.textured.enable();
+            this.statsOverlay.font.drawString(""+this.player.punchTicks, 
+                    displayWidth/2, displayHeight/2, -1, true, 1.0f);
+//            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2, 32, 32);
             
-            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
+//            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
             if (show) {
                 if (Game.DO_TIMING)
                     TimingHelper.startSec("debugOverlay");
@@ -951,15 +1000,15 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >222222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
-          Shaders.initShaders();
-//          Engine.worldRenderer.initShaders();
+//          Shaders.initShaders();
+          Engine.worldRenderer.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 //            
         }
     }
@@ -993,32 +1042,29 @@ public class Game extends GameBase implements IErrorHandler {
         this.world.updateFrame(f);
         PlayerSelf player = getPlayer();
         if (player != null) {
+            this.dig.preRenderUpdate();
             player.updateInputDirect(movement);
             float yaw = player.yaw;
             float pitch = player.pitch;
             Engine.camera.setOrientation(yaw, pitch, thirdPerson, settings.thirdpersonDistance);
 
             if (follow) {
-                lastCamX = px;
-                lastCamY = py;
-                lastCamZ = pz;
+                vLastCam.set(vCam);
             }
+            vLastPlayer.set(vPlayer);
             
-            px = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
-            py = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
-            pz = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+            vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
+            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
+            vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+            vCam.set(vPlayer);
             if (thirdPerson) {
                 Vector3f camPos = Engine.camera.getCameraOffset();
-                px+=camPos.x;
-                py+=camPos.y;
-                pz+=camPos.z;
+                vCam.addVec(camPos);
             }
             
             if (this.world.lights.size() > 0) {
-                DynamicLight l = this.world.lights.get(0);
-                l.loc.x = px;
-                l.loc.y = py;
-                l.loc.z = pz;
+//                DynamicLight l = this.world.lights.get(0);
+//                l.loc.set(vPlayer);
 //                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
 //                l.intensity = 0.4F;
 //                l.color = new Vector3f(1*l.intensity);
@@ -1026,7 +1072,7 @@ public class Game extends GameBase implements IErrorHandler {
 //                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
 //                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
             }
-          Engine.camera.setPosition(px, py, pz);
+          Engine.camera.setPosition(vCam);
 //          if (Engine.worldRenderer.qmodel!=null)
 //          Engine.worldRenderer.qmodel.setHeadOrientation(yaw, pitch);
         }
@@ -1049,20 +1095,20 @@ public class Game extends GameBase implements IErrorHandler {
             }
             if (this.gui == null) {
                 Engine.updateMouseOverView(winX, winY, this.movement.grabbed());
-                selection.update(world, px, py, pz);
+                selection.update(world, vCam.x, vCam.y, vCam.z);
             }
         }
         
         if (this.world != null && updateRenderers) {
-            float renderRegionX = follow ? px : lastCamX;
+            float renderRegionX = follow ? vCam.x : vLastCam.x;
 //            float renderRegionY = follow ? py : lastCamY;
-            float renderRegionZ = follow ? pz : lastCamZ;
+            float renderRegionZ = follow ? vCam.z : vLastCam.x;
             int xPosP = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
             int zPosP = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
             if (Engine.updateRenderOffset) {
                 Engine.regionRenderer.reRender();
             }
-            Engine.regionRenderer.update(this.world, px, py, pz, xPosP, zPosP, f);
+            Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
         }
     }
     
@@ -1141,6 +1187,7 @@ public class Game extends GameBase implements IErrorHandler {
        if (this.gui != null) {
            this.gui.update();
        }
+       this.dig.update();
        ChatManager.getInstance().saveInputHistory();
        Engine.regionRenderer.tickUpdate();
        Engine.worldRenderer.tickUpdate();
@@ -1269,7 +1316,6 @@ public class Game extends GameBase implements IErrorHandler {
             pos.z+=intersect.q.z;
         }
         sendPacket(new PacketCSetBlock(world.getId(), pos, intersect.pos, faceHit, this.selBlock.copy()));
-        
     }
 
     /**

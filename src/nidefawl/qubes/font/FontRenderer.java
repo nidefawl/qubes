@@ -79,6 +79,7 @@ public class FontRenderer {
 //        if (font == null)
         Font font = Font.decode(this.fontName);
         if (font == null) {
+            
         	throw new GameError("Failed creating font "+this.fontName+", "+this.size+", "+this.style);
         }
         return font.deriveFont(this.style, this.size);

@@ -83,6 +83,8 @@ public class FinalRenderer extends AbstractRenderer {
 
         shaderDeferred.enable();
         ArrayList<DynamicLight> lights = world.lights;
+        
+        //TODO: optimize me: deferred gets called 3 times now per frame, only upload lights in first pass
         shaderDeferred.setProgramUniform1i("pass", pass);
         shaderDeferred.setProgramUniform1i("numLights", Math.min(256, lights.size()));
         for (int a = 0; a < lights.size() && a < 256; a++) {
@@ -114,7 +116,7 @@ public class FinalRenderer extends AbstractRenderer {
 
         Engine.drawFullscreenQuad();
 
-        if (Game.show && pass == 0) {
+        if (Game.show && pass == 2) {
             Shader.disable();
             FrameBuffer.unbindFramebuffer();
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
@@ -390,6 +392,9 @@ public class FinalRenderer extends AbstractRenderer {
               if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
             }
         }
+//        Shaders.textured.enable();
+//        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.fbScene.getTexture(1));
+//        Engine.drawFullscreenQuad();
 
         this.frame++;
     }
@@ -532,18 +537,18 @@ public class FinalRenderer extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-        if (hadContext) {
-            if (Game.instance.getVendor() != GPUVendor.INTEL) {
-                Engine.checkGLError("pre GLNativeLib.deleteContext");
-                HBAOPlus.deleteContext();
-                Engine.checkGLError("post GLNativeLib.deleteContext");
-            }
-        }
+//        if (hadContext) {
+//            if (Game.instance.getVendor() != GPUVendor.INTEL) {
+//                Engine.checkGLError("pre GLNativeLib.deleteContext");
+//                HBAOPlus.deleteContext();
+//                Engine.checkGLError("post GLNativeLib.deleteContext");
+//            }
+//        }
         if (smaa != null) {
             smaa.releaseAll(EResourceType.FRAMEBUFFER);
         }
         releaseAll(EResourceType.FRAMEBUFFER);
-        if (Game.instance.getVendor() != GPUVendor.INTEL) {
+        if (!hadContext && Game.instance.getVendor() != GPUVendor.INTEL) {
             Engine.checkGLError("pre GLNativeLib.createContext");
             HBAOPlus.createContext(displayWidth, displayHeight);
             Engine.checkGLError("post GLNativeLib.createContext");

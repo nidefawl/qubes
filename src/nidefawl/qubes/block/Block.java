@@ -52,6 +52,7 @@ public class Block {
     public final static Block ore_diamond = new Block(-1).setName("ore_diamond").setTextures("rocks/ore_diamond");
     public final static Block ore_gold = new Block(-1).setName("ore_gold").setTextures("rocks/ore_gold");
     public final static Block ore_silver = new Block(-1).setName("ore_silver").setTextures("rocks/ore_silver");
+//    public final static BlockGroupOres ores = new BlockGroupOres(stones);
 
     public final static BlockGroup bricks = new BlockGroupBricks(stones);
     public final static BlockGroup stonebricks = new BlockGroupStoneBricks(stones);

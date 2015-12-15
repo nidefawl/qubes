@@ -152,4 +152,10 @@ public abstract class Handler {
      */
     public void handleWorldBiomes(PacketSWorldBiomes packetSWorldBiomes) {
     }
+
+    public void handleDigState(PacketCDigState packetCDigState) {
+    }
+
+    public void handleServerDigState(PacketSDigState packetSDigState) {
+    }
 }

@@ -73,6 +73,9 @@ public class TextureManager {
         uploadTexture(rgba, w, h, 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
         return i;
     }
+    public void releaseTexture(int tex) {
+        GL11.glDeleteTextures(tex);
+    }
     public int makeNewTexture(AssetTexture tex, boolean repeat, boolean filter, int mipmapLevel) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);

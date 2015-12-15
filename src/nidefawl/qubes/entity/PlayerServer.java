@@ -12,6 +12,7 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketChatMessage;
@@ -121,7 +122,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         this.joinedChannels.addAll(data.joinedChannels);
         this.worldPositions.clear();
         this.worldPositions.putAll(data.worldPositions);
-        this.inventory = data.inv.copy();
+        this.inventory = data.inv.copy(new PlayerInventory());
     }
 
     public PlayerData save() {
@@ -133,7 +134,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         data.worldPositions.putAll(this.worldPositions);
         data.flying = this.flying;
         data.joinedChannels = new HashSet<String>(this.joinedChannels);
-        data.inv = this.inventory.copy();
+        this.inventory.copy(data.inv);
         return data;
     }
 

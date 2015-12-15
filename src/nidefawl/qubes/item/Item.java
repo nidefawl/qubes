@@ -9,6 +9,8 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.models.ItemModel;
+import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.texture.ItemTextureArray;
 import nidefawl.qubes.vec.AABBFloat;
 
@@ -23,8 +25,8 @@ public class Item {
     private static Item[] registereditems;
     private static short[] registereditemIds;
     public static final Item[] item = new Item[NUM_ITEMS];
-    public static final Item pickaxe = new Item(1).setName("pickaxe").setTextures("tools/pick");
-    public static final Item axe = new Item(2).setName("axe").setTextures("tools/axe");
+    public static final Item pickaxe = new Item(1).setName("pickaxe").setTextures("tools/pick").setModel(ItemModel.modelPickaxe);
+    public static final Item axe = new Item(2).setName("axe").setTextures("tools/axe").setModel(ItemModel.modelAxe);
     /**
      * @return
      */
@@ -40,6 +42,7 @@ public class Item {
     private final boolean transparent;
     protected String[] textures;
     protected final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
+    private ItemModel itemModel;
 
     public Item(int id, boolean transparent) {
         if (id < 0) {
@@ -56,7 +59,11 @@ public class Item {
     public void init() {
     }
 
-    
+
+    public Item setModel(ItemModel itemModel) {
+        this.itemModel = itemModel;
+        return this;
+    }
     public Item setName(String name) {
         this.name = name;
         return this;
@@ -132,5 +139,12 @@ public class Item {
     public int getTexture(ItemStack itemStack) {
         return ItemTextureArray.getInstance().getTextureIdx(this.id, 0);
     } 
+    
+    /**
+     * @return the itemModel
+     */
+    public ItemModel getItemModel() {
+        return this.itemModel;
+    }
     
 }

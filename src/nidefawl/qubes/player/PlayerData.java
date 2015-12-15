@@ -20,7 +20,7 @@ public class PlayerData {
     public int chunkLoadDistance;
     public HashSet<String> joinedChannels = Sets.newHashSet();
     public HashMap<UUID, Vector3f> worldPositions = Maps.newHashMap();
-    public PlayerInventory inv;
+    public PlayerInventory inv = new PlayerInventory();
 
     public void load(Tag.Compound t) {
         this.world = t.getUUID("world");

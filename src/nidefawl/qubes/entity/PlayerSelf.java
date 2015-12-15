@@ -198,8 +198,8 @@ public class PlayerSelf extends Player {
      * @param isDown
      */
     public void clicked(int button, boolean isDown) {
-        if (!isDown) {
-            this.punchTicks = 8;
+        if (isDown) {
+            this.punchTicks = 12;
         }
     }
 

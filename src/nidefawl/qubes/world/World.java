@@ -282,7 +282,7 @@ public abstract class World implements IBlockWorld {
 //            intens = 2.7f;
 //        }
 //      intens += 10.7f;
-        intens = 0.1f+(intens)*0.2f;
+        intens = 4.1f+(intens)*0.2f;
         DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
         this.lights.add(light);
     }

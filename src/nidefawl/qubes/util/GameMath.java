@@ -7,6 +7,7 @@ import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Quaternion;
 
 public class GameMath {
+    public static final float PI = (float)3.14159265358979323846;
 
     public static float cos(float f) {
         return (float)Math.cos(f);
