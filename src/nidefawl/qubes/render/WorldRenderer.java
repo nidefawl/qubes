@@ -167,7 +167,6 @@ public class WorldRenderer extends AbstractRenderer {
         startup = false;
     }
     int idx = -1;
-    private int image;
     public void reloadModel() {
         File[] list = (new File(WorkingEnv.getAssetFolder(), "models")).listFiles(new FileFilter() {
             
@@ -198,11 +197,6 @@ public class WorldRenderer extends AbstractRenderer {
         ModelLoaderQModel l = new ModelLoaderQModel();
         l.loadModel("models/test.qmodel");
         this.qmodel = (ModelRigged) l.buildModel();
-        if (this.image > 0) {
-            TextureManager.getInstance().releaseTexture(this.image); 
-        }
-        AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/human_adj_uv.png");
-        this.image = TextureManager.getInstance().makeNewTexture(t, false, true, 0);
 //        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
 //        AssetTexture tex1 = AssetManager.getInstance().loadPNGAsset("textures/heightmap_03.png");
 //        
@@ -483,7 +477,7 @@ public class WorldRenderer extends AbstractRenderer {
                     mat2.update();
                     UniformBuffer.setNormalMat(mat2.get());
                 }
-                GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.image);
+                qmodel.bindTextures();
                 qmodel.render(Game.ticksran+fTime);
                 UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
             }
@@ -504,7 +498,6 @@ public class WorldRenderer extends AbstractRenderer {
         Shader.disable();
         if (Game.DO_TIMING)
             TimingHelper.endSec();
-
     }
     //MOve somewhere else?!
     public void renderFirstPerson(World world, float fTime) {
@@ -527,68 +520,30 @@ public class WorldRenderer extends AbstractRenderer {
         }
         shaderModelfirstPerson.enable();
         this.modelRot=this.lastModelRot=4;
-//            System.out.println(e.yaw);
         BufferedMatrix mat = Engine.getTempMatrix();
-        float modelScale = 1 / 2.8f;
-        float angle = 0;
+        float modelScale = 1 / 2.7f;
         float f1=0;
         DigController dig = Game.instance.dig;
-        if (dig.isDigAnimation()) {
-            int ticks = Game.instance.dig.getTicks();
-            int iTicks = ticks;
-            int iStart = 4;
-            int iforward = 4;
-            int iback = 7;
-            if (iTicks+fTime <= iStart) {
-                float fTicks = (iTicks+fTime)/(float)iStart;
-                float progress = fTicks;
-                if (progress>0.5f) {
-                    progress = 1.0f-progress;
-                }
-                angle = -20*progress;
-                f1 = 0;
-            }
-            else if (iTicks+fTime <= iStart+iforward) {
-                iTicks -= iStart;
-                float fTicks = (iTicks+fTime)/(float)(iforward);
-                float progress = 1-fTicks;
-                progress=progress*progress;
-                progress=1-progress;
-                angle = 60*progress;
-                f1 = 0;
-            }
-            else if (iTicks+fTime <= iStart+iforward+iback) {
-                iTicks -= iStart;
-                iTicks -= iforward;
-                float fTicks = (iTicks+fTime)/(float)(iback);
-                float progress = fTicks;
-                progress=progress*progress;
-                angle = 60*(1-progress);
-                f1 = 0;
-            }
-//            if (p.punchTicks > 30)
-//            float progress = (Math.max(0, (maxTicks-p.punchTicks)+fTime))/((float)maxTicks);
-//            float forward = progress/
-//            progress=1-progress;
-//            progress=progress*progress*progress;
-//            progress=1-progress;
-//            progress = Math.min(1, progress);
-//            float updown = GameMath.sin(progress*2*GameMath.PI);
-//            if (updown<0)updown*=3.4f;
-//            else updown*=2.4f;
-//            angle = -updown*18;
-//            f1 = updown>0?-updown/5.0f:updown/5.0f;
-//            f1=0;
-        
-        }
-        
         mat.setIdentity();
-//        mat.translate(0.8f-(f1*0.165f), -0.9f-(f1*0.765f), -0.8f-(f1*0.8f));
-        mat.translate(0.8f+(f1*0.565f), -0.9f-(f1*0.4f), -0.8f);
-        mat.rotate((-100-(angle*1.2f)) * GameMath.PI_OVER_180, 1, 0, 0);
-        mat.rotate((-220-(angle*-0.2f)) * GameMath.PI_OVER_180, 0, 0, 1);
-        mat.rotate((21+(angle*0.4f)) * GameMath.PI_OVER_180, 0, 0, 1);
+        float angleX = -110;
+        float angleY = 180;
+        float angleZ = 0;
+        float swingProgress = dig.getSwingProgress(fTime);
+        float f17 = GameMath.sin(GameMath.PI*swingProgress);
+        float f23 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
+        mat.translate(-f23*0.3f, f17*0.2f+ GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI*2.0f)*0.3f, f17*0.11f);
+        float f7 = 0.8f;
+        mat.translate(0.7F * f7, -0.55F * f7 - (1.0F - f1) * 0.6F, -1.2F * f7);
+        float f18 = GameMath.sin(swingProgress*swingProgress*GameMath.PI);
+        float f24 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
+        mat.rotate(angleY * GameMath.PI_OVER_180, 0, 1, 0);
+        mat.rotate(angleZ * GameMath.PI_OVER_180, 0, 0, 1);
+        mat.rotate(angleX * GameMath.PI_OVER_180, 1, 0, 0);
+        mat.rotate(f18*-14f * GameMath.PI_OVER_180, 0, 1, 0);
+        mat.rotate(f24*12f * GameMath.PI_OVER_180, 0, 0, 1);
+        mat.rotate(f24*40f * GameMath.PI_OVER_180, 1, 0, 0);
         mat.scale(modelScale);
+        
         mat.update();
         shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         if (true) { //TODO: fix me (Normal mat)
@@ -601,7 +556,7 @@ public class WorldRenderer extends AbstractRenderer {
             mat.update();
             UniformBuffer.setNormalMat(mat.get());
         }
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, model.loadedTextures[0]);
+        model.loadedModels[0].bindTextures();
         //first person needs clear depth buffer, move somewhere else
 //            glDisable(GL_DEPTH_TEST);
         model.loadedModels[0].render(Game.ticksran+fTime);
@@ -642,7 +597,7 @@ public class WorldRenderer extends AbstractRenderer {
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
-//        Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
+        Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         Shader.disable();
     }
