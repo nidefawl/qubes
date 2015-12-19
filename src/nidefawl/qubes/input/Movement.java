@@ -18,7 +18,7 @@ public class Movement {
         if (this.grabbed) {
             float mult = 1.0F;
             if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
-                mult = 0.01F;
+                mult = 0.001F;
             if (Keyboard.isKeyDown(GLFW.GLFW_KEY_W)) {
                 this.forward += mult;
             }

@@ -9,10 +9,16 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.assets.*;
 import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.BlockStack;
+import nidefawl.qubes.item.Item;
+import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.meshing.ChunkRenderCache;
 import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
+import nidefawl.qubes.models.ItemModel;
+import nidefawl.qubes.models.qmodel.ModelBlock;
+import nidefawl.qubes.models.qmodel.ModelQModel;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.GameError;
@@ -52,7 +58,7 @@ public class Block {
     public final static Block ore_diamond = new Block(-1).setName("ore_diamond").setTextures("rocks/ore_diamond");
     public final static Block ore_gold = new Block(-1).setName("ore_gold").setTextures("rocks/ore_gold");
     public final static Block ore_silver = new Block(-1).setName("ore_silver").setTextures("rocks/ore_silver");
-//    public final static BlockGroupOres ores = new BlockGroupOres(stones);
+    public final static BlockGroupOres ores = new BlockGroupOres(stones);
 
     public final static BlockGroup bricks = new BlockGroupBricks(stones);
     public final static BlockGroup stonebricks = new BlockGroupStoneBricks(stones);
@@ -62,6 +68,7 @@ public class Block {
     public final static BlockGroup slabs = new BlockGroupSlabs(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
     public final static BlockGroup stairs = new BlockGroupStairs(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
     public final static BlockGroup walls = new BlockGroupWalls(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
+    
 
     public final static Block flower_fmn_black = new BlockFlowerFMN(-1).setName("forget_me_not_black").setTextures("flowers/bush_forget_me_not_black.layer0","flowers/bush_forget_me_not_black.layer1","flowers/bush_forget_me_not_black.layer2");
     public final static Block flower_fmn_blue = new BlockFlowerFMN(-1).setName("forget_me_not_blue").setTextures("flowers/bush_forget_me_not_blue.layer0","flowers/bush_forget_me_not_blue.layer1","flowers/bush_forget_me_not_blue.layer2");
@@ -94,7 +101,7 @@ public class Block {
     public final static Block tallgrass2 = new BlockDoublePlant(-1).setName("tallgrass2").setTextures("plants/double_grass_2.lower", "plants/double_grass_2.upper");
     public final static Block pad = new BlockPlantFlat(-1).setName("pad").setTextures("plants/pad");
     public final static Block waterlily = new BlockWaterLily(-1).setName("waterlily").setTextures("flowers/water_rose");
-    
+    public final static BlockGroup modelled = new BlockGroupModelledStones(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
     
     public static void preInit() {
         
@@ -146,6 +153,8 @@ public class Block {
     protected final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
     protected BlockTextureMode textureMode = BlockTextureMode.DEFAULT;
     protected BlockCategory blockCategory = BlockCategory.UNASSIGNED;
+    public ModelBlock[] loadedModels;
+    private String[] models;
 
     public Block(int id, boolean transparent) {
         if (id < 0) {
@@ -187,6 +196,14 @@ public class Block {
        }
         this.textures = list;
         return this;
+    }
+
+    protected Block setModels(String... models) {
+        this.models = models;
+        return this;
+    }
+    public String[] getModels() {
+        return this.models;
     }
 
     public Block setAbsTextures(String...list) {
@@ -536,5 +553,10 @@ public class Block {
      */
     public float getInvRenderRotation() {
         return 0;
+    }
+    public boolean canMineWith(World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
+        return itemstack.getItem().canMine(this, w, pos, player, itemstack);
+    }
+    public void onBlockMine(World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
     }
 }

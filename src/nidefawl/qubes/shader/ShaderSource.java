@@ -216,7 +216,7 @@ public class ShaderSource {
                         continue;
                     }
                     String[] lines2 = source.split("\r?\n");
-                    if (lines2.length <= i2) {
+                    if (i2<0 || lines2.length <= i2) {
                         System.err.println("failed getting line idx "+i2+" ("+lines2.length+")");
                         continue;
                     }

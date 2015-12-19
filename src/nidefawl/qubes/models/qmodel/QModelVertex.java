@@ -34,7 +34,7 @@ public class QModelVertex extends Vector3f {
         int nBones = loader.readUByte();
         int idx = 0;
         for (int j = 0; j < nBones; j++) {
-            int boneIdx = loader.readUByte();;
+            int boneIdx = loader.readUByte();
             float weight = loader.readFloat();
             if (weight > 1E-4f) {
                 if (idx >= MAX_BONES) {

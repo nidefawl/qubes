@@ -2,6 +2,8 @@ package nidefawl.qubes.gui;
 
 import java.util.ArrayList;
 
+import org.lwjgl.opengl.GL11;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
@@ -118,9 +120,6 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("z: %.2f", v.z));
         info.addAll(Game.instance.glProfileResults);
         
-        Block b = Game.instance.selBlock.getBlock();
-
-        info.add(String.format("Selected: %s", b == null ? "destroy" : b.getName()));
         info.add(String.format("Mode: %s", Game.instance.selection.getMode().toString()));
         info.add(Game.instance.selection.quarterMode ? "Quarter" : "Full");
         render = true;
@@ -130,6 +129,7 @@ public class GuiOverlayStats extends Gui {
         Shaders.textured.enable();
 
         int y = 20;
+        float maxW = 250;
             font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
             y += font.getLineHeight() * 1.2F;
@@ -142,7 +142,6 @@ public class GuiOverlayStats extends Gui {
                 y += font.getLineHeight() * 1.2F;
             }
             float totalHeight = (fontSmall.getLineHeight() * 1.2F)*info.size();
-            float maxW = 250;
             y-=font.getLineHeight()*1.7f;
             Tess.instance.setColorF(0, 0.8f);
             Tess.instance.add(0, y+totalHeight+4);
@@ -169,6 +168,42 @@ public class GuiOverlayStats extends Gui {
                 font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
         }
+        float rn = round;
+        round = 5;
+        int w = 192;
+        int x = 5;
+        y+=5;
+        Shaders.gui.enable();
+        float ff = shadowSigma;
+        shadowSigma = 2;
+        int ex = extendx;
+        int ey = extendy;
+        extendx = 1;
+        extendy = 1;
+        float wBg = w+16;
+        renderRoundedBoxShadowInverse(x, y, -4, wBg, wBg, -1, 0.8f, true);
+        this.round = 3;
+        float inset2 = 2;
+        renderRoundedBoxShadowInverse(x+inset2, y+inset2, 32, wBg-inset2*2, wBg-inset2*2, -1, 0.6f, false);
+        shadowSigma = ff;
+        extendx = ex;
+        extendy = ey;
+        x+=8;
+        y+=3;
+        round = rn;
+        Shaders.colored.enable();
+        Tess.instance.drawQuads();
+        
+        if (Game.instance.selBlock.getBlock()!=Block.air) {
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
+            Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+        }
+        Block b = Game.instance.selBlock.getBlock();
+        Shaders.textured.enable();
+        if (b != null)
+            font.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
+
         Shader.disable();
  
     }

@@ -25,8 +25,8 @@ public class ItemModel {
     public static final ItemModel[] model = new ItemModel[NUM_MODELS];
     
 
-    public final static ItemModel modelPickaxe = new ItemModel("pickaxe").setModels("models/pick.qmodel").setTextures("models/pick_texture.png");
-    public final static ItemModel modelAxe = new ItemModel("axe").setModels("models/axe.qmodel").setTextures("models/pick_texture.png");
+    public final static ItemModel modelPickaxe = new ItemModel("pickaxe").setModels("models/pick.qmodel");
+    public final static ItemModel modelAxe = new ItemModel("axe").setModels("models/axe.qmodel");
 
     public static void preInit() {
         
@@ -61,7 +61,6 @@ public class ItemModel {
     protected String[] models;
     protected String[] textures;
     public ModelQModel[] loadedModels;
-    public int[] loadedTextures;
     public final String name;
     
 
@@ -72,18 +71,9 @@ public class ItemModel {
         System.out.println("model "+this.name+" has id "+this.id);
     }
 
-    protected ItemModel setTextures(String... textures) {
-        this.textures = textures;
-        return this;
-    }
-
     protected ItemModel setModels(String... models) {
         this.models = models;
         return this;
-    }
-
-    public String[] getTextures() {
-        return this.textures;
     }
 
     public String[] getModels() {

@@ -37,7 +37,7 @@ public class FontRenderer {
 	    if (fontName == null) {
 	        fontName = "Arial";
 	    }
-		String hashName = fontName.trim().toLowerCase()+","+size+","+style+","+lineHeight;
+        String hashName = fontName.trim().toLowerCase()+","+size+","+style+","+lineHeight;
 		FontRenderer r = fonts.get(hashName);
 		if (r == null) {
 			r = new FontRenderer(fontName, size, style, lineHeight);

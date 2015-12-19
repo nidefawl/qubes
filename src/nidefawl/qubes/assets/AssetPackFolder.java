@@ -4,8 +4,11 @@
 package nidefawl.qubes.assets;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Stack;
+
+import com.google.common.collect.Sets;
 
 /**
  * @author Michael Hept 2015
@@ -15,20 +18,40 @@ public class AssetPackFolder extends AssetPack {
 
     private final File directory;
 
+    HashSet<File> files = Sets.newHashSet();
     /**
      * @param directory
      */
     public AssetPackFolder(File directory) {
         this.directory = directory;
+        Stack<File> stack = new Stack<File>();
+        stack.push(this.directory);
+        while (!stack.isEmpty()) {
+            File f = stack.pop();
+            System.out.println("scan "+f);
+            File[] fList = f.listFiles(new FileFilter() {
+                
+                @Override
+                public boolean accept(File f) {
+                    return f.isDirectory() || (f.isFile());
+                }
+            });
+
+            for (int i = 0; fList != null && i < fList.length; i++) {
+                if (fList[i].isDirectory() && !stack.contains(fList[i])) {
+                    stack.push(fList[i]);
+                } else if (fList[i].isFile()) {
+                    files.add(fList[i]);
+                }
+            }
+        }
     }
 
-    /* (non-Javadoc)
-     * @see nidefawl.qubes.assets.AssetPack#getInputStream(java.lang.String)
-     */
+
     @Override
     public AssetInputStream getInputStream(String name) throws IOException {
         File f = new File(this.directory, name);
-        if (f.exists()) {
+        if (files.contains(f)) {
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bif = new BufferedInputStream(fis);
             return new AssetInputStream(this, bif);
@@ -47,7 +70,8 @@ public class AssetPackFolder extends AssetPack {
             Stack<File> stack = new Stack<File>();
             stack.push(this.directory);
             while (!stack.isEmpty()) {
-                File[] fList = this.directory.listFiles(new FileFilter() {
+                File f = stack.pop();
+                File[] fList = f.listFiles(new FileFilter() {
                     
                     @Override
                     public boolean accept(File f) {

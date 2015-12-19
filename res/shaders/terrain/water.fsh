@@ -103,8 +103,8 @@ vec4 getNoise(vec2 uv){
 void main() {
 	vec3 normal_out = normal;
 	vec2 texCoord2 = texcoord.st;
-    if (isWater > 0) {
-		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir]);
+    if (isWater > 0 && faceDir != 0u) {
+		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
 		float dist = (14+length(vpos)/122);
 		vec2 vw = vec2(vwpos.x, vwpos.z);
 	    vec4 noise = getNoise(vw*2.5);

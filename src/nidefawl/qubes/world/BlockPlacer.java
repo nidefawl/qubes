@@ -9,8 +9,7 @@ import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.item.StackData;
+import nidefawl.qubes.item.*;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.BlockPos;
@@ -24,7 +23,7 @@ import nidefawl.qubes.vec.Vector3f;
 public class BlockPlacer {
 
     private PlayerServer player;
-    private BlockStack stack;
+    BlockStack stack;
 
     /**
      * @param serverHandlerPlay
@@ -42,28 +41,34 @@ public class BlockPlacer {
         return this.player.world;
     }
 
-    /**
-     * @return the stack
-     */
-    public BlockStack getStack() {
-        return this.stack;
-    }
     
-    /**
-     * @param x
-     * @param y
-     * @param z
-     * @param fx 
-     * @param fy 
-     * @param fz 
-     * @param type
-     * @param data
-     * @param face 
-     */
+
+    public void tryMine(BlockPos pos, Vector3f fpos, BaseStack stack, int face) {
+        World w = this.player.world;
+//        int x, int y, int z, float fx, float fy, float fz
+        if (stack == null || !stack.isItem()) {
+            this.player.kick("Invalid stack received");
+            return;
+        }
+        boolean isQuarter = (face & 8) != 0;
+        if (pos.y < 0 || pos.y >= w.worldHeight) {
+            return;
+        }
+        if (isQuarter) {
+            return;
+        }
+        int typeAt = getWorld().getType(pos);
+        Block bAgainst = Block.get(typeAt);
+        ItemStack itemstack = (ItemStack) stack;
+        if (bAgainst.canMineWith(w, pos, this.player, itemstack)) {
+            bAgainst.onBlockMine(w, pos, this.player, itemstack);
+        }
+        
+    }
     public void tryPlace(BlockPos pos, Vector3f fpos, BlockStack stack, int face) {
         World w = this.player.world;
-        this.stack = stack;
 //        int x, int y, int z, float fx, float fy, float fz
+        this.stack = stack;
         Block b = stack.getBlock();
         if (b == null) {
             this.player.kick("Invalid block received");

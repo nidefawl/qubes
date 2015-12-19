@@ -340,7 +340,11 @@ public class MeshedRegion {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         if (Engine.USE_TRIANGLES) {
            ReallocIntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
-            int intLen = VertexBuffer.createIndex(this.elementCount[pass], shBuffer);
+//           int intLen = VertexBuffer.createIndex(this.elementCount[pass], shBuffer);
+            int intLen = buffer.getTriIdxPos();
+//            System.out.println("number tri idx on pass "+pass+" - "+intLen);
+            shBuffer.reallocBuffer(intLen);
+            shBuffer.put(buffer.getTriIdxBuffer(), 0, intLen);
 //            System.out.println(byteSizeBuffer+"/"+(nTriangleIdx*2));
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices[pass]);
             if (Game.GL_ERROR_CHECKS)

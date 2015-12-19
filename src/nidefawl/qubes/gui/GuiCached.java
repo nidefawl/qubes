@@ -30,6 +30,7 @@ public class GuiCached extends Gui {
         fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16);
         fbDbg.setFilter(GL_COLOR_ATTACHMENT0, GL_NEAREST, GL_NEAREST);
         fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        fbDbg.setHasDepthAttachment();
         fbDbg.setup(null);
         this.gui.setSize(w, h);
     }

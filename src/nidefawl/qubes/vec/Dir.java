@@ -49,6 +49,23 @@ public class Dir {
             return DIR_POS_Z;
         return 0;
     }
+    public static String asString(int i) {
+        switch (i) {
+            case DIR_POS_X:
+                return "PosX";
+            case DIR_NEG_X:
+                return "NegX";
+            case DIR_POS_Y:
+                return "PosY";
+            case DIR_NEG_Y:
+                return "NegY";
+            case DIR_POS_Z:
+                return "PosZ";
+            case DIR_NEG_Z:
+                return "NegZ";
+        }
+        return null;
+    }
     public static String toFaceName(int i) {
         switch (i) {
             case DIR_POS_X:

@@ -1,6 +1,7 @@
 #version 150 core
 
 #pragma define "ALPHA_TEST"
+#pragma include "tonemap.glsl"
 
 uniform sampler2D tex0;
 
@@ -15,5 +16,7 @@ void main(void) {
 //     if (tex.a < 1.0)
 //     	discard;
 // #endif
-    out_Color = tex*pass_Color;
+	vec4 color = tex*pass_Color;
+	srgbToLin(color.rgb);
+    out_Color = vec4(color.rgb*0.1, tex.a*pass_Color.a);
 }

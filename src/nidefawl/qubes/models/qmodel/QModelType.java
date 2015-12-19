@@ -8,7 +8,7 @@ package nidefawl.qubes.models.qmodel;
  * Copyright: Michael Hept
  */
 public enum QModelType {
-    STATIC, RIGGED;
+    STATIC, RIGGED, BLOCK;
 
     /**
      * @param readUByte
@@ -20,6 +20,8 @@ public enum QModelType {
                 return STATIC;
             case 1:
                 return RIGGED;
+            case 2:
+                return BLOCK;
         }
         return null;
     }

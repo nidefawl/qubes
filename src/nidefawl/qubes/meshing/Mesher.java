@@ -292,7 +292,6 @@ public class Mesher {
                     dv[v] = h;
                     BlockFace face = new BlockFace(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                     meshes[c.pass].add(face);
-                    
                 }
                 extraIdx = 0;
                 if (MEASURE) TimingHelper2.endSec();

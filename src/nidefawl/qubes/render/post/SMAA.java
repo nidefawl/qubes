@@ -155,7 +155,7 @@ public class SMAA {
      * @param texture
      */
     public void render(int texture, int debugTexture) {
-        if (GameBase.GL_ERROR_CHECKS) {
+        if (true||Game.GL_ERROR_CHECKS) {
             boolean b = glGetBoolean(GL_DEPTH_TEST);
             if (!b) {
                 System.err.println("NEED DEPTH TESTING!");

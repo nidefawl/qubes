@@ -13,10 +13,13 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
 import org.lwjgl.opengl.*;
+
+import com.google.common.collect.Lists;
 
 public class BlockTextureArray {
     public static final int BLOCK_TEXTURE_BITS = 4;
@@ -112,6 +115,7 @@ public class BlockTextureArray {
 
         int maxTextures = 0;
         String maxTexture = null;
+        HashMap<String, AssetTexture> stringToTexture = new HashMap<>();
         HashMap<Integer, ArrayList<AssetTexture>> text = new HashMap<>();
         HashMap<Integer, AssetTexture> slotTextureMap = new HashMap<>();
         Block[] blocks = Block.block;
@@ -119,43 +123,67 @@ public class BlockTextureArray {
         float progress = 0f;
         int totalBlocks = Block.getRegisteredIDs().length;
         int nBlock = 0;
+        TimingHelper.startSilent(1);
         for (int i = 0; i < len; i++) {
             Block b = blocks[i];
             if (b != null) {
-                ArrayList<AssetTexture> blockTextures = b.resolveTextures(mgr);
-                if (!blockTextures.isEmpty()) {
-                    for (AssetTexture tex : blockTextures) {
-//                        System.out.println(tex.getName()+" - "+tex.getWidth()+","+tex.getHeight()+ " from "+tex.getPack());
-                        int texW = tex.getWidth();//Math.max(tex.getWidth(), tex.getHeight());
-                        if (texW > maxTileW) {
-                            maxTileW = texW;
-                            maxTexture = tex.getName();
+                ArrayList<AssetTexture> list = Lists.newArrayList();
+                for (String s : b.getTextures()) {
+                    AssetTexture tex = stringToTexture.get(s);
+                    if (tex == null) {
+                        tex = mgr.loadPNGAsset(s, false);
+                        if (tex.getWidth() != tex.getHeight()) {
+                            if (tex.getHeight()>tex.getWidth()) {
+                                tex.cutH();
+                            }else 
+                            throw new GameError("Block tiles must be width == height");
                         }
-                        maxTextures++;
-                        if (maxTileW > 512) {
-                            throw new GameError("Maximum resolution must not exceed 512! (texture '"+tex.getName()+"')");
-                        }
+                        stringToTexture.put(s, tex);
                     }
-                    text.put(b.id, blockTextures);
+                    list.add(tex);
                 }
+                text.put(b.id, list);
                 if (firstInit) {
                     progress = ++nBlock/(float)totalBlocks;
-                    Game.instance.loadRender(1, progress, b.getName());
-                    GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
-                    Engine.checkGLError("Game.instance.loadRender");
+                    Game.instance.loadRender(1, progress, "Loading... "+b.getName());
                 }
             }
         }
-        if (firstInit) {
-            Game.instance.loadRender(1, 1);
-            Engine.checkGLError("Game.instance.loadRender");
+        long l =  TimingHelper.stopSilent(1);
+        System.out.println("step 1 "+l);
+        TimingHelper.startSilent(1);
+        for (AssetTexture tex : stringToTexture.values()) {
+            int texW = tex.getWidth();//Math.max(tex.getWidth(), tex.getHeight());
+            if (texW > maxTileW) {
+                maxTileW = texW;
+                maxTexture = tex.getName();
+            }
+            maxTextures++;
+            if (maxTileW > 512) {
+                throw new GameError("Maximum resolution must not exceed 512! (texture '"+tex.getName()+"')");
+            }
         }
         System.out.println("maxTileW = "+maxTileW);
         System.out.println("maxTexture = "+maxTexture);
         this.tileSize = maxTileW;
+        for (AssetTexture tex : stringToTexture.values()) {
+            maxTextures++;
+            if (tex.getWidth() < this.tileSize) {
+                tex.rescale(this.tileSize);
+            }
+        }
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
+        Engine.checkGLError("Game.instance.loadRender");
+        if (firstInit) {
+            Game.instance.loadRender(1, 1);
+            Engine.checkGLError("Game.instance.loadRender");
+        }
         this.maxTextures = maxTextures;
         this.textures = new int[Block.NUM_BLOCKS<<BLOCK_TEXTURE_BITS];
         this.numMipmaps = 1+GameMath.log2(this.tileSize);
+        l =  TimingHelper.stopSilent(1);
+        System.out.println("step 2 "+l);
+        TimingHelper.startSilent(1);
 
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
         if (firstInit) {
@@ -171,23 +199,6 @@ public class BlockTextureArray {
         nBlock = 0;
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = text.entrySet().iterator();
         int slot = 0;
-        while (it.hasNext()) {
-            Entry<Integer, ArrayList<AssetTexture>> entry = it.next();
-            ArrayList<AssetTexture> blockTexture = entry.getValue();
-            for (int i = 0; i < blockTexture.size(); i++) {
-                AssetTexture tex = blockTexture.get(i);
-                if (tex.getWidth() != tex.getHeight()) {
-                    if (tex.getHeight()>tex.getWidth()) {
-                        tex.cutH();
-                    }else 
-                    throw new GameError("Block tiles must be width == height");
-                }
-                if (tex.getWidth() < this.tileSize) {
-                    tex.rescale(this.tileSize);
-                }
-            }
-        }
-        it = text.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Integer, ArrayList<AssetTexture>> entry = it.next();
             int blockId = entry.getKey();
@@ -225,10 +236,12 @@ public class BlockTextureArray {
             }
             if (firstInit) {
                 progress = ++nBlock/(float)totalBlocks;
-                Game.instance.loadRender(2, progress);
+                Game.instance.loadRender(2, progress, "Setting up textures "+nBlock+"/"+totalBlocks);
                 GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
             }
         }
+        l =  TimingHelper.stopSilent(1);
+        System.out.println("step 3 "+l);
         Game.instance.loadRender(2, 1);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
         lastLoaded = text;

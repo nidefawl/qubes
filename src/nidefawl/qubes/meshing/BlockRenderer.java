@@ -7,13 +7,17 @@ import static nidefawl.qubes.render.WorldRenderer.*;
 import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCKS_MASK;
 import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MASK;
 
+import java.util.Arrays;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.SingleBlockWorld;
@@ -205,7 +209,8 @@ public class BlockRenderer {
                     n += renderWaterLily(block, ix, iy, iz, pass);
                     break;
                 case 13:
-                    n += renderOre(block, ix, iy, iz, pass);
+                    setDefaultBounds();
+                    n += renderBlockModel(block, ix, iy, iz, pass, block.getLODPass());
                     break;
             }
         }
@@ -814,6 +819,30 @@ public class BlockRenderer {
      * @param targetBuffer 
      * 
      */
+    protected void putSingleVert(Block block, int targetBuffer, int attrIdx) {
+        attr.putSingleVert(attrIdx, this.vbuffer[targetBuffer]);
+        if (block.getRenderShadow()>0) {
+            if (this.shadowDrawMode == 1) {
+                attr.putShadowTexturedSingleVert(attrIdx, this.vbuffer[PASS_SHADOW_SOLID]);
+            } else {
+                attr.putBasicSingleVert(attrIdx, this.vbuffer[PASS_SHADOW_SOLID]);
+            }   
+        }
+    }
+
+    protected void incVertCount(Block block, int targetBuffer, int vIdx) {
+        this.vbuffer[targetBuffer].incVertCount(vIdx);
+        if (block.getRenderShadow()>0) {
+            this.vbuffer[PASS_SHADOW_SOLID].incVertCount(vIdx);
+        }
+    }
+
+    protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx) {
+        this.vbuffer[targetBuffer].putTriIndex(vertexIdx);
+        if (block.getRenderShadow()>0) {
+            this.vbuffer[PASS_SHADOW_SOLID].putTriIndex(vertexIdx);
+        }
+    }
     protected void putBuffer(Block block, int targetBuffer) {
         attr.put(this.vbuffer[targetBuffer]);
         if (block.getRenderShadow()>0) {
@@ -963,31 +992,113 @@ public class BlockRenderer {
         }
         return f;
     }
-    private int renderOre(Block block, int ix, int iy, int iz, int texturepass) {
+    private int renderBlockModel(Block block, int ix, int iy, int iz, int texturepass, int targetBuffer) {
         int f = 0;
-        setBlockBounds(block, ix, iy, iz);
-        for (int n = 0; n < 6; n++) {
-            int axis = n/2;
-            int side = n%2;
-            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs, texturepass);
-            if (surface != null) {
-                int faceDir = axis<<1|side;
-                setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
-                f+= renderFace(block, faceDir, ix, iy, iz, WorldRenderer.PASS_SOLID);    
+        try {
+            setDefaultBounds();
+            ModelBlock model = block.loadedModels[0];
+            int vPos[] = new int[model.loader.listVertex.size()]; //could be much smaller (when vertex are grouped by face(group)
+            int vIdx = 0;
+            Arrays.fill(vPos, -1);
+            for (int faceDir = 0; faceDir < 6; faceDir++) {
+    //            int faceDir = Dir.DIR_POS_Y;
+//                if (faceDir != Dir.DIR_NEG_X) continue;
+                int axis = (faceDir)/2;
+                int side = (faceDir)%2;
+                final float vScale = 1/8f;
+                BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, this.bs, texturepass);
+                if (surface != null) {
+                    //TODO: precalc this, cache, cache, cache!
+                    
+                    setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
+//                    f+= renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
+                    
+    
+                    QModelTriGroup group = model.groups[faceDir];
+                    QModelMaterial mat = group.material;
+                    int numTris = group.listTri.size();
+//                    int vertexIdx[] = new int[numTris*3*2]; // could be smaller
+                    final int faceCount = numTris/2;
+                    int[] vertexIdx = new int[3];
+                    for (int i = 0; i < numTris; i++) {
+                        QModelTriangle tri = group.listTri.get(i);
+                        int vIdxOut = 0;
+                        for (int v = 0; v < 3; v++) {
+                            int triVertIdx = tri.vertIdx[v];
+                            if (vPos[triVertIdx] < 0) {
+                                vPos[triVertIdx] = vIdx++;
+                                QModelVertex vertex = model.loader.getVertex(tri.vertIdx[v]);
+                                
+                                attr.v[0].setNormal(tri.normal[v].x, tri.normal[v].y, tri.normal[v].z);
+                                attr.v[0].setUV(tri.texCoord[0][v], tri.texCoord[1][v]);
+                                attr.v[0].setPos(ix + vertex.x*vScale, iy + vertex.y*vScale, iz + vertex.z*vScale);
+                                attr.setFaceDir(-1);
+                                putSingleVert(block, targetBuffer, 0);
+                            }
+                            vertexIdx[vIdxOut] = vPos[triVertIdx];
+                            vIdxOut++;
+                        }
+                        putTriIndex(block, targetBuffer, vertexIdx);
+                    }
+//                    putIndex(block, targetBuffer, vertexIdx, vIdxOut, faceCount);
+                    
+                    f+=faceCount;
+                }
+
+            
             }
+            incVertCount(block, targetBuffer, vIdx);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+////        renderYPos(block, ix, iy, iz);
+//        putBuffer(block, targetBuffer);
+//        for (int n = 0; n < 6; n++) {
+//            int axis = n/2;
+//            int side = n%2;
+//            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs, texturepass);
+//            if (surface != null) {
+//                int faceDir = axis<<1|side;
+//                setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
+//                
+//                f += renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
+//            }
+//            
+//        }
         return f;
+        
     }
+
+    float f(int x, int z) {
+        float xf = (x)/8f;
+        float zf = (z)/8f;
+        if (xf>0.5f) {
+            xf = 1-xf;
+        }
+        if (zf>0.5f) {
+            zf = 1-zf;
+        }
+        xf /= 0.5f;
+        zf /= 0.5f;
+        float xzf = xf*zf;
+        return xzf;
+    }
+    
 
 
     protected void flipFace() {
         int dir = attr.getFaceDir();
-        int axis = dir>>1;
-        int side = dir & 1;
-        side = 1 - side;
-        dir = axis << 1 | side;
-        attr.setFaceDir(dir);
-        attr.setReverse((side&1)!=0);
+        if (dir < 0) {
+            attr.setReverse(attr.getReverse());
+        } else {
+            int axis = dir>>1;
+            int side = dir & 1;
+            side = 1 - side;
+            dir = axis << 1 | side;
+            attr.setFaceDir(dir);
+            attr.setReverse((side&1)!=0);
+        }
     }
 
     protected void setFaceColorTexture(Block block, int ix, int iy, int iz, int faceDir, BlockSurface bs, int tex, int texturepass) {
@@ -1102,7 +1213,7 @@ public class BlockRenderer {
         int bottomAO = !bendNormal?2:2;
         attr.setAO(maskAO(bottomAO,bottomAO,topAO,topAO));
         attr.setTex(tex);
-        attr.setFaceDir(Dir.DIR_POS_Y);
+        attr.setFaceDir(-1);
 
         int br_pp = brigthness;
         int br_cp = brigthness;
@@ -1167,6 +1278,9 @@ public class BlockRenderer {
 //        int rgb2 = Biome.MEADOW_GREEN.getFaceColor(BiomeColor.FOLIAGE2);
         int rgb2 = this.w.getBiomeFaceColor(ix, iy, iz, Dir.DIR_POS_Y, pass, BiomeColor.FOLIAGE2);
         float incr = 1/(float)num;
+//        num = 2;
+//        incr = 0.5f;
+//        rot = 0;
         for (int i = 0; i < num; i++) {
 
             float frot = rot*GameMath.PI_OVER_180*180;
@@ -1227,7 +1341,7 @@ public class BlockRenderer {
             
             if (bendNormal) {
                 attr.calcNormal(plantNormal);
-                plantNormal.y+=0.2f;
+                plantNormal.y+=0.5f;
                 plantNormal.normalise();
                 int normal = attr.packNormal(plantNormal);
                 for (int j = 0; j < 4; j++) {
@@ -1249,10 +1363,10 @@ public class BlockRenderer {
             if (bendNormal) {
 
                 attr.calcNormal(plantNormal);
-                plantNormal.y+=0.2f;
+                plantNormal.y+=0.5f;
                 plantNormal.normalise();
 
-                int normal = attr.calcNormal();
+                int normal = attr.packNormal(plantNormal);
                  for (int j = 0; j < 4; j++) {
                      attr.v1.normal = normal;
                      attr.v2.normal = normal;

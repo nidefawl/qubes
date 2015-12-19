@@ -250,7 +250,7 @@ public class ServerHandlerPlay extends ServerHandler {
 
     public void handleDigState(PacketCDigState p) {
         if (p.stage == 3) {
-            this.player.sendMessage("+");
+            player.blockPlace.tryMine(p.pos, p.fpos, p.stack, p.face);
         }
     }
 }

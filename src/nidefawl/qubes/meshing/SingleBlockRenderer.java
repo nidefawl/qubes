@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.meshing;
 
+import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
+
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.gl.VertexBuffer;
@@ -47,5 +49,15 @@ public class SingleBlockRenderer extends BlockRenderer {
     @Override
     protected void putBuffer(Block block, int targetBuffer) {
         attr.put(this.singleBlockBuffer);
+    }
+    protected void putSingleVert(Block block, int targetBuffer, int attrIdx) {
+        attr.putSingleVert(attrIdx, this.singleBlockBuffer);
+    }
+    protected void incVertCount(Block block, int targetBuffer, int vIdx) {
+        singleBlockBuffer.incVertCount(vIdx);
+    }
+
+    protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx) {
+        singleBlockBuffer.putTriIndex(vertexIdx);
     }
 }

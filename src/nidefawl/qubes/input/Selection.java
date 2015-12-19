@@ -121,11 +121,11 @@ public class Selection {
     }
     public void renderBlockOver(TesselatorState out, AABBFloat box) {
 
-        float ext = 1 / 96F;
+        float ext = 1 / 256f;
         float w = 1/32f;
         Tess tesselator = Tess.instance;
-        float br = 0.6f;
-        tesselator.setColorRGBAF(br,br,br, 0.5f);
+        float br = 1f;
+        tesselator.setColorRGBAF(br,br,br, 1f);
         float minX = box.minX - ext;
         float minY = box.minY - ext;
         float minZ = box.minZ - ext;
@@ -246,7 +246,7 @@ public class Selection {
 
     public void renderBB() {
 
-        float ext = 1 / 64.0f;
+        float ext = 1 / 32.0f;
         Tess tesselator = Tess.instance;
         tesselator.setColorRGBAF(0.4f, 0.4f, 0.4f, 0.5F);
         BlockPos sel1 = pos[0];
@@ -394,6 +394,7 @@ public class Selection {
                 renderBlockOver(this.customBB, this.selBB);
                 this.renderBB = customBB;
             } else {
+                renderBlockOver(this.fullBlock, new AABBFloat(0, 0, 0, 1, 1, 1));
                 this.renderBB = fullBlock;
             }
         } else {

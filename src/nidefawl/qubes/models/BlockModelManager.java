@@ -1,6 +1,3 @@
-/**
- * 
- */
 package nidefawl.qubes.models;
 
 import java.util.Arrays;
@@ -10,22 +7,21 @@ import java.util.HashSet;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.item.Item;
+import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 
-/**
- * @author Michael Hept 2015
- * Copyright: Michael Hept
- */
-public class ItemModelManager {
-    static final ItemModelManager instance = new ItemModelManager();
-    public static ItemModelManager getInstance() {
+public class BlockModelManager {
+    static final BlockModelManager instance = new BlockModelManager();
+    public static BlockModelManager getInstance() {
         return instance;
     }
-    HashMap<AssetBinary, ModelQModel> models = new HashMap<>();
+    HashMap<AssetBinary, ModelBlock> models = new HashMap<>();
+    HashMap<AssetTexture, Integer> textures = new HashMap<>();
     /**
      * 
      */
@@ -43,14 +39,23 @@ public class ItemModelManager {
             }
             this.models.clear();
         }
+        if (!this.textures.isEmpty()) {
+            for (Integer texture : this.textures.values()) {
+                textureManager.releaseTexture(texture);
+            }
+            this.textures.clear();
+        }
         
+        //TODO: load texture dynamically (once we have lots of models/textures)
         HashSet<String> modelNames = new HashSet<>();
-        for (int i = 0; i < ItemModel.HIGHEST_MODEL_ID+1; i++) {
-            ItemModel model = ItemModel.model[i];
-            if (model == null) {
+        for (int i = 0; i < Block.HIGHEST_BLOCK_ID+1; i++) {
+            Block block = Block.block[i];
+            if (block == null) {
                 continue;
             }
-            modelNames.addAll(Arrays.asList(model.getModels()));
+            String[] models = block.getModels();
+            if (models != null)
+                modelNames.addAll(Arrays.asList(models));
         }
         HashMap<String, AssetBinary> modelAssets = new HashMap<>();
         for (String s : modelNames) {
@@ -60,22 +65,26 @@ public class ItemModelManager {
         for (AssetBinary t : modelAssets.values()) {
             ModelLoaderQModel loader = new ModelLoaderQModel();
             loader.loadModel(t);
-            ModelQModel model = loader.buildModel();
+            ModelBlock model = loader.buildBlockModel();
             this.models.put(t, model);
+            System.out.println("reloaded block model "+model.loader.getModelName());
         }
-        for (int i = 0; i < ItemModel.HIGHEST_MODEL_ID+1; i++) {
-            ItemModel model = ItemModel.model[i];
-            if (model == null) {
+        for (int i = 0; i < Block.HIGHEST_BLOCK_ID+1; i++) {
+            Block block = Block.block[i];
+            if (block == null) {
                 continue;
             }
-            String[] modelnames = model.getModels();
-            ModelQModel[] models = new ModelQModel[modelnames.length];
+            String[] modelnames = block.getModels();
+            if (modelnames == null) {
+                continue;
+            }
+            ModelBlock[] models = new ModelBlock[modelnames.length];
             for (int j = 0; j < modelnames.length; j++) {
                 AssetBinary asset = modelAssets.get(modelnames[j]);
                 models[j] = this.models.get(asset);
             }
-            System.out.println("loaded model "+model.name+" has id "+model.id);
-            model.loadedModels = models;
+            
+            block.loadedModels = models;
         }
     }
 

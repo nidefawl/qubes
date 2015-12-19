@@ -8,7 +8,9 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryUtil;
 
 import com.google.common.collect.Lists;
@@ -17,6 +19,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.GuiOverlayDebug;
+import nidefawl.qubes.input.Keyboard;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
@@ -31,8 +34,8 @@ import nidefawl.qubes.world.World;
 
 public class FinalRenderer extends AbstractRenderer {
 
+    public Shader       shaderBloomCombine;
     public Shader       shaderFinal;
-    public Shader       shaderFinalNoBloom;
     public Shader       shaderBlur;
     public Shader       shaderDeferred;
     public Shader       shaderInterpLum;
@@ -50,7 +53,7 @@ public class FinalRenderer extends AbstractRenderer {
     public FrameBuffer  fbSSRCombined;
     public FrameBuffer  fbDeferred;
     public FrameBuffer  fbSSAO;
-    public FrameBuffer  fbBloom;
+    public FrameBuffer  fbFinal;
     private FrameBuffer fbBlur1;
     private FrameBuffer fbBlur2;
     private FrameBuffer fbLuminanceDownsample[];
@@ -116,7 +119,7 @@ public class FinalRenderer extends AbstractRenderer {
 
         Engine.drawFullscreenQuad();
 
-        if (Game.show && pass == 2) {
+        if (Game.show && pass == 0) {
             Shader.disable();
             FrameBuffer.unbindFramebuffer();
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
@@ -153,7 +156,6 @@ public class FinalRenderer extends AbstractRenderer {
     public void calcLum(World world, float fTime) {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Luminance");
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Luminance 4x + convert");
-        glDisable(GL_BLEND);
         FrameBuffer inputBuffer = ssr > 0 ? this.fbSSRCombined : this.fbDeferred;
         
         
@@ -172,7 +174,7 @@ public class FinalRenderer extends AbstractRenderer {
         FrameBuffer lastBound = this.fbLuminanceDownsample[0];
         for (int i = 0; i < this.fbLuminanceDownsample.length-1; i++) {
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Luminance step "+(i));
-//            System.out.println("input w/h "+this.fbLuminance[i].getWidth()+", "+this.fbLuminance[i].getHeight());
+//            System.out.println("input w/h "+this.fbLuminanceDownsample[i].getWidth()+", "+this.fbLuminanceDownsample[i].getHeight());
             twoPixelX = 2.0f / (float) this.fbLuminanceDownsample[i].getWidth();
             twoPixelY = 2.0f / (float) this.fbLuminanceDownsample[i].getHeight();
             lastBound = this.fbLuminanceDownsample[i+1];
@@ -217,7 +219,6 @@ public class FinalRenderer extends AbstractRenderer {
         Shader.disable();
 
         GL11.glViewport(0, 0, fbDeferred.getWidth(), fbDeferred.getHeight());
-        glEnable(GL_BLEND);
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
     }
     
@@ -339,6 +340,38 @@ public class FinalRenderer extends AbstractRenderer {
 
 
     public void renderFinal(World world, float fTime) {
+        int outputColor = fbFinal.getTexture(0);
+        if (smaa != null) {
+            fbDeferred.bind();
+            fbDeferred.clearColorBlack();
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
+            outputColor = fbDeferred.getTexture(0);
+        } else {
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
+        }
+        shaderFinal.enable();
+        int indexIn = this.frame%2;
+        int indexOut = 1-indexIn;
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.fbLuminanceInterp[indexOut].getTexture(0));
+        Engine.drawFullscreenQuad();
+        FrameBuffer.unbindFramebuffer();
+        if (smaa != null) {
+            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
+            this.smaa.render(outputColor, 0);
+            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        }
+
+        this.frame++;
+    }
+    public void copySceneDepthBuffer() {
+        fbFinal.bind();
+
+        Engine.getSceneFB().bindRead();
+        //             
+        GL30.glBlitFramebuffer(0, 0, fbScene.getWidth(), fbScene.getHeight(), 0, 0, fbScene.getWidth(), fbScene.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        FrameBuffer.unbindReadFramebuffer();
+    }
+    public void renderBloom(World world, float fTime) {
         FrameBuffer input = ssr > 0 ? fbSSRCombined : fbDeferred;
         if (Game.show) {
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
@@ -347,56 +380,27 @@ public class FinalRenderer extends AbstractRenderer {
             dbg.drawDbgTexture(2, 0, 1, blurTexture, "texBlur");
             dbg.postDbgFB();
         }
-        
-        
-        shaderFinal.enable();
+        fbFinal.bind();
+//        fbFinal.clearFrameBuffer();
+        shaderBloomCombine.enable();
         
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderBlur");
 
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input.getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, blurTexture);
-        int indexIn = this.frame%2;
-        int indexOut = 1-indexIn;
-        GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, this.fbLuminanceInterp[indexOut].getTexture(0));
-        boolean aa = Game.instance.settings.aa>0;
-        if (!aa) {
-            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("combine bloom");
-            FrameBuffer.unbindFramebuffer();
-            Engine.drawFullscreenQuad();
-            Shader.disable();
-            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-        } else {
-            if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("combine bloom");
-            glDisable(GL_BLEND);
-            fbBloom.bind();
-            Engine.drawFullscreenQuad();
-            if (Game.show) {
-                GuiOverlayDebug dbg = Game.instance.debugOverlay;
-                dbg.preDbgFB(false);
-                dbg.drawDbgTexture(2, 1, 0, fbBloom.getTexture(0), "bloom+albedo");
-                dbg.drawDbgTexture(3, 0, 0, fbBloom.getTexture(0), "bloom+albedo");
-                dbg.postDbgFB();
-            }
-            FrameBuffer.unbindFramebuffer();
-            int outputColor = fbBloom.getTexture(0);
-            if (smaa != null) {
-                if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-                if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
-                this.smaa.render(outputColor, 0);
-                if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-            } else {
-              Shaders.textured.enable();
-              GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
-              Engine.drawFullscreenQuad();
-              if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-            }
-        }
-//        Shaders.textured.enable();
-//        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.fbScene.getTexture(1));
-//        Engine.drawFullscreenQuad();
 
-        this.frame++;
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("combine bloom");
+
+        Engine.drawFullscreenQuad();
+        if (Game.show) {
+            GuiOverlayDebug dbg = Game.instance.debugOverlay;
+            dbg.preDbgFB(false);
+            dbg.drawDbgTexture(2, 1, 0, fbFinal.getTexture(0), "bloom+albedo");
+            dbg.drawDbgTexture(3, 0, 0, fbFinal.getTexture(0), "bloom+albedo");
+            dbg.postDbgFB();
+        }
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
     }
 
 
@@ -419,7 +423,7 @@ public class FinalRenderer extends AbstractRenderer {
             Shader new_shaderSSRCombine = assetMgr.loadShader(this, "post/SSR/ssr_combine");
             Shader new_shaderDef = assetMgr.loadShader(this, "post/deferred");
             Shader new_shaderBlur = assetMgr.loadShader(this, "filter/blur_kawase");
-            Shader new_shaderFinal = assetMgr.loadShader(this, "post/finalstage", new IShaderDef() {
+            Shader new_shaderbloom_combine = assetMgr.loadShader(this, "post/bloom_combine", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
                     if ("DO_BLOOM".equals(define)) {
@@ -428,7 +432,7 @@ public class FinalRenderer extends AbstractRenderer {
                     return null;
                 }
             });
-            Shader new_shaderFinalNoBloom = assetMgr.loadShader(this, "post/finalstage");
+            Shader new_shaderFinal = assetMgr.loadShader(this, "post/finalstage");
             
 //            Shader new_calcLuminance = assetMgr.loadShader(this, "shaders/basic/calcLuminance");
 //            Shader new_calcAdaptedLuminance = assetMgr.loadShader(this, "shaders/basic/calcAdaptedLuminance");
@@ -448,12 +452,11 @@ public class FinalRenderer extends AbstractRenderer {
             Shader new_interpLum = assetMgr.loadShader(this, "filter/luminanceInterp");
             popNewShaders();
             shaderSSRCombine = new_shaderSSRCombine;
+            shaderSSRCombine = new_shaderSSRCombine;
             shaderSSRBlur = new_shaderSSRBlur;
+            shaderBloomCombine = new_shaderbloom_combine;
             shaderFinal = new_shaderFinal;
-            shaderFinalNoBloom = new_shaderFinalNoBloom;
             shaderBlur = new_shaderBlur;
-//            shaderCalcLuminance = new_calcLuminance;
-//            shaderCalcAdaptedLuminance = new_calcAdaptedLuminance;
             shaderDownsample4x = new_shaderDownsample4x;
             shaderDownsample4xLum = new_shaderDownsample4xLum;
             shaderDeferred = new_shaderDef;
@@ -481,12 +484,12 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDownsample4xLum.enable();
             shaderDownsample4xLum.setProgramUniform1i("texColor", 0);
             
+            shaderBloomCombine.enable();
+            shaderBloomCombine.setProgramUniform1i("texColor", 0);
+            shaderBloomCombine.setProgramUniform1i("texBlur", 1);
             shaderFinal.enable();
             shaderFinal.setProgramUniform1i("texColor", 0);
-            shaderFinal.setProgramUniform1i("texBlur", 1);
-            shaderFinal.setProgramUniform1i("texLum", 2);
-            shaderFinalNoBloom.enable();
-            shaderFinalNoBloom.setProgramUniform1i("texColor", 0);
+            shaderFinal.setProgramUniform1i("texLum", 1);
             shaderBlur.enable();
             shaderBlur.setProgramUniform1i("texColor", 0);
             shaderThreshold.enable();
@@ -616,13 +619,14 @@ public class FinalRenderer extends AbstractRenderer {
 //        System.out.println(floatBuf.get(0));
 
         fbDeferred = FrameBuffer.make(this, displayWidth, displayHeight, GL_RGB16F);
-        fbBloom = new FrameBuffer(displayWidth, displayHeight);
-        fbBloom.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
-        fbBloom.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        fbBloom.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
-        fbBloom.setup(this);
-        fbBloom.bind();
-        fbBloom.clearColor();
+        fbFinal = new FrameBuffer(displayWidth, displayHeight);
+        fbFinal.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        fbFinal.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
+        fbFinal.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        fbFinal.setHasDepthAttachment();
+        fbFinal.setup(this);
+        fbFinal.bind();
+        fbFinal.clearColor();
         
 
 

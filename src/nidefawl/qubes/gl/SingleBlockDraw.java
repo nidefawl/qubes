@@ -81,7 +81,9 @@ public class SingleBlockDraw {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData ");
         if (Engine.USE_TRIANGLES) {
-            numInts = VertexBuffer.createIndex(buffer.faceCount * 2, this.vboIdxBuf);
+            numInts = buffer.getTriIdxPos();
+            this.vboIdxBuf.reallocBuffer(numInts);
+            this.vboIdxBuf.put(buffer.getTriIdxBuffer(), 0, numInts);
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBindBuffer " + vboIndices);

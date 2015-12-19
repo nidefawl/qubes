@@ -30,6 +30,9 @@ public class ModelRigged extends ModelQModel {
     private QModelPoseBone head;
     private QModelPoseBone neck;
     private QModelAction action;
+    private int numIdx;
+    private int[] idxArr;
+    private int[] vPos;
 	/**
 	 * @param qModelJoint 
 	 * 
@@ -55,6 +58,9 @@ public class ModelRigged extends ModelQModel {
         }
         this.rootJoint = this.poseBones.get(0);
         this.action = loader.listActions.get(0);
+        this.numIdx = loader.listTri.size()*3;
+        this.idxArr = new int[numIdx];
+        this.vPos = new int[loader.listTri.size()];
 //        this.head.animate = false;
 	}
 	public void setAction(int idx) {
@@ -164,14 +170,10 @@ public class ModelRigged extends ModelQModel {
         if (this.needsDraw || System.currentTimeMillis()-this.reRender>42200) {
             this.reRender = System.currentTimeMillis();
             this.needsDraw = false;
+            if (buf == null)
+                buf = new VertexBuffer(1024*64);
             this.buf.reset();
-            List<QModelTriangle> triList = this.loader.listTri; 
-            List<QModelVertex> vList = this.loader.listVertex; 
-            int numIdx = triList.size()*3;
-            int[] idxArr = new int[numIdx];
-            int[] vPos = new int[vList.size()];
             int vPosI = 0;
-            Arrays.fill(vPos, -1);
             int pos = 0;
             for (QModelTriangle triangle : this.loader.listTri) {
                 for (int i = 0; i < 3; i++) {

@@ -25,7 +25,7 @@ flat in vec4 faceLightSky;
 flat in uvec4 blockinfo;
 flat in float blockid;
 flat in uint faceDir;
-in float blockside;
+flat in uint vertDir;
 in vec2 texPos;
 
 
@@ -108,9 +108,9 @@ void main(void) {
 	// if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
 	// 	colorizeLeaves(color_adj, position.xyz);
 	// }
-	// if (blockid == 1) {
+	if (faceDir != 0u) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
  		// vec2 newCoords = texcoord.st;//
-		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir]);
+		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
 		// float height = texture(normalTextures, texcoord.st).a;
 		 //Our heightmap only has one color channel.
 		 // const vec2 scaleBias = vec2(0.04, 0.02);
@@ -129,7 +129,7 @@ void main(void) {
 		// if (length(outNormal) > 1) {
 		// 	color_adj=vec3(1,0,0);
 		// }
-	// }	
+	}	
 
 #endif
 	// color_adj*=ambientOccl;
@@ -138,5 +138,10 @@ void main(void) {
     out_Normal = vec4((outNormal) * 0.5f + 0.5f, 1);
     out_Material = blockinfo;
     out_Light = vec4(lightLevelSky, lightLevelBlock, ambientOccl, 1);
+    // float dbgAO = 0;
+    // if (ao != 0 && ao != 1) {
+    // 	dbgAO = 1;
+    // }
+    // out_Light = vec4(vec3(ao), 1);
     // gl_FragData[0] = vec4(0,1,1,1);
 }

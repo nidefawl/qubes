@@ -54,7 +54,6 @@ void main() {
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 	float distCam = length(in_position.xyz - CAMERA_POS);
 
-	// uint faceDir = BLOCK_FACEDIR(blockinfo);
 	uint vertDir = BLOCK_VERTDIR(blockinfo);
 	vec3 dir = vertexDir.dir[vertDir].xyz;
 

@@ -86,7 +86,7 @@ public class Engine {
     private static int           fieldOfView;
 
     public static boolean renderWireFrame = false;
-    public static boolean USE_TRIANGLES = false;
+    public static boolean USE_TRIANGLES = true; //mandatory now...
 
     public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();

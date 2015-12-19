@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.*;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
@@ -32,10 +33,13 @@ public class ModelLoaderQModel {
 
 	public List<QModelVertex> listVertex;
 	public List<QModelTriangle> listTri;
-	public List<QModelMesh> listMesh;
-	public List<QModelMaterial> listMaterials;
+	public List<QModelTriGroup> listGroups;
+    public List<QModelMaterial> listMaterials;
+    public List<QModelTexture> listTextures;
     public List<QModelBone> listBones;
     public List<QModelAction> listActions;
+    public Map<String, QModelTriGroup> mapGroups;
+    public Map<String, QModelMaterial> mapMaterials;
 	private String path;
     private QModelType modelType;
 
@@ -145,19 +149,25 @@ public class ModelLoaderQModel {
 				QModelTriangle tri = new QModelTriangle(i, this);
 				listTri.add(tri);
 			}
-			int numMeshes = readUShort();
-			listMesh = Lists.newArrayListWithCapacity(numMeshes);
+			int numGroups = readUShort();
+			listGroups = Lists.newArrayListWithCapacity(numGroups);
 			
-			for (int i = 0; i < numMeshes; i++) {
-				QModelMesh mesh = new QModelMesh(i, this);
-				listMesh.add(mesh);
+			for (int i = 0; i < numGroups; i++) {
+				QModelTriGroup group = new QModelTriGroup(i, this);
+				listGroups.add(group);
 			}
-			int numMaterials = readUShort();
-			listMaterials = Lists.newArrayListWithCapacity(numMaterials);
-			for (int i = 0; i < numMaterials; i++) {
-				QModelMaterial mat = new QModelMaterial(i, this);
-				listMaterials.add(mat);
-			}
+            int numTextures = readUShort();
+            listTextures = Lists.newArrayListWithCapacity(numTextures);
+            for (int i = 0; i < numTextures; i++) {
+                QModelTexture mat = new QModelTexture(i, this);
+                listTextures.add(mat);
+            }
+            int numMaterials = readUShort();
+            listMaterials = Lists.newArrayListWithCapacity(numMaterials);
+            for (int i = 0; i < numMaterials; i++) {
+                QModelMaterial mat = new QModelMaterial(i, this);
+                listMaterials.add(mat);
+            }
 			
 			int numJoints = readUShort();
 			listBones = Lists.newArrayListWithCapacity(numJoints);
@@ -179,7 +189,27 @@ public class ModelLoaderQModel {
                 QModelAction jt = new QModelAction(i, this);
                 listActions.add(jt);
             }
-            
+            this.mapGroups = Maps.newHashMap();
+            this.mapMaterials = Maps.newHashMap();
+            for (int i = 0; i < numGroups; i++) {
+                QModelTriGroup group = this.listGroups.get(i);
+                group.listTri = Lists.newArrayList();
+                for (int j = 0; j < group.triIdx.length; j++) {
+                    int idx = group.triIdx[j];
+                    group.listTri.add(listTri.get(idx));
+                }
+            }
+            // link instances in 1:1 relation of groups and materials
+            for (QModelMaterial mat : this.listMaterials) {
+                for (QModelTriGroup group : this.listGroups) {
+                    if (mat.idx == group.materialIdx) {
+                        group.material = mat;
+                        this.mapGroups.put(mat.name, group);
+                        break;
+                    }
+                }
+                this.mapMaterials.put(mat.name, mat);
+            }
             //normalize weights
 			for (int i = 0; i < numVertices; i++) {
 			    QModelVertex v = this.listVertex.get(i);
@@ -229,7 +259,7 @@ public class ModelLoaderQModel {
 		System.out.println("loaded " + path + ": " + this.asset.getData().length + " bytes");
 		System.out.println("vertices: "+this.listVertex.size());
 		System.out.println("triangles: "+this.listTri.size());
-		System.out.println("meshes: "+this.listMesh.size());
+		System.out.println("meshes: "+this.listGroups.size());
 		System.out.println("materials: "+this.listMaterials.size());
         System.out.println("Joints: "+this.listBones.size());
         System.out.println("Action: "+this.listActions.size());
@@ -241,6 +271,9 @@ public class ModelLoaderQModel {
 	private void resetOffset() {
 		this.offset = 0;
 	}
+    public ModelBlock buildBlockModel() {
+        return new ModelBlock(this);
+    }
 
 	public ModelQModel buildModel() {
 	    switch (this.modelType) {
@@ -259,4 +292,15 @@ public class ModelLoaderQModel {
 	public QModelVertex getVertex(int i) {
 		return this.listVertex.get(i);
 	}
+
+    public String getModelName() {
+        return this.path;
+    }
+
+    public QModelTriGroup getGroup(String string) {
+        return this.mapGroups.get(string);
+    }
+    public QModelMaterial getListMaterial(String string) {
+        return this.mapMaterials.get(string);
+    }
 }

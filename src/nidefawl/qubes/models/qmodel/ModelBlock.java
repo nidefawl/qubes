@@ -1,30 +1,58 @@
-/**
- * 
- */
 package nidefawl.qubes.models.qmodel;
 
 import java.util.Arrays;
 import java.util.List;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Half;
-import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 
-/**
- * @author Michael Hept 2015
- * Copyright: Michael Hept
- */
-public class ModelStatic extends ModelQModel {
-
-    public ModelStatic(ModelLoaderQModel loader) {
+public class ModelBlock extends ModelQModel {
+    public final QModelTriGroup[] groups = new QModelTriGroup[6];
+    public ModelBlock(ModelLoaderQModel loader) {
         super(loader);
+        for (int i = 0; i < 6; i++) {
+            int axisSwap = i;
+            if (i == Dir.DIR_NEG_Z) {
+                axisSwap = Dir.DIR_NEG_Y;
+            }
+            if (i == Dir.DIR_NEG_Y) {
+                axisSwap = Dir.DIR_NEG_Z;
+            }
+            if (i == Dir.DIR_POS_Z) {
+                axisSwap = Dir.DIR_POS_Y;
+            }
+            if (i == Dir.DIR_POS_Y) {
+                axisSwap = Dir.DIR_POS_Z;
+            }
+            if (i == Dir.DIR_POS_X) {
+                axisSwap = Dir.DIR_NEG_X;
+            }
+            if (i == Dir.DIR_NEG_X) {
+                axisSwap = Dir.DIR_POS_X;
+            }
+            QModelTriGroup group = this.loader.getGroup(Dir.asString(axisSwap));
+            if (group == null) {
+                throw new GameError(this.loader.getModelName()+": Invalid block model, group "+Dir.asString(i)+ " missing");
+            }
+            this.groups[i] = group;
+        }
     }
+
+    @Override
+    public QModelType getType() {
+        return QModelType.BLOCK;
+    }
+
 
     Vector3f tmpVec = new Vector3f();
     public void render(float f) {
-        if (this.needsDraw || System.currentTimeMillis()-this.reRender>2100) {
+        if (this.needsDraw || System.currentTimeMillis()-this.reRender>1) {
+            int side = (Game.ticksran/20)%6;
             this.reRender = System.currentTimeMillis();
             this.needsDraw = false;
             if (buf == null)
@@ -38,10 +66,13 @@ public class ModelStatic extends ModelQModel {
             int vPosI = 0;
             Arrays.fill(vPos, -1);
             int pos = 0;
-            for (QModelTriangle triangle : this.loader.listTri) {
+            QModelTriGroup group = this.loader.listGroups.get(side);
+            for (QModelTriangle triangle : group.listTri) {
+                if (triangle.group != side)
+                    continue;
                 for (int i = 0; i < 3; i++) {
                     int idx = triangle.vertIdx[i];
-//                  if (vPos[idx]<0) {
+//                      if (vPos[idx]<0) {
                         vPos[idx] = vPosI++;
                         QModelVertex v = this.loader.getVertex(idx);
                         buf.put(Float.floatToRawIntBits(v.x));
@@ -52,7 +83,7 @@ public class ModelStatic extends ModelQModel {
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
                         buf.put(textureHalf2);
                         buf.put(0xffffffff);
-//                  }
+//                      }
                     idxArr[pos++] = vPos[idx];
                     buf.increaseVert();
                 }
@@ -71,9 +102,5 @@ public class ModelStatic extends ModelQModel {
         this.gpuBuf.draw(5);
 
 
-    }
-    @Override
-    public QModelType getType() {
-        return QModelType.STATIC;
     }
 }

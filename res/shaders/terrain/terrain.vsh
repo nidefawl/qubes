@@ -25,7 +25,7 @@ flat out vec4 faceLightSky;
 flat out uvec4 blockinfo;
 flat out float blockid; // duplicate data, not sure if faster than per fragment bitmasking (on blockinfo.y)
 flat out uint faceDir; // also duplicate, I really need to check if passing varyings costs more than bitmasking
-out float blockside;
+flat out uint vertDir; // also duplicate
 out vec2 texPos;
 
 #define MAX_AO 3.0
@@ -34,15 +34,6 @@ const vec4 aoLevels = normalize(vec4(0, 0.2, 0.4, 0.6));
 #define LIGHT_MASK 0xFu
 #define AO_MASK 0x3u
 #define DEBUG_MODE2
-#define BR_0 0.27f
-#define BR_1 0.38f
-#define BR_2 0.56f
-#define BR_3 1.0f
-// #define BR_0 0.6f
-// #define BR_1 0.8f
-// #define BR_2 0.9f
-// #define BR_3 1.0f
-float blocksidebrightness[6] = float[6](BR_2, BR_2, BR_3, BR_0, BR_1, BR_1);
 
 void main() {
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
@@ -58,7 +49,7 @@ void main() {
 	float distCam = length(in_position.xyz - CAMERA_POS);
 
 	faceDir = BLOCK_FACEDIR(blockinfo);
-	uint vertDir = BLOCK_VERTDIR(blockinfo);
+	vertDir = BLOCK_VERTDIR(blockinfo);
 	vec3 dir = vertexDir.dir[vertDir].xyz;
     float renderpass = BLOCK_RENDERPASS(blockinfo);
 
@@ -89,8 +80,6 @@ void main() {
 	pos.y += dir.y*distScale;
 	pos.z += dir.z*distScale;
 
-
-	blockside = blocksidebrightness[faceDir];
 // #ifndef FAR_BLOCKFACE
 	faceAO = vec4(
 		aoLevels[BLOCK_AO_IDX_0(in_blockinfo)],

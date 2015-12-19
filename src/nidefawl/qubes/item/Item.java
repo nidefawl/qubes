@@ -9,10 +9,15 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockLog;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.texture.ItemTextureArray;
 import nidefawl.qubes.vec.AABBFloat;
+import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.world.World;
 
 /**
  * @author Michael Hept 2015
@@ -145,6 +150,18 @@ public class Item {
      */
     public ItemModel getItemModel() {
         return this.itemModel;
+    }
+    public boolean canMine(Block block, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
+        System.out.println("Mine");
+        //Move to subclass
+        if (pickaxe==this) {
+            System.out.println(block);
+            return Block.ores.getBlocks().contains(block);
+        }
+        if (axe==this) {
+            return block instanceof BlockLog;
+        }
+        return false;
     }
     
 }

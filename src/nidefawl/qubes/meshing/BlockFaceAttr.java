@@ -121,8 +121,44 @@ public class BlockFaceAttr {
 //        for (int i = 0; i < 4; i++)
 //            System.out.printf("%d %.2f %.2f\n", i, this.v[i].u, this.v[i].v);
     }
+
+    public void putSingleVert(int vert, VertexBuffer vertexBuffer) {
+        BlockFaceVert v = this.v[vert];
+        vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+        vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+        vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+        vertexBuffer.put(v.normal);
+        int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
+        vertexBuffer.put(textureHalf2);
+        vertexBuffer.put(v.rgba);
+        vertexBuffer.put(this.tex | this.type << 16 | v.pass << (16+12)); //2x SHORT
+        // BIT 0-7: 8 bit AO
+        // BIT 16-18: 3 bit FACEDIR (aka blockside)
+        // BIT 19-24: 6 bit VERTEXDIR 
+        vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);    
+        vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16);
+    }
+    public void putShadowTexturedSingleVert(int vert, VertexBuffer vertexBuffer) {
+        BlockFaceVert v = this.v[vert];
+        vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+        vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+        vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+        vertexBuffer.put(Float.floatToRawIntBits(1));
+        vertexBuffer.put(Float.floatToRawIntBits(v.u)); //TODO: i think this should be halffloats
+        vertexBuffer.put(Float.floatToRawIntBits(v.v));
+        vertexBuffer.put(tex|this.type<<16); //2x SHORT
+    }
+
+    public void putBasicSingleVert(int vert, VertexBuffer vertexBuffer) {
+        BlockFaceVert v = this.v[vert];
+        vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+        vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+        vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+        vertexBuffer.put(Float.floatToRawIntBits(1));
+    }
     public void put(VertexBuffer vertexBuffer) {
 //        rotateUV(1);
+        int idxPos = vertexBuffer.getVertexCount();
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
@@ -139,14 +175,20 @@ public class BlockFaceAttr {
             // BIT 19-24: 6 bit VERTEXDIR 
             vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);    
             vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16); 
-             
             vertexBuffer.increaseVert();
         }
+        vertexBuffer.putIdx(idxPos+0);
+        vertexBuffer.putIdx(idxPos+1);
+        vertexBuffer.putIdx(idxPos+2);
+        vertexBuffer.putIdx(idxPos+2);
+        vertexBuffer.putIdx(idxPos+3);
+        vertexBuffer.putIdx(idxPos+0);
         vertexBuffer.increaseFace();
         
     }
 
     public void putBasic(VertexBuffer vertexBuffer) {
+        int idxPos = vertexBuffer.getVertexCount();
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
@@ -156,11 +198,18 @@ public class BlockFaceAttr {
             vertexBuffer.put(Float.floatToRawIntBits(1));
             vertexBuffer.increaseVert();
         }
+        vertexBuffer.putIdx(idxPos+0);
+        vertexBuffer.putIdx(idxPos+1);
+        vertexBuffer.putIdx(idxPos+2);
+        vertexBuffer.putIdx(idxPos+2);
+        vertexBuffer.putIdx(idxPos+3);
+        vertexBuffer.putIdx(idxPos+0);
         vertexBuffer.increaseFace();
     }
 
 
     public void putShadowTextured(VertexBuffer vertexBuffer) {
+        int idxPos = vertexBuffer.getVertexCount();
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
             BlockFaceVert v = this.v[idx];
@@ -173,6 +222,12 @@ public class BlockFaceAttr {
             vertexBuffer.put(tex|this.type<<16); //2x SHORT
             vertexBuffer.increaseVert();
         }
+        vertexBuffer.putIdx(idxPos+0);
+        vertexBuffer.putIdx(idxPos+1);
+        vertexBuffer.putIdx(idxPos+2);
+        vertexBuffer.putIdx(idxPos+2);
+        vertexBuffer.putIdx(idxPos+3);
+        vertexBuffer.putIdx(idxPos+0);
         vertexBuffer.increaseFace();
     }
 
@@ -208,13 +263,13 @@ public class BlockFaceAttr {
      * @param faceDir2
      */
     public void setFaceDir(int faceDir) {
-        this.faceDir = faceDir;
+        this.faceDir = 1+faceDir;
     }
     /**
      * @return the faceDir
      */
     public int getFaceDir() {
-        return this.faceDir;
+        return this.faceDir-1;
     }
 
     /**
@@ -278,5 +333,10 @@ public class BlockFaceAttr {
         byte byte2 = (byte)(int)(n.z * 127F);
         return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
     }
+
+    public boolean getReverse() {
+        return this.reverse;
+    }
+
 
 }

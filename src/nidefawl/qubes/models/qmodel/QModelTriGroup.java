@@ -4,17 +4,20 @@
 package nidefawl.qubes.models.qmodel;
 
 import java.io.EOFException;
+import java.util.List;
 
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class QModelMesh {
+public class QModelTriGroup {
 	public final int idx;
 	public final int flags;
 	public final String name;
 	public final int[] triIdx;
-	public final int material;
+    public final int materialIdx;
+    public QModelMaterial material;
+    public List<QModelTriangle> listTri;
 
 	
 	/**
@@ -22,7 +25,7 @@ public class QModelMesh {
      * @param modelLoaderQModel
 	 * @throws EOFException 
      */
-    public QModelMesh(int i, ModelLoaderQModel loader) throws EOFException {
+    public QModelTriGroup(int i, ModelLoaderQModel loader) throws EOFException {
         this.idx = i;
         this.flags = loader.readUByte();
         this.name = loader.readString(32);
@@ -31,8 +34,7 @@ public class QModelMesh {
         for (int j = 0; j < numTri; j++) {
             this.triIdx[j] = loader.readUShort();
         }
-        this.material = loader.readUByte();
-        
+        this.materialIdx = loader.readUByte();
     }
 
 

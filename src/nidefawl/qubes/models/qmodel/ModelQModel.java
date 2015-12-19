@@ -3,8 +3,15 @@
  */
 package nidefawl.qubes.models.qmodel;
 
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+
+import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.vec.Vector3f;
 
 /**
@@ -14,7 +21,7 @@ import nidefawl.qubes.vec.Vector3f;
 public abstract class ModelQModel {
 
     public final ModelLoaderQModel loader;
-    public VertexBuffer buf = new VertexBuffer(1024*64);
+    public VertexBuffer buf;
 //    public VertexBuffer shadowBuf = new VertexBuffer(1024*16);
     public GLTriBuffer gpuBuf = null;
 //    public GLTriBuffer gpuShadowBuf = null;
@@ -50,6 +57,9 @@ public abstract class ModelQModel {
             this.buf = null;
 //            this.shadowBuf = null;
         }
+        for (int i = 0; i < this.loader.listTextures.size(); i++) {
+            this.loader.listTextures.get(i).release();
+        }
     }
     public abstract QModelType getType();
 
@@ -74,4 +84,18 @@ public abstract class ModelQModel {
      * @param f
      */
     public abstract void render(float fTime);
+
+
+    public void bindTextures() {
+        if (this.loader.listTextures.isEmpty()) {
+//            System.out.println("no tex "+this.loader.getModelName());
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, 0);
+            return;
+        }
+        //TODO: multitexturing (requires shader changes)
+        for (int i = 0; i < this.loader.listTextures.size(); i++) {
+            QModelTexture texture = this.loader.listTextures.get(i);
+            GL.bindTexture(GL_TEXTURE0+i, GL_TEXTURE_2D, texture.get());
+        }
+    }
 }

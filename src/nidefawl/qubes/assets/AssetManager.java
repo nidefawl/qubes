@@ -16,7 +16,7 @@ public class AssetManager {
     ArrayList<AssetPack>          assetPacks   = new ArrayList<>();
     private ShaderSource lastFailedShader;
     File                      folder;
-    private boolean externalResources;
+    private boolean externalResources = true;
     public void toggleExternalResources() {
         this.externalResources = !externalResources;
         init();
@@ -66,11 +66,11 @@ public class AssetManager {
 //                }
 //            }
 //        }
-        assetPacks.add(new AssetPackClassPath());
-        if (!this.externalResources) {
+        if (this.externalResources) {
             if (folder.exists())
                 assetPacks.add(new AssetPackFolder(folder));
         }
+        assetPacks.add(new AssetPackClassPath());
         Collections.reverse(assetPacks);
         System.out.println("Found "+assetPacks.size()+" asset packs");
     }
