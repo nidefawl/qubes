@@ -178,7 +178,6 @@ public class UniformBuffer {
         this.shaders.add(shader);
     }
     public static void updateUBO(WorldClient world, float f) {
-        if (Game.DO_TIMING) TimingHelper.startSec("updateUBO");
 //        Shaders.colored.enable();
 //        Shaders.colored.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
 //        Shaders.textured.enable();
@@ -280,7 +279,6 @@ public class UniformBuffer {
         }
         LightInfo.put(1);
         LightInfo.update();
-        if (Game.DO_TIMING) TimingHelper.endSec();
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     }

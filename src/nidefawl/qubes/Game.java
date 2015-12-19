@@ -626,12 +626,10 @@ public class Game extends GameBase implements IErrorHandler {
 
     public void render(float fTime) {
         //      fogColor.scale(0.4F);
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("world");
+        
         if (this.world != null) {
             glDisable(GL_BLEND);
-            if (Game.DO_TIMING)
-                TimingHelper.startSec("ShadowPass");
+            
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderShadowPass");
             Engine.shadowRenderer.renderShadowPass(this.world, fTime);
@@ -641,8 +639,7 @@ public class Game extends GameBase implements IErrorHandler {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
-            if (Game.DO_TIMING)
-                TimingHelper.endStart("renderWorld");
+            
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderWorld");
@@ -658,19 +655,14 @@ public class Game extends GameBase implements IErrorHandler {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("renderWorld");
 
-            if (Game.DO_TIMING)
-                TimingHelper.endStart("unbindCurrentFrameBuffer");
+            
 
             FrameBuffer.unbindFramebuffer();
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
+            
+            
         }
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("screen");
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("prepare");
+        
+        
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("glClear");
@@ -683,8 +675,7 @@ public class Game extends GameBase implements IErrorHandler {
             GPUProfiler.end();
 
         if (this.world != null) {
-            if (Game.DO_TIMING)
-                TimingHelper.endStart("final");
+            
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("HBAO");
@@ -820,14 +811,12 @@ public class Game extends GameBase implements IErrorHandler {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("forwardPass");
                 
-                if (Game.DO_TIMING)
-                    TimingHelper.endStart("forwardPass");
+                
 
 
                 if (!Engine.worldRenderer.debugBBs.isEmpty()) {
 
-                    if (Game.DO_TIMING)
-                        TimingHelper.startSec("renderDebugBB");
+                    
 
                     if (GPUProfiler.PROFILING_ENABLED)
                         GPUProfiler.start("renderDebugBB");
@@ -837,13 +826,11 @@ public class Game extends GameBase implements IErrorHandler {
 
                     if (Game.GL_ERROR_CHECKS)
                         Engine.checkGLError("renderDebugBB");
-                    if (Game.DO_TIMING)
-                        TimingHelper.endSec();
+                    
                 }
 
                 if (Engine.renderWireFrame) {
-                    if (Game.DO_TIMING)
-                        TimingHelper.startSec("renderNormals");
+                    
                     Engine.worldRenderer.renderNormals(this.world, fTime);
                     glEnable(GL_POLYGON_OFFSET_FILL);
                     glPolygonOffset(-3.4f, 2.f);
@@ -851,11 +838,9 @@ public class Game extends GameBase implements IErrorHandler {
                     glDisable(GL_POLYGON_OFFSET_FILL);
                     if (Game.GL_ERROR_CHECKS)
                         Engine.checkGLError("renderNormals");
-                    if (Game.DO_TIMING)
-                        TimingHelper.endSec();
+                    
                 }
-                if (Game.DO_TIMING)
-                    TimingHelper.startSec("renderBlockHighlight");
+                
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("renderBlockHighlight");
                 selection.renderBlockHighlight(this.world, fTime);
@@ -866,12 +851,10 @@ public class Game extends GameBase implements IErrorHandler {
 
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("renderBlockHighlight");
-                if (Game.DO_TIMING)
-                    TimingHelper.endSec();
+                
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
-                if (Game.DO_TIMING)
-                    TimingHelper.endSec();
+                
                 glEnable(GL_CULL_FACE);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("firstPerson");
@@ -909,16 +892,14 @@ public class Game extends GameBase implements IErrorHandler {
         glClear(GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("gui");
+        
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("gui");
 
         if (this.world != null && this.gui == null && this.movement.grabbed()) {
             Shaders.colored.enable();
-            if (Game.DO_TIMING)
-                TimingHelper.startSec("crosshair");
+            
             Tess.instance.setColor(-1, 100);
             Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
             float height = 1;
@@ -932,8 +913,7 @@ public class Game extends GameBase implements IErrorHandler {
             Tess.instance.add(height, -w, 0);
             Tess.instance.add(-height, -w, 0);
             Tess.instance.draw(GL_QUADS);
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
+            
             Shader.disable();
         }
 
@@ -1009,33 +989,27 @@ public class Game extends GameBase implements IErrorHandler {
             
 //            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
             if (show) {
-                if (Game.DO_TIMING)
-                    TimingHelper.startSec("debugOverlay");
+                
                 if (this.debugOverlay != null) {
                     this.debugOverlay.render(fTime, 0, 0);
                 }
-                if (Game.DO_TIMING)
-                    TimingHelper.endSec();
+                
             }
             if (this.chatOverlay != null) {
                 this.chatOverlay.render(fTime, 0, 0);
             }
-            if (Game.DO_TIMING)
-                TimingHelper.startSec("statsOverlay");
+            
 
             if (this.statsCached != null) {
                 this.statsCached.render(fTime, 0, 0);
             }
-            if (Game.DO_TIMING)
-                TimingHelper.endSec();
+            
         }
 
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
+        
         glEnable(GL_DEPTH_TEST);
 
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
+        
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 

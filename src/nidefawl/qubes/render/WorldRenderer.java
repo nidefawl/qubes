@@ -290,12 +290,10 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderWorld(World world, float fTime) {
 
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("setupView");
+        
 
         glDisable(GL_BLEND);
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("Sky");
+        
         glDepthMask(false);
         skyShader.enable();
         skybox1.bindAndDraw(GL_QUAD_STRIP);
@@ -304,11 +302,9 @@ public class WorldRenderer extends AbstractRenderer {
             Engine.checkGLError("skyShader.drawSkybox");
         Shader.disable();
         glDepthMask(true);
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("setupView2");
+        
 
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("testShader");
+        
 
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("terrain shader");
@@ -317,8 +313,7 @@ public class WorldRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
         GL.bindTexture(GL_TEXTURE2, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getNormals());
         
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("renderFirstPass");
+        
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if (Game.GL_ERROR_CHECKS)
@@ -367,8 +362,6 @@ public class WorldRenderer extends AbstractRenderer {
 //            this.qmodel.animate(fTime);
         renderQModels(world, shaderModelQ, PASS_SOLID, fTime);
 
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
     }
 
     public void renderVoxModels(Shader modelShader, int pass, float fTime) {
@@ -487,8 +480,7 @@ public class WorldRenderer extends AbstractRenderer {
     public void renderTransparent(World world, float fTime) {
 //      glEnable(GL_BLEND);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("renderSecondPass");
+        
         waterShader.enable();
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNoise);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
@@ -496,8 +488,6 @@ public class WorldRenderer extends AbstractRenderer {
             Engine.checkGLError("renderSecondPass");
 
         Shader.disable();
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
     }
     //MOve somewhere else?!
     public void renderFirstPerson(World world, float fTime) {

@@ -444,8 +444,7 @@ public abstract class GameBase implements Runnable {
             DO_TIMING = !DO_TIMING;
             TimingHelper.reset();
         }
-        if (Game.DO_TIMING)
-            TimingHelper.check();
+        
         
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.startFrame();
@@ -454,23 +453,18 @@ public abstract class GameBase implements Runnable {
             shutdown();
             return;
         }
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("pre render");
+        
         checkResize();
         updateTime();
         Stats.uniformCalls = 0;
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("pre render");
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("input");
+        
+        
         updateInput();
         input(renderTime);
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("preRenderUpdate");
+        
+        
         preRenderUpdate(renderTime);
         //        if (!startRender) {
         //            try {
@@ -480,21 +474,17 @@ public abstract class GameBase implements Runnable {
         //            }
         //            return;
         //        }
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
+        
         render(renderTime);
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("postRenderUpdate");
+        
         postRenderUpdate(renderTime);
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
+        
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();
         //        if (Main.DO_TIMING) TimingHelper.end(14);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("render");
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("Display.update");
+        
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("updateDisplay");
         updateDisplay();
@@ -506,10 +496,8 @@ public abstract class GameBase implements Runnable {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         frameTime = System.nanoTime();
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("calcFPS");
+        
+        
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("Post render");
         Stats.fpsCounter++;
@@ -520,8 +508,7 @@ public abstract class GameBase implements Runnable {
             Stats.fpsCounter = 0;
             onStatsUpdated();
         }
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
+        
         if (this.showError != null) {
             //            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2], true);
             throw this.showError;

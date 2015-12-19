@@ -258,26 +258,16 @@ public class FinalRenderer extends AbstractRenderer {
 
 
     public void render(World world, float fTime, int pass) {
-        if (Game.DO_TIMING)
-            TimingHelper.startSec("Deferred");
         renderDeferred(world, fTime, pass);
         
     }
 
     public void renderReflAndBlur(World world, float fTime) {
         if (ssr > 0) {
-            if (Game.DO_TIMING)
-                TimingHelper.endStart("SSR");
             renderReflection(world, fTime);
         }
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("calcLum");
         calcLum(world, fTime);
-        if (Game.DO_TIMING)
-            TimingHelper.endStart("Blur");
         renderBlur(world, fTime);
-        if (Game.DO_TIMING)
-            TimingHelper.endSec();
     }
 
     /**

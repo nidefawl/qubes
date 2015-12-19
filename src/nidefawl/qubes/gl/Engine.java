@@ -415,10 +415,8 @@ public class Engine {
     }
     public static void updateShadowProjections(float fTime) {
 //        Engine.worldRenderer.debugBBs.clear();
-        if (Game.DO_TIMING) TimingHelper.startSec("calcShadow");
         shadowProj.calcSplits(modelview, lightDirection, shadowRenderer.getTextureSize() / 2.0f); //divide tex size by 2 as we use only a quarter per cascade
-        
-        if (Game.DO_TIMING) TimingHelper.endSec();
+
         
     }
 
