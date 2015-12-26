@@ -10,6 +10,7 @@ import org.lwjgl.opengl.*;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.IDMapping;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.config.ClientSettings;
@@ -580,7 +581,7 @@ public class Game extends GameBase implements IErrorHandler {
             this.selBlock.id += yoffset > 0 ? -1 : 1;
             if (!Block.isValid(this.selBlock.id)) {
                 int maxBlock = 0;
-                for (int b = 0; this.selBlock.id< 0&&b < Block.HIGHEST_BLOCK_ID+1; b++) {
+                for (int b = 0; this.selBlock.id< 0&&b < IDMapping.HIGHEST_BLOCK_ID+1; b++) {
                     if (Block.get(b) != null) {
                         maxBlock = b;
                     }

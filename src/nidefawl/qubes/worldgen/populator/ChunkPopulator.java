@@ -43,7 +43,7 @@ public class ChunkPopulator implements IChunkPopulator {
         int a = 0;
         Random r = new Random();
         ArrayList<Block> bl = Lists.newArrayList();
-        for (int i = 0; i < Block.HIGHEST_BLOCK_ID+1; i++) {
+        for (int i = 0; i < IDMapping.HIGHEST_BLOCK_ID+1; i++) {
             Block b1 = Block.get(i);
             if (b1 != null && b1.getBlockCategory() == BlockCategory.FLOWER) {
                 bl.add(b1);
