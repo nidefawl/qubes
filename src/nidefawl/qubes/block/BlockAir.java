@@ -21,10 +21,10 @@ import nidefawl.qubes.world.World;
 public class BlockAir extends Block {
 
     
-    public BlockAir(int id) {
+    public BlockAir(String id) {
         this(id, true);
     }
-    BlockAir(int id, boolean transparent) {
+    BlockAir(String id, boolean transparent) {
         super(id, transparent);
         this.textures = NO_TEXTURES;
     }

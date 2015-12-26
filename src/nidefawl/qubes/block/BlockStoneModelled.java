@@ -8,10 +8,10 @@ public class BlockStoneModelled extends BlockModelled {
 
 
     private final int overrideTextureIdx;
-    public BlockStoneModelled(int id, Block baseBlock) {
+    public BlockStoneModelled(String id, Block baseBlock) {
         this(id, baseBlock, -1);
     }
-    public BlockStoneModelled(int id, Block baseBlock, int overrideTextureIdx) {
+    public BlockStoneModelled(String id, Block baseBlock, int overrideTextureIdx) {
         super(id);
         this.textures = NO_TEXTURES;
         this.baseBlock = baseBlock;

@@ -5,7 +5,6 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
 
@@ -18,7 +17,7 @@ public class BlockGrassBush extends BlockPlantCrossedSquares {
     /**
      * @param id
      */
-    public BlockGrassBush(int id) {
+    public BlockGrassBush(String id) {
         super(id);
         setCategory(BlockCategory.PLANT);
     }

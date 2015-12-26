@@ -5,8 +5,6 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.blocklight.LightChunkCache;
-import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
 
 /**
@@ -19,12 +17,12 @@ public class BlockLeaves extends Block {
     /**
      * @param id
      */
-    public BlockLeaves(int id) {
+    public BlockLeaves(String id) {
         this(id, -1);
         setCategory(BlockCategory.LEAVES);
     }
 
-    public BlockLeaves(int id, int rgb) {
+    public BlockLeaves(String id, int rgb) {
         super(id, true);
         this.leavesColor = rgb;
     }

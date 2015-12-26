@@ -6,7 +6,6 @@ package nidefawl.qubes.block;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -21,10 +20,10 @@ public class BlockPlantCrossedSquares extends Block {
     /**
      * @param id
      */
-    public BlockPlantCrossedSquares(int id) {
+    public BlockPlantCrossedSquares(String id) {
         this(id, false);
     }
-    public BlockPlantCrossedSquares(int id, boolean multipass) {
+    public BlockPlantCrossedSquares(String id, boolean multipass) {
         super(id, true);
         this.multipass=multipass;
         setCategory(BlockCategory.FLOWER);

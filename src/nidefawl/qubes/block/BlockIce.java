@@ -7,7 +7,7 @@ import nidefawl.qubes.blocklight.LightChunkCache;
  * Copyright: Michael Hept
  */
 public class BlockIce extends Block {
-    public BlockIce(int id) {
+    public BlockIce(String id) {
         super(id, true);
     }
 

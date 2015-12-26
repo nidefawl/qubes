@@ -4,7 +4,7 @@ import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.World;
 
 public class BlockWater extends Block {
-    public BlockWater(int id) {
+    public BlockWater(String id) {
         super(id, true);
     }
 

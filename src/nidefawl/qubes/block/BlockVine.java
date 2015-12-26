@@ -23,7 +23,7 @@ public class BlockVine extends Block {
     /**
      * @param id
      */
-    public BlockVine(int id) {
+    public BlockVine(String id) {
         super(id, true);
         setCategory(BlockCategory.VINE);
     }

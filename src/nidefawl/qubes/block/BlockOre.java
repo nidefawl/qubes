@@ -4,16 +4,10 @@ import java.util.ArrayList;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
@@ -23,7 +17,7 @@ public class BlockOre extends Block {
 
     private Block baseBlock;
 
-    public BlockOre(int id, Block b) {
+    public BlockOre(String id, Block b) {
         super(id, true);
         this.textures = NO_TEXTURES;
         ArrayList<String> list = Lists.newArrayList();

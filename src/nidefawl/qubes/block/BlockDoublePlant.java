@@ -1,7 +1,6 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
@@ -17,7 +16,7 @@ public class BlockDoublePlant extends Block {
     /**
      * 
      */
-    public BlockDoublePlant(int id) {
+    public BlockDoublePlant(String id) {
         super(id, true);
         setCategory(BlockCategory.PLANT);
     }

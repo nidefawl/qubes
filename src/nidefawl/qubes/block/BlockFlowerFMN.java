@@ -5,7 +5,6 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
 
 /**
@@ -18,7 +17,7 @@ public class BlockFlowerFMN extends BlockPlantCrossedSquares {
      * @param id
      * @param multipass
      */
-    public BlockFlowerFMN(int id) {
+    public BlockFlowerFMN(String id) {
         super(id, true);
         setCategory(BlockCategory.FLOWER);
     }

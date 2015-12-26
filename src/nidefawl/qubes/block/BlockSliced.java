@@ -1,10 +1,10 @@
 package nidefawl.qubes.block;
 
 public class BlockSliced extends Block {
-    public BlockSliced(int id) {
+    public BlockSliced(String id) {
         this(id, true);
     }
-    public BlockSliced(int id, boolean b) {
+    public BlockSliced(String id, boolean b) {
         super(id, b);
     }
 

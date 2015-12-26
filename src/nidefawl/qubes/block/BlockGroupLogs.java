@@ -17,7 +17,7 @@ public class BlockGroupLogs extends BlockGroup {
             list.add("destroy/destroy_stage_"+i);
         }
         for (String s : logNames) {
-            BlockLog log = (BlockLog) new BlockLog(-1).setName(s+" log");
+            BlockLog log = (BlockLog) new BlockLog(s+"_log");
             ArrayList<String> list2 = Lists.newArrayList();
             list2.add("logs/"+s);
             list2.add("logs/"+s+"_top");

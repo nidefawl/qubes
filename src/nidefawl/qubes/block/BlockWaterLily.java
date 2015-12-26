@@ -12,7 +12,7 @@ public class BlockWaterLily extends BlockPlantCrossedSquares {
     /**
      * @param id
      */
-    public BlockWaterLily(int id) {
+    public BlockWaterLily(String id) {
         super(id, false);
         setCategory(BlockCategory.FLOWER);
     }

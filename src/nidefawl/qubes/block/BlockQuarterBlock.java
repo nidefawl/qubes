@@ -28,7 +28,7 @@ public class BlockQuarterBlock extends BlockSliced {
     public final static short[] readOnly = new short[8];
     public final static int Q_DATA_TYPEID = 1;
     public final static int Q_SIZE = 8;
-    public BlockQuarterBlock(int id) {
+    public BlockQuarterBlock(String id) {
         super(id, true);
         this.textures = NO_TEXTURES;
     }

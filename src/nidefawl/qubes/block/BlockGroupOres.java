@@ -9,7 +9,7 @@ public class BlockGroupOres  extends BlockGroup {
     public BlockGroupOres(BlockGroup b) {
         stoneNames.addAll(b.getNames());
         for (Block s : b.getBlocks()) {
-            addBlock(new BlockOre(-1, s).setName(s.getName()+" ore"));
+            addBlock(new BlockOre(s.getName()+"_ore", s));
         }
     }
 

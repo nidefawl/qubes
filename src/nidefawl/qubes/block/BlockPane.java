@@ -45,7 +45,7 @@ public class BlockPane extends Block {
         return connect == BlockConnect.PANE;
     }
     
-    public BlockPane(int id) {
+    public BlockPane(String id) {
         super(id, true);
     }
     @Override

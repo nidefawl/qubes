@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.IBlockWorld;
@@ -18,7 +17,7 @@ public class BlockSnowLayer extends Block {
 	/**
 	 * @param id
 	 */
-	public BlockSnowLayer(int id) {
+	public BlockSnowLayer(String id) {
 		super(id, true);
 	}
 	

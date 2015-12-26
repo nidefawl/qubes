@@ -9,7 +9,7 @@ package nidefawl.qubes.block;
  */
 public class BlockGlass extends Block {
     
-    public BlockGlass(int id) {
+    public BlockGlass(String id) {
         super(id, true);
     }
     

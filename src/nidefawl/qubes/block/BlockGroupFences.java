@@ -4,7 +4,6 @@
 package nidefawl.qubes.block;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -33,8 +32,7 @@ public class BlockGroupFences extends BlockGroup {
 //                    addBlock(slab);
 //                }
 //            } else {
-                BlockFence slab = new BlockFence(-1, block);
-                slab.setName(block.getName()+" fence");
+                BlockFence slab = new BlockFence(block.getName()+"_fence", block);
                 slab.setCategory(BlockCategory.UNASSIGNED);
                 addBlock(slab);
 //            }

@@ -3,9 +3,6 @@
  */
 package nidefawl.qubes.block;
 
-import java.util.List;
-
-import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -45,7 +42,7 @@ public class BlockFence extends Block {
         return connect == BlockConnect.FENCE;
     }
 
-    public BlockFence(int id, Block baseBlock) {
+    public BlockFence(String id, Block baseBlock) {
         super(id, true);
         this.textures = NO_TEXTURES;
         this.baseBlock = baseBlock;

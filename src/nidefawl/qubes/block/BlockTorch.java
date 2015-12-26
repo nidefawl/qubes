@@ -16,7 +16,7 @@ public class BlockTorch extends Block {
     /**
      * 
      */
-    public BlockTorch(int id) {
+    public BlockTorch(String id) {
         super(id, true);
     }
     @Override

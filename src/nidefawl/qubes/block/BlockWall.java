@@ -5,10 +5,8 @@ package nidefawl.qubes.block;
 
 import java.util.List;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -54,10 +52,10 @@ public class BlockWall extends Block {
     }
 
     private final int overrideTextureIdx;
-    public BlockWall(int id, Block baseBlock) {
+    public BlockWall(String id, Block baseBlock) {
         this(id, baseBlock, -1);
     }
-    public BlockWall(int id, Block baseBlock, int overrideTextureIdx) {
+    public BlockWall(String id, Block baseBlock, int overrideTextureIdx) {
         super(id, true);
         this.textures = NO_TEXTURES;
         this.baseBlock = baseBlock;

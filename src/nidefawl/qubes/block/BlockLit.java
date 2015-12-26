@@ -3,10 +3,10 @@ package nidefawl.qubes.block;
 public class BlockLit extends Block {
     private final int lightValue;
 
-    public BlockLit(int id) {
+    public BlockLit(String id) {
         this(id, 15);
     }
-    public BlockLit(int id, int lightValue) {
+    public BlockLit(String id, int lightValue) {
         super(id, false);
         this.lightValue = lightValue;
     }

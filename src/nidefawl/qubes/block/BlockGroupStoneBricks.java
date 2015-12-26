@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.block;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -17,8 +16,7 @@ public class BlockGroupStoneBricks extends BlockGroup {
     public BlockGroupStoneBricks(BlockGroup b) {
         stoneNames.addAll(b.getNames());
         for (String s : stoneNames) {
-            Block block = new Block(-1);
-            block.setName(s+" stonebrick");
+            Block block = new Block(s+"_stonebrick");
             block.setTextures(
                     "stones/stonebrick_"+s+"_smooth", 
                     "stones/stonebrick_"+s+"_rough", 

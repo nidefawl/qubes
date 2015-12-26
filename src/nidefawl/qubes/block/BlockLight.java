@@ -1,7 +1,7 @@
 package nidefawl.qubes.block;
 
 public class BlockLight extends Block {
-    public BlockLight(int id) {
+    public BlockLight(String id) {
         super(id, false);
     }
 

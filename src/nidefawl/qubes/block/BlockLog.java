@@ -3,19 +3,14 @@
  */
 package nidefawl.qubes.block;
 
-import java.util.Iterator;
-
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.biome.HexBiomesServer;
 import nidefawl.qubes.worldgen.trees.Tree;
 
 /**
@@ -27,7 +22,7 @@ public class BlockLog extends Block {
     /**
      * @param id
      */
-    public BlockLog(int id) {
+    public BlockLog(String id) {
         super(id, false);
         setCategory(BlockCategory.LOG);
     }

@@ -12,7 +12,7 @@ public class BlockGroupLeaves extends BlockGroup {
     final public Block oak;
     public BlockGroupLeaves() {
         for (String s : leaveNames) {
-            Block leaves = new BlockLeaves(-1).setName(s+" leaves");
+            Block leaves = new BlockLeaves(s+"_leaves");
             leaves.setTextures("leaves/"+s);
             addBlock(leaves);
         }

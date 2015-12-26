@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.vec.AABBFloat;
@@ -19,7 +18,7 @@ public class BlockPlantFlat extends Block {
     /**
      * @param id
      */
-    public BlockPlantFlat(int id) {
+    public BlockPlantFlat(String id) {
         super(id, true);
         this.blockBounds.set(0, 0, 0, 1, 2/16f, 1);
         setCategory(BlockCategory.PLANT);

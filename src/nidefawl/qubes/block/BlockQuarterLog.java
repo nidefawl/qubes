@@ -16,14 +16,14 @@ public class BlockQuarterLog extends Block {
      * @param id
      * @param transparent
      */
-    public BlockQuarterLog(int id, boolean transparent) {
+    public BlockQuarterLog(String id, boolean transparent) {
         super(id, transparent);
     }
 
     /**
      * @param id
      */
-    public BlockQuarterLog(int id) {
+    public BlockQuarterLog(String id) {
         super(id);
     }
 

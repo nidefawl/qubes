@@ -9,7 +9,7 @@ import nidefawl.qubes.world.IBlockWorld;
 public class BlockGrass extends Block {
 
 
-    BlockGrass(int id) {
+    BlockGrass(String id) {
         super(id);
         setCategory(BlockCategory.GROUND);
     }

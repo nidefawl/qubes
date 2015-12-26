@@ -13,7 +13,7 @@ public class BlockGroupWood extends BlockGroup {
 
     public BlockGroupWood() {
         for (String s : woodNames) {
-            Block wood = new Block(-1).setName(s+" log");
+            Block wood = new Block(s+"_wood");
             ArrayList<String> list2 = Lists.newArrayList();
             list2.add("wood/"+s+"_0");
             list2.add("wood/"+s+"_1");

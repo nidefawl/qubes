@@ -4,10 +4,7 @@
 package nidefawl.qubes.block;
 
 import java.util.Arrays;
-import java.util.List;
 
-import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.meshing.SlicedBlockFaceInfo;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.vec.*;
@@ -29,10 +26,10 @@ public class BlockStairs extends BlockSliced {
     static boolean isUpsideDown(int a) {
         return (a & 0x4) != 0;
     }
-    public BlockStairs(int id, Block baseBlock) {
+    public BlockStairs(String id, Block baseBlock) {
         this(id, baseBlock, -1);
     }
-    public BlockStairs(int id, Block baseBlock, int textureIdx) {
+    public BlockStairs(String id, Block baseBlock, int textureIdx) {
         super(id, baseBlock.isTransparent());
         setTextures(new String[0]);
         this.baseBlock = baseBlock;

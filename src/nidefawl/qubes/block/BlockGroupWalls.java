@@ -4,7 +4,6 @@
 package nidefawl.qubes.block;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -27,14 +26,12 @@ public class BlockGroupWalls extends BlockGroup {
         for (Block block : blocks) {
             if (block.textureMode == BlockTextureMode.SUBTYPED_TEX_PER_TYPE) {
                 for (int i = 0; i < block.textures.length; i++) {
-                    BlockWall slab = new BlockWall(-1, block, i);
-                    slab.setName(block.getName()+" slab");
+                    BlockWall slab = new BlockWall(block.getName()+"_wall", block, i);
                     slab.setCategory(BlockCategory.STONE);
                     addBlock(slab);
                 }
             } else {
-                BlockWall slab = new BlockWall(-1, block);
-                slab.setName(block.getName()+" slab");
+                BlockWall slab = new BlockWall(block.getName()+"_wall", block);
                 slab.setCategory(BlockCategory.STONE);
                 addBlock(slab);
             }

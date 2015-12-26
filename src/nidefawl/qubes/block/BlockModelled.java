@@ -5,11 +5,11 @@ import nidefawl.qubes.world.IBlockWorld;
 
 public class BlockModelled extends Block {
 
-    public BlockModelled(int id, boolean transparent) {
+    public BlockModelled(String id, boolean transparent) {
         this(id);
     }
 
-    public BlockModelled(int id) {
+    public BlockModelled(String id) {
         super(id, true);
     }
 
