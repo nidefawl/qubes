@@ -29,8 +29,10 @@ layout(std140) uniform uboSceneData
     vec4 cameraPosition;
     vec4 framePos;
     vec4 viewport;
+    vec4 pxoffset;
 } in_scene;
 
 #define FRAME_TIME in_scene.framePos.w
 #define CAMERA_POS in_scene.cameraPosition.xyz
 #define RENDER_OFFSET in_scene.framePos.xyz
+#define PX_OFFSET in_scene.pxoffset

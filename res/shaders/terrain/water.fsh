@@ -137,6 +137,6 @@ void main() {
     out_Color = vec4(color_adj.rgb, color.a*tex.a);
     out_Normal = vec4((normal_out) * 0.5f + 0.5f, 1);
     out_Material = blockinfo;
-    out_Light = vec4(lightLevelSky*0.5, lightLevelBlock, 1, 1);
+    out_Light = vec4(lightLevelSky*0.2, lightLevelBlock, 1, 1);
     // gl_FragData[0] = vec4(0,1,1,1);
 }

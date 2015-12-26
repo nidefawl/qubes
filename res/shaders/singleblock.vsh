@@ -6,8 +6,8 @@
 #pragma include "vertex_layout.glsl"
 #pragma include "blockinfo.glsl"
 
-uniform vec3 in_offset;
 uniform mat4 in_modelMatrix;
+uniform mat4 in_projectionMatrix;
 uniform float in_scale;
 
 out vec4 color;
@@ -72,6 +72,6 @@ void main() {
 
 
 	vec4 position = in_matrix_2D.mv3DOrtho * in_modelMatrix * pos;
-	vec4 outpos = in_matrix_2D.p3DOrtho * position;
+	vec4 outpos = in_projectionMatrix * position;
 	gl_Position = outpos;
 }

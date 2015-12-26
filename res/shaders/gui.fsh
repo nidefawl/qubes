@@ -1,5 +1,6 @@
 #version 150 core
 
+#pragma include "ubo_scene.glsl"
 
 
 // A standard gaussian function, used for weighting samples
@@ -70,6 +71,8 @@ void main(void) {
  //    out_Color = mix(shadow, rect, inside);
 
 	out_Color = color;
-	out_Color.rgb *= 0.7+texcoord.y*0.3;
-    out_Color.a *= roundedBoxShadow(box.xy, box.zw, vertex, sigma, corner);
+	out_Color.rgb *= 0.7+texcoord.y*0.3; 
+    out_Color.a *= roundedBoxShadow(box.xy+PX_OFFSET.xy, box.zw+PX_OFFSET.xy, vertex, sigma, corner);
+    if (out_Color.a<0.01)
+      discard;
 }

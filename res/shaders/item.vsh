@@ -5,7 +5,6 @@
 #pragma include "ubo_constants.glsl"
 #pragma include "vertex_layout.glsl"
 
-uniform vec3 in_offset;
 uniform mat4 in_modelMatrix;
 uniform float in_scale;
 
@@ -18,7 +17,7 @@ void main() {
 	color = in_color;
 	idx = in_blockinfo.x;
 
-	vec4 pos = in_position;
+	vec4 pos = vec4(in_position.xyz + PX_OFFSET.xyz, 1);
 	texcoord = in_texcoord;
 
 

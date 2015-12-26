@@ -108,7 +108,8 @@ void main(void) {
 	// if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
 	// 	colorizeLeaves(color_adj, position.xyz);
 	// }
-	if (faceDir != 0u) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
+	float indexNormalMap = BLOCK_NORMAL_SLOT(blockinfo);
+	if (indexNormalMap > 0 && faceDir > 0u) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
  		// vec2 newCoords = texcoord.st;//
 		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
 		// float height = texture(normalTextures, texcoord.st).a;
@@ -121,7 +122,7 @@ void main(void) {
 		//  color_adj = tex.rgb;
 		// color_adj *= color.rgb;
 		// srgbToLin(color_adj.rgb);
-		vec3 normalMapTex=texture(normalTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo))).xzy * 2.0 - 1.0; // swizzling is important here
+		vec3 normalMapTex=texture(normalTextures, vec3(texcoord.st, indexNormalMap)).xzy * 2.0 - 1.0; // swizzling is important here
 		// normalMapTex *= 1/1.1;
 
 		// vec3 normalMapTex = texture(normalTest, newCoords).xzy * 2.0 - 1.0; // swizzling is important here

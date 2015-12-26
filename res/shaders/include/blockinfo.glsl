@@ -1,7 +1,8 @@
 
 #define BLOCK_ID(blockinfo) (blockinfo.y&0xFFFu)
 #define BLOCK_RENDERPASS(blockinfo) float((blockinfo.y&0xF000u)>>12u)
-#define BLOCK_TEX_SLOT(blockinfo) float(blockinfo.x)
+#define BLOCK_TEX_SLOT(blockinfo) float(blockinfo.x&0xFFFu)
+#define BLOCK_NORMAL_SLOT(blockinfo) float((blockinfo.x&0xF000u)>>12u)
 #define BLOCK_FACEDIR(blockinfo) (blockinfo.w&0x7u)
 #define BLOCK_VERTDIR(blockinfo) ((blockinfo.w >> 3u) & 0x3Fu)
 #define BLOCK_AO_IDX_0(blockinfo) (in_blockinfo.z)&AO_MASK

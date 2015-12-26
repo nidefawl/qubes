@@ -9,11 +9,10 @@ out vec3 vposition;
 out vec3 normal;
 out float ftime;
 out highp vec3 triangle;
-uniform vec3 in_offset;
 uniform int num_vertex;
 
 void main() {
-	vec4 vPos = vec4(in_position.xyz - RENDER_OFFSET + in_offset, in_position.w);
+	vec4 vPos = vec4(in_position.xyz - RENDER_OFFSET + PX_OFFSET.xyz, in_position.w);
     gl_Position = in_matrix_3D.mvp * vPos;
 	vposition = (in_matrix_3D.mv * vPos).xyz;
 	ftime = FRAME_TIME*0.05;

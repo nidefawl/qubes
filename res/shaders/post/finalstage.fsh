@@ -1,25 +1,31 @@
 #version 150 core
 
-#pragma define "DO_BLOOM"
+#pragma define "DO_AUTOEXPOSURE"
 #pragma include "ubo_scene.glsl"
 #pragma include "tonemap.glsl"
 
 uniform sampler2D texColor;
+#ifdef DO_AUTOEXPOSURE
 uniform sampler2D texLum;
+const float constexposure = 100;
+#else
+const float constexposure = 660;
+#endif
 
-uniform float exposure;
 
 in vec2 pass_texcoord;
 
 out vec4 out_Color;
-
 void main(void) {
 	vec4 tex = texture(texColor, pass_texcoord.st, 0);
+#ifdef DO_AUTOEXPOSURE
 	float brightness = texelFetch(texLum, ivec2(0,0), 0).r;
-	float exposure = 100;
-	float autoExposure = ((brightness-0.7f)) * -exposure;
-	autoExposure = exposure*0.3f + autoExposure ;
+	float autoExposure = ((brightness-0.7f)) * -constexposure;
+	autoExposure = constexposure*0.3f + autoExposure;
 	autoExposure = clamp(autoExposure, 10, 160);
 	vec3 toneMapped = ToneMap(tex.rgb, autoExposure);
+#else 
+	vec3 toneMapped = ToneMap(tex.rgb, constexposure);
+#endif
 	out_Color = vec4(toneMapped, 1);
 }
