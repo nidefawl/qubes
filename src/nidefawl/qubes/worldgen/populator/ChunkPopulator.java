@@ -15,6 +15,9 @@ import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.biome.HexBiome;
+import nidefawl.qubes.worldgen.biome.HexBiomesServer;
+import nidefawl.qubes.worldgen.trees.Tree;
 
 /**
  * @author Michael Hept 2015
@@ -86,54 +89,15 @@ public class ChunkPopulator implements IChunkPopulator {
                 if ( a <= 4 && rand.nextInt(24) == 0) {
                     if (list != null && !list.isEmpty()) {
                         int treeType = list.get(rand.nextInt(list.size()));
-                        TreeGeneratorLSystem g = TreeGenerators.get(treeType);
+                        TreeGeneratorLSystem g = TreeGenerators.get(treeType, rand);
+                        if (treeType == 2) {
+                            g.setVines(Block.vines);
+                        }
                         g.generate(world, x, h+1, z, rand);
-                        if (treeType == 2)
-                        for (Entry<Long, Integer> e : g.blocks.entrySet()) {
-                            if (e.getValue() == Block.leaves.id) {
-                                long l = e.getKey();
-                                int x1 = TripletLongHash.getX(l);
-                                int y1 = TripletLongHash.getY(l)-1-rand.nextInt(5);
-                                int z1 = TripletLongHash.getZ(l);
-                                int typec = world.getType(x1, y1, z1);
-                                if (typec != Block.leaves.id)
-                                    continue;
-                                for (int k = 1; k <4; k++) { 
-                                    int offx = k==0?-1:k==2?1:0;
-                                    int offz = k==1?-1:k==3?1:0;
-                                    int bX = x1+offx;
-                                    int bY = y1;
-                                    int bZ = z1+offz;
-                                    int typeb = world.getType(bX, bY, bZ);
-                                    if (typeb == 0) {
-                                        boolean fail = false;
-                                        for (int y3 = 1; y3 < 7; y3++) {
-                                            if (world.getType(bX, bY-y3, bZ) != 0) {
-                                                fail = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!fail) {
-                                            int rotData = 1;
-                                            switch (k) {
-                                                case 0:
-                                                    rotData = 8; break;
-                                                case 1:
-                                                    rotData = 1; break;
-                                                case 2:
-                                                    rotData = 2; break;
-                                                case 3:
-                                                    rotData = 4; break;
-                                            }
-                                            int y4 = 3+rand.nextInt(4);
-                                            for (int y3 = 0; y3 < y4; y3++) {
-                                                world.setTypeData(bX, bY-y3, bZ, Block.vines.id, rotData, Flags.MARK);
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
+                        Tree tree = g.getTree();
+                        if (tree != null) {
+                            HexBiome hex = ((HexBiomesServer)world.biomeManager).blockToHex(x, z);
+                            hex.registerTree(tree);
                         }
                     }
                 } else {

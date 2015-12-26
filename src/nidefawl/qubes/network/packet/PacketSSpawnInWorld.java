@@ -49,10 +49,7 @@ public class PacketSSpawnInWorld extends Packet {
         this.worldSettings.write(stream);
     }
 
-    @Override
-    public int getID() {
-        return 5;
-    }
+
 
     @Override
     public void handle(Handler h) {

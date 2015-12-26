@@ -141,14 +141,14 @@ public class ItemTextureArray {
                 }
                 if (firstInit) {
                     progress = ++nBlock/(float)totalBlocks;
-                    Game.instance.loadRender(3, progress, b.getName());
+//                    Game.instance.loadRender(3, progress, b.getName());
                     GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
                     Engine.checkGLError("Game.instance.loadRender");
                 }
             }
         }
         if (firstInit) {
-            Game.instance.loadRender(3, 1);
+//            Game.instance.loadRender(3, 1);
             Engine.checkGLError("Game.instance.loadRender");
         }
         System.out.println("maxTileW = "+maxTileW);
@@ -226,11 +226,11 @@ public class ItemTextureArray {
             }
             if (firstInit) {
                 progress = ++nBlock/(float)totalBlocks;
-                Game.instance.loadRender(4, progress);
+//                Game.instance.loadRender(4, progress);
                 GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
             }
         }
-        Game.instance.loadRender(4, 1);
+//        Game.instance.loadRender(4, 1);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glid_color);
         lastLoaded = text;
         boolean useDefault = true;

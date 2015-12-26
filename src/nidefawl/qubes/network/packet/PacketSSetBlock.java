@@ -45,10 +45,7 @@ public class PacketSSetBlock extends AbstractPacketWorldRef {
         stream.writeByte(light);
     }
 
-    @Override
-    public int getID() {
-        return 10;
-    }
+
 
     @Override
     public void handle(Handler h) {

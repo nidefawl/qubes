@@ -241,6 +241,13 @@ public abstract class Tag {
         @Override
         protected void writeData(DataOutput out) throws IOException {
             int len = data.size();
+            if (tagType == null) {
+                if (len != 0) {
+                    throw new IOException("Tag type not set and list is not empty");
+                }
+                out.writeInt(len);
+                return;
+            }
             out.writeInt(len);
             out.writeByte(tagType.getID());
             for (int a = 0; a < len; a++) {
@@ -257,11 +264,17 @@ public abstract class Tag {
         public Object getValue() {
             return this.data;
         }
+        public int getSize() {
+            return this.data.size();
+        }
 
         @Override
         protected void readData(DataInput in, TagReadLimiter limit) throws IOException {
             int len = in.readInt();
             limit.add(4);
+            if (len == 0) {
+                return;
+            }
             if (len > MAX_LIST_LEN) {
                 throw new IOException("Maximum list length exceeded (" + len + " >= " + MAX_LIST_LEN + ")");
             }

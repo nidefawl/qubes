@@ -40,10 +40,7 @@ public class PacketSLightChunk extends AbstractPacketWorldRef {
         stream.write(this.data);
     }
 
-    @Override
-    public int getID() {
-        return 12;
-    }
+
 
     @Override
     public void handle(Handler h) {

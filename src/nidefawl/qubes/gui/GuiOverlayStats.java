@@ -8,14 +8,11 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.input.GameMode;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.region.MeshedRegion;
-import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
@@ -23,7 +20,6 @@ import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
 public class GuiOverlayStats extends Gui {
@@ -78,35 +74,31 @@ public class GuiOverlayStats extends Gui {
             this.stats5 = "";
             BlockPos p = Game.instance.selection.pos[0];
             BlockPos p2 = Game.instance.selection.pos[1];
-            RayTraceIntersection intersect = null;
-            if (Game.instance.selection.getMode() == GameMode.PLAY) {
-                p = null;
-                p2 = null;
-                intersect = Game.instance.selection.getHit();
-                if (intersect != null) {
-                    p = intersect.blockPos;
-                }
-            }
             if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
-            }
-            else if (p != null) {
-                int lvl = world.getLight(p.x, p.y, p.z);
-                int lvlNX = intersect != null ? Dir.getDirX(intersect.face) : 0;
-                int lvlNY = intersect != null ? Dir.getDirY(intersect.face) : 1;
-                int lvlNZ = intersect != null ? Dir.getDirZ(intersect.face) : 0;
-                int lvl1 = world.getLight(p.x+lvlNX, p.y+lvlNY, p.z+lvlNZ);
-                int bType = world.getType(p.x, p.y, p.z);
-                int bMETA = world.getData(p.x, p.y, p.z);
-                BlockData bData = world.getBlockData(p.x, p.y, p.z);
-                int block1 = lvl&0xF;
-                int sky1 = (lvl>>4)&0xF;
-                int block2 = lvl1&0xF;
-                int sky2 = (lvl1>>4)&0xF;
-                int h = world.getHeight(p.x, p.z);
-                this.stats5 = String.format("Light: %d/%d ("+(intersect!=null?"Face":"+1")+": %d/%d)\n %d/%d/%d = %d:%d" + 
-                        (bData == null ?" -" :(" "+bData.toString())),  
-                        sky1, block1, sky2, block2, p.x, p.y, p.z, bType, bMETA);
+            } else {
+
+                RayTraceIntersection intersect = Game.instance.selection.getHit();
+                if (intersect != null) {
+                    p = intersect.blockPos;
+                    int lvl = world.getLight(p.x, p.y, p.z);
+                    int lvlNX = Dir.getDirX(intersect.face);
+                    int lvlNY = Dir.getDirY(intersect.face);
+                    int lvlNZ = Dir.getDirZ(intersect.face);
+                    int lvl1 = world.getLight(p.x+lvlNX, p.y+lvlNY, p.z+lvlNZ);
+                    int bType = world.getType(p.x, p.y, p.z);
+                    int bMETA = world.getData(p.x, p.y, p.z);
+                    BlockData bData = world.getBlockData(p.x, p.y, p.z);
+                    int block1 = lvl&0xF;
+                    int sky1 = (lvl>>4)&0xF;
+                    int block2 = lvl1&0xF;
+                    int sky2 = (lvl1>>4)&0xF;
+                    String s = Block.get(bType).getName();
+                    this.stats5 = String.format("Light: %d/%d ("+(intersect!=null?"Face":"+1")+": %d/%d)\n %d/%d/%d = %s (%d:%d" + 
+                            (bData == null ?" -" :(" "+bData.toString()))+")",  
+                            sky1, block1, sky2, block2, p.x, p.y, p.z, s, bType, bMETA);
+                }
+            
             }
         }
 
@@ -168,36 +160,27 @@ public class GuiOverlayStats extends Gui {
                 font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
         }
-        float rn = round;
-        round = 5;
-        int w = 192;
+        int w = 64;
         int x = 5;
         y+=5;
         Shaders.gui.enable();
-        float ff = shadowSigma;
+        float wBg = w+16;
         shadowSigma = 2;
-        int ex = extendx;
-        int ey = extendy;
         extendx = 1;
         extendy = 1;
-        float wBg = w+16;
+        round = 5;
         renderRoundedBoxShadowInverse(x, y, -4, wBg, wBg, -1, 0.8f, true);
-        this.round = 3;
         float inset2 = 2;
+        this.round = 3;
         renderRoundedBoxShadowInverse(x+inset2, y+inset2, 32, wBg-inset2*2, wBg-inset2*2, -1, 0.6f, false);
-        shadowSigma = ff;
-        extendx = ex;
-        extendy = ey;
+        resetShape();
         x+=8;
         y+=3;
-        round = rn;
         Shaders.colored.enable();
         Tess.instance.drawQuads();
         
         if (Game.instance.selBlock.getBlock()!=Block.air) {
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
             Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
         }
         Block b = Game.instance.selBlock.getBlock();
         Shaders.textured.enable();
@@ -212,6 +195,7 @@ public class GuiOverlayStats extends Gui {
         this.messageTime = System.currentTimeMillis();
         this.message = message;
     }
+    
     @Override
     public void initGui(boolean first) {
     }

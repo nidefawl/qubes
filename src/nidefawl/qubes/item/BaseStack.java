@@ -4,7 +4,6 @@
 package nidefawl.qubes.item;
 
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.network.StreamIO;
 import nidefawl.qubes.util.GameError;
 
@@ -20,6 +19,8 @@ public abstract class BaseStack implements StreamIO {
     }
     public abstract BaseStack copy();
     public abstract Tag save();
+    public abstract boolean isFullyEqual(BaseStack s);
+    public abstract boolean isEqualId(BaseStack s);
     /**
      * 
      */
@@ -35,5 +36,12 @@ public abstract class BaseStack implements StreamIO {
                 return new ItemStack(cmp);
         }
         throw new GameError("Invalid stack type");
+    }
+    public static boolean equalStacks(BaseStack a, BaseStack b) {
+        if (a == null)
+            return b == null;
+        if (b == null)
+            return a == null;
+        return a.equals(b);
     }
 }

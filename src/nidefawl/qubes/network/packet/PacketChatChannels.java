@@ -58,10 +58,7 @@ public class PacketChatChannels extends Packet {
     /* (non-Javadoc)
      * @see nidefawl.qubes.network.packet.Packet#getID()
      */
-    @Override
-    public int getID() {
-        return 17;
-    }
+
 
     /* (non-Javadoc)
      * @see nidefawl.qubes.network.packet.Packet#handle(nidefawl.qubes.network.Handler)

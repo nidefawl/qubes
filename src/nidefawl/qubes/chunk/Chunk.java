@@ -1,6 +1,7 @@
 package nidefawl.qubes.chunk;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.Block;
@@ -439,6 +440,9 @@ public class Chunk {
      */
     public byte[] getWaterMask() {
         return this.waterMask;
+    }
+
+    public void getDestroyStage(int x2, int y, int z2) {
     }
 
 }

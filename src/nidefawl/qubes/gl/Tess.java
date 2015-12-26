@@ -6,7 +6,7 @@ import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.block.Block;
 
-public class Tess extends TesselatorState {
+public class Tess extends AbstractTesselatorState {
     final public static String[] attributes = new String[] {
             "in_position",
             "in_normal",
@@ -18,7 +18,6 @@ public class Tess extends TesselatorState {
     
     public final static Tess instance    = new Tess();
     public final static Tess tessFont    = new Tess();
-    public static boolean useClientStates;
 
     public final static int BUF_INCR  = 1024*1024;
 
@@ -33,14 +32,25 @@ public class Tess extends TesselatorState {
     protected float         offsetZ;
     
     private final boolean isSoftTesselator;
-    ByteBuffer                   buffer       = null;
-    private IntBuffer            intBuffer;
+//    ByteBuffer                   buffer       = null;
+//    private IntBuffer            intBuffer;
+    ReallocIntBuffer bufInt;
+
+    private int vboIdx;
+
+    private GLVBO[] vbo = new GLVBO[1<<12];
 
     public Tess() {
         this(false);
     }
     public Tess(boolean isSoftTesselator) {
         this.isSoftTesselator = isSoftTesselator;
+        if (!this.isSoftTesselator) {
+            bufInt = new ReallocIntBuffer();
+            for (int i = 0; i < this.vbo.length; i++) {
+                this.vbo[i] = new GLVBO();
+            }
+        }
     }
     
     public boolean isSoftTesselator() {
@@ -120,15 +130,8 @@ public class Tess extends TesselatorState {
         int[] newBuffer = new int[oldBuffer.length + BUF_INCR];
         System.arraycopy(oldBuffer, 0, newBuffer, 0, oldBuffer.length);
         this.rawBuffer = newBuffer;
-        if (!isSoftTesselator()) {
-            resizeDirect();   
-        }
     }
 
-    private void resizeDirect() {
-        buffer = ByteBuffer.allocateDirect(rawBuffer.length*4).order(ByteOrder.nativeOrder());
-        intBuffer = buffer.asIntBuffer();
-    }
 
     public void setColorRGBAF(float r, float g, float b, float a) {
         if (!useColorPtr && vertexcount > 0) {
@@ -178,45 +181,26 @@ public class Tess extends TesselatorState {
         setColor(rgb&0xFFFFFF, (int) Math.max(0, Math.min(255, alpha * 255F)));
     }
     
-    public void draw(int mode, TesselatorState out) {
+    public void draw(int mode, AbstractTesselatorState out) {
         if (isSoftTesselator()) {
             throw new IllegalStateException("Cannot draw soft tesselator");
         }
         if (vertexcount >1) {
-            if (buffer == null || intBuffer.capacity() < rawBuffer.length) {
-                resizeDirect();
-            }
             int vIdx = getIdx(vertexcount);
             int len = vIdx * 4;
-            intBuffer.clear();
-            intBuffer.put(rawBuffer, 0, vIdx);
-            buffer.position(0);
-            buffer.limit(len);
-            if (useClientStates) {
-            } else {
-                out.bindVBO();
-                if (out.vboSize <= len) {
-                    GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-                } else {
-                    GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, len, buffer);
-                }
-                out.vboSize = len;
-            }
+            bufInt.reallocBuffer(vIdx);
+            bufInt.put(rawBuffer, 0, vIdx);
+            GLVBO vbo = out.getVBO();
+            vbo.bind();
+            vbo.upload(bufInt.getByteBuf(), len);
             if (out == this) {
-                if (useClientStates) {
-                    setClientStates(buffer);
-                } else {
-                    setAttrPtr();
-                }
+                setAttrPtr();
                 drawVBO(mode);
-                if (useClientStates) {
-                    GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-                    GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
-                    GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                    GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
-                } else {
-                    for (int i = 0; i < 3; i++)
-                        GL20.glDisableVertexAttribArray(i);
+                for (int i = 0; i < 4; i++)
+                    GL20.glDisableVertexAttribArray(i);
+                this.vboIdx++;
+                if (this.vboIdx >= this.vbo.length) {
+                    this.vboIdx = 0;
                 }
             } else {
                 this.copyTo(out);
@@ -225,6 +209,10 @@ public class Tess extends TesselatorState {
         }
         resetState();
     }
+    @Override
+    public GLVBO getVBO() {
+        return this.vbo[this.vboIdx];
+    }
     
     public void draw(int mode) {
         this.draw(mode, this);
@@ -232,7 +220,7 @@ public class Tess extends TesselatorState {
     
     
     public void drawQuads() {
-        this.draw(GL11.GL_QUADS, this);
+        this.draw(GL11.GL_QUADS);
     }
     
 
@@ -248,8 +236,10 @@ public class Tess extends TesselatorState {
     }
 
     public void destroy() {
-        buffer = null;
-        GL15.glDeleteBuffers(this.vboId);
+        this.bufInt.release();
+        for (int i = 0; i < vbo .length; i++) {
+            this.vbo[i].release();
+        }
     }
 
     public void setOffset(float f, float j, float g) {

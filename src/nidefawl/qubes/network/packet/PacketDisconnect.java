@@ -28,11 +28,6 @@ public class PacketDisconnect extends Packet {
 	}
 
 	@Override
-	public int getID() {
-		return 3;
-	}
-
-	@Override
 	public void handle(Handler h) {
 	    h.handleDisconnect(this);
 	}

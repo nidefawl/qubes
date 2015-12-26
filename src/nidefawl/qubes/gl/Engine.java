@@ -16,13 +16,14 @@ import org.lwjgl.opengl.GL30;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.item.ItemRenderer;
-import nidefawl.qubes.meshing.SingleBlockRenderer;
 import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.ShadowRenderer;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.gui.SingleBlockDraw;
+import nidefawl.qubes.render.gui.SingleBlockRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
@@ -58,6 +59,9 @@ public class Engine {
     private static BufferedMatrix tempMatrix;
     private static BufferedMatrix tempMatrix2;
     private static BufferedMatrix identity;
+    public static Vector3f       pxOffset = new Vector3f();
+    public final static Vec3Stack pxStack = new Vec3Stack();
+    
 
     public static FrameBuffer fbScene;
     public static FrameBuffer fbDbg;
@@ -168,6 +172,13 @@ public class Engine {
         }
         blockDraw.init();
         itemRender.init();
+        pxStack.setCallBack(new StackChangeCallBack() {
+            @Override
+            public void onChange(Vector3f vec) {
+                pxOffset.set(vec);
+                UniformBuffer.updatePxOffset();
+            }
+        });
     }
     
     public static void resize(int displayWidth, int displayHeight) {
@@ -246,14 +257,9 @@ public class Engine {
         orthoMVP.update();
         
         ortho3DMV.setIdentity();
-        float size = 32;
-//        Project.lookAt(10, 5, 10, 0, 0, 0, 0, 1, 0, ortho3DMV);
-//        ortho3DMV.translate(0, 0, 0);
         ortho3DMV.update();
+        
         ortho3DP.setZero();
-//        Project.orthoMat(-0, displayWidth, 0, displayHeight, -100, 100, orthoP);
-        float h = displayHeight/displayWidth;
-        h*=size;
         Project.orthoMat(0, displayWidth, 0, displayHeight, -400, 400, ortho3DP);
         ortho3DP.update();
     }
@@ -537,6 +543,10 @@ public class Engine {
         Matrix4f.mul(orthoP, orthoMV, orthoMVP);
         orthoMVP.update();
         UniformBuffer.updateOrtho();
+    }
+
+    public static Vector3f getPxOffset() {
+        return pxOffset;
     }
 
 

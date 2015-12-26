@@ -1,6 +1,12 @@
 package nidefawl.qubes.vec;
 
-public class AABB {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+import nidefawl.qubes.network.StreamIO;
+
+public class AABB implements StreamIO {
     public double minX;
     public double minY;
     public double minZ;
@@ -17,6 +23,10 @@ public class AABB {
     }
 
     public AABB() {
+    }
+
+    public AABB(AABBInt bb) {
+        this(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
     }
 
     public double getWidth() {
@@ -175,6 +185,26 @@ public class AABB {
     @Override
     public String toString() {
         return "AABB["+String.format("%.2f %.2f %.2f - %.2f %.2f %.2f", minX, minY, minZ, maxX, maxY, maxZ)+"]";
+    }
+
+    @Override
+    public void read(DataInput in) throws IOException {
+        this.minX = in.readDouble();
+        this.minY = in.readDouble();
+        this.minZ = in.readDouble();
+        this.maxX = in.readDouble();
+        this.maxY = in.readDouble();
+        this.maxZ = in.readDouble();
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeDouble(this.minX);
+        out.writeDouble(this.minY);
+        out.writeDouble(this.minZ);
+        out.writeDouble(this.maxX);
+        out.writeDouble(this.maxY);
+        out.writeDouble(this.maxZ);
     }
 
 }

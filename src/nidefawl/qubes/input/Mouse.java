@@ -69,6 +69,7 @@ public class Mouse {
             setLastPos();
         }
 		isGrabbed = b;
+        System.out.println(b);
         GLFW.glfwSetInputMode(GameBase.windowId, GLFW.GLFW_CURSOR, b ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
 	}
 
@@ -90,13 +91,8 @@ public class Mouse {
 	        mx = my = 0;
 		x = mx;
 		y = my;
-        if (isGrabbed) {
-    		dx += x-lastX;
-    		dy += y-lastY;
-        } else {
-        	dx = 0;
-        	dy = 0;
-        }
+        dx += x-lastX;
+        dy += y-lastY;
         lastX = mx;
         lastY = my;
 	}

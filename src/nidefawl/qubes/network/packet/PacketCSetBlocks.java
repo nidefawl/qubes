@@ -74,10 +74,7 @@ public class PacketCSetBlocks extends AbstractPacketWorldRef {
         this.stack.write(stream);
     }
 
-    @Override
-    public int getID() {
-        return 9;
-    }
+
 
     @Override
     public void handle(Handler h) {

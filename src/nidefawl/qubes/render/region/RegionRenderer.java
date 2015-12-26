@@ -79,7 +79,7 @@ public class RegionRenderer extends AbstractRenderer {
     final static int MAX_OCCL_QUERIES = 8;
     final static int MIN_DIST_OCCL = 1;
     final static int MIN_STATE_OCCL = Frustum.FRUSTUM_INSIDE_FULLY;
-    final static boolean ENABLE_OCCL = false;//!GPUProfiler.PROFILING_ENABLED;
+    final static boolean ENABLE_OCCL = !GPUProfiler.PROFILING_ENABLED;
     private int[] occlQueries = new int[MAX_OCCL_QUERIES];
     private MeshedRegion[] occlQueriesRunning = new MeshedRegion[MAX_OCCL_QUERIES];
     int queriesRunning = 0;
@@ -729,15 +729,15 @@ public class RegionRenderer extends AbstractRenderer {
         }
         Tess.instance.draw(GL_LINES, debug);
         glEnable(GL_BLEND);
-        debug.bindVBO();
+        debug.getVBO().bind();
         debug.setAttrPtr();
         for (int i = 0; i < this.regions.length; i++) {
             MeshedRegion[] r = this.regions[i];
             int xOff = r[0].rX << (RegionRenderer.REGION_SIZE_BITS + 4);
             int zOff = r[0].rZ << (RegionRenderer.REGION_SIZE_BITS + 4);
-            Shaders.colored.setProgramUniform3f("in_offset", xOff, 0, zOff);
+            Engine.pxStack.push(xOff, 0, zOff);
             debug.drawVBO(GL_LINES);
-            Shaders.colored.setProgramUniform3f("in_offset", 0, 0, 0);
+            Engine.pxStack.pop();
         }
     }
 }

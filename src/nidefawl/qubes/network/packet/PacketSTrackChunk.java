@@ -37,11 +37,6 @@ public class PacketSTrackChunk extends AbstractPacketWorldRef {
 	}
 
 	@Override
-	public int getID() {
-		return 13;
-	}
-
-	@Override
 	public void handle(Handler h) {
 	    if (h.isValidWorld(this))
 	        h.handleTrackChunk(this);

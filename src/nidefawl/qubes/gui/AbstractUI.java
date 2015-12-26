@@ -69,6 +69,13 @@ public abstract class AbstractUI implements Renderable {
     public float round = 15;
     public int extendx = 3;
     public int extendy = 0;
+    public void resetShape() {
+        boxSigma = 0.25f;
+        shadowSigma = 4;
+        round = 15;
+        extendx = 3;
+        extendy = 0;
+    }
     
     public void renderRoundedBoxShadow(float x, float y, float z, float w, float h, int rgba, float alpha, boolean drawShadow) {
         float r = TextureUtil.getR(rgba);
@@ -88,6 +95,8 @@ public abstract class AbstractUI implements Renderable {
             GL11.glDepthMask(false);
             Engine.drawQuad();
             GL11.glDepthMask(true);
+        } else {
+            Shaders.gui.setProgramUniform1f("corner", round);
         }
         Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
         Shaders.gui.setProgramUniform1f("zpos", z);
@@ -99,8 +108,9 @@ public abstract class AbstractUI implements Renderable {
         float r = TextureUtil.getR(rgba);
         float g = TextureUtil.getG(rgba);
         float b = TextureUtil.getB(rgba);
+//        System.out.println(z);
         Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
-        Shaders.gui.setProgramUniform1f("zpos", z);
+        Shaders.gui.setProgramUniform1f("zpos", 0);
         Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);
         Shaders.gui.setProgramUniform1f("sigma", 0.6f);
         Shaders.gui.setProgramUniform1f("corner", round+2);
@@ -110,16 +120,16 @@ public abstract class AbstractUI implements Renderable {
             w-=extendx*2;
             y+=extendy;
             h-=extendy*2;
-            Shaders.gui.setProgramUniform1f("zpos", z+2);
-            Shaders.gui.setProgramUniform4f("box", x, y+1, x+w, y+h);
+            Shaders.gui.setProgramUniform1f("zpos", z+1);
+            Shaders.gui.setProgramUniform4f("box", x, y+0, x+w, y+h);
 //            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
-            float br = 0.12f;
+            float br = 0.08f;
             Shaders.gui.setProgramUniform4f("color", br,br,br, alpha);
             Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
             Shaders.gui.setProgramUniform1f("corner", round);
-            GL11.glDepthMask(false);
+//            GL11.glDepthMask(false);
             Engine.drawQuad();
-            GL11.glDepthMask(true);
+//            GL11.glDepthMask(true);
         }
     }
     public void renderOutlinedBox() {

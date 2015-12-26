@@ -54,10 +54,7 @@ public class PacketSWorldBiomes extends AbstractPacketWorldRef {
         }
     }
 
-    @Override
-    public int getID() {
-        return 25;
-    }
+
 
     @Override
     public void handle(Handler h) {

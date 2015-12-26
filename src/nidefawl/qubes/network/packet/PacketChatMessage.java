@@ -29,11 +29,6 @@ public class PacketChatMessage extends Packet {
 	}
 
 	@Override
-	public int getID() {
-		return 16;
-	}
-
-	@Override
 	public void handle(Handler h) {
 		h.handleChat(this);
 	}

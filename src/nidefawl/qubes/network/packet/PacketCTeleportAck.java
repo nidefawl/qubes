@@ -32,10 +32,7 @@ public class PacketCTeleportAck extends AbstractPacketWorldRef {
         stream.writeInt(sync);
     }
 
-    @Override
-    public int getID() {
-        return 21;
-    }
+
 
     @Override
     public void handle(Handler h) {

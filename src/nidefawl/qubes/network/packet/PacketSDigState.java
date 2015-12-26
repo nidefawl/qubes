@@ -11,7 +11,7 @@ public class PacketSDigState extends AbstractPacketWorldRef {
     public PacketSDigState() {
     }
 
-    private int stage;
+    public int stage;
     
     public PacketSDigState(int worldid, int stage) {
         super(worldid);
@@ -30,10 +30,7 @@ public class PacketSDigState extends AbstractPacketWorldRef {
         stream.writeInt(this.stage);
     }
 
-    @Override
-    public int getID() {
-        return 27;
-    }
+
 
     @Override
     public void handle(Handler h) {

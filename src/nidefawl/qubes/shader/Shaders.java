@@ -24,12 +24,10 @@ public class Shaders {
 
     public static void init() {
         Shaders.colored.enable();
-        colored.setProgramUniform3f("in_offset", 0, 0, 0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("setProgramUniform3f");
         Shaders.textured.enable();
         textured.setProgramUniform1i("tex0", 0);
-        textured.setProgramUniform3f("in_offset", 0, 0, 0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("setProgramUniform1i");
         Shader.disable();
@@ -45,6 +43,7 @@ public class Shaders {
     public static Shader singleblock;
     public static Shader gui;
     public static Shader item;
+    public static Shader tonemap;
 
 
     public static void initShaders() {
@@ -64,6 +63,7 @@ public class Shaders {
             Shader new_singleblock = assetMgr.loadShader(newshaders, "singleblock");
             Shader new_gui = assetMgr.loadShader(newshaders, "gui");
             Shader new_item = assetMgr.loadShader(newshaders, "item");
+            Shader new_tonemap = assetMgr.loadShader(newshaders, "post/finalstage");
             shaders.release();
             SimpleResourceManager tmp = shaders;
             shaders = newshaders;
@@ -77,6 +77,7 @@ public class Shaders {
             Shaders.colored3D = new_colored3D;
             Shaders.renderUINT = new_uint;
             Shaders.singleblock = new_singleblock;
+            Shaders.tonemap = new_tonemap;
             Shaders.gui = new_gui;
             Shaders.item = new_item;
             Shaders.colored.enable();
@@ -88,7 +89,6 @@ public class Shaders {
             Shaders.gui.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.gui.setProgramUniform1i("itemTextures", 0);
             singleblock.enable();
-            singleblock.setProgramUniform3f("in_offset", Vector3f.ZERO);
             singleblock.setProgramUniform1f("in_scale", 1);
             singleblock.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
             singleblock.setProgramUniform1i("blockTextures", 0);
@@ -97,6 +97,8 @@ public class Shaders {
             Shaders.colored3D.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.textured3D.enable();
             Shaders.textured3D.setProgramUniform3f("offset", Vector3f.ZERO);
+            Shaders.tonemap.enable();
+            Shaders.tonemap.setProgramUniform1i("texColor", 0);
             Shaders.wireframe.enable();
             Shaders.wireframe.setProgramUniform3f("offset", Vector3f.ZERO);
             Shaders.wireframe.setProgramUniform1i("num_vertex", 4);

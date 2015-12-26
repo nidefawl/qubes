@@ -1,5 +1,8 @@
 package nidefawl.qubes.vec;
 
+import nidefawl.qubes.nbt.Tag;
+import nidefawl.qubes.nbt.Tag.Compound;
+
 public class AABBInt {
     public int minX;
     public int minY;
@@ -110,6 +113,34 @@ public class AABBInt {
     @Override
     public String toString() {
         return "AABBInt["+String.format("%d %d %d - %d %d %d", minX, minY, minZ, maxX, maxY, maxZ)+"]";
+    }
+
+    public Tag.Compound saveTag() {
+        Tag.Compound tag = new Tag.Compound();
+        tag.setInt("minX", this.minX);
+        tag.setInt("minY", this.minY);
+        tag.setInt("minZ", this.minZ);
+        tag.setInt("maxX", this.maxX);
+        tag.setInt("maxY", this.maxY);
+        tag.setInt("maxZ", this.maxZ);
+        return tag;
+    }
+
+    public void loadTag(Compound tag) {
+        this.minX = tag.getInt("minX");
+        this.minY = tag.getInt("minY");
+        this.minZ = tag.getInt("minZ");
+        this.maxX = tag.getInt("maxX");
+        this.maxY = tag.getInt("maxY");
+        this.maxZ = tag.getInt("maxZ");
+    }
+
+    public boolean contains(int x, int y, int z) {
+        return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY && z >= this.minZ && z <= this.maxZ;
+    }
+
+    public boolean contains(BlockPos bPos) {
+        return contains(bPos.x, bPos.y, bPos.z);
     }
 
 }

@@ -13,11 +13,12 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockLog;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.models.ItemModel;
-import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.texture.ItemTextureArray;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.worldgen.trees.Tree;
 
 /**
  * @author Michael Hept 2015
@@ -32,6 +33,7 @@ public class Item {
     public static final Item[] item = new Item[NUM_ITEMS];
     public static final Item pickaxe = new Item(1).setName("pickaxe").setTextures("tools/pick").setModel(ItemModel.modelPickaxe);
     public static final Item axe = new Item(2).setName("axe").setTextures("tools/axe").setModel(ItemModel.modelAxe);
+    public static final Item wood = new Item(3).setName("wood").setTextures("wood");
     /**
      * @return
      */
@@ -151,7 +153,7 @@ public class Item {
     public ItemModel getItemModel() {
         return this.itemModel;
     }
-    public boolean canMine(Block block, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
+    public boolean canMine(BlockPlacer placer, Block block, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
         System.out.println("Mine");
         //Move to subclass
         if (pickaxe==this) {
@@ -159,6 +161,11 @@ public class Item {
             return Block.ores.getBlocks().contains(block);
         }
         if (axe==this) {
+            Tree tree = placer.getTree();
+            if (tree == null) {
+                System.out.println("tree is null");
+                return false;
+            }
             return block instanceof BlockLog;
         }
         return false;

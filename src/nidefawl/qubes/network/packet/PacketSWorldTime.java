@@ -39,10 +39,7 @@ public class PacketSWorldTime extends AbstractPacketWorldRef {
         stream.writeByte(this.isFixed ? 1 : 0);
     }
 
-    @Override
-    public int getID() {
-        return 18;
-    }
+
 
     @Override
     public void handle(Handler h) {

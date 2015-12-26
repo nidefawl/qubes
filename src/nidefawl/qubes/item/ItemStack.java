@@ -8,9 +8,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.nbt.Tag.Compound;
-import nidefawl.qubes.texture.BlockTextureArray;
-import nidefawl.qubes.texture.ItemTextureArray;
 
 /**
  * @author Michael Hept 2015
@@ -86,11 +83,24 @@ public class ItemStack extends BaseStack {
     @Override
     public Tag save() {
         Tag.Compound tag = new Tag.Compound();
-        tag.setInt("type", 1);
+        tag.setInt("stacktype", 1);
         tag.setInt("id", this.id);
         tag.setInt("data", this.data);
         tag.setInt("size", this.size);
         return tag;
     }
 
+
+    public boolean isEqualId(BaseStack s) {
+        if (!(s instanceof ItemStack))
+            return false;
+        ItemStack other = (ItemStack)s;
+        return this.id == other.id && this.data == other.data;
+    }
+    public boolean isFullyEqual(BaseStack s) {
+        if (!(s instanceof ItemStack))
+            return false;
+        ItemStack other = (ItemStack)s;
+        return this.id == other.id && this.data == other.data && this.size == other.size;
+    }
 }

@@ -3,6 +3,9 @@
  */
 package nidefawl.qubes.worldgen.populator;
 
+import java.util.List;
+import java.util.Random;
+
 import com.google.common.collect.ImmutableMap;
 
 import nidefawl.qubes.block.Block;
@@ -13,9 +16,11 @@ import nidefawl.qubes.block.Block;
  */
 public class TreeGenerators {
     
-    public static TreeGeneratorLSystem get(int a) {
-        Block b = Block.leaves;
-        Block log = Block.log;
+    public static TreeGeneratorLSystem get(int a, Random rand) {
+        List<Block> list = Block.logs.getBlocks();
+        Block log = list.get(rand.nextInt(list.size()));
+        List<Block> list2 = Block.leaves.getBlocks();
+        Block b = list2.get(rand.nextInt(list2.size()));
         switch (a) {
             case 0 :
 

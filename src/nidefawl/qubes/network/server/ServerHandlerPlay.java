@@ -4,6 +4,9 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
+import nidefawl.qubes.inventory.slots.Slot;
+import nidefawl.qubes.inventory.slots.Slots;
+import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.packet.*;
@@ -42,6 +45,7 @@ public class ServerHandlerPlay extends ServerHandler {
             }
             sendPacket(new PacketSSpawnInWorld(player.id, world.getWorldType(), world.settings, this.player.pos, flags));
             world.addPlayer(player);
+            player.syncInventory();
             PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
             if (biomes != null) {
                 biomes.worldID = world.getId();
@@ -66,6 +70,7 @@ public class ServerHandlerPlay extends ServerHandler {
         }
         sendPacket(new PacketSSpawnInWorld(player.id, world.getWorldType(), world.settings, this.player.pos, flags));
         world.addPlayer(player);
+        player.syncInventory();
         player.sendMessage("You are now in world "+world.getName());
         PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
         if (biomes != null) {
@@ -249,8 +254,24 @@ public class ServerHandlerPlay extends ServerHandler {
     }
 
     public void handleDigState(PacketCDigState p) {
-        if (p.stage == 3) {
-            player.blockPlace.tryMine(p.pos, p.fpos, p.stack, p.face);
+        player.blockPlace.tryMine(p.pos, p.fpos, p.stack, p.face, p.stage);
+    }
+
+    public void handleInvClick(PacketCInvClick p) {
+        Slots slots = player.getSlots(p.id);
+        if (slots == null) {
+            //TODO: kick + log
+            return;
+        }
+        Slot slot = slots.getSlot(p.idx);
+        if (slot == null) {
+            //TODO: kick + log
+            return;
+        }
+        BaseStack result = slots.slotClicked(slot, p.button, p.action);
+        if (!BaseStack.equalStacks(result, p.stack)) {
+            //TODO: resync + log
+            this.player.syncInventory();
         }
     }
 }

@@ -168,6 +168,7 @@ public class BlockRenderer {
         int n = 0;
         for (int pass = 0; pass < multi; pass++) {
             switch (renderType) {
+                case 14:
                 case 0: {
                     setDefaultBounds();
                     n += renderBlock(block, ix, iy, iz, pass, block.getLODPass()); //Normal block with default bounds 
@@ -394,6 +395,7 @@ public class BlockRenderer {
         
         attr.setAO(0);
         attr.setTex(tex);
+        attr.setNormalMap(0);
         attr.setFaceDir(Dir.DIR_POS_Y);
 
         int br_pp = brigthness;
@@ -924,7 +926,7 @@ public class BlockRenderer {
                             for (int texPass = 0; texPass < nSubTexturePasses; texPass++) {
                 
                                 //TODO: figure out how to get cached getSingleBlockSurface for multipass textures
-                                if (textureBlock.skipTexturePassSide(axis, side, texPass)) {
+                                if (textureBlock.skipTexturePassSide(this.w, x, y, z, axis, side, texPass)) {
                                     continue;
                                 }
                                 int tex = textureBlock.getTexture(n, w.getData(ix, iy, iz), texPass);
@@ -996,7 +998,10 @@ public class BlockRenderer {
         int f = 0;
         try {
             setDefaultBounds();
-            ModelBlock model = block.loadedModels[0];
+            ModelBlock model = block.getBlockModel(this.w, ix, iy, iz, texturepass);
+            if (model == null) {
+                return renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
+            }
             int vPos[] = new int[model.loader.listVertex.size()]; //could be much smaller (when vertex are grouped by face(group)
             int vIdx = 0;
             Arrays.fill(vPos, -1);
@@ -1106,6 +1111,7 @@ public class BlockRenderer {
         float alpha = block.getAlpha();
         int rgb = block.getFaceColor(w, ix, iy, iz, faceDir, texturepass);
         attr.setTex(tex);
+        attr.setNormalMap(block.getNormalMap(tex));
         attr.setFaceDir(faceDir);
         attr.setReverse((bs.face&1)!=0);
         attr.setAO(bs.maskedAO);
@@ -1156,7 +1162,7 @@ public class BlockRenderer {
     
     //TODO: cache this by ix,iy,iz,axis,side (for stairs)
     protected BlockSurface getSingleBlockSurface(Block block, int ix, int iy, int iz, int axis, int side, boolean checkVisibility, BlockSurface out, int texturepass) {
-        if (block.skipTexturePassSide(axis, side, texturepass)) {
+        if (block.skipTexturePassSide(this.w, ix, iy, iz, axis, side, texturepass)) {
             return null;
         }
         if (checkVisibility) {
@@ -1213,6 +1219,7 @@ public class BlockRenderer {
         int bottomAO = !bendNormal?2:2;
         attr.setAO(maskAO(bottomAO,bottomAO,topAO,topAO));
         attr.setTex(tex);
+        attr.setNormalMap(0);
         attr.setFaceDir(-1);
 
         int br_pp = brigthness;
@@ -1341,7 +1348,7 @@ public class BlockRenderer {
             
             if (bendNormal) {
                 attr.calcNormal(plantNormal);
-                plantNormal.y+=0.5f;
+                plantNormal.y+=1.9f;
                 plantNormal.normalise();
                 int normal = attr.packNormal(plantNormal);
                 for (int j = 0; j < 4; j++) {
@@ -1363,7 +1370,7 @@ public class BlockRenderer {
             if (bendNormal) {
 
                 attr.calcNormal(plantNormal);
-                plantNormal.y+=0.5f;
+                plantNormal.y+=1.9f;
                 plantNormal.normalise();
 
                 int normal = attr.packNormal(plantNormal);

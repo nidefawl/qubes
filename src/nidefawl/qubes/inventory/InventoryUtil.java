@@ -3,8 +3,12 @@
  */
 package nidefawl.qubes.inventory;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import com.google.common.collect.Lists;
+
+import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
@@ -19,14 +23,13 @@ public class InventoryUtil {
      * @param stacks
      * @return
      */
-    public static Tag writeToTag(BaseStack[] stacks) {
+    public static Tag writeToTag(List<SlotStack> stacks) {
         Tag.TagList list = new Tag.TagList();
-        for (int i = 0; i < stacks.length; i++) {
-            BaseStack stack = stacks[i];
-            if (stack != null) {
+        for (SlotStack stack : stacks) {
+            if (stack.stack != null) {
                 Compound cmp = new Compound();
-                cmp.setInt("slot", i);
-                cmp.set("stack", stack.save());
+                cmp.setInt("slot", stack.slot);
+                cmp.set("stack", stack.stack.save());
                 list.add(cmp);
             }
         }
@@ -38,19 +41,23 @@ public class InventoryUtil {
      * @param size
      * @return
      */
-    public static void readFromTag(Tag tagInv, BaseStack[] stacks) {
+    public static List<SlotStack> readFromTag(Tag tagInv) {
         if (tagInv.getType() != Tag.TagType.LIST)
             throw new GameError("Cannot read inventory from tag type that isn't LIST");
         Tag.TagList list = (Tag.TagList) tagInv;
+        if (list.getSize() == 0) {
+            return Collections.emptyList();
+        }
         if (list.getListTagType() != Tag.TagType.COMPOUND)
             throw new GameError("Cannot read inventory from list that isn't type COMPOUND");
-        Arrays.fill(stacks, null);
+        List<SlotStack> stacks = Lists.newArrayList();
         for (Tag t : list.getList()) {
             Tag.Compound compound = (Tag.Compound) t;
             int i = compound.getInt("slot");
             Tag tagStack = compound.get("stack");
-            stacks[i] = BaseStack.load(tagStack);
+            stacks.add(new SlotStack(i, BaseStack.load(tagStack)));
         }
+        return stacks;
     }
 
 }

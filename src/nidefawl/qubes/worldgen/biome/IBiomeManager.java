@@ -50,4 +50,10 @@ public interface IBiomeManager {
      * 
      */
     public void sendChanges();
+
+    public void saveChanges();
+
+    public HexBiome blockToHex(int x, int z);
+
+    public void deleteAll();
 }

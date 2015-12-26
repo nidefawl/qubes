@@ -101,10 +101,7 @@ public class PacketSSetBlocks extends AbstractPacketWorldRef {
         }
     }
 
-    @Override
-    public int getID() {
-        return 11;
-    }
+
 
     @Override
     public void handle(Handler h) {

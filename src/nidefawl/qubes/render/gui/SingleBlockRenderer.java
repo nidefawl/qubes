@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.meshing;
+package nidefawl.qubes.render.gui;
 
 import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
 
@@ -9,6 +9,8 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.item.StackData;
+import nidefawl.qubes.meshing.BlockFaceAttr;
+import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.util.SingleBlockWorld;
 import nidefawl.qubes.vec.BlockPos;
 

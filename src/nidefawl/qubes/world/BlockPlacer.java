@@ -5,25 +5,34 @@ package nidefawl.qubes.world;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockQuarterBlock;
+import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.*;
+import nidefawl.qubes.network.packet.PacketSDigState;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.worldgen.biome.HexBiome;
+import nidefawl.qubes.worldgen.biome.HexBiomesServer;
+import nidefawl.qubes.worldgen.trees.Tree;
 
 /**
  * @author Michael Hept 2015 
  * Copyright: Michael Hept
  */
 public class BlockPlacer {
-
     private PlayerServer player;
     BlockStack stack;
+    long startTime = 0L;
+    private HexBiome biome;
+    private Tree tree;
+    private int resolved;
+    private BlockPos pos;
 
     /**
      * @param serverHandlerPlay
@@ -41,15 +50,34 @@ public class BlockPlacer {
         return this.player.world;
     }
 
-    
-
-    public void tryMine(BlockPos pos, Vector3f fpos, BaseStack stack, int face) {
-        World w = this.player.world;
-//        int x, int y, int z, float fx, float fy, float fz
-        if (stack == null || !stack.isItem()) {
-            this.player.kick("Invalid stack received");
-            return;
+    public Tree getTree() {
+        if ((resolved&2)==0) {
+            resolved|=2;
+            HexBiome biome = getBiome();
+            if (biome != null) {
+                HexBiome[] biomes = biome.getClosest3(pos.x, pos.z);
+                for (HexBiome b : biomes) {
+                    this.tree = b.getTree(pos.x, pos.y, pos.z);
+                    if (this.tree != null) {
+                        break;
+                    }
+                }
+                System.out.println("tree "+tree);
+            }
         }
+        return this.tree;
+    }
+    public HexBiome getBiome() {
+        if ((resolved&1)==0) {
+            resolved|=1;
+            this.biome = getWorld().getHex(pos.x, pos.z);
+        }
+        return this.biome;
+    }
+
+
+    public void tryMine(BlockPos pos, Vector3f fpos, BaseStack stack, int face, int stage) {
+        World w = getWorld();
         boolean isQuarter = (face & 8) != 0;
         if (pos.y < 0 || pos.y >= w.worldHeight) {
             return;
@@ -57,11 +85,27 @@ public class BlockPlacer {
         if (isQuarter) {
             return;
         }
+        if (stack == null || !stack.isItem()) {
+//            this.player.kick("Invalid stack received");
+            return;
+        }
+        this.pos = pos;
+        this.resolved = 0;
+   
         int typeAt = getWorld().getType(pos);
         Block bAgainst = Block.get(typeAt);
         ItemStack itemstack = (ItemStack) stack;
-        if (bAgainst.canMineWith(w, pos, this.player, itemstack)) {
-            bAgainst.onBlockMine(w, pos, this.player, itemstack);
+        if (stage > 0 && bAgainst.canMineWith(this, w, pos, this.player, itemstack)) {
+            long l = (System.currentTimeMillis()-startTime)/50;
+            l/=15;
+            if (stage > 1) {
+                bAgainst.onBlockMine(this, w, pos, this.player, itemstack); 
+            } else {
+                player.sendPacket(new PacketSDigState(w.getId(), 1));
+                startTime = System.currentTimeMillis();
+            }
+        } else {
+            player.sendPacket(new PacketSDigState(w.getId(), 0));
         }
         
     }

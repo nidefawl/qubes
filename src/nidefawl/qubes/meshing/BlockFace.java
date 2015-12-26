@@ -280,6 +280,7 @@ public class BlockFace {
         int rgb =  block.getMeshedColor(this.bs);// TODO: generalize
 
         attr.setTex(this.bs.texture);
+        attr.setNormalMap(block.getNormalMap(this.bs.texture));
         attr.setFaceDir(faceDir);
         attr.setReverse((this.bs.face&1)!=0);
 //

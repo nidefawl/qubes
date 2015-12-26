@@ -15,7 +15,9 @@ import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ComboBox;
 import nidefawl.qubes.gui.controls.ComboBox.ComboBoxList;
 import nidefawl.qubes.render.post.SMAA;
+import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.shader.UniformBuffer;
 
 public class GuiSettings extends Gui {
     static int nextID = 3;
@@ -48,6 +50,7 @@ public class GuiSettings extends Gui {
     private Setting reflectionSetting;
     private Setting smaaSetting;
     private Setting smaaQSetting;
+    private Setting aoSetting;
 
     public GuiSettings() {
         this.font = FontRenderer.get(null, 18, 0, 20);
@@ -56,6 +59,7 @@ public class GuiSettings extends Gui {
     @Override
     public void initGui(boolean first) {
         this.buttons.clear();
+        this.list.clear();
         int w1 = 160;
         int h = 30;
         List<String> l = Lists.newArrayList();
@@ -97,14 +101,23 @@ public class GuiSettings extends Gui {
                 Game.instance.saveSettings();
             }
         }));
+        final String[] strAOSettings = new String[] { "Disabled", "Enabled" };
+        list.add((this.aoSetting = new Setting(this, "Ambient Occlusion", strAOSettings[Game.instance.settings.ao & 1], strAOSettings) {
+            void callback(int id) {
+                Game.instance.settings.ao = id;
+                Engine.outRenderer.initAO(Game.displayWidth, Game.displayHeight);
+                UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
+            }
+        }));
         final String[] smaa = new String[] { "Disabled", "1x SMAA" };
         list.add((this.smaaSetting = new Setting(this, "Anti-Aliasing", smaa[Game.instance.settings.aa & 1], smaa) {
             void callback(int id) {
                 Game.instance.settings.aa = id;
                 Game.instance.saveSettings();
+                Engine.outRenderer.initAA();
             }
         }));
-        
+
         final String[] smaaQ = SMAA.qualDesc;
         list.add((this.smaaQSetting = new Setting(this, "SMAA Quality", smaaQ[Game.instance.settings.smaaQuality%smaaQ.length], smaaQ) {
             void callback(int id) {

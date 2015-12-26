@@ -113,7 +113,8 @@ public class UniformBuffer {
             .addMat4() //vp
             .addVec4() //cameraPosition
             .addFloat() //frameTime
-            .addVec4(); //viewport
+            .addVec4() //viewport
+            .addVec4(); //in_offset
     static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
             .addVec4() //dayLightTime
             .addVec4() //posSun
@@ -235,11 +236,15 @@ public class UniformBuffer {
         uboSceneData.put(Engine.GLOBAL_OFFSET.y);
         uboSceneData.put(Engine.GLOBAL_OFFSET.z);
         uboSceneData.put(Game.ticksran+f);
-        
+
         uboSceneData.put(Game.displayWidth);
         uboSceneData.put(Game.displayHeight);
         uboSceneData.put(Engine.znear);
         uboSceneData.put(Engine.zfar);
+        uboSceneData.put(Engine.pxOffset.x);
+        uboSceneData.put(Engine.pxOffset.y);
+        uboSceneData.put(Engine.pxOffset.z);
+        uboSceneData.put(1F);
         uboSceneData.update();
         
         LightInfo.reset();
@@ -446,6 +451,14 @@ public class UniformBuffer {
         uboMatrix3D.setPosition(0*16);
         uboMatrix3D.put(mat);//0
         uboMatrix3D.update();
+    }
+    public static void updatePxOffset() {
+        uboSceneData.setPosition(12);
+        uboSceneData.put(Engine.pxOffset.x);
+        uboSceneData.put(Engine.pxOffset.y);
+        uboSceneData.put(Engine.pxOffset.z);
+        uboSceneData.put(1F);
+        uboSceneData.update();
     }
 
 }

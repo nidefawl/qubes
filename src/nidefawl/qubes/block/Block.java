@@ -20,6 +20,7 @@ import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.models.qmodel.ModelQModel;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.texture.BlockNormalMapArray;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
@@ -32,43 +33,49 @@ import nidefawl.qubes.world.World;
 
 public class Block {
 
-    public static final int BLOCK_MASK = 0x1FF;
-    public static final int NUM_BLOCKS = 512;
+    public static final int BLOCK_BITS = 10;
+    public static final int NUM_BLOCKS = 1<<BLOCK_BITS;
+    public static final int BLOCK_MASK = NUM_BLOCKS-1;
     public static int HIGHEST_BLOCK_ID = 0;
     private static Block[] registeredblocks;
     private static short[] registeredblockIds;
     public static final Block[] block = new Block[NUM_BLOCKS];
     public final static String[] NO_TEXTURES = new String[0];
     public final static Block air = new BlockAir(0).setName("air");
-    public final static Block grass = new BlockGrass(-1).setName("grass").setTextures("ground/grass", "ground/grass_side", "ground/grass_side_overlay");
-    public final static Block dirt = new Block(-1).setName("dirt").setTextures("ground/dirt").setCategory(BlockCategory.GROUND);
+    public final static Block grass = new BlockGrass(-1).setName("grass").setTextures("ground/grass", "ground/grass_side", "ground/grass_side_overlay").setNormalMaps("ground/grass_side_normalmap");
+    public final static Block dirt = new Block(-1).setName("dirt").setTextures("ground/dirt").setNormalMaps("ground/dirt_normalmap").setCategory(BlockCategory.GROUND);
     public final static BlockGroupStones stones = new BlockGroupStones();
     public final static Block water = new BlockWater(-1).setName("water/water_still");
     public final static Block sand = new BlockSand(-1).setName("sand").setTextures("ground/sand");
     public final static Block sand_red = new BlockSand(-1).setName("red_sand").setTextures("ground/sand_red");
-//    public final static Block glowstone = new BlockLit(-1).setName("glowstone").setTextures("glowstone");
-    public final static Block log = new BlockLog(-1).setName("log").setTextures("logs/log", "logs/log_top");
-    public final static Block leaves = new BlockLeaves(-1).setName("leaves/leaves");
+    public final static Block snow = new Block(-1).setName("snow").setTextures("ground/snow").setCategory(BlockCategory.GROUND);
+    public final static Block ice = new BlockIce(-1).setName("ice").setTextures("ground/ice").setCategory(BlockCategory.GROUND);
+
+    
+    public final static BlockGroupLogs logs = new BlockGroupLogs();
+    public final static BlockGroup wood = new BlockGroupWood();
+    public final static BlockGroupLeaves leaves = new BlockGroupLeaves();
+
     public final static Block grassbush = new BlockGrassBush(-1).setName("grassbush").setTextures("plants/grassbush");
+    public final static Block heath = new BlockGrassBush(-1).setName("heath").setTextures("plants/heath");
+    public final static Block aloe_vera = new BlockGrassBush(-1).setName("aloe_vera").setTextures("plants/aloe_vera");
     public final static Block vines = new BlockVine(-1).setName("vine").setTextures("plants/vines");
     public final static Block treemoss = new BlockVine(-1).setName("treemoss").setTextures("plants/treemoss");
-    public final static Block fence_log = new BlockFence(-1, log).setName("fence_log").setAbsTextures(NO_TEXTURES);
-    public final static Block wall_log = new BlockWall(-1, log).setName("wall_log").setAbsTextures(NO_TEXTURES);
     public final static Block quarter = new BlockQuarterBlock(-1).setName("quarter");
     public final static Block ore_diamond = new Block(-1).setName("ore_diamond").setTextures("rocks/ore_diamond");
     public final static Block ore_gold = new Block(-1).setName("ore_gold").setTextures("rocks/ore_gold");
     public final static Block ore_silver = new Block(-1).setName("ore_silver").setTextures("rocks/ore_silver");
+    
     public final static BlockGroupOres ores = new BlockGroupOres(stones);
-
     public final static BlockGroup bricks = new BlockGroupBricks(stones);
     public final static BlockGroup stonebricks = new BlockGroupStoneBricks(stones);
     public final static BlockGroup smoothstones = new BlockGroupSmoothStones(stones);
     public final static BlockGroup stonepath = new BlockGroupStonePath(stones);
     public final static BlockGroup cobblestones = new BlockGroupCobbleStones(stones);
-    public final static BlockGroup slabs = new BlockGroupSlabs(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
-    public final static BlockGroup stairs = new BlockGroupStairs(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
-    public final static BlockGroup walls = new BlockGroupWalls(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
-    
+    public final static BlockGroup slabs = new BlockGroupSlabs(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks, logs, wood);
+    public final static BlockGroup stairs = new BlockGroupStairs(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks, logs, wood);
+    public final static BlockGroup walls = new BlockGroupWalls(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks, logs, wood);
+    public final static BlockGroup fences = new BlockGroupFences(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks, logs, wood);
 
     public final static Block flower_fmn_black = new BlockFlowerFMN(-1).setName("forget_me_not_black").setTextures("flowers/bush_forget_me_not_black.layer0","flowers/bush_forget_me_not_black.layer1","flowers/bush_forget_me_not_black.layer2");
     public final static Block flower_fmn_blue = new BlockFlowerFMN(-1).setName("forget_me_not_blue").setTextures("flowers/bush_forget_me_not_blue.layer0","flowers/bush_forget_me_not_blue.layer1","flowers/bush_forget_me_not_blue.layer2");
@@ -97,12 +104,13 @@ public class Block {
     public final static Block fern2 = new BlockDoublePlant(-1).setName("fern2").setTextures("plants/double_plant_fern_2.lower", "plants/double_plant_fern_2.upper");
     public final static Block fern3 = new BlockDoublePlant(-1).setName("fern3").setTextures("plants/double_plant_fern_3.lower", "plants/double_plant_fern_3.upper");
     public final static Block fern4 = new BlockDoublePlant(-1).setName("fern4").setTextures("plants/double_plant_fern_4.lower", "plants/double_plant_fern_4.upper");
+    public final static Block double_heath = new BlockDoublePlant(-1).setName("double_heath").setTextures("plants/double_heath.lower", "plants/double_heath.upper");
     public final static Block tallgrass1 = new BlockDoublePlant(-1).setName("tallgrass1").setTextures("plants/double_grass_1.lower", "plants/double_grass_1.upper");
     public final static Block tallgrass2 = new BlockDoublePlant(-1).setName("tallgrass2").setTextures("plants/double_grass_2.lower", "plants/double_grass_2.upper");
     public final static Block pad = new BlockPlantFlat(-1).setName("pad").setTextures("plants/pad");
     public final static Block waterlily = new BlockWaterLily(-1).setName("waterlily").setTextures("flowers/water_rose");
     public final static BlockGroup modelled = new BlockGroupModelledStones(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
-    
+
     public static void preInit() {
         
 //        for (Block b : block) {
@@ -150,11 +158,13 @@ public class Block {
     private String name;
     private final boolean transparent;
     protected String[] textures;
+    protected String[] normalMaps = NO_TEXTURES;
     protected final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
     protected BlockTextureMode textureMode = BlockTextureMode.DEFAULT;
     protected BlockCategory blockCategory = BlockCategory.UNASSIGNED;
     public ModelBlock[] loadedModels;
     private String[] models;
+    private BlockGroup blockGroup;
 
     public Block(int id, boolean transparent) {
         if (id < 0) {
@@ -167,7 +177,15 @@ public class Block {
         this.transparent = transparent;
         init();
     }
+    public BlockGroup getBlockGroup() {
+        return this.blockGroup;
+    }
 
+    protected Block setBlockGroup(BlockGroup group) {
+        this.blockGroup = group;
+        return this;
+    }
+    
     protected Block setCategory(BlockCategory blockCategory) {
         this.blockCategory = blockCategory;
         return this;
@@ -189,12 +207,22 @@ public class Block {
     public String[] getTextures() {
         return this.textures;
     }
+    public String[] getNormalMaps() {
+        return this.normalMaps;
+    }
 
     public Block setTextures(String...list) {
         for (int a = 0; a < list.length; a++) {
             list[a] = "textures/blocks/" + list[a] + ".png";
        }
         this.textures = list;
+        return this;
+    }
+    public Block setNormalMaps(String...list) {
+        for (int a = 0; a < list.length; a++) {
+            list[a] = "textures/blocks/" + list[a] + ".png";
+       }
+        this.normalMaps = list;
         return this;
     }
 
@@ -537,7 +565,7 @@ public class Block {
         return textures;
     }
     
-    public boolean skipTexturePassSide(int axis, int side, int texPass) {
+    public boolean skipTexturePassSide(IBlockWorld w, int x, int y, int z, int axis, int side, int texPass) {
         return false;
     }
     
@@ -554,9 +582,18 @@ public class Block {
     public float getInvRenderRotation() {
         return 0;
     }
-    public boolean canMineWith(World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
-        return itemstack.getItem().canMine(this, w, pos, player, itemstack);
+    public boolean canMineWith(BlockPlacer placer, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
+        return itemstack.getItem().canMine(placer, this, w, pos, player, itemstack);
     }
-    public void onBlockMine(World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
+    public void onBlockMine(BlockPlacer placer, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
+    }
+    public ModelBlock getBlockModel(IBlockWorld w, int ix, int iy, int iz, int texturepass) {
+        return loadedModels[0];
+    }
+    public int getNormalMap(int texture) {
+        if (this.normalMaps.length > 0) {
+            return BlockNormalMapArray.getInstance().getTextureIdx(this.id, 0);
+        }
+        return 0;
     }
 }

@@ -35,10 +35,7 @@ public class PacketSEntityUnTrack extends Packet {
         stream.writeInt(this.entId);
     }
 
-    @Override
-    public int getID() {
-        return 23;
-    }
+
 
     @Override
     public void handle(Handler h) {

@@ -31,6 +31,11 @@ public abstract class HexagonGridStorage<T> extends HexagonGrid {
     HashMap<Long, T> map = new HashMap<>();
     HashMap<Long, T> oobmap = new HashMap<>();
 
+    public void reset() {
+        map.clear();
+        oobmap.clear();
+    }
+
     protected void putPos(long pos, T cell) {
         map.put(pos, cell);
     }
@@ -69,5 +74,8 @@ public abstract class HexagonGridStorage<T> extends HexagonGrid {
     //TODO: check thread safety
     public Collection<T> getLoaded() {
         return this.map.values();
+    }
+
+    public void flag(int x, int z) {
     }
 }

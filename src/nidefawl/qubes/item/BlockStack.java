@@ -6,15 +6,14 @@ package nidefawl.qubes.item;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Stack;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockGroup;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.ByteArray;
-import nidefawl.qubes.network.StreamIO;
 
 /**
  * @author Michael Hept 2015
@@ -82,7 +81,7 @@ public class BlockStack extends BaseStack {
     @Override
     public Tag save() {
         Tag.Compound tag = new Tag.Compound();
-        tag.setInt("type", 0);
+        tag.setInt("stacktype", 0);
         tag.setInt("id", this.id);
         tag.setInt("data", this.data);
         tag.setInt("size", this.size);
@@ -103,9 +102,6 @@ public class BlockStack extends BaseStack {
             stack.stackdata = this.stackdata.copy();
         return stack;
     }
-    /**
-     * @return
-     */
     public Block getBlock() {
         return Block.get(this.id);
     }
@@ -134,11 +130,17 @@ public class BlockStack extends BaseStack {
         }
     }
 
-    public boolean isEqualId(BlockStack s) {
-        return this.id == s.id && this.data == s.data;
+    public boolean isEqualId(BaseStack s) {
+        if (!(s instanceof BlockStack))
+            return false;
+        BlockStack other = (BlockStack)s;
+        return this.id == other.id && this.data == other.data;
     }
-    public boolean isFullyEqual(BlockStack s) {
-        return this.id == s.id && this.data == s.data && this.size == s.size;
+    public boolean isFullyEqual(BaseStack s) {
+        if (!(s instanceof BlockStack))
+            return false;
+        BlockStack other = (BlockStack)s;
+        return this.id == other.id && this.data == other.data && this.size == other.size;
     }
 
     @Override

@@ -2,8 +2,12 @@ package nidefawl.qubes.entity;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Movement;
 import nidefawl.qubes.inventory.PlayerInventory;
+import nidefawl.qubes.inventory.slots.Slots;
+import nidefawl.qubes.inventory.slots.SlotsCrafting;
+import nidefawl.qubes.inventory.slots.SlotsInventory;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
@@ -20,9 +24,14 @@ public class PlayerSelf extends Player {
     public float eyeHeight = 1.3F;
     public PlayerProfile profile;
     private ClientHandler clientHandler;
+    private final SlotsInventory slotsInventory;
+    private final SlotsCrafting slotsCrafting;
+
 
     public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
         super();
+        this.slotsInventory = new SlotsInventory(this, 0, 0, Gui.slotW, Gui.slotBDist);
+        this.slotsCrafting = new SlotsCrafting(this, 0, 0, Gui.slotW, Gui.slotBDist);
         this.profile = profile;
         this.clientHandler = clientHandler;
         this.name = this.profile.getName();
@@ -203,12 +212,15 @@ public class PlayerSelf extends Player {
         }
     }
 
-    /**
-     * @return
-     */
-    public PlayerInventory getInventory() {
-        return this.inventory;
+
+    public Slots getSlots(int id) {
+        switch (id) {
+            case 0:
+                return this.slotsInventory;
+            case 1:
+                return this.slotsCrafting;
+        }
+        return null;
     }
-    
 
 }

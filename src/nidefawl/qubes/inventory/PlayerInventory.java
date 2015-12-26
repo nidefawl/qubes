@@ -3,7 +3,12 @@
  */
 package nidefawl.qubes.inventory;
 
+import java.util.Iterator;
+import java.util.List;
+
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.inventory.slots.Slot;
+import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.item.*;
 
 /**
@@ -12,15 +17,10 @@ import nidefawl.qubes.item.*;
  */
 public class PlayerInventory extends BaseInventory {
     
-    public final int inventorySize = 10*4;
-    public final BaseStack[] stacks = new BaseStack[inventorySize];
     public BaseStack carried;
     
     public PlayerInventory() {
-        stacks[1] = new ItemStack(Item.axe);
-        stacks[0] = new ItemStack(Item.pickaxe);
-        stacks[2] = new BlockStack(Block.dirt);
-        stacks[3] = new BlockStack(Block.grass);
+        super(0, 10*4);
     }
 
     public PlayerInventory copy(PlayerInventory inv) {
@@ -30,11 +30,28 @@ public class PlayerInventory extends BaseInventory {
         }
         return inv;
     }
-    @Override
-    public BaseStack getItem(int idx) {
-        return this.stacks[idx];
-    }
 
+    public List<SlotStack> copySlotStacks() {
+        List<SlotStack> list = super.copySlotStacks();
+        BaseStack carried = this.carried;
+        if (carried != null ){
+            list.add(new SlotStack(255, carried.copy()));
+        }
+        return list;
+    }
+    public void set(List<SlotStack> list) {
+        super.set(list);
+        Iterator<SlotStack> it = list.iterator();
+        while (it.hasNext()) {
+            SlotStack slotStack = it.next();
+            if (slotStack.slot == 255) {
+                this.carried = slotStack.stack;
+            } else {
+                System.out.println("stack wasn't consumed "+slotStack.slot+" - "+slotStack.stack);
+                add(slotStack.stack);
+            }
+        }
+    }
     /**
      * @param item
      */
@@ -44,13 +61,7 @@ public class PlayerInventory extends BaseInventory {
         return cur;
     }
 
-    @Override
     public BaseStack getCarried() {
         return this.carried;
-    }
-
-    @Override
-    public void setItem(int idx, BaseStack item) {
-        this.stacks[idx] = item;
     }
 }

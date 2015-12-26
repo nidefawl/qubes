@@ -526,7 +526,8 @@ public abstract class GameBase implements Runnable {
 
     public ArrayList<String> glProfileResults = new ArrayList<>();
 
-    public void loadRender(int step, float f) {
+    public boolean loadRender(int step, float f) {
+        return false;
     }
     public void mainLoop() {
         try {

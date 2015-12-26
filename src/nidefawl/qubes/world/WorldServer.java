@@ -166,9 +166,14 @@ public class WorldServer extends World {
                 break;
             }
         }
-        
+
+        long start1 = System.currentTimeMillis();
+        long passed2 = System.currentTimeMillis()-start1;
         this.chunkTracker.sendBlockChanges();
+        this.biomeManager.saveChanges();
         this.biomeManager.sendChanges();
+        if (passed2 > 80)
+            System.err.println("SLOW saveChanges "+passed2+"ms");
     }
     public void updateGeneratedChunks() {
         
@@ -317,6 +322,7 @@ public class WorldServer extends World {
             PlayerServer PlayerServer = this.players.get(i);
             tr.addPlayer(PlayerServer);
         }
+        this.biomeManager.deleteAll();
         return n;
     }
 

@@ -37,11 +37,6 @@ public class PacketAuth extends Packet {
 	}
 
 	@Override
-	public int getID() {
-		return 4;
-	}
-
-	@Override
 	public void handle(Handler h) {
 		h.handleAuth(this);
 	}

@@ -579,7 +579,7 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderTerrainWireFrame(World world, float fTime) {
         Shaders.wireframe.enable();
-        Shaders.wireframe.setProgramUniform3f("in_offset", Engine.GLOBAL_OFFSET.x, Engine.GLOBAL_OFFSET.y, Engine.GLOBAL_OFFSET.z);
+        Engine.pxStack.push(Engine.GLOBAL_OFFSET.x, Engine.GLOBAL_OFFSET.y, Engine.GLOBAL_OFFSET.z);
         Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
         Shaders.wireframe.setProgramUniform1f("thickness", 0.2f);
         Shaders.wireframe.setProgramUniform1f("maxDistance", 110);
@@ -589,6 +589,7 @@ public class WorldRenderer extends AbstractRenderer {
         Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
         Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+        Engine.pxStack.pop();
         Shader.disable();
     }
     
@@ -601,7 +602,7 @@ public class WorldRenderer extends AbstractRenderer {
             glPushAttrib(-1);
             glEnable(GL_BLEND);
             glDepthFunc(GL_LEQUAL);
-          glDisable(GL_DEPTH_TEST);
+//          glDisable(GL_DEPTH_TEST);
             Shaders.colored3D.enable();
             for (Integer i : debugBBs.keySet()) {
                 AABB bb = debugBBs.get(i);
@@ -615,11 +616,11 @@ public class WorldRenderer extends AbstractRenderer {
                 float fMaxY = (float) bb.maxY;
                 float fMaxZ = (float) bb.maxZ;
                 
-                glLineWidth(2.0F);
+                glLineWidth(4.0F);
                 float ext = 1/32F;
                 float zero = -ext;
                 float one = 1+ext;
-                Tess.instance.setColor(iColor, 120);
+                Tess.instance.setColor(iColor, 255);
                 Tess.instance.add(fMinX, fMinY, fMinZ);
                 Tess.instance.add(fMaxX, fMinY, fMinZ);
                 Tess.instance.add(fMaxX, fMinY, fMaxZ);
@@ -632,7 +633,7 @@ public class WorldRenderer extends AbstractRenderer {
                 Tess.instance.add(fMinX, fMaxY, fMinZ);
                 Tess.instance.draw(GL_LINE_STRIP);
                 
-                Tess.instance.setColor(iColor, 120);
+                Tess.instance.setColor(iColor, 255);
                 Tess.instance.add(fMinX, fMinY, fMaxZ);
                 Tess.instance.add(fMinX, fMaxY, fMaxZ);
                 Tess.instance.add(fMaxX, fMinY, fMaxZ);

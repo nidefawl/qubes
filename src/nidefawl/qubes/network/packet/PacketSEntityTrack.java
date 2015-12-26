@@ -65,10 +65,7 @@ public class PacketSEntityTrack extends Packet {
         
     }
 
-    @Override
-    public int getID() {
-        return 22;
-    }
+
 
     @Override
     public void handle(Handler h) {

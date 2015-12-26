@@ -25,11 +25,6 @@ public class PacketPing extends Packet {
 	}
 
 	@Override
-	public int getID() {
-		return 1;
-	}
-
-	@Override
 	public void handle(Handler h) {
 		h.handlePing(this);
 	}

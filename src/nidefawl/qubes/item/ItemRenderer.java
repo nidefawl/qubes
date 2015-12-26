@@ -5,20 +5,15 @@ package nidefawl.qubes.item;
 
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
-import java.nio.IntBuffer;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
-import org.lwjgl.opengl.*;
-
-import nidefawl.qubes.Game;
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.render.region.MeshedRegion;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.texture.ItemTextureArray;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.util.GameMath;
 
 /**
  * @author Michael Hept 2015
@@ -52,14 +47,14 @@ public class ItemRenderer {
             Tess.instance.add(x+w, y+h, 0, 1, 0);
             Tess.instance.draw(GL11.GL_QUADS);
         } else {
-            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+            Shaders.textured.enable();
             BlockStack blockStack = (BlockStack) stack;
 //          float scale = w/32f;
-          float scale = w/45f;
-            Engine.blockDraw.setOffset(x+w/2.0f, y+h/2.0f, 20);
+            float scale = w/45f;
+            Engine.blockDraw.setOffset(x+w/2.0f, y+h/2.0f, 0);
             Engine.blockDraw.setScale(scale);
             Engine.blockDraw.setRotation(18, 90+45, 0);
-            Engine.blockDraw.drawBlock(blockStack.getBlock(), blockStack.data, blockStack.getStackdata());
+            Engine.blockDraw.drawBlockDefault(blockStack.getBlock(), blockStack.data, blockStack.getStackdata());
         }
     }
 

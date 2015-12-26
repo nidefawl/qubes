@@ -45,10 +45,7 @@ public class PacketSChunkData extends AbstractPacketWorldRef {
         stream.write(this.blocks);
     }
 
-    @Override
-    public int getID() {
-        return 7;
-    }
+
 
     @Override
     public void handle(Handler h) {

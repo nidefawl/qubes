@@ -4,7 +4,6 @@
 package nidefawl.qubes.inventory.slots;
 
 import nidefawl.qubes.inventory.BaseInventory;
-import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.item.BaseStack;
 
 /**
@@ -40,29 +39,6 @@ public class Slot {
      */
     public boolean isAt(double x, double y) {
         return x>=this.x&&x<=this.x+this.w&&y>=this.y&&y<=this.y+this.w;
-    }
-
-    /**
-     * @param stack
-     * @param inv2
-     */
-    public void carriedClicked(BaseStack stack) {
-        inv.setCarried(this.getItem());
-        this.setItem(stack);
-    }
-
-    /**
-     * @param stack
-     */
-    private void setItem(BaseStack stack) {
-        this.inv.setItem(this.idx, stack);
-    }
-
-    /**
-     * @param stack
-     */
-    public void clicked() {
-        this.setItem(inv.setCarried(this.getItem()));
     }
 
 }

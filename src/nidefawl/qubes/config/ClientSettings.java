@@ -20,6 +20,7 @@ public class ClientSettings extends AbstractYMLConfig {
     public float thirdpersonDistance;
     public boolean dirty;
     private int saveTicks;
+    public int ao;
     
     @Override
     public void setDefaults() {
@@ -27,6 +28,7 @@ public class ClientSettings extends AbstractYMLConfig {
         this.shadowDrawMode = 0;
         this.ssr = 0;
         this.aa = 1;
+        this.ao = 1;
         this.smaaQuality = 1;
         this.thirdpersonDistance = 4.0f;
     }
@@ -39,6 +41,7 @@ public class ClientSettings extends AbstractYMLConfig {
         smaaQuality = getInt("smaaQuality", smaaQuality);
         ssr = getInt("ssr", ssr);
         aa = getInt("aa", aa);
+        ao = getInt("ao", ao);
     }
 
     @Override
@@ -47,6 +50,7 @@ public class ClientSettings extends AbstractYMLConfig {
         setInt("shadowDrawMode", shadowDrawMode);
         setInt("ssr", ssr);
         setInt("aa", aa);
+        setInt("ao", ao);
         setInt("smaaQuality", smaaQuality);
         setFloat("thirdpersonDistance", thirdpersonDistance);
     }

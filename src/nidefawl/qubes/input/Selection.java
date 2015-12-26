@@ -94,7 +94,6 @@ public class Selection {
                 Shaders.colored3D.enable();
                 highlightSelection.drawQuads();
                 Shaders.wireframe.enable();
-                Shaders.wireframe.setProgramUniform3f("in_offset", 0,0,0);
                 Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
                 Shaders.wireframe.setProgramUniform1f("thickness", 0.7f);
                 Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0f, 1f, 1);
@@ -112,9 +111,10 @@ public class Selection {
     private void renderMouseOver() {
         if (this.renderBB != null) {
             glDepthFunc(GL_LESS);
-            Shaders.colored3D.setProgramUniform3f("in_offset", this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
+            
+            Engine.pxStack.push(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
             this.renderBB.drawQuads();
-            Shaders.colored3D.setProgramUniform3f("in_offset", 0, 0, 0);
+            Engine.pxStack.pop();
             glDepthFunc(GL_LEQUAL);
         }
         
@@ -375,17 +375,17 @@ public class Selection {
                 int y = hit.q.y;
                 int z = hit.q.z;
                 selBB.set(x*0.5f, y*0.5f, z*0.5f, x*0.5f+0.5f, y*0.5f+0.5f, z*0.5f+0.5f);
-//                System.out.println(hit.pos.x);
-//                this.selBB.set(0, 0, 0, 0.5f, 0.5f, 0.5f);
-//                if (hit.face == Dir.DIR_POS_X || hit.pos.x-this.mouseOver.x >= 0.5f) {
-//                    this.selBB.offset(0.5f, 0, 0);
-//                }
-//                if (hit.face == Dir.DIR_POS_Y || hit.pos.y-this.mouseOver.y >= 0.5f) {
-//                    this.selBB.offset(0, 0.5f, 0);
-//                }
-//                if (hit.face == Dir.DIR_POS_Z || hit.pos.z-this.mouseOver.z >= 0.5f) {
-//                    this.selBB.offset(0, 0, 0.5f);
-//                }
+//              System.out.println(hit.pos.x);
+//              this.selBB.set(0, 0, 0, 0.5f, 0.5f, 0.5f);
+//              if (hit.face == Dir.DIR_POS_X || hit.pos.x-this.mouseOver.x >= 0.5f) {
+//                  this.selBB.offset(0.5f, 0, 0);
+//              }
+//              if (hit.face == Dir.DIR_POS_Y || hit.pos.y-this.mouseOver.y >= 0.5f) {
+//                  this.selBB.offset(0, 0.5f, 0);
+//              }
+//              if (hit.face == Dir.DIR_POS_Z || hit.pos.z-this.mouseOver.z >= 0.5f) {
+//                  this.selBB.offset(0, 0, 0.5f);
+//              }
                 renderBlockOver(this.customBB, this.selBB);
                 this.renderBB = customBB;
                 return;
@@ -394,7 +394,6 @@ public class Selection {
                 renderBlockOver(this.customBB, this.selBB);
                 this.renderBB = customBB;
             } else {
-                renderBlockOver(this.fullBlock, new AABBFloat(0, 0, 0, 1, 1, 1));
                 this.renderBB = fullBlock;
             }
         } else {

@@ -25,11 +25,6 @@ public class PacketHandshake extends Packet {
 	}
 
 	@Override
-	public int getID() {
-		return 2;
-	}
-
-	@Override
 	public void handle(Handler h) {
 		h.handleHandshake(this);
 	}

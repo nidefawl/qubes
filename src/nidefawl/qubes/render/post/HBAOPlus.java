@@ -10,7 +10,9 @@ import java.io.File;
  * Copyright: Michael Hept
  */
 public class HBAOPlus {
-  //---------------------------------------------------------------------------------------------------
+  public static boolean hasContext;
+
+    //---------------------------------------------------------------------------------------------------
  // Remarks:
 //     * The final occlusion is a weighted sum of 2 occlusion contributions. The DetailAO and CoarseAO parameters are the weights.
 //     * Setting the DetailAO parameter to 0.0 (default value) is fastest and avoids over-occlusion artifacts on alpha-tested geometry.

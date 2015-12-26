@@ -23,9 +23,8 @@ public class BlockGroupModelledStones extends BlockGroup {
             blocks.addAll(group.getBlocks());
         }
         HashMap<String, String> modelTypes = Maps.newHashMap();
-        modelTypes.put("smooth", "models/block_smooth.qmodel");
+//        modelTypes.put("smooth", "models/block_smooth.qmodel");
         modelTypes.put("carved", "models/block_carved.qmodel");
-        modelTypes.put("carved", "models/block_cracked.qmodel");
         
         for (Entry<String, String> entry : modelTypes.entrySet()) {
             for (Block block : blocks) {

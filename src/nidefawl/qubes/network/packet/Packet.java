@@ -1,49 +1,65 @@
 package nidefawl.qubes.network.packet;
 
 import java.io.*;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
+
+import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.item.BlockStack;
+import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.network.Handler;
 
 
 public abstract class Packet {
     public final static int                       MAX_ID       = 255;
     public final static int                       MAX_STR_LEN       = 32*1024;
-    public static final int NET_VERSION = 2;
+    public static final int NET_VERSION = 3;
+    private static int NEXT_PACKET_ID;
     
     @SuppressWarnings("unchecked")
     public final static Class<? extends Packet>[] packets      = new Class[MAX_ID + 1];
     public final static boolean[]                 sentByServer = new boolean[MAX_ID + 1];
     public final static boolean[]                 sentByClient = new boolean[MAX_ID + 1];
+    static Map<Class<?>, Integer> classToIDMap = Maps.newHashMap();
+    
     static {
-        register(PacketPing.class, 1, true, true);
-        register(PacketHandshake.class, 2, true, true);
-        register(PacketDisconnect.class, 3, true, true);
-        register(PacketAuth.class, 4, true, true);
-        register(PacketSSpawnInWorld.class, 5, true, false);
-        register(PacketCMovement.class, 6, true, true);
-        register(PacketSChunkData.class, 7, true, false);
-        register(PacketCSetBlock.class, 8, false, true);
-        register(PacketCSetBlocks.class, 9, false, true);
-        register(PacketSSetBlock.class, 10, true, false);
-        register(PacketSSetBlocks.class, 11, true, false);
-        register(PacketSLightChunk.class, 12, true, false);
-        register(PacketSTrackChunk.class, 13, true, false);
-        register(PacketCSettings.class, 14, false, true);
-        register(PacketCSwitchWorld.class, 15, false, true);
-        register(PacketChatMessage.class, 16, true, true);
-        register(PacketChatChannels.class, 17, true, false);
-        register(PacketSWorldTime.class, 18, true, false);
-        register(PacketSTeleport.class, 19, true, false);
-        register(PacketSyncBlocks.class, 20, true, true);
-        register(PacketCTeleportAck.class, 21, false, true);
-        register(PacketSEntityTrack.class, 22, true, false);
-        register(PacketSEntityUnTrack.class, 23, true, false);
-        register(PacketSEntityMove.class, 24, true, false);
-        register(PacketSWorldBiomes.class, 25, true, false);
-        register(PacketCDigState.class, 26, false, true);
-        register(PacketSDigState.class, 27, true, false);
+        register(PacketPing.class, true, true);
+        register(PacketHandshake.class, true, true);
+        register(PacketDisconnect.class, true, true);
+        register(PacketAuth.class, true, true);
+        register(PacketSSpawnInWorld.class, true, false);
+        register(PacketCMovement.class, true, true);
+        register(PacketSChunkData.class, true, false);
+        register(PacketCSetBlock.class, false, true);
+        register(PacketCSetBlocks.class, false, true);
+        register(PacketSSetBlock.class, true, false);
+        register(PacketSSetBlocks.class, true, false);
+        register(PacketSLightChunk.class, true, false);
+        register(PacketSTrackChunk.class, true, false);
+        register(PacketCSettings.class, false, true);
+        register(PacketCSwitchWorld.class, false, true);
+        register(PacketChatMessage.class, true, true);
+        register(PacketChatChannels.class, true, false);
+        register(PacketSWorldTime.class, true, false);
+        register(PacketSTeleport.class, true, false);
+        register(PacketSyncBlocks.class, true, true);
+        register(PacketCTeleportAck.class, false, true);
+        register(PacketSEntityTrack.class, true, false);
+        register(PacketSEntityUnTrack.class, true, false);
+        register(PacketSEntityMove.class, true, false);
+        register(PacketSWorldBiomes.class, true, false);
+        register(PacketCDigState.class, false, true);
+        register(PacketSDigState.class, true, false);
+        register(PacketSDebugBB.class, true, false);
+        register(PacketCInvClick.class, true, true);
+        register(PacketSInvSync.class, true, true);
     }
+    
+    private int id;
+    
     public Packet() {
+        this.id = classToIDMap.get(getClass());
     }
 
     static Packet lastSuccess = null;
@@ -68,6 +84,7 @@ public abstract class Packet {
         p.writePacket(stream);
     }
 
+
     private static Packet makePacket(int t) throws InvalidPacketException {
         return makePacket(packets[t]);
     }
@@ -75,8 +92,6 @@ public abstract class Packet {
     public abstract void readPacket(DataInput stream) throws IOException;
 
     public abstract void writePacket(DataOutput stream) throws IOException;
-
-    public abstract int getID();
 
     public abstract void handle(Handler h);
 
@@ -92,11 +107,16 @@ public abstract class Packet {
         return p;
     }
 
+    private int getID() {
+        return this.id;
+    }
 
-    private static void register(final Class<? extends Packet> c, int id, final boolean ss, final boolean sc) {
+    private static void register(final Class<? extends Packet> c, final boolean ss, final boolean sc) {
+        int id = NEXT_PACKET_ID++;
         packets[id] = c;
         sentByServer[id] = ss;
         sentByClient[id] = sc;
+        classToIDMap.put(c, id);
     }
     
     public boolean handleSynchronized() {
@@ -128,4 +148,36 @@ public abstract class Packet {
 		stream.writeShort(len);
 		stream.write(str);
 	}
+
+    public static BaseStack readStack(DataInput in) throws IOException {
+        int i = in.readUnsignedByte();
+        switch (i) {
+            default:
+            case 0:
+                return null;
+            case 1:
+                ItemStack itemStack = new ItemStack();
+                itemStack.read(in);
+                return itemStack;
+            case 2:
+                BlockStack blockStack = new BlockStack();
+                blockStack.read(in);
+                return blockStack;
+        }
+    }
+
+    public static void writeStack(BaseStack stack, DataOutput out) throws IOException {
+        
+        if (stack != null && stack.isItem()) {
+            out.writeByte(1);
+            stack.write(out);
+            return;
+        }
+        if (stack != null && stack.isBlock()) {
+            out.writeByte(2);
+            stack.write(out);
+            return;
+        }
+        out.writeByte(0);
+    }
 }

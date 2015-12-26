@@ -14,7 +14,8 @@ import nidefawl.qubes.block.BlockQuarterBlock;
 import nidefawl.qubes.chunk.server.ChunkReader;
 
 /**
- * @author Michael Hept 2015 Copyright: Michael Hept
+ * @author Michael Hept 2015
+ * Copyright: Michael Hept
  */
 public class BlockDataQuarterBlock extends BlockData {
     public final short[] blockIDs = new short[Q_SIZE];

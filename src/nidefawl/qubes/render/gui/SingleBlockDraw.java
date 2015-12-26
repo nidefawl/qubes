@@ -1,25 +1,28 @@
 /**
  * 
  */
-package nidefawl.qubes.gl;
+package nidefawl.qubes.render.gui;
+
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
 import java.nio.IntBuffer;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL31;
+import org.lwjgl.opengl.*;
+
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.render.region.MeshedRegion;
-import nidefawl.qubes.render.region.RegionRenderer;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
 
 /**
- * @author Michael Hept 2015 Copyright: Michael Hept
+ * @author Michael Hept 2015
+ * Copyright: Michael Hept
  */
 public class SingleBlockDraw {
 
@@ -28,6 +31,7 @@ public class SingleBlockDraw {
     ReallocIntBuffer vboBuf;
     ReallocIntBuffer vboIdxBuf;
     private BufferedMatrix modelMatrix;
+    private BufferedMatrix projMatrix;
     private float x;
     private float y;
     private float z;
@@ -52,14 +56,50 @@ public class SingleBlockDraw {
         this.vboBuf = new ReallocIntBuffer(1024);
         this.vboIdxBuf = new ReallocIntBuffer(1024);
         this.modelMatrix = new BufferedMatrix();
+        this.projMatrix = new BufferedMatrix();
     }
 
 
-    /**
-     * @param stackData 
-     * @param stone
-     * @param i
-     */
+
+
+    public void drawBlockDefault(Block block, int data, StackData stackData) {
+        SingleBlockRenderAtlas atlas = SingleBlockRenderAtlas.getInstance();
+        if (atlas.needsRender(block, data, stackData)) {
+            this.modelMatrix.setIdentity();
+            this.projMatrix.setZero();
+            atlas.preRender(block, data, stackData, projMatrix, modelMatrix);
+            this.modelMatrix.scale(1, -1, 1);
+            this.modelMatrix.rotate(this.rotX*GameMath.PI_OVER_180, 1,0,0);
+            this.modelMatrix.rotate(this.rotY*GameMath.PI_OVER_180, 0,1,0);
+            this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
+            this.modelMatrix.update();
+            this.projMatrix.update();
+            Shaders.singleblock.enable();
+            Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
+            Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, this.projMatrix.get(), false);
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+            doRender(block, data, stackData);
+            atlas.postRender();
+            Shaders.textured.enable();
+        }
+        int tex = atlas.getTexture(block, data, stackData);
+        int texIdx = atlas.getTextureIdx(block, data, stackData);
+        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, tex);
+        float texX = SingleBlockRenderAtlas.getX(texIdx);
+        float texY = SingleBlockRenderAtlas.getY(texIdx);
+        float texW = SingleBlockRenderAtlas.getTexW();
+        float pxW = scale*32;
+        float xPos = x-pxW;
+        float yPos = y-pxW;
+        float zPos = z;
+        pxW*=2;
+        Tess.instance.setColorF(-1, 1);
+        Tess.instance.add(xPos, yPos+pxW, zPos, texX, texY);
+        Tess.instance.add(xPos+pxW, yPos+pxW, zPos, texX+texW, texY);
+        Tess.instance.add(xPos+pxW, yPos, zPos, texX+texW, texY+texW);
+        Tess.instance.add(xPos, yPos, zPos, texX, texY+texW);
+        Tess.instance.draw(GL11.GL_QUADS);
+    }
     public void drawBlock(Block block, int data, StackData stackData) {
         Shaders.singleblock.enable();
         this.modelMatrix.setIdentity();
@@ -71,6 +111,12 @@ public class SingleBlockDraw {
         this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
         this.modelMatrix.update();
         Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
+        Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, Engine.getMatOrtho3DP().get(), false);
+        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        doRender(block, data, stackData);
+    }
+
+    protected void doRender(Block block, int data, StackData stackData) {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
         int numInts = buffer.putIn(this.vboBuf);
 
@@ -83,6 +129,7 @@ public class SingleBlockDraw {
         if (Engine.USE_TRIANGLES) {
             numInts = buffer.getTriIdxPos();
             this.vboIdxBuf.reallocBuffer(numInts);
+//                System.out.println(numInts);
             this.vboIdxBuf.put(buffer.getTriIdxBuffer(), 0, numInts);
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
             if (Game.GL_ERROR_CHECKS)
@@ -92,7 +139,6 @@ public class SingleBlockDraw {
                 Engine.checkGLError("glBufferData");
         }
 
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
         int ptrSetting = 0;
         MeshedRegion.enableVertexPtrs(ptrSetting);
         if (Engine.USE_TRIANGLES) {

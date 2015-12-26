@@ -48,10 +48,7 @@ public class PacketSTeleport extends AbstractPacketWorldRef {
         stream.writeFloat(pitch);
     }
 
-    @Override
-    public int getID() {
-        return 19;
-    }
+
 
     @Override
     public void handle(Handler h) {

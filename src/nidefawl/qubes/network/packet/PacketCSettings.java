@@ -25,11 +25,6 @@ public class PacketCSettings extends Packet {
 	}
 
 	@Override
-	public int getID() {
-		return 14;
-	}
-
-	@Override
 	public void handle(Handler h) {
 		h.handleClientSettings(this);
 	}

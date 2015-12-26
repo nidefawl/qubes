@@ -21,7 +21,6 @@ import nidefawl.qubes.server.PlayerChunkTracker.Entry;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.world.*;
-import nidefawl.qubes.worldgen.biome.HexBiomes.HexBiomeEnd;
 
 /**
  * @author Michael Hept 2015
@@ -31,12 +30,18 @@ public class HexBiomesServer extends HexBiomes {
     final static public Pattern FILE_PATTERN = Pattern.compile("hex\\.(-?[0-9]+)\\.(-?[0-9]+)\\.dat");
 	private final File dir;
     Set<Long>       flaggedInstances = Sets.newConcurrentHashSet();
+    Set<Long>       flaggedInstances2 = Sets.newConcurrentHashSet();
 
 	public HexBiomesServer(World world, long seed, IWorldSettings settings) {
 	    super(world, seed, settings);
         this.dir = new File(((WorldSettings) settings).getWorldDirectory(), "biomes");
         this.dir.mkdirs();
         loadFiles();
+	}
+	File getFile(int x, int z) {
+
+        File file = new File(this.dir, String.format("hex.%d.%d.dat", x, z));
+        return file;
 	}
     
 	/**
@@ -81,14 +86,13 @@ public class HexBiomesServer extends HexBiomes {
     //TODO: make threadsafe
     @Override
     public HexBiome loadCell(int gridX, int gridY) {
-        File file = new File(this.dir, String.format("hex.%d.%d.dat", gridX, gridY));
         HexBiome b = new HexBiome(this, gridX, gridY);
         //This is really only for testing
         int id = new Random(gridX * 89153 ^ gridY * 33199 + 1).nextInt(Biome.maxBiome);
         System.out.println("biome at "+gridX+","+gridY+": "+id);
         b.biome = Biome.biomes[id];
         try {
-            b.save(file);
+            b.save(getFile(gridX, gridY));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -97,7 +101,7 @@ public class HexBiomesServer extends HexBiomes {
         return b;
     }
 
-    private void flagBiome(int gridX, int gridY) {
+    private synchronized void flagBiome(int gridX, int gridY) {
         flaggedInstances.add(GameMath.toLong(gridX, gridY));
     }
 
@@ -139,9 +143,8 @@ public class HexBiomesServer extends HexBiomes {
     /**
      * Send block changes.
      */
-    public void sendChanges() {
+    public synchronized void sendChanges() {
         if (!this.flaggedInstances.isEmpty()) {
-            //TODO: drain atomic! (.iterator().remove() ?)
             ArrayList<HexBiome> biomes = new ArrayList<>();
             for (Long e : this.flaggedInstances) {
                 HexBiome hexBiome = getPos(e);
@@ -155,5 +158,48 @@ public class HexBiomesServer extends HexBiomes {
     @Override
     public HexBiome oobCell(int x, int z) {
         return new HexBiomeEnd(this, x, z);
+    }
+    @Override
+    public synchronized void saveChanges() {
+        if (!this.flaggedInstances2.isEmpty()) {
+            for (Long e : this.flaggedInstances2) {
+                HexBiome hexBiome = getPos(e);
+                try {
+//                    long l = System.nanoTime();
+                    hexBiome.save(getFile(hexBiome.x, hexBiome.z));
+//                    long l2 = System.nanoTime();
+//                    System.out.println("save took "+(l2-l)/1000000L);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            flaggedInstances2.clear();
+        }
+    }
+    @Override
+    public synchronized void flag(int x, int z) {
+        flaggedInstances2.add(GameMath.toLong(x, z));
+    }
+
+    @Override
+    public void deleteAll() {
+        synchronized (this) {
+            File[] regionFiles = dir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.isFile() && pathname.getName().endsWith(".dat");
+                }
+            });
+            for (int i = 0; regionFiles != null && i < regionFiles.length; i++) {
+                File f = regionFiles[i];
+                Matcher m = FILE_PATTERN.matcher(f.getName());
+                if (m.matches()) {
+                    f.delete();
+                }
+            }
+            this.flaggedInstances.clear();
+            this.flaggedInstances2.clear();
+            super.reset();
+        }
     }
 }

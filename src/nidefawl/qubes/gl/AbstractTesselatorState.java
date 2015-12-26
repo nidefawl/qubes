@@ -6,24 +6,22 @@ import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 
-public class TesselatorState {
+public abstract class AbstractTesselatorState {
     public int           vertexcount;
 
     public boolean       useColorPtr;
     public boolean       useTexturePtr;
     public boolean       useNormalPtr;
     public boolean       useUINTPtr;
-    public int vboId = 0;
-    public int vboSize = 0;
     
-    public void copyTo(TesselatorState out) {
+    public void copyTo(AbstractTesselatorState out) {
         out.vertexcount = this.vertexcount;
         out.useColorPtr = this.useColorPtr;
         out.useTexturePtr = this.useTexturePtr;
         out.useNormalPtr = this.useNormalPtr;
         out.useUINTPtr = this.useUINTPtr;
     }
-
+    public abstract GLVBO getVBO();
 
 
     public int getIdx(int v) {
@@ -43,37 +41,6 @@ public class TesselatorState {
         return stride;
     }
 
-    public void bindVBO() {
-        if (this.vboId == 0) {
-            vboId = GL15.glGenBuffers();
-        }
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-    }
-    
-    public void setClientStates(ByteBuffer buffer) {
-        int stride = getVSize();
-        GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        GL11.glVertexPointer(4, GL11.GL_FLOAT, stride*4, (ByteBuffer) buffer.position(0));
-        int offset = 4;
-        if (useNormalPtr) {
-            GL11.glNormalPointer(GL11.GL_BYTE, stride*4, (ByteBuffer) buffer.position(offset*4));
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glNormalPointer");
-            GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-            offset+=1;
-        }
-        if (useTexturePtr) {
-            GL11.glTexCoordPointer(2, GL11.GL_FLOAT, stride*4, (ByteBuffer) buffer.position(offset*4));
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexCoordPointer");
-            GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-            offset+=2;
-        }
-        if (useColorPtr) {
-            GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, stride*4, (ByteBuffer) buffer.position(offset*4));
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexCoordPointer");
-            GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-            offset+=1;
-        }
-    }
 
     public void setAttrPtr() {
         int stride = getVSize();
@@ -118,7 +85,7 @@ public class TesselatorState {
     }
 
     public void bindAndDraw(int mode) {
-        bindVBO();
+        getVBO().bind();
         setAttrPtr();
         drawVBO(mode);
     }

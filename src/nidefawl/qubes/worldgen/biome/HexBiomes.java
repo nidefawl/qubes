@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.worldgen.biome;
 
+import java.util.HashMap;
+
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.hex.*;
@@ -17,13 +19,6 @@ import nidefawl.qubes.world.WorldServer;
  * Copyright: Michael Hept
  */
 public abstract class HexBiomes extends HexagonGridStorage<HexBiome> implements IBiomeManager {
-    public static class HexBiomeEnd extends HexBiome {
-        public HexBiomeEnd(HexagonGridStorage<HexBiome> grid, int x, int z) {
-            super(grid, x, z);
-            this.biome = Biome.MEADOW_GREEN;
-        }
-    }
-
     final World world;
 
     public HexBiomes(World world, long seed, IWorldSettings settings) {
@@ -49,6 +44,7 @@ public abstract class HexBiomes extends HexagonGridStorage<HexBiome> implements 
         if (hex == null) {
             return 0;
         }
+        
         double dist = hex.getDistanceCenter(x, z);
         int rgb = hex.biome.getFaceColor(colorType);
         float innerScale = colorType == BiomeColor.FOLIAGE2 ? 0.25f : 0.55f;
@@ -92,6 +88,15 @@ public abstract class HexBiomes extends HexagonGridStorage<HexBiome> implements 
             rgbCorner = TextureUtil.mixRGB(rgbCorner, rgbT, ((float)-scaleTangent));
         }
         rgbCorner = TextureUtil.mixRGB(rgb, rgbCorner, fscale);
+//        float r = TextureUtil.getR(rgbCorner)*255;
+//        float g = TextureUtil.getG(rgbCorner)*255;
+//        float b = TextureUtil.getB(rgbCorner)*255;
+//        int step = 4;
+//        int iR = (((int)r)/step)*step;
+//        int iG = (((int)g)/step)*step;
+//        int iB = (((int)b)/step)*step;
+//        return iR<<16|iG<<8|iB;
         return rgbCorner;
     }
+    
 }

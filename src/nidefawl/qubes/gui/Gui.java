@@ -7,18 +7,22 @@ import java.util.ArrayList;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.AbstractUIOverlay;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.PopupHolder;
+import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
-    ArrayList<AbstractUI> buttons   = new ArrayList<>();
+    protected ArrayList<AbstractUI> buttons   = new ArrayList<>();
     public boolean    firstOpen = true;
     public AbstractUIOverlay popup;
+    public static final int slotW = 48;
+    public static final int slotBDist = 2;
     
 
     @Override
@@ -35,12 +39,15 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     public void renderButtons(float fTime, double mX, double mY) {
+        Engine.pxStack.push(this.posX, this.posY, 0);
         for (int i = 0; i < this.buttons.size(); i++) {
-            this.buttons.get(i).render(fTime, mX, mY);
+            this.buttons.get(i).shadowSigma = this instanceof GuiWindow ? 2 : 4;
+            this.buttons.get(i).render(fTime, mX-this.posX, mY-this.posY);
         }
         if (this.popup != null) {
-            this.popup.render(fTime, mX, mY);
+            this.popup.render(fTime, mX-this.posX, mY-this.posY);
         }
+        Engine.pxStack.pop();
     }
 
     public void onClose() {
@@ -56,14 +63,14 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             }
         }
         if (selectedButton != null && action == 0) {
-            if (selectedButton.enabled && selectedButton.mouseOver(Mouse.getX(), Mouse.getY())) {
+            if (selectedButton.enabled && selectedButton.mouseOver(Mouse.getX()-this.posX, Mouse.getY()-this.posY)) {
                 selectedButton.handleMouseUp(this, action);
             }
             selectedButton = null;
             return true;
         } else if (selectedButton == null && action == 1){
             if (this.popup != null) {
-                if (this.popup.mouseOver(Mouse.getX(), Mouse.getY())) {
+                if (this.popup.mouseOver(Mouse.getX()-this.posX, Mouse.getY()-this.posY)) {
                     if (this.popup != null && !this.popup.handleMouseDown(this, action)) {
                         selectedButton = this.popup;
                     }
@@ -72,7 +79,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             }
             for (int i = 0; i < this.buttons.size(); i++) {
                 AbstractUI b = this.buttons.get(i);
-                if (b.enabled && b.mouseOver(Mouse.getX(), Mouse.getY())) {
+                if (b.enabled && b.mouseOver(Mouse.getX()-this.posX, Mouse.getY()-this.posY)) {
                     if (!b.handleMouseDown(this, action)) {
                         selectedButton = b;    
                     }
@@ -90,7 +97,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
 
     public boolean onKeyPress(int key, int scancode, int action, int mods) {
         if (key == GLFW.GLFW_KEY_ESCAPE && Game.instance.getWorld() != null) {
-            Game.instance.showGUI(null);
+            close();
             return true;
         }
         if (this.popup != null) {
@@ -107,6 +114,10 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             }
         }
         return false;
+    }
+
+    protected void close() {
+        Game.instance.showGUI(null);
     }
 
     public boolean onTextInput(int codepoint) {
@@ -132,5 +143,12 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         Tess.instance.add(this.posX+this.width, this.posY);
         Tess.instance.add(this.posX, this.posY);
         Tess.instance.draw(GL_QUADS);
+    }
+
+    protected void updateBounds() {
+    }
+
+    protected boolean canResize() {
+        return false;
     }
 }

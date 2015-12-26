@@ -27,10 +27,7 @@ public class PacketCSwitchWorld extends Packet {
         stream.writeInt(flags);
     }
 
-    @Override
-    public int getID() {
-        return 15;
-    }
+
 
     @Override
     public void handle(Handler h) {

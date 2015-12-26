@@ -11,6 +11,8 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.GameMath;
+
 import org.lwjgl.opengl.*;
 
 public class TextureManager {
@@ -90,6 +92,10 @@ public class TextureManager {
      * Copy the supplied image onto the specified OpenGL texture
      */
     public void uploadTexture(byte[] rgba, int w, int h, int bytespp, int format, int internalFormat, boolean repeat, boolean filter, int mipmapLevel) {
+        if (mipmapLevel < 0) {
+            int maxDim = Math.max(w, h);
+            mipmapLevel = 1+GameMath.log2(maxDim);
+        }
         int magfilter = GL11.GL_NEAREST;
         int minfilter = GL11.GL_NEAREST;
         int wrap_s = GL12.GL_CLAMP_TO_EDGE;

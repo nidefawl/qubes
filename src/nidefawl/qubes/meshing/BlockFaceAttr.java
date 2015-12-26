@@ -43,6 +43,7 @@ public class BlockFaceAttr {
     private int type;
     private boolean reverse = false;
     private int faceDir;
+    private int normalMap;
     
     /**
      * @param useGlobalRenderOffset the useGlobalRenderOffset to set
@@ -53,6 +54,10 @@ public class BlockFaceAttr {
 
     public void setTex(int tex) {
         this.tex = tex;
+    }
+
+    public void setNormalMap(int normalMap) {
+        this.normalMap = normalMap;
     }
 
     public void setOffset(float xOff, float yOff, float zOff) {
@@ -131,7 +136,7 @@ public class BlockFaceAttr {
         int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
         vertexBuffer.put(textureHalf2);
         vertexBuffer.put(v.rgba);
-        vertexBuffer.put(this.tex | this.type << 16 | v.pass << (16+12)); //2x SHORT
+        vertexBuffer.put(this.tex | this.normalMap << 12 | this.type << 16 | v.pass << (16+12)); //2x SHORT
         // BIT 0-7: 8 bit AO
         // BIT 16-18: 3 bit FACEDIR (aka blockside)
         // BIT 19-24: 6 bit VERTEXDIR 
@@ -169,7 +174,7 @@ public class BlockFaceAttr {
             int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
             vertexBuffer.put(textureHalf2);
             vertexBuffer.put(v.rgba);
-            vertexBuffer.put(this.tex | this.type << 16 | v.pass << (16+12)); //2x SHORT
+            vertexBuffer.put(this.tex | this.normalMap << 12 | this.type << 16 | v.pass << (16+12)); //2x SHORT
             // BIT 0-7: 8 bit AO
             // BIT 16-18: 3 bit FACEDIR (aka blockside)
             // BIT 19-24: 6 bit VERTEXDIR 

@@ -12,6 +12,9 @@ import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerServer;
+import nidefawl.qubes.inventory.slots.SlotStack;
+import nidefawl.qubes.item.Item;
+import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
@@ -48,6 +51,9 @@ public class PlayerManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            data.invStacks.add(new SlotStack(0, new ItemStack(Item.axe)));
+            data.invStacks.add(new SlotStack(1, new ItemStack(Item.pickaxe)));
         }
         return data;
     }

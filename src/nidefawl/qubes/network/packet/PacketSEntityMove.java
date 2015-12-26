@@ -61,10 +61,7 @@ public class PacketSEntityMove extends Packet {
         }
     }
 
-    @Override
-    public int getID() {
-        return 24;
-    }
+
 
     @Override
     public void handle(Handler h) {

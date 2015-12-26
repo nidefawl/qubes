@@ -41,7 +41,16 @@ public class BlockGrass extends Block {
         return 2;
     }
     
-    public boolean skipTexturePassSide(int axis, int side, int texPass) {
+    public boolean skipTexturePassSide(IBlockWorld w, int x, int y, int z, int axis, int side, int texPass) {
         return texPass == 1 && axis == 1;
+    }
+    @Override
+    public int getNormalMap(int texture) {
+        if (texture == BlockTextureArray.getInstance().getTextureIdx(this.id, 1))
+            return 1;
+        if (texture == BlockTextureArray.getInstance().getTextureIdx(Block.dirt.id, 0)) {
+            return Block.dirt.getNormalMap(texture);
+        }
+        return 0;
     }
 }

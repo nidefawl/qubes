@@ -158,4 +158,13 @@ public abstract class Handler {
 
     public void handleServerDigState(PacketSDigState packetSDigState) {
     }
+
+    public void handleDebugBBs(PacketSDebugBB packetSDebugBB) {
+    }
+
+    public void handleInvClick(PacketCInvClick packetCInvClick) {
+    }
+
+    public void handleInvSync(PacketSInvSync packetSInvSync) {
+    }
 }

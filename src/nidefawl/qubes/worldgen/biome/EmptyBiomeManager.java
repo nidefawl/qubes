@@ -13,6 +13,7 @@ import nidefawl.qubes.world.*;
  * Copyright: Michael Hept
  */
 public class EmptyBiomeManager implements IBiomeManager {
+
     public EmptyBiomeManager(World world, long seed, IWorldSettings settings) {
     }
 
@@ -41,5 +42,17 @@ public class EmptyBiomeManager implements IBiomeManager {
 
     @Override
     public void sendChanges() {
+    }
+
+    @Override
+    public void saveChanges() {
+    }
+    @Override
+    public HexBiome blockToHex(int x, int z) {
+        return null;
+    }
+
+    @Override
+    public void deleteAll() {
     }
 }

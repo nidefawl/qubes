@@ -46,4 +46,11 @@ public class HexBiomesClient extends HexBiomes {
     @Override
     public void sendChanges() {
     }
+    @Override
+    public void saveChanges() {
+    }
+
+    @Override
+    public void deleteAll() {
+    }
 }

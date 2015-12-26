@@ -138,6 +138,9 @@ public class GameServer implements Runnable, IErrorHandler {
         this.networkServer.update();
         long passed = System.currentTimeMillis()-lastTick;
         if (passed >= TICK_LEN_MS) {
+            if (passed > 80) {
+                System.err.println("SLOW TICK "+passed+"ms");
+            }
             updateTick();
             lastTick = System.currentTimeMillis();
         }
@@ -145,8 +148,13 @@ public class GameServer implements Runnable, IErrorHandler {
         if (start2-this.lastSaveTick > 10000) {
             resyncTime();
             this.lastSaveTick = start2;
+            long start1 = System.currentTimeMillis();
             this.saveAndUnloadData();
-            ServerStats.dump();
+            long passed2 = System.currentTimeMillis()-start1;
+            if (passed2 > 80) {
+                System.err.println("SLOW saveAndUnloadData "+passed2+"ms");
+            }
+//            ServerStats.dump();
         }
         start2 = System.currentTimeMillis();
         PreparedCommand run;
@@ -160,8 +168,8 @@ public class GameServer implements Runnable, IErrorHandler {
         }
             
         passed = System.currentTimeMillis()-start;
-        if (passed < 10) {
-            long lSleep = 10-passed;
+        if (passed < 4) {
+            long lSleep = 4-passed;
             if (lSleep > 0)
                 Thread.sleep(lSleep);
         }

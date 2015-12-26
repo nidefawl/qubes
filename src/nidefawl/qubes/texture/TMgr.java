@@ -8,7 +8,7 @@ public class TMgr {
     }
 
     public static int getBlocks() {
-        return BlockTextureArray.getInstance().glid_color;
+        return BlockTextureArray.getInstance().glid;
     }
 
     public static int getItems() {
@@ -28,7 +28,7 @@ public class TMgr {
     }
 
     public static int getNormals() {
-        return BlockTextureArray.getInstance().glid_normalmaps;
+        return BlockNormalMapArray.getInstance().glid;
     }
     public static int getItemNormals() {
         return ItemTextureArray.getInstance().glid_normalmaps;

@@ -1,13 +1,17 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.PlayerInventory;
+import nidefawl.qubes.inventory.PlayerInventoryCrafting;
+import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.item.BaseStack;
 
 public abstract class Player extends Entity {
 
     public String        name;
     public int punchTicks;
-    PlayerInventory inventory = new PlayerInventory();
+    final PlayerInventory inventory = new PlayerInventory();
+    final PlayerInventoryCrafting inventoryCraft = new PlayerInventoryCrafting();
     public Player() {
         super();
     }
@@ -38,4 +42,23 @@ public abstract class Player extends Entity {
         return inventory.getItem(0);
     }
 
+
+    public final PlayerInventory getInventory() {
+        return inventory;
+    }
+    public final PlayerInventoryCrafting getCraftInventory() {
+        return inventoryCraft;
+    }
+    public BaseInventory getInv(int id) {
+        switch (id) {
+            case 0:
+                return getInventory();
+            case 1:
+                return getCraftInventory();
+        }
+        return null;
+    }
+    public Slots getSlots(int id) {
+        return null;
+    }
 }

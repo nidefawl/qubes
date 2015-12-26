@@ -15,6 +15,8 @@ import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.worldgen.biome.HexBiome;
+import nidefawl.qubes.worldgen.biome.HexBiomes;
 import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public abstract class World implements IBlockWorld {
@@ -431,5 +433,9 @@ public abstract class World implements IBlockWorld {
     @Override
     public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
         return this.biomeManager.getBiomeFaceColor(this, x, y, z, faceDir, pass, colorType);
+    }
+    
+    public HexBiome getHex(int x, int z) {
+        return this.biomeManager.blockToHex(x, z);
     }
 }

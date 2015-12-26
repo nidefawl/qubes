@@ -32,7 +32,7 @@ public class GuiGameMenu extends Gui {
     public void initGui(boolean first) {
         this.buttons.clear();
         int w1 = 240;
-        int h = 24;
+        int h = 30;
         int left = this.posX+this.width/2-w1/2;
         {
             resume = new Button(1, "Resume");
@@ -63,6 +63,11 @@ public class GuiGameMenu extends Gui {
             this.buttons.add(quit);
             quit.setPos(left, this.posY+this.height/2+140);
             quit.setSize(w1, h);
+        }
+        int top = this.posY+(this.height/2)-(this.buttons.size()*(h+20))/4;
+        for (AbstractUI b : this.buttons) {
+            b.posY = top;
+            top += 20+b.height;
         }
     }
     public boolean onMouseClick(int button, int action) {

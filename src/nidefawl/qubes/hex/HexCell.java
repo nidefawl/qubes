@@ -12,7 +12,7 @@ import nidefawl.qubes.worldgen.biome.HexBiome;
 public class HexCell<T> {
     public int x;
     public int z;
-    private HexagonGridStorage<T> grid;
+    protected HexagonGridStorage<T> grid;
     public HexCell(HexagonGridStorage<T> grid, int x, int z) {
         this.grid = grid;
         this.x = x;

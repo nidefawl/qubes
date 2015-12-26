@@ -40,10 +40,7 @@ public class PacketCMovement extends Packet {
         stream.writeFloat(this.pitch);
     }
 
-    @Override
-    public int getID() {
-        return 6;
-    }
+
 
     @Override
     public void handle(Handler h) {

@@ -22,7 +22,7 @@ public class Biome {
             .setColor(BiomeColor.GRASS, 0x48AB73)
             .setColor(BiomeColor.LEAVES, 0x48AB73)
             .setColor(BiomeColor.FOLIAGE, 0x48AB73)
-            .setColor(BiomeColor.FOLIAGE2, 0x0000aa)
+            .setColor(BiomeColor.FOLIAGE2, 0x489363)
             .setDebugColor(0x3232dd);
     public final static Biome MEADOW_RED = new BiomeMeadow(2)
             .setColor(BiomeColor.GRASS, 0xE68245)
@@ -113,6 +113,10 @@ public class Biome {
             case LEAVES:
                 return this.colorLeaves;
             case FOLIAGE2:
+                if (this == MEADOW_RED)
+                    return 0xB3CC58;
+                if (this == MEADOW_BLUE)
+                    return 0x489363;
                 return this.colorFoliage2;
             default:
                 break;

@@ -17,6 +17,7 @@ import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
@@ -411,5 +412,25 @@ public class ClientHandler extends Handler {
     public void handleWorldBiomes(PacketSWorldBiomes packetSWorldBiomes) {
         IBiomeManager mgr = this.world.biomeManager;
         mgr.recvData(packetSWorldBiomes);
+    }
+    public void handleServerDigState(PacketSDigState packetSDigState) {
+        Game.instance.dig.handleServerState(packetSDigState.stage);
+    }
+    public void handleDebugBBs(PacketSDebugBB packetSDebugBB) {
+        Engine.worldRenderer.debugBBs.clear();
+        for (int i = 0; i < packetSDebugBB.boxes.size(); i++) {
+            Engine.worldRenderer.debugBBs.put(i, packetSDebugBB.boxes.get(i));    
+        }
+        
+    }
+
+    public void handleInvSync(PacketSInvSync p) {
+        PlayerSelf player = Game.instance.getPlayer();
+        if (player != null) {
+            BaseInventory inv = player.getInv(p.invId);
+            if (inv != null) {
+                inv.set(p.stacks);    
+            }
+        }
     }
 }

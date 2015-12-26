@@ -21,10 +21,10 @@ public class GuiOverlayDebug extends Gui {
 
 	public void render(float fTime, double mx, double mY) {
 	    Shaders.textured.enable();
-	    Shaders.textured.setProgramUniform3f("in_offset", 250, -280, 0);
+	    Engine.pxStack.push(250, -280, 0);
         glBindTexture(GL_TEXTURE_2D, Engine.fbDbg.getTexture(0));
         Engine.drawFullscreenQuad();
-        Shaders.textured.setProgramUniform3f("in_offset", 0, 0, 0);
+        Engine.pxStack.pop();
         Shader.disable();
 	}
     public void preDbgFB(boolean clear) {

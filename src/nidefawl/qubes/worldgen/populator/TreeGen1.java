@@ -21,8 +21,8 @@ public class TreeGen1 implements IWorldGen {
      * 
      */
     public TreeGen1() {
-        this.log = Block.log.id;
-        this.leaves = Block.leaves.id;
+        this.log = Block.logs.getBlocks().get(0).id;
+        this.leaves = Block.leaves.getBlocks().get(0).id;
     }
 
     /* (non-Javadoc)

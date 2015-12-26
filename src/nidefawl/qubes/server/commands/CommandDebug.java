@@ -1,9 +1,15 @@
 package nidefawl.qubes.server.commands;
 
+import java.util.Collections;
+
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
+import nidefawl.qubes.inventory.slots.SlotStack;
+import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.item.Item;
+import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.server.GameServer;
-import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.worldgen.biome.HexBiome;
@@ -18,6 +24,7 @@ public class CommandDebug extends Command {
     public void execute(ICommandSource source, String cmd, String[] args, String line) {
         GameServer server = source.getServer();
         if (args.length > 0) {
+            source.sendMessage(args[0]);
             switch (args[0]) {
                 case "deletechunks":
                     int n = ((WorldServer)source.getWorld()).deleteAllChunks();
@@ -26,6 +33,12 @@ public class CommandDebug extends Command {
                 case "pos":
                     Vec3D pos = ((Player)source).pos;
                     System.out.println(String.format("%.0f %.0f %.0f", pos.x, pos.y, pos.z));
+                    return;
+                case "wipeInv":
+                    ((PlayerServer)source).getInventory().set(Collections.<SlotStack>emptyList());
+                    ((PlayerServer)source).recvItem(new ItemStack(Item.axe));
+                    ((PlayerServer)source).recvItem(new ItemStack(Item.pickaxe));
+                    ((PlayerServer)source).syncInventory();
                     return;
                 case "setbiome":
                      pos = ((Player)source).pos;

@@ -162,9 +162,9 @@ public class ShaderSource {
         if ("IS_LIGHT".equals(define)) {
             return "#define IS_LIGHT(blockid) float(blockid==2222u)";
         }
-        if ("IS_LEAVES".equals(define)) {
-            return "#define IS_LEAVES(blockid) (blockid=="+Block.leaves.id+"u)";
-        }
+//        if ("IS_LEAVES".equals(define)) {
+//            return "#define IS_LEAVES(blockid) (blockid=="+Block.leaves.id+"u)";
+//        }
 //        if ("IS_WAVING_VERTEX".equals(define)) {
 //            String def = "";
 //            for (int i = 0; i <= Block.HIGHEST_BLOCK_ID; i++) {

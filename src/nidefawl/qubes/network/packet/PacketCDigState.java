@@ -37,11 +37,7 @@ public class PacketCDigState extends AbstractPacketWorldRef {
         this.face = stream.readInt();
         this.pos.read(stream);
         this.fpos.read(stream);
-        int s = stream.readByte();
-        if (s == 1) {
-            this.stack = new ItemStack();
-            this.stack.read(stream);
-        }
+        this.stack = readStack(stream);
     }
 
     @Override
@@ -51,18 +47,10 @@ public class PacketCDigState extends AbstractPacketWorldRef {
         stream.writeInt(this.face);
         this.pos.write(stream);
         this.fpos.write(stream);
-        if (this.stack != null) {
-            stream.writeByte(1);
-            this.stack.write(stream);
-        } else {
-            stream.writeByte(0);
-        }
+        writeStack(this.stack, stream);
     }
 
-    @Override
-    public int getID() {
-        return 26;
-    }
+
 
     @Override
     public void handle(Handler h) {
