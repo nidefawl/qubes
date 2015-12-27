@@ -69,7 +69,6 @@ public class Mouse {
             setLastPos();
         }
 		isGrabbed = b;
-        System.out.println(b);
         GLFW.glfwSetInputMode(GameBase.windowId, GLFW.GLFW_CURSOR, b ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
 	}
 
