@@ -1,17 +1,29 @@
 package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE2;
+import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL30.*;
+
+import static org.lwjgl.opengl.GL31.*;
+import static org.lwjgl.opengl.GL32.*;
+import static org.lwjgl.opengl.GL40.*;
+import static org.lwjgl.opengl.GL41.*;
+import static org.lwjgl.opengl.GL42.*;
+import static org.lwjgl.opengl.GL43.*;
+
 
 import java.awt.Color;
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
@@ -22,10 +34,12 @@ import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
+import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelRigged;
@@ -40,6 +54,7 @@ import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldClient;
 
 public class WorldRenderer extends AbstractRenderer {
 
@@ -131,7 +146,6 @@ public class WorldRenderer extends AbstractRenderer {
             this.shaderModelQ = modelQ;
             this.shaderModelfirstPerson = shaderModelfirstPerson;
             this.shaderZPre = shaderZPre;
-            
             this.shaderZPre.enable();
             this.shaderZPre.setProgramUniform1i("blockTextures", 0);
             
@@ -648,7 +662,6 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-
         float ext = 1/32F;
         float zero = -ext;
         float one = 1+ext;
@@ -740,5 +753,6 @@ public class WorldRenderer extends AbstractRenderer {
             this.lastModelRot-=360;
         }
     }
+
 
 }

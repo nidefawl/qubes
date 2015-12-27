@@ -65,7 +65,7 @@ public class GLDebugTextures {
                 int_format = GL11.GL_RGBA8;
             }
             GL.bindTexture(GL13.GL_TEXTURE0, target, tex.tex);
-            GL42.glTexStorage2D(target, 1, int_format, w, h);
+            GL.glTexStorage2D(target, 1, int_format, w, h);
         }
         ARBCopyImage.glCopyImageSubData(texture, target, 0, 0, 0, 0, tex.tex, target, 0, 0, 0, 0, w, h, d);
         GL.bindTexture(GL13.GL_TEXTURE0, target, 0);

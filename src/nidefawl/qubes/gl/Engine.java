@@ -8,10 +8,13 @@ import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
+
+import com.google.common.collect.Maps;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
@@ -19,12 +22,11 @@ import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.render.FinalRenderer;
-import nidefawl.qubes.render.ShadowRenderer;
-import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
+import nidefawl.qubes.shader.ShaderBuffer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.GameError;
@@ -37,6 +39,8 @@ public class Engine {
 
     public final static BlockPos GLOBAL_OFFSET = new BlockPos();
     private final static BlockPos LAST_REPOS = new BlockPos();
+    private static Map<String, Integer> bufferBindingPoints = Maps.newHashMap();
+    private static int NEXT_BUFFER_BINDING_POINT = 0;
 
     public static boolean initRenderers = true;
 
@@ -83,6 +87,7 @@ public class Engine {
     public static ShadowRenderer  shadowRenderer;
     public static FinalRenderer  outRenderer;
     public static RegionRenderer regionRenderer;
+    public static LightCompute  lightCompute;
     public static MeshThread     regionRenderThread;
     public static int            vaoId        = 0;
     public static int            vaoTerrainId = 0;
@@ -246,6 +251,7 @@ public class Engine {
             shadowRenderer.resize(displayWidth, displayHeight);
         }
         UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
+        ShaderBuffer.rebindShaders();
     }
     public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
         orthoMV.setIdentity();
@@ -482,12 +488,15 @@ public class Engine {
         worldRenderer = new WorldRenderer();
         outRenderer = new FinalRenderer();
         shadowRenderer = new ShadowRenderer();
+        lightCompute = new LightCompute();
         worldRenderer.init();
         outRenderer.init();
         shadowRenderer.init();
+        lightCompute.init();
         worldRenderer.resize(Game.displayWidth, Game.displayHeight);
         outRenderer.resize(Game.displayWidth, Game.displayHeight);
         shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
+        lightCompute.resize(Game.displayWidth, Game.displayHeight);
         regionRenderer.reRender();
     }
 
@@ -547,6 +556,15 @@ public class Engine {
 
     public static Vector3f getPxOffset() {
         return pxOffset;
+    }
+
+    public static int getBindingPoint(String name) {
+        Integer i = bufferBindingPoints.get(name);;
+        if (i == null) {
+            i = NEXT_BUFFER_BINDING_POINT;
+            bufferBindingPoints.put(name, NEXT_BUFFER_BINDING_POINT++);
+        }
+        return i;
     }
 
 

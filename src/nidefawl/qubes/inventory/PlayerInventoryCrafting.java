@@ -10,7 +10,7 @@ package nidefawl.qubes.inventory;
 public class PlayerInventoryCrafting extends BaseInventory {
     
     public PlayerInventoryCrafting() {
-        super(1, 8*2);
+        super(1, 8*2+1);
     }
 
     public PlayerInventoryCrafting copy(PlayerInventoryCrafting inv) {

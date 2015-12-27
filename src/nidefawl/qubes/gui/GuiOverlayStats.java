@@ -67,6 +67,7 @@ public class GuiOverlayStats extends Gui {
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
+            info.add( String.format("Lights: %d", world.lights.size()) );
             info.add( String.format("UpdateRenderers (R): %s", Game.instance.updateRenderers ? "On" : "Off") );
             info.add( String.format("Primitive (Z): %s", Engine.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
             info.add( String.format("External resources (F11): %s", AssetManager.getInstance().isExternalResources() ? "On" : "Off") );

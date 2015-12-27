@@ -24,11 +24,13 @@ public class UniformBuffer {
     private int buffer;
     protected int len;
     private FloatBuffer floatBuffer;
+    private int bindingPoint;
     UniformBuffer(String name) {
         this(name, 0);
     }
     UniformBuffer(String name, int len) {
         buffers[nextIdx++] = this;
+        this.bindingPoint = Engine.getBindingPoint(name);
         this.name = name;
         this.len = len;
     }
@@ -125,6 +127,7 @@ public class UniformBuffer {
     static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4);
     static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6);
     
+    
     public static void init() {
 //        int size = GL11.glGetInteger(GL_MAX_UNIFORM_BLOCK_SIZE);
 //        System.out.println("GL_MAX_UNIFORM_BLOCK_SIZE: "+size);
@@ -153,10 +156,10 @@ public class UniformBuffer {
             final int blockIndex = glGetUniformBlockIndex(shader.shader, buffers[i].name);
             if (blockIndex != -1) {
 //                System.out.println("bind blockidx "+blockIndex+" of buffer "+buffers[i].name+"/"+i+"/"+buffers[i].buffer+" to shader "+shader.name);
-                glBindBufferBase(GL_UNIFORM_BUFFER, i, buffers[i].buffer);
+                glBindBufferBase(GL_UNIFORM_BUFFER, buffers[i].bindingPoint, buffers[i].buffer); //TODO: this needs to be done only once on buffer creation
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
-                glUniformBlockBinding(shader.shader, blockIndex, i);
+                glUniformBlockBinding(shader.shader, blockIndex, buffers[i].bindingPoint);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
                 buffers[i].addShader(shader);
@@ -459,6 +462,9 @@ public class UniformBuffer {
         uboSceneData.put(Engine.pxOffset.z);
         uboSceneData.put(1F);
         uboSceneData.update();
+    }
+    public static int getMaxBindingPoint() {
+        return buffers.length-1;
     }
 
 }

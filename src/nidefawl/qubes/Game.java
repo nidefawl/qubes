@@ -327,12 +327,12 @@ public class Game extends GameBase implements IErrorHandler {
 //              }
                 lastShaderLoadTime = System.currentTimeMillis();
                 thirdPerson = !thirdPerson;
-                Shaders.initShaders();
-                Engine.worldRenderer.initShaders();
+//                Shaders.initShaders();
+//                Engine.worldRenderer.initShaders();
 //////                Engine.worldRenderer.reloadModel();
-                  Engine.regionRenderer.initShaders();
+//                  Engine.regionRenderer.initShaders();
 //////                  Engine.shadowRenderer.initShaders();
-//                  Engine.outRenderer.initShaders();
+                  Engine.outRenderer.initShaders();
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F2) {
@@ -707,6 +707,7 @@ public class Game extends GameBase implements IErrorHandler {
         
 
         if (this.world != null) {
+            Engine.lightCompute.render(this.world, fTime);
             
 
             if (GPUProfiler.PROFILING_ENABLED)
@@ -1055,12 +1056,12 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2212322/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
-//          Engine.worldRenderer.initShaders();
-////          Engine.worldRenderer.reloadModel();
+          Engine.lightCompute.initShaders();
+//          Engine.worldRenderer.reloadModel();
 //            Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();

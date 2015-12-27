@@ -93,14 +93,14 @@ public class FinalRenderer extends AbstractRenderer {
         for (int a = 0; a < lights.size() && a < 256; a++) {
             DynamicLight light = lights.get(a);
             float constant = 1.0f;
-            float linear = 0.7f;
-            float quadratic = 0.8f;
-            float lightThreshold = 0.01f;
+            float linear = 4f;
+            float quadratic = 2f;
+            float lightThreshold = 0.1f;
             float maxBrightness = Math.max(Math.max(light.color.x, light.color.y), light.color.z);
-            float lightL = (float) (linear * linear - 4 * quadratic * (constant - (256.0 / lightThreshold) * maxBrightness));
+            float lightL = (float) (linear * linear - 4 * quadratic * (constant - (256.0 / lightThreshold) * 1));
             float radius = (-linear + GameMath.sqrtf(lightL)) / (2 * quadratic);
             lightPos[a].set(light.loc.x-Engine.GLOBAL_OFFSET.x, light.loc.y-Engine.GLOBAL_OFFSET.y, light.loc.z-Engine.GLOBAL_OFFSET.z);
-            lightColors[a].set(light.color);
+            lightColors[a].set(1,1,1);
             lightLin[a].set(linear);
             lightExp[a].set(quadratic);
             lightSize[a].set(radius);
@@ -461,10 +461,9 @@ public class FinalRenderer extends AbstractRenderer {
             });
             
             Shader new_shaderThresh = assetMgr.loadShader(this, "filter/thresholdfilter");
-            
+
             Shader new_interpLum = assetMgr.loadShader(this, "filter/luminanceInterp");
             popNewShaders();
-            shaderSSRCombine = new_shaderSSRCombine;
             shaderSSRCombine = new_shaderSSRCombine;
             shaderSSRBlur = new_shaderSSRBlur;
             shaderBloomCombine = new_shaderbloom_combine;
@@ -592,7 +591,7 @@ public class FinalRenderer extends AbstractRenderer {
         System.out.println(smaa);
         fbScene = new FrameBuffer(displayWidth, displayHeight);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGB16F);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
         fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);

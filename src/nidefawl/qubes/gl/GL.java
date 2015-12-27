@@ -13,6 +13,8 @@ import java.util.List;
 
 import org.lwjgl.opengl.*;
 
+import nidefawl.qubes.util.GameError;
+
 
 public class GL {
 
@@ -99,5 +101,17 @@ public class GL {
                 }
             }
         }
+    }
+
+    public static void glTexStorage2D(int target, int levels, int internalformat, int width, int height) {
+        GLCapabilities caps = getCaps();
+        if (caps.OpenGL42) {
+            GL42.glTexStorage2D(target, levels, internalformat, width, height);
+        } else if (caps.GL_ARB_texture_storage) {
+            ARBTextureStorage.glTexStorage2D(target, levels, internalformat, width, height);
+        } else {
+            throw new GameError("Your GPU is not yet supported");
+        }
+        
     }
 }

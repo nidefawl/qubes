@@ -256,6 +256,7 @@ public class Shader implements IManagedResource {
             System.out.println(this.name +": "+log);
         glUseProgram(0);
         UniformBuffer.bindBuffers(this);
+        ShaderBuffer.bindBuffers(this);
 
     }
     static IntBuffer buf = Memory.createIntBuffer(1);
@@ -433,6 +434,14 @@ public class Shader implements IManagedResource {
     public EResourceType getType() {
         return EResourceType.SHADER;
     }
-
+//
+//    @Override
+//    public int hashCode() {
+//        return this.name.hashCode();
+//    }
+//    @Override
+//    public boolean equals(Object obj) {
+//        return obj instanceof Shader && ((Shader)obj).name.equals(this.name);
+//    }
 }
         

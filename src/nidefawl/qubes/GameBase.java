@@ -36,7 +36,7 @@ public abstract class GameBase implements Runnable {
     public static int     displayWidth;
     public static int     displayHeight;
     public static boolean glDebug         = false;
-    public static boolean GL_ERROR_CHECKS = false;
+    public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
     static int            initHeight      = (int) (1050*0.8);
@@ -105,9 +105,17 @@ public abstract class GameBase implements Runnable {
     public final void run() {
         try {
             initDisplay(false);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("early initDisplay");
             initGLContext();
-            glClear(-1);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("early initGLContext");
+            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ACCUM_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("early glClear");
             updateDisplay();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("early updateDisplay");
         } catch (Throwable t) {
             t.printStackTrace();
             return;

@@ -15,9 +15,7 @@ import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ComboBox;
 import nidefawl.qubes.gui.controls.ComboBox.ComboBoxList;
 import nidefawl.qubes.render.post.SMAA;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.shader.*;
 
 public class GuiSettings extends Gui {
     static int nextID = 3;
@@ -107,6 +105,7 @@ public class GuiSettings extends Gui {
                 Game.instance.settings.ao = id;
                 Engine.outRenderer.initAO(Game.displayWidth, Game.displayHeight);
                 UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
+                ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
             }
         }));
         final String[] smaa = new String[] { "Disabled", "1x SMAA" };
