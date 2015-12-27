@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <project basedir="." default="build_game" name="Game">
+    <taskdef resource="proguard/ant/task.properties" classpath="D:/proguard5.1/lib/proguard.jar" />
     <property environment="env"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
@@ -47,12 +48,6 @@
             	<attribute name="Main-Class" value="nidefawl.qubes.BootClient"/>
 	        </manifest>
 		</jar>
-    	<exec executable="${cryptfilepath}/CryptFile.exe">
-  		  <arg value="-i"/>
-		  <arg value="../game.jar"/>
-  		  <arg value="-o"/>
-  		  <arg value="U:/qubes/files/game.jar"/>
-    	</exec>
     </target>
 
 
@@ -62,6 +57,25 @@
     	<antcall target="build_game_init_copy_src" />
     	<antcall target="build_game_compile" />
     	<antcall target="build_game_jar" />
+    	<antcall target="fastobfuscate" />
+    </target>
+    <target name="fastobfuscate">
+      <proguard configuration="proguard.cfg">
+        <injar name="../game.jar"/>
+        <libraryjar name="${java.home}/lib/rt.jar"/>
+        <libraryjar name="${java.home}/lib/jce.jar"/>
+        <libraryjar name="lib/jline/jline-2.13.jar"/>
+        <libraryjar name="lib/lwjgl_dbg/lwjgl.jar"/>
+        <libraryjar name="lib/guava/guava-18.0.jar"/>
+        <libraryjar name="lib/snakeyaml/snakeyaml-1.16.jar"/>
+        <outjar name="../game_obf.jar"/>
+      </proguard>
+    	<exec executable="${cryptfilepath}/CryptFile.exe">
+  		  <arg value="-i"/>
+		  <arg value="../game_obf.jar"/>
+  		  <arg value="-o"/>
+  		  <arg value="U:/qubes/files/game.jar"/>
+    	</exec>
     </target>
     <target name="build_copy_shader_and_jar">
         <echo message="${ant.project.name}: ${ant.file}"/>
