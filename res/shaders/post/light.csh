@@ -120,13 +120,13 @@ void buildFrustum2(inout vec4 frustumPlanes[6], in vec2 wrkGrp, in float minZ, i
     frustumPlanes[1] = vec4(-Projection[0][0] * tileScale.x, 0, 1 - tileBias.x, 0);
     frustumPlanes[2] = vec4(0, Projection[1][1] * tileScale.y, tileBias.y, 0);
     frustumPlanes[3] = vec4(0, -Projection[1][1] * tileScale.y, 1 - tileBias.y, 0);
+    // Near/Far
+    frustumPlanes[4] = vec4(0, 0, 1, -minZ);
+    frustumPlanes[5] = vec4(0, 0, -1, maxZ);
 
     for (uint i = 0; i < 4; ++i)
         frustumPlanes[i] /= length(frustumPlanes[i].xyz);
 
-    // Near/Far
-    frustumPlanes[4] = vec4(0, 0, 1, -minZ);
-    frustumPlanes[5] = vec4(0, 0, -1, maxZ);
 }
 bool inFrustumDbg(in vec4 pos, vec2 wrkGrp) {
     vec4 frustumPlanes[6];
@@ -196,11 +196,11 @@ void main()
                 float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
                 inFrustum = inFrustum && (d >= -rad);
             }
-            // for (int i = 4; i < 6; ++i)
-            // {
-            //     float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
-            //     inFrustum = inFrustum && (d >= -rad);
-            // }
+            for (int i = 4; i < 6; ++i)
+            {
+                float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+                inFrustum = inFrustum && (d >= -rad);
+            }
 
             if (inFrustum)
             {
