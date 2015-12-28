@@ -4,30 +4,11 @@
 
 
 #define WORK_GROUP_SIZE 32
-#define MAX_LIGHTS_PER_TILE 40 
+#define MAX_LIGHTS_PER_TILE 1024 
 #define MAX_LIGHTS 1024
+#define EXTEND_RADIUS 1.05f
+#define LIGHT_CUTOFF 0.01f
 
-struct Attenuation
-{
-    float constant;
-    float linear;
-    float exponent;
-}; 
-// aten size = 3
-struct Light
-{
-    vec3 color;
-    float intensity;
-};
-//light size = 4
-struct PointLight
-{
-    Light light;
-    Attenuation atten;
-    vec3 position;
-    float radius;
-};
-//pnt light size = 3+4+4=11
 
 struct SurfaceProperties {
     vec3    albedo;                                 //Diffuse texture aka "color texture"
@@ -43,45 +24,36 @@ struct SurfaceProperties {
     vec4   light;
 } prop;
 
-layout(std140) uniform LightInfo {
-  vec4 dayLightTime; 
-  vec4 posSun; // Light position in world space
-  vec4 lightDir; // Light dir in world space
-  vec4 La; // Ambient light intensity
-  vec4 Ld; // Diffuse light intensity
-  vec4 Ls; // Specular light intensity
-} SkyLight;
-
-
-//uniform DirectionalLight directionalLight;
-//uniform Light ambientLight;
-
-//uniform vec2 resolution;
-//uniform vec3 camPos;
-uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
-uniform int numActiveLights;
-
-layout (binding = 0, rgba16f) readonly uniform highp image2D geometryNormal;
-layout (binding = 1) uniform sampler2D depthBuffer;
-
-layout (binding = 5, rgba16f) writeonly uniform highp image2D finalImage;
+struct PointLight
+{
+    vec4 position;
+    vec4 color;
+    float intensity;
+    float radius;
+    float constant;
+    float linear;
+    float exponent;
+    float padding1;
+};
 layout (std430) buffer DebugOutputBuffer
 {
-    uint maxLights;
-    uint maxLights2;
-    uint maxLights3;
-    uint maxLights4;
+    int tileLights[];
 } debugBuf;
 
-layout (std430) buffer PointLightStorageBuffer
+layout (std140) buffer PointLightStorageBuffer
 {
     PointLight pointLights[];
 };
-
 layout (local_size_x = WORK_GROUP_SIZE, local_size_y = WORK_GROUP_SIZE, local_size_z = 1) in;
 
-shared uint minDepth = 0;
+
+layout (binding = 0, rgba16f) readonly uniform highp image2D geometryNormal;
+layout (binding = 1) uniform sampler2D depthBuffer;
+layout (binding = 5, rgba16f) writeonly uniform highp image2D finalImage;
+
+uniform int numActiveLights;
+
+shared uint minDepth = 0x7F7FFFFF;
 shared uint maxDepth = 0;
 shared uint pointLightCount = 0;
 shared uint pointLightIndex[MAX_LIGHTS];
@@ -92,87 +64,143 @@ float expToLinearDepth(in float depth)
     return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
 }
 
-vec4 unprojectPos(in vec2 coord, in float depth) { 
+vec4 unprojectPos(vec2 coord, in float depth) { 
     vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
     fragposition /= fragposition.w;
     return fragposition;
+}
+
+//----------------------------------------------------------------------------
+vec3 ReconstructViewPosition(float zBuffer, uvec2 fragCoord)
+{
+    vec2 clipPos = (vec2(fragCoord) + 0.5) * (1.0/in_scene.viewport.xy); // InvViewDim
+    clipPos = clipPos * 2.0 - 1.0;
+    
+    vec4 viewPositionH = in_matrix_3D.proj_inv * vec4(clipPos, zBuffer, 1.0);
+    return viewPositionH.xyz / viewPositionH.w; 
+}
+
+// p1 is always camera origin in view space, float3(0, 0, 0)
+vec4 CreatePlaneEquation(/*float3 p1,*/ vec3 p2, vec3 p3)
+{
+    vec4 plane;
+
+    plane.xyz = normalize(cross(p2, p3));
+    plane.w = 0;
+
+    return plane;
+}
+void buildFrustum(inout vec4 frustumPlanes[6], in vec2 wrkGrp, in float minZ, in float maxZ) {
+    vec2 resolution = in_scene.viewport.xy;
+    double tileScaleX = 64.0/double(resolution.x);
+    double tileScaleY = 64.0/double(resolution.y);
+    double extendX = tileScaleX*0.01;
+    double extendY = tileScaleY*0.01;
+    // Top/Bottom
+    frustumPlanes[0] = vec4( 0,  1, 0, -1+tileScaleY*wrkGrp.y+tileScaleY+extendY);
+    frustumPlanes[1] = vec4( 0, -1, 0, 1-tileScaleY*wrkGrp.y+extendY);
+    // Left/Right
+    frustumPlanes[2] = vec4( 1,  0, 0, -1+tileScaleX*wrkGrp.x+tileScaleX+extendX);
+    frustumPlanes[3] = vec4(-1,  0, 0, 1-tileScaleX*wrkGrp.x+extendX);
+    // Near/Far
+    frustumPlanes[4] = vec4(0, 0, 1, -minZ);
+    frustumPlanes[5] = vec4(0, 0, -1, maxZ);
+    for (int i = 0; i < 4; ++i) {
+        frustumPlanes[i] /= length(frustumPlanes[i].xyz);
+    }
+}
+void buildFrustum2(inout vec4 frustumPlanes[6], in vec2 wrkGrp, in float minZ, in float maxZ) {
+    vec2 resolution = in_scene.viewport.xy;
+    mat4 Projection = in_matrix_3D.p;
+    vec2 tileScale = vec2(resolution.xy) / (2.0f * vec2(WORK_GROUP_SIZE, WORK_GROUP_SIZE));
+    vec2 tileBias = tileScale - vec2(gl_WorkGroupID.xy);
+
+    // Left/Right/Bottom/Top
+    frustumPlanes[0] = vec4(Projection[0][0] * tileScale.x, 0, tileBias.x, 0);
+    frustumPlanes[1] = vec4(-Projection[0][0] * tileScale.x, 0, 1 - tileBias.x, 0);
+    frustumPlanes[2] = vec4(0, Projection[1][1] * tileScale.y, tileBias.y, 0);
+    frustumPlanes[3] = vec4(0, -Projection[1][1] * tileScale.y, 1 - tileBias.y, 0);
+
+    for (uint i = 0; i < 4; ++i)
+        frustumPlanes[i] /= length(frustumPlanes[i].xyz);
+
+    // Near/Far
+    frustumPlanes[4] = vec4(0, 0, 1, -minZ);
+    frustumPlanes[5] = vec4(0, 0, -1, maxZ);
+}
+bool inFrustumDbg(in vec4 pos, vec2 wrkGrp) {
+    vec4 frustumPlanes[6];
+    buildFrustum(frustumPlanes, wrkGrp, -1, 1);
+    bool inFrustum = true;
+    for (int i = 0; inFrustum && i < 6; i++) {
+        float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+        inFrustum = (d >= 0);
+    }
+    return inFrustum;
 }
 void main()
 {
     vec3 camPos = vec3(0, 0, 0);
     vec2 resolution = in_scene.viewport.xy;
-    ivec2 pixelPos = ivec2(gl_GlobalInvocationID.xy);
-    vec2 tilePos = vec2(gl_WorkGroupID.xy * gl_WorkGroupSize.xy) / resolution;
+    ivec2 iResolution = ivec2(resolution) - ivec2(1);
+    uvec2 workGroupPixelOffset = gl_WorkGroupID.xy * gl_WorkGroupSize.xy;
 
+    ivec2 pixelPos = ivec2(resolution.x-1-gl_GlobalInvocationID.x, resolution.y-1-gl_GlobalInvocationID.y);
+    vec2 texCoord = pixelPos / resolution;
     vec4 nl = imageLoad(geometryNormal, pixelPos);
     prop.normal = nl.rgb * 2.0f - 1.0f;
-    // prop.light = texture(texLight, pixelPos, 0);
-    prop.depth = texture(depthBuffer, pixelPos).r;
+    prop.depth = texelFetch(depthBuffer, pixelPos, 0).r;
     prop.linearDepth = expToLinearDepth(prop.depth);
-    prop.position = unprojectPos(pixelPos, prop.depth);
+    prop.position = unprojectPos(texCoord, prop.depth);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
+    // prop.worldposition.xyz /= prop.worldposition.w;
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
-    prop.NdotL = dot( prop.normal, SkyLight.lightDir.xyz );
-    // vec3 color = vec3(0);
-    // if (prop.depth < 0) {
-    //     color = vec3(1,0,0);
-    // } else if (prop.depth > 1) {
-    //     color = vec3(0,1,0);
-    // }
-    // color.r = WORK_GROUP_SIZE/40.0;
 
-    // float d = normalColor.w;
-    uint depth = uint(prop.depth * 0xFFFFFFFF);
+    uint depth = floatBitsToUint(prop.linearDepth);
 
     atomicMin(minDepth, depth);
     atomicMax(maxDepth, depth);
 
     barrier();
 
-    float minDepthZ = float(minDepth / float(0xFFFFFFFF));
-    float maxDepthZ = float(maxDepth / float(0xFFFFFFFF));
-
-    vec2 tileScale = resolution * (1.0f / float( 2 * WORK_GROUP_SIZE));
-    vec2 tileBias = tileScale - vec2(gl_WorkGroupID.xy);
-
-    vec4 col1 = vec4(-projectionMatrix[0][0] * tileScale.x, projectionMatrix[0][1], tileBias.x, projectionMatrix[0][3]);
-    vec4 col2 = vec4(projectionMatrix[1][0], -projectionMatrix[1][1] * tileScale.y, tileBias.y, projectionMatrix[1][3]);
-    vec4 col4 = vec4(projectionMatrix[3][0], projectionMatrix[3][1], -1.0, projectionMatrix[3][3]);
-
+    float minDepthZ = uintBitsToFloat(minDepth);
+    float maxDepthZ = uintBitsToFloat(maxDepth);
+   
     vec4 frustumPlanes[6];
-    frustumPlanes[0] = col4 + col1;
-    frustumPlanes[1] = col4 - col1;
-    frustumPlanes[2] = col4 - col2;
-    frustumPlanes[3] = col4 + col2;
-    frustumPlanes[4] = vec4(0.0, 0.0, -1.0, -minDepthZ);
-    frustumPlanes[5] = vec4(0.0, 0.0, -1.0, maxDepthZ);
+    buildFrustum2(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
 
-    for (int i = 0; i < 4; i++)
-    {
-        frustumPlanes[i] *= 1.0 / length(frustumPlanes[i].xyz);
-    }
 
-    uint threadCount = WORK_GROUP_SIZE * WORK_GROUP_SIZE;
-    uint passCount = (numActiveLights + threadCount - 1) / threadCount;
 
-    for (uint passIt = 0; passIt < passCount; passIt++)
-    {
-        uint lightIndex = passIt * threadCount + gl_LocalInvocationIndex;
-        lightIndex = min(lightIndex, numActiveLights);
-        atomicMax(maxLightIndex, lightIndex);
 
+    uint lightIndex = gl_LocalInvocationIndex;
+    if (lightIndex < numActiveLights) {
         PointLight p = pointLights[lightIndex];
-        vec4 pos = viewMatrix * vec4(p.position, 1.0);
-        float rad = p.radius;
+        vec4 pos = in_matrix_3D.mv * vec4(p.position.xyz, 1);
+        pos /= pos.w;
+        // pos.xyz/pos.w;
+        // pos.w = 1;
+        // pos = in_matrix_3D.p * pos;
+        // pos.w = 1;
+        float rad = p.radius*(EXTEND_RADIUS);
 
-        if (pointLightCount < MAX_LIGHTS_PER_TILE)
+        // if (pointLightCount < MAX_LIGHTS_PER_TILE)
         {
             bool inFrustum = true;
-            for (uint i = 3; i >= 0 && inFrustum; i--)
+            for (int i = 0; i < 2; ++i)
             {
-                float dist = dot(frustumPlanes[i], pos);
-                inFrustum = (-rad <= dist);
+                float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+                inFrustum = inFrustum && (d >= -rad);
             }
+            for (int i = 2; i < 4; ++i)
+            {
+                float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+                inFrustum = inFrustum && (d >= -rad);
+            }
+            // for (int i = 4; i < 6; ++i)
+            // {
+            //     float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+            //     inFrustum = inFrustum && (d >= -rad);
+            // }
 
             if (inFrustum)
             {
@@ -182,30 +210,83 @@ void main()
         }
     }
 
+
     barrier();
-
-    // vec3 position = imageLoad(geometryPosition, pixelPos).xyz;
-    // vec4 diffuse = vec4(imageLoad(geometryDiffuse, pixelPos).xyz, 1.0);
-    // vec3 normal = normalColor.xyz;
-    // vec3 specular = imageLoad(geometrySpecular, pixelPos).xyz;
-
-    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-
-    for (int i = 0; i < pointLightCount; i++)
+    debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
+    // debugBuf.tileLights[0] = 4;
+    // debugBuf.tileLights[1] = 5;
+    // debugBuf.tileLights[2] = 6;
+    // debugBuf.tileLights[3] = 7;
+    // barrier();
+    // memoryBarrierShared();
+    // groupMemoryBarrier();
+    // memoryBarrier();
+    vec3 finalLight = vec3(0);
+    float fDist = 0;
+    for(int i = 0; i < pointLightCount; ++i)
     {
-        // color += calcPointLight(pointLights[pointLightIndex[i]], position, normal, specular, camPos);
-        color.r += 0.01f;
+        uint idx = pointLightIndex[i];
+        if (idx >= numActiveLights) {
+            continue;
+        }
+        PointLight p = pointLights[idx];
+
+        vec3 lightRay = p.position.xyz - prop.worldposition.xyz;
+        fDist = length(lightRay);
+        float occlusion = 1;
+        if (fDist < p.radius*EXTEND_RADIUS)
+        {
+            vec3 normal = prop.normal;
+            // normal = vec3(0,1,0);
+            // Diffuse
+            float lightIntensity = p.intensity;
+            float intensityDiffuse = 1 * lightIntensity;
+            float intensitySpecular = 1 * lightIntensity;
+            vec3 colorLight = clamp(p.color.rgb, vec3(0), vec3(12));
+            vec3 lightDir = normalize(lightRay);
+            vec3 diffuse = intensityDiffuse * max(dot(normal, lightDir), 0.0) * colorLight;
+            // Specular
+            vec3 halfwayDir = normalize(lightDir + prop.viewVector);  
+            float spec = max(pow(max(dot(normal, halfwayDir), 0.0), 1.4), 0.0);
+            vec3 specular = intensitySpecular * spec * colorLight;
+            // Attenuation
+            float attenuation = 1.0 / (p.constant + p.linear * fDist + p.exponent * fDist * fDist);
+            attenuation = (attenuation - LIGHT_CUTOFF) / (1 - LIGHT_CUTOFF);
+            attenuation = max(attenuation, 0);
+
+            diffuse *= attenuation * occlusion;
+            specular *= attenuation * occlusion;
+            finalLight += diffuse;
+            finalLight += specular;
+        }
     }
-    //color += calcDirectionalLight(directionalLight, position, normal, specular, camPos);
-    //diffuse *= vec4((ambientLight.intensity * ambientLight.color).xyz, 1.0);
-    // color += diffuse;
-    // color.r = pointLightCount/1000.0f;
-    // debugBuf.maxLights = 1;
-    debugBuf.maxLights = pointLightCount/4;
-    debugBuf.maxLights2 = maxLightIndex;
-    debugBuf.maxLights3 = numActiveLights;
     barrier();
+    // finalLight = vec3(1);
+    vec4 pos = in_matrix_3D.mvp * vec4(prop.worldposition.xyz, 1);
+    pos /= pos.w;
+    // bool inFrustum = true;
+    // for (int i = 0; i < 2; ++i)
+    // {
+    //     float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+    //     inFrustum = inFrustum && (d >= 0);
+    // }
+    // if (inFrustum) {
+    //     finalLight = prop.normal.rgb;
+    // }
+    // for (int i = 2; i < 4; ++i)
+    // {
+    //     float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+    //     inFrustum = inFrustum && (d >= 0);
+    // }
 
-    imageStore(finalImage, pixelPos, color);
 
+    // if (inFrustumDbg(pos, vec2(gl_WorkGroupID.xy))) {
+    //     finalLight = prop.normal.rgb;
+    // } else {
+
+    //     finalLight = vec3(0);
+    // }
+
+    imageStore(finalImage, pixelPos, vec4(finalLight,1));
 }
+
