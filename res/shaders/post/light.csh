@@ -129,11 +129,41 @@ void buildFrustum2(inout vec4 frustumPlanes[6], in vec2 wrkGrp, in float minZ, i
         frustumPlanes[i] /= length(frustumPlanes[i].xyz);
 
 }
+void buildFrustum3(inout vec4 frustumPlanes[6], in vec2 wrkGrp, in float minZ, in float maxZ) {
+    vec2 resolution = in_scene.viewport.xy;
+    mat4 projection = in_matrix_3D.p;
+
+    float sc1=2;
+    float sc2=1;
+    vec2 tileScale = vec2(resolution.xy) / (sc2 * vec2(WORK_GROUP_SIZE, WORK_GROUP_SIZE));
+    vec2 wrkGrpOffset = wrkGrp*2+1;
+    vec2 tileBias = (tileScale) - wrkGrpOffset;
+
+    // vec2 tileScale = vec2(resolution.xy) / (2 * vec2(WORK_GROUP_SIZE, WORK_GROUP_SIZE));
+    // vec2 tileBias = (tileScale) - (wrkGrp);
+
+    // Left/Right/Bottom/Top
+    vec4 col1 = vec4(projection[0][0] * tileScale.x, projection[0][1], tileBias.x, projection[0][3]);
+    vec4 col2 = vec4(projection[1][0], projection[1][1] * tileScale.y, tileBias.y, projection[1][3]);
+    vec4 col4 = vec4(projection[3][0], projection[3][1], -1.0, projection[3][3]);
+    frustumPlanes[0] = col4 + col1;
+    frustumPlanes[1] = col4 - col1;
+    frustumPlanes[2] = col4 - col2;
+    frustumPlanes[3] = col4 + col2;
+
+    // Near/Far
+    frustumPlanes[4] = vec4(0, 0, -1, minZ);
+    frustumPlanes[5] = vec4(0, 0, 1, -maxZ);
+
+    for (uint i = 0; i < 4; ++i)
+        frustumPlanes[i] /= length(frustumPlanes[i].xyz);
+
+}
 bool inFrustumDbg(in vec4 pos, vec2 wrkGrp) {
     vec4 frustumPlanes[6];
-    buildFrustum(frustumPlanes, wrkGrp, -1, 1);
+    buildFrustum2(frustumPlanes, wrkGrp, -1000, 1000);
     bool inFrustum = true;
-    for (int i = 0; inFrustum && i < 6; i++) {
+    for (int i = 0; inFrustum && i < 1; i++) {
         float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
         inFrustum = (d >= 0);
     }
@@ -173,7 +203,7 @@ void main()
     debugBuf.debugVals[1] = maxDepthZ;
    
     vec4 frustumPlanes[6];
-    buildFrustum2(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
+    buildFrustum3(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
 
 
 
@@ -267,26 +297,18 @@ void main()
         }
     }
     barrier();
-    // finalLight = vec3(1);
-    vec4 pos = in_matrix_3D.mvp * vec4(prop.worldposition.xyz, 1);
-    pos /= pos.w;
-    // bool inFrustum = true;
-    // for (int i = 0; i < 2; ++i)
+    // buildFrustum3(frustumPlanes, vec2(8,8), minDepthZ, maxDepthZ);
+    // vec4 pos = in_matrix_3D.mv * vec4(prop.worldposition.xyz, 1);
+    //     // pos /= pos.w;
+
+    // bool inFrustum = true;//gl_WorkGroupID.x==8&&gl_WorkGroupID.y==8;
+    // for (int i = 0; i < 4; ++i)
     // {
     //     float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
     //     inFrustum = inFrustum && (d >= 0);
     // }
-    // if (inFrustum) {
-    //     finalLight = prop.normal.rgb;
-    // }
-    // for (int i = 2; i < 4; ++i)
-    // {
-    //     float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
-    //     inFrustum = inFrustum && (d >= 0);
-    // }
-
-
-    // if (inFrustumDbg(pos, vec2(gl_WorkGroupID.xy))) {
+    // // if (inFrustumDbg(pos, vec2(gl_WorkGroupID.xy))) {
+    // if (inFrustum){
     //     finalLight = prop.normal.rgb;
     // } else {
 
