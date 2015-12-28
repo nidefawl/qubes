@@ -37,6 +37,7 @@ struct PointLight
 };
 layout (std430) buffer DebugOutputBuffer
 {
+    float debugVals[16];
     int tileLights[];
 } debugBuf;
 
@@ -53,8 +54,8 @@ layout (binding = 5, rgba16f) writeonly uniform highp image2D finalImage;
 
 uniform int numActiveLights;
 
-shared uint minDepth = 0x7F7FFFFF;
-shared uint maxDepth = 0;
+shared uint minDepth = 0xfF7FFFFF;
+shared uint maxDepth = 0x7f7fffff;
 shared uint pointLightCount = 0;
 shared uint pointLightIndex[MAX_LIGHTS];
 shared uint maxLightIndex = 0;
@@ -121,8 +122,8 @@ void buildFrustum2(inout vec4 frustumPlanes[6], in vec2 wrkGrp, in float minZ, i
     frustumPlanes[2] = vec4(0, Projection[1][1] * tileScale.y, tileBias.y, 0);
     frustumPlanes[3] = vec4(0, -Projection[1][1] * tileScale.y, 1 - tileBias.y, 0);
     // Near/Far
-    frustumPlanes[4] = vec4(0, 0, 1, -minZ);
-    frustumPlanes[5] = vec4(0, 0, -1, maxZ);
+    frustumPlanes[4] = vec4(0, 0, -1, minZ);
+    frustumPlanes[5] = vec4(0, 0, 1, -maxZ);
 
     for (uint i = 0; i < 4; ++i)
         frustumPlanes[i] /= length(frustumPlanes[i].xyz);
@@ -156,15 +157,20 @@ void main()
     // prop.worldposition.xyz /= prop.worldposition.w;
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
 
-    uint depth = floatBitsToUint(prop.linearDepth);
+    float viewSpaceZ = in_matrix_3D.p[3][2] / (prop.depth - in_matrix_3D.p[2][2]);
+    uint depth = floatBitsToUint(prop.position.z);
 
-    atomicMin(minDepth, depth);
-    atomicMax(maxDepth, depth);
-
+    if (prop.depth > 0.0) 
+    {
+        atomicMin(minDepth, depth);
+        atomicMax(maxDepth, depth);
+    }
     barrier();
 
     float minDepthZ = uintBitsToFloat(minDepth);
     float maxDepthZ = uintBitsToFloat(maxDepth);
+    debugBuf.debugVals[0] = minDepthZ;
+    debugBuf.debugVals[1] = maxDepthZ;
    
     vec4 frustumPlanes[6];
     buildFrustum2(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
