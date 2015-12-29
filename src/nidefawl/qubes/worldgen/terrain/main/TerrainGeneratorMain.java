@@ -44,6 +44,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
         this.map.put(Biome.MEADOW_RED, new SubTerrainGen1(this));
         this.map.put(Biome.DESERT, new SubTerrainGen2(this));
         this.map.put(Biome.DESERT_RED, new SubTerrainGen2(this));
+        this.map.put(Biome.ICE, new SubTerrainGen3(this));
     }
 
     @Override
@@ -183,7 +184,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
 //                        }
                         if (d2 > 0.5 || y <=93) {
                             curBlock = Block.water.id;
-                            if (fromNonAir) {
+                            if (fromNonAir && curBlock == Block.water.id) {
                                 waterMask[(y+1) << 8 | xz] = 1;
                             }
                             q++;
@@ -196,6 +197,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
                         bid = getStone(this.world, cX+x, y, cZ+z, hex, rand);
                     }
                     if (curBlock == Block.water.id) {
+                        
                         blocks[y << 8 | xz] = 0;
                         waterMask[y << 8 | xz] = 1;
                         continue;
@@ -209,19 +211,42 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 int xz=z<<Chunk.SIZE_BITS|x;
                 double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
                 double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
-                        
-                int y = 93;
-                if (blockNoise > 0.1 &&  waterMask[y << 8 | xz] == 0) {
-                    if (blocks[y << 8 | xz] != 0) {
-                        blocks[y << 8 | xz] =(short) Block.sand.id;
-                    }
-                    if (blocks[(y+1) << 8 | xz] != 0) {
-                        blocks[(y+1) << 8 | xz] =(short) Block.sand.id;
-                    }
-                    if (blocks[(y+2) << 8 | xz] != 0) {
-                        blocks[(y+2) << 8 | xz] =(short) Block.sand.id;
-                    }
+                if (blockNoise < 0.1) {
+                    continue;
                 }
+                HexBiome hex = hexs[xz];
+                Biome b = biomes.getBiome(cX+x, cZ+z);
+                int y = 93;
+                if (b == Biome.ICE) {
+                    if (blocks[(y+1) << 8 | xz] == 0 && (y-8<0||waterMask[(y-8) << 8 | xz] == 0)) {
+                        blocks[y << 8 | xz] =(short) Block.ice.id;
+                        c.setData(x, y, z, 7);
+                        waterMask[y << 8 | xz] = 1;
+//                        waterMask[y << 8 | xz]++;   
+                    }
+                    continue;
+                }
+//                if (b == Biome.ICE) {
+//                    int y = 93;
+//                    if (blocks[y << 8 | xz] != 0) {
+//                        blocks[y << 8 | xz] =(short) Block.ice.id;
+//                    }
+//                } else {
+                    if (waterMask[y << 8 | xz] == 0) {
+//                        Block.get(getStone(this.world, cX+x, y, cZ+z, hex, rand))
+                        Block coast = Block.sand;
+
+                        if (blocks[y << 8 | xz] != 0) {
+                            blocks[y << 8 | xz] =(short) coast.id;
+                        }
+                        if (blocks[(y+1) << 8 | xz] != 0) {
+                            blocks[(y+1) << 8 | xz] =(short) coast.id;
+                        }
+                        if (blocks[(y+2) << 8 | xz] != 0) {
+                            blocks[(y+2) << 8 | xz] =(short) coast.id;
+                        }
+                    }
+//                }
             }
         }
     }

@@ -6,10 +6,8 @@ package nidefawl.qubes.inventory;
 import java.util.Iterator;
 import java.util.List;
 
-import nidefawl.qubes.block.Block;
-import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.inventory.slots.SlotStack;
-import nidefawl.qubes.item.*;
+import nidefawl.qubes.item.BaseStack;
 
 /**
  * @author Michael Hept 2015

@@ -1,9 +1,9 @@
 package nidefawl.qubes.render;
 
-import static nidefawl.qubes.render.WorldRenderer.*;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import org.lwjgl.opengl.GL30;
 
@@ -14,7 +14,6 @@ import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
 

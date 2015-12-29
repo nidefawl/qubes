@@ -413,4 +413,12 @@ public class Vector3f implements StreamIO {
     public void subtract(Vector3f param) {
         Vector3f.sub(this, param, this);
     }
+
+    public static void interp(Vector3f a, Vector3f b, float f, Vector3f to) {
+        to.set(
+                a.x+(a.x-b.x)*f,
+                a.y+(a.y-b.y)*f,
+                a.z+(a.z-b.z)*f
+                );
+    }
 }

@@ -4,7 +4,6 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.system.jemalloc.JEmalloc.je_calloc;
-import static org.lwjgl.system.jemalloc.JEmalloc.je_free;
 import static org.lwjgl.system.jemalloc.JEmalloc.je_malloc;
 
 import java.nio.*;

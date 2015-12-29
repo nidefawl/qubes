@@ -1,13 +1,9 @@
 package nidefawl.qubes.texture;
 
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
-import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseTileable3D;
-import nidefawl.qubes.noise.opennoise.SimplexValueNoise;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameMath;
 

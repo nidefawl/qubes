@@ -1,18 +1,8 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-
-import org.lwjgl.glfw.GLFW;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.font.ITextEdit;
-import nidefawl.qubes.font.TextInput;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
-import nidefawl.qubes.gui.controls.TextField;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
 
 public class GuiGameMenu extends Gui {
 

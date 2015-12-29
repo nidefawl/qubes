@@ -6,7 +6,6 @@ package nidefawl.qubes.chunk;
 import java.io.IOException;
 import java.util.List;
 
-import nidefawl.qubes.chunk.server.ChunkLoadThread;
 import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.ByteArray;

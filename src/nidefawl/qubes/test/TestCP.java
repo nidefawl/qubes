@@ -3,13 +3,6 @@
  */
 package nidefawl.qubes.test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-
-import nidefawl.qubes.texture.PNGDecoder;
-import nidefawl.qubes.texture.TextureUtil;
-
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept

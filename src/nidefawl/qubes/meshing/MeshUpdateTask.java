@@ -1,24 +1,21 @@
 package nidefawl.qubes.meshing;
 
-import static nidefawl.qubes.meshing.BlockFaceAttr.BLOCK_FACE_INT_SIZE;
-
-import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_2_BLOCK_FACE_INT_SIZE;
-import static nidefawl.qubes.meshing.BlockFaceAttr.PASS_3_BLOCK_FACE_INT_SIZE;
-import static nidefawl.qubes.render.region.RegionRenderer.*;
-
-import static nidefawl.qubes.render.WorldRenderer.*;
+import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+import static nidefawl.qubes.render.WorldRenderer.PASS_LOD;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
+import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCKS_MASK;
+import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCK_SIZE_BITS;
+import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MASK;
 
 import java.util.List;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
-import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 

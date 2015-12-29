@@ -91,26 +91,30 @@ public class RegionRenderer extends AbstractRenderer {
     int drawInstances = 0;
     public int numV;
     
-    protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
-    protected static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
-    protected static ByteBuffer[] idxByteBuffers = new ByteBuffer[NUM_PASSES];
-    protected static ReallocIntBuffer[] idxShortBuffers = new ReallocIntBuffer[NUM_PASSES];
+//    protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
+//    protected static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
+//    protected static ByteBuffer[] idxByteBuffers = new ByteBuffer[NUM_PASSES];
+    protected static ReallocIntBuffer[] buffers = new ReallocIntBuffer[NUM_PASSES*4];
+    protected static ReallocIntBuffer[] idxShortBuffers = new ReallocIntBuffer[NUM_PASSES*4];
     static {
         for (int i = 0; i < idxShortBuffers.length; i++) {
             idxShortBuffers[i] = new ReallocIntBuffer();
         }
-    }
-    
-    static void reallocBuffer(int pass, int len) {
-        if (buffers[pass] == null || buffers[pass].capacity() < len) {
-            if (buffers[pass] != null) {
-                buffers[pass] = Memory.reallocByteBufferAligned(buffers[pass], 64, len);
-            } else {
-                buffers[pass] = Memory.createByteBufferAligned(64, len);
-            }
-            intbuffers[pass] = buffers[pass].asIntBuffer();
+        for (int i = 0; i < buffers.length; i++) {
+            buffers[i] = new ReallocIntBuffer();
         }
     }
+    
+//    static void reallocBuffer(int pass, int len) {
+//        if (buffers[pass] == null || buffers[pass].capacity() < len) {
+//            if (buffers[pass] != null) {
+//                buffers[pass] = Memory.reallocByteBufferAligned(buffers[pass], 64, len);
+//            } else {
+//                buffers[pass] = Memory.createByteBufferAligned(64, len);
+//            }
+//            intbuffers[pass] = buffers[pass].asIntBuffer();
+//        }
+//    }
 
     public void init() {
         initShaders();
@@ -336,7 +340,7 @@ public class RegionRenderer extends AbstractRenderer {
                 r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
                 this.numV += r.getNumVertices(PASS_SOLID);
             }
-            if (numV < 1000000) {
+            if (numV < 2000000) {
                 if (r.hasPass(PASS_LOD)) {
                     r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
                     this.numV += r.getNumVertices(PASS_LOD);
@@ -426,7 +430,7 @@ public class RegionRenderer extends AbstractRenderer {
                 if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
                     continue;
                 }
-                if ((dist == 0) != (r.distance < LOD_DISTANCE)) continue;
+                if ((dist == 1) && (r.distance > LOD_DISTANCE)) continue;
                 if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
                         && r.distance > MIN_DIST_OCCL 
                         && r.frustumStates[0] >= MIN_STATE_OCCL) {
@@ -465,7 +469,7 @@ public class RegionRenderer extends AbstractRenderer {
                     r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
                     this.numV += r.getNumVertices(PASS_SOLID);
                 }
-                if (numV < 1000000) {
+                if (numV < 2000000) {
                     if (r.hasPass(PASS_LOD)) {
                         r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
                         this.numV += r.getNumVertices(PASS_LOD);
@@ -536,6 +540,8 @@ public class RegionRenderer extends AbstractRenderer {
                 queriesRunning--;
             }             
         }
+//        long n, timespent;
+//        timespent = 0L;
 //        TimingHelper.startSilent(1);
         for (int i = 0; i < this.regions.length; i++) {
             MeshedRegion[] regions = this.regions[i];
@@ -556,7 +562,9 @@ public class RegionRenderer extends AbstractRenderer {
                         }
                     }
                     if (m.isRenderable && m.hasAnyPass()) {
+//                        n=System.nanoTime();
                         updateFrustum(m);
+//                        timespent+=System.nanoTime()-n;
                         int a = 0;
                         for (;a<4;a++) {
                             if (m.frustumStates[a]>-1) {
@@ -579,6 +587,7 @@ public class RegionRenderer extends AbstractRenderer {
                 }
             }
         }
+//        System.out.println(timespent/1000L);
 //        long took = TimingHelper.stopSilent(1);
 //        System.out.println("array "+took);
         for (int i = 0; ENABLE_OCCL && i < occlQueriesRunning.length; i++) {
@@ -636,7 +645,7 @@ public class RegionRenderer extends AbstractRenderer {
         for (int i = 0; i < 4; i++) {
             m.frustumStates[i] = -1;
         }
-        m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb);
+        m.frustumStates[0] = Engine.camFrustum.checkFrustum(m.aabb, 27.8f);
         m.frustumStateChanged = (m.frustumStates[0]) != oof;
         if (m.frustumStateChanged) {
             m.occlusionResult = 0;
@@ -645,7 +654,7 @@ public class RegionRenderer extends AbstractRenderer {
             }
         }
         for (int i = 0; i < 3; i++) {
-            int state = Engine.shadowProj.checkFrustum(2-i, m.aabb);
+            int state = Engine.shadowProj.checkFrustum(2-i, m.aabb, 27.8f);
             if (state < 0) {
                 break;
             }

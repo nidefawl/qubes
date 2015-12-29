@@ -1,17 +1,14 @@
 package nidefawl.qubes.gui;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.chat.client.ChatLine;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 

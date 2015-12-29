@@ -4,12 +4,10 @@
 package nidefawl.qubes.noise;
 
 import java.io.File;
-import java.nio.Buffer;
 
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseLib;
-import sun.misc.Unsafe;
 
 /**
  * @author Michael Hept 2015

@@ -154,16 +154,13 @@ public class Item {
         return this.itemModel;
     }
     public boolean canMine(BlockPlacer placer, Block block, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
-        System.out.println("Mine");
         //Move to subclass
         if (pickaxe==this) {
-            System.out.println(block);
             return Block.ores.getBlocks().contains(block);
         }
         if (axe==this) {
             Tree tree = placer.getTree();
             if (tree == null) {
-                System.out.println("tree is null");
                 return false;
             }
             return block instanceof BlockLog;

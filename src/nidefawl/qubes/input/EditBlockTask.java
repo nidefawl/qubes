@@ -1,9 +1,7 @@
 package nidefawl.qubes.input;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.World;

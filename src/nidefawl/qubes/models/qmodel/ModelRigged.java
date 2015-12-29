@@ -12,9 +12,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.Half;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Quaternion;
 import nidefawl.qubes.vec.Vector3f;
@@ -31,7 +29,6 @@ public class ModelRigged extends ModelQModel {
     private QModelPoseBone neck;
     private QModelAction action;
     private int numIdx;
-    private int[] idxArr;
     private int[] vPos;
 	/**
 	 * @param qModelJoint 
@@ -59,7 +56,6 @@ public class ModelRigged extends ModelQModel {
         this.rootJoint = this.poseBones.get(0);
         this.action = loader.listActions.get(0);
         this.numIdx = loader.listTri.size()*3;
-        this.idxArr = new int[numIdx];
         this.vPos = new int[loader.listTri.size()];
 //        this.head.animate = false;
 	}
@@ -203,13 +199,13 @@ public class ModelRigged extends ModelQModel {
                         } else {
                             tmpVec.set(triangle.normal[i]);
                         }
-                        int normal = packNormal(tmpVec);
+                        int normal = RenderUtil.packNormal(tmpVec);
                         buf.put(normal);
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
                         buf.put(textureHalf2);
                         buf.put(0xff999999);
 //                  }
-                    idxArr[pos++] = vPos[idx];
+                    buf.putIdx(vPos[idx]);
                     buf.increaseVert();
                 }
                 buf.increaseFace();
@@ -219,7 +215,7 @@ public class ModelRigged extends ModelQModel {
             if (this.gpuBuf == null) {
                 this.gpuBuf = new GLTriBuffer();
             }
-            this.gpuBuf.upload(buf, idxArr);
+            this.gpuBuf.upload(buf);
         }
         
 

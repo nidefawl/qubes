@@ -35,18 +35,6 @@ public abstract class ModelQModel {
     }
 
 
-    /**
-     * @param vector3f
-     * @return
-     */
-    protected int packNormal(Vector3f v) {
-        byte byte0 = (byte)(int)(v.x * 127F);
-        byte byte1 = (byte)(int)(v.y * 127F);
-        byte byte2 = (byte)(int)(v.z * 127F);
-        int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
-        return normal;
-    }
-
 
     public void release() {
         if (this.gpuBuf != null) {

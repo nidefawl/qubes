@@ -5,20 +5,13 @@ package nidefawl.qubes.input;
 
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.network.packet.PacketCDigState;
-import nidefawl.qubes.network.packet.PacketCSetBlock;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
@@ -36,6 +29,7 @@ public class DigController {
     public BlockPos mouseOver;
     public BlockPos lastMouseOver;
     private RayTraceIntersection intersect;
+    int transaction = 0;
 
     public void onMouseClick(int button, boolean isDown) {
         if (button == 0) {
@@ -67,7 +61,7 @@ public class DigController {
      * @return
      */
     public boolean isDigAnimation() {
-        return digging || tick != 0;
+        return tick != 0;
     }
 
     /**
@@ -133,17 +127,16 @@ public class DigController {
             World world = Game.instance.getWorld();
             if (world == null)
                 return;
-            System.out.println("send "+state);
             int faceHit = intersect.face;
             BlockPos pos = intersect.blockPos;
-            Game.instance.sendPacket(new PacketCDigState(world.getId(), state, pos, intersect.pos, faceHit, Game.instance.getPlayer().getEquippedItem()));
+            transaction++;
+            Game.instance.sendPacket(new PacketCDigState(world.getId(), transaction<<2|state, pos, intersect.pos, faceHit, Game.instance.getPlayer().getEquippedItem()));
         }
     }
 
     public void setBlock(RayTraceIntersection hit, BlockPos mouseOver) {
         if (this.mouseOver == null || !mouseOver.equals(this.mouseOver)) {
             if (digging) {
-                System.out.println("still dig");
                 this.stage = 0;
                 sendDigState(1);
             }
@@ -249,12 +242,16 @@ public class DigController {
         if (!isDigAnimation()) {
             return 0f;
         }
-        float pr = (tick+fTime)/(float)(speed);
+        float pr = ((Math.max(0,tick-1))+fTime)/(float)(speed);
         return pr>1?1:pr;
     }
 
-    public void handleServerState(int stage) {
-        System.out.println("recv "+stage);
+    public void handleServerState(int remoteStage) {
+        int transaction = remoteStage>>2;
+        int stage = remoteStage&3;
+        if (transaction != this.transaction) {
+            return;
+        }
         this.stage = stage;
     }
 }

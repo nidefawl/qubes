@@ -1,7 +1,5 @@
 package nidefawl.qubes.util;
 
-import java.io.File;
-
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMapping;
 import nidefawl.qubes.config.WorkingEnv;

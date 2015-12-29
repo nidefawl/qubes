@@ -7,13 +7,14 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL14;
+
 import nidefawl.qubes.Game;
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
-
-import org.lwjgl.opengl.*;
 
 public class TextureManager {
     final static TextureManager instance = new TextureManager();
@@ -23,6 +24,8 @@ public class TextureManager {
     public int                  texEmpty;
     public int                  texEmptyNormal;
     private ByteBuffer          directBuf;
+
+    public int texEmptyWhite;
     
 
     TextureManager() {
@@ -37,7 +40,10 @@ public class TextureManager {
         texNoise = glGenTextures();
 //        texNoise2 = glGenTextures();
         reload();
-        texEmpty = makeNewTexture(new byte[16*16*4], 16, 16, true, false, 0);
+        byte[] emptyTexData = new byte[16*16*4];
+        texEmpty = makeNewTexture(emptyTexData, 16, 16, true, false, 0);
+        Arrays.fill(emptyTexData, (byte)0xff);
+        texEmptyWhite = makeNewTexture(emptyTexData, 16, 16, true, false, 0);
         int[] normalBumpMap = new int[16*16*4];
         Arrays.fill(normalBumpMap, 0xff7f7fff);
         byte[] ndata = TextureUtil.toBytesRGBA(normalBumpMap);

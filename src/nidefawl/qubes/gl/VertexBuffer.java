@@ -3,11 +3,6 @@
  */
 package nidefawl.qubes.gl;
 
-import java.nio.IntBuffer;
-
-import nidefawl.qubes.chunk.blockdata.BlockData;
-import nidefawl.qubes.render.region.RegionRenderer;
-
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -167,7 +162,6 @@ public class VertexBuffer {
             idx[nTriangleIdx++] = vIdx+3;
             idx[nTriangleIdx++] = vIdx+0;
         }
-        vboIdxBuf.reallocBuffer(numIdx);
         vboIdxBuf.put(idx);
         return numIdx;
     }
@@ -178,7 +172,6 @@ public class VertexBuffer {
      */
     public int putIn(ReallocIntBuffer vboBuf) {
         int intLen = this.pos;
-        vboBuf.reallocBuffer(intLen);
         vboBuf.put(this.buffer, 0, intLen);
         return intLen;
     }

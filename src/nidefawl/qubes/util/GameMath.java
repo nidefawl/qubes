@@ -2,7 +2,6 @@ package nidefawl.qubes.util;
 
 import java.nio.FloatBuffer;
 
-import nidefawl.qubes.hex.HexCell;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Quaternion;
 
@@ -230,5 +229,8 @@ public class GameMath {
         double dot = x1*x2+y1*y2;
         double cross = x1*y2-y1*x2;
         return Math.atan2(cross, dot);
+    }
+    public static float tan(float angle) {
+        return (float)Math.tan(angle);
     }
 }

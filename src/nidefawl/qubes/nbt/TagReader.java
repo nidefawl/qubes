@@ -1,7 +1,9 @@
 package nidefawl.qubes.nbt;
 
 import java.io.*;
-import java.util.zip.*;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 import com.google.common.io.*;
 

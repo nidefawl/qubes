@@ -1,9 +1,6 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.render.region.MeshedRegion;
-import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.world.IBlockWorld;
 
 public class BlockSurface {
@@ -508,6 +505,11 @@ public class BlockSurface {
         Block block = Block.get(this.type);
         int dataVal = cache.getData(x, y, z);
         this.texture = block.getTexture(this.axis<<1|this.face, dataVal, 0);
+//        if (block == Block.water && cache.getWater(x, y, z) > 0) {
+//            if (cache.getWater(x, y-2, z)==0) {
+//                this.texture = Block.ice.getTexture(this.axis<<1|this.face, dataVal, 0);
+//            }
+//        }
 //        this.texture = block.getFaceTexture(cache, x, y, z, dataVal, this.axis<<1|this.face, 0);
         this.faceColor = block.getFaceColor(cache, x, y, z, this.axis<<1|this.face, -1);
     }

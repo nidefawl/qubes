@@ -2,7 +2,6 @@ package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -11,18 +10,21 @@ import org.lwjgl.opengl.*;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 
 public class GLDebugTextures {
 
-    private int format;
-    private String name;
-    private String pass;
-    private int h;
-    private int w;
-    private int tex;
-    private int d;
-    private int flags;
+    public int format;
+    public String name;
+    public String pass;
+    public int h;
+    public int w;
+    public int tex;
+    public int d;
+    public int flags;
+    public boolean valid;
+    public static boolean show    = false;
 
     GLDebugTextures(String pass, String name, int format, int w, int h, int d, int flags) {
         this.pass = pass;
@@ -32,8 +34,12 @@ public class GLDebugTextures {
         this.h = h;
         this.d = d;
         this.flags = flags;
+        this.valid = true;
     }
     static HashMap<String, HashMap<String, GLDebugTextures>> textures = Maps.newLinkedHashMap();
+    static HashMap<Integer, GLDebugTextures> alltextures = Maps.newLinkedHashMap();
+    private static GLDebugTextures selTex;
+    private static boolean triggered;
 
     public static void readTexture(String name, String string, int texture) {
         readTexture(name, string, texture, 0);
@@ -66,12 +72,14 @@ public class GLDebugTextures {
             }
             GL.bindTexture(GL13.GL_TEXTURE0, target, tex.tex);
             GL.glTexStorage2D(target, 1, int_format, w, h);
+            alltextures.put(tex.tex, tex);
         }
         ARBCopyImage.glCopyImageSubData(texture, target, 0, 0, 0, 0, tex.tex, target, 0, 0, 0, 0, w, h, d);
         GL.bindTexture(GL13.GL_TEXTURE0, target, 0);
     }
 
     private void release() {
+        this.valid = false;
         GL11.glDeleteTextures(this.tex);
     }
     public static void onResize() {
@@ -105,6 +113,10 @@ public class GLDebugTextures {
         float xpos = gap*4;
         float ypos = gap*4;
         int x = 0;
+        double mouseX = Mouse.getX();
+        double mouseY = Mouse.getY();
+        boolean grab = !Mouse.isGrabbed();
+        GLDebugTextures mouseOver = null;
         while (itMaps.hasNext()) {
             String mapName = itMaps.next();
             HashMap<String, GLDebugTextures> map = textures.get(mapName);
@@ -128,22 +140,15 @@ public class GLDebugTextures {
                 }
                 Shaders.colored.enable();
                 Tess.instance.setColorF(background, 1);
+                if (grab && mouseX > left && mouseX < right && mouseY > top && mouseY < bottom) {
+                    mouseOver = tex;
+                }
                 Tess.instance.add(left, bottom, 0, 0, 1);
                 Tess.instance.add(right, bottom, 0, 1, 1);
                 Tess.instance.add(right, top, 0, 1, 0);
                 Tess.instance.add(left, top, 0, 0, 0);
                 Tess.instance.draw(GL11.GL_QUADS);
-
-                if (tex.format == GL30.GL_RGBA16UI) {
-                    Shaders.renderUINT.enable();
-                } else if ((tex.flags&0x1)!=0) {
-                    Shaders.tonemap.enable();
-                } else if ((tex.flags&0x2)!=0) {
-                    Shaders.depthBufShader.enable();
-                } else {
-
-                    Shaders.textured.enable();
-                }
+                tex.bindShader();
                 Tess.instance.setColorF(-1, 1);
                 Tess.instance.add(left, bottom, 0, 0, 0);
                 Tess.instance.add(right, bottom, 0, 1, 0);
@@ -157,7 +162,13 @@ public class GLDebugTextures {
                 Tess.tessFont.add(right, bottom-20, 0, 1, 1);
                 Tess.tessFont.add(left, bottom-20, 0, 0, 1);
                 Tess.tessFont.draw(7);
-                Tess.instance.setColorF(border, 1);
+                int bColor = border;
+                int texColor = -1;
+                if (mouseOver == tex) {
+                    bColor = 0x9999FF;
+                    texColor = 0xFF4444;
+                }
+                Tess.instance.setColorF(bColor, 1);
                 Tess.instance.add(left, bottom, 0, 0, 1);
                 Tess.instance.add(right, bottom, 0, 1, 1);
                 Tess.instance.add(right, top, 0, 1, 0);
@@ -166,7 +177,7 @@ public class GLDebugTextures {
                 GL11.glLineWidth(2);
                 Tess.instance.draw(GL11.GL_LINE_STRIP);
                 Shaders.textured.enable();
-                FontRenderer.get("Arial", 16, 0, 20).drawString(tex.name, left, bottom, -1, true, 1);
+                FontRenderer.get("Arial", 16, 0, 20).drawString(tex.name +" ("+tex.tex+")", left, bottom, texColor, true, 1);
                 if (!it.hasNext()) {
                     break;
                 }
@@ -174,10 +185,80 @@ public class GLDebugTextures {
             }
             x++;
         }
+        if (Mouse.isButtonDown(0)) {
+            if (!triggered) {
+                triggered = true;
+                selTex = mouseOver;
+            }
+        } else {
+            triggered = false;
+        }
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
         glPopAttrib();
     
+    }
+    public void bindShader() {
+        if (this.format == GL30.GL_RGBA16UI) {
+            Shaders.renderUINT.enable();
+        } else if ((this.flags&0x1)!=0) {
+            Shaders.tonemap.enable();
+        } else if ((this.flags&0x2)!=0) {
+            Shaders.depthBufShader.enable();
+        } else {
+
+            Shaders.textured.enable();
+        }
+    }
+    public static int getTexture(int i) {
+        GLDebugTextures tex = alltextures.get(i);
+        return tex == null ? 0 : tex.tex;
+    }
+    
+    public static GLDebugTextures getSelected() {    
+        return selTex != null && selTex.valid ? selTex : null;
+    }
+    public int get() {
+        return this.tex;
+    }
+    public static void drawFullScreen(GLDebugTextures t) {
+        try {
+
+            FrameBuffer.unbindFramebuffer();
+            t.bindShader();
+            GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, t.get());
+            Engine.drawFullscreenQuad();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static boolean isShow() {
+        return show || selTex != null;
+    }
+    public static void setShow(boolean show) {
+        GLDebugTextures.show = show;
+    }
+    public static void toggleDebugTex() {
+        
+        GLDebugTextures lightOut1 = null;
+        GLDebugTextures lightOut2 = null;
+        HashMap<String, GLDebugTextures> map = textures.get("compute_light_0");
+        if (map != null) {
+            lightOut1 = map.get("output");
+            lightOut2 = map.get("output2");
+            if ( lightOut1 == null) { //start up updates
+                show = true;
+            } else {
+                show = false;
+            }
+        }
+        if (selTex == null) {
+            selTex = lightOut1;
+        } else if (selTex == lightOut1) {
+            selTex = lightOut2;
+        } else {
+            selTex = null;
+        }
     }
 
 }

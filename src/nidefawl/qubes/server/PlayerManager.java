@@ -7,15 +7,14 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.MapMaker;
 
-import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerServer;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.nbt.TagReader;

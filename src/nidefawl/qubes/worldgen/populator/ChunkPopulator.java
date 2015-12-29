@@ -157,6 +157,9 @@ public class ChunkPopulator implements IChunkPopulator {
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
             int w = world.getWater(x, h, z);
+            if (world.getType(x, h, z) != 0) {
+                continue;
+            }
             int min1 = world.getType(x, h-1, z);
             int min2 = world.getType(x, h-2, z);
             if (w>0 && (isSoil(min1)||min1==Block.sand.id)) {

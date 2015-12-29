@@ -9,12 +9,10 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMapping;
-import nidefawl.qubes.item.Item;
 import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.util.GameMath;
 
 public class BlockModelManager {
     static final BlockModelManager instance = new BlockModelManager();

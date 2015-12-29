@@ -9,7 +9,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import nidefawl.qubes.network.packet.InvalidPacketException;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
-import nidefawl.qubes.server.StartServer;
 import nidefawl.qubes.util.GameContext;
 
 public class Connection {

@@ -1,8 +1,9 @@
 package nidefawl.qubes.entity;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.BlockColl;
+import nidefawl.qubes.util.CollisionQuery;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
 

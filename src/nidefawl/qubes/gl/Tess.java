@@ -1,10 +1,9 @@
 package nidefawl.qubes.gl;
 
-import java.nio.*;
+import java.nio.ByteOrder;
 
-import org.lwjgl.opengl.*;
-
-import nidefawl.qubes.block.Block;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 
 public class Tess extends AbstractTesselatorState {
     final public static String[] attributes = new String[] {
@@ -188,7 +187,6 @@ public class Tess extends AbstractTesselatorState {
         if (vertexcount >1) {
             int vIdx = getIdx(vertexcount);
             int len = vIdx * 4;
-            bufInt.reallocBuffer(vIdx);
             bufInt.put(rawBuffer, 0, vIdx);
             GLVBO vbo = out.getVBO();
             vbo.bind();

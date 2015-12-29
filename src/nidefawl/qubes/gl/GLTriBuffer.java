@@ -10,23 +10,23 @@ import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.render.region.MeshedRegion;
+import nidefawl.qubes.util.GameError;
 
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
 public class GLTriBuffer {
 
-    private int      vbo;
-    private int      vboIndices;
+    private int      vbo = -1;
+    private int      vboIndices = -1;
     ReallocIntBuffer vboBuf;
     ReallocIntBuffer vboIdxBuf;
     private int      triCount;
     private int      vertexCount;
 
-    /**
-     * @param buf
-     */
-    public void upload(VertexBuffer buf, int[] vertIdx) {
+
+
+    public void upload(VertexBuffer buf) {
         if (this.vboBuf == null) {
             IntBuffer buff = Engine.glGenBuffers(2);
             this.vbo = buff.get(0);
@@ -36,7 +36,7 @@ public class GLTriBuffer {
         }
         int numInts = buf.putIn(this.vboBuf);
         this.vertexCount = buf.vertexCount;
-        this.triCount = vertIdx.length/3;
+        this.triCount = buf.getTriIdxPos()/3;
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
         if (Game.GL_ERROR_CHECKS)
@@ -48,10 +48,9 @@ public class GLTriBuffer {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer " + vboIndices);
 
-        this.vboIdxBuf.reallocBuffer(vertIdx.length);
-        this.vboIdxBuf.put(vertIdx);
+        this.vboIdxBuf.put(buf.getTriIdxBuffer(), 0, buf.getTriIdxPos());
         
-        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, vertIdx.length * 4, this.vboIdxBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
+        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buf.getTriIdxPos() * 4, this.vboIdxBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData");
     
@@ -62,6 +61,9 @@ public class GLTriBuffer {
      * 
      */
     public void bind() {
+        if (this.vbo == -1) {
+            throw new GameError("VBO == -1");
+        }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer " + vbo);
@@ -70,14 +72,20 @@ public class GLTriBuffer {
             Engine.checkGLError("glBindBuffer " + vboIndices);
     }
 
-    /**
-     * @param ptrSetting
-     */
+    public void drawElements() {
+        GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
+    }
     public void draw(int ptrSetting) {
+        if (this.triCount <= 0) {
+            throw new GameError("this.triCount <= 0");
+        }
         MeshedRegion.enableVertexPtrs(ptrSetting);
         GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
         MeshedRegion.disableVertexPtrs(ptrSetting);
+        unbind();
+    }
+    public void unbind() {
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
 

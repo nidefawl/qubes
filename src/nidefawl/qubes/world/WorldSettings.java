@@ -7,10 +7,6 @@ import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.util.StringUtil;
-import nidefawl.qubes.worldgen.populator.ChunkPopulator;
-import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
-import nidefawl.qubes.worldgen.populator.IChunkPopulator;
-import nidefawl.qubes.worldgen.terrain.*;
 
 public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 

@@ -8,7 +8,6 @@ import nidefawl.qubes.server.commands.Command;
 import nidefawl.qubes.server.commands.CommandException;
 import nidefawl.qubes.server.commands.ICommandSource;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldServer;
 
 public class ConsoleReader implements Runnable, ICommandSource {
 

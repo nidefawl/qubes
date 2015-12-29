@@ -102,9 +102,9 @@ public class TreeGeneratorLSystem implements IWorldGen {
                 int y1 = TripletLongHash.getY(l)-1-rand.nextInt(5);
                 int z1 = TripletLongHash.getZ(l);
                 Block block = Block.get(world.getType(x1, y1, z1));
-                if (Block.leaves.getBlocks().contains(block))
+                if (!Block.leaves.getBlocks().contains(block))
                     continue;
-                for (int k = 1; k <4; k++) { 
+                for (int k = 0; k <4; k++) { 
                     int offx = k==0?-1:k==2?1:0;
                     int offz = k==1?-1:k==3?1:0;
                     int bX = x1+offx;

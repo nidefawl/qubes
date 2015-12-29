@@ -1,6 +1,8 @@
 package nidefawl.qubes.shader;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -10,7 +12,6 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetInputStream;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GPUVendor;
 import nidefawl.qubes.util.GameError;
 

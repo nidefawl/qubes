@@ -1,29 +1,14 @@
 package nidefawl.qubes.font;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphMetrics;
-import java.awt.font.GlyphVector;
-import java.awt.font.TextAttribute;
+import java.awt.*;
+import java.awt.font.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
+
+import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
-
-import org.lwjgl.opengl.GL11;
 
 /**
  * A TrueType font implementation originally for Slick, edited for Bobjob's

@@ -1,10 +1,8 @@
 package nidefawl.qubes.entity;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Movement;
-import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;

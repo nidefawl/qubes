@@ -9,12 +9,9 @@ import java.util.HashSet;
 
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.item.Item;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.util.GameMath;
 
 /**
  * @author Michael Hept 2015

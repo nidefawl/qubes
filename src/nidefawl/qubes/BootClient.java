@@ -1,11 +1,7 @@
 package nidefawl.qubes;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
-import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.modules.ModuleLoader;
 import nidefawl.qubes.util.GameContext;

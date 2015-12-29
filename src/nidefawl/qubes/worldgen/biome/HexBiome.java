@@ -119,8 +119,6 @@ public class HexBiome extends HexCell<HexBiome> {
     public Tree getTree(int x, int y, int z) {
         Collection<Tree> list = trees.getRegions(x, z, 0);
         for (Tree tree : list) {
-            System.err.println(tree);
-            System.err.println(""+x+","+y+","+z+" - "+tree.trunkBB);
             if (!tree.trunkBB.contains(x, y, z)) {
                 continue;
             }

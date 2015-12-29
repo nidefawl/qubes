@@ -21,7 +21,6 @@ public class GuiInventory extends GuiInventoryBase {
             return;
         }
         this.slots = p.getSlots(0);
-        System.out.println("bounds "+this.bounds);;
         if (this.bounds != null) {
             setPos(this.bounds[0], this.bounds[1]);
             setSize(this.bounds[2], this.bounds[3]);

@@ -10,12 +10,10 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.AbstractUIOverlay;
-import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.util.Renderable;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
     protected ArrayList<AbstractUI> buttons   = new ArrayList<>();

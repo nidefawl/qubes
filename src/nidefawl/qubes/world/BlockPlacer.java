@@ -5,7 +5,6 @@ package nidefawl.qubes.world;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockQuarterBlock;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.entity.Player;
@@ -13,12 +12,9 @@ import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.network.packet.PacketSDigState;
 import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.biome.HexBiomesServer;
 import nidefawl.qubes.worldgen.trees.Tree;
 
 /**
@@ -62,7 +58,6 @@ public class BlockPlacer {
                         break;
                     }
                 }
-                System.out.println("tree "+tree);
             }
         }
         return this.tree;
@@ -76,7 +71,7 @@ public class BlockPlacer {
     }
 
 
-    public void tryMine(BlockPos pos, Vector3f fpos, BaseStack stack, int face, int stage) {
+    public void tryMine(BlockPos pos, Vector3f fpos, BaseStack stack, int face, int clientStage) {
         World w = getWorld();
         boolean isQuarter = (face & 8) != 0;
         if (pos.y < 0 || pos.y >= w.worldHeight) {
@@ -95,17 +90,19 @@ public class BlockPlacer {
         int typeAt = getWorld().getType(pos);
         Block bAgainst = Block.get(typeAt);
         ItemStack itemstack = (ItemStack) stack;
+        int transaction = clientStage>>2;
+        int stage = clientStage&3;
         if (stage > 0 && bAgainst.canMineWith(this, w, pos, this.player, itemstack)) {
             long l = (System.currentTimeMillis()-startTime)/50;
             l/=15;
             if (stage > 1) {
                 bAgainst.onBlockMine(this, w, pos, this.player, itemstack); 
             } else {
-                player.sendPacket(new PacketSDigState(w.getId(), 1));
+                player.sendPacket(new PacketSDigState(w.getId(), transaction<<2|1));
                 startTime = System.currentTimeMillis();
             }
         } else {
-            player.sendPacket(new PacketSDigState(w.getId(), 0));
+            player.sendPacket(new PacketSDigState(w.getId(), transaction<<2|0));
         }
         
     }
@@ -134,15 +131,11 @@ public class BlockPlacer {
         if (isQuarter) {
             int offset = bAgainst.isReplaceable() ? -1 : face;
             //            BlockPos against = pos.copy();
-            System.out.println("qPos1 " + qPos);
-            System.out.println("pos1 " + pos);
             if (b != Block.air)
                 qPos.offset(offset);
-            System.out.println("qPos2 " + qPos);
             pos.x = qPos.x >> 1;
             pos.y = qPos.y >> 1;
             pos.z = qPos.z >> 1;
-            System.out.println("pos2 " + pos);
             int typeAt2 = getWorld().getType(pos);
             Block b2 = Block.get(typeAt2);
             if (b2 != Block.quarter) {
@@ -172,7 +165,6 @@ public class BlockPlacer {
                 w.flagBlock(pos.x, pos.y, pos.z);
 
             }
-          System.out.println("b2 "+b2);
 //            if (1!=2)
 //                return;
 //            float x = fpos.x-pos.x;

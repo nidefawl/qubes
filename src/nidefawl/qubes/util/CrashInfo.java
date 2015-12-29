@@ -5,11 +5,7 @@ package nidefawl.qubes.util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import nidefawl.qubes.shader.ShaderCompileError;
 
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept

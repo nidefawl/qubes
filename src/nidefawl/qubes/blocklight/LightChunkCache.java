@@ -6,18 +6,16 @@
  */
 package nidefawl.qubes.blocklight;
 
-import static nidefawl.qubes.chunk.Chunk.*;
+import static nidefawl.qubes.chunk.Chunk.MASK;
+import static nidefawl.qubes.chunk.Chunk.SIZE_BITS;
+
 import java.util.Arrays;
-import java.util.HashSet;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.server.PlayerChunkTracker;
-import nidefawl.qubes.util.TripletLongHash;
-import nidefawl.qubes.util.TripletShortHash;
 import nidefawl.qubes.vec.BlockBoundingBox;
-import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 

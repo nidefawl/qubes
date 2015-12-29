@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.chat;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ import com.google.common.collect.MapMaker;
 
 import nidefawl.qubes.chat.channel.AbstractChannel;
 import nidefawl.qubes.chat.channel.GlobalChannel;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.server.GameServer;
 

@@ -3,21 +3,14 @@
  */
 package nidefawl.qubes.meshing;
 
-import static nidefawl.qubes.render.WorldRenderer.*;
-import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCKS_MASK;
-import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MASK;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
 
 import java.util.Arrays;
 
-import nidefawl.qubes.Game;
-import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.block.*;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.models.qmodel.*;
-import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.SingleBlockWorld;

@@ -7,23 +7,18 @@ import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
-import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 
 public class Selection {

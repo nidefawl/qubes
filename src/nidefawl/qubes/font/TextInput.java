@@ -1,8 +1,5 @@
 package nidefawl.qubes.font;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;

@@ -36,7 +36,7 @@ public abstract class GameBase implements Runnable {
     public static int     displayWidth;
     public static int     displayHeight;
     public static boolean glDebug         = false;
-    public static boolean GL_ERROR_CHECKS = true;
+    public static boolean GL_ERROR_CHECKS = false;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
     static int            initHeight      = (int) (1050*0.8);
@@ -329,8 +329,7 @@ public abstract class GameBase implements Runnable {
 
     protected void checkResize() {
         if (newWidth != displayWidth || newHeight != displayHeight) {
-            System.out.println("1 resize " + newWidth + "/" + newHeight);
-            System.out.println("2 resize " + displayWidth + "/" + displayHeight);
+            System.out.println("resize " + newWidth + "/" + newHeight);
             displayWidth = newWidth;
             displayHeight = newHeight;
             if (displayWidth <= 0) {
@@ -339,7 +338,6 @@ public abstract class GameBase implements Runnable {
             if (displayHeight <= 0) {
                 displayHeight = 1;
             }
-            System.out.println("resize " + displayWidth + "/" + displayHeight);
             try {
                 if (isRunning())
                     GL11.glViewport(0, 0, displayWidth, displayHeight);

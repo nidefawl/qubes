@@ -7,9 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.inventory.InventoryUtil;
-import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.inventory.slots.SlotStack;
-import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.util.StringUtil;

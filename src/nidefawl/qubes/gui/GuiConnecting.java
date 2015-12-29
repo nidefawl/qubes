@@ -1,15 +1,9 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-
-import org.lwjgl.glfw.GLFW;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.network.client.ThreadConnect;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiConnecting extends Gui {

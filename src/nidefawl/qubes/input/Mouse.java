@@ -5,7 +5,6 @@ import static org.lwjgl.glfw.GLFW.glfwSetCursorPos;
 
 import java.nio.DoubleBuffer;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.GameBase;

@@ -1,9 +1,7 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockGrass;
 import nidefawl.qubes.block.BlockLeaves;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.texture.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
@@ -171,8 +169,13 @@ public class BlockFace {
                 this.v3[i] = fPos + dv[i];
             }
         }
+        boolean shift = false;
+//        if (bs.type == Block.water.id && bs.isAirAbove)
+//            shift = true;
+        if (bs.type == Block.water.id && bs.isAirAbove)
+            shift = true;
         
-        if (bs.type == Block.water.id && bs.isAirAbove) {
+        if (shift) {
             float fillLevel = 0.3f;
             float offset = 1-fillLevel;
             switch (side) {

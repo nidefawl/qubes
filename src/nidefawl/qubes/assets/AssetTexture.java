@@ -1,11 +1,9 @@
 package nidefawl.qubes.assets;
 
-import java.io.*;
 import java.nio.ByteBuffer;
 
 import nidefawl.qubes.texture.PNGDecoder;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
 
 public class AssetTexture extends Asset {
 

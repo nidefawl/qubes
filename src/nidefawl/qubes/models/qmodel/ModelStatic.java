@@ -9,6 +9,7 @@ import java.util.List;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.Half;
+import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -33,7 +34,6 @@ public class ModelStatic extends ModelQModel {
             List<QModelTriangle> triList = this.loader.listTri; 
             List<QModelVertex> vList = this.loader.listVertex; 
             int numIdx = triList.size()*3;
-            int[] idxArr = new int[numIdx];
             int[] vPos = new int[vList.size()];
             int vPosI = 0;
             Arrays.fill(vPos, -1);
@@ -47,13 +47,14 @@ public class ModelStatic extends ModelQModel {
                         buf.put(Float.floatToRawIntBits(v.x));
                         buf.put(Float.floatToRawIntBits(v.y));
                         buf.put(Float.floatToRawIntBits(v.z));
-                        int normal = packNormal(triangle.normal[i]);
+                        int normal = RenderUtil.packNormal(triangle.normal[i]);
                         buf.put(normal);
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
                         buf.put(textureHalf2);
                         buf.put(0xffffffff);
 //                  }
-                    idxArr[pos++] = vPos[idx];
+//                    idxArr[pos++] = vPos[idx];
+                    buf.putIdx(vPos[idx]);
                     buf.increaseVert();
                 }
                 buf.increaseFace();
@@ -63,7 +64,7 @@ public class ModelStatic extends ModelQModel {
             if (this.gpuBuf == null) {
                 this.gpuBuf = new GLTriBuffer();
             }
-            this.gpuBuf.upload(buf, idxArr);
+            this.gpuBuf.upload(buf);
         }
         
 

@@ -127,14 +127,11 @@ public class SingleBlockDraw {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData ");
         if (Engine.USE_TRIANGLES) {
-            numInts = buffer.getTriIdxPos();
-            this.vboIdxBuf.reallocBuffer(numInts);
-//                System.out.println(numInts);
-            this.vboIdxBuf.put(buffer.getTriIdxBuffer(), 0, numInts);
+            this.vboIdxBuf.put(buffer.getTriIdxBuffer(), 0, buffer.getTriIdxPos());
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBindBuffer " + vboIndices);
-            GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, numInts * 4, this.vboIdxBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
+            GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer.getTriIdxPos() * 4, this.vboIdxBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBufferData");
         }

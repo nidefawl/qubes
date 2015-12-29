@@ -110,7 +110,6 @@ public class BlockSlab extends BlockSliced {
         if (offset == Dir.DIR_NEG_Y) // placed against a bottom face
             return 1;
         float yOff = (fpos.y%1.0f);
-        System.out.println(yOff);
         Block b = Block.get(idAt);
         if (b != Block.air && b.isReplaceable())
             return 0;

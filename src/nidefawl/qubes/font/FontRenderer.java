@@ -1,24 +1,14 @@
 package nidefawl.qubes.font;
 
 import java.awt.Font;
-import java.awt.FontFormatException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
-
-import nidefawl.qubes.assets.AssetBinary;
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetPath;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.util.GameError;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
+import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.util.GameError;
 
 public class FontRenderer {
     public static HashMap<String, FontRenderer> fonts = new HashMap<String, FontRenderer>();

@@ -1,10 +1,6 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.EXTDirectStateAccess.glBindMultiTextureEXT;
-import static org.lwjgl.opengl.EXTDirectStateAccess.glGenerateTextureMipmapEXT;
-import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
-import static org.lwjgl.opengl.GL20.glCreateShader;
-import static org.lwjgl.opengl.GL20.glDeleteShader;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -37,8 +33,8 @@ public class GL {
     public static List<String> validateCaps() {
         final GLCapabilities caps = getCaps();
         ArrayList<String> missingExt = new ArrayList<>();
-        if (!caps.OpenGL32) {
-            missingExt.add("OpenGL >= 3.2");
+        if (!caps.OpenGL44) {
+            missingExt.add("OpenGL >= 4.4");
         }
         if (!caps.GL_EXT_texture_array) {
             missingExt.add("GL_EXT_texture_array");

@@ -3,18 +3,16 @@
  */
 package nidefawl.qubes;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import nidefawl.qubes.modules.ModuleLoader;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.world.*;
 import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
-import nidefawl.qubes.worldgen.terrain.*;
+import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 
 /** 
  * This class is used to register terrain generators and other "pluggable" stuff

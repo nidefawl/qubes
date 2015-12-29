@@ -23,6 +23,10 @@ public class TMgr {
         return TextureManager.getInstance().texEmpty;
     }
 
+    public static int getEmptyWhite() {
+        return TextureManager.getInstance().texEmptyWhite;
+    }
+
     public static int getEmptySpecularMap() {
         return TextureManager.getInstance().texEmpty;
     }

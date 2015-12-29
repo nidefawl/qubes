@@ -32,7 +32,6 @@ public abstract class BaseInventory {
 
     public void setItem(int idx, BaseStack item) {
         this.stacks[idx] = item;
-        System.out.println(this+" "+idx+" = "+item);
     }
 
     public int getId() {
@@ -64,12 +63,6 @@ public abstract class BaseInventory {
     }
 
     public void set(List<SlotStack> list) {
-        //        if (this.inventorySize != invSize) {
-        //            this.stacks = new BaseStack[invSize];
-        //        }
-        //        this.inventorySize = invSize;
-        //        this.id = invId;
-        System.out.println(list);
         for (int i = 0; i < this.stacks.length; i++) {
             this.stacks[i] = null;
         }

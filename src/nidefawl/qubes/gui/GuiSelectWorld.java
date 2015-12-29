@@ -8,9 +8,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
-import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.PacketCSwitchWorld;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiSelectWorld extends Gui {

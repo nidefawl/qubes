@@ -8,6 +8,7 @@ import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Half;
+import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -78,13 +79,14 @@ public class ModelBlock extends ModelQModel {
                         buf.put(Float.floatToRawIntBits(v.x));
                         buf.put(Float.floatToRawIntBits(v.y));
                         buf.put(Float.floatToRawIntBits(v.z));
-                        int normal = packNormal(triangle.normal[i]);
+                        int normal = RenderUtil.packNormal(triangle.normal[i]);
                         buf.put(normal);
-                        int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
+                        int textureHalf2 = RenderUtil.packTexCoord(triangle.texCoord[0][i], triangle.texCoord[1][i]);
                         buf.put(textureHalf2);
                         buf.put(0xffffffff);
 //                      }
                     idxArr[pos++] = vPos[idx];
+                    buf.putIdx(vPos[idx]);
                     buf.increaseVert();
                 }
                 buf.increaseFace();
@@ -94,7 +96,7 @@ public class ModelBlock extends ModelQModel {
             if (this.gpuBuf == null) {
                 this.gpuBuf = new GLTriBuffer();
             }
-            this.gpuBuf.upload(buf, idxArr);
+            this.gpuBuf.upload(buf);
         }
         
 

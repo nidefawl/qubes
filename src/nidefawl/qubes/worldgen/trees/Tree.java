@@ -98,17 +98,23 @@ public class Tree implements RegionEntry {
 
     public static byte[] intToByteArray(int[] blocks, byte[] bytes) {
         for (int i = 0; i < blocks.length; i++) {
-            bytes[i*2+0] = (byte) (blocks[i]&0xFF);
-            bytes[i*2+1] = (byte) ((blocks[i]>>8)&0xFF);
-            bytes[i*2+2] = (byte) ((blocks[i]>>16)&0xFF);
-            bytes[i*2+3] = (byte) ((blocks[i]>>24)&0xFF);
+            int blockid = blocks[i];
+            for (int a = 0; a < 4; a++) {
+                bytes[i*4+a] = (byte) (blockid&0xFF);
+                blockid >>= 8;
+            }
         }
         return bytes;
     }
 
     public static int[] byteToIntArray(byte[] blocks, int[] ints) {
         for (int i = 0; i < ints.length; i++) {
-            ints[i] = (int) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8)  | ((blocks[i*2+2]&0xFF)<<16)  | ((blocks[i*2+3]&0xFF)<<24) );
+            int j = 0;
+            for (int a = 0; a < 4; a++) {
+                int d = (blocks[i*4+a]&0xFF) << (a*8);
+                j |= d;
+            }
+            ints[i] = j;
         }
         return ints;
     }
@@ -138,7 +144,6 @@ public class Tree implements RegionEntry {
 
         if (stage >= 10) {
 //            w.setType(pos.x, pos.y, pos.z, 0, Flags.MARK|Flags.LIGHT);
-            long l = System.nanoTime();
             Iterator<BlockPos> it = trunkIterator();
             boolean done = true;
             BlockPos pos2 = new BlockPos();
@@ -182,8 +187,6 @@ public class Tree implements RegionEntry {
                 }
                 player.recvItem(new ItemStack(Item.wood));
             }
-            l = System.nanoTime()-l;
-            System.out.println(l/1000000L);
         } else {
             w.setData(pos.x, pos.y, pos.z, stage<<2|type, Flags.MARK|Flags.LIGHT);
         }

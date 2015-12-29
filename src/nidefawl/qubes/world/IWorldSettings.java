@@ -1,11 +1,8 @@
 package nidefawl.qubes.world;
 
-import java.io.File;
 import java.util.UUID;
 
-import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.network.StreamIO;
-import nidefawl.qubes.util.StringUtil;
 
 public interface IWorldSettings extends StreamIO {
     public long getSeed();

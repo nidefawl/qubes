@@ -82,15 +82,15 @@ public class AABBInt {
     }
     
     public int getCenterX() {
-        return this.minX+getWidth()>>1;
+        return this.minX+(getWidth()>>1);
     }
     
     public int getCenterY() {
-        return this.minY+getHeight()>>1;
+        return this.minY+(getHeight()>>1);
     }
     
     public int getCenterZ() {
-        return this.minZ+getLength()>>1;
+        return this.minZ+(getLength()>>1);
     }
 
     public void centerXZ(int x, int y, int z) {

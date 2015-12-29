@@ -1,18 +1,19 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
+import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
+import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
+import static org.lwjgl.opengl.GL30.GL_RGBA16UI;
+import static org.lwjgl.opengl.GL30.glFramebufferTexture2D;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
+import org.lwjgl.opengl.*;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.util.*;
-
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
-import org.lwjgl.system.MemoryUtil;
 
 public class FrameBuffer implements IManagedResource {
     private static final int MAX_COLOR_ATT    = 8;

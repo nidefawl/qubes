@@ -1,13 +1,10 @@
 package nidefawl.qubes.blocklight;
 
-import static nidefawl.qubes.chunk.Chunk.MASK;
-
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Dir;
-import nidefawl.qubes.world.WorldServer;
 
 public class BlockLightUpdate {
 

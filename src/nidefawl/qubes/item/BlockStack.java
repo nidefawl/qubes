@@ -11,7 +11,6 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockGroup;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.ByteArray;
 

@@ -231,119 +231,38 @@ public class MeshedRegion {
     public static long totalBytes = 0;
     long alloc[] = new long[NUM_PASSES];
     public static long totalBytesPass[] = new long[NUM_PASSES];
+    static int nextBuffer = 0;
     public void uploadBuffer(int pass, VertexBuffer buffer, int shadowDrawMode) {
         int numV = buffer.getVertexCount();
         int numF = buffer.getFaceCount();
-        int len = buffer.getIndex();
         this.vertexCount[pass] = numV;
         this.elementCount[pass] = numF*2;
         this.hasPass[pass] |= numV > 0;
         this.hasAnyPass |= numV > 0;
         this.shadowDrawMode = shadowDrawMode;
-        RegionRenderer.reallocBuffer(pass, len*4);
-        ByteBuffer buf = RegionRenderer.buffers[pass];
-        IntBuffer intBuffer = RegionRenderer.intbuffers[pass];
-        intBuffer.clear();
-        intBuffer.put(buffer.get(), 0, len);
-        buf.position(0).limit(len * 4);
+        int bufIdx = (nextBuffer++)%4;
+        ReallocIntBuffer buf = RegionRenderer.buffers[bufIdx*4+pass];
+        int intlen = buffer.putIn(buf);
         
-        if (pass == 0 && numF > 44444 && false) {
-            byte[] data = new byte[BLOCK_FACE_BYTE_SIZE];
-            buf.get(data);
-            buf.position(0).limit(len * 4);
-            String hex = DatatypeConverter.printHexBinary(data);
-            String cur = "";
-            int curDataLen = 0;
-            int curAttrib = 0;
-            int face = 0;
-            int lastface = -1;
-            for (int i = 0; i < BLOCK_FACE_BYTE_SIZE; i++) {
-                if (face != lastface) {
-                    System.out.printf("Face: %d (%d/%d)\n", face, i, data.length);
-                    lastface = face;
-                    curAttrib = 0;
-                }
-                if (curDataLen == 0) {
-                    cur = "";
-                }
-                int bHexIdx = i*2;
-                cur+=hex.charAt(bHexIdx);
-                cur+=hex.charAt(bHexIdx+1);
-                curDataLen++;
-                switch (curAttrib) {
-                    case 0://pos
-                        if (curDataLen == 4*4) {
-                            System.out.printf("%-20s: %s\n", "Pos", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                        }
-                        break;
-                    case 1://pos
-                        if (curDataLen == 1*4) {
-                            System.out.printf("%-20s: %s\n", "in_normal", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                        }
-                        break;
-                    case 2://pos
-                        if (curDataLen == 2*4) {
-                            System.out.printf("%-20s: %s\n", "in_texcoord", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                        }
-                        break;
-                    case 3://pos
-                        if (curDataLen == 1*4) {
-                            System.out.printf("%-20s: %s\n", "in_color", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                        }
-                        break;
-                    case 4://pos
-                        if (curDataLen == 2*4) {
-                            System.out.printf("%-20s: %s\n", "in_blockinfo", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                        }
-                        break;
-                    case 5://pos
-                        if (curDataLen == 1*4) {
-                            System.out.printf("%-20s: %s\n", "in_light", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                        }
-                        break;
-                    case 6://pos
-                        if (curDataLen == 1*4) {
-                            System.out.printf("%-20s: %s\n", "in_direction", cur);
-                            curDataLen = 0;
-                            curAttrib++;
-                            face++;
-                        }
-                        break;
-                }
-            }
-        }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo[pass]);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer " + vbo[pass]);
-        if (alloc[pass] != len * 4) {
+        if (alloc[pass] != intlen * 4) {
             totalBytes -= this.alloc[pass];
             totalBytesPass[pass] -= this.alloc[pass];
-            this.alloc[pass] = len * 4L;
+            this.alloc[pass] = intlen * 4L;
             totalBytes += this.alloc[pass];
             totalBytesPass[pass] += this.alloc[pass];
         }
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, len * 4L, buf, GL15.GL_STATIC_DRAW);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, intlen * 4L, buf.getByteBuf(), GL15.GL_STATIC_DRAW);
         if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData /" + intBuffer);
+            Engine.checkGLError("glBufferData /" + buf);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         if (Engine.USE_TRIANGLES) {
            ReallocIntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
 //           int intLen = VertexBuffer.createIndex(this.elementCount[pass], shBuffer);
             int intLen = buffer.getTriIdxPos();
 //            System.out.println("number tri idx on pass "+pass+" - "+intLen);
-            shBuffer.reallocBuffer(intLen);
             shBuffer.put(buffer.getTriIdxBuffer(), 0, intLen);
 //            System.out.println(byteSizeBuffer+"/"+(nTriangleIdx*2));
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices[pass]);
@@ -351,7 +270,7 @@ public class MeshedRegion {
                 Engine.checkGLError("glBindBuffer " + vboIndices[pass]);
             GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, intLen*4, shBuffer.getByteBuf(), GL15.GL_STATIC_DRAW);
             if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBufferData /" + intBuffer);
+                Engine.checkGLError("glBufferData /" + shBuffer);
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
             
         }

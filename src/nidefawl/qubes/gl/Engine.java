@@ -19,9 +19,7 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.item.ItemRenderer;
-import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.meshing.MeshThread;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
@@ -200,6 +198,7 @@ public class Engine {
         
 
         Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+        camFrustum.setCamInternals(fieldOfView, aspectRatio, znear, zfar);
         projection.update();
         projection.update();
         if (initRenderers) {
@@ -249,6 +248,9 @@ public class Engine {
         }
         if (shadowRenderer != null) {
             shadowRenderer.resize(displayWidth, displayHeight);
+        }
+        if (lightCompute != null) {
+            lightCompute.resize(displayWidth, displayHeight);
         }
         UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
         ShaderBuffer.rebindShaders();
@@ -341,6 +343,7 @@ public class Engine {
         modelview.setIdentity();
         modelview.translate(-vec.x, -vec.y, -vec.z);
         modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
+//        System.out.println(GLOBAL_OFFSET);
         
         Matrix4f.mul(view, modelview, modelview);
         Matrix4f.mul(projection, modelview, modelviewprojection);
@@ -351,6 +354,7 @@ public class Engine {
         normalMatrix.setIdentity();
         normalMatrix.invert().transpose();
         normalMatrix.update();
+        camFrustum.setPos(vec, view);
         camFrustum.set(modelviewprojection);
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
         updateOrthoMatrix(Game.displayWidth, Game.displayHeight);

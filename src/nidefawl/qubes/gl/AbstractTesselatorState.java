@@ -1,8 +1,8 @@
 package nidefawl.qubes.gl;
 
-import java.nio.ByteBuffer;
-
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 

@@ -13,9 +13,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
 
-import jline.internal.InputStreamReader;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.util.GameError;

@@ -57,4 +57,16 @@ public class Vec3Stack {
     public void setCallBack(StackChangeCallBack cb) {
         this.cb = cb;
     }
+    public void setTranslation(float x, float y, float z) {
+        if (stackSize == 0) {
+            throw new IllegalStateException("push stack first");
+        }
+        Vector3f stackTop = stack[stackSize];
+        stackTop.x=x;
+        stackTop.y=y;
+        stackTop.z=z;
+        if (cb != null) {
+            cb.onChange(get());
+        }
+    }
 }

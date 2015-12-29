@@ -3,7 +3,9 @@
  */
 package nidefawl.qubes.assets;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
 
 import nidefawl.qubes.models.voxel.ModelVoxPalette;
 import nidefawl.qubes.vec.BlockPos;

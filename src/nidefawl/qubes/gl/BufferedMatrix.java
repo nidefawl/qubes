@@ -7,41 +7,30 @@ import nidefawl.qubes.vec.Matrix4f;
 
 public class BufferedMatrix extends Matrix4f {
     
+    final Matrix4f inv = new Matrix4f();
+    boolean needInv = false;
     FloatBuffer cur = Memory.createFloatBuffer(16);
-    FloatBuffer last = Memory.createFloatBuffer(16);
     FloatBuffer curInv = Memory.createFloatBuffer(16);
-    FloatBuffer lastInv = Memory.createFloatBuffer(16);
+    
     public BufferedMatrix() {
         super();
         setIdentity();
         store(cur);
-        store(last);
-        last.rewind();
+        createInv();
         cur.rewind();
-        GameMath.invertMat4x(cur, curInv);
-        GameMath.invertMat4x(last, lastInv);
-        cur.rewind();
-        last.rewind();
         curInv.rewind();
-        lastInv.rewind();
+        needInv = false;
     }
     
     public void update() {
         cur.rewind();
-        last.rewind();
         curInv.rewind();
-        lastInv.rewind();
-        last.put(cur);
-        lastInv.put(curInv);
-        cur.rewind();
-        last.rewind();
-        curInv.rewind();
-        lastInv.rewind();
         store(cur);
         cur.rewind();
         GameMath.invertMat4x(cur, curInv);
         cur.rewind();
         curInv.rewind();
+        needInv = true;
     }
 
     public FloatBuffer get() {
@@ -50,13 +39,25 @@ public class BufferedMatrix extends Matrix4f {
     }
 
     public FloatBuffer getInv() {
+        if (needInv) {
+            createInv();
+        }
         curInv.rewind();
         return curInv;
     }
+    public Matrix4f getInvMat4() {
+        if (needInv) {
+            createInv();
+        }
+        return inv;
+    }
 
-    public FloatBuffer getPrev() {
-        last.rewind();
-        return last;
+    private void createInv() {
+        needInv = false;
+        inv.load(this);
+        inv.invert();
+        curInv.rewind();
+        inv.store(curInv);
     }
 
     /**
@@ -64,9 +65,7 @@ public class BufferedMatrix extends Matrix4f {
      */
     public void free() {
         Memory.free(this.cur);
-        Memory.free(this.last);
         Memory.free(this.curInv);
-        Memory.free(this.lastInv);
     }
 
 }

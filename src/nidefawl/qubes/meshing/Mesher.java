@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockLeaves;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.WorldRenderer;
@@ -91,13 +90,13 @@ public class Mesher {
                 mask2[n] = bs2;
                 return;
             }
-            if (bs1.type == Block.water.id && bs2.type != Block.water.id) {
+            if (bs1.transparent && !bs2.transparent) {
                 if (bs1.axis == 1 && bs1.face == 0)
                     extraWaterFaces[extraIdx++]=bs1;
                 mask2[n] = bs2;
                 return;
             }
-            if (bs2.type == Block.water.id && bs1.type != Block.water.id) {
+            if (bs2.transparent && !bs1.transparent) {
                 if (bs2.axis == 1 && bs2.face == 0)
                     extraWaterFaces[extraIdx++]=bs2;
                 mask2[n] = bs1;
@@ -321,7 +320,7 @@ public class Mesher {
         }
         int type = chunk.getTypeId(i&0xF, j, k&0xF);
         boolean a = chunk.getWater(i&0xF, j, k&0xF)>0;
-        if (a) {
+        if (a && (type != Block.ice.id)) {
             if (type > 0) {
                 if (center && strategy == 0 && axis == 0 && l == 0) {
                     renderTypeBlocks[this.nextBlockIDX++] = 
@@ -329,6 +328,9 @@ public class Mesher {
                 }
             }
             type = Block.water.id;
+//            if (chunk.getWater(i&0xF, j-2, k&0xF)==0) {
+//                type = Block.ice.id;
+//            }
         }
         if (type > 0) {
             Block block = Block.get(type);

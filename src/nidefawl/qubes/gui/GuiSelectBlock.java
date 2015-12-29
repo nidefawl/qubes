@@ -1,9 +1,11 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 
-import java.util.*;
+import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -13,18 +15,16 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockGroup;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
-import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.packet.PacketCSwitchWorld;
-import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
 
 public class GuiSelectBlock extends Gui {

@@ -5,10 +5,8 @@ import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryUtil;
@@ -19,15 +17,13 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.GuiOverlayDebug;
-import nidefawl.qubes.input.Keyboard;
-import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.*;
-import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.EResourceType;
+import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
@@ -85,26 +81,8 @@ public class FinalRenderer extends AbstractRenderer {
     public void renderDeferred(World world, float fTime, int pass) {
 
         shaderDeferred.enable();
-        ArrayList<DynamicLight> lights = world.lights;
         
-        //TODO: optimize me: deferred gets called 3 times now per frame, only upload lights in first pass
         shaderDeferred.setProgramUniform1i("pass", pass);
-        shaderDeferred.setProgramUniform1i("numLights", Math.min(256, lights.size()));
-        for (int a = 0; a < lights.size() && a < 256; a++) {
-            DynamicLight light = lights.get(a);
-            float constant = 1.0f;
-            float linear = 4f;
-            float quadratic = 2f;
-            float lightThreshold = 0.1f;
-            float maxBrightness = Math.max(Math.max(light.color.x, light.color.y), light.color.z);
-            float lightL = (float) (linear * linear - 4 * quadratic * (constant - (256.0 / lightThreshold) * 1));
-            float radius = (-linear + GameMath.sqrtf(lightL)) / (2 * quadratic);
-            lightPos[a].set(light.loc.x-Engine.GLOBAL_OFFSET.x, light.loc.y-Engine.GLOBAL_OFFSET.y, light.loc.z-Engine.GLOBAL_OFFSET.z);
-            lightColors[a].set(1,1,1);
-            lightLin[a].set(linear);
-            lightExp[a].set(quadratic);
-            lightSize[a].set(radius);
-        }
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
 
@@ -113,13 +91,13 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
         GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
         GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
-        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, TMgr.getNoise());
+        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.lightCompute.getTexture());
         GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
         GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.fbSSAO.getTexture(0));
 
         Engine.drawFullscreenQuad();
 
-        if (Game.show) {
+        if (GLDebugTextures.isShow()) {
             Shader.disable();
             FrameBuffer.unbindFramebuffer();
             String name;
@@ -140,10 +118,11 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(name, "texColor", Engine.getSceneFB().getTexture(0));
             GLDebugTextures.readTexture(name, "texNormals", Engine.getSceneFB().getTexture(1));
             GLDebugTextures.readTexture(name, "texMaterial", Engine.getSceneFB().getTexture(2));
-            GLDebugTextures.readTexture(name, "light", Engine.getSceneFB().getTexture(3));
+            GLDebugTextures.readTexture(name, "blocklight", Engine.getSceneFB().getTexture(3));
             GLDebugTextures.readTexture(name, "texMaterial", Engine.getSceneFB().getTexture(2));
             GLDebugTextures.readTexture(name, "texDepth", Engine.getSceneFB().getDepthTex(), 2);
             GLDebugTextures.readTexture(name, "DeferredOut", this.fbDeferred.getTexture(0), 1);
+            GLDebugTextures.readTexture(name, "light", Engine.lightCompute.getTexture());
             if (pass == 0) {
                 GLDebugTextures.readTexture(name, "texShadow", Engine.shadowRenderer.getDebugTexture());
                 GLDebugTextures.readTexture(name, "AOOut", this.fbSSAO.getTexture(0));
@@ -204,7 +183,7 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.fbLuminanceInterp[indexIn].getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, lastBound.getTexture(0));
         Engine.drawFullscreenQuad();
-        if (Game.show) {
+        if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("Luminance", "Output", this.fbLuminanceInterp[indexOut].getTexture(0));
         }
 
@@ -335,11 +314,15 @@ public class FinalRenderer extends AbstractRenderer {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
 
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-        if (Game.show) {
+        if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("SSR", "DeferredInput", fbDeferred.getTexture(0), 1);
             GLDebugTextures.readTexture("SSR", "SSROutput", fbSSR.getTexture(0), 1);
             GLDebugTextures.readTexture("SSR", "SSRBlurred", fbSSRBlurredY.getTexture(0), 1);
             GLDebugTextures.readTexture("SSR", "SSRBlurCombined", fbSSRCombined.getTexture(0), 1);
+            GLDebugTextures.readTexture("SSR", "texDepth", this.fbFinal.getDepthTex(), 2);
+            GLDebugTextures.readTexture("SSR", "texColor", fbDeferred.getTexture(0));
+            GLDebugTextures.readTexture("SSR", "texNormals", Engine.getSceneFB().getTexture(1));
+            GLDebugTextures.readTexture("SSR", "texMaterial", Engine.getSceneFB().getTexture(2));
         }
     }
 
@@ -380,7 +363,7 @@ public class FinalRenderer extends AbstractRenderer {
     public void renderBloom(World world, float fTime) {
         renderBlur(world, fTime);
         FrameBuffer input = ssr > 0 ? fbSSRCombined : fbDeferred;
-        if (Game.show) {
+        if (GLDebugTextures.isShow()) {
             GuiOverlayDebug dbg = Game.instance.debugOverlay;
             dbg.preDbgFB(false);
             dbg.drawDbgTexture(2, 0, 0, input.getTexture(0), "texColor");
@@ -400,7 +383,7 @@ public class FinalRenderer extends AbstractRenderer {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Combine");
 
         Engine.drawFullscreenQuad();
-        if (Game.show) {
+        if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("Bloom", "blurInput", input.getTexture(0));
             GLDebugTextures.readTexture("Bloom", "blurTexture", blurTexture);
             GLDebugTextures.readTexture("Bloom", "fbFinal", fbFinal.getTexture(0));
@@ -514,8 +497,8 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDeferred.setProgramUniform1i("texDepth", 3);
             shaderDeferred.setProgramUniform1i("texShadow", 4);
             shaderDeferred.setProgramUniform1i("texShadow2", 4);
-            shaderDeferred.setProgramUniform1i("noisetex", 5);
-            shaderDeferred.setProgramUniform1i("texLight", 6);
+            shaderDeferred.setProgramUniform1i("texLight", 5);
+            shaderDeferred.setProgramUniform1i("texBlockLight", 6);
             shaderDeferred.setProgramUniform1i("texAO", 7);
             for (int i = 0; i < lightColors.length; i++) {
                 this.lightPos[i] = shaderDeferred.getUniform("lights["+i+"].Position", Uniform3f.class);

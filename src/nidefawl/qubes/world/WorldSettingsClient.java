@@ -5,7 +5,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.UUID;
 
-import nidefawl.qubes.network.StreamIO;
 import nidefawl.qubes.network.packet.Packet;
 
 public class WorldSettingsClient implements IWorldSettings {

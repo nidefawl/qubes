@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.worldgen.biome.HexBiome;
 
 /**
  * @author Michael Hept 2015

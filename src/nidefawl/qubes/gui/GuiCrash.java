@@ -8,9 +8,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.lwjgl.opengl.GL11;
+
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
-import org.lwjgl.opengl.GL11;
 
 public class GuiCrash extends Gui {
     FontRenderer         fontSmall = FontRenderer.get(null, 16, 1, 18);

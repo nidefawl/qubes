@@ -42,6 +42,12 @@ public class Biome {
             .setColor(BiomeColor.FOLIAGE, 0xAB9448)
             .setColor(BiomeColor.FOLIAGE2, 0xEDB12F)
             .setDebugColor(0xdd32dd);
+    public final static Biome ICE = new BiomeIce(5)
+            .setColor(BiomeColor.GRASS, 0x408019)
+            .setColor(BiomeColor.LEAVES, 0x4A7818)
+            .setColor(BiomeColor.FOLIAGE, 0x408A10)
+            .setColor(BiomeColor.FOLIAGE2, 0x64B051)
+            .setDebugColor(0xaaaaaa);
     public int color;
     public int colorFoliage;
     public int colorFoliage2;
@@ -131,5 +137,8 @@ public class Biome {
     }
     public Block getSoilBlock() {
         return Block.dirt;
+    }
+    public Block getWaterBlock() {
+        return Block.water;
     }
 }

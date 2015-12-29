@@ -3,8 +3,6 @@
  */
 package nidefawl.qubes.hex;
 
-import nidefawl.qubes.worldgen.biome.HexBiome;
-
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept

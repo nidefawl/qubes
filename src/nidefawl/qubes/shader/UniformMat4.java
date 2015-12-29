@@ -3,7 +3,6 @@ package nidefawl.qubes.shader;
 
 import java.nio.FloatBuffer;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Memory;
 

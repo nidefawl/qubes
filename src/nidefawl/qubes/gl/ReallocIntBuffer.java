@@ -33,6 +33,9 @@ public class ReallocIntBuffer {
     public void reallocBuffer(int intLen) {
         intLen *= 4;
         if (buffers == null || buffers.capacity() < intLen) {
+            if (intLen*2 < 2*1024*1024) {
+                intLen = intLen*2;
+            }
             if (buffers != null) {
                 buffers = Memory.reallocByteBufferAligned(buffers, 64, intLen);
             } else {
@@ -62,6 +65,7 @@ public class ReallocIntBuffer {
      * @param intLen
      */
     public void put(int[] buffer, int offset, int len) {
+        reallocBuffer(offset+len);
         intbuffers.clear();
         intbuffers.put(buffer, offset, len);
         buffers.position(0).limit(len*4);

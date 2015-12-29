@@ -10,7 +10,6 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.PacketSEntityMove;
 import nidefawl.qubes.network.packet.PacketSEntityTrack;

@@ -9,14 +9,11 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.lighting.DynamicLight;
-import nidefawl.qubes.util.*;
-import nidefawl.qubes.vec.AABBFloat;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.biome.HexBiomes;
 import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public abstract class World implements IBlockWorld {
@@ -278,25 +275,18 @@ public abstract class World implements IBlockWorld {
         float r = 1;
         float g = 0.9f;
         float b = 0.8f;
-        float intens = (0.5f+this.rand.nextFloat())*0.1f;
-//        if (this.rand.nextInt(10) == 0) {
-//            intens+=1;
-//            intens = 2.7f;
-//        }
-//      intens += 10.7f;
-        intens = 1.4f+(intens)*0.2f;
-        DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b),  intens);
+        DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b), 0.85f);
         this.lights.add(light);
     }
 
     public void spawnLights(BlockPos block) {
         for (int i = 0; i < 10; i++) {
 
-            int range = 210;
+            int range = 143;
             int x = block.x+this.rand.nextInt(range*2)-range;
             int z = block.z+this.rand.nextInt(range*2)-range;
             int y = getHeight(x, z);
-            addLight(new Vector3f(x+0.5F, y+1.2f+rand.nextFloat()*3.0f, z+0.5F));
+            addLight(new Vector3f(x+0.5F, y+1.2f, z+0.5F));
         }
     }
 

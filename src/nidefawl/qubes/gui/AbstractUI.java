@@ -1,11 +1,8 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.Renderable;
@@ -108,7 +105,6 @@ public abstract class AbstractUI implements Renderable {
         float r = TextureUtil.getR(rgba);
         float g = TextureUtil.getG(rgba);
         float b = TextureUtil.getB(rgba);
-//        System.out.println(z);
         Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
         Shaders.gui.setProgramUniform1f("zpos", 0);
         Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);

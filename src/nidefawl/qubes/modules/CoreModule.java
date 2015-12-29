@@ -4,7 +4,6 @@
 package nidefawl.qubes.modules;
 
 import nidefawl.qubes.GameRegistry;
-import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.Side;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;

@@ -96,6 +96,9 @@ public class ShadowProjector {
 
         shadowSplitMVP[split].setIdentity();
         Project.lookAt(eye.x, eye.y, eye.z, frustumCenter.x, frustumCenter.y, frustumCenter.z, 0, 1, 0, shadowSplitMVP[split]);
+//        shadowCamFrustum[split].setCamPos(eye);
+//        shadowCamFrustum[split].setView(shadowSplitMVP[split]);
+
 //        matLookAt.load(shadowSplitMVP[split]);
 //        matLookAt.translate(eye.x, eye.y, eye.z);
 //
@@ -106,7 +109,7 @@ public class ShadowProjector {
 
         Matrix4f.mul(matOrtho, shadowSplitMVP[split], shadowSplitMVP[split]);
         shadowSplitMVP[split].update();
-        shadowSplitMVP[split].update();
+//        shadowSplitMVP[split].update();
 //        shadowSplitDepth[split] = radius / 1.41F;// I'm 90% sure this is wrong, the shader requires 1 x radius and should reduce the input depth for each cascade as they are not centered on the same point
         shadowCamFrustum[split].set(shadowSplitMVP[split]);
 ////
@@ -156,6 +159,9 @@ public class ShadowProjector {
         for (int i = 0; i < shadowSplitMVP.length; i++) {
             calcShadow(i, modelview, lightDirection, textureSize);
         }
+    }
+    public int checkFrustum(int i, AABBInt aabb, float f) {
+        return shadowCamFrustum[i].checkFrustum(aabb, f);
     }
 
     public int checkFrustum(int i, AABBInt aabb) {

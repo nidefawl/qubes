@@ -3,8 +3,6 @@ package nidefawl.qubes.util;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-import org.lwjgl.BufferUtils;
-
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;

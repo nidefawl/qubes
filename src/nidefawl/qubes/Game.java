@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL11.*;
 import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
@@ -20,13 +20,13 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.*;
-import nidefawl.qubes.gui.windows.*;
+import nidefawl.qubes.gui.windows.GuiInventory;
+import nidefawl.qubes.gui.windows.GuiInventory2;
+import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.logging.IErrorHandler;
-import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.client.NetworkClient;
@@ -55,7 +55,6 @@ import nidefawl.qubes.world.WorldClientBenchmark;
 public class Game extends GameBase implements IErrorHandler {
 
     static public Game instance;
-    public static boolean show    = false;
     PlayerProfile         profile = new PlayerProfile();
     public final ClientSettings          settings  = new ClientSettings();
 
@@ -302,7 +301,7 @@ public class Game extends GameBase implements IErrorHandler {
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F3) {
             public void onDown() {
-                show = !show;
+                GLDebugTextures.setShow(!GLDebugTextures.show);
             }
         });
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F4) {
@@ -400,6 +399,13 @@ public class Game extends GameBase implements IErrorHandler {
         Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_PERIOD) {
             public void onDown() {
                 GuiWindowManager.openWindow(GuiInventory2.class);
+            }
+        });
+
+
+        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_P) {
+            public void onDown() {
+                GLDebugTextures.toggleDebugTex();
             }
         });
 
@@ -707,7 +713,12 @@ public class Game extends GameBase implements IErrorHandler {
         
 
         if (this.world != null) {
-            Engine.lightCompute.render(this.world, fTime);
+//            FrameBuffer.unbindFramebuffer();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("lightCompute 0");
+            Engine.lightCompute.render(this.world, fTime, 0);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
             
 
             if (GPUProfiler.PROFILING_ENABLED)
@@ -762,18 +773,6 @@ public class Game extends GameBase implements IErrorHandler {
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-            boolean debugStage = false;
-            if (debugStage) {
-                try {
-
-                    FrameBuffer.unbindFramebuffer();
-                    Shaders.textured.enable();
-                    GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
-                    Engine.drawFullscreenQuad();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
 
             Engine.outRenderer.copySceneDepthBuffer();
 
@@ -788,6 +787,11 @@ public class Game extends GameBase implements IErrorHandler {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("World");
                 Engine.worldRenderer.renderFirstPerson(world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("lightCompute 1");
+                Engine.lightCompute.render(this.world, fTime, 1);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
 
@@ -897,7 +901,17 @@ public class Game extends GameBase implements IErrorHandler {
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Final");
-            Engine.outRenderer.renderFinal(this.world, fTime);
+            GLDebugTextures selTex = GLDebugTextures.getSelected();
+//            &&ticksran%40<20
+            if (selTex != null) {
+                GLDebugTextures.drawFullScreen(selTex);
+                if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
+                    Engine.lightCompute.renderDebug();
+                }
+            } else {
+
+                Engine.outRenderer.renderFinal(this.world, fTime);
+            }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
@@ -1035,12 +1049,13 @@ public class Game extends GameBase implements IErrorHandler {
                 GPUProfiler.end();
         }       
 
-        if (show) {
+        if (GLDebugTextures.show) {
 //          
 //          if (this.debugOverlay != null) {
 //              this.debugOverlay.render(fTime, 0, 0);
 //          }
 //          
+            
           GLDebugTextures.drawAll(displayWidth, displayHeight);
       }
         
@@ -1056,15 +1071,16 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2222/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >4211/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
           Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
-//            Engine.regionRenderer.initShaders();
+          Engine.worldRenderer.initShaders();
+//          Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            
         }
@@ -1172,6 +1188,7 @@ public class Game extends GameBase implements IErrorHandler {
                 Engine.regionRenderer.reRender();
             }
             Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
+            Engine.lightCompute.updateLights(this.world, f);
         }
     }
     

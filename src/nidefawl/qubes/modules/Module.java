@@ -3,8 +3,6 @@
  */
 package nidefawl.qubes.modules;
 
-import java.lang.reflect.Method;
-
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.Side;
 

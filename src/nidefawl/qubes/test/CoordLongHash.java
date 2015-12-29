@@ -2,8 +2,6 @@ package nidefawl.qubes.test;
 
 import java.util.Random;
 
-import nidefawl.qubes.util.GameMath;
-
 public class CoordLongHash {
 
     public static int lhToZ(long l) {

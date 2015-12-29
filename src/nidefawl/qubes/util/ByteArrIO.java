@@ -3,8 +3,6 @@
  */
 package nidefawl.qubes.util;
 
-import java.io.EOFException;
-
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
