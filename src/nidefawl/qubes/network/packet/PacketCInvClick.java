@@ -4,7 +4,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.network.Handler;
 

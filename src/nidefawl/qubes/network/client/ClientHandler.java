@@ -1,6 +1,5 @@
 package nidefawl.qubes.network.client;
 
-import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 

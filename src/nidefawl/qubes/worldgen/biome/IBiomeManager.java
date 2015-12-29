@@ -7,7 +7,6 @@ import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.network.packet.PacketSWorldBiomes;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldServer;
 
 /**
  * @author Michael Hept 2015

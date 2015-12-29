@@ -1,6 +1,5 @@
 package nidefawl.qubes.network.server;
 
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
@@ -14,9 +13,6 @@ import nidefawl.qubes.server.PlayerManager;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Vec3D;
-import nidefawl.qubes.world.BlockPlacer;
-import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
 public class ServerHandlerPlay extends ServerHandler {

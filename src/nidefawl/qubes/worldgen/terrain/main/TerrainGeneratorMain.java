@@ -10,11 +10,7 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.hex.HexCell;
-import nidefawl.qubes.noise.*;
-import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
@@ -23,7 +19,6 @@ import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
-import sun.util.resources.CurrencyNames_ar_LB;
 
 public class TerrainGeneratorMain implements ITerrainGen {
     public final static String GENERATOR_NAME = "terrain_rivers";

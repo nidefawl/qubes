@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.ChannelManager;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
@@ -12,7 +11,6 @@ import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerManager;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.world.WorldServer;
 
 public class ServerHandlerLogin extends ServerHandler {
 

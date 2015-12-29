@@ -3,12 +3,10 @@ package nidefawl.qubes.worldgen.terrain;
 import java.util.Random;
 
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
 import nidefawl.qubes.worldgen.biome.IBiomeManager;
-import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 

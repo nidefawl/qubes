@@ -5,7 +5,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import nidefawl.qubes.item.BaseStack;
-import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;

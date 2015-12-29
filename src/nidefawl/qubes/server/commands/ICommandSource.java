@@ -5,7 +5,6 @@ package nidefawl.qubes.server.commands;
 
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldServer;
 
 public interface ICommandSource {
 

@@ -3,8 +3,6 @@
  */
 package nidefawl.qubes.render.gui;
 
-import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
-
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.gl.VertexBuffer;

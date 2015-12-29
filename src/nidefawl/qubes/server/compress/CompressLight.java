@@ -1,7 +1,5 @@
 package nidefawl.qubes.server.compress;
 
-import java.util.Arrays;
-
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.network.packet.PacketSLightChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;

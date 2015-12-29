@@ -4,7 +4,6 @@
 package nidefawl.qubes.worldgen.populator;
 
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.world.WorldServer;
 
 /**
  * @author Michael Hept 2015

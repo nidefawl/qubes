@@ -3,10 +3,7 @@ package nidefawl.qubes.network.packet;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
-
 import nidefawl.qubes.network.Handler;
-import nidefawl.qubes.vec.Vec3D;
 
 public class PacketSWorldTime extends AbstractPacketWorldRef {
     public long   time;

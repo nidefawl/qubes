@@ -5,7 +5,6 @@ package nidefawl.qubes.models.qmodel;
 
 import java.io.EOFException;
 
-import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
 /**

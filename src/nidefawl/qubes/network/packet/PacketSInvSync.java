@@ -8,7 +8,6 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.inventory.BaseInventory;
-import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.network.Handler;
 

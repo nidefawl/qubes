@@ -4,15 +4,12 @@
 package nidefawl.qubes.worldgen.populator;
 
 import java.util.*;
-import java.util.Map.Entry;
-
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.Flags;
-import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.worldgen.biome.HexBiome;

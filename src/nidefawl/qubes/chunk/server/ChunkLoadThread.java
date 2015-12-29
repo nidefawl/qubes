@@ -2,7 +2,6 @@ package nidefawl.qubes.chunk.server;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameError;

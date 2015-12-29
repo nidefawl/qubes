@@ -6,7 +6,6 @@ import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.SlotStack;
-import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.server.GameServer;

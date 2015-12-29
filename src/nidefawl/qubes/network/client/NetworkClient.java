@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.*;
 
 import nidefawl.qubes.network.Connection;
-import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
 

@@ -4,22 +4,14 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.lwjgl.opengl.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL31.*;
-import static org.lwjgl.opengl.GL32.*;
-
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.item.StackData;
-import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Project;
 
 public class SingleBlockRenderAtlas {

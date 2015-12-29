@@ -8,7 +8,6 @@ import java.util.Collection;
 
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.chat.ChatUser;
-import nidefawl.qubes.entity.Player;
 
 /**
  * @author Michael Hept 2015

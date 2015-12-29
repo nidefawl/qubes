@@ -11,7 +11,6 @@ import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;

@@ -17,7 +17,6 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.hex.HexCell;
 import nidefawl.qubes.network.packet.PacketSWorldBiomes;
-import nidefawl.qubes.server.PlayerChunkTracker.Entry;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.world.*;

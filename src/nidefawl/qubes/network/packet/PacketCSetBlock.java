@@ -4,12 +4,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.World;
 
 public class PacketCSetBlock extends AbstractPacketWorldRef {
     public PacketCSetBlock() {

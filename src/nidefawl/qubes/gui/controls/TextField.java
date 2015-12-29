@@ -1,14 +1,11 @@
 package nidefawl.qubes.gui.controls;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;

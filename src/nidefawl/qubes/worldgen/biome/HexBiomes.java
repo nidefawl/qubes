@@ -3,8 +3,6 @@
  */
 package nidefawl.qubes.worldgen.biome;
 
-import java.util.HashMap;
-
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.hex.*;
@@ -12,7 +10,6 @@ import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldServer;
 
 /**
  * @author Michael Hept 2015

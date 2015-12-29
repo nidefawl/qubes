@@ -4,8 +4,6 @@
 package nidefawl.qubes.worldgen.biome;
 
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.hex.HexCell;
-import nidefawl.qubes.hex.HexagonGridStorage;
 import nidefawl.qubes.network.packet.PacketSWorldBiomes;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.*;

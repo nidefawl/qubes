@@ -3,12 +3,9 @@ package nidefawl.qubes.render.region;
 import static org.lwjgl.opengl.GL11.*;
 import static nidefawl.qubes.render.WorldRenderer.*;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.*;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import com.google.common.collect.Lists;
@@ -24,10 +21,8 @@ import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Frustum;
-import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 

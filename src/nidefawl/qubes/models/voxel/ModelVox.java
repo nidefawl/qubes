@@ -4,7 +4,6 @@
 package nidefawl.qubes.models.voxel;
 
 import nidefawl.qubes.assets.AssetVoxModel;
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.GLQuadBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.meshing.BlockFaceAttr;

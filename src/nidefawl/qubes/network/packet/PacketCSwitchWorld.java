@@ -5,7 +5,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import nidefawl.qubes.network.Handler;
-import nidefawl.qubes.vec.Vec3D;
 
 public class PacketCSwitchWorld extends Packet {
     public int flags;

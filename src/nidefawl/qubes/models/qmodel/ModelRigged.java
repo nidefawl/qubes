@@ -4,12 +4,7 @@
 package nidefawl.qubes.models.qmodel;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import com.google.common.collect.Lists;
-import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.*;

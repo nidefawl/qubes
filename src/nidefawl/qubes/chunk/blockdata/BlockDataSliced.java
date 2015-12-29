@@ -3,8 +3,6 @@
  */
 package nidefawl.qubes.chunk.blockdata;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -13,8 +11,6 @@ import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.ByteArray;
 import nidefawl.qubes.nbt.Tag.TagList;
 import nidefawl.qubes.util.ByteArrIO;
-import nidefawl.qubes.util.ByteInStream;
-import nidefawl.qubes.util.ByteOutStream;
 import nidefawl.qubes.world.World;
 
 /**

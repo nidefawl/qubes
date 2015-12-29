@@ -1,7 +1,5 @@
 package nidefawl.qubes.gui.controls;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
@@ -11,7 +9,6 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 

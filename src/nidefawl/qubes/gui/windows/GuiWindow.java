@@ -1,16 +1,12 @@
 package nidefawl.qubes.gui.windows;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.util.GameMath;
 
 public abstract class GuiWindow extends Gui {
 

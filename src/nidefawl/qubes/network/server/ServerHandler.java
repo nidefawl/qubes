@@ -2,7 +2,6 @@ package nidefawl.qubes.network.server;
 
 import java.net.InetSocketAddress;
 
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.Packet;

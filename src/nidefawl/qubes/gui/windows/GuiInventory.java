@@ -2,7 +2,6 @@ package nidefawl.qubes.gui.windows;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
-import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiInventory extends GuiInventoryBase {

@@ -3,10 +3,6 @@ package nidefawl.qubes.network.packet;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
-
-import com.google.common.collect.Lists;
-
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.network.Handler;
 

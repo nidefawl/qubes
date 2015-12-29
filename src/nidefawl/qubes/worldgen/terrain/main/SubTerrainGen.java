@@ -4,7 +4,6 @@
 package nidefawl.qubes.worldgen.terrain.main;
 
 import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
 
 /**
  * @author Michael Hept 2015

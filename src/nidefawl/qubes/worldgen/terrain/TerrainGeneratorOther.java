@@ -8,7 +8,6 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;

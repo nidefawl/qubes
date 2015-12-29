@@ -6,13 +6,9 @@ package nidefawl.qubes.models.qmodel;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
-import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.vec.Vector3f;
 
 /**
  * @author Michael Hept 2015

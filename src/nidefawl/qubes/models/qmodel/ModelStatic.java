@@ -10,7 +10,6 @@ import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.Half;
 import nidefawl.qubes.util.RenderUtil;
-import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
 /**

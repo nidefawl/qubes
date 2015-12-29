@@ -7,7 +7,6 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.Half;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;

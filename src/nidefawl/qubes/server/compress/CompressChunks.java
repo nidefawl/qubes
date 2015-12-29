@@ -1,13 +1,8 @@
 package nidefawl.qubes.server.compress;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
-
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
-import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
-import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.network.packet.PacketSChunkData;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.util.ByteArrIO;

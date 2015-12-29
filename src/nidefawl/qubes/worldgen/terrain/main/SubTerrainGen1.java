@@ -8,11 +8,8 @@ import java.util.Random;
 import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.*;
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
-import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen1.NoiseData;
 
 /**
  * @author Michael Hept 2015

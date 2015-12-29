@@ -15,7 +15,6 @@ import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;

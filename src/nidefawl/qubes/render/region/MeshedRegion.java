@@ -3,12 +3,8 @@ package nidefawl.qubes.render.region;
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
 import static nidefawl.qubes.meshing.BlockFaceAttr.*;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.Arrays;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.lwjgl.opengl.*;
 
