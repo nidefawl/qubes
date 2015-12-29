@@ -53,12 +53,14 @@ void main(void) {
 		discard;
 	 // tex = vec4(vec3(1),1);
 	vec3 color_adj = tex.rgb;
-	color_adj *= color.rgb;
+	vec3 color_adj2 = color.rgb;
 	srgbToLin(color_adj.rgb);
+	srgbToLin(color_adj2.rgb);
+	color_adj *= color_adj2.rgb;
 	// float lum = dot(color_adj, vec3(0.3));
 
 	//MINECRAFTISH BLOCK LIGHTING
-	color_adj *= 1;
+	// color_adj *= 1;
 	// color_adj *= 0.5+abs(dir.z)*0.3+(dir.y)*0.2;
 
 

@@ -203,16 +203,14 @@ float getSoftShadow() {
 }
 
 
-#define SHADE
+
 void main() {
 
     vec4 sceneColor = texture(texColor, pass_texcoord);
 	prop.albedo = sceneColor.rgb;
-
-    float alpha = 1.0;
-#ifdef SHADE
     vec4 ssao = vec4(1);
-    if (pass < 1) {
+    float alpha = 1.0;
+    if (pass < 2) {
         ssao=texture(texAO, pass_texcoord);
     }
 
@@ -242,7 +240,7 @@ void main() {
     float isLight = IS_LIGHT(blockid);
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
-    float isEntity = float(renderpass==5||renderpass==2);
+    float isEntity = float(renderpass==5);
     // float isFlower = float(blockid>=48u);
     if (pass > 0) {
         alpha = sceneColor.a;
@@ -274,38 +272,27 @@ void main() {
     float skyLightLvl = prop.blockLight.x;
     float blockLightLvl = prop.blockLight.y;
     float occlusion = min(prop.blockLight.z, ssao.r);
-    occlusion+=float(pass==1);
+    occlusion+=isWater;
     occlusion = min(1, occlusion);
 
     float shadow = getShadow2()*(1-isBackface);
     // float shadow = mix(getSoftShadow(), 1, 0.04);
   	float nDotL = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
-
-    float sunLight = skyLightLvl * nDotL * shadow * dayLightIntens *(1-fNight);
-    sunLight = max(shadow*(0.05-fNight*0.035), sunLight);
-    sunLight = sunLight*occlusion;
+    float sunLight = skyLightLvl * nDotL * shadow * dayLightIntens;
+    sunLight = max(shadow*0.05, sunLight);
+    sunLight = mix(sunLight, sunLight*occlusion, 1);
     sunLight = max(0, sunLight);
 
 
     float blockLight = (1-pow(1-blockLightLvl,0.05))*1.1;
-    vec3 lightColor = vec3(1);
-    vec3 lightColor2 = vec3(1);
-    vec3 lightColor3 = vec3(1);
-    lightColor*=1-fNight*0.92;
-    lightColor2*=1-fNight*(0.98*(1-isEntity));
-    lightColor3*=1-fNight*0.7;
-    lightColor = max(vec3(0.1), lightColor);
-	vec3 Ispec = SkyLight.Ls.rgb * lightColor3 * nDotL * spec;
+    vec3 lightColor = mix(vec3(1), vec3(1.0)*0.02, fNight);
+    vec3 lightColor2 = mix(vec3(1), vec3(0.56, 0.56, 1.0)*0.005, fNight);
+	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
     vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
     vec3 Iamb = SkyLight.La.rgb * lightColor * mix(((NdotLAmb1+NdotLAmb2)*0.5f), 1.2, isEntity*0.8);
 
-    // Idiff*=darkenSkyLitBlocksNight;
-    // Ispec*=darkenSkyLitBlocksNight;
-    // Iamb = vec3(0);
     vec3 finalLight = vec3(0);
-    float minAmb = 0.2;
-    vec3 blockAmbientLevel = Iamb * (minAmb+occlusion*(1-minAmb)) * (0.04+skyLightLvl*(1-0.04));
-    finalLight += blockAmbientLevel;
+    finalLight += Iamb * (0.04+occlusion*(1-0.04)) * (0.04+skyLightLvl*(1-0.04));
 
     finalLight += lum* (mix(1, occlusion, 0.19)) * blockLight*isLight*0.6;
     float fl=blockLightLvl/15.0f;
@@ -315,16 +302,17 @@ void main() {
     finalLight+=isIllum*4;
     finalLight += vec3(1, 0.9, 0.7) * pow(blockLightLvl/8.0,2)*((1.0-isLight*0.8)*blockLightConst);
     finalLight *= max(0.3+ssao.r*0.7, isWater);
-    finalLight+=prop.light.rgb*(occlusion);
     alpha = clamp(alpha+float(pass==1)*0.2*(1-clamp(sunLight, 0, 1)), 0, 1);
 
+    finalLight+=prop.light.rgb;
 
-    vec3 sky=mix(prop.albedo, vec3(0.002), fNight)*0.23;
-    prop.sunSpotDens*=(1-fNight*0.9);
-    float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
-    sky = mix(sky, sky*skySunScat, 0.3f);
-    sky += skySunScat*prop.sunSpotDens*1.2;
-    sky += sky*SkyLight.La.rgb*(1.0-prop.sunSpotDens)*1.1f;
+
+	vec3 sky=mix(prop.albedo, vec3(0.04), fNight)*0.23;
+
+	float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
+	sky = mix(sky, sky*skySunScat, 0.3f);
+	sky += skySunScat*prop.sunSpotDens*1.2;
+	sky += sky*SkyLight.La.rgb*(1.0-prop.sunSpotDens)*1.1f;
     sky *= 0.4;
     vec3 terr=prop.albedo*finalLight;
     spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
@@ -333,13 +321,12 @@ void main() {
 
     prop.albedo = mix(terr, sky, isSky);
     
-    vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,0.7)*0.2, clamp(nightNoon, 0, 1));
-    float dist = length(prop.position);
-    dist = min(dist, in_scene.viewport.w/6);
-    dist = max(dist-46, 0);
-    float fogAmount = clamp(1.0 - exp( -dist*0.00004 ), 0, 1);
-    prop.albedo =  mix( prop.albedo, fogColor, fogAmount );
-#endif
+    // vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,0.7)*0.2, clamp(nightNoon, 0, 1));
+    // float dist = length(prop.position);
+    // dist = min(dist, in_scene.viewport.w/6);
+    // dist = max(dist-46, 0);
+    // float fogAmount = clamp(1.0 - exp( -dist*0.00004 ), 0, 1);
+    // prop.albedo =  mix( prop.albedo, fogColor, fogAmount );
 
     out_Color = vec4(prop.albedo, alpha);
 }

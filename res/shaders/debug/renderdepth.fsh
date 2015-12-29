@@ -2,21 +2,28 @@
 
 
 uniform sampler2D tex0;
-uniform vec2 zbufparam;
 
 in vec4 pass_Color;
 in vec2 pass_texcoord;
+flat in vec3 clipInfo;
+flat in float nearPlaneZ;
+flat in float farPlaneZ;
  
 out vec4 out_Color;
  
-float LinearizeDepth(vec2 uv)
-{
-  float z = texture2D(tex0, uv).x;
-  // x == near, y == far
-  return (2.0 * zbufparam.x) / (zbufparam.y + zbufparam.x - z * (zbufparam.y - zbufparam.x));	
+
+float reconstructCSZ(float depthBufferValue) {
+    return clipInfo[0] / (depthBufferValue * clipInfo[1] + clipInfo[2]);
+}
+
+float Linear01Depth(float depth) {
+	float camSpaceZ = reconstructCSZ(depth);
+	float clipSpaceZ= (camSpaceZ-nearPlaneZ) / (farPlaneZ-nearPlaneZ);
+	return clipSpaceZ;
 }
 
 void main(void) {
-  float d = LinearizeDepth(pass_texcoord);
+  float z = texture2D(tex0, pass_texcoord).x;
+  float d = pow(1-Linear01Depth(z), 16);
   out_Color = vec4(d, d, d, 1);
 }

@@ -145,9 +145,9 @@ void main()
     vec2 tileScale = resolution * (1.0f / float( 2 * WORK_GROUP_SIZE));
     vec2 tileBias = tileScale - vec2(gl_WorkGroupID.xy);
 
-    vec4 col1 = vec4(-projectionMatrix[0][0] * tileScale.x, projectionMatrix[0][1], tileBias.x, projectionMatrix[0][3]);
-    vec4 col2 = vec4(projectionMatrix[1][0], -projectionMatrix[1][1] * tileScale.y, tileBias.y, projectionMatrix[1][3]);
-    vec4 col4 = vec4(projectionMatrix[3][0], projectionMatrix[3][1], -1.0, projectionMatrix[3][3]);
+    vec4 col1 = vec4(-proj[0][0] * tileScale.x, proj[0][1], tileBias.x, proj[0][3]);
+    vec4 col2 = vec4(proj[1][0], -proj[1][1] * tileScale.y, tileBias.y, proj[1][3]);
+    vec4 col4 = vec4(proj[3][0], proj[3][1], -1.0, proj[3][3]);
 
     vec4 frustumPlanes[6];
     frustumPlanes[0] = col4 + col1;

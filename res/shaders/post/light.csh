@@ -194,9 +194,11 @@ void main()
     {
         atomicMin(minDepth, depth);
         atomicMax(maxDepth, depth);
-    }
+    } 
     barrier();
 
+    if (prop.depth > 0.0) 
+    {
     float minDepthZ = uintBitsToFloat(minDepth);
     float maxDepthZ = uintBitsToFloat(maxDepth);
     debugBuf.debugVals[0] = minDepthZ;
@@ -222,17 +224,7 @@ void main()
         // if (pointLightCount < MAX_LIGHTS_PER_TILE)
         {
             bool inFrustum = true;
-            for (int i = 0; i < 2; ++i)
-            {
-                float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
-                inFrustum = inFrustum && (d >= -rad);
-            }
-            for (int i = 2; i < 4; ++i)
-            {
-                float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
-                inFrustum = inFrustum && (d >= -rad);
-            }
-            for (int i = 4; i < 6; ++i)
+            for (int i = 0; i < 6; ++i)
             {
                 float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
                 inFrustum = inFrustum && (d >= -rad);
@@ -246,8 +238,12 @@ void main()
         }
     }
 
+    } 
 
     barrier();
+    vec3 finalLight = vec3(0);
+    if (prop.depth > 0.0) 
+    {
     debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
     // debugBuf.tileLights[0] = 4;
     // debugBuf.tileLights[1] = 5;
@@ -257,7 +253,6 @@ void main()
     // memoryBarrierShared();
     // groupMemoryBarrier();
     // memoryBarrier();
-    vec3 finalLight = vec3(0);
     float fDist = 0;
     for(int i = 0; i < pointLightCount; ++i)
     {
@@ -293,8 +288,9 @@ void main()
             diffuse *= attenuation * occlusion;
             specular *= attenuation * occlusion;
             finalLight += diffuse;
-            finalLight += specular;
+            // finalLight += specular;
         }
+    }
     }
     barrier();
     // buildFrustum3(frustumPlanes, vec2(8,8), minDepthZ, maxDepthZ);

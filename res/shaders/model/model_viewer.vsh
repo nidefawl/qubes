@@ -19,6 +19,7 @@ void main(void) {
 	color = in_color;
 	vec4 pos = in_position;
 	texcoord = in_texcoord;
-	position = model_matrix * pos;
-    gl_Position = in_matrix_3D.mvp * model_matrix * in_position;
+	position = model_matrix * vec4(in_position.xyz - RENDER_OFFSET + PX_OFFSET.xyz, in_position.w);
+    gl_Position = in_matrix_3D.mvp * position;
+    
 }
