@@ -30,10 +30,12 @@ struct PointLight
     vec4 color;
     float intensity;
     float radius;
-    float constant;
-    float linear;
-    float exponent;
+    float quadratic;
     float padding1;
+    float padding2;
+    float padding3;
+    float padding4;
+    float padding5;
 };
 layout (std430) buffer DebugOutputBuffer
 {
@@ -201,8 +203,8 @@ void main()
     {
     float minDepthZ = uintBitsToFloat(minDepth);
     float maxDepthZ = uintBitsToFloat(maxDepth);
-    debugBuf.debugVals[0] = minDepthZ;
-    debugBuf.debugVals[1] = maxDepthZ;
+    // debugBuf.debugVals[0] = minDepthZ;
+    // debugBuf.debugVals[1] = maxDepthZ;
    
     vec4 frustumPlanes[6];
     buildFrustum3(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
@@ -244,7 +246,7 @@ void main()
     vec3 finalLight = vec3(0);
     if (prop.depth > 0.0) 
     {
-    debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
+    // debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
     // debugBuf.tileLights[0] = 4;
     // debugBuf.tileLights[1] = 5;
     // debugBuf.tileLights[2] = 6;
@@ -281,7 +283,9 @@ void main()
             float spec = max(pow(max(dot(normal, halfwayDir), 0.0), 1.4), 0.0);
             vec3 specular = intensitySpecular * spec * colorLight;
             // Attenuation
-            float attenuation = 1.0 / (p.constant + p.linear * fDist + p.exponent * fDist * fDist);
+            // float attenuation = 1.0 / (p.constant + p.linear * fDist + p.exponent * fDist * fDist);
+            float at=max(1, (-0.05f+p.quadratic * fDist * fDist));
+            float attenuation = 1.0 / at;
             attenuation = (attenuation - LIGHT_CUTOFF) / (1 - LIGHT_CUTOFF);
             attenuation = max(attenuation, 0);
 

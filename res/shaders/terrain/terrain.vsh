@@ -2,6 +2,7 @@
 
 #pragma define "FAR_BLOCKFACE"
 #pragma define "MODEL_RENDER"
+#pragma define "TEST_RENDER"
 
 #pragma include "ubo_scene.glsl"
 #pragma include "ubo_constants.glsl"
@@ -107,7 +108,7 @@ void main() {
 #ifdef MODEL_RENDER
 	position = model_matrix * pos;
     gl_Position = in_matrix_3D.mvp * model_matrix * in_position;
-#else
+#else 
 	position = pos;
 	gl_Position = in_matrix_3D.mvp * pos;
 #endif

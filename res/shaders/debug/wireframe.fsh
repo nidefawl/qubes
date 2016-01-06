@@ -1,19 +1,18 @@
 #version 150 core
 
+#pragma include "ubo_scene.glsl"
 
 #pragma define "RENDER_WIREFRAME"
 
 
-in vec3 normal;
+uniform float thickness;
+uniform float maxDistance;
 in vec4 color;
-in vec3 vposition;
-in highp vec3 triangle;
-in float ftime; 
+noperspective in vec3 vposition;
+ in vec3 triangle;
+noperspective in vec3 normal;
 
 out vec4 out_Color;
-uniform float thickness;
-
-uniform float maxDistance;
 
 float edgeFactor(){
     vec3 d = fwidth(triangle);
@@ -22,7 +21,7 @@ float edgeFactor(){
 }
 
 void main() {
-
+    float ftime = FRAME_TIME*0.05;
     // float min_dist = min(min(triangle.x, triangle.y), triangle.z);
     // float edge = 1.0-smoothstep(fwidth(min_dist), 2 * fwidth(min_dist), min_dist);
     // out_Color = vec4(1,0,1, color.a*edge);

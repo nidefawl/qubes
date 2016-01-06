@@ -8,10 +8,9 @@ uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
 uniform sampler2D texDepth;
 
-uniform mat4 inverseProj;
+
 uniform mat4 pixelProj;
 
-uniform mat4 worldMVP;
 
 in vec2 pass_texcoord;
 flat in vec3 clipInfo;
@@ -47,7 +46,7 @@ float getBrightness(vec2 b) {
 const float _Iterations = 16;							// maximum ray iterations 
 const float _PixelStride = 18;							// number of pixels per ray step close to camera
 const float _PixelStrideZCuttoff = 152;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
+const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
 const float _PixelZSize = 32.0f;							// Z size in camera space of a pixel in the depth buffer
 const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
 const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
@@ -57,9 +56,9 @@ const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ra
 const float _Iterations = 24;							// maximum ray iterations 
 const float _PixelStride = 25;							// number of pixels per ray step close to camera
 const float _PixelStrideZCuttoff = 80;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
-const float _PixelZSize = 3.1f;							// Z size in camera space of a pixel in the depth buffer
-const float _MaxRayDistance = 2222.0f;						// maximum distance of a ray
+const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
+const float _PixelZSize = 0.8f;							// Z size in camera space of a pixel in the depth buffer
+const float _MaxRayDistance = 1222.0f;						// maximum distance of a ray
 const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
 
 #endif
@@ -225,9 +224,9 @@ bool traceScreenSpaceRay( float3 rayOrigin,
 			rayZMax = (dPQK.z * -0.5 + pqk.z) / (dPQK.w * -0.5 + pqk.w);
 			swapIfBigger( rayZMax, rayZMin);
     		float2 newHit = permute ? pqk.yx : pqk.xy;;
-			// if (newHit.x < 0 || newHit.y < 0 || newHit.x > renderBufferSize.x || newHit.y > renderBufferSize.y) {
-			// 	break;
-			// }
+			if (newHit.x < 0 || newHit.y < 0 || newHit.x > renderBufferSize.x || newHit.y > renderBufferSize.y) {
+				break;
+			}
 	    	hitPixel = newHit;
 	        
 	        originalStride *= 0.5;
@@ -283,8 +282,7 @@ void main(void) {
     uvec4 blockinfo = texture(texMaterial, pass_texcoord, 0);
 	float depthFrag = texture(texDepth, pass_texcoord).r;
 	float cameraZ = Linear01Depth(depthFrag);
-    vec4 cameraRay = inverseProj * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 1, 1.0f);
-
+    vec4 cameraRay = in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 1, 1.0f);
 
     cameraRay /= cameraRay.w;
     // cameraRay.y+=0.4;
@@ -317,7 +315,7 @@ void main(void) {
 	float alpha = calculateAlphaForIntersection( hit, iterationCount, specularStrength, hitPixel, hitPoint, vsRayOrigin, vsRayDirection);
 	// float alpha = specularStrength;
 
-	vec4 cOut = vec4(albedo.rgb, 1);
+	vec4 cOut = vec4(albedo.rgb*albedo.a, 0);
 	if (isWater>0) {
 	if (hit) {
 		if (!inScreen(hitPixel)) {

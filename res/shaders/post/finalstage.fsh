@@ -7,9 +7,9 @@
 uniform sampler2D texColor;
 #ifdef DO_AUTOEXPOSURE
 uniform sampler2D texLum;
-const float constexposure = 100;
+const float constexposure = 130;
 #else
-const float constexposure = 660;
+uniform float constexposure;
 #endif
 
 
@@ -19,7 +19,7 @@ out vec4 out_Color;
 void main(void) {
 	vec4 tex = texture(texColor, pass_texcoord.st, 0);
 #ifdef DO_AUTOEXPOSURE
-	float brightness = texelFetch(texLum, ivec2(0,0), 0).r;
+	float brightness = 1-pow(1-texelFetch(texLum, ivec2(0,0), 0).r, 1.4);
 	float fDyn = 0.7;
 	float autoExposure = ((brightness-fDyn)) * -constexposure;
 	autoExposure = constexposure*(1.0-fDyn) + autoExposure;

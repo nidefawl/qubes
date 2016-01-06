@@ -1,8 +1,6 @@
 #version 150 core
 
 uniform sampler2D texSSR;
-uniform sampler2D texNormals;
-uniform sampler2D texDepth;
 
 uniform vec2 _TexelOffsetScale;
 const float _DepthBias = 0.305;

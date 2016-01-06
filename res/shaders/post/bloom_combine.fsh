@@ -17,7 +17,7 @@ void main(void) {
 	vec4 tex = texture(texColor, pass_texcoord.st, 0);
 #ifdef DO_BLOOM
 	vec4 texBloom = texture(texBlur, pass_texcoord.st, 0);
-	out_Color = vec4(tex.rgb+texBloom.rgb*0.4, 1);
+	out_Color = vec4(tex.rgb+texBloom.rgb*0.01, 1);
 #else
 	out_Color = tex;
 #endif
