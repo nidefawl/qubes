@@ -4,6 +4,7 @@ import java.io.EOFException;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 
@@ -32,10 +33,8 @@ public class QModelTexture {
     }
 
     public void release() {
-        if (this.glid > 0) {
-            TextureManager.getInstance().releaseTexture(this.glid);
-            this.glid = 0;
-        }
+        GL.deleteTexture(this.glid);
+        this.glid = 0;
     }
 
 }

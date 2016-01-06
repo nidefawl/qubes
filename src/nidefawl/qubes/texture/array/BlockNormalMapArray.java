@@ -1,4 +1,4 @@
-package nidefawl.qubes.texture;
+package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
@@ -91,7 +91,6 @@ public class BlockNormalMapArray extends TextureArray {
                   defNormal[idx*4+3] = (byte)0xFF;
               }
           }
-          System.out.println("upload default normal map wiht size "+this.tileSize);
         directBuf = put(directBuf, defNormal);
         GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0,                     //Mipmap number
               0, 0, slot,                 //xoffset, yoffset, zoffset

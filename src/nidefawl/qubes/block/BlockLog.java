@@ -5,7 +5,7 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.BlockPlacer;

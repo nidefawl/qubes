@@ -12,6 +12,7 @@ import java.util.List;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
@@ -60,6 +61,9 @@ public class MeshUpdateTask {
             return true;
         }
         if (this.meshed) {
+            if (GPUProfiler.PROFILING_ENABLED) {
+                GPUProfiler.start("upload");
+            }
             long l = System.nanoTime();
             this.mr.preUploadBuffers();
 
@@ -68,6 +72,9 @@ public class MeshUpdateTask {
             }
 //            this.mr.compileDisplayList(this.tess);
             Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
+            if (GPUProfiler.PROFILING_ENABLED) {
+                GPUProfiler.end();
+            }
         } else {
             //TODO: flush display list if compile failed, or ignore
         }

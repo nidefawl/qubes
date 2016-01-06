@@ -17,7 +17,7 @@ public abstract class GuiInventoryBase extends GuiWindow {
 
     protected void renderSlots(float fTime, double mX, double mY) {
         float posx = this.posX+10;
-        float posy  = this.posY+40;
+        float posy  = this.posY+titleBarHeight+5;
         Shaders.gui.enable();
         Slot sHover = null;
         float inset = 4;
@@ -65,7 +65,9 @@ public abstract class GuiInventoryBase extends GuiWindow {
     public boolean onMouseClick(int button, int action) {
         if (super.onMouseClick(button, action))
             return true;
-        Slot s = this.slots.getSlotAt(Mouse.getX()-this.posX-10, Mouse.getY()-this.posY-40);
+        float posx = this.posX+10;
+        float posy  = this.posY+titleBarHeight+5;
+        Slot s = this.slots.getSlotAt(Mouse.getX()-posx, Mouse.getY()-posy);
         if (s != null) {
             BaseStack stack = this.slots.slotClicked(s, button, action);
             Game.instance.sendPacket(new PacketCInvClick(slots.getId(), s.idx, button, action, stack));

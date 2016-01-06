@@ -31,6 +31,7 @@ public class GuiSettings extends Gui {
         public Setting(Gui g, String string, Object current, Object[] vals) {
             this.box = new ComboBox(g, nextID++, string);
             this.box.setValue(current);
+            this.box.titleLeft=true;
             this.vals = vals;
         }
 
@@ -49,8 +50,9 @@ public class GuiSettings extends Gui {
     private Setting smaaQSetting;
     private Setting aoSetting;
 
-    public GuiSettings() {
+    public GuiSettings(Gui parent) {
         this.font = FontRenderer.get(null, 18, 0, 20);
+        this.parent = parent;
     }
 
     @Override
@@ -124,7 +126,7 @@ public class GuiSettings extends Gui {
                 Engine.outRenderer.initAA();
             }
         }));
-        int left = this.posX + this.width / 2 - w1 / 2;
+        int left = this.posX + this.width / 2;
         int y = this.posY + this.height / 6 + 40;
         for (Setting s : list) {
             s.box.setPos(left, y);
@@ -134,6 +136,7 @@ public class GuiSettings extends Gui {
             this.buttons.add(s.box);
         }
         {
+             left = this.posX + this.width / 2 - (w1) / 2;
             back = new Button(6, "Back");
             this.buttons.add(back);
             back.setPos(left, this.posY + this.height / 2 + 120);
@@ -150,12 +153,9 @@ public class GuiSettings extends Gui {
     }
 
     public void render(float fTime, double mX, double mY) {
-        if(Game.instance.isConnected())
-            renderBackground(fTime, mX, mY, true, 0.8f);
-        else
-            renderBackground(fTime, mX, mY, true, 1.0f);
+        renderBackground(fTime, mX, mY, true, 0.7f);
         Shaders.textured.enable();
-        this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f);
+        this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f, 2);
         this.smaaQSetting.box.enabled = Game.instance.settings.aa==1;
         
         // Disable non-runtime options
@@ -186,10 +186,7 @@ public class GuiSettings extends Gui {
             }
         }
         if (element == back) {
-            if(!Game.instance.isConnected())
-                Game.instance.showGUI(new GuiMainMenu());
-            else
-                Game.instance.showGUI(null);
+            Game.instance.showGUI((Gui) parent);
         }
         return true;
     }

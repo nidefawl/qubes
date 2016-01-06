@@ -3,7 +3,7 @@ package nidefawl.qubes.meshing;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockLeaves;
 import nidefawl.qubes.gl.VertexBuffer;
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.vec.Dir;
 
 public class BlockFace {

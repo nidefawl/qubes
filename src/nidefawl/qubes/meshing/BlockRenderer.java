@@ -26,18 +26,6 @@ import nidefawl.qubes.world.World;
  */
 public class BlockRenderer {
 
-    public static int mix_light(int br0, int br1, int br2, int br3) {
-        // shift the upper nibble up by 4 bits so the overflow (bit 4-7) can be masked out later
-        br0 = (br0 & 0xF) | (br0 & 0xF0) << 4;
-        br1 = (br1 & 0xF) | (br1 & 0xF0) << 4;
-        br2 = (br2 & 0xF) | (br2 & 0xF0) << 4;
-        br3 = (br3 & 0xF) | (br3 & 0xF0) << 4;
-        return (br0 + br1 + br2 + br3) >> 2;
-    }
-
-    public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
-        return ((ao3 & 0x3) << 6) | ((ao2 & 0x3) << 4) | ((ao1 & 0x3) << 2) | (ao0 & 0x3);
-    }
     final static int[][] offsets = new int[3*2][];
     static {
         for (int n = 0; n < 6; n++) {
@@ -111,26 +99,6 @@ public class BlockRenderer {
         this.shadowDrawMode = shadowDrawMode;
     }
 
-    protected void maskLight(int ao0, int ao1, int ao2, int ao3, Block block) {
-        int sky = 0;
-        sky |= (ao3 >> 8) & 0xF;// shift down by 8, skylight is now in upper byte (mix_light shifted it there), then mask out the overflow
-        sky <<= 4;
-        sky |= (ao2 >> 8) & 0xF;
-        sky <<= 4;
-        sky |= (ao1 >> 8) & 0xF;
-        sky <<= 4;
-        sky |= (ao0 >> 8) & 0xF;
-        int self = block.getLightValue();
-        int blockLight = 0;
-        blockLight |= Math.max((ao3) & 0xF, self);
-        blockLight <<= 4;
-        blockLight |= Math.max((ao2) & 0xF, self);
-        blockLight <<= 4;
-        blockLight |= Math.max((ao1) & 0xF, self);
-        blockLight <<= 4;
-        blockLight |= Math.max((ao0) & 0xF, self);
-        attr.setLight(sky, blockLight);
-    }
 
     public int render(int ix, int iy, int iz) {
         //        ccache
@@ -399,11 +367,11 @@ public class BlockRenderer {
         int br_nn = brigthness;
         int br_cn = brigthness;
         int br_pn = brigthness;
-        int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
-        int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
-        int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
-        int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP, block);
+        int brPP = BlockFaceAttr.mix_light(brigthness, br_pp, br_cp, br_pc);
+        int brNP = BlockFaceAttr.mix_light(brigthness, br_np, br_cp, br_nc);
+        int brNN = BlockFaceAttr.mix_light(brigthness, br_nn, br_cn, br_nc);
+        int brPN = BlockFaceAttr.mix_light(brigthness, br_pn, br_cn, br_pc);
+        attr.maskLight(brNN, brPN, brPP, brNP, block.getLightValue());
         attr.setType(block.id);
         attr.setNormal(0, 1, 0); // set upward normal
 
@@ -1210,7 +1178,7 @@ public class BlockRenderer {
         boolean bendNormal = !(block instanceof BlockDoublePlant) || (data&0x8) != 0;
         int topAO = !bendNormal?2:1;
         int bottomAO = !bendNormal?2:2;
-        attr.setAO(maskAO(bottomAO,bottomAO,topAO,topAO));
+        attr.setAO(BlockFaceAttr.maskAO(bottomAO,bottomAO,topAO,topAO));
         attr.setTex(tex);
         attr.setNormalMap(0);
         attr.setFaceDir(-1);
@@ -1223,11 +1191,11 @@ public class BlockRenderer {
         int br_nn = brigthness;
         int br_cn = brigthness;
         int br_pn = brigthness;
-        int brPP = mix_light(brigthness, br_pp, br_cp, br_pc);
-        int brNP = mix_light(brigthness, br_np, br_cp, br_nc);
-        int brNN = mix_light(brigthness, br_nn, br_cn, br_nc);
-        int brPN = mix_light(brigthness, br_pn, br_cn, br_pc);
-        maskLight(brNN, brPN, brPP, brNP, block);
+        int brPP = BlockFaceAttr.mix_light(brigthness, br_pp, br_cp, br_pc);
+        int brNP = BlockFaceAttr.mix_light(brigthness, br_np, br_cp, br_nc);
+        int brNN = BlockFaceAttr.mix_light(brigthness, br_nn, br_cn, br_nc);
+        int brPN = BlockFaceAttr.mix_light(brigthness, br_pn, br_cn, br_pc);
+        attr.maskLight(brNN, brPN, brPP, brNP, block.getLightValue());
         attr.setType(block.id);
         attr.setNormal(0, 1, 0); // set upward normal
 

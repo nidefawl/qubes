@@ -7,8 +7,10 @@ import java.util.*;
 
 import org.lwjgl.opengl.GL11;
 
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.texture.TextureUtil;
 
 /**
  * A TrueType font implementation originally for Slick, edited for Bobjob's
@@ -278,7 +280,8 @@ public class TrueTypeFont {
             }
         }
         if (image != null) {
-            this.fontTextureID = TextureManager.getInstance().makeNewTexture(image, false, true, 0);
+            byte[] data = TextureUtil.toBytesRGBA(image);
+            this.fontTextureID = TextureManager.getInstance().makeNewTexture(data, image.getWidth(), image.getHeight(), false, true, 0);
         }
         this.spaceWidth = Math.min(this.fontMetrics.charWidth(' '), (int) (this.fontMetrics.getHeight() * 0.2D));
         int max = 0;
@@ -344,7 +347,8 @@ public class TrueTypeFont {
             }
             charMap.put((int) chBuffer[0], newRect);
             this.unallocate();
-            this.fontTextureID = TextureManager.getInstance().makeNewTexture(image, false, true, 0);
+            byte[] data = TextureUtil.toBytesRGBA(image);
+            this.fontTextureID = TextureManager.getInstance().makeNewTexture(data, image.getWidth(), image.getHeight(), false, true, 0);
             return chBuffer[0];
         }
         return -4;
@@ -677,10 +681,8 @@ public class TrueTypeFont {
     }
 
     public void unallocate() {
-        if (this.fontTextureID>0) {
-            GL11.glDeleteTextures(this.fontTextureID);
-            this.fontTextureID = 0;
-        }
+        GL.deleteTexture(this.fontTextureID);
+        this.fontTextureID = 0;
     }
     
     

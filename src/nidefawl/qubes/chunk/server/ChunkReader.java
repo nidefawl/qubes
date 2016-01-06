@@ -27,7 +27,8 @@ public class ChunkReader {
                 Compound t = (Compound) TagReader.readTagFromCompressedBytes(data);
                 return readChunk(world, x, z, t);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("While reading chunk "+world.getName()+","+x+","+z+" from "+f);
             e.printStackTrace();
         }
         return null;

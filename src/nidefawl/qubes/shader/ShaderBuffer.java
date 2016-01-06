@@ -49,14 +49,16 @@ public class ShaderBuffer {
     public void update() {
         int max = Math.max(this.buf.limit(), Math.max(this.bufFloat.limit()*4, this.bufInt.limit()*4));
         
-//        System.out.println(buf+"/"+bufFloat+"/"+max+"/"+this.bufInt.get(0));
-//        System.out.println(this.shaders.get(0).name+" - "+this.name+" - "+this.bindingPoint + buffers.get(0).bindingPoint);
+        //System.out.println(buf+"/"+bufFloat+"/"+max+"/"+this.bufInt.get(0));
+        //System.out.println(this.shaders.get(0).name+" - "+this.name+" - "+this.bindingPoint + buffers.get(0).bindingPoint);
+        
         buf.position(0).limit(max);
         GL15.glBindBuffer(GL_SHADER_STORAGE_BUFFER, this.buffer);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_SHADER_STORAGE_BUFFER");
         GL15.glBufferData(GL_SHADER_STORAGE_BUFFER, this.len, GL15.GL_DYNAMIC_DRAW);
-//        System.out.println(buf+"/"+this.len);
+
+        //System.out.println(buf+"/"+this.len);
         
         GL15.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buf);
         
@@ -99,7 +101,6 @@ public class ShaderBuffer {
             ShaderBuffer buffer = buffers.get(i);
             final int blockIndex = glGetProgramResourceIndex(shader.shader, GL_SHADER_STORAGE_BLOCK, buffer.name);
             if (blockIndex != -1) {
-                System.out.println("buffer "+buffer.name+" is at "+blockIndex+ " on shader "+shader.name+", linking it over binding point "+buffer.bindingPoint);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, buffer.bindingPoint, buffer.buffer);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glBindBufferBase GL_SHADER_STORAGE_BUFFER");

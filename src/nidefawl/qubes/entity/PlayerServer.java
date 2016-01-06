@@ -78,7 +78,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 Chunk c = this.world.getChunkManager().get(x, z);
                 if (c != null) {
                     if (chunks == null) {
-                        chunks = Sets.newHashSet();
+                        chunks = Sets.newLinkedHashSet();
                     }
 //                    System.out.println("send chunk "+c);
                     chunks.add(c);
@@ -295,5 +295,9 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 return this.slotsCrafting;
         }
         return null;
+    }
+
+    public void onWorldLeave() {
+        this.sendChunks.clear();
     }
 }

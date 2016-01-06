@@ -70,7 +70,6 @@ public class RegionRenderer extends AbstractRenderer {
     boolean                         needsSortingUpdateRenderers    = false;
     
     
-    TesselatorState                 debug           = new TesselatorState();
     final static int MAX_OCCL_QUERIES = 8;
     final static int MIN_DIST_OCCL = 1;
     final static int MIN_STATE_OCCL = Frustum.FRUSTUM_INSIDE_FULLY;
@@ -398,7 +397,13 @@ public class RegionRenderer extends AbstractRenderer {
                 if (r.hasPass(PASS_SOLID) || r.hasPass(PASS_LOD)) {
                     justrendered.add(r);
                 }
-//                r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                if (numV < 2000000) {
+                    if (r.hasPass(PASS_LOD)) {
+                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        this.numV += r.getNumVertices(PASS_LOD);
+                    }
+                }
             }
 //            if (dist == 0) {
 //                cur = worldRenderer.terrainShaderFar;
@@ -416,6 +421,7 @@ public class RegionRenderer extends AbstractRenderer {
         this.numV = 0;
         int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
+        Engine.bindVAO(GLVAO.vaoBlocks);
         for (int dist = 0; dist < 1; dist++)  {
             for (int i = 0; i < size; i++) {
                 MeshedRegion r = renderList.get(i);
@@ -445,8 +451,11 @@ public class RegionRenderer extends AbstractRenderer {
                         GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
                         GL11.glColorMask(false, false, false, false);
                         GL11.glDepthMask(false);
+                        Engine.bindVAO(GLVAO.vaoBlocksShadow);
                         r.renderRegion(fTime, PASS_SHADOW_SOLID, drawMode, this.drawInstances);
+//                        r.renderRegion(fTime, PASS_TRANSPARENT, drawMode, this.drawInstances);
                         r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        Engine.bindVAO(GLVAO.vaoBlocks);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
                         GL11.glDepthMask(true);
@@ -471,14 +480,22 @@ public class RegionRenderer extends AbstractRenderer {
                     }
                 }
             }
-            if (dist == 0) {
-                cur = worldRenderer.terrainShaderFar;
-                cur.enable();
-                GL11.glDisable(GL11.GL_BLEND);
-            }
+//            if (dist == 0) {
+//                cur = worldRenderer.terrainShaderFar;
+//                cur.enable();
+//                GL11.glDisable(GL11.GL_BLEND);
+//            }
         }
     }
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
+        GLVAO vao = GLVAO.vaoBlocks;
+        if (pass == PASS_SHADOW_SOLID) {
+            vao = GLVAO.vaoBlocksShadow;
+            if (Game.instance.settings.shadowDrawMode == 1) {
+                vao = GLVAO.vaoBlocksShadowTextured;
+            }
+        }
+        Engine.bindVAO(vao);
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
         int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
@@ -716,32 +733,4 @@ public class RegionRenderer extends AbstractRenderer {
         return (o1.distance < o2.distance) ? -1 : ((o1.distance == o2.distance) ? 0 : 1);
     }
 
-    public void renderDebug(World world, float fTime) {
-        Tess.instance.setColor(-1, 200);
-        int b=RegionRenderer.REGION_SIZE*Chunk.SIZE;
-        int h = World.MAX_WORLDHEIGHT/3*2;
-        for (int x = 0; x < b; x+=Chunk.SIZE) {
-            for (int z = 0; z < b; z+=Chunk.SIZE) {
-                Tess.instance.setColor(-1, 200);
-                if (x==0||z==0)
-                    Tess.instance.setColor(0xffff00, 200);
-                Tess.instance.add(x, 0, z);
-                Tess.instance.add(x, h, z);
-                Tess.instance.add(z, 0, x);
-                Tess.instance.add(z, h, x);
-            }
-        }
-        Tess.instance.draw(GL_LINES, debug);
-        glEnable(GL_BLEND);
-        debug.getVBO().bind();
-        debug.setAttrPtr();
-        for (int i = 0; i < this.regions.length; i++) {
-            MeshedRegion[] r = this.regions[i];
-            int xOff = r[0].rX << (RegionRenderer.REGION_SIZE_BITS + 4);
-            int zOff = r[0].rZ << (RegionRenderer.REGION_SIZE_BITS + 4);
-            Engine.pxStack.push(xOff, 0, zOff);
-            debug.drawVBO(GL_LINES);
-            Engine.pxStack.pop();
-        }
-    }
 }

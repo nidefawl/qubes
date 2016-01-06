@@ -10,7 +10,7 @@ import nidefawl.qubes.shader.Shaders;
 
 public abstract class GuiWindow extends Gui {
 
-    public static final int titleBarHeight = 28;
+    public static final int titleBarHeight = 24;
     public boolean allwaysVisible;
     public boolean visible;
     private boolean mouseOverResize;
@@ -68,7 +68,7 @@ public abstract class GuiWindow extends Gui {
     }
     
     public boolean mouseOver(double mx, double my) {
-        return this.visible && this.posX <= mx && this.posX + this.width >= mx && this.posY-1 <= my && this.posY + this.height >= my;
+        return this.visible && this.posX <= mx && this.posX + this.width >= mx && this.posY-1 <= my && this.posY + this.height+4 >= my;
     }
     public boolean mouseOverResize(double mx, double my) {
         return mx > this.posX+this.width - 14 && mx < this.posX+this.width && my > this.posY+this.height - 14 && my < this.posY+this.height;
@@ -134,19 +134,22 @@ public abstract class GuiWindow extends Gui {
         }
         int z = -10;
 
-        renderRoundedBoxShadow(posX-out, posY, z, width+out*2, bw, color, alpha, true);
-        renderRoundedBoxShadow(posX-out, posY-out, z, bw, height+out*2, color, alpha, true);
-        renderRoundedBoxShadow(posX+width+out-bw, posY-out, z, bw, height+out*2, color, alpha, true);
-        renderRoundedBoxShadow(posX-out, posY+height+out-bw, z, width+out*2, bw, color, alpha, true);
-        renderRoundedBoxShadow(posX, posY, z, width, height, this.color, 1, false);
-        this.round = 4;
-        out=1;
+//        renderRoundedBoxShadow(posX-out, posY, z, width+out*2, bw, color, alpha, true);
+//        renderRoundedBoxShadow(posX-out, posY-out, z, bw, height+out*2, color, alpha, true);
+//        renderRoundedBoxShadow(posX+width+out-bw, posY-out, z, bw, height+out*2, color, alpha, true);
+//        renderRoundedBoxShadow(posX-out, posY+height+out-bw, z, width+out*2, bw, color, alpha, true);
+//        renderRoundedBoxShadow(posX, posY, z, width, height, this.color, 1, false);
+        resetShape();
+        this.posY+=5;
+//        color
+        renderBox();
+        out=-30;
         alpha = 1;
         color = this.hasFocus() ? 0xdadada : 0xbababa;
 //        color = 0xdadada;
         this.shadowSigma = 1f;
-        
-        renderRoundedBoxShadow(posX-out*2, posY-out*2-1, 5, width+out*4, titleBarHeight+out*2, color, 1f, false);
+        int titleWidth = 220;
+        renderRoundedBoxShadow(posX+width/2-titleWidth/2, posY-4, 5, titleWidth, titleBarHeight, color, 1f, false);
 //        GL11.glDepthFunc(GL11.GL_EQUAL);
 //        this.shadowSigma = 3f;
 //        this.round = 32;
@@ -155,8 +158,9 @@ public abstract class GuiWindow extends Gui {
         resetShape();
         Shaders.textured.enable();
         Engine.pxStack.push(0, 0, 6);
-        font.drawString(getTitle(), posX + 8, posY + 24, -1, true, 1f);
+        font.drawString(getTitle(), posX+width/2, posY + titleBarHeight-7, -1, true, 1f, 2);
         Engine.pxStack.pop();
+        this.posY-=5;
     }
     public void onDrag(double mX, double mY) {
         int displayWidth = Game.displayWidth;
@@ -209,7 +213,7 @@ public abstract class GuiWindow extends Gui {
             if (this.popup != null) {
                 mx -= (this.posX + this.popup.posX);
                 my -= (this.posY + this.popup.posY);
-                if (mx > 0 && mx < this.popup.width && my > -titleBarHeight && my <= this.popup.height) {
+                if (mx > 0 && mx < this.popup.width && my > Math.min(this.posX + this.popup.posX, 0) && my <= this.popup.height) {
 //                    this.popup.mouseClicked((mx+(this.popup.posX)), (my + this.popup.posY), Mouse.getEventButton());
                     return true;
                 }

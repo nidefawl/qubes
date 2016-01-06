@@ -135,17 +135,14 @@ public class SingleBlockDraw {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glBufferData");
         }
-
-        int ptrSetting = 0;
-        MeshedRegion.enableVertexPtrs(ptrSetting);
+        Engine.bindVAO(GLVAO.vaoBlocks);
+        Engine.bindBuffer(vbo);
+        Engine.bindIndexBuffer(vboIndices);
         if (Engine.USE_TRIANGLES) {
             GL11.glDrawElements(GL11.GL_TRIANGLES, buffer.faceCount * 2 * 3, GL11.GL_UNSIGNED_INT, 0);
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
             GL11.glDrawArrays(GL11.GL_QUADS, 0, buffer.vertexCount);
         }
-        MeshedRegion.disableVertexPtrs(ptrSetting);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
 
     /**

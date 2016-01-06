@@ -551,4 +551,8 @@ public class Selection {
         int maxZ = Math.max(sel1.z, sel2.z);        
         return ix >= minX && ix <= maxX && iy >= minY && iy <= maxY && iz >= minZ && iz <= maxZ;
     }
+
+    public void toggleQuarterMode() {
+        this.quarterMode = !this.quarterMode;
+    }
 }

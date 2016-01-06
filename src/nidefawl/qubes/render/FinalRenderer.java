@@ -1,14 +1,15 @@
 package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
 import com.google.common.collect.Lists;
@@ -16,11 +17,13 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.GuiOverlayDebug;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.*;
+import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
@@ -34,6 +37,8 @@ public class FinalRenderer extends AbstractRenderer {
     public Shader       shaderFinal;
     public Shader       shaderBlur;
     public Shader       shaderDeferred;
+    public Shader       shaderDeferredWater;
+    public Shader       shaderDeferredFirstPerson;
     public Shader       shaderInterpLum;
     public Shader       shaderThreshold;
     public Shader       shaderSSR;
@@ -41,6 +46,7 @@ public class FinalRenderer extends AbstractRenderer {
     public Shader       shaderSSRCombine;
     public Shader       shaderDownsample4x;
     public Shader       shaderDownsample4xLum;
+    private Shader shaderNormals;
 
     private FrameBuffer fbScene;
     public FrameBuffer  fbSSR;
@@ -56,33 +62,24 @@ public class FinalRenderer extends AbstractRenderer {
     private FrameBuffer fbLuminanceInterp[];
 
     private int         blurTexture;
+    private int preWaterDepthTex;
     private boolean     startup     = true;
     private int         ssr         = 0;
-    private FloatBuffer floatBuf;
     float               curBrightness;
     float               brightness;
     private int         frame;
     SMAA smaa;
-    
-    /** deferred shader uniform array for lights
-     * Layout:
-    vec3 Position;
-    vec3 Color;
-    float Linear;
-    float Quadratic;
-    float Radius;
-     */
-    private Uniform3f[] lightColors = new Uniform3f[256];
-    private Uniform3f[] lightPos = new Uniform3f[256];
-    private Uniform1f[] lightLin = new Uniform1f[256];
-    private Uniform1f[] lightExp = new Uniform1f[256];
-    private Uniform1f[] lightSize = new Uniform1f[256];
 
     public void renderDeferred(World world, float fTime, int pass) {
-
+        Shader shaderDeferred = this.shaderDeferred;
+        if (pass == 1) {
+            shaderDeferred = this.shaderDeferredWater;
+        }
+        if (pass == 2) {
+            shaderDeferred = this.shaderDeferredFirstPerson;
+        }
         shaderDeferred.enable();
         
-        shaderDeferred.setProgramUniform1i("pass", pass);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
 
@@ -94,6 +91,9 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.lightCompute.getTexture());
         GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
         GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.fbSSAO.getTexture(0));
+        if (pass == 1) {
+            GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.preWaterDepthTex);
+        }
 
         Engine.drawFullscreenQuad();
 
@@ -119,13 +119,15 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(name, "texNormals", Engine.getSceneFB().getTexture(1));
             GLDebugTextures.readTexture(name, "texMaterial", Engine.getSceneFB().getTexture(2));
             GLDebugTextures.readTexture(name, "blocklight", Engine.getSceneFB().getTexture(3));
-            GLDebugTextures.readTexture(name, "texMaterial", Engine.getSceneFB().getTexture(2));
             GLDebugTextures.readTexture(name, "texDepth", Engine.getSceneFB().getDepthTex(), 2);
             GLDebugTextures.readTexture(name, "DeferredOut", this.fbDeferred.getTexture(0), 1);
             GLDebugTextures.readTexture(name, "light", Engine.lightCompute.getTexture());
             if (pass == 0) {
                 GLDebugTextures.readTexture(name, "texShadow", Engine.shadowRenderer.getDebugTexture());
                 GLDebugTextures.readTexture(name, "AOOut", this.fbSSAO.getTexture(0));
+            }
+            if (pass == 1) {
+                GLDebugTextures.readTexture(name, "preWaterDepth", this.preWaterDepthTex, 2);
             }
         }
 
@@ -197,6 +199,7 @@ public class FinalRenderer extends AbstractRenderer {
         GL11.glViewport(0, 0, fbBlur1.getWidth(), fbBlur1.getHeight()); // 4x downsampled render resolutino
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, inputBuffer.getTexture(0)); // Albedo
         GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3)); // Material/Blockinfo
+        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.lightCompute.getTexture());
         
         shaderThreshold.enable();
         fbBlur1.bind();
@@ -270,9 +273,6 @@ public class FinalRenderer extends AbstractRenderer {
         fbSSR.bind();
         fbSSR.clearFrameBuffer();
         shaderSSR.enable();
-        shaderSSR.setProgramUniformMatrix4("inverseProj", false, Engine.getMatSceneP().getInv(), false);
-        shaderSSR.setProgramUniformMatrix4("pixelProj", false, scaleMatBuf, false);
-        shaderSSR.setProgramUniformMatrix4("worldMVP", false, Engine.getMatSceneMVP().get(), false);
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbDeferred.getTexture(0)); //COLOR
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1)); //NORMAL
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2)); //MATERIAL
@@ -285,11 +285,9 @@ public class FinalRenderer extends AbstractRenderer {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("blur");
         
         float maxBlurRadius = 8;
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbSSR.getTexture(0)); //SSR
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1)); //NORMAL
-        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex()); //DEPTH
         fbSSRBlurredX.bind();
         fbSSRBlurredX.clearFrameBuffer();
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbSSR.getTexture(0)); //SSR
         shaderSSRBlur.enable();
         shaderSSRBlur.setProgramUniform2f("_TexelOffsetScale", maxBlurRadius / (float)fbSSR.getWidth(), 0f);
         Engine.drawFullscreenQuad();
@@ -351,11 +349,43 @@ public class FinalRenderer extends AbstractRenderer {
         }
 
         this.frame++;
+        
+        
+//
+//        if(Stats.fpsCounter==0) {
+//            Engine.debugOutput.bind();
+//            ByteBuffer buf = Engine.debugOutput.map(false);
+//            
+//            float[] debugVals = new float[16];
+//            FloatBuffer fbuf = buf.asFloatBuffer();
+//            fbuf.get(debugVals);
+//            System.out.println("a "+String.format("%10f", debugVals[0]));
+//            System.out.println("b "+String.format("%10f", debugVals[1]));
+//            Engine.debugOutput.unmap();
+//            Engine.debugOutput.unbind();
+//        }
+        
+    }
+    
+    public int renderNormals() {
+        fbFinal.bind();
+        fbFinal.clearFrameBuffer();
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbScene.getTexture(1));
+        this.shaderNormals.enable();
+        Engine.drawFullscreenQuad();
+        GLDebugTextures.readTexture("fixNormals", "texNormals", Engine.getSceneFB().getTexture(1), 8);
+        return GLDebugTextures.readTexture("fixNormals", "output", fbFinal.getTexture(0), 8);
+    }
+    public void copyPreWaterDepth() {
+        FrameBuffer.unbindReadFramebuffer();
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.preWaterDepthTex);
+        ARBCopyImage.glCopyImageSubData(fbScene.getDepthTex(), GL_TEXTURE_2D, 0, 0, 0, 0, this.preWaterDepthTex, GL_TEXTURE_2D, 0, 0, 0, 0, Game.displayWidth, Game.displayHeight, 1);
+        
     }
     public void copySceneDepthBuffer() {
         fbFinal.bind();
 
-        Engine.getSceneFB().bindRead();
+        fbScene.bindRead();
         //             
         GL30.glBlitFramebuffer(0, 0, fbScene.getWidth(), fbScene.getHeight(), 0, 0, fbScene.getWidth(), fbScene.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         FrameBuffer.unbindReadFramebuffer();
@@ -409,7 +439,33 @@ public class FinalRenderer extends AbstractRenderer {
             });
             Shader new_shaderSSRBlur = assetMgr.loadShader(this, "post/SSR/ssr_blur");
             Shader new_shaderSSRCombine = assetMgr.loadShader(this, "post/SSR/ssr_combine");
-            Shader new_shaderDef = assetMgr.loadShader(this, "post/deferred");
+            Shader new_shaderDef = assetMgr.loadShader(this, "post/deferred", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("RENDER_PASS".equals(define)) {
+                        return "#define RENDER_PASS 0";
+                    }
+                    return null;
+                }
+            });
+            Shader new_shaderDef2 = assetMgr.loadShader(this, "post/deferred", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("RENDER_PASS".equals(define)) {
+                        return "#define RENDER_PASS 1";
+                    }
+                    return null;
+                }
+            });
+            Shader new_shaderDef3 = assetMgr.loadShader(this, "post/deferred", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("RENDER_PASS".equals(define)) {
+                        return "#define RENDER_PASS 2";
+                    }
+                    return null;
+                }
+            });
             Shader new_shaderBlur = assetMgr.loadShader(this, "filter/blur_kawase");
             Shader new_shaderbloom_combine = assetMgr.loadShader(this, "post/bloom_combine", new IShaderDef() {
                 @Override
@@ -446,6 +502,7 @@ public class FinalRenderer extends AbstractRenderer {
             Shader new_shaderThresh = assetMgr.loadShader(this, "filter/thresholdfilter");
 
             Shader new_interpLum = assetMgr.loadShader(this, "filter/luminanceInterp");
+            Shader newshaderNormals = assetMgr.loadShader(this, "filter/normals_rh_lh");
             popNewShaders();
             shaderSSRCombine = new_shaderSSRCombine;
             shaderSSRBlur = new_shaderSSRBlur;
@@ -455,18 +512,24 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDownsample4x = new_shaderDownsample4x;
             shaderDownsample4xLum = new_shaderDownsample4xLum;
             shaderDeferred = new_shaderDef;
+            shaderDeferredWater = new_shaderDef2;
+            shaderDeferredFirstPerson = new_shaderDef3;
             shaderInterpLum = new_interpLum;
             shaderThreshold = new_shaderThresh;
             shaderSSR = new_shaderSSR;
+            shaderNormals = newshaderNormals;
+            shaderNormals.enable();
+            shaderNormals.setProgramUniform1i("texNormals", 0);
             shaderSSR.enable();
             shaderSSR.setProgramUniform1i("texColor", 0);
             shaderSSR.setProgramUniform1i("texNormals", 1);
             shaderSSR.setProgramUniform1i("texMaterial", 2);
             shaderSSR.setProgramUniform1i("texDepth", 3);
+            if (this.scaleMatBuf != null) {
+                this.shaderSSR.setProgramUniformMatrix4("pixelProj", false, scaleMatBuf, false);
+            }
             shaderSSRBlur.enable();
             shaderSSRBlur.setProgramUniform1i("texSSR", 0);
-            shaderSSRBlur.setProgramUniform1i("texNormals", 1);
-            shaderSSRBlur.setProgramUniform1i("texDepth", 3);
             shaderSSRCombine.enable();
             shaderSSRCombine.setProgramUniform1i("texColor", 0);
             shaderSSRCombine.setProgramUniform1i("texSSRBlurred", 1);
@@ -489,24 +552,35 @@ public class FinalRenderer extends AbstractRenderer {
             shaderBlur.setProgramUniform1i("texColor", 0);
             shaderThreshold.enable();
             shaderThreshold.setProgramUniform1i("texColor", 0);
-            shaderThreshold.setProgramUniform1i("texLight", 6);
+            shaderThreshold.setProgramUniform1i("texLight", 5);
+            shaderThreshold.setProgramUniform1i("texBlockLight", 6);
             shaderDeferred.enable();
             shaderDeferred.setProgramUniform1i("texColor", 0);
             shaderDeferred.setProgramUniform1i("texNormals", 1);
             shaderDeferred.setProgramUniform1i("texMaterial", 2);
             shaderDeferred.setProgramUniform1i("texDepth", 3);
             shaderDeferred.setProgramUniform1i("texShadow", 4);
-            shaderDeferred.setProgramUniform1i("texShadow2", 4);
             shaderDeferred.setProgramUniform1i("texLight", 5);
             shaderDeferred.setProgramUniform1i("texBlockLight", 6);
             shaderDeferred.setProgramUniform1i("texAO", 7);
-            for (int i = 0; i < lightColors.length; i++) {
-                this.lightPos[i] = shaderDeferred.getUniform("lights["+i+"].Position", Uniform3f.class);
-                this.lightColors[i] = shaderDeferred.getUniform("lights["+i+"].Color", Uniform3f.class);
-                this.lightLin[i] = shaderDeferred.getUniform("lights["+i+"].Linear", Uniform1f.class);
-                this.lightExp[i] = shaderDeferred.getUniform("lights["+i+"].Quadratic", Uniform1f.class);
-                this.lightSize[i] = shaderDeferred.getUniform("lights["+i+"].Radius", Uniform1f.class);
-            }
+            shaderDeferredWater.enable();
+            shaderDeferredWater.setProgramUniform1i("texColor", 0);
+            shaderDeferredWater.setProgramUniform1i("texNormals", 1);
+            shaderDeferredWater.setProgramUniform1i("texMaterial", 2);
+            shaderDeferredWater.setProgramUniform1i("texDepth", 3);
+            shaderDeferredWater.setProgramUniform1i("texShadow", 4);
+            shaderDeferredWater.setProgramUniform1i("texLight", 5);
+            shaderDeferredWater.setProgramUniform1i("texBlockLight", 6);
+            shaderDeferredWater.setProgramUniform1i("texAO", 7);
+            shaderDeferredFirstPerson.enable();
+            shaderDeferredFirstPerson.setProgramUniform1i("texColor", 0);
+            shaderDeferredFirstPerson.setProgramUniform1i("texNormals", 1);
+            shaderDeferredFirstPerson.setProgramUniform1i("texMaterial", 2);
+            shaderDeferredFirstPerson.setProgramUniform1i("texDepth", 3);
+            shaderDeferredFirstPerson.setProgramUniform1i("texShadow", 4);
+            shaderDeferredFirstPerson.setProgramUniform1i("texLight", 5);
+            shaderDeferredFirstPerson.setProgramUniform1i("texBlockLight", 6);
+            shaderDeferredFirstPerson.setProgramUniform1i("texAO", 7);
             Shader.disable();
         } catch (ShaderCompileError e) {
             releaseNewShaders();
@@ -531,6 +605,7 @@ public class FinalRenderer extends AbstractRenderer {
             HBAOPlus.hasContext = false;
         }
         if (!HBAOPlus.hasContext && enableAO) {
+            updateHBAOSettings();
             Engine.checkGLError("pre GLNativeLib.createContext");
             HBAOPlus.createContext(displayWidth, displayHeight);
             Engine.checkGLError("post GLNativeLib.createContext");
@@ -541,25 +616,39 @@ public class FinalRenderer extends AbstractRenderer {
         if (enableAO) {
             HBAOPlus.setDepthTex(Engine.getSceneFB().getDepthTex());
             HBAOPlus.setNormalTex(Engine.getSceneFB().getTexture(1));
+            long ptr1 = MemoryUtil.memAddress(Engine.getMatSceneV_YZ_Inv().get());
+            HBAOPlus.setViewMatrix(ptr1);
             long ptr = MemoryUtil.memAddress(Engine.getMatSceneP().get());
             HBAOPlus.setProjMatrix(ptr);
             HBAOPlus.setOutputFBO(fbSSAO.getFB());
-            HBAOPlus.setRadius(1);
-            HBAOPlus.setBias(0.2f);
-            HBAOPlus.setCoarseAO(1.2f);
-            HBAOPlus.setBlur(true, 8, 16.0f);
-            HBAOPlus.setBlurSharpen(false, 16, 0, 0);
-            HBAOPlus.setDetailAO(1f);
-            HBAOPlus.setPowerExponent(1);
-            HBAOPlus.setDepthThreshold(false, 220, 0.5f);
-            
         }
         Shader.disable();
         FrameBuffer.unbindFramebuffer();
     }
+    public void updateHBAOSettings() {
+//      HBAOPlus.setRadius(1);
+//      HBAOPlus.setBias(0.2f);
+//      HBAOPlus.setCoarseAO(1.2f);
+//      HBAOPlus.setBlur(true, 8, 16.0f);
+//      HBAOPlus.setBlurSharpen(false, 16, 0, 0);
+//      HBAOPlus.setDetailAO(1f);
+//      HBAOPlus.setPowerExponent(1);
+//      HBAOPlus.setDepthThreshold(false, 220, 0.5f);
+        HBAOPlus.setRadius(1.8f);
+        HBAOPlus.setBias(0.15f);
+        HBAOPlus.setCoarseAO(1.3f);
+        HBAOPlus.setBlur(true, 8, 16.0f);
+        HBAOPlus.setBlurSharpen(false, 16, 0, 0);
+        HBAOPlus.setDetailAO(0.9f);
+        HBAOPlus.setPowerExponent(1.5f);
+        HBAOPlus.setDepthThreshold(false, 220, 0.5f);
+        HBAOPlus.setNormalDecodeScaleBias(2.0f,-1f);
+        HBAOPlus.setRenderMask(1|2);
+        HBAOPlus.setBlur(true, 8, 16);
+    }
     public void initAA() {
         if (smaa != null) {
-            this.smaa.releaseAll(EResourceType.FRAMEBUFFER);
+            this.smaa.releaseAll(null);
             smaa = null;
         }
         if (Game.instance.getVendor() != GPUVendor.INTEL && Game.instance.settings.aa > 0) {
@@ -570,8 +659,8 @@ public class FinalRenderer extends AbstractRenderer {
 
     public void resize(int displayWidth, int displayHeight) {
         releaseAll(EResourceType.FRAMEBUFFER);
+        Engine.checkGLError("releaseAll(EResourceType.FRAMEBUFFER)");
         initAA();
-        System.out.println(smaa);
         fbScene = new FrameBuffer(displayWidth, displayHeight);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
@@ -585,7 +674,13 @@ public class FinalRenderer extends AbstractRenderer {
         fbScene.setHasDepthAttachment();
         fbScene.setup(this);
         Engine.setSceneFB(fbScene);
-        int blurDownSample = 4;
+
+        GL.deleteTexture(this.preWaterDepthTex);
+        this.preWaterDepthTex = GL.genStorage(displayWidth, displayHeight, GL14.GL_DEPTH_COMPONENT32, GL_NEAREST, GL12.GL_CLAMP_TO_EDGE);
+
+        
+        
+        int blurDownSample = 2;
         int blurW = displayWidth/blurDownSample;
         int blurH = displayHeight/blurDownSample;
         if (blurDownSample != 1) {
@@ -617,15 +712,6 @@ public class FinalRenderer extends AbstractRenderer {
         for (int i = 0; i < 2; i++) {
             this.fbLuminanceInterp[i] = FrameBuffer.make(this, 1, 1, GL_RGB16F);
         }
-        if (this.floatBuf == null)
-        this.floatBuf = Memory.createFloatBufferAligned(4, 4);
-//        FrameBuffer.unbindFramebuffer();
-//        list.get(list.size()-1).bind();
-//        floatBuf.position(0);
-//        glReadBuffer(GL_COLOR_ATTACHMENT0);
-//        glReadPixels(0, 0, 1, 1, GL_RED, GL_FLOAT, floatBuf);
-//        FrameBuffer.unbindFramebuffer();
-//        System.out.println(floatBuf.get(0));
 
         fbDeferred = FrameBuffer.make(this, displayWidth, displayHeight, GL_RGB16F);
         fbFinal = new FrameBuffer(displayWidth, displayHeight);
@@ -687,6 +773,10 @@ public class FinalRenderer extends AbstractRenderer {
         this.scaleMatBuf.position(0);
         scale.store(scaleMatBuf);
         scaleMatBuf.flip();
+        if (this.shaderSSR != null) {
+            this.shaderSSR.enable();
+            this.shaderSSR.setProgramUniformMatrix4("pixelProj", false, scaleMatBuf, false);
+        }
         initAO(displayWidth, displayHeight);
     
     }

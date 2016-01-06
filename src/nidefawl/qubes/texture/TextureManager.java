@@ -1,6 +1,9 @@
 package nidefawl.qubes.texture;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL30.GL_RGBA16F;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
@@ -14,6 +17,7 @@ import org.lwjgl.opengl.GL14;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.util.GameMath;
 
 public class TextureManager {
@@ -66,31 +70,18 @@ public class TextureManager {
     public void load(String path) {
 
     }
-    public int makeNewTexture(BufferedImage image, boolean repeat, boolean filter, int mipmapLevels) {
-        int i = GL11.glGenTextures();
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glBindTexture(GL11.GL_TEXTURE_2D, i)");
 
-        byte[] data = TextureUtil.toBytesRGBA(image);
-        uploadTexture(data, image.getWidth(), image.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevels);
-        return i;
-    }
     public int makeNewTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter, int mipmapLevel) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
         uploadTexture(rgba, w, h, 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
         return i;
     }
-    public void releaseTexture(int tex) {
-        GL11.glDeleteTextures(tex);
-    }
+    
     public int makeNewTexture(AssetTexture tex, boolean repeat, boolean filter, int mipmapLevel) {
-        int i = GL11.glGenTextures();
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
-        uploadTexture(tex.getData(), tex.getWidth(), tex.getHeight(), 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
-        return i;
-        
+        return makeNewTexture(tex.getData(), tex.getWidth(), tex.getHeight(), repeat, filter, mipmapLevel);
     }
+    
     public int makeNewTexture(AssetTexture tex) {
         return makeNewTexture(tex, false, true, 0);
     }

@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFW;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.GuiAction;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.item.BaseStack;
@@ -249,7 +250,7 @@ public class GuiWindowManager implements Renderable  {
         if (!GuiAction.isAct(GuiAction.ACTION_NONE)) {
             mouseOver = null;
         }
-        
+        Gui btnGui = (Gui) (Gui.selectedButton!=null&&(Gui.selectedButton.parent instanceof Gui)?Gui.selectedButton.parent:null);
 
         int a = 0;
         float windowDepth = 30F;
@@ -264,8 +265,8 @@ public class GuiWindowManager implements Renderable  {
             if (!w.visible)
                 continue;
             Engine.pxStack.push(0, 0, z);
-            double mX = w == mouseOver ? mouseX : -111;
-            double mY = w == mouseOver ? mouseY : -111;
+            double mX = (w == mouseOver||w==btnGui) ? mouseX : -111;
+            double mY = (w == mouseOver||w==btnGui) ? mouseY : -111;
             w.renderFrame(fTime, mX, mY);
             w.render(fTime, mX, mY);
             z+=windowDepth;
@@ -276,8 +277,8 @@ public class GuiWindowManager implements Renderable  {
         Engine.pxStack.push(0, 0, z);
 //        GL11.glTranslatef(0, 0, windowDepth);
         if (windowFocus != null && windowFocus.visible) {
-            double mX = windowFocus == mouseOver ? mouseX : -111;
-            double mY = windowFocus == mouseOver ? mouseY : -111;
+            double mX = (windowFocus == mouseOver||windowFocus==btnGui) ? mouseX : -111;
+            double mY = (windowFocus == mouseOver||windowFocus==btnGui) ? mouseY : -111;
             windowFocus.renderFrame(fTime, mX, mY);
             windowFocus.render(fTime, mX, mY);
         }
@@ -328,6 +329,9 @@ public class GuiWindowManager implements Renderable  {
         if (window != null) {
             /*return*/ window.onMouseClick(button, action);
             return true;
+        }
+        if (Gui.selectedButton != null && Gui.selectedButton.parent instanceof GuiWindow) {
+            ((Gui) Gui.selectedButton.parent).onMouseClick(button, action);
         }
         return false;
     }

@@ -12,8 +12,10 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.SunLightModel;
 import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
@@ -60,6 +62,9 @@ public class UniformBuffer {
     void put(float f) {
         this.floatBuffer.put(f);
     }
+    void skip() {
+        this.floatBuffer.position(this.floatBuffer.position()+1);
+    }
 
     void put(float x, float y, float z) {
         this.floatBuffer.put(x);
@@ -79,6 +84,7 @@ public class UniformBuffer {
         
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
+        GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
     public void setup() {
         this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
@@ -180,6 +186,7 @@ public class UniformBuffer {
         }
         this.shaders.add(shader);
     }
+    static boolean once = false;
     public static void updateUBO(WorldClient world, float f) {
 //        Shaders.colored.enable();
 //        Shaders.colored.setProgramUniformMatrix4ARB("matortho", false, Engine.getMatOrthoMVP().get(), false);
@@ -254,14 +261,26 @@ public class UniformBuffer {
             LightInfo.put(world.getDayNoonFloat()); // dayTime
             LightInfo.put(world.getNightNoonFloat()); // nightlight
             LightInfo.put(world.getDayLightIntensity()); // dayLightIntens
-            LightInfo.put(world.getLightAngleUp()); // lightAngleUp
+            LightInfo.put(world.getLightAngleUp()); // lightAngleUp      
         } else {
-            LightInfo.put(0);
-            LightInfo.put(0);
-            LightInfo.put(0);
-            LightInfo.put(0);
+            if (!once) {
+                SunLightModel model = new SunLightModel();
+                model.setDayLen(10000);
+                model.setTime(8000);
+                model.updateFrame(0);
+                Vector3f lightPosition = model.getLightPosition();
+                Engine.setLightPosition(lightPosition);
+                LightInfo.put(model.getDayNoonFloat()); // dayTime
+                LightInfo.put(model.getNightNoonFloat()); // nightlight
+                LightInfo.put(model.getDayLightIntensity()); // dayLightIntens
+                LightInfo.put(model.getLightAngleUp()); // lightAngleUp      
+            } else {
+                LightInfo.skip();
+                LightInfo.skip();
+                LightInfo.skip();
+                LightInfo.skip();
+            }
         }
-        
         LightInfo.put(Engine.lightPosition.x);
         LightInfo.put(Engine.lightPosition.y);
         LightInfo.put(Engine.lightPosition.z);
@@ -270,9 +289,10 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.y);
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
-        float ambIntens = 0.05F;
+
+        float ambIntens = 0.06f;
         float diffIntens = 0.45F;
-        float specIntens = 0.55F;
+        float specIntens = 0.35F;
         for (int a = 0; a < 3; a++) {
             LightInfo.put(ambIntens);
         }

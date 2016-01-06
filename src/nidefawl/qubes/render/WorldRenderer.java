@@ -11,6 +11,7 @@ import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.List;
 
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
@@ -311,8 +312,10 @@ public class WorldRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE2, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getNormals());
         
         
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //TODO check what effect blendign has on alpha testing (writing to z-buffer)
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        System.out.println(glGetBoolean(GL_BLEND));
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("pre renderMain");
         boolean zPre = false; //sucks, not faster
@@ -338,19 +341,8 @@ public class WorldRenderer extends AbstractRenderer {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
 //
-//        if (Game.DO_TIMING)
-//            TimingHelper.endStart("renderSecondPass");
-//        waterShader.enable();
-//
-//        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNormals);
-//        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
-//        glDisable(GL_BLEND);
-//        Engine.checkGLError("renderRegions");
-//        this.rendered = Engine.regionRenderer.rendered;
-//        if (Game.GL_ERROR_CHECKS)
-//            Engine.checkGLError("renderSecondPass");
 //        
-        glDisable(GL_BLEND);
+//        glDisable(GL_BLEND);
 //        shaderModelVoxel.enable();
 //        renderVoxModels(shaderModelVoxel, PASS_SOLID, fTime);
 //        Shader.disable();
@@ -363,6 +355,11 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderVoxModels(Shader modelShader, int pass, float fTime) {
         if (vox != null) {
+            GLVAO vao = GLVAO.vaoBlocks;
+            if (pass == PASS_SHADOW_SOLID) {
+                vao = GLVAO.vaoBlocksShadow;
+            }
+            Engine.bindVAO(vao);
             BufferedMatrix mat = Engine.getTempMatrix();
             BufferedMatrix mat2 = Engine.getTempMatrix2();
             float modelScale = 1 / 16f;
@@ -408,6 +405,7 @@ public class WorldRenderer extends AbstractRenderer {
     public void renderQModels(World world, Shader modelShader, int pass, float fTime) {
 
         if (qmodel != null) {
+            Engine.bindVAO(GLVAO.vaoModel);
             //TODO: IMPORTANT sort entities by renderer/model/shader client side
             //TODO: move in own render per-entity class
             List<Entity> ents = world.getEntityList();
@@ -546,6 +544,7 @@ public class WorldRenderer extends AbstractRenderer {
         model.loadedModels[0].bindTextures();
         //first person needs clear depth buffer, move somewhere else
 //            glDisable(GL_DEPTH_TEST);
+        Engine.bindVAO(GLVAO.vaoModel);
         model.loadedModels[0].render(Game.ticksran+fTime);
 //            glEnable(GL_DEPTH_TEST);
         UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());

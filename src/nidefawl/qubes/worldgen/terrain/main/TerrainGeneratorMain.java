@@ -10,6 +10,8 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.noise.NoiseLib;
+import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
@@ -29,6 +31,10 @@ public class TerrainGeneratorMain implements ITerrainGen {
 //    private TerrainNoiseScale nois234234e;
     HexBiomesServer biomes;
     final static double smoothScale = 0.9;;
+    OpenSimplexNoise j4;
+    OpenSimplexNoise j5;
+    OpenSimplexNoise j;
+    OpenSimplexNoise j2;
 
     private Map<Biome, SubTerrainGen> map = Maps.newConcurrentMap(); 
     public TerrainGeneratorMain(WorldServer world, long seed, WorldSettings settings) {
@@ -40,6 +46,11 @@ public class TerrainGeneratorMain implements ITerrainGen {
         this.map.put(Biome.DESERT, new SubTerrainGen2(this));
         this.map.put(Biome.DESERT_RED, new SubTerrainGen2(this));
         this.map.put(Biome.ICE, new SubTerrainGen3(this));
+        this.map.put(Biome.MEADOW_GREEN2, new SubTerrainGen4(this));
+        this.j4 = NoiseLib.makeGenerator(89153^23);
+        this.j5 = NoiseLib.makeGenerator(824112353^23);
+        this.j = NoiseLib.makeGenerator(seed*33703^31);
+        this.j2 = NoiseLib.makeGenerator(89153^23);
     }
 
     @Override
@@ -87,8 +98,6 @@ public class TerrainGeneratorMain implements ITerrainGen {
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dSlice = new double[wh];
-        OpenSimplexNoiseJava j4 = new OpenSimplexNoiseJava(89153^23);
-        OpenSimplexNoiseJava j5 = new OpenSimplexNoiseJava(824112353^23);
         double noiseScale4 = 1/32.0D;
         double noiseScale6 = 1/256.0D;
         for (int x = 0; x < 16; x++) {
@@ -117,8 +126,6 @@ public class TerrainGeneratorMain implements ITerrainGen {
         }
 
         Random rand = new Random(0L);
-        OpenSimplexNoiseJava j = new OpenSimplexNoiseJava(seed*33703^31);
-        OpenSimplexNoiseJava j2 = new OpenSimplexNoiseJava(89153^23);
         double noiseScale = 1/128.0D;
         double noiseScale2 = 1/2.0D;
         for (int x = 0; x < 16; x++) {

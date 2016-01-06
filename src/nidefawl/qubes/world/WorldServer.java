@@ -318,7 +318,24 @@ public class WorldServer extends World {
             PlayerServer PlayerServer = this.players.get(i);
             tr.addPlayer(PlayerServer);
         }
-        this.biomeManager.deleteAll();
+//        this.biomeManager.deleteAll();
+        return n;
+    }
+    public int regenChunks(Collection<Long> chunks) {
+        PlayerChunkTracker tr = getPlayerChunkTracker();
+        int l = this.players.size();
+        for (int i = 0; i < l; i++) {
+            PlayerServer PlayerServer = this.players.get(i);
+            tr.removePlayer(PlayerServer);
+        }
+        this.lightUpdateQueue.clear();
+        this.lightUpdater.ensureEmpty();
+        int n = getChunkManager().regenChunks(chunks);
+        for (int i = 0; i < l; i++) {
+            PlayerServer PlayerServer = this.players.get(i);
+            tr.addPlayer(PlayerServer);
+        }
+//        this.biomeManager.deleteAll();
         return n;
     }
 

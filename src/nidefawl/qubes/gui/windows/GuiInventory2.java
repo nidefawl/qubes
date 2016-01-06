@@ -43,28 +43,28 @@ public class GuiInventory2 extends GuiInventoryBase {
         this.slots = p.getSlots(1);
 
         int bw = 60;
-        if (this.bounds != null) {
-            setPos(this.bounds[0], this.bounds[1]);
-            setSize(this.bounds[2], this.bounds[3]);
-        } else {
-            int rows = this.slots.getSlots().size()/8;
+//        if (this.bounds != null) {
+//            setPos(this.bounds[0], this.bounds[1]);
+//            setSize(this.bounds[2], this.bounds[3]);
+//        } else {
+            int rows = (this.slots.getSlots().size()-1)/8;
             int width = 20 + (slotBDist+slotW)*8 + bw + 20;
-            int height = titleBarHeight + 20+ (slotBDist+slotW)*rows + 30;
+            int height = titleBarHeight + 15+ (slotBDist+slotW)*rows + 30;
             int xPos = (Game.displayWidth-width)/2;
             int yPos = (Game.displayHeight-height)/2;
             setPos(xPos, yPos);
             setSize(width, height);
-        }
+//        }
         this.buttons.clear();
         btn1 = new Button(1, "Start");
         btn2 = new Button(2, "Stop");
         this.buttons.add(btn1);
         this.buttons.add(btn2);
-        btn1.setPos(width-bw-14, height-34-24-5);
-        btn1.setSize(bw, 24);
+        btn1.setPos(width-bw-14, height-34-20);
+        btn1.setSize(bw, 20);
         btn1.round = 3;
-        btn2.setPos(width-bw-14, height-34);
-        btn2.setSize(bw, 24);
+        btn2.setPos(width-bw-14, height-30);
+        btn2.setSize(bw, 20);
         btn2.round = 3;
     }
     @Override

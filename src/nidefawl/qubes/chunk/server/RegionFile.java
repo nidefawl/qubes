@@ -5,18 +5,18 @@ import java.util.ArrayList;
 
 public class RegionFile {
 
-	public static class RegionFileHeader {
+	static class RegionFileHeader {
 		int version;
 		final DataChunkMeta[] chunks = new DataChunkMeta[NUM_CHUNKS];
 		ArrayList<Boolean> usedSectors = new ArrayList<>(); // crappy
 
-		public RegionFileHeader() {
+		RegionFileHeader() {
 			for (int a = 0; a < chunks.length; a++) {
 				chunks[a] = new DataChunkMeta(FILE_META_SIZE + a * CHUNK_META_SIZE);
 			}
 		}
 
-		public void read(RandomAccessFile f) throws IOException {
+		void read(RandomAccessFile f) throws IOException {
 			this.version = f.readInt();
 			for (int a = 0; a < chunks.length; a++) {
 				f.seek(FILE_META_SIZE + a * CHUNK_META_SIZE);
@@ -32,7 +32,7 @@ public class RegionFile {
 			}
 		}
 
-		public void write(RandomAccessFile f) throws IOException {
+		void write(RandomAccessFile f) throws IOException {
 			f.writeInt(this.version);
 			for (int a = 0; a < chunks.length; a++) {
 				f.seek(FILE_META_SIZE + a * CHUNK_META_SIZE);
@@ -41,22 +41,22 @@ public class RegionFile {
 		}
 	}
 
-	public static class DataChunkMeta {
+	static class DataChunkMeta {
 		public final long byteOffset;
 		int offset = -1;
 		int size;
 		int writetime;
-		public DataChunkMeta(long byteOffset) {
+		DataChunkMeta(long byteOffset) {
 			this.byteOffset = byteOffset;
 		}
 
-		public void read(RandomAccessFile f) throws IOException {
+		void read(RandomAccessFile f) throws IOException {
 			this.offset = f.readInt();
 			this.size = f.readInt();
 			this.writetime = f.readInt();
 		}
 
-		public void write(RandomAccessFile f) throws IOException {
+		void write(RandomAccessFile f) throws IOException {
 			f.writeInt(this.offset);
 			f.writeInt(this.size);
 			f.writeInt(this.writetime);
@@ -101,7 +101,7 @@ public class RegionFile {
 		int h = getLastUsedSec();
 //		System.out.println("opened region file, highest used sector: " + h);
 	}
-    public int deleteChunks() {
+    public synchronized int deleteChunks() {
         int n = 0;
         for (int a = 0; a < this.header.chunks.length; a++) {
             DataChunkMeta m = this.header.chunks[a];
@@ -120,7 +120,7 @@ public class RegionFile {
         return n;
     }
 
-	public byte[] readChunk(int x, int z) throws IOException {
+	public synchronized byte[] readChunk(int x, int z) throws IOException {
 		x &= CHUNK_MASK;
 		z &= CHUNK_MASK;
 		int idx = z * REGION_SIZE + x;
@@ -142,7 +142,7 @@ public class RegionFile {
 	public static long timeFindSec = 0L;
 	public static long timeWriteHeader = 0L;
 
-	public void writeChunk(int x, int z, byte[] data) throws IOException {
+	public synchronized void writeChunk(int x, int z, byte[] data) throws IOException {
 		x &= CHUNK_MASK;
 		z &= CHUNK_MASK;
 		int idx = z * REGION_SIZE + x;
@@ -248,7 +248,7 @@ public class RegionFile {
 		return "region." + regionX + "." + regionZ + ".dat";
 	}
 
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
 		int h = getLastUsedSec();
 		System.out.println("closing region file, highest used sector: " + h);
 		this.randomAccess.getChannel().force(true);

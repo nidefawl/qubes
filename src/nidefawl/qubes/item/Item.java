@@ -13,7 +13,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockLog;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.models.ItemModel;
-import nidefawl.qubes.texture.ItemTextureArray;
+import nidefawl.qubes.texture.array.ItemTextureArray;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.BlockPlacer;

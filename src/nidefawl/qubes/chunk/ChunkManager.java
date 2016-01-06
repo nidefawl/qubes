@@ -1,5 +1,7 @@
 package nidefawl.qubes.chunk;
 
+import java.util.Collection;
+
 import nidefawl.qubes.world.World;
 
 public abstract class ChunkManager {
@@ -40,6 +42,9 @@ public abstract class ChunkManager {
      * @return 
      */
     public int deleteAllChunks() {
+        return 0;
+    }
+    public int regenChunks(Collection<Long> chunks) {
         return 0;
     }
 }

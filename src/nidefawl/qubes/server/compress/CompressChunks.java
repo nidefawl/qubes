@@ -3,9 +3,11 @@ package nidefawl.qubes.server.compress;
 import java.util.Collection;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
+import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.packet.PacketSChunkData;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.util.ByteArrIO;
+import nidefawl.qubes.world.World;
 
 public class CompressChunks implements ICompressTask {
 
@@ -116,8 +118,46 @@ public class CompressChunks implements ICompressTask {
         packet.flags |= 1;
         if (this.hasLight)
         packet.flags |= 2;
-        for (int i = 0; i < handlers.length; i++)
-            this.handlers[i].sendPacket(packet);
+        for (int i = 0; i < handlers.length; i++) {
+            ServerHandlerPlay h = handlers[i];
+            if (h == null || h.finished()) {
+                continue;
+            }
+            Player p = h.getPlayer();
+            if (p == null) {
+                continue;
+            }
+            World w = p.getWorld();
+            if (w == null) {
+                continue;
+            }
+            if (w.getId() == this.worldid) {
+                h.sendPacket(packet);
+            }
+        }
+    }
+
+
+    @Override
+    public boolean isValid() {
+        for (int i = 0; i < handlers.length; i++) {
+            ServerHandlerPlay h = handlers[i];
+            if (h == null || h.finished()) {
+                continue;
+            }
+            Player p = h.getPlayer();
+            if (p == null) {
+                continue;
+            }
+            World w = p.getWorld();
+            if (w == null) {
+                continue;
+            }
+            if (w.getId() == this.worldid) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

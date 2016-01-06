@@ -1,4 +1,4 @@
-package nidefawl.qubes.texture;
+package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;

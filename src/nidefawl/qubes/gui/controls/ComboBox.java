@@ -455,7 +455,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                 this.font.drawString(this.string, this.posX - titleWidth, this.posY + (this.height+this.font.getLineHeight())/2, this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
 
             } else {
-                this.font.drawString(this.string, this.posX + this.width + 5, this.posY + (this.height+this.font.getLineHeight())/2, this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
+                this.font.drawString(this.string, this.posX + this.width + 15, this.posY + (this.height+this.font.getLineHeight())/2, this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
             }
 
         }

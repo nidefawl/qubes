@@ -48,10 +48,12 @@ public class TextField extends AbstractUI implements Renderable {
         GL11.glDisable(GL11.GL_CULL_FACE);
         this.inputRenderer.focused = this.focused;
 
+        GL11.glPushAttrib(GL11.GL_SCISSOR_BIT);
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(this.posX + 2, Game.displayHeight-(posY+this.height), this.width - 7, height);
         this.inputRenderer.drawStringWithCursor(mX, mY, Mouse.isButtonDown(0));
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        GL11.glPopAttrib();
         GL11.glEnable(GL11.GL_CULL_FACE);
         //        this.font.drawString(this.text, this.posX + 3, this.posY + this.height / 2 + font.getLineHeight() / 2, -1, false, 1.0F, 0);
         Shader.disable();

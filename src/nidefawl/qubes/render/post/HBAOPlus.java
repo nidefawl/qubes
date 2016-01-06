@@ -5,6 +5,8 @@ package nidefawl.qubes.render.post;
 
 import java.io.File;
 
+import nidefawl.qubes.vec.Matrix4f;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -22,14 +24,38 @@ public class HBAOPlus {
 	native public static void deleteContext();
 	native public static void renderAO();
     native public static void setProjMatrix(long projMatPtr);
+    /**
+     * set to 0 to disable normal map decoding
+     */
+    native public static void setViewMatrix(long viewMatPtr);
     native public static void setOutputFBO(int outputFBO);
     native public static void setDepthTex(int depthTex);
+    
+    
+    /**
+     *     GFSDK_SSAO_DRAW_Z                              = 1,     // Linearize the input depths
+     *     GFSDK_SSAO_DRAW_AO                             = 2,     // Render AO based on pre-linearized depths
+     *     GFSDK_SSAO_DRAW_DEBUG_N                        = 4,     // Render Color = float4(-InternalViewNormal.xyz, 0) (for debugging)
+     *     GFSDK_SSAO_RENDER_AO                           = GFSDK_SSAO_DRAW_Z | GFSDK_SSAO_DRAW_AO, //DEFAULT
+     *     GFSDK_SSAO_RENDER_DEBUG_NORMAL                 = GFSDK_SSAO_DRAW_Z | GFSDK_SSAO_DRAW_DEBUG_N,
+     * 
+     * @param renderMask
+     */
+    native public static void setRenderMask(int renderMask);
+    /**
+     * set to 0 to disable normal map decoding
+     */
     native public static void setNormalTex(int normalTex);
     /** 
      * To hide low-tessellation artifacts // 0.0~0.5
      * @param f (default is 0.2f)
      */
     native public static void setBias(float f);
+    /** 
+     * @param f Optional pre-matrix scale (1.f to 2f)
+     * @param f Optional pre-matrix bias (-1f to 1f)
+     */
+    native public static void setNormalDecodeScaleBias(float decodeScale, float decodeBias);
     /** 
      * The AO radius in meters
      * @param f (default is 2.0f)

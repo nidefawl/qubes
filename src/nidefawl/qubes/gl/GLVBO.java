@@ -14,6 +14,9 @@ public class GLVBO {
         }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
     }
+    public int getVboId() {
+        return this.vboId;
+    }
     public void upload(ByteBuffer buffer, int len) {
         if (this.vboSize <= len) {
             GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);

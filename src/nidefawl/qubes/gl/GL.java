@@ -1,7 +1,11 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.EXTDirectStateAccess.glBindMultiTextureEXT;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -9,6 +13,7 @@ import java.util.List;
 
 import org.lwjgl.opengl.*;
 
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.util.GameError;
 
 
@@ -109,5 +114,24 @@ public class GL {
             throw new GameError("Your GPU is not yet supported");
         }
         
+    }
+
+    public static int genStorage(int w, int h, int format, int filter, int wrap) {
+        int i = GL11.glGenTextures();
+        glActiveTexture(GL_TEXTURE0);
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, i);
+        GL.glTexStorage2D(GL_TEXTURE_2D, 1, format, w, h);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, wrap);
+        glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, wrap);
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, 0);
+        return i;
+    }
+
+    public static void deleteTexture(int tex) {
+        if (tex > 0) {
+            GL11.glDeleteTextures(tex);
+        }
     }
 }

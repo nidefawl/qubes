@@ -27,6 +27,7 @@ import nidefawl.qubes.world.*;
  */
 public class HexBiomesServer extends HexBiomes {
     final static public Pattern FILE_PATTERN = Pattern.compile("hex\\.(-?[0-9]+)\\.(-?[0-9]+)\\.dat");
+    public static boolean SAVE_LOAD = true;
 	private final File dir;
     Set<Long>       flaggedInstances = Sets.newConcurrentHashSet();
     Set<Long>       flaggedInstances2 = Sets.newConcurrentHashSet();
@@ -35,7 +36,9 @@ public class HexBiomesServer extends HexBiomes {
 	    super(world, seed, settings);
         this.dir = new File(((WorldSettings) settings).getWorldDirectory(), "biomes");
         this.dir.mkdirs();
-        loadFiles();
+        if (SAVE_LOAD) {
+            loadFiles();
+        }
 	}
 	File getFile(int x, int z) {
 
@@ -72,6 +75,7 @@ public class HexBiomesServer extends HexBiomes {
                 }
             }
         }
+    
     }
 
     //DEBUG CONSTRUCTOR FOR USE OUTSIDE OF GAME 
@@ -79,7 +83,7 @@ public class HexBiomesServer extends HexBiomes {
         super(null, 0L, null);
         this.dir = file;
         this.dir.mkdirs();
-        loadFiles();
+       SAVE_LOAD = false;
     }
 
     //TODO: make threadsafe
@@ -90,12 +94,14 @@ public class HexBiomesServer extends HexBiomes {
         int id = new Random(gridX * 89153 ^ gridY * 33199 + 1).nextInt(Biome.maxBiome);
         System.out.println("biome at "+gridX+","+gridY+": "+id);
         b.biome = Biome.biomes[id];
-        try {
-            b.save(getFile(gridX, gridY));
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (SAVE_LOAD) {
+            try {
+                b.save(getFile(gridX, gridY));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("save cell "+gridX+"/"+gridY);   
         }
-        System.out.println("save cell "+gridX+"/"+gridY);
         this.flagBiome(gridX, gridY);
         return b;
     }

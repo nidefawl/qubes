@@ -1,7 +1,6 @@
 package nidefawl.qubes.gl;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.GL_RGBA8;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
@@ -10,9 +9,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Map;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 
 import com.google.common.collect.Maps;
 
@@ -24,9 +21,7 @@ import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
-import nidefawl.qubes.shader.ShaderBuffer;
-import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Project;
@@ -48,6 +43,7 @@ public class Engine {
 
     private static BufferedMatrix projection;
     private static BufferedMatrix view;
+    private static BufferedMatrix viewInvYZ;
     private static BufferedMatrix viewprojection;
     private static BufferedMatrix modelviewprojection;
     private static Matrix4f       modelviewprojectionInv;
@@ -63,6 +59,7 @@ public class Engine {
     private static BufferedMatrix identity;
     public static Vector3f       pxOffset = new Vector3f();
     public final static Vec3Stack pxStack = new Vec3Stack();
+    public final static Matrix4f invertYZ = new Matrix4f().scale(1, -1, -1);
     
 
     public static FrameBuffer fbScene;
@@ -87,8 +84,6 @@ public class Engine {
     public static RegionRenderer regionRenderer;
     public static LightCompute  lightCompute;
     public static MeshThread     regionRenderThread;
-    public static int            vaoId        = 0;
-    public static int            vaoTerrainId = 0;
     private static float         aspectRatio;
     private static int           fieldOfView;
 
@@ -99,6 +94,24 @@ public class Engine {
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
     public final static SingleBlockDraw blockDraw = new SingleBlockDraw();
     public final static ItemRenderer itemRender = new ItemRenderer();
+    static GLVAO active = null;
+    public final static ShaderBuffer        debugOutput         = new ShaderBuffer("DebugOutputBuffer").setSize(4096*4);
+
+    public static void bindVAO(GLVAO vao) {
+        if (active != vao) {
+            active = vao;
+            int id = active == null ? 0 : active.vaoId;
+            GL30.glBindVertexArray(id);
+        }
+    }
+
+    public static void bindIndexBuffer(int i) {
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, i);
+    }
+
+    public static void bindBuffer(int i) {
+        GL43.glBindVertexBuffer(0, i, 0, active.stride);
+    }
     
 
     public static void generateLightMapTexture() {
@@ -115,13 +128,13 @@ public class Engine {
     }
 
     public static void baseInit() {
-        vaoId = GL30.glGenVertexArrays();
-        vaoTerrainId = GL30.glGenVertexArrays();
+        GLVAO.initVAOs();
         viewport = Memory.createIntBufferHeap(16);
         position = Memory.createFloatBufferHeap(3);
         allocBuffer = Memory.createIntBuffer(8);
         projection = new BufferedMatrix();
         view = new BufferedMatrix();
+        viewInvYZ = new BufferedMatrix();
         viewprojection = new BufferedMatrix();
         modelview = new BufferedMatrix();
         modelviewprojection = new BufferedMatrix();
@@ -161,7 +174,6 @@ public class Engine {
         baseInit();
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("baseInit");
-        GL30.glBindVertexArray(vaoId);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("GL30.glBindVertexArray");
         UniformBuffer.reinit();
@@ -287,6 +299,9 @@ public class Engine {
     public static BufferedMatrix getMatSceneV() {
         return view;
     }
+    public static BufferedMatrix getMatSceneV_YZ_Inv() {
+        return viewInvYZ;
+    }
     public static BufferedMatrix getMatSceneVP() {
         return viewprojection;
     }
@@ -337,6 +352,9 @@ public class Engine {
         Matrix4f cam = camera.getViewMatrix();
         view.load(cam);
         view.update();
+        viewInvYZ.load(view);
+        viewInvYZ.mulMat(invertYZ);
+        viewInvYZ.update();
         
         Vector3f vec = camera.getPosition();
         updateRenderOffset = updateGlobalRenderOffset(vec.x, vec.y, vec.z);
@@ -493,15 +511,41 @@ public class Engine {
         outRenderer = new FinalRenderer();
         shadowRenderer = new ShadowRenderer();
         lightCompute = new LightCompute();
+        clearScreen();
         worldRenderer.init();
+        clearScreen();
         outRenderer.init();
+        clearScreen();
         shadowRenderer.init();
+        clearScreen();
         lightCompute.init();
+        clearScreen();
         worldRenderer.resize(Game.displayWidth, Game.displayHeight);
+        clearScreen();
         outRenderer.resize(Game.displayWidth, Game.displayHeight);
+        clearScreen();
         shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
+        clearScreen();
         lightCompute.resize(Game.displayWidth, Game.displayHeight);
+        clearScreen();
         regionRenderer.reRender();
+        clearScreen();
+    }
+
+    private static void clearScreen() {
+        int a = 10;
+        while (a-- > 0) {
+            try {
+                FrameBuffer.unbindFramebuffer();
+                Shader.disable();
+                glClearColor(0,0,0,0);
+                glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+                Game.instance.updateDisplay();
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static void setSceneFB(FrameBuffer fb) {

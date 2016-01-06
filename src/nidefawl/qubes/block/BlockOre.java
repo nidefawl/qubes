@@ -6,7 +6,7 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.BlockPlacer;
@@ -18,7 +18,7 @@ public class BlockOre extends Block {
     private Block baseBlock;
 
     public BlockOre(String id, Block b) {
-        super(id, true);
+        super(id, false);
         this.textures = NO_TEXTURES;
         ArrayList<String> list = Lists.newArrayList();
         for (int i = 0; i < 10; i++) {

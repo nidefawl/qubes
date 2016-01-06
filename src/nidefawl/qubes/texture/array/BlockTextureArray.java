@@ -1,4 +1,4 @@
-package nidefawl.qubes.texture;
+package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
@@ -19,6 +19,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameError;
 
 public class BlockTextureArray extends TextureArray {
@@ -87,7 +88,6 @@ public class BlockTextureArray extends TextureArray {
                         if (mipmapSize > 0)
                             data = TextureUtil.makeMipMap(data, mipmapSize, mipmapSize, avg);
                     }
-                    System.out.println(mipmapSize);
                     tex.setSlot(slot);
                     slotTextureMap.put(slot, tex);
                     textures[blockId << 4 | i] = slot;

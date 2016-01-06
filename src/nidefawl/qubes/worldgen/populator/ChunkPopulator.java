@@ -83,7 +83,7 @@ public class ChunkPopulator implements IChunkPopulator {
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= 4 && rand.nextInt(24) == 0) {
+                if ( a <= 6 && rand.nextInt(24) == 0) {
                     if (list != null && !list.isEmpty()) {
                         int treeType = list.get(rand.nextInt(list.size()));
                         TreeGeneratorLSystem g = TreeGenerators.get(treeType, rand);

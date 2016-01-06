@@ -1,5 +1,6 @@
 package nidefawl.qubes.util;
 
+import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMapping;
 import nidefawl.qubes.config.WorkingEnv;
@@ -11,6 +12,7 @@ public class GameContext {
     static Thread mainThread;
     static Side side;
     static GameError initError;
+    
 
     public static void setMainThread(Thread thread) {
         mainThread = thread;
@@ -42,6 +44,7 @@ public class GameContext {
      */
     public static void earlyInit() {
         try {
+            AsyncTasks.init();
             IDMapping.load();
             ModuleLoader.scanModules(WorkingEnv.getModulesDir());
         } catch (GameError e) {
@@ -79,5 +82,6 @@ public class GameContext {
             initError = new GameError(e);
         }
     }
+    
 
 }

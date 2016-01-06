@@ -2,7 +2,7 @@ package nidefawl.qubes.entity;
 
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.input.InputController;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
@@ -35,7 +35,7 @@ public class PlayerSelf extends Player {
         this.name = this.profile.getName();
     }
 
-    public void updateInputDirect(Movement movement) {
+    public void updateInputDirect(InputController movement) {
         float fa = 0.14F;
         float mx = movement.mX * fa;
         float my = -movement.mY * fa;

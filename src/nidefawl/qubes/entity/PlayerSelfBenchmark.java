@@ -4,7 +4,7 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.PlayerProfile;
-import nidefawl.qubes.input.Movement;
+import nidefawl.qubes.input.InputController;
 import nidefawl.qubes.network.client.ClientHandler;
 
 /**
@@ -28,7 +28,7 @@ public class PlayerSelfBenchmark extends PlayerSelf {
         super(null, null);
     }
     @Override
-    public void updateInputDirect(Movement movement) {
+    public void updateInputDirect(InputController movement) {
     }
     @Override
     public void tickUpdate() {

@@ -3,6 +3,15 @@
  */
 package nidefawl.qubes.hex;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import nidefawl.qubes.util.GameMath;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -79,5 +88,117 @@ public class HexCell<T> {
      */
     public HexagonGridStorage getGrid() {
         return this.grid;
+    }
+
+    public Collection<Long> getChunks() {
+        final double centerX = x * grid.width + z * grid.hwidth;
+        final double centerY = z * grid.height;
+        Point2F[] points = new Point2F[6];
+        for (int i = 0; i < 6; i++) {
+            double x = centerX + grid.radius * grid.sinCos[i * 2 + 0];
+            double y = centerY + grid.radius * grid.sinCos[i * 2 + 1];
+            points[i] = new Point2F(x, y);
+            //            System.out.printf("%d %.2f, %.2f\n", i, x, y);
+        }
+        HashSet<Long> l = Sets.newHashSet();
+        //    {
+        //
+        //        
+        //        int minX = GameMath.floor(points[2].x/16);
+        //        int maxX = GameMath.floor(points[0].x/16);
+        //        int minZ = GameMath.floor(points[4].y/16);
+        //        int maxZ = GameMath.floor(points[1].y/16);
+        //        for (int x = minX; x<=maxX; x++)
+        //            for (int z = minZ; z<=maxZ; z++)
+        //                l.add(GameMath.toLong(x, z));
+        //    }
+        {
+
+        }
+        int x1 = GameMath.floor(points[2].x / 16);
+        int x2 = GameMath.floor(points[5].x / 16);
+        int z1 = GameMath.floor(points[5].y / 16);
+        int z2 = GameMath.floor(points[2].y / 16);
+        int xCenter = GameMath.floor(points[4].x / 16);
+        for (int x = x1; x <= x2; x++)
+            for (int z = z1; z <= z2; z++)
+                l.add(GameMath.toLong(x, z));
+
+        {//topleft
+
+            int minX = GameMath.floor(points[3].x / 16);
+            int maxX = xCenter;
+            int minZ = GameMath.floor(points[4].y / 16);
+            int maxZ = z1-1;
+            Point2F A = points[4];
+            Point2F B = points[3];
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    int Cx = ((x + 1) * 16);
+                    int Cy = ((z + 1) * 16);
+                    float s = (B.x - A.x) * (Cy - A.y) - (B.y - A.y) * (Cx - A.x);
+                    if (s <= 0) {
+                        l.add(GameMath.toLong(x, z));
+                    }
+                }
+            }
+        }
+        {//topright
+
+            int minX = xCenter+1;
+            int maxX = GameMath.floor(points[5].x / 16);
+            int minZ = GameMath.floor(points[4].y / 16);
+            int maxZ = z1-1;
+            Point2F A = points[5];
+            Point2F B = points[4];
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    int Cx = ((x) * 16);
+                    int Cy = ((z + 1) * 16);
+                    float s = (B.x - A.x) * (Cy - A.y) - (B.y - A.y) * (Cx - A.x);
+                    if (s <= 0) {
+                        l.add(GameMath.toLong(x, z));
+                    }
+                }
+            }
+        }
+        {//bottomright
+
+            int minX = xCenter+1;
+            int maxX = GameMath.floor(points[0].x / 16);
+            int minZ = z2+1;
+            int maxZ = GameMath.floor(points[1].y / 16);
+            Point2F A = points[1];
+            Point2F B = points[0];
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    int Cx = ((x) * 16);
+                    int Cy = ((z) * 16);
+                    float s = (B.x - A.x) * (Cy - A.y) - (B.y - A.y) * (Cx - A.x);
+                    if (s <= 0) {
+                        l.add(GameMath.toLong(x, z));
+                    }
+                }
+            }
+        }
+        {//bottomleft
+            int minX = GameMath.floor(points[2].x / 16);
+            int maxX = xCenter;
+            int minZ = z2+1;
+            int maxZ = GameMath.floor(points[1].y / 16);
+            Point2F A = points[2];
+            Point2F B = points[1];
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    int Cx = ((x + 1) * 16);
+                    int Cy = ((z) * 16);
+                    float s = (B.x - A.x) * (Cy - A.y) - (B.y - A.y) * (Cx - A.x);
+                    if (s <= 0) {
+                        l.add(GameMath.toLong(x, z));
+                    }
+                }
+            }
+        }
+        return l;
     }
 }

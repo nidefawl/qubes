@@ -54,32 +54,17 @@ public class GLQuadBuffer {
                 Engine.checkGLError("glBufferData");
         }
     }
+
     /**
-     * 
      */
-    public void bind() {
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vbo);
+    public void draw() {
+        Engine.bindBuffer(vbo);
         if (Engine.USE_TRIANGLES) {
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBuffer " + vboIndices);
-        }
-    }
-    /**
-     * @param ptrSetting
-     */
-    public void draw(int ptrSetting) {
-        MeshedRegion.enableVertexPtrs(ptrSetting);
-        if (Engine.USE_TRIANGLES) {
+            Engine.bindIndexBuffer(vboIndices);
             GL11.glDrawElements(GL11.GL_TRIANGLES, this.faceCount * 2 * 3, GL11.GL_UNSIGNED_INT, 0);
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
             GL11.glDrawArrays(GL11.GL_QUADS, 0, this.vertexCount);
         }
-        MeshedRegion.disableVertexPtrs(ptrSetting);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
     /**
      * 

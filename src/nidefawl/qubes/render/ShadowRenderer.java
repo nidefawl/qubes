@@ -14,6 +14,7 @@ import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
 
@@ -179,8 +180,7 @@ public class ShadowRenderer extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-        if (this.fbShadow != null)
-            this.fbShadow.release();
+        releaseAll(EResourceType.FRAMEBUFFER);
         SHADOW_BUFFER_SIZE = 1024*4;
         this.fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
         this.fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);

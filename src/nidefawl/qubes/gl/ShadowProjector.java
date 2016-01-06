@@ -120,7 +120,7 @@ public class ShadowProjector {
 ////        
 //        tmp.set(0, 0, radius);
 //        Matrix4f.transform(matLookAtInv, tmp, tmp);
-        
+//        System.out.println(radius);
       shadowSplitDepth[split] = radius;//tmp.z*2;//splits[split+1];
 //    System.out.println(split+"="+radius+"/"+farZ+"/"+tmp.z);
     }

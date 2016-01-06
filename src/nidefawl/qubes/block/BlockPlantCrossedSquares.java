@@ -5,7 +5,7 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;

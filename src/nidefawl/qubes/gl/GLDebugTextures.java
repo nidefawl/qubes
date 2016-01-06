@@ -44,7 +44,7 @@ public class GLDebugTextures {
     public static void readTexture(String name, String string, int texture) {
         readTexture(name, string, texture, 0);
     }
-    public static void readTexture(String name, String string, int texture, int flags) {
+    public static int readTexture(String name, String string, int texture, int flags) {
         HashMap<String, GLDebugTextures> texMap = textures.get(name);
         if (texMap == null) {
             texMap = Maps.newLinkedHashMap();
@@ -76,11 +76,12 @@ public class GLDebugTextures {
         }
         ARBCopyImage.glCopyImageSubData(texture, target, 0, 0, 0, 0, tex.tex, target, 0, 0, 0, 0, w, h, d);
         GL.bindTexture(GL13.GL_TEXTURE0, target, 0);
+        return tex.tex;
     }
 
     private void release() {
         this.valid = false;
-        GL11.glDeleteTextures(this.tex);
+        GL.deleteTexture(this.tex);
     }
     public static void onResize() {
         for (HashMap<String, GLDebugTextures> texMap : textures.values()) {
@@ -198,20 +199,29 @@ public class GLDebugTextures {
         glPopAttrib();
     
     }
+
     public void bindShader() {
+        if ((this.flags & 0x8) != 0) {
+            Shaders.textured.enable();
+            return;
+        }
         if (this.format == GL30.GL_RGBA16UI) {
             Shaders.renderUINT.enable();
-        } else if ((this.flags&0x1)!=0) {
+        } else if ((this.flags & 0x1) != 0) {
             Shaders.tonemap.enable();
-        } else if ((this.flags&0x2)!=0) {
+        } else if ((this.flags & 0x2) != 0) {
             Shaders.depthBufShader.enable();
+        } else if ((this.flags & 0x4) != 0) {
+            Shaders.tonemap.enable();
+            Shaders.tonemap.setProgramUniform1f("constexposure", 30);
         } else {
 
             Shaders.textured.enable();
         }
     }
-    public static int getTexture(int i) {
-        GLDebugTextures tex = alltextures.get(i);
+    public static int getTexture(String s, String s2) {
+        HashMap<String, GLDebugTextures> map = textures.get(s);
+        GLDebugTextures tex = map == null ? null : map.get(s2);
         return tex == null ? 0 : tex.tex;
     }
     

@@ -1,6 +1,6 @@
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 
 public class BlockStoneModelled extends BlockModelled {
 

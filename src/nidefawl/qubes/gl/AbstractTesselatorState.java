@@ -27,17 +27,17 @@ public abstract class AbstractTesselatorState {
     public int getIdx(int v) {
         return getVSize() * v;
     }
-    
+
     public int getVSize() {
         int stride = 4;
         if (useColorPtr)
             stride++;
         if (useNormalPtr)
-            stride+=3;
+            stride++;
         if (useTexturePtr)
             stride+=2;
         if (useUINTPtr)
-            stride+=4;
+            stride+=2;
         return stride;
     }
 
@@ -85,8 +85,21 @@ public abstract class AbstractTesselatorState {
     }
 
     public void bindAndDraw(int mode) {
-        getVBO().bind();
-        setAttrPtr();
+        int tessSetting = getSetting();
+        Engine.bindVAO(GLVAO.vaoTesselator[tessSetting]);
+        Engine.bindBuffer(getVBO().getVboId());
         drawVBO(mode);
+    }
+    public int getSetting() {
+        int s = 0;
+        if (this.useNormalPtr)
+            s|=1;
+        if (this.useTexturePtr)
+            s|=2;
+        if (this.useColorPtr)
+            s|=4;
+        if (this.useUINTPtr)
+            s|=8;
+        return s;
     }
 }

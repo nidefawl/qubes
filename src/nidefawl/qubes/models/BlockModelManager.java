@@ -9,6 +9,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMapping;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
@@ -31,7 +32,6 @@ public class BlockModelManager {
      */
     public void reload() {
         AssetManager mgr = AssetManager.getInstance();
-        TextureManager textureManager = TextureManager.getInstance();
         if (!this.models.isEmpty()) {
             for (ModelQModel model : this.models.values()) {
                 model.release();
@@ -40,7 +40,7 @@ public class BlockModelManager {
         }
         if (!this.textures.isEmpty()) {
             for (Integer texture : this.textures.values()) {
-                textureManager.releaseTexture(texture);
+                GL.deleteTexture(texture);
             }
             this.textures.clear();
         }

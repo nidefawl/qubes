@@ -1,6 +1,7 @@
 package nidefawl.qubes.chunk.server;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import nidefawl.qubes.chunk.Chunk;
@@ -25,12 +26,12 @@ public class ChunkManagerServer extends ChunkManager {
         super(world);
         this.worldServer = world;
         this.regionFileCache = new RegionFileCache(new File(worldDirectory, "data"));
-        this.thread = new ChunkLoadThread(this);
+        this.thread = new ChunkLoadThread(this, world);
         this.unloadThread = new ChunkUnloadThread(this);
         this.reader = new ChunkReader(this, this.regionFileCache);
     }
     public void startThreads() {
-        this.thread.start();
+        this.thread.startThreads();
         this.unloadThread.start();
     }
     public void onWorldUnload() {
@@ -50,21 +51,32 @@ public class ChunkManagerServer extends ChunkManager {
     }
 
     public void loadOrGenerate(int x, int z) {
-        synchronized (this.syncObj2) {
-            Chunk c = this.reader.loadChunk(this.world, x, z);
-            if (c == null) {
+        Chunk cExist = table.get(x, z);
+        Chunk cLoad = null;
+        if (cExist == null) {
+            boolean wasLoaded = true;
+            cLoad = this.reader.loadChunk(this.world, x, z);
+            if (cLoad == null) {
+                wasLoaded = false;
                 ITerrainGen gen = this.worldServer.getGenerator();
                 long l1 = System.nanoTime();
-                c = gen.generateChunk(x, z);
+                cLoad = gen.generateChunk(x, z);
                 long l2 = System.nanoTime();
                 ServerStats.add("generateChunk", l2-l1);
-                c.postGenerate();
                 ServerStats.add("postGenerate", System.nanoTime()-l2);
                 ServerStats.add("generatedChunks", 1);
-            } else {
-                c.postLoad();
             }
-            this.table.put(x, z, c);
+            synchronized (this.syncObj2) {
+                Chunk cExist2 = table.get(x, z);
+                if (cExist2 == null) {
+                    this.table.put(x, z, cLoad);
+                    if (wasLoaded) {
+                        cLoad.postLoad();
+                    } else {
+                        cLoad.postGenerate();
+                    }
+                }
+            }
         }
     }
     public void queueLoad(int x, int z) {
@@ -163,6 +175,33 @@ public class ChunkManagerServer extends ChunkManager {
             }
         }
         int n = this.reader.fileCache.deleteChunks();
+        return n;
+    }
+    public int regenChunks(Collection<Long> chunks) {
+        this.thread.ensureEmpty();
+        this.unloadThread.ensureEmpty();
+        int n = 0;
+        for (Long l : chunks) {
+            Chunk c = this.table.remove(l);
+            if (c != null) {
+                c.isValid = false;
+                c.isUnloading = true;
+                n++;
+            }
+        }
+        for (Long l : chunks) {
+            int x = GameMath.lhToX(l); int z = GameMath.lhToZ(l);
+            RegionFile rf = regionFileCache.getRegionFileChunk(x, z);
+            try {
+                rf.writeChunk(x, z, new byte[0]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        for (Long l : chunks) {
+            this.queueLoadChecked(l);
+        }
         return n;
     }
 }

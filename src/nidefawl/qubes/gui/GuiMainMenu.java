@@ -1,10 +1,13 @@
 package nidefawl.qubes.gui;
 
+import java.util.Arrays;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gui.controls.Button;
+import nidefawl.qubes.gui.controls.ColorPicker;
 import nidefawl.qubes.gui.controls.TextField;
 
 public class GuiMainMenu extends Gui implements ITextEdit {
@@ -15,9 +18,9 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     private TextField fieldN;
     private Button connect;
     private Button settings;
+    private Button controls;
     private Button quit;
     private Button crash;
-
     public GuiMainMenu() {
         this.font = FontRenderer.get(null, 18, 0, 20);
         this.fontSmall = FontRenderer.get(null, 14, 0, 16);
@@ -38,7 +41,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
 
             this.field = new TextField(this, 2, Game.instance.serverAddr);
             field.setPos(left, this.posY+this.height/2-20);
-            field.setSize(w1-110, h);
+            field.setSize(w1-115, h);
 //            field.
             this.buttons.add(field);
         }
@@ -55,6 +58,12 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             this.buttons.add(settings);
             settings.setPos(left, this.posY+this.height/2+20);
             settings.setSize(w1, h);
+        }
+        {
+            controls = new Button(4, "Controls");
+            this.buttons.add(controls);
+            controls.setPos(left, this.posY+this.height/2+60);
+            controls.setSize(w1, h);
         }
         {
             quit = new Button(4, "Quit Game");
@@ -78,9 +87,8 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     }
 
     public void render(float fTime, double mX, double mY) {
-        renderBackground(fTime, mX, mY, true, 1.0f);
+        renderBackground(fTime, mX, mY, true, 0.7f);
         super.renderButtons(fTime, mX, mY);
- 
     }
     public boolean onGuiClicked(AbstractUI element) {
 //        element.posX+=30;
@@ -95,7 +103,10 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             int a = s.length();
         }
         if (element == this.settings) {
-            Game.instance.showGUI(new GuiSettings());
+            Game.instance.showGUI(new GuiSettings(this));
+        }
+        if (element == this.controls) {
+            Game.instance.showGUI(new GuiControls(this));
         }
         if (element == this.quit) {
             Game.instance.shutdown();

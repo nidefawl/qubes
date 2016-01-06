@@ -11,7 +11,7 @@ import nidefawl.qubes.util.Pool;
 @SuppressWarnings("unused")
 public class GPUProfiler {
 
-    public static final boolean PROFILING_ENABLED = false;
+    public static final boolean PROFILING_ENABLED = true;
 
     private static Pool<GPUTaskProfile> taskPool;
     private static ArrayList<Integer>   queryObjects;
@@ -25,7 +25,7 @@ public class GPUProfiler {
     private static int perFrame;
 
     private static int frameCount;
-    static boolean     DISABLE_FRAME;
+    static boolean     DISABLE_FRAME = !PROFILING_ENABLED;
 
     static {
         taskPool = new Pool<GPUTaskProfile>(200) {

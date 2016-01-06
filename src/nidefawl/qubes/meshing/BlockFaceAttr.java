@@ -5,6 +5,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Half;
+import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Vector3f;
 
 public class BlockFaceAttr {
@@ -149,8 +150,7 @@ public class BlockFaceAttr {
         vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
         vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
         vertexBuffer.put(Float.floatToRawIntBits(1));
-        vertexBuffer.put(Float.floatToRawIntBits(v.u)); //TODO: i think this should be halffloats
-        vertexBuffer.put(Float.floatToRawIntBits(v.v));
+        vertexBuffer.put(RenderUtil.packTexCoord(v.u, v.v));
         vertexBuffer.put(tex|this.type<<16); //2x SHORT
     }
 
@@ -160,6 +160,68 @@ public class BlockFaceAttr {
         vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
         vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
         vertexBuffer.put(Float.floatToRawIntBits(1));
+    }
+    public void putVertAttr(VertexBuffer vertexBuffer) {
+    //      rotateUV(1);
+          int idxPos = vertexBuffer.getVertexCount();
+          for (int i = 0; i < 4; i++) {
+              int idx = this.reverse ? 3-(i % 4) : i % 4;
+              BlockFaceVert v = this.v[idx];
+              vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+              vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+              vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+              vertexBuffer.put(v.normal);
+              int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
+              vertexBuffer.put(textureHalf2);
+              vertexBuffer.put(v.rgba);
+              vertexBuffer.increaseVert();
+          }
+          vertexBuffer.putIdx(idxPos+0);
+          vertexBuffer.putIdx(idxPos+1);
+          vertexBuffer.putIdx(idxPos+2);
+          vertexBuffer.putIdx(idxPos+2);
+          vertexBuffer.putIdx(idxPos+3);
+          vertexBuffer.putIdx(idxPos+0);
+          vertexBuffer.increaseFace();
+    }
+
+    public void putVertAttrStrip(VertexBuffer vertexBuffer) {
+        int idxPos = vertexBuffer.getVertexCount();
+        for (int i = 0; i < 4; i++) {
+            int idx = this.reverse ? 3 - (i % 4) : i % 4;
+            BlockFaceVert v = this.v[idx];
+            vertexBuffer.put(Float.floatToRawIntBits(this.xOff + v.x));
+            vertexBuffer.put(Float.floatToRawIntBits(this.yOff + v.y));
+            vertexBuffer.put(Float.floatToRawIntBits(this.zOff + v.z));
+            vertexBuffer.put(v.normal);
+            int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
+            vertexBuffer.put(textureHalf2);
+            vertexBuffer.put(v.rgba);
+            vertexBuffer.put(this.tex | this.normalMap << 12 | this.type << 16 | v.pass << (16 + 12));
+            vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);
+            vertexBuffer.put(this.lightMaskBlock & 0xFFFF | (this.lightMaskSky & 0xFFFF) << 16);
+            vertexBuffer.increaseVert();
+        }
+        vertexBuffer.putIdx(idxPos + 0);
+        vertexBuffer.putIdx(idxPos + 1);
+        vertexBuffer.putIdx(idxPos + 3);
+        vertexBuffer.putIdx(idxPos + 2);
+        vertexBuffer.putIdx(-1);
+        vertexBuffer.increaseFace();
+
+    }
+    public void putFaceAttr(VertexBuffer vertexBuffer) {
+        for (int i = 0; i < 4; i++) {
+            int idx = this.reverse ? 3-(i % 4) : i % 4;
+            BlockFaceVert v = this.v[idx];
+            vertexBuffer.put(this.tex | this.normalMap << 12 | this.type << 16 | v.pass << (16+12)); //2x SHORT
+            // BIT 0-7: 8 bit AO
+            // BIT 16-18: 3 bit FACEDIR (aka blockside)
+            // BIT 19-24: 6 bit VERTEXDIR 
+            vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);    
+            vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16);
+        }
+        
     }
     public void put(VertexBuffer vertexBuffer) {
 //        rotateUV(1);
@@ -222,8 +284,7 @@ public class BlockFaceAttr {
             vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
             vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
             vertexBuffer.put(Float.floatToRawIntBits(1));
-            vertexBuffer.put(Float.floatToRawIntBits(v.u));
-            vertexBuffer.put(Float.floatToRawIntBits(v.v));
+            vertexBuffer.put(RenderUtil.packTexCoord(v.u, v.v));
             vertexBuffer.put(tex|this.type<<16); //2x SHORT
             vertexBuffer.increaseVert();
         }
@@ -344,4 +405,36 @@ public class BlockFaceAttr {
     }
 
 
+    public void maskLight(int ao0, int ao1, int ao2, int ao3, int lightValue) {
+        int sky = 0;
+        sky |= (ao3 >> 8) & 0xF;// shift down by 8, skylight is now in upper byte (mix_light shifted it there), then mask out the overflow
+        sky <<= 4;
+        sky |= (ao2 >> 8) & 0xF;
+        sky <<= 4;
+        sky |= (ao1 >> 8) & 0xF;
+        sky <<= 4;
+        sky |= (ao0 >> 8) & 0xF;
+        int blockLight = 0;
+        blockLight |= Math.max((ao3) & 0xF, lightValue);
+        blockLight <<= 4;
+        blockLight |= Math.max((ao2) & 0xF, lightValue);
+        blockLight <<= 4;
+        blockLight |= Math.max((ao1) & 0xF, lightValue);
+        blockLight <<= 4;
+        blockLight |= Math.max((ao0) & 0xF, lightValue);
+        this.setLight(sky, blockLight);
+    }
+
+    public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
+        return ((ao3 & 0x3) << 6) | ((ao2 & 0x3) << 4) | ((ao1 & 0x3) << 2) | (ao0 & 0x3);
+    }
+
+    public static int mix_light(int br0, int br1, int br2, int br3) {
+        // shift the upper nibble up by 4 bits so the overflow (bit 4-7) can be masked out later
+        br0 = (br0 & 0xF) | (br0 & 0xF0) << 4;
+        br1 = (br1 & 0xF) | (br1 & 0xF0) << 4;
+        br2 = (br2 & 0xF) | (br2 & 0xF0) << 4;
+        br3 = (br3 & 0xF) | (br3 & 0xF0) << 4;
+        return (br0 + br1 + br2 + br3) >> 2;
+    }
 }

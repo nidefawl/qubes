@@ -59,7 +59,7 @@ public class TerrainNoiseScaleLib extends TerrainNoiseScale {
     }
 
     @Override
-    public double[] gen(int cx, int cz) {
+    public synchronized double[] gen(int cx, int cz) {
         native_generateNoise(ptr, cx, cz, bufferAddr);
         double[] noise = new double[w * h * w];
         UnsafeHelper.copyDoubleArray(this.bufferAddr, noise);

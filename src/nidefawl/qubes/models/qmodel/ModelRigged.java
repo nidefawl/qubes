@@ -214,8 +214,7 @@ public class ModelRigged extends ModelQModel {
         }
         
 
-        this.gpuBuf.bind();
-        this.gpuBuf.draw(5);
+        this.gpuBuf.draw();
 
 
     }

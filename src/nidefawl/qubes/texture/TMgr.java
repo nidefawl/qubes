@@ -1,5 +1,9 @@
 package nidefawl.qubes.texture;
 
+import nidefawl.qubes.texture.array.BlockNormalMapArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.ItemTextureArray;
+
 /** Shortcut class to keep code small */
 public class TMgr {
 
@@ -12,7 +16,7 @@ public class TMgr {
     }
 
     public static int getItems() {
-        return ItemTextureArray.getInstance().glid_color;
+        return ItemTextureArray.getInstance().glid;
     }
 
     public static int getEmptyNormalMap() {
@@ -33,8 +37,5 @@ public class TMgr {
 
     public static int getNormals() {
         return BlockNormalMapArray.getInstance().glid;
-    }
-    public static int getItemNormals() {
-        return ItemTextureArray.getInstance().glid_normalmaps;
     }
 }

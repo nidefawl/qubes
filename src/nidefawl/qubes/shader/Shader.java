@@ -375,6 +375,10 @@ public class Shader implements IManagedResource {
         T uni = (T) uniforms.get(name);
         if (uni == null) {
             int loc = getUniformLocation(name);
+            if (loc < 0) {
+                System.out.println("invalid uniform "+getName()+":"+type.getSimpleName().replaceFirst("Uniform", "")+" "+name);
+//                Thread.dumpStack();
+            }
             try {
                 uni = type.getDeclaredConstructor(String.class, int.class).newInstance(name, loc);
             } catch (Exception e) {

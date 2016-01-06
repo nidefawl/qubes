@@ -59,6 +59,7 @@ public class ServerHandlerPlay extends ServerHandler {
         if (idx<0||idx>=worlds.length) idx = 0;
         WorldServer worldCurrent = (WorldServer) this.player.world;
         worldCurrent.removePlayer(this.player);
+        this.player.onWorldLeave();
         WorldServer world = worlds[idx];
         int flags = 0;
         if (this.player.flying) {

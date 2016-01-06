@@ -1,10 +1,15 @@
 package nidefawl.qubes.network.client;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.async.AsyncTaskThread;
+import nidefawl.qubes.async.AsyncTasks;
+import nidefawl.qubes.async.IAsyncTask;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
@@ -187,13 +192,39 @@ public class ClientHandler extends Handler {
     
     //TODO: PUT IN THREAD
     @Override
-    public void handleChunkDataMulti(PacketSChunkData packet, int flags) {
+    public void handleChunkDataMulti(final PacketSChunkData packet, final int flags) {
+        if ((flags&1)!=0) {
+            AsyncTasks.submit(new IAsyncTask<Runnable>() {
+                @Override
+                public Runnable call() throws Exception {
+                    if (isValidWorld(packet)) {
+                        AsyncTaskThread context = ((AsyncTaskThread)Thread.currentThread());
+                        final byte[] decompressData = context.inflate(packet.blocks);
+                        return new Runnable() {
+                            public void run() {
+                                processChunkData(packet, decompressData, flags);
+                            }
+                        };
+                    }
+                    return null;
+                }
+                @Override
+                public TaskType getType() {
+                    return TaskType.CHUNK_DECOMPRESS;
+                }
+                @Override
+                public boolean requiresComplete() {
+                    return isValidWorld(packet);
+                }
+            });
+        } else {
+            processChunkData(packet, packet.blocks, flags);
+        }
+    }
+
+    private void processChunkData(PacketSChunkData packet, byte[] decompressed, int flags) {
         int[][] coords = packet.coords;
         int len = coords.length;
-        byte[] decompressed = packet.blocks;
-        if ((flags&1)!=0) {
-            decompressed = inflate(packet.blocks);
-        }
         int offset = 0;
         for (int i = 0; i < len; i++) {
             int[] pos = coords[i];
@@ -417,9 +448,9 @@ public class ClientHandler extends Handler {
     }
     public void handleDebugBBs(PacketSDebugBB packetSDebugBB) {
         Engine.worldRenderer.debugBBs.clear();
-        for (int i = 0; i < packetSDebugBB.boxes.size(); i++) {
-            Engine.worldRenderer.debugBBs.put(i, packetSDebugBB.boxes.get(i));    
-        }
+//        for (int i = 0; i < packetSDebugBB.boxes.size(); i++) {
+//            Engine.worldRenderer.debugBBs.put(i, packetSDebugBB.boxes.get(i));    
+//        }
         
     }
 

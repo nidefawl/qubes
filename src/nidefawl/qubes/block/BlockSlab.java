@@ -6,7 +6,7 @@ package nidefawl.qubes.block;
 import java.util.List;
 
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;

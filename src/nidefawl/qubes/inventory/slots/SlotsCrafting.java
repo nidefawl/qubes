@@ -13,9 +13,10 @@ public class SlotsCrafting extends Slots {
     public SlotsCrafting(Player player, int xPos, int yPos, int w, int dist) {
         super(1, player.getInventory(), player.getCraftInventory());
         this.inv = player.getCraftInventory();
-        for (int i = 0; i < this.inv.inventorySize; i++) {
+        for (int i = 0; i < this.inv.inventorySize-1; i++) {
             addSlot(new Slot(this.inv, i, xPos+(i%8)*(w+dist), yPos+(i/8)*(w+dist), w));
         }
+        addSlot(new Slot(this.inv, this.inv.inventorySize-1, xPos+(8)*(w+dist)+10, yPos+12, (int)(w*1.5)));
     }
 
 }

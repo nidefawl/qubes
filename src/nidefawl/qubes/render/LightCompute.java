@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL15.GL_READ_ONLY;
 import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
 import static org.lwjgl.opengl.GL42.glBindImageTexture;
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -25,6 +26,7 @@ import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.shader.*;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Frustum;
@@ -36,10 +38,8 @@ public class LightCompute extends AbstractRenderer {
     int                 maxLights      = 1024;
     int                 lightFloatSize = 16;
     ShaderBuffer        lights         = new ShaderBuffer("PointLightStorageBuffer").setSize(maxLights * lightFloatSize * 4);
-    ShaderBuffer        debugOutput         = new ShaderBuffer("DebugOutputBuffer").setSize(4096*4);
     private int         lightTilesTex;
     private boolean     startup        = true;
-    private long sync;
     private int[] debugResults;
     private int numLights;
 
@@ -73,16 +73,11 @@ public class LightCompute extends AbstractRenderer {
 
     public void init() {
         initShaders();
-        sync = ARBSync.glFenceSync(ARBSync.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         lights.setup();
-        debugOutput.setup();
-        debugOutput.bind();
-        ByteBuffer buf = debugOutput.map(false);
-        System.out.println(buf);
-        int test = buf.asIntBuffer().get(0);
-        System.out.println("debug result "+test);
-        debugOutput.unmap();
-        debugOutput.unbind();
+        lights.update();
+        Engine.debugOutput.setup();
+        Engine.debugOutput.update();
+        GL15.glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 
     public void resize(int displayWidth, int displayHeight) {
@@ -91,20 +86,11 @@ public class LightCompute extends AbstractRenderer {
         int groupsY = displayHeight / 32 + (displayHeight % 32 != 0 ? 1 : 0);
         System.out.println("tilescover "+(groupsX*32)+"/"+(groupsY*32));
         this.lightTiles = new int[] { groupsX, groupsY };
-        if (this.lightTilesTex != 0) {
-            TextureManager.getInstance().releaseTexture(this.lightTilesTex);
-            this.lightTilesTex = 0;
-        }
-        this.lightTilesTex = glGenTextures();
-        glActiveTexture(GL_TEXTURE0);
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.lightTilesTex);
-        GL.glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, displayWidth, displayHeight);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, 0);
+        GL.deleteTexture(this.lightTilesTex);
+        this.lightTilesTex = GL.genStorage(displayWidth, displayHeight, GL_RGBA16F, GL_LINEAR, GL12.GL_CLAMP_TO_EDGE);
         Engine.checkGLError("lightTilesTex");
+        Engine.debugOutput.update();
+        lights.update();
     }
 
     public void updateLights(WorldClient world, float fTime) {
@@ -122,7 +108,7 @@ public class LightCompute extends AbstractRenderer {
             if (n >= Frustum.FRUSTUM_INSIDE) {
                 nLights++;
                 light.store(lightBuf);
-                while (lightBuf.position()%4!=0) {
+                while (lightBuf.position()%16!=0) {
                     lightBuf.put(0);
                 }   
             } else {
@@ -134,34 +120,35 @@ public class LightCompute extends AbstractRenderer {
         this.lights.update();
     }
     public void render(WorldClient world, float fTime, int pass) {
-        shaderComputerLight.enable();
-        glBindImageTexture(0, Engine.getSceneFB().getTexture(1), 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
+        if (this.numLights > 0) {
+            shaderComputerLight.enable();
+            glBindImageTexture(0, Engine.getSceneFB().getTexture(1), 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
 
-        glBindImageTexture(5, this.lightTilesTex, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
-        shaderComputerLight.setProgramUniform1i("numActiveLights", this.numLights);
-        GL43.glDispatchCompute(this.lightTiles[0], this.lightTiles[1], 1);
-        
-//      glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-//      glMemoryBarrier(GL42.GL_ALL_BARRIER_BITS);
-//      int ret = ARBSync.glClientWaitSync(sync, ARBSync.GL_SYNC_FLUSH_COMMANDS_BIT, 1000000);
-//      if (ret == ARBSync.GL_WAIT_FAILED || ret == ARBSync.GL_TIMEOUT_EXPIRED) {
-//          System.err.println("sync failed with "+ret);
-//      }
-        
+            glBindImageTexture(5, this.lightTilesTex, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+            GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
+            shaderComputerLight.setProgramUniform1i("numActiveLights", this.numLights);
+            GL43.glDispatchCompute(this.lightTiles[0], this.lightTiles[1], 1);
+            
+//          glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+//          glMemoryBarrier(GL42.GL_ALL_BARRIER_BITS);
+//          int ret = ARBSync.glClientWaitSync(sync, ARBSync.GL_SYNC_FLUSH_COMMANDS_BIT, 1000000);
+//          if (ret == ARBSync.GL_WAIT_FAILED || ret == ARBSync.GL_TIMEOUT_EXPIRED) {
+//              System.err.println("sync failed with "+ret);
+//          }
+            
+        }
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("compute light 5");
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("compute_light_"+pass, "input", Engine.getSceneFB().getTexture(0));
-            GLDebugTextures.readTexture("compute_light_"+pass, "output", this.lightTilesTex);
-            GLDebugTextures.readTexture("compute_light_"+pass, "output2", this.lightTilesTex);
+            GLDebugTextures.readTexture("compute_light_"+pass, "output", this.getTexture(), 4);
         }
     }
 
     public void renderDebug() {
         try {
-            debugOutput.bind();
-            ByteBuffer buf = debugOutput.map(false);
+            Engine.debugOutput.bind();
+            ByteBuffer buf = Engine.debugOutput.map(false);
             
             float[] debugVals = new float[16];
             FloatBuffer fbuf = buf.asFloatBuffer();
@@ -172,8 +159,8 @@ public class LightCompute extends AbstractRenderer {
                 this.debugResults = new int[ibuf.remaining()]; 
             }
             ibuf.get(this.debugResults);
-            debugOutput.unmap();
-            debugOutput.unbind();
+            Engine.debugOutput.unmap();
+            Engine.debugOutput.unbind();
             if(Stats.fpsCounter==0) {
                 System.out.println("minDepth "+String.format("%10f", debugVals[0]));
                 System.out.println("maxDepth "+String.format("%10f", debugVals[1]));
@@ -192,7 +179,7 @@ public class LightCompute extends AbstractRenderer {
 
                     int n = this.debugResults[idx];
                     if (n <= 0) {
-                        t.setColorF(0xff0000, 1);
+                        t.setColorF(0xff0000, 0.3f);
                     } else /*if (!region.isRenderable) {
                            t.setColorF(0x555500, 1);
                            } else*/
@@ -201,7 +188,7 @@ public class LightCompute extends AbstractRenderer {
                         //                    if (Math.abs(region.rX) % 2 == Math.abs(region.rZ) % 2)
                         //                        r = 0;
                         //
-                        t.setColorF(r, 1);
+                        t.setColorF(r, 0.5f);
                     }
                     //                t.add(0, chunkWPx);
                     //                t.add(chunkWPx, chunkWPx);
@@ -233,13 +220,13 @@ public class LightCompute extends AbstractRenderer {
             Shaders.colored.enable();
             t.drawQuads();
             Shaders.textured.enable();
-            FontRenderer font = FontRenderer.get(null, 16, 1, 18);
+            FontRenderer font = FontRenderer.get(null, 12, 1, 12);
             for (int x = 0; x < this.lightTiles[0]; x++) {
                 for (int y = 0; y < this.lightTiles[1]; y++) {
                     int idx = y * this.lightTiles[0] + x;
                     int n = this.debugResults[idx];
                     float screenY = (screenZ + chunkWPx * y);
-                    font.drawString("" + n, screenX + chunkWPx * x + chunkWPx / 3, screenY + font.getLineHeight() / 2.0f + chunkWPx / 2.0f, -1, true, 1.0f);
+                    font.drawString("" + n, screenX + chunkWPx * x + chunkWPx / 3, screenY + font.getLineHeight() / 2.0f + chunkWPx / 2.0f, -1, true, 0.7f);
                 }
             }
             GL11.glDisable(GL11.GL_BLEND);
@@ -250,6 +237,6 @@ public class LightCompute extends AbstractRenderer {
     }
 
     public int getTexture() {
-        return this.lightTilesTex;
+        return this.numLights > 0 ? lightTilesTex : TMgr.getEmpty();
     }
 }

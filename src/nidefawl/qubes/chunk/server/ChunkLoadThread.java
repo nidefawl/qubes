@@ -6,52 +6,54 @@ import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.world.WorldServer;
 
-public class ChunkLoadThread extends Thread {
+public class ChunkLoadThread implements Runnable {
     private static long               sleepTime = 10;
     private LinkedBlockingQueue<Long> queue     = new LinkedBlockingQueue<Long>();
     private volatile boolean          isRunning;
 
     private ChunkManagerServer mgr;
     private boolean finished;
+    private Thread threads[] = new Thread[4];
 
-    public ChunkLoadThread(ChunkManagerServer mgr) {
-        setName("ChunkLoadThread");
-        setDaemon(true);
+    public ChunkLoadThread(ChunkManagerServer mgr, WorldServer world) {
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new Thread(this);
+            threads[i].setName("ChunkLoadThread_"+i+"_"+world.getName());
+            threads[i].setDaemon(true);
+        }
         this.isRunning = true;
         this.mgr = mgr;
     }
 
-    public void init() {
-        start();
+    public void startThreads() {
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].start();
+        }
     }
-
+    
     @Override
     public void run() {
         try {
 
-            System.out.println(getName() + " started");
+            System.out.println(Thread.currentThread().getName() + " started");
 
             while (mgr.isRunning() && this.isRunning) {
                 boolean did = false;
                 try {
                     Long task = this.queue.take();
                     if (task != null) {
-                        synchronized (this.mgr.syncObj) {
-                            Chunk c = mgr.table.get(task);
-                            if (c == null) {
-                                int x = GameMath.lhToX(task);
-                                int z = GameMath.lhToZ(task);
-                                mgr.loadOrGenerate(x, z);
-                            }
-                        }
+                        int x = GameMath.lhToX(task);
+                        int z = GameMath.lhToZ(task);
+                        mgr.loadOrGenerate(x, z);
                     }
                 } catch (InterruptedException e1) {
                     if (!isRunning)
                         break;
                     onInterruption();
                 } catch (Exception e) {
-                    ErrorHandler.setException(new GameError("Exception in " + getName(), e));
+                    ErrorHandler.setException(new GameError("Exception in " + Thread.currentThread().getName(), e));
                     break;
                 }
                 if (!did && sleepTime > 0) {
@@ -64,7 +66,7 @@ public class ChunkLoadThread extends Thread {
                     }
                 }
             }
-            System.out.println(getName() + " ended");
+            System.out.println(Thread.currentThread().getName() + " ended");
         } finally {
             this.finished = true;
         }
@@ -96,7 +98,9 @@ public class ChunkLoadThread extends Thread {
             this.isRunning = false;
             try {
                 this.queue.clear();
-                this.interrupt();
+                for (int i = 0; i < threads.length; i++) {
+                    threads[i].interrupt();
+                }
                 Thread.sleep(60);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -104,7 +108,9 @@ public class ChunkLoadThread extends Thread {
             while (!this.finished) {
                 try {
                     this.queue.clear();
-                    this.interrupt();
+                    for (int i = 0; i < threads.length; i++) {
+                        threads[i].interrupt();
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

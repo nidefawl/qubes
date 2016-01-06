@@ -12,14 +12,34 @@ public class Keybinding {
     private boolean enabled;
     private int     key;
     private boolean isPressed;
+    private String name;
+    private boolean hasCallback = true;
+    private boolean staticBinding = false;
 
-    /**
-     * 
-     */
-    public Keybinding(int key) {
+    public Keybinding(String name, int key) {
+        this.name = name;
         this.enabled = true;
         this.key = key;
         this.isPressed = false;
+    }
+    public Keybinding setNoCallBack() {
+        this.hasCallback = false;
+        return this;
+    }
+
+    public Keybinding setStatic() {
+        this.staticBinding = true;
+        return this;
+    }
+    public boolean isStaticBinding() {
+        return this.staticBinding;
+    }
+    public boolean hasCallback() {
+        return this.hasCallback;
+    }
+    
+    public String getName() {
+        return this.name;
     }
 
     /**

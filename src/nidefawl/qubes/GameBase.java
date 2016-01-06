@@ -16,10 +16,8 @@ import java.util.List;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
-import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.GPUVendor;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.logging.LogBufferStream;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -35,7 +33,6 @@ public abstract class GameBase implements Runnable {
     public static String  appName         = "LWJGL Test App";
     public static int     displayWidth;
     public static int     displayHeight;
-    public static boolean glDebug         = false;
     public static boolean GL_ERROR_CHECKS = false;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
@@ -255,7 +252,7 @@ public abstract class GameBase implements Runnable {
 //              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             }
 
-            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, glDebug ? GL_TRUE : GL_FALSE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_ERROR_CHECKS ? GL_TRUE : GL_FALSE);
             //            glfwWindowHint(GLFW_RED_BITS, 8);
             //            glfwWindowHint(GLFW_GREEN_BITS, 8);
             //            glfwWindowHint(GLFW_BLUE_BITS, 8);
@@ -298,8 +295,13 @@ public abstract class GameBase implements Runnable {
                 System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
             }
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-            if (GL_ERROR_CHECKS)
+            if (GL_ERROR_CHECKS) {
+                if (KHRDebug.getInstance() != null) {
+//                    GLDebugLog.setup();
+                    _checkGLError("GLDebugLog.setup()");
+                }
                 _checkGLError("Pre startup");
+            }
 
         } catch (Throwable t) {
             throw new RuntimeException(t);
@@ -318,13 +320,13 @@ public abstract class GameBase implements Runnable {
     }
 
     protected void onDestroy() {
-        Engine.stop();
         TextureManager.getInstance().destroy();
         Tess.destroyAll();
     }
 
     public void shutdown() {
         this.running = false;
+        Engine.stop();
     }
 
     protected void checkResize() {

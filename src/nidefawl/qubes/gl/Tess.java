@@ -192,10 +192,7 @@ public class Tess extends AbstractTesselatorState {
             vbo.bind();
             vbo.upload(bufInt.getByteBuf(), len);
             if (out == this) {
-                setAttrPtr();
-                drawVBO(mode);
-                for (int i = 0; i < 4; i++)
-                    GL20.glDisableVertexAttribArray(i);
+                bindAndDraw(mode);
                 this.vboIdx++;
                 if (this.vboIdx >= this.vbo.length) {
                     this.vboIdx = 0;

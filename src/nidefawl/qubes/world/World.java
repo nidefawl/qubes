@@ -41,7 +41,6 @@ public abstract class World implements IBlockWorld {
     public World(IWorldSettings settings) {
         this.settings = settings;
         this.id = settings.getId();
-        this.chunkMgr = makeChunkManager();
         this.seed = settings.getSeed();
         this.name = settings.getName();
         this.uuid = settings.getUUID();
@@ -51,6 +50,7 @@ public abstract class World implements IBlockWorld {
         this.worldHeight = 1 << worldHeightBits;
         this.worldHeightMinusOne = (1 << worldHeightBits) - 1;
         this.worldSeaLevel = 59;//1 << (worldHeightBits - 1);
+        this.chunkMgr = makeChunkManager();
 //        this.generator = new TerrainGenerator2(this, this.seed);
 
     }
@@ -269,24 +269,40 @@ public abstract class World implements IBlockWorld {
     }
 
     public void addLight(Vector3f pos) {
-//        float r = this.rand.nextFloat()*0.5f+0.5f;
-//        float g = this.rand.nextFloat()*0.5f+0.5f;
-//        float b = this.rand.nextFloat()*0.5f+0.5f;
-        float r = 1;
-        float g = 0.9f;
-        float b = 0.8f;
-        DynamicLight light = new DynamicLight(pos, new Vector3f(r, g, b), 0.85f);
+        Vector3f color = new Vector3f();
+        while (color.length()<1E-4F) {
+            color.set(this.rand.nextFloat(),this.rand.nextFloat(),this.rand.nextFloat());
+        }
+        color.normalise();
+//        float r = 1;
+//        float g = 0.9f;
+//        float b = 0.8f;
+        DynamicLight light = new DynamicLight(pos,color , 0.1f);
         this.lights.add(light);
     }
 
     public void spawnLights(BlockPos block) {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 80; i++) {
 
-            int range = 143;
+            int range = 12;
             int x = block.x+this.rand.nextInt(range*2)-range;
+            int y = block.y+this.rand.nextInt(range)-range/2;
             int z = block.z+this.rand.nextInt(range*2)-range;
-            int y = getHeight(x, z);
-            addLight(new Vector3f(x+0.5F, y+1.2f, z+0.5F));
+            if (getType(x, y, z)==0) {
+                block.set(x, y, z);
+                BlockPos pos2 = block.copy();
+                boolean found = false;
+                for (int d = 0; d < 6; d++) {
+                    pos2.set(block);
+                    pos2.offset(d);
+                    if (getType(pos2)!=0) {
+                        found=true;break;
+                    }
+                }
+                if (found) {
+                    addLight(new Vector3f(x+0.5F, y+1.2f, z+0.5F));
+                }
+            }
         }
     }
 

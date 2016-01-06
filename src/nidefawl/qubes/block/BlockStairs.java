@@ -5,7 +5,7 @@ package nidefawl.qubes.block;
 
 import java.util.Arrays;
 
-import nidefawl.qubes.texture.BlockTextureArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;

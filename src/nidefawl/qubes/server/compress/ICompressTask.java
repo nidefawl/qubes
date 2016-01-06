@@ -6,4 +6,6 @@ public interface ICompressTask {
 
     public void finish(byte[] compressed);
 
+    public boolean isValid();
+
 }

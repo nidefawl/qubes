@@ -4,6 +4,7 @@ import java.nio.FloatBuffer;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.WorldClient;
 
@@ -15,8 +16,6 @@ public class DynamicLight {
     public Vector3f renderPos = new Vector3f();
     public Vector3f color;
     public float intensity;
-    public float constant = 0.01f;
-    public float linear = 0.4f;
     public float quadratic =1f;
     public float lightThreshold = 0.1f;
     public float radius;
@@ -50,12 +49,12 @@ public class DynamicLight {
         float y = (1+sin)*1.56f;
         this.renderPos.y+=0;
         this.intensity = 0.5f+(sin*0.5f+0.5f)*2f;
-        this.quadratic = 12F/this.intensity;
+        this.quadratic = 1F/this.intensity;
+        this.radius = GameMath.sqrtf(1.0f / (quadratic * 0.01f));
 //      System.out.println(renderPos);
 //        System.out.println(radius);
     }
     public void store(FloatBuffer lightBuf) {
-        this.radius = GameMath.sqrtf(1.0f / (quadratic * 0.01f));
 //        System.out.println(radius);
         this.renderPos.store(lightBuf);
         lightBuf.put(0);
@@ -63,8 +62,6 @@ public class DynamicLight {
         lightBuf.put(0);
         lightBuf.put(intensity); 
         lightBuf.put(radius);
-        lightBuf.put(constant);
-        lightBuf.put(linear);
         lightBuf.put(quadratic);
 //        System.out.println(Engine.GLOBAL_OFFSET);
     }

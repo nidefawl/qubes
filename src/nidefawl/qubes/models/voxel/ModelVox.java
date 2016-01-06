@@ -4,6 +4,7 @@
 package nidefawl.qubes.models.voxel;
 
 import nidefawl.qubes.assets.AssetVoxModel;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLQuadBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.meshing.BlockFaceAttr;
@@ -204,14 +205,9 @@ public class ModelVox {
             this.gpuBuf.upload(buf);
         }
         if (pass == WorldRenderer.PASS_SHADOW_SOLID) {
-            this.gpuShadowBuf.bind();
-            int ptrSetting = 2;
-            this.gpuShadowBuf.draw(ptrSetting);
+            this.gpuShadowBuf.draw();
         } else {
-
-            this.gpuBuf.bind();
-            int ptrSetting = 0;
-            this.gpuBuf.draw(ptrSetting);
+            this.gpuBuf.draw();
         }
     }
     public boolean isOccluding(int x, int y, int z) {

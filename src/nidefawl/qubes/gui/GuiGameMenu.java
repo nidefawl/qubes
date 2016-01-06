@@ -10,7 +10,7 @@ public class GuiGameMenu extends Gui {
     final FontRenderer fontSmall;
     private Button resume;
     private Button settings;
-    private Button bindings;
+    private Button controls;
     private Button back;
     private Button quit;
 
@@ -37,10 +37,10 @@ public class GuiGameMenu extends Gui {
             settings.setSize(w1, h);
         }
         {
-            bindings = new Button(3, "Bindings");
-            this.buttons.add(bindings);
-            bindings.setPos(left, this.posY+this.height/2+60);
-            bindings.setSize(w1, h);
+            controls = new Button(3, "Controls");
+            this.buttons.add(controls);
+            controls.setPos(left, this.posY+this.height/2+60);
+            controls.setSize(w1, h);
         }
         {
             back = new Button(4, "Back to Main Menu");
@@ -77,10 +77,10 @@ public class GuiGameMenu extends Gui {
             Game.instance.showGUI(null);
         }
         if (element == this.settings) {
-            Game.instance.showGUI(new GuiSettings());
+            Game.instance.showGUI(new GuiSettings(this));
         }
-        if (element == this.bindings) {
-
+        if (element == this.controls) {
+            Game.instance.showGUI(new GuiControls(this));
         }
         if (element == this.back) {
             Game.instance.returnToMenu();

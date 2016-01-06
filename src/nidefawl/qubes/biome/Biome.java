@@ -48,6 +48,12 @@ public class Biome {
             .setColor(BiomeColor.FOLIAGE, 0x408A10)
             .setColor(BiomeColor.FOLIAGE2, 0x64B051)
             .setDebugColor(0xaaaaaa);
+    public final static Biome MEADOW_GREEN2 = new BiomeMeadow(6)
+            .setColor(BiomeColor.GRASS, 0x408019)
+            .setColor(BiomeColor.LEAVES, 0x4A7818)
+            .setColor(BiomeColor.FOLIAGE, 0x408A10)
+            .setColor(BiomeColor.FOLIAGE2, 0x64B051)
+            .setDebugColor(0x32dd32);
     public int color;
     public int colorFoliage;
     public int colorFoliage2;

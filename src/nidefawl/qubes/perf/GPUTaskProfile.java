@@ -91,22 +91,29 @@ public class GPUTaskProfile implements Poolable {
     }
 
     public void dump(List<String> to) {
-        dump(to, 0);
+        dump(to, 0, 0);
     }
 
-    private void dump(List<String> to, int indentation) {
+    private void dump(List<String> to, int indentation, float fFrame) {
         String s = "";
         for (int i = 0; i < indentation; i++) {
             s+="  ";
         }
         float f = getTimeTaken() / 1000 / 1000f;
         s+= name + " : " + f + "ms";
-        if (name.startsWith("Frame ")) {
+        if (this.parent == null) {
             s+=" ("+(int)(1000.0f/f)+")";
+        } else {
+            float percent = (f/fFrame)*100.0f;
+            String prefix = " ";
+            if (percent > 20) {
+                prefix = " \0udd7733";
+            }
+            s+= prefix + String.format("(%.2f%%)", percent);
         }
         to.add(s);
         for (int i = 0; i < children.size(); i++) {
-            children.get(i).dump(to, indentation + 1);
+            children.get(i).dump(to, indentation + 1, this.parent == null ? f : fFrame);
         }
     }
 }

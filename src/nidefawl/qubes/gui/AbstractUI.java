@@ -3,11 +3,13 @@ package nidefawl.qubes.gui;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.Renderable;
 
 public abstract class AbstractUI implements Renderable {
+    public AbstractUI parent;
     public int           id;
     public int width;
     public int height;
@@ -27,12 +29,17 @@ public abstract class AbstractUI implements Renderable {
         this.posX = x;
         this.posY = y;
     }
+    public boolean hasElement(AbstractUI element) {
+        return false;
+    }
+    public void add(AbstractUI element) {
+    }
 
     public void update() {
     }
 
     public boolean mouseOver(double mX, double mY) {
-        return this.enabled && mX >= this.posX && mX <= this.posX + this.width && mY >= this.posY && mY <= this.posY + this.height;
+        return this.enabled && (selectedButton == null || selectedButton == this) && mX >= this.posX && mX <= this.posX + this.width && mY >= this.posY && mY <= this.posY + this.height;
     }
 
     public boolean handleMouseUp(Gui gui, int action) {
@@ -63,13 +70,13 @@ public abstract class AbstractUI implements Renderable {
     public float        alpha4 = 0.8F;
     public float boxSigma = 0.25f;
     public float shadowSigma = 4;
-    public float round = 15;
+    public float round = 4;
     public int extendx = 3;
     public int extendy = 0;
     public void resetShape() {
         boxSigma = 0.25f;
         shadowSigma = 4;
-        round = 15;
+        round = 4;
         extendx = 3;
         extendy = 0;
     }

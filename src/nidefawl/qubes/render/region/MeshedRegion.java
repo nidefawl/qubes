@@ -10,9 +10,8 @@ import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.ReallocIntBuffer;
-import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.gl.*;
+import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -87,22 +86,20 @@ public class MeshedRegion {
     
     }
     public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo[pass]);
-        int ptrSetting = pass;
-        if (ptrSetting == 2) {
-            if (this.shadowDrawMode == 1) {
-                ptrSetting = 4;
+//        enableVertexPtrs(ptrSetting);
+        if (pass == 2) {
+            if (this.shadowDrawMode != Game.instance.settings.shadowDrawMode) {
+                return;
             }
         }
-        enableVertexPtrs(ptrSetting);
+        Engine.bindBuffer(this.vbo[pass]);
         if (Engine.USE_TRIANGLES) {
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIndices[pass]);
+            Engine.bindIndexBuffer(this.vboIndices[pass]);
             if (drawInstances > 0) {
                 GL31.glDrawElementsInstanced(drawMode, this.elementCount[pass]*3, GL11.GL_UNSIGNED_SHORT, 0, drawInstances);
             } else {
                 GL11.glDrawElements(drawMode, this.elementCount[pass]*3, GL11.GL_UNSIGNED_INT, 0);
             }
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
 
             if (drawInstances > 0) {
@@ -111,8 +108,6 @@ public class MeshedRegion {
                 GL11.glDrawArrays(drawMode, 0, this.vertexCount[pass]);
             }
         }
-        disableVertexPtrs(ptrSetting);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
 
 

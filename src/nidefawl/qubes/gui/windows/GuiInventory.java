@@ -20,18 +20,18 @@ public class GuiInventory extends GuiInventoryBase {
             return;
         }
         this.slots = p.getSlots(0);
-        if (this.bounds != null) {
-            setPos(this.bounds[0], this.bounds[1]);
-            setSize(this.bounds[2], this.bounds[3]);
-        } else {
+//        if (this.bounds != null) {
+//            setPos(this.bounds[0], this.bounds[1]);
+//            setSize(this.bounds[2], this.bounds[3]);
+//        } else {
             int rows = this.slots.getSlots().size()/10;
             int width = 20 + (slotBDist+slotW)*10;
-            int height = titleBarHeight + 20+ (slotBDist+slotW)*rows;
+            int height = titleBarHeight + 15+ (slotBDist+slotW)*rows;
             int xPos = (Game.displayWidth-width)/2;
             int yPos = (Game.displayHeight-height)/2;
             setPos(xPos, yPos);
             setSize(width, height);
-        }
+//        }
         
     }
 

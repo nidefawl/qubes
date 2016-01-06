@@ -6,9 +6,11 @@ import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryUtil;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMapping;
 import nidefawl.qubes.chat.client.ChatManager;
@@ -44,9 +46,13 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.*;
+import nidefawl.qubes.texture.array.BlockNormalMapArray;
+import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.ItemTextureArray;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
@@ -68,13 +74,13 @@ public class Game extends GameBase implements IErrorHandler {
     private NetworkClient  client;
     WorldClient            world              = null;
     PlayerSelf             player;
-    public Movement        movement           = new Movement();
+    public InputController        movement           = new InputController();
     public final DigController   dig           = new DigController();
     public final Selection selection          = new Selection();
     public boolean         follow             = true;
     
     public BlockStack           selBlock           = new BlockStack(0);
-    long                   lastShaderLoadTime = System.currentTimeMillis();
+    public long                   lastShaderLoadTime = System.currentTimeMillis();
     public final Vector3f vCam = new Vector3f();
     public final Vector3f vPlayer = new Vector3f();
     public final Vector3f vLastCam = new Vector3f();
@@ -82,7 +88,7 @@ public class Game extends GameBase implements IErrorHandler {
 
     public boolean                  updateRenderers = true;
     private TesselatorState debugChunks;
-    static boolean showGrid=false;
+    public static boolean showGrid=false;
     public boolean thirdPerson = true;
     boolean reinittexthook = false;
     boolean wasGrabbed = false;
@@ -129,6 +135,7 @@ public class Game extends GameBase implements IErrorHandler {
         debugChunks = new TesselatorState();
         loadProfile();
         loadSettings();
+        InputController.initKeybinds();
         selection.init();
         dig.init();
         AssetManager.getInstance().init();
@@ -255,207 +262,9 @@ public class Game extends GameBase implements IErrorHandler {
         ItemTextureArray.getInstance().reload();
         BlockTextureArray.getInstance().reload();
         BlockNormalMapArray.getInstance().reload();
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F8) {
-            public void onDown() {
-                setVSync(!getVSync());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F9) {
-            public void onDown() {
-                Engine.toggleWireFrame();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F10) {
-            public void onDown() {
-//                Engine.flushRenderTasks();
-//                Engine.regionRenderer.resetAll();
-//                Engine.toggleDrawMode();
-                ItemTextureArray.getInstance().reload();
-                BlockTextureArray.getInstance().reload();
-                BlockNormalMapArray.getInstance().reload();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_R) {
-            public void onDown() {
-                updateRenderers=!updateRenderers;
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_ENTER) {
-            public void onDown() {
-                if (world != null)
-                    showGUI(new GuiChatInput());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_T) {
-            public void onDown() {
-                if (world != null)
-                    showGUI(new GuiChatInput());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_Z) {
-            public void onDown() {
-                Engine.flushRenderTasks();
-                Engine.regionRenderer.resetAll();
-                Engine.USE_TRIANGLES=!Engine.USE_TRIANGLES;
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F3) {
-            public void onDown() {
-                GLDebugTextures.setShow(!GLDebugTextures.show);
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F4) {
-            public void onDown() {
-//                toggleTestMode();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F) {
-            public void onDown() {
-                reposModel();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F5) {
-            public void onDown() {
-//              setWorld(new WorldClient(null));
-//              Engine.worldRenderer.flush();
-//              Engine.textures.refreshNoiseTextures();
-//              PlayerSelf p = getPlayer();
-//              if (p != null) {
-//                  Random rand = new Random();
-//                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
-//              }
-                lastShaderLoadTime = System.currentTimeMillis();
-                thirdPerson = !thirdPerson;
-//                Shaders.initShaders();
-//                Engine.worldRenderer.initShaders();
-//////                Engine.worldRenderer.reloadModel();
-//                  Engine.regionRenderer.initShaders();
-//////                  Engine.shadowRenderer.initShaders();
-                  Engine.outRenderer.initShaders();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F2) {
-            public void onDown() {
-                showGrid = !showGrid;
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F1) {
-            public void onDown() {
-                Engine.regionRenderer.reRender();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F11) {
-            public void onDown() {
-//                toggleTiming = true;
-                AssetManager.getInstance().toggleExternalResources();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F12) {
-            public void onDown() {
-                TimingHelper.dump();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_F6) {
-            public void onDown() {
-                TimingHelper2.dump();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_Q) {
-            public void onDown() {
-                selection.quarterMode = !selection.quarterMode;
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_ESCAPE) {
-            public void onDown() {
-                /*if (world != null) {
-                    setWorld(null);
-                }
-                if (client != null) {
-                    client.disconnect("Quit");
-                }
-                if (gui == null)
-                    showGUI(new GuiMainMenu());
-                    */
-                if( gui == null)
-                    showGUI(new GuiGameMenu());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_N) {
-            public void onDown() {
-                showGUI(new GuiSelectWorld());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_B) {
-            public void onDown() {
-                showGUI(new GuiSelectBlock());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_I) {
-            public void onDown() {
-                GuiWindowManager.openWindow(GuiInventory.class);
-            }
-        });
-
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_PERIOD) {
-            public void onDown() {
-                GuiWindowManager.openWindow(GuiInventory2.class);
-            }
-        });
-
-
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_P) {
-            public void onDown() {
-                GLDebugTextures.toggleDebugTex();
-            }
-        });
-
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_O) {
-            public void onDown() {
-//                if (step+1 < edits.size()) {
-//                    step++;
-//                    edits.get(step).apply(world);
-//                }
-                if (player != null)
-                    world.addLight(new Vector3f(player.pos).translate(0, 1, 0));
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_H) {
-            public void onDown() {
-                if (player != null) {
-                    player.toggleFly();
-                }
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_SUBTRACT) {
-            public void onDown() {
-                if (world != null)
-                for (int i = 0; i < 22; i++) {
-
-                    world.removeLight(0);
-                }
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_ADD) {
-            public void onDown() {
-
-                Engine.worldRenderer.reloadModel();
-                ItemModelManager.getInstance().reload();
-                BlockModelManager.getInstance().reload();
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_KP_MULTIPLY) {
-            public void onDown() {
-                if (player != null)
-                    world.spawnLights(player.pos.toBlock());
-            }
-        });
-        Keyboard.addKeyBinding(new Keybinding(GLFW.GLFW_KEY_M) {
-            public void onDown() {
-                toggleGameMode();
-            }
-        });
         ChatManager.getInstance().loadInputHistory();
-        
+
+        InputController.load();
     }
 
     public void toggleGameMode() {
@@ -491,7 +300,7 @@ public class Game extends GameBase implements IErrorHandler {
     /**
      * 
      */
-    protected void reposModel() {
+    public void reposModel() {
         Engine.worldRenderer.setModelPos(vPlayer.x, vPlayer.y-1, vPlayer.z);
     }
 
@@ -513,6 +322,7 @@ public class Game extends GameBase implements IErrorHandler {
         super.shutdown();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
+        AsyncTasks.shutdown();
     }
     
     protected void onTextInput(long window, int codepoint) {
@@ -535,7 +345,7 @@ public class Game extends GameBase implements IErrorHandler {
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
-          Keybinding k = Keyboard.getKeyBinding(key);
+          Keybinding k = InputController.getKeyBinding(key);
           if (k != null && k.isEnabled() && k.isPressed()) {
               k.update(action);
               return;
@@ -571,7 +381,7 @@ public class Game extends GameBase implements IErrorHandler {
     @Override
     protected void onWheelScroll(long window, double xoffset, double yoffset) {
         if (this.gui != null) {
-//            this.gui.onMouseClick(button, action);
+            this.gui.onWheelScroll(xoffset, yoffset);
         } else {
             if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
                 this.settings.thirdpersonDistance += yoffset*-0.2f;
@@ -725,6 +535,7 @@ public class Game extends GameBase implements IErrorHandler {
                 GPUProfiler.start("HBAO");
 
             if (HBAOPlus.hasContext) {
+
                 HBAOPlus.renderAO();
                 Shader.disable();
             }
@@ -751,6 +562,11 @@ public class Game extends GameBase implements IErrorHandler {
 
             boolean secondPass = true;
             if (secondPass) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("copyPreWaterDepth");
+                Engine.outRenderer.copyPreWaterDepth();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 Engine.getSceneFB().bind();
@@ -774,7 +590,11 @@ public class Game extends GameBase implements IErrorHandler {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("copySceneDepthBuffer");
             Engine.outRenderer.copySceneDepthBuffer();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
 
             boolean firstPerson = !this.thirdPerson && this.mode == GameMode.PLAY;
             if (firstPerson) {
@@ -1071,13 +891,13 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >4211/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >2000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
-//          Shaders.initShaders();
-          Engine.lightCompute.initShaders();
+          Shaders.initShaders();
+//          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
-          Engine.worldRenderer.initShaders();
+//          Engine.worldRenderer.initShaders();
 //          Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
             Engine.outRenderer.initShaders();
@@ -1286,6 +1106,7 @@ public class Game extends GameBase implements IErrorHandler {
        if(this.throttleClick > 0) {
            this.throttleClick--;
        }
+       AsyncTasks.completeTasks();
     }
 
     public void returnToMenu() {
@@ -1412,5 +1233,13 @@ public class Game extends GameBase implements IErrorHandler {
      */
     public boolean isInSelection(int ix, int iy, int iz) {
         return this.selection.contains(ix, iy, iz);
+    }
+
+    public Selection getSelection() {
+        return this.selection;
+    }
+
+    public Gui getGui() {
+        return this.gui;
     }
 }
