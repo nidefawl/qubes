@@ -181,7 +181,6 @@ void main()
     minDepth = 0xfF7FFFFF;
     maxDepth = 0x7f7fffff;
     pointLightCount = 0;
-    pointLightIndex[MAX_LIGHTS];
     maxLightIndex = 0;
     barrier();
     vec3 camPos = vec3(0, 0, 0);
