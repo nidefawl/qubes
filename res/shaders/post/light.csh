@@ -56,12 +56,17 @@ layout (binding = 5, rgba16f) writeonly uniform highp image2D finalImage;
 
 uniform int numActiveLights;
 
-shared uint minDepth = 0xfF7FFFFF;
-shared uint maxDepth = 0x7f7fffff;
-shared uint pointLightCount = 0;
-shared uint pointLightIndex[MAX_LIGHTS];
-shared uint maxLightIndex = 0;
+// shared uint minDepth = 0xfF7FFFFF;
+// shared uint maxDepth = 0x7f7fffff;
+// shared uint pointLightCount = 0;
+// shared uint pointLightIndex[MAX_LIGHTS];
+// shared uint maxLightIndex = 0;
 
+shared uint minDepth;
+shared uint maxDepth;
+shared uint pointLightCount;
+shared uint pointLightIndex[MAX_LIGHTS];
+shared uint maxLightIndex;
 float expToLinearDepth(in float depth)
 {
     return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
@@ -173,6 +178,12 @@ bool inFrustumDbg(in vec4 pos, vec2 wrkGrp) {
 }
 void main()
 {
+    minDepth = 0xfF7FFFFF;
+    maxDepth = 0x7f7fffff;
+    pointLightCount = 0;
+    pointLightIndex[MAX_LIGHTS];
+    maxLightIndex = 0;
+    barrier();
     vec3 camPos = vec3(0, 0, 0);
     vec2 resolution = in_scene.viewport.xy;
     ivec2 iResolution = ivec2(resolution) - ivec2(1);
