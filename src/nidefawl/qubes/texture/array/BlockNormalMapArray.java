@@ -108,7 +108,7 @@ public class BlockNormalMapArray extends TextureArray {
                 int reuseslot = tex.getSlot();
                 if (reuseslot < 0) {
                     byte[] data = tex.getData();
-                    System.out.println("put data with dim "+tex.getWidth()+"x"+tex.getHeight()+" in tex slot "+slot+" with size "+this.tileSize+"x"+this.tileSize);
+//                    System.out.println("put data with dim "+tex.getWidth()+"x"+tex.getHeight()+" in tex slot "+slot+" with size "+this.tileSize+"x"+this.tileSize);
                     directBuf = put(directBuf, data);
                     GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0,                     //Mipmap number
                           0, 0, slot,                 //xoffset, yoffset, zoffset
@@ -120,11 +120,10 @@ public class BlockNormalMapArray extends TextureArray {
                     
                     tex.setSlot(slot);
                     slotTextureMap.put(slot, tex);
-                    textures[blockId << 4 | i] = slot;
+                    setTexture(blockId, i, slot);
                     slot++;
                 } else {
-
-                    textures[blockId << 4 | i] = reuseslot;
+                    setTexture(blockId, i, reuseslot);
                 }
             }
             if (firstInit) {
@@ -136,6 +135,7 @@ public class BlockNormalMapArray extends TextureArray {
         }
 
     }
+
     @Override
     protected void upscaleTextures() {
         super.upscaleTextures();

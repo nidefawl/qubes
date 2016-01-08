@@ -71,13 +71,13 @@ public abstract class AbstractUI implements Renderable {
     public float boxSigma = 0.25f;
     public float shadowSigma = 4;
     public float round = 4;
-    public int extendx = 3;
+    public int extendx = 0;
     public int extendy = 0;
     public void resetShape() {
         boxSigma = 0.25f;
         shadowSigma = 4;
         round = 4;
-        extendx = 3;
+        extendx = 0;
         extendy = 0;
     }
     
@@ -146,12 +146,12 @@ public abstract class AbstractUI implements Renderable {
         this.posY -= 1;
         this.height += 2;
         Shaders.gui.enable();
-        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, 0.6f, true);
+        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, true);
         this.width -= 2;
         this.posX += 1;
         this.height -= 2;
         this.posY += 1;
-        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, 1f, false);
+        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
     }
     public void renderBox() {
         color3 = 0xbababa;

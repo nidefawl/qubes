@@ -1,9 +1,7 @@
 package nidefawl.qubes.worldgen.terrain.main;
 
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import com.google.common.collect.Maps;
 
@@ -98,6 +96,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dSlice = new double[wh];
+        double[] dSlice2 = new double[wh];
         double noiseScale4 = 1/32.0D;
         double noiseScale6 = 1/256.0D;
         for (int x = 0; x < 16; x++) {
@@ -114,20 +113,26 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 double dStr2 = 12.0D*2;
                 double blockNoise2 = j4.eval((cX+x)*noiseScale4, (cZ+z)*noiseScale4);
                 double blockNoise3 = j5.eval((cX+x)*noiseScale6, (cZ+z)*noiseScale6);
+                Arrays.fill(dSlice2, 0.0D);
                 if (outerScale < 1)
-                    g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice);
+                    g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice, dSlice2);
                 for (int y = 0; y < wh; y++) {
                     double dYH2 = clamp10((y+0+5)/(double)wh);
                     double dBase2 = dStr2-dYH2*dStr2*2.0;
                     dBase2+=blockNoise2*blockNoise3*2.3;
                     dNoise[y<<8|xz] = mix(dSlice[y], dBase2, outerScale);
+                    dNoise2[y<<8|xz] = mix(dSlice2[y], -111, outerScale);
                 }
             }
         }
 
+        OpenSimplexNoise j6 = new OpenSimplexNoiseJava(266671);
+        OpenSimplexNoise j7 = new OpenSimplexNoiseJava(121661);
         Random rand = new Random(0L);
         double noiseScale = 1/128.0D;
         double noiseScale2 = 1/2.0D;
+        double noiseScale3 = 1/12.0D;
+        double noiseScale5 = 1/6.0D;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<Chunk.SIZE_BITS|x;
@@ -140,66 +145,92 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 Block top = b.getTopBlock();
                 Block earth = b.getSoilBlock();
                 int stone = 0xFFFFFF;
+                int ore = 0x1FFFFFF;
+                int undefined = 0x2FFFFFF;
                 int a = -1;
                 int curBlock = 0;
                 int q = -1;
                 double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
                 double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
-                
-                    
+    //                if (orenoise > 0.2)
+    //                    System.out.println("orenoise "+orenoise);
                 for (int y = this.world.worldHeight - 1; y >= 0; y--) {
                     double d = dNoise[y << 8 | xz];
                     double d2 = dNoise2[y << 8 | xz];
+                    double d3 = 0;
                     boolean wasWater = curBlock == Block.water.id;
-                    if (d >= 0D) {
-                        curBlock = stone;
-//                        if (d2<=0) {
-                            if (a < 0) {
-                                if (wasWater) {
-                                    if (blockNoise > 0.1) {
-                                        curBlock = Block.sand.id;
-                                        if (q > 3)
-                                            curBlock = earth.id;
-//                                    } else if (blockNoise < -0.4) {
-//                                        curBlock = stone;
+                    boolean fromNonAir = curBlock != 0 && y+1<wh;
+                    curBlock = undefined;
+//                    if (d>-2&&d<2.1&&d2 > 3) {
+//                        double orenoise1 = j7.eval((cX+x)*noiseScale5, y*noiseScale5, (cZ+z)*noiseScale5);
+//                        double orenoise = j6.eval((cX+x+orenoise1*4)*noiseScale3, (y+orenoise1*4)*noiseScale3, (cZ+z+orenoise1*4)*noiseScale3);
+//                        curBlock = undefined;
+//                        if (orenoise > 0.25) {
+//                            orenoise-=0.25;
+//                            curBlock = ore;
+//                        }
+//                    }
+                    if (curBlock == undefined) {
+                        if (d >= 0D) {
+                            curBlock = stone;
+//                            if (d2<=0) {
+                                if (a < 0) {
+                                    if (wasWater) {
+                                        if (blockNoise > 0.1) {
+                                            curBlock = Block.sand.id;
+                                            if (q > 3)
+                                                curBlock = earth.id;
+//                                        } else if (blockNoise < -0.4) {
+//                                            curBlock = stone;
+                                        } else {
+                                            curBlock = top.id;
+                                            if (q > 3)
+                                                curBlock = earth.id;
+                                        }
                                     } else {
                                         curBlock = top.id;
-                                        if (q > 3)
-                                            curBlock = earth.id;
                                     }
-                                } else {
-                                    curBlock = top.id;
+                                        
+                                } else if (a < 3) {
+                                    curBlock = earth.id;
                                 }
-                                    
-                            } else if (a < 3) {
-                                curBlock = earth.id;
-                            }
-//                        }
-                        a++;
-                        q = 0;
-                    } else {
-                        a = -1;
-                        boolean fromNonAir = curBlock != 0 && y+1<wh;
-                        curBlock = 0;
-//                        if (y < 60) {
-//                            curBlock = Block.water.id;
-//                        }
-                        if (d2 > 0.5 || y <=93) {
-                            curBlock = Block.water.id;
-                            if (fromNonAir && curBlock == Block.water.id) {
-                                waterMask[(y+1) << 8 | xz] = 1;
-                            }
-                            q++;
-                        } else {
+//                            }
+                            a++;
                             q = 0;
+                        } else {
+                            a = -1;
+                            curBlock = 0;
+//                            if (y < 60) {
+//                                curBlock = Block.water.id;
+//                            }
+                            if (d3 > 0.5 || y <=93) {
+                                curBlock = Block.water.id;
+                                if (fromNonAir && curBlock == Block.water.id) {
+                                    waterMask[(y+1) << 8 | xz] = 1;
+                                }
+                                q++;
+                            } else {
+                                q = 0;
+                            }
                         }
                     }
                     int bid = curBlock;
-                    if (curBlock == stone) {
+                    if (curBlock == stone ) {
                         bid = getStone(this.world, cX+x, y, cZ+z, hex, rand);
+                        if (d2>0) {
+                          double orenoise1 = j7.eval((cX+x)*noiseScale5, y*noiseScale5, (cZ+z)*noiseScale5);
+                          double orenoise = j6.eval((cX+x+orenoise1*4)*noiseScale3, (y+orenoise1*4)*noiseScale3, (cZ+z+orenoise1*4)*noiseScale3);
+
+//                            System.out.println("ore at "+(cX+x)+","+y+","+(cZ+z));
+                            //todo: add mapping stone<->ore
+                          if (orenoise > 0.3)
+                            bid = Block.ores.getBlocks().get(0).id;
+                        //                            for (Block b2 : Block.ores.getBlocks()) {
+                        //                                if (b2.gette
+                        //                            }
+                        }
                     }
                     if (curBlock == Block.water.id) {
-                        
                         blocks[y << 8 | xz] = 0;
                         waterMask[y << 8 | xz] = 1;
                         continue;

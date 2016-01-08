@@ -78,7 +78,7 @@ public class VertexBuffer {
         this.buffer[this.pos++] = val;
         left--;
         if (left < 100) {
-            int incr = this.buffer.length <= 1024 ? 512 : this.buffer.length>>1;
+            int incr = 1<<23;//8Mb
             int newSize = (this.buffer.length+incr);
             realloc(newSize);
         }
@@ -87,7 +87,7 @@ public class VertexBuffer {
         this.triIdxBuffer[this.triIdxPos++] = val;
         left2--;
         if (left2 < 100) {
-            int incr = this.triIdxBuffer.length <= 1024 ? 512 : this.triIdxBuffer.length>>1;
+            int incr = 1<<22;//4Mb
             int newSize = (this.triIdxBuffer.length+incr);
             reallocTriIdxBuffer(newSize);
         }

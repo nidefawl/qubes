@@ -10,8 +10,7 @@ import org.lwjgl.glfw.GLFW;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.gui.GuiAction;
+import nidefawl.qubes.gui.*;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.shader.Shaders;
@@ -144,10 +143,10 @@ public class GuiWindowManager implements Renderable  {
         return openWindow(windowClass, true);
     }
 
-    public static GuiWindow getWindow(final Class<?> windowClass) {
+    public static <T> T getWindow(final Class<T> windowClass) {
         for (final GuiWindow w : windowList.values()) {
             if (w.getClass().equals(windowClass)) {
-                return w;
+                return (T) w;
             }
         }
         return null;
@@ -244,7 +243,7 @@ public class GuiWindowManager implements Renderable  {
     }
 
     public void drawWindows(float fTime, double mouseX, double mouseY) {
-
+        setTooltip(null);
         int highestIdx = getHighestIndex();
         GuiWindow mouseOver = getMouseOver(mouseX, mouseY);
         if (!GuiAction.isAct(GuiAction.ACTION_NONE)) {
@@ -286,7 +285,7 @@ public class GuiWindowManager implements Renderable  {
 //        super.drawScreen(i, j, f);
 
         Player player = Game.instance.getPlayer();
-        BaseStack stack = player.getInventory().getCarried();
+        BaseStack stack = player == null? null:player.getInventory().getCarried();
         if (stack != null) {
             int slotW = 48;
             float inset = 4;
@@ -294,10 +293,30 @@ public class GuiWindowManager implements Renderable  {
             Engine.itemRender.drawItem(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
             Shaders.textured.enable();
             Engine.itemRender.drawItemOverlay(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
+        } else {
+            renderTooltip(fTime, mouseX, mouseY);
         }
         Engine.pxStack.pop();
         Engine.pxStack.pop();
         
+    }
+    void renderTooltip(float fTime, double mouseX, double mouseY) {
+        if (tooltip != null) {
+            Engine.pxStack.translate(0, 0, 100);
+            tooltip.render(fTime, mouseX, mouseY);
+        }
+    }
+
+    static Tooltip tooltip;
+    public static void setTooltip(Tooltip tt) {
+        if (tt != null) {
+            if (dragged != null || resized != null || !GuiAction.isAct(GuiAction.ACTION_NONE))
+                return;
+        }
+        tooltip = tt;
+    }
+    public static Tooltip getTooltip() {
+        return tooltip;
     }
 
     @Override
@@ -390,7 +409,7 @@ public class GuiWindowManager implements Renderable  {
         }
         boolean anyVisible = anyWindowVisible();
         if (!anyVisible) {
-            Game.instance.setGrabbed(true);
+            Game.instance.setGrabbed(Game.instance.getWorld()!=null);
         }
     }
     public static void onWindowOpened(GuiWindow guiWindow) {

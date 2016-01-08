@@ -1,4 +1,4 @@
-package nidefawl.qubes.block;
+package nidefawl.qubes.item;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -18,11 +18,11 @@ import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.util.GameError;
 
-public class IDMapping {
+public class IDMappingItems {
     public static boolean CHANGED = false;
     public static boolean LOADED = false;
 
-    public static int HIGHEST_BLOCK_ID = 0;
+    public static int HIGHEST_ITEM_ID = 0;
     static ImmutableBiMap<String, Integer> map = ImmutableBiMap.<String, Integer>builder().build();
     final static Object sync = new Object();
     
@@ -30,7 +30,7 @@ public class IDMapping {
         InputStream is = null;
         try {
             synchronized (sync) {
-                File inFile = new File(WorkingEnv.getConfigFolder(), "blockmapping.yml");
+                File inFile = new File(WorkingEnv.getConfigFolder(), "itemmapping.yml");
                 if (inFile.exists()) {
                     is = new FileInputStream(inFile);
                     is = new BufferedInputStream(is);
@@ -40,18 +40,18 @@ public class IDMapping {
                         throw new InvalidConfigException("config file has invalid format");
                     }
                     map = ImmutableBiMap.<String, Integer>builder().putAll((Map)o).build();
-                    for (int i = 0; i < Block.NUM_BLOCKS; i++) {
+                    for (int i = 0; i < Item.NUM_ITEMS; i++) {
                         if (map.inverse().get(i) != null) {
-                            if (i > HIGHEST_BLOCK_ID) {
-                                HIGHEST_BLOCK_ID = i;
+                            if (i > HIGHEST_ITEM_ID) {
+                                HIGHEST_ITEM_ID = i;
                             }
                         }
                     }
-                    System.out.println("HIGHEST "+HIGHEST_BLOCK_ID);
+                    System.out.println("HIGHEST "+HIGHEST_ITEM_ID);
                 }
             }
         } catch (Exception e) {
-            throw new GameError("Failed loading block id mapping", e);
+            throw new GameError("Failed loading item id mapping", e);
         } finally {
             if (is != null) {
                 try {
@@ -72,7 +72,7 @@ public class IDMapping {
         OutputStreamWriter oswriter = null;
         try {
             synchronized (sync) {
-                File outFile = new File(WorkingEnv.getConfigFolder(), "blockmapping.yml");
+                File outFile = new File(WorkingEnv.getConfigFolder(), "itemmapping.yml");
                 raf = new RandomAccessFile(outFile, "rws");
                 filechannel = raf.getChannel();
                 lock = filechannel.lock(0, Long.MAX_VALUE, false);
@@ -86,7 +86,7 @@ public class IDMapping {
                 yaml.dump(map, oswriter);
             }
         } catch (Exception e) {
-            throw new GameError("Failed loading block id mapping", e);
+            throw new GameError("Failed loading item id mapping", e);
         } finally {
             try {
                 if (oswriter != null) {
@@ -116,19 +116,19 @@ public class IDMapping {
                 if (id != null && id.intValue() >= 0) {
                     return id;
                 }
-                System.out.println("Finding id for new block "+sid);
+                System.out.println("Finding id for new item "+sid);
                 Integer newId = null;
-                for (int i = 0; i < Block.NUM_BLOCKS; i++) {
+                for (int i = 0; i < Item.NUM_ITEMS; i++) {
                     if (map.inverse().get(i) == null) {
                         newId = i;
                         break;
                     }
                 }
                 if (newId == null) {
-                    throw new GameError("Out of block IDs");
+                    throw new GameError("Out of item IDs");
                 }
-                if (newId > HIGHEST_BLOCK_ID) {
-                    HIGHEST_BLOCK_ID = newId;
+                if (newId > HIGHEST_ITEM_ID) {
+                    HIGHEST_ITEM_ID = newId;
                 }
                 map = ImmutableBiMap.<String, Integer>builder().putAll(map).put(sid, newId).build();
                 CHANGED = true;
@@ -136,7 +136,7 @@ public class IDMapping {
             }
             
         } catch (Exception e) {
-            throw new GameError("Failed updating block id map ", e);
+            throw new GameError("Failed updating item id map ", e);
         }
     }
 

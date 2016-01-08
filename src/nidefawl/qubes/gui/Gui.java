@@ -17,7 +17,7 @@ import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
-    protected ArrayList<AbstractUI> buttons   = new ArrayList<>();
+    public ArrayList<AbstractUI> buttons   = new ArrayList<>();
     public boolean    firstOpen = true;
     public AbstractUIOverlay popup;
     public static final int slotW = 48;

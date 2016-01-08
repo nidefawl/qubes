@@ -8,7 +8,7 @@ import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.IDMapping;
+import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
@@ -47,7 +47,7 @@ public class BlockModelManager {
         
         //TODO: load texture dynamically (once we have lots of models/textures)
         HashSet<String> modelNames = new HashSet<>();
-        for (int i = 0; i < IDMapping.HIGHEST_BLOCK_ID+1; i++) {
+        for (int i = 0; i < IDMappingBlocks.HIGHEST_BLOCK_ID+1; i++) {
             Block block = Block.block[i];
             if (block == null) {
                 continue;
@@ -68,7 +68,7 @@ public class BlockModelManager {
             this.models.put(t, model);
             System.out.println("reloaded block model "+model.loader.getModelName());
         }
-        for (int i = 0; i < IDMapping.HIGHEST_BLOCK_ID+1; i++) {
+        for (int i = 0; i < IDMappingBlocks.HIGHEST_BLOCK_ID+1; i++) {
             Block block = Block.block[i];
             if (block == null) {
                 continue;

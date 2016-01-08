@@ -25,6 +25,8 @@ public class BlockSurface {
     public int texture;
     public boolean renderTypeTransition;
     public int faceColor;
+    
+    
     public static int maskAO(int ao0, int ao1, int ao2, int ao3) {
         return ((ao3&0x3)<<6)|((ao2&0x3)<<4)|((ao1&0x3)<<2)|(ao0&0x3);
     }
@@ -532,6 +534,28 @@ public class BlockSurface {
         texture = 0;
         axis = 0;
 
+    }
+    public BlockSurface copy() {
+        BlockSurface surface = new BlockSurface();
+        surface.maskedAO = this.maskedAO;
+        surface.maskedLightBlock = this.maskedLightBlock;
+        surface.maskedLightSky = this.maskedLightSky;
+        surface.type = this.type;
+        surface.transparent = this.transparent;
+        surface.extraFace = this.extraFace;
+        surface.resolved = this.resolved;
+        surface.isAirAbove = this.isAirAbove;
+        surface.renderTypeTransition = this.renderTypeTransition;
+        surface.calcLight = this.calcLight;
+        surface.pass = this.pass;
+        surface.texture = this.texture;
+        surface.face = this.face;
+        surface.faceColor = this.faceColor;
+        surface.axis = this.axis;
+        surface.x = this.x;
+        surface.y = this.y;
+        surface.z = this.z;
+        return surface;
     }
 
 }

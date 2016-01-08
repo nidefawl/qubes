@@ -90,11 +90,10 @@ public class BlockTextureArray extends TextureArray {
                     }
                     tex.setSlot(slot);
                     slotTextureMap.put(slot, tex);
-                    textures[blockId << 4 | i] = slot;
+                    setTexture(blockId, i, slot);
                     slot++;
                 } else {
-
-                    textures[blockId << 4 | i] = reuseslot;
+                    setTexture(blockId, i, reuseslot);
                 }
             }
             if (firstInit) {

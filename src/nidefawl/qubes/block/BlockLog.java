@@ -19,12 +19,20 @@ import nidefawl.qubes.worldgen.trees.Tree;
  */
 public class BlockLog extends Block {
 
+    private int index;
+
     /**
      * @param id
+     * @param i 
      */
-    public BlockLog(String id) {
+    public BlockLog(String id, int i) {
         super(id, false);
         setCategory(BlockCategory.LOG);
+        this.index = i;
+    }
+    
+    public int getIndex() {
+        return this.index;
     }
 
     @Override

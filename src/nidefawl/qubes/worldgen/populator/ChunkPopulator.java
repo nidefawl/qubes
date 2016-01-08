@@ -10,6 +10,7 @@ import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.Flags;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.worldgen.biome.HexBiome;
@@ -33,14 +34,17 @@ public class ChunkPopulator implements IChunkPopulator {
     @Override
     public void populate(Chunk c) {
 //        if (1==1)return;
-        Biome b = this.world.biomeManager.getBiome(c.getBlockX()+8, c.getBlockZ()+8);
+        int cX = c.getBlockX()+8;
+        int cZ= c.getBlockZ()+8;
+        HexBiome hex = this.world.getHex(cX, cZ);
+        Biome b = hex.biome;
         if (b == Biome.DESERT || b == Biome.DESERT_RED)
             return;
         Random rand = new Random();
         int a = 0;
         Random r = new Random();
         ArrayList<Block> bl = Lists.newArrayList();
-        for (int i = 0; i < IDMapping.HIGHEST_BLOCK_ID+1; i++) {
+        for (int i = 0; i < IDMappingBlocks.HIGHEST_BLOCK_ID+1; i++) {
             Block b1 = Block.get(i);
             if (b1 != null && b1.getBlockCategory() == BlockCategory.FLOWER) {
                 bl.add(b1);
@@ -76,6 +80,9 @@ public class ChunkPopulator implements IChunkPopulator {
         list.add(4);
         list.add(4);
         list.add(4);
+        double distCenter = GameMath.dist2d(hex.getCenterX(), hex.getCenterY(), cX, cZ);
+        double distScale = Math.max(0, 1-(distCenter/(hex.getGrid().radius*0.8)));
+        int nTrees = (int) (3+distScale*64);
         for (int i = 0; i < 133; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
@@ -83,7 +90,7 @@ public class ChunkPopulator implements IChunkPopulator {
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= 6 && rand.nextInt(24) == 0) {
+                if ( a <= nTrees && rand.nextInt(44) == 0) {
                     if (list != null && !list.isEmpty()) {
                         int treeType = list.get(rand.nextInt(list.size()));
                         TreeGeneratorLSystem g = TreeGenerators.get(treeType, rand);
@@ -93,8 +100,8 @@ public class ChunkPopulator implements IChunkPopulator {
                         g.generate(world, x, h+1, z, rand);
                         Tree tree = g.getTree();
                         if (tree != null) {
-                            HexBiome hex = ((HexBiomesServer)world.biomeManager).blockToHex(x, z);
-                            hex.registerTree(tree);
+                            HexBiome hex2 = ((HexBiomesServer)world.biomeManager).blockToHex(x, z);
+                            hex2.registerTree(tree);
                         }
                     }
                 } else {

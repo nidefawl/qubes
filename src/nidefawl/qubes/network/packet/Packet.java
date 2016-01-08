@@ -54,6 +54,9 @@ public abstract class Packet {
         register(PacketSDebugBB.class, true, false);
         register(PacketCInvClick.class, true, true);
         register(PacketSInvSync.class, true, true);
+        register(PacketSInvSyncIncr.class, true, true);
+        register(PacketCCrafting.class, true, true);
+        register(PacketSCraftingProgress.class, true, true);
     }
     
     private int id;

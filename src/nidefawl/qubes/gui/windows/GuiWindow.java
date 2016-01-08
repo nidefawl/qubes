@@ -7,10 +7,11 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.GameMath;
 
 public abstract class GuiWindow extends Gui {
 
-    public static final int titleBarHeight = 24;
+    public static final int titleBarHeight = 26;
     public boolean allwaysVisible;
     public boolean visible;
     private boolean mouseOverResize;
@@ -107,6 +108,7 @@ public abstract class GuiWindow extends Gui {
         resetShape();
     }
     public void renderFrame(float fTime, double mX, double mY) {
+        this.posY+=5;
         this.round = 1;
         this.extendx = 0;
         this.round = 2;
@@ -121,35 +123,36 @@ public abstract class GuiWindow extends Gui {
             int n = 4;
             Shaders.gui.enable();
             Shaders.gui.setProgramUniform1f("zpos", -18);
-            Shaders.gui.setProgramUniform4f("box", posX-n+4, posY-n, posX+width+n, posY+height+n);
-//            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
-//            float blink = GameMath.sin((((Game.ticksran+fTime)/20f)%20.0f)*GameMath.PI*2f)*0.5f+0.5f;
-//            float c = 0.8f*blink;
-//          Shaders.gui.setProgramUniform4f("color", c,c,c, c);
+            Shaders.gui.setProgramUniform4f("box", posX-n, posY-n, posX+width+n, posY+height+n);
+//          Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
+//          float blink = GameMath.sin((((Game.ticksran+fTime)/20f)%20.0f)*GameMath.PI*2f)*0.5f+0.5f;
+//          float c = 0.8f*blink;
+//            Shaders.gui.setProgramUniform1f("sigma", 4+c*5);
+//        Shaders.gui.setProgramUniform4f("color", c,c,c, c);
+//        shadowSigma = c*10;
             float c = 0.1f;
-          Shaders.gui.setProgramUniform4f("color", c,c,c, alpha);
-            Shaders.gui.setProgramUniform1f("sigma", 16);
+            Shaders.gui.setProgramUniform4f("color", c,c,c, 0.3f);
+            Shaders.gui.setProgramUniform1f("sigma", 2);
             Shaders.gui.setProgramUniform1f("corner", 8);
             Engine.drawQuad();
         }
         int z = -10;
 
-//        renderRoundedBoxShadow(posX-out, posY, z, width+out*2, bw, color, alpha, true);
-//        renderRoundedBoxShadow(posX-out, posY-out, z, bw, height+out*2, color, alpha, true);
-//        renderRoundedBoxShadow(posX+width+out-bw, posY-out, z, bw, height+out*2, color, alpha, true);
-//        renderRoundedBoxShadow(posX-out, posY+height+out-bw, z, width+out*2, bw, color, alpha, true);
-//        renderRoundedBoxShadow(posX, posY, z, width, height, this.color, 1, false);
         resetShape();
-        this.posY+=5;
-//        color
+        alpha = 0.3f;
+        Shaders.gui.setProgramUniform1f("fade", 0.1f);
         renderBox();
+        Shaders.gui.setProgramUniform1f("fade", 0.3f);
         out=-30;
         alpha = 1;
         color = this.hasFocus() ? 0xdadada : 0xbababa;
 //        color = 0xdadada;
-        this.shadowSigma = 1f;
+        this.shadowSigma = 4f;
         int titleWidth = 220;
-        renderRoundedBoxShadow(posX+width/2-titleWidth/2, posY-4, 5, titleWidth, titleBarHeight, color, 1f, false);
+        int top = (posY-4);
+        int left = posX+width/2-titleWidth/2;
+        renderRoundedBoxShadow(left, top, 5, titleWidth, titleBarHeight, color, 1f, true);
+        resetShape();
 //        GL11.glDepthFunc(GL11.GL_EQUAL);
 //        this.shadowSigma = 3f;
 //        this.round = 32;

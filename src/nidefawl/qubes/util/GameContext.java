@@ -2,8 +2,12 @@ package nidefawl.qubes.util;
 
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.IDMapping;
+import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.crafting.CraftingManager;
+import nidefawl.qubes.crafting.recipes.CraftingRecipe;
+import nidefawl.qubes.crafting.recipes.CraftingRecipes;
+import nidefawl.qubes.item.IDMappingItems;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.modules.ModuleLoader;
@@ -45,7 +49,8 @@ public class GameContext {
     public static void earlyInit() {
         try {
             AsyncTasks.init();
-            IDMapping.load();
+            IDMappingBlocks.load();
+            IDMappingItems.load();
             ModuleLoader.scanModules(WorkingEnv.getModulesDir());
         } catch (GameError e) {
             initError = e;
@@ -74,7 +79,9 @@ public class GameContext {
             Block.postInit();
             Item.postInit();
             ItemModel.postInit();
-            IDMapping.save();
+            IDMappingBlocks.save();
+            IDMappingItems.save();
+            CraftingRecipes.init();
             
         } catch (GameError e) {
             initError = e;

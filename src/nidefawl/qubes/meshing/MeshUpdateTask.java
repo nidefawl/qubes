@@ -75,6 +75,15 @@ public class MeshUpdateTask {
             if (GPUProfiler.PROFILING_ENABLED) {
                 GPUProfiler.end();
             }
+            int b = 0;
+            for (int i = 0; i < NUM_PASSES; i++) {
+                b+=vbuffer[i].get().length*4+vbuffer[i].getTriIdxBuffer().length*4;
+            }
+            if (Stats.regionUpdates%40==0) {
+                float mb = b/(float)(1024*1024);
+//                System.out.printf("%d %d %.2fMb\n",Stats.regionUpdates,Mesher.avgUsage, mb);   
+            }
+            
         } else {
             //TODO: flush display list if compile failed, or ignore
         }

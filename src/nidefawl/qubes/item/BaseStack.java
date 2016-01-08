@@ -3,6 +3,7 @@
  */
 package nidefawl.qubes.item;
 
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.StreamIO;
 import nidefawl.qubes.util.GameError;
@@ -44,4 +45,6 @@ public abstract class BaseStack implements StreamIO {
             return a == null;
         return a.equals(b);
     }
+    public abstract Item getItem();
+    public abstract Block getBlock();
 }

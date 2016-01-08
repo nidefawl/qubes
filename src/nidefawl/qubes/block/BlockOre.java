@@ -71,7 +71,10 @@ public class BlockOre extends Block {
         }
         return super.skipTexturePassSide(w, x, y, z, axis, side, texPass);
     }
-    
+    @Override
+    public int getNormalMap(int texture) {
+        return this.baseBlock.getNormalMap(texture);
+    }
     @Override
     public int getRenderType() {
         return 14;

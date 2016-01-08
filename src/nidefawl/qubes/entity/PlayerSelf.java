@@ -1,6 +1,8 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.crafting.CraftingManager;
+import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.InputController;
 import nidefawl.qubes.inventory.slots.Slots;
@@ -24,6 +26,7 @@ public class PlayerSelf extends Player {
     private ClientHandler clientHandler;
     private final SlotsInventory slotsInventory;
     private final SlotsCrafting slotsCrafting;
+    public final CraftingManagerClient crafting = new CraftingManagerClient(this, 0);
 
 
     public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
@@ -219,6 +222,10 @@ public class PlayerSelf extends Player {
                 return this.slotsCrafting;
         }
         return null;
+    }
+
+    public CraftingManagerClient getCrafting(int id) {
+        return this.crafting;
     }
 
 }

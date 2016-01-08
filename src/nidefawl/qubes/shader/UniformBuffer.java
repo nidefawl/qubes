@@ -257,9 +257,11 @@ public class UniformBuffer {
         uboSceneData.update();
         
         LightInfo.reset();
+        float nightNoon = 0;
         if (world != null) {
+            nightNoon = world.getNightNoonFloat();
             LightInfo.put(world.getDayNoonFloat()); // dayTime
-            LightInfo.put(world.getNightNoonFloat()); // nightlight
+            LightInfo.put(nightNoon); // nightlight
             LightInfo.put(world.getDayLightIntensity()); // dayLightIntens
             LightInfo.put(world.getLightAngleUp()); // lightAngleUp      
         } else {
@@ -270,8 +272,9 @@ public class UniformBuffer {
                 model.updateFrame(0);
                 Vector3f lightPosition = model.getLightPosition();
                 Engine.setLightPosition(lightPosition);
+                nightNoon = model.getNightNoonFloat();
                 LightInfo.put(model.getDayNoonFloat()); // dayTime
-                LightInfo.put(model.getNightNoonFloat()); // nightlight
+                LightInfo.put(nightNoon); // nightlight
                 LightInfo.put(model.getDayLightIntensity()); // dayLightIntens
                 LightInfo.put(model.getLightAngleUp()); // lightAngleUp      
             } else {
@@ -293,6 +296,10 @@ public class UniformBuffer {
         float ambIntens = 0.06f;
         float diffIntens = 0.45F;
         float specIntens = 0.35F;
+        float fNight = GameMath.easeInOutCubic(nightNoon);
+        ambIntens*=1.0f-fNight*0.92f;
+        diffIntens*=1.0f-fNight*0.9f;
+        specIntens*=1.0f-fNight*0.9f;
         for (int a = 0; a < 3; a++) {
             LightInfo.put(ambIntens);
         }

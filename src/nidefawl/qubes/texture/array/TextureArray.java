@@ -21,18 +21,18 @@ import nidefawl.qubes.util.GameMath;
 
 public abstract class TextureArray {
     public final static boolean SKIP_LOAD_TEXTURES = false;
-    HashMap<Integer, ArrayList<AssetTexture>> lastLoaded         = new HashMap<>();
     HashMap<String, AssetTexture>             texNameToAssetMap  = new HashMap<>();
     HashMap<Integer, ArrayList<AssetTexture>> blockIDToAssetList = new HashMap<>();
     HashMap<Integer, AssetTexture> slotTextureMap = new HashMap<>();
 
     protected boolean firstInit = true;
 
-    int[]         textures;
+    private final int[]         textures;
     public int    glid;
     public int    tileSize = 0;
     protected int numTextures;
     protected int numMipmaps;
+    private int   subtypeBits = 0;
 
     public TextureArray(int maxTextures) {
         this.textures = new int[maxTextures];
@@ -43,7 +43,6 @@ public abstract class TextureArray {
             GL.deleteTexture(this.glid);
             this.texNameToAssetMap.clear();
             this.blockIDToAssetList.clear();
-            this.lastLoaded.clear();
             this.slotTextureMap.clear();
             Arrays.fill(this.textures, 0);
         }
@@ -69,21 +68,29 @@ public abstract class TextureArray {
         collectTextures(mgr);
         findMaxTileWidth();
         upscaleTextures();
+        calculateSubtypeBits();
         this.numMipmaps = 1+GameMath.log2(this.tileSize);
         
         System.out.println("tileSize = "+this.tileSize);
         System.out.println("numTextures = "+this.numTextures);
-        
+        System.out.println("subtypeBits = "+this.subtypeBits);
+
 
         initGLStorage();
         uploadTextures();
         postUpload();
+        free();
 
 
-
-        lastLoaded = blockIDToAssetList;
         this.firstInit = false;
 
+    }
+
+
+    private void free() {
+        this.blockIDToAssetList.clear();
+        this.slotTextureMap.clear();
+        this.texNameToAssetMap.clear();
     }
 
     /**
@@ -102,10 +109,22 @@ public abstract class TextureArray {
     }
 
     public int getTextureIdx(int block, int texId) {
-        return this.textures[block << 4 | texId];
+        return this.textures[block << subtypeBits | texId];
+    }
+    protected void setTexture(int i, int j, int s) {
+        this.textures[i << subtypeBits | j] = s;
     }
 
 
+
+    protected void calculateSubtypeBits() {
+        int nSubTypes = 0;
+        for (ArrayList<AssetTexture> tex : blockIDToAssetList.values()) {
+            nSubTypes = Math.max(nSubTypes, tex.size());
+        }
+        this.subtypeBits = nSubTypes == 0 ? 0 : 1+GameMath.log2(nSubTypes);
+        System.err.println("nSubTypes "+nSubTypes+" requries "+subtypeBits+", max idx = "+(1<<this.subtypeBits));
+    }
     protected void findMaxTileWidth() {
         int maxTileW = 0;
         for (AssetTexture tex : texNameToAssetMap.values()) {
@@ -151,6 +170,5 @@ public abstract class TextureArray {
     protected abstract void uploadTextures();
     protected abstract void collectTextures(AssetManager mgr);
     protected abstract void postUpload();
-    
 
 }

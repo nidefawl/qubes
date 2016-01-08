@@ -1,6 +1,7 @@
 package nidefawl.qubes.network.server;
 
 import nidefawl.qubes.chat.ChannelManager;
+import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.Slot;
@@ -270,5 +271,17 @@ public class ServerHandlerPlay extends ServerHandler {
             //TODO: resync + log
             this.player.syncInventory();
         }
+    }
+    public void handleCrafting(PacketCCrafting p) {
+        CraftingManager mgr = player.getCrafting(p.id);
+        if (mgr == null) {
+            kick("Invalid packet");
+            return;
+        }
+        if (p.action < 0 || p.action > 3) {
+            kick("Invalid packet");
+            return;
+        }
+        mgr.handleRequest(p.action);
     }
 }

@@ -12,4 +12,8 @@ public class BlockSurfaceHidden extends BlockSurfaceAir {
         this.pass = -2;
         this.resolved = true;
     }
+
+    public BlockSurface copy() {
+        throw new UnsupportedOperationException("Cannot copy BlockSurfaceHidden");
+    }
 }

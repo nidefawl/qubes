@@ -14,6 +14,7 @@ import nidefawl.qubes.block.BlockLog;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.texture.array.ItemTextureArray;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.BlockPlacer;
@@ -27,37 +28,43 @@ import nidefawl.qubes.worldgen.trees.Tree;
 public class Item {
     public static final int ITEM_MASK = 0x1FF;
     public static final int NUM_ITEMS = 512;
-    public static int HIGHEST_ITEM_ID = 0;
     private static Item[] registereditems;
     private static short[] registereditemIds;
     public static final Item[] item = new Item[NUM_ITEMS];
-    public static final Item pickaxe = new Item(1).setName("pickaxe").setTextures("tools/pick").setModel(ItemModel.modelPickaxe);
-    public static final Item axe = new Item(2).setName("axe").setTextures("tools/axe").setModel(ItemModel.modelAxe);
-    public static final Item wood = new Item(3).setName("wood").setTextures("wood");
+    public static final Item pickaxe = new Item("pickaxe").setTextures("tools/pick").setModel(ItemModel.modelPickaxe);
+    public static final Item axe = new Item("axe").setTextures("tools/axe").setModel(ItemModel.modelAxe);
+    public static final ItemGroupLog log = new ItemGroupLog();
+    public static final ItemGroupPlank plank = new ItemGroupPlank();
     /**
      * @return
      */
     public static Item[] getRegisteredIDs() {
         return registereditems;
     }
-    public Item(int id) {
-        this(id, false);
+    public Item(String name) {
+        this(name, false);
     }
 
     public final int id;
-    private String name;
+    private final String name;
     private final boolean transparent;
     protected String[] textures;
     protected final AABBFloat blockBounds = new AABBFloat(0, 0, 0, 1, 1, 1);
     private ItemModel itemModel;
+    private ItemGroup itemGroup;
+    public ItemGroup getItemGroup() {
+        return this.itemGroup;
+    }
+    public void setItemGroup(ItemGroup itemGroup) {
+        this.itemGroup = itemGroup;
+    }
 
-    public Item(int id, boolean transparent) {
-        if (id < 0) {
-            id = HIGHEST_ITEM_ID+1;
+    public Item(String name, boolean transparent) {
+        if (name.contains(" ")) {
+            throw new GameError("Names must not contain spaces");
         }
-        this.id = id;
-        if (this.id > HIGHEST_ITEM_ID)
-            HIGHEST_ITEM_ID = this.id;
+        this.name = name;
+        this.id = IDMappingItems.get(name);
         item[id] = this;
         this.transparent = transparent;
         init();
@@ -71,10 +78,7 @@ public class Item {
         this.itemModel = itemModel;
         return this;
     }
-    public Item setName(String name) {
-        this.name = name;
-        return this;
-    }
+    
     public String[] getTextures() {
         return this.textures;
     }

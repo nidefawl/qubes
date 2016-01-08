@@ -26,6 +26,7 @@ public class PlayerManager {
     private File directory;
     private Map<String, PlayerServer> players = new MapMaker().makeMap();
     private Map<String, PlayerServer> playersLowerCase = new MapMaker().makeMap();
+    private PlayerServer[] serverPlayers = new PlayerServer[0];
     private GameServer server;
 
     public PlayerManager(GameServer server) {
@@ -66,7 +67,7 @@ public class PlayerManager {
         }
     }
 
-    public PlayerServer addPlayer(String name) {
+    public synchronized PlayerServer addPlayer(String name) {
         PlayerServer player = (PlayerServer) EntityType.PLAYER.newInstance();
         player.name = name;
         PlayerData data = loadPlayer(name);
@@ -92,15 +93,16 @@ public class PlayerManager {
         player.load(data);
         this.players.put(name, player);
         this.playersLowerCase.put(name.toLowerCase(), player);
+        this.serverPlayers = this.players.values().toArray(new PlayerServer[this.players.size()]);
         return player;
     }
 
-    public void removePlayer(PlayerServer p) {
-        World world = p.world;
+    public synchronized void removePlayer(PlayerServer p) {
         this.players.remove(p.name);
         this.playersLowerCase.remove(p.name.toLowerCase());
         PlayerData data = p.save();
         savePlayer(p.name, data);
+        this.serverPlayers = this.players.values().toArray(new PlayerServer[this.players.size()]);
     }
 
     public void savePlayers() {
@@ -140,5 +142,16 @@ public class PlayerManager {
      */
     public Collection<PlayerServer> getPlayers() {
         return players.values();
+    }
+
+    public void updateTick() {
+        PlayerServer[] players = this.serverPlayers;
+        for (int i = 0; i < players.length; i++) {
+            try {
+                players[i].updatePostTick();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

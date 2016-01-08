@@ -88,6 +88,7 @@ public class Shaders {
             Shaders.gui.setProgramUniform1f("valueH", 0.5f);
             Shaders.gui.setProgramUniform1f("valueS", 1f);
             Shaders.gui.setProgramUniform1f("valueL", 0.5f);
+            Shaders.gui.setProgramUniform1f("fade", 0.3f);
             singleblock.enable();
 //            singleblock.setProgramUniform1f("in_scale", 1);
             singleblock.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);

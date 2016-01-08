@@ -162,7 +162,7 @@ public class Block {
         if (name.contains(" ")) {
             throw new GameError("Names must not contain spaces");
         }
-        this.id = IDMapping.get(name);
+        this.id = IDMappingBlocks.get(name);
         this.name = name;
         block[id] = this;
         this.transparent = transparent;

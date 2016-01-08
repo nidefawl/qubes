@@ -69,14 +69,13 @@ public class ItemTextureArray extends TextureArray {
                         if (mipmapSize > 0)
                             data = TextureUtil.makeMipMap(data, mipmapSize, mipmapSize, avg);
                     }
-                    System.out.println(mipmapSize);
+//                    System.out.println(mipmapSize);
                     tex.setSlot(slot);
                     slotTextureMap.put(slot, tex);
-                    textures[blockId << 4 | i] = slot;
+                    setTexture(blockId, i, slot);
                     slot++;
                 } else {
-
-                    textures[blockId << 4 | i] = reuseslot;
+                    setTexture(blockId, i, reuseslot);
                 }
             }
             if (firstInit) {

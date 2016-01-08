@@ -26,7 +26,7 @@ public class Mesher {
     private int nextBlockIDX = 0;
     
     //TODO: implement cache to make memory efficient
-    private final BlockSurface[] scratchPad = new BlockSurface[1000000];
+    private final BlockSurface[] scratchPad = new BlockSurface[2048]; //shoudln't exceed 32*32*2 (2 sides) block faces
     int scratchpadidx = 0;
     @SuppressWarnings("rawtypes")
     List[] meshes = new List[WorldRenderer.NUM_PASSES];
@@ -176,6 +176,7 @@ public class Mesher {
     private int yPos;
     private int ySlice;
     final static boolean MEASURE = false;
+    public static int avgUsage = -1;
     public void mesh(ChunkRenderCache ccache, int rY) {
         scratchpadidx = 0;
         this.nextBlockIDX = 0;
@@ -191,6 +192,13 @@ public class Mesher {
         if (MEASURE) TimingHelper2.endStart("mesh1");
         this.meshRound(ccache);
         if (MEASURE) TimingHelper2.endSec();
+        if (scratchpadidx > avgUsage) {
+            System.out.println("new max = "+scratchpadidx+" ("+this.extraIdx+"/"+this.nextBlockIDX+")");
+            for (int i = 0; i < WorldRenderer.NUM_PASSES; i++) {
+                System.out.println("meshes["+i+"].size() = "+meshes[i].size());
+            }
+        }
+        avgUsage = Math.max(scratchpadidx,avgUsage);
     }
 
     private void meshRound(ChunkRenderCache ccache) {
@@ -211,7 +219,7 @@ public class Mesher {
             int masklen = dims[u] * dims[v];
             dir[axis] = 1;
             for (x[axis] = -1; x[axis] < dims[axis];) {
-
+                scratchpadidx = 0;
                 if (MEASURE) TimingHelper2.startSec("masq");
                 int n = 0;
                 for (x[v] = 0; x[v] < dims[v]; ++x[v]) {
@@ -258,7 +266,7 @@ public class Mesher {
                             if (add) {
                                 if (!c.resolved)
                                     c.resolve(ccache);
-                                
+                                c = c.copy();
                                 BlockFace face = new BlockFace(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                                 meshes[c.pass].add(face);
                             }
@@ -289,6 +297,7 @@ public class Mesher {
                     x[v] = c.x;
                     du[u] = w;
                     dv[v] = h;
+                    c = c.copy();
                     BlockFace face = new BlockFace(c, new int[] { x[0], x[1], x[2] }, du, dv, u, v, w, h);
                     meshes[c.pass].add(face);
                 }

@@ -12,7 +12,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.IDMapping;
+import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.config.ClientSettings;
@@ -24,7 +24,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiInventory;
-import nidefawl.qubes.gui.windows.GuiInventory2;
+import nidefawl.qubes.gui.windows.GuiCrafting;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.*;
@@ -397,7 +397,7 @@ public class Game extends GameBase implements IErrorHandler {
             this.selBlock.id += yoffset > 0 ? -1 : 1;
             if (!Block.isValid(this.selBlock.id)) {
                 int maxBlock = 0;
-                for (int b = 0; this.selBlock.id< 0&&b < IDMapping.HIGHEST_BLOCK_ID+1; b++) {
+                for (int b = 0; this.selBlock.id< 0&&b < IDMappingBlocks.HIGHEST_BLOCK_ID+1; b++) {
                     if (Block.get(b) != null) {
                         maxBlock = b;
                     }
@@ -415,7 +415,14 @@ public class Game extends GameBase implements IErrorHandler {
     int throttleClick=0;
     public void onMouseClick(long window, int button, int action, int mods) {
         if (this.gui != null) {
-            this.gui.onMouseClick(button, action);
+            if (!this.gui.onMouseClick(button, action)) {
+                if (this.world == null) {
+
+                    if (GuiWindowManager.onMouseClick(button, action)) {
+                        return;
+                    }
+                }
+            }
         } else {
             if (GuiWindowManager.onMouseClick(button, action)) {
                 return;
@@ -787,6 +794,12 @@ public class Game extends GameBase implements IErrorHandler {
             this.gui.render(fTime, Mouse.getX(), Mouse.getY());
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
+            if (this.world == null) {
+
+                glEnable(GL_DEPTH_TEST);
+                GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
+                glDisable(GL_DEPTH_TEST);
+            }
         } else if (this.world != null) {
             if (showGrid) {
                 int ipX = GameMath.floor(vCam.x);
@@ -867,7 +880,8 @@ public class Game extends GameBase implements IErrorHandler {
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-        }       
+        }else {
+        }
 
         if (GLDebugTextures.show) {
 //          
@@ -891,7 +905,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >2000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >3241/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
           Shaders.initShaders();
@@ -900,7 +914,7 @@ public class Game extends GameBase implements IErrorHandler {
 //          Engine.worldRenderer.initShaders();
 //          Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
-            Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            
         }

@@ -5,6 +5,7 @@ import java.util.*;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockLog;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
@@ -185,7 +186,12 @@ public class Tree implements RegionEntry {
                     }
                     w.setType(treeblock.x, treeblock.y, treeblock.z, 0, Flags.MARK|Flags.LIGHT);
                 }
-                player.recvItem(new ItemStack(Item.wood));
+                if (blockLog instanceof BlockLog) {
+                    Item item = Item.log.getItem(((BlockLog)blockLog).getIndex());
+                    if (item != null) {
+                        player.recvItem(new ItemStack(item));
+                    }
+                }
             }
         } else {
             w.setData(pos.x, pos.y, pos.z, stage<<2|type, Flags.MARK|Flags.LIGHT);

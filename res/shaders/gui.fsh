@@ -61,6 +61,7 @@ uniform float valueL;
 uniform int colorwheel;
 uniform float sigma;
 uniform float corner;
+uniform float fade;
 in vec2 vertex;
 in vec2 texcoord;
 
@@ -113,7 +114,7 @@ if (colorwheel == 1) {
   out_Color = color;
 } else {
   out_Color = color;
-  out_Color.rgb *= 0.7+texcoord.y*0.3; 
+  out_Color.rgb *= (1-fade)+texcoord.y*fade;
 }
     out_Color.a *= roundedBoxShadow(box.xy+PX_OFFSET.xy, box.zw+PX_OFFSET.xy, vertex, sigma, corner);
     if (out_Color.a<0.01)

@@ -46,7 +46,7 @@ public class GuiControls extends Gui {
             int rw = 150;
 //            System.out.println(parent.width+"/"+this.width);
 //            System.out.println(parent);
-            int r = (parent.width)-rw-30;
+            int r = (parent.width)-rw-15;
             this.posX = r;
             this.width = rw;
             Shaders.gui.enable();

@@ -7,4 +7,7 @@ public class BlockSurfaceAir extends BlockSurface {
         this.resolved = true;
     }
 
+    public BlockSurface copy() {
+        throw new UnsupportedOperationException("Cannot copy BlockSurfaceAir");
+    }
 }

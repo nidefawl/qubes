@@ -46,7 +46,7 @@ public class PlayerInventory extends BaseInventory {
                 this.carried = slotStack.stack;
             } else {
                 System.out.println("stack wasn't consumed "+slotStack.slot+" - "+slotStack.stack);
-                add(slotStack.stack);
+                addStack(slotStack.stack);
             }
         }
     }

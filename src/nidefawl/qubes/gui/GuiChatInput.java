@@ -54,6 +54,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
             field.setPos(xP, Game.displayHeight-h-yP);
             field.setSize(Game.displayWidth/2, h);
             field.focused = true;
+            this.field.alpha = 0.1f;
             //            field.
             this.buttons.add(field);
             this.field.width = this.overlay.width;

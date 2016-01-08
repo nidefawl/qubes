@@ -233,4 +233,9 @@ public class GameMath {
     public static float tan(float angle) {
         return (float)Math.tan(angle);
     }
+    
+    public static float easeInOutCubic(float t)
+    {
+        return t<0.5f ? 4.0f*t*t*t : (t-1.0f)*(2.0f*t-2.0f)*(2.0f*t-2.0f)+1.0f;
+    }
 }

@@ -12,9 +12,8 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.inventory.slots.Slots;
-import nidefawl.qubes.inventory.slots.SlotsCrafting;
-import nidefawl.qubes.inventory.slots.SlotsInventory;
+import nidefawl.qubes.crafting.CraftingManager;
+import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.packet.*;
@@ -57,6 +56,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
     public final PlayerEntityTracker entTracker     = new PlayerEntityTracker(this);
     public final SlotsCrafting slotsCrafting;
     public final SlotsInventory slotsInventory;
+    public final CraftingManager crafting = new CraftingManager(this, 0);
     /**
      * 
      */
@@ -142,6 +142,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 this.sendPacket(new PacketSDebugBB(trees));
             }
         }
+        this.crafting.update();
     }
 
     public void load(PlayerData data) {
@@ -277,14 +278,10 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         return null;
     }
 
-    public void syncInventory() {
-        this.sendPacket(new PacketSInvSync(this.inventory));
-        this.sendPacket(new PacketSInvSync(this.inventoryCraft));
-    }
 
-    public void recvItem(BaseStack itemStack) {
-        this.inventory.add(itemStack);
-        this.syncInventory(); //TODO: don't resync all
+    public BaseStack recvItem(BaseStack itemStack) {
+        BaseStack stack = this.slotsInventory.addStack(itemStack);
+        return stack;
     }
 
     public Slots getSlots(int id) {
@@ -299,5 +296,27 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
 
     public void onWorldLeave() {
         this.sendChunks.clear();
+    }
+
+    public CraftingManager getCrafting(int id) {
+        return this.crafting;
+    }
+    public void syncInventory() {
+        this.sendPacket(new PacketSInvSync(this.inventory.getId(), this.inventory.getSize(), this.inventory.copySlotStacks()));
+        this.sendPacket(new PacketSInvSync(this.inventoryCraft.getId(), this.inventoryCraft.getSize(), this.inventoryCraft.copySlotStacks()));
+    }
+
+    public void updatePostTick() {
+        if (this.inventory.isDirty()) {
+            HashSet<SlotStack> stacks = this.inventory.getUpdate();
+            if (stacks != null)
+                this.sendPacket(new PacketSInvSyncIncr(this.inventory.id, stacks));
+        }
+        if (this.inventoryCraft.isDirty()) {
+            HashSet<SlotStack> stacks = this.inventoryCraft.getUpdate();
+            System.out.println(stacks);
+            if (stacks != null)
+                this.sendPacket(new PacketSInvSyncIncr(this.inventoryCraft.id, stacks));
+        }
     }
 }

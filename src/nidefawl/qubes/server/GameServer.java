@@ -189,6 +189,7 @@ public class GameServer implements Runnable, IErrorHandler {
                 e.printStackTrace();
             }
         }
+        this.playerManager.updateTick();
     }
     private void saveAndUnloadData() {
         int idx = this.lastSaveStep++%this.worlds.length;
@@ -299,6 +300,10 @@ public class GameServer implements Runnable, IErrorHandler {
      */
     public ChannelManager getChatChannelMgr() {
         return this.channelManager;
+    }
+
+    public long getServerTime() {
+        return System.currentTimeMillis();
     }
 
 }

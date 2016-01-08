@@ -511,41 +511,15 @@ public class Engine {
         outRenderer = new FinalRenderer();
         shadowRenderer = new ShadowRenderer();
         lightCompute = new LightCompute();
-        clearScreen();
         worldRenderer.init();
-        clearScreen();
         outRenderer.init();
-        clearScreen();
         shadowRenderer.init();
-        clearScreen();
         lightCompute.init();
-        clearScreen();
         worldRenderer.resize(Game.displayWidth, Game.displayHeight);
-        clearScreen();
         outRenderer.resize(Game.displayWidth, Game.displayHeight);
-        clearScreen();
         shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
-        clearScreen();
         lightCompute.resize(Game.displayWidth, Game.displayHeight);
-        clearScreen();
         regionRenderer.reRender();
-        clearScreen();
-    }
-
-    private static void clearScreen() {
-        int a = 10;
-        while (a-- > 0) {
-            try {
-                FrameBuffer.unbindFramebuffer();
-                Shader.disable();
-                glClearColor(0,0,0,0);
-                glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-                Game.instance.updateDisplay();
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public static void setSceneFB(FrameBuffer fb) {

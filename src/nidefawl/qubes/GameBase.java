@@ -67,6 +67,7 @@ public abstract class GameBase implements Runnable {
     protected volatile boolean running     = false;
     protected volatile boolean wasrunning  = false;
     protected volatile boolean sysExit     = true;
+    protected volatile boolean minimized   = false;
     private Thread             thread;
     private int newWidth = initWidth;
     private int newHeight = initHeight;
@@ -330,8 +331,18 @@ public abstract class GameBase implements Runnable {
     }
 
     protected void checkResize() {
+        if (minimized && newWidth*newHeight>0) {
+            minimized = false;
+            if (isRunning())
+                GL11.glViewport(0, 0, displayWidth, displayHeight);
+        }
         if (newWidth != displayWidth || newHeight != displayHeight) {
+            if (newWidth*newHeight <= 0) {
+                minimized = true;
+                return;
+            }
             System.out.println("resize " + newWidth + "/" + newHeight);
+            minimized = false;
             displayWidth = newWidth;
             displayHeight = newHeight;
             if (displayWidth <= 0) {

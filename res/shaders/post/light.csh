@@ -213,8 +213,8 @@ void main()
     {
     float minDepthZ = uintBitsToFloat(minDepth);
     float maxDepthZ = uintBitsToFloat(maxDepth);
-    // debugBuf.debugVals[0] = minDepthZ;
-    // debugBuf.debugVals[1] = maxDepthZ;
+    debugBuf.debugVals[0] = minDepthZ;
+    debugBuf.debugVals[1] = maxDepthZ;
    
     vec4 frustumPlanes[6];
     buildFrustum3(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
@@ -256,7 +256,7 @@ void main()
     vec3 finalLight = vec3(0);
     if (prop.depth > 0.0) 
     {
-    // debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
+    debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
     // debugBuf.tileLights[0] = 4;
     // debugBuf.tileLights[1] = 5;
     // debugBuf.tileLights[2] = 6;

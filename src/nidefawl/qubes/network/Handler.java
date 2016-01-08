@@ -167,4 +167,13 @@ public abstract class Handler {
 
     public void handleInvSync(PacketSInvSync packetSInvSync) {
     }
+
+    public void handleCrafting(PacketCCrafting packetCCrafting) {
+    }
+
+    public void handleCraftingProgress(PacketSCraftingProgress packetSCraftingProgress) {
+    }
+
+    public void handleInvSyncIncr(PacketSInvSyncIncr packetSInvSyncIncr) {
+    }
 }

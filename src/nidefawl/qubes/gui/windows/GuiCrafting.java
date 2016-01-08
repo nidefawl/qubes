@@ -1,14 +1,17 @@
 package nidefawl.qubes.gui.windows;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.controls.Button;
+import nidefawl.qubes.network.packet.PacketCCrafting;
 import nidefawl.qubes.shader.Shaders;
 
-public class GuiInventory2 extends GuiInventoryBase {
+public class GuiCrafting extends GuiInventoryBase {
 
     private Button btn1;
     private Button btn2;
@@ -27,21 +30,24 @@ public class GuiInventory2 extends GuiInventoryBase {
     }
     boolean running;
     private float lastProgress;
+    private CraftingManagerClient crafting;
     
-    public GuiInventory2() {
+    public GuiCrafting() {
     }
     public String getTitle() {
         return "Crafting";
     }
     @Override
     public void initGui(boolean first) {
-        Player p = Game.instance.getPlayer();
+        PlayerSelf p = Game.instance.getPlayer();
         if (p == null) {
             close();
             return;
         }
         this.slots = p.getSlots(1);
 
+        this.crafting = p.getCrafting(0);
+        Game.instance.sendPacket(new PacketCCrafting(this.crafting.getId(), 0));
         int bw = 60;
 //        if (this.bounds != null) {
 //            setPos(this.bounds[0], this.bounds[1]);
@@ -70,12 +76,11 @@ public class GuiInventory2 extends GuiInventoryBase {
     @Override
     public boolean onGuiClicked(AbstractUI element) {
         if (element == btn1) {
-            end();
-            start();
+            Game.instance.sendPacket(new PacketCCrafting(this.crafting.getId(), 1));
             return true;
         }
         if (element == btn2) {
-            end();
+            Game.instance.sendPacket(new PacketCCrafting(this.crafting.getId(), 2));
             return true;
         }
         return super.onGuiClicked(element);
@@ -130,6 +135,14 @@ public class GuiInventory2 extends GuiInventoryBase {
         Engine.pxStack.pop();
         resetShape();
         super.renderButtons(fTime, mX, mY);
+    }
+    public void onRemoteUpdate(int action) {
+        System.out.println("remote update action "+action);
+        if (action == 1) {
+            start();
+        } else if (action >= 3) {
+            end();
+        }
     }
 
 }

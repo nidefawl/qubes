@@ -12,6 +12,7 @@ import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.worldgen.biome.HexBiome;
@@ -39,6 +40,14 @@ public class CommandDebug extends Command {
                 case "deletechunks":
                     int n = ((WorldServer)source.getWorld()).deleteAllChunks();
                     source.sendMessage("Deleted "+n+" chunks");
+                    return;
+                case "give":
+                    int id = StringUtil.parseInt(args[1], 0);
+                    Item item = Item.get(id);
+                    if (item == null)return;
+                    source.sendMessage(""+item.getName());
+                    ((PlayerServer)source).recvItem(new ItemStack(item));
+                    ((PlayerServer)source).syncInventory();
                     return;
                 case "pos":
                     Vec3D pos = ((Player)source).pos;

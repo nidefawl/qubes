@@ -5,7 +5,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 public class BlockGroupLeaves extends BlockGroup {
-    final List<String> leaveNames = Lists.newArrayList(new String[] { 
+    public final static List<String> leaveNames = Lists.newArrayList(new String[] { 
             "acacia", "birch", "cocoa", "coconut", "ebony", "mahagoni", "oak", "pine", "redwood", "spruce", "walnut", "willow"
     });
 

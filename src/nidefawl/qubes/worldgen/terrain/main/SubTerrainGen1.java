@@ -103,7 +103,7 @@ public class SubTerrainGen1 extends SubTerrainGen {
         data.dnoise3_ = noise3.gen(cX, cZ);
         return data;
     }
-    public int generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d) {
+    public int generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d, double[] d2) {
         
         NoiseData noise = (NoiseData) data;
         
@@ -162,6 +162,7 @@ public class SubTerrainGen1 extends SubTerrainGen {
             xr += cavestr * 36;
             dBase -= xr * coreScale;
             d[y] = dBase;
+            d2[y] = cavestr * 36;
         }
         return 1;
     }

@@ -141,7 +141,12 @@ public class LightCompute extends AbstractRenderer {
             Engine.checkGLError("compute light 5");
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("compute_light_"+pass, "input", Engine.getSceneFB().getTexture(0));
-            GLDebugTextures.readTexture("compute_light_"+pass, "output", this.getTexture(), 4);
+            if (this.numLights > 0) {
+                GLDebugTextures.readTexture("compute_light_"+pass, "output", this.getTexture(), 4);    
+            } else {
+                GLDebugTextures.readTexture("compute_light_"+pass, "unlit", this.getTexture(), 4);
+            }
+            
         }
     }
 

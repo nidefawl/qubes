@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 public class BlockGroupLogs extends BlockGroup {
-    final List<String> logNames = Lists.newArrayList(new String[] { 
+    public final static List<String> logNames = Lists.newArrayList(new String[] { 
             "acacia", "birch", "cocoa", "coconut", "ebony", "mahagoni", "oak", "pine", "redwood", "spruce", "walnut", "willow"
     });
 
@@ -16,8 +16,10 @@ public class BlockGroupLogs extends BlockGroup {
         for (int i = 0; i < 10; i++) {
             list.add("destroy/destroy_stage_"+i);
         }
-        for (String s : logNames) {
-            BlockLog log = (BlockLog) new BlockLog(s+"_log");
+        int size = logNames.size();
+        for (int i = 0; i < size; i++) {
+            String s = logNames.get(i);
+            BlockLog log = (BlockLog) new BlockLog(s+"_log", i);
             ArrayList<String> list2 = Lists.newArrayList();
             list2.add("logs/"+s);
             list2.add("logs/"+s+"_top");
@@ -26,8 +28,8 @@ public class BlockGroupLogs extends BlockGroup {
             addBlock(log);
         }
         oak = getBlocks().get(6);
-        
     }
+    
     @Override
     public List<String> getNames() {
         return logNames;

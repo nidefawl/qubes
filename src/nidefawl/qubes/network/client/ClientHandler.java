@@ -17,6 +17,8 @@ import nidefawl.qubes.chunk.ChunkDataSliced2;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
+import nidefawl.qubes.crafting.CraftingManager;
+import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerSelf;
@@ -463,4 +465,26 @@ public class ClientHandler extends Handler {
             }
         }
     }
+    public void handleInvSyncIncr(PacketSInvSyncIncr p) {
+        PlayerSelf player = Game.instance.getPlayer();
+        if (player != null) {
+            BaseInventory inv = player.getInv(p.invId);
+            if (inv != null) {
+                inv.setIncr(p.stacks);    
+            }
+        }
+    }
+    public void handleCraftingProgress(PacketSCraftingProgress p) {
+        CraftingManagerClient mgr = player.getCrafting(p.id);
+        if (mgr == null) {
+            this.client.disconnect("Invalid packet");
+            return;
+        }
+        if (p.action < 0 || p.action > 4) {
+            this.client.disconnect("Invalid packet");
+            return;
+        }
+        mgr.handleRequest(p.action, p);
+    }
+
 }

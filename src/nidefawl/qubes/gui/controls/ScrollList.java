@@ -72,12 +72,12 @@ public class ScrollList extends Gui {
         }
         Shaders.colored.enable();
         int border = 10;
-        int scrollBarW = (int) (round*1.4f);
+        int scrollBarW = (int) (16);
         int scrollBarG = 5;
         this.posX-=border/2;
         this.posY-=border/2;
         this.width+=border;
-        this.width-=scrollBarG+scrollBarW;
+        this.width-=scrollBarG+6;
         this.height+=border;
 //        this.width+=(int)(scrollBarW*1f)+4;
         renderBox();
@@ -85,7 +85,7 @@ public class ScrollList extends Gui {
         this.posX+=border/2;
         this.posY+=border/2;
         this.width-=border;
-        this.width+=scrollBarG+scrollBarW;
+        this.width+=scrollBarG+6;
         this.height-=border;
         GL11.glPushAttrib(GL11.GL_SCISSOR_BIT);
         GL11.glEnable(GL11.GL_SCISSOR_TEST);

@@ -3,6 +3,7 @@ package nidefawl.qubes.network.packet;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -15,11 +16,11 @@ public class PacketSInvSync extends Packet {
 
     public int invId;
     public int invSize;
-    public List<SlotStack> stacks;
-    public PacketSInvSync(BaseInventory inventory) {
-        this.invId = inventory.getId();
-        this.invSize = inventory.getSize();
-        this.stacks = inventory.copySlotStacks();
+    public Collection<SlotStack> stacks;
+    public PacketSInvSync(int id, int size, Collection<SlotStack> stacks) {
+        this.invId = id;
+        this.invSize = size;
+        this.stacks = stacks;
     }
     public PacketSInvSync() {
     }
@@ -42,8 +43,8 @@ public class PacketSInvSync extends Packet {
     public void writePacket(DataOutput stream) throws IOException {
         stream.writeInt(this.invId);
         stream.writeInt(this.invSize);
-      stream.writeInt(this.stacks.size());
-      for (SlotStack stack : this.stacks) {
+        stream.writeInt(this.stacks.size());
+        for (SlotStack stack : this.stacks) {
             stack.write(stream);
         }
     }

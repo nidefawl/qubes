@@ -20,6 +20,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.*;
+import nidefawl.qubes.meshing.Mesher;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.perf.TimingHelper;
@@ -222,7 +223,12 @@ public class InputController {
 
         addKeyBinding(new Keybinding("show_crafting", GLFW.GLFW_KEY_PERIOD) {
             public void onDown() {
-                GuiWindowManager.openWindow(GuiInventory2.class);
+                GuiWindowManager.openWindow(GuiCrafting.class);
+            }
+        });
+        addKeyBinding(new Keybinding("show_crafting2", GLFW.GLFW_KEY_COMMA) {
+            public void onDown() {
+                GuiWindowManager.openWindow(GuiCraftingSelect.class);
             }
         });
         addKeyBinding(new Keybinding("show_select_world", GLFW.GLFW_KEY_N) {
@@ -298,7 +304,9 @@ public class InputController {
         });
         addKeyBinding(new Keybinding("flush_renderers", GLFW.GLFW_KEY_F1) {
             public void onDown() {
+                Mesher.avgUsage=0;
                 Engine.regionRenderer.reRender();
+                
             }
         });
         addKeyBinding(new Keybinding("toggle_external_resources", GLFW.GLFW_KEY_F11) {

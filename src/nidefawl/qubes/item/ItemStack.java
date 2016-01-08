@@ -7,6 +7,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.nbt.Tag;
 
 /**
@@ -102,5 +103,9 @@ public class ItemStack extends BaseStack {
             return false;
         ItemStack other = (ItemStack)s;
         return this.id == other.id && this.data == other.data && this.size == other.size;
+    }
+    @Override
+    public Block getBlock() {
+        return null;
     }
 }

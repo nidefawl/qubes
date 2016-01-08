@@ -11,7 +11,6 @@ import nidefawl.qubes.util.IResourceManager;
 
 public class AssetManager {
     final static AssetManager instance = new AssetManager();
-    ArrayList<Asset>          assets   = new ArrayList<>();
     ArrayList<AssetPack>          assetPacks   = new ArrayList<>();
     private ShaderSource lastFailedShader;
     File                      folder;
@@ -132,7 +131,6 @@ public class AssetManager {
             if (is != null && is.inputStream != null) {
                 AssetTexture asset = new AssetTexture(name);
                 asset.load(is);
-                assets.add(asset);
                 return asset;
             }
         } catch (Exception e) {

@@ -19,12 +19,16 @@ public class SlotsInventory extends Slots {
         super(0, player.getInventory(), player.getInventory());
         this.inv = player.getInventory();
         for (int i = 0; i < this.inv.inventorySize; i++) {
-            addSlot(new Slot(this.inv, i, xPos+(i%10)*(w+dist), yPos+(i/10)*(w+dist), w));
+            addSlot(new Slot(this, this.inv, i, xPos+(i%10)*(w+dist), yPos+(i/10)*(w+dist), w));
         }
     }
 
     public SlotsInventory(PlayerServer player) {
         this(player, 0, 0, 32, 2);
+    }
+
+    public boolean canModify() {
+        return true;
     }
     
 }

@@ -2,6 +2,7 @@ package nidefawl.qubes.gui.windows;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gui.Tooltip;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.inventory.slots.Slots;
@@ -55,10 +56,16 @@ public abstract class GuiInventoryBase extends GuiWindow {
         Engine.pxStack.translate(0, 0, 5);
         Shaders.gui.enable();
         if (sHover != null) {
-            renderSlotBackground(posx+sHover.x+inset2, posy+sHover.y+inset2, 32, sHover.w-inset2*2, sHover.w-inset2*2, -1, 0.16f, false, 2);
+            renderSlotBackground(posx+sHover.x+inset2, posy+sHover.y+inset2, 32, +sHover.w-inset2*2, sHover.w-inset2*2, -1, 0.16f, false, 2);
+
         }
         Engine.pxStack.pop();
-        
+        BaseStack stack = sHover != null ? sHover.getItem() : null;
+        if (stack != null) {
+            Tooltip tip = Tooltip.item.set(stack, sHover, this);
+            tip.setPos((int)(posx+sHover.x+sHover.w+4), (int)(posy+sHover.y+sHover.w/2));
+            GuiWindowManager.setTooltip(tip);
+        }
         Shader.disable();
 
     }

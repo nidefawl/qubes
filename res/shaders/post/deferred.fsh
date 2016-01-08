@@ -273,8 +273,9 @@ float getShadow2() {
     return 1;
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
-#define G_SCATTERING 0.2f
-#define NB_STEPS 128
+#define G_SCATTERING 0.8f
+#define VOL_STRENGTH 0.1f
+#define NB_STEPS 8
 // #define PI 10
 const float pi = 3.1415927;
 float ComputeScattering(float lightDotView)
@@ -423,16 +424,10 @@ void main() {
 
 
     float blockLight = (1-pow(1-blockLightLvl,0.05))*1.1;
-    vec3 lightColor = vec3(1);
-    vec3 lightColor2 = vec3(1);
-    vec3 lightColor3 = vec3(1);
-    lightColor*=1-fNight*0.92;
-    lightColor2*=1-fNight*(0.9*(1-isEntity));
-    lightColor3*=1-fNight*0.9;
-    lightColor = max(vec3(0.1), lightColor);
-	vec3 Ispec = SkyLight.Ls.rgb * lightColor3 * nDotL * spec;
-    vec3 Idiff = SkyLight.Ld.rgb * lightColor2 * nDotL;
-    vec3 Iamb = SkyLight.La.rgb * lightColor * mix(((NdotLAmb1+NdotLAmb2)*0.5f), 1.2, isEntity*0.8);
+    vec3 lightColor = mix(vec3(1), vec3(0.8, 0.9, 1.1), fNight);
+	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
+    vec3 Idiff = SkyLight.Ld.rgb * lightColor * nDotL;
+    vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*0.5f), 1.2, isEntity*0.8);
 
     // Idiff*=darkenSkyLitBlocksNight;
     // Ispec*=darkenSkyLitBlocksNight;
@@ -451,17 +446,16 @@ void main() {
     finalLight += vec3(1, 0.9, 0.7) * pow(blockLightLvl/8.0,2)*((1.0-isLight*0.8)*blockLightConst);
     finalLight *= max(0.3+ssao.r*0.7, isWater);
     finalLight+=prop.light.rgb*(occlusion);
-
 #if RENDER_PASS ==1
     float waterDepth = length(prop.position-viewSpacePosUnderWater);
     alpha = clamp(clamp(waterDepth/6, 0.25, (sceneColor.a*1.4)*(1-clamp(sunLight, 0, 1))), 0.25, 1);
 #endif
     alpha = clamp(alpha, 0, 1);
 
-    vec3 sky=mix(prop.albedo, vec3(0.002), fNight)*0.23;
-    prop.sunSpotDens*=(1-fNight*0.9);
+    vec3 sky=mix(prop.albedo, vec3(0.0001), fNight)*0.23;
+    prop.sunSpotDens*=(1-fNight*0.92);
     float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
-    sky = mix(sky, sky*skySunScat, 0.3f);
+    sky = mix(sky, sky*skySunScat, 0.3f-fNight*0.2f);
     sky += skySunScat*prop.sunSpotDens*1.2;
     sky += sky*SkyLight.La.rgb*(1.0-prop.sunSpotDens)*1.1f;
     sky *= 0.4;
@@ -472,18 +466,18 @@ void main() {
 
     prop.albedo = mix(terr, sky, isSky);
 #if RENDER_PASS < 2
-    vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,0.7)*0.2, clamp(nightNoon, 0, 1));
+    vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0, 1));
     float fogDepth = length(prop.position);
     fogDepth = min(fogDepth, in_scene.viewport.w/6);
-    fogDepth = max(fogDepth-10, 0);
-    float fogAmount = clamp(1.0 - exp( -fogDepth*0.000015 ), 0, 1);
+    fogDepth = max(fogDepth-30, 0);
+    float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001 ), 0, 1);
     prop.albedo =  mix( prop.albedo, fogColor, fogAmount );
 #endif
 
 // #if RENDER_PASS < 2
 //     // vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0, 1));
 //      fogAmount = VolumetricLight();
-//     prop.albedo =  mix( prop.albedo, fogColor, fogAmount*0.05 );
+//     prop.albedo =  mix( prop.albedo, fogColor, fogAmount*VOL_STRENGTH );
 // #endif
 #endif
 

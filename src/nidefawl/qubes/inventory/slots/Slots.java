@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.util.GameError;
 
 public class Slots {
     protected BaseInventory baseInv;
@@ -60,10 +61,14 @@ public class Slots {
      */
     public BaseStack slotClicked(Slot s, int button, int action) {
         if (button == 0 && action == 0) {
-            BaseStack stack = s.getItem();
-            BaseStack prevcarried = playerInv.setCarried(stack);
-            this.baseInv.setItem(s.idx, prevcarried);
-            return stack;
+            if (s.canTake()) {
+                BaseStack stack = s.getItem();
+                if (s.canPut(playerInv.getCarried())) {
+                    BaseStack prevcarried = playerInv.setCarried(stack);
+                    this.baseInv.setItem(s.idx, prevcarried);
+                    return stack;   
+                }
+            }
         }
         return null;
     }
@@ -72,4 +77,30 @@ public class Slots {
         return idx>=0&&idx<this.slots.size()?this.slots.get(idx):null;
     }
 
+    public Slot getFirstEmpty(BaseStack item) {
+        for (int i = 0; i < this.slots.size(); i++) {
+            if (this.slots.get(i).isEmpty()) {
+                if (this.slots.get(i).canPut(item)) {
+                    return this.slots.get(i);
+                }
+            }
+        }
+        return null;
+    }
+
+    public BaseStack addStack(BaseStack stack) {
+        Slot output = this.getFirstEmpty(stack);
+        if (output != null) {
+            BaseStack left = output.putStack(stack);
+            if (left != null) {
+                // should not happen!!!
+                throw new GameError("Result slot was expected to be empty");
+            }
+            return null;
+        }
+        return stack;
+    }
+    public boolean canModify() {
+        return true;
+    }
 }

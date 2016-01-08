@@ -41,7 +41,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
 
             this.field = new TextField(this, 2, Game.instance.serverAddr);
             field.setPos(left, this.posY+this.height/2-20);
-            field.setSize(w1-115, h);
+            field.setSize(w1-110, h);
 //            field.
             this.buttons.add(field);
         }

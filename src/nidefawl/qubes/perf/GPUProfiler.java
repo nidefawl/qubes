@@ -11,7 +11,7 @@ import nidefawl.qubes.util.Pool;
 @SuppressWarnings("unused")
 public class GPUProfiler {
 
-    public static final boolean PROFILING_ENABLED = true;
+    public static final boolean PROFILING_ENABLED = false;
 
     private static Pool<GPUTaskProfile> taskPool;
     private static ArrayList<Integer>   queryObjects;
@@ -84,6 +84,9 @@ public class GPUProfiler {
             frameCount = perFrame;
         }
         if (PROFILING_ENABLED) {
+            if (currentTask == null) {
+                throw new IllegalStateException("frame not started properly!");
+            }
             if (currentTask.getParent() != null) {
                 throw new IllegalStateException("Error ending frame. Not all tasks finished (parent: " + currentTask.getParent() + ").");
             }

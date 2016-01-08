@@ -146,4 +146,8 @@ public class BlockStack extends BaseStack {
     public boolean isItem() {
         return false;
     }
+    @Override
+    public Item getItem() {
+        return null;
+    }
 }

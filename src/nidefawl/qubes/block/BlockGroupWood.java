@@ -6,14 +6,12 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 public class BlockGroupWood extends BlockGroup {
-    final List<String> woodNames = Lists.newArrayList(new String[] { 
-            "acacia", "birch", "cocoa", "coconut", "ebony", "mahagoni", 
-            "oak", "pine", "redwood", "spruce", "walnut", "willow"
-    });
 
     public BlockGroupWood() {
-        for (String s : woodNames) {
-            Block wood = new Block(s+"_wood");
+        int size = BlockGroupLogs.logNames.size();
+        for (int i = 0; i < size; i++) {
+            String s = BlockGroupLogs.logNames.get(i);
+            Block wood = new BlockWood(s+"_wood", i);
             ArrayList<String> list2 = Lists.newArrayList();
             list2.add("wood/"+s+"_0");
             list2.add("wood/"+s+"_1");
@@ -25,6 +23,6 @@ public class BlockGroupWood extends BlockGroup {
     }
     @Override
     public List<String> getNames() {
-        return woodNames;
+        return BlockGroupLogs.logNames;
     }
 }
