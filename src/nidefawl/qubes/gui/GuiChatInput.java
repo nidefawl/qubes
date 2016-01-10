@@ -43,7 +43,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
 
     @Override
     public void initGui(boolean first) {
-        this.buttons.clear();
+        this.clearElements();
         {
 
             int h = 30;
@@ -56,7 +56,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
             field.focused = true;
             this.field.alpha = 0.1f;
             //            field.
-            this.buttons.add(field);
+            this.add(field);
             this.field.width = this.overlay.width;
         }
     }

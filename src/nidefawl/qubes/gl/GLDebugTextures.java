@@ -96,7 +96,7 @@ public class GLDebugTextures {
         glPushAttrib(-1);
         glDisable(3008);
         glDepthFunc(519);
-        glDepthMask(false);
+        Engine.enableDepthMask(false);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -195,7 +195,7 @@ public class GLDebugTextures {
             triggered = false;
         }
         glDepthFunc(GL_LEQUAL);
-        glDepthMask(true);
+        Engine.enableDepthMask(true);
         glPopAttrib();
     
     }

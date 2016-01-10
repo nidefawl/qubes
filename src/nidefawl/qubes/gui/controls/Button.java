@@ -7,8 +7,8 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 
 public class Button extends AbstractUI implements Renderable {
-    private String       text;
-    private FontRenderer font;
+    protected String       text;
+    protected FontRenderer font;
     
     public Button(int id, String text) {
         this.id = id;
@@ -21,11 +21,11 @@ public class Button extends AbstractUI implements Renderable {
         this.hovered = this.mouseOver(mX, mY);
         if (!draw)
             return;
-        Shaders.colored.enable();
         renderBox();
-        Shaders.textured.enable();
-        this.font.drawString(this.text, this.posX + this.width / 2, this.posY + this.height / 2 + font.getLineHeight() / 2, -1, true, 1.0F, 2);
-        Shader.disable();
+        if (this.text!=null&&!this.text.isEmpty()) {
+            Shaders.textured.enable();
+            this.font.drawString(this.text, this.posX + this.width / 2, this.posY + this.height / 2 + font.getLineHeight() / 2, -1, true, 1.0F, 2);
+        }
     }
 
     @Override

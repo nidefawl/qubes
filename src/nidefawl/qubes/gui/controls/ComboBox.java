@@ -5,6 +5,7 @@ import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
@@ -102,6 +103,8 @@ public class ComboBox extends AbstractUI implements Renderable {
             this.box = box;
             this.box.setWatchPopup(this);
             this.values = values == null ? new Object[0] : values;
+            extendx=1;
+            extendy=2;
         }
         
         @Override
@@ -203,7 +206,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                 this.heightPerEntry = box.font.getLineHeight() - 1;
                 this.height = values * this.heightPerEntry;
                 this.width = this.box.width;
-                this.posY = this.box.posY + this.box.height;
+                this.posY = this.box.posY + this.box.height+extendy;
                 this.posX = this.box.posX;
                 if (this.posY + this.height > Game.displayHeight && this.box.posY - this.height > 0) {
                     this.posY = this.box.posY - this.height;
@@ -238,12 +241,9 @@ public class ComboBox extends AbstractUI implements Renderable {
                 }
                 final Tess tessellator = Tess.instance;
                 Shaders.gui.enable();
-                this.round = 4;
-                this.extendx = 5;
-                this.extendy = 5;
-                renderRoundedBoxShadow(this.posX, this.posY, 10, this.width, this.height, 0xababab, 1f, true);
+//                renderRoundedBoxShadow(this.posX, this.posY, 10, this.width, this.height, 0xababab, 1f, true);
+                renderBox(true, true, color2, color3);
                 Shaders.colored.enable();
-                GL11.glEnable(3553 /* GL_TEXTURE_2D */);
                 for (int c = 0; c < values ; c++) {
                     int i1 = 0xFFFFFF;
                     if (c+scrollOffset == this.box.sel) {
@@ -287,9 +287,6 @@ public class ComboBox extends AbstractUI implements Renderable {
                       tessellator.draw(GL11.GL_LINE_STRIP);
                     }
                 }
-                GL11.glEnable(3042 /* GL_BLEND */);
-                GL11.glDisable(3553 /* GL_TEXTURE_2D */);
-                GL11.glBlendFunc(770, 771);
 //                OpenGlHelper.glColor4f(1.0F, 1.0F, 1.0F, 0.3F);
                 GL11.glLineWidth(2.0F);
                 Shaders.colored.enable();
@@ -301,9 +298,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                     int scrollBarRight = scrollBarX+(scrollbarwidth-3);
                     int posY= this.posY+1;
                     float scrolled = ((float) (scrollOffset) / (float) (this.values.length-values));
-                    
-                    GL11.glEnable(GL11.GL_BLEND);
-                    GL11.glBlendFunc(770, 771);
+
 //                    GL11.glShadeModel(GL11.GL_SMOOTH);
                     int totalContentHeight = heightPerEntry*this.values.length;
                     int scrollerHeight = ((bottom - posY) * (bottom - posY)) / totalContentHeight;
@@ -359,8 +354,6 @@ public class ComboBox extends AbstractUI implements Renderable {
 //                    GL11.glEnd();
 //                    GL11.glShadeModel(GL11.GL_FLAT);
                 }
-                GL11.glEnable(3553 /* GL_TEXTURE_2D */);
-                GL11.glDisable(3042 /* GL_BLEND */);
                 
             } else {
                 this.box.sel = -1;
@@ -401,7 +394,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                 this.comboBoxList = null;
             }
         }
-        GL11.glDepthMask(false);
+        Engine.enableDepthMask(false);
         
         AbstractUIOverlay popup = gui.getPopup();
         
@@ -459,7 +452,7 @@ public class ComboBox extends AbstractUI implements Renderable {
             }
 
         }
-        GL11.glDepthMask(true);
+        Engine.enableDepthMask(true);
     }
     /**
      * @param guiSettings

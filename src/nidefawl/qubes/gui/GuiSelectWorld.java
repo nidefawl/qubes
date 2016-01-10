@@ -21,9 +21,9 @@ public class GuiSelectWorld extends Gui {
 
     @Override
     public void initGui(boolean first) {
-        this.buttons.clear();
+        this.clearElements();
         {
-            this.buttons.add(new Button(1, "Back"));
+            this.add(new Button(1, "Back"));
             int w = 200;
             int h = 30;
             this.buttons.get(0).setPos(this.posX + this.width / 2 - w / 2, this.posY + this.height / 2 + 70);

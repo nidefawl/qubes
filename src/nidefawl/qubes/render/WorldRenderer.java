@@ -292,14 +292,14 @@ public class WorldRenderer extends AbstractRenderer {
 
         glDisable(GL_BLEND);
         
-        glDepthMask(false);
+        Engine.enableDepthMask(false);
         skyShader.enable();
         skybox1.bindAndDraw(GL_QUAD_STRIP);
         skybox2.bindAndDraw(GL_QUADS);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("skyShader.drawSkybox");
         Shader.disable();
-        glDepthMask(true);
+        Engine.enableDepthMask(true);
         
 
         
@@ -326,11 +326,11 @@ public class WorldRenderer extends AbstractRenderer {
             Engine.regionRenderer.renderMainPre(world, fTime, this);
             glColorMask(true, true, true, true);
             glDepthFunc(GL_EQUAL);
-            glDepthMask(false);
+            Engine.enableDepthMask(false);
             terrainShader.enable();
             Engine.regionRenderer.renderMainPost(world, fTime, this);
             glDepthFunc(GL_LEQUAL);
-            glDepthMask(true);
+            Engine.enableDepthMask(true);
         } else {
             terrainShader.enable();
             Engine.regionRenderer.renderMain(world, fTime, this);

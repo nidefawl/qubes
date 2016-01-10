@@ -19,6 +19,7 @@ import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vec.Vector3f;
 
 /**
  * @author Michael Hept 2015
@@ -65,6 +66,8 @@ public class SingleBlockDraw {
     public void drawBlockDefault(Block block, int data, StackData stackData) {
         SingleBlockRenderAtlas atlas = SingleBlockRenderAtlas.getInstance();
         if (atlas.needsRender(block, data, stackData)) {
+            Engine.setOverrideScissorTest(false);
+            Engine.setOverrideDepthMask(true);
             this.modelMatrix.setIdentity();
             this.projMatrix.setZero();
             atlas.preRender(block, data, stackData, projMatrix, modelMatrix);
@@ -81,6 +84,8 @@ public class SingleBlockDraw {
             doRender(block, data, stackData);
             atlas.postRender();
             Shaders.textured.enable();
+            Engine.restoreScissorTest();
+            Engine.restoreDepthMask();
         }
         int tex = atlas.getTexture(block, data, stackData);
         int texIdx = atlas.getTextureIdx(block, data, stackData);
@@ -91,8 +96,9 @@ public class SingleBlockDraw {
         float pxW = scale*32;
         float xPos = x-pxW;
         float yPos = y-pxW;
-        float zPos = z;
+        float zPos = 0;
         pxW*=2;
+        Shaders.textured.enable();
         Tess.instance.setColorF(-1, 1);
         Tess.instance.add(xPos, yPos+pxW, zPos, texX, texY);
         Tess.instance.add(xPos+pxW, yPos+pxW, zPos, texX+texW, texY);

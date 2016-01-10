@@ -8,6 +8,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.chat.client.ChatLine;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -58,7 +59,7 @@ public class GuiOverlayChat extends Gui {
         int h = 16;
         int insetX = 2;
         int insetY = 2;
-        GL11.glDepthMask(false);
+        Engine.enableDepthMask(false);
         this.posY=posY-this.height;
         Shaders.colored.enable();
         renderOutlinedBox();
@@ -92,7 +93,7 @@ public class GuiOverlayChat extends Gui {
             font.drawString(s.getLine(), 12, posY-6-(i)*fLine, 0xFFFFFF, true, 1.0F);    
         }
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
-        GL11.glDepthMask(true);
+        Engine.enableDepthMask(true);
         this.height = cHeight;
     }
 }

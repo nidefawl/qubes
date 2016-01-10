@@ -27,14 +27,14 @@ public class BlockGroupStairs extends BlockGroup {
             String name = block.getName()+"_stairs";
             if (block.textureMode == BlockTextureMode.SUBTYPED_TEX_PER_TYPE) {
                 for (int i = 0; i < block.textures.length; i++) {
-                    BlockStairs slab = new BlockStairs(name, block, i);
-                    slab.setCategory(BlockCategory.STONE);
-                    addBlock(block);
+                    BlockStairs stair = new BlockStairs(name, block, i);
+                    stair.setCategory(BlockCategory.STONE);
+                    addBlock(stair);
                 }
             } else {
-                BlockStairs slab = new BlockStairs(name, block);
-                slab.setCategory(BlockCategory.STONE);
-                addBlock(block);
+                BlockStairs stair = new BlockStairs(name, block);
+                stair.setCategory(BlockCategory.STONE);
+                addBlock(stair);
             }
         }
     }

@@ -69,7 +69,17 @@ public abstract class GuiWindow extends Gui {
     }
     
     public boolean mouseOver(double mx, double my) {
-        return this.visible && this.posX <= mx && this.posX + this.width >= mx && this.posY-1 <= my && this.posY + this.height+4 >= my;
+        if (this.visible) {
+            if (this.posX <= mx && this.posX + this.width >= mx && this.posY-1 <= my && this.posY + this.height+4 >= my) {
+                return true;
+            }
+            for (int i = 0; i < this.prebackground.size(); i++) {
+                if (this.prebackground.get(i).mouseOver(mx-posX, my-posY)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     public boolean mouseOverResize(double mx, double my) {
         return mx > this.posX+this.width - 14 && mx < this.posX+this.width && my > this.posY+this.height - 14 && my < this.posY+this.height;
@@ -91,23 +101,9 @@ public abstract class GuiWindow extends Gui {
         return this.popup == null;
     }
 
-
-    public void renderSlotBackground(float x, float y, float z, float w, float h, int color, float alpha, boolean shadow, float i) {
-        shadowSigma = 4;
-        extendx = 1;
-        extendy = 1;
-        this.round = i;
-//        renderRoundedBoxShadowInverse(x, y, z, w, h, color, alpha, shadow);
-        shadowSigma = 0.4f;
-        extendx = 2;
-        extendy = 2;
-        extendx = 1;
-        extendy = 1;
-
-        renderRoundedBoxShadowInverse(x, y, z, w, h, color, alpha, shadow);
-        resetShape();
-    }
+    
     public void renderFrame(float fTime, double mX, double mY) {
+        renderBackgroundElements(fTime, mX, mY);
         this.posY+=5;
         this.round = 1;
         this.extendx = 0;
@@ -222,16 +218,22 @@ public abstract class GuiWindow extends Gui {
                 }
             }
                 
-            if (my <= this.posY + titleBarHeight) {
+            if (mx>=this.posX&&mx<=this.posX+width&&my <= this.posY + titleBarHeight) {
                 GuiWindowManager.dragged = this;
                 return true;
             }
-            if (canResize() && mouseOverResize(mx, my)) {
+            if (mx>=this.posX&&mx<=this.posX+width&&canResize() && mouseOverResize(mx, my)) {
                 GuiWindowManager.resized = this;
                 return true;
             }
         }
 //        return false;
             return super.onMouseClick(button, action);
+    }
+    public int getWindowPosX() {
+        return this.posX;
+    }
+    public int getWindowPosY() {
+        return this.posY;
     }
 }

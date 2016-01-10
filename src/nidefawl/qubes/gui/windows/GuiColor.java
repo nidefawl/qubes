@@ -16,7 +16,7 @@ public class GuiColor extends GuiWindow {
     }
     @Override
     public void initGui(boolean first) {
-        this.buttons.clear();
+        this.clearElements();
         this.colorPick = new ColorPicker(this);
         this.colorPick.setPos(15, 20+titleBarHeight);
         this.colorPick.setSize(360, 130);

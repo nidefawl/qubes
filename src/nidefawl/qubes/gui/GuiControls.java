@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 
 import com.google.common.collect.Lists;
 
@@ -31,9 +32,8 @@ public class GuiControls extends Gui {
          * @param g 
          * @param string2
          */
-        public Control(Gui g, Keybinding b) {
+        public Control(Keybinding b) {
             this.b = b;
-            this.parent = g;
         }
 
         @Override
@@ -42,7 +42,9 @@ public class GuiControls extends Gui {
             Shaders.colored.enable();
             this.hovered = this.mouseOver(mX, mY);
             int x = this.posX;
+            int y = this.posY;
             int w = this.width;
+            int h = this.height;
             int rw = 150;
 //            System.out.println(parent.width+"/"+this.width);
 //            System.out.println(parent);
@@ -53,10 +55,14 @@ public class GuiControls extends Gui {
             AbstractUI g = selectedButton;
             if (this.hovered)
             selectedButton = this;
+            posY+=2;
+            height-=4;
             renderBox();
             selectedButton = g;
             this.width = w;
             this.posX = x;
+            this.posY = y;
+            this.height = h;
             int c1 = this.hovered ? -1 : this.color;
             int c2 = this.hovered ? -1 : this.color2;
 //            final Tess tessellator = Tess.instance;
@@ -68,6 +74,17 @@ public class GuiControls extends Gui {
                 keyname = Keyboard.getKeyName(b.getKey());
             }
             fr.drawString(keyname, r+rw/2, this.posY+(this.height-5), -1, true, 0.9f, 2);
+            Shaders.colored.enable();
+            Tess tessellator = Tess.instance;
+//          OpenGlHelper.glColor3f(fa, fa, fa);
+          GL11.glLineWidth(1.0F);
+          
+//          GL11.glBegin(GL11.GL_LINE_STRIP);
+          tessellator.setColorF(-1, 0.3f);
+
+          tessellator.add(this.posX + w - 8, this.posY + h + 1);
+          tessellator.add(this.posX + 4, this.posY + h + 1);
+          tessellator.draw(GL11.GL_LINE_STRIP);
         }
 
         @Override
@@ -89,31 +106,36 @@ public class GuiControls extends Gui {
     @Override
     public void initGui(boolean first) {
         scrolllist = new ScrollList(this);
-        this.buttons.clear();
+        this.clearElements();
         this.list.clear();
         int w1 = 520;
         int h = 30;
+        int idx = 10;
         for (Keybinding b : InputController.getBindings()) {
-            if (!b.isStaticBinding())
-            list.add(new Control(scrolllist, b));
+            if (b.isStaticBinding()){
+                continue;
+            }
+            Control c = new Control(b);
+            c.id = idx++;
+            list.add(c);
         }
-        int left = this.posX + this.width / 2 - (w1/2);
-        this.scrolllist.setPos(left, this.posY + this.height / 6 + 40);
+        int left =this.width / 2 - (w1/2);
+        this.scrolllist.setPos(left, this.height / 6 + 40);
         int y = 0;
         for (Control s : list) {
             s.setPos(0, y);
             s.setSize(w1, 30);
             y += 36;
-            scrolllist.buttons.add(s);
+            scrolllist.add(s);
         }
         this.scrolllist.setSize(w1, this.height / 2);
         {
             back = new Button(6, "Back");
-            this.buttons.add(back);
-            back.setPos(this.posX + this.width / 2 - 160/2, this.posY + this.height / 2 + 220);
+            this.add(back);
+            back.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
             back.setSize(160, 30);
         }
-        this.buttons.add(this.scrolllist.scrollbarbutton);
+        this.add(this.scrolllist.scrollbarbutton);
     }
 
     public boolean onMouseClick(int button, int action) {
@@ -135,15 +157,15 @@ public class GuiControls extends Gui {
         }
         renderBackground(fTime, mX, mY, true, 0.7f);
         Shaders.textured.enable();
-        this.font.drawString("Controls", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f, 2);
+        this.font.drawString("Controls", this.width / 2.0f, this.height / 6, -1, true, 1.0f, 2);
         this.scrolllist.render(fTime, mX, mY);
         super.renderButtons(fTime, mX, mY);
         if (selected != null) {
             String name = Keyboard.getKeyName(selected.b.getKey());
             int w = 300;
             int h = 150;
-            int x = this.posX+width/2-w/2;
-            int y = this.posY+height/2-h/2;
+            int x = width/2-w/2;
+            int y = height/2-h/2;
             Shaders.gui.enable();
             renderRoundedBoxShadow(x, y, 2, w, h, color2, 0.7f, true);
             Shaders.textured.enable();
@@ -206,11 +228,12 @@ public class GuiControls extends Gui {
         }
         return true;
     }
-    public void onWheelScroll(double xoffset, double yoffset) {
+    public boolean onWheelScroll(double xoffset, double yoffset) {
         if (selected != null) {
-            return;
+            return true;
         }
         this.scrolllist.onWheelScroll(xoffset, yoffset);
+        return true;
     }
 
 }

@@ -597,7 +597,7 @@ public abstract class GameBase implements Runnable {
         glDepthFunc(GL_LEQUAL);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glDepthFunc(GL_LEQUAL)");
-        glDepthMask(true);
+        Engine.enableDepthMask(true);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glDepthMask(true)");
         glColorMask(true, true, true, true);

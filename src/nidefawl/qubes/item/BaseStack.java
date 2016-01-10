@@ -47,4 +47,28 @@ public abstract class BaseStack implements StreamIO {
     }
     public abstract Item getItem();
     public abstract Block getBlock();
+    public boolean is(Block b) {
+        return getBlock()==b;
+    }
+    public boolean is(Item item) {
+        return getItem()==item;
+    }
+    public String getName() {
+        return getItem()!=null?getItem().getName():getBlock().getName();
+    }
+
+    static ItemStack  tmpStackItem  = new ItemStack();
+    static BlockStack tmpStackBlock = new BlockStack();
+
+    public static BaseStack getTemp(Object o) {
+        if (o instanceof Item) {
+            tmpStackItem.id=((Item)o).id;
+            return tmpStackItem;
+        }
+        if (o instanceof Block) {
+            tmpStackBlock.id=((Block)o).id;
+            return tmpStackBlock;
+        }
+        return null;
+    }
 }

@@ -23,9 +23,7 @@ import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
-import nidefawl.qubes.gui.windows.GuiInventory;
-import nidefawl.qubes.gui.windows.GuiCrafting;
-import nidefawl.qubes.gui.windows.GuiWindowManager;
+import nidefawl.qubes.gui.windows.*;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.logging.IErrorHandler;
@@ -381,8 +379,16 @@ public class Game extends GameBase implements IErrorHandler {
     @Override
     protected void onWheelScroll(long window, double xoffset, double yoffset) {
         if (this.gui != null) {
+            if (this.world == null) {
+                if (GuiWindowManager.onWheelScroll(xoffset, yoffset)) {
+                    return;
+                }
+            }
             this.gui.onWheelScroll(xoffset, yoffset);
         } else {
+            if (GuiWindowManager.onWheelScroll(xoffset, yoffset)) {
+                return;
+            }
             if (Keyboard.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
                 this.settings.thirdpersonDistance += yoffset*-0.2f;
                 if (this.settings.thirdpersonDistance < 1) {
@@ -415,13 +421,12 @@ public class Game extends GameBase implements IErrorHandler {
     int throttleClick=0;
     public void onMouseClick(long window, int button, int action, int mods) {
         if (this.gui != null) {
-            if (!this.gui.onMouseClick(button, action)) {
-                if (this.world == null) {
-
-                    if (GuiWindowManager.onMouseClick(button, action)) {
-                        return;
-                    }
+            if (this.world == null) {
+                if (GuiWindowManager.onMouseClick(button, action)) {
+                    return;
                 }
+            }
+            if (!this.gui.onMouseClick(button, action)) {
             }
         } else {
             if (GuiWindowManager.onMouseClick(button, action)) {
@@ -642,7 +647,7 @@ public class Game extends GameBase implements IErrorHandler {
 
             glDisable(GL_BLEND); // don't blend ssr
             glDisable(GL_DEPTH_TEST);
-            glDepthMask(false);
+            Engine.enableDepthMask(false);
             Engine.outRenderer.renderReflAndBlur(this.world, fTime);
 
 
@@ -657,7 +662,7 @@ public class Game extends GameBase implements IErrorHandler {
                 GPUProfiler.end();
 
             glEnable(GL_DEPTH_TEST);
-            glDepthMask(true);
+            Engine.enableDepthMask(true);
             
             boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
             if (pass) {
@@ -791,13 +796,25 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.gui != null) {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("gui");
-            this.gui.render(fTime, Mouse.getX(), Mouse.getY());
+            double mx = Mouse.getX();
+            double my = Mouse.getY();
+            GuiWindow window = GuiWindowManager.getMouseOver(mx, my);
+            if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
+                mx-=10000;
+                my-=10000;
+            }
+            this.gui.render(fTime, mx, my);
+            if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
+                mx+=10000;
+                my+=10000;
+            }
+            
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
             if (this.world == null) {
 
                 glEnable(GL_DEPTH_TEST);
-                GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
+                GuiWindowManager.getInstance().render(fTime, mx, my);
                 glDisable(GL_DEPTH_TEST);
             }
         } else if (this.world != null) {
@@ -905,7 +922,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >3241/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >3000241/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
           Shaders.initShaders();

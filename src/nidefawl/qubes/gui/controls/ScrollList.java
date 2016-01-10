@@ -15,28 +15,31 @@ import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.vec.Vector3f;
 
 public class ScrollList extends Gui {
     final public FontRenderer font;
     float scrollOffset=0f;
     final public Button scrollbarbutton;
+    public float scrollY;
 
     public ScrollList(Gui parent) {
         this.parent = parent;
         this.font = FontRenderer.get(null, 18, 0, 20);
         scrollbarbutton = new Button(-2, "");
+        scrollbarbutton.parent = this.parent;
     }
     float getMinY() {
         float minY = Float.MAX_VALUE;
         for (AbstractUI element : this.buttons) {
-            if (element.posY<minY) minY = element.posY;
+            if (element.draw && element.posY<minY) minY = element.posY;
         }
         return minY;
     }
     float getMaxY() {
         float maxY = -Float.MAX_VALUE;
         for (AbstractUI element : this.buttons) {
-            if (element.posY+element.height > maxY) {
+            if (element.draw && element.posY+element.height > maxY) {
                 maxY = element.posY+element.height;
             }
         }
@@ -46,8 +49,8 @@ public class ScrollList extends Gui {
         float minY = Float.MAX_VALUE;
         float maxY = -minY;
         for (AbstractUI element : this.buttons) {
-            if (element.posY<minY) minY = element.posY;
-            if (element.posY+element.height > maxY) {
+            if (element.draw && element.posY<minY) minY = element.posY;
+            if (element.draw && element.posY+element.height > maxY) {
                 maxY = element.posY+element.height;
             }
         }
@@ -59,8 +62,8 @@ public class ScrollList extends Gui {
         float minY = 0;
         float maxY = 0;
         for (AbstractUI element : this.buttons) {
-            if (element.posY<minY) minY = element.posY;
-            if (element.posY+element.height > maxY) {
+            if (element.draw && element.posY<minY) minY = element.posY;
+            if (element.draw && element.posY+element.height > maxY) {
                 maxY = element.posY+element.height;
             }
         }
@@ -70,42 +73,45 @@ public class ScrollList extends Gui {
             yPos += (contentheight-this.height)*scrollOffset;
 //            System.out.println(contentheight);
         }
+        yPos = (int)yPos;
+        this.scrollY=yPos;
         Shaders.colored.enable();
+
         int border = 10;
         int scrollBarW = (int) (16);
         int scrollBarG = 5;
-        this.posX-=border/2;
-        this.posY-=border/2;
-        this.width+=border;
-        this.width-=scrollBarG+6;
-        this.height+=border;
-//        this.width+=(int)(scrollBarW*1f)+4;
-        renderBox();
-//        this.width-=(int)(scrollBarW*1f)+4;
-        this.posX+=border/2;
-        this.posY+=border/2;
-        this.width-=border;
-        this.width+=scrollBarG+6;
-        this.height-=border;
-        GL11.glPushAttrib(GL11.GL_SCISSOR_BIT);
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        border/=2;
-        this.posX-=border/2;
-        this.posY-=border/2;
-        this.width+=border;
-        this.height+=border;
-        GL11.glScissor(this.posX, Game.displayHeight-(posY+this.height), this.width, height);
-        this.posX+=border/2;
-        this.posY+=border/2;
-        this.width-=border;
-        this.height-=border;
+
+        this.posX -= border / 2;
+        this.posY -= border / 2;
+        this.width += border;
+        this.width -= scrollBarG + 4;
+        this.height += border;
+
+        Shaders.gui.enable();
+        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+        renderBox(false, true, color2, color3);
+        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+        this.posX += border / 2;
+        this.posY += border / 2;
+        this.width -= border;
+        this.width += scrollBarG + 4;
+        this.height -= border;
+        border /= 2;
+        this.posX -= border / 2;
+        this.posY -= border / 2;
+        this.width += border;
+        this.height += border;
+        this.posX += border / 2;
+        this.posY += border / 2;
+        this.width -= border;
+        this.height -= border;
+        Engine.pxStack.setScissors(this.posX-2, this.posY-2, this.width+2, this.height+2);
+        Engine.enableScissors();
         Engine.pxStack.push(0, -yPos, 0);
         super.renderButtons(fTime, mX, mY+yPos);
         Engine.pxStack.pop();
+        Engine.disableScissors();
         Shaders.textured.enable();
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
-        GL11.glPopAttrib();
-        Shaders.gui.enable();
         int scX = this.posX+this.width;
         int scY = this.posY-border;
         int scH = this.height+border*2;
@@ -123,10 +129,15 @@ public class ScrollList extends Gui {
         }
         scX-=1;
         scrollBarW+=2;
-        renderRoundedBoxShadow(scX, scY, 1, scrollBarW, scH, c2, this.alpha2, true);
+        shadowSigma=2f;
+        Shaders.gui.enable();
+        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+        renderRoundedBoxShadow(scX, scY, 1, scrollBarW, scH, color4, this.alpha2, true);
         scX+=1;
         scrollBarW-=2;
-        renderRoundedBoxShadow(scX, scY, 1, scrollBarW, scH, c1, this.alpha, false);
+        renderRoundedBoxShadow(scX, scY, 1, scrollBarW, scH, color3, this.alpha, false);
+        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+        resetShape();
         int scrollbarOffsetY = (int) (this.scrollOffset*(scH-scrollbarHeight));
         this.scrollbarbutton.setPos(scX, scY+scrollbarOffsetY);
         this.scrollbarbutton.setSize(scrollBarW, (int) scrollbarHeight);
@@ -138,23 +149,24 @@ public class ScrollList extends Gui {
     }
     @Override
     public boolean onMouseClick(int button, int action) {
-        double mx=Mouse.getX();
-        double my=Mouse.getY();
+        double mx=Mouse.getX()-(getWindowPosX());
+        double my=Mouse.getY()-(getWindowPosY());
         if (mx>=posX&&mx<=posX+this.width &&my>=posY&&my<=posY+this.height) {
-            return super.onMouseClick(button, action);    
         }
-        return false;
+//        return false;
+        return super.onMouseClick(button, action);    
     }
 
-    public void onWheelScroll(double xoffset, double yoffset) {
+    public boolean onWheelScroll(double xoffset, double yoffset) {
         float h = getContentHeight();
         h = h<=0?1:h;
         this.scrollOffset = (float) Math.min(1, Math.max(scrollOffset-yoffset/(h*0.02f), 0));
+        return true;
     }
 
     public double mouseOffsetY() {
         float contentheight = getContentHeight();
-        int yOff = this.posY;
+        double yOff = super.mouseOffsetY();
         if (contentheight>this.height) {
             yOff -= (contentheight-this.height)*scrollOffset;
         }
@@ -163,10 +175,6 @@ public class ScrollList extends Gui {
     @Override
     public boolean onGuiClicked(AbstractUI element) {
         return ((Gui) parent).onGuiClicked(element);
-    }
-
-    public double mouseOffsetX() {
-        return this.posX;
     }
 
 }

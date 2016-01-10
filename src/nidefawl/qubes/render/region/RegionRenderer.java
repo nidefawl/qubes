@@ -379,12 +379,12 @@ public class RegionRenderer extends AbstractRenderer {
                         occlQueryShader.enable();
                         GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
                         GL11.glColorMask(false, false, false, false);
-                        GL11.glDepthMask(false);
+                        Engine.enableDepthMask(false);
                         r.renderRegion(fTime, PASS_SHADOW_SOLID, drawMode, this.drawInstances);
                         r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
-                        GL11.glDepthMask(true);
+                        Engine.enableDepthMask(true);
                         GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
                         queriesRunning++;
                     }
@@ -450,7 +450,7 @@ public class RegionRenderer extends AbstractRenderer {
                         occlQueryShader.enable();
                         GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
                         GL11.glColorMask(false, false, false, false);
-                        GL11.glDepthMask(false);
+                        Engine.enableDepthMask(false);
                         Engine.bindVAO(GLVAO.vaoBlocksShadow);
                         r.renderRegion(fTime, PASS_SHADOW_SOLID, drawMode, this.drawInstances);
 //                        r.renderRegion(fTime, PASS_TRANSPARENT, drawMode, this.drawInstances);
@@ -458,7 +458,7 @@ public class RegionRenderer extends AbstractRenderer {
                         Engine.bindVAO(GLVAO.vaoBlocks);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
-                        GL11.glDepthMask(true);
+                        Engine.enableDepthMask(true);
                         GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
                         queriesRunning++;
                     }

@@ -20,37 +20,37 @@ public class GuiGameMenu extends Gui {
     }
     @Override
     public void initGui(boolean first) {
-        this.buttons.clear();
+        this.clearElements();
         int w1 = 240;
         int h = 30;
         int left = this.posX+this.width/2-w1/2;
         {
             resume = new Button(1, "Resume");
-            this.buttons.add(resume);
+            this.add(resume);
             resume.setPos(left, this.posY+this.height/2-20);
             resume.setSize(w1, h);
         }
         {
             settings = new Button(2, "Settings");
-            this.buttons.add(settings);
+            this.add(settings);
             settings.setPos(left, this.posY+this.height/2+20);
             settings.setSize(w1, h);
         }
         {
             controls = new Button(3, "Controls");
-            this.buttons.add(controls);
+            this.add(controls);
             controls.setPos(left, this.posY+this.height/2+60);
             controls.setSize(w1, h);
         }
         {
             back = new Button(4, "Back to Main Menu");
-            this.buttons.add(back);
+            this.add(back);
             back.setPos(left, this.posY+this.height/2+100);
             back.setSize(w1, h);
         }
         {
             quit = new Button(5, "Squid Game");
-            this.buttons.add(quit);
+            this.add(quit);
             quit.setPos(left, this.posY+this.height/2+140);
             quit.setSize(w1, h);
         }

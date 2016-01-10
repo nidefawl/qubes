@@ -389,6 +389,14 @@ public class GuiWindowManager implements Renderable  {
         }
         return false;
     }
+
+    public static boolean onWheelScroll(double xoffset, double yoffset) {
+        if (windowFocus != null && windowFocus.visible) {
+            return windowFocus.onWheelScroll(xoffset, yoffset);
+//            return true;
+        }
+        return false;
+    }
     public static void onWindowClosed(final GuiWindow window) {
         if (window.removeOnClose()) {
             windowList.values().remove(window);

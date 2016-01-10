@@ -1,6 +1,11 @@
 package nidefawl.qubes.vec;
 
-public class Vec3Stack {
+import org.lwjgl.opengl.GL11;
+
+import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Engine;
+
+public class TransformStack {
 
     final static int MAX_STACK = 16;
     
@@ -9,7 +14,7 @@ public class Vec3Stack {
     final Vector3f tmp = new Vector3f();
     private StackChangeCallBack cb = null;
 
-    public Vec3Stack() {
+    public TransformStack() {
         stackSize = 0;
         for (int i = 0; i < stack.length; i++) {
             stack[i] = new Vector3f(Vector3f.ZERO);
@@ -68,5 +73,10 @@ public class Vec3Stack {
         if (cb != null) {
             cb.onChange(get());
         }
+    }
+    
+    public void setScissors(int posX, int posY, int width, int height) {
+        Vector3f v = get();
+        GL11.glScissor((int)(v.x+posX), (int)(Game.displayHeight-((int)v.y+posY+height)), (int)width, (int)height);
     }
 }

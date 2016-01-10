@@ -15,12 +15,25 @@ public abstract class AbstractUI implements Renderable {
     public int height;
     public int posX;
     public int posY;
+    public int[] overridebounds = new int[4];
     public boolean hovered = false;
     public boolean enabled = true;
     public boolean draw = true;
     public boolean focused = false;
+    public int zIndex = 0;
     public static AbstractUI selectedButton;
-
+    public void saveBounds() {
+        overridebounds[0] = posX;
+        overridebounds[1] = posY;
+        overridebounds[2] = width;
+        overridebounds[3] = height;
+    }
+    public void restoreBounds() {
+        posX=overridebounds[0];
+        posY=overridebounds[1];
+        width=overridebounds[2];
+        height=overridebounds[3];
+    }
     public void setSize(int w, int h) {
         this.width = w;
         this.height = h;
@@ -64,9 +77,11 @@ public abstract class AbstractUI implements Renderable {
     public float        alpha  = 1.0F;
     public int          color2 = 0x888888;
     public float        alpha2 = 0.8F;
-    public int          color3  = 0x999999;
+    public int          color3  = 0xbababa;
     public float        alpha3  = 1.0F;
     public int          color4 = 0x888888;
+    public int          color5 = 0xeaeaea;
+    public int          color6 = 0x383838;
     public float        alpha4 = 0.8F;
     public float boxSigma = 0.25f;
     public float shadowSigma = 4;
@@ -96,9 +111,9 @@ public abstract class AbstractUI implements Renderable {
             Shaders.gui.setProgramUniform4f("color", 0,0,0, alpha);
             Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
             Shaders.gui.setProgramUniform1f("corner", round);
-            GL11.glDepthMask(false);
+            Engine.enableDepthMask(false);
             Engine.drawQuad();
-            GL11.glDepthMask(true);
+            Engine.enableDepthMask(true);
         } else {
             Shaders.gui.setProgramUniform1f("corner", round);
         }
@@ -136,43 +151,98 @@ public abstract class AbstractUI implements Renderable {
         }
     }
     public void renderOutlinedBox() {
-        color3 = 0xbababa;
-        color4 = 0x888888;
         int c1 = this.hovered || this.focused ? this.color3 : this.color;
         int c2 = this.hovered || this.focused ? this.color4 : this.color2;
         Shaders.gui.enable();
-        this.posX -= 1;
-        this.width += 2;
-        this.posY -= 1;
-        this.height += 2;
+        int extend = 2;
+        this.posX -= extend;
+        this.width += extend*2;
+        this.posY -= extend;
+        this.height += extend*2;
         Shaders.gui.enable();
         renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, true);
-        this.width -= 2;
-        this.posX += 1;
-        this.height -= 2;
-        this.posY += 1;
+        this.width -= extend*2;
+        this.posX += extend;
+        this.height -= extend*2;
+        this.posY += extend;
         renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
     }
     public void renderBox() {
-        color3 = 0xbababa;
-        color4 = 0x888888;
         int c1 = this.hovered ? this.color3 : this.color;
         int c2 = this.hovered ? this.color4 : this.color2;
         if (selectedButton == this) {
-            c1 = 0xeaeaea;
-            c2 = 0x383838;
+            c1 = color5;
+            c2 = color6;
         }
-        this.posX -= 1;
-        this.width += 2;
-        this.posY -= 1;
-        this.height += 2;
+        renderBox(true, false, c1, c2);
+    }
+    public void renderBox(boolean addShadow, boolean inverse, int c1, int c2, int i) {
+        
+    }
+    public void renderBox(boolean addShadow, boolean inverse, int c1, int c2) {
+        int extend = 2;
+        this.posX -= extend;
+        this.width += extend*2;
+        this.posY -= extend;
+        this.height += extend*2;
         Shaders.gui.enable();
-        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, true);
-        this.width -= 2;
-        this.posX += 1;
-        this.height -= 2;
-        this.posY += 1;
+        if (inverse)
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
+        else
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, addShadow);    
+        
+        this.width -= extend*2;
+        this.posX += extend;
+        this.height -= extend*2;
+        this.posY += extend;
+        if (inverse)
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, addShadow);    
+        else 
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
+        
+    }
+    public void renderBox2(boolean addShadow, boolean inverse, int c1, int c2) {
+        int extend = 4;
+        this.posX -= extend;
+        this.width += extend*2;
+        this.posY -= extend;
+        this.height += extend*2;
+        Shaders.gui.enable();
+        if (inverse)
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
+        else
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, addShadow);    
+        
+        this.width -= extend*2;
+        this.posX += extend;
+        this.height -= extend*2;
+        this.posY += extend;
+        if (inverse)
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, addShadow);    
+        else 
+            renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
+        
+    }
+    public int getWindowPosX() {
+        return this.parent != null ? this.parent.getWindowPosX() : 0;
+    }
+    public int getWindowPosY() {
+        return this.parent != null ? this.parent.getWindowPosY() : 0;
+    }
 
-        renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
+    public void renderSlotBackground(float x, float y, float z, float w, float h, int color, float alpha, boolean shadow, float i) {
+        shadowSigma = 4;
+        extendx = 1;
+        extendy = 1;
+        this.round = i;
+//        renderRoundedBoxShadowInverse(x, y, z, w, h, color, alpha, shadow);
+        shadowSigma = 0.4f;
+        extendx = 2;
+        extendy = 2;
+        extendx = 1;
+        extendy = 1;
+
+        renderRoundedBoxShadowInverse(x, y, z, w, h, color, alpha, shadow);
+        resetShape();
     }
 }

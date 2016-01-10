@@ -27,13 +27,13 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     }
     @Override
     public void initGui(boolean first) {
-        this.buttons.clear();
+        this.clearElements();
         int w1 = 300;
         int h = 30;
         int left = this.posX+this.width/2-w1/2;
         {
             connect = new Button(1, "Connect");
-            this.buttons.add(connect);
+            this.add(connect);
             connect.setPos(left+200, this.posY+this.height/2-20);
             connect.setSize(100, h);
         }
@@ -43,7 +43,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             field.setPos(left, this.posY+this.height/2-20);
             field.setSize(w1-110, h);
 //            field.
-            this.buttons.add(field);
+            this.add(field);
         }
         {
 
@@ -51,29 +51,29 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             fieldN.setPos(left, this.posY+this.height/2-60);
             fieldN.setSize(w1, h);
 //            field.
-            this.buttons.add(fieldN);
+            this.add(fieldN);
         }
         {
             settings = new Button(3, "Settings");
-            this.buttons.add(settings);
+            this.add(settings);
             settings.setPos(left, this.posY+this.height/2+20);
             settings.setSize(w1, h);
         }
         {
             controls = new Button(4, "Controls");
-            this.buttons.add(controls);
+            this.add(controls);
             controls.setPos(left, this.posY+this.height/2+60);
             controls.setSize(w1, h);
         }
         {
             quit = new Button(4, "Quit Game");
-            this.buttons.add(quit);
+            this.add(quit);
             quit.setPos(left, this.posY+this.height/2+120);
             quit.setSize(w1, h);
         }
         {
             crash = new Button(5, "Crash");
-            this.buttons.add(crash);
+            this.add(crash);
             crash.setPos(left, this.posY+this.height/2+160);
             crash.setSize(w1, h);
         }

@@ -3,6 +3,8 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -10,14 +12,15 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.AbstractUIOverlay;
-import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.PopupHolder;
+import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
     public ArrayList<AbstractUI> buttons   = new ArrayList<>();
+    public ArrayList<AbstractUI> prebackground   = new ArrayList<>();
     public boolean    firstOpen = true;
     public AbstractUIOverlay popup;
     public static final int slotW = 48;
@@ -33,8 +36,33 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
     public void add(AbstractUI element) {
         this.buttons.add(element);
+        element.parent = this;
+    }
+    public void addBackground(AbstractUI element) {
+        this.buttons.add(element);
+        this.prebackground.add(element);
+        element.parent = this;
+        sortElements();
+    }
+    public void clearElements() {
+        this.buttons.clear();
+        this.prebackground.clear();
+    }
+    public void sortElements() {
+        Collections.sort(this.prebackground, new Comparator<AbstractUI>() {
+            @Override
+            public int compare(AbstractUI o1, AbstractUI o2) {
+                int n = Integer.compare(o1.zIndex,  o2.zIndex);
+                if (n != 0)
+                    return n;
+                return Integer.compare(o1.id, o2.id);
+            }
+        });
     }
 
+    public void remove(AbstractUI element) {
+        this.buttons.remove(element);
+    }
     @Override
     public void setPopup(AbstractUIOverlay popup) {
         if (selectedButton == popup) {
@@ -43,9 +71,21 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         this.popup = popup;
     }
 
+    public void renderBackgroundElements(float fTime, double mX, double mY) {
+        if (prebackground.isEmpty())
+            return;
+        Engine.pxStack.push(this.posX, this.posY, 0);
+        for (int i = 0; i < this.prebackground.size(); i++) {
+            this.prebackground.get(i).render(fTime, mX-this.posX, mY-this.posY);
+        }
+        Engine.pxStack.pop();
+    }
     public void renderButtons(float fTime, double mX, double mY) {
         Engine.pxStack.push(this.posX, this.posY, 0);
         for (int i = 0; i < this.buttons.size(); i++) {
+            if (this.prebackground.contains(this.buttons.get(i))) {
+                continue;
+            }
             this.buttons.get(i).shadowSigma = this instanceof GuiWindow ? 2 : 4;
             this.buttons.get(i).render(fTime, mX-this.posX, mY-this.posY);
         }
@@ -61,7 +101,6 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public boolean onMouseClick(int button, int action) {
         double mx=Mouse.getX()-mouseOffsetX();
         double my=Mouse.getY()-mouseOffsetY();
-        
         if (action == GLFW.GLFW_PRESS) {
             for (int i = 0; i < this.buttons.size(); i++) {
                 AbstractUI b = this.buttons.get(i);
@@ -103,11 +142,11 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     public double mouseOffsetY() {
-        return this.posY;
+        return this.posY+(this.parent!=null?this.parent.getWindowPosY():0);
     }
 
     public double mouseOffsetX() {
-        return this.posX;
+        return this.posX+(this.parent!=null?this.parent.getWindowPosX():0);
     }
 
     public boolean onGuiClicked(AbstractUI element) {
@@ -176,6 +215,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         return false;
     }
 
-    public void onWheelScroll(double xoffset, double yoffset) {
+    public boolean onWheelScroll(double xoffset, double yoffset) {
+        return false;
     }
 }

@@ -57,7 +57,6 @@ public abstract class GuiInventoryBase extends GuiWindow {
         Shaders.gui.enable();
         if (sHover != null) {
             renderSlotBackground(posx+sHover.x+inset2, posy+sHover.y+inset2, 32, +sHover.w-inset2*2, sHover.w-inset2*2, -1, 0.16f, false, 2);
-
         }
         Engine.pxStack.pop();
         BaseStack stack = sHover != null ? sHover.getItem() : null;

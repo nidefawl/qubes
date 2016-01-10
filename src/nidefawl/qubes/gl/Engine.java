@@ -58,7 +58,7 @@ public class Engine {
     private static BufferedMatrix tempMatrix2;
     private static BufferedMatrix identity;
     public static Vector3f       pxOffset = new Vector3f();
-    public final static Vec3Stack pxStack = new Vec3Stack();
+    public final static TransformStack pxStack = new TransformStack();
     public final static Matrix4f invertYZ = new Matrix4f().scale(1, -1, -1);
     
 
@@ -89,6 +89,9 @@ public class Engine {
 
     public static boolean renderWireFrame = false;
     public static boolean USE_TRIANGLES = true; //mandatory now...
+    private static boolean isDepthMask = true;
+
+    public static boolean isScissors = false;
 
     public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
@@ -462,6 +465,7 @@ public class Engine {
 
     public static final Vector3f vOrigin = new Vector3f();
     public static Vector3f vDir = null;
+
     public static final Vector3f vDirTmp = new Vector3f();
     public static final Vector3f vTarget = new Vector3f();
     public static final Vector3f t = new Vector3f();
@@ -589,5 +593,39 @@ public class Engine {
         return i;
     }
 
+    public static void enableDepthMask(boolean flag) {
+        isDepthMask = flag;
+        GL11.glDepthMask(flag);
+    }
+
+    public static void enableScissors() {
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        isScissors = true;
+    }
+    public static void disableScissors() {
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        isScissors = false;
+    }
+    public static void setOverrideScissorTest(boolean b) {
+        if (!b) {
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);    
+        } else {
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        }
+    }
+    public static void restoreScissorTest() {
+        if (!isScissors) {
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);    
+        } else {
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        }
+    }
+    public static void restoreDepthMask() {
+        GL11.glDepthMask(isDepthMask);
+    }
+    //May need stack sometime
+    public static void setOverrideDepthMask(boolean b) {
+        GL11.glDepthMask(b);
+    }
 
 }

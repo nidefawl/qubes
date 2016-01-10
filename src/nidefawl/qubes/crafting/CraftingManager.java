@@ -96,11 +96,11 @@ public class CraftingManager {
                 for (int i = 0; i < slots.getInputSize(); i++) {
                     slots.getSlot(i).drain();
                 }
-                BaseStack left = s.putStack(new ItemStack(this.recipe.getOut()));
-                if (left != null) {
-                    // should not happen!!!
-                    throw new GameError("Result slot was expected to be empty");
-                }
+//                BaseStack left = s.putStack(this.recipe.getOut().copy());
+//                if (left != null) {
+//                    // should not happen!!!
+//                    throw new GameError("Result slot was expected to be empty");
+//                }
                 stopCrafting();
                 player.sendPacket(getStatePacket(4));
                 return true;

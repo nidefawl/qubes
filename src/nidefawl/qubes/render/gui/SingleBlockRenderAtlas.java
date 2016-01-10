@@ -44,12 +44,16 @@ public class SingleBlockRenderAtlas {
 //            this.glId = TextureManager.getInstance().makeNewTexture(defaultData, tileSize, tileSize, false, true, -1); 
         }
         public int getTextureIdx(int hash) {
+            int free = -1;
             for (int i = 0; i < slots; i++) {
                 if (hashes[i] == hash) {
                     return i;
                 }
+                if (hashes[i] == -1) {
+                    free = i;
+                }
             }
-            return -1;
+            return free;
         }
         public boolean hasFree() {
             return getTextureIdx(-1) != -1;
@@ -105,7 +109,7 @@ public class SingleBlockRenderAtlas {
         if (atlas == null)
             return true;
         int idx = atlas.getTextureIdx(hash);
-        return idx < 0;
+        return idx < 0 || Math.random()<0.1;
     }
     Map<Integer, TextureAtlas> map = Maps.newHashMap();
     private boolean rendering;
@@ -125,7 +129,7 @@ public class SingleBlockRenderAtlas {
         int hash = block.id<<8|data;
         TextureAtlas atlas = getAtlas(hash, true);
         if (atlas != null) {
-            int idx = atlas.getTextureIdx(-1);
+            int idx = atlas.getTextureIdx(hash);
             atlas.hashes[idx] = hash;
             int x = getXPx(idx);
             int y = getYPx(idx);

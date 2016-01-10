@@ -57,7 +57,7 @@ public class GuiSettings extends Gui {
 
     @Override
     public void initGui(boolean first) {
-        this.buttons.clear();
+        this.clearElements();
         this.list.clear();
         int w1 = 160;
         int h = 30;
@@ -133,12 +133,12 @@ public class GuiSettings extends Gui {
             s.box.setSize(w1, h);
             s.box.titleWidth = 185;
             y += 45;
-            this.buttons.add(s.box);
+            this.add(s.box);
         }
         {
              left = this.posX + this.width / 2 - (w1) / 2;
             back = new Button(6, "Back");
-            this.buttons.add(back);
+            this.add(back);
             back.setPos(left, this.posY + this.height / 2 + 120);
             back.setSize(w1, h);
         }

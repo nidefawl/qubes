@@ -36,7 +36,7 @@ public class GuiOverlayDebug extends Gui {
         glPushAttrib(-1);
         glDisable(3008);
         glDepthFunc(519);
-        glDepthMask(false);
+        Engine.enableDepthMask(false);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
@@ -46,7 +46,7 @@ public class GuiOverlayDebug extends Gui {
     public void postDbgFB() {
         glEnable(GL_TEXTURE_2D);
         glDepthFunc(GL_LEQUAL);
-        glDepthMask(true);
+        Engine.enableDepthMask(true);
         glPopAttrib();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("fbDbg.glPopAttrib");
         FrameBuffer.unbindFramebuffer();
