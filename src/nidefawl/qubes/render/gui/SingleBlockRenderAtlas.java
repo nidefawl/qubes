@@ -109,7 +109,7 @@ public class SingleBlockRenderAtlas {
         if (atlas == null)
             return true;
         int idx = atlas.getTextureIdx(hash);
-        return idx < 0 || Math.random()<0.1;
+        return idx < 0;
     }
     Map<Integer, TextureAtlas> map = Maps.newHashMap();
     private boolean rendering;
