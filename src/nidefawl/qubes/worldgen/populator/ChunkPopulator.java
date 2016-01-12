@@ -38,8 +38,9 @@ public class ChunkPopulator implements IChunkPopulator {
         int cZ= c.getBlockZ()+8;
         HexBiome hex = this.world.getHex(cX, cZ);
         Biome b = hex.biome;
-        if (b == Biome.DESERT || b == Biome.DESERT_RED)
+        if (b == Biome.DESERT || b == Biome.DESERT_RED) {
             return;
+        }
         Random rand = new Random();
         int a = 0;
         Random r = new Random();
@@ -61,6 +62,8 @@ public class ChunkPopulator implements IChunkPopulator {
         ArrayList<Block> bl4 = Lists.newArrayList();
         bl4.add(Block.tallgrass1);
         bl4.add(Block.tallgrass2);
+        bl4.add(Block.cattail);
+        bl4.add(Block.cattail);
         bl4.add(Block.grassbush);
         List<Integer> list = new ArrayList<Integer>();
         list.add(0);
@@ -83,7 +86,12 @@ public class ChunkPopulator implements IChunkPopulator {
         double distCenter = GameMath.dist2d(hex.getCenterX(), hex.getCenterY(), cX, cZ);
         double distScale = Math.max(0, 1-(distCenter/(hex.getGrid().radius*0.8)));
         int nTrees = (int) (3+distScale*64);
-        for (int i = 0; i < 133; i++) {
+        Block bush = Block.grassbush;
+        if (rand.nextInt(44) > 22) {
+            bush = Block.thingrass;
+        }
+        int amt = 133;
+        for (int i = 0; i < amt; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
@@ -105,8 +113,13 @@ public class ChunkPopulator implements IChunkPopulator {
                         }
                     }
                 } else {
-                    Block bg = Block.grassbush;
-                    world.setType(x, h+1, z, bg.id, Flags.MARK);
+                    world.setType(x, h+1, z, bush.id, Flags.MARK);
+                    if (rand.nextInt(amt/2) == 0) {
+                        bush = Block.grassbush;
+                        if (rand.nextInt(44) > 22) {
+                            bush = Block.thingrass;
+                        }
+                    }
                 }
                 a++;
             }   
