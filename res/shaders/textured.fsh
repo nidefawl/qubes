@@ -12,7 +12,7 @@ out vec4 out_Color;
 void main(void) {
 	vec4 tex = texture(tex0, pass_texcoord.st, 0);
 #ifdef ALPHA_TEST
-    if (tex.a < 1.0)
+    if (tex.a < 0.04)
     	discard;
 #endif
     out_Color = tex*pass_Color;

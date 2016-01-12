@@ -82,41 +82,43 @@ void main(void) {
 	// vec4 rect = vec4(vec3(0.5), 1);
 	// vec4 shadow = vec4(0,0,0,1)*f;
  //    out_Color = mix(shadow, rect, inside);
-if (colorwheel == 1) {
-      
-  out_Color = color;
-  float range = -0.004;
-  vec3 g = color_palette(range+(1-texcoord.x)*(1-range*2), a, b, c, d);
-  float l1 = valueL/0.5f;
-  float l2 = max(0, l1-1.0f);
-  g = mix(vec3(valueL), g, valueS);
-  vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
-  out_Color.rgb = h; 
-} else if (colorwheel == 2) {
-  vec3 e = vec3(0.5, 0.5, 0.5);
-  vec3 f = color_palette(valueH, a, b, c, d);
-  out_Color = color;
-  vec3 g = mix(e, f, texcoord.x);
-  float l1 = valueL/0.5f;
-  float l2 = max(0, l1-1.0f);
-  vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
-  out_Color.rgb = h; 
-} else if (colorwheel == 3) {
-  vec3 e = vec3(0);
-  vec3 f = color_palette(valueH, a, b, c, d);
-  f = mix(vec3(0.5f), f, valueS);
-  vec3 g = vec3(1);
-  float l1 = texcoord.x/0.5f;
-  float l2 = max(0, l1-1.0f);
-  out_Color = color;
-  out_Color.rgb = mix(mix(e, f, l1), g, l2); 
-} else if (colorwheel == 4) {
-  out_Color = color;
-} else {
-  out_Color = color;
-  out_Color.rgb *= (1-fade)+texcoord.y*fade;
-}
-    out_Color.a *= roundedBoxShadow(box.xy+PX_OFFSET.xy, box.zw+PX_OFFSET.xy, vertex, sigma, corner);
-    if (out_Color.a<0.01)
-      discard;
+  if (colorwheel == 1) {
+        
+    out_Color = color;
+    float range = -0.004;
+    vec3 g = color_palette(range+(1-texcoord.x)*(1-range*2), a, b, c, d);
+    float l1 = valueL/0.5f;
+    float l2 = max(0, l1-1.0f);
+    g = mix(vec3(valueL), g, valueS);
+    vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
+    out_Color.rgb = h; 
+  } else if (colorwheel == 2) {
+    vec3 e = vec3(0.5, 0.5, 0.5);
+    vec3 f = color_palette(valueH, a, b, c, d);
+    out_Color = color;
+    vec3 g = mix(e, f, texcoord.x);
+    float l1 = valueL/0.5f;
+    float l2 = max(0, l1-1.0f);
+    vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
+    out_Color.rgb = h; 
+  } else if (colorwheel == 3) {
+    vec3 e = vec3(0);
+    vec3 f = color_palette(valueH, a, b, c, d);
+    f = mix(vec3(0.5f), f, valueS);
+    vec3 g = vec3(1);
+    float l1 = texcoord.x/0.5f;
+    float l2 = max(0, l1-1.0f);
+    out_Color = color;
+    out_Color.rgb = mix(mix(e, f, l1), g, l2); 
+  } else if (colorwheel == 4) {
+    out_Color = color;
+  } else {
+    out_Color = color;
+    out_Color.rgb *= (1-fade)+texcoord.y*fade;
+  }
+
+    
+  out_Color.a *= roundedBoxShadow(box.xy+PX_OFFSET.xy, box.zw+PX_OFFSET.xy, vertex, sigma, corner);
+  if (out_Color.a<0.01)
+    discard;
 }

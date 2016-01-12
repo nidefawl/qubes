@@ -5,7 +5,6 @@
 #pragma include "ubo_constants.glsl"
 #pragma include "vertex_layout.glsl"
 
-uniform mat4 in_modelMatrix;
 uniform float in_scale;
 
 out vec4 color;
@@ -19,9 +18,6 @@ void main() {
 
 	vec4 pos = vec4(in_position.xyz + PX_OFFSET.xyz, 1);
 	texcoord = in_texcoord;
-
-
-	vec4 position = in_matrix_2D.mv3DOrtho * in_modelMatrix * pos;
-	vec4 outpos = in_matrix_2D.p3DOrtho * position;
+	vec4 outpos = in_matrix_2D.mvp * pos;
 	gl_Position = outpos;
 }
