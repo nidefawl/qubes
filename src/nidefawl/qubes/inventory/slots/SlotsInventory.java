@@ -11,15 +11,13 @@ import nidefawl.qubes.inventory.PlayerInventory;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class SlotsInventory extends Slots {
+public class SlotsInventory extends SlotsInventoryBase {
 
-    private PlayerInventory inv;
 
     public SlotsInventory(Player player, int xPos, int yPos, int w, int dist) {
         super(0, player.getInventory(), player.getInventory());
-        this.inv = player.getInventory();
-        for (int i = 0; i < this.inv.inventorySize; i++) {
-            addSlot(new Slot(this, this.inv, i, xPos+(i%10)*(w+dist), yPos+(i/10)*(w+dist), w));
+        for (int i = 0; i < this.baseInv.inventorySize; i++) {
+            addSlot(new SlotInventory(this, this.baseInv, i, xPos+(i%10)*(w+dist), yPos+(i/10)*(w+dist), w));
         }
     }
 

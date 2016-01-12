@@ -1,11 +1,13 @@
 package nidefawl.qubes.network.server;
 
 import nidefawl.qubes.chat.ChannelManager;
+import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
+import nidefawl.qubes.crafting.recipes.CraftingRecipe;
+import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.inventory.slots.Slot;
-import nidefawl.qubes.inventory.slots.Slots;
+import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
@@ -268,20 +270,79 @@ public class ServerHandlerPlay extends ServerHandler {
         }
         BaseStack result = slots.slotClicked(slot, p.button, p.action);
         if (!BaseStack.equalStacks(result, p.stack)) {
+            System.err.println("transaction not in sync");
+            System.err.println("client "+p.stack);
+            System.err.println("server "+result);
             //TODO: resync + log
             this.player.syncInventory();
         }
     }
     public void handleCrafting(PacketCCrafting p) {
-        CraftingManager mgr = player.getCrafting(p.id);
+        CraftingRecipe recipe = CraftingRecipes.getRecipeId(p.recipeid);
+        CraftingCategory cat = CraftingCategory.getCatId(p.catid);
+        if (cat == null && recipe != null) {
+            cat = recipe.getCategory();
+        }
+        if (cat == null) {
+            kick("Invalid packet. Code 0x2001");
+            return;
+        }
+        CraftingManager mgr = player.getCrafting(cat.getId());
         if (mgr == null) {
-            kick("Invalid packet");
+            kick("Invalid packet. Code 0x2002");
             return;
         }
-        if (p.action < 0 || p.action > 3) {
-            kick("Invalid packet");
+        System.err.println("mgr "+mgr.getId());
+        int result = mgr.handleRequest(cat, recipe, p.action, p.amount);
+        if (result > 0x2000) {
+            kick("Invalid packet. Code "+String.format("0x%05X", result));
             return;
         }
-        mgr.handleRequest(p.action);
+        if (result == 1) {
+            //crafting inventory contains items but no crafting is undefined
+            //this should never happen (unless in dev)
+        }
+        if (result == 2) {
+            //unknown recipe
+        }
+        if (result == 3) {
+            //tried to start crafting while still crafting
+        }
+        if (result == 4) {
+            //tried to stop crafting while not crafting
+        }
+        if (result == 5) {
+            //unmatched recipe (missing input items)
+        }
+        if (result == 6) {
+            //tried to stop crafting after finished
+        }
+        if (result == 7) {
+            //invalid amount
+        }
+        System.out.println("result "+result);
+    }
+    public void handleInvTransaction(PacketCInvTransaction p) {
+        Slots slots = player.getSlots(p.id);
+        if (slots == null) {
+            //TODO: kick + log
+            return;
+        }
+        switch (p.action) {
+            case 1:
+                if (slots instanceof SlotsCrafting) {
+                    int n = ((SlotsCrafting)slots).transferSlots((SlotsInventoryBase) player.getSlots(0));
+                    if (n != 0) {
+                        //no inv space!
+                        return;
+                    }
+                    return;
+                }
+                kick("Invalid packet. Code 0x2011");
+                break;
+            default:
+                kick("Invalid packet. Code 0x2012");
+                return;
+        }
     }
 }

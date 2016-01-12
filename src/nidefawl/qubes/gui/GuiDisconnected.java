@@ -27,9 +27,6 @@ public class GuiDisconnected extends Gui {
         }
     }
 
-    public void update() {
-    }
-
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
         Shaders.textured.enable();

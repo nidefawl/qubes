@@ -24,6 +24,7 @@ import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.inventory.BaseInventory;
+import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
@@ -485,6 +486,14 @@ public class ClientHandler extends Handler {
             return;
         }
         mgr.handleRequest(p.action, p);
+    }
+
+    public void handleInvCarried(PacketSInvCarried packetSInvCarried) {
+        PlayerSelf player = Game.instance.getPlayer();
+        if (player != null) {
+            PlayerInventory inv = (PlayerInventory) player.getInv(0);
+            inv.carried=packetSInvCarried.stack.stack;
+        }
     }
 
 }

@@ -9,8 +9,19 @@ package nidefawl.qubes.inventory;
  */
 public class PlayerInventoryCrafting extends BaseInventory {
     
-    public PlayerInventoryCrafting() {
-        super(1, 8*2+1);
+    private int inputSlots;
+    private int outputSlots;
+    public PlayerInventoryCrafting(int id, int inputSlots, int outputSlots) {
+        super(id, inputSlots+outputSlots);
+        this.inputSlots = inputSlots;
+        this.outputSlots = outputSlots;
+    }
+    
+    public int getInputSlots() {
+        return this.inputSlots;
+    }
+    public int getOutputSlots() {
+        return this.outputSlots;
     }
 
     public PlayerInventoryCrafting copy(PlayerInventoryCrafting inv) {

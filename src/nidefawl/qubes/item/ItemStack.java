@@ -15,10 +15,6 @@ import nidefawl.qubes.nbt.Tag;
  * Copyright: Michael Hept
  */
 public class ItemStack extends BaseStack {
-
-    public int id;
-    public int data;
-    public int size;
     
     public ItemStack(Item item) {
         this.id = item.id;
@@ -107,5 +103,14 @@ public class ItemStack extends BaseStack {
     @Override
     public Block getBlock() {
         return null;
+    }
+    @Override
+    public String toString() {
+        return "ItemStack[id="+this.id+",data="+this.data+",size="+this.size+"]";
+    }
+    /** Only for crafting calc purposes, does not reflect state of dynamic stackdata instances */
+    @Override
+    public int getTypeHash() {
+        return ((this.id<<16|this.data)<<2);
     }
 }

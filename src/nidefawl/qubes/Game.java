@@ -328,29 +328,40 @@ public class Game extends GameBase implements IErrorHandler {
 //        if (k != null && k.isEnabled() && k.isPressed()) {
 //            return;
 //        }
-        if (this.gui != null) {
-            if (this.gui.onTextInput(codepoint)) {
-                return;
-            }
+        if (GuiContext.input != null) {
+            GuiContext.input.onTextInput(codepoint);
         }
-        if (GuiWindowManager.requiresTextInput()) {
-            if (GuiWindowManager.onTextInput(codepoint)) {
-                return;
-            }
-        } 
+//        if (this.gui != null) {
+//            if (this.gui.onTextInput(codepoint)) {
+//                return;
+//            }
+//        }
+//        if (GuiWindowManager.requiresTextInput()) {
+//            
+//            if (GuiWindowManager.onTextInput(codepoint)) {
+//                return;
+//            }
+//        } 
     }
     
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
-          Keybinding k = InputController.getKeyBinding(key);
-          if (k != null && k.isEnabled() && k.isPressed()) {
-              k.update(action);
-              return;
-          }
-          if (GuiWindowManager.onKeyPress(key, scancode, action, mods)) {
-              return;
-          }
+            if (GuiContext.input != null) {
+                if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_PRESS) {
+                    GuiContext.input.focused = false;
+                    GuiContext.input = null;
+                    return;
+                }
+            }
+            Keybinding k = InputController.getKeyBinding(key);
+            if (k != null && k.isEnabled() && k.isPressed()) {
+                k.update(action);
+                return;
+            }
+            if (GuiWindowManager.onKeyPress(key, scancode, action, mods)) {
+                return;
+            }
             if (this.gui != null) {
                 if (this.gui.onKeyPress(key, scancode, action, mods)) {
                     return;
@@ -370,7 +381,7 @@ public class Game extends GameBase implements IErrorHandler {
             } else if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
                 this.selBlock.id = key - GLFW.GLFW_KEY_1;
                 this.selBlock.data = 0;
-                if (!Block.isValid(this.selBlock.id)) 
+                if (!Block.isValid(this.selBlock.id))
                     this.selBlock.id = 0;
             }
         }
@@ -879,6 +890,15 @@ public class Game extends GameBase implements IErrorHandler {
                 t.drawQuads();
                 Shader.disable();
             }
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("stats");
+            if (this.statsCached != null) {
+                this.statsCached.render(fTime, 0, 0);
+            }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_DEPTH_TEST);
             GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
             glDisable(GL_DEPTH_TEST);
@@ -889,14 +909,6 @@ public class Game extends GameBase implements IErrorHandler {
             if (this.chatOverlay != null) {
                 this.chatOverlay.render(fTime, 0, 0);
             }
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("stats");
-            if (this.statsCached != null) {
-                this.statsCached.render(fTime, 0, 0);
-            }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
         }else {
         }
 
@@ -922,7 +934,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >3000241/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >3241/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
           Shaders.initShaders();
@@ -1077,15 +1089,14 @@ public class Game extends GameBase implements IErrorHandler {
     @Override
     public void updateInput() {
         super.updateInput();
-        if (reinittexthook) {
-            reinittexthook = false;
-            if (this.gui != null && this.gui.requiresTextInput()) {
-                setTextHook(true);
-            } else if (GuiWindowManager.requiresTextInput()) {
-                setTextHook(true);
-            } else {
-                setTextHook(false);
-            }
+        if (GuiContext.input != null && !GuiContext.input.focused) {
+            GuiContext.input.focused=false;
+            GuiContext.input = null;
+        }
+        boolean reqTextHook=(GuiContext.input != null && GuiContext.input.isFocusedAndContext());
+        if (hasTextHook()!=reqTextHook) {
+            System.out.println("reinit text hook -> "+reqTextHook);
+            setTextHook(reqTextHook);
         }
     }
 

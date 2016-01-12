@@ -14,21 +14,21 @@ public class PacketSCraftingProgress extends Packet {
     public long startTime;
     public long endTime;
     public int recipe;
+    public boolean finished;
+    public int amount;
+    
     public PacketSCraftingProgress() {
     }
 
-    public PacketSCraftingProgress(int id, int idx, int button, int action, BaseStack stack) {
-        super();
-        this.id = id;
-        this.action = action;
-    }
 
 
     @Override
     public void readPacket(DataInput stream) throws IOException {
         this.id = stream.readInt();
         this.action = stream.readInt();
+        this.amount = stream.readInt();
         this.recipe = stream.readInt();
+        this.finished = stream.readUnsignedByte()!=0;
         this.currentTime = stream.readLong();
         this.startTime = stream.readLong();
         this.endTime = stream.readLong();
@@ -38,7 +38,9 @@ public class PacketSCraftingProgress extends Packet {
     public void writePacket(DataOutput stream) throws IOException {
         stream.writeInt(this.id);
         stream.writeInt(this.action);
+        stream.writeInt(this.amount);
         stream.writeInt(this.recipe);
+        stream.writeByte(this.finished?1:0);
         stream.writeLong(this.currentTime);
         stream.writeLong(this.startTime);
         stream.writeLong(this.endTime);

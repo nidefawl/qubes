@@ -56,7 +56,16 @@ public class Shaders {
             }
             Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");
             Shader new_uint = assetMgr.loadShader(newshaders, "debug/render_uint_texture");
-            Shader new_textured = assetMgr.loadShader(newshaders, "textured");
+            Shader new_textured = assetMgr.loadShader(newshaders, "textured", new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("ALPHA_TEST".equals(define)) {
+                        return "#define ALPHA_TEST 1";
+                    }
+                    return null;
+                }
+            });
             Shader new_textured3D = assetMgr.loadShader(newshaders, "textured_3D");
             Shader new_colored = assetMgr.loadShader(newshaders, "colored");
             Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
@@ -82,7 +91,6 @@ public class Shaders {
             Shaders.item = new_item;
             Shaders.colored.enable();
             Shaders.item.enable();
-            Shaders.item.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
             Shaders.gui.enable();
             Shaders.gui.setProgramUniform1i("colorwheel", 0);
             Shaders.gui.setProgramUniform1f("valueH", 0.5f);

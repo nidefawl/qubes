@@ -12,6 +12,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
+import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
@@ -24,10 +25,12 @@ public class ScrollList extends Gui {
     public float scrollY;
 
     public ScrollList(Gui parent) {
+        this();
         this.parent = parent;
+    }
+    public ScrollList() {
         this.font = FontRenderer.get(null, 18, 0, 20);
         scrollbarbutton = new Button(-2, "");
-        scrollbarbutton.parent = this.parent;
     }
     float getMinY() {
         float minY = Float.MAX_VALUE;
@@ -59,6 +62,7 @@ public class ScrollList extends Gui {
 
     @Override
     public void render(float fTime, double mX, double mY) {
+        GuiContext.scrolllist = this;
         float minY = 0;
         float maxY = 0;
         for (AbstractUI element : this.buttons) {

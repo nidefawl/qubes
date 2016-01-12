@@ -19,6 +19,7 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gui.*;
+import nidefawl.qubes.gui.crafting.GuiCraftingSelect;
 import nidefawl.qubes.gui.windows.*;
 import nidefawl.qubes.meshing.Mesher;
 import nidefawl.qubes.models.BlockModelManager;
@@ -223,7 +224,6 @@ public class InputController {
 
         addKeyBinding(new Keybinding("show_crafting", GLFW.GLFW_KEY_PERIOD) {
             public void onDown() {
-                GuiWindowManager.openWindow(GuiCrafting.class);
             }
         });
         addKeyBinding(new Keybinding("show_crafting2", GLFW.GLFW_KEY_COMMA) {

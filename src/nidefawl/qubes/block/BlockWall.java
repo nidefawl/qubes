@@ -18,6 +18,10 @@ import nidefawl.qubes.world.World;
  */
 public class BlockWall extends Block {
     private Block baseBlock;
+    @Override
+    public Block getBaseBlock() {
+        return this.baseBlock;
+    }
     
     public static int setWallConnections(IBlockWorld w, int ix, int iy, int iz, boolean[] b) {
         int n = 0;

@@ -76,7 +76,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         void call(ComboBoxList combo, int id);
     }
 
-    public static class ComboBoxList extends AbstractUIOverlay {
+    public static class ComboBoxList extends AbstractUI {
         PopupHolder            parentScreen;
         private final CallBack callBack;
         public ComboBox        box;
@@ -109,7 +109,6 @@ public class ComboBox extends AbstractUI implements Renderable {
         
         @Override
         public void initGui(boolean first) {
-            super.initGui(first);
             setFocus();
         }
 
@@ -396,7 +395,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         }
         Engine.enableDepthMask(false);
         
-        AbstractUIOverlay popup = gui.getPopup();
+        AbstractUI popup = gui.getPopup();
         
         this.hovered = this.enabled && ((popup != null && popup == this.comboBoxList) || (popup == null&&  this.mouseOver(i, j))) ;
         

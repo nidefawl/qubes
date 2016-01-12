@@ -22,6 +22,10 @@ public class BlockStairs extends BlockSliced {
      * @param transparent
      */
     final Block baseBlock;
+    @Override
+    public Block getBaseBlock() {
+        return this.baseBlock;
+    }
     private final int overrideTextureIdx;
     static boolean isUpsideDown(int a) {
         return (a & 0x4) != 0;

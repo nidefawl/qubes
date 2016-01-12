@@ -32,6 +32,7 @@ public class GuiConnecting extends Gui {
     }
 
     public void update() {
+        super.update();
         stateStr = this.thread.getState();
         if (this.thread.connected && this.thread.finished) {
             Game.instance.showGUI(null);

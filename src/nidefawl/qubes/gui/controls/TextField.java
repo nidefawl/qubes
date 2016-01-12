@@ -6,8 +6,12 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
+import nidefawl.qubes.gui.windows.GuiContext;
+import nidefawl.qubes.gui.windows.GuiWindow;
+import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -41,26 +45,26 @@ public class TextField extends AbstractUI implements Renderable {
     }
     @Override
     public void render(float fTime, double mX, double mY) {
+        if (!this.draw) {
+            return;
+        }
         this.hovered = this.mouseOver(mX, mY);
         Shaders.colored.enable();
         renderOutlinedBox();
         Shaders.textured.enable();
         GL11.glDisable(GL11.GL_CULL_FACE);
         this.inputRenderer.focused = this.focused;
-
-        GL11.glPushAttrib(GL11.GL_SCISSOR_BIT);
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(this.posX + 2, Game.displayHeight-(posY+this.height), this.width - 7, height);
+        Engine.pxStack.setScissors(posX + 2, posY, width - 7, height);
+        Engine.enableScissors();
         this.inputRenderer.drawStringWithCursor(mX, mY, Mouse.isButtonDown(0));
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
-        GL11.glPopAttrib();
+        Engine.disableScissors();
         GL11.glEnable(GL11.GL_CULL_FACE);
         //        this.font.drawString(this.text, this.posX + 3, this.posY + this.height / 2 + font.getLineHeight() / 2, -1, false, 1.0F, 0);
         Shader.disable();
     }
 
     public boolean mouseOver(double mX, double mY) {
-        return mX >= this.posX && mX <= this.posX + this.width && mY >= this.posY && mY <= this.posY + this.height;
+        return this.enabled && this.draw && mX >= this.posX && mX <= this.posX + this.width && mY >= this.posY && mY <= this.posY + this.height;
     }
 
     @Override
@@ -73,7 +77,13 @@ public class TextField extends AbstractUI implements Renderable {
     }
 
     public boolean handleMouseDown(Gui gui, int action) {
+        if (!enabled)
+            return false;
         this.focused = true;
+        if (GuiContext.input != null) {
+            GuiContext.input.focused=false;
+        }
+        GuiContext.input=this;
         //        return gui.onGuiClicked(this);
         return true;
     }
@@ -103,6 +113,23 @@ public class TextField extends AbstractUI implements Renderable {
      */
     public TextInput getTextInput() {
         return this.inputRenderer;
+    }
+
+    public boolean isFocusedAndContext() {
+        if (this.focused) {
+            if (this.parent instanceof Gui) {
+                if (Game.instance.getGui()==this.parent) {
+                    return true;
+                }
+            }
+            if (this.parent instanceof GuiWindow) {
+                GuiWindow w = (GuiWindow)this.parent;
+                if (w.visible && GuiWindowManager.anyWindowVisible() && w.hasFocus()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

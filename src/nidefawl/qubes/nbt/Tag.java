@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
 
+import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -376,6 +377,10 @@ public abstract class Tag {
             this.set(string, new Tag.Int(x));
         }
 
+        public void setLong(String string, long x) {
+            this.set(string, new Tag.Long(x));
+        }
+
         public void setByteArray(String string, byte[] b) {
             this.set(string, new Tag.ByteArray(b));
         }
@@ -429,6 +434,11 @@ public abstract class Tag {
         public int getInt(String string) {
             Tag t = this.data.get(string);
             return t instanceof Tag.Int ? ((Tag.Int) t).getInt() : 0;
+        }
+
+        public long getLong(String string) {
+            Tag t = this.data.get(string);
+            return t instanceof Tag.Long ? ((Tag.Long) t).getLong() : 0l;
         }
 
         public boolean getBoolean(String string) {
@@ -587,6 +597,12 @@ public abstract class Tag {
     public static class Long extends Tag {
 
         long data;
+
+        public Long(long x) {
+            this.data = x;
+        }
+        public Long() {
+        }
 
         @Override
         protected void writeData(DataOutput out) throws IOException {

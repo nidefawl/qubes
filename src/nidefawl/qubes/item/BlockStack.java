@@ -20,9 +20,6 @@ import nidefawl.qubes.nbt.Tag.ByteArray;
  */
 public class BlockStack extends BaseStack {
 
-    public int id;
-    public int data;
-    public int size;
     public StackData stackdata;
     
     /**
@@ -39,6 +36,9 @@ public class BlockStack extends BaseStack {
     }
     public BlockStack(int id) {
         this(id, 0, 1);
+    }
+    public BlockStack(Block block, int i) {
+        this(block.id, 0, i);
     }
     public BlockStack(Block block) {
         this(block.id, 0, 1);
@@ -149,5 +149,16 @@ public class BlockStack extends BaseStack {
     @Override
     public Item getItem() {
         return null;
+    }
+    
+    @Override
+    public String toString() {
+        return "BlockStack[id="+this.id+",data="+this.data+",size="+this.size+",stackdata="+(this.stackdata!=null?this.stackdata.hashCode():"<null>")+"]";
+    }
+    
+    /** Only for crafting calc purposes, does not reflect state of dynamic stackdata instances */
+    @Override
+    public int getTypeHash() {
+        return (this.stackdata!=null?2:1)|((this.id<<16|this.data)<<2);
     }
 }

@@ -176,4 +176,10 @@ public abstract class Handler {
 
     public void handleInvSyncIncr(PacketSInvSyncIncr packetSInvSyncIncr) {
     }
+
+    public void handleInvCarried(PacketSInvCarried packetSInvCarried) {
+    }
+
+    public void handleInvTransaction(PacketCInvTransaction packetCInvTransaction) {
+    }
 }

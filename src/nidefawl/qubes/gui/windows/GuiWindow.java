@@ -204,19 +204,23 @@ public abstract class GuiWindow extends Gui {
         }
     }
     public boolean onMouseClick(int button, int action) {
+        double mx = Mouse.getX();
+        double my = Mouse.getY();
+        if (this.popup != null) {
+            float popupMx=(float) (mx-(this.posX + this.popup.posX));
+            float popupMy=(float) (my-(this.posY + this.popup.posY));
+            if (popupMx > 0 && popupMx < this.popup.width && popupMy > 0 && popupMy <= this.popup.height) {
+                if (popup instanceof Gui) {
+                    ((Gui) this.popup).onMouseClick(button, action);
+                    return true;    
+                }
+            } else {
+                setPopup(null);
+            }
+        }
         if (action == GLFW.GLFW_PRESS) {
                 
             this.setFocus();
-            double mx = Mouse.getX();
-            double my = Mouse.getY();
-            if (this.popup != null) {
-                mx -= (this.posX + this.popup.posX);
-                my -= (this.posY + this.popup.posY);
-                if (mx > 0 && mx < this.popup.width && my > Math.min(this.posX + this.popup.posX, 0) && my <= this.popup.height) {
-//                    this.popup.mouseClicked((mx+(this.popup.posX)), (my + this.popup.posY), Mouse.getEventButton());
-                    return true;
-                }
-            }
                 
             if (mx>=this.posX&&mx<=this.posX+width&&my <= this.posY + titleBarHeight) {
                 GuiWindowManager.dragged = this;

@@ -4,7 +4,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.shader.Shaders;
 
-public class GuiInventory extends GuiInventoryBase {
+public class GuiInventory extends GuiWindowInventoryBase {
     
 
     public GuiInventory() {
@@ -33,9 +33,6 @@ public class GuiInventory extends GuiInventoryBase {
             setSize(width, height);
 //        }
         
-    }
-
-    public void update() {
     }
 
     public void render(float fTime, double mX, double mY) {

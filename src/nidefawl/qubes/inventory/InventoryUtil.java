@@ -60,4 +60,15 @@ public class InventoryUtil {
         return stacks;
     }
 
+    public static int count(BaseInventory inv, BaseStack needle) {
+        int j=0;
+        for (int i = 0; i < inv.stacks.length; i++) {
+            BaseStack stack = inv.stacks[i];
+            if (stack!=null&&stack.isEqualId(needle)) {
+                j++;
+            }
+        }
+        return j;
+    }
+
 }

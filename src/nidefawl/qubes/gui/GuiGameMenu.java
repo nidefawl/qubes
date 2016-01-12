@@ -60,13 +60,6 @@ public class GuiGameMenu extends Gui {
             top += 20+b.height;
         }
     }
-    public boolean onMouseClick(int button, int action) {
-        return super.onMouseClick(button, action);
-    }
-
-    public void update() {
-        
-    }
 
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);

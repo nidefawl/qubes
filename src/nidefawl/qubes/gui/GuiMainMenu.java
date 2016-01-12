@@ -9,6 +9,7 @@ import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ColorPicker;
 import nidefawl.qubes.gui.controls.TextField;
+import nidefawl.qubes.gui.windows.GuiContext;
 
 public class GuiMainMenu extends Gui implements ITextEdit {
 
@@ -82,10 +83,6 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         return super.onMouseClick(button, action);
     }
 
-    public void update() {
-        
-    }
-
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
         super.renderButtons(fTime, mX, mY);
@@ -133,6 +130,12 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     public void onEscape(TextInput textInput) {
         this.field.focused = false;
         this.fieldN.focused = false;
+        if (GuiContext.input == this.field) {
+            GuiContext.input=null;
+        }
+        if (GuiContext.input == this.fieldN) {
+            GuiContext.input=null;
+        }
     }
 
     public boolean requiresTextInput() {

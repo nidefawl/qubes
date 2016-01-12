@@ -105,7 +105,7 @@ public class FontRenderer {
         tess.setColorF(color, alpha);
         int w = this.trueTypeFont.drawString(tess, x, y, chatline, alignment, true, alpha, maxWidth);
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, getTexture());
-        tess.draw(GL11.GL_QUADS, tess);
+        tess.draw(GL11.GL_QUADS);
         this.drawedHeight = this.trueTypeFont.drawedHeight;
         return w;
     }

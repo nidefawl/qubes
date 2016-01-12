@@ -12,7 +12,9 @@ import com.google.common.collect.Sets;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
+import nidefawl.qubes.inventory.PlayerInventoryCrafting;
 import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.nbt.Tag;
@@ -54,16 +56,20 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
     public BlockPlacer               blockPlace     = new BlockPlacer(this);
     public HashMap<UUID, Vector3f>   worldPositions = Maps.newHashMap();
     public final PlayerEntityTracker entTracker     = new PlayerEntityTracker(this);
-    public final SlotsCrafting slotsCrafting;
-    public final SlotsInventory slotsInventory;
-    public final CraftingManager crafting = new CraftingManager(this, 0);
+    public final CraftingManager[] crafting = new CraftingManager[CraftingCategory.NUM_CATS];
     /**
      * 
      */
     public PlayerServer() {
         super();
-        this.slotsCrafting = new SlotsCrafting(this);
         this.slotsInventory = new SlotsInventory(this);
+        for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
+            this.slotsCrafting[i] = new SlotsCrafting(this, i+1);
+            this.crafting[i] = new CraftingManager(this, i);
+        }
+    }
+    public CraftingManager getCrafting(int id) {
+        return id < 0 | id >= this.crafting.length ? null : this.crafting[id];
     }
 
     @Override
@@ -142,7 +148,9 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 this.sendPacket(new PacketSDebugBB(trees));
             }
         }
-        this.crafting.update();
+        for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
+            this.crafting[i].update();
+        }
     }
 
     public void load(PlayerData data) {
@@ -154,7 +162,13 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         this.worldPositions.clear();
         this.worldPositions.putAll(data.worldPositions);
         this.inventory.set(data.invStacks);
-        this.inventoryCraft.set(data.invCraftStacks);
+        for (int i = 0; i < this.inventoryCraft.length; i++) {
+            this.inventoryCraft[i].set(data.invCraftStacks[i]);
+            if (data.craftingStates[i] != null) {
+                int id = data.craftingStates[i].getInt("id");
+                this.crafting[id].load(data.craftingStates[i]);
+            }
+        }
     }
 
     public PlayerData save() {
@@ -167,7 +181,11 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         data.flying = this.flying;
         data.joinedChannels = new HashSet<String>(this.joinedChannels);
         data.invStacks = this.inventory.copySlotStacks();
-        data.invCraftStacks = this.inventoryCraft.copySlotStacks();
+        for (int i = 0; i < this.inventoryCraft.length; i++) {
+            data.invCraftStacks[i] = this.inventoryCraft[i].copySlotStacks();
+            data.craftingStates[i] = this.crafting[i].save();
+        }
+        
         return data;
     }
 
@@ -284,26 +302,17 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         return stack;
     }
 
-    public Slots getSlots(int id) {
-        switch (id) {
-            case 0:
-                return this.slotsInventory;
-            case 1:
-                return this.slotsCrafting;
-        }
-        return null;
-    }
-
     public void onWorldLeave() {
         this.sendChunks.clear();
     }
 
-    public CraftingManager getCrafting(int id) {
-        return this.crafting;
-    }
     public void syncInventory() {
         this.sendPacket(new PacketSInvSync(this.inventory.getId(), this.inventory.getSize(), this.inventory.copySlotStacks()));
-        this.sendPacket(new PacketSInvSync(this.inventoryCraft.getId(), this.inventoryCraft.getSize(), this.inventoryCraft.copySlotStacks()));
+        for (int i = 0; i < this.inventoryCraft.length; i++) {
+            PlayerInventoryCrafting inv = this.inventoryCraft[i];
+            this.sendPacket(new PacketSInvSync(inv.getId(), inv.getSize(), inv.copySlotStacks()));
+        }
+        this.sendPacket(new PacketSInvCarried(new SlotStack(0, this.inventory.carried)));
     }
 
     public void updatePostTick() {
@@ -312,11 +321,14 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
             if (stacks != null)
                 this.sendPacket(new PacketSInvSyncIncr(this.inventory.id, stacks));
         }
-        if (this.inventoryCraft.isDirty()) {
-            HashSet<SlotStack> stacks = this.inventoryCraft.getUpdate();
-            System.out.println(stacks);
-            if (stacks != null)
-                this.sendPacket(new PacketSInvSyncIncr(this.inventoryCraft.id, stacks));
+        for (int i = 0; i < this.inventoryCraft.length; i++) {
+            PlayerInventoryCrafting inv = this.inventoryCraft[i];
+            if (inv.isDirty()) {
+                HashSet<SlotStack> stacks = inv.getUpdate();
+                System.out.println(stacks);
+                if (stacks != null)
+                    this.sendPacket(new PacketSInvSyncIncr(inv.id, stacks));
+            }
         }
     }
 }

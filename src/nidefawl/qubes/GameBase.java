@@ -48,6 +48,7 @@ public abstract class GameBase implements Runnable {
     private GLFWWindowFocusCallback cbWindowFocus;
     private GLFWCursorPosCallback   cbCursorPos;
     private GLFWCharCallback        cbText;
+    static boolean hasTextHook = false;
 
     public static boolean      toggleTiming;
     public static boolean      DO_TIMING   = false;
@@ -775,7 +776,11 @@ public abstract class GameBase implements Runnable {
     public long getTime() {
         return timer.absTime;
     }
+    public static boolean hasTextHook() {
+        return hasTextHook;
+    }
     public void setTextHook(boolean state) {
+        hasTextHook = state;
         if (state) {
             glfwSetCharCallback(windowId, cbText);
         } else {

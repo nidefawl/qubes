@@ -53,10 +53,12 @@ public abstract class Packet {
         register(PacketSDigState.class, true, false);
         register(PacketSDebugBB.class, true, false);
         register(PacketCInvClick.class, true, true);
-        register(PacketSInvSync.class, true, true);
-        register(PacketSInvSyncIncr.class, true, true);
-        register(PacketCCrafting.class, true, true);
+        register(PacketSInvSync.class, true, false);
+        register(PacketSInvSyncIncr.class, true, false);
+        register(PacketCCrafting.class, false, true);
         register(PacketSCraftingProgress.class, true, true);
+        register(PacketSInvCarried.class, true, false);
+        register(PacketCInvTransaction.class, false, true);
     }
     
     private int id;

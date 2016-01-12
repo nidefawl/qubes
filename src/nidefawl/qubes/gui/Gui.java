@@ -9,9 +9,9 @@ import java.util.Comparator;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gui.controls.AbstractUIOverlay;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.gui.windows.GuiWindow;
@@ -22,13 +22,13 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public ArrayList<AbstractUI> buttons   = new ArrayList<>();
     public ArrayList<AbstractUI> prebackground   = new ArrayList<>();
     public boolean    firstOpen = true;
-    public AbstractUIOverlay popup;
+    public AbstractUI popup;
     public static final int slotW = 48;
     public static final int slotBDist = 2;
     
 
     @Override
-    public AbstractUIOverlay getPopup() {
+    public AbstractUI getPopup() {
         return this.popup;
     }
     public boolean hasElement(AbstractUI element) {
@@ -37,6 +37,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public void add(AbstractUI element) {
         this.buttons.add(element);
         element.parent = this;
+        sortElements();
     }
     public void addBackground(AbstractUI element) {
         this.buttons.add(element);
@@ -44,12 +45,15 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         element.parent = this;
         sortElements();
     }
+    public AbstractUI getElement(int i) {
+        return i>=0&&i<this.buttons.size()?this.buttons.get(i):null;
+    }
     public void clearElements() {
         this.buttons.clear();
         this.prebackground.clear();
     }
     public void sortElements() {
-        Collections.sort(this.prebackground, new Comparator<AbstractUI>() {
+        Comparator<AbstractUI> comparator = new Comparator<AbstractUI>() {
             @Override
             public int compare(AbstractUI o1, AbstractUI o2) {
                 int n = Integer.compare(o1.zIndex,  o2.zIndex);
@@ -57,18 +61,27 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
                     return n;
                 return Integer.compare(o1.id, o2.id);
             }
-        });
+        };
+        Collections.sort(this.prebackground, comparator);
+        Collections.sort(this.buttons, comparator);
     }
 
     public void remove(AbstractUI element) {
-        this.buttons.remove(element);
+        boolean b = this.buttons.remove(element);
+        if (b) {
+            element.parent=null;
+        }
     }
     @Override
-    public void setPopup(AbstractUIOverlay popup) {
+    public void setPopup(AbstractUI popup) {
         if (selectedButton == popup) {
             selectedButton = null;
         }
         this.popup = popup;
+        if (popup != null) {
+            popup.parent = this;
+            popup.initGui(false);   
+        }
     }
 
     public void renderBackgroundElements(float fTime, double mX, double mY) {
@@ -81,18 +94,44 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         Engine.pxStack.pop();
     }
     public void renderButtons(float fTime, double mX, double mY) {
-        Engine.pxStack.push(this.posX, this.posY, 0);
+        Engine.pxStack.push(this.posX, this.posY, 2);
+        double mx = mX;
+        double my = mY;
+        if (this.popup != null) {
+            mx -= (this.posX + this.popup.posX);
+            my -= (this.posY + this.popup.posY);
+            if (mx > 0 && mx < this.popup.width && my > Math.min(this.posX + this.popup.posX, 0) && my <= this.popup.height) {
+                mX-=1000;
+                mY-=1000;
+            }
+            mx += (this.posX + this.popup.posX);
+            my += (this.posY + this.popup.posY);
+        }
+        int lastZ=Integer.MIN_VALUE;
         for (int i = 0; i < this.buttons.size(); i++) {
-            if (this.prebackground.contains(this.buttons.get(i))) {
+            AbstractUI btn = this.buttons.get(i);
+            if (this.prebackground.contains(btn)) {
                 continue;
             }
-            this.buttons.get(i).shadowSigma = this instanceof GuiWindow ? 2 : 4;
-            this.buttons.get(i).render(fTime, mX-this.posX, mY-this.posY);
-        }
-        if (this.popup != null) {
-            this.popup.render(fTime, mX-this.posX, mY-this.posY);
+            if (btn.zIndex!=lastZ) {
+                lastZ = btn.zIndex;
+                Engine.pxStack.translate(0, 0, 8);
+            }
+            btn.render(fTime, mX-this.posX, mY-this.posY);
         }
         Engine.pxStack.pop();
+        if (this.popup != null) {
+            Engine.pxStack.push(this.posX, this.posY, 200);
+            this.popup.render(fTime, mx-this.posX, my-this.posY);
+            Engine.pxStack.pop();
+        }
+    }
+    @Override
+    public void update() {
+        super.update();
+        for (int i = 0; i < this.buttons.size(); i++) {
+            this.buttons.get(i).update();
+        }
     }
 
     public void onClose() {
@@ -127,9 +166,10 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
                     return true;
                 }
             }
-            for (int i = 0; i < this.buttons.size(); i++) {
+            for (int i = this.buttons.size()-1; i >= 0; i--) {
                 AbstractUI b = this.buttons.get(i);
                 if (b.enabled && b.mouseOver(mx, my)) {
+                    System.err.println("aosidfj "+b);
                     if (!b.handleMouseDown(this, action)) {
                         selectedButton = b;    
                     }

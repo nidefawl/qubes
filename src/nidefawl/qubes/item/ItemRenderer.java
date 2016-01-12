@@ -21,7 +21,7 @@ import nidefawl.qubes.texture.TMgr;
  */
 public class ItemRenderer {
 
-    private FontRenderer font;
+    public FontRenderer font;
 
     public ItemRenderer() {
     }

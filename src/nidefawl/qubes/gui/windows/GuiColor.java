@@ -39,9 +39,6 @@ public class GuiColor extends GuiWindow {
         return false;
     }
 
-    public void update() {
-    }
-
     public void render(float fTime, double mX, double mY) {
         Engine.pxStack.push(posX, posY, 4);
         this.colorPick.render(fTime, mX-posX, mY-posY);

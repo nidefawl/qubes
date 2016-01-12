@@ -80,10 +80,14 @@ public class GuiControls extends Gui {
           GL11.glLineWidth(1.0F);
           
 //          GL11.glBegin(GL11.GL_LINE_STRIP);
-          tessellator.setColorF(-1, 0.3f);
+          tessellator.setColorF(-1, 0.1f);
 
-          tessellator.add(this.posX + w - 8, this.posY + h + 1);
-          tessellator.add(this.posX + 4, this.posY + h + 1);
+          tessellator.add(this.posX + w - 12, this.posY + h + 3);
+          tessellator.setColorF(-1, 0.4f);
+          tessellator.add(this.posX + 2 +(w-12)/2, this.posY + h + 3);
+          tessellator.setColorF(-1, 0.1f);
+
+          tessellator.add(this.posX + 2, this.posY + h + 3);
           tessellator.draw(GL11.GL_LINE_STRIP);
         }
 
@@ -146,9 +150,10 @@ public class GuiControls extends Gui {
     }
 
     public void update() {
+        super.update();
         this.scrolllist.update();
-
     }
+    
     Keybinding inUseKey = null;
     public void render(float fTime, double mX, double mY) {
         if (selected != null) {

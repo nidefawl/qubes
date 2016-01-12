@@ -274,7 +274,7 @@ public class Engine {
         orthoMV.setIdentity();
         orthoMV.update();
         orthoP.setZero();
-        Project.orthoMat(0, displayWidth, 0, displayHeight, -400, 400, orthoP);
+        Project.orthoMat(0, displayWidth, 0, displayHeight, -4200, 200, orthoP);
         orthoP.update();
         Matrix4f.mul(orthoP, orthoMV, orthoMVP);
         orthoMVP.update();
@@ -378,7 +378,7 @@ public class Engine {
         camFrustum.setPos(vec, view);
         camFrustum.set(modelviewprojection);
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
-        updateOrthoMatrix(Game.displayWidth, Game.displayHeight);
+        updateOrthoMatrix(Game.displayWidth, Game.displayHeight);//TODO: this only needs to be updated when resolution has changed
     }
 
     

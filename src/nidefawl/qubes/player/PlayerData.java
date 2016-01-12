@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.inventory.InventoryUtil;
 import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.nbt.Tag;
@@ -21,7 +22,13 @@ public class PlayerData {
     public HashSet<String> joinedChannels = Sets.newHashSet();
     public HashMap<UUID, Vector3f> worldPositions = Maps.newHashMap();
     public List<SlotStack> invStacks = Lists.newArrayList();
-    public List<SlotStack> invCraftStacks = Lists.newArrayList();
+    public List[] invCraftStacks = new List[CraftingCategory.NUM_CATS];
+    public Compound[] craftingStates = new Tag.Compound[CraftingCategory.NUM_CATS];
+    public PlayerData() {
+        for (int i = 0; i < invCraftStacks.length; i++) {
+            invCraftStacks[i] = Lists.newArrayList();
+        }
+    }
 
     public void load(Tag.Compound t) {
         this.world = t.getUUID("world");
@@ -43,9 +50,12 @@ public class PlayerData {
         if (tagInv != null) {
             invStacks = InventoryUtil.readFromTag(tagInv);
         }
-        Tag tagInvCraft = t.get("inventorycraft");
-        if (tagInvCraft != null) {
-            invCraftStacks = InventoryUtil.readFromTag(tagInvCraft);
+        for (int i = 0; i < this.invCraftStacks.length; i++) {
+            Tag tagInvCraft = t.get("inventorycraft_"+i);
+            if (tagInvCraft != null) {
+                invCraftStacks[i] = InventoryUtil.readFromTag(tagInvCraft);
+            }
+            this.craftingStates[i] = (Compound) t.get("craftingstates_"+i);
         }
     }
 
@@ -63,8 +73,11 @@ public class PlayerData {
         cmp.set("worldpositions", cmpWorldPos);
         Tag tagInv = InventoryUtil.writeToTag(invStacks);
         cmp.set("inventory", tagInv);
-        Tag tagInvCraft = InventoryUtil.writeToTag(invCraftStacks);
-        cmp.set("inventorycraft", tagInvCraft);
+        for (int i = 0; i < this.invCraftStacks.length; i++) {
+            Tag tagInvCraft = InventoryUtil.writeToTag(invCraftStacks[i]);
+            cmp.set("inventorycraft_"+i, tagInvCraft);
+            cmp.set("craftingstates_"+i, this.craftingStates[i]);
+        }
         return cmp;
     }
 

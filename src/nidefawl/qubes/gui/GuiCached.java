@@ -39,7 +39,6 @@ public class GuiCached extends Gui {
     }
 
     public void render(float fTime, double mx, double mY) {
-        glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         if (refresh) {
             refresh = false;

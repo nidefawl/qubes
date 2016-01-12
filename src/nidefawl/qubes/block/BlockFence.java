@@ -14,6 +14,10 @@ import nidefawl.qubes.world.World;
  */
 public class BlockFence extends Block {
     private Block baseBlock;
+    @Override
+    public Block getBaseBlock() {
+        return this.baseBlock;
+    }
     
     public static int setFenceConnections(IBlockWorld w, int ix, int iy, int iz, boolean[] b) {
         int n = 0;

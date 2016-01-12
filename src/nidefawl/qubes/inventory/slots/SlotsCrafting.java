@@ -2,27 +2,20 @@ package nidefawl.qubes.inventory.slots;
 
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.inventory.PlayerInventoryCrafting;
+import nidefawl.qubes.item.BaseStack;
 
-public class SlotsCrafting extends Slots {
+public class SlotsCrafting extends SlotsInventoryBase {
 
-    private PlayerInventoryCrafting inv;
-    private Slot result;
     private boolean locked = false;
-    public SlotsCrafting(Player player) {
-        this(player, 0, 0, 32, 2);
+    public SlotsCrafting(Player player, int id) {
+        this(player, id, 0, 0, 32, 2);
     }
 
-    public SlotsCrafting(Player player, int xPos, int yPos, int w, int dist) {
-        super(1, player.getInventory(), player.getCraftInventory());
-        this.inv = player.getCraftInventory();
-        for (int i = 0; i < this.inv.inventorySize-1; i++) {
-            addSlot(new Slot(this, this.inv, i, xPos+(i%8)*(w+dist), yPos+(i/8)*(w+dist), w));
+    public SlotsCrafting(Player player, int id, int xPos, int yPos, int w, int dist) {
+        super(id, player.getInventory(), player.getInv(id));
+        for (int i = 0; i < this.baseInv.inventorySize; i++) {
+            addSlot(new SlotInventory(this, this.baseInv, i, xPos+(i%4)*(w+dist), yPos+(i/4)*(w+dist), w));
         }
-        addSlot(this.result=new Slot(this, this.inv, this.inv.inventorySize-1, xPos+(8)*(w+dist)+10, yPos+12, (int)(w*1.5)));
-    }
-
-    public Slot getResult() {
-        return this.result;
     }
 
     public int getSize() {
@@ -43,6 +36,28 @@ public class SlotsCrafting extends Slots {
 
     public boolean canModify() {
         return !locked;
+    }
+
+    public int getNumItems() {
+        int j = 0;
+        for (int i = 0; i < this.getInputSize(); i++) {
+            if (!this.getSlot(i).isEmpty()) {
+                j++;
+            }
+        }
+        return j;
+    }
+    public int transferSlots(SlotsInventoryBase baseInv) {
+        for (int i = 0; i < this.getInputSize(); i++) {
+            Slot s = this.getSlot(i);
+            BaseStack stack = s.getItem();
+            if (stack != null) {
+                if (!s.transferTo(baseInv)) {
+                    return 1;   
+                }
+            }
+        }
+        return 0;
     }
 
 }

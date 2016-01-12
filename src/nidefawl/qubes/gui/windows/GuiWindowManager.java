@@ -252,7 +252,7 @@ public class GuiWindowManager implements Renderable  {
         Gui btnGui = (Gui) (Gui.selectedButton!=null&&(Gui.selectedButton.parent instanceof Gui)?Gui.selectedButton.parent:null);
 
         int a = 0;
-        float windowDepth = 30F;
+        float windowDepth = 220F;
         float z = 0;
         highestIdx = getHighestIndex();
         for (; a < highestIdx; a++) {
@@ -281,7 +281,7 @@ public class GuiWindowManager implements Renderable  {
             windowFocus.renderFrame(fTime, mX, mY);
             windowFocus.render(fTime, mX, mY);
         }
-        Engine.pxStack.push(0, 0, windowDepth);
+        Engine.pxStack.push(0, 0, windowDepth+windowDepth);
 //        super.drawScreen(i, j, f);
 
         Player player = Game.instance.getPlayer();

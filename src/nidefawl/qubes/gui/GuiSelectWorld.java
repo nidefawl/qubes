@@ -31,9 +31,6 @@ public class GuiSelectWorld extends Gui {
         }
     }
 
-    public void update() {
-    }
-
     public void render(float fTime, double mX, double mY) {
         Shaders.colored.enable();
         Tess.instance.setColor(2, 128);

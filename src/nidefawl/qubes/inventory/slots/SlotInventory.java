@@ -11,40 +11,21 @@ import nidefawl.qubes.item.ItemStack;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class Slot {
+public class SlotInventory extends Slot {
     public BaseInventory inv;
-    public int           idx;
-    public float         x;
-    public float         y;
-    public float         w;
-    protected Slots slots;
 
-    public Slot(Slots slots, BaseInventory inv, int i, float x, float y, float w) {
-        this.slots = slots;
+    public SlotInventory(Slots slots, BaseInventory inv, int i, float x, float y, float w) {
+        super(slots, i, x, y, w);
         this.inv = inv;
-        this.idx = i;
-        this.x = x;
-        this.y = y;
-        this.w = w;
     }
 
-    /**
-     * @return
-     */
+    @Override
     public BaseStack getItem() {
         return this.inv.getItem(this.idx);
     }
-
-    /**
-     * @param x2
-     * @param y2
-     * @return
-     */
-    public boolean isAt(double x, double y) {
-        return x>=this.x&&x<=this.x+this.w&&y>=this.y&&y<=this.y+this.w;
-    }
-
-    public boolean transferTo(Slots out) {
+    
+    @Override
+    public boolean transferTo(SlotsInventoryBase out) {
         if (this.canTake()) {
             Slot output = out.getFirstEmpty(this.getItem());
             if (output != null && output.canPut(this.getItem())) {
@@ -55,18 +36,22 @@ public class Slot {
         return false;
     }
 
+    @Override
     public boolean isEmpty() {
         return this.getItem()==null;
     }
 
+    @Override
     public BaseStack drain() {
         return this.inv.setItem(this.idx, null);
     }
 
-    public BaseStack put(Slot other) {
+    @Override
+    public BaseStack put(SlotInventory other) {
         return this.inv.setItem(this.idx, other.drain());
     }
 
+    @Override
     public BaseStack putStack(BaseStack stack) {
         if (this.canPut(stack)) {
             return this.inv.setItem(this.idx, stack);
@@ -74,12 +59,17 @@ public class Slot {
         return stack;
     }
 
+    @Override
     public boolean canTake() {
         return slots.canModify();
     }
 
+    @Override
     public boolean canPut(BaseStack stack) {
         return slots.canModify();
     }
 
+    public void flag() {
+        this.inv.flag(this.idx);
+    }
 }

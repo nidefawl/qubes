@@ -6,6 +6,7 @@ package nidefawl.qubes.inventory;
 import java.util.*;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.inventory.slots.SlotStack;
@@ -21,12 +22,15 @@ public abstract class BaseInventory {
     public final BaseStack[] stacks;
     private byte[] flagged;
     boolean dirty = true;
+    boolean needSorting = false;
+    HashMap<Integer, Integer> amounts = Maps.newHashMap();
 
     public BaseInventory(int id, int inventorySize) {
         this.id = id;
         this.inventorySize = inventorySize;
         this.stacks = new BaseStack[inventorySize];
         this.flagged = new byte[inventorySize];
+        this.needSorting = true;
         Arrays.fill(this.flagged, (byte)1);
     }
     public boolean isDirty() {
@@ -42,6 +46,7 @@ public abstract class BaseInventory {
         this.stacks[idx] = item;
         this.flagged[idx] |= 1;
         this.dirty = true;
+        this.needSorting = true;
         return tmp;
     }
 
@@ -94,6 +99,7 @@ public abstract class BaseInventory {
                 it.remove();
             }
         }
+        this.needSorting = true;
     }
 
     public HashSet<SlotStack> getUpdate() {
@@ -108,5 +114,27 @@ public abstract class BaseInventory {
             }
         }
         return stacks;
+    }
+    public void flag(int idx) {
+        this.flagged[idx] |= 1;
+        this.dirty = true;
+    }
+    public HashMap<Integer, Integer> getSortedStacks() {
+        if (this.needSorting) {
+            this.needSorting = false;
+            HashMap<Integer, Integer> map = Maps.newHashMap();
+            for (int i = 0; i < this.stacks.length; i++) {
+                if (this.stacks[i] != null) {
+                    int h = this.stacks[i].getTypeHash();
+                    Integer n = map.get(h);
+                    if (n == null)
+                        n = 0;
+                    n += this.stacks[i].getSize();
+                    map.put(h, n);
+                }
+            }
+            amounts = map;
+        }
+        return amounts;
     }
 }

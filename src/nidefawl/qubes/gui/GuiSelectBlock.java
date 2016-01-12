@@ -87,6 +87,7 @@ public class GuiSelectBlock extends Gui {
     float rot     = 0;
     float lastRot = 0;
     public void update() {
+        super.update();
         this.lastRot = rot;
         this.rot += 4*GameMath.PI_OVER_180;
         if (this.rot>360*GameMath.PI_OVER_180) {
@@ -205,7 +206,6 @@ public class GuiSelectBlock extends Gui {
             }
             float pX2 = pX1+bSize;
             float pY2 = pY1+bSize;
-            float zz = -50;
             float fRot = block.getInvRenderRotation();
             float blockscale = bascale;
             fRot+=animRot;
@@ -216,15 +216,16 @@ public class GuiSelectBlock extends Gui {
             pX2+=offset;
             pY2+=offset;
             pY1-=offset;
-            renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 0.8f, true);
+            Engine.pxStack.push(0, 0, 60);
+            renderRoundedBoxShadow(pX1, pY1, -5, pX2-pX1, pY2-pY1, color, 0.8f, true);
             if (sel != null) {
                 Shaders.gui.enable();
                 String s = sel.getBlock().getName();
                 int w = font.getStringWidth(s)+10;
                 float extraw=pX2-pX1<w?(w-(pX2-pX1))/2:0;
                 int h = 28;
-                int yPosText = (int) (topDown?pY1-h-2:pY2+2);
-                renderRoundedBoxShadow(pX1-extraw, yPosText, zz, pX2-pX1+extraw*2, h, color, 0.8f, true);
+                int yPosText = (int) (topDown?pY1-h-2:pY2+6);
+                renderRoundedBoxShadow(pX1-extraw, yPosText, -3, pX2-pX1+extraw*2, h, color, 0.8f, true);
                 Shaders.textured.enable();
                 font.drawString(""+sel.getBlock().getName(), pX1+(pY2-pY1)/2.0f, yPosText+h-5, -1, true, 1, 2);
                 Shader.disable();
@@ -234,13 +235,13 @@ public class GuiSelectBlock extends Gui {
             pY2+=4;
             pY1-=4;
             Shaders.gui.enable();
-            renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 0.7f, true);
-            Engine.blockDraw.setOffset(pX1+bSize, pY1+bSize, zz+100);
+            renderRoundedBoxShadow(pX1, pY1, 0, pX2-pX1, pY2-pY1, color, 0.7f, true);
+            Engine.blockDraw.setOffset(pX1+bSize, pY1+bSize, 125);
             Engine.blockDraw.setScale(blockscale);
             Engine.blockDraw.setRotation(15, 90+45+fRot*GameMath.P_180_OVER_PI, 0);
             Engine.blockDraw.drawBlock(block, renderData, this.sel.getStackdata());
+          Engine.pxStack.pop();
         }
-//        Engine.pxStack.pop();
         resetShape();
 
         GL11.glDisable(GL11.GL_DEPTH_TEST);

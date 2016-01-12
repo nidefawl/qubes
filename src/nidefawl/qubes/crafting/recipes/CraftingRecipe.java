@@ -1,22 +1,27 @@
 package nidefawl.qubes.crafting.recipes;
 
-import nidefawl.qubes.inventory.slots.Slot;
+import nidefawl.qubes.crafting.CraftingCategory;
+import nidefawl.qubes.inventory.slots.SlotInventory;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
+import nidefawl.qubes.inventory.slots.SlotsInventoryBase;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
+import nidefawl.qubes.item.ItemStack;
 
 public class CraftingRecipe {
+    static int NEXT_ID = 0;
 
     private BaseStack[] in;
     private BaseStack[] out;
     private int id;
     private BaseStack preview;
+    CraftingCategory category;
 
-    public CraftingRecipe(int id, BaseStack in, BaseStack out) {
-        this.id = id;
-        this.in = new BaseStack[] {in};
-        this.out = new BaseStack[] {out};
-        this.preview = out;
+    private String subCat;
+
+    public CraftingRecipe() {
+        this.id = NEXT_ID++;
+        CraftingRecipes.add(this);
     }
     public int getId() {
         return this.id;
@@ -52,5 +57,34 @@ public class CraftingRecipe {
     public long getTime() {
         return 5000;
     }
+    public CraftingCategory getCategory() {
+        return this.category;
+    }
+    public void setInput(BaseStack... itemStack) {
+        for (int n = 0; n < itemStack.length; n++) {
+            if (itemStack[n].getSize() <= 0) {
+                throw new IllegalArgumentException("Invalid stack size for recipe input");
+            }
+        }
+        this.in = itemStack;
+    }
+    public void setOutput(BaseStack... itemStack) {
+        for (int n = 0; n < itemStack.length; n++) {
+            if (itemStack[n].getSize() <= 0) {
+                throw new IllegalArgumentException("Invalid stack size for recipe output");
+            }
+        }
+        this.out = itemStack;
+        if (this.preview == null) {
+            this.preview = this.out[0];
+        }
+    }
+    public void setCategory(CraftingCategory craftingCategory, String subCat) {
+        this.category = craftingCategory;
+        this.subCat = subCat;
+    }
 
+    public String getSubCat() {
+        return this.subCat;
+    }
 }

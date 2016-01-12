@@ -22,6 +22,10 @@ public class BlockSlab extends BlockSliced {
      * @param transparent
      */
     final Block baseBlock;
+    @Override
+    public Block getBaseBlock() {
+        return this.baseBlock;
+    }
     private final int overrideTextureIdx;
     public BlockSlab(String id, Block baseBlock) {
         this(id, baseBlock, -1);

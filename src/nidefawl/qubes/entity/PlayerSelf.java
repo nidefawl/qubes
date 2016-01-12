@@ -1,6 +1,7 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.gui.Gui;
@@ -24,18 +25,22 @@ public class PlayerSelf extends Player {
     public float eyeHeight = 1.3F;
     public PlayerProfile profile;
     private ClientHandler clientHandler;
-    private final SlotsInventory slotsInventory;
-    private final SlotsCrafting slotsCrafting;
-    public final CraftingManagerClient crafting = new CraftingManagerClient(this, 0);
+    public final CraftingManagerClient[] crafting = new CraftingManagerClient[CraftingCategory.NUM_CATS];
 
 
     public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
         super();
         this.slotsInventory = new SlotsInventory(this, 0, 0, Gui.slotW, Gui.slotBDist);
-        this.slotsCrafting = new SlotsCrafting(this, 0, 0, Gui.slotW, Gui.slotBDist);
+        for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
+            this.slotsCrafting[i] = new SlotsCrafting(this, 1+i, 0, 0, Gui.slotW, Gui.slotBDist);
+            this.crafting[i] = new CraftingManagerClient(this, i);
+        }
         this.profile = profile;
         this.clientHandler = clientHandler;
         this.name = this.profile.getName();
+    }
+    public CraftingManagerClient getCrafting(int id) {
+        return id < 0 | id >= this.crafting.length ? null : this.crafting[id];
     }
 
     public void updateInputDirect(InputController movement) {
@@ -211,21 +216,6 @@ public class PlayerSelf extends Player {
         if (isDown) {
             this.punchTicks = 12;
         }
-    }
-
-
-    public Slots getSlots(int id) {
-        switch (id) {
-            case 0:
-                return this.slotsInventory;
-            case 1:
-                return this.slotsCrafting;
-        }
-        return null;
-    }
-
-    public CraftingManagerClient getCrafting(int id) {
-        return this.crafting;
     }
 
 }

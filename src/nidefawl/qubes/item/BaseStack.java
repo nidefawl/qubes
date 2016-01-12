@@ -14,6 +14,10 @@ import nidefawl.qubes.util.GameError;
  */
 public abstract class BaseStack implements StreamIO {
 
+    public int id;
+    public int data;
+    public int size;
+
     public abstract boolean isItem();
     public boolean isBlock() {
         return !isItem();
@@ -43,10 +47,11 @@ public abstract class BaseStack implements StreamIO {
             return b == null;
         if (b == null)
             return a == null;
-        return a.equals(b);
+        return a.isFullyEqual(b);
     }
     public abstract Item getItem();
     public abstract Block getBlock();
+    public abstract int getTypeHash();
     public boolean is(Block b) {
         return getBlock()==b;
     }
@@ -70,5 +75,23 @@ public abstract class BaseStack implements StreamIO {
             return tmpStackBlock;
         }
         return null;
+    }
+    public void setSize(int size) {
+        this.size = size;
+    }
+    public int getSize() {
+        return this.size;
+    }
+    public int getId() {
+        return this.id;
+    }
+    public int getData() {
+        return this.data;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+    public void setData(int data) {
+        this.data = data;
     }
 }

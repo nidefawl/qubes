@@ -12,6 +12,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gui.controls.TextField;
+import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.shader.Shaders;
@@ -54,6 +55,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
             field.setPos(xP, Game.displayHeight-h-yP);
             field.setSize(Game.displayWidth/2, h);
             field.focused = true;
+            GuiContext.input=field;
             this.field.alpha = 0.1f;
             //            field.
             this.add(field);
@@ -98,6 +100,10 @@ public class GuiChatInput extends Gui implements ITextEdit {
     
     @Override
     public void render(float fTime, double mX, double mY) {
+        if (!field.focused) {
+            close();
+            return;
+        }
         field.focused = true;
         Shaders.textured.enable();
         if (this.mouseResize == 1) {
