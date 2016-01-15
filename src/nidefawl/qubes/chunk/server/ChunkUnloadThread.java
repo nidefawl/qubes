@@ -32,7 +32,6 @@ public class ChunkUnloadThread extends Thread {
         try {
             System.out.println(getName() + " started");
             while ((mgr.isRunning() && this.isRunning) || !this.queue.isEmpty()) {
-                boolean did = false;
                 try {
                     Long task = this.queue.take();
                     if (task != null) {
@@ -51,32 +50,19 @@ public class ChunkUnloadThread extends Thread {
                         }
                     }
                 } catch (InterruptedException e1) {
-                    if (!isRunning)
-                        break;
-                    onInterruption();
+                    break;
                 } catch (Exception e) {
                     ErrorHandler.setException(new GameError("Exception in " + getName(), e));
                     break;
                 }
-                try {
-                    if (sleepTime > 0) {
-                        Thread.sleep(did ? sleepTime : sleepTime * 3);
-                    }
-                } catch (InterruptedException e) {
-                    if (!isRunning)
-                        break;
-                    onInterruption();
-                }
             }
             System.out.println(getName() + " ended");
         } finally {
+            this.isRunning = false;
             this.finished = true;
         }
     }
 
-    private void onInterruption() {
-    }
-    
     /**
      * The thread might still be working on an item after calling this
      */
@@ -87,6 +73,11 @@ public class ChunkUnloadThread extends Thread {
 
 
     public void queueUnloadChecked(Long l) {
+        if (!this.isRunning) {
+            System.err.println("Attempt to queue unload after thread halt");
+            Thread.dumpStack();
+            return;
+        }
         if (!this.queue.contains(l)) {
             this.queue.add(l);
         }
@@ -102,22 +93,13 @@ public class ChunkUnloadThread extends Thread {
                 while (!this.queue.isEmpty()) {
                     Thread.sleep(100);
                 }
-                this.interrupt();
+                while (!this.finished) {
+                    if (this.queue.isEmpty())
+                        this.interrupt();
+                    Thread.sleep(100);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-            }
-            while (!this.finished) {
-                try {
-                    this.queue.clear();
-                    this.interrupt();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                try {
-                    Thread.sleep(60);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             }
         }
     }

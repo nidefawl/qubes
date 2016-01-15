@@ -17,26 +17,20 @@ import nidefawl.qubes.util.GameError;
  */
 public class GLTriBuffer {
 
-    private int      vbo = -1;
-    private int      vboIndices = -1;
+    private final GLVBO vbo;
+    private final GLVBO vboIndices;
     ReallocIntBuffer vboBuf;
     ReallocIntBuffer vboIdxBuf;
     private int      triCount;
     private int      vertexCount;
-    
-    public int getGLArrayBuffer() {
-        return this.vbo;
-    }
-    public int getGLIndexBuffer() {
-        return this.vboIndices;
+    public GLTriBuffer(int usage) {
+        this.vbo = new GLVBO(usage);
+        this.vboIndices = new GLVBO(usage);
     }
 
 
     public void gen() {
         if (this.vboBuf == null) {
-            IntBuffer buff = Engine.glGenBuffers(2);
-            this.vbo = buff.get(0);
-            this.vboIndices = buff.get(1);
             this.vboBuf = new ReallocIntBuffer(1024);
             this.vboIdxBuf = new ReallocIntBuffer(1024);
         }
@@ -49,20 +43,9 @@ public class GLTriBuffer {
         int numInts = buf.putIn(this.vboBuf);
         this.vertexCount = buf.vertexCount;
         this.triCount = buf.getTriIdxPos()/3;
-
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vbo);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, numInts * 4L, this.vboBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData ");
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vboIndices);
-
         this.vboIdxBuf.put(buf.getTriIdxBuffer(), 0, buf.getTriIdxPos());
-        
-        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buf.getTriIdxPos() * 4, this.vboIdxBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
+        this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts * 4L);
+        this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), buf.getTriIdxPos() * 4);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData");
     
@@ -79,8 +62,8 @@ public class GLTriBuffer {
         if (this.triCount <= 0) {
             throw new GameError("this.triCount <= 0");
         }
-        Engine.bindBuffer(this.vbo);
-        Engine.bindIndexBuffer(this.vboIndices);
+        Engine.bindBuffer(this.vbo.getVboId());
+        Engine.bindIndexBuffer(this.vboIndices.getVboId());
         GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
     }
 
@@ -89,11 +72,21 @@ public class GLTriBuffer {
      */
     public void release() {
         if (this.vboBuf != null) {
-            Engine.deleteBuffers(this.vbo, this.vboIndices);
+            this.vbo.release();
+            this.vboIndices.release();
             this.vboBuf.release();
             this.vboIdxBuf.release();
             this.vboBuf = null;
             this.vboIdxBuf = null;
         }
+    }
+
+
+
+    public int getGLArrayBuffer() {
+        return this.vbo.getVboId();
+    }
+    public int getGLIndexBuffer() {
+        return this.vbo.getVboId();
     }
 }

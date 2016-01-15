@@ -181,10 +181,9 @@ public class Engine {
             Engine.checkGLError("baseInit");
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("GL30.glBindVertexArray");
-        UniformBuffer.reinit();
-        Shaders.reinit();
-        
+        UniformBuffer.init();
         Shaders.init();
+        
         if (initRenderers) {
             regionRenderThread.init();
             regionRenderer.init();
@@ -464,8 +463,11 @@ public class Engine {
     }
 
     public static void stop() {
-        if (regionRenderThread != null)
-        regionRenderThread.stopThread();
+        if (regionRenderThread != null) {
+            regionRenderThread.stopThread();
+            regionRenderThread.cleanup();
+        }
+        UniformBuffer.destroy();
     }
 
 

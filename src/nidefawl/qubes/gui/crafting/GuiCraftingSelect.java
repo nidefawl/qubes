@@ -454,8 +454,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
         this.cat.setSize(w2, w2);
         sortElements();
         updateProgress();
-        System.out.println("cat  "+cat);
-        System.out.println("cat.catid "+cat.catid);
         Game.instance.sendPacket(new PacketCCrafting(cat.catid, id, 0));
     }
 
@@ -473,7 +471,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             b.setSize(w, w);
             addBackground(b);
             catButtons.add(b);
-            System.err.println("catbutn");
         }
         for (GuiButtonCat cat : catButtons) {
             GuiControlCat ctrlCat = cat.category;
@@ -538,7 +535,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
     public void render(float fTime, double mX, double mY) {
         Engine.pxStack.push(this.posX, this.posY, 2);
 
-//        System.out.println(cat.hashCode()+"/"+cat.getScrollList().buttons);
         this.cat.getScrollList().render(fTime, mX-this.posX, mY-this.posY);
         this.scr2.render(fTime, mX-this.posX, mY-this.posY);
         Shaders.gui.enable();

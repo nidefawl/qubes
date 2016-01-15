@@ -38,7 +38,7 @@ public class Tess extends AbstractTesselatorState {
 
     private int vboIdx;
 
-    private GLVBO[] vbo = new GLVBO[1<<12];
+    private GLVBO[] vbo = new GLVBO[1<<4];
 
     public Tess() {
         this(false);
@@ -48,7 +48,7 @@ public class Tess extends AbstractTesselatorState {
         if (!this.isSoftTesselator) {
             bufInt = new ReallocIntBuffer();
             for (int i = 0; i < this.vbo.length; i++) {
-                this.vbo[i] = new GLVBO();
+                this.vbo[i] = new GLVBO(GL15.GL_DYNAMIC_DRAW);
             }
         }
     }
@@ -190,7 +190,7 @@ public class Tess extends AbstractTesselatorState {
             int len = vIdx * 4;
             bufInt.put(rawBuffer, 0, vIdx);
             GLVBO vbo = out.getVBO();
-            vbo.upload(bufInt.getByteBuf(), len);
+            vbo.upload(GL15.GL_ARRAY_BUFFER, bufInt.getByteBuf(), len);
             if (out == this) {
                 bindAndDraw(mode);
                 this.vboIdx++;

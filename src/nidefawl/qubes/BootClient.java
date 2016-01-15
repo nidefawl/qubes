@@ -27,11 +27,11 @@ public class BootClient {
         return val;
     }
     public static void main(String[] args) {
-        boolean debug = true;
+        boolean debug = false;
         Configuration.DEBUG.set(debug);
-        Configuration.DEBUG_MEMORY_ALLOCATOR.set(debug);
-        Configuration.DISABLE_CHECKS.set(!debug);
-        Configuration.GLFW_CHECK_THREAD0.set(debug);
+        Configuration.DEBUG_MEMORY_ALLOCATOR.set(false);
+        Configuration.DISABLE_CHECKS.set(true);
+        Configuration.GLFW_CHECK_THREAD0.set(false);
         Configuration.MEMORY_ALLOCATOR.set("jemalloc");
         Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
         GameContext.setSideAndPath(Side.CLIENT, ".");

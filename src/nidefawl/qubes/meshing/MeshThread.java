@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;
@@ -16,6 +17,7 @@ public class MeshThread extends Thread {
     private LinkedList<MeshUpdateTask>          finish    = new LinkedList<MeshUpdateTask>();
     private volatile boolean                            hasResults;
     private volatile boolean                            isRunning;
+    private volatile boolean                            finished;
     private final MeshUpdateTask[]              tasks;
 
     public MeshThread(int numTasks) {
@@ -39,37 +41,41 @@ public class MeshThread extends Thread {
 
     @Override
     public void run() {
-        while (Game.instance.isRunning() && this.isRunning) {
-            boolean did = false;
-            try {
-                MeshUpdateTask task = this.queue.take();
-                if (task != null) {
-                    if (task.isValid(this.id)) {
-                        did = task.updateFromThread();
+        try {
+            while (Game.instance.isRunning() && this.isRunning) {
+                boolean did = false;
+                try {
+                    MeshUpdateTask task = this.queue.take();
+                    if (task != null) {
+                        if (task.isValid(this.id)) {
+                            did = task.updateFromThread();
+                        }
+                        synchronized (this.results) {
+                            hasResults = true;
+                            results.add(task);
+                        }
                     }
-                    synchronized (this.results) {
-                        hasResults = true;
-                        results.add(task);
-                    }
-                }
-            } catch (InterruptedException e1) {
-                if (!isRunning)
+                } catch (InterruptedException e1) {
                     break;
-                onInterruption();
-            } catch (Exception e) {
-                Game.instance.setException(new GameError("Exception in " + getName(), e));
-                break;
+                } catch (Exception e) {
+                    Game.instance.setException(new GameError("Exception in " + getName(), e));
+                    break;
+                }
+                if (Thread.interrupted()) {
+                    break;
+                }
             }
+            synchronized (this.results) {
+                this.results.clear();
+                this.hasResults = false;
+            }
+            System.out.println("render thread ended");
+        } finally {
+            isRunning = false;
+            finished = true;
         }
-        System.out.println("render thread ended");
     }
 
-    private void onInterruption() {
-        synchronized (this.results) {
-            this.results.clear();
-            this.hasResults = false;
-        }
-    }
 
     int tasksRunning = 0;
 
@@ -132,11 +138,37 @@ public class MeshThread extends Thread {
     }
 
     public void stopThread() {
-        id = -1;
-        isRunning = false;
-        this.interrupt(); // maybe it will end..
+        if (!this.finished) {
+            try {
+                this.id = -1;
+                this.isRunning = false;
+                this.queue.clear();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            this.interrupt();
+            while (!this.finished) {
+                try {
+                    Thread.sleep(60);
+                    this.interrupt();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
+
     public boolean isRunning() {
         return this.isRunning;
+    }
+
+    public void cleanup() {
+        this.queue.clear();
+        this.results.clear();
+        this.finish.clear();
+        this.hasResults = false;
+        for (int i = 0; i < tasks.length; i++) {
+            tasks[i].destroy();
+        }
     }
 }

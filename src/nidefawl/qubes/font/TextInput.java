@@ -5,7 +5,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.TrueTypeFontAWT.GlyphRect;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
@@ -374,31 +373,6 @@ public class TextInput {
         calculatePreview();
     }
 
-    public int getCharPositionFromXCoord(double mouseX) {
-        float totalwidth = -shiftPX;
-        GlyphRect rect;
-        int mX = (int) Math.round(mouseX);
-        for (int i = 0; i < editText.length(); i++) {
-            int charCurrent = editText.charAt(i);
-            if (charCurrent == ' ') {
-                totalwidth += trueType.getSpaceWidth();
-            }
-            if ((rect = trueType.getRect(charCurrent)) == null) {
-                continue;
-            }
-
-            if (charCurrent == '\247' && i + 1 < editText.length()) {
-                i += 2;
-                continue;
-            }
-            float charw=(rect.width - trueType.getCorrectL());
-            if (getLeft() + totalwidth+charw/3.0f >= mX) {
-                return i;
-            }
-            totalwidth += charw;
-        }
-        return editText.length();
-    }
 
     public void drawStringWithCursor(double mouseX, double mouseY, boolean mouseDownLeft) {
         this.tick = Game.ticksran;
@@ -415,7 +389,7 @@ public class TextInput {
                             makeCursorVisible();
                         }
                     } else if (mouseX <= getRight()+11) {
-                        selEnd = getCharPositionFromXCoord(mouseX);
+                        selEnd = trueType.getCharPositionFromXCoord(editText, mouseX-getLeft(), shiftPX);
                         mpos = selEnd;
                     } else if (selEnd < editText.length()) {
                         selEnd++;
@@ -423,7 +397,7 @@ public class TextInput {
                         makeCursorVisible();
                     }
                 } else if (getRight()+11 > mouseX&&getLeft()-4 < mouseX && overTextBoxY) {
-                    selStart = selEnd = getCharPositionFromXCoord(mouseX);
+                    selStart = selEnd = trueType.getCharPositionFromXCoord(editText, mouseX-getLeft(), shiftPX);
                     mpos = selStart;
                     mouseDown = true;
                 } else {
@@ -444,7 +418,7 @@ public class TextInput {
             if (!rightMouseDown) {
                 if (overTextBoxY) {
                     if (mouseX <= getRight()) {
-                        mpos = getCharPositionFromXCoord(mouseX);
+                        mpos = trueType.getCharPositionFromXCoord(editText, mouseX-getLeft(), shiftPX);
                         insertTextAtCursor(ClipboardHelper.getClipboardString());
                     }
                 }
@@ -453,7 +427,6 @@ public class TextInput {
         } else {
             rightMouseDown = false;
         }
-        GlyphRect rect;
         int charCurrent;
         boolean showCursor = this.focused && (this.tick / 6 % 2 == 0);
         float totalwidth = 0;
@@ -495,6 +468,7 @@ public class TextInput {
 //        tessellator.setColorRGBA_F(1, 1, 1, 1);
         int prevColor = -1;
         int i = 0;
+        trueType.start(totalwidth, startY);
         boolean isURL = editText.startsWith("http");
         while (true) {
             if (i >= editText.length()) {
@@ -512,47 +486,16 @@ public class TextInput {
                 tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                 tessellator.setColor(-1, 255);
                 Shaders.textured.enable();
-//                if (prevColor >= 0) {
-//                    int l = GuiIngameCland.colorMap[prevColor];
-//                    tessellator.setColorRGBA_F((float) (l >> 16) / 255F, (float) (l >> 8 & 0xff) / 255F, (float) (l & 0xff) / 255F, 1.0F);
-//                } else {
-//
-//                    tessellator.setColorRGBA_F(1, 1, 1, 1);
-//                }
             }
             charCurrent = editText.charAt(i);
-            float thisCharWidth;
-            if (charCurrent == ' ') {
-                thisCharWidth = trueType.getSpaceWidth();
-                if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
-                    break;
-                }
-                totalwidth += thisCharWidth;
+            trueType.readQuad(charCurrent);
+            if (totalwidth-shiftPX > -30) {
+                trueType.renderQuad(tessellator, getLeft(), getBottom());
             }
-            if ((rect = trueType.getRect(charCurrent)) == null) {
-                i++;
-                continue;
-            }
-
-            thisCharWidth = (rect.width - trueType.getCorrectL());
-            if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
+            totalwidth = trueType.getXPos();
+            if (totalwidth - shiftPX > getWidth()) {
                 break;
             }
-//            if (!isURL)
-//                if (charCurrent == '&' && i + 1 < editText.length()) {
-//                    int colorIndex = "0123456789abcdef".indexOf(Character.toLowerCase(editText.charAt(i + 1)));
-//                    if (colorIndex >= 0) {
-//                        int l = GuiIngameCland.colorMap[colorIndex];
-//                        tessellator.setColorRGBA_F((float) (l >> 16) / 255F, (float) (l >> 8 & 0xff) / 255F, (float) (l & 0xff) / 255F, 1.0F);
-//                        //                    i += 2;
-//                        prevColor = colorIndex;
-//                        //                    continue;
-//                    }
-//                }
-            if (totalwidth-shiftPX > -30) {
-                rect.drawQuadTess(tessellator, totalwidth + getLeft(), startY + getBottom());
-            }
-            totalwidth += thisCharWidth;
             i++;
         }
         tessellator.draw(GL11.GL_QUADS);
@@ -568,6 +511,7 @@ public class TextInput {
             tessellator.setColor(-1, 255);
             Shaders.textured.enable();
         }
+        trueType.start(totalwidth, startY);
         if (editText.startsWith("/") && shiftPX == 0) {
             if (prevText != null) {
                 i = editText.length();
@@ -578,25 +522,12 @@ public class TextInput {
                             break;
                         }
                         charCurrent = prevText.charAt(i);
-                        float thisCharWidth;
-                        if (charCurrent == ' ') {
-                            thisCharWidth = trueType.getSpaceWidth();
-                            if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
-                                break;
-                            }
-                            totalwidth += thisCharWidth;
-                        }
-                        if ((rect = trueType.getRect(charCurrent)) == null) {
-                            i++;
-                            continue;
-                        }
-
-                        thisCharWidth = (rect.width - trueType.getCorrectL());
-                        if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
+                        trueType.readQuad(charCurrent);
+                        trueType.renderQuad(tessellator, getLeft(), getBottom());
+                        totalwidth = trueType.getXPos();
+                        if (totalwidth - shiftPX > getWidth()) {
                             break;
                         }
-                        rect.drawQuadTess(tessellator, totalwidth + getLeft(), startY + getBottom());
-                        totalwidth += thisCharWidth;
                         i++;
                     }
                     tessellator.draw(GL11.GL_QUADS);
@@ -607,31 +538,19 @@ public class TextInput {
                     if (getWidth() - totalwidth > w + 40) {
                         i = 0;
                         totalwidth = getWidth() - w;
+                        trueType.start(totalwidth, startY);
                         tessellator.setColorRGBAF(0.7F, 0.7F, 0.7F, 0.8F);
                         while (true) {
                             if (i >= hint.length()) {
                                 break;
                             }
                             charCurrent = hint.charAt(i);
-                            float thisCharWidth;
-                            if (charCurrent == ' ') {
-                                thisCharWidth = trueType.getSpaceWidth();
-                                if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
-                                    break;
-                                }
-                                totalwidth += thisCharWidth;
-                            }
-                            if ((rect = trueType.getRect(charCurrent)) == null) {
-                                i++;
-                                continue;
-                            }
-
-                            thisCharWidth = (rect.width - trueType.getCorrectL());
-                            if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
+                            trueType.readQuad(charCurrent);
+                            trueType.renderQuad(tessellator, getLeft(), getBottom());
+                            totalwidth = trueType.getXPos();
+                            if (totalwidth - shiftPX > getWidth()) {
                                 break;
                             }
-                            rect.drawQuadTess(tessellator, totalwidth + getLeft(), startY + getBottom());
-                            totalwidth += thisCharWidth;
                             i++;
                         }
                         tessellator.draw(GL11.GL_QUADS);

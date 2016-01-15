@@ -12,25 +12,10 @@ public class Shaders {
 
     private static boolean startup = true;
 
-    public static void reinit() {
-        Shaders.depthBufShader = null;
-        Shaders.normals = null;
-        Shaders.textured = null;
-        Shaders.colored = null;
-        Shaders.wireframe = null;
+    public static void init() {
         initShaders();
     }
-
-    public static void init() {
-        Shaders.colored.enable();
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("setProgramUniform3f");
-        Shaders.textured.enable();
-        textured.setProgramUniform1i("tex0", 0);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("setProgramUniform1i");
-        Shader.disable();
-    }
+    
     public static Shader depthBufShader;
     public static Shader normals;
     public static Shader wireframe;
@@ -111,6 +96,14 @@ public class Shaders {
             Shaders.tonemap.setProgramUniform1f("constexposure", 660);
             Shaders.wireframe.enable();
             Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
+            Shader.disable();
+            Shaders.colored.enable();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("setProgramUniform3f");
+            Shaders.textured.enable();
+            textured.setProgramUniform1i("tex0", 0);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("setProgramUniform1i");
             Shader.disable();
         } catch (ShaderCompileError e) {
             newshaders.release();

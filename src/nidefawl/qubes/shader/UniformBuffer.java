@@ -97,6 +97,10 @@ public class UniformBuffer {
             Engine.checkGLError("UBO Matrix");
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
+    private void release() {
+        Memory.free(this.floatBuffer);
+        Engine.deleteBuffers(this.buffer);
+    }
     static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D")
             .addMat4() //mvp
             .addMat4() //mv
@@ -142,8 +146,11 @@ public class UniformBuffer {
         updateVertDir();
         updateTBNMatrices();
     }
-    public static void reinit() {
-        init();
+    public static void destroy() {
+        for (int i = 0; i < buffers.length; i++) {
+            if (buffers[i] != null)
+                buffers[i].release();
+        }
     }
 
     public static void rebindShaders() {

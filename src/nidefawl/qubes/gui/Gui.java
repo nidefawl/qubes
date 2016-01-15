@@ -169,7 +169,6 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             for (int i = this.buttons.size()-1; i >= 0; i--) {
                 AbstractUI b = this.buttons.get(i);
                 if (b.enabled && b.mouseOver(mx, my)) {
-                    System.err.println("aosidfj "+b);
                     if (!b.handleMouseDown(this, action)) {
                         selectedButton = b;    
                     }

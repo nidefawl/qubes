@@ -14,9 +14,19 @@ import nidefawl.qubes.util.GameMath;
 
 public class FontRenderer {
     public static HashMap<String, FontRenderer> fonts = new HashMap<String, FontRenderer>();
-    public static HashMap<String, Font> ttfMap = new HashMap<String, Font>();
+    public static void destroy() {
+        for (FontRenderer f : fonts.values()) {
+            f.free();
+        }
+        fonts.clear();
+    }
 
-	public TrueTypeFont trueTypeFont;
+	private void free() {
+	    this.trueTypeFont.release();
+	    this.trueTypeFont=null;
+    }
+
+    public TrueTypeFont trueTypeFont;
 	private float size;
 	private int style;
     private int font;
@@ -54,7 +64,7 @@ public class FontRenderer {
         this.size = size;
         this.style = style;
         this.setupFont();
-        while (!trueTypeFont.isValid()) {
+        while (!trueTypeFont.isValid()&&this.size>0) {
             this.size--;
             setupFont();
         }
@@ -68,14 +78,14 @@ public class FontRenderer {
     };
     private void setupFont() {
         if (this.trueTypeFont != null) {
-            this.trueTypeFont.unallocate();
+            this.trueTypeFont.release();
             this.trueTypeFont = null;
         }
 //        this.trueTypeFont = new TrueTypeFontAWT(this.fontName, this.size, this.style, true);
 //        if (this.lineHeight == -1)
 //            this.lineHeight = (int) (this.trueTypeFont.getLineHeight() * 0.8);
         String s = "fonts/"+fontNames[this.style&3];
-        this.trueTypeFont = new TrueTypeFontSTB(s, this.size*1.5f, this.style, true);
+        this.trueTypeFont = new TrueTypeFont(s, this.size*1.5f, this.style, true);
     }
     
 

@@ -174,4 +174,7 @@ public class MeshUpdateTask {
         return this.mr;
     }
 
+    public void destroy() {
+    }
+
 }

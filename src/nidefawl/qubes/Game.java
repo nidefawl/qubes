@@ -85,7 +85,6 @@ public class Game extends GameBase implements IErrorHandler {
     public final Vector3f vLastPlayer = new Vector3f();
 
     public boolean                  updateRenderers = true;
-    private TesselatorState debugChunks;
     public static boolean showGrid=false;
     public boolean thirdPerson = true;
     boolean reinittexthook = false;
@@ -130,7 +129,6 @@ public class Game extends GameBase implements IErrorHandler {
 
     @Override
     public void initGame() {
-        debugChunks = new TesselatorState();
         loadProfile();
         loadSettings();
         InputController.initKeybinds();

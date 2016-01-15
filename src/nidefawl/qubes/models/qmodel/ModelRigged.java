@@ -4,6 +4,9 @@
 package nidefawl.qubes.models.qmodel;
 
 import java.util.ArrayList;
+
+import org.lwjgl.opengl.GL15;
+
 import com.google.common.collect.Lists;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
@@ -208,7 +211,7 @@ public class ModelRigged extends ModelQModel {
             
             
             if (this.gpuBuf == null) {
-                this.gpuBuf = new GLTriBuffer();
+                this.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
             }
             this.gpuBuf.upload(buf);
         }

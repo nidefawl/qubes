@@ -99,18 +99,20 @@ public class BlockLightThread extends Thread {
                     ErrorHandler.setException(new GameError("Exception in " + getName(), e));
                     break;
                 }
+                if (Thread.interrupted()) {
+                    break;
+                }
                 if (!did) {
                     try {
                         Thread.sleep(sleepTime);
                     } catch (InterruptedException e) {
-                        if (!isRunning)
-                            break;
-                        onInterruption();
+                        break;
                     }
                 }
             }
             System.out.println(getName() + " ended");
         } finally {
+            this.isRunning = false;
             this.finished = true;
         }
     }
@@ -144,31 +146,24 @@ public class BlockLightThread extends Thread {
         return null;
     }
 
-    private void onInterruption() {
-    }
 
     public void halt() {
         if (!this.finished) {
             this.isRunning = false;
             try {
-                this.queue.clear();
-                this.interrupt();
-                Thread.sleep(60);
+                if (!this.queue.isEmpty()) {
+                    System.out.println("Waiting for "+this.queue.size()+" light updates to finish...");
+                }
+                while (!this.queue.isEmpty()) {
+                    Thread.sleep(100);
+                }
+                while (!this.finished) {
+                    if (this.queue.isEmpty())
+                        this.interrupt();
+                    Thread.sleep(100);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-            }
-            while (!this.finished) {
-                try {
-                    this.queue.clear();
-                    this.interrupt();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                try {
-                    Thread.sleep(60);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             }
         }
     }

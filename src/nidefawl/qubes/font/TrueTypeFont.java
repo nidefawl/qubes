@@ -20,7 +20,42 @@ import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
-public class TrueTypeFontSTB extends TrueTypeFont {
+public class TrueTypeFont {
+    public final static int[] colorMap = new int[32];
+    static {
+        for (int l = 0; l < 32; l++) {
+            int j1 = (l >> 3 & 1) * 85;
+            int l1 = (l >> 2 & 1) * 170 + j1;
+            int j2 = (l >> 1 & 1) * 170 + j1;
+            int l2 = (l >> 0 & 1) * 170 + j1;
+            if (l == 6) {
+                l1 += 85;
+            }
+            if (l >= 16) {
+                l1 /= 2;
+                j2 /= 2;
+                l2 /= 2;
+            }
+            colorMap[l] = (l1 & 0xff) << 16 | (j2 & 0xff) << 8 | l2 & 0xff;
+        }
+    }
+
+
+    public final static int ALIGN_LEFT = 0, ALIGN_RIGHT = 1, ALIGN_CENTER = 2;
+    /**
+     * Array that holds necessary information about the font characters
+     */
+    // private CharPosition[] charArray = new CharPosition[256];
+    public final static String ctrls = "0123456789abcdefsu";
+
+    public static int getControlChar(int charCurrent) {
+        return ctrls.indexOf(charCurrent);
+    }
+
+    public String trimColorChars(final String in) {
+        return in.replaceAll("(\u00A7([a-f0-9]))", "");
+    }
+    
     int texW=512;
     public int correctL = 1;
     private Buffer chardata;
@@ -39,7 +74,7 @@ public class TrueTypeFontSTB extends TrueTypeFont {
     private float spaceWidth;
     private float lineOffset;
     private float size;
-    public TrueTypeFontSTB(String fontPath, float fontSize, int style, boolean aa) {
+    public TrueTypeFont(String fontPath, float fontSize, int style, boolean aa) {
         this.size = GameMath.round(fontSize);
         this.rangeStart = 32;
         this.numChars = 200;
@@ -90,6 +125,7 @@ public class TrueTypeFontSTB extends TrueTypeFont {
         pc.free();
         chardata.position(0);
         
+
         byte[] data = new byte[texW*texW*4];
         for (int i = 0; i < texW*texW; i++) {
             byte b = bitmap.get(i);
@@ -104,21 +140,21 @@ public class TrueTypeFontSTB extends TrueTypeFont {
         this.spaceWidth = getCharWidth(' ');
     }
 
-    @Override
+
     public float getCharWidth(int ch) {
         xb2.put(0, 0);
         yb2.put(0, 0);
-        chardata.position(0);
+        
         int idx = getIndex((char) ch);
         stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
         return xb2.get(0);
     }
 
-    @Override
+
     public float getWidth(String text) {
         xb2.put(0, 0);
         yb2.put(0, 0);
-        chardata.position(0);
+        
         for (int i = 0; i < text.length(); i++) {
             char charCurrent = text.charAt(i);
             if (charCurrent == 0 && i + 1 < text.length()) {
@@ -142,42 +178,94 @@ public class TrueTypeFontSTB extends TrueTypeFont {
         }
         return xb2.get(0);
     }
+    public void start(float x, float y) {
+        xb.put(0, x);
+        yb.put(0, y);
+    }
+    public float getXPos() {
+        return xb.get(0);
+    }
+    public float getYPos() {
+        return yb.get(0);
+    }
+    public void readQuad(int charCurrent) {
+        int idx = getIndex(charCurrent);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
+    }
+    public void renderQuad(Tess tess, float x, float y) {
+        tess.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
+        tess.add(x + q.x1(), y + q.y0(), 0F, q.s1(), q.t0());
+        tess.add(x + q.x0(), y + q.y0(), 0F, q.s0(), q.t0());
+        tess.add(x + q.x0(), y + q.y1(), 0F, q.s0(), q.t1());
+    }
 
-    @Override
+    public int getCharPositionFromXCoord(String editText, double mouseX, float shiftPX) {
+        xb2.put(0, -shiftPX);
+        yb2.put(0, 0);
+        int mX = (int) Math.round(mouseX);
+        for (int i = 0; i < editText.length(); i++) {
+            char charCurrent = editText.charAt(i);
+            if (charCurrent == 0 && i + 1 < editText.length()) {
+                i++;
+                int ctrl = getControlChar(charCurrent);
+                if (ctrl >= 0) {
+                    i++;
+                    if (charCurrent == 'u' && i + 6 < editText.length()) {
+                        i += 6;
+                    } else if (charCurrent == 's') {
+                        xb2.put(0, xb2.get(0)+this.spaceWidth);
+                    } else if (ctrl >= 0 && ctrl <= 15) {
+                    }
+                    continue;
+                }
+            }
+            int idx = getIndex(charCurrent);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
+            if (xb2.get(0) >= mX) {
+                return Math.max(0, i-1);
+            }
+        }
+        return editText.length();
+    }
+
     public float getCorrectL() {
         return 0;
     }
 
-    @Override
+
     public boolean isValid() {
         return true;
     }
 
-    @Override
-    public void unallocate() {
+
+    public void release() {
         GL.deleteTexture(this.font_tex);
-        info.free();
-        memFree(chardata);
-        memFree(yb);
-        memFree(xb);
+        this.info.free();
+        this.q.free();
+        this.q2.free();
+        memFree(this.chardata);
+        memFree(this.yb);
+        memFree(this.xb);
+        memFree(this.yb2);
+        memFree(this.xb2);
     }
 
-    @Override
+
     public float getLineHeight() {
         return this.lineOffset;
     }
 
-    @Override
+
     public int getTexture() {
         return this.font_tex;
     }
 
-    @Override
+
     public float getCharHeight() {
         return getLineHeight()+descent;
     }
 
-    @Override
+
     public float drawString(Tess tess, float x, float y, String text, int alignment, boolean shadow, float alpha, int maxWidth) {
 
         y-=2;
@@ -306,24 +394,24 @@ public class TrueTypeFontSTB extends TrueTypeFont {
         }
         return charCurrent;
     }
-    @Override
+
     public float drawGlyph(float x, float y, int ch, boolean b, float alpha) {
         xb.put(0, 0);
         yb.put(0, 0);
-        chardata.position(0);
+        
         int idx = getIndex((char) ch);
         stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
 
         return xb.get(0);
     }
 
-    @Override
+
     public float getLastDrawHeight() {
         return this.drawedHeight;
     }
 
 
-    @Override
+
     public boolean hasCharacter(char c) {
         return c>=this.rangeStart&&c<=this.numChars;
     }

@@ -6,6 +6,8 @@ package nidefawl.qubes.models.qmodel;
 import java.util.Arrays;
 import java.util.List;
 
+import org.lwjgl.opengl.GL15;
+
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.Half;
@@ -61,7 +63,7 @@ public class ModelStatic extends ModelQModel {
             
             
             if (this.gpuBuf == null) {
-                this.gpuBuf = new GLTriBuffer();
+                this.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
             }
             this.gpuBuf.upload(buf);
         }

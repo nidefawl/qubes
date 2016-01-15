@@ -14,6 +14,7 @@ import java.util.List;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
+import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.input.Mouse;
@@ -31,7 +32,7 @@ public abstract class GameBase implements Runnable {
     public static String  appName         = "LWJGL Test App";
     public static int     displayWidth;
     public static int     displayHeight;
-    public static boolean GL_ERROR_CHECKS = false;
+    public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
     static int            initHeight      = (int) (1050*0.8);
@@ -314,13 +315,16 @@ public abstract class GameBase implements Runnable {
         cbScrollCallback.release();
         cbWindowSize.release();
         cbWindowFocus.release();
+        cbCursorPos.release();
         errorCallback.release();
+        cbText.release();
         glfwTerminate();
         windowId = 0;
     }
 
     protected void onDestroy() {
         TextureManager.getInstance().destroy();
+        FontRenderer.destroy();
         Tess.destroyAll();
     }
 
@@ -473,6 +477,9 @@ public abstract class GameBase implements Runnable {
         }
         
         checkResize();
+        if (!this.running) {
+            return;
+        }
         updateTime();
         Stats.uniformCalls = 0;
         if (Game.GL_ERROR_CHECKS)
@@ -480,9 +487,15 @@ public abstract class GameBase implements Runnable {
         
         
         updateInput();
+        if (!this.running) {
+            return;
+        }
         input(renderTime);
         
         
+        if (!this.running) {
+            return;
+        }
         preRenderUpdate(renderTime);
         //        if (!startRender) {
         //            try {
@@ -492,10 +505,19 @@ public abstract class GameBase implements Runnable {
         //            }
         //            return;
         //        }
+        if (!this.running) {
+            return;
+        }
         
         render(renderTime);
+        if (!this.running) {
+            return;
+        }
         
         postRenderUpdate(renderTime);
+        if (!this.running) {
+            return;
+        }
         
         //        if (Main.DO_TIMING) TimingHelper.start(14);
         //        GL11.glFlush();

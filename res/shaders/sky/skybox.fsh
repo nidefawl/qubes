@@ -3,7 +3,7 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "atmosphere.glsl"
 
-#pragma include "basic/sky_scatter.glsl"
+#pragma include "sky_scatter.glsl"
 
 uniform sampler2D tex0;
 uniform float lightIntens;
