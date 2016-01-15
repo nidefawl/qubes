@@ -1,7 +1,5 @@
 package nidefawl.qubes;
 
-import static org.lwjgl.glfw.Callbacks.errorCallbackPrint;
-import static org.lwjgl.glfw.Callbacks.glfwSetCallback;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -158,7 +156,7 @@ public abstract class GameBase implements Runnable {
     }
 
     void initCallbacks() {
-        errorCallback = errorCallbackPrint(System.err);
+        errorCallback = GLFWErrorCallback.createPrint(System.err);
         cbWindowSize = new GLFWWindowSizeCallback() {
 
             @Override
@@ -271,20 +269,20 @@ public abstract class GameBase implements Runnable {
             Mouse.init();
 
             // Get the resolution of the primary monitor
-            ByteBuffer vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             // Center our window
-            glfwSetWindowPos(windowId, (GLFWvidmode.width(vidmode) - displayWidth) / 2, (GLFWvidmode.height(vidmode) - displayHeight) / 2);
+            glfwSetWindowPos(windowId, (vidmode.width() - displayWidth) / 2, (vidmode.height() - displayHeight) / 2);
 
             glfwMakeContextCurrent(windowId);
             org.lwjgl.opengl.GL.createCapabilities();
             // Make the window visible
             glfwShowWindow(windowId);
-            glfwSetCallback(windowId, cbWindowSize);
+            glfwSetWindowSizeCallback(windowId, cbWindowSize);
             glfwSetKeyCallback(windowId, cbKeyboard);
-            glfwSetCallback(windowId, cbMouseButton);
-            glfwSetCallback(windowId, cbScrollCallback);
+            glfwSetMouseButtonCallback(windowId, cbMouseButton);
+            glfwSetScrollCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
-            glfwSetCallback(windowId, cbCursorPos);
+            glfwSetCursorPosCallback(windowId, cbCursorPos);
 
             int major, minor, rev;
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
@@ -335,7 +333,7 @@ public abstract class GameBase implements Runnable {
         if (minimized && newWidth*newHeight>0) {
             minimized = false;
             if (isRunning())
-                GL11.glViewport(0, 0, displayWidth, displayHeight);
+                Engine.setDefaultViewport();
         }
         if (newWidth != displayWidth || newHeight != displayHeight) {
             if (newWidth*newHeight <= 0) {
@@ -354,7 +352,7 @@ public abstract class GameBase implements Runnable {
             }
             try {
                 if (isRunning())
-                    GL11.glViewport(0, 0, displayWidth, displayHeight);
+                    Engine.setDefaultViewport();
                 onResize(displayWidth, displayHeight);
             } catch (Throwable t) {
                 setException(new GameError("GLFWWindowSizeCallback", t));
@@ -512,6 +510,7 @@ public abstract class GameBase implements Runnable {
         
         
       //TODO: add second counter that calculates frame time len without vsync so we can use this one for frame time based calculation
+        Stats.lastFrameTimeD = took;
         Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;  
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();

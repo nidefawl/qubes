@@ -87,7 +87,7 @@ public class ShadowRenderer extends AbstractRenderer {
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
-        glViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
@@ -106,7 +106,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
         glPolygonOffset(1.2f, 2.f);
 
-        glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.setViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         Engine.worldRenderer.renderModelsUsingProgram(world, shadowShader, PASS_SHADOW_SOLID, fTime); //TODO: FRUSTUM CULLING
@@ -115,7 +115,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
         glPolygonOffset(1.4f, 2.f);
 
-        glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         Engine.worldRenderer.renderModelsUsingProgram(world, shadowShader, PASS_SHADOW_SOLID, fTime); //TODO: FRUSTUM CULLING
         shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
@@ -124,7 +124,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
         Shader.disable();
 
-        glViewport(0, 0, Game.displayWidth, Game.displayHeight);
+        Engine.setDefaultViewport();
 //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
 //        glEnable(GL_CULL_FACE);
@@ -136,7 +136,7 @@ public class ShadowRenderer extends AbstractRenderer {
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
         glEnable(GL_BLEND);
-        glViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
         shadowShader.setProgramUniform1i("blockTextures", 0);
@@ -151,21 +151,21 @@ public class ShadowRenderer extends AbstractRenderer {
 
         glPolygonOffset(1.2f, 2.f);
 
-        glViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.setViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
         glPolygonOffset(2.4f, 2.f);
 
-        glViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
 
         FrameBuffer.unbindFramebuffer();
 
         Shader.disable();
 
-        glViewport(0, 0, Game.displayWidth, Game.displayHeight);
+        Engine.setDefaultViewport();
 //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
 //        glEnable(GL_CULL_FACE);

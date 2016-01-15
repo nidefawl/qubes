@@ -1,11 +1,13 @@
 package nidefawl.qubes.server;
 
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.noise.TerrainNoiseScale;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Side;
+import nidefawl.qubes.worldgen.TerrainGen;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -34,6 +36,8 @@ public class StartServer {
 			    throw err;
 			}
 	        GameContext.lateInit();
+	        AssetManager.init();
+            TerrainGen.init();
             err = GameContext.getInitError();
             if (err != null) {
                 throw err;

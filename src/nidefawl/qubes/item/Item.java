@@ -35,6 +35,7 @@ public class Item {
     public static final Item axe = new Item("axe").setTextures("tools/axe").setModel(ItemModel.modelAxe);
     public static final ItemGroupLog log = new ItemGroupLog();
     public static final ItemGroupPlank plank = new ItemGroupPlank();
+    public static final ItemGroupStones stones = new ItemGroupStones();
     /**
      * @return
      */

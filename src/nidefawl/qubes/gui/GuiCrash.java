@@ -14,8 +14,8 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
 
 public class GuiCrash extends Gui {
-    FontRenderer         fontSmall = FontRenderer.get(null, 16, 1, 18);
-    FontRenderer         fontBig   = FontRenderer.get(null, 20, 0, 22);
+    FontRenderer         fontSmall = FontRenderer.get(0, 16, 1);
+    FontRenderer         fontBig   = FontRenderer.get(0, 20, 0);
     private List<String> desc;
     private List<String> desc2;
     private String       title;

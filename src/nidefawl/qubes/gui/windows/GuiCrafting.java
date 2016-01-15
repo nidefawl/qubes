@@ -131,7 +131,7 @@
 //        Shaders.textured.enable();
 //        String s = String.format("%.0f%%", Math.min(100, Math.max(0, progress)));
 //        Engine.pxStack.push(0, 0, zBar+3);
-//        FontRenderer fr = FontRenderer.get(null, 14, 0, 18);
+//        FontRenderer fr = FontRenderer.get(0, 14, 0);
 //        fr.drawString(s, xBar+w/2.0f-16, yBar+fr.getLineHeight(), -1, true, 1.0f);
 //        Engine.pxStack.pop();
 //        resetShape();

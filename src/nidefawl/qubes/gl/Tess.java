@@ -3,6 +3,7 @@ package nidefawl.qubes.gl;
 import java.nio.ByteOrder;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
 public class Tess extends AbstractTesselatorState {
@@ -189,7 +190,6 @@ public class Tess extends AbstractTesselatorState {
             int len = vIdx * 4;
             bufInt.put(rawBuffer, 0, vIdx);
             GLVBO vbo = out.getVBO();
-            vbo.bind();
             vbo.upload(bufInt.getByteBuf(), len);
             if (out == this) {
                 bindAndDraw(mode);

@@ -18,7 +18,7 @@ public abstract class GuiWindow extends Gui {
     final public FontRenderer font;
     int[] bounds;
     public GuiWindow() {
-        this.font = FontRenderer.get(null, 22, 0, 26);
+        this.font = FontRenderer.get(0, 22, 0);
     }
     @Override
     public void initGui(boolean first) {
@@ -157,7 +157,7 @@ public abstract class GuiWindow extends Gui {
         resetShape();
         Shaders.textured.enable();
         Engine.pxStack.push(0, 0, 6);
-        font.drawString(getTitle(), posX+width/2, posY + titleBarHeight-7, -1, true, 1f, 2);
+        font.drawString(getTitle(), posX+width/2, posY + font.centerY(titleBarHeight-16), -1, true, 1f, 2);
         Engine.pxStack.pop();
         this.posY-=5;
     }

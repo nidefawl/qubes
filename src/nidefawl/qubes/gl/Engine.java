@@ -22,9 +22,7 @@ import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.*;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.Project;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
 
 public class Engine {
@@ -37,7 +35,7 @@ public class Engine {
 
     public static boolean initRenderers = true;
 
-    private static IntBuffer   viewport;
+    private static IntBuffer   viewportBuf;
     private static FloatBuffer position;
     private static IntBuffer   allocBuffer;
 
@@ -80,6 +78,7 @@ public class Engine {
     public static ShadowProjector shadowProj;
     public static WorldRenderer  worldRenderer;
     public static ShadowRenderer  shadowRenderer;
+    public static BlurRenderer   blurRenderer;
     public static FinalRenderer  outRenderer;
     public static RegionRenderer regionRenderer;
     public static LightCompute  lightCompute;
@@ -98,6 +97,7 @@ public class Engine {
     public final static SingleBlockDraw blockDraw = new SingleBlockDraw();
     public final static ItemRenderer itemRender = new ItemRenderer();
     static GLVAO active = null;
+    final static int[] viewport = new int[] {0,0,0,0};
     public final static ShaderBuffer        debugOutput         = new ShaderBuffer("DebugOutputBuffer").setSize(4096*4);
 
     public static void bindVAO(GLVAO vao) {
@@ -132,7 +132,7 @@ public class Engine {
 
     public static void baseInit() {
         GLVAO.initVAOs();
-        viewport = Memory.createIntBufferHeap(16);
+        viewportBuf = Memory.createIntBufferHeap(16);
         position = Memory.createFloatBufferHeap(3);
         allocBuffer = Memory.createIntBuffer(8);
         projection = new BufferedMatrix();
@@ -165,9 +165,11 @@ public class Engine {
             worldRenderer = new WorldRenderer();
             shadowRenderer = new ShadowRenderer();
             outRenderer = new FinalRenderer();
+            blurRenderer = new BlurRenderer();
             regionRenderer = new RegionRenderer();
             regionRenderThread = new MeshThread(3);
         }
+        System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
     }
     
     public static void init() {
@@ -197,6 +199,7 @@ public class Engine {
                 UniformBuffer.updatePxOffset();
             }
         });
+        System.out.println("Engine.init: "+GameContext.getTimeSinceStart());
     }
     
     public static void resize(int displayWidth, int displayHeight) {
@@ -204,12 +207,12 @@ public class Engine {
         aspectRatio = (float) displayWidth / (float) displayHeight;
         znear = 0.1F;
         zfar = 1024F;
-        viewport.position(0);
-        viewport.put(0);
-        viewport.put(0);
-        viewport.put(displayWidth);
-        viewport.put(displayHeight);
-        viewport.flip();
+        viewportBuf.position(0);
+        viewportBuf.put(0);
+        viewportBuf.put(0);
+        viewportBuf.put(displayWidth);
+        viewportBuf.put(displayHeight);
+        viewportBuf.flip();
         
 
         Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
@@ -255,6 +258,9 @@ public class Engine {
         Tess.instance.add(0, 1, 0, 0, 1);
         Tess.instance.add(1, 1, 0, 1, 1);
         Tess.instance.draw(GL_QUADS, quad);
+        if (blurRenderer != null) {
+            blurRenderer.resize(displayWidth, displayHeight);
+        }
         if (worldRenderer != null) {
             worldRenderer.resize(displayWidth, displayHeight);
         }
@@ -471,9 +477,9 @@ public class Engine {
     public static final Vector3f t = new Vector3f();
 
     public static void updateMouseOverView(float winX, float winY, boolean cameraOffset) {
-        viewport.position(0);
+        viewportBuf.position(0);
         position.position(0);
-        if (!Project.gluUnProject(winX, winY, 1F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
+        if (!Project.gluUnProject(winX, winY, 1F, getMatSceneMV().get(), getMatSceneP().get(), viewportBuf, position)) {
             System.err.println("unproject fail 1");
         }
         vTarget.x = position.get(0)+Engine.GLOBAL_OFFSET.x;
@@ -482,10 +488,10 @@ public class Engine {
 //        Vector4f zdepth = new Vector4f(0,0,-100, 0);
 //        Matrix4f.transform(view, zdepth, zdepth);
 //        System.out.println(vTarget); 
-        viewport.position(0);
+        viewportBuf.position(0);
         position.position(0);
         //TODO: optimize
-        if (!Project.gluUnProject(winX, winY, 0F, getMatSceneMV().get(), getMatSceneP().get(), viewport, position)) {
+        if (!Project.gluUnProject(winX, winY, 0F, getMatSceneMV().get(), getMatSceneP().get(), viewportBuf, position)) {
             System.err.println("unproject fail 2");
         }
         vOrigin.x = position.get(0)+Engine.GLOBAL_OFFSET.x;
@@ -511,14 +517,18 @@ public class Engine {
         if (worldRenderer != null) worldRenderer.release();
         if (outRenderer != null) outRenderer.release();
         if (shadowRenderer != null) shadowRenderer.release();
+        if (blurRenderer != null) blurRenderer.release();
         worldRenderer = new WorldRenderer();
         outRenderer = new FinalRenderer();
         shadowRenderer = new ShadowRenderer();
         lightCompute = new LightCompute();
+        blurRenderer = new BlurRenderer();
+        blurRenderer.init();
         worldRenderer.init();
         outRenderer.init();
         shadowRenderer.init();
         lightCompute.init();
+        blurRenderer.resize(Game.displayWidth, Game.displayHeight);
         worldRenderer.resize(Game.displayWidth, Game.displayHeight);
         outRenderer.resize(Game.displayWidth, Game.displayHeight);
         shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
@@ -626,6 +636,20 @@ public class Engine {
     //May need stack sometime
     public static void setOverrideDepthMask(boolean b) {
         GL11.glDepthMask(b);
+    }
+
+    public static void setViewport(int x, int y, int w, int h) {
+        if (viewport[0] != x || viewport[1] != y || viewport[2] != w || viewport[3] != h) {
+            viewport[0] = x;
+            viewport[1] = y;
+            viewport[2] = w;
+            viewport[3] = h;
+            GL11.glViewport(x, y, w, h);
+        }
+    }
+
+    public static void setDefaultViewport() {
+        setViewport(0, 0, Game.displayWidth, Game.displayHeight);
     }
 
 }

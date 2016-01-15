@@ -15,8 +15,8 @@ public class GuiGameMenu extends Gui {
     private Button quit;
 
     public GuiGameMenu() {
-        this.font = FontRenderer.get(null, 18, 0, 20);
-        this.fontSmall = FontRenderer.get(null, 14, 0, 16);
+        this.font = FontRenderer.get(0, 18, 0);
+        this.fontSmall = FontRenderer.get(0, 14, 0);
     }
     @Override
     public void initGui(boolean first) {
@@ -43,16 +43,10 @@ public class GuiGameMenu extends Gui {
             controls.setSize(w1, h);
         }
         {
-            back = new Button(4, "Back to Main Menu");
+            back = new Button(4, "Disconnect");
             this.add(back);
             back.setPos(left, this.posY+this.height/2+100);
             back.setSize(w1, h);
-        }
-        {
-            quit = new Button(5, "Squid Game");
-            this.add(quit);
-            quit.setPos(left, this.posY+this.height/2+140);
-            quit.setSize(w1, h);
         }
         int top = this.posY+(this.height/2)-(this.buttons.size()*(h+20))/4;
         for (AbstractUI b : this.buttons) {

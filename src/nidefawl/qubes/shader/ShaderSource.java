@@ -29,13 +29,13 @@ public class ShaderSource {
     private String processed;
     int nInclude = 0;
     private String attrTypes = "default";
-    private Shader shader;
+    private ShaderSourceBundle shaderSourceBundle;
 
     /**
-     * @param shader
+     * @param shaderSourceBundle
      */
-    public ShaderSource(Shader shader) {
-        this.shader = shader;
+    public ShaderSource(ShaderSourceBundle shaderSourceBundle) {
+        this.shaderSourceBundle = shaderSourceBundle;
     }
     void load(AssetManager assetManager, String path, String name, IShaderDef def) throws IOException {
         this.processed = readParse(assetManager, path, name, def, false);
@@ -86,12 +86,12 @@ public class ShaderSource {
                         Matcher m;
                         if ((m = patternInclude.matcher(line)).matches()) {
                             if (resolve) {
-                                throw new ShaderCompileError(this.shader, line, name, "Recursive inlcudes are not supported");
+                                throw new ShaderCompileError(line, name, "Recursive inlcudes are not supported");
                             }
                             String filename = m.group(1);
                             String include = readParse(assetManager, path, filename, def, true);
                             if (include == null) {
-                                throw new ShaderCompileError(this.shader, line, name, "Preprocessor error: Failed loading include \"" + filename + "\"");
+                                throw new ShaderCompileError(line, name, "Preprocessor error: Failed loading include \"" + filename + "\"");
                             }
                             code += "#line " + 1 + " " + (nInclude-1) + "\r\n";
                             code += include;
@@ -109,7 +109,7 @@ public class ShaderSource {
                         } else if ((m = patternAttr.matcher(line)).matches()) {
                             this.attrTypes = m.group(1);
                         } else {
-                            throw new ShaderCompileError(this.shader, line, name, "Preprocessor error: Failed to parse pragma directive");
+                            throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
                         }
                     } else {
                         if (i>0&&insertLine && !resolve) {

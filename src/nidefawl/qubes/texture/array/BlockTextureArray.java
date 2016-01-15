@@ -52,6 +52,7 @@ public class BlockTextureArray extends TextureArray {
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
             //      GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
+        if (this.report)
         Game.instance.loadRender(2, 1);
     }
 
@@ -96,23 +97,10 @@ public class BlockTextureArray extends TextureArray {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            if (firstInit) {
-                progress = ++nBlock / (float) totalBlocks;
-                if (Game.instance.loadRender(2, progress, "Setting up textures " + nBlock + "/" + totalBlocks)) {
-                    GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
-                }
-            }
+            uploadprogress = ++nBlock / (float) totalBlocks;
         }
     }
 
-    @Override
-    protected void upscaleTextures() {
-        super.upscaleTextures();
-        if (firstInit) {
-            Game.instance.loadRender(1, 1, "Loading... ");
-            Engine.checkGLError("Game.instance.loadRender");
-        }
-    }
 
     protected void collectTextures(AssetManager mgr) {
         Block[] blocks = Block.block;
@@ -136,11 +124,8 @@ public class BlockTextureArray extends TextureArray {
                     list.add(tex);
                 }
                 blockIDToAssetList.put(b.id, list);
-                if (firstInit) {
-                    float progress = (i / (float) len);
-                    Game.instance.loadRender(1, progress, "Loading... " + b.getName());
-                }
             }
+            loadprogress = (i / (float) len);
         }
     }
 

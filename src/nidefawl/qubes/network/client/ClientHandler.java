@@ -9,7 +9,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.async.AsyncTaskThread;
 import nidefawl.qubes.async.AsyncTasks;
-import nidefawl.qubes.async.IAsyncTask;
+import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
@@ -197,27 +197,25 @@ public class ClientHandler extends Handler {
     @Override
     public void handleChunkDataMulti(final PacketSChunkData packet, final int flags) {
         if ((flags&1)!=0) {
-            AsyncTasks.submit(new IAsyncTask<Runnable>() {
+            AsyncTasks.submit(new AsyncTask() {
+                byte[] decpressData;
                 @Override
-                public Runnable call() throws Exception {
+                public Void call() throws Exception {
                     if (isValidWorld(packet)) {
                         AsyncTaskThread context = ((AsyncTaskThread)Thread.currentThread());
-                        final byte[] decompressData = context.inflate(packet.blocks);
-                        return new Runnable() {
-                            public void run() {
-                                processChunkData(packet, decompressData, flags);
-                            }
-                        };
+                        this.decpressData = context.inflate(packet.blocks);
                     }
                     return null;
                 }
                 @Override
-                public TaskType getType() {
-                    return TaskType.CHUNK_DECOMPRESS;
+                public void post() {
+                    if (isValidWorld(packet)) {
+                        processChunkData(packet, this.decpressData, flags);
+                    }
                 }
                 @Override
-                public boolean requiresComplete() {
-                    return isValidWorld(packet);
+                public TaskType getType() {
+                    return TaskType.CHUNK_DECOMPRESS;
                 }
             });
         } else {

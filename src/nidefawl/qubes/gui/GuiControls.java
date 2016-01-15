@@ -67,13 +67,13 @@ public class GuiControls extends Gui {
             int c2 = this.hovered ? -1 : this.color2;
 //            final Tess tessellator = Tess.instance;
             Shaders.textured.enable();
-            fr.drawString(b.getName(), this.posX, this.posY+(this.height-5), -1, true, 0.9f);
+            fr.drawString(b.getName(), this.posX, this.posY+fr.centerY(height), -1, true, 0.9f);
 ////            GLfw.g
             String keyname = "";
             if (b.isEnabled()) {
                 keyname = Keyboard.getKeyName(b.getKey());
             }
-            fr.drawString(keyname, r+rw/2, this.posY+(this.height-5), -1, true, 0.9f, 2);
+            fr.drawString(keyname, r+rw/2, this.posY+fr.centerY(height), -1, true, 0.9f, 2);
             Shaders.colored.enable();
             Tess tessellator = Tess.instance;
 //          OpenGlHelper.glColor3f(fa, fa, fa);
@@ -103,7 +103,7 @@ public class GuiControls extends Gui {
     ScrollList scrolllist;
 
     public GuiControls(Gui parent) {
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
         this.parent = parent;
     }
 

@@ -1,9 +1,8 @@
 package nidefawl.qubes;
 
-import java.io.File;
+import org.lwjgl.system.Configuration;
 
 import nidefawl.qubes.logging.ErrorHandler;
-import nidefawl.qubes.modules.ModuleLoader;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;
 
@@ -28,6 +27,13 @@ public class BootClient {
         return val;
     }
     public static void main(String[] args) {
+        boolean debug = true;
+        Configuration.DEBUG.set(debug);
+        Configuration.DEBUG_MEMORY_ALLOCATOR.set(debug);
+        Configuration.DISABLE_CHECKS.set(!debug);
+        Configuration.GLFW_CHECK_THREAD0.set(debug);
+        Configuration.MEMORY_ALLOCATOR.set("jemalloc");
+        Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
         GameContext.setSideAndPath(Side.CLIENT, ".");
         String serverAddr = "nide.ddns.net:21087";
         for (int i = 0; i < args.length; i++) {
@@ -39,22 +45,6 @@ public class BootClient {
                 switch (arg) {
                     case "server": {
                         serverAddr = getValue(args, i, arg);
-                        break;
-                    }
-                    case "modules": {
-                        String path = getValue(args, i, arg);
-                        ModuleLoader.setOverrideModules(path);
-                        break;
-                    }
-                    case "moduledir": {
-                        try {
-                            String path = getValue(args, i, arg);
-                            File fpath = new File(path);
-                            System.err.println("adding module direcotry "+fpath);
-                            ModuleLoader.addURLs(fpath.toURI().toURL());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
                         break;
                     }
                         

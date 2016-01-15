@@ -29,7 +29,7 @@ public class ScrollList extends Gui {
         this.parent = parent;
     }
     public ScrollList() {
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
         scrollbarbutton = new Button(-2, "");
     }
     float getMinY() {

@@ -39,6 +39,9 @@ public class GameMath {
         int x = (int) d;
         return d < x ? x - 1 : x;
     }
+    public static int ceil(double x) {
+        return (int) Math.ceil(x);
+    }
     final static float[] m   = new float[16];
     final static float[] inv = new float[16];
     public static void invertMat4x(FloatBuffer matin, FloatBuffer matout) {
@@ -237,5 +240,23 @@ public class GameMath {
     public static float easeInOutCubic(float t)
     {
         return t<0.5f ? 4.0f*t*t*t : (t-1.0f)*(2.0f*t-2.0f)*(2.0f*t-2.0f)+1.0f;
+    }
+    public static int[] downsample(int w, int h, int fac) {
+        if (fac != 1) {
+            int ssrW = w/fac;
+            int ssrH = h/fac;
+            if (ssrW%2!=0)
+                ssrW++;
+            if (ssrH%2!=0)
+                ssrH++;
+            if (ssrW<1)ssrW=1;
+            if (ssrH<1)ssrH=1;
+            return new int[] {ssrW, ssrH};
+        }
+        return new int[] {w, h};
+        
+    }
+    public static int round(float stringWidth) {
+        return stringWidth%1.0f<0.5?floor(stringWidth):ceil(stringWidth);
     }
 }

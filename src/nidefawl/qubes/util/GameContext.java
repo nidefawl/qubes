@@ -10,12 +10,15 @@ import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.item.IDMappingItems;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.models.ItemModel;
-import nidefawl.qubes.modules.ModuleLoader;
 
 public class GameContext {
     static Thread mainThread;
     static Side side;
     static GameError initError;
+    private static long startBoot;
+    public static long getTimeSinceStart() {
+        return System.currentTimeMillis()-startBoot;
+    }
     
 
     public static void setMainThread(Thread thread) {
@@ -39,6 +42,7 @@ public class GameContext {
     }
 
     public static void setSideAndPath(Side s, String path) {
+        startBoot = System.currentTimeMillis();
         side = s;
         WorkingEnv.init(path);
     }
@@ -51,7 +55,6 @@ public class GameContext {
             AsyncTasks.init();
             IDMappingBlocks.load();
             IDMappingItems.load();
-            ModuleLoader.scanModules(WorkingEnv.getModulesDir());
         } catch (GameError e) {
             initError = e;
         } catch (Exception e) {
@@ -75,7 +78,6 @@ public class GameContext {
             ItemModel.preInit();
             Block.preInit();
             Item.preInit();
-            ModuleLoader.loadModules();
             Block.postInit();
             Item.postInit();
             ItemModel.postInit();

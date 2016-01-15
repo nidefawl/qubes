@@ -11,7 +11,6 @@ import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.ServerConfig;
 import nidefawl.qubes.config.WorkingEnv;
-import nidefawl.qubes.event.Events;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.network.server.NetworkServer;
 import nidefawl.qubes.server.commands.CommandHandler;
@@ -53,8 +52,7 @@ public class GameServer implements Runnable, IErrorHandler {
 		try {
 			this.running = true;
 			load();
-            Events.onServerStarted(this);
-            CompressThread.startNewThread(this);
+			CompressThread.startNewThread(this);
 			networkServer.startListener();
 			System.out.println("server is running");
 			while (this.running) {
@@ -142,7 +140,7 @@ public class GameServer implements Runnable, IErrorHandler {
             lastTick = System.currentTimeMillis();
         }
         long start2 = System.currentTimeMillis();
-        if (start2-this.lastSaveTick > 10000) {
+        if (start2-this.lastSaveTick > 1000) {
             resyncTime();
             this.lastSaveTick = start2;
             long start1 = System.currentTimeMillis();

@@ -35,7 +35,7 @@ public class GuiSelectBlock extends Gui {
     private BlockStack sel;
 
     public GuiSelectBlock() {
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
     }
     @Override
     public void initGui(boolean first) {
@@ -221,7 +221,7 @@ public class GuiSelectBlock extends Gui {
             if (sel != null) {
                 Shaders.gui.enable();
                 String s = sel.getBlock().getName();
-                int w = font.getStringWidth(s)+10;
+                float w = font.getStringWidth(s)+10;
                 float extraw=pX2-pX1<w?(w-(pX2-pX1))/2:0;
                 int h = 28;
                 int yPosText = (int) (topDown?pY1-h-2:pY2+6);

@@ -10,7 +10,10 @@ import org.lwjgl.system.MemoryUtil;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.async.AsyncTaskThread;
 import nidefawl.qubes.async.AsyncTasks;
+import nidefawl.qubes.async.AsyncTask;
+import nidefawl.qubes.async.AsyncTask.TaskType;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.chat.client.ChatManager;
@@ -44,9 +47,7 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.*;
-import nidefawl.qubes.texture.array.BlockNormalMapArray;
-import nidefawl.qubes.texture.array.BlockTextureArray;
-import nidefawl.qubes.texture.array.ItemTextureArray;
+import nidefawl.qubes.texture.array.*;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.BlockPos;
@@ -64,7 +65,6 @@ public class Game extends GameBase implements IErrorHandler {
 
     public GuiOverlayStats statsOverlay;
     public GuiCached       statsCached;
-    public GuiOverlayDebug debugOverlay;
     public GuiOverlayChat  chatOverlay;
     private Gui            gui;
 
@@ -102,7 +102,7 @@ public class Game extends GameBase implements IErrorHandler {
     private BaseStack testStack2 = new ItemStack(Item.axe);
     
     private GameMode mode = GameMode.PLAY;
-    final float[] loadProgress = new float[5];
+    final float[] loadProgress = new float[2];
     
     public GameMode getMode() {
         return this.mode;
@@ -136,7 +136,7 @@ public class Game extends GameBase implements IErrorHandler {
         InputController.initKeybinds();
         selection.init();
         dig.init();
-        AssetManager.getInstance().init();
+        AssetManager.init();
         FontRenderer.init();
         Engine.init();
         loadRender(0, 0, "Initializing");
@@ -162,10 +162,6 @@ public class Game extends GameBase implements IErrorHandler {
         this.statsCached.setPos(0, 0);
         this.statsCached.setSize(displayWidth, displayHeight);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
-        this.debugOverlay = new GuiOverlayDebug();
-        this.debugOverlay.setPos(0, 0);
-        this.debugOverlay.setSize(displayWidth, displayHeight);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 4");
         Engine.checkGLError("Post startup");
         loadRender(0, 0.5f, "Initializing");
     }
@@ -192,8 +188,7 @@ public class Game extends GameBase implements IErrorHandler {
         float x = 0;
         float y = 0;
         float l = tw*0.2f;
-        float barh = 8;
-        float barsH = (barh*1.2f) * (loadProgress.length-1);
+        float barsH = 32;
         float barsTop = (th-barsH)/2.0f;
         if (isCloseRequested()) {
             shutdown();
@@ -204,7 +199,7 @@ public class Game extends GameBase implements IErrorHandler {
         updateInput();
         Engine.updateOrthoMatrix(displayWidth, displayHeight);
         UniformBuffer.updateOrtho();
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClearColor(0, 0, 0, 0F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("loadRender glClear");
@@ -228,7 +223,7 @@ public class Game extends GameBase implements IErrorHandler {
         Tess.instance.add(x + l, y + barsTop+barsH+2, 0, 0, 0);
         Tess.instance.add(x + l + w, y + barsTop+barsH+2, 0, 1, 0);
         Tess.instance.drawQuads();
-        FontRenderer font = FontRenderer.get(null, 16, 1, 18);
+        FontRenderer font = FontRenderer.get(0, 16, 1);
         if (font != null) {
             Shaders.textured.enable();
             font.drawString(string, x+l+2, y+barsTop+barsH+10+font.getLineHeight(), -1, true, 1.0f);
@@ -257,9 +252,41 @@ public class Game extends GameBase implements IErrorHandler {
         loadRender(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
         loadRender(0, 1f, "Loading... Item Textures");
-        ItemTextureArray.getInstance().reload();
-        BlockTextureArray.getInstance().reload();
-        BlockNormalMapArray.getInstance().reload();
+        TextureArray[] arrays = {
+                ItemTextureArray.getInstance(),
+                BlockNormalMapArray.getInstance(),
+                BlockTextureArray.getInstance(),
+        };
+        for (int i = 0; i < arrays.length; i++) {
+            final TextureArray arr = arrays[i];
+            AsyncTasks.submit(new AsyncTask() {
+                @Override
+                public void pre() {
+                    arr.preUpdate();
+                }
+                @Override
+                public void post() {
+                    arr.postUpdate();
+                }
+                @Override
+                public Void call() throws Exception {
+                    arr.load();
+                    return null;
+                }
+                @Override
+                public TaskType getType() {
+                    return TaskType.LOAD_TEXTURES;
+                }
+            });
+        }
+        while(!AsyncTasks.completeTasks()) {
+            float pr = 0;
+            for (int i = 0; i < arrays.length; i++) {
+                pr+=arrays[i].getProgress();
+            }
+            pr/=(float)arrays.length;
+            loadRender(1, pr, "Loading...");
+        }
         ChatManager.getInstance().loadInputHistory();
 
         InputController.load();
@@ -556,7 +583,6 @@ public class Game extends GameBase implements IErrorHandler {
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("HBAO");
-
             if (HBAOPlus.hasContext) {
 
                 HBAOPlus.renderAO();
@@ -934,7 +960,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >3241/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >32421/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
           Shaders.initShaders();
@@ -943,7 +969,7 @@ public class Game extends GameBase implements IErrorHandler {
 //          Engine.worldRenderer.initShaders();
 //          Engine.regionRenderer.initShaders();
 //            Engine.shadowRenderer.initShaders();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            
         }
@@ -955,6 +981,7 @@ public class Game extends GameBase implements IErrorHandler {
     }
     @Override
     public void preRenderUpdate(float f) {
+        Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
         boolean b = Mouse.isGrabbed();
         if (b != this.movement.grabbed()) {
@@ -1107,10 +1134,6 @@ public class Game extends GameBase implements IErrorHandler {
             if (this.statsCached != null) {
                 this.statsCached.setSize(displayWidth, displayHeight);
                 this.statsCached.setPos(0, 0);
-            }
-            if (this.debugOverlay != null) {
-                this.debugOverlay.setPos(0, 0);
-                this.debugOverlay.setSize(displayWidth, displayHeight);
             }
             if (this.gui != null) {
                 this.gui.setPos(0, 0);

@@ -10,11 +10,11 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import nidefawl.qubes.util.GameError;
 
 public class AsyncTasks {
-    static ArrayList<Future<Runnable>> tasks = new ArrayList<>();
+    static ArrayList<AsyncTask> tasks = new ArrayList<>();
     static ExecutorService service;
     public static void init() {
         if (service == null)
-        service = Executors.newFixedThreadPool(2, 
+        service = Executors.newFixedThreadPool(4, 
                 new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setNameFormat("PooledThread_%d")
@@ -32,26 +32,29 @@ public class AsyncTasks {
                 })
                 .build());
     }
-    public static Future<Runnable> submit(IAsyncTask<Runnable> iAsyncTask) {
-        Future<Runnable> future = service.submit(iAsyncTask);
-        if (iAsyncTask.requiresComplete()) {
-            tasks.add(future);    
-        }
-        return future;
+    public static void submit(AsyncTask iAsyncTask) {
+        try {
+            iAsyncTask.pre();
+            iAsyncTask.setFuture(service.submit(iAsyncTask));
+            tasks.add(iAsyncTask);  
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            if (!service.isTerminated()) {
+                throw new GameError("while submitting task "+iAsyncTask, e);
+            }
+        } catch (Exception e2) {
+            throw new GameError("while submitting task "+iAsyncTask, e2);
+            
+        }  
     }
-    public static void completeTasks() {
-        
+    public static boolean completeTasks() {
         if (!tasks.isEmpty()) {
             long start = System.currentTimeMillis();
             for (int i = 0; i < tasks.size(); i++) {
-                Future<Runnable> a = tasks.get(i);
-                if (a.isDone()) {
+                AsyncTask a = tasks.get(i);
+                if (a.isDone()||a.isCancelled()) {
                     tasks.remove(i--);
                     try {
-                        Runnable run = a.get();
-                        if (run != null) {
-                            run.run();
-                        }
+                        a.post();
                     } catch (Exception e) {
                         throw new GameError("Error while handling async tasks", e);
                     }
@@ -64,6 +67,7 @@ public class AsyncTasks {
                 }
             }
         }
+        return tasks.isEmpty();
     }
     public static void shutdown() {
         if (service != null)

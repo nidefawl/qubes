@@ -10,6 +10,13 @@ package nidefawl.qubes.test;
 public class TestCP {
     
     public static void main(String[] args) {
+        for (int i = -520; i < -510; i++) {
+            System.err.println(i%513);    
+        }
+        for (int i = -2; i < 4; i++) {
+            System.err.println(i%513);    
+        }
+        
         System.out.println(Integer.toHexString(Integer.reverseBytes(0x00112233)));
 //        try {
 //            PNGDecoder dec = new PNGDecoder(new FileInputStream(new File("res/textures/colorpalette.png")));

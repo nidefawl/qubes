@@ -51,7 +51,7 @@ public class GuiSettings extends Gui {
     private Setting aoSetting;
 
     public GuiSettings(Gui parent) {
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
         this.parent = parent;
     }
 
@@ -104,7 +104,7 @@ public class GuiSettings extends Gui {
         list.add((this.aoSetting = new Setting(this, "Ambient Occlusion", strAOSettings[Game.instance.settings.ao & 1], strAOSettings) {
             void callback(int id) {
                 Game.instance.settings.ao = id;
-                Engine.outRenderer.initAO(Game.displayWidth, Game.displayHeight);
+                Engine.outRenderer.initAO();
                 UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
                 ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
             }

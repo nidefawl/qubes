@@ -35,14 +35,14 @@ public class GuiOverlayStats extends Gui {
     boolean render = false;
     private String stats5;
     public GuiOverlayStats() {
-        this.font = FontRenderer.get(null, 18, 0, 20);
-        this.fontSmall = FontRenderer.get(null, 16, 0, 18);
+        this.font = FontRenderer.get(0, 18, 0);
+        this.fontSmall = FontRenderer.get(0, 16, 0);
     }
 
 
     public void refresh() {
         int smallSize = 12;
-        this.fontSmall = FontRenderer.get(null, smallSize, 1, smallSize+2);
+        this.fontSmall = FontRenderer.get(0, smallSize, 1);
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
@@ -123,16 +123,16 @@ public class GuiOverlayStats extends Gui {
         float maxW = 250;
             font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
-            y += font.getLineHeight() * 1.2F;
+            y += font.getLineHeight();
             for (String s : info1) {
                 font.drawString(s, 5, y, 0xFFFFFF, true, 1.0F);
-                y += font.getLineHeight() * 1.2F;
+                y += font.getLineHeight();
             }
             if (stats5 != null) {
                 font.drawString(stats5, GameBase.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
-                y += font.getLineHeight() * 1.2F;
+                y += font.getLineHeight();
             }
-            float totalHeight = (fontSmall.getLineHeight() * 1.2F)*info.size();
+            float totalHeight = (fontSmall.getLineHeight())*info.size();
             y-=font.getLineHeight()*1.7f;
             Tess.instance.setColorF(0, 0.8f);
             Tess.instance.add(0, y+totalHeight+4);
@@ -145,11 +145,11 @@ public class GuiOverlayStats extends Gui {
             Shaders.textured.enable();
             for (String st : info) {
                 fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
-                y += fontSmall.getLineHeight() * 1.2F;
+                y += fontSmall.getLineHeight();
             }
 
         if (System.currentTimeMillis() - messageTime < 5000) {
-            int strwidth = 0;
+            float strwidth = 0;
 
             String[] split = message.split("\n");
             for (int i = 0; i < split.length; i++) {

@@ -1,6 +1,5 @@
 package nidefawl.qubes.util;
 
-import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
 
 public class SysInfo {
@@ -27,7 +26,8 @@ public class SysInfo {
         this.javaVersion = System.getProperty("java.version") + " - " + System.getProperty("java.vendor");
         this.javaMachineVersion = System.getProperty("java.vm.name") + " - " + System.getProperty("java.vm.info") + " - " + System.getProperty("java.vm.vendor");
         this.memoryMb = Runtime.getRuntime().maxMemory() / (1024L * 1024L);
-        this.lwjglVersion = Sys.getVersion();
+        
+//        this.lwjglVersion = Sys.getVersion();
         this.openGLVersion = GL11.glGetString(GL11.GL_RENDERER) + " " + GL11.glGetString(GL11.GL_VERSION);
         this.openGLVendor = GL11.glGetString(GL11.GL_VENDOR);
     }

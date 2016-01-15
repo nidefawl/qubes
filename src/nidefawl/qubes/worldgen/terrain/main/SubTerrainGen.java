@@ -14,7 +14,7 @@ public abstract class SubTerrainGen {
         
     }
 
-    public abstract SubTerrainData prepare(int cX, int cZ);
+    public abstract SubTerrainData prepare(int cX, int cZ, HexBiome b);
 
     /**
      * @param hex
@@ -23,5 +23,5 @@ public abstract class SubTerrainGen {
      * @param blockX
      * @param blockZ
      */
-    public abstract int generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d, double[] d2);
+    public abstract double generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d, double[] d2);
 }

@@ -7,6 +7,7 @@ import nidefawl.qubes.inventory.slots.SlotInventory;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.GameMath;
 
 public abstract class Tooltip extends Gui {
     public static class ItemToolTip extends Tooltip {
@@ -18,8 +19,8 @@ public abstract class Tooltip extends Gui {
         FontRenderer fr2;
 
         public ItemToolTip set(BaseStack stack, Slot slot, GuiWindow window) {
-            this.fr = FontRenderer.get(null, 16, 1, 18);
-            this.fr2 = FontRenderer.get(null, 14, 0, 16);
+            this.fr = FontRenderer.get(0, 16, 1);
+            this.fr2 = FontRenderer.get(0, 14, 0);
             if (this.stack != stack) {
                 this.width = height = 0;
                 this.stack = stack;   
@@ -31,9 +32,8 @@ public abstract class Tooltip extends Gui {
                     name = item.getName();
                 }
                 this.title = name;
-                this.width = Math.max(this.width, fr.getStringWidth(this.title)+16);
-                this.height = Math.max(this.height, fr.getLineHeight()+10);
-                System.out.println(this.width+"/"+this.height);
+                this.width = GameMath.round(Math.max(this.width, fr.getStringWidth(this.title)+16));
+                this.height = GameMath.round(Math.max(this.height, fr.getLineHeight()+10));
             }
             this.slot = slot;
             this.window = window;
@@ -48,7 +48,7 @@ public abstract class Tooltip extends Gui {
             renderBox();
             Shaders.gui.setProgramUniform1f("fade", 0.3f);
             Shaders.textured.enable();
-            int y = this.posY+this.fr.getLineHeight()+5;
+            int y = GameMath.round(this.posY+fr.centerY(this.height));
             fr.drawString(this.title, posX+8, y, -1, false, 1, 0);
             y+=fr.getLineHeight();
             resetShape();

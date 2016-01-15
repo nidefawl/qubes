@@ -229,7 +229,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
                 Shaders.textured.enable();
                 Engine.pxStack.translate(0, 0, 10);
                 FontRenderer font = Engine.itemRender.font;
-                int w2 = font.getStringWidth(""+nMult);
+                int w2 = GameMath.round(font.getStringWidth(""+nMult));
                 font.drawString(""+nMult, posX+inset+slotW-inset*2-w2-1, posY+inset+slotW-inset*2+2, 0xf0f0f0, true, 1.0f);
             }
             if (this.hovered) {
@@ -307,7 +307,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 //            selectedButton = g;
             restoreBounds();
             Shaders.textured.enable();
-            fr.drawString(string, posX+width/2, posY+fr.getLineHeight()+6, -1, true, 1, 2);
+            fr.drawString(string, posX+width/2, posY+fr.centerY(height), -1, true, 1, 2);
         }
 
         @Override
@@ -391,21 +391,21 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 
         {
 
-            btnIncr.font = FontRenderer.get(null, 10, 0, 10);
+            btnIncr.font = FontRenderer.get(0, 10, 0);
             btnIncr.setPos(txtAmount.posX+txtAmount.width+10, txtAmount.posY);
             btnIncr.setSize(15, 12);
             btnIncr.zIndex=4;
         }
         {
 
-            btnDecr.font = FontRenderer.get(null, 10, 0, 10);
+            btnDecr.font = FontRenderer.get(0, 10, 0);
             btnDecr.setPos(txtAmount.posX+txtAmount.width+10, txtAmount.posY+18);
             btnDecr.setSize(15, 12);
             btnDecr.zIndex=4;
         }
         {
 
-            btnMax.font = FontRenderer.get(null, 16, 1, 16);
+            btnMax.font = FontRenderer.get(0, 16, 1);
             btnMax.setPos(txtAmount.posX+txtAmount.width+34, txtAmount.posY);
             btnMax.setSize(44, 30);
             btnMax.zIndex=4;
@@ -556,7 +556,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             renderBox();
             Shaders.textured.enable();
             FontRenderer font = this.cat.getScrollList().font;
-            font.drawString(selected.recipe.getPreview().getName(), posX + width / 2, posY + font.getLineHeight() + 6, -1, true, 1, 2);
+            font.drawString(selected.recipe.getPreview().getName(), posX + width / 2, posY + font.centerY(height), -1, true, 1, 2);
 
             font.drawString("Recipe", bg.posX + bg.width / 4, posY + font.getLineHeight() + 6 + 35, -1, true, 1, 2);
             font.drawString("Inventory", bg.posX + bg.width / 4 * 3, posY + font.getLineHeight() + 6 + 35, -1, true, 1, 2);
@@ -750,7 +750,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
     public void renderSlotOverlay(Slot s, float posx, float posy) {
         if (s instanceof SlotStock) {
             int stackSize = s.getItem().getSize();
-            int w2 = Engine.itemRender.font.getStringWidth(""+stackSize);
+            int w2 = GameMath.round(Engine.itemRender.font.getStringWidth(""+stackSize));
             float w = s.w-inset*2;
             int color = 0x60f060;
             if (stackSize < ((SlotStock)s).stackReq.getSize()) {

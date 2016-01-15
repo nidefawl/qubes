@@ -14,7 +14,6 @@ public class WorkingEnv {
     static File worlds;
     static File config;
     static File playerdata;
-    static File modules;
     
 	public static void init(String basePath) {
 	    Side side = GameContext.getSide();
@@ -26,7 +25,6 @@ public class WorkingEnv {
         playerdata = new File(workingDir, "playerdata");
         assetDir = new File(workingDir, "res");
         packsDir = new File(workingDir, "packs");
-        modules = new File(workingDir, "modules");
         if (side == Side.CLIENT) {
         }
         if (side == Side.SERVER) {
@@ -57,19 +55,6 @@ public class WorkingEnv {
      */
     public static File getWorkingDir() {
         return workingDir;
-    }
-
-    /**
-     * @param string
-     */
-    public static void setModulePath(String string) {
-        modules = new File(string);
-    }
-    /**
-     * @return the modules
-     */
-    public static File getModulesDir() {
-        return modules;
     }
 
 }

@@ -55,13 +55,21 @@ public class FrameBuffer implements IManagedResource {
         }
         FRAMEBUFFERS++;
     }
-    public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type) {
+    public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type, boolean clearBlack) {
         FrameBuffer f = new FrameBuffer(renderWidth, renderHeight);
         f.setColorAtt(GL_COLOR_ATTACHMENT0, type);
         f.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        f.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
+        if (clearBlack) {
+            f.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        } else {
+            f.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
+        }
         f.setup(resMgr);
+        f.clearFrameBuffer();
         return f;
+    }
+    public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type) {
+        return make(resMgr, renderWidth, renderHeight, type, false);
     }
 
     public void setColorAtt(int att, int fmt) {

@@ -24,7 +24,7 @@ public class TextField extends AbstractUI implements Renderable {
 
     public TextField(ITextEdit gui, int id, String text) {
         this.id = id;
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
         this.inputRenderer = new TextInput(this.font, gui);
         this.inputRenderer.editText = text;
         this.focused = false;

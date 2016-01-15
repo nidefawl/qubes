@@ -30,7 +30,7 @@ public class ItemRenderer {
      * 
      */
     public void init() {
-        this.font = FontRenderer.get(null, 16, 1, 18);
+        this.font = FontRenderer.get(0, 16, 1);
     }
 
     public void drawItem(BaseStack stack, float x, float y, float w, float h) {
@@ -73,7 +73,7 @@ public class ItemRenderer {
             stackSize = ((BlockStack)stack).size;
         }
         if (stackSize != 0)  {
-            int w2 = this.font.getStringWidth(""+stackSize);
+            float w2 = this.font.getStringWidth(""+stackSize);
             this.font.drawString(""+stackSize, x+w-w2-1, y+h+2, 0xf0f0f0, true, 1.0f);
         }
     }

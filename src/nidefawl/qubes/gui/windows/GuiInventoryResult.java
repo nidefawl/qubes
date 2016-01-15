@@ -115,9 +115,7 @@ public abstract class GuiInventoryResult extends Gui {
 
 
     public boolean onMouseClick(int button, int action) {
-        System.err.println("popup onMouseClick");
         if (super.onMouseClick(button, action)) {
-            System.err.println("popup hit element");
             return true;
         }
         float posx = (float) (10+mouseOffsetX());
@@ -126,7 +124,6 @@ public abstract class GuiInventoryResult extends Gui {
             System.out.println(this.slots.getSlot(0).x+", "+(Mouse.getX()-posx));
             Slot s = this.slots.getSlotAt(Mouse.getX()-posx, Mouse.getY()-posy);
             if (s != null) {
-                System.err.println("popup hit slot");
                 BaseStack stack = this.slots.slotClicked(s, button, action);
                 Game.instance.sendPacket(new PacketCInvClick(slots.getId(), s.idx, button, action, stack));
                 return true;

@@ -11,7 +11,7 @@ public class GuiDisconnected extends Gui {
     private String reason;
 
     public GuiDisconnected(String reason) {
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
         this.reason = reason;
     }
 

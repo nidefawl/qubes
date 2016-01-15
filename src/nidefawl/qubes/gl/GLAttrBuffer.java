@@ -45,23 +45,6 @@ public class GLAttrBuffer {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData ");
     }
-    
-
-    /**
-     * 
-     */
-    public void bind() {
-        if (this.vbo == -1) {
-            throw new GameError("VBO == -1");
-        }
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vbo);
-    }
-
-    public void unbind() {
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-    }
 
     /**
      * 

@@ -11,6 +11,7 @@ import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Renderable;
 
 /**
@@ -28,7 +29,7 @@ public class ComboBox extends AbstractUI implements Renderable {
     public float         b                 = 1.0f;
     public float         a                 = 1.0f;
     public Object        value             = null;
-    public int           stringWidth;
+    public float         stringWidth;
     public boolean       isOpen            = false;
     public int           sel;
     public int           id;
@@ -49,7 +50,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         this.id = id;
         this.string = text;
         this.width = this.height = 18;
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
         this.stringWidth = this.font.getStringWidth(this.string);
     }
     public void setValue(Object obj) {
@@ -59,10 +60,10 @@ public class ComboBox extends AbstractUI implements Renderable {
         this.gui = gui;
         this.string = s;
         this.id = id;
-        this.font = FontRenderer.get(null, 18, 0, 20);
-        this.height = this.font.getLineHeight()+4;
+        this.font = FontRenderer.get(0, 18, 0);
+        this.height = GameMath.round(this.font.getLineHeight()+4);
         this.stringWidth = this.font.getStringWidth(s);
-        titleWidth=Math.max(stringWidth+6, titleWidth);
+        titleWidth=GameMath.round(Math.max(stringWidth+6, titleWidth));
         this.titleLeft = stringLeft;
     }
 
@@ -202,7 +203,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                 scrollbarwidth = 0;
             }
             if (this.values.length > 0) {
-                this.heightPerEntry = box.font.getLineHeight() - 1;
+                this.heightPerEntry = GameMath.round(box.font.getLineHeight()+2);
                 this.height = values * this.heightPerEntry;
                 this.width = this.box.width;
                 this.posY = this.box.posY + this.box.height+extendy;
@@ -257,9 +258,11 @@ public class ComboBox extends AbstractUI implements Renderable {
                         tessellator.drawQuads();
                     }
                     String entry = String.valueOf(this.values[c+scrollOffset]);
-                    int w = box.font.getStringWidth(entry);
+                    int w = GameMath.round(box.font.getStringWidth(entry));
                     box.font.maxWidth = rowWidth - 8;
-                    final int yStringPos = this.posY - 1 + box.font.getLineHeight() + (c * this.heightPerEntry);
+                    float entryBoxBottom = this.posY-1+(heightPerEntry) + (c * this.heightPerEntry);
+                    entryBoxBottom-=(heightPerEntry-2-box.font.getCharHeight())/2.0f;
+                    final int yStringPos = GameMath.round(entryBoxBottom);
                     Shaders.textured.enable();
                     box.font.drawString(entry, this.posX + this.size, yStringPos, i1, true, 1.0f);
 
@@ -367,7 +370,7 @@ public class ComboBox extends AbstractUI implements Renderable {
 
     public void setFont(FontRenderer font) {
         this.font = font;
-        this.height = this.font.getLineHeight()+4;
+        this.height = GameMath.round(this.font.getLineHeight()+4);
         this.stringWidth = this.font.getStringWidth(this.string);
     }
 
@@ -435,19 +438,19 @@ public class ComboBox extends AbstractUI implements Renderable {
         if (inset < 4) inset = 4;
         this.font.maxWidth = this.width - height - inset;
         String val = String.valueOf(this.value);
-        this.font.drawString(val, this.posX + 4, this.posY + (this.height+this.font.getLineHeight())/2, this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
+        this.font.drawString(val, this.posX + 4, this.posY + this.font.centerY(this.height), this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
 
-        int w = this.font.getStringWidth(val);
+        int w = GameMath.round(this.font.getStringWidth(val));
         if (canexpandHorizontally && !isOpen) {
             this.width = height+inset+w+4;
         }
         this.font.maxWidth = -1;
         if (this.drawTitle) {
             if (titleLeft) {
-                this.font.drawString(this.string, this.posX - titleWidth, this.posY + (this.height+this.font.getLineHeight())/2, this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
+                this.font.drawString(this.string, this.posX - titleWidth, this.posY  + this.font.centerY(this.height), this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
 
             } else {
-                this.font.drawString(this.string, this.posX + this.width + 15, this.posY + (this.height+this.font.getLineHeight())/2, this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
+                this.font.drawString(this.string, this.posX + this.width + 15, this.posY  + this.font.centerY(this.height), this.enabled ? 0xFFFFFF : colorDisabled, true, 1.0f);
             }
 
         }

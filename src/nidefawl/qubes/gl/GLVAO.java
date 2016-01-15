@@ -67,7 +67,7 @@ public class GLVAO {
             //POS
             GL43.glVertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 0);
             int offset = 3;
-            //TEXCOORD
+            //NORMAL
             GL43.glVertexAttribFormat(1, 3, GL11.GL_BYTE, false, offset * 4);
             offset += 1;
             //TEXCOORD

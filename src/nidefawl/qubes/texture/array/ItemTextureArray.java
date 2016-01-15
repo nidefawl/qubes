@@ -78,25 +78,11 @@ public class ItemTextureArray extends TextureArray {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            if (firstInit) {
-                progress = ++nBlock / (float) totalBlocks;
-//                if (Game.instance.loadRender(2, progress, "Setting up textures " + nBlock + "/" + totalBlocks)) {
-//                    GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
-//                }
-            }
+            uploadprogress = ++nBlock / (float) totalBlocks;
         }
     
     }
 
-
-    @Override
-    protected void upscaleTextures() {
-        super.upscaleTextures();
-        if (firstInit) {
-//            Game.instance.loadRender(1, 1, "Loading... ");
-//            Engine.checkGLError("Game.instance.loadRender");
-        }
-    }
 
     protected void collectTextures(AssetManager mgr) {
         Item[] items = Item.item;
@@ -120,11 +106,8 @@ public class ItemTextureArray extends TextureArray {
                     list.add(tex);
                 }
                 blockIDToAssetList.put(itzem.id, list);
-                if (firstInit) {
-                    float progress = (i / (float) len);
-//                    Game.instance.loadRender(1, progress, "Loading... " + itzem.getName());
-                }
             }
+            loadprogress = (i / (float) len);
         }
     }
 
@@ -148,7 +131,6 @@ public class ItemTextureArray extends TextureArray {
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
 //          GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
-//        Game.instance.loadRender(2, 1);
     }
 
 }

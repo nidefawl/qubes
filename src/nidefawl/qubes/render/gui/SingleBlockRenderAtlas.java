@@ -10,6 +10,7 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.BufferedMatrix;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.util.Project;
@@ -135,9 +136,8 @@ public class SingleBlockRenderAtlas {
             int y = getYPx(idx);
 //            System.out.println(x);
             this.rendering = true;
-            glPushAttrib(GL_VIEWPORT_BIT);
             atlas.frameBuffer.bind();
-            glViewport(x, y, tileSize, tileSize);
+            Engine.setViewport(x, y, tileSize, tileSize);
             atlas.frameBuffer.clearDepth();
             Project.orthoMat(-1, 1, -1, 1, -1, 1, projMatrix);
 //            modelMatrix.translate(-texSize/2+40,0,0);
@@ -153,7 +153,7 @@ public class SingleBlockRenderAtlas {
         if (this.rendering) {
             this.rendering = false;
             FrameBuffer.unbindFramebuffer();
-            glPopAttrib();
+            Engine.setDefaultViewport();
         }
     }
 

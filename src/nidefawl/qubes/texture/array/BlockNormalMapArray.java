@@ -28,6 +28,8 @@ public class BlockNormalMapArray extends TextureArray {
     }
 
 
+
+
     public BlockNormalMapArray() {
         super(256);
     }
@@ -65,11 +67,8 @@ public class BlockNormalMapArray extends TextureArray {
                     list.add(tex);
                 }
                 blockIDToAssetList.put(b.id, list);
-                if (firstInit) {
-                    float progress = (i / (float) len)*0.7f;
-                    Game.instance.loadRender(3, progress, "Loading... " + b.getName());
-                }
             }
+            loadprogress = (i / (float) len);
         }
     
     }
@@ -126,23 +125,9 @@ public class BlockNormalMapArray extends TextureArray {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            if (firstInit) {
-                progress = ++nBlock/(float)totalBlocks;
-                if (Game.instance.loadRender(4, progress, "Setting up textures "+nBlock+"/"+totalBlocks)) {
-                    GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
-                }
-            }
+            uploadprogress = ++nBlock/(float)totalBlocks;
         }
 
-    }
-
-    @Override
-    protected void upscaleTextures() {
-        super.upscaleTextures();
-        if (firstInit) {
-            Game.instance.loadRender(3, 1);
-            Engine.checkGLError("Game.instance.loadRender");
-        }
     }
 
 
@@ -166,7 +151,6 @@ public class BlockNormalMapArray extends TextureArray {
         }
         GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
-        Game.instance.loadRender(4, 1);
     }
     
 

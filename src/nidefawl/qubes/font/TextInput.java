@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.TrueTypeFont.GlyphRect;
+import nidefawl.qubes.font.TrueTypeFontAWT.GlyphRect;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
@@ -22,7 +22,7 @@ public class TextInput {
     public boolean      did            = false;
     public int          selStart       = 0;
     public int          selEnd         = 0;
-    public int          shiftPX        = 0;
+    public float        shiftPX        = 0;
     public int          mpos;
     public int          tick           = 0;
     public String       prevText       = null;
@@ -97,7 +97,7 @@ public class TextInput {
     public void onTextInput(int codepoint) {
         int cursorPos = mpos;
         char c = Character.valueOf((char) (codepoint));
-        int w = this.trueType.getCharWidth(c);
+        float w = this.trueType.getCharWidth(c);
         if (w > 0) {
             String s = new String(new char[] {c});
             if (hasSelection()) {
@@ -312,7 +312,7 @@ public class TextInput {
     }
     
     public void makeCursorVisible() {
-        int cursorPosPX = editText.isEmpty() ? 0 : trueType.getWidth(editText.substring(0, mpos));
+        float cursorPosPX = editText.isEmpty() ? 0 : trueType.getWidth(editText.substring(0, mpos));
         int boxWidthPX = getWidth()-2;
         if (shiftPX == 0 || (cursorPosPX > boxWidthPX)) {
             shiftPX = cursorPosPX - boxWidthPX;
@@ -375,14 +375,13 @@ public class TextInput {
     }
 
     public int getCharPositionFromXCoord(double mouseX) {
-        int totalwidth = -shiftPX;
+        float totalwidth = -shiftPX;
         GlyphRect rect;
         int mX = (int) Math.round(mouseX);
         for (int i = 0; i < editText.length(); i++) {
             int charCurrent = editText.charAt(i);
             if (charCurrent == ' ') {
-                int spaceWidth = Math.min(trueType.fontMetrics.charWidth(charCurrent) + trueType.correctL, (int) (trueType.fontMetrics.getHeight() * 0.2D));
-                totalwidth += spaceWidth;
+                totalwidth += trueType.getSpaceWidth();
             }
             if ((rect = trueType.getRect(charCurrent)) == null) {
                 continue;
@@ -392,7 +391,7 @@ public class TextInput {
                 i += 2;
                 continue;
             }
-            float charw=(rect.width - trueType.correctL);
+            float charw=(rect.width - trueType.getCorrectL());
             if (getLeft() + totalwidth+charw/3.0f >= mX) {
                 return i;
             }
@@ -457,7 +456,7 @@ public class TextInput {
         GlyphRect rect;
         int charCurrent;
         boolean showCursor = this.focused && (this.tick / 6 % 2 == 0);
-        int totalwidth = 0;
+        float totalwidth = 0;
         float startY = -2;
 //        GL11.glPushMatrix();
         Shaders.textured.enable();
@@ -465,8 +464,8 @@ public class TextInput {
         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
         tessellator.setColor(-1, 255);
         if (hasSelection() && this.focused) {
-            int width = trueType.getWidth(editText.substring(selEnd > selStart ? selStart : selEnd, selEnd > selStart ? selEnd : selStart));
-            int widthPre = trueType.getWidth(editText.substring(0, selEnd > selStart ? selStart : selEnd));
+            float width = trueType.getWidth(editText.substring(selEnd > selStart ? selStart : selEnd, selEnd > selStart ? selEnd : selStart));
+            float widthPre = trueType.getWidth(editText.substring(0, selEnd > selStart ? selStart : selEnd));
             float selRight = getLeft() + widthPre + width;
             float selLeft = getLeft() + widthPre;
             if (selLeft < getLeft()+shiftPX-30) {
@@ -491,7 +490,7 @@ public class TextInput {
         }
 
         GL11.glEnable(GL11.GL_BLEND);
-        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.fontTextureID);
+        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.getTexture());
 //        tessellator.startDrawingQuads();
 //        tessellator.setColorRGBA_F(1, 1, 1, 1);
         int prevColor = -1;
@@ -522,9 +521,9 @@ public class TextInput {
 //                }
             }
             charCurrent = editText.charAt(i);
-            int thisCharWidth;
+            float thisCharWidth;
             if (charCurrent == ' ') {
-                thisCharWidth = Math.min(trueType.fontMetrics.charWidth(charCurrent) + trueType.correctL, (int) (trueType.fontMetrics.getHeight() * 0.2D));
+                thisCharWidth = trueType.getSpaceWidth();
                 if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
                     break;
                 }
@@ -535,7 +534,7 @@ public class TextInput {
                 continue;
             }
 
-            thisCharWidth = (rect.width - trueType.correctL);
+            thisCharWidth = (rect.width - trueType.getCorrectL());
             if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
                 break;
             }
@@ -579,9 +578,9 @@ public class TextInput {
                             break;
                         }
                         charCurrent = prevText.charAt(i);
-                        int thisCharWidth;
+                        float thisCharWidth;
                         if (charCurrent == ' ') {
-                            thisCharWidth = Math.min(trueType.fontMetrics.charWidth(charCurrent) + trueType.correctL, (int) (trueType.fontMetrics.getHeight() * 0.2D));
+                            thisCharWidth = trueType.getSpaceWidth();
                             if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
                                 break;
                             }
@@ -592,7 +591,7 @@ public class TextInput {
                             continue;
                         }
 
-                        thisCharWidth = (rect.width - trueType.correctL);
+                        thisCharWidth = (rect.width - trueType.getCorrectL());
                         if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
                             break;
                         }
@@ -604,7 +603,7 @@ public class TextInput {
                     tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                     tessellator.setColor(-1, 255);
                     String hint = "Press <TAB> to complete";
-                    int w = trueType.getWidth(hint);
+                    float w = trueType.getWidth(hint);
                     if (getWidth() - totalwidth > w + 40) {
                         i = 0;
                         totalwidth = getWidth() - w;
@@ -614,10 +613,9 @@ public class TextInput {
                                 break;
                             }
                             charCurrent = hint.charAt(i);
-                            int thisCharWidth;
+                            float thisCharWidth;
                             if (charCurrent == ' ') {
-                                thisCharWidth = Math.min(trueType.fontMetrics.charWidth(charCurrent) + trueType.correctL,
-                                        (int) (trueType.fontMetrics.getHeight() * 0.2D));
+                                thisCharWidth = trueType.getSpaceWidth();
                                 if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
                                     break;
                                 }
@@ -628,7 +626,7 @@ public class TextInput {
                                 continue;
                             }
 
-                            thisCharWidth = (rect.width - trueType.correctL);
+                            thisCharWidth = (rect.width - trueType.getCorrectL());
                             if (totalwidth - shiftPX + thisCharWidth > getWidth()) {
                                 break;
                             }

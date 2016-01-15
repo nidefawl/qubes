@@ -12,7 +12,8 @@ import nidefawl.qubes.vec.Matrix4f;
  * Copyright: Michael Hept
  */
 public class HBAOPlus {
-  public static boolean hasContext;
+    public static boolean hasContext;
+    public static boolean needsInit;
 
     //---------------------------------------------------------------------------------------------------
  // Remarks:

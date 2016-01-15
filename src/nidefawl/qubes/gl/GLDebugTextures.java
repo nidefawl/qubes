@@ -101,7 +101,7 @@ public class GLDebugTextures {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         Iterator<String> itMaps = textures.keySet().iterator();
-        float w = 160;
+        float w = 100;
         
         float gap = 10;
         float maxW = 200;
@@ -125,7 +125,7 @@ public class GLDebugTextures {
             int y = 0;
             float left = xpos+x*(w+gap);
             float right = left+w;
-            FontRenderer.get("Arial", 18, 0, 20).drawString(mapName, left, ypos, -1, true, 1);
+            FontRenderer.get(0, 18, 0).drawString(mapName, left, ypos, -1, true, 1);
             while (it.hasNext()) {
                 GLDebugTextures tex = it.next();
                 GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, tex.tex);
@@ -178,7 +178,7 @@ public class GLDebugTextures {
                 GL11.glLineWidth(2);
                 Tess.instance.draw(GL11.GL_LINE_STRIP);
                 Shaders.textured.enable();
-                FontRenderer.get("Arial", 16, 0, 20).drawString(tex.name +" ("+tex.tex+")", left, bottom, texColor, true, 1);
+                FontRenderer.get(0, 16, 0).drawString(tex.name +" ("+tex.tex+")", left, bottom, texColor, true, 1);
                 if (!it.hasNext()) {
                     break;
                 }

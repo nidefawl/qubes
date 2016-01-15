@@ -13,7 +13,7 @@ public class ProgressBar extends AbstractUI {
     private String       s            = "";
 
     public ProgressBar() {
-        this.fr = FontRenderer.get(null, 14, 0, 14);
+        this.fr = FontRenderer.get(0, 14, 0);
         setProgress(1);
     }
 
@@ -50,7 +50,7 @@ public class ProgressBar extends AbstractUI {
         renderRoundedBoxShadow(xBar, yBar, zBar + 1, pW, (height/3)-1, color2, 0.2f, false);
         Shaders.textured.enable();
         Engine.pxStack.translate(0, 0, zBar + 2);
-        fr.drawString(s, xBar + (w) / 2.0f, yBar + (height-fr.getLineHeight())/2 + fr.getLineHeight(), -1, true, 1.0f, 2);
+        fr.drawString(s, xBar + (w) / 2.0f, yBar + fr.centerY(this.height), -1, true, 1.0f, 2);
         Engine.pxStack.pop();
         resetShape();
     }

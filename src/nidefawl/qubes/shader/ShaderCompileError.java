@@ -11,11 +11,9 @@ public class ShaderCompileError extends GameError {
 
     private ShaderSource code;
 
-    private Shader shader;
 
-    public ShaderCompileError(Shader shader, ShaderSource src, String string, String log) {
+    public ShaderCompileError(ShaderSource src, String string, String log) {
         super("Failed to compile " + string + " shader");
-        this.shader = shader;
         this.name = string;
         this.log = log;
         if ( src != null)
@@ -23,15 +21,14 @@ public class ShaderCompileError extends GameError {
         this.code =  src;
     }
 
-    public ShaderCompileError(Shader shader, String line, String string, String log) {
+    public ShaderCompileError(String line, String string, String log) {
         super("Failed to compile " + string + " shader");
-        this.shader = shader;
         this.name = string;
         this.log = log + "\r\n" + line;
     }
 
     public String getName() {
-        return this.shader.getName();
+        return this.name;
     }
 
     public String getLog() {

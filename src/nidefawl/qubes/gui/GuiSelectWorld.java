@@ -16,7 +16,7 @@ public class GuiSelectWorld extends Gui {
     final public FontRenderer font;
 
     public GuiSelectWorld() {
-        this.font = FontRenderer.get(null, 18, 0, 20);
+        this.font = FontRenderer.get(0, 18, 0);
     }
 
     @Override

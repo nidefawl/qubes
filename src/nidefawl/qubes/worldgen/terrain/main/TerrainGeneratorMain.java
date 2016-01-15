@@ -28,27 +28,37 @@ public class TerrainGeneratorMain implements ITerrainGen {
     
 //    private TerrainNoiseScale nois234234e;
     HexBiomesServer biomes;
-    final static double smoothScale = 0.9;;
-    OpenSimplexNoise j4;
-    OpenSimplexNoise j5;
+    final static double smoothScale = 0.85;
     OpenSimplexNoise j;
     OpenSimplexNoise j2;
+    OpenSimplexNoise j4;
+    OpenSimplexNoise j5;
+    OpenSimplexNoise j6;
+    OpenSimplexNoise j7;
 
     private Map<Biome, SubTerrainGen> map = Maps.newConcurrentMap(); 
     public TerrainGeneratorMain(WorldServer world, long seed, WorldSettings settings) {
         this.world = world;
         this.seed = seed;
-        this.map.put(Biome.MEADOW_GREEN, new SubTerrainGen1(this));
-        this.map.put(Biome.MEADOW_BLUE, new SubTerrainGen1(this));
-        this.map.put(Biome.MEADOW_RED, new SubTerrainGen1(this));
-        this.map.put(Biome.DESERT, new SubTerrainGen2(this));
-        this.map.put(Biome.DESERT_RED, new SubTerrainGen2(this));
-        this.map.put(Biome.ICE, new SubTerrainGen3(this));
-        this.map.put(Biome.MEADOW_GREEN2, new SubTerrainGen4(this));
-        this.j4 = NoiseLib.makeGenerator(89153^23);
-        this.j5 = NoiseLib.makeGenerator(824112353^23);
+//        this.map.put(Biome.MEADOW_GREEN, new SubTerrainGen1(this));
+//        this.map.put(Biome.MEADOW_BLUE, new SubTerrainGen1(this));
+//        this.map.put(Biome.MEADOW_RED, new SubTerrainGen1(this));
+//        this.map.put(Biome.DESERT, new SubTerrainGen2(this));
+//        this.map.put(Biome.DESERT_RED, new SubTerrainGen2(this));
+//        this.map.put(Biome.ICE, new SubTerrainGen3(this));
+//        this.map.put(Biome.MEADOW_GREEN2, new SubTerrainGen4(this));
+
+        for (int i = 0; i < Biome.biomes.length; i++) {
+            if (Biome.biomes[i] != null) {
+                this.map.put(Biome.biomes[i], new SubTerrainGen7(this));        
+            }
+        }
         this.j = NoiseLib.makeGenerator(seed*33703^31);
         this.j2 = NoiseLib.makeGenerator(89153^23);
+        this.j4 = NoiseLib.makeGenerator(89153^23);
+        this.j5 = NoiseLib.makeGenerator(824112353^23);
+        this.j6 = new OpenSimplexNoiseJava(266671);
+        this.j7 = new OpenSimplexNoiseJava(121661);
     }
 
     @Override
@@ -60,7 +70,6 @@ public class TerrainGeneratorMain implements ITerrainGen {
     public Chunk generateChunk(int chunkX, int chunkZ) {
         long rx = chunkX * 0x589638F52CL;
         long rz = chunkZ * 0x3F94515BD5L;
-        Random rand = new Random(rx + rz);
         int heightBits = world.worldHeightBits;
         Chunk c = new Chunk(world, chunkX, chunkZ, heightBits);
         HexBiome[] hexs = new HexBiome[Chunk.SIZE*Chunk.SIZE];
@@ -86,19 +95,20 @@ public class TerrainGeneratorMain implements ITerrainGen {
         Map<HexBiome, SubTerrainData> map = Maps.newHashMap();
         for (HexBiome b : h) {
             SubTerrainGen g = this.map.get(b.biome);
-            SubTerrainData data = g.prepare(c.getBlockX(), c.getBlockZ());
+            SubTerrainData data = g.prepare(c.getBlockX(), c.getBlockZ(), b);
             map.put(b, data);
         }
         int wh = this.world.worldHeight;
         int cX = c.getBlockX();
         int cZ = c.getBlockZ();
-        double gridRadius = biomes.hwidth;
+        double gridRadius = biomes.hwidth*0.98;
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dSlice = new double[wh];
         double[] dSlice2 = new double[wh];
         double noiseScale4 = 1/32.0D;
         double noiseScale6 = 1/256.0D;
+        double smoothScale = 0.9;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int xz=z<<Chunk.SIZE_BITS|x;
@@ -107,27 +117,30 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 double hz = hex.getCenterY();
                 double distHex = GameMath.dist2d(hx, hz, cX+x, cZ+z);
                 double outerDist = Math.max(distHex-gridRadius*smoothScale, 0);
-                double outerScale = outerDist/(gridRadius*(1-smoothScale));
+                double outerScale = clamp10(outerDist/(gridRadius*(1.0-smoothScale)));
+                outerScale=1-outerScale;
+                outerScale=Math.pow(outerScale, 2);
+                outerScale=1-outerScale;
                 SubTerrainGen g = this.map.get(hex.biome);
                 SubTerrainData data = map.get(hex);
                 double dStr2 = 12.0D*2;
                 double blockNoise2 = j4.eval((cX+x)*noiseScale4, (cZ+z)*noiseScale4);
                 double blockNoise3 = j5.eval((cX+x)*noiseScale6, (cZ+z)*noiseScale6);
                 Arrays.fill(dSlice2, 0.0D);
-                if (outerScale < 1)
-                    g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice, dSlice2);
+                double power = 1.0D;
+                if (outerScale < 1.0D)
+                    power = g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice, dSlice2);
+                double noiseStr = clamp10(outerScale+(1-power));
                 for (int y = 0; y < wh; y++) {
                     double dYH2 = clamp10((y+0+5)/(double)wh);
                     double dBase2 = dStr2-dYH2*dStr2*2.0;
                     dBase2+=blockNoise2*blockNoise3*2.3;
-                    dNoise[y<<8|xz] = mix(dSlice[y], dBase2, outerScale);
-                    dNoise2[y<<8|xz] = mix(dSlice2[y], -111, outerScale);
+                    dNoise[y<<8|xz] = mix(dSlice[y], dBase2, noiseStr);
+                    dNoise2[y<<8|xz] = mix(dSlice2[y], -111, noiseStr);
                 }
             }
         }
 
-        OpenSimplexNoise j6 = new OpenSimplexNoiseJava(266671);
-        OpenSimplexNoise j7 = new OpenSimplexNoiseJava(121661);
         Random rand = new Random(0L);
         double noiseScale = 1/128.0D;
         double noiseScale2 = 1/2.0D;

@@ -79,7 +79,7 @@ public class SubTerrainGen1 extends SubTerrainGen {
             this.r2D2 = new RiverNoise2D(33, dRScale, 8);
         }
     }
-    public SubTerrainData prepare(int cX, int cZ) {
+    public SubTerrainData prepare(int cX, int cZ, HexBiome b) {
 
 
         double scaleMixXZ = 3.80D;
@@ -103,7 +103,7 @@ public class SubTerrainGen1 extends SubTerrainGen {
         data.dnoise3_ = noise3.gen(cX, cZ);
         return data;
     }
-    public int generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d, double[] d2) {
+    public double generate(int cX, int cZ, int x, int y1, int y2, int z, HexBiome hex, SubTerrainData data, double[] d, double[] d2) {
         
         NoiseData noise = (NoiseData) data;
         

@@ -1,6 +1,12 @@
 package nidefawl.qubes.assets;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferUShort;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import javax.imageio.ImageIO;
 
 import nidefawl.qubes.texture.PNGDecoder;
 import nidefawl.qubes.util.GameError;
@@ -12,6 +18,9 @@ public class AssetTexture extends Asset {
     private byte[] data;
     int slot = -1;
     private String name;
+    private int bits;
+    private int colorComps;
+    private short[] shortData;
     
     public AssetTexture() {
         this.name = "";
@@ -20,15 +29,65 @@ public class AssetTexture extends Asset {
     public AssetTexture(String name) {
         this.name = name;
     }
+    public boolean loadImageIO(AssetInputStream is) throws Exception {
+        setPack(is.source);
+        BufferedImage bufferedImage = ImageIO.read(is.inputStream);
+        this.width = bufferedImage.getWidth();
+        this.height = bufferedImage.getHeight();
+        DataBuffer buf = bufferedImage.getRaster().getDataBuffer();
+        
+        this.bits = DataBuffer.getDataTypeSize(buf.getDataType());
+        if (bits != 8 && bits != 16) {
+            throw new IOException("Unsupported bit depth: "+bits);
+        }
+        
+        if (bits == 16) {
+            if (bufferedImage.getType() != BufferedImage.TYPE_USHORT_GRAY) {
+                throw new IOException("Unsupported 16bit image format");
+            }
+            if (!(buf instanceof DataBufferUShort)) {
+                throw new IOException("Unsupported 16bit image format");
+            }
+            DataBufferUShort b = ((java.awt.image.DataBufferUShort) bufferedImage.getRaster().getDataBuffer());
+            short[] shData = b.getData();
+            this.shortData = new short[shData.length];
+            System.arraycopy(shData, 0, this.shortData, 0, shData.length);
+            this.colorComps = 1;
+        } else if (bits == 8) {
+            //TODO: implement
+            throw new IOException("Unsupported 8bit image format");
+        }
+        
+        return true;
+    }
+        
 
-    public void load(AssetInputStream is) throws Exception {
+    public boolean loadPNGDecoder(AssetInputStream is) throws Exception {
         setPack(is.source);
         PNGDecoder dec = new PNGDecoder(is.inputStream);
         this.width = dec.getWidth();
         this.height = dec.getHeight();
-        ByteBuffer buffer = ByteBuffer.allocate(width*height*4); 
-        dec.decode(buffer, width*4, PNGDecoder.Format.RGBA);
+        this.bits = dec.getBitdepth();
+        if (this.bits != 8) { //16 bit broken
+            return false;
+        }
+        PNGDecoder.Format fmt = PNGDecoder.Format.RGBA;
+        fmt = dec.decideTextureFormat(fmt);
+        if (fmt != PNGDecoder.Format.RGBA) {
+            return false;
+        }
+        this.colorComps = 4;
+        int bufferSize = width*height*(fmt.getNumComponents()*(this.bits/8));
+        ByteBuffer buffer = ByteBuffer.allocate(bufferSize); 
+        dec.decode(buffer, width*fmt.getNumComponents(), fmt);
         this.data = buffer.array();
+        return true;
+    }
+    public int getBits() {
+        return this.bits;
+    }
+    public int getComponents() {
+        return this.colorComps;
     }
     public int getWidth() {
         return width;
@@ -105,5 +164,9 @@ public class AssetTexture extends Asset {
      */
     public void reload() {
         AssetManager.getInstance().reloadPNGAsset(this);
+    }
+
+    public short[] getUShortData() {
+        return this.shortData;
     }
 }

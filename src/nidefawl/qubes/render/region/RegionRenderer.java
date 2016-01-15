@@ -419,10 +419,11 @@ public class RegionRenderer extends AbstractRenderer {
         int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         this.occlCulled=0;
         this.numV = 0;
-        int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
+        int totalv=0;
+        int LOD_DISTANCE = 4; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
         Engine.bindVAO(GLVAO.vaoBlocks);
-        for (int dist = 0; dist < 1; dist++)  {
+        for (int dist = 0; dist < 2; dist++)  {
             for (int i = 0; i < size; i++) {
                 MeshedRegion r = renderList.get(i);
                 if (!r.hasAnyPass()) {
@@ -468,24 +469,34 @@ public class RegionRenderer extends AbstractRenderer {
                     this.occlCulled++;
                     continue;
                 }
+                if (dist == 0)
                 if (r.hasPass(PASS_SOLID)) {
                     //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
                     r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
                     this.numV += r.getNumVertices(PASS_SOLID);
                 }
-                if (numV < 2000000) {
+                if (dist == 1) {
                     if (r.hasPass(PASS_LOD)) {
                         r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
                         this.numV += r.getNumVertices(PASS_LOD);
                     }
+                    if (numV > 1000000) {
+                        break;
+                    }
+                }
+                if (numV > 3000000) {
+                    break;
                 }
             }
+            totalv+=numV;
+            numV=0;
 //            if (dist == 0) {
 //                cur = worldRenderer.terrainShaderFar;
 //                cur.enable();
 //                GL11.glDisable(GL11.GL_BLEND);
 //            }
         }
+        numV=totalv;
     }
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
         GLVAO vao = GLVAO.vaoBlocks;

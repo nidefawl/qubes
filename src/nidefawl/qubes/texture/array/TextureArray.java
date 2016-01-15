@@ -1,7 +1,6 @@
 package nidefawl.qubes.texture.array;
 
-import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_RGBA8;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -33,6 +32,9 @@ public abstract class TextureArray {
     protected int numTextures;
     protected int numMipmaps;
     private int   subtypeBits = 0;
+    protected boolean report;
+    public float loadprogress;
+    public float uploadprogress;
 
     public TextureArray(int maxTextures) {
         this.textures = new int[maxTextures];
@@ -51,41 +53,42 @@ public abstract class TextureArray {
         glid = GL11.glGenTextures();
     }
 
-
-    public void reload() {
+    public void preUpdate() {
         unload();
         init();
-        int maxSize = glGetInteger(GL_MAX_TEXTURE_SIZE);
-        float maxAnisotropy = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
-        int maxMipMap = GameMath.log2(maxSize);
-        System.out.println("GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT = "+maxAnisotropy);
-        System.out.println("GL_MAX_TEXTURE_SIZE = "+maxSize);
-        System.out.println("log2(GL_MAX_TEXTURE_SIZE) = "+maxMipMap);
-        
-        
+    }
+    private void _load() {
         AssetManager mgr = AssetManager.getInstance();
         if (!SKIP_LOAD_TEXTURES)
         collectTextures(mgr);
+        this.loadprogress = 1;
         findMaxTileWidth();
         upscaleTextures();
         calculateSubtypeBits();
         this.numMipmaps = 1+GameMath.log2(this.tileSize);
-        
-        System.out.println("tileSize = "+this.tileSize);
-        System.out.println("numTextures = "+this.numTextures);
-        System.out.println("subtypeBits = "+this.subtypeBits);
+    }
+    public void load() {
+        this.report=false;
+        _load();
+    }
 
-
-        initGLStorage();
-        uploadTextures();
-        postUpload();
-        free();
-
-
-        this.firstInit = false;
+    public void reload() {
+        preUpdate();
+        this.report=true;
+        _load();
+        postUpdate();
 
     }
 
+
+    public void postUpdate() {
+        initGLStorage();
+        uploadTextures();
+        this.uploadprogress = 1;
+        postUpload();
+        free();
+        this.firstInit = false;
+    }
 
     private void free() {
         this.blockIDToAssetList.clear();
@@ -157,6 +160,7 @@ public abstract class TextureArray {
 
 
     protected void initGLStorage() {
+        System.err.println(glid+"/"+numMipmaps+"/"+this.tileSize+"/"+this.numTextures);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         Engine.checkGLError("pre glTexStorage3D");
         nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, 
@@ -170,5 +174,9 @@ public abstract class TextureArray {
     protected abstract void uploadTextures();
     protected abstract void collectTextures(AssetManager mgr);
     protected abstract void postUpload();
+
+    public float getProgress() {
+        return (loadprogress+uploadprogress)/2.0f;
+    }
 
 }

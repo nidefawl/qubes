@@ -62,7 +62,7 @@ class GuiRecipeOutPreviewItemSlot extends AbstractUI {
                 Shaders.textured.enable();
                 Engine.pxStack.translate(0, 0, 10);
                 FontRenderer font = Engine.itemRender.font;
-                int w2 = font.getStringWidth(""+nMult);
+                float w2 = font.getStringWidth(""+nMult);
                 font.drawString(""+nMult, posX+inset+width-inset*2-w2-1, posY+inset+width-inset*2+2, 0xf0f0f0, true, 1.0f);
             }
             if (this.hovered) {

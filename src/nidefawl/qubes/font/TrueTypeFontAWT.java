@@ -11,6 +11,7 @@ import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.TextureUtil;
+import nidefawl.qubes.util.GameError;
 
 /**
  * A TrueType font implementation originally for Slick, edited for Bobjob's
@@ -22,37 +23,11 @@ import nidefawl.qubes.texture.TextureUtil;
  * @original author Peter Korzuszek (genail)
  * @new version edited by David Aaron Muhar (bobjob)
  */
-public class TrueTypeFont {
-    public final static int[] colorMap = new int[32];
-    static {
-        for (int l = 0; l < 32; l++) {
-            int j1 = (l >> 3 & 1) * 85;
-            int l1 = (l >> 2 & 1) * 170 + j1;
-            int j2 = (l >> 1 & 1) * 170 + j1;
-            int l2 = (l >> 0 & 1) * 170 + j1;
-            if (l == 6) {
-                l1 += 85;
-            }
-            if (l >= 16) {
-                l1 /= 2;
-                j2 /= 2;
-                l2 /= 2;
-            }
-            colorMap[l] = (l1 & 0xff) << 16 | (j2 & 0xff) << 8 | l2 & 0xff;
-        }
-    }
-
-
-    public final static int ALIGN_LEFT = 0, ALIGN_RIGHT = 1, ALIGN_CENTER = 2;
-    /**
-     * Array that holds necessary information about the font characters
-     */
-    // private CharPosition[] charArray = new CharPosition[256];
-    public final static String ctrls = "0123456789abcdefs";
+public class TrueTypeFontAWT extends TrueTypeFont {
     /**
      * Default font texture width
      */
-    private final int texture;
+    private final int textureSize;
     /**
      * Font's height
      */
@@ -82,25 +57,21 @@ public class TrueTypeFont {
     private int[] usedY;
     private int offset;
 
-    public TrueTypeFont(final Font font, int from, int to) {
-        this.texture = 512;
-        this.valid = this.createSet(this.texture, this.texture, font, from, to, 0);
-    }
-
-    public TrueTypeFont(final Font font, final boolean useAA) {
-        this.texture = 512;
-        this.useAA = useAA;
-        this.valid = this.createSet(this.texture, this.texture, font, 0 + 32, 256 + 32, 32);
-    }
-
-    public TrueTypeFont(final Font font, int texSize, boolean antialiasing) {
-        this.texture = texSize;
-        this.useAA = antialiasing;
-        this.valid = this.createSet(this.texture, this.texture, font, 0 + 32, 256 + 32, 32);
-    }
-
-    public static int getControlChar(char chr) {
-        return ctrls.indexOf(chr);
+    public TrueTypeFontAWT(String fontName, float size, int style, boolean aa) {
+        //      Font font = ttfMap.get(fontName.toLowerCase());
+        //      System.out.println(fontName+" - "+font);
+        //      if (font == null)
+        Font font = Font.decode(fontName);
+        if (font == null) {
+            throw new GameError("Missing font " + fontName);
+        }
+        font = font.deriveFont(style, size);
+        if (font == null) {
+            throw new GameError("Missing font " + fontName + ", " + size + ", " + style);
+        }
+        this.textureSize = 512;
+        this.useAA = aa;
+        this.valid = this.createSet(this.textureSize, this.textureSize, font, 0 + 32, 256 + 32, 32);
     }
 
     public static boolean isSupported(final String fontname) {
@@ -171,9 +142,9 @@ public class TrueTypeFont {
 
         final ArrayList<GlyphRect> rectList = new ArrayList<GlyphRect>();
         final char[] chBuffer = new char[1];
-        HashMap<GlyphRect, Float> xDrawOffsets = new HashMap<TrueTypeFont.GlyphRect, Float>();
-        HashMap<GlyphRect, Float> yDrawOffsets = new HashMap<TrueTypeFont.GlyphRect, Float>();
-        HashMap<GlyphRect, Shape> outlines = new HashMap<TrueTypeFont.GlyphRect, Shape>();
+        HashMap<GlyphRect, Float> xDrawOffsets = new HashMap<GlyphRect, Float>();
+        HashMap<GlyphRect, Float> yDrawOffsets = new HashMap<GlyphRect, Float>();
+        HashMap<GlyphRect, Shape> outlines = new HashMap<GlyphRect, Shape>();
         int codepoint = startChar - 1;
         while (codepoint++ < endChar) {
 
@@ -249,7 +220,7 @@ public class TrueTypeFont {
             for (int x = 0; x < rect.width; x++) {
                 yp = Math.max(yp, usedY[xp + x]);
             }
-            rect.setXY(xp, yp, texture);
+            rect.setXY(xp, yp, textureSize);
 
             final Graphics2D gGlyph = (Graphics2D) g.create(xp, yp, rect.width, rect.height);
             try {
@@ -334,7 +305,7 @@ public class TrueTypeFont {
 
         if (chBuffer[0] == ' ' && glyphWidth == 0)
             glyphWidth = this.fontMetrics.charWidth(' ');
-        final GlyphRect newRect = new GlyphRect(chBuffer[0], Math.min(glyphWidth, texture), glyphHeight, advance + padding.advance, yoffset);
+        final GlyphRect newRect = new GlyphRect(chBuffer[0], Math.min(glyphWidth, textureSize), glyphHeight, advance + padding.advance, yoffset);
 
         if (findSpot(newRect)) {
             // found enough room...
@@ -358,11 +329,11 @@ public class TrueTypeFont {
 
         int y = 0;
         int x = 0;
-        while (x < this.texture) {
+        while (x < this.textureSize) {
             y = usedY[x] + 1;
-            if (texture - y > newRect.height + 1) {
+            if (textureSize - y > newRect.height + 1) {
                 if (isRoom(newRect, x, y)) {
-                    newRect.setXY(x, y, texture);
+                    newRect.setXY(x, y, textureSize);
                     for (int aX = x; aX < x + newRect.width; aX++) {
                         usedY[aX] = newRect.y + newRect.height;
                     }
@@ -381,7 +352,7 @@ public class TrueTypeFont {
         return true;
     }
 
-    public int getWidth(final String whatchars) {
+    public float getWidth(final String whatchars) {
         int totalwidth = 0;
         GlyphRect rect = null;
         String toLower = null;
@@ -448,14 +419,14 @@ public class TrueTypeFont {
         return (totalwidth);
     }
 
-    public int getWidth2(final String whatchars) {
+    public float getWidth2(final String whatchars) {
         if (whatchars.contains("\n")) {
             String split[] = whatchars.split("\n");
             if (split.length > 1) {
-                int max = getWidth(split[0]);
+                float max = getWidth(split[0]);
                 for (int i = 1; i < split.length; i++) ;
                 {
-                    int l2 = getWidth(split[1]);
+                    float l2 = getWidth(split[1]);
                     if (l2 > max) max = l2;
                 }
                 return max;
@@ -464,33 +435,27 @@ public class TrueTypeFont {
         return getWidth(whatchars);
     }
 
-    public int getCharWidth(final Character c) {
-        if (c == ' ')
-            return Math.min(this.fontMetrics.charWidth(c) - this.correctL, (int) (this.fontMetrics.getHeight() * 0.2D));
-        return this.getRectWidth(c);
+    public float getCharWidth(final int codepoint) {
+        return this.fontMetrics.charWidth(codepoint);
     }
 
-    public int getGlyphWidth(final int c) {
+    public float getGlyphWidth(final int c) {
         return this.getRectWidth(c);
     }
-    public int getGlyphHeight(final int c) {
+    public float getGlyphHeight(final int c) {
         return this.getRectHeight(c);
     }
 
-    public int getHeight() {
-        return this.fontHeight;
+    public float getCharHeight() {
+        return this.fontMetrics.getHeight();
     }
 
-    public int getHeight(final String HeightString) {
-        return this.fontHeight;
-    }
-
-    public int getLineHeight() {
+    public float getLineHeight() {
         return this.fontHeight;
     }
 
 
-    public int drawGlyph(final float x, final float y, final int index, final boolean shadow, final float alpha) {
+    public float drawGlyph(final float x, final float y, final int index, final boolean shadow, final float alpha) {
         GlyphRect rect = this.getRect(index);
         if (rect == null) return 0;
         float startY = -2;
@@ -499,16 +464,12 @@ public class TrueTypeFont {
         return (rect.width - this.correctL);
     }
 
-    public String trimColorChars(final String in) {
-        return in.replaceAll("(\u00A7([a-f0-9]))", "");
-    }
-
-    public int drawString(Tess tess, final float x, final float y, final String whatchars, final int format, final boolean shadow, final float alpha, int maxWidth) {
+    public float drawString(Tess tess, final float x, final float y, final String whatchars, final int format, final boolean shadow, final float alpha, int maxWidth) {
         final int startIndex = 0;
         final int endIndex = whatchars.length() - 1;
         GlyphRect rect = null;
         int charCurrent;
-        int totalwidth = 0;
+        float totalwidth = 0;
         int i = startIndex, d, c;
         float startY = -2;
         int offset = 0;
@@ -778,4 +739,24 @@ public class TrueTypeFont {
         }
     }
 
+
+    @Override
+    public float getCorrectL() {
+        return this.correctL;
+    }
+
+    @Override
+    public int getTexture() {
+        return this.fontTextureID;
+    }
+
+    @Override
+    public float getLastDrawHeight() {
+        return this.drawedHeight;
+    }
+
+    @Override
+    public boolean hasCharacter(char c) {
+        return this.getRect(c)!=null;
+    }
 }

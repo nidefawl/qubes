@@ -69,25 +69,6 @@ public class GLTriBuffer {
     }
     
 
-    /**
-     * 
-     */
-    public void bind() {
-        if (this.vbo == -1) {
-            throw new GameError("VBO == -1");
-        }
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vbo);
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vboIndices);
-    }
-    public void unbind() {
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-    }
-
     public void drawElements() {
         GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
     }

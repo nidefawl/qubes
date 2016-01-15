@@ -225,7 +225,7 @@ public class LightCompute extends AbstractRenderer {
             Shaders.colored.enable();
             t.drawQuads();
             Shaders.textured.enable();
-            FontRenderer font = FontRenderer.get(null, 12, 1, 12);
+            FontRenderer font = FontRenderer.get(0, 12, 1);
             for (int x = 0; x < this.lightTiles[0]; x++) {
                 for (int y = 0; y < this.lightTiles[1]; y++) {
                     int idx = y * this.lightTiles[0] + x;

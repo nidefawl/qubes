@@ -5,7 +5,6 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.util.SimpleResourceManager;
-import nidefawl.qubes.vec.Vector3f;
 
 public class Shaders {
     static SimpleResourceManager shaders = new SimpleResourceManager();
@@ -35,6 +34,7 @@ public class Shaders {
     public static Shader depthBufShader;
     public static Shader normals;
     public static Shader wireframe;
+    public static Shader texturedAlphaTest;
     public static Shader textured;
     public static Shader colored;
     public static Shader colored3D;
@@ -56,7 +56,7 @@ public class Shaders {
             }
             Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");
             Shader new_uint = assetMgr.loadShader(newshaders, "debug/render_uint_texture");
-            Shader new_textured = assetMgr.loadShader(newshaders, "textured", new IShaderDef() {
+            Shader new_textured_alpha_test = assetMgr.loadShader(newshaders, "textured", new IShaderDef() {
                 
                 @Override
                 public String getDefinition(String define) {
@@ -66,6 +66,7 @@ public class Shaders {
                     return null;
                 }
             });
+            Shader new_textured = assetMgr.loadShader(newshaders, "textured");
             Shader new_textured3D = assetMgr.loadShader(newshaders, "textured_3D");
             Shader new_colored = assetMgr.loadShader(newshaders, "colored");
             Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
@@ -81,6 +82,7 @@ public class Shaders {
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
             Shaders.textured = new_textured;
+            Shaders.texturedAlphaTest = new_textured_alpha_test;
             Shaders.textured3D = new_textured3D;
             Shaders.colored = new_colored;
             Shaders.colored3D = new_colored3D;
