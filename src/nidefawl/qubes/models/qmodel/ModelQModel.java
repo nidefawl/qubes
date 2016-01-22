@@ -18,9 +18,7 @@ public abstract class ModelQModel {
 
     public final ModelLoaderQModel loader;
     public VertexBuffer buf;
-//    public VertexBuffer shadowBuf = new VertexBuffer(1024*16);
     public GLTriBuffer gpuBuf = null;
-//    public GLTriBuffer gpuShadowBuf = null;
     public boolean needsDraw = true;
     public long reRender=0;
     /**
@@ -44,6 +42,7 @@ public abstract class ModelQModel {
         for (int i = 0; i < this.loader.listTextures.size(); i++) {
             this.loader.listTextures.get(i).release();
         }
+        this.loader.listTextures.clear();
     }
     public abstract QModelType getType();
 

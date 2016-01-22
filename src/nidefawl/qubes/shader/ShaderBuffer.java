@@ -20,6 +20,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Memory;
+import nidefawl.qubes.util.GameError;
 
 public class ShaderBuffer {
     static List<ShaderBuffer> buffers = Lists.newArrayList();
@@ -32,6 +33,8 @@ public class ShaderBuffer {
     private ByteBuffer buf;
     private FloatBuffer bufFloat;
     private IntBuffer bufInt;
+    ByteBuffer readBuf;
+    FloatBuffer readBufFloat;
     
     public ShaderBuffer(String name) {
         this(name, 0);
@@ -56,7 +59,7 @@ public class ShaderBuffer {
         GL15.glBindBuffer(GL_SHADER_STORAGE_BUFFER, this.buffer);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_SHADER_STORAGE_BUFFER");
-        GL15.glBufferData(GL_SHADER_STORAGE_BUFFER, this.len, GL15.GL_DYNAMIC_DRAW);
+        GL15.glBufferData(GL_SHADER_STORAGE_BUFFER, this.len, GL15.GL_STATIC_DRAW);
 
         //System.out.println(buf+"/"+this.len);
         
@@ -95,7 +98,13 @@ public class ShaderBuffer {
             }
         }
     }
-
+    public static void init() {
+        for (int i = 0; i < buffers.size(); i++) {
+            buffers.get(i).setup();
+            buffers.get(i).update();
+        }
+        GL15.glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
     public static void bindBuffers(Shader shader) {
         for (int i = 0; i < buffers.size(); i++) {
             ShaderBuffer buffer = buffers.get(i);
@@ -132,26 +141,50 @@ public class ShaderBuffer {
     public IntBuffer getIntBuffer() {
         return this.bufInt;
     }
-    ByteBuffer readbuf;
     public ByteBuffer map(boolean write) {
-       long offset = 0;
-       long length = this.len;
+        ByteBuffer cur = this.readBuf;
+        ByteBuffer buf = _map(write);
+        if (cur != readBuf) {
+            this.readBufFloat = readBuf.asFloatBuffer();
+        }
+        if (this.readBuf.limit() != this.len) {
+            throw new GameError("expected buffer length "+this.len+", got "+this.readBuf.limit());
+        }
+        if (this.readBufFloat.limit()*4 != this.len) {
+            throw new GameError("expected float buffer length "+this.len+", got "+(this.readBufFloat.limit()*4));
+        }
+        this.readBufFloat.position(0).limit(this.len>>2);
+        return buf;
+    }
+    private ByteBuffer _map(boolean write) {
 
-       if (GL.getCaps().OpenGL30) {
-          int flags = write ? GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT : GL_MAP_READ_BIT;
-          readbuf = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, offset, length, flags, readbuf);
-          Engine.checkGLError("glMapBufferRange");
-          return readbuf;
-       }
+        long offset = 0;
+        long length = this.len;
 
-       if (GL.getCaps().GL_ARB_map_buffer_range) {
-          int flags = write ? ARBMapBufferRange.GL_MAP_WRITE_BIT | ARBMapBufferRange.GL_MAP_UNSYNCHRONIZED_BIT : ARBMapBufferRange.GL_MAP_READ_BIT;
-          readbuf = ARBMapBufferRange.glMapBufferRange(GL_SHADER_STORAGE_BUFFER, offset, length, flags, readbuf);
-          return readbuf;
-       }
-       
-       readbuf = GL15.glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY , readbuf);
-       return readbuf;
+        int flags = write ? GL_MAP_WRITE_BIT : GL_MAP_READ_BIT;
+        if (GL.getCaps().OpenGL30) {
+           readBuf = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, offset, length, flags, readBuf);
+           Engine.checkGLError("glMapBufferRange");
+           return readBuf;
+        }
+
+        if (GL.getCaps().GL_ARB_map_buffer_range) {
+           readBuf = ARBMapBufferRange.glMapBufferRange(GL_SHADER_STORAGE_BUFFER, offset, length, flags, readBuf);
+           return readBuf;
+        }
+        flags = write ? GL15.GL_WRITE_ONLY : GL_READ_ONLY;
+        readBuf = GL15.glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY , readBuf);
+        return readBuf;
+     
+    }
+    public ByteBuffer getMappedBuf() {
+        return this.readBuf;
+    }
+    public FloatBuffer getMappedBufFloat() {
+        if (this.readBufFloat.limit()*4!=this.len) {
+            throw new GameError("buffer size missmatch "+(this.readBufFloat.limit()*4)+" != "+this.len);
+        }
+        return this.readBufFloat;
     }
 
     public void unmap() {
@@ -162,6 +195,9 @@ public class ShaderBuffer {
     }
     public void bind() {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+    }
+    public int getSize() {
+        return this.len;
     }
 
 

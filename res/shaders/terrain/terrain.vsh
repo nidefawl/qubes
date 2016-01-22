@@ -28,6 +28,7 @@ flat out float blockid; // duplicate data, not sure if faster than per fragment 
 flat out uint faceDir; // also duplicate, I really need to check if passing varyings costs more than bitmasking
 flat out uint vertDir; // also duplicate
 out vec2 texPos;
+out float roughness;
 
 #define MAX_AO 3.0
 
@@ -43,6 +44,7 @@ void main() {
 	color = in_color;
 	blockinfo = in_blockinfo;
 	blockid = BLOCK_ID(blockinfo);
+	roughness = (in_normal.w < 0 ? 255+in_normal.w : in_normal.w) / 255.0f;
 
 	vec4 pos = in_position;
 	texcoord = in_texcoord;

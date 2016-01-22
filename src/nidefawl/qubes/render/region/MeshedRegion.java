@@ -12,6 +12,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -53,61 +54,11 @@ public class MeshedRegion {
         Arrays.fill(frustumStates, -2);
     }
     
-    public static void enabledDefaultBlockPtrs() {
-
-        final int VERT_LEN = (BLOCK_VERT_INT_SIZE)<<2;
-        //POS
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, VERT_LEN, 0);
-        int offset = 3;
-        //NORMAL
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, VERT_LEN, offset * 4);
-        offset += 1; 
-        
-        //1 BYTE UNUSED (normal has 3 bytes)
-        
-        //TEXCOORD
-        GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(2, 2, GL30.GL_HALF_FLOAT, false, VERT_LEN, offset * 4);
-        offset += 1; 
-        //COLOR
-        GL20.glEnableVertexAttribArray(3);
-        GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, VERT_LEN, offset * 4);
-        offset += 1; 
-        //BLOCKINFO
-        GL20.glEnableVertexAttribArray(4);
-        GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
-        offset += 2;
-        //LIGHTINFO
-        GL20.glEnableVertexAttribArray(5);
-        GL30.glVertexAttribIPointer(5, 2, GL11.GL_UNSIGNED_SHORT, VERT_LEN, offset * 4);
-        offset += 1;
-    
-    }
-    public void renderRegion(float fTime, int pass, int drawMode, int drawInstances) {
-//        enableVertexPtrs(ptrSetting);
-        if (pass == 2) {
-            if (this.shadowDrawMode != Game.instance.settings.shadowDrawMode) {
-                return;
-            }
-        }
+    public void renderRegion(float fTime, int pass) {
         Engine.bindBuffer(this.vbo[pass].getVboId());
-        if (Engine.USE_TRIANGLES) {
-            Engine.bindIndexBuffer(this.vboIndices[pass].getVboId());
-            if (drawInstances > 0) {
-                GL31.glDrawElementsInstanced(drawMode, this.elementCount[pass]*3, GL11.GL_UNSIGNED_SHORT, 0, drawInstances);
-            } else {
-                GL11.glDrawElements(drawMode, this.elementCount[pass]*3, GL11.GL_UNSIGNED_INT, 0);
-            }
-        } else {
-
-            if (drawInstances > 0) {
-                GL31.glDrawArraysInstanced(drawMode, 0, this.vertexCount[pass], drawInstances);
-            } else {
-                GL11.glDrawArrays(drawMode, 0, this.vertexCount[pass]);
-            }
-        }
+        Engine.bindIndexBuffer(this.vboIndices[pass].getVboId());
+        GL11.glDrawElements(GL11.GL_TRIANGLES, this.elementCount[pass]*3, GL11.GL_UNSIGNED_INT, 0);
+        Stats.regionDrawCalls++;
     }
 
 
@@ -136,50 +87,33 @@ public class MeshedRegion {
     long alloc[] = new long[NUM_PASSES];
     public static long totalBytesPass[] = new long[NUM_PASSES];
     static int nextBuffer = 0;
+
     public void uploadBuffer(int pass, VertexBuffer buffer, int shadowDrawMode) {
         int numV = buffer.getVertexCount();
         int numF = buffer.getFaceCount();
         this.vertexCount[pass] = numV;
-        this.elementCount[pass] = numF*2;
+        this.elementCount[pass] = numF * 2;
         this.hasPass[pass] |= numV > 0;
         this.hasAnyPass |= numV > 0;
         this.shadowDrawMode = shadowDrawMode;
-        int bufIdx = (nextBuffer++)%4;
-        ReallocIntBuffer buf = RegionRenderer.buffers[bufIdx*4+pass];
-        int intlen = buffer.putIn(buf);
+        int bufIdx = (nextBuffer++) % 4;
+        ReallocIntBuffer buf = RegionRenderer.buffers[bufIdx * 4 + pass];
+        ReallocIntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
+        int intlen = buffer.storeVertexData(buf);
+        int intlenIdx = buffer.storeIndexData(shBuffer);
+        vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
+        vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intlenIdx * 4L);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        int byteSize = (intlenIdx * 4) + (intlen * 4);
         
-        if (alloc[pass] != intlen * 4) {
+        if (alloc[pass] != byteSize) {
             totalBytes -= this.alloc[pass];
             totalBytesPass[pass] -= this.alloc[pass];
-            this.alloc[pass] = intlen * 4L;
+            this.alloc[pass] = byteSize;
             totalBytes += this.alloc[pass];
             totalBytesPass[pass] += this.alloc[pass];
-        }
-        vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
-//        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo[pass]);
-//        if (Game.GL_ERROR_CHECKS)
-//            Engine.checkGLError("glBindBuffer " + vbo[pass]);
-//        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, intlen * 4L, buf.getByteBuf(), GL15.GL_STATIC_DRAW);
-//        if (Game.GL_ERROR_CHECKS)
-//            Engine.checkGLError("glBufferData /" + buf);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        if (Engine.USE_TRIANGLES) {
-           ReallocIntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
-//           int intLen = VertexBuffer.createIndex(this.elementCount[pass], shBuffer);
-            int intLen = buffer.getTriIdxPos();
-//            System.out.println("number tri idx on pass "+pass+" - "+intLen);
-            shBuffer.put(buffer.getTriIdxBuffer(), 0, intLen);
-//            System.out.println(byteSizeBuffer+"/"+(nTriangleIdx*2));
-            vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intLen * 4L);
-            
-//            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices[pass]);
-//            if (Game.GL_ERROR_CHECKS)
-//                Engine.checkGLError("glBindBuffer " + vboIndices[pass]);
-//            GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, intLen*4, shBuffer.getByteBuf(), GL15.GL_STATIC_DRAW);
-//            if (Game.GL_ERROR_CHECKS)
-//                Engine.checkGLError("glBufferData /" + shBuffer);
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-            
         }
     }
     
@@ -237,5 +171,8 @@ public class MeshedRegion {
      */
     public boolean hasAnyPass() {
         return this.hasAnyPass;
+    }
+    public int getShadowDrawMode() {
+        return this.shadowDrawMode;
     }
 }

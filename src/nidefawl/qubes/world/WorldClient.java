@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.lwjgl.opengl.GL11;
+
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
 import nidefawl.qubes.entity.Entity;
@@ -81,7 +83,9 @@ public class WorldClient extends World {
             moonModelView.rotate(moonPathRotation * GameMath.PI_OVER_180, 1f, 0f, 0f);
             moonPosition.set(0, -100, 0);
             Matrix4f.transform(moonModelView, moonPosition, moonPosition);
+            float isNight = 0;
             if (sunPosition.y <= 0) {
+                isNight = 1;
                 lightPosition.set(moonPosition);
             } else {
                 lightPosition.set(sunPosition);
@@ -92,7 +96,7 @@ public class WorldClient extends World {
             lightAngleUp = Vector3f.dot(lightDirection, tmp1);
             dayLightIntensity = GameMath.clamp(lightAngleUp, 0.5f, 1.0f);
             dayNoon = (ca < 0.5 ? 1 - ca : ca)*2-1;
-            nightNoon = 1-dayNoon;
+            nightNoon = GameMath.clamp(1-dayNoon+isNight*0.4f, 0, 1);
         }
     }
     public Vector3f getLightPosition() {

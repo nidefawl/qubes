@@ -1,5 +1,6 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.util.BlockColl;
 import nidefawl.qubes.util.CollisionQuery;
@@ -293,5 +294,9 @@ public abstract class Entity {
     public void setRemoteRotation(float pitch, float yaw, float yawBodyOffset) {
         remoteRotation.set(yaw, yawBodyOffset, pitch);
         rotticks=3;
+    }
+
+    public EntityModel getEntityModel() {
+        return null;
     }
 }

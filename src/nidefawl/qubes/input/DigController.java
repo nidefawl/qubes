@@ -153,12 +153,9 @@ public class DigController {
 
 
     public void init() {
-        this.fullBlock = new TesselatorState();
-        renderBlockOver(this.fullBlock, new AABBFloat(0, 0, 0, 1, 1, 1));
     }
 
 
-    private TesselatorState fullBlock;
     private int[] stageTex = new int[10];
     public void reloadTextures() {
         for (int i = 0; i < stageTex.length; i++) {

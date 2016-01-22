@@ -3,17 +3,16 @@
  */
 package nidefawl.qubes.gl;
 
-import java.nio.IntBuffer;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Stats;
 
 /**
- * @author Michael Hept 2015 Copyright: Michael Hept
+ * @author Michael Hept 2015
+ * Copyright: Michael Hept
  */
 public class GLTriBuffer {
 
@@ -23,6 +22,7 @@ public class GLTriBuffer {
     ReallocIntBuffer vboIdxBuf;
     private int      triCount;
     private int      vertexCount;
+    private int idxCount;
     public GLTriBuffer(int usage) {
         this.vbo = new GLVBO(usage);
         this.vboIndices = new GLVBO(usage);
@@ -36,32 +36,34 @@ public class GLTriBuffer {
         }
     }
 
-    public void upload(VertexBuffer buf) {
+    public int upload(VertexBuffer buf) {
         if (this.vboBuf == null) {
             gen();
         }
-        int numInts = buf.putIn(this.vboBuf);
-        this.vertexCount = buf.vertexCount;
-        this.triCount = buf.getTriIdxPos()/3;
-        this.vboIdxBuf.put(buf.getTriIdxBuffer(), 0, buf.getTriIdxPos());
+        int numInts = buf.storeVertexData(this.vboBuf);
+        int numInts2 = buf.storeIndexData(this.vboIdxBuf);
         this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts * 4L);
-        this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), buf.getTriIdxPos() * 4);
+        this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2 * 4L);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData");
-    
+        this.vertexCount = buf.vertexCount;
+        this.idxCount = buf.getTriIdxPos();
+        this.triCount = this.idxCount/3;
+        return (numInts+numInts2)*4;
     }
     
 
     public void drawElements() {
-        GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
+        GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount*3, GL11.GL_UNSIGNED_INT, 0);
     }
-    public int getElementCount() {
-        return this.triCount * 3;
+    public int getTriCount() {
+        return this.triCount;
     }
     public void draw() {
         if (this.triCount <= 0) {
             throw new GameError("this.triCount <= 0");
         }
+        Stats.modelDrawCalls++;
         Engine.bindBuffer(this.vbo.getVboId());
         Engine.bindIndexBuffer(this.vboIndices.getVboId());
         GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
@@ -87,6 +89,20 @@ public class GLTriBuffer {
         return this.vbo.getVboId();
     }
     public int getGLIndexBuffer() {
-        return this.vbo.getVboId();
+        return this.vboIndices.getVboId();
+    }
+    
+    public int getVertexCount() {
+        return this.vertexCount;
+    }
+    
+    public GLVBO getVbo() {
+        return this.vbo;
+    }
+    public GLVBO getVboIndices() {
+        return this.vboIndices;
+    }
+    public int getIdxCount() {
+        return this.idxCount;
     }
 }

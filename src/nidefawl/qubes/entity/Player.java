@@ -8,6 +8,7 @@ import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
 import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.models.EntityModel;
 
 public abstract class Player extends Entity {
 
@@ -86,5 +87,9 @@ public abstract class Player extends Entity {
                 return slotsCrafting[3];
         }
         return null;
+    }
+
+    public EntityModel getEntityModel() {
+        return EntityModel.modelPlayer;
     }
 }

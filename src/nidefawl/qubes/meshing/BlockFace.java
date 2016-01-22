@@ -284,6 +284,7 @@ public class BlockFace {
 
         attr.setTex(this.bs.texture);
         attr.setNormalMap(block.getNormalMap(this.bs.texture));
+        attr.setRoughness(block.getRoughness(this.bs.texture));
         attr.setFaceDir(faceDir);
         attr.setReverse((this.bs.face&1)!=0);
 //
@@ -322,6 +323,8 @@ public class BlockFace {
         if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
             int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
             attr.setTex(sideOverlay);
+            attr.setNormalMap(block.getNormalMap(sideOverlay));
+            attr.setRoughness(block.getRoughness(sideOverlay));
             for (int i = 0; i < 4; i++) {
                 attr.v[i].setColorRGBA(this.bs.faceColor, alpha);
             }

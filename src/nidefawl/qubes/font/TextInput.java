@@ -10,6 +10,7 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.ClipboardHelper;
+import nidefawl.qubes.util.GameMath;
 
 public class TextInput {
 
@@ -28,6 +29,7 @@ public class TextInput {
     public IStringHistory history        = null;
     public int          commandScroll  = 0;
     public boolean      focused       = false;
+    public boolean      multiline       = false;
     public FontRenderer font;
     public int          xPos;
     public int          yPos;
@@ -142,6 +144,9 @@ public class TextInput {
             return true;
         }
         if ((key == GLFW.GLFW_KEY_ENTER) || (key == GLFW.GLFW_KEY_KP_ENTER)) {// return/enter
+            if (this.multiline) {
+                this.insertTextAtCursor("\n");
+            } else
             onSubmit();
             //        } else if ((Keyboard.isKeyDown(Keyboard.KEY_PAGE_UP)) && (chat.currentTab().getChatScroll() <= chat.currentTab().processed.size() - chat.linesToShow - 1)) {
             //            chat.currentTab().setChatScroll(chat.currentTab().getChatScroll() + (control ? 10 : 1));
@@ -360,7 +365,11 @@ public class TextInput {
         if (newText == null)
             newText = "";
         for (int i = 0; i < newText.length(); i++) {
-            if (!font.isValid(newText.charAt(i))) {
+            char c = newText.charAt(i);
+            if (c == '\n' && multiline) {
+                continue;
+            }
+            if (!font.isValid(c)) {
                 newText = (i > 0 ? newText.substring(0, i - 1) : "") + newText.substring(i + 1);
             }
         }
@@ -371,6 +380,12 @@ public class TextInput {
         selStart = selEnd = mpos;
         commandScroll = 0;
         calculatePreview();
+    }
+    public void setEditText(String editText) {
+        this.editText = editText;
+        selStart = selEnd = 0;
+        shiftPX        = 0;
+        commandScroll = 0;
     }
 
 
@@ -437,8 +452,8 @@ public class TextInput {
         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
         tessellator.setColor(-1, 255);
         if (hasSelection() && this.focused) {
-            float width = trueType.getWidth(editText.substring(selEnd > selStart ? selStart : selEnd, selEnd > selStart ? selEnd : selStart));
-            float widthPre = trueType.getWidth(editText.substring(0, selEnd > selStart ? selStart : selEnd));
+            float width = trueType.getWidthAtLine(editText.substring(selEnd > selStart ? selStart : selEnd, selEnd > selStart ? selEnd : selStart));
+            float widthPre = trueType.getWidthAtLine(editText.substring(0, selEnd > selStart ? selStart : selEnd));
             float selRight = getLeft() + widthPre + width;
             float selLeft = getLeft() + widthPre;
             if (selLeft < getLeft()+shiftPX-30) {
@@ -448,13 +463,13 @@ public class TextInput {
                 selRight = getRight()+shiftPX+30;
             }
             GL11.glEnable(3042 /*GL_BLEND*/);
-            GL11.glBlendFunc(770, 771);
+//            GL11.glBlendFunc(770, 771);
             Shaders.colored.enable();
             tessellator.setColorRGBAF(1.2F, 0.2F, 1.0F, 0.4F);
-            tessellator.add(selLeft, getBottom() + startY + 3.0F, 0.0f);
-            tessellator.add(selRight, getBottom() + startY + 3.0F, 0.0f);
-            tessellator.add(selRight, getBottom() + startY - height + 3.0F, 0.0f);
-            tessellator.add(selLeft, getBottom() + startY - height + 3.0F, 0.0f);
+            tessellator.add(selLeft, getTop() + startY + trueType.getLineHeight(), 0.0f);
+            tessellator.add(selRight, getTop() + startY + trueType.getLineHeight(), 0.0f);
+            tessellator.add(selRight, getTop() + startY , 0.0f);
+            tessellator.add(selLeft, getTop() + startY , 0.0f);
             tessellator.draw(GL11.GL_QUADS);
             tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
             tessellator.setColor(-1, 255);
@@ -480,17 +495,26 @@ public class TextInput {
                 tessellator.setColor(-1, 255);
                 Shaders.colored.enable();
                 GL11.glLineWidth(2.0F);
-                tessellator.add(totalwidth + getLeft() + 1F, getBottom() + startY, 0);
-                tessellator.add(totalwidth + getLeft() + 1F, getBottom() + startY - height, 0);
+                tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY, 0);
+                tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0);
                 tessellator.draw(GL11.GL_LINES);
                 tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                 tessellator.setColor(-1, 255);
                 Shaders.textured.enable();
             }
             charCurrent = editText.charAt(i);
+            if (charCurrent == '\n') {
+                if (multiline) {
+                    totalwidth = 0;
+                    startY+=trueType.getLineHeight();
+                    trueType.start(totalwidth, startY);
+                    i++;
+                    continue;   
+                }
+            }
             trueType.readQuad(charCurrent);
             if (totalwidth-shiftPX > -30) {
-                trueType.renderQuad(tessellator, getLeft(), getBottom());
+                trueType.renderQuad(tessellator, getLeft(), getTop()+trueType.getCharHeight());
             }
             totalwidth = trueType.getXPos();
             if (totalwidth - shiftPX > getWidth()) {
@@ -504,8 +528,8 @@ public class TextInput {
         if (showCursor && mpos == editText.length()) {
             GL11.glLineWidth(2.0F);
             Shaders.colored.enable();
-            tessellator.add(totalwidth + getLeft() + 2F, getBottom() - 1, 0);
-            tessellator.add(totalwidth + getLeft() + 2F, getBottom() - height + 1, 0);
+            tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY, 0);
+            tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0);
             tessellator.draw(GL11.GL_LINES);
             tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
             tessellator.setColor(-1, 255);

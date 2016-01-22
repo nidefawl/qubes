@@ -30,7 +30,7 @@ public class BlurRenderer extends AbstractRenderer {
     private FrameBuffer fbSSRBlurredY;
     public Shader       shaderBlurSeperate;
     public Shader       shaderBlurKawase;
-    private boolean startup;
+    private boolean startup = true;
     final int[][] kawaseKernelSizePasses = new int[] [] {
         {0,0},
         {0, 1, 1},

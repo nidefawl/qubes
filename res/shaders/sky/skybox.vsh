@@ -6,8 +6,10 @@
 out vec4 pass_Color;
 out vec2 pass_texcoord;
  
-void main(void) {
-    pass_Color = in_color;
-    pass_texcoord = in_texcoord.st;
-    gl_Position = in_matrix_2D.mvp * in_position;
+out vec3 vposition;
+
+void main() {
+	pass_Color = in_color;
+	vposition = (in_matrix_3D.view * in_position).xyz;
+	gl_Position = in_matrix_3D.vp * in_position;
 }

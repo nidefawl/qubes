@@ -26,7 +26,7 @@ void main(void) {
 
 	float alpha = tex.a*1;
     out_Color = vec4(color_adj*0.1, alpha);
-    out_Normal = vec4((normal) * 0.5f + 0.5f, 1);
+    out_Normal = vec4((normal) * 0.5f + 0.5f, 0.05f);
     out_Material = uvec4(0u,1u+ENCODE_RENDERPASS(2),0u,1u);
     out_Light = vec4(1, 0,  1, 1);
 }

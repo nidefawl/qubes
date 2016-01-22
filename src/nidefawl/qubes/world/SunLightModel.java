@@ -56,18 +56,20 @@ public class SunLightModel {
             moonModelView.rotate(moonPathRotation * GameMath.PI_OVER_180, 1f, 0f, 0f);
             moonPosition.set(0, -100, 0);
             Matrix4f.transform(moonModelView, moonPosition, moonPosition);
+            float isnight = 0;
             if (sunPosition.y <= 0) {
                 lightPosition.set(moonPosition);
+                isnight=1;
             } else {
                 lightPosition.set(sunPosition);
             }
             lightDirection.set(lightPosition);
             lightDirection.normalise();
-            tmp1.set(0, 3, 0);
+            tmp1.set(0, 1, 0);
             lightAngleUp = Vector3f.dot(lightDirection, tmp1);
             dayLightIntensity = GameMath.clamp(lightAngleUp, 0.5f, 1.0f);
             dayNoon = (ca < 0.5 ? 1 - ca : ca)*2-1;
-            nightNoon = 1-dayNoon;
+            nightNoon = GameMath.clamp((1-dayNoon)*120*isnight, 0, 1);
         }
     }
     public void setDayLen(long dayLen) {

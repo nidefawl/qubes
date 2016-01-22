@@ -3,9 +3,7 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
@@ -44,13 +42,13 @@ public class GuiCached extends Gui {
             refresh = false;
             fbDbg.bind();
             fbDbg.clearFrameBuffer();
-            GL14.glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             this.gui.render(fTime, 0, 0);
             FrameBuffer.unbindFramebuffer();
         }
         Shaders.textured.enable();
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
         Engine.drawFullscreenQuad();
         Shader.disable();
     }

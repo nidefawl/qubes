@@ -6,6 +6,7 @@ import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL40;
 import org.lwjgl.system.MemoryUtil;
 
 import nidefawl.qubes.assets.AssetManager;
@@ -31,6 +32,7 @@ import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.models.BlockModelManager;
+import nidefawl.qubes.models.EntityModelmanager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
@@ -249,6 +251,8 @@ public class Game extends GameBase implements IErrorHandler {
         ItemModelManager.getInstance().reload();
         loadRender(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
+        loadRender(0, 1f, "Loading... Entity Models");
+        EntityModelmanager.getInstance().reload();
         loadRender(0, 1f, "Loading... Item Textures");
         TextureArray[] arrays = {
                 ItemTextureArray.getInstance(),
@@ -345,7 +349,6 @@ public class Game extends GameBase implements IErrorHandler {
         super.shutdown();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
-        AsyncTasks.shutdown();
     }
     
     protected void onTextInput(long window, int codepoint) {
@@ -524,29 +527,22 @@ public class Game extends GameBase implements IErrorHandler {
 
 
     public void render(float fTime) {
-        //      fogColor.scale(0.4F);
+
+        glDisable(GL_BLEND);
         
+        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
-            glDisable(GL_BLEND);
             
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("ShadowPass");
-            Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             Engine.getSceneFB().bind();
             Engine.getSceneFB().clearFrameBuffer();
 
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
 
             
 
             if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("MainPass");
-            if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("renderWorld");
 
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             Engine.worldRenderer.renderWorld(this.world, fTime);
             
@@ -558,19 +554,20 @@ public class Game extends GameBase implements IErrorHandler {
 
             
 
-            FrameBuffer.unbindFramebuffer();
             
-            
-        }
-        
-        
 
-        glDisable(GL_BLEND);
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
-        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("ShadowPass");
+            Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            FrameBuffer.unbindFramebuffer();
+        }
         
 
         if (this.world != null) {
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("MainPass");
 //            FrameBuffer.unbindFramebuffer();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("lightCompute 0");
@@ -615,7 +612,11 @@ public class Game extends GameBase implements IErrorHandler {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
                 glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+                for (int i = 0; i < 3; i++) {
+                    GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+                }
                 Engine.getSceneFB().bind();
                 Engine.getSceneFB().clearColorBlack();
                 if (GPUProfiler.PROFILING_ENABLED)
@@ -703,7 +704,7 @@ public class Game extends GameBase implements IErrorHandler {
             if (pass) {
                 glDisable(GL_CULL_FACE);
                 glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 if (firstPerson) {
                     glDepthRange(0, 0.04);
                     glColorMask(false, false, false, false);
@@ -799,7 +800,7 @@ public class Game extends GameBase implements IErrorHandler {
         }
         
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glClear(GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
 
@@ -827,7 +828,7 @@ public class Game extends GameBase implements IErrorHandler {
         }
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if (this.gui != null) {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("gui");
@@ -922,7 +923,7 @@ public class Game extends GameBase implements IErrorHandler {
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_DEPTH_TEST);
             GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
             glDisable(GL_DEPTH_TEST);
@@ -958,15 +959,16 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >32421/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >=2000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
-          Shaders.initShaders();
-//          Engine.lightCompute.initShaders();
+//          Shaders.initShaders();
+////          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
-//          Engine.worldRenderer.initShaders();
-//          Engine.regionRenderer.initShaders();
-//            Engine.shadowRenderer.initShaders();
+          Engine.worldRenderer.initShaders();
+            
+////          Engine.regionRenderer.initShaders();
+////            Engine.shadowRenderer.initShaders();
             Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            

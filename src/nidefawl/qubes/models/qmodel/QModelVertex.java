@@ -38,7 +38,7 @@ public class QModelVertex extends Vector3f {
             float weight = loader.readFloat();
             if (weight > 1E-4f) {
                 if (idx >= MAX_BONES) {
-                    throw new GameError("Too many bone weights on vertex #"+idx);
+                    throw new GameError("Too many bone weights on vertex #"+i+" -> "+nBones);
                 }
                 bones[idx] = boneIdx;
                 weights[idx] = weight;

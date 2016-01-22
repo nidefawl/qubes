@@ -49,6 +49,9 @@ public class TrueTypeFont {
     public final static String ctrls = "0123456789abcdefsu";
 
     public static int getControlChar(int charCurrent) {
+        if (charCurrent==0) {
+            return 255;
+        }
         return ctrls.indexOf(charCurrent);
     }
 
@@ -151,6 +154,38 @@ public class TrueTypeFont {
     }
 
 
+    public float getWidthAtLine(String text) {
+        xb2.put(0, 0);
+        yb2.put(0, 0);
+        float lastw = 0;
+        int nLine = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char charCurrent = text.charAt(i);
+            if (charCurrent == 0 && i + 1 < text.length()) {
+                i++;
+                int ctrl = getControlChar(charCurrent);
+                if (ctrl >= 0) {
+                    i++;
+                    if (charCurrent == 'u' && i + 6 < text.length()) {
+                        i += 6;
+                    } else if (charCurrent == 's') {
+                        xb2.put(0, xb2.get(0)+spaceWidth);
+                    } else if (ctrl >= 0 && ctrl <= 15) {
+                    }
+                    continue;
+                }
+            }
+            if (charCurrent == '\n') {
+                lastw = xb2.get(0);
+                nLine++;
+                xb2.put(0, 0);
+                continue;
+            }
+            int idx = getIndex(charCurrent);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
+        }
+        return xb2.get(0);
+    }
     public float getWidth(String text) {
         xb2.put(0, 0);
         yb2.put(0, 0);
@@ -222,7 +257,7 @@ public class TrueTypeFont {
             int idx = getIndex(charCurrent);
             stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
             if (xb2.get(0) >= mX) {
-                return Math.max(0, i-1);
+                return Math.max(0, i);
             }
         }
         return editText.length();
@@ -266,7 +301,7 @@ public class TrueTypeFont {
     }
 
 
-    public float drawString(Tess tess, float x, float y, String text, int alignment, boolean shadow, float alpha, int maxWidth) {
+    public float drawString(Tess tess, float x, float y, String text, int alignment, boolean shadow, float alpha, int maxWidth, int baseColor, float baseAlpha) {
 
         y-=2;
         final int startIndex = 0;
@@ -364,6 +399,8 @@ public class TrueTypeFont {
                     } else if (charCurrent == 's') {
                         xPos += spaceWidth;
                         xb.put(0, xPos);
+                    } else if (ctrl == 255) {
+                        tess.setColorF(baseColor, baseAlpha);
                     } else if (ctrl >= 0 && ctrl <= 15) {
                         if (!shadow) {
                             ctrl += 16;
@@ -419,5 +456,6 @@ public class TrueTypeFont {
     public float getSpaceWidth() {
         return this.spaceWidth;
     }
+
 
 }

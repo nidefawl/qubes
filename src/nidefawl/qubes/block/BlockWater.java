@@ -46,4 +46,7 @@ public class BlockWater extends Block {
     public int getLightLoss(LightChunkCache c, int i, int j, int k, int type) {
         return 2;
     }
+    public float getRoughness(int texture) {
+        return 0.5f;
+    }
 }

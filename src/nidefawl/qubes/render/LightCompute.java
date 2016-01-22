@@ -35,9 +35,7 @@ import nidefawl.qubes.world.WorldClient;
 public class LightCompute extends AbstractRenderer {
     public Shader       shaderComputerLight;
     private int[]       lightTiles;
-    int                 maxLights      = 1024;
-    int                 lightFloatSize = 16;
-    ShaderBuffer        lights         = new ShaderBuffer("PointLightStorageBuffer").setSize(maxLights * lightFloatSize * 4);
+    ShaderBuffer        lights         = Engine.ssbo_lights;
     private int         lightTilesTex;
     private boolean     startup        = true;
     private int[] debugResults;
@@ -73,10 +71,6 @@ public class LightCompute extends AbstractRenderer {
 
     public void init() {
         initShaders();
-        lights.setup();
-        lights.update();
-        Engine.debugOutput.setup();
-        Engine.debugOutput.update();
         GL15.glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 
@@ -99,7 +93,7 @@ public class LightCompute extends AbstractRenderer {
         lightBuf.clear();
         int a = 0;
         int nLights = 0;
-        for (; a < lights.size() && a < this.maxLights; a++) {
+        for (; a < lights.size() && a < Engine.MAX_LIGHTS; a++) {
             
             DynamicLight light = lights.get(a);
             

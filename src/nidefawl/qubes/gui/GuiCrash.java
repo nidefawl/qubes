@@ -45,13 +45,13 @@ public class GuiCrash extends Gui {
     public void render(float fTime, double mx, double mY) {
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
         
         fontBig.drawString(this.title, width / 2, height / 6, -1, true, 1.0F, 2);
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_TEXTURE_2D);
         int l = width / 5;
         int t = height / 5;
@@ -63,7 +63,7 @@ public class GuiCrash extends Gui {
         Tess.instance.draw(GL11.GL_QUADS);
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
         int yp = t+20;
         for (int i = 0; i < this.desc.size(); i++) {

@@ -34,6 +34,9 @@ public class AsyncTasks {
     }
     public static void submit(AsyncTask iAsyncTask) {
         try {
+            if (service == null) {
+                return;
+            }
             iAsyncTask.pre();
             iAsyncTask.setFuture(service.submit(iAsyncTask));
             tasks.add(iAsyncTask);  
@@ -70,7 +73,9 @@ public class AsyncTasks {
         return tasks.isEmpty();
     }
     public static void shutdown() {
-        if (service != null)
+        if (service != null) {
             service.shutdownNow();
+            service = null;
+        }
     }
 }

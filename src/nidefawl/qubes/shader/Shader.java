@@ -26,6 +26,7 @@ public abstract class Shader implements IManagedResource {
     HashMap<String, Integer> missinglocations    = new HashMap<String, Integer>();
     private int setProgramUniformCalls;
     public boolean valid = true;
+    private ShaderSourceBundle src;
     void incUniformCalls() {
         Stats.uniformCalls++;
     }
@@ -241,5 +242,13 @@ public abstract class Shader implements IManagedResource {
 //    public boolean equals(Object obj) {
 //        return obj instanceof Shader && ((Shader)obj).name.equals(this.name);
 //    }
+
+
+    public void setSource(ShaderSourceBundle shaderSrc) {
+        this.src = shaderSrc;
+    }
+    public ShaderSourceBundle getSource() {
+        return this.src;
+    }
 }
         

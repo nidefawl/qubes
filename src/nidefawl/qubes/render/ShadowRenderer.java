@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL40;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
@@ -99,9 +100,9 @@ public class ShadowRenderer extends AbstractRenderer {
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
 //        Engine.worldRenderer.re
-        Engine.worldRenderer.renderModelsUsingProgram(world, shadowShader, PASS_SHADOW_SOLID, fTime); //TODO: FRUSTUM CULLING
-        BufferedMatrix mat = Engine.getIdentityMatrix();
-        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+        Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 0); //TODO: FRUSTUM CULLING
+
+        shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
         glPolygonOffset(1.2f, 2.f);
@@ -109,20 +110,22 @@ public class ShadowRenderer extends AbstractRenderer {
         Engine.setViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
-        Engine.worldRenderer.renderModelsUsingProgram(world, shadowShader, PASS_SHADOW_SOLID, fTime); //TODO: FRUSTUM CULLING
-        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+        Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 1); //TODO: FRUSTUM CULLING
+
+        shadowShader.enable();
+//        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
         glPolygonOffset(1.4f, 2.f);
 
         Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
-        Engine.worldRenderer.renderModelsUsingProgram(world, shadowShader, PASS_SHADOW_SOLID, fTime); //TODO: FRUSTUM CULLING
-        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+        Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 2); //TODO: FRUSTUM CULLING
+//        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
 
-        FrameBuffer.unbindFramebuffer();
+//        FrameBuffer.unbindFramebuffer();
 
-        Shader.disable();
+//        Shader.disable();
 
         Engine.setDefaultViewport();
 //        glCullFace(GL_BACK);
@@ -144,7 +147,8 @@ public class ShadowRenderer extends AbstractRenderer {
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
@@ -161,9 +165,9 @@ public class ShadowRenderer extends AbstractRenderer {
         Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
 
-        FrameBuffer.unbindFramebuffer();
+//        FrameBuffer.unbindFramebuffer();
 
-        Shader.disable();
+//        Shader.disable();
 
         Engine.setDefaultViewport();
 //        glCullFace(GL_BACK);

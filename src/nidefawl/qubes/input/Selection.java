@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
@@ -31,6 +32,7 @@ public class Selection {
     private TesselatorState highlightSelection;
     private TesselatorState fullBlock;
     private TesselatorState customBB;
+    AABBFloat lastCustomBB;
     public boolean                 quarterMode       = false;
     boolean                 mouseDown         = false;
     boolean                 mouseStateChanged = false;
@@ -39,9 +41,9 @@ public class Selection {
 
     public void init() {
 
-        highlightSelection = new TesselatorState();
-        fullBlock = new TesselatorState();
-        customBB = new TesselatorState();
+        highlightSelection = new TesselatorState(GL15.GL_DYNAMIC_DRAW);
+        fullBlock = new TesselatorState(GL15.GL_STATIC_DRAW);
+        customBB = new TesselatorState(GL15.GL_DYNAMIC_DRAW);
         this.rayTrace = new RayTrace(); 
         renderBlockOver(this.fullBlock, new AABBFloat(0, 0, 0, 1, 1, 1));
     }
@@ -115,7 +117,14 @@ public class Selection {
         
     }
     public void renderBlockOver(TesselatorState out, AABBFloat box) {
-
+        
+        if (this.lastCustomBB != null && this.lastCustomBB.isEqual(box)) {
+            return;
+        }
+        if (this.lastCustomBB == null) {
+            this.lastCustomBB = new AABBFloat();
+        }
+        this.lastCustomBB.set(box);
         float ext = 1 / 256f;
         float w = 1/32f;
         Tess tesselator = Tess.instance;

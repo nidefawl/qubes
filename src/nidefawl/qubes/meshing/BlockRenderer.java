@@ -357,6 +357,7 @@ public class BlockRenderer {
         attr.setAO(0);
         attr.setTex(tex);
         attr.setNormalMap(0);
+        attr.setRoughness(block.getRoughness(tex));
         attr.setFaceDir(Dir.DIR_POS_Y);
 
         int br_pp = brigthness;
@@ -1073,6 +1074,7 @@ public class BlockRenderer {
         int rgb = block.getFaceColor(w, ix, iy, iz, faceDir, texturepass);
         attr.setTex(tex);
         attr.setNormalMap(block.getNormalMap(tex));
+        attr.setRoughness(block.getRoughness(tex));
         attr.setFaceDir(faceDir);
         attr.setReverse((bs.face&1)!=0);
         attr.setAO(bs.maskedAO);
@@ -1181,6 +1183,7 @@ public class BlockRenderer {
         attr.setAO(BlockFaceAttr.maskAO(bottomAO,bottomAO,topAO,topAO));
         attr.setTex(tex);
         attr.setNormalMap(0);
+        attr.setRoughness(block.getRoughness(tex));
         attr.setFaceDir(-1);
 
         int br_pp = brigthness;

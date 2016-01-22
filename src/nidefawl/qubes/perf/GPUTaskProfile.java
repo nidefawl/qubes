@@ -94,6 +94,22 @@ public class GPUTaskProfile implements Poolable {
         dump(to, 0, 0);
     }
 
+    public String dumpSingle(float fFrame) {
+        String s = "";
+        float f = getTimeTaken() / 1000 / 1000f;
+        s+= name + " : " + f + "ms";
+        if (this.parent == null) {
+            s+=" ("+(int)(1000.0f/f)+")";
+        } else {
+            float percent = (f/fFrame)*100.0f;
+            String prefix = " ";
+            if (percent > 20) {
+                prefix = " \0udd7733";
+            }
+            s+= prefix + String.format("(%.2f%%)", percent);
+        }
+        return s;
+    }
     private void dump(List<String> to, int indentation, float fFrame) {
         String s = "";
         for (int i = 0; i < indentation; i++) {
@@ -110,6 +126,9 @@ public class GPUTaskProfile implements Poolable {
                 prefix = " \0udd7733";
             }
             s+= prefix + String.format("(%.2f%%)", percent);
+            if (percent > 20) {
+                s+= "\0\0";
+            }
         }
         to.add(s);
         for (int i = 0; i < children.size(); i++) {

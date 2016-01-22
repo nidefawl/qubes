@@ -37,10 +37,8 @@ public class GLAttrBuffer {
         if (this.vboBuf == null) {
             gen();
         }
-        int numInts = buf.putIn(this.vboBuf);
+        int numInts = buf.storeVertexData(this.vboBuf);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vbo);
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, numInts * 4L, this.vboBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData ");

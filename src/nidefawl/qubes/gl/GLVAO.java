@@ -85,6 +85,40 @@ public class GLVAO {
             Engine.checkGLError("init vao");
         }
     };
+    public final static GLVAO vaoModelGPUSkinned= new GLVAO() {
+        void init() {
+            this.vaoId = GL30.glGenVertexArrays();
+            GL30.glBindVertexArray(vaoId);
+            //POS
+            GL43.glVertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 0);
+            int offset = 3;
+            //NORMAL
+            GL43.glVertexAttribFormat(1, 3, GL11.GL_BYTE, false, offset * 4);
+            offset += 1;
+            //TEXCOORD
+            GL43.glVertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, offset * 4);
+            offset += 1;
+            //BONEIDX 0-3
+            GL43.glVertexAttribIFormat(3, 4, GL11.GL_UNSIGNED_BYTE, offset * 4);
+            offset += 1;
+            //BONEIDX 4-7
+            GL43.glVertexAttribIFormat(4, 4, GL11.GL_UNSIGNED_BYTE, offset * 4);
+            offset += 1;
+            //WEIGHTS 0-3
+            GL43.glVertexAttribFormat(5, 4, GL30.GL_HALF_FLOAT, false, offset * 4);
+            offset += 2;
+            //WEIGHTS 4-7
+            GL43.glVertexAttribFormat(6, 4, GL30.GL_HALF_FLOAT, false, offset * 4);
+            offset += 2;
+            this.stride = offset * 4;
+            for (int i = 0; i < 7; i++) {
+                GL20.glEnableVertexAttribArray(i);
+                GL43.glVertexAttribBinding(i, 0);
+            }
+            GL30.glBindVertexArray(0);
+            Engine.checkGLError("init vao");
+        }
+    };
     public final static GLVAO vaoBlocks = new GLVAO() {
         void init() {
             this.vaoId = GL30.glGenVertexArrays();
@@ -93,7 +127,7 @@ public class GLVAO {
             GL43.glVertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 0);
             int offset = 3;
             //NORMAL
-            GL43.glVertexAttribFormat(1, 3, GL11.GL_BYTE, false, offset * 4);//1 BYTE UNUSED (normal has 3 bytes)
+            GL43.glVertexAttribFormat(1, 4, GL11.GL_BYTE, false, offset * 4);//1 BYTE UNUSED (normal has 3 bytes)
             offset += 1; 
             //TEXCOORD
             GL43.glVertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, offset * 4);

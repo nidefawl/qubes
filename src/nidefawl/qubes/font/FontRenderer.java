@@ -104,10 +104,10 @@ public class FontRenderer {
         if (shadow) {
             final int k2 = (color & 0xf0f0f0) >> 2 | color & 0xff000000;
             tess.setColorF(k2, alpha*0.8f);
-            this.trueTypeFont.drawString(tess, x + this.shadowOffset, y + this.shadowOffset, chatline, alignment, false, alpha, maxWidth);
+            this.trueTypeFont.drawString(tess, x + this.shadowOffset, y + this.shadowOffset, chatline, alignment, false, alpha, maxWidth, k2, alpha*0.8f);
         }
         tess.setColorF(color, alpha);
-        float w = this.trueTypeFont.drawString(tess, x, y, chatline, alignment, true, alpha, maxWidth);
+        float w = this.trueTypeFont.drawString(tess, x, y, chatline, alignment, true, alpha, maxWidth, color, alpha);
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueTypeFont.getTexture());
 //        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, TMgr.getEmptyWhite());
         tess.draw(GL11.GL_QUADS);

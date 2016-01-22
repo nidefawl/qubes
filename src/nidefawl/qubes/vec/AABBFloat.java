@@ -212,6 +212,14 @@ public class AABBFloat {
         }
         return (a >= b);
     }
+    public boolean isEqual(AABBFloat other) {
+        return other.maxX==this.maxX &&
+                other.maxY==this.maxY &&
+                other.maxZ==this.maxZ &&
+                other.minX==this.minX &&
+                other.minY==this.minY &&
+                other.minZ==this.minZ;
+    }
 
 }
 

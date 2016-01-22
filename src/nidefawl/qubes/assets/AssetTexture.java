@@ -73,10 +73,11 @@ public class AssetTexture extends Asset {
         }
         PNGDecoder.Format fmt = PNGDecoder.Format.RGBA;
         fmt = dec.decideTextureFormat(fmt);
-        if (fmt != PNGDecoder.Format.RGBA) {
+        if (fmt != PNGDecoder.Format.RGBA && fmt != PNGDecoder.Format.LUMINANCE) {
             return false;
         }
-        this.colorComps = 4;
+        
+        this.colorComps = fmt.getNumComponents();
         int bufferSize = width*height*(fmt.getNumComponents()*(this.bits/8));
         ByteBuffer buffer = ByteBuffer.allocate(bufferSize); 
         dec.decode(buffer, width*fmt.getNumComponents(), fmt);

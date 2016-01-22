@@ -65,9 +65,9 @@ public class GuiOverlayStats extends Gui {
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
+            info.add( String.format("Drawcalls %d", Stats.lastFrameDrawCalls));
             info.add( String.format("Lights: %d", world.lights.size()) );
             info.add( String.format("UpdateRenderers (R): %s", Game.instance.updateRenderers ? "On" : "Off") );
-            info.add( String.format("Primitive (Z): %s", Engine.USE_TRIANGLES ? "Idxed Triangles" : "Quads") );
             info.add( String.format("External resources (F11): %s", AssetManager.getInstance().isExternalResources() ? "On" : "Off") );
 
             this.stats5 = "";
@@ -135,10 +135,10 @@ public class GuiOverlayStats extends Gui {
             float totalHeight = (fontSmall.getLineHeight())*info.size();
             y-=font.getLineHeight()*1.7f;
             Tess.instance.setColorF(0, 0.8f);
-            Tess.instance.add(0, y+totalHeight+4);
-            Tess.instance.add(maxW, y+totalHeight+4);
-            Tess.instance.add(maxW, y-4);
-            Tess.instance.add(0, y-4);
+            Tess.instance.add(0, y+totalHeight+8);
+            Tess.instance.add(maxW, y+totalHeight+8);
+            Tess.instance.add(maxW, y);
+            Tess.instance.add(0, y);
             Shaders.colored.enable();
             Tess.instance.drawQuads();
             y+=fontSmall.getLineHeight()*1.2f;

@@ -28,15 +28,23 @@ public class GLVBO {
     }
     public void upload(int type, ByteBuffer buffer, long len) {
         GL15.glBindBuffer(type, getVboId());
-        if (this.vboSize  < MIN_BUF_SIZE && len < MIN_BUF_SIZE) {
-            GL15.glBufferData(type, MIN_BUF_SIZE, this.usage);
-            this.vboSize = MIN_BUF_SIZE;
-        }
-        if (this.vboSize < len) {
-            this.vboSize = len;
-            GL15.glBufferData(type, len, buffer, this.usage);
+        if (this.usage == GL15.GL_DYNAMIC_DRAW) {
+            if (this.vboSize  < MIN_BUF_SIZE && len < MIN_BUF_SIZE) {
+                GL15.glBufferData(type, MIN_BUF_SIZE, this.usage);
+                this.vboSize = MIN_BUF_SIZE;
+            }
+//            GL15.glBufferData(type, 0, this.usage);
+            if (this.vboSize < len) {
+                this.vboSize = len;
+                GL15.glBufferData(type, len, this.usage);
+                GL15.glBufferData(type, len, buffer, this.usage);
+            } else {
+                GL15.glBufferSubData(type, 0, len, buffer);
+            }
         } else {
-            GL15.glBufferSubData(type, 0, len, buffer);
+            this.vboSize = len;
+            GL15.glBufferData(type, len, this.usage);
+            GL15.glBufferData(type, len, buffer, this.usage);
         }
         if (GameBase.GL_ERROR_CHECKS)
             Engine.checkGLError("vbo update");

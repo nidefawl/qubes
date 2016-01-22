@@ -10,8 +10,10 @@ import org.lwjgl.opengl.GL15;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
+import nidefawl.qubes.render.BatchedRiggedModelRenderer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
@@ -59,6 +61,9 @@ public class UniformBuffer {
     private void put(float[] mat4x4) {
         this.floatBuffer.put(mat4x4);
     }
+    public FloatBuffer getFloatBuffer() {
+        return this.floatBuffer;
+    }
     void put(float f) {
         this.floatBuffer.put(f);
     }
@@ -75,7 +80,7 @@ public class UniformBuffer {
     void putNeg(float x, float y, float z) {
         put(-x, -y, -z);
     }
-    void update() {
+    public void update() {
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
         this.floatBuffer.position(0).limit(this.len);
         if (Game.GL_ERROR_CHECKS)
@@ -135,6 +140,7 @@ public class UniformBuffer {
             .addVec4(); // Specular light intensity
     static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4);
     static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6);
+//    public static UniformBuffer BoneMatUBO = new UniformBuffer("BoneMatUBO", BatchedRiggedModelRenderer.STRUCT_SIZE*7);
     
     
     public static void init() {
@@ -272,29 +278,18 @@ public class UniformBuffer {
             LightInfo.put(world.getDayLightIntensity()); // dayLightIntens
             LightInfo.put(world.getLightAngleUp()); // lightAngleUp      
         } else {
-            if (!once) {
-                SunLightModel model = new SunLightModel();
-                model.setDayLen(10000);
-                model.setTime(8000);
-                model.updateFrame(0);
-                Vector3f lightPosition = model.getLightPosition();
-                Engine.setLightPosition(lightPosition);
-                nightNoon = model.getNightNoonFloat();
-                LightInfo.put(model.getDayNoonFloat()); // dayTime
-                LightInfo.put(nightNoon); // nightlight
-                LightInfo.put(model.getDayLightIntensity()); // dayLightIntens
-                LightInfo.put(model.getLightAngleUp()); // lightAngleUp      
-            } else {
-                LightInfo.skip();
-                LightInfo.skip();
-                LightInfo.skip();
-                LightInfo.skip();
-            }
+            SunLightModel model = Engine.getSunLightModel();
+            nightNoon = model.getNightNoonFloat();
+            LightInfo.put(model.getDayNoonFloat()); // dayTime
+            LightInfo.put(nightNoon); // nightlight
+            LightInfo.put(model.getDayLightIntensity()); // dayLightIntens
+            LightInfo.put(model.getLightAngleUp()); // lightAngleUp
         }
         LightInfo.put(Engine.lightPosition.x);
         LightInfo.put(Engine.lightPosition.y);
         LightInfo.put(Engine.lightPosition.z);
         LightInfo.put(1F);
+//        System.out.println(Engine.lightDirection);
         LightInfo.put(Engine.lightDirection.x);
         LightInfo.put(Engine.lightDirection.y);
         LightInfo.put(Engine.lightDirection.z);
@@ -304,9 +299,9 @@ public class UniformBuffer {
         float diffIntens = 0.45F;
         float specIntens = 0.35F;
         float fNight = GameMath.easeInOutCubic(nightNoon);
-        ambIntens*=1.0f-fNight*0.92f;
-        diffIntens*=1.0f-fNight*0.9f;
-        specIntens*=1.0f-fNight*0.9f;
+        ambIntens*=Math.max(0, 1.0f-fNight*0.98f);
+        diffIntens*=1.0f-fNight*0.97f;
+        specIntens*=1.0f-fNight*0.91f;
         for (int a = 0; a < 3; a++) {
             LightInfo.put(ambIntens);
         }

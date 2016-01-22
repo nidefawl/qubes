@@ -31,6 +31,8 @@ struct SurfaceProperties {
     vec4    blockLight;
     vec4    light;
     float sunTheta;
+    float roughness;
+    float reflective;
 } prop;
 
 layout (std430) buffer DebugOutputBuffer
@@ -285,6 +287,72 @@ float ComputeScattering(float lightDotView)
     result /= (4.0f * pi * pow(1.0f + G_SCATTERING * G_SCATTERING - (2.0f * G_SCATTERING) * lightDotView, 1.7f));
     return result;
 }
+float specularCookTorrance( float roughnessValue, 
+    float fresnelReflectance, 
+    float IOR, 
+    vec3 surfacePosition, vec3 surfaceNormal, vec3 lightDirection, float lambertFactor ) {
+    vec3 viewDirection = normalize( -surfacePosition );
+    vec3 halfDirection = normalize( lightDirection + viewDirection );
+
+    float NdotH = max(dot(surfaceNormal, halfDirection), 0.0); 
+    float NdotV = max(dot(surfaceNormal, viewDirection), 0.0);
+    float VdotH = max(dot(viewDirection, halfDirection), 0.0);
+    
+    float roughnessSquared = roughnessValue * roughnessValue;
+
+    float NH2 = 2.0 * NdotH;
+    float g1 = (NH2 * NdotV) / VdotH;
+    float g2 = (NH2 * lambertFactor) / VdotH;
+    float geoAtt = min(1.0, min(g1, g2));
+    float r1 = 1.0 / ( 4.0 * roughnessSquared * pow(NdotH, 4.0));
+    float r2 = (NdotH * NdotH - 1.0) / (roughnessSquared * NdotH * NdotH);
+    float roughness = r1 * exp(r2);
+    float fresnel = pow(1.0 - VdotH, 5.0);
+    fresnel *= (1.0 - fresnelReflectance);
+    fresnel += fresnelReflectance;
+
+    float factor = (fresnel * geoAtt * roughness) / (NdotV * lambertFactor * IOR);
+    return factor;
+}
+//------------------------------------------------------------------------------
+// Constants
+//  1/(2pi) = 0.159154943f
+//  1/pi    = 0.3183098861f
+//------------------------------------------------------------------------------
+// Cook-Torrance BRDF
+float CookBRDF( in vec3 _viewDir,
+                                in vec3 _lightDir,
+                                in vec3 _normal,
+                                in float _roughness,
+                                in float _specularity)
+{
+        vec3  h                 = normalize(_viewDir+_lightDir);
+        float VdotH     = max(0.0f,dot(_viewDir,h));
+        float NdotH     = max(0.0f,dot(_normal,h));
+        float NdotL     = max(0.0f,dot(_normal,_lightDir));
+        float NdotV     = max(0.0f,dot(_normal,_viewDir));
+        float sNdotH    = sqrt(1.f-NdotH*NdotH);
+
+        // Use Schlick approximation for Fresnel
+        // Use Kelemen and Szirmau-Kalos apprixmation for the geometric term
+        float F0                = 0.1f;
+        float F                 = F0 + (1.f-F0) * pow(1.f - VdotH,5.f);
+        #if 1
+        float G                 = min(1.f,min( 2.f*NdotH*NdotV/VdotH , 2.f*NdotH*NdotL/VdotH ));
+        float M0                = max(0.f,F *G / (NdotL * NdotV));
+        #else
+        float M0                = max(0.f,F / (VdotH * VdotH));
+        #endif
+
+        // Use Beckmann NDF
+        float kappa             = sNdotH/(NdotH*_roughness);
+        float D                 = max(0.f, 1.f / (3.141592654f * _roughness*_roughness * pow(NdotH,4.f)) * exp(-kappa*kappa));
+
+        float sRadiance = M0 * D;
+        float dRadiance = NdotL * 0.3183098861f;
+        return dRadiance + _specularity*sRadiance;
+}
+
 float VolumetricLight() {
     vec4 ditherPattern[4];
     ditherPattern[0] = vec4(0.0f, 0.5f, 0.125f, 0.625f);
@@ -356,25 +424,31 @@ void main() {
 
 
     vec4 nl = texture(texNormals, pass_texcoord);
+    prop.roughness = nl.w;
 	prop.normal = nl.rgb * 2.0f - 1.0f;
     prop.blockLight = texture(texBlockLight, pass_texcoord, 0);
+    prop.reflective = prop.blockLight.w;
     prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
     prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
     prop.linearDepth = expToLinearDepth(prop.depth);
     prop.position = unprojectPos(pass_texcoord, prop.depth);
+    // vec4 nearPos = unprojectPos(pass_texcoord, 0);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
+    // nearPos = in_matrix_3D.mv_inv * nearPos;
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
-    prop.NdotL = dot( prop.normal, SkyLight.lightDir.xyz );
+    prop.NdotL = max(dot( prop.normal, SkyLight.lightDir.xyz ), 0.0);
     
     prop.sunTheta = dot(-prop.viewVector, normalize(SkyLight.lightDir.xyz));
     float sunTheta = max( prop.sunTheta, 0.0 );
-    prop.sunSpotDens = pow(sunTheta, 32.0)*1;
+    float theta = max(dot(prop.viewVector, prop.normal), 0.0);
+    prop.sunSpotDens = pow(sunTheta, 32.0)*1.0;
     uint blockid = BLOCK_ID(prop.blockinfo);
     float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
 
-    float isSky = IS_SKY(blockid);
+    bool isSky = bool(IS_SKY(blockid)==1.0f);
     float isWater = IS_WATER(blockid);
+    float stone = float(blockid==6u||blockid==4u);
     float isLight = IS_LIGHT(blockid);
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
@@ -388,93 +462,119 @@ void main() {
         if(sceneColor.a < 0.1)
             discard;
     }
-    float roughness = 1.3+isWater*40;
-
-    const vec3 ambLight1 = normalize(vec3(50, 100, 50));
-    const vec3 ambLight2 = normalize(vec3(-50, -70, -50));
-    float NdotLAmb1 = max(dot( prop.normal, ambLight1 ), 0);
-    float NdotLAmb2 = max(dot( prop.normal, ambLight2 ), 0);
-    vec3 reflectDirAmb1 = (reflect(-ambLight1, prop.normal));  
-    vec3 reflectDirAmb2 = (reflect(-ambLight2, prop.normal));  
-    float specAmb1 = pow(max(dot(prop.viewVector, reflectDirAmb1), 0.0), 2);
-    float specAmb2 = pow(max(dot(prop.viewVector, reflectDirAmb2), 0.0), 2);
-
-    vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-    float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness);
-
-    // vec3 halfDir = normalize(SkyLight.lightDir.xyz + prop.viewVector.xyz);
-    // float specAngle = max(dot(halfDir, prop.normal), 0.0);
-    // float spec = pow(specAngle, roughness);
+    if (!isSky) {
+        float minAmb = 0.2;
+        float minAmb2 = 0.1;
+         float diff = 1.2;
+        // prop.roughness = 0.3;
+        float roughness = 1.2;// pow(2.0, 1.0+(prop.roughness)*10.0)-1.0;
+        // out_Color = vec4(vec3(prop.roughness), 1);
+        // return;
+        // float glossy = 0.02;
+        // if (isWater > 0) {
+        //     glossy = 6.0;
+        //     roughness = 0.2;
+        // }
 
 
-    float theta = max(dot(prop.viewVector, prop.normal), 0.0);
-    float minRefl = 0.02;
-    float amtRefl = minRefl + (1.0 - minRefl) * pow(1.0 - theta, 5.0);
+        // if (stone>0) {
+        //     glossy = 1.4;
+        //     roughness = 0.3;
+        //     // out_Color = vec4(0,1,0,1);
+        //     // return;
+        // }
+        const vec3 ambLight1 = normalize(vec3(50, 100, 50));
+        const vec3 ambLight2 = normalize(vec3(-50, -70, -50));
+        float NdotLAmb1 = max(dot( prop.normal, ambLight1 ), 0.0);
+        float NdotLAmb2 = max(dot( prop.normal, ambLight2 ), 0.0);
+        // vec3 reflectDirAmb1 = (reflect(-ambLight1, prop.normal));  
+        // vec3 reflectDirAmb2 = (reflect(-ambLight2, prop.normal));  
+        // float specAmb1 = pow(max(dot(prop.viewVector, reflectDirAmb1), 0.0), roughness)*44;
+        // float specAmb2 = pow(max(dot(prop.viewVector, reflectDirAmb2), 0.0), roughness)*44;
+        // vec3 halfDir1 = normalize(ambLight1.xyz + prop.viewVector.xyz);
+        // vec3 halfDir2 = normalize(ambLight2.xyz + prop.viewVector.xyz);
+        // float specAmb1 = pow(max(dot(halfDir1, prop.normal), 0.0), roughness);
+        // float specAmb2 = pow(max(dot(halfDir2, prop.normal), 0.0), roughness);
 
-    // vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
+        vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
+        float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness)*1;
 
-    float fNight = smoothstep(0, 1, clamp(nightNoon-isLight, 0, 1));
-    float skyLightLvl = prop.blockLight.x;
-    float blockLightLvl = prop.blockLight.y;
-    float occlusion = min(prop.blockLight.z, ssao.r);
-    occlusion+=float(RENDER_PASS==1);
-    occlusion = min(1, occlusion);
-
-    float shadow = getShadow2()*(1-isBackface);
-    // float shadow = mix(getSoftShadow(), 1, 0.04);
-  	float nDotL = clamp(max(0.0f, prop.NdotL * 0.99f + 0.01f), 0, 1);
-
-    float sunLight = skyLightLvl * nDotL * shadow * dayLightIntens *(1-fNight);
-    sunLight = max(shadow*(0.05-fNight*0.035), sunLight);
-    sunLight = sunLight*occlusion;
-    sunLight = max(0, sunLight);
+        // float roughnessValue = 0.3; // 0 : smooth, 1: rough
+        // float F0 = 0.8; // fresnel reflectance at normal incidence
+        // float k = 0.2; // fraction of diffuse reflection (specular reflection = 1 - k)
+        // vec3 halfDir = normalize(SkyLight.lightDir.xyz + prop.viewVector.xyz);
+        // float specAngle = max(dot(halfDir, prop.normal), 0.0);
+        // float spec = pow(specAngle, roughness);
+         // spec = CookBRDF(prop.viewVector.xyz, SkyLight.lightDir.xyz, prop.normal.xyz, roughness, glossy);
+         // diff = k; spec = 1.0 - k;
+         // float spec = 1.0;
 
 
-    float blockLight = (1-pow(1-blockLightLvl,0.05))*1.1;
-    vec3 lightColor = mix(vec3(1), vec3(0.8, 0.9, 1.1), fNight);
-	vec3 Ispec = SkyLight.Ls.rgb * lightColor * nDotL * spec;
-    vec3 Idiff = SkyLight.Ld.rgb * lightColor * nDotL;
-    vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*0.5f), 1.2, isEntity*0.8);
 
-    // Idiff*=darkenSkyLitBlocksNight;
-    // Ispec*=darkenSkyLitBlocksNight;
-    // Iamb = vec3(0);
-    vec3 finalLight = vec3(0);
-    float minAmb = 0.2;
-    vec3 blockAmbientLevel = Iamb * (minAmb+occlusion*(1-minAmb)) * (0.04+skyLightLvl*(1-0.04));
-    finalLight += blockAmbientLevel;
+        float fNight = smoothstep(0.0, 1.0, clamp(nightNoon-isLight, 0.0, 1.0));
+        float skyLightLvl = smoothstep(0.0, 1.0, prop.blockLight.x);
+        float blockLightLvl = prop.blockLight.y;
+        float occlusion = min(prop.blockLight.z, ssao.r);
+        occlusion+=float(RENDER_PASS==1);
+        occlusion = min(1.0, occlusion);
 
-    finalLight += lum* (mix(1, occlusion, 0.19)) * blockLight*isLight*0.6;
-    float fl=blockLightLvl/15.0f;
-    finalLight += Ispec * sunLight;
-    finalLight += Idiff * sunLight;
-    const float blockLightConst = 60;
-    finalLight+=isIllum*4;
-    finalLight += vec3(1, 0.9, 0.7) * pow(blockLightLvl/8.0,2)*((1.0-isLight*0.8)*blockLightConst);
-    finalLight *= max(0.3+ssao.r*0.7, isWater);
-    finalLight+=prop.light.rgb*(occlusion);
+        float shadow = getShadow2()*(1.0-isBackface);
+        // float shadow = mix(getSoftShadow(), 1, 0.04);
 
+        float sunLight = skyLightLvl * prop.NdotL * shadow * dayLightIntens *(1.0-fNight);
+        sunLight = max(shadow*(0.05-fNight*0.035), sunLight);
+        sunLight = sunLight*occlusion;
+        sunLight = max(0.0, sunLight);
+
+        float blockLight = (1.0-pow(1.0-blockLightLvl,0.05))*1.1;
+        vec3 lightColor = mix(vec3(1.0), vec3(0.8, 0.9, 1.1), fNight);
+        vec3 Ispec = SkyLight.Ls.rgb * lightColor * prop.NdotL *spec;
+        vec3 Idiff = SkyLight.Ld.rgb * lightColor * prop.NdotL *diff;
+        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.35)), 1.2, isEntity*0.8);
+         // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb1 *specAmb1 * 0.25;
+         // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb2 *specAmb2 * 0.08;
+
+
+        vec3 finalLight = vec3(0.0);
+        finalLight += Iamb * (minAmb+occlusion*(1.0-minAmb)) * (minAmb2+(skyLightLvl)*(1-minAmb2));
+
+        finalLight += Ispec * sunLight;
+        finalLight += Idiff * sunLight;
+
+        const float blockLightConst = 60.0;
+        finalLight += lum* (mix(1.0, occlusion, 0.19)) * blockLight*isLight*0.6;
+        finalLight+=isIllum*4.0;
+        finalLight += vec3(1.0, 0.9, 0.7) * pow(blockLightLvl/8.0,2.0)*((1.0-isLight*0.8)*blockLightConst);
+
+        finalLight *= max(0.3+ssao.r*0.7, isWater);
+        finalLight+=prop.light.rgb*(occlusion);
+        // finalLight*=2;
 #if RENDER_PASS ==1
-    float waterDepth = length(prop.position-viewSpacePosUnderWater);
-    alpha = clamp(clamp(waterDepth/6, 0.25, (sceneColor.a*1.4)*(1-clamp(sunLight, 0, 1))), 0.25, 1);
+        float waterDepth = length(prop.position-viewSpacePosUnderWater);
+        alpha = clamp(clamp(waterDepth/6, 0.25, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.25, 1.0);
 #endif
 
-    alpha = clamp(alpha, 0, 1);
+        alpha = clamp(alpha, 0.0, 1.0);
 
 
-    vec3 terr=prop.albedo*finalLight;
-    spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
-    vec3 waterAlb = mix(prop.albedo*finalLight, spec*vec3(0.1), isWater*theta);
-    terr = mix (terr, waterAlb, isWater);
+        vec3 terr=prop.albedo*finalLight;
+        spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
+        // vec3 waterAlb = mix(prop.albedo*finalLight, spec*0.02*vec3(0.1), isWater*theta);
+        vec3 waterAlb = mix(prop.albedo*finalLight, spec*vec3(0.02), isWater*theta);
+        prop.albedo = mix (terr, waterAlb, isWater);
+        // prop.albedo=terr;
 
-    prop.albedo = mix(terr, prop.albedo, isSky);
+    } else {
+
+    }
+
 
 #if RENDER_PASS < 2
-    vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0, 1));
+    vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     float fogDepth = length(prop.position);
-    fogDepth = min(fogDepth, in_scene.viewport.w/6);
-    fogDepth = max(fogDepth-30, 0);
-    float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001 ), 0, 1);
+    fogDepth = min(fogDepth, in_scene.viewport.w/3.0);
+    fogDepth = max(fogDepth-30.0, 0.0);
+    float fogAmount = clamp(1.0 - exp( -fogDepth*0.000005 ), 0.0, 1.0);
     prop.albedo =  mix( prop.albedo, fogColor, fogAmount );
 #endif
 

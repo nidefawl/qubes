@@ -5,6 +5,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.util.Stats;
 
 public abstract class AbstractTesselatorState {
     public int           vertexcount;
@@ -76,6 +77,7 @@ public abstract class AbstractTesselatorState {
         }
     }
     public void drawVBO(int mode) {
+        Stats.tessDrawCalls++;
         GL11.glDrawArrays(mode, 0, vertexcount);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
     }

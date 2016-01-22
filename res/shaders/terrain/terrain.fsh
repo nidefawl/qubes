@@ -27,7 +27,7 @@ flat in float blockid;
 flat in uint faceDir;
 flat in uint vertDir;
 in vec2 texPos;
-
+in float roughness;
 
 out vec4 out_Color;
 out vec4 out_Normal;
@@ -138,7 +138,7 @@ void main(void) {
 	// color_adj*=ambientOccl;
 	float alpha = tex.a*1;
     out_Color = vec4(color_adj, alpha);
-    out_Normal = vec4((outNormal) * 0.5f + 0.5f, 1);
+    out_Normal = vec4((outNormal) * 0.5f + 0.5f, roughness);
     out_Material = blockinfo;
     out_Light = vec4(lightLevelSky, lightLevelBlock, ambientOccl, 1);
     // float dbgAO = 0;

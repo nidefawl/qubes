@@ -249,7 +249,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                     if (c+scrollOffset == this.box.sel) {
                         i1 = this.box.textColorHover;
                         Shaders.colored.enable();
-                        GL11.glBlendFunc(770, 771);
+//                        GL11.glBlendFunc(770, 771);
                         tessellator.setColorF(0, 0.6f);
                         tessellator.add(this.posX + rowWidth, this.posY + (c * this.heightPerEntry), 0.0f);
                         tessellator.add(this.posX, this.posY + (c * this.heightPerEntry), 0.0f);

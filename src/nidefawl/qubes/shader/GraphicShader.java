@@ -110,8 +110,19 @@ public class GraphicShader extends Shader {
             glAttachShader(this.shader, this.geometryShader);
             Engine.checkGLError("glAttachObjectARB");
         }
-
-        if ("shadow".equals(attr)) {
+        if ("particle".equals(attr)) {
+            glBindAttribLocation(this.shader, 0, "in_texcoord");
+            glBindAttribLocation(this.shader, 1, "in_position");
+            glBindAttribLocation(this.shader, 2, "in_color");
+        } else if ("model".equals(attr)) {
+            glBindAttribLocation(this.shader, 0, "in_position");
+            glBindAttribLocation(this.shader, 1, "in_normal");
+            glBindAttribLocation(this.shader, 2, "in_texcoord");
+            glBindAttribLocation(this.shader, 3, "in_bones1");
+            glBindAttribLocation(this.shader, 4, "in_bones2");
+            glBindAttribLocation(this.shader, 5, "in_weights1");
+            glBindAttribLocation(this.shader, 6, "in_weights2");
+        } else if ("shadow".equals(attr)) {
             glBindAttribLocation(this.shader, 0, "in_position");
             glBindAttribLocation(this.shader, 1, "in_texcoord");
             glBindAttribLocation(this.shader, 2, "in_blockinfo");

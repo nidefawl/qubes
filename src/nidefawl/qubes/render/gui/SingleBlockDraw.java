@@ -27,8 +27,8 @@ import nidefawl.qubes.vec.Vector3f;
  */
 public class SingleBlockDraw {
 
-    private int      vbo;
-    private int      vboIndices;
+    private GLVBO      vbo;
+    private GLVBO      vboIdx;
     ReallocIntBuffer vboBuf;
     ReallocIntBuffer vboIdxBuf;
     private BufferedMatrix modelMatrix;
@@ -52,8 +52,8 @@ public class SingleBlockDraw {
      */
     public void init() {
         IntBuffer buff = Engine.glGenBuffers(2);
-        this.vbo = buff.get(0);
-        this.vboIndices = buff.get(1);
+        this.vbo = new GLVBO(GL15.GL_DYNAMIC_DRAW);
+        this.vboIdx = new GLVBO(GL15.GL_DYNAMIC_DRAW);
         this.vboBuf = new ReallocIntBuffer(1024);
         this.vboIdxBuf = new ReallocIntBuffer(1024);
         this.modelMatrix = new BufferedMatrix();
@@ -124,31 +124,16 @@ public class SingleBlockDraw {
 
     protected void doRender(Block block, int data, StackData stackData) {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
-        int numInts = buffer.putIn(this.vboBuf);
-
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer " + vbo);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, numInts * 4L, this.vboBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData ");
-        if (Engine.USE_TRIANGLES) {
-            this.vboIdxBuf.put(buffer.getTriIdxBuffer(), 0, buffer.getTriIdxPos());
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBindBuffer " + vboIndices);
-            GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer.getTriIdxPos() * 4, this.vboIdxBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("glBufferData");
-        }
+        int numInts = buffer.storeVertexData(this.vboBuf);
+        int numInts2 = buffer.storeIndexData(this.vboIdxBuf);
+        this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
+        this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);
         Engine.bindVAO(GLVAO.vaoBlocks);
-        Engine.bindBuffer(vbo);
-        Engine.bindIndexBuffer(vboIndices);
-        if (Engine.USE_TRIANGLES) {
-            GL11.glDrawElements(GL11.GL_TRIANGLES, buffer.faceCount * 2 * 3, GL11.GL_UNSIGNED_INT, 0);
-        } else {
-            GL11.glDrawArrays(GL11.GL_QUADS, 0, buffer.vertexCount);
-        }
+        Engine.bindBuffer(vbo.getVboId());
+        Engine.bindIndexBuffer(vboIdx.getVboId());
+        GL11.glDrawElements(GL11.GL_TRIANGLES, buffer.faceCount * 2 * 3, GL11.GL_UNSIGNED_INT, 0);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("SingleBlockDraw.doRender");
     }
 
     /**

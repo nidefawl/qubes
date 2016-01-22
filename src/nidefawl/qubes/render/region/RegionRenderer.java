@@ -81,8 +81,6 @@ public class RegionRenderer extends AbstractRenderer {
     private boolean startup;
     float camX; float camY; float camZ;
     MeshedRegion[][] regions;
-    int drawMode = -1;
-    int drawInstances = 0;
     public int numV;
     
 //    protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
@@ -317,26 +315,17 @@ public class RegionRenderer extends AbstractRenderer {
         }
     }
     
-    public void setDrawMode(int i) {
-        this.drawMode = i;
-    }
-    public void setDrawInstances(int i) {
-        this.drawInstances = i;
-    }
-
     ArrayList<MeshedRegion> justrendered = Lists.newArrayList();
     public void renderMainPost(World world, float fTime, WorldRenderer worldRenderer) {
-        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         for (MeshedRegion r : this.justrendered) {
 
             if (r.hasPass(PASS_SOLID)) {
-                //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
-                r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                r.renderRegion(fTime, PASS_SOLID);
                 this.numV += r.getNumVertices(PASS_SOLID);
             }
             if (numV < 2000000) {
                 if (r.hasPass(PASS_LOD)) {
-                    r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                    r.renderRegion(fTime, PASS_LOD);
                     this.numV += r.getNumVertices(PASS_LOD);
                 }
             }
@@ -345,8 +334,6 @@ public class RegionRenderer extends AbstractRenderer {
     public void renderMainPre(World world, float fTime, WorldRenderer worldRenderer) {
         justrendered.clear();
         int size = renderList.size();
-//        PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE
-        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         this.occlCulled=0;
         this.numV = 0;
         int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
@@ -380,8 +367,8 @@ public class RegionRenderer extends AbstractRenderer {
                         GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
                         GL11.glColorMask(false, false, false, false);
                         Engine.enableDepthMask(false);
-                        r.renderRegion(fTime, PASS_SHADOW_SOLID, drawMode, this.drawInstances);
-                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        r.renderRegion(fTime, PASS_SHADOW_SOLID);
+                        r.renderRegion(fTime, PASS_LOD);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
                         Engine.enableDepthMask(true);
@@ -397,10 +384,10 @@ public class RegionRenderer extends AbstractRenderer {
                 if (r.hasPass(PASS_SOLID) || r.hasPass(PASS_LOD)) {
                     justrendered.add(r);
                 }
-                r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                r.renderRegion(fTime, PASS_SOLID);
                 if (numV < 2000000) {
                     if (r.hasPass(PASS_LOD)) {
-                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        r.renderRegion(fTime, PASS_LOD);
                         this.numV += r.getNumVertices(PASS_LOD);
                     }
                 }
@@ -415,12 +402,10 @@ public class RegionRenderer extends AbstractRenderer {
 
     public void renderMain(World world, float fTime, WorldRenderer worldRenderer) {
         int size = renderList.size();
-//        PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE
-        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         this.occlCulled=0;
         this.numV = 0;
         int totalv=0;
-        int LOD_DISTANCE = 4; //TODO: move solid/slab blocks out of LOD PASS
+        int LOD_DISTANCE = 14; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
         Engine.bindVAO(GLVAO.vaoBlocks);
         for (int dist = 0; dist < 2; dist++)  {
@@ -453,9 +438,9 @@ public class RegionRenderer extends AbstractRenderer {
                         GL11.glColorMask(false, false, false, false);
                         Engine.enableDepthMask(false);
                         Engine.bindVAO(GLVAO.vaoBlocksShadow);
-                        r.renderRegion(fTime, PASS_SHADOW_SOLID, drawMode, this.drawInstances);
-//                        r.renderRegion(fTime, PASS_TRANSPARENT, drawMode, this.drawInstances);
-                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        r.renderRegion(fTime, PASS_SHADOW_SOLID);
+//                        r.renderRegion(fTime, PASS_TRANSPARENT);
+                        r.renderRegion(fTime, PASS_LOD);
                         Engine.bindVAO(GLVAO.vaoBlocks);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
@@ -472,12 +457,12 @@ public class RegionRenderer extends AbstractRenderer {
                 if (dist == 0)
                 if (r.hasPass(PASS_SOLID)) {
                     //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
-                    r.renderRegion(fTime, PASS_SOLID, drawMode, this.drawInstances);
+                    r.renderRegion(fTime, PASS_SOLID);
                     this.numV += r.getNumVertices(PASS_SOLID);
                 }
                 if (dist == 1) {
                     if (r.hasPass(PASS_LOD)) {
-                        r.renderRegion(fTime, PASS_LOD, drawMode, this.drawInstances);
+                        r.renderRegion(fTime, PASS_LOD);
                         this.numV += r.getNumVertices(PASS_LOD);
                     }
                     if (numV > 1000000) {
@@ -498,6 +483,7 @@ public class RegionRenderer extends AbstractRenderer {
         }
         numV=totalv;
     }
+
     public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
         GLVAO vao = GLVAO.vaoBlocks;
         if (pass == PASS_SHADOW_SOLID) {
@@ -506,15 +492,23 @@ public class RegionRenderer extends AbstractRenderer {
                 vao = GLVAO.vaoBlocksShadowTextured;
             }
         }
+        int requiredShadowMode = Game.instance.settings.shadowDrawMode;
+
         Engine.bindVAO(vao);
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
-        int drawMode = this.drawMode < 0 ? (Engine.USE_TRIANGLES ? GL11.GL_TRIANGLES : GL11.GL_QUADS) : this.drawMode;
         for (int i = 0; i < size; i++) {
             MeshedRegion r = list.get(i);
-            if (r.hasPass(pass) && r.frustumStates[nFrustum] >= frustumState) {
-                r.renderRegion(fTime, pass, drawMode, this.drawInstances);
+            if (!r.hasPass(pass)) {
+                continue;
             }
+            if (r.frustumStates[nFrustum] < frustumState) {
+                continue;
+            }
+            if (r.getShadowDrawMode() != requiredShadowMode) {
+                continue;
+            }
+            r.renderRegion(fTime, pass);
         }
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderRegions");

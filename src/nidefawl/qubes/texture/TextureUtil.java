@@ -19,6 +19,17 @@ public class TextureUtil {
                 }
         return data;
     }
+    public static byte[] genNoise2(int w) {
+        byte[] data = new byte[w * w * 3];
+        for (int y = 0; y < w; y++)
+            for (int x = 0; x < w; x++)
+                for (int z = 1; z < 4; z++) {
+                    int seed = (GameMath.randomI(x) + GameMath.randomI(y * 19)) * GameMath.randomI(z*23)-z;
+                    
+                    data[(y * w + x) * 3 + (z-1)] = (byte) (GameMath.randomI(seed) % 128);
+                }
+        return data;
+    }
 
     public static byte[] genNoise2(int w, int h) {
         int noct = 8;

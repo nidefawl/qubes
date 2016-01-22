@@ -74,5 +74,5 @@ void main(void) {
     // sky+=skySunScat;
 // vec3 compileMe = skySunScat*sunTheta*sky;
 // 	sky = mix(sky, compileMe, 0.0001);
-    out_Color = vec4(sky, 1.0);
+    out_Color = vec4(viewVector.xyz, 1.0);
 }

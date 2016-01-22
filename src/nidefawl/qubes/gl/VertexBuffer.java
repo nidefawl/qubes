@@ -120,7 +120,7 @@ public class VertexBuffer {
     /**
      * @return
      */
-    public int getIndex() {
+    public int getPos() {
         return this.pos;
     }
     /**
@@ -143,37 +143,20 @@ public class VertexBuffer {
     }
 
     /**
-     * @param i
-     * @param vboIdxBuf
-     * @return
-     */
-    public static int createIndex(int elementCount, ReallocIntBuffer vboIdxBuf) {
-        int numTriangles = elementCount;
-        int numQuads = numTriangles/2;
-        int numIdx = numQuads*6;
-        int[] idx = new int[numIdx];
-        int nTriangleIdx = 0;
-        for (int i = 0; i < numQuads; i++) {
-            int vIdx = i*4;
-            idx[nTriangleIdx++] = vIdx+0;
-            idx[nTriangleIdx++] = vIdx+1;
-            idx[nTriangleIdx++] = vIdx+2;
-            idx[nTriangleIdx++] = vIdx+2;
-            idx[nTriangleIdx++] = vIdx+3;
-            idx[nTriangleIdx++] = vIdx+0;
-        }
-        vboIdxBuf.put(idx);
-        return numIdx;
-    }
-
-    /**
-     * @param vboBuf
+     * @param directBuf
      * @return 
      */
-    public int putIn(ReallocIntBuffer vboBuf) {
-        int intLen = this.pos;
-        vboBuf.put(this.buffer, 0, intLen);
-        return intLen;
+    public int storeVertexData(ReallocIntBuffer directBuf) {
+        directBuf.put(this.buffer, 0, this.pos);
+        return this.pos;
+    }
+    /**
+     * @param directBuf
+     * @return 
+     */
+    public int storeIndexData(ReallocIntBuffer directBuf) {
+        directBuf.put(this.triIdxBuffer, 0, this.triIdxPos);
+        return this.triIdxPos;
     }
 
     public void incrIndex(int[] vertexIdx, int vIdxOut, int faces) {
@@ -198,6 +181,18 @@ public class VertexBuffer {
 //            System.out.println(index);
         }
         increaseFace();
+    }
+
+    public void makeTriIdx() {
+        for (int i = 0; i < this.faceCount; i++) {
+            int vIdx = i*4;
+            putIdx(vIdx+0);
+            putIdx(vIdx+1);
+            putIdx(vIdx+2);
+            putIdx(vIdx+2);
+            putIdx(vIdx+3);
+            putIdx(vIdx+0);
+        }
     }
 
 }

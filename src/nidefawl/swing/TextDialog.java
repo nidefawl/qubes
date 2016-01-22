@@ -17,6 +17,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultCaret;
 
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
 
@@ -89,7 +90,7 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
 
         ArrayList<String> desc = new ArrayList<>(desca);
         ArrayList<String> desc2 = new ArrayList<>();
-        if (throwable != null && !(throwable instanceof ShaderCompileError)) {
+        if (throwable != null) {
             throwable.printStackTrace();
             StringWriter errors = new StringWriter();
             throwable.printStackTrace(new PrintWriter(errors));
@@ -97,6 +98,9 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
             desc.add("");
             desc.add("__ STACKTRACE OF ERROR __");
             desc2.addAll(Arrays.asList(split));
+            if (throwable instanceof ShaderCompileError) {
+                System.err.println(((ShaderCompileError)throwable).getLog());
+            }
         }
         for (String s : desc)
             appendLine(s);

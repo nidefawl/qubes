@@ -3,6 +3,8 @@ package nidefawl.qubes.texture;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL30.GL_R8;
+import static org.lwjgl.opengl.GL30.GL_RG;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
 
 import java.awt.image.BufferedImage;
@@ -10,14 +12,14 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
 public class TextureManager {
@@ -55,11 +57,11 @@ public class TextureManager {
     }
 
     public void reload() {
-        byte[] data = TextureUtil.genNoise(64);
-        glBindTexture(GL_TEXTURE_2D, texNoise);
-        TextureManager.getInstance().uploadTexture(data, 64, 64, 3, GL_RGB, GL_RGB, true, true, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
         int size=256;
+        byte[] data = TextureUtil.genNoise2(size);
+        glBindTexture(GL_TEXTURE_2D, texNoise);
+        TextureManager.getInstance().uploadTexture(data, size, size, 3, GL_RGB, GL_RGB, true, true, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
 //        byte[] data2 = TextureUtil.genNoise2(size,size);
 //        glBindTexture(GL_TEXTURE_2D, texNoise2);
 //        TextureManager.getInstance().uploadTexture(data2, size, size, 3, GL_RGB, GL_RGB, true, true, 0);
@@ -74,7 +76,19 @@ public class TextureManager {
     public int makeNewTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter, int mipmapLevel) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
-        uploadTexture(rgba, w, h, 4, GL11.GL_RGBA, GL11.GL_RGBA, repeat, filter, mipmapLevel);
+        int fmt = GL11.GL_RGBA;
+        int ifmt = GL11.GL_RGBA;
+        int bytespp = 4;
+        if (w*h*4 > rgba.length) {
+            if (rgba.length<w*h) {
+                throw new GameError("Cannot generate textures, date seems to be non of [RGBA, R]");
+            }
+            ifmt = GL_R8;
+            fmt = GL_RED;
+            bytespp = 1;
+        }
+        uploadTexture(rgba, w, h, bytespp, fmt, ifmt, repeat, filter, mipmapLevel);
+        Engine.checkGLError("uploadTexture");
         return i;
     }
     
@@ -133,10 +147,11 @@ public class TextureManager {
         directBuf.position(0).limit(w*h*bytespp);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL11.GL_UNSIGNED_BYTE, directBuf);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glTexImage2D");
-//        if (mipmapLevel > 0) {
-//            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-//            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("GL30.glGenerateMipmap");
-//        }
+        if (mipmapLevel > 0) {
+            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+            if (GameBase.GL_ERROR_CHECKS) Engine.checkGLError("GL30.glGenerateMipmap");
+        }
     }
 
     public int setupTexture(AssetTexture assetTexture, boolean repeat, boolean filter, int mipmapLvls) {

@@ -45,6 +45,7 @@ public class BlockFaceAttr {
     private boolean reverse = false;
     private int faceDir;
     private int normalMap;
+    private int roughness;
     
     /**
      * @param useGlobalRenderOffset the useGlobalRenderOffset to set
@@ -133,7 +134,7 @@ public class BlockFaceAttr {
         vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
         vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
         vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
-        vertexBuffer.put(v.normal);
+        vertexBuffer.put(v.normal&0xFFFFFF|(this.roughness<<24));
         int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
         vertexBuffer.put(textureHalf2);
         vertexBuffer.put(v.rgba);
@@ -170,7 +171,7 @@ public class BlockFaceAttr {
               vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
               vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
               vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
-              vertexBuffer.put(v.normal);
+              vertexBuffer.put(v.normal&0xFFFFFF|(this.roughness<<24));
               int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
               vertexBuffer.put(textureHalf2);
               vertexBuffer.put(v.rgba);
@@ -184,32 +185,7 @@ public class BlockFaceAttr {
           vertexBuffer.putIdx(idxPos+0);
           vertexBuffer.increaseFace();
     }
-
-    public void putVertAttrStrip(VertexBuffer vertexBuffer) {
-        int idxPos = vertexBuffer.getVertexCount();
-        for (int i = 0; i < 4; i++) {
-            int idx = this.reverse ? 3 - (i % 4) : i % 4;
-            BlockFaceVert v = this.v[idx];
-            vertexBuffer.put(Float.floatToRawIntBits(this.xOff + v.x));
-            vertexBuffer.put(Float.floatToRawIntBits(this.yOff + v.y));
-            vertexBuffer.put(Float.floatToRawIntBits(this.zOff + v.z));
-            vertexBuffer.put(v.normal);
-            int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
-            vertexBuffer.put(textureHalf2);
-            vertexBuffer.put(v.rgba);
-            vertexBuffer.put(this.tex | this.normalMap << 12 | this.type << 16 | v.pass << (16 + 12));
-            vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);
-            vertexBuffer.put(this.lightMaskBlock & 0xFFFF | (this.lightMaskSky & 0xFFFF) << 16);
-            vertexBuffer.increaseVert();
-        }
-        vertexBuffer.putIdx(idxPos + 0);
-        vertexBuffer.putIdx(idxPos + 1);
-        vertexBuffer.putIdx(idxPos + 3);
-        vertexBuffer.putIdx(idxPos + 2);
-        vertexBuffer.putIdx(-1);
-        vertexBuffer.increaseFace();
-
-    }
+    
     public void putFaceAttr(VertexBuffer vertexBuffer) {
         for (int i = 0; i < 4; i++) {
             int idx = this.reverse ? 3-(i % 4) : i % 4;
@@ -232,7 +208,7 @@ public class BlockFaceAttr {
             vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
             vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
             vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
-            vertexBuffer.put(v.normal);
+            vertexBuffer.put(v.normal&0xFFFFFF|(this.roughness<<24));
             int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
             vertexBuffer.put(textureHalf2);
             vertexBuffer.put(v.rgba);
@@ -299,6 +275,9 @@ public class BlockFaceAttr {
 
     public void setAO(int aoMask) {
         this.aoMask = aoMask;
+    }
+    public void setRoughness(float f) {
+        this.roughness = (int) GameMath.clamp(f*255.0f, 0, 255);
     }
     
     public void setType(int type) {

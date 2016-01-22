@@ -1262,4 +1262,24 @@ public class Matrix4f {
             euler.setZ( GameMath.asin( this.m10 ) );
         }
     }
+
+    public void viewVec(float x, float y, float z) {
+        /*
+         * 
+            float fq = GameMath.sqrtf(t.x*t.x+t.z*t.z);
+            float rotx = GameMath.atan2(t.x, t.z);
+            float roty = GameMath.atan2(t.y, fq);
+            sprite.mat.rotate(roty, 0, 1, 0);
+            sprite.mat.rotate(rotx, 1, 0, 0);
+         */
+//        float fq = GameMath.sqrtf(t.x*t.x+t.z*t.z);
+//        float rotx = GameMath.atan2(t.x, t.z);
+//        float roty = GameMath.atan2(t.y, fq);
+//        sprite.mat.rotate(roty, 0, 1, 0);
+//        sprite.mat.rotate(rotx, 1, 0, 0);
+        float rotx = -GameMath.atan2( z, x )+GameMath.PI*0.5f;
+        float roty = -GameMath.atan2( y, GameMath.sqrtf(y*y+z*z));
+        this.rotate(rotx, 0, 1, 0);
+        this.rotate(roty, 1, 0, 0);
+    }
 }

@@ -10,10 +10,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
+import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
@@ -298,7 +300,7 @@ public abstract class GameBase implements Runnable {
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
             if (GL_ERROR_CHECKS) {
                 if (KHRDebug.getInstance() != null) {
-//                    GLDebugLog.setup();
+                    GLDebugLog.setup();
                     _checkGLError("GLDebugLog.setup()");
                 }
                 _checkGLError("Pre startup");
@@ -331,6 +333,7 @@ public abstract class GameBase implements Runnable {
     public void shutdown() {
         this.running = false;
         Engine.stop();
+        AsyncTasks.shutdown();
     }
 
     protected void checkResize() {
@@ -470,6 +473,7 @@ public abstract class GameBase implements Runnable {
         
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.startFrame();
+        Stats.resetDrawCalls();
         
         if (isCloseRequested()) {
             shutdown();
@@ -587,8 +591,21 @@ public abstract class GameBase implements Runnable {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame lateInitGame");
             setVSync(this.vsync);
+            long a = 0;
+            int i = 0;
             while (this.running) {
+                i++;
+                long s = System.nanoTime();
                 runFrame();
+                s = (System.nanoTime() - s)/1000L;
+                
+                a = (a*99L+s)/100L;
+                if (s > a*2L) {
+                    System.out.println("slow frame "+s);
+                }
+                if (i%200==0) {
+                    System.out.println(a);
+                }
             }
         } catch (Throwable t) {
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
@@ -597,6 +614,21 @@ public abstract class GameBase implements Runnable {
                 onDestroy();
             }
             destroyContext();
+            Thread t2 = new Thread() {
+                public void run() {
+                    try {
+                        //temp hack to clear up references so java can die
+                        System.gc();
+                        Thread.sleep(1000);
+                        System.gc();
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                };
+            };
+            t2.setName("watch");
+            t2.start();
         }
     }
 

@@ -9,6 +9,7 @@ import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.item.IDMappingItems;
 import nidefawl.qubes.item.Item;
+import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.ItemModel;
 
 public class GameContext {
@@ -76,11 +77,13 @@ public class GameContext {
         initError = null;
         try {
             ItemModel.preInit();
+            EntityModel.preInit();
             Block.preInit();
             Item.preInit();
             Block.postInit();
             Item.postInit();
             ItemModel.postInit();
+            EntityModel.postInit();
             IDMappingBlocks.save();
             IDMappingItems.save();
             CraftingRecipes.init();

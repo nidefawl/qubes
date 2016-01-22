@@ -11,15 +11,19 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.*;
 
 /**
- * @author Michael Hept 2015 Copyright: Michael Hept
+ * Loads models. Abstracts model data and layout from rendering.
+ * Models reference data from here to reduce memory footprint.
+ * 
+ * @author Michael Hept 2015 
+ * Copyright: Michael Hept
  */
 public class ModelLoaderQModel {
 
-	private ModelRigged model;
 
 	/**
 	 * 
@@ -199,6 +203,42 @@ public class ModelLoaderQModel {
                     group.listTri.add(listTri.get(idx));
                 }
             }
+            Collections.sort(this.listTri, new Comparator<QModelTriangle>() {
+                @Override
+                public int compare(QModelTriangle o1, QModelTriangle o2) {
+                    int n1 = getMinBone(o1);
+                    int n2 = getMinBone(o2);
+                    if (n1 != n2) {
+                        if (n1 == -1) {
+                            return -1;
+                        }
+                        if (n2 == -1) {
+                            return 1;
+                        }
+                        return n1 < n2 ? -1 : 1;
+                    }
+                    int m1 = getMaxBone(o1);
+                    int m2 = getMaxBone(o2);
+                    if (m1 != m2) {
+                        if (m2 == -1) {
+                            return -1;
+                        }
+                        if (m1 == -1) {
+                            return 1;
+                        }
+                        return m1 > m2 ? -1 : 1;
+                    }
+                    return o1.idx < o2.idx ? -1 : 1;
+                }
+            });
+//            Collections.reverse(this.listTri);
+//            for (int i = 0; i < listTri.size(); i++) {
+//                QModelTriangle tri = listTri.get(i);
+//                int n1 = getMinBone(tri);
+//                int m1 = getMaxBone(tri);
+//                System.out.println("["+i+"] = "+tri.idx+" - ("+debugStrBones(tri)+")");
+//            }
+//            System.exit(1);
             // link instances in 1:1 relation of groups and materials
             for (QModelMaterial mat : this.listMaterials) {
                 for (QModelTriGroup group : this.listGroups) {
@@ -237,6 +277,61 @@ public class ModelLoaderQModel {
 	}
 
 
+
+    private String debugStrBones(QModelTriangle tri) {
+        List<Integer> intList = Lists.newArrayList(); 
+        for (int i = 0; i < 3; i++) {
+            QModelVertex v = this.getVertex(tri.vertIdx[i]);
+            for (int j = 0; j < v.numBones; j++) {
+                if (!intList.contains(v.bones[j])) {
+                    intList.add(v.bones[j]);
+                }
+            }
+        }
+        if (intList.isEmpty()) {
+            return "empty";
+        }
+        Collections.sort(intList);
+        String s = "";
+        for (int a = 0; a < intList.size(); a++) {
+            if (a > 0) {
+                s+=",";
+            }
+            s+=intList.get(a);
+        }
+        return s;
+    }
+
+    protected int getMinBone(QModelTriangle o1) {
+        int bones = -1;
+        for (int i = 0; i < o1.vertIdx.length; i++) {
+            int vertIdx = o1.vertIdx[i];
+            QModelVertex vert = listVertex.get(vertIdx);
+            for (int j = 0; j < vert.numBones; j++) {
+                if (bones == -1) {
+                    bones = vert.bones[j];
+                }
+                bones=Math.min(bones, vert.bones[j]);
+            }
+        }
+        return bones;
+    }
+
+
+    protected int getMaxBone(QModelTriangle o1) {
+        int bones = -1;
+        for (int i = 0; i < o1.vertIdx.length; i++) {
+            int vertIdx = o1.vertIdx[i];
+            QModelVertex vert = listVertex.get(vertIdx);
+            for (int j = 0; j < vert.numBones; j++) {
+                if (bones == -1) {
+                    bones = vert.bones[j];
+                }
+                bones=Math.max(bones, vert.bones[j]);
+            }
+        }
+        return bones;
+    }
 
     /**
      * @param parent

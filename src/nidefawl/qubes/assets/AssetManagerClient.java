@@ -69,6 +69,9 @@ public class AssetManagerClient extends AssetManager {
             Shader shader = shaderSrc.compileShader();
             if (mgr != null && shader != null)
                 mgr.addResource(shader);
+            if (shader != null) {
+                shader.setSource(shaderSrc);
+            }
             return shader;
         } catch (ShaderCompileError e) {
             this.lastFailedShader = e.getShaderSource();

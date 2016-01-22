@@ -2,15 +2,21 @@
 
 #pragma include "tonemap.glsl"
 #pragma include "blockinfo.glsl"
+#pragma define "SHADOW_PASS"
 
-uniform sampler2D tex0;
-
+out vec4 out_Color;
 in vec4 color;
 in vec3 normal;
 in vec4 texcoord;
 in vec4 position;
 
-out vec4 out_Color;
+#ifdef SHADOW_PASS
+void main(void) {
+  out_Color = vec4(0, 0, 0, 1);
+}
+#else
+
+uniform sampler2D tex0;
 out vec4 out_Normal;
 out uvec4 out_Material;
 out vec4 out_Light;
@@ -26,7 +32,9 @@ void main(void) {
 
 	float alpha = tex.a*1;
     out_Color = vec4(color_adj, alpha);
-    out_Normal = vec4((normal) * 0.5f + 0.5f, 1);
+    out_Normal = vec4((normal) * 0.5f + 0.5f, 0.05f);
     out_Material = uvec4(0u,1u+ENCODE_RENDERPASS(5),0u,1u);
     out_Light = vec4(1, 0,  1, 1);
 }
+
+#endif

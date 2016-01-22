@@ -71,12 +71,12 @@ public class ChunkLoadThread {
         }
     }
     public ChunkLoadThread(ChunkManagerServer mgr, WorldServer world) {
+        this.mgr = mgr;
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new LoadThread(this);
             threads[i].setName("ChunkLoadThread_"+i+"_"+world.getName());
             threads[i].setDaemon(true);
         }
-        this.mgr = mgr;
     }
 
     public void startThreads() {

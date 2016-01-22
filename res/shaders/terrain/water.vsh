@@ -16,6 +16,7 @@ out vec2 texPos;
 out vec4 vpos;
 out vec4 vwpos;
 out float isWater;
+out float roughness;
 
 #define LIGHT_MASK 0xFu
 
@@ -32,6 +33,7 @@ void main() {
 	texcoord = in_texcoord;
     isWater = IS_WATER(blockid);
 	color = in_color;
+	roughness = (in_normal.w < 0 ? 255+in_normal.w : in_normal.w) / 255.0f;
 
 	faceLightSky = vec4(
 		float(in_light.y&LIGHT_MASK)/15.0,

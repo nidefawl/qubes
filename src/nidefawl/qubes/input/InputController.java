@@ -280,13 +280,6 @@ public class InputController {
                 SingleBlockRenderAtlas.getInstance().reset();
             }
         });
-        addKeyBinding(new Keybinding("toggle_quad_tri_render", GLFW.GLFW_KEY_Z) {
-            public void onDown() {
-                Engine.flushRenderTasks();
-                Engine.regionRenderer.resetAll();
-                Engine.USE_TRIANGLES=!Engine.USE_TRIANGLES;
-            }
-        });
         addKeyBinding(new Keybinding("show_debug_textures", GLFW.GLFW_KEY_F3) {
             public void onDown() {
                 GLDebugTextures.setShow(!GLDebugTextures.show);

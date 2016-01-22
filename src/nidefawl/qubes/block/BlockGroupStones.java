@@ -23,7 +23,7 @@ public class BlockGroupStones extends BlockGroup {
     final public Block sandstone_red;
     public BlockGroupStones() {
         for (String s : stoneNames) {
-            addBlock(new Block(s).setTextures("rocks/"+s).setCategory(BlockCategory.ROCK));
+            addBlock(new BlockStone(s).setTextures("rocks/"+s).setCategory(BlockCategory.ROCK));
         }
         granite = getBlocks().get(0);
         basalt = getBlocks().get(1);

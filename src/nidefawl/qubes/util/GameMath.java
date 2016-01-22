@@ -134,6 +134,12 @@ public class GameMath {
         seed ^= (seed << 4);
         return (int) seed;
     }
+    public static int randomI2(long seed) {
+        seed ^= (seed << 13);
+        seed ^= (seed >> 17);
+        seed ^= (seed << 5);
+        return (int) seed;
+    }
     public static int lhToZ(long l) {
         return (int) (l&0xFFFFFFFF) + Integer.MIN_VALUE;
     }

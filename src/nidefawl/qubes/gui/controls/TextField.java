@@ -79,10 +79,10 @@ public class TextField extends AbstractUI implements Renderable {
     public boolean handleMouseDown(Gui gui, int action) {
         if (!enabled)
             return false;
-        this.focused = true;
         if (GuiContext.input != null) {
             GuiContext.input.focused=false;
         }
+        this.focused = true;
         GuiContext.input=this;
         //        return gui.onGuiClicked(this);
         return true;

@@ -33,4 +33,8 @@ public class ShaderSourceBundle {
         return this.name;
     }
 
+    public ShaderSource getFragment() {
+        return this.fragCode;
+    }
+
 }

@@ -3,11 +3,17 @@
  */
 package nidefawl.qubes.models.qmodel;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL31;
 
 import com.google.common.collect.Lists;
+
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.*;
@@ -27,7 +33,7 @@ public class ModelRigged extends ModelQModel {
     private QModelPoseBone neck;
     private QModelAction action;
     private int numIdx;
-    private int[] vPos;
+    public GLTriBuffer gpuBufRest = null;
 	/**
 	 * @param qModelJoint 
 	 * 
@@ -54,7 +60,6 @@ public class ModelRigged extends ModelQModel {
         this.rootJoint = this.poseBones.get(0);
         this.action = loader.listActions.get(0);
         this.numIdx = loader.listTri.size()*3;
-        this.vPos = new int[loader.listTri.size()];
 //        this.head.animate = false;
 	}
 	public void setAction(int idx) {
@@ -159,6 +164,82 @@ public class ModelRigged extends ModelQModel {
 ////    }
    
 	Vector3f tmpVec = new Vector3f();
+
+    public void getMatrices() {
+        Matrix4f m2 = tmpMat2;
+        for (int j = 0; j < this.poseBones.size(); j++) {
+            QModelPoseBone jt = poseBones.get(j);
+            m2.load(jt.restbone.matRestInv);
+            m2.mulMat(jt.matDeform);
+        }
+    }
+    public int storeMatrices(FloatBuffer buffer) {
+        Matrix4f m2 = tmpMat2;
+        for (int j = 0; j < this.poseBones.size(); j++) {
+            QModelPoseBone jt = poseBones.get(j);
+            m2.load(jt.restbone.matRestInv);
+            m2.mulMat(jt.matDeform);
+            m2.store(buffer);
+        }
+        return this.poseBones.size();
+    }
+    public void renderRestModel(int instances) {
+        if (this.gpuBufRest == null) {
+            this.reRender = System.currentTimeMillis();
+            VertexBuffer buf = new VertexBuffer(1024*64);
+            buf.reset();
+            int vPosI = 0;
+//            int[] vPos = new int[this.loader.listTri.size()*3];
+//            Arrays.fill(vPos, -1);
+            for (QModelTriangle triangle : this.loader.listTri) {
+                for (int i = 0; i < 3; i++) {
+                    int idx = triangle.vertIdx[i];
+//                    if (vPos[idx] < 0) { // shared vertices require per vertex UVs -> requires exporter to be adjusted
+                    // but also gives worse performance
+//                        vPos[idx] =
+//                                vPosI++;
+                        QModelVertex v = this.loader.getVertex(idx);
+                        buf.put(Float.floatToRawIntBits(v.x));
+                        buf.put(Float.floatToRawIntBits(v.y));
+                        buf.put(Float.floatToRawIntBits(v.z));
+                        tmpVec.set(triangle.normal[i]);
+                        buf.put(RenderUtil.packNormal(tmpVec));
+                        buf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
+                        int bones03 = 0;
+                        int bones47 = 0;
+                        for (int w = 0; w < 4; w++) {
+                            int boneIdx = (0 + w) >= v.numBones ? 0xFF : v.bones[0 + w];
+                            int boneIdx2 = (4 + w) >= v.numBones ? 0xFF : v.bones[4 + w];
+                            bones03 |= (boneIdx) << (w * 8);
+                            bones47 |= (boneIdx2) << (w * 8);
+                        }
+                        buf.put(bones03);
+                        buf.put(bones47);
+                        for (int w = 0; w < 4; w++) {
+                            buf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
+                        }
+                        buf.increaseVert();
+//                    } else {
+//                        System.out.println("reuse vert");
+//                    }
+                    buf.putIdx(vPosI++);
+                }
+                buf.increaseFace();
+            }
+            this.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
+
+            int bytes = this.gpuBufRest.upload(buf);
+            System.out.println("byte size upload "+bytes+", "+this.gpuBufRest.getVertexCount());
+            System.out.println(""+this.gpuBufRest.getVertexCount()+" vertices, "+this.gpuBufRest.getTriCount()+" tris, "+this.gpuBufRest.getIdxCount()+" indexes");
+
+        }
+//        this.gpuBufRest.draw();
+        Stats.modelDrawCalls++;
+        
+        Engine.bindBuffer(this.gpuBufRest.getVbo().getVboId());
+        Engine.bindIndexBuffer(this.gpuBufRest.getVboIndices().getVboId());
+        GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, this.gpuBufRest.getTriCount()*3, GL11.GL_UNSIGNED_INT, 0, instances);
+    }
     public void render(float f) {
         this.needsDraw = true;
         if (this.needsDraw || System.currentTimeMillis()-this.reRender>42200) {
@@ -169,6 +250,7 @@ public class ModelRigged extends ModelQModel {
             this.buf.reset();
             int vPosI = 0;
             int pos = 0;
+            int[] vPos = new int[this.loader.listTri.size()*3];
             for (QModelTriangle triangle : this.loader.listTri) {
                 for (int i = 0; i < 3; i++) {
                     int idx = triangle.vertIdx[i];

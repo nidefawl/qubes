@@ -6,21 +6,20 @@ import static org.lwjgl.opengl.KHRDebug.*;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.opengl.KHRDebug;
 import org.lwjgl.system.MemoryUtil;
 
-import nidefawl.qubes.GameBase;
 
 public class GLDebugLog {
 
     public static GLDebugMessageCallback callback;
-
+    static ByteBuffer buf;
+    
     public static void setup() {
+        //make sure context was created with glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE)
         glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        KHRDebug.glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, ByteBuffer.allocateDirect(0), true);
+        KHRDebug.glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, ByteBuffer.allocateDirect(0), true);
         KHRDebug.glDebugMessageCallback(callback=new GLDebugMessageCallback() {
 
             @Override
@@ -52,11 +51,10 @@ public class GLDebugLog {
                     case GL_DEBUG_TYPE_PERFORMANCE:         typeStr = "PERFORMANCE"; break;
                     case GL_DEBUG_TYPE_OTHER:               typeStr = "OTHER"; break;
                 }
-
-                String msg = MemoryUtil.memDecodeUTF8(MemoryUtil.memByteBuffer(message, length));
-                stream.println("OpenGL " + typeStr +  " [" + srcStr +"]: " + msg);
+                buf = buf == null ? MemoryUtil.memByteBuffer(message, length) : MemoryUtil.memSetupBuffer(buf, message, length);
+                String msg = MemoryUtil.memDecodeUTF8(buf);
+//                stream.println("OpenGL " + typeStr +  " [" + srcStr +"]: " + msg);
             }
-            
         }, 0);
     }
 

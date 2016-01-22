@@ -24,6 +24,7 @@ in vec4 vpos;
 in vec4 vwpos;
 in float isWater;
 
+in float roughness;
 
 
 out vec4 out_Color;
@@ -135,7 +136,7 @@ void main() {
 	vec3 color_adj = tex.rgb * color.rgb;
 	srgbToLin(color_adj.rgb);
     out_Color = vec4(color_adj.rgb, color.a*tex.a);
-    out_Normal = vec4((normal_out) * 0.5f + 0.5f, 1);
+    out_Normal = vec4((normal_out) * 0.5f + 0.5f, roughness);
     out_Material = blockinfo;
     out_Light = vec4(lightLevelSky*0.2, lightLevelBlock, 1, 1);
     // gl_FragData[0] = vec4(0,1,1,1);

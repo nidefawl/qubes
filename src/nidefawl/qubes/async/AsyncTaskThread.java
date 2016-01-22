@@ -6,6 +6,7 @@ import java.util.zip.Inflater;
 public class AsyncTaskThread extends Thread {
     public AsyncTaskThread(Runnable r) {
         super(r);
+        setName("AsyncTaskThread");
     }
 
     //TODO: move decompression to thread

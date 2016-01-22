@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -24,9 +25,12 @@ import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
+import nidefawl.qubes.world.SunLightModel;
 
 public class Engine {
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
+    public final static int MAX_LIGHTS       = 1024;
+    public final static int SIZE_OF_STRUCT_LIGHT  = 16*4;
 
     public final static BlockPos GLOBAL_OFFSET = new BlockPos();
     private final static BlockPos LAST_REPOS = new BlockPos();
@@ -87,7 +91,6 @@ public class Engine {
     private static int           fieldOfView;
 
     public static boolean renderWireFrame = false;
-    public static boolean USE_TRIANGLES = true; //mandatory now...
     private static boolean isDepthMask = true;
 
     public static boolean isScissors = false;
@@ -99,7 +102,24 @@ public class Engine {
     static GLVAO active = null;
     final static int[] viewport = new int[] {0,0,0,0};
     public final static ShaderBuffer        debugOutput         = new ShaderBuffer("DebugOutputBuffer").setSize(4096*4);
-
+    
+    public final static ShaderBuffer        ssbo_lights = new ShaderBuffer("PointLightStorageBuffer").setSize(MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT);
+    
+    public final static ShaderBuffer        boneMatrices         = new ShaderBuffer("QModelMat")
+            .setSize(BatchedRiggedModelRenderer.STRUCT_SIZE*BatchedRiggedModelRenderer.MAX_INSTANCES);
+    
+    public final static ShaderBuffer        ssbo_model_modelmat         = new ShaderBuffer("QModel_mat_model")
+            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES);
+    
+    public final static ShaderBuffer        ssbo_model_normalmat         = new ShaderBuffer("QModel_mat_normal")
+            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES);
+    
+    public final static ShaderBuffer        ssbo_model_bonemat         = new ShaderBuffer("QModel_mat_bone")
+            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES*32);
+    
+    public final static SunLightModel sunlightmodel = new SunLightModel();
+    
+    
     public static void bindVAO(GLVAO vao) {
         if (active != vao) {
             active = vao;
@@ -169,6 +189,8 @@ public class Engine {
             regionRenderer = new RegionRenderer();
             regionRenderThread = new MeshThread(3);
         }
+        sunlightmodel.setDayLen(10000);
+        sunlightmodel.setTime(7500);
         System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
     }
     
@@ -183,7 +205,8 @@ public class Engine {
             Engine.checkGLError("GL30.glBindVertexArray");
         UniformBuffer.init();
         Shaders.init();
-        
+        ShaderBuffer.init();
+        Engine.boneMatrices.update();
         if (initRenderers) {
             regionRenderThread.init();
             regionRenderer.init();
@@ -234,10 +257,10 @@ public class Engine {
         fbDbg.setup(null);
 
         if (fullscreenquad == null) {
-            fullscreenquad = new TesselatorState();
+            fullscreenquad = new TesselatorState(GL15.GL_STATIC_DRAW);
         }
         if (quad == null) {
-            quad = new TesselatorState();
+            quad = new TesselatorState(GL15.GL_STATIC_DRAW);
         }
         Tess.instance.resetState();
         int tw = Game.displayWidth;
@@ -388,7 +411,7 @@ public class Engine {
 
     
     private static boolean updateGlobalRenderOffset(float x, float y, float z) {
-        final int OFFSET_BITS = 5;//= 100;
+        final int OFFSET_BITS = 5;
         final int OFFSET_REPOS_DIST = 512;
         int ix = GameMath.floor(x);
         int iz = GameMath.floor(z);
@@ -652,6 +675,10 @@ public class Engine {
 
     public static void setDefaultViewport() {
         setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+    }
+
+    public static SunLightModel getSunLightModel() {
+        return sunlightmodel;
     }
 
 }

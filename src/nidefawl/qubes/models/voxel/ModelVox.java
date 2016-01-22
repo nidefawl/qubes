@@ -3,10 +3,10 @@
  */
 package nidefawl.qubes.models.voxel;
 
+import org.lwjgl.opengl.GL15;
+
 import nidefawl.qubes.assets.AssetVoxModel;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GLQuadBuffer;
-import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.vec.BlockPos;
@@ -20,8 +20,8 @@ public class ModelVox {
 
     public VertexBuffer buf = new VertexBuffer(1024*64);
     public VertexBuffer shadowBuf = new VertexBuffer(1024*16);
-    public GLQuadBuffer gpuBuf = null;
-    public GLQuadBuffer gpuShadowBuf = null;
+    public GLTriBuffer gpuBuf = null;
+    public GLTriBuffer gpuShadowBuf = null;
     public AssetVoxModel asset;
     public ModelVoxPalette palette;
     public BlockPos size;
@@ -196,12 +196,14 @@ public class ModelVox {
                 }
             }
             if (this.gpuShadowBuf == null) {
-                this.gpuShadowBuf = new GLQuadBuffer();
+                this.gpuShadowBuf = new GLTriBuffer(GL15.GL_STATIC_DRAW);
             }
+            this.shadowBuf.makeTriIdx();
             this.gpuShadowBuf.upload(shadowBuf);
             if (this.gpuBuf == null) {
-                this.gpuBuf = new GLQuadBuffer();
+                this.gpuBuf = new GLTriBuffer(GL15.GL_STATIC_DRAW);
             }
+            this.buf.makeTriIdx();
             this.gpuBuf.upload(buf);
         }
         if (pass == WorldRenderer.PASS_SHADOW_SOLID) {
