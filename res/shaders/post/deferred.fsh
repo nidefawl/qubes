@@ -379,6 +379,7 @@ void main() {
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
     float isEntity = float(renderpass==5||renderpass==2);
+    float isCloud = float(renderpass==8);
     // float isFlower = float(blockid>=48u);
     if (RENDER_PASS > 0) {
         alpha = sceneColor.a;
@@ -400,11 +401,17 @@ void main() {
 
     vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
     float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness);
+
+    // vec3 halfDir = normalize(SkyLight.lightDir.xyz + prop.viewVector.xyz);
+    // float specAngle = max(dot(halfDir, prop.normal), 0.0);
+    // float spec = pow(specAngle, roughness);
+
+
     float theta = max(dot(prop.viewVector, prop.normal), 0.0);
     float minRefl = 0.02;
     float amtRefl = minRefl + (1.0 - minRefl) * pow(1.0 - theta, 5.0);
 
-    vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
+    // vec3 skySunScat = skyAtmoScat(-prop.viewVector, SkyLight.lightDir.xyz, moonSunFlip);
 
     float fNight = smoothstep(0, 1, clamp(nightNoon-isLight, 0, 1));
     float skyLightLvl = prop.blockLight.x;
@@ -446,25 +453,22 @@ void main() {
     finalLight += vec3(1, 0.9, 0.7) * pow(blockLightLvl/8.0,2)*((1.0-isLight*0.8)*blockLightConst);
     finalLight *= max(0.3+ssao.r*0.7, isWater);
     finalLight+=prop.light.rgb*(occlusion);
+
 #if RENDER_PASS ==1
     float waterDepth = length(prop.position-viewSpacePosUnderWater);
     alpha = clamp(clamp(waterDepth/6, 0.25, (sceneColor.a*1.4)*(1-clamp(sunLight, 0, 1))), 0.25, 1);
 #endif
+
     alpha = clamp(alpha, 0, 1);
 
-    vec3 sky=mix(prop.albedo, vec3(0.0001), fNight)*0.23;
-    prop.sunSpotDens*=(1-fNight*0.92);
-    float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
-    sky = mix(sky, sky*skySunScat, 0.3f-fNight*0.2f);
-    sky += skySunScat*prop.sunSpotDens*1.2;
-    sky += sky*SkyLight.La.rgb*(1.0-prop.sunSpotDens)*1.1f;
-    sky *= 0.4;
+
     vec3 terr=prop.albedo*finalLight;
     spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
     vec3 waterAlb = mix(prop.albedo*finalLight, spec*vec3(0.1), isWater*theta);
     terr = mix (terr, waterAlb, isWater);
 
-    prop.albedo = mix(terr, sky, isSky);
+    prop.albedo = mix(terr, prop.albedo, isSky);
+
 #if RENDER_PASS < 2
     vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0, 1));
     float fogDepth = length(prop.position);
