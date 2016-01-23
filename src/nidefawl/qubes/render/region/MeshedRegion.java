@@ -68,14 +68,14 @@ public class MeshedRegion {
             this.vbo = new GLVBO[NUM_PASSES];
             for (int i = 0; i < vbo.length; i++) {
                 vbo[i] = new GLVBO(GL15.GL_STATIC_DRAW);
-                vbo[i].getVboId();
+                vbo[i].setTerrain(true);
             }
         }
         if (this.vboIndices == null) {
             this.vboIndices = new GLVBO[NUM_PASSES];
             for (int i = 0; i < vboIndices.length; i++) {
                 vboIndices[i] = new GLVBO(GL15.GL_STATIC_DRAW);
-                vboIndices[i].getVboId();
+                vboIndices[i].setTerrain(true);
             }
         }
         Arrays.fill(this.hasPass, false);
@@ -91,6 +91,11 @@ public class MeshedRegion {
     public void uploadBuffer(int pass, VertexBuffer buffer, int shadowDrawMode) {
         int numV = buffer.getVertexCount();
         int numF = buffer.getFaceCount();
+        boolean wasEmpty = this.vertexCount[pass] == 0;
+        boolean isEmpty = buffer.getVertexCount() == 0;
+        if (wasEmpty && isEmpty) {
+            return;
+        }
         this.vertexCount[pass] = numV;
         this.elementCount[pass] = numF * 2;
         this.hasPass[pass] |= numV > 0;

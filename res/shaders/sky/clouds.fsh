@@ -137,7 +137,7 @@ float Clouds(vec3 p)
 const float CLOUD_HEIGHT = 1.3;
 
 // scale of clouds
-const float UV_FREQ = 0.002;
+const float UV_FREQ = 0.0032;
 
 // cloudiness, bigger number = less clouds
  float CLOUD_FILTER = 0.24;//0.2;
@@ -159,7 +159,8 @@ vec2 getuv(in vec3 w, float l)
 	vec2 uv = _offset*0.003*l;
   uv+=(CAMERA_POS.xz + RENDER_OFFSET.xz)*0.003;
   uv /= 1.0+length(uv)*0.0001;
-	uv.y+=FRAME_TIME*0.001;
+  uv.y+=FRAME_TIME*0.001;
+  // uv.y+=FRAME_TIME*0.04;
   return uv;
 }
 
@@ -242,26 +243,27 @@ void main() {
     vec3 sunDir = normalize(-SkyLight.lightDir.xyz);
     float sunTheta = max( dot(rayDir, sunDir), 0.0 );
     float fNight = smoothstep(0.0f, 1.0f, clamp(nightNoon, 0.0, 1.0f));
-    float sunSpotDens = pow(sunTheta, 8.0+fNight*32)*0.4;
+    float sunSpotDens = pow(sunTheta, 4.0+fNight*12)*(1.8-fNight*1.7);
     vec3 skySunScat = skyAtmoScat(-rayDir, SkyLight.lightDir.xyz, moonSunFlip);
     float intens = mix(1, 0, moonSunFlip)*dayLightIntens;
-    vec3 colorSun = vec3(1.2, 1.1, 1);
+    vec3 colorSun = vec3(1.3, 1.2, 1.1);
     vec3 sunColor = mix(colorSun, vec3(0.00025), fNight);
     vec3 sunGlowColor = vec3(colorSun);
     vec3 skyColor = mix(vec3(1, 1.02, 1.05), vec3(1, 1.02, 1.05)*0.003, fNight);
 
     float yt =1-smoothstep(0, 1, abs(dot(rayDir, vec3(0, 1, 0))));
-    vec3 fogColor=vec3(0.74f, 1.24f, 1.66f)*0.4;
-    vec3 fogColor2=vec3(1.14f, 1.34f, 1.66f)*0.6;
+    vec3 fogColor=vec3(0.74f, 1.24f, 1.66f)*0.7;
+    vec3 fogColor2=vec3(1.14f, 1.34f, 1.66f)*0.4;
      fogColor=mix(fogColor, fogColor2, yt);
     vec3 fogColorLit=mix(fogColor, vec3(fogColor*0.0001), fNight)*0.2;
     vec3 sky = vec3(fogColorLit);
     sunSpotDens*=(1-fNight*0.82);
     float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
+    sky += skySunScat*sunSpotDens*0.2;
     sky = mix(sky, sky*skySunScat, 0.3f-fNight*0.2f);
     sky += skySunScat*sunSpotDens*1.2;
-    sky += sky*SkyLight.La.rgb*(1.0-sunSpotDens)*1.1f;
-    sky *= 0.62;
+    // sky += sky*SkyLight.La.rgb*(1.0-sunSpotDens)*1.1f;
+    // sky *= .32;
 
 
 
@@ -276,7 +278,7 @@ void main() {
     uint renderData = 0u;
   	if (pos.y>0) {
   		vec3 intersectPoint = vec3(0);	
-  		if (IntersectRayPlane(rayOrigin, rayDir, vec3(0, 1200, 0), vec3(0, -1, 0), intersectPoint)) {
+  		if (IntersectRayPlane(rayOrigin, rayDir, vec3(0,1700, 0), vec3(0, -1, 0), intersectPoint)) {
         // intersectPoint.xz+=CAMERA_POS.xz+ RENDER_OFFSET.xz;
 		    float l = 1.0;
 		    float alpha = 0;
@@ -300,7 +302,7 @@ void main() {
 		        maxh = max(maxh, h);
 		        maxf = max(maxf, f);
 		        alpha+=(f*i*ff);
-		        float range = 0.04;
+		        float range = 0.03;
 		        l*=1.0+range-2*range*h;
 	        	_uv = getuv(intersectPoint, l);
 		    }
@@ -331,10 +333,10 @@ void main() {
           light = clamp(pow(clamp(light, 0.0, 1.0), 1.2), 0.0, 1.0);
 			    vec3 color = mix(skyColor+sunGlowColor*fNight*0.005, sunGlowColor, sunSpotDens*4);
 
-          color = mix(color, mix(fogColorLit, sunColor, clamp(pow(sunTheta, 1.3), 0.55, 1)), blub);
+          color = mix(color, mix(fogColorLit, sunColor*1, clamp(pow(sunTheta, 1.3), 0.55, 1)), blub);
           color = mix(color*min(0.05, (0.1+distSc*3.5)), color, light);
 
-          blendColor(cloudColor, color.rgb*(0.15), cdens*scale2);
+          blendColor(cloudColor, color.rgb*(0.22), cdens*scale2*(clamp(1-sunSpotDens, 0, 1)));
           if (cdens*scale2 > 0) {
             renderData = ENCODE_RENDERPASS(8);  
           }
@@ -343,7 +345,7 @@ void main() {
 
     blendColor(cloudColor, fogColorLit, yt*0.9);
 
-    out_Color = cloudColor;
+    out_Color = cloudColor*0.4;
     out_Normal = vec4(0.5);
     renderData = ENCODE_RENDERPASS(8);
     out_Material = uvec4(0u,renderData,0u,1u);

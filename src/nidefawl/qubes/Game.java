@@ -613,15 +613,16 @@ public class Game extends GameBase implements IErrorHandler {
                     GPUProfiler.end();
                 glEnable(GL_BLEND);
 //                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-                for (int i = 0; i < 3; i++) {
-                    GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-                }
                 Engine.getSceneFB().bind();
                 Engine.getSceneFB().clearColorBlack();
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("World");
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+                for (int i = 0; i < 3; i++) {
+                    GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+                }
                 Engine.worldRenderer.renderTransparent(world, fTime);
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
 
@@ -959,7 +960,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >=2000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >=1000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();

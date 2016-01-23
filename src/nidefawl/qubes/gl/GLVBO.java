@@ -7,6 +7,8 @@ import org.lwjgl.opengl.GL15;
 import nidefawl.qubes.GameBase;
 
 public class GLVBO {
+    public static int ALLOC_VBOS = 0;
+    public static int ALLOC_VBOS_TERRAIN = 0;
     static final int MIN_BUF_SIZE = 1<<14;
     public int vboId = 0;
     public long vboSize = 0;
@@ -14,9 +16,21 @@ public class GLVBO {
     public GLVBO(int usage) {
         this.usage = usage;
     }
+    boolean isTerrain = false;
+    public void setTerrain(boolean isTerrain) {
+        this.isTerrain = isTerrain;
+    }
+    public boolean isTerrain() {
+        return this.isTerrain;
+    }
+    
     public int getVboId() {
         if (this.vboId == 0) {
             vboId = GL15.glGenBuffers();
+            ALLOC_VBOS++;
+            if (this.isTerrain) {
+                ALLOC_VBOS_TERRAIN++;
+            }
         }
         return this.vboId;
     }
@@ -53,6 +67,10 @@ public class GLVBO {
         if (this.vboId != 0) {
             GL15.glDeleteBuffers(this.vboId);
             this.vboId = 0;
+            ALLOC_VBOS--;
+            if (this.isTerrain) {
+                ALLOC_VBOS_TERRAIN--;
+            }
         }
     }
 }

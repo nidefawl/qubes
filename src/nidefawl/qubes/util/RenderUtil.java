@@ -74,10 +74,18 @@ public class RenderUtil {
         final float R = 1.0f/(float)(rings-1);
         final float S = 1.0f/(float)(sectors-1);
         int r, s;
-
         double M_PI_2 = Math.PI/2.0;
         double M_PI = Math.PI;
-        for(r = 0; r < rings; r++) {
+        {
+            buf.put(Float.floatToRawIntBits(0 * radius));
+            buf.put(Float.floatToRawIntBits(-1 * radius));
+            buf.put(Float.floatToRawIntBits(0 * radius));
+            buf.put(packNormal(0, 1, 0));
+            buf.put(packTexCoord(0, 0));
+            buf.put(0xffffffff);
+            buf.increaseVert();
+        }
+        for(r = 1; r < rings-1; r++) {
             for(s = 0; s < sectors; s++) {
                 final float y = (float) Math.sin( -M_PI_2 + M_PI * r * R );
                 final float x = (float) (Math.cos(2*M_PI * s * S) * Math.sin( M_PI * r * R ));
@@ -89,35 +97,41 @@ public class RenderUtil {
                 buf.put(packTexCoord(s*S, r*R));
                 buf.put(0xffffffff);
                 buf.increaseVert();
-                int curRow = r * sectors;
-                int nextRow = (r+1) * sectors;
-
-                buf.putIdx(curRow + s);
-                buf.putIdx(nextRow + s);
-                buf.putIdx(nextRow + (s+1));
-
-                buf.putIdx(curRow + s);
-                buf.putIdx(nextRow + (s+1));
-                buf.putIdx(curRow + (s+1));
+            }
+        }
+        int lastIdx = buf.getVertexCount();
+        {
+            buf.put(Float.floatToRawIntBits(0 * radius));
+            buf.put(Float.floatToRawIntBits(1 * radius));
+            buf.put(Float.floatToRawIntBits(0 * radius));
+            buf.put(packNormal(0, -1, 0));
+            buf.put(packTexCoord(1, 1));
+            buf.put(0xffffffff);
+            buf.increaseVert();
+        }
+        for(s = 0; s < sectors-1; s++) {
+            buf.putIdx(0);
+            buf.putIdx(1+s);
+            buf.putIdx(1+s+1);
+            buf.increaseFace();
+        }
+        for(r = 1; r < rings-2; r++) {
+            for(s = 1; s < sectors; s++) {
+                buf.putIdx((r) * sectors + s);
+                buf.putIdx((r) * sectors + s + 1);
+                buf.putIdx((r - 1) * sectors + s + 1);
+                buf.putIdx((r) * sectors + s);
+                buf.putIdx((r - 1) * sectors + s + 1);
+                buf.putIdx((r - 1) * sectors + s);
                 buf.increaseFace();
             }
         }
-//        for(r = 0; r < rings-1; r++) {
-//            for(s = 0; s < sectors-1; s++) {
-//               /* 
-//                buf.putIdx(r * sectors + s);
-//                buf.putIdx(r * sectors + (s+1));
-//                buf.putIdx((r+1) * sectors + (s+1));
-//                buf.putIdx((r+1) * sectors + s);
-//                */
-//                buf.putIdx((r+1) * sectors + s);
-//                buf.putIdx((r+1) * sectors + (s+1));
-//                buf.putIdx(r * sectors + (s+1));
-//                buf.putIdx(r * sectors + s);
-//                buf.increaseFace();
-//                buf.increaseFace();
-//            }
-//        }
+        for(s = 0; s < sectors-1; s++) {
+            buf.putIdx(lastIdx);
+            buf.putIdx(lastIdx-s-1);
+            buf.putIdx(lastIdx-s-2);
+            buf.increaseFace();
+        }
 
     }
     public final static int packNormal(Vector3f v) {

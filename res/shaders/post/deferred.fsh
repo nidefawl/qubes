@@ -445,8 +445,8 @@ void main() {
     prop.sunSpotDens = pow(sunTheta, 32.0)*1.0;
     uint blockid = BLOCK_ID(prop.blockinfo);
     float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
-
-    bool isSky = bool(IS_SKY(blockid)==1.0f);
+    float fIsSky = IS_SKY(blockid);
+    bool isSky = bool(fIsSky==1.0f);
     float isWater = IS_WATER(blockid);
     float stone = float(blockid==6u||blockid==4u);
     float isLight = IS_LIGHT(blockid);
@@ -467,7 +467,7 @@ void main() {
         float minAmb2 = 0.1;
          float diff = 1.2;
         // prop.roughness = 0.3;
-        float roughness = 1.2;// pow(2.0, 1.0+(prop.roughness)*10.0)-1.0;
+        float roughness = pow(2.0, 1.0+(prop.roughness)*10.0)-1.0;
         // out_Color = vec4(vec3(prop.roughness), 1);
         // return;
         // float glossy = 0.02;
@@ -514,9 +514,10 @@ void main() {
         float fNight = smoothstep(0.0, 1.0, clamp(nightNoon-isLight, 0.0, 1.0));
         float skyLightLvl = smoothstep(0.0, 1.0, prop.blockLight.x);
         float blockLightLvl = prop.blockLight.y;
+        // float occlusion = min(prop.blockLight.z, ssao.r);
         float occlusion = min(prop.blockLight.z, ssao.r);
         occlusion+=float(RENDER_PASS==1);
-        occlusion = min(1.0, occlusion);
+        occlusion = min(1.0, occlusion);/**3.5*/
 
         float shadow = getShadow2()*(1.0-isBackface);
         // float shadow = mix(getSoftShadow(), 1, 0.04);
@@ -530,7 +531,7 @@ void main() {
         vec3 lightColor = mix(vec3(1.0), vec3(0.8, 0.9, 1.1), fNight);
         vec3 Ispec = SkyLight.Ls.rgb * lightColor * prop.NdotL *spec;
         vec3 Idiff = SkyLight.Ld.rgb * lightColor * prop.NdotL *diff;
-        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.35)), 1.2, isEntity*0.8);
+        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.8);
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb1 *specAmb1 * 0.25;
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb2 *specAmb2 * 0.08;
 
@@ -568,21 +569,26 @@ void main() {
 
     }
 
-
 #if RENDER_PASS < 2
-    vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
+    vec3 fogColor = mix(vec3(0.5,0.6,0.7)*0.8, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     float fogDepth = length(prop.position);
     fogDepth = min(fogDepth, in_scene.viewport.w/3.0);
-    fogDepth = max(fogDepth-30.0, 0.0);
-    float fogAmount = clamp(1.0 - exp( -fogDepth*0.000005 ), 0.0, 1.0);
-    prop.albedo =  mix( prop.albedo, fogColor, fogAmount );
+    fogDepth = max(fogDepth-40.0, 0.0);
+    float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
+    float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
+    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
 #endif
 
-// #if RENDER_PASS < 2
-//     // vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0, 1));
-//      fogAmount = VolumetricLight();
-//     prop.albedo =  mix( prop.albedo, fogColor, fogAmount*VOL_STRENGTH );
-// #endif
+
+#if 0
+#if RENDER_PASS < 2
+    // vec3 fogColor = mix(vec3(0.5,0.6,0.7), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0, 1));
+     fogAmount = VolumetricLight();
+    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*VOL_STRENGTH );
+#endif
+#endif
+
+
 #endif
 
     out_Color = vec4(prop.albedo, alpha);

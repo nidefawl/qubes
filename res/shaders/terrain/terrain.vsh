@@ -105,6 +105,9 @@ void main() {
 		float((in_light.x>>8u)&LIGHT_MASK)/15.0,
 		float((in_light.x>>12u)&LIGHT_MASK)/15.0
 		);
+	// faceAO = vec4(0);
+	// faceLight = vec4(0);
+	// faceLightSky = vec4(0);
 	
 
 #ifdef MODEL_RENDER

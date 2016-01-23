@@ -3,8 +3,7 @@
  */
 package nidefawl.qubes.gl;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.util.GameError;
@@ -54,7 +53,9 @@ public class GLTriBuffer {
     
 
     public void drawElements() {
-        GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount*3, GL11.GL_UNSIGNED_INT, 0);
+//        GL12.glDrawRangeElements(GL11.GL_TRIANGLES, 14, 12, 9, GL11.GL_UNSIGNED_INT, 0);
+//        GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount-32, GL11.GL_UNSIGNED_INT, 6*3);
+        GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount, GL11.GL_UNSIGNED_INT, 0);
     }
     public int getTriCount() {
         return this.triCount;
@@ -66,7 +67,7 @@ public class GLTriBuffer {
         Stats.modelDrawCalls++;
         Engine.bindBuffer(this.vbo.getVboId());
         Engine.bindIndexBuffer(this.vboIndices.getVboId());
-        GL11.glDrawElements(GL11.GL_TRIANGLES, this.triCount * 3, GL11.GL_UNSIGNED_INT, 0);
+        GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount, GL11.GL_UNSIGNED_INT, 0);
     }
 
     /**

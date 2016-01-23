@@ -601,10 +601,10 @@ public abstract class GameBase implements Runnable {
                 
                 a = (a*99L+s)/100L;
                 if (s > a*2L) {
-                    System.out.println("slow frame "+s);
+//                    System.out.println("slow frame "+s);
                 }
                 if (i%200==0) {
-                    System.out.println(a);
+//                    System.out.println(a);
                 }
             }
         } catch (Throwable t) {

@@ -51,7 +51,6 @@ public class SingleBlockDraw {
      * 
      */
     public void init() {
-        IntBuffer buff = Engine.glGenBuffers(2);
         this.vbo = new GLVBO(GL15.GL_DYNAMIC_DRAW);
         this.vboIdx = new GLVBO(GL15.GL_DYNAMIC_DRAW);
         this.vboBuf = new ReallocIntBuffer(1024);
