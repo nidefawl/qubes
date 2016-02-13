@@ -15,12 +15,13 @@ public class ShaderSourceBundle {
         this.name = name;
     }
 
-    public void load(AssetManager assetManager, String path, String fname, IShaderDef def) throws IOException {
-        computeCode.load(assetManager, path, fname + ".csh", def);
-        vertCode.load(assetManager, path, fname + ".vsh", def);
-        fragCode.load(assetManager, path, fname + ".fsh", def);
-        geomCode.load(assetManager, path, fname + ".gsh", def);
+    public void load(AssetManager assetManager, String path, String nameVsh, String nameFsh, String nameGsh, String nameCsh, IShaderDef def) throws IOException {
+        computeCode.load(assetManager, path, nameCsh + ".csh", def);
+        vertCode.load(assetManager, path, nameVsh + ".vsh", def);
+        fragCode.load(assetManager, path, nameFsh + ".fsh", def);
+        geomCode.load(assetManager, path, nameGsh + ".gsh", def);
     }
+    
     public Shader compileShader() {
         if (!computeCode.isEmpty()) {
             return new ComputeShader(this.name, this.computeCode);

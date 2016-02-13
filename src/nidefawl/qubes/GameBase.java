@@ -6,11 +6,9 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -19,6 +17,11 @@ import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.gui.AbstractUI;
+import nidefawl.qubes.gui.Gui;
+import nidefawl.qubes.gui.windows.GuiContext;
+import nidefawl.qubes.gui.windows.GuiWindowManager;
+import nidefawl.qubes.input.InputController;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.logging.LogBufferStream;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -28,13 +31,12 @@ import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
-import nidefawl.swing.TextDialog;
 
 public abstract class GameBase implements Runnable {
-    public static String  appName         = "LWJGL Test App";
+    public static String  appName         = "";
     public static int     displayWidth;
     public static int     displayHeight;
-    public static boolean GL_ERROR_CHECKS = true;
+    public static boolean GL_ERROR_CHECKS = false;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
     static int            initHeight      = (int) (1050*0.8);
@@ -54,6 +56,7 @@ public abstract class GameBase implements Runnable {
     public static boolean      toggleTiming;
     public static boolean      DO_TIMING   = false;
     public static float        renderTime;
+    public static float        absTime;
     public static int          ticksran;
     public int                 lastFPS     = 0;
     protected long             timeLastFPS;
@@ -74,6 +77,11 @@ public abstract class GameBase implements Runnable {
     private int newWidth = initWidth;
     private int newHeight = initHeight;
     private GPUVendor vendor = GPUVendor.OTHER;
+    static public GameBase baseInstance;
+    public InputController  movement = new InputController();
+    public Gui            gui;
+    boolean               reinittexthook  = false;
+    boolean               wasGrabbed      = false;
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -82,6 +90,7 @@ public abstract class GameBase implements Runnable {
     }
 
     public GameBase() {
+        baseInstance = this;
         this.timer = new Timer(TICKS_PER_SEC);
         displayWidth = initWidth;
         displayHeight = initHeight;
@@ -265,7 +274,7 @@ public abstract class GameBase implements Runnable {
             //            glfwWindowHint(GLFW_DOUBLE_BUFFER, GL_TRUE);//Check Version
 
             // Create the window
-            windowId = glfwCreateWindow(displayWidth, displayHeight, appName, NULL, NULL);
+            windowId = glfwCreateWindow(displayWidth, displayHeight, getAppTitle(), NULL, NULL);
             if (windowId == NULL)
                 throw new RuntimeException("Failed to create the GLFW window");
             // Make the OpenGL context current
@@ -309,6 +318,10 @@ public abstract class GameBase implements Runnable {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
+    }
+
+    public String getAppTitle() {
+        return appName;
     }
 
     protected void destroyContext() {
@@ -437,10 +450,19 @@ public abstract class GameBase implements Runnable {
         }
     }
 
-    public void updateInput() {
+    protected void updateInput() {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
+        if (GuiContext.input != null && !GuiContext.input.focused) {
+            GuiContext.input.focused=false;
+            GuiContext.input = null;
+        }
+        boolean reqTextHook=(GuiContext.input != null && GuiContext.input.isFocusedAndContext());
+        if (hasTextHook()!=reqTextHook) {
+            System.out.println("reinit text hook -> "+reqTextHook);
+            setTextHook(reqTextHook);
+        }
     }
 
     public void setTitle(String title) {
@@ -499,6 +521,11 @@ public abstract class GameBase implements Runnable {
         
         if (!this.running) {
             return;
+        }
+
+        boolean b = Mouse.isGrabbed();
+        if (b != this.movement.grabbed()) {
+            setGrabbed(b);
         }
         preRenderUpdate(renderTime);
         //        if (!startRender) {
@@ -611,24 +638,24 @@ public abstract class GameBase implements Runnable {
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
         } finally {
             if (this.wasrunning) {
-                onDestroy();
+//                onDestroy();
             }
-            destroyContext();
-            Thread t2 = new Thread() {
-                public void run() {
-                    try {
-                        //temp hack to clear up references so java can die
-                        System.gc();
-                        Thread.sleep(1000);
-                        System.gc();
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                };
-            };
-            t2.setName("watch");
-            t2.start();
+//            destroyContext();
+//            Thread t2 = new Thread() {
+//                public void run() {
+//                    try {
+//                        //temp hack to clear up references so java can die
+//                        System.gc();
+//                        Thread.sleep(1000);
+//                        System.gc();
+//                        Thread.sleep(1000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                };
+//            };
+//            t2.setName("watch");
+//            t2.start();
         }
     }
 
@@ -696,6 +723,7 @@ public abstract class GameBase implements Runnable {
         timer.calculate();
         ticksran += timer.ticks;
         renderTime = timer.partialTick;
+        absTime = ((ticksran+renderTime)/(float)GameBase.TICKS_PER_SEC);
         for (int i = 0; i < timer.ticks; i++) {
             this.tick();
             tick++;
@@ -727,7 +755,7 @@ public abstract class GameBase implements Runnable {
                 NativeInterface.getInstance().gameCrashed(info);
                 return;
             }
-            TextDialog dlg = new TextDialog(title, desc, throwable, b);
+            nidefawl.swing.TextDialog dlg = new nidefawl.swing.TextDialog(title, desc, throwable, b);
             dlg.prepend(buf1);
             dlg.prepend(buf2);
             dlg.setVisible(displayWidth, displayHeight);
@@ -829,6 +857,7 @@ public abstract class GameBase implements Runnable {
     public long getTime() {
         return timer.absTime;
     }
+    
     public static boolean hasTextHook() {
         return hasTextHook;
     }
@@ -846,13 +875,9 @@ public abstract class GameBase implements Runnable {
     
     protected abstract void onKeyPress(long window, int key, int scancode, int action, int mods);
 
-    protected abstract void onMouseClick(long window, int button, int action, int mods);
-
     protected abstract void onWheelScroll(long window, double xoffset, double yoffset);
 
     public abstract void render(float f);
-
-    public abstract void input(float f);
 
     public abstract void preRenderUpdate(float f);
 
@@ -865,4 +890,107 @@ public abstract class GameBase implements Runnable {
     public abstract void initGame();
 
     public abstract void lateInitGame();
+
+    
+    public void showGUI(Gui gui) {
+
+        if (gui != null && this.gui == null) {
+            if (Mouse.isGrabbed()) {
+                setGrabbed(false);
+                wasGrabbed = true;
+            }
+        }
+        if (this.gui != null) {
+            this.gui.onClose();
+        }
+        this.gui = gui;
+        if (this.gui != null) {
+            this.gui.setPos(0, 0);
+            this.gui.setSize(displayWidth, displayHeight);
+            this.gui.initGui(this.gui.firstOpen);
+            this.gui.firstOpen = false;
+            if (Mouse.isGrabbed()) {
+                setGrabbed(false);
+                wasGrabbed = true;
+            }
+        } else {
+            if (wasGrabbed) {
+                Game.instance.setGrabbed(true);
+            }
+            wasGrabbed = false;
+        }
+        reinittexthook = true;
+    }
+
+    int throttleClick=0;
+    public void onMouseClick(long window, int button, int action, int mods) {
+        if (this.gui != null) {
+//            if (this.world == null) {
+                if (GuiWindowManager.onMouseClick(button, action)) {
+                    return;
+                }
+//            }
+            if (!this.gui.onMouseClick(button, action)) {
+            }
+        } else {
+            if (GuiWindowManager.onMouseClick(button, action)) {
+                return;
+            }
+
+
+            boolean b = Mouse.isGrabbed();
+            boolean isDown = Mouse.getState(action);
+            if (throttleClick > 0) {
+                return;
+            }
+//            if (b)
+//                dig.onMouseClick(button, isDown);
+            switch (button) {
+                case 0:
+//                    selection.clicked(button, isDown);
+//                    if (this.player != null) {
+//                        this.player.clicked(button, isDown);
+//                    }
+                    break;
+                case 1:
+                    if (isDown ) {
+                        setGrabbed(!b);
+                        b = !b;
+                    }
+                    break;
+                case 2:
+//                    selection.clicked(button, isDown);
+                    break;
+            }
+            if (b != this.movement.grabbed()) {
+                setGrabbed(b);
+            }
+        }
+    }
+    public void setGrabbed(boolean b) {
+        if (b != this.movement.grabbed()) {
+            this.movement.setGrabbed(b);
+            Mouse.setCursorPosition(displayWidth / 2, displayHeight / 2);
+            Mouse.setGrabbed(b);
+        }
+    }
+
+    public boolean isGrabbed() {
+        return this.movement.grabbed();
+    }
+
+    public void input(float fTime) {
+        double mdX = Mouse.getDX();
+        double mdY = Mouse.getDY();
+        if (this.movement.grabbed()) {
+            this.movement.update(mdX, -mdY);
+        } else {
+            GuiWindowManager.mouseMove(mdX, -mdY);
+        }
+    }
+
+    public Gui getGui() {
+        return this.gui;
+    }
+
 }

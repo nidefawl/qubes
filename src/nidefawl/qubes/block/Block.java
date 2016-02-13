@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.blocklight.LightChunkCache;
+import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.item.Item;
@@ -610,5 +611,8 @@ public class Block {
     }
     public Block getBaseBlock() {
         return this;
+    }
+    public boolean canWalkThru(IBlockWorld w, int ix, int iy, int iz, Entity e) {
+        return isReplaceable();
     }
 }

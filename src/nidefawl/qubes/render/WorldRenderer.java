@@ -28,9 +28,12 @@ import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.models.*;
-import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelRigged;
+import nidefawl.qubes.models.qmodel.QModelProperties;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
+import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.models.voxel.ModelVox;
+import nidefawl.qubes.path.PathPoint;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
@@ -66,6 +69,7 @@ public class WorldRenderer extends AbstractRenderer {
 //    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
     public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
     public HashMap<Integer, AABB> debugBBs = new HashMap<>();
+    public HashMap<Integer, List<PathPoint>> debugPaths = new HashMap<>();
 
     
 
@@ -81,21 +85,18 @@ public class WorldRenderer extends AbstractRenderer {
     public Shader       skyCloudShader;
     public Shader       waterShader;
     public Shader       shaderModelVoxel;
-    public Shader       shaderModelDbg;
 
     public Shader       shaderModelfirstPerson;
-    public final BatchedRiggedModelRenderer rend = new BatchedRiggedModelRenderer();
     
     private TesselatorState skybox1;
     private TesselatorState skybox2;
     private Shader shaderZPre;
 
-    ModelVox vox;
+//  ModelVox vox;
     private Shader skyShader2;
 
     public void initShaders() {
         try {
-            this.rend.initShaders();
             pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_waterShader = assetMgr.loadShader(this, "terrain/water");
@@ -122,7 +123,6 @@ public class WorldRenderer extends AbstractRenderer {
                 }
                 
             });
-            Shader shaderModelDbg = assetMgr.loadShader(this, "model/modeldebug");
             Shader shaderModelfirstPerson = assetMgr.loadShader(this, "model/firstperson");
             Shader sky = assetMgr.loadShader(this, "sky/sky");
             Shader sky2 = assetMgr.loadShader(this, "sky/clouds");
@@ -133,7 +133,6 @@ public class WorldRenderer extends AbstractRenderer {
             this.skyShader2 = sky2;
             this.waterShader = new_waterShader;
             this.shaderModelVoxel = modelVoxel;
-            this.shaderModelDbg = shaderModelDbg;
             this.shaderModelfirstPerson = shaderModelfirstPerson;
             this.shaderZPre = shaderZPre;
             this.shaderZPre.enable();
@@ -191,10 +190,10 @@ public class WorldRenderer extends AbstractRenderer {
             }
             String mName = list[idx].getName();
 
-            AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/" + mName);
-            if (this.vox != null)
-                this.vox.release();
-            vox = new ModelVox(asset);   
+//            AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/" + mName);
+//            if (this.vox != null)
+//                this.vox.release();
+//            vox = new ModelVox(asset);   
         }
 
 //        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
@@ -285,17 +284,16 @@ public class WorldRenderer extends AbstractRenderer {
 //            }
 //        }
 //        
-        AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/dragon.vox");
-        if (this.vox != null) this.vox.release();
-        vox = new ModelVox(asset);
+//        AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/dragon.vox");
+//        if (this.vox != null) this.vox.release();
+//        vox = new ModelVox(asset);
         reloadModel();
 
-        rend.init();
     }
 
     public void renderWorld(World world, float fTime) {
 
-        
+
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("sky+sun+clouds");
         Engine.enableDepthMask(false);
@@ -314,6 +312,8 @@ public class WorldRenderer extends AbstractRenderer {
             GPUProfiler.end();
         
 
+
+        GLDebugTextures.readTexture("Sky", "skyColor", Engine.getSceneFB().getTexture(0));
         
 
         if (Game.GL_ERROR_CHECKS)
@@ -365,36 +365,36 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
     public void renderVoxModels(Shader modelShader, int pass, float fTime) {
-        if (vox != null) {
-            GLVAO vao = GLVAO.vaoBlocks;
-            if (pass == PASS_SHADOW_SOLID) {
-                vao = GLVAO.vaoBlocksShadow;
-            }
-            Engine.bindVAO(vao);
-            BufferedMatrix mat = Engine.getTempMatrix();
-            BufferedMatrix mat2 = Engine.getTempMatrix2();
-            float modelScale = 1 / 16f;
-            mat.setIdentity();
-            mat.translate(mPos.x, mPos.y, mPos.z);
-            mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
-            float w = (vox.size.x);
-            float l = (vox.size.z);
-            mat.translate(w * 0.5f * modelScale, 0, l * 0.5f * modelScale);
-            mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-
-            mat.translate(-w * 0.5f * modelScale, 0, -l * 0.5f * modelScale);
-            mat.scale(modelScale);
-            mat.update();
-            modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-            mat2.setIdentity();
-            mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-            mat2.invert().transpose();
-            mat2.update();
-            UniformBuffer.setNormalMat(mat2.get());
-            vox.render(pass);
-            UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
-        }
-    
+//        if (vox != null) {
+//            GLVAO vao = GLVAO.vaoBlocks;
+//            if (pass == PASS_SHADOW_SOLID) {
+//                vao = GLVAO.vaoBlocksShadow;
+//            }
+//            Engine.bindVAO(vao);
+//            BufferedMatrix mat = Engine.getTempMatrix();
+//            BufferedMatrix mat2 = Engine.getTempMatrix2();
+//            float modelScale = 1 / 16f;
+//            mat.setIdentity();
+//            mat.translate(mPos.x, mPos.y, mPos.z);
+//            mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
+//            float w = (vox.size.x);
+//            float l = (vox.size.z);
+//            mat.translate(w * 0.5f * modelScale, 0, l * 0.5f * modelScale);
+//            mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+//
+//            mat.translate(-w * 0.5f * modelScale, 0, -l * 0.5f * modelScale);
+//            mat.scale(modelScale);
+//            mat.update();
+//            modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+//            mat2.setIdentity();
+//            mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
+//            mat2.invert().transpose();
+//            mat2.update();
+//            UniformBuffer.setNormalMat(mat2.get());
+//            vox.render(pass);
+//            UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
+//        }
+//    
         
         
     }
@@ -412,12 +412,13 @@ public class WorldRenderer extends AbstractRenderer {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("renderEntities");
 //        if ((GameBase.ticksran/40f)%1.0f<0.5f) {
-            if (shader == Shaders.normals) {//TODO: implement
+            //TODO: implement
+            if (shader == Shaders.normals) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
                 return;
             }
-            renderEntitiesBatched(world, pass, fTime, shader, shadowVP);    
+            renderEntitiesBatched(world, pass, fTime, shader, shadowVP);
 //        } else {
 //            renderEntitiesSingle(world, pass, fTime, shader);    
 //        }
@@ -428,180 +429,74 @@ public class WorldRenderer extends AbstractRenderer {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
     }
-    public void renderEntitiesSingle(World world, int pass, float fTime, Shader shader) {
-//        if ()
-        //
-//      if (qmodel != null) {
-        if (shader == null) shader = shaderModelDbg;
-
-          //TODO: IMPORTANT sort entities by renderer/model/shader client side
-          //TODO: move in own render per-entity class
-          List<Entity> ents = world.getEntityList();
-          int size = ents.size();
-          if (size == 0) {
-              return;
-          }
-
-          Engine.bindVAO(GLVAO.vaoModel);
-          for (int i = 0; i < size*EXTRA_RENDER; i++) {
-              float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC);
-              Entity e = ents.get(i/EXTRA_RENDER);
-              if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
-                  continue;
-              EntityModel emodel = e.getEntityModel();
-              ModelRigged rigged = (ModelRigged) emodel.getModel();
-              rigged.setAction(0);
-              int type = 0;
-              if (e instanceof Player && ((Player)e).punchTicks>0) {
-                  int maxTicks = 8;
-                  absTimeInSeconds = (maxTicks-(((Player)e).punchTicks-fTime))/((float)maxTicks-1);
-                  rigged.setAction(1);
-                  type = 1;
-              } else if (e.pos.distanceSq(e.lastPos) > 1.0E-4) {
-                  rigged.setAction(2);
-                  absTimeInSeconds *= 8;
-                  absTimeInSeconds %= 4f;
-                  absTimeInSeconds /= 4f;
-                  type = 1;
-              }
-              //TODO: Implement different animation timing types (continues/one-shot)
-              rigged.animate(type, absTimeInSeconds);
-              Vector3f pos = e.getRenderPos(fTime);
-              if (HALF_EXTRA_RENDER > 0) {
-                  int idx = i%EXTRA_RENDER;
-                  int xPos = idx%(HALF_EXTRA_RENDER*2);
-                  int zPos = idx/(HALF_EXTRA_RENDER*2);
-                  pos.x+=(-HALF_EXTRA_RENDER+xPos)*RDIST;
-                  pos.z+=(-HALF_EXTRA_RENDER+zPos)*RDIST;
-              }
-              
-              Vector3f rot = e.getRenderRot(fTime);
-              float headYaw = rot.x;
-              float yaw = rot.y;
-              float pitch = rot.z;
-              rigged.setHeadOrientation(270+headYaw, pitch);
-              yaw -= headYaw;
-              this.modelRot=this.lastModelRot=-1*yaw-90;
-              BufferedMatrix mat = Engine.getTempMatrix();
-              float modelScale = 1 / 3.7f;
-              mat.setIdentity();
-
-              mat.translate(pos.x, pos.y, pos.z);
-              mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
-              mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-              mat.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
-              mat.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
-              mat.scale(modelScale);
-              mat.update();
-              shader.enable();
-//              System.out.println(modelShader.getName());
-              shader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-              if (shader == shaderModelDbg) {
-                  BufferedMatrix mat2 = Engine.getTempMatrix2();
-                  mat2.setIdentity();
-                  mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-                  mat2.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
-                  mat2.rotate(-90 * GameMath.PI_OVER_180, 0, 0, 1);
-                  mat2.invert().transpose();
-                  mat2.update();
-                  UniformBuffer.setNormalMat(mat2.get());
-              }
-              rigged.bindTextures();
-              rigged.render(Game.ticksran+fTime);
-          }
-          UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
-          if (pass == PASS_SHADOW_SOLID) {
-              BufferedMatrix mat = Engine.getIdentityMatrix();
-              shader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-          }
-//      }
-        
-    }
+    QModelProperties modelProperties = new QModelProperties();
     public void renderEntitiesBatched(World world, int pass, float fTime, Shader sg, int shadowVP) {
-        float absTimeInSeconds = ((GameBase.ticksran+fTime)/GameBase.TICKS_PER_SEC);
         List<Entity> ents = world.getEntityList();
         int size = ents.size();
         if (size == 0) {
             return;
         }
+        QModelBatchedRender modelRender = Engine.renderBatched;
 
-        EntityModel model = EntityModel.modelPlayer;
         
-        // pseudo code for multi model renderer (on GL4.3 using SSBO)
-        // modeltypeToEnttyMap.clear()
-        // for (entity in world) 
-        //     type = entity.getmodeltype
-        //     modelEntityList = modeltypeToEnttyMap.get(type)
-        //     if modelEntityList is null:
-        //        modelEntityList = new list
-        //        modeltypeToEntityMap.put(type, modelEntitylist)
-        //     modelEntitylist.add(entity)
-        //
-        // for (entry<modeltype, list<entity>> mapentry in modeltypeToEntityMap.keySet())
-        //     rend.begin
-        //     for (entity e in mapentry.list)
-        //          mapentry.modeltype.setPose(rend, e, time)
-        //     rend.end()
-        //     modeltype.bindtex
-        //     modeltype.bindshader
-        //     modeltype.drawModelInstanced(mapentry.list.size())
-        
-        
+        modelRender.setPass(pass, shadowVP);
         // Single Model render logic, move into BatchedRenderer class
         boolean needStateSetup = true;
         boolean mappedBuffer = false;
-        Shader shader = rend.getShader(pass, shadowVP);
-        for (int i = 0; i < size*EXTRA_RENDER; i++) {
-            if (mappedBuffer && rend.isOverCapacity()) {
-                rend.end();
-                mappedBuffer = false;
-                _renderBatch(model, shader, pass, shadowVP, needStateSetup);
-                needStateSetup = false;
+        if (pass == PASS_SOLID) {
+            modelRender.reset();
+            for (int i = 0; i < size*EXTRA_RENDER; i++) {
+    //            if (mappedBuffer && modelRender.isOverCapacity()) {
+    //                modelRender.end();
+    //                mappedBuffer = false;
+    //                _renderBatch(model, shader, pass, shadowVP, needStateSetup);
+    //                needStateSetup = false;
+    //            }
+                Entity e = ents.get(i/EXTRA_RENDER);
+                if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
+                    continue;
+    //            if (e.getEntityModel() != model) {
+    //                continue;
+    //            }
+                if (!mappedBuffer) {
+                    mappedBuffer = true;
+                    modelRender.begin();
+                }
+                QModelProperties renderProps = this.modelProperties;
+                Vector3f pos = e.getRenderPos(fTime);
+                Vector3f rot = e.getRenderRot(fTime);
+                EntityModel model = e.getEntityModel();
+                renderProps.setPos(pos);
+                renderProps.setRot(rot);
+                renderProps.setEntity(e);
+                e.adjustRenderProps(renderProps, fTime);
+                modelRender.setModel(model);
+                model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
+                model.setPose(modelRender, renderProps, GameBase.absTime, fTime);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("setPose");
             }
-            Entity e = ents.get(i/EXTRA_RENDER);
-            if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
-                continue;
-            if (e.getEntityModel() != model) {
-                continue;
+            if (mappedBuffer) {
+                modelRender.end();
             }
-            if (!mappedBuffer) {
-                mappedBuffer = true;
-                rend.begin();
-            }
-            Vector3f pos = e.getRenderPos(fTime);
-            Vector3f rot = e.getRenderRot(fTime);
-            if (HALF_EXTRA_RENDER > 0) {
-                int idx = i%EXTRA_RENDER;
-                int xPos = idx%(HALF_EXTRA_RENDER*2);
-                int zPos = idx/(HALF_EXTRA_RENDER*2);
-                pos.x+=(-HALF_EXTRA_RENDER+xPos)*RDIST;
-                pos.z+=(-HALF_EXTRA_RENDER+zPos)*RDIST;
-            }
-            model.setPose(this.rend, e, absTimeInSeconds, fTime, rot, pos);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("setPose");
         }
 
-        if (mappedBuffer) {
-            rend.end();
-            _renderBatch(model, shader, pass, shadowVP, needStateSetup);
-        }
-    
+        modelRender.render(fTime);
     }
-    void _renderBatch(EntityModel model, Shader shader, int pass, int shadowVP, boolean needStateSetup) {
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("_renderBatch pre");
-        if (needStateSetup) {
-            shader.enable();
-            if (pass == PASS_SHADOW_SOLID)
-                shader.setProgramUniform1i("shadowSplit", shadowVP);
-            model.getModel().bindTextures();
-            Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
-        }
-        ((ModelRigged) model.getModel()).renderRestModel(rend.getNumModels());
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("_renderBatch post");
-    }
+//    void _renderBatch(EntityModel model, Shader shader, int pass, int shadowVP, boolean needStateSetup) {
+//        if (Game.GL_ERROR_CHECKS)
+//            Engine.checkGLError("_renderBatch pre");
+//        if (needStateSetup) {
+//            shader.enable();
+//            if (pass == PASS_SHADOW_SOLID)
+//                shader.setProgramUniform1i("shadowSplit", shadowVP);
+//            model.getModel().bindTextures(0);
+//            Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
+//        }
+//        ((ModelRigged) model.getModel()).renderRestModel(0, 0, rend.getNumModels());
+//        if (Game.GL_ERROR_CHECKS)
+//            Engine.checkGLError("_renderBatch post");
+//    }
     public void renderTransparent(World world, float fTime) {
 //      glEnable(GL_BLEND);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -633,20 +528,20 @@ public class WorldRenderer extends AbstractRenderer {
         if (model == null) {
             return;
         }
-        shaderModelfirstPerson.enable();
         this.modelRot=this.lastModelRot=4;
         BufferedMatrix mat = Engine.getTempMatrix();
         float modelScale = 1 / 2.7f;
         float f1=0;
         DigController dig = Game.instance.dig;
         mat.setIdentity();
+//        mat.translate(0, 3, -4);
         float angleX = -110;
         float angleY = 180;
         float angleZ = 0;
         float swingProgress = dig.getSwingProgress(fTime);
         float f17 = GameMath.sin(GameMath.PI*swingProgress);
         float f23 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
-        mat.translate(-f23*0.3f, f17*0.2f+ GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI*2.0f)*0.3f, f17*0.11f);
+        mat.translate(-f23*0.25f, f17*0.1f+ GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI*2.0f)*0.3f, f17*-0.11f);
         float f7 = 0.8f;
         mat.translate(0.7F * f7, -0.55F * f7 - (1.0F - f1) * 0.6F, -1.2F * f7);
         float f18 = GameMath.sin(swingProgress*swingProgress*GameMath.PI);
@@ -654,28 +549,28 @@ public class WorldRenderer extends AbstractRenderer {
         mat.rotate(angleY * GameMath.PI_OVER_180, 0, 1, 0);
         mat.rotate(angleZ * GameMath.PI_OVER_180, 0, 0, 1);
         mat.rotate(angleX * GameMath.PI_OVER_180, 1, 0, 0);
-        mat.rotate(f18*-14f * GameMath.PI_OVER_180, 0, 1, 0);
-        mat.rotate(f24*12f * GameMath.PI_OVER_180, 0, 0, 1);
+        mat.rotate(f18*-17f * GameMath.PI_OVER_180, 0, 1, 0);
+        mat.rotate(f24*16f * GameMath.PI_OVER_180, 0, 0, 1);
         mat.rotate(f24*40f * GameMath.PI_OVER_180, 1, 0, 0);
         mat.scale(modelScale);
-        
+//        mat.translate(0, -1, -4);
+        mat.rotate(90 * GameMath.PI_OVER_180, 1, 0, 0);
+        mat.rotate(-180 * GameMath.PI_OVER_180, 0, 1, 0);
         mat.update();
+        shaderModelfirstPerson.enable();
         shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         if (true) { //TODO: fix me (Normal mat)
 
-            BufferedMatrix mat2 = Engine.getTempMatrix2();
-            mat2.load(Engine.getMatSceneV());
-            mat2.invert();
-            mat.mulMat(mat2);
-            mat.invert().transpose();
+            mat.load(Engine.getMatSceneV());
+            mat.transpose();
             mat.update();
             UniformBuffer.setNormalMat(mat.get());
         }
-        model.loadedModels[0].bindTextures();
+        model.loadedModels[0].bindTextures(0);
         //first person needs clear depth buffer, move somewhere else
 //            glDisable(GL_DEPTH_TEST);
         Engine.bindVAO(GLVAO.vaoModel);
-        model.loadedModels[0].render(Game.ticksran+fTime);
+        model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
 //            glEnable(GL_DEPTH_TEST);
         UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
            
@@ -693,6 +588,7 @@ public class WorldRenderer extends AbstractRenderer {
             renderEntities(world, PASS_SOLID, fTime, Shaders.normals, 0);
             BufferedMatrix mat = Engine.getIdentityMatrix();
             Shaders.normals.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+            
 //            glLineWidth(2.0F);
 
 //            Shaders.colored.enable();
@@ -724,8 +620,9 @@ public class WorldRenderer extends AbstractRenderer {
     public void renderDebugBB(World world, float fTime) {
         if (!this.debugBBs.isEmpty()) {
             glPushAttrib(-1);
-            glEnable(GL_BLEND);
-            glDepthFunc(GL_LEQUAL);
+//            glEnable(GL_BLEND);
+            glDisable(GL_BLEND);
+//            glDepthFunc(GL_LEQUAL);
 //          glDisable(GL_DEPTH_TEST);
             Shaders.colored3D.enable();
             for (Integer i : debugBBs.keySet()) {
@@ -769,6 +666,27 @@ public class WorldRenderer extends AbstractRenderer {
             Shader.disable();
             glPopAttrib();
         }
+        if (!this.debugPaths.isEmpty()) {
+            glPushAttrib(-1);
+            glDisable(GL_BLEND);
+//            glDepthFunc(GL_LEQUAL);
+//          glDisable(GL_DEPTH_TEST);
+            Shaders.colored3D.enable();
+            glLineWidth(4.0F);
+            for (Integer i : debugPaths.keySet()) {
+                List<PathPoint> bb = debugPaths.get(i);
+                int iColor = GameMath.randomI(i*19)%33;
+                iColor = Color.getHSBColor(iColor/33F, 0.8F, 1.0F).getRGB();
+                Tess.instance.setColor(iColor, 255);
+                for (PathPoint p : bb) {
+                    Tess.instance.add(p.x+0.5f, p.y+0.1f, p.z+0.5f);
+                }
+                Tess.instance.draw(GL11.GL_LINE_STRIP);
+            }
+            Shader.disable();
+            glPopAttrib();
+        }
+    
     }
 
     public void resize(int displayWidth, int displayHeight) {

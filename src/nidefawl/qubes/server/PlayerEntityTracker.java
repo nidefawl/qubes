@@ -14,6 +14,9 @@ import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.PacketSEntityMove;
 import nidefawl.qubes.network.packet.PacketSEntityTrack;
 import nidefawl.qubes.network.packet.PacketSEntityUnTrack;
+import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
 
@@ -21,6 +24,7 @@ import nidefawl.qubes.world.WorldServer;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
+@SideOnly(value = Side.SERVER)
 public class PlayerEntityTracker {
     //TODO: use list + map to speed up update iteration
     Map<Integer, Entry> map = Maps.newHashMap();
@@ -69,11 +73,12 @@ public class PlayerEntityTracker {
             return;
         }
         Iterator<Entry> iterator = this.map.values().iterator();
+        
         while (iterator.hasNext()) {
             Entry entry = iterator.next();
             Entity entity = entry.entity;
             double d = entry.pos.distanceSq(entity.pos);
-            float dyaw = Math.abs(entry.yaw-entity.yaw);
+            float dyaw = Math.abs(GameMath.wrapAngle(entry.yaw-entity.yaw));
             float dyawB = Math.abs(entry.yawBodyOffset-entity.yawBodyOffset);
             float dpitch = Math.abs(entry.pitch-entity.pitch);
             int flags = 0;
@@ -82,6 +87,7 @@ public class PlayerEntityTracker {
                 flags |= 1;
             }
             if (dyaw > 1.0E-4 || dpitch > 1.0E-4 || dyawB > 1.0E-4) {
+//                System.out.println("rot update "+dyaw);
                 entry.yaw = entity.yaw;
                 entry.pitch = entity.pitch;
                 entry.yawBodyOffset = entity.yawBodyOffset;
@@ -100,7 +106,7 @@ public class PlayerEntityTracker {
         Entry tNew = new Entry(ent);
         Entry t = map.put(ent.id, tNew);
         if (t != null) { //must not happen
-            System.err.println("Entity is not tracked");
+            System.err.println("Entity is already tracked");
             return;
         }
         //TODO: buffer add/remove/updates
@@ -114,6 +120,7 @@ public class PlayerEntityTracker {
      * @return
      */
     private PacketSEntityTrack getPacket(Entry t) {
+        System.out.println(t.pos);
         
         PacketSEntityTrack packet = new PacketSEntityTrack();
         packet.entId = t.entity.id;

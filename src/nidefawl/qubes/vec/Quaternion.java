@@ -24,6 +24,9 @@ public class Quaternion {
     public Quaternion(float x, float y, float z, float w) {
         set(x,y,z,w);
     }
+    public Quaternion(Vector4f vec) {
+        set(vec.x, vec.y, vec.z, vec.w);
+    }
 
     /*
      * (non-Javadoc)

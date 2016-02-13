@@ -6,6 +6,9 @@ import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
+import nidefawl.qubes.biomes.EmptyBiomeManager;
+import nidefawl.qubes.biomes.HexBiomesClient;
+import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
 import nidefawl.qubes.entity.Entity;
@@ -15,9 +18,6 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
-import nidefawl.qubes.worldgen.biome.HexBiomesClient;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public class WorldClient extends World {
     float dayLightIntensity;
@@ -34,6 +34,7 @@ public class WorldClient extends World {
     private final Vector3f       tmp1;
     HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
     ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
+    ArrayList<Entity>         entityRemove = new ArrayList<>();                                           // use fast array list
 
     public WorldClient(WorldSettingsClient settings, int worldType) {
         super(settings);
@@ -127,10 +128,19 @@ public class WorldClient extends World {
         if (!this.settings.isFixedTime()) {
             this.settings.setTime(this.settings.getTime()+1L);
         }
+        this.entityRemove.clear();
         int size = this.entityList.size();
         for (int i = 0; i < size; i++) {
             Entity e = this.entityList.get(i);
             e.tickUpdate();
+            if (e.flagRemove) {
+                this.entityRemove.add(e);
+            }
+        }
+        size = this.entityRemove.size();
+        for (int i = 0; i < size; i++) {
+            Entity e = this.entityRemove.get(i);
+            this.removeEntity(e);
         }
         int size1 = this.lights.size();
         for (int i = 0; i < size1; i++) {

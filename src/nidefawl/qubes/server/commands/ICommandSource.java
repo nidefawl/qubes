@@ -5,6 +5,7 @@ package nidefawl.qubes.server.commands;
 
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldServer;
 
 public interface ICommandSource {
 
@@ -48,6 +49,6 @@ public interface ICommandSource {
     /**
      * get the command senders current world, returns getSpawnWorld for console
      */
-    World getWorld();
+    WorldServer getWorld();
 
 }

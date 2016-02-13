@@ -40,6 +40,8 @@ public abstract class AssetManager {
     public abstract Shader loadShader(IResourceManager mgr, String name);
 
     public abstract Shader loadShader(IResourceManager mgr, String name, IShaderDef def);
+    
+    public abstract Shader loadShader(IResourceManager mgr, String nameVSH, String nameFSH, String nameGSH, String nameCSH, IShaderDef def);
 
     public abstract ShaderSource getLastFailedShaderSource();
     

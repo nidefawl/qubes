@@ -18,10 +18,13 @@ import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.nbt.TagReader;
 import nidefawl.qubes.player.PlayerData;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
+@SideOnly(value = Side.SERVER)
 public class PlayerManager {
     private File directory;
     private Map<String, PlayerServer> players = new MapMaker().makeMap();
@@ -100,7 +103,7 @@ public class PlayerManager {
     public synchronized void removePlayer(PlayerServer p) {
         this.players.remove(p.name);
         this.playersLowerCase.remove(p.name.toLowerCase());
-        PlayerData data = p.save();
+        PlayerData data = (PlayerData) p.save();
         savePlayer(p.name, data);
         this.serverPlayers = this.players.values().toArray(new PlayerServer[this.players.size()]);
     }
@@ -111,7 +114,7 @@ public class PlayerManager {
             Map.Entry<String, PlayerServer> entry = it.next();
             try {
                 PlayerServer player = entry.getValue();
-                PlayerData data = player.save();
+                PlayerData data = (PlayerData) player.save();
                 savePlayer(entry.getKey(), data);   
             } catch (Exception e) {
                 e.printStackTrace();

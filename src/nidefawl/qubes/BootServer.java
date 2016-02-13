@@ -9,7 +9,10 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 
 import nidefawl.qubes.server.StartServer;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
+@SideOnly(value = Side.SERVER)
 public class BootServer {
 
     public static void addURLs(URL[] u) throws IOException {

@@ -66,6 +66,8 @@ public class BufferedMatrix extends Matrix4f {
     public void free() {
         Memory.free(this.cur);
         Memory.free(this.curInv);
+        this.cur=null;
+        this.curInv=null;
     }
 
 }

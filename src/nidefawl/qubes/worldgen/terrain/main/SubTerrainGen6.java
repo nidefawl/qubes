@@ -6,10 +6,10 @@ import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.smoothSc
 
 import java.util.Random;
 
+import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.worldgen.biome.HexBiome;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4.NoiseData;
 

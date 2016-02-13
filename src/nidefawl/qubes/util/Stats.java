@@ -14,11 +14,13 @@ public class Stats {
     public static int modelDrawCalls;
     public static int regionDrawCalls;
     public static int lastFrameDrawCalls;
+    public static int uploadBytes;
     public static void resetDrawCalls() {
         lastFrameDrawCalls = tessDrawCalls+modelDrawCalls+regionDrawCalls;
         tessDrawCalls = 0;
         modelDrawCalls = 0;
         regionDrawCalls = 0;
+        uploadBytes = 0;
     }
 
 }

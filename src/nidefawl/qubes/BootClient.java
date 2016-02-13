@@ -5,7 +5,9 @@ import org.lwjgl.system.Configuration;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
+@SideOnly(value = Side.CLIENT)
 public class BootClient {
     static String getValue(String[] args, int i, String arg) {
         String val = i+1<args.length ? args[i+1] : null;

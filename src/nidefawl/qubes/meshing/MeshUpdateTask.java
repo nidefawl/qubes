@@ -112,6 +112,7 @@ public class MeshUpdateTask {
         World w = Game.instance.getWorld();
         
         if (w != null) {
+//            System.out.println(Thread.currentThread().getName()+" on "+this.mr);
             try {
               int xOff = (this.mr.rX << (RegionRenderer.REGION_SIZE_BITS + Chunk.SIZE_BITS));
               int yOff = this.mr.rY << (RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
@@ -160,6 +161,7 @@ public class MeshUpdateTask {
             
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
                 this.meshed = true;
+//                System.out.println(Thread.currentThread().getName()+" done "+this.mr);
                 return true;
             } catch (Exception e) {
                 Game.instance.setException(new GameError("Error while updating region", e));

@@ -1,7 +1,7 @@
 package nidefawl.qubes.worldgen.terrain;
 
+import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
 public interface ITerrainGen {

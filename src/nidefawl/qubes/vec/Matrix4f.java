@@ -276,7 +276,10 @@ public class Matrix4f {
      * @param buf The buffer to store this matrix in
      */
     public Matrix4f store(float[] buf) {
-        int idx = 0;
+        return store(buf, 0);
+    }
+    public Matrix4f store(float[] buf, int pos) {
+        int idx = pos;
         buf[idx++] = (m00);
         buf[idx++] = (m01);
         buf[idx++] = (m02);
@@ -1281,5 +1284,15 @@ public class Matrix4f {
         float roty = -GameMath.atan2( y, GameMath.sqrtf(y*y+z*z));
         this.rotate(rotx, 0, 1, 0);
         this.rotate(roty, 1, 0, 0);
+    }
+
+    public void clearTranslation() {
+        this.m30=0;
+        this.m31=0;
+        this.m32=0;
+        this.m33=1;
+        this.m03=0;
+        this.m13=0;
+        this.m23=0;
     }
 }

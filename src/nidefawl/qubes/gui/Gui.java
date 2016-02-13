@@ -9,6 +9,7 @@ import java.util.Comparator;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
@@ -25,6 +26,8 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public AbstractUI popup;
     public static final int slotW = 48;
     public static final int slotBDist = 2;
+    public static int FONT_SIZE_WINDOW_TITLE = 22;
+    public static int FONT_SIZE_BUTTON = 18;
     
 
     @Override
@@ -214,7 +217,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     protected void close() {
-        Game.instance.showGUI((Gui) this.parent);
+        GameBase.baseInstance.showGUI((Gui) this.parent);
     }
 
     public boolean onTextInput(int codepoint) {
@@ -233,7 +236,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         return false;
     }
     public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
-        if (Game.instance.getWorld() != null) {
+        if (Game.instance != null && Game.instance.getWorld() != null) {
             a = 0.7f;
         } else {
             a = 1.0f;

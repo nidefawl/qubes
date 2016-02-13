@@ -2,14 +2,12 @@ package nidefawl.qubes.chunk.server;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 
 public class ChunkLoadThread {
-    private static long               sleepTime = 10;
     private LinkedBlockingQueue<Long> queue     = new LinkedBlockingQueue<Long>();
 
     private ChunkManagerServer mgr;

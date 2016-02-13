@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biomes.HexBiome;
+import nidefawl.qubes.biomes.HexBiomesServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.SlotStack;
@@ -15,8 +17,6 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
-import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.biome.HexBiomesServer;
 
 public class CommandDebug extends Command {
 
@@ -60,22 +60,24 @@ public class CommandDebug extends Command {
                     ((PlayerServer)source).syncInventory();
                     return;
                 case "setbiome":
-                     pos = ((Player)source).pos;
-                     WorldServer wserv = (WorldServer) ((Player)source).world;
-                     HexBiome grid = ((HexBiomesServer)wserv.biomeManager).blockToHex((int)pos.x, (int)pos.z);
-                     Biome b = Biome.get(Integer.parseInt(args[1]));
-                     grid.biome = b;
-                    return;
-                case "tp":
                 {
-                    Player other = server.getPlayerManager().getPlayer(args[1]);
-                    if (other == null) {
-                        source.sendMessage("Player not found");
-                        return;
-                    }
-                    ((Player)source).move(other.pos);
+
+                    pos = ((Player)source).pos;
+                    WorldServer wserv = (WorldServer) ((Player)source).world;
+                    HexBiome grid = ((HexBiomesServer)wserv.biomeManager).blockToHex((int)pos.x, (int)pos.z);
+                    Biome b = Biome.get(Integer.parseInt(args[1]));
+                    grid.biome = b;
                 }
-                    return;
+                   return;
+                case "getbiome":
+                {
+
+                    pos = ((Player)source).pos;
+                    WorldServer wserv = (WorldServer) ((Player)source).world;
+                    HexBiome grid = ((HexBiomesServer)wserv.biomeManager).blockToHex((int)pos.x, (int)pos.z);
+                    source.sendMessage(""+grid.biome.getClass().getSimpleName()+", "+(grid.subtype%2));
+                }
+                   return;
             }
         }
     }

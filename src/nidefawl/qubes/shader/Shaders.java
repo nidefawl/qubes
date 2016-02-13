@@ -1,6 +1,7 @@
 package nidefawl.qubes.shader;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
@@ -96,6 +97,7 @@ public class Shaders {
             Shaders.tonemap.setProgramUniform1f("constexposure", 660);
             Shaders.wireframe.enable();
             Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
+            Shaders.wireframe.setProgramUniformMatrix4("model_matrix", false, Engine.getIdentityMatrix().get(), false);
             Shader.disable();
             Shaders.colored.enable();
             if (Game.GL_ERROR_CHECKS)
@@ -112,6 +114,7 @@ public class Shaders {
             if (startup) {
                 throw e;
             } else {
+                if (Game.instance != null)
                 Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             }
         }

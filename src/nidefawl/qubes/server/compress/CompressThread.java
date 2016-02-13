@@ -4,7 +4,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.Deflater;
 
 import nidefawl.qubes.server.GameServer;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
+@SideOnly(value = Side.SERVER)
 public class CompressThread implements Runnable {
     static Thread                                  thread;
     static final LinkedBlockingQueue<ICompressTask> queue = new LinkedBlockingQueue<>();

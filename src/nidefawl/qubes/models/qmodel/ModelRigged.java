@@ -6,6 +6,7 @@ package nidefawl.qubes.models.qmodel;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -16,6 +17,12 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
+import nidefawl.qubes.models.qmodel.animation.QModelAction;
+import nidefawl.qubes.models.qmodel.animation.QModelKeyFrameMatrix;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
+import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Quaternion;
@@ -28,16 +35,11 @@ import nidefawl.qubes.vec.Vector3f;
 public class ModelRigged extends ModelQModel {
 
     public QModelPoseBone rootJoint;
-    private ArrayList<QModelPoseBone> poseBones;
+    public ArrayList<QModelPoseBone> poseBones;
     private QModelPoseBone head;
     private QModelPoseBone neck;
-    private QModelAction action;
-    private int numIdx;
-    public GLTriBuffer gpuBufRest = null;
-	/**
-	 * @param qModelJoint 
-	 * 
-	 */
+    private boolean needsDraw;
+
 	public ModelRigged(ModelLoaderQModel loader) {
 	    super(loader);
 	    this.poseBones = Lists.newArrayList();
@@ -50,26 +52,17 @@ public class ModelRigged extends ModelQModel {
             if (b.parent != null) {
                 b.parent.addChild(b);
             }
-            if (b.restbone.name.equalsIgnoreCase("head")) {
+            if (b.restbone.name.equalsIgnoreCase("CATHead")) {
                 this.head = b;
             }
-            if (b.restbone.name.equalsIgnoreCase("neck")) {
+            if (b.restbone.name.equalsIgnoreCase("CATNeck")) {
                 this.neck = b;
             }
         }
-        this.rootJoint = this.poseBones.get(0);
-        this.action = loader.listActions.get(0);
-        this.numIdx = loader.listTri.size()*3;
-//        this.head.animate = false;
-	}
-	public void setAction(int idx) {
-	    if (idx < 0) idx = 0;
-	    if (idx >= this.loader.listActions.size()) {
-	        idx = this.loader.listActions.size()-1;
-	    }
-        this.action = loader.listActions.get(idx);
+        this.rootJoint = this.poseBones.isEmpty() ? null : this.poseBones.get(0);
 	}
 
+	
 	/**
      * @param restbone
      * @return
@@ -82,67 +75,61 @@ public class ModelRigged extends ModelQModel {
         return null;
     }
 
-    public void rest() {
+    /**
+     * @param i
+     * @param f
+     */
+    public void animate(QModelProperties properties, float fabs, float f) {
         for (QModelPoseBone joint : this.poseBones) {
-            joint.matDeform = joint.restbone.matRest;
+            int idx = properties.getChannelIdx(joint.restbone.name);
+            QAnimationChannel anim = properties.getActionChannel(idx, joint.restbone.name);
+            float offset = properties.getActionOffset(idx);
+            if (anim != null && anim.setDeform(0, fabs-offset, tmpMat1)) {
+                joint.matDeform.load(tmpMat1);
+            } else {
+                joint.matDeform.load(joint.getMatRest());
+            }
+            joint.updateNormalMat();
         }
     }
-    public void animate(int animationType, float time) {
-//	    float f = 1.0f/this.loader.fps;
-//	    float absTime = absTimeInSeconds / f;
-        for (QModelPoseBone joint : this.poseBones) {
-            QBoneAnimation anim = this.action == null ? null :this.action.map.get(joint.restbone.name);
-            if (anim == null || !joint.animate) {
-                joint.matDeform = joint.restbone.matRest;
-                continue;
-            }
-            
-            if (anim.frames.length > 0) {
-                float f = time;
-                if (animationType == 1) {
-                    f = time*anim.frames.length;
-                }
-                QModelKeyFrameMatrix frame = (QModelKeyFrameMatrix) anim.getFrameAt(animationType, f);
-                QModelKeyFrameMatrix nextframe = (QModelKeyFrameMatrix) frame.getNext();
-                //TODO: if nextframe < frame
-                
-                float frameInterpProgress;
-                if (animationType == 1) {
-                    frameInterpProgress = f%1.0f;
-                } else {
-                    float totalLen = anim.animLength;
-                    float frameLen = nextframe.time - frame.time;
-                    frameInterpProgress = ((f % totalLen)- frame.time) / frameLen;
-                }
-                if (frameInterpProgress <= 0) {
-                    joint.matDeform = frame.mat;
-                } else if (frameInterpProgress >= 1 ) {
-                    joint.matDeform = nextframe.mat;
-                } else {
-                    joint.interpolateFrame(frame.mat, nextframe.mat, frameInterpProgress);
-                }
-
+    /**
+     * @param i
+     * @param f
+     */
+    public void animateNodes(QModelProperties properties, float fabs, float f) {
+        for (QModelNode empty : this.loader.listEmpties) {
+            int idx = properties.getChannelIdx(empty.name);
+            QAnimationChannel anim = properties.getActionChannel(idx, empty.name);
+            float offset = properties.getActionOffset(idx);
+            if (anim != null && anim.setDeform(0, fabs-offset, tmpMat1)) {
+                empty.matDeform.load(this.tmpMat1);
             } else {
-                joint.matDeform = joint.restbone.matRest;
+                empty.matDeform.load(empty.localMat);
             }
-            this.needsDraw = true; //DONT! (DEBUG)
+            QModelBone bone = empty.getAttachmentBone();
+            if (bone != null) {
+                QModelPoseBone pbone = bone.posebone;
+                empty.matDeform.m31 += pbone.restbone.boneLength;
+                empty.matDeform.mulMat(pbone.matDeform);
+            }
+            empty.updateNormalMat();
         }
-        
-	}
+    }
     Quaternion q = new Quaternion();
-    Matrix4f tmpMat1 = new Matrix4f();
+    public Matrix4f tmpMat1 = new Matrix4f();
     Matrix4f tmpMat2 = new Matrix4f();
 	/** DEBUG METHOD! SLOW! RUN IN SHADER! 
+	 * @param obj 
 	 * @param tmpVec2 
 	 * @return */
-    public Matrix4f buildFinalPose(QModelVertex v) {
+    public Matrix4f buildFinalPose(QModelObject obj, QModelVertex v) {
         Matrix4f m1 = tmpMat1;
         Matrix4f m2 = tmpMat2;
         m1.setZero();
         for (int j = 0; j < v.numBones; j++) {
-            QModelPoseBone jt = poseBones.get(v.bones[j]);
-            m2.load(jt.restbone.matRestInv);
-            m2.mulMat(jt.matDeform);
+            QModelBone bone = obj.listBones.get(v.bones[j]);
+            m2.load(bone.matRestInv);
+            m2.mulMat(bone.posebone.matDeform);
             m1.addWeighted(m2, v.weights[j]);
         }
         return v.numBones > 0 ? m1 : null;
@@ -162,49 +149,41 @@ public class ModelRigged extends ModelQModel {
 ////            return m1;
 ////        return null;
 ////    }
-   
-	Vector3f tmpVec = new Vector3f();
 
-    public void getMatrices() {
-        Matrix4f m2 = tmpMat2;
-        for (int j = 0; j < this.poseBones.size(); j++) {
-            QModelPoseBone jt = poseBones.get(j);
-            m2.load(jt.restbone.matRestInv);
-            m2.mulMat(jt.matDeform);
-        }
+    Vector3f tmpVec = new Vector3f();
+    Vector3f tmpVec2 = new Vector3f();
+
+    public void renderRestModel(int object, int group, int instances) {
+        
     }
-    public int storeMatrices(FloatBuffer buffer) {
-        Matrix4f m2 = tmpMat2;
-        for (int j = 0; j < this.poseBones.size(); j++) {
-            QModelPoseBone jt = poseBones.get(j);
-            m2.load(jt.restbone.matRestInv);
-            m2.mulMat(jt.matDeform);
-            m2.store(buffer);
-        }
-        return this.poseBones.size();
-    }
-    public void renderRestModel(int instances) {
-        if (this.gpuBufRest == null) {
-            this.reRender = System.currentTimeMillis();
-            VertexBuffer buf = new VertexBuffer(1024*64);
-            buf.reset();
+    public void renderRestModel(QModelObject obj, QModelGroup grp, int instances) {
+        ModelRenderObject rObj = this.getGroup(obj.idx);
+        ModelRenderGroup rGroup = rObj.getGroup(grp.idx);
+        if (rGroup.gpuBufRest == null /*|| (System.currentTimeMillis()-rGroup.reRender>1000)*/) {
+            if (rGroup.gpuBufRest != null) {
+                rGroup.gpuBufRest.release();
+            }
+            rGroup.reRender = System.currentTimeMillis();
+            if (this.vbuf == null)
+                this.vbuf = new VertexBuffer(1024*64);
+            this.vbuf.reset();
             int vPosI = 0;
 //            int[] vPos = new int[this.loader.listTri.size()*3];
 //            Arrays.fill(vPos, -1);
-            for (QModelTriangle triangle : this.loader.listTri) {
+            for (QModelTriangle triangle : grp.listTri) {
                 for (int i = 0; i < 3; i++) {
                     int idx = triangle.vertIdx[i];
 //                    if (vPos[idx] < 0) { // shared vertices require per vertex UVs -> requires exporter to be adjusted
                     // but also gives worse performance
 //                        vPos[idx] =
 //                                vPosI++;
-                        QModelVertex v = this.loader.getVertex(idx);
-                        buf.put(Float.floatToRawIntBits(v.x));
-                        buf.put(Float.floatToRawIntBits(v.y));
-                        buf.put(Float.floatToRawIntBits(v.z));
+                        QModelVertex v = obj.listVertex.get(idx);
+                        vbuf.put(Float.floatToRawIntBits(v.x));
+                        vbuf.put(Float.floatToRawIntBits(v.y));
+                        vbuf.put(Float.floatToRawIntBits(v.z));
                         tmpVec.set(triangle.normal[i]);
-                        buf.put(RenderUtil.packNormal(tmpVec));
-                        buf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
+                        vbuf.put(RenderUtil.packNormal(tmpVec));
+                        vbuf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
                         int bones03 = 0;
                         int bones47 = 0;
                         for (int w = 0; w < 4; w++) {
@@ -213,59 +192,83 @@ public class ModelRigged extends ModelQModel {
                             bones03 |= (boneIdx) << (w * 8);
                             bones47 |= (boneIdx2) << (w * 8);
                         }
-                        buf.put(bones03);
-                        buf.put(bones47);
+                        vbuf.put(bones03);
+                        vbuf.put(bones47);
                         for (int w = 0; w < 4; w++) {
-                            buf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
+                            vbuf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
                         }
-                        buf.increaseVert();
+                        vbuf.increaseVert();
 //                    } else {
 //                        System.out.println("reuse vert");
 //                    }
-                    buf.putIdx(vPosI++);
+                    vbuf.putIdx(vPosI++);
                 }
-                buf.increaseFace();
+                vbuf.increaseFace();
             }
-            this.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
+            rGroup.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
 
-            int bytes = this.gpuBufRest.upload(buf);
-            System.out.println("byte size upload "+bytes+", "+this.gpuBufRest.getVertexCount());
-            System.out.println(""+this.gpuBufRest.getVertexCount()+" vertices, "+this.gpuBufRest.getTriCount()+" tris, "+this.gpuBufRest.getIdxCount()+" indexes");
+            int bytes = rGroup.gpuBufRest.upload(vbuf);
+            System.out.println("byte size upload "+bytes+", "+rGroup.gpuBufRest.getVertexCount());
+            System.out.println(""+rGroup.gpuBufRest.getVertexCount()+" vertices, "+rGroup.gpuBufRest.getTriCount()+" tris, "+rGroup.gpuBufRest.getIdxCount()+" indexes");
 
         }
 //        this.gpuBufRest.draw();
         Stats.modelDrawCalls++;
-        
-        Engine.bindBuffer(this.gpuBufRest.getVbo().getVboId());
-        Engine.bindIndexBuffer(this.gpuBufRest.getVboIndices().getVboId());
-        GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, this.gpuBufRest.getTriCount()*3, GL11.GL_UNSIGNED_INT, 0, instances);
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("render_"+this.loader.getModelName()+"_"+obj.name+"_"+grp.name);
+        Engine.bindBuffer(rGroup.gpuBufRest.getVbo().getVboId());
+        Engine.bindIndexBuffer(rGroup.gpuBufRest.getVboIndices().getVboId());
+//        System.out.println(instances);
+        GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, rGroup.gpuBufRest.getTriCount()*3, GL11.GL_UNSIGNED_INT, 0, instances);
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
     }
-    public void render(float f) {
+    private VertexBuffer vbuf;
+    public void render(int object, int group, float f) {
+        QModelObject obj = this.loader.listObjects.get(object);
+        QModelGroup grp = obj.listGroups.get(group);
+        ModelRenderObject rObj = this.getGroup(object);
+        ModelRenderGroup rGroup = rObj.getGroup(group);
         this.needsDraw = true;
-        if (this.needsDraw || System.currentTimeMillis()-this.reRender>42200) {
-            this.reRender = System.currentTimeMillis();
+        if (this.needsDraw || System.currentTimeMillis()-rGroup.reRender>42200) {
+            rGroup.reRender = System.currentTimeMillis();
             this.needsDraw = false;
-            if (buf == null)
-                buf = new VertexBuffer(1024*64);
-            this.buf.reset();
+            if (this.vbuf == null)
+                this.vbuf = new VertexBuffer(1024*64);
+            this.vbuf.reset();
             int vPosI = 0;
             int pos = 0;
-            int[] vPos = new int[this.loader.listTri.size()*3];
-            for (QModelTriangle triangle : this.loader.listTri) {
+            int[] vPos = new int[obj.listTri.size()*3];
+            for (QModelTriangle triangle : grp.listTri) {
                 for (int i = 0; i < 3; i++) {
                     int idx = triangle.vertIdx[i];
-//                  if (vPos[idx]<0) {
+//                      if (vPos[idx]<0) {
                         vPos[idx] = vPosI++;
-                        QModelVertex v = this.loader.getVertex(idx);
-                        Matrix4f pose = buildFinalPose(v);
+                        QModelVertex v = obj.listVertex.get(idx);
+                        Matrix4f pose = buildFinalPose(obj, v);
                         if (pose != null) {
                             Matrix4f.transform(pose, v, tmpVec);
                         } else {
                             tmpVec.set(v);
                         }
-                        buf.put(Float.floatToRawIntBits(tmpVec.x));
-                        buf.put(Float.floatToRawIntBits(tmpVec.y));
-                        buf.put(Float.floatToRawIntBits(tmpVec.z));
+                        
+                        QModelBone bone = obj.getAttachmentBone();
+                        if(bone != null) {
+                            tmpVec.addVec(bone.posebone.getTailLocal());
+                            Matrix4f.transform(bone.posebone.matDeform, tmpVec, tmpVec);
+                        }
+                        
+                        QModelAbstractNode node = obj.getAttachementNode();
+                        if(node != null) {
+                            Matrix4f.transform(node.getMatDeform(), tmpVec, tmpVec);
+                        }
+                        
+                        this.vbuf.put(Float.floatToRawIntBits(tmpVec.x));
+                        this.vbuf.put(Float.floatToRawIntBits(tmpVec.y));
+                        this.vbuf.put(Float.floatToRawIntBits(tmpVec.z));
+                        
                         if (pose != null) {
                             pose.m30=0;
                             pose.m31=0;
@@ -279,43 +282,59 @@ public class ModelRigged extends ModelQModel {
                         } else {
                             tmpVec.set(triangle.normal[i]);
                         }
+                        
+                        if(bone != null) {
+                            Matrix4f.transform(bone.posebone.matDeformNormal, tmpVec, tmpVec);
+                            tmpVec.normalise();
+                        }
+                        
+                        if(node != null) {
+                            Matrix4f.transform(node.getMatDeformNormal(), tmpVec, tmpVec);
+                            tmpVec.normalise();
+                        }
+                        
                         int normal = RenderUtil.packNormal(tmpVec);
-                        buf.put(normal);
+                        this.vbuf.put(normal);
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
-                        buf.put(textureHalf2);
-                        buf.put(0xff999999);
-//                  }
-                    buf.putIdx(vPos[idx]);
-                    buf.increaseVert();
+                        this.vbuf.put(textureHalf2);
+                        this.vbuf.put(0xff999999);
+//                      }
+                        this.vbuf.putIdx(vPos[idx]);
+                    this.vbuf.increaseVert();
                 }
-                buf.increaseFace();
+                this.vbuf.increaseFace();
             }
             
             
-            if (this.gpuBuf == null) {
-                this.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
+            if (rGroup.gpuBuf == null) {
+                rGroup.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
             }
-            this.gpuBuf.upload(buf);
+            int bytes = rGroup.gpuBuf.upload(this.vbuf);
+//                System.out.println("byte size upload "+bytes+", "+this.gpuBuf.getVertexCount());
+//                System.out.println(""+this.gpuBuf.getVertexCount()+" vertices, "+this.gpuBuf.getTriCount()+" tris, "+this.gpuBuf.getIdxCount()+" indexes");
+
         }
         
 
-        this.gpuBuf.draw();
+        rGroup.gpuBuf.draw();
 
 
     }
-
     /**
      * @param yaw
      * @param pitch
      */
     public void setHeadOrientation(float yaw, float pitch) {
+        if (this.head == null) {
+            return;
+        }
         //temp variable for head position in neck local space
-        Vector3f headParentLocal=new Vector3f();
+        Vector3f headParentLocal=this.tmpVec2;
         {
             QModelPoseBone b = this.head;
             
             //copy rest pose matrix to deform matrix
-            b.deformInterp.load(b.getMatDeform());
+//            b.deformInterp.load(b.getMatDeform());
             // alternative:
             // should allow clamping of angles when not using restpose but already animated pose
 //            b.getMatRest().toEuler(tmpVec);
@@ -332,22 +351,30 @@ public class ModelRigged extends ModelQModel {
             
             //clamp max angle 
             float hyaw = (yaw-270)*-1;
-            float max = 60;
+            float max = 30;
             if (hyaw < -max) {
                 hyaw = -max;
             }
             if (hyaw > max) {
                 hyaw = max;
             }
+            float max1 = 60;
+            float hpitch = pitch*0.8f;
+            if (hpitch < -max1) {
+                hpitch = -max1;
+            }
+            if (hpitch > max1) {
+                hpitch = max1;
+            }
 //            System.out.println(yaw+"/"+hyaw);
             
 
             //apply rotation on top of copied rest pose
-            b.deformInterp.rotate(hyaw * GameMath.PI_OVER_180, 0f, 1f, 0f);
-            b.deformInterp.rotate(-pitch * GameMath.PI_OVER_180, 1f, 0f, 0f);
+            b.matDeform.rotate(hyaw * GameMath.PI_OVER_180, 1f, 0f, 0f);
+            b.matDeform.rotate(hpitch * GameMath.PI_OVER_180, 0f, 0f, 1f);
             
             
-            b.matDeform = b.deformInterp;
+//            b.matDeform.load(b.deformInterp);
             
             //keep the x,y,z translation from restpose
 //            b.matDeform.m30 = b.restbone.matRest.m30;
@@ -363,20 +390,29 @@ public class ModelRigged extends ModelQModel {
         {
             QModelPoseBone b = this.neck;
             //copy rest pose matrix to deform matrix
-            b.deformInterp.load(b.getMatDeform());
+//            b.deformInterp.load(b.getMatDeform());
             //clamp max angle 
-            float hyaw = (yaw);
-            float max = 60;
+            float hyaw = (yaw-270)*-1;
+            float max = 40;
             if (hyaw < -max) {
                 hyaw = -max;
             }
             if (hyaw > max) {
                 hyaw = max;
             }
+            float max1 = 60;
+            float hpitch = pitch*0.5f;
+            if (hpitch < -max1) {
+                hpitch = -max1;
+            }
+            if (hpitch > max1) {
+                hpitch = max1;
+            }
             //apply rotation on top of copied rest pose
-            b.deformInterp.rotate(hyaw * 0.4f * GameMath.PI_OVER_180, 0f, 1f, 0f);
-            b.deformInterp.rotate(-pitch * 0.4f * GameMath.PI_OVER_180, 1f, 0f, 0f);
-            b.matDeform = b.deformInterp;
+//            b.matDeform.rotate(hyaw * 0.4f * GameMath.PI_OVER_180, 0f, 1f, 0f);
+            b.matDeform.rotate(hyaw * GameMath.PI_OVER_180, 1f, 0f, 0f);
+            b.matDeform.rotate(hpitch * GameMath.PI_OVER_180, 0f, 0f, 1f);
+//            b.matDeform.load(b.deformInterp);
             
             //keep the x,y,z translation from restpose
 //            b.matDeform.m30 = b.restbone.matRest.m30;

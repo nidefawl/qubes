@@ -964,7 +964,8 @@ public class BlockRenderer {
             if (model == null) {
                 return renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
             }
-            int vPos[] = new int[model.loader.listVertex.size()]; //could be much smaller (when vertex are grouped by face(group)
+            QModelObject obj = model.loader.listObjects.get(0);
+            int vPos[] = new int[obj.listVertex.size()]; //could be much smaller (when vertex are grouped by face(group)
             int vIdx = 0;
             Arrays.fill(vPos, -1);
             for (int faceDir = 0; faceDir < 6; faceDir++) {
@@ -981,7 +982,7 @@ public class BlockRenderer {
 //                    f+= renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
                     
     
-                    QModelTriGroup group = model.groups[faceDir];
+                    QModelGroup group = model.faceGroups[faceDir];
                     QModelMaterial mat = group.material;
                     int numTris = group.listTri.size();
 //                    int vertexIdx[] = new int[numTris*3*2]; // could be smaller
@@ -994,7 +995,7 @@ public class BlockRenderer {
                             int triVertIdx = tri.vertIdx[v];
                             if (vPos[triVertIdx] < 0) {
                                 vPos[triVertIdx] = vIdx++;
-                                QModelVertex vertex = model.loader.getVertex(tri.vertIdx[v]);
+                                QModelVertex vertex = obj.listVertex.get(tri.vertIdx[v]);
                                 
                                 attr.v[0].setNormal(tri.normal[v].x, tri.normal[v].y, tri.normal[v].z);
                                 attr.v[0].setUV(tri.texCoord[0][v], tri.texCoord[1][v]);

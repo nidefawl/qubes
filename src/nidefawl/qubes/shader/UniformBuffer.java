@@ -103,8 +103,15 @@ public class UniformBuffer {
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
     private void release() {
-        Memory.free(this.floatBuffer);
-        Engine.deleteBuffers(this.buffer);
+        if (this.floatBuffer != null) {
+            Memory.free(this.floatBuffer);
+            this.floatBuffer=null;   
+        }
+        if (this.buffer > 0) {
+            Engine.deleteBuffers(this.buffer);
+            this.buffer = 0;
+        }
+        
     }
     static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D")
             .addMat4() //mvp
@@ -211,16 +218,7 @@ public class UniformBuffer {
 //        updateVertDir();
         updateTBNMatrices();
         
-        uboMatrix3D.reset();
-        uboMatrix3D.put(Engine.getMatSceneMVP().get());//0
-        uboMatrix3D.put(Engine.getMatSceneMV().get());//1
-        uboMatrix3D.put(Engine.getMatSceneV().get());//2
-        uboMatrix3D.put(Engine.getMatSceneVP().get());//3
-        uboMatrix3D.put(Engine.getMatSceneP().get());//4
-        uboMatrix3D.put(Engine.getMatSceneNormal().get());//5
-        uboMatrix3D.put(Engine.getMatSceneMV().getInv());//6
-        uboMatrix3D.put(Engine.getMatSceneP().getInv());//7
-        uboMatrix3D.update();
+        updateSceneMatrices();
 
         uboMatrixShadow.reset();
         
@@ -481,6 +479,18 @@ public class UniformBuffer {
     public static void setMVP(FloatBuffer mat) {
         uboMatrix3D.setPosition(0*16);
         uboMatrix3D.put(mat);//0
+        uboMatrix3D.update();
+    }
+    public static void updateSceneMatrices() {
+        uboMatrix3D.reset();
+        uboMatrix3D.put(Engine.getMatSceneMVP().get());//0
+        uboMatrix3D.put(Engine.getMatSceneMV().get());//1
+        uboMatrix3D.put(Engine.getMatSceneV().get());//2
+        uboMatrix3D.put(Engine.getMatSceneVP().get());//3
+        uboMatrix3D.put(Engine.getMatSceneP().get());//4
+        uboMatrix3D.put(Engine.getMatSceneNormal().get());//5
+        uboMatrix3D.put(Engine.getMatSceneMV().getInv());//6
+        uboMatrix3D.put(Engine.getMatSceneP().getInv());//7
         uboMatrix3D.update();
     }
     public static void updatePxOffset() {

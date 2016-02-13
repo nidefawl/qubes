@@ -9,6 +9,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
@@ -20,6 +21,7 @@ import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
+import nidefawl.qubes.player.EntityData;
 import nidefawl.qubes.player.PlayerData;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerEntityTracker;
@@ -28,18 +30,19 @@ import nidefawl.qubes.server.commands.CommandException;
 import nidefawl.qubes.server.commands.ICommandSource;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.WorldServer;
-import nidefawl.qubes.worldgen.biome.HexBiome;
 import nidefawl.qubes.worldgen.trees.Tree;
 
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
+
+@SideOnly(value=Side.SERVER)
 public class PlayerServer extends Player implements ChatUser, ICommandSource {
 
     public ServerHandlerPlay         netHandler;
@@ -138,7 +141,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                         for (Tree tree : list) {
                             AABB bb1 = new AABB(tree.bb);
                             AABB bb2 = new AABB(tree.trunkBB);
-                            bb1.expandTo(1, 1, 1);
+                            bb1.expandTo(1, 1, 1);  
                             bb2.expandTo(1, 1, 1);
                             trees.add(bb1);
                             trees.add(bb2);
@@ -147,13 +150,19 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 }
                 this.sendPacket(new PacketSDebugBB(trees));
             }
+//        ArrayList<AABB> list = new ArrayList<>();
+//        for (Entity e : this.getWorld().entityList) {
+//            list.add(e.aabb.copy());
         }
+//        ((WorldServer) this.world).broadcastPacket(new PacketSDebugBB(list));
+//        }
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
             this.crafting[i].update();
         }
     }
 
-    public void load(PlayerData data) {
+    public void load(EntityData edata) {
+        PlayerData data = (PlayerData)edata;
         this.flying = data.flying;
         this.spawnWorld = data.world;
         this.chunkLoadDistance = data.chunkLoadDistance;
@@ -169,9 +178,11 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 this.crafting[id].load(data.craftingStates[i]);
             }
         }
+        if (data.properties != null)
+            this.properties.load(data.properties);
     }
 
-    public PlayerData save() {
+    public EntityData save() {
         PlayerData data = new PlayerData();
         data.world = this.world != null ? this.world.getUUID() : null;
         if (data.world != null) {
@@ -185,6 +196,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
             data.invCraftStacks[i] = this.inventoryCraft[i].copySlotStacks();
             data.craftingStates[i] = this.crafting[i].save();
         }
+        data.properties = this.properties.save();
         
         return data;
     }
@@ -290,8 +302,8 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         if (!isUpdate) {
             Tag.Compound tag = new Tag.Compound();
             tag.setString("name", this.name);
-//            tag.set("uuid", this.uuid);
-//            etc
+            tag.set("properties", this.properties.save());
+            return tag;
         }
         return null;
     }
@@ -325,10 +337,13 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
             PlayerInventoryCrafting inv = this.inventoryCraft[i];
             if (inv.isDirty()) {
                 HashSet<SlotStack> stacks = inv.getUpdate();
-                System.out.println(stacks);
                 if (stacks != null)
                     this.sendPacket(new PacketSInvSyncIncr(inv.id, stacks));
             }
         }
+    }
+
+    public WorldServer getWorld() {
+        return (WorldServer) this.world;
     }
 }

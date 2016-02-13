@@ -11,10 +11,13 @@ import nidefawl.qubes.inventory.InventoryUtil;
 import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vector3f;
 
-public class PlayerData {
+@SideOnly(value = Side.SERVER)
+public class PlayerData extends EntityData {
 
     public UUID world;
     public boolean flying;
@@ -24,6 +27,7 @@ public class PlayerData {
     public List<SlotStack> invStacks = Lists.newArrayList();
     public List[] invCraftStacks = new List[CraftingCategory.NUM_CATS];
     public Compound[] craftingStates = new Tag.Compound[CraftingCategory.NUM_CATS];
+    public Compound properties;
     public PlayerData() {
         for (int i = 0; i < invCraftStacks.length; i++) {
             invCraftStacks[i] = Lists.newArrayList();
@@ -57,6 +61,7 @@ public class PlayerData {
             }
             this.craftingStates[i] = (Compound) t.get("craftingstates_"+i);
         }
+        this.properties = (Compound) t.get("properties");
     }
 
     public Tag save() {
@@ -78,6 +83,8 @@ public class PlayerData {
             cmp.set("inventorycraft_"+i, tagInvCraft);
             cmp.set("craftingstates_"+i, this.craftingStates[i]);
         }
+        System.out.println("properties "+properties.getMap());
+        cmp.set("properties", this.properties);
         return cmp;
     }
 

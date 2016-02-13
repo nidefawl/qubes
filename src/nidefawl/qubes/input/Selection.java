@@ -7,6 +7,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.gl.Engine;
@@ -456,7 +457,7 @@ public class Selection {
     }
 
     public boolean extendReach() {
-        return this.mouseDown || Game.instance.movement.grabbed();
+        return this.mouseDown || GameBase.baseInstance.isGrabbed();
     }
 
     public BlockPos getMin() {

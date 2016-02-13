@@ -4,13 +4,12 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.noise.TerrainNoiseScale;
-import nidefawl.qubes.util.GameContext;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.worldgen.TerrainGen;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
+@SideOnly(value = Side.SERVER)
 public class StartServer {
 
 	public static void main(String[] args) {

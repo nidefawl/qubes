@@ -10,7 +10,7 @@ import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.world.WorldClient;
 
-public class MeshThread extends Thread {
+public class MeshThread implements Runnable {
     private static long                                 sleepTime = 10;
     private LinkedBlockingQueue<MeshUpdateTask> queue     = new LinkedBlockingQueue<MeshUpdateTask>();
     private LinkedList<MeshUpdateTask>          results   = new LinkedList<MeshUpdateTask>();
@@ -19,11 +19,10 @@ public class MeshThread extends Thread {
     private volatile boolean                            isRunning;
     private volatile boolean                            finished;
     private final MeshUpdateTask[]              tasks;
-
+    final Thread[] threads;
     public MeshThread(int numTasks) {
-        setName("RegionRenderThread");
-        setDaemon(true);
         this.isRunning = true;
+        this.threads = new Thread[numTasks];
         this.tasks = new MeshUpdateTask[numTasks];
         for (int i = 0; i < tasks.length; i++) {
             tasks[i] = new MeshUpdateTask();
@@ -36,7 +35,17 @@ public class MeshThread extends Thread {
     }
 
     public void init() {
-        start();
+        for (int i = 0; i < this.threads.length; i++) {
+            if (this.threads[i] != null) {
+                this.threads[i].interrupt();
+            }
+            this.threads[i] = new Thread(this);
+            this.threads[i].setName("RegionRenderThread #"+i);
+            this.threads[i].setDaemon(true);
+        }
+        for (int i = 0; i < this.threads.length; i++) {
+            this.threads[i].start();
+        }
     }
 
     @Override
@@ -58,7 +67,7 @@ public class MeshThread extends Thread {
                 } catch (InterruptedException e1) {
                     break;
                 } catch (Exception e) {
-                    Game.instance.setException(new GameError("Exception in " + getName(), e));
+                    Game.instance.setException(new GameError("Exception in " + Thread.currentThread().getName(), e));
                     break;
                 }
                 if (Thread.interrupted()) {
@@ -106,8 +115,8 @@ public class MeshThread extends Thread {
         if (task != null) {
             if (task.prepare(world, m, renderChunkX, renderChunkZ)) {
                 task.worldInstance = this.id;
-                this.queue.add(task);
                 tasksRunning++;
+                this.queue.add(task);
                 return true;
             }
         }
@@ -146,11 +155,19 @@ public class MeshThread extends Thread {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            this.interrupt();
+            for (int i = 0; i < this.threads.length; i++) {
+                if (this.threads[i] != null) {
+                    this.threads[i].interrupt();
+                }
+            }
             while (!this.finished) {
                 try {
                     Thread.sleep(60);
-                    this.interrupt();
+                    for (int i = 0; i < this.threads.length; i++) {
+                        if (this.threads[i] != null) {
+                            this.threads[i].interrupt();
+                        }
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

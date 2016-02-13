@@ -6,6 +6,7 @@ import java.util.*;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biomes.*;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.noise.NoiseLib;
@@ -14,7 +15,6 @@ import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
-import nidefawl.qubes.worldgen.biome.*;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
@@ -35,11 +35,19 @@ public class TerrainGeneratorMain implements ITerrainGen {
     OpenSimplexNoise j5;
     OpenSimplexNoise j6;
     OpenSimplexNoise j7;
-
-    private Map<Biome, SubTerrainGen> map = Maps.newConcurrentMap(); 
+    final SubTerrainGen[] gens;
     public TerrainGeneratorMain(WorldServer world, long seed, WorldSettings settings) {
         this.world = world;
         this.seed = seed;
+        this.gens = new SubTerrainGen[] {
+                new SubTerrainGenMeadow(this),
+                new SubTerrainGenDesert(this),
+                new SubTerrainGenSnowHills(this),
+                new SubTerrainGen4(this),
+                new SubTerrainGen5(this),
+                new SubTerrainGen6(this),
+                new SubTerrainGen7(this),
+        };
 //        this.map.put(Biome.MEADOW_GREEN, new SubTerrainGen1(this));
 //        this.map.put(Biome.MEADOW_BLUE, new SubTerrainGen1(this));
 //        this.map.put(Biome.MEADOW_RED, new SubTerrainGen1(this));
@@ -48,11 +56,11 @@ public class TerrainGeneratorMain implements ITerrainGen {
 //        this.map.put(Biome.ICE, new SubTerrainGen3(this));
 //        this.map.put(Biome.MEADOW_GREEN2, new SubTerrainGen4(this));
 
-        for (int i = 0; i < Biome.biomes.length; i++) {
-            if (Biome.biomes[i] != null) {
-                this.map.put(Biome.biomes[i], new SubTerrainGen7(this));        
-            }
-        }
+//        for (int i = 0; i < Biome.biomes.length; i++) {
+//            if (Biome.biomes[i] != null) {
+//                this.map.put(Biome.biomes[i], new SubTerrainGen7(this));        
+//            }
+//        }
         this.j = NoiseLib.makeGenerator(seed*33703^31);
         this.j2 = NoiseLib.makeGenerator(89153^23);
         this.j4 = NoiseLib.makeGenerator(89153^23);
@@ -90,11 +98,39 @@ public class TerrainGeneratorMain implements ITerrainGen {
         c.checkIsEmtpy();
         return c;
     }
+    private SubTerrainGen getTerrainGenInstance(HexBiome b) {
+        if (b.biome == Biome.DESERT) {
+            if (b.subtype%2 != 0) {
+                return this.gens[3];
+            }
+            return this.gens[1];
+        }
+        if (b.biome == Biome.DESERT_RED) {
+            if (b.subtype%2 != 0) {
+                return this.gens[3];
+            }
+            return this.gens[1];
+        }
+        if (b.biome == Biome.ICE) {
+            if (b.subtype%2 != 0) {
+                return this.gens[4];
+            }
+            return this.gens[2];
+        }
+        if (b.subtype%3 == 1) {
+            return this.gens[3];
+        }
+        if (b.subtype%3 == 2) {
+            return this.gens[6];
+        }
+        return this.gens[0];
+    }
 
     private void generateTerrain(Chunk c, short[] blocks, byte[] waterMask, HexBiome[] hexs, ArrayList<HexBiome> h) {
         Map<HexBiome, SubTerrainData> map = Maps.newHashMap();
         for (HexBiome b : h) {
-            SubTerrainGen g = this.map.get(b.biome);
+            
+            SubTerrainGen g = getTerrainGenInstance(b);
             SubTerrainData data = g.prepare(c.getBlockX(), c.getBlockZ(), b);
             map.put(b, data);
         }
@@ -121,7 +157,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 outerScale=1-outerScale;
                 outerScale=Math.pow(outerScale, 2);
                 outerScale=1-outerScale;
-                SubTerrainGen g = this.map.get(hex.biome);
+                SubTerrainGen g = getTerrainGenInstance(hex);
                 SubTerrainData data = map.get(hex);
                 double dStr2 = 12.0D*2;
                 double blockNoise2 = j4.eval((cX+x)*noiseScale4, (cZ+z)*noiseScale4);
@@ -296,6 +332,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
             }
         }
     }
+
 
 
     public int getStone(WorldServer world, int x, int y, int z, HexBiome hex, Random rand) {

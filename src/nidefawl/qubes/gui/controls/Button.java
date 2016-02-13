@@ -6,6 +6,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
+import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
@@ -17,7 +18,7 @@ public class Button extends AbstractUI implements Renderable {
     public Button(int id, String text) {
         this.id = id;
         this.text = text;
-        this.font = FontRenderer.get(0, 18, 0);
+        this.font = FontRenderer.get(0, Gui.FONT_SIZE_BUTTON, 0);
     }
 
     @Override

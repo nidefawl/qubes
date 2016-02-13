@@ -3,6 +3,8 @@ package nidefawl.qubes.worldgen.terrain;
 
 import java.util.Random;
 
+import nidefawl.qubes.biomes.EmptyBiomeManager;
+import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.noise.*;
@@ -10,8 +12,6 @@ import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
-import nidefawl.qubes.worldgen.biome.EmptyBiomeManager;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 

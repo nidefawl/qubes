@@ -7,14 +7,10 @@ import java.io.File;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL40;
-import org.lwjgl.system.MemoryUtil;
 
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.async.AsyncTaskThread;
-import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.async.AsyncTask;
-import nidefawl.qubes.async.AsyncTask.TaskType;
+import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.chat.client.ChatManager;
@@ -27,20 +23,20 @@ import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gui.*;
-import nidefawl.qubes.gui.windows.*;
+import nidefawl.qubes.gui.windows.GuiContext;
+import nidefawl.qubes.gui.windows.GuiWindow;
+import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.models.BlockModelManager;
-import nidefawl.qubes.models.EntityModelmanager;
+import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
@@ -48,12 +44,13 @@ import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.*;
+import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
+import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
@@ -62,41 +59,43 @@ import nidefawl.qubes.world.WorldClientBenchmark;
 public class Game extends GameBase implements IErrorHandler {
 
     static public Game instance;
+    static final String buildName = "Indev alpha ";
+    static final String buildVersion = "0.1";
+    static final String BUILD_CODE = "::BUILD_CODE::";
+    static final String buildIdentifier = String.format("%s %s.%s", buildName, buildVersion, BUILD_CODE);
+    
     PlayerProfile         profile = new PlayerProfile();
     public final ClientSettings          settings  = new ClientSettings();
 
     public GuiOverlayStats statsOverlay;
     public GuiCached       statsCached;
     public GuiOverlayChat  chatOverlay;
-    private Gui            gui;
 
-    private ThreadConnect  connect;
-    private NetworkClient  client;
-    WorldClient            world              = null;
-    PlayerSelf             player;
-    public InputController        movement           = new InputController();
-    public final DigController   dig           = new DigController();
-    public final Selection selection          = new Selection();
-    public boolean         follow             = true;
-    
-    public BlockStack           selBlock           = new BlockStack(0);
-    public long                   lastShaderLoadTime = System.currentTimeMillis();
-    public final Vector3f vCam = new Vector3f();
-    public final Vector3f vPlayer = new Vector3f();
-    public final Vector3f vLastCam = new Vector3f();
-    public final Vector3f vLastPlayer = new Vector3f();
+    private ThreadConnect      connect;
+    private NetworkClient      client;
+    WorldClient                world     = null;
+    PlayerSelf                 player;
+    public final DigController dig       = new DigController();
+    public final Selection     selection = new Selection();
+    public boolean             follow    = true;
 
-    public boolean                  updateRenderers = true;
-    public static boolean showGrid=false;
-    public boolean thirdPerson = true;
-    boolean reinittexthook = false;
-    boolean wasGrabbed = false;
-    public String serverAddr;
-    boolean testMode = false;
-    PlayerSelf remotePlayer;
-    PlayerSelf testPlayer;
-    WorldClient remoteWorld;
-    WorldClient testWorld;
+    public BlockStack selBlock           = new BlockStack(0);
+    public long       lastShaderLoadTime = System.currentTimeMillis();
+
+    public final Vector3f vCam               = new Vector3f();
+    public final Vector3f vPlayer            = new Vector3f();
+    public final Vector3f vLastCam           = new Vector3f();
+    public final Vector3f vLastPlayer        = new Vector3f();
+
+    public boolean        updateRenderers = true;
+    public static boolean showGrid        = false;
+    public boolean        thirdPerson     = true;
+    boolean               testMode        = false;
+    public String         serverAddr;
+    PlayerSelf            remotePlayer;
+    PlayerSelf            testPlayer;
+    WorldClient           remoteWorld;
+    WorldClient           testWorld;
 
     int skipChars = 0;
     private BaseStack testStack = new ItemStack(Item.pickaxe);
@@ -145,16 +144,9 @@ public class Game extends GameBase implements IErrorHandler {
         ItemModelManager.getInstance().init();
         ItemTextureArray.getInstance().init();
         SingleBlockRenderAtlas.getInstance().init();
-        AssetTexture tex_map_grass = AssetManager.getInstance().loadPNGAsset("textures/colormap_grass.png");
-        ColorMap.grass.set(tex_map_grass);
-        AssetTexture tex_map_foliage = AssetManager.getInstance().loadPNGAsset("textures/colormap_foliage.png");
-        ColorMap.foliage.set(tex_map_foliage);
 
         
         
-        SysInfo info = new SysInfo();
-        String title = "LWJGL "+info.lwjglVersion+" - "+info.openGLVersion;
-        setTitle(title);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
         this.statsOverlay = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
@@ -164,6 +156,10 @@ public class Game extends GameBase implements IErrorHandler {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
         loadRender(0, 0.5f, "Initializing");
+    }
+
+    public String getAppTitle() {
+        return String.format("Qubes - %s", buildIdentifier);
     }
     @Override
     public boolean loadRender(int step, float f) {
@@ -252,7 +248,7 @@ public class Game extends GameBase implements IErrorHandler {
         loadRender(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
         loadRender(0, 1f, "Loading... Entity Models");
-        EntityModelmanager.getInstance().reload();
+        EntityModelManager.getInstance().reload();
         loadRender(0, 1f, "Loading... Item Textures");
         TextureArray[] arrays = {
                 ItemTextureArray.getInstance(),
@@ -503,17 +499,6 @@ public class Game extends GameBase implements IErrorHandler {
         }
     }
 
-    @Override
-    public void input(float fTime) {
-        double mdX = Mouse.getDX();
-        double mdY = Mouse.getDY();
-        if (this.movement.grabbed()) {
-            this.movement.update(mdX, -mdY);
-        } else {
-            GuiWindowManager.mouseMove(mdX, -mdY);
-        }
-    }
-
     public void setGrabbed(boolean b) {
         if (b != this.movement.grabbed()) {
             this.movement.setGrabbed(b);
@@ -655,7 +640,13 @@ public class Game extends GameBase implements IErrorHandler {
                 Engine.getSceneFB().clearDepth();
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("World");
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+                for (int i = 0; i < 3; i++) {
+                    GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+                }
                 Engine.worldRenderer.renderFirstPerson(world, fTime);
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
                 if (GPUProfiler.PROFILING_ENABLED)
@@ -719,21 +710,14 @@ public class Game extends GameBase implements IErrorHandler {
                 
 
 
-                if (!Engine.worldRenderer.debugBBs.isEmpty()) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("BB Debug");
+                Engine.worldRenderer.renderDebugBB(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
 
-                    
-
-                    if (GPUProfiler.PROFILING_ENABLED)
-                        GPUProfiler.start("BB Debug");
-                    Engine.worldRenderer.renderDebugBB(this.world, fTime);
-                    if (GPUProfiler.PROFILING_ENABLED)
-                        GPUProfiler.end();
-
-                    if (Game.GL_ERROR_CHECKS)
-                        Engine.checkGLError("renderDebugBB");
-                    
-                }
-
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("renderDebugBB");
                 if (Engine.renderWireFrame) {
 
                     if (GPUProfiler.PROFILING_ENABLED)
@@ -960,18 +944,19 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >=1000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >=6000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
 ////          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
-          Engine.worldRenderer.initShaders();
+//          Engine.worldRenderer.initShaders();
             
 ////          Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
-            Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
+//            ItemModelManager.getInstance().reload();
 //            
         }
     }
@@ -984,10 +969,6 @@ public class Game extends GameBase implements IErrorHandler {
     public void preRenderUpdate(float f) {
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
-        boolean b = Mouse.isGrabbed();
-        if (b != this.movement.grabbed()) {
-            setGrabbed(b);
-        }
         if (this.client != null) {
             String reason = this.client.getClient().getDisconnectReason();
             if (reason!=null) {
@@ -1083,50 +1064,6 @@ public class Game extends GameBase implements IErrorHandler {
         }
     }
     
-    public void showGUI(Gui gui) {
-
-        if (gui != null && this.gui == null) {
-            if (Mouse.isGrabbed()) {
-                setGrabbed(false);
-                wasGrabbed = true;
-            }
-        }
-        if (this.gui != null) {
-            this.gui.onClose();
-        }
-        this.gui = gui;
-        if (this.gui != null) {
-            this.gui.setPos(0, 0);
-            this.gui.setSize(displayWidth, displayHeight);
-            this.gui.initGui(this.gui.firstOpen);
-            this.gui.firstOpen = false;
-            if (Mouse.isGrabbed()) {
-                setGrabbed(false);
-                wasGrabbed = true;
-            }
-        } else {
-            if (wasGrabbed) {
-                Game.instance.setGrabbed(true);
-            }
-            wasGrabbed = false;
-        }
-        reinittexthook = true;
-            
-    }
-    
-    @Override
-    public void updateInput() {
-        super.updateInput();
-        if (GuiContext.input != null && !GuiContext.input.focused) {
-            GuiContext.input.focused=false;
-            GuiContext.input = null;
-        }
-        boolean reqTextHook=(GuiContext.input != null && GuiContext.input.isFocusedAndContext());
-        if (hasTextHook()!=reqTextHook) {
-            System.out.println("reinit text hook -> "+reqTextHook);
-            setTextHook(reqTextHook);
-        }
-    }
 
     @Override
     public void onResize(int displayWidth, int displayHeight) {
@@ -1303,9 +1240,5 @@ public class Game extends GameBase implements IErrorHandler {
 
     public Selection getSelection() {
         return this.selection;
-    }
-
-    public Gui getGui() {
-        return this.gui;
     }
 }

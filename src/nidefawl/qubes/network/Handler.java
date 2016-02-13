@@ -182,4 +182,13 @@ public abstract class Handler {
 
     public void handleInvTransaction(PacketCInvTransaction packetCInvTransaction) {
     }
+
+    public void handleDebugPath(PacketSDebugPath packetSDebugPath) {
+    }
+
+    public void handleSetProperty(PacketCSetProperty packetCPlayerLook) {
+    }
+
+    public void handleEntityProperties(PacketSEntityProperties p) {
+    }
 }

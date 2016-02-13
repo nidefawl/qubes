@@ -5,7 +5,6 @@ package nidefawl.qubes.inventory.slots;
 
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.inventory.PlayerInventory;
 
 /**
  * @author Michael Hept 2015

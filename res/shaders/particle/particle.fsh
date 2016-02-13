@@ -6,7 +6,7 @@
 uniform sampler2D tex0;
 
 in vec3 normal;
-in vec3 color;
+in vec4 color;
 in vec4 texcoord;
 in vec4 position;
 
@@ -45,8 +45,8 @@ void main(void) {
   float dist = length(position);
   float fogFactor = clamp( (dist - 20.0f) / 150.0f, 0.0f, 0.5f );
   // fogFactor += clamp( (dist - 20.0f) / 420.0f, 0.0f, 0.06f );
-  vec3 skycolor = mix(color, fogColor, fogFactor);
-  out_Color = vec4(skycolor, clamp(tex.a*(1-fogFactor), 0, 1));
+  vec3 skycolor = mix(color.rgb, fogColor, fogFactor);
+  out_Color = vec4(skycolor*0.1, clamp(tex.a*(1-fogFactor)*color.a*0.2, 0, 1));
   out_Normal = vec4(0.5);
   out_Material = uvec4(0);
 }

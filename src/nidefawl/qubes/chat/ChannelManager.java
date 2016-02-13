@@ -12,11 +12,15 @@ import nidefawl.qubes.chat.channel.AbstractChannel;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.server.GameServer;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
+
+@SideOnly(value=Side.SERVER)
 public class ChannelManager {
     Map<String, AbstractChannel> channels = new MapMaker().makeMap();
     

@@ -9,6 +9,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.async.AsyncTaskThread;
 import nidefawl.qubes.async.AsyncTasks;
+import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
@@ -34,7 +35,6 @@ import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldSettingsClient;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public class ClientHandler extends Handler {
 
@@ -413,7 +413,7 @@ public class ClientHandler extends Handler {
         e.pitch = p.pitch;
         e.yaw = p.yaw;
         e.yawBodyOffset = p.yawbody;
-        e.pos.set(p.pos);
+        e.move(p.pos);
         Tag tag = p.data;
         if (tag != null)
             e.readClientData(tag);
@@ -449,10 +449,15 @@ public class ClientHandler extends Handler {
     }
     public void handleDebugBBs(PacketSDebugBB packetSDebugBB) {
         Engine.worldRenderer.debugBBs.clear();
-//        for (int i = 0; i < packetSDebugBB.boxes.size(); i++) {
-//            Engine.worldRenderer.debugBBs.put(i, packetSDebugBB.boxes.get(i));    
-//        }
+        for (int i = 0; i < packetSDebugBB.boxes.size(); i++) {
+            Engine.worldRenderer.debugBBs.put(i, packetSDebugBB.boxes.get(i));    
+        }
         
+    }
+    public void handleDebugPath(PacketSDebugPath packetSDebugPath) {
+        Engine.worldRenderer.debugPaths.clear();
+//        Engine.worldRenderer.debugPaths.put(0, packetSDebugPath.pts);
+//        System.out.println(packetSDebugPath.pts);
     }
 
     public void handleInvSync(PacketSInvSync p) {
@@ -491,6 +496,16 @@ public class ClientHandler extends Handler {
         if (player != null) {
             PlayerInventory inv = (PlayerInventory) player.getInv(0);
             inv.carried=packetSInvCarried.stack.stack;
+        }
+    }
+
+
+    public void handleEntityProperties(PacketSEntityProperties p) {
+        Entity e = this.world.getEntity(p.entId);
+        if (e != null) {
+            Tag tag = p.data;
+            if (tag != null)
+                e.readProperties(tag);
         }
     }
 

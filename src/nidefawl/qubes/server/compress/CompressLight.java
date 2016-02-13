@@ -2,11 +2,15 @@ package nidefawl.qubes.server.compress;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.PacketSLightChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.World;
 
+@SideOnly(value = Side.SERVER)
 public class CompressLight implements ICompressTask {
 
     private Chunk chunks;
@@ -49,7 +53,7 @@ public class CompressLight implements ICompressTask {
             if (h == null || h.finished()) {
                 continue;
             }
-            Player p = h.getPlayer();
+            PlayerServer p = h.getPlayer();
             if (p == null) {
                 continue;
             }
@@ -71,7 +75,7 @@ public class CompressLight implements ICompressTask {
             if (h == null || h.finished()) {
                 continue;
             }
-            Player p = h.getPlayer();
+            PlayerServer p = h.getPlayer();
             if (p == null) {
                 continue;
             }

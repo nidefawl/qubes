@@ -49,8 +49,8 @@ public class ComboBox extends AbstractUI implements Renderable {
         this.gui = gui;
         this.id = id;
         this.string = text;
-        this.width = this.height = 18;
-        this.font = FontRenderer.get(0, 18, 0);
+        this.width = this.height = Gui.FONT_SIZE_BUTTON;
+        this.font = FontRenderer.get(0, Gui.FONT_SIZE_BUTTON, 0);
         this.stringWidth = this.font.getStringWidth(this.string);
     }
     public void setValue(Object obj) {
@@ -60,7 +60,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         this.gui = gui;
         this.string = s;
         this.id = id;
-        this.font = FontRenderer.get(0, 18, 0);
+        this.font = FontRenderer.get(0, Gui.FONT_SIZE_BUTTON, 0);
         this.height = GameMath.round(this.font.getLineHeight()+4);
         this.stringWidth = this.font.getStringWidth(s);
         titleWidth=GameMath.round(Math.max(stringWidth+6, titleWidth));
@@ -203,7 +203,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                 scrollbarwidth = 0;
             }
             if (this.values.length > 0) {
-                this.heightPerEntry = GameMath.round(box.font.getLineHeight()+2);
+                this.heightPerEntry = GameMath.round(box.font.getLineHeight());
                 this.height = values * this.heightPerEntry;
                 this.width = this.box.width;
                 this.posY = this.box.posY + this.box.height+extendy;
@@ -391,10 +391,10 @@ public class ComboBox extends AbstractUI implements Renderable {
                 isOpen = false;
             else if (this.comboBoxList.parentScreen.getPopup() != this.comboBoxList)
                 isOpen = false;
-            if (!isOpen) {
-                System.out.println("popup was closed");
-                this.comboBoxList = null;
-            }
+        }
+        if (!isOpen) {
+//            System.out.println("popup was closed");
+            this.comboBoxList = null;
         }
         Engine.enableDepthMask(false);
         
@@ -462,11 +462,13 @@ public class ComboBox extends AbstractUI implements Renderable {
      */
     public boolean onClick(PopupHolder parent) {
         if (this.isOpen) {
+            System.out.println("onClick");
             this.isOpen = false;
             if (parent.getPopup() != null) {
                 parent.setPopup(null);
                 return false;
             }
+            return false;
         }
         if (!enabled) return false;
         if (!this.isOpen) {

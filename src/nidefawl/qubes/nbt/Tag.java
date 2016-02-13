@@ -15,7 +15,7 @@ import nidefawl.qubes.vec.Vector3f;
 public abstract class Tag {
 
     public static enum TagType {
-        END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTEARRAY, STRING, LIST, COMPOUND, VEC3, UUID;
+        END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTEARRAY, STRING, LIST, COMPOUND, VEC3, UUID, INT_MAP;
         public int getID() {
             return ordinal();
         }
@@ -313,6 +313,50 @@ public abstract class Tag {
 
     }
 
+    public static class IntMap extends Tag {
+
+
+        Map<Integer, Integer> data = new HashMap<>();
+        @Override
+        public TagType getType() {
+            return TagType.INT_MAP;
+        }
+
+        @Override
+        public Object getValue() {
+            return data;
+        }
+
+        @Override
+        protected void writeData(DataOutput out) throws IOException {
+            out.writeInt(this.data.size());
+            Iterator<Entry<Integer, Integer>> it = this.data.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<Integer, Integer> entry = it.next();
+                out.writeInt(entry.getKey());
+                out.writeInt(entry.getValue());
+            }
+        }
+
+        @Override
+        protected void readData(DataInput in, TagReadLimiter l) throws IOException {
+            int size = in.readInt();
+            if (size > MAX_COMPOUND_TAG_ENTRIES) {
+                throw new IOException("Maximum int map size exceeded");
+            }
+            for (int i = 0; i < size; i++) {
+                this.data.put(in.readInt(), in.readInt());
+            }
+        }
+        public Map<Integer, Integer> getData() {
+            return this.data;
+        }
+
+        public void set(HashMap<Integer, Integer> map) {
+            this.data.clear();
+            this.data.putAll(map);
+        }
+    }
     public static class Compound extends Tag {
 
         Map<String, Tag> data = new HashMap<>();
@@ -767,6 +811,8 @@ public abstract class Tag {
                 return new Vec3Tag();
             case UUID:
                 return new UUIDTag();
+            case INT_MAP:
+                return new IntMap();
             default:
                 break;
         }

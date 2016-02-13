@@ -127,11 +127,16 @@ public class ShadowProjector {
 
     public void setSplits(float[] splits, float fieldOfView, float aspectRatio) {
         this.splits = splits;
+        int i;
+        for (i = 0; shadowSplitMVP != null && i < shadowSplitMVP.length; i++) {
+            if (shadowSplitMVP[i] != null) {
+                shadowSplitMVP[i].free();
+            }
+        }
         shadowSplitProj = new Matrix4f[splits.length - 1];
         shadowSplitMVP = new BufferedMatrix[splits.length - 1];
         shadowSplitDepth = new float[splits.length - 1];
         shadowCamFrustum = new Frustum[splits.length - 1];
-        int i;
         for (i = 0; i < shadowSplitProj.length; i++) {
             shadowSplitProj[i] = new Matrix4f();
         }

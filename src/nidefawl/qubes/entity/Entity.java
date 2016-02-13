@@ -1,7 +1,11 @@
 package nidefawl.qubes.entity;
 
+import java.util.Random;
+
 import nidefawl.qubes.models.EntityModel;
+import nidefawl.qubes.models.qmodel.QModelProperties;
 import nidefawl.qubes.nbt.Tag;
+import nidefawl.qubes.nbt.Tag.TagType;
 import nidefawl.qubes.util.BlockColl;
 import nidefawl.qubes.util.CollisionQuery;
 import nidefawl.qubes.util.GameMath;
@@ -33,19 +37,24 @@ public abstract class Entity {
 	public Vec3D remotePos = new Vec3D();
     public Vector3f remoteRotation = new Vector3f();
     int rotticks, posticks;
-    private double width;
-    private double height;
-    private double length;
+    public double width;
+    public double height;
+    public double length;
     
     //debug vars
     public float yawfloat1, yawfloat2;
     public float yawfloat3, yawfloat4;
     public int ticks1, ticks2, ticks3;
+    public float   timeJump;
+    public float   timePunch;
+    public boolean flagRemove = false;
+    Random random = new Random();
+    protected EntityProperties properties;
     
 	public Entity() {
-		this.width = 0.8D;
-		this.height = 1.6D;
-		this.length = 0.8D;
+        this.width = getEntityType().getWidth();
+        this.height = getEntityType().getHeight();
+        this.length = getEntityType().getLength();
 		this.aabb.set(-width/2.0D, 0, -length/2.0D, width/2.0D, height, length/2.0D);
 	}
 	
@@ -60,18 +69,39 @@ public abstract class Entity {
 	}
 	
 	public void tickUpdate() {
-	    if (this.yaw > 360)
-	        this.yaw -= 360;
-	    if (this.yaw < 0)
-	        this.yaw += 360;
+	    this.preStep();
+        this.step();
+        this.postStep();
+	}
+    public boolean doesFall() {
+        return !doesFly() && this.world.getChunk(GameMath.floor(this.pos.x)>>4, GameMath.floor(this.pos.z)>>4) != null;
+    }
+    public boolean doesFly() {
+        return false;
+    }
+    protected void postStep() {
+        float slowdown = 0.28F;
+        float f = -getGravity();
+        float fn = 0.11F;
+        this.mot.x *= slowdown;
+        this.mot.z *= slowdown;
+        boolean fall = doesFall();
+        if (fall) {
+            this.mot.y = this.mot.y*(1F-fn)+f*fn;
+        } else {
+            this.mot.y *= slowdown;
+        }
+    }
+    protected void preStep() {
         this.lastYaw = this.yaw;
         this.lastYawBodyOffset = this.yawBodyOffset;
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);
         this.lastPos.set(this.pos);
-        this.step();
-	}
-
+        this.yaw = GameMath.wrapAngle(this.yaw);
+        this.yawBodyOffset = GameMath.wrapAngle(this.yawBodyOffset);
+        this.pitch = GameMath.wrapAngle(this.pitch);
+    }
     protected void step() {
         if (this.noclip) {
             aabb.offset(this.mot.x, this.mot.y, this.mot.z);
@@ -80,6 +110,8 @@ public abstract class Entity {
             this.pos.z = aabb.getCenterZ();
             return;
         }
+//        if (this.getEntityType()==EntityType.CAT)
+//            System.out.println("cat "+this.pos);
 //        boolean debug = GameContext.getSide()==Side.CLIENT;
 //        if (debug) {
 //            Engine.worldRenderer.debugBBs.clear();
@@ -215,10 +247,23 @@ public abstract class Entity {
      * @return
      */
     public Tag writeClientData(boolean isUpdate) {
+        if (!isUpdate && this.properties != null) {
+            Tag.Compound tag = new Tag.Compound();
+            tag.set("properties", this.properties.save());
+            return tag;
+        }
         return null;
     }
 
+
     public void readClientData(Tag tag) {
+        readProperties(tag);
+    }
+    public void readProperties(Tag tag) {
+        if (tag.getType() == TagType.COMPOUND) {
+            Tag.Compound compound = (Tag.Compound) tag;
+            this.properties.load(compound);
+        }
     }
 
     public abstract EntityType getEntityType();
@@ -237,10 +282,6 @@ public abstract class Entity {
         if (dir == 3)
             return Dir.DIR_NEG_Z;
         return Dir.DIR_POS_X;
-    }
-
-    public World getWorld() {
-        return this.world;
     }
 
     /**
@@ -292,11 +333,62 @@ public abstract class Entity {
      * @param yawBodyOffset2
      */
     public void setRemoteRotation(float pitch, float yaw, float yawBodyOffset) {
+        float diff = this.yaw-yaw;
+        if (diff > 180) {
+            this.yaw-=360;
+            this.lastYaw-=360;
+        } else if (diff < -180) {
+            this.yaw+=360;
+            this.lastYaw+=360;
+        }
+        diff = this.yawBodyOffset-yawBodyOffset;
+        if (diff > 180) {
+            this.yawBodyOffset-=360;
+            this.lastYawBodyOffset-=360;
+        } else if (diff < -180) {
+            this.yawBodyOffset+=360;
+            this.lastYawBodyOffset+=360;
+        }
+        diff = this.pitch-pitch;
+        if (diff > 180) {
+            this.pitch-=360;
+            this.lastPitch-=360;
+        } else if (diff < -180) {
+            this.pitch+=360;
+            this.lastPitch+=360;
+        }
         remoteRotation.set(yaw, yawBodyOffset, pitch);
         rotticks=3;
+    }
+
+    public void remove() {
+        this.flagRemove = true;
+    }
+
+    public Random getRandom() {
+        return this.random;
+    }
+
+    public float getPathWeight(int rx, int ry, int rz) {
+        return 0;
+    }
+    public AABB getAabb() {
+        return this.aabb;
+    }
+
+    public void adjustRenderProps(QModelProperties renderProps, float fTime) {
+        EntityProperties properties = this.properties;
+        if (properties != null) {
+            renderProps.options.clear();
+            renderProps.options.putAll(properties.map);
+        }
     }
 
     public EntityModel getEntityModel() {
         return null;
     }
+    public EntityProperties getEntityProperties() {
+        return this.properties;
+    }
+
 }

@@ -7,8 +7,12 @@ import jline.console.UserInterruptException;
 import nidefawl.qubes.server.commands.Command;
 import nidefawl.qubes.server.commands.CommandException;
 import nidefawl.qubes.server.commands.ICommandSource;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.WorldServer;
 
+@SideOnly(value = Side.SERVER)
 public class ConsoleReader implements Runnable, ICommandSource {
 
     private static Thread thread;
@@ -106,7 +110,7 @@ public class ConsoleReader implements Runnable, ICommandSource {
     }
 
     @Override
-    public World getWorld() {
+    public WorldServer getWorld() {
         return this.server.getSpawnWorld();
     }
 

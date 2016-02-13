@@ -68,5 +68,28 @@ public class ByteArrIO {
     public static void writeByte(byte[] output, int offset, int v) {
         output[offset++] = (byte) (v & 0xFF);
     }
+    public static void byteToShortArray(byte[] blocks, short[] dst) {
+        for (int i = 0; i < dst.length; i++) {
+            dst[i] = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
+        }
+    }
+    public static byte[] shortToByteArray(short[] blocks) {
+        byte[] bytes = new byte[blocks.length*2];
+        return shortToByteArray(blocks, bytes);
+    }
+    public static byte[] shortToByteArray(short[] blocks, byte[] bytes) {
+        for (int i = 0; i < blocks.length; i++) {
+            bytes[i*2+0] = (byte) (blocks[i]&0xFF);
+            bytes[i*2+1] = (byte) ((blocks[i]>>8)&0xFF);
+        }
+        return bytes;
+    }
+    public static short[] byteToShortArray(byte[] blocks) {
+        short[] shorts = new short[blocks.length/2];
+        for (int i = 0; i < shorts.length; i++) {
+            shorts[i] = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
+        }
+        return shorts;
+    }
 
 }

@@ -14,6 +14,13 @@ public class ReallocIntBuffer {
 
     ByteBuffer buffers;
     IntBuffer intbuffers;
+    boolean inUse = true;
+    public void setInUse(boolean inUse) {
+        this.inUse = inUse;
+    }
+    public boolean isInUse() {
+        return this.inUse;
+    }
     
     /**
      * @param i

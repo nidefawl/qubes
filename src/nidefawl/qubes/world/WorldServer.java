@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.GameRegistry;
+import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.blocklight.BlockLightThread;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -18,14 +19,12 @@ import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketSWorldTime;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.ServerStats;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 
+@SideOnly(value = Side.SERVER)
 public class WorldServer extends World {
 
     private final GameServer         server;
@@ -40,6 +39,7 @@ public class WorldServer extends World {
     private final BlockLightThread lightUpdater;
     public HashMap<Integer, Entity>  entities   = new HashMap<>();                                             // use trove or something
     public ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
+    ArrayList<Entity>         entityRemove = new ArrayList<>();                                           // use fast array list
 
 
     public WorldServer(WorldSettings settings, GameServer server) {
@@ -76,10 +76,19 @@ public class WorldServer extends World {
         if (!this.settings.isFixedTime()) {
             this.settings.setTime(this.settings.getTime() + 1L);
         }
+        this.entityRemove.clear();
         int size = this.entityList.size();
         for (int i = 0; i < size; i++) {
             Entity e = this.entityList.get(i);
             e.tickUpdate();
+            if (e.flagRemove) {
+                this.entityRemove.add(e);
+            }
+        }
+        size = this.entityRemove.size();
+        for (int i = 0; i < size; i++) {
+            Entity e = this.entityRemove.get(i);
+            this.removeEntity(e);
         }
         updateChunks();
     }

@@ -16,8 +16,8 @@ import nidefawl.qubes.vec.Vector3f;
  */
 public class QModelPoseBone {
     private final List<QModelPoseBone> children = Lists.newArrayList();
-    public Matrix4f matDeform;
-    public final Matrix4f deformInterp = new Matrix4f();
+    public final Matrix4f matDeform = new Matrix4f();
+    public final Matrix4f matDeformNormal = new Matrix4f();
     public final QModelBone restbone;
     public QModelPoseBone parent;
     public boolean animate = true;
@@ -27,8 +27,19 @@ public class QModelPoseBone {
      */
     public QModelPoseBone(QModelBone b) {
         this.restbone = b;
-        this.matDeform = deformInterp;
+        this.restbone.posebone = this;
         this.matDeform.load(b.matRest);
+        updateNormalMat();
+    }
+    public void updateNormalMat() {
+        this.matDeformNormal.load(this.matDeform);
+        matDeformNormal.m30=0;
+        matDeformNormal.m31=0;
+        matDeformNormal.m32=0;
+        matDeformNormal.m33=1;
+        matDeformNormal.m03=0;
+        matDeformNormal.m13=0;
+        matDeformNormal.m23=0;
     }
     /**
      * @param jt
@@ -41,17 +52,6 @@ public class QModelPoseBone {
      */
     public List<QModelPoseBone> getChildren() {
         return this.children;
-    }
-    /**
-     * @param mat
-     * @param mat2
-     * @param frameInterpProgress
-     */
-    public void interpolateFrame(Matrix4f mat, Matrix4f mat2, float frameInterpProgress) {
-        deformInterp.setZero();
-        deformInterp.addWeighted(mat, 1.0f-frameInterpProgress);
-        deformInterp.addWeighted(mat2, frameInterpProgress);
-        this.matDeform = deformInterp;
     }
     /**
      * @return

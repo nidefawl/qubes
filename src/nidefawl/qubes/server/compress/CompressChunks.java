@@ -4,11 +4,15 @@ import java.util.Collection;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.PacketSChunkData;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.util.ByteArrIO;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.world.World;
 
+@SideOnly(value = Side.SERVER)
 public class CompressChunks implements ICompressTask {
 
     private Collection<Chunk> chunks;
@@ -123,7 +127,7 @@ public class CompressChunks implements ICompressTask {
             if (h == null || h.finished()) {
                 continue;
             }
-            Player p = h.getPlayer();
+            PlayerServer p = h.getPlayer();
             if (p == null) {
                 continue;
             }
@@ -145,7 +149,7 @@ public class CompressChunks implements ICompressTask {
             if (h == null || h.finished()) {
                 continue;
             }
-            Player p = h.getPlayer();
+            PlayerServer p = h.getPlayer();
             if (p == null) {
                 continue;
             }

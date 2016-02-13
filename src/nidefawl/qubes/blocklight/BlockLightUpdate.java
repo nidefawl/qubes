@@ -2,10 +2,10 @@ package nidefawl.qubes.blocklight;
 
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.TripletLongHash;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Dir;
 
+@SideOnly(value = Side.SERVER)
 public class BlockLightUpdate {
 
     //TODO: use world.getHeight or World.MAX_HEIGHT

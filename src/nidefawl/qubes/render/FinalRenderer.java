@@ -367,6 +367,7 @@ public class FinalRenderer extends AbstractRenderer {
                 @Override
                 public String getDefinition(String define) {
                     if ("SSR".equals(define)) {
+                        System.err.println("DEFINE");
                         int ssr = Game.instance.settings.ssr;
                         return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
                     }

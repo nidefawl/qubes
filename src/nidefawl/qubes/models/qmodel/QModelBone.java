@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
@@ -24,9 +25,10 @@ public class QModelBone {
     public Matrix4f matRest;
     public Matrix4f matRestInv = new Matrix4f();
     private final List<QModelBone> children = Lists.newArrayList();
-    public Vector3f tail;
     public Vector3f tailLocal = new Vector3f();
     public QModelBone parent;
+    public QModelPoseBone posebone;
+    public float boneLength;
     /**
      * @param i 
      * @param modelLoaderQModel
@@ -43,9 +45,10 @@ public class QModelBone {
             mat[j] = loader.readFloat();
         }
         this.matRest.load(mat);
-        this.tail = loader.readVec3();
         Matrix4f.invert(this.matRest, this.matRestInv);
-        Matrix4f.transform(this.matRestInv, this.tail, this.tailLocal);
+        Vector3f vec = loader.readVec3();
+        Matrix4f.transform(this.matRestInv, vec, this.tailLocal);
+        this.boneLength = this.tailLocal.length();
     }
     /**
      * @param jt

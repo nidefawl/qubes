@@ -6,8 +6,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.world.WorldServer;
 
+@SideOnly(value = Side.SERVER)
 public class BlockLightThread extends Thread {
     private static long               sleepTime = 10;
     private LinkedBlockingQueue<Long> queue     = new LinkedBlockingQueue<Long>();

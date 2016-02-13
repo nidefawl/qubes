@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.lwjgl.opengl.ARBMapBufferRange;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL43;
 
 import com.google.common.collect.Lists;
 
@@ -21,6 +22,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Stats;
 
 public class ShaderBuffer {
     static List<ShaderBuffer> buffers = Lists.newArrayList();
@@ -59,11 +61,16 @@ public class ShaderBuffer {
         GL15.glBindBuffer(GL_SHADER_STORAGE_BUFFER, this.buffer);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_SHADER_STORAGE_BUFFER");
-        GL15.glBufferData(GL_SHADER_STORAGE_BUFFER, this.len, GL15.GL_STATIC_DRAW);
+        if (this.len < max) {
+            System.err.println("INVALID SIZE");
+        }
+//        GL43.glInvalidateBufferData(this.buffer);
+//        GL15.glBufferData(GL_SHADER_STORAGE_BUFFER, this.len, GL15.GL_STATIC_DRAW);
 
         //System.out.println(buf+"/"+this.len);
         
         GL15.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buf);
+        Stats.uploadBytes+=max;
         
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferSubData GL_SHADER_STORAGE_BUFFER "+this.name+"/"+this.buffer+"/"+buf+"/"+this.len);

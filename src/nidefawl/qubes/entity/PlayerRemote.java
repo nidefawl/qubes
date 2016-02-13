@@ -4,12 +4,17 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.nbt.Tag;
+import nidefawl.qubes.nbt.Tag.IntMap;
 import nidefawl.qubes.nbt.Tag.TagType;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
+
+@SideOnly(value=Side.CLIENT)
 public class PlayerRemote extends Player {
 
     /**
@@ -20,12 +25,15 @@ public class PlayerRemote extends Player {
 
     public void readClientData(Tag tag) {
         if (tag.getType() == TagType.COMPOUND) {
-            this.name = ((Tag.Compound)tag).getString("name");
+            Tag.Compound compound = (Tag.Compound) tag;
+            this.name = compound.getString("name");
+            Tag c = compound.get("properties");
+            if (c != null)
+                readProperties(c);
         }
     }
-    
     @Override
-    public void tickUpdate() {
+    protected void preStep() {
         this.lastYaw = this.yaw;
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);
@@ -52,7 +60,17 @@ public class PlayerRemote extends Player {
             }
             this.rotticks--;
         }
-        updateTicks();
+    }
+    @Override
+    protected void step() {
+    }
+    @Override
+    protected void postStep() {
+    }
+    
+    @Override
+    public void tickUpdate() {
+        super.tickUpdate();
     }
 
 }

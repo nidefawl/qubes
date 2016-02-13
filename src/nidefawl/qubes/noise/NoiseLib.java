@@ -10,26 +10,38 @@ import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseLib;
 
 /**
- * @author Michael Hept 2015
- * Copyright: Michael Hept
+ * @author Michael Hept 2015 Copyright: Michael Hept
  */
 public class NoiseLib {
     final static boolean LIB_PRESENT;
+
     static {
-        boolean hasNoise=false;
+        boolean hasNoise = false;
         try {
-            System.load(new File("libnativenoise.so").getAbsolutePath());    
+            System.load(new File("libnativenoise.so").getAbsolutePath());
             hasNoise = true;
         } catch (UnsatisfiedLinkError e) {
             //SWALLOW
-        }       
+        }
+        try {
+            System.load(new File("../lib/noise/nativenoise.dll").getAbsolutePath());
+            hasNoise = true;
+        } catch (UnsatisfiedLinkError e) {
+            //SWALLOW
+        }
+        try {
+            System.load(new File("./lib/noise/nativenoise.dll").getAbsolutePath());
+            hasNoise = true;
+        } catch (UnsatisfiedLinkError e) {
+            //SWALLOW
+        }
         LIB_PRESENT = hasNoise;
     }
-    
+
     public static boolean isLibPresent() {
         return LIB_PRESENT;
     }
-    
+
     public static OpenSimplexNoise makeGenerator(long seed) {
         if (LIB_PRESENT) {
             return new OpenSimplexNoiseLib(seed);

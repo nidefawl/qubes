@@ -8,9 +8,9 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.biomes.IBiomeManager;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.world.*;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 
@@ -20,6 +20,8 @@ import nidefawl.qubes.worldgen.terrain.ITerrainGen;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
+
+@SideOnly(value=Side.SERVER)
 public class GameRegistry {
 
     final static Map<String, Class<? extends ITerrainGen>> terrainGenerators = Maps.newHashMap();
@@ -33,6 +35,9 @@ public class GameRegistry {
     public static ITerrainGen newGenerator(WorldServer worldServer, WorldSettings settings) {
         String gen = settings.getString("generator", "terrain");
         Class<? extends ITerrainGen> genKlass = terrainGenerators.get(gen);
+        if (genKlass == null) {
+            throw new IllegalArgumentException("Undefined terraingenerator "+gen);
+        }
         try {
             Constructor<? extends ITerrainGen> cstr = genKlass.getDeclaredConstructor(WorldServer.class, long.class, WorldSettings.class);
             ITerrainGen igen = cstr.newInstance(worldServer, settings.getSeed(), settings);
@@ -62,7 +67,7 @@ public class GameRegistry {
         if (gen != null) {
             genKlass = terrainPopulators.get(gen);
             if (genKlass == null) {
-                throw new IllegalArgumentException("No such terrain populator "+gen);
+                throw new IllegalArgumentException("Undefined terrain populator "+gen);
             }
         }
         if (genKlass == null) {

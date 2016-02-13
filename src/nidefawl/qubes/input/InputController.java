@@ -21,8 +21,11 @@ import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.crafting.GuiCraftingSelect;
 import nidefawl.qubes.gui.windows.*;
+import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiModelView;
+import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiPlayerAdjust;
 import nidefawl.qubes.meshing.Mesher;
 import nidefawl.qubes.models.BlockModelManager;
+import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
@@ -222,13 +225,20 @@ public class InputController {
             }
         });
 
-        addKeyBinding(new Keybinding("show_crafting", GLFW.GLFW_KEY_PERIOD) {
-            public void onDown() {
-            }
-        });
-        addKeyBinding(new Keybinding("show_crafting2", GLFW.GLFW_KEY_COMMA) {
+        addKeyBinding(new Keybinding("show_crafting", GLFW.GLFW_KEY_O) {
             public void onDown() {
                 GuiWindowManager.openWindow(GuiCraftingSelect.class);
+            }
+        });
+
+        addKeyBinding(new Keybinding("show_look", GLFW.GLFW_KEY_L) {
+            public void onDown() {
+                GuiWindowManager.openWindow(GuiPlayerAdjust.class);
+            }
+        });
+        addKeyBinding(new Keybinding("show_models", GLFW.GLFW_KEY_K) {
+            public void onDown() {
+                GuiWindowManager.openWindow(GuiModelView.class);
             }
         });
         addKeyBinding(new Keybinding("show_select_world", GLFW.GLFW_KEY_N) {

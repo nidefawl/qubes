@@ -3,6 +3,7 @@ package nidefawl.qubes.gui.controls;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
@@ -118,7 +119,7 @@ public class TextField extends AbstractUI implements Renderable {
     public boolean isFocusedAndContext() {
         if (this.focused) {
             if (this.parent instanceof Gui) {
-                if (Game.instance.getGui()==this.parent) {
+                if (GameBase.baseInstance.getGui()==this.parent) {
                     return true;
                 }
             }

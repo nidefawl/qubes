@@ -2,7 +2,7 @@ package nidefawl.qubes.test;
 
 import java.util.Random;
 
-import nidefawl.qubes.chunk.server.ChunkReader;
+import nidefawl.qubes.util.ByteArrIO;
 
 public class ShortArrayToByteArray {
 
@@ -22,8 +22,8 @@ public class ShortArrayToByteArray {
             System.out.print(bla + " ");
         }
         System.out.println();
-        byte[] b = ChunkReader.shortToByteArray(data);
-        short[] s = ChunkReader.byteToShortArray(b);
+        byte[] b = ByteArrIO.shortToByteArray(data);
+        short[] s = ByteArrIO.byteToShortArray(b);
         for (int i = 0; i < s.length; i++) {
             int bla = s[i] & 0xFFFF;
             System.out.print(bla + " ");

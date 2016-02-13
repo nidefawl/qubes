@@ -15,8 +15,8 @@ public class NetworkClient {
 
     public NetworkClient(final String host, final short port) throws UnknownHostException, IOException {
     	Socket s = new Socket();
-    	s.connect(new InetSocketAddress(host, port), 500);
-    	s.setSoTimeout(5000);
+    	s.connect(new InetSocketAddress(host, port), 10000);
+    	s.setSoTimeout(10000);
         this.conn = new Connection(s);
         this.handler = new ClientHandler(this);
         this.conn.startThreads();

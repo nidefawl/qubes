@@ -15,6 +15,7 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.util.SysInfo;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
@@ -38,7 +39,7 @@ public class GuiOverlayStats extends Gui {
         this.font = FontRenderer.get(0, 18, 0);
         this.fontSmall = FontRenderer.get(0, 16, 0);
     }
-
+    SysInfo sysInfo = null;
 
     public void refresh() {
         int smallSize = 12;
@@ -61,12 +62,28 @@ public class GuiOverlayStats extends Gui {
         info.clear();
         if (world != null) {
             int numChunks = world.getChunkManager().getChunksLoaded();
+            if (sysInfo == null) {
+                sysInfo = new SysInfo();
+            }
+            String ss = sysInfo.openGLVersion; 
+            while (ss.length() > 0) {
+                int n = ss.length() < 30 ? -1 : ss.substring(30).indexOf(" ");
+                if (n >= 0 && n < ss.length()-1) {
+                    n+=30;
+                    info.add(ss.substring(0, n));
+                    ss = ss.substring(n+1);
+                } else {
+
+                    info.add(ss);
+                    break;
+                }
+            }
             info.add( String.format("Shaders %d - FBOs %d", Shader.SHADERS, FrameBuffer.FRAMEBUFFERS));
             info.add( String.format("VBOs %d (%d terrain)", GLVBO.ALLOC_VBOS, GLVBO.ALLOC_VBOS_TERRAIN));
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
-            info.add( String.format("Drawcalls %d", Stats.lastFrameDrawCalls));
+            info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
             info.add( String.format("Lights: %d", world.lights.size()) );
             info.add( String.format("UpdateRenderers (R): %s", Game.instance.updateRenderers ? "On" : "Off") );
             info.add( String.format("External resources (F11): %s", AssetManager.getInstance().isExternalResources() ? "On" : "Off") );

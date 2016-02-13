@@ -18,6 +18,8 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
+import nidefawl.qubes.models.render.QModelBatchedRender;
+import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
@@ -79,6 +81,7 @@ public class Engine {
     public static Vector3f       lightDirection;
     public static float          sunAngle     = 0F;
     public static Camera         camera;
+    public static Camera         camera2;
     public static ShadowProjector shadowProj;
     public static WorldRenderer  worldRenderer;
     public static ShadowRenderer  shadowRenderer;
@@ -87,6 +90,7 @@ public class Engine {
     public static RegionRenderer regionRenderer;
     public static LightCompute  lightCompute;
     public static MeshThread     regionRenderThread;
+    public static QModelBatchedRender renderBatched;
     private static float         aspectRatio;
     private static int           fieldOfView;
 
@@ -105,8 +109,6 @@ public class Engine {
     
     public final static ShaderBuffer        ssbo_lights = new ShaderBuffer("PointLightStorageBuffer").setSize(MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT);
     
-    public final static ShaderBuffer        boneMatrices         = new ShaderBuffer("QModelMat")
-            .setSize(BatchedRiggedModelRenderer.STRUCT_SIZE*BatchedRiggedModelRenderer.MAX_INSTANCES);
     
     public final static ShaderBuffer        ssbo_model_modelmat         = new ShaderBuffer("QModel_mat_model")
             .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES);
@@ -118,6 +120,7 @@ public class Engine {
             .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES*32);
     
     public final static SunLightModel sunlightmodel = new SunLightModel();
+    private final static ReallocIntBuffer[] buffers = new ReallocIntBuffer[4];
     
     
     public static void bindVAO(GLVAO vao) {
@@ -180,6 +183,7 @@ public class Engine {
         lightDirection = new Vector3f();
         back = new Vector4f();
         camera = new Camera();
+        camera2 = new Camera();
         if (initRenderers) {
             shadowProj = new ShadowProjector();
             worldRenderer = new WorldRenderer();
@@ -189,6 +193,7 @@ public class Engine {
             regionRenderer = new RegionRenderer();
             regionRenderThread = new MeshThread(3);
         }
+        renderBatched = new QModelBatchedRender();
         sunlightmodel.setDayLen(10000);
         sunlightmodel.setTime(7500);
         System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
@@ -206,12 +211,12 @@ public class Engine {
         UniformBuffer.init();
         Shaders.init();
         ShaderBuffer.init();
-        Engine.boneMatrices.update();
         if (initRenderers) {
             regionRenderThread.init();
             regionRenderer.init();
             reloadRenderer(true);
         }
+        renderBatched.init();
         blockDraw.init();
         itemRender.init();
         pxStack.setCallBack(new StackChangeCallBack() {
@@ -376,8 +381,11 @@ public class Engine {
         return identity;
     }
 
-
     public static void updateCamera() {
+        updateCamera(camera);
+    }
+
+    public static void updateCamera(Camera camera) {
         up.set(0, 100, 0);
 //        back.set(0, -10, 0);
         Matrix4f cam = camera.getViewMatrix();
@@ -679,6 +687,21 @@ public class Engine {
 
     public static SunLightModel getSunLightModel() {
         return sunlightmodel;
+    }
+
+    public static ReallocIntBuffer getIntBuffer() {
+        for (int i = 0; i < buffers.length; i++) {
+            if (buffers[i] == null) {
+                buffers[i] = new ReallocIntBuffer();
+                buffers[i].setInUse(true);
+                return buffers[i];
+            }
+            if (!buffers[i].isInUse()) {
+                buffers[i].setInUse(true);
+                return buffers[i];
+            }
+        }
+        return null;
     }
 
 }

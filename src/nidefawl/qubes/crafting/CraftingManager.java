@@ -14,7 +14,10 @@ import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketSCraftingProgress;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
+@SideOnly(value=Side.SERVER)
 public class CraftingManager extends CraftingManagerBase {
     protected PlayerServer player;
     

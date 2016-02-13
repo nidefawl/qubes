@@ -17,8 +17,6 @@ public class GLTriBuffer {
 
     private final GLVBO vbo;
     private final GLVBO vboIndices;
-    ReallocIntBuffer vboBuf;
-    ReallocIntBuffer vboIdxBuf;
     private int      triCount;
     private int      vertexCount;
     private int idxCount;
@@ -28,26 +26,20 @@ public class GLTriBuffer {
     }
 
 
-    public void gen() {
-        if (this.vboBuf == null) {
-            this.vboBuf = new ReallocIntBuffer(1024);
-            this.vboIdxBuf = new ReallocIntBuffer(1024);
-        }
-    }
-
     public int upload(VertexBuffer buf) {
-        if (this.vboBuf == null) {
-            gen();
-        }
-        int numInts = buf.storeVertexData(this.vboBuf);
-        int numInts2 = buf.storeIndexData(this.vboIdxBuf);
-        this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts * 4L);
-        this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2 * 4L);
+        ReallocIntBuffer buffer1 = Engine.getIntBuffer();
+        ReallocIntBuffer buffer2 = Engine.getIntBuffer();
+        int numInts = buf.storeVertexData(buffer1);
+        int numInts2 = buf.storeIndexData(buffer2);
+        this.vbo.upload(GL15.GL_ARRAY_BUFFER, buffer1.getByteBuf(), numInts * 4L);
+        this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer2.getByteBuf(), numInts2 * 4L);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData");
         this.vertexCount = buf.vertexCount;
         this.idxCount = buf.getTriIdxPos();
         this.triCount = this.idxCount/3;
+        buffer1.setInUse(false);
+        buffer2.setInUse(false);
         return (numInts+numInts2)*4;
     }
     
@@ -74,13 +66,11 @@ public class GLTriBuffer {
      * 
      */
     public void release() {
-        if (this.vboBuf != null) {
+        if (this.vbo != null) {
             this.vbo.release();
+        }
+        if (this.vboIndices != null) {
             this.vboIndices.release();
-            this.vboBuf.release();
-            this.vboIdxBuf.release();
-            this.vboBuf = null;
-            this.vboIdxBuf = null;
         }
     }
 

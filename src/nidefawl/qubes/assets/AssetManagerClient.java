@@ -50,22 +50,46 @@ public class AssetManagerClient extends AssetManager {
     public Shader loadShader(IResourceManager mgr, String name) {
         return loadShader(mgr, name, null);
     }
+
     public Shader loadShader(IResourceManager mgr, String name, IShaderDef def) {
-        if (!name.startsWith("/"))
-            name = "shaders/" + name;
-        ShaderSourceBundle shaderSrc = new ShaderSourceBundle(name);
+        return loadShader(mgr, name, name, name, name, def);
+    }
+    
+    static String[] splitPath(String name) {
+        String path;
+        String fname;
+        int idx = name.lastIndexOf("/");
+        if (idx <= 0) {
+            path = "";
+            fname = name;
+        } else {
+            path = name.substring(0, idx);
+            fname = name.substring(idx+1);
+        }
+        return new String[] { path, fname };
+    }
+    
+    public Shader loadShader(IResourceManager mgr, String nameVSH, String nameFSH, String nameGSH, String nameCSH, IShaderDef def) {
+        if (nameFSH == null)
+            nameFSH = nameVSH;
+        if (nameGSH == null)
+            nameGSH = nameVSH;
+        if (nameCSH == null)
+            nameCSH = nameVSH;
+        
+        if (!nameVSH.startsWith("/"))
+            nameVSH = "shaders/" + nameVSH;
+
+        ShaderSourceBundle shaderSrc = new ShaderSourceBundle(nameVSH);
         try {
-            int idx = name.lastIndexOf("/");
-            String path;
-            String fname;
-            if (idx <= 0) {
-                path = "";
-                fname = name;
-            } else {
-                path = name.substring(0, idx);
-                fname = name.substring(idx+1);
-            }
-            shaderSrc.load(this, path, fname, def);
+
+            final String[] pathNameVSH = splitPath(nameVSH);
+            final String[] pathNameFSH = splitPath(nameFSH);
+            final String[] pathNameGSH = splitPath(nameGSH);
+            final String[] pathNameCSH = splitPath(nameCSH);
+            
+            shaderSrc.load(this, pathNameVSH[0], pathNameVSH[1], pathNameFSH[1], pathNameGSH[1], pathNameCSH[1], def);
+            
             Shader shader = shaderSrc.compileShader();
             if (mgr != null && shader != null)
                 mgr.addResource(shader);
@@ -79,7 +103,7 @@ public class AssetManagerClient extends AssetManager {
         } catch (GameError e) {
             throw e;
         } catch (Exception e) {
-            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+            throw new GameError("Cannot load asset '" + nameVSH + "': " + e, e);
         }
     }
 

@@ -7,6 +7,7 @@ import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
+import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.item.IDMappingItems;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.models.EntityModel;
@@ -56,6 +57,7 @@ public class GameContext {
             AsyncTasks.init();
             IDMappingBlocks.load();
             IDMappingItems.load();
+            EntityType.load();
         } catch (GameError e) {
             initError = e;
         } catch (Exception e) {

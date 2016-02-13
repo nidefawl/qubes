@@ -5,6 +5,7 @@ import java.io.EOFException;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
 
@@ -18,7 +19,7 @@ public class QModelTexture {
         this.idx = i;
         this.name = loader.readString(32);
         this.path = loader.readString(128);
-        System.out.println(loader.getModelName()+" - texture "+idx+": name "+this.name+", path "+this.path);
+//        System.out.println(loader.getModelName()+" - texture "+idx+": name "+this.name+", path "+this.path);
     }
     
     public int get() {

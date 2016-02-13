@@ -1,0 +1,20 @@
+Netcode things:
+Synchronize block IDs between client and server on connect
+
+
+Performance things:
+
+Test compressed texture formats performance
+Test more compact block vertex formats (non-GL_FLOAT for vec3 pos)
+
+Model renderer:
+
+
+Launcher things:
+Add multiple applications to launcher
+Use better compression on files
+
+
+
+
+ 

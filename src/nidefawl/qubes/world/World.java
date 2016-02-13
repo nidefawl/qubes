@@ -4,6 +4,8 @@ import java.util.*;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
+import nidefawl.qubes.biomes.HexBiome;
+import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -13,8 +15,6 @@ import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.worldgen.biome.HexBiome;
-import nidefawl.qubes.worldgen.biome.IBiomeManager;
 
 public abstract class World implements IBlockWorld {
     public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;

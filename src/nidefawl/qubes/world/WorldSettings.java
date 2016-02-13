@@ -1,6 +1,7 @@
 package nidefawl.qubes.world;
 
 import java.io.*;
+import java.util.Random;
 import java.util.UUID;
 
 import nidefawl.qubes.config.AbstractYMLConfig;
@@ -57,14 +58,15 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     public void setDefaults() {
         this.seed = 0;
         this.time = 0;
-        this.uuid = UUID.randomUUID();
+        Random rand = new Random();
+        this.uuid = new UUID(rand.nextLong(), rand.nextLong());
     }
 
     @Override
     public void load() {
         String strseed = getString("seed", "0");
         this.seed = StringUtil.parseLong(strseed, 0, 16);
-        this.generatorName = getString("terraingen", this.generatorName);
+        this.generatorName = getString("generator", this.generatorName);
         this.time = getLong("time", this.time);
         this.dayLen = getLong("dayLength", this.dayLen);
         this.isFixedTime = getBoolean("isFixedTime", this.isFixedTime);
@@ -79,7 +81,7 @@ public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
     @Override
     public void save() {
         setString("seed", Long.toHexString(this.seed));
-        setString("terraingen", this.generatorName);
+        setString("generator", this.generatorName);
         setLong("time", this.time);
         setLong("dayLength", this.dayLen);
         setBoolean("isFixedTime", this.isFixedTime);

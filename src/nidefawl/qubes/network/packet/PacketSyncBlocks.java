@@ -3,8 +3,8 @@ package nidefawl.qubes.network.packet;
 import java.io.*;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.network.Handler;
+import nidefawl.qubes.util.ByteArrIO;
 
 public class PacketSyncBlocks extends Packet {
     public short[] blockIds;
@@ -27,14 +27,14 @@ public class PacketSyncBlocks extends Packet {
         this.blockIds = new short[len];
         byte[] byteData = new byte[this.blockIds.length*2];
         stream.readFully(byteData);
-        ChunkReader.byteToShortArray(byteData, this.blockIds);
+        ByteArrIO.byteToShortArray(byteData, this.blockIds);
         
     }
 
     @Override
     public void writePacket(DataOutput stream) throws IOException {
         stream.writeInt(this.blockIds.length);
-	    byte[] data = ChunkReader.shortToByteArray(this.blockIds);;
+	    byte[] data = ByteArrIO.shortToByteArray(this.blockIds);;
 	    stream.write(data);
 	}
 

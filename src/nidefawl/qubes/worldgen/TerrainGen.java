@@ -1,11 +1,14 @@
 package nidefawl.qubes.worldgen;
 
 import nidefawl.qubes.GameRegistry;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.*;
 import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
 
+@SideOnly(value = Side.SERVER)
 public class TerrainGen {
 
     public static void init() {

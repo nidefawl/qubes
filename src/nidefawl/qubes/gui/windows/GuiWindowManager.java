@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.*;
@@ -130,9 +131,10 @@ public class GuiWindowManager implements Renderable  {
             }
         }
         try {
-            GuiWindow window = (GuiWindow) windowClass.getDeclaredConstructors()[0].newInstance();
+            GuiWindow window = (GuiWindow) windowClass.newInstance();
             window.initGui(true);
             addWindow(window, true);
+            return window;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -284,7 +286,7 @@ public class GuiWindowManager implements Renderable  {
         Engine.pxStack.push(0, 0, windowDepth+windowDepth);
 //        super.drawScreen(i, j, f);
 
-        Player player = Game.instance.getPlayer();
+        Player player = Game.instance != null ? Game.instance.getPlayer() : null;
         BaseStack stack = player == null? null:player.getInventory().getCarried();
         if (stack != null) {
             int slotW = 48;
@@ -355,7 +357,7 @@ public class GuiWindowManager implements Renderable  {
         return false;
     }
     public static GuiWindow getMouseOver(double mX, double mY) {
-        if (Game.instance.movement.grabbed()) {
+        if (GameBase.baseInstance.isGrabbed()) {
             return null;
         }
         int highest = getHighestIndex();
@@ -417,13 +419,14 @@ public class GuiWindowManager implements Renderable  {
         }
         boolean anyVisible = anyWindowVisible();
         if (!anyVisible) {
-            Game.instance.setGrabbed(Game.instance.getWorld()!=null);
+            if (Game.instance != null)
+                GameBase.baseInstance.setGrabbed(Game.instance.getWorld()!=null);
         }
     }
     public static void onWindowOpened(GuiWindow guiWindow) {
         boolean anyVisible = anyWindowVisible();
         if (anyVisible) {
-            Game.instance.setGrabbed(false);
+            GameBase.baseInstance.setGrabbed(false);
         }
     }
     public static void update() {

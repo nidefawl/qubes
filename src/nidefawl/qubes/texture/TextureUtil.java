@@ -2,9 +2,6 @@ package nidefawl.qubes.texture;
 
 import java.awt.image.BufferedImage;
 
-import nidefawl.qubes.noise.NoiseLib;
-import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameMath;
 
 public class TextureUtil {
@@ -30,109 +27,109 @@ public class TextureUtil {
                 }
         return data;
     }
-
-    public static byte[] genNoise2(int w, int h) {
-        int noct = 8;
-        long seed = 0xdeadbeefL;
-        seed--;
-        OpenSimplexNoise n4d2 = NoiseLib.makeGenerator(42);
-        OpenSimplexNoise n4d = NoiseLib.makeGenerator(5);
-        OpenSimplexNoise n4d3 = NoiseLib.makeGenerator(6);
-        OpenSimplexNoise n4d5 = NoiseLib.makeGenerator(7);
-        byte[] data = new byte[w * h * 3];
-        TimingHelper.startSilent(123);
-//        float f1 = Client.ticksran + Main.instance.partialTick;
-        int iW = 0;
-        double scale = 6;
-        double scale2 = scale/1.2;
-        double sclae3 = 44;
-        double x1,x2,y1,y2;
-        double dx,dy;
-        x1 = -1; y1= -1;
-        x2 = 1; y2 = 1;
-        dx = x2-x1; dy = y2-y1;
-        float PI = (float) Math.PI;
-        double[] dNoise = new double[(w + iW * 2) * (h + iW * 2)];
-        float fb=0.05f;
-        double[] rgb = new double[3];
-        for (int iX = -iW; iX < w + iW; iX++)
-            for (int iZ = -iW; iZ < h + iW; iZ++) {
-                float fx = (iX/(float)w);
-                float fy = (iZ/(float)h);
-                double xI1=fx>fb?1:(fx)/fb;
-                double xI2=fx<1-fb?1:1-(fx-(1-fb))/fb;
-                double nx = x1+GameMath.cos(fx*2*PI)*dx/(2*PI);
-                double ny = y1+GameMath.cos(fy*2*PI)*dy/(2*PI);
-                double nz = x1+GameMath.sin(fx*2*PI)*dx/(2*PI);
-                double nw = y1+GameMath.sin(fy*2*PI)*dy/(2*PI);
-                double d3 = 0.6+0.2*n4d3.eval(nx*sclae3,ny*sclae3,nz*sclae3,nw*sclae3);
-                ny*=scale2;
-                nz*=scale;
-                nw*=scale2;
-                nx*=scale;
-                double d1 = n4d2.eval(nx,ny*0.1,nz,nw*0.1);
-                double d4 = n4d5.eval(nx,ny*0.4,nz,nw*0.4);
-                double oc = 12;
-                double d2 = (oc)*(n4d.eval(nx*(1+d3*0.1),ny*d1,nz*(1+d3*0.1),nw*d1)*0.5+0.5);
-                d2 *=(0.9+d3*0.3);
-                int a = GameMath.floor(d2);
-                d2 = (d2-a);
-                d2 = d2*0.25;
-//                if (d2 < 0.47) d2 = 0;
-                double d = d2;
-                d = Math.min(1, d);
-                d = Math.max(0, d);
-                d = 1 - d;
-                d = Math.pow(d, 4)-1.23;
-                d = 1 - d;
-                d = Math.min(1, d);
-                d = Math.max(0, d);
-                int lu = 12;
-                d3 = Math.min(0.2, d3-0.7);
-                d4*=(0.4+d3);
-                d*=1.5;
-                rgb[0] = d * 69 + 10 * d1 * 0.3 + d3 * lu + (d4*34.2);
-                rgb[1] = d * 45 + 10 * d1 * 0.3 + d3 * lu + (d4*24.2);
-                rgb[2] = d * 7  + 10 + d3 * lu + (d4*14.2);
-                
-                oc = Math.abs(a)/oc;
-                rgb[0] += 3+oc*44;
-                rgb[1] += -4+oc*44;
-                rgb[2] += 0+oc*12;
-                for (int i = 0; i < 3; i++) {
-                    
-                    d = rgb[i];
-                    d = Math.min(255, d);
-                    d = Math.max(0, d);
-//                    d = 1+(d-1)*xI1;
-//                    d = 1+(d-1)*xI2;
-                    data[(iZ * w + iX) * 3 + i] = (byte)(int)d;
-                }
-
-            }
-        if (iW == 0) {
-        } else {
-            for (int ix = 0; ix < w; ix++)
-                for (int iz = 0; iz < h; iz++) {
-                    double d = getBlur(dNoise, ix, iz, iW, iW, w);
-                    d = 1 - d;
-                    d = Math.pow(d, 4);
-                    //              d-=1D;
-                    d = Math.min(1, d);
-                    d = Math.max(0, d);
-                    d = 1 - d;
-                    int lum = (int) (d * 255);
-                    //              int seed = (GameMath.randomI(x*5)-79 + GameMath.randomI(y * 37)) * 1+GameMath.randomI((z-2) * 73);
-                    data[(iz * w + ix) * 3 + 0] = (byte) lum;
-                    data[(iz * w + ix) * 3 + 1] = (byte) lum;
-                    data[(iz * w + ix) * 3 + 2] = (byte) lum;
-                    //                break;
-                }
-        }
-        long l = TimingHelper.stopSilent(123);
-        System.out.println(l);
-        return data;
-    }
+//
+//    public static byte[] genNoise2(int w, int h) {
+//        int noct = 8;
+//        long seed = 0xdeadbeefL;
+//        seed--;
+//        OpenSimplexNoise n4d2 = NoiseLib.makeGenerator(42);
+//        OpenSimplexNoise n4d = NoiseLib.makeGenerator(5);
+//        OpenSimplexNoise n4d3 = NoiseLib.makeGenerator(6);
+//        OpenSimplexNoise n4d5 = NoiseLib.makeGenerator(7);
+//        byte[] data = new byte[w * h * 3];
+//        TimingHelper.startSilent(123);
+////        float f1 = Client.ticksran + Main.instance.partialTick;
+//        int iW = 0;
+//        double scale = 6;
+//        double scale2 = scale/1.2;
+//        double sclae3 = 44;
+//        double x1,x2,y1,y2;
+//        double dx,dy;
+//        x1 = -1; y1= -1;
+//        x2 = 1; y2 = 1;
+//        dx = x2-x1; dy = y2-y1;
+//        float PI = (float) Math.PI;
+//        double[] dNoise = new double[(w + iW * 2) * (h + iW * 2)];
+//        float fb=0.05f;
+//        double[] rgb = new double[3];
+//        for (int iX = -iW; iX < w + iW; iX++)
+//            for (int iZ = -iW; iZ < h + iW; iZ++) {
+//                float fx = (iX/(float)w);
+//                float fy = (iZ/(float)h);
+//                double xI1=fx>fb?1:(fx)/fb;
+//                double xI2=fx<1-fb?1:1-(fx-(1-fb))/fb;
+//                double nx = x1+GameMath.cos(fx*2*PI)*dx/(2*PI);
+//                double ny = y1+GameMath.cos(fy*2*PI)*dy/(2*PI);
+//                double nz = x1+GameMath.sin(fx*2*PI)*dx/(2*PI);
+//                double nw = y1+GameMath.sin(fy*2*PI)*dy/(2*PI);
+//                double d3 = 0.6+0.2*n4d3.eval(nx*sclae3,ny*sclae3,nz*sclae3,nw*sclae3);
+//                ny*=scale2;
+//                nz*=scale;
+//                nw*=scale2;
+//                nx*=scale;
+//                double d1 = n4d2.eval(nx,ny*0.1,nz,nw*0.1);
+//                double d4 = n4d5.eval(nx,ny*0.4,nz,nw*0.4);
+//                double oc = 12;
+//                double d2 = (oc)*(n4d.eval(nx*(1+d3*0.1),ny*d1,nz*(1+d3*0.1),nw*d1)*0.5+0.5);
+//                d2 *=(0.9+d3*0.3);
+//                int a = GameMath.floor(d2);
+//                d2 = (d2-a);
+//                d2 = d2*0.25;
+////                if (d2 < 0.47) d2 = 0;
+//                double d = d2;
+//                d = Math.min(1, d);
+//                d = Math.max(0, d);
+//                d = 1 - d;
+//                d = Math.pow(d, 4)-1.23;
+//                d = 1 - d;
+//                d = Math.min(1, d);
+//                d = Math.max(0, d);
+//                int lu = 12;
+//                d3 = Math.min(0.2, d3-0.7);
+//                d4*=(0.4+d3);
+//                d*=1.5;
+//                rgb[0] = d * 69 + 10 * d1 * 0.3 + d3 * lu + (d4*34.2);
+//                rgb[1] = d * 45 + 10 * d1 * 0.3 + d3 * lu + (d4*24.2);
+//                rgb[2] = d * 7  + 10 + d3 * lu + (d4*14.2);
+//                
+//                oc = Math.abs(a)/oc;
+//                rgb[0] += 3+oc*44;
+//                rgb[1] += -4+oc*44;
+//                rgb[2] += 0+oc*12;
+//                for (int i = 0; i < 3; i++) {
+//                    
+//                    d = rgb[i];
+//                    d = Math.min(255, d);
+//                    d = Math.max(0, d);
+////                    d = 1+(d-1)*xI1;
+////                    d = 1+(d-1)*xI2;
+//                    data[(iZ * w + iX) * 3 + i] = (byte)(int)d;
+//                }
+//
+//            }
+//        if (iW == 0) {
+//        } else {
+//            for (int ix = 0; ix < w; ix++)
+//                for (int iz = 0; iz < h; iz++) {
+//                    double d = getBlur(dNoise, ix, iz, iW, iW, w);
+//                    d = 1 - d;
+//                    d = Math.pow(d, 4);
+//                    //              d-=1D;
+//                    d = Math.min(1, d);
+//                    d = Math.max(0, d);
+//                    d = 1 - d;
+//                    int lum = (int) (d * 255);
+//                    //              int seed = (GameMath.randomI(x*5)-79 + GameMath.randomI(y * 37)) * 1+GameMath.randomI((z-2) * 73);
+//                    data[(iz * w + ix) * 3 + 0] = (byte) lum;
+//                    data[(iz * w + ix) * 3 + 1] = (byte) lum;
+//                    data[(iz * w + ix) * 3 + 2] = (byte) lum;
+//                    //                break;
+//                }
+//        }
+//        long l = TimingHelper.stopSilent(123);
+//        System.out.println(l);
+//        return data;
+//    }
 
     private static double getBlur(double[] dNoise, int x, int z, int iW, int i, int w) {
         if (i == 0) {

@@ -18,7 +18,7 @@ public abstract class GuiWindow extends Gui {
     final public FontRenderer font;
     int[] bounds;
     public GuiWindow() {
-        this.font = FontRenderer.get(0, 22, 0);
+        this.font = FontRenderer.get(0, Gui.FONT_SIZE_WINDOW_TITLE, 0);
     }
     @Override
     public void initGui(boolean first) {
@@ -216,6 +216,7 @@ public abstract class GuiWindow extends Gui {
                 }
             } else {
                 setPopup(null);
+                return true;
             }
         }
         if (action == GLFW.GLFW_PRESS) {

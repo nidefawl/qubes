@@ -10,6 +10,9 @@ import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderGroup;
+import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderObject;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.util.Half;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Vector3f;
@@ -19,60 +22,67 @@ import nidefawl.qubes.vec.Vector3f;
  * Copyright: Michael Hept
  */
 public class ModelStatic extends ModelQModel {
+    public boolean needsDraw = true;
 
     public ModelStatic(ModelLoaderQModel loader) {
         super(loader);
     }
 
     Vector3f tmpVec = new Vector3f();
-    public void render(float f) {
-        if (this.needsDraw || System.currentTimeMillis()-this.reRender>2100) {
-            this.reRender = System.currentTimeMillis();
+    private VertexBuffer vBuf;
+    public void render(int object, int group, float f) {
+        QModelObject obj = this.loader.listObjects.get(object);
+        QModelGroup grp = obj.listGroups.get(group);
+        ModelRenderObject rObj = this.getGroup(object);
+        ModelRenderGroup rGroup = rObj.getGroup(group);
+        if (this.needsDraw || System.currentTimeMillis()-rGroup.reRender>2100) {
+            rGroup.reRender = System.currentTimeMillis();
             this.needsDraw = false;
-            if (buf == null)
-                buf = new VertexBuffer(1024*64);
-            this.buf.reset();
-            List<QModelTriangle> triList = this.loader.listTri; 
-            List<QModelVertex> vList = this.loader.listVertex; 
+            if (this.vBuf == null)
+                this.vBuf = new VertexBuffer(1024*64);
+            this.vBuf.reset();
+            List<QModelTriangle> triList = obj.listTri; 
+            List<QModelVertex> vList = obj.listVertex; 
             int numIdx = triList.size()*3;
             int[] vPos = new int[vList.size()];
             int vPosI = 0;
             Arrays.fill(vPos, -1);
             int pos = 0;
-            for (QModelTriangle triangle : this.loader.listTri) {
+            for (QModelTriangle triangle : triList) {
                 for (int i = 0; i < 3; i++) {
                     int idx = triangle.vertIdx[i];
 //                  if (vPos[idx]<0) {
                         vPos[idx] = vPosI++;
-                        QModelVertex v = this.loader.getVertex(idx);
-                        buf.put(Float.floatToRawIntBits(v.x));
-                        buf.put(Float.floatToRawIntBits(v.y));
-                        buf.put(Float.floatToRawIntBits(v.z));
+                        QModelVertex v = obj.listVertex.get(idx);
+                        this.vBuf.put(Float.floatToRawIntBits(v.x));
+                        this.vBuf.put(Float.floatToRawIntBits(v.y));
+                        this.vBuf.put(Float.floatToRawIntBits(v.z));
                         int normal = RenderUtil.packNormal(triangle.normal[i]);
-                        buf.put(normal);
+                        this.vBuf.put(normal);
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
-                        buf.put(textureHalf2);
-                        buf.put(0xffffffff);
+                        this.vBuf.put(textureHalf2);
+                        this.vBuf.put(0xffffffff);
 //                  }
 //                    idxArr[pos++] = vPos[idx];
-                    buf.putIdx(vPos[idx]);
-                    buf.increaseVert();
+                    this.vBuf.putIdx(vPos[idx]);
+                    this.vBuf.increaseVert();
                 }
-                buf.increaseFace();
+                this.vBuf.increaseFace();
             }
             
             
-            if (this.gpuBuf == null) {
-                this.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
+            if (rGroup.gpuBuf == null) {
+                rGroup.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
             }
-            this.gpuBuf.upload(buf);
+            rGroup.gpuBuf.upload(vBuf);
         }
         
 
-        this.gpuBuf.draw();
+        rGroup.gpuBuf.draw();
 
 
     }
+
     @Override
     public QModelType getType() {
         return QModelType.STATIC;

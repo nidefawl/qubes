@@ -18,40 +18,33 @@ import nidefawl.qubes.util.GameError;
 public class GLAttrBuffer {
 
     private int      vbo = -1;
-    ReallocIntBuffer vboBuf;
     
     public int getGLArrayBuffer() {
         return this.vbo;
     }
 
 
-
-    public void gen() {
-        if (this.vboBuf == null) {
+    public void upload(VertexBuffer buf) {
+        if (this.vbo < 0) {
             IntBuffer buff = Engine.glGenBuffers(1);
             this.vbo = buff.get(0);
-            this.vboBuf = new ReallocIntBuffer(1024);
         }
-    }
-    public void upload(VertexBuffer buf) {
-        if (this.vboBuf == null) {
-            gen();
-        }
-        int numInts = buf.storeVertexData(this.vboBuf);
+        ReallocIntBuffer buffer1 = Engine.getIntBuffer();
+        int numInts = buf.storeVertexData(buffer1);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, numInts * 4L, this.vboBuf.getByteBuf(), GL15.GL_STATIC_DRAW);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, numInts * 4L, buffer1.getByteBuf(), GL15.GL_STATIC_DRAW);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData ");
+        buffer1.setInUse(false);
     }
 
     /**
      * 
      */
     public void release() {
-        if (this.vboBuf != null) {
+        if (this.vbo > -1) {
             Engine.deleteBuffers(this.vbo);
-            this.vboBuf.release();
-            this.vboBuf = null;
+            this.vbo = -1;
         }
     }
 }

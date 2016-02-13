@@ -18,11 +18,11 @@ public class Mesher {
 
     private final int[]    dims;
     private BlockSurface[] mask2;
-    private final static BlockSurfaceAir air = new BlockSurfaceAir();
-    private final static BlockSurfaceHidden hidden = new BlockSurfaceHidden();
+    private final  BlockSurfaceAir air = new BlockSurfaceAir();
+    private final  BlockSurfaceHidden hidden = new BlockSurfaceHidden();
     
  // THIS WILL NOT WORK WITH REGIONS > 32x32x32 (needs to be bigger data type + bigger array size)
-    private final static short[] renderTypeBlocks = new short[1<<16]; 
+    private final  short[] renderTypeBlocks = new short[1<<16]; 
     private int nextBlockIDX = 0;
     
     //TODO: implement cache to make memory efficient

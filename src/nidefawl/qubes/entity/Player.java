@@ -24,6 +24,7 @@ public abstract class Player extends Entity {
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
             inventoryCraft[i] = new PlayerInventoryCrafting(1+i, 4, 4);
         }
+        this.properties = new EntityProperties();
     }
 
     public String getName() {
@@ -90,6 +91,13 @@ public abstract class Player extends Entity {
     }
 
     public EntityModel getEntityModel() {
-        return EntityModel.modelPlayer;
+        EntityProperties properties = this.properties;
+        if (properties != null) {
+            int n = properties.getOption(100, 0);
+            if (n != 0) {
+                return EntityModel.modelPlayerFemale;
+            }
+        }
+        return EntityModel.modelPlayerMale;
     }
 }

@@ -11,9 +11,8 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.models.qmodel.ModelBlock;
-import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
-import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 
 public class BlockModelManager {
     static final BlockModelManager instance = new BlockModelManager();

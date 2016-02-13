@@ -20,6 +20,8 @@ public class CommandHandler {
         this.register(CommandSetTime.class);
         this.register(CommandDebug.class);
         this.register(CommandToCoord.class);
+        this.register(CommandTP.class);
+        this.register(CommandEntity.class);
     }
 
     public void register(Class<? extends Command> class1) {

@@ -7,7 +7,8 @@
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
 	<property name="cryptfilepath" value="..\" />
-	<property name="targetfile" value="U:/game/server.jar" />
+	<property name="server_target_jar" value="U:/game/server.jar" />
+	<property name="compile_dir" value="../compile" />
     <path id="Game.classpath">
         <pathelement location="bin"/>
         <pathelement location="lib/jline/jline-2.13.jar"/>
@@ -17,50 +18,60 @@
     </path>
 	
     <target name="clean">
-        <delete dir="compile"/>
-        <delete dir="compileserver"/>
-    </target>
-    <target name="build_game_init">
-	    <delete dir="compile/game" failonerror="no"/>
-        <mkdir dir="compile/game"/>
-        <mkdir dir="compile/game/res"/>
+        <delete dir="${compile_dir}/bin/client" failonerror="no"/>
+        <delete dir="${compile_dir}/src/client" failonerror="no"/>
+        <delete dir="${compile_dir}/bin/server" failonerror="no"/>
+        <delete dir="${compile_dir}/src/server" failonerror="no"/>
     </target>
     <target name="build_game_init_copy_src">
-        <copy includeemptydirs="false" todir="compile/game">
-            <fileset dir="src">
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-        <copy includeemptydirs="false" todir="compile/game/res">
+    	<delete dir="${compile_dir}/bin/client" failonerror="no"/>
+    	<delete dir="${compile_dir}/src/client" failonerror="no"/>
+        <mkdir dir="${compile_dir}/bin/client"/>
+        <mkdir dir="${compile_dir}/src/client"/>
+    	<exec executable="java">
+    	    <arg value="-jar"/>
+    	    <arg value="../preprocessor.jar"/>
+    	    <arg value="--config"/>
+    	    <arg value="build_config/client_drop_pkg.txt"/>
+    	    <arg value="--side"/>
+    	    <arg value="client"/>
+		    <arg value="--in"/>
+    	    <arg value="src"/>
+		    <arg value="--out"/>
+		    <arg value="${compile_dir}/src/client"/>
+	    </exec>
+        <mkdir dir="${compile_dir}/bin/client/res"/>
+        <copy includeemptydirs="false" todir="${compile_dir}/bin/client/res">
 	        <fileset dir="res" includes="shaders/**/*" /> 
         </copy>
     </target>
     <target name="build_game_compile">
-        <javac debug="true" debuglevel="${debuglevel}" destdir="compile/game" source="${source}" target="${target}">
-            <src path="src"/>
+        <buildnumber file="../build.number"/>
+        <replace>
+            <fileset dir="${compile_dir}/bin/client" includes="nidefawl/qubes/Game.java" />
+            <replacefilter token="::BUILD_CODE::" value="${build.number}" />
+    	</replace>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/client" source="${source}" target="${target}">
+            <src path="${compile_dir}/src/client"/>
             <classpath refid="Game.classpath"/>
         </javac>
     </target>
     <target name="build_game_jar">
 	    <delete file="../game.jar" failonerror="no"/>
-		<jar destfile="../game.jar" basedir="compile/game" includes="**/*" compress="false">
-	        <manifest>
-            	<attribute name="Main-Class" value="nidefawl.qubes.BootClient"/>
-	        </manifest>
+		<jar destfile="../game.jar" basedir="${compile_dir}/bin/client" includes="**/*" compress="false">
 		</jar>
     </target>
 
 
     <target name="build_game">
         <echo message="${ant.project.name}: ${ant.file}"/>
-    	<antcall target="build_game_init" />
     	<antcall target="build_game_init_copy_src" />
     	<antcall target="build_game_compile" />
     	<antcall target="build_game_jar" />
     	<antcall target="fastobfuscate" />
     </target>
     <target name="fastobfuscate">
-      <proguard configuration="proguard.cfg">
+      <proguard configuration="build_config/proguard.cfg">
         <injar name="../game.jar"/>
         <libraryjar name="${java.home}/lib/rt.jar"/>
         <libraryjar name="${java.home}/lib/jce.jar"/>
@@ -74,7 +85,7 @@
   		  <arg value="-i"/>
 		  <arg value="../game_obf.jar"/>
   		  <arg value="-o"/>
-  		  <arg value="U:/qubes/files/game.jar"/>
+  		  <arg value="U:/qubes/files/game.dat"/>
     	</exec>
     </target>
     <target name="build_copy_shader_and_jar">
@@ -89,21 +100,21 @@
 	</target>
 	<target name="build_resources">
         <echo message="${ant.project.name}: ${ant.file}"/>
-	    <delete file="../game_res.jar" failonerror="no"/>
-		<jar destfile="../game_res.jar" compress="false">
+	    <delete file="../game_res.dat" failonerror="no"/>
+		<zip destfile="../game_res.dat" level="9">
 	        <fileset dir="." includes="res/**/*" excludes="res/shaders/**/*" /> 
-		</jar>
+		</zip>
     	<exec executable="${cryptfilepath}/CryptFile.exe">
   		  <arg value="-i"/>
-		  <arg value="../game_res.jar"/>
+		  <arg value="../game_res.dat"/>
   		  <arg value="-o"/>
-  		  <arg value="U:/qubes/files/game_res.jar"/>
+  		  <arg value="U:/qubes/files/game_res.dat"/>
     	</exec>
 	</target>
 	
 	<target name="build_deps">
         <echo message="${ant.project.name}: ${ant.file}"/>
-	    <delete file="../game_deps.jar" failonerror="no"/>
+	    <delete file="../game_deps.dat" failonerror="no"/>
 	    <delete dir="compile/deps" failonerror="no"/>
         <mkdir dir="compile/deps"/>
 		<copy file="lib/lwjgl_dbg/lwjgl.jar" tofile="compile/deps/lwjgl.jar"/>
@@ -125,33 +136,53 @@
 	        <fileset dir="compile/deps" includes="**/*" /> 
 		</jar>
         <copy includeemptydirs="false" todir="U:/qubes/files">
-            <fileset file="../game_deps.jar" />
+            <fileset file="../game_deps.dat" />
         </copy>
 	</target>
 
-    <target name="initserver">
-        <mkdir dir="compileserver"/>
-        <copy includeemptydirs="false" todir="compileserver">
-            <fileset dir="src">
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-    </target>
-    <target depends="initserver" name="buildserver">
+	<target name="buildserver_quick">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="compileserver" source="${source}" target="${target}">
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/server" source="${source}" target="${target}">
             <src path="src"/>
             <classpath refid="Game.classpath"/>
         </javac>
-    </target>
-	<target name="jarserver" depends="buildserver">
-		<delete file="../server.jar"/>
-		<jar destfile="../server.jar" basedir="compileserver" includes="**/*">
+		<jar destfile="../server.jar" basedir="${compile_dir}/bin/server" includes="**/*">
 	        <manifest>
 	            <attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
 	        </manifest>
 		</jar>
         <delete file="${targetfile}"/>
-        <copy file="../server.jar" tofile="${targetfile}"/>
+        <copy file="../server.jar" tofile="${server_target_jar}"/>
+    </target>
+	<target name="buildserver">
+    	<delete dir="${compile_dir}/bin/server"  failonerror="no"/>
+    	<delete dir="${compile_dir}/src/server" failonerror="no"/>
+        <mkdir dir="${compile_dir}/bin/server"/>
+        <mkdir dir="${compile_dir}/src/server"/>
+    	<exec executable="java">
+    	    <arg value="-jar"/>
+    	    <arg value="../preprocessor.jar"/>
+    	    <arg value="--config"/>
+    	    <arg value="build_config/server_drop_pkg.txt"/>
+    	    <arg value="--side"/>
+    	    <arg value="server"/>
+		    <arg value="--in"/>
+    	    <arg value="src"/>
+		    <arg value="--out"/>
+		    <arg value="${compile_dir}/src/server"/>
+	    </exec>
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/server" source="${source}" target="${target}">
+            <src path="${compile_dir}/src/server"/>
+            <classpath refid="Game.classpath"/>
+        </javac>
+		<delete file="../server.jar"/>
+		<jar destfile="../server.jar" basedir="${compile_dir}/bin/server" includes="**/*">
+	        <manifest>
+	            <attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
+	        </manifest>
+		</jar>
+        <delete file="${targetfile}"/>
+        <copy file="../server.jar" tofile="${server_target_jar}"/>
     </target>
 </project>

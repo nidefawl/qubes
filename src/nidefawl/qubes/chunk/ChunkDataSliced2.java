@@ -6,10 +6,10 @@ package nidefawl.qubes.chunk;
 import java.io.IOException;
 import java.util.List;
 
-import nidefawl.qubes.chunk.server.ChunkReader;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.ByteArray;
 import nidefawl.qubes.nbt.Tag.TagList;
+import nidefawl.qubes.util.ByteArrIO;
 import nidefawl.qubes.world.World;
 
 /**
@@ -82,7 +82,7 @@ public class ChunkDataSliced2 extends ChunkData {
                 }
                 Tag.Compound cmp = new Tag.Compound();
                 cmp.setByte("y", i);
-                byte[] dataBytes = ChunkReader.shortToByteArray(data);
+                byte[] dataBytes = ByteArrIO.shortToByteArray(data);
                 cmp.setByteArray("data", dataBytes);
                 l.add(cmp);
             }
@@ -113,7 +113,7 @@ public class ChunkDataSliced2 extends ChunkData {
                             throw new IOException("Invalid chunk data");
                         }
                         short[] sData = getArray(y, true);
-                        ChunkReader.byteToShortArray(bytes, sData);
+                        ByteArrIO.byteToShortArray(bytes, sData);
                     }
                 }
             }

@@ -8,15 +8,22 @@ import org.lwjgl.opengl.GL15;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderGroup;
+import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderObject;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 
 public class ModelBlock extends ModelQModel {
-    public final QModelTriGroup[] groups = new QModelTriGroup[6];
+    public final QModelGroup[] faceGroups = new QModelGroup[6];
+    public VertexBuffer vBuf;
+    public boolean needsDraw = true;
+    public long reRender=0;
     public ModelBlock(ModelLoaderQModel loader) {
         super(loader);
+        QModelObject obj = loader.listObjects.get(0);
         for (int i = 0; i < 6; i++) {
             int axisSwap = i;
             if (i == Dir.DIR_NEG_Z) {
@@ -37,11 +44,18 @@ public class ModelBlock extends ModelQModel {
             if (i == Dir.DIR_NEG_X) {
                 axisSwap = Dir.DIR_POS_X;
             }
-            QModelTriGroup group = this.loader.getGroup(Dir.asString(axisSwap));
-            if (group == null) {
+            QModelGroup g = null;
+            for (int j = 0; j < obj.listGroups.size(); j++) {
+                QModelGroup group = obj.listGroups.get(j);
+                if (group.material.name.equals(Dir.asString(axisSwap))) {
+                    g = group;
+                    break;
+                }
+            }
+            if (g == null) {
                 throw new GameError(this.loader.getModelName()+": Invalid block model, group "+Dir.asString(i)+ " missing");
             }
-            this.groups[i] = group;
+            this.faceGroups[i] = g;
         }
     }
 
@@ -52,56 +66,56 @@ public class ModelBlock extends ModelQModel {
 
 
     Vector3f tmpVec = new Vector3f();
-    public void render(float f) {
+    public void render(int object, int group, float f) {
+        QModelObject obj = this.loader.listObjects.get(object);
+        QModelGroup grp = obj.listGroups.get(group);
+        ModelRenderObject rObj = this.getGroup(object);
+        ModelRenderGroup rGroup = rObj.getGroup(group);
         if (this.needsDraw || System.currentTimeMillis()-this.reRender>1) {
-            int side = (Game.ticksran/20)%6;
             this.reRender = System.currentTimeMillis();
             this.needsDraw = false;
-            if (buf == null)
-                buf = new VertexBuffer(1024*64);
-            this.buf.reset();
-            List<QModelTriangle> triList = this.loader.listTri; 
-            List<QModelVertex> vList = this.loader.listVertex; 
+            if (this.vBuf == null)
+                this.vBuf = new VertexBuffer(1024*64);
+            this.vBuf.reset();
+            List<QModelTriangle> triList = obj.listTri; 
+            List<QModelVertex> vList = obj.listVertex; 
             int numIdx = triList.size()*3;
             int[] idxArr = new int[numIdx];
             int[] vPos = new int[vList.size()];
             int vPosI = 0;
             Arrays.fill(vPos, -1);
             int pos = 0;
-            QModelTriGroup group = this.loader.listGroups.get(side);
-            for (QModelTriangle triangle : group.listTri) {
-                if (triangle.group != side)
-                    continue;
+            for (QModelTriangle triangle : triList) {
                 for (int i = 0; i < 3; i++) {
                     int idx = triangle.vertIdx[i];
 //                      if (vPos[idx]<0) {
                         vPos[idx] = vPosI++;
-                        QModelVertex v = this.loader.getVertex(idx);
-                        buf.put(Float.floatToRawIntBits(v.x));
-                        buf.put(Float.floatToRawIntBits(v.y));
-                        buf.put(Float.floatToRawIntBits(v.z));
+                        QModelVertex v = obj.listVertex.get(idx);
+                        vBuf.put(Float.floatToRawIntBits(v.x));
+                        vBuf.put(Float.floatToRawIntBits(v.y));
+                        vBuf.put(Float.floatToRawIntBits(v.z));
                         int normal = RenderUtil.packNormal(triangle.normal[i]);
-                        buf.put(normal);
+                        vBuf.put(normal);
                         int textureHalf2 = RenderUtil.packTexCoord(triangle.texCoord[0][i], triangle.texCoord[1][i]);
-                        buf.put(textureHalf2);
-                        buf.put(0xffffffff);
+                        vBuf.put(textureHalf2);
+                        vBuf.put(0xffffffff);
 //                      }
                     idxArr[pos++] = vPos[idx];
-                    buf.putIdx(vPos[idx]);
-                    buf.increaseVert();
+                    vBuf.putIdx(vPos[idx]);
+                    vBuf.increaseVert();
                 }
-                buf.increaseFace();
+                vBuf.increaseFace();
             }
             
             
-            if (this.gpuBuf == null) {
-                this.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
+            if (rGroup.gpuBuf == null) {
+                rGroup.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
             }
-            this.gpuBuf.upload(buf);
+            rGroup.gpuBuf.upload(vBuf);
         }
         
 
-        this.gpuBuf.draw();
+        rGroup.gpuBuf.draw();
 
 
     }

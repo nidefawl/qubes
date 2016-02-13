@@ -13,9 +13,7 @@ import nidefawl.qubes.network.server.ServerHandlerPlay;
 import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressLight;
 import nidefawl.qubes.server.compress.CompressThread;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.SnakeIterator;
-import nidefawl.qubes.util.TripletShortHash;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.WorldServer;
@@ -24,6 +22,7 @@ import nidefawl.qubes.world.WorldServer;
 /**
  * The Class PlayerChunkTracker.
  */
+@SideOnly(value = Side.SERVER)
 public class PlayerChunkTracker {
     
     /**

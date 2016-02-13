@@ -265,4 +265,12 @@ public class GameMath {
     public static int round(float stringWidth) {
         return stringWidth%1.0f<0.5?floor(stringWidth):ceil(stringWidth);
     }
+    public static float wrapAngle(float f) {
+        f %= 360.0f;
+        if (f > 180.0f)
+            f-=360.0f;
+        if (f < -180.0f)
+            f+=360.0f;
+        return f;
+    }
 }

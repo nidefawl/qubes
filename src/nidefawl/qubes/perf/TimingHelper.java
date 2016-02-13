@@ -110,6 +110,9 @@ public class TimingHelper {
             }
         }
         calls[i]++;
+        if (calls[i]%1200==0) {
+            dump();
+        }
         return timeTaken;
     }
     static class TimingEntry {

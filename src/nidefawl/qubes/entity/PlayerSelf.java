@@ -1,5 +1,6 @@
 package nidefawl.qubes.entity;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
@@ -9,24 +10,30 @@ import nidefawl.qubes.input.InputController;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
+import nidefawl.qubes.models.qmodel.QModelProperties;
+import nidefawl.qubes.nbt.Tag;
+import nidefawl.qubes.nbt.Tag.TagType;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 
+@SideOnly(value=Side.CLIENT)
 public class PlayerSelf extends Player {
 
     private float   forward;
     private float   strafe;
     private float   maxSpeed = 0.82F;
     private boolean fly      = false;
-    private float   jump;
     private boolean   jumped;
     private float   sneak;
+    private float jump;
     public float eyeHeight = 1.3F;
     public PlayerProfile profile;
     private ClientHandler clientHandler;
     public final CraftingManagerClient[] crafting = new CraftingManagerClient[CraftingCategory.NUM_CATS];
-
+    
 
     public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
         super();
@@ -68,8 +75,12 @@ public class PlayerSelf extends Player {
                 movement.jump = 0;
             } else {
                 if (hitGround) {
-                    jumped = movement.jump > 0;
-                    this.jump = movement.jump;
+                    if(movement.jump > 0) {
+                        jumped = true;
+                        this.jump=4;
+                        this.timeJump = GameBase.absTime;
+                    } else {
+                    }
                 }
             }
         }
@@ -81,15 +92,13 @@ public class PlayerSelf extends Player {
     @Override
     public void tickUpdate() {
         float vel = GameMath.sqrtf(this.forward * this.forward + this.strafe * this.strafe);
-        float slowdown = 0.28F;
-        float f = -getGravity();
-        float fn = 0.11F;
         this.noclip = this.fly;
         if (this.fly) {
             maxSpeed = 0.9F;
             float var7 = 0.0F;
             this.mot.y -= 0.98D * this.sneak;
             this.mot.y += 0.98D * this.jump;
+
 
             float f4 = 0.0F;
             float f5 = 0.0F;
@@ -125,9 +134,15 @@ public class PlayerSelf extends Player {
             }
             this.jump *= 1;
         } else {
-            slowdown = 0.28F;
+            float jmp = this.jump;
+            if (jump > 1) {
+                jmp = 0;
+            } else if (jump <0.5 && hitGround) {
+                this.timeJump = 0;
+                 
+            }
             maxSpeed = 0.2F;
-            this.mot.y += 0.49171D * this.jump;
+            this.mot.y += 0.49171D * jmp;
             this.jump *= 0.5;
             if (vel > 0.01F) {
                 if (vel < 1)
@@ -163,23 +178,6 @@ public class PlayerSelf extends Player {
             this.yawBodyOffset = offset;
         }
         super.tickUpdate();
-        this.mot.x *= slowdown;
-        this.mot.z *= slowdown;
-        boolean nofall = this.fly || this.world.getChunk(GameMath.floor(this.pos.x)>>4, GameMath.floor(this.pos.z)>>4) == null;
-        if (nofall) {
-
-            this.mot.y *= slowdown;
-        } else {
-
-            this.mot.y = this.mot.y*(1F-fn)+f*fn;
-        }
-//      float f = getGravity();
-//      if (this.mot.y > 0) {
-//          this.mot.y *= slowdown;
-//      }
-//      if (this.mot.y > f) {
-//      }
-//        this.network.send(PacketMovement)
         int flags = 0;
         if (this.hitGround) {
             flags |= 1;
@@ -190,6 +188,10 @@ public class PlayerSelf extends Player {
         this.clientHandler.sendPacket(new PacketCMovement(this.pos, this.yaw, this.pitch, flags));
         
     }
+    public boolean doesFly() {
+        return this.fly;
+    }
+
 
     public float getGravity() {
         return this.fly ? 0 : 0.98F;
@@ -214,8 +216,8 @@ public class PlayerSelf extends Player {
      */
     public void clicked(int button, boolean isDown) {
         if (isDown) {
-            this.punchTicks = 12;
+            this.punchTicks = 20;
+            this.timePunch = GameBase.absTime;
         }
     }
-
 }

@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.biome.Biome;
+import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
@@ -12,7 +13,6 @@ import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.worldgen.biome.HexBiome;
 
 public class ColorPicker extends AbstractUI {
     private Button[] colorPick;
@@ -82,21 +82,23 @@ public class ColorPicker extends AbstractUI {
 
     private void onColorChange(int rgb2) {
         System.out.println("color "+rgb2);
-        World w = Game.instance.getWorld();
-        PlayerSelf p = Game.instance.getPlayer();
-        if (w != null && p != null) {
-            int x = GameMath.floor(p.pos.x);
-            int z = GameMath.floor(p.pos.z);
-            HexBiome hex = w.getHex(x, z);
-            if (hex != null) {
-                hex.biome.colorGrass = rgb2;
-                hex.biome.colorFoliage = rgb2;
-                hex.biome.colorLeaves = rgb2;
-                float[] hsb = Color.RGBtoHSB((rgb2>>8)&0xFF, (rgb2>>8)&0xFF, rgb2&0xFF, null);
-                int rgb3 = Color.HSBtoRGB(hsb[0], hsb[1]*0.7f, hsb[2]*0.9f);
-                hex.biome.colorFoliage2 = rgb3;
-                
-                Engine.regionRenderer.reRender();
+        if (Game.instance != null) {
+            World w = Game.instance.getWorld();
+            PlayerSelf p = Game.instance.getPlayer();
+            if (w != null && p != null) {
+                int x = GameMath.floor(p.pos.x);
+                int z = GameMath.floor(p.pos.z);
+                HexBiome hex = w.getHex(x, z);
+                if (hex != null) {
+                    hex.biome.colorGrass = rgb2;
+                    hex.biome.colorFoliage = rgb2;
+                    hex.biome.colorLeaves = rgb2;
+                    float[] hsb = Color.RGBtoHSB((rgb2>>8)&0xFF, (rgb2>>8)&0xFF, rgb2&0xFF, null);
+                    int rgb3 = Color.HSBtoRGB(hsb[0], hsb[1]*0.7f, hsb[2]*0.9f);
+                    hex.biome.colorFoliage2 = rgb3;
+                    
+                    Engine.regionRenderer.reRender();
+                }
             }
         }
 

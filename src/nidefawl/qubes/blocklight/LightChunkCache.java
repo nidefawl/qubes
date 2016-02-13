@@ -15,10 +15,13 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.server.PlayerChunkTracker;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 
+@SideOnly(value = Side.SERVER)
 public class LightChunkCache {
     public final static int NEXT    = 1;
     public final static int WIDTH   = 1 + (NEXT * 2);

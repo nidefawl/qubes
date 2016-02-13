@@ -50,4 +50,9 @@ public class AssetManagerServer extends AssetManager {
         System.out.println("Found "+assetPacks.size()+" asset packs");
     }
 
+    @Override
+    public Shader loadShader(IResourceManager mgr, String nameVSH, String nameFSH, String nameGSH, String nameCSH, IShaderDef def) {
+        return null;
+    }
+
 }

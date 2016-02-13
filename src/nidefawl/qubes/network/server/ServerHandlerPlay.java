@@ -5,6 +5,7 @@ import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
+import nidefawl.qubes.entity.EntityProperties;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.*;
@@ -51,6 +52,10 @@ public class ServerHandlerPlay extends ServerHandler {
                 sendPacket(biomes);
             }
             sendPacket(new PacketChatChannels(this.player.getJoinedChannels()));
+            PacketSEntityProperties packet = new PacketSEntityProperties();
+            packet.entId = this.player.id;
+            packet.data = this.player.getEntityProperties().save();
+            sendPacket(packet);
         }
         super.update();
     }
@@ -206,7 +211,7 @@ public class ServerHandlerPlay extends ServerHandler {
         return packet.getWorldId() == this.player.world.getId();
     }
 
-    public Player getPlayer() {
+    public PlayerServer getPlayer() {
         return this.player;
     }
 
@@ -344,5 +349,65 @@ public class ServerHandlerPlay extends ServerHandler {
                 kick("Invalid packet. Code 0x2012");
                 return;
         }
+    }
+
+    public void handleSetProperty(PacketCSetProperty p) {
+        EntityProperties properties = this.player.getEntityProperties();
+        switch (p.propId) {
+            case 100:
+                if (p.propVal <0||p.propVal>1) {
+                    kick("Invalid packet. Code 0x2100");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 0:
+                if (p.propVal <0||p.propVal>3) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 1:
+                if (p.propVal <0||p.propVal>12) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 2:
+                if (p.propVal <0||p.propVal>12) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 3:
+                if (p.propVal <0||p.propVal>8) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 4:
+                if (p.propVal <0||p.propVal>9) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 5:
+                if (p.propVal <0||p.propVal>7) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            case 6:
+                if (p.propVal <0||p.propVal>9) {
+                    kick("Invalid packet. Code 0x2101");
+                }
+                properties.setOption(p.propId, p.propVal);
+                break;
+            default:
+                return;
+        }
+        PacketSEntityProperties packet = new PacketSEntityProperties();
+        packet.entId = this.player.id;
+        packet.data = properties.save();
+        this.player.getWorld().broadcastPacket(packet);
     }
 }

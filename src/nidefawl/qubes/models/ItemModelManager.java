@@ -9,9 +9,8 @@ import java.util.HashSet;
 
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.models.qmodel.ModelLoaderQModel;
 import nidefawl.qubes.models.qmodel.ModelQModel;
-import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 
 /**
  * @author Michael Hept 2015
@@ -33,7 +32,6 @@ public class ItemModelManager {
      */
     public void reload() {
         AssetManager mgr = AssetManager.getInstance();
-        TextureManager textureManager = TextureManager.getInstance();
         if (!this.models.isEmpty()) {
             for (ModelQModel model : this.models.values()) {
                 model.release();

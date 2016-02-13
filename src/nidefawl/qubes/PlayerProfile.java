@@ -1,5 +1,6 @@
 package nidefawl.qubes;
 
+import java.util.Random;
 import java.util.UUID;
 
 import nidefawl.qubes.config.AbstractYMLConfig;
@@ -18,7 +19,8 @@ public class PlayerProfile extends AbstractYMLConfig {
 
     @Override
     public void setDefaults() {
-        uuid = UUID.randomUUID();
+        Random rand = new Random();
+        uuid = new UUID(rand.nextLong(), rand.nextLong());
         name = "Player";
     }
 

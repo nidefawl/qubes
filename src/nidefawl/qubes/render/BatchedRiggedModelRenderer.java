@@ -12,9 +12,10 @@ import nidefawl.qubes.vec.Matrix4f;
 public class BatchedRiggedModelRenderer extends AbstractRenderer {
     public static final int MAX_INSTANCES = 16*1024;
     public static final int SIZE_OF_MAT4 = 16*4;
-    public static final int STRUCT_SIZE = (4+32)*SIZE_OF_MAT4;
-    public Shader             shaderModelQ;
-    public Shader             shaderModelShadow;
+    public static final int NUM_BONE_MATRICES = 64;
+    public Shader           shaderModelShadow;
+    public Shader          shaderModelBatched;
+    public Shader          shaderModelBatchedSkinned;
     private boolean           startup = true;
     FloatBuffer buf;
     private int position;
@@ -32,8 +33,9 @@ public class BatchedRiggedModelRenderer extends AbstractRenderer {
         try {
             pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader modelQ = assetMgr.loadShader(this, "model/model");
-            Shader modelShadow = assetMgr.loadShader(this, "model/model", new IShaderDef() {
+            Shader newShaderModelBatched = assetMgr.loadShader(this, "model/model_batched");
+            Shader newShaderModelBatchedSkinned = assetMgr.loadShader(this, "model/model_batched_skinned");
+            Shader modelShadow = assetMgr.loadShader(this, "model/model_batched_skinned", new IShaderDef() {
                 
                 @Override
                 public String getDefinition(String define) {
@@ -43,10 +45,15 @@ public class BatchedRiggedModelRenderer extends AbstractRenderer {
                 }
             });
             popNewShaders();
-            this.shaderModelQ = modelQ;
             this.shaderModelShadow = modelShadow;
-            shaderModelShadow.enable();
-            shaderModelQ.enable();
+            this.shaderModelBatched = newShaderModelBatched;
+            this.shaderModelBatchedSkinned = newShaderModelBatchedSkinned;
+            this.shaderModelBatched.enable();
+            this.shaderModelBatched.setProgramUniform1i("tex0", 0);
+            this.shaderModelBatchedSkinned.enable();
+            this.shaderModelBatchedSkinned.setProgramUniform1i("tex0", 0);
+            this.shaderModelShadow.enable();
+            this.shaderModelShadow.setProgramUniform1i("tex0", 0);
             Shader.disable();
             startup = false;
         } catch (ShaderCompileError e) {
@@ -124,7 +131,7 @@ public class BatchedRiggedModelRenderer extends AbstractRenderer {
 //      this.buf.position((this.position*STRUCT_SIZE)>>2);
         this.bufModelMat.position((this.position*SIZE_OF_MAT4)>>2);
         this.bufNormalMat.position((this.position*SIZE_OF_MAT4)>>2);
-        this.bufBoneMat.position((this.position*SIZE_OF_MAT4*32)>>2);
+        this.bufBoneMat.position((this.position*SIZE_OF_MAT4*NUM_BONE_MATRICES)>>2);
     }
 
     public int getNumModels() {
@@ -132,7 +139,7 @@ public class BatchedRiggedModelRenderer extends AbstractRenderer {
     }
 
     public Shader getShader(int pass, int shadowVP) {
-        Shader shader = this.shaderModelQ;
+        Shader shader = this.shaderModelBatched;
         if (pass == WorldRenderer.PASS_SHADOW_SOLID) {
             shader = this.shaderModelShadow;
         }

@@ -17,9 +17,12 @@ import nidefawl.qubes.server.commands.CommandHandler;
 import nidefawl.qubes.server.commands.PreparedCommand;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Side;
+import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 
+@SideOnly(value = Side.SERVER)
 public class GameServer implements Runnable, IErrorHandler {
 	final ServerConfig config = new ServerConfig();
     final CommandHandler commands = new CommandHandler();

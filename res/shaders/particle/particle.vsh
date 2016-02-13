@@ -9,7 +9,7 @@ in vec4 in_position;
 in vec4 in_color; 
 
 
-out vec3 color;
+out vec4 color;
 out vec3 normal;
 out vec4 texcoord;
 out vec4 position;
@@ -22,7 +22,7 @@ void main(void) {
 	vec4 camNormal = in_matrix_3D.normal * vec4(0, 0, -1, 1);
 	normal = normalize(camNormal.xyz);
 	texcoord = in_texcoord;
-	color = in_color.rgb;
+	color = vec4(in_color.rgb, 0.1);
 	vec3 inPos = in_position.xyz;
 	// inPos = vec3(0);
 	vec4 pos = in_matrix_3D.mv*vec4(inPos - RENDER_OFFSET + PX_OFFSET.xyz, 1);

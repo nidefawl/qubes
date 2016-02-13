@@ -20,8 +20,10 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
+import nidefawl.qubes.util.NoDeploy;
 
 @SuppressWarnings("serial")
+@NoDeploy
 public class TextDialog extends JFrame implements ActionListener, ClipboardOwner {
     class JTextAreaWithScroll extends JTextArea {
         private final JScrollPane scrollPane;
@@ -79,7 +81,8 @@ public class TextDialog extends JFrame implements ActionListener, ClipboardOwner
         final JButton closeButtone = new JButton("Close");
         closeButtone.setActionCommand("Close");
         closeButtone.addActionListener(this);
-        shader = AssetManager.getInstance().getLastFailedShaderSource();
+        AssetManager mgr = AssetManager.getInstance();
+        shader = mgr == null ? null : mgr.getLastFailedShaderSource();
         if (shader != null) {
             buttonPane.add(shaderBtn);
         }

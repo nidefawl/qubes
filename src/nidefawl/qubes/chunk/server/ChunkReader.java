@@ -1,12 +1,11 @@
 package nidefawl.qubes.chunk.server;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.TagReader;
+import nidefawl.qubes.util.ByteArrIO;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.nbt.Tag.Compound;
 
@@ -51,7 +50,7 @@ public class ChunkReader {
         cmp.setInt("x", c.x);
         cmp.setInt("z", c.z);
         short[] blocks = c.getBlocks();
-        byte[] byteBlocks = shortToByteArray(blocks);
+        byte[] byteBlocks = ByteArrIO.shortToByteArray(blocks);
         Tag.Compound blockSHortDataCompound = c.blockMetadata.writeToTag();
         if (blockSHortDataCompound != null)
             cmp.set("blockdata", blockSHortDataCompound);
@@ -103,11 +102,6 @@ public class ChunkReader {
         return c;
     }
 
-    public static void byteToShortArray(byte[] blocks, short[] dst) {
-        for (int i = 0; i < dst.length; i++) {
-            dst[i] = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
-        }
-    }
     public static void readBlocks(byte[] blocks, short[] dst) {
         for (int i = 0; i < dst.length; i++) {
             short block = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
@@ -118,42 +112,5 @@ public class ChunkReader {
                 dst[i] = block;
             }
         }
-    }
-
-
-    public static byte[] shortToByteArray(short[] blocks) {
-        byte[] bytes = new byte[blocks.length*2];
-        return shortToByteArray(blocks, bytes);
-    }
-
-    public static byte[] shortToByteArray(short[] blocks, byte[] bytes) {
-        for (int i = 0; i < blocks.length; i++) {
-            bytes[i*2+0] = (byte) (blocks[i]&0xFF);
-            bytes[i*2+1] = (byte) ((blocks[i]>>8)&0xFF);
-        }
-        return bytes;
-    }
-
-    public static short[] byteToShortArray(byte[] blocks) {
-        short[] shorts = new short[blocks.length/2];
-        for (int i = 0; i < shorts.length; i++) {
-            shorts[i] = (short) ( (blocks[i*2+0]&0xFF) | ((blocks[i*2+1]&0xFF)<<8) );
-        }
-        return shorts;
-    }
-
-
-    static byte[] temp = new byte[1024];
-    /** MAKE SURE TO CALL THIS FROM A SINGLE THREAD ONLY **/
-    public static void shortArrayFromStream(short[] data, DataInput in) throws IOException {
-        in.readFully(temp, 0, data.length*2);
-        byteToShortArray(temp, data);
-        
-    }
-
-    /** MAKE SURE TO CALL THIS FROM A SINGLE THREAD ONLY **/
-    public static void shorArrayToStream(short[] data, DataOutput out) throws IOException {
-        shortToByteArray(data, temp);
-        out.write(temp, 0, data.length>>1);
     }
 }

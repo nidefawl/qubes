@@ -39,8 +39,6 @@ public class PacketSDebugBB extends Packet {
         }
     }
 
-
-
     @Override
     public void handle(Handler h) {
         h.handleDebugBBs(this);

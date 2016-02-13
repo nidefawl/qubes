@@ -445,8 +445,6 @@ void main() {
     prop.sunSpotDens = pow(sunTheta, 32.0)*1.0;
     uint blockid = BLOCK_ID(prop.blockinfo);
     float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
-    float fIsSky = IS_SKY(blockid);
-    bool isSky = bool(fIsSky==1.0f);
     float isWater = IS_WATER(blockid);
     float stone = float(blockid==6u||blockid==4u);
     float isLight = IS_LIGHT(blockid);
@@ -454,6 +452,8 @@ void main() {
     float isBackface = float(renderpass==3);
     float isEntity = float(renderpass==5||renderpass==2);
     float isCloud = float(renderpass==8);
+    float fIsSky = isCloud;
+    bool isSky = bool(fIsSky==1.0f);
     // float isFlower = float(blockid>=48u);
     if (RENDER_PASS > 0) {
         alpha = sceneColor.a;
@@ -462,6 +462,8 @@ void main() {
         if(sceneColor.a < 0.1)
             discard;
     }
+    alpha += isEntity;
+    alpha = min(alpha, 1.0);
     if (!isSky) {
         float minAmb = 0.2;
         float minAmb2 = 0.1;
@@ -578,7 +580,7 @@ void main() {
     float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
     prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
 #endif
-
+    // prop.albedo = vec3(fIsSky);
 
 #if 0
 #if RENDER_PASS < 2
