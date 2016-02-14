@@ -15,12 +15,17 @@ public class Keybinding {
     private String name;
     private boolean hasCallback = true;
     private boolean staticBinding = false;
+    private int defaultkey;
 
     public Keybinding(String name, int key) {
         this.name = name;
         this.enabled = true;
+        this.defaultkey = key;
         this.key = key;
         this.isPressed = false;
+    }
+    public int getDefaultkey() {
+        return this.defaultkey;
     }
     public Keybinding setNoCallBack() {
         this.hasCallback = false;
@@ -36,6 +41,13 @@ public class Keybinding {
     }
     public boolean hasCallback() {
         return this.hasCallback;
+    }
+    public void fire() {
+        if (this.hasCallback) {
+            this.isPressed=false;
+            this.update(GLFW.GLFW_PRESS);
+            this.update(GLFW.GLFW_RELEASE);
+        }
     }
     
     public String getName() {

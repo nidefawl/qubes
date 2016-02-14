@@ -72,14 +72,14 @@ public class ModelLoaderQModel extends BinaryStreamReader {
             for (int i = 0; i < numObjects; i++) {
                 QModelObject v = new QModelObject(i, this);
                 listObjects.add(v);
-                System.out.println(v.name+", parent: "+v.parent_name+", parent-type: "+v.parent_type);
+//                System.out.println(v.name+", parent: "+v.parent_name+", parent-type: "+v.parent_type);
             }
             int numNodes = readUShort();
             listEmpties = Lists.newArrayListWithExpectedSize(numNodes);
             for (int i = 0; i < numNodes; i++) {
                 QModelNode v = new QModelNode(i, this);
                 listEmpties.add(v);
-                System.out.println(v.name+", parent: "+v.parent_name+", parent-type: "+v.parent_type);
+//                System.out.println(v.name+", parent: "+v.parent_name+", parent-type: "+v.parent_type);
             }
             int numTextures = readUShort();
             listTextures = Lists.newArrayListWithCapacity(numTextures);

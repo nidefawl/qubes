@@ -157,7 +157,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 		}
 	}
 
-	private Button reload;
+//	private Button reload;
 	List<Setting> list = Lists.newArrayList();
 	List<Setting> listDyn = Lists.newArrayList();
 	private Setting testSetting;
@@ -190,13 +190,6 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 		if (isPlayerAdjust()) {
             EntityModelPlayer p = (EntityModelPlayer)entityModel;
             PlayerSelf self = Game.instance!=null?Game.instance.getPlayer():null;
-            if (self != null) {
-//                config = this.curConfig = self.getProperties();
-                
-                System.out.println("this.curConfig = "+this.properties);
-                System.out.println("texFace "+this.properties.options.get(p.texFace.getId()));
-                System.out.println(2+" = "+this.properties.options.get(2));
-            }
 
 		    config.setAction(0, entityModel.getIdle());
             config.setAction(1, null);
@@ -276,11 +269,11 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
                 }
             }));
 		}
-        if (!isPlayerAdjust()) {
-            reload = new Button(4, "Reload");
-            int he = layout();
-            this.add(reload);
-        }
+//        if (!isPlayerAdjust()) {
+//            reload = new Button(4, "Reload");
+//            int he = layout();
+//            this.add(reload);
+//        }
         setModel(0);
 	}
 
@@ -315,13 +308,13 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 		y += 20;
 
 		y = Math.max(320, y);
-		if (reload != null) {
-	        y += 25;
-		    reload.setPos(30, y);
-		    reload.setSize(w - 40, h);
-	        y += h;
-	        y += 20;
-		}
+//		if (reload != null) {
+//	        y += 25;
+//		    reload.setPos(30, y);
+//		    reload.setSize(w - 40, h);
+//	        y += h;
+//	        y += 20;
+//		}
 		setSize(w + 370, y);
 		return y;
 	}
@@ -455,9 +448,9 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 				}
 			}
 		}
-		if (element == reload) {
-			EntityModelManager.getInstance().reload();
-		}
+//		if (element == reload) {
+//			EntityModelManager.getInstance().reload();
+//		}
 		return true;
 	}
 

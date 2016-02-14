@@ -3,6 +3,7 @@ package nidefawl.qubes.input;
 import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -56,7 +57,7 @@ public class InputController {
             for (Keybinding keybinding : keybindings) {
                 String s = getString(keybinding.getName(), "kb:"+keybinding.getKey());
                 if (s.startsWith("kb:")&&s.length()>3) {
-                    int kb = StringUtil.parseInt(s.substring(2), -9999);
+                    int kb = StringUtil.parseInt(s.substring(3), -9999);
                     if (kb != -9999) {
                         keybinding.setKey(kb);
                     }
@@ -79,6 +80,7 @@ public class InputController {
 
     static final Map<Integer, Keybinding> keyToKeyBinding = new MapMaker().makeMap();
     static final ArrayList<Keybinding> keybindings = Lists.newArrayList();
+    static final ConcurrentMap<String, Keybinding> keybindingsStr = new MapMaker().makeMap();
     static {
 
         kb_forward = new Keybinding("forward", GLFW.GLFW_KEY_W).setNoCallBack();
@@ -99,6 +101,10 @@ public class InputController {
      */
     public static void addKeyBinding(Keybinding keybinding) {
         keybindings.add(keybinding);
+        keybindingsStr.put(keybinding.getName(), keybinding);
+    }
+    public static Keybinding getKeyBindingByName(String name) {
+        return keybindingsStr.get(name);
     }
     public static void updateKeybindMap() {
         keyToKeyBinding.clear();
@@ -358,7 +364,7 @@ public class InputController {
 
     public static void load() {
         try {
-            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
+            File f = new File(WorkingEnv.getConfigFolder(), "controls.yml");
             settings.load(f);
             if (!f.exists())
                 settings.write(f);
@@ -370,7 +376,8 @@ public class InputController {
     public static void saveBindings() {
         if (settings == null) return;
         try {
-            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
+            settings.save();
+            File f = new File(WorkingEnv.getConfigFolder(), "controls.yml");
             settings.write(f);
         } catch (InvalidConfigException e) {
             e.printStackTrace();

@@ -108,7 +108,6 @@ public class QModelObject extends QModelAbstractNode {
                     v.bones[l]=map.get(v.bones[l]);
                 }
             }
-            System.out.println(""+n+"/"+loader.listBones.size()+" were unused");
             
         }
     }

@@ -208,8 +208,8 @@ public class ModelRigged extends ModelQModel {
             rGroup.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
 
             int bytes = rGroup.gpuBufRest.upload(vbuf);
-            System.out.println("byte size upload "+bytes+", "+rGroup.gpuBufRest.getVertexCount());
-            System.out.println(""+rGroup.gpuBufRest.getVertexCount()+" vertices, "+rGroup.gpuBufRest.getTriCount()+" tris, "+rGroup.gpuBufRest.getIdxCount()+" indexes");
+//            System.out.println("byte size upload "+bytes+", "+rGroup.gpuBufRest.getVertexCount());
+//            System.out.println(""+rGroup.gpuBufRest.getVertexCount()+" vertices, "+rGroup.gpuBufRest.getTriCount()+" tris, "+rGroup.gpuBufRest.getIdxCount()+" indexes");
 
         }
 //        this.gpuBufRest.draw();

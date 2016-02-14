@@ -3,6 +3,9 @@ package nidefawl.qubes.gui;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gui.controls.Button;
+import nidefawl.qubes.input.InputController;
+import nidefawl.qubes.input.Keybinding;
+import nidefawl.qubes.input.Keyboard;
 
 public class GuiGameMenu extends Gui {
 
@@ -43,12 +46,39 @@ public class GuiGameMenu extends Gui {
             controls.setSize(w1, h);
         }
         {
-            back = new Button(4, "Disconnect");
+            Keybinding key = InputController.getKeyBindingByName("show_look");
+            String name = Keyboard.getKeyName(key.getKey());
+            String desc = " ("+name+")";
+            Button controls = new Button(4, "Adjust Character"+desc);
+            this.add(controls);
+            controls.setPos(left, this.posY+this.height/2+60);
+            controls.setSize(w1, h);
+        }
+        {
+            Keybinding key = InputController.getKeyBindingByName("show_inventory");
+            String name = Keyboard.getKeyName(key.getKey());
+            String desc = " ("+name+")";
+            Button controls = new Button(5, "Inventory"+desc);
+            this.add(controls);
+            controls.setPos(left, this.posY+this.height/2+60);
+            controls.setSize(w1, h);
+        }
+        {
+            Keybinding key = InputController.getKeyBindingByName("show_crafting");
+            String name = Keyboard.getKeyName(key.getKey());
+            String desc = " ("+name+")";
+            Button controls = new Button(6, "Crafting"+desc);
+            this.add(controls);
+            controls.setPos(left, this.posY+this.height/2+60);
+            controls.setSize(w1, h);
+        }
+        {
+            back = new Button(7, "Disconnect");
             this.add(back);
             back.setPos(left, this.posY+this.height/2+100);
             back.setSize(w1, h);
         }
-        int top = this.posY+(this.height/2)-(this.buttons.size()*(h+20))/4;
+        int top = this.posY+(this.height/2)-(this.buttons.size()*(h+20))/3;
         for (AbstractUI b : this.buttons) {
             b.posY = top;
             top += 20+b.height;
@@ -60,6 +90,21 @@ public class GuiGameMenu extends Gui {
         super.renderButtons(fTime, mX, mY);
     }
     public boolean onGuiClicked(AbstractUI element) {
+        if (element.id == 4) {
+            Game.instance.showGUI(null);
+            InputController.getKeyBindingByName("show_look").fire();
+            return true;
+        }
+        if (element.id == 5) {
+            Game.instance.showGUI(null);
+            InputController.getKeyBindingByName("show_inventory").fire();
+            return true;
+        }
+        if (element.id == 6) {
+            Game.instance.showGUI(null);
+            InputController.getKeyBindingByName("show_crafting").fire();
+            return true;
+        }
         if (element == this.resume) {
             Game.instance.showGUI(null);
         }

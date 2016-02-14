@@ -46,8 +46,6 @@ public class GuiControls extends Gui {
             int w = this.width;
             int h = this.height;
             int rw = 150;
-//            System.out.println(parent.width+"/"+this.width);
-//            System.out.println(parent);
             int r = (parent.width)-rw-15;
             this.posX = r;
             this.width = rw;
@@ -70,7 +68,7 @@ public class GuiControls extends Gui {
             fr.drawString(b.getName(), this.posX, this.posY+fr.centerY(height), -1, true, 0.9f);
 ////            GLfw.g
             String keyname = "";
-            if (b.isEnabled()) {
+            if (b.isEnabled() && b.getKey() != -1) {
                 keyname = Keyboard.getKeyName(b.getKey());
             }
             fr.drawString(keyname, r+rw/2, this.posY+fr.centerY(height), -1, true, 0.9f, 2);
@@ -102,6 +100,9 @@ public class GuiControls extends Gui {
     List<Control>             list = Lists.newArrayList();
     ScrollList scrolllist;
 
+    private Button            clear;
+    private Button            cancel;
+    private Button            defaultSet;
     public GuiControls(Gui parent) {
         this.font = FontRenderer.get(0, 18, 0);
         this.parent = parent;
@@ -134,6 +135,27 @@ public class GuiControls extends Gui {
         }
         this.scrolllist.setSize(w1, this.height / 2);
         {
+            clear = new Button(3, "None");
+            clear.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
+            clear.setSize(160, 30);
+            this.add(clear);
+            clear.draw = false;
+        }
+        {
+            cancel = new Button(4, "Cancel");
+            cancel.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
+            cancel.setSize(160, 30);
+            this.add(cancel);
+            cancel.draw = false;
+        }
+        {
+            defaultSet = new Button(5, "Set default");
+            defaultSet.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
+            defaultSet.setSize(160, 30);
+            this.add(defaultSet);
+            defaultSet.draw = false;
+        }
+        {
             back = new Button(6, "Back");
             this.add(back);
             back.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
@@ -144,7 +166,7 @@ public class GuiControls extends Gui {
 
     public boolean onMouseClick(int button, int action) {
         if (selected != null) {
-            return true;
+            return super.onMouseClick(button, action);
         }
         return super.onMouseClick(button, action) || this.scrolllist.onMouseClick(button, action);
     }
@@ -156,23 +178,46 @@ public class GuiControls extends Gui {
     
     Keybinding inUseKey = null;
     public void render(float fTime, double mX, double mY) {
+        double mmX = mX;
+        double mmY = mY;
+        
         if (selected != null) {
-            mX = -9999;
-            mY = -9999;
+            mmX = -9999;
+            mmY = -9999;
         }
-        renderBackground(fTime, mX, mY, true, 0.7f);
+        renderBackground(fTime, mmX, mmY, true, 0.7f);
         Shaders.textured.enable();
         this.font.drawString("Controls", this.width / 2.0f, this.height / 6, -1, true, 1.0f, 2);
-        this.scrolllist.render(fTime, mX, mY);
-        super.renderButtons(fTime, mX, mY);
+        this.scrolllist.render(fTime, mmX, mmY);
+        this.clear.draw = this.selected != null;
+        this.defaultSet.draw = this.selected != null;
+        this.cancel.draw = this.selected != null;
+        this.back.enabled = this.selected == null;
         if (selected != null) {
             String name = Keyboard.getKeyName(selected.b.getKey());
             int w = 300;
             int h = 150;
             int x = width/2-w/2;
             int y = height/2-h/2;
+            int h2=h;
+            if (inUseKey != null) {
+                h2+=70;
+            }
+            int buttonW = 150;
+            this.cancel.width = w-20;
+            this.cancel.height = 20;
+            this.cancel.posX = x+10;
+            this.cancel.posY = y+h2-this.cancel.height-10;
+            this.defaultSet.width = w/2-20;
+            this.defaultSet.height = 24;
+            this.defaultSet.posX = x+10;
+            this.defaultSet.posY = this.cancel.posY-30;
+            this.clear.width = w/2-20;
+            this.clear.height = 24;
+            this.clear.posX = x+w/2+10;
+            this.clear.posY = this.cancel.posY-30;
             Shaders.gui.enable();
-            renderRoundedBoxShadow(x, y, 2, w, h, color2, 0.7f, true);
+            renderRoundedBoxShadow(x, y, 2, w, h2, color2, 0.7f, true);
             Shaders.textured.enable();
             this.font.drawString("Please press a key for", x+w/2, y+h/4, 0xf1f1f1, true, 1.0f, 2);
             this.font.drawString(selected.b.getName(), x+w/2, y+h/4*2-6, 0xf1ffff, true, 1.0f, 2);
@@ -182,10 +227,11 @@ public class GuiControls extends Gui {
                 this.font.drawString(inUseKey.getName(), x+w/2, y+h-10, 0xf19999, true, 1.0f, 2);
             } else {
 
-                this.font.drawString("ESC to cancel", x+w/2, y+h/4*3+15, -1, true, 1.0f, 2);
+//                this.font.drawString("ESC to cancel", x+w/2, y+h/4*3+15, -1, true, 1.0f, 2);
             }
             
         }
+        super.renderButtons(fTime, mX, mY);
     }
     @Override
     public boolean onKeyPress(int key, int scancode, int action, int mods) {
@@ -205,8 +251,8 @@ public class GuiControls extends Gui {
                     }
                     this.selected.b.setEnabled(true);
                     this.selected.b.setKey(key);
-                    InputController.saveBindings();
                     InputController.updateKeybindMap();
+                    InputController.saveBindings();
                     this.selected = null;
                     
                 }
@@ -219,6 +265,31 @@ public class GuiControls extends Gui {
     
 
     public boolean onGuiClicked(AbstractUI element) {
+        if (element == clear) {
+            if (this.selected != null) {
+                this.selected.b.setKey(-1);
+                InputController.updateKeybindMap();
+                InputController.saveBindings();
+                this.selected = null;
+                this.inUseKey = null;
+            }
+            return true;
+        }
+        if (element == defaultSet) {
+            if (this.selected != null) {
+                this.selected.b.setKey(this.selected.b.getDefaultkey());
+                InputController.updateKeybindMap();
+                InputController.saveBindings();
+                this.selected = null;
+                this.inUseKey = null;
+            }
+            return true;
+        }
+        if (element == cancel) {
+            this.selected = null;
+            this.inUseKey = null;
+            return true;
+        }
         if (selected != null) {
             return true;
         }

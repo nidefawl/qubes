@@ -156,9 +156,10 @@ public class ScrollList extends Gui {
         double mx=Mouse.getX()-(getWindowPosX());
         double my=Mouse.getY()-(getWindowPosY());
         if (mx>=posX&&mx<=posX+this.width &&my>=posY&&my<=posY+this.height) {
+            return super.onMouseClick(button, action);    
+        } else {
         }
-//        return false;
-        return super.onMouseClick(button, action);    
+        return false;
     }
 
     public boolean onWheelScroll(double xoffset, double yoffset) {

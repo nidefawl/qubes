@@ -16,7 +16,9 @@ import com.google.common.collect.ImmutableBiMap;
 
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.WorkingEnv;
+import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.Side;
 
 public class IDMappingItems {
     public static boolean CHANGED = false;
@@ -115,6 +117,9 @@ public class IDMappingItems {
                 Integer id = map.get(sid);
                 if (id != null && id.intValue() >= 0) {
                     return id;
+                }
+                if (GameContext.getSide() == Side.CLIENT) {
+                    throw new GameError("Missing item id for "+sid);
                 }
                 System.out.println("Finding id for new item "+sid);
                 Integer newId = null;

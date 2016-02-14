@@ -65,6 +65,7 @@ public class EntityModelManager {
             model.setModel(this.models.get(asset));
             
             System.out.println("loaded model "+model.name+" has id "+model.id);
+            Thread.dumpStack();
         }
     }
 
