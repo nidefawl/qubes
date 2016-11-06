@@ -21,6 +21,7 @@ import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.biomes.IBiomeManager;
+import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.structure.GenTask;
 import nidefawl.qubes.worldgen.structure.MineGen;
@@ -50,10 +51,10 @@ public class WorldServer extends World {
         super(settings);
         this.server = server;
         this.chunkServer = (ChunkManagerServer) getChunkManager();
-        this.generator = GameRegistry.newGenerator(this, settings);
-        this.biomeManager = GameRegistry.newBiomeManager(this, this.generator, settings);
-        this.populator = GameRegistry.newPopulator(this, this.generator, settings);
-        this.generator.init();
+        WorldGenInit worldGen = GameRegistry.newGenerator(this, settings);
+        this.generator = worldGen.getGenerator();
+        this.biomeManager = worldGen.getBiomeManager();
+        this.populator = worldGen.getPopulator();
         this.lightUpdater = new BlockLightThread(this);
     }
     public void onLeave() {
@@ -364,12 +365,7 @@ public class WorldServer extends World {
     public List<Entity> getEntityList() {
         return this.entityList;
     }
-    /**
-     * @return
-     */
-    public int getWorldType() {
-        return this.biomeManager.getWorldType();
-    }
+    
     /**
      * @return
      */

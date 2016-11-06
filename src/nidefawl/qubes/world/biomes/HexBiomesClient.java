@@ -14,7 +14,7 @@ import nidefawl.qubes.world.*;
  */
 public class HexBiomesClient extends HexBiomes {
 
-	public HexBiomesClient(World world, long seed, IWorldSettings settings) {
+	public HexBiomesClient(World world, long seed, IWorldSettings settings, IBiomeSettings biomeSettings) {
 	    super(world, seed, settings);
 	}
     @Override
@@ -50,5 +50,9 @@ public class HexBiomesClient extends HexBiomes {
 
     @Override
     public void deleteAll() {
+    }
+    @Override
+    public IBiomeSettings getBiomeSettings() {
+        return null;
     }
 }

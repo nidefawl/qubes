@@ -9,6 +9,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerBenchmark;
+import nidefawl.qubes.world.biomes.BiomeSettingsStatic;
 
 /**
  * @author Michael Hept 2015
@@ -28,7 +29,7 @@ public class WorldClientBenchmark extends WorldClient {
         return clSettings;
     }
     public WorldClientBenchmark() {
-        super(makeSettings(), 0);
+        super(makeSettings(), new BiomeSettingsStatic());
         ChunkManagerBenchmark chMgr = (ChunkManagerBenchmark) this.getChunkManager();
         chMgr.testChunk = new Chunk(this, 0, 0, 8);
         for (int x = 0; x < 16; x++) {

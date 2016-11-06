@@ -27,11 +27,6 @@ public abstract class HexBiomes extends HexagonGridStorage<HexBiome> implements 
         HexBiome b = (HexBiome) blockToHex(x, z);
         return b.biome;
     }
-    
-    @Override
-    public int getWorldType() {
-        return 1;
-    }
 
     @Override
     public int getBiomeFaceColor(World world, int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {

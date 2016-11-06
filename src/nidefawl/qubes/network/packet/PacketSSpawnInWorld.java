@@ -7,21 +7,22 @@ import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldSettingsClient;
+import nidefawl.qubes.world.biomes.IBiomeSettings;
 
 public class PacketSSpawnInWorld extends Packet {
     public IWorldSettings worldSettings;
+    public IBiomeSettings biomeSettings;
     public Vec3D          pos;
     public int            flags;
     public int            entId;
-    public int            worldType;
 
     public PacketSSpawnInWorld() {
     }
 
-    public PacketSSpawnInWorld(int id, int worldType, IWorldSettings worldSettings, Vec3D pos, int flags) {
+    public PacketSSpawnInWorld(int id, IWorldSettings worldSettings, IBiomeSettings biomeSettings, Vec3D pos, int flags) {
         this.entId = id;
-        this.worldType = worldType;
         this.worldSettings = worldSettings;
+        this.biomeSettings = biomeSettings;
         this.pos = pos;
         this.flags = flags;
     }
@@ -30,10 +31,12 @@ public class PacketSSpawnInWorld extends Packet {
     public void readPacket(DataInput stream) throws IOException {
         this.entId = stream.readInt();
         this.flags = stream.readInt();
-        pos = new Vec3D(stream.readDouble(), stream.readDouble(), stream.readDouble());
-        this.worldType = stream.readInt();
-        worldSettings = new WorldSettingsClient();
-        worldSettings.read(stream);
+        this.pos = new Vec3D(stream.readDouble(), stream.readDouble(), stream.readDouble());
+        int worldType = stream.readInt();
+        this.biomeSettings = IBiomeSettings.fromId(worldType);
+        this.biomeSettings.read(stream);
+        this.worldSettings = new WorldSettingsClient();
+        this.worldSettings.read(stream);
     }
 
     @Override
@@ -43,7 +46,8 @@ public class PacketSSpawnInWorld extends Packet {
         stream.writeDouble(this.pos.x);
         stream.writeDouble(this.pos.y);
         stream.writeDouble(this.pos.z);
-        stream.writeInt(this.worldType);
+        stream.writeInt(IBiomeSettings.getId(this.biomeSettings));
+        this.biomeSettings.write(stream);
         this.worldSettings.write(stream);
     }
 

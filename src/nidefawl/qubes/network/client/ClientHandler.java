@@ -168,8 +168,7 @@ public class ClientHandler extends Handler {
         }
         this.state = STATE_CONNECTED;
         this.time = System.currentTimeMillis();
-        int worldType = packetJoinGame.worldType;
-        this.world = new WorldClient((WorldSettingsClient) packetJoinGame.worldSettings, worldType);
+        this.world = new WorldClient((WorldSettingsClient) packetJoinGame.worldSettings, packetJoinGame.biomeSettings);
         this.chunkManager = (ChunkManagerClient) this.world.getChunkManager();
         this.player.setFly((packetJoinGame.flags & 0x1) != 0);
         this.player.id = packetJoinGame.entId;

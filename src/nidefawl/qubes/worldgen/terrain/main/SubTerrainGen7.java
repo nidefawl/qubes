@@ -10,8 +10,6 @@ import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.biomes.HexBiome;
-import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
-import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4.NoiseData;
 
 public class SubTerrainGen7 extends SubTerrainGen {
     /**

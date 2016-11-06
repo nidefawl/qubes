@@ -49,7 +49,7 @@ public class ServerHandlerPlay extends ServerHandler {
             if (this.player.flying) {
                 flags |= 1;
             }
-            sendPacket(new PacketSSpawnInWorld(player.id, world.getWorldType(), world.settings, this.player.pos, flags));
+            sendPacket(new PacketSSpawnInWorld(player.id, world.settings, world.biomeManager.getBiomeSettings(), this.player.pos, flags));
             world.addPlayer(player);
             player.syncInventory();
             PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
@@ -79,7 +79,7 @@ public class ServerHandlerPlay extends ServerHandler {
         if (this.player.flying) {
             flags |= 1;
         }
-        sendPacket(new PacketSSpawnInWorld(player.id, world.getWorldType(), world.settings, this.player.pos, flags));
+        sendPacket(new PacketSSpawnInWorld(player.id, world.getSettings(), world.biomeManager.getBiomeSettings(), this.player.pos, flags));
         world.addPlayer(player);
         player.syncInventory();
         player.sendMessage("You are now in world "+world.getName());

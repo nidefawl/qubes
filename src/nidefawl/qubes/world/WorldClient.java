@@ -15,9 +15,7 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.world.biomes.EmptyBiomeManager;
-import nidefawl.qubes.world.biomes.HexBiomesClient;
-import nidefawl.qubes.world.biomes.IBiomeManager;
+import nidefawl.qubes.world.biomes.*;
 
 public class WorldClient extends World {
     float dayLightIntensity;
@@ -36,7 +34,7 @@ public class WorldClient extends World {
     ArrayList<Entity>         entityList = new ArrayList<>();                                           // use fast array list
     ArrayList<Entity>         entityRemove = new ArrayList<>();                                           // use fast array list
 
-    public WorldClient(WorldSettingsClient settings, int worldType) {
+    public WorldClient(WorldSettingsClient settings, IBiomeSettings biomeSettings) {
         super(settings);
         this.sunModelView = new Matrix4f();
         this.moonModelView = new Matrix4f();
@@ -45,19 +43,22 @@ public class WorldClient extends World {
         this.lightPosition = new Vector3f();
         this.lightDirection = new Vector3f();
         this.tmp1 = new Vector3f();
-        this.biomeManager = createBiomeManager(worldType);
+        this.biomeManager = createBiomeManager(biomeSettings);
     }
 
 
     /**
-     * @param worldType
+     * @param biomeSettings
      * @return
      */
-    private IBiomeManager createBiomeManager(int worldType) {
-        if (worldType == 0) {
-            return new EmptyBiomeManager(this, this.settings.getSeed(), this.settings);
+    private IBiomeManager createBiomeManager(IBiomeSettings biomeSettings) {
+        switch (biomeSettings.getType()) {
+            case HEX:
+                return new HexBiomesClient(this, this.settings.getSeed(), this.settings, biomeSettings);
+            case SINGLE:
+                return new EmptyBiomeManager(this, this.settings.getSeed(), this.settings, biomeSettings);
         }
-        return new HexBiomesClient(this, this.settings.getSeed(), this.settings);
+        throw new IllegalArgumentException("Undefined BiomeSettings type "+biomeSettings.getType());
     }
 
 

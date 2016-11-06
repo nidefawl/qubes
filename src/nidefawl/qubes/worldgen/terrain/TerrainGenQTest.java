@@ -8,14 +8,13 @@ import java.util.Random;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
-import nidefawl.qubes.noise.*;
+import nidefawl.qubes.noise.TerrainNoise2D;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.world.biomes.EmptyBiomeManager;
-import nidefawl.qubes.world.biomes.IBiomeManager;
+import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
-import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 
 /**
  * @author Michael Hept 2015
@@ -381,18 +380,12 @@ public class TerrainGenQTest implements ITerrainGen {
     }
 
     @Override
-    public Class<? extends IChunkPopulator> getPopulator() {
-        return EmptyChunkPopulator.class;
-    }
-
-    @Override
-    public Class<? extends IBiomeManager> getBiomeManager() {
-        return EmptyBiomeManager.class;
-    }
-
-
-    @Override
-    public void init() {
+    public WorldGenInit getWorldGen(WorldServer world, long seed, WorldSettings settings) {
+        WorldGenInit init = new WorldGenInit();
+        init.generator = this;
+        init.biomeManager = new EmptyBiomeManager(world, seed, settings);
+        init.populator = new EmptyChunkPopulator(world, seed, settings);
+        return init;
     }
 
 }

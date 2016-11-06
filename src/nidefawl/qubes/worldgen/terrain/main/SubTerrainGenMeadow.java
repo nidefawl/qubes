@@ -3,9 +3,9 @@
  */
 package nidefawl.qubes.worldgen.terrain.main;
 
-import java.util.Random;
-
 import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.*;
+
+import java.util.Random;
 
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;

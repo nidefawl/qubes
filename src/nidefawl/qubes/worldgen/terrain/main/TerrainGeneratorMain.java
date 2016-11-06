@@ -16,9 +16,8 @@ import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.biomes.HexBiomesServer;
-import nidefawl.qubes.world.biomes.IBiomeManager;
+import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
-import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
 
@@ -41,6 +40,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
     public TerrainGeneratorMain(WorldServer world, long seed, WorldSettings settings) {
         this.world = world;
         this.seed = seed;
+        this.biomes = new HexBiomesServer(world, seed, settings);
         this.gens = new SubTerrainGen[] {
                 new SubTerrainGenMeadow(this),
                 new SubTerrainGenDesert(this),
@@ -69,11 +69,6 @@ public class TerrainGeneratorMain implements ITerrainGen {
         this.j5 = NoiseLib.makeGenerator(824112353^23);
         this.j6 = new OpenSimplexNoiseJava(266671);
         this.j7 = new OpenSimplexNoiseJava(121661);
-    }
-
-    @Override
-    public void init() {
-        biomes = (HexBiomesServer) world.biomeManager;
     }
 
     @Override
@@ -394,14 +389,12 @@ public class TerrainGeneratorMain implements ITerrainGen {
         z = z-z2;
         return x*x+z+z;
     }
-
     @Override
-    public Class<? extends IChunkPopulator> getPopulator() {
-        return ChunkPopulator.class;
-    }
-
-    @Override
-    public Class<? extends IBiomeManager> getBiomeManager() {
-        return HexBiomesServer.class;
+    public WorldGenInit getWorldGen(WorldServer world, long seed, WorldSettings settings) {
+        WorldGenInit init = new WorldGenInit();
+        init.generator = this;
+        init.biomeManager = this.biomes;
+        init.populator = new ChunkPopulator(world, seed, settings);
+        return init;
     }
 }

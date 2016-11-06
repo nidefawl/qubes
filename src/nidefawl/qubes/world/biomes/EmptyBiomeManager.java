@@ -14,17 +14,18 @@ import nidefawl.qubes.world.*;
  */
 public class EmptyBiomeManager implements IBiomeManager {
 
+    private BiomeSettingsStatic settings;
+    public EmptyBiomeManager(World world, long seed, IWorldSettings settings, IBiomeSettings biomeSettings) {
+        this.settings = (BiomeSettingsStatic) biomeSettings;
+    }
+
     public EmptyBiomeManager(World world, long seed, IWorldSettings settings) {
+        this.settings = new BiomeSettingsStatic();
     }
 
     @Override
     public Biome getBiome(int x, int z) {
         return Biome.MEADOW_GREEN;
-    }
-
-    @Override
-    public int getWorldType() {
-        return 0;
     }
 
     @Override
@@ -54,5 +55,10 @@ public class EmptyBiomeManager implements IBiomeManager {
 
     @Override
     public void deleteAll() {
+    }
+
+    @Override
+    public IBiomeSettings getBiomeSettings() {
+        return this.settings;
     }
 }

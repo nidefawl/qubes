@@ -31,9 +31,11 @@ public class HexBiomesServer extends HexBiomes {
 	private final File dir;
     Set<Long>       flaggedInstances = Sets.newConcurrentHashSet();
     Set<Long>       flaggedInstances2 = Sets.newConcurrentHashSet();
+    private BiomeSettingsHex biomesettings;
 
 	public HexBiomesServer(World world, long seed, IWorldSettings settings) {
 	    super(world, seed, settings);
+	    this.biomesettings = new BiomeSettingsHex();
         this.dir = new File(((WorldSettings) settings).getWorldDirectory(), "biomes");
         this.dir.mkdirs();
         if (SAVE_LOAD) {
@@ -211,5 +213,9 @@ public class HexBiomesServer extends HexBiomes {
 //      this.flaggedInstances2.clear();
 //      super.reset();
 //  }
+    }
+    @Override
+    public IBiomeSettings getBiomeSettings() {
+        return this.biomesettings;
     }
 }

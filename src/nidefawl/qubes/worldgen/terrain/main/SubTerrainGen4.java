@@ -3,9 +3,11 @@
  */
 package nidefawl.qubes.worldgen.terrain.main;
 
-import java.util.Random;
+import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.clamp10;
+import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.func2;
+import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.smoothScale;
 
-import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.*;
+import java.util.Random;
 
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;

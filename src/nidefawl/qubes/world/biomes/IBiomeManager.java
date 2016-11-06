@@ -20,7 +20,7 @@ public interface IBiomeManager {
     /**
      * @return
      */
-    public int getWorldType();
+    public IBiomeSettings getBiomeSettings();
 
     /**
      * @param world
