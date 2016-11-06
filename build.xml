@@ -36,7 +36,9 @@
     	    <arg value="--side"/>
     	    <arg value="client"/>
 		    <arg value="--in"/>
-    	    <arg value="src"/>
+    	    <arg value="src/engine"/>
+		    <arg value="--in"/>
+    	    <arg value="src/game"/>
 		    <arg value="--out"/>
 		    <arg value="${compile_dir}/src/client"/>
 	    </exec>
@@ -48,7 +50,7 @@
     <target name="build_game_compile">
         <buildnumber file="../build.number"/>
         <replace>
-            <fileset dir="${compile_dir}/bin/client" includes="nidefawl/qubes/Game.java" />
+            <fileset dir="${compile_dir}/src/client" includes="nidefawl/qubes/Game.java" />
             <replacefilter token="::BUILD_CODE::" value="${build.number}" />
     	</replace>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/client" source="${source}" target="${target}">
@@ -139,6 +141,18 @@
             <fileset file="../game_deps.dat" />
         </copy>
 	</target>
+
+	<target name="copy_blockmapping">
+        <copy includeemptydirs="false" todir="config">
+            <fileset file="U:\game\dev\config\blockmapping.yml" />
+        </copy>
+	</target>
+	<target name="wipe_worlds">
+	    <delete dir="server/worlds/world/biomes" failonerror="no"/>
+	    <delete dir="server/worlds/world/data" failonerror="no"/>
+	    <delete dir="server/worlds/mine/data" failonerror="no"/>
+	</target>
+		
 
 	<target name="buildserver_quick">
         <echo message="${ant.project.name}: ${ant.file}"/>
