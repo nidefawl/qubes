@@ -3,7 +3,7 @@
  */
 package nidefawl.qubes.worldgen.terrain.main;
 
-import nidefawl.qubes.biomes.HexBiome;
+import nidefawl.qubes.world.biomes.HexBiome;
 
 /**
  * @author Michael Hept 2015

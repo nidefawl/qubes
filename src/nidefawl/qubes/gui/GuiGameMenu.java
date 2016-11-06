@@ -34,13 +34,10 @@ public class GuiGameMenu extends Gui {
             resume.setSize(w1, h);
         }
         {
-            settings = new Button(2, "Settings");
-            this.add(settings);
-            settings.setPos(left, this.posY+this.height/2+20);
-            settings.setSize(w1, h);
-        }
-        {
-            controls = new Button(3, "Controls");
+            Keybinding key = InputController.getKeyBindingByName("show_select_world");
+            String name = Keyboard.getKeyName(key.getKey());
+            String desc = " ("+name+")";
+            Button controls = new Button(2, "Worlds"+desc);
             this.add(controls);
             controls.setPos(left, this.posY+this.height/2+60);
             controls.setSize(w1, h);
@@ -73,12 +70,24 @@ public class GuiGameMenu extends Gui {
             controls.setSize(w1, h);
         }
         {
-            back = new Button(7, "Disconnect");
+            settings = new Button(7, "Settings");
+            this.add(settings);
+            settings.setPos(left, this.posY+this.height/2+20);
+            settings.setSize(w1, h);
+        }
+        {
+            controls = new Button(8, "Controls");
+            this.add(controls);
+            controls.setPos(left, this.posY+this.height/2+60);
+            controls.setSize(w1, h);
+        }
+        {
+            back = new Button(9, "Disconnect");
             this.add(back);
             back.setPos(left, this.posY+this.height/2+100);
             back.setSize(w1, h);
         }
-        int top = this.posY+(this.height/2)-(this.buttons.size()*(h+20))/3;
+        int top = this.posY+(this.height/2)-(this.buttons.size()*(h+30))/3;
         for (AbstractUI b : this.buttons) {
             b.posY = top;
             top += 20+b.height;
@@ -103,6 +112,11 @@ public class GuiGameMenu extends Gui {
         if (element.id == 6) {
             Game.instance.showGUI(null);
             InputController.getKeyBindingByName("show_crafting").fire();
+            return true;
+        }
+        if (element.id == 2) {
+            Game.instance.showGUI(null);
+            InputController.getKeyBindingByName("show_select_world").fire();
             return true;
         }
         if (element == this.resume) {

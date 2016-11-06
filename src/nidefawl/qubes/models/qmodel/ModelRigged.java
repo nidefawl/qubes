@@ -38,7 +38,7 @@ public class ModelRigged extends ModelQModel {
     public ArrayList<QModelPoseBone> poseBones;
     private QModelPoseBone head;
     private QModelPoseBone neck;
-    private boolean needsDraw;
+    public QModelNode weaponSlot;
 
 	public ModelRigged(ModelLoaderQModel loader) {
 	    super(loader);
@@ -57,6 +57,11 @@ public class ModelRigged extends ModelQModel {
             }
             if (b.restbone.name.equalsIgnoreCase("CATNeck")) {
                 this.neck = b;
+            }
+        }
+        for (QModelNode node : loader.listEmpties) {
+            if (node.name.equals("WeaponSlot")) {
+                weaponSlot = node;
             }
         }
         this.rootJoint = this.poseBones.isEmpty() ? null : this.poseBones.get(0);
@@ -84,7 +89,8 @@ public class ModelRigged extends ModelQModel {
             int idx = properties.getChannelIdx(joint.restbone.name);
             QAnimationChannel anim = properties.getActionChannel(idx, joint.restbone.name);
             float offset = properties.getActionOffset(idx);
-            if (anim != null && anim.setDeform(0, fabs-offset, tmpMat1)) {
+            float mult = properties.getActionSpeed(idx);
+            if (anim != null && anim.setDeform(0, (fabs-offset)*mult, tmpMat1)) {
                 joint.matDeform.load(tmpMat1);
             } else {
                 joint.matDeform.load(joint.getMatRest());
@@ -115,9 +121,7 @@ public class ModelRigged extends ModelQModel {
             empty.updateNormalMat();
         }
     }
-    Quaternion q = new Quaternion();
-    public Matrix4f tmpMat1 = new Matrix4f();
-    Matrix4f tmpMat2 = new Matrix4f();
+    
 	/** DEBUG METHOD! SLOW! RUN IN SHADER! 
 	 * @param obj 
 	 * @param tmpVec2 
@@ -150,82 +154,7 @@ public class ModelRigged extends ModelQModel {
 ////        return null;
 ////    }
 
-    Vector3f tmpVec = new Vector3f();
-    Vector3f tmpVec2 = new Vector3f();
 
-    public void renderRestModel(int object, int group, int instances) {
-        
-    }
-    public void renderRestModel(QModelObject obj, QModelGroup grp, int instances) {
-        ModelRenderObject rObj = this.getGroup(obj.idx);
-        ModelRenderGroup rGroup = rObj.getGroup(grp.idx);
-        if (rGroup.gpuBufRest == null /*|| (System.currentTimeMillis()-rGroup.reRender>1000)*/) {
-            if (rGroup.gpuBufRest != null) {
-                rGroup.gpuBufRest.release();
-            }
-            rGroup.reRender = System.currentTimeMillis();
-            if (this.vbuf == null)
-                this.vbuf = new VertexBuffer(1024*64);
-            this.vbuf.reset();
-            int vPosI = 0;
-//            int[] vPos = new int[this.loader.listTri.size()*3];
-//            Arrays.fill(vPos, -1);
-            for (QModelTriangle triangle : grp.listTri) {
-                for (int i = 0; i < 3; i++) {
-                    int idx = triangle.vertIdx[i];
-//                    if (vPos[idx] < 0) { // shared vertices require per vertex UVs -> requires exporter to be adjusted
-                    // but also gives worse performance
-//                        vPos[idx] =
-//                                vPosI++;
-                        QModelVertex v = obj.listVertex.get(idx);
-                        vbuf.put(Float.floatToRawIntBits(v.x));
-                        vbuf.put(Float.floatToRawIntBits(v.y));
-                        vbuf.put(Float.floatToRawIntBits(v.z));
-                        tmpVec.set(triangle.normal[i]);
-                        vbuf.put(RenderUtil.packNormal(tmpVec));
-                        vbuf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
-                        int bones03 = 0;
-                        int bones47 = 0;
-                        for (int w = 0; w < 4; w++) {
-                            int boneIdx = (0 + w) >= v.numBones ? 0xFF : v.bones[0 + w];
-                            int boneIdx2 = (4 + w) >= v.numBones ? 0xFF : v.bones[4 + w];
-                            bones03 |= (boneIdx) << (w * 8);
-                            bones47 |= (boneIdx2) << (w * 8);
-                        }
-                        vbuf.put(bones03);
-                        vbuf.put(bones47);
-                        for (int w = 0; w < 4; w++) {
-                            vbuf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
-                        }
-                        vbuf.increaseVert();
-//                    } else {
-//                        System.out.println("reuse vert");
-//                    }
-                    vbuf.putIdx(vPosI++);
-                }
-                vbuf.increaseFace();
-            }
-            rGroup.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
-
-            int bytes = rGroup.gpuBufRest.upload(vbuf);
-//            System.out.println("byte size upload "+bytes+", "+rGroup.gpuBufRest.getVertexCount());
-//            System.out.println(""+rGroup.gpuBufRest.getVertexCount()+" vertices, "+rGroup.gpuBufRest.getTriCount()+" tris, "+rGroup.gpuBufRest.getIdxCount()+" indexes");
-
-        }
-//        this.gpuBufRest.draw();
-        Stats.modelDrawCalls++;
-
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("render_"+this.loader.getModelName()+"_"+obj.name+"_"+grp.name);
-        Engine.bindBuffer(rGroup.gpuBufRest.getVbo().getVboId());
-        Engine.bindIndexBuffer(rGroup.gpuBufRest.getVboIndices().getVboId());
-//        System.out.println(instances);
-        GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, rGroup.gpuBufRest.getTriCount()*3, GL11.GL_UNSIGNED_INT, 0, instances);
-
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-    }
-    private VertexBuffer vbuf;
     public void render(int object, int group, float f) {
         QModelObject obj = this.loader.listObjects.get(object);
         QModelGroup grp = obj.listGroups.get(group);
@@ -298,11 +227,10 @@ public class ModelRigged extends ModelQModel {
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
                         this.vbuf.put(textureHalf2);
                         this.vbuf.put(0xff999999);
+                        this.vbuf.increaseVert();
 //                      }
                         this.vbuf.putIdx(vPos[idx]);
-                    this.vbuf.increaseVert();
                 }
-                this.vbuf.increaseFace();
             }
             
             

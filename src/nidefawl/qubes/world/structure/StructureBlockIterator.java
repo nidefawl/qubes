@@ -1,4 +1,4 @@
-package nidefawl.qubes.worldgen.trees;
+package nidefawl.qubes.world.structure;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -6,15 +6,16 @@ import java.util.Iterator;
 import nidefawl.qubes.util.TripletIntHash;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.world.structure.tree.Tree;
 
-public class TreeBlockIterator implements Iterator<BlockPos> {
-    final Tree tree;
+public class StructureBlockIterator implements Iterator<BlockPos> {
+    final Structure tree;
     private int pos;
     private int[] blocks;
 
     BlockPos bPos = new BlockPos();
     private AABBInt bb;
-    public TreeBlockIterator(Tree tree, AABBInt bb) {
+    public StructureBlockIterator(Structure tree, AABBInt bb) {
         this.pos = 0;
         this.tree = tree;
         this.bb = bb;

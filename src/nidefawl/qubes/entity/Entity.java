@@ -2,6 +2,7 @@ package nidefawl.qubes.entity;
 
 import java.util.Random;
 
+import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.QModelProperties;
 import nidefawl.qubes.nbt.Tag;
@@ -50,6 +51,7 @@ public abstract class Entity {
     public boolean flagRemove = false;
     Random random = new Random();
     protected EntityProperties properties;
+    public BaseStack[] equipment = new BaseStack[0];
     
 	public Entity() {
         this.width = getEntityType().getWidth();
@@ -257,7 +259,13 @@ public abstract class Entity {
 
 
     public void readClientData(Tag tag) {
-        readProperties(tag);
+        if (tag.getType() == TagType.COMPOUND) {
+            Tag.Compound compound = (Tag.Compound) tag;
+//            this.name = compound.getString("name");
+            Tag c = compound.get("properties");
+            if (c != null)
+                readProperties(c);
+        }
     }
     public void readProperties(Tag tag) {
         if (tag.getType() == TagType.COMPOUND) {
@@ -379,8 +387,7 @@ public abstract class Entity {
     public void adjustRenderProps(QModelProperties renderProps, float fTime) {
         EntityProperties properties = this.properties;
         if (properties != null) {
-            renderProps.options.clear();
-            renderProps.options.putAll(properties.map);
+            renderProps.setProperties(properties.properties);
         }
     }
 
@@ -389,6 +396,17 @@ public abstract class Entity {
     }
     public EntityProperties getEntityProperties() {
         return this.properties;
+    }
+    public BaseStack getActiveItem(int i) {
+        if (this.equipment.length > i) {
+            return this.equipment[i];
+        }
+        return null;
+    }
+
+    public void setEquipment(BaseStack[] stacks) {
+        System.out.println("setequp "+(stacks==null||stacks.length==0?"<null>":stacks[0]));
+        this.equipment = stacks;
     }
 
 }

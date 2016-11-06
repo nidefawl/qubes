@@ -191,4 +191,13 @@ public abstract class Handler {
 
     public void handleEntityProperties(PacketSEntityProperties p) {
     }
+
+    public void handleEntityEquip(PacketSEntityEquip packetSEntityEquip) {
+    }
+
+    public void handleListReq(PacketCListRequest packetCListRequest) {
+    }
+
+    public void handleList(PacketSList packetSList) {
+    }
 }

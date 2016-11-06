@@ -1,15 +1,17 @@
 package nidefawl.qubes.network.client;
 
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.async.AsyncTaskThread;
 import nidefawl.qubes.async.AsyncTasks;
-import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
@@ -26,6 +28,8 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.PlayerInventory;
+import nidefawl.qubes.io.ByteArrIO;
+import nidefawl.qubes.io.network.WorldInfo;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
@@ -35,14 +39,27 @@ import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldSettingsClient;
+import nidefawl.qubes.world.biomes.IBiomeManager;
 
 public class ClientHandler extends Handler {
+    public final static long   timeout = 5000;
 
     int state = STATE_HANDSHAKE;
+    String disconnectReason = null;
+    private long               time;
+    int disconnectFrom   = -1;
+
 
     public final NetworkClient client;
-    private long               time;
-    public final static long   timeout = 5000;
+    private ChunkManagerClient chunkManager;
+    private PlayerSelf         player;
+    private WorldClient        world;
+
+    //TODO: move decompression to thread
+    final Inflater inflate = new Inflater();
+    final int i10Meg = 20*1024*1024;
+    byte[] tmpBuffer = new byte[i10Meg];
+    public ArrayList<WorldInfo> worldList = Lists.newArrayList();
 
     public ClientHandler(final NetworkClient client) {
         this.client = client;
@@ -129,14 +146,6 @@ public class ClientHandler extends Handler {
         return this.state;
     }
 
-    int disconnectFrom   = -1;
-    String disconnectReason = null;
-
-    private WorldClient world;
-
-    private PlayerSelf player;
-
-    private ChunkManagerClient chunkManager;
 
     @Override
     public void onDisconnect(int from, String reason) {
@@ -296,11 +305,6 @@ public class ClientHandler extends Handler {
         }
     }
 
-    //TODO: move decompression to thread
-    final Inflater inflate = new Inflater();
-    final int i10Meg = 20*1024*1024;
-
-    byte[] tmpBuffer = new byte[i10Meg];
     private byte[] inflate(byte[] blocks) {
         inflate.reset();
         inflate.setInput(blocks);
@@ -415,8 +419,9 @@ public class ClientHandler extends Handler {
         e.yawBodyOffset = p.yawbody;
         e.move(p.pos);
         Tag tag = p.data;
-        if (tag != null)
+        if (tag != null) {
             e.readClientData(tag);
+        }
         this.world.addEntity(e); 
     }
 
@@ -452,7 +457,6 @@ public class ClientHandler extends Handler {
         for (int i = 0; i < packetSDebugBB.boxes.size(); i++) {
             Engine.worldRenderer.debugBBs.put(i, packetSDebugBB.boxes.get(i));    
         }
-        
     }
     public void handleDebugPath(PacketSDebugPath packetSDebugPath) {
         Engine.worldRenderer.debugPaths.clear();
@@ -509,4 +513,17 @@ public class ClientHandler extends Handler {
         }
     }
 
+
+
+    public void handleEntityEquip(PacketSEntityEquip p) {
+        Entity e = this.world.getEntity(p.entId);
+        if (e != null) {
+            e.setEquipment(p.stacks);
+        }
+    }
+
+    public void handleList(PacketSList packetSList) {
+        this.worldList.clear();
+        this.worldList.addAll(packetSList.list);
+    }
 }

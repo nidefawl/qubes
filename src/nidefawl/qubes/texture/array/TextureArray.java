@@ -59,8 +59,9 @@ public abstract class TextureArray {
     }
     private void _load() {
         AssetManager mgr = AssetManager.getInstance();
-        if (!SKIP_LOAD_TEXTURES)
-        collectTextures(mgr);
+        if (!SKIP_LOAD_TEXTURES) {
+            collectTextures(mgr);
+        }
         this.loadprogress = 1;
         findMaxTileWidth();
         upscaleTextures();

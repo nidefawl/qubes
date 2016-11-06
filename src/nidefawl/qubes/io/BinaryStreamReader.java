@@ -1,4 +1,4 @@
-package nidefawl.qubes.util;
+package nidefawl.qubes.io;
 
 import java.io.EOFException;
 

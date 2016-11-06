@@ -6,7 +6,9 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Entity;
+import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
@@ -23,7 +25,6 @@ public class EntityModelPlayer extends EntityModel {
     ArrayList<QModelObject> hats = Lists.newArrayList();
     ArrayList<QModelObject> beards = Lists.newArrayList();
     ArrayList<QModelObject> hairs = Lists.newArrayList();
-    ArrayList<QModelObject> tools = Lists.newArrayList();
     ArrayList<QModelObject> bags = Lists.newArrayList();
     public final ModelOption modelSize = new ModelOption(this, "Model").setOptions("Normal", "Slim", "Strong");
     public final ModelOption texSkin = new ModelOption(this, "Skin texture").setOptionCount("Skin #", 13);
@@ -34,8 +35,6 @@ public class EntityModelPlayer extends EntityModel {
     public final ModelOption texBeard = new ModelOption(this, "Beard texture");
     public final ModelOption modelHat = new ModelOption(this, "Hat");
     public final ModelOption texHat = new ModelOption(this, "Hat texture").setOptionCount("Texture #", 7);
-    public final ModelOption modelTools = new ModelOption(this, "Tool");
-    public final ModelOption texTools = new ModelOption(this, "Tool texture").setOptionCount("Texture #", 3);
     public final ModelOption modelBag= new ModelOption(this, "Bag");
     public final ModelOption texBag = new ModelOption(this, "Bag texture").setOptionCount("Texture #", 2);
 //    final ModelOption curAction = new ModelOption(this, "Action");
@@ -81,18 +80,15 @@ public class EntityModelPlayer extends EntityModel {
         ArrayList<String> hairNames = Lists.newArrayList();
         ArrayList<String> hatNames = Lists.newArrayList();
         ArrayList<String> beardNames = Lists.newArrayList();
-        ArrayList<String> toolNames = Lists.newArrayList();
         ArrayList<String> bagNames = Lists.newArrayList();
         bagNames.add("-");
         hatNames.add("-");
         hairNames.add("-");
         beardNames.add("-");
-        toolNames.add("-");
         bags.add(null);
         hats.add(null);
         hairs.add(null);
         beards.add(null);
-        tools.add(null);
         int idxHat=1;
         int idxHair=1;
         int idxBeard=1;
@@ -109,19 +105,16 @@ public class EntityModelPlayer extends EntityModel {
             } else if (nLower.contains("beard")) {
                 beards.add(g);
                 beardNames.add("Beard "+(idxBeard++));
-            } else if (nLower.contains("tool")) {
-                tools.add(g);
-                toolNames.add("Tool "+(idxTool++));
             } else if (nLower.contains("bag")) {
                 bags.add(g);
                 bagNames.add("Bag "+(idxBag++));
             } else if (nLower.startsWith("attach_")) {
             }
         }
+        
         modelHat.setOptions(hatNames.toArray(new String[hatNames.size()]));
         modelBeard.setOptions(beardNames.toArray(new String[beardNames.size()]));
         modelHair.setOptions(hairNames.toArray(new String[hairNames.size()]));
-        modelTools.setOptions(toolNames.toArray(new String[toolNames.size()]));
         modelBag.setOptions(bagNames.toArray(new String[bagNames.size()]));
         modelHair.setDefaultVal(1);
         main_0 = getObject(list, "main_0");
@@ -186,14 +179,17 @@ public class EntityModelPlayer extends EntityModel {
         if (e != null) {
             properties.setAction(0, null);
             properties.setAction(1, null);
-            if (e.timePunch > 0 && e.timePunch + this.hit1.lenTime > Game.absTime) {
+            DigController dig = Game.instance.dig;
+            if (dig.isDigAnimation()/*e.timePunch > 0 && Game.absTime-e.timePunch < hit1.lenTime*/) {
+                
                 properties.setAction(0, hit1);
                 properties.setActionOffset(0, e.timePunch);
+                properties.setActionSpeed(0, 1.33f);
             } else if (e.pos.distanceSq(e.lastPos) > 1.0E-4) {
             } else {
                 properties.setAction(0, idle);
             }
-            if (e.timeJump > 0 && e.timeJump + this.jump.lenTime > Game.absTime) {
+            if (e.timeJump > 0 && Game.absTime-e.timeJump < this.jump.lenTime) {
                 properties.setAction(0, this.jump);
                 properties.setActionOffset(0, e.timeJump);
             }
@@ -243,9 +239,33 @@ public class EntityModelPlayer extends EntityModel {
         attach(rend, properties, hairs, this.modelHair, this.texHair);
         attach(rend, properties, hats, this.modelHat, this.texHat);
         attach(rend, properties, beards, this.modelBeard, this.texBeard);
-        attach(rend, properties, tools, this.modelTools, this.texTools);
         attach(rend, properties, bags, this.modelBag, this.texBag);
+
+        if (properties.getModelAtt() != null) {
+            Matrix4f matSlot = ((ModelRigged)this.model).weaponSlot.matDeform;
+            BufferedMatrix m4 = Engine.getTempMatrix();
+            m4.load(matSlot);
+            m4.mulMat(rend.modelMat);
+            m4.rotate(-180 * GameMath.PI_OVER_180, 1, 0, 0);
+            m4.rotate(-140 * GameMath.PI_OVER_180, 0, 1, 0);
+            m4.scale(13f);
+            m4.translate(0, -1f, 0);
+            rend.modelMat.load(m4);
+            rend.modelMat.update();
+            rend.normalMat.load(rend.modelMat);
+            rend.normalMat.clearTranslation();
+            rend.normalMat.invert();
+            rend.normalMat.transpose();
+            rend.normalMat.update();
+            QModelObject qobj = properties.getModelAtt().getObjects().get(0);
+            qobj.bindTextureIdx(0, 0);
+            qobj.setAttachmentEmpty(null);
+            rend.model = properties.getModelAtt(); 
+            rend.addObject(qobj);
+        }
     }
+    
+    
 
     private void attach(QModelRender rend, QModelProperties config, ArrayList<QModelObject> list, ModelOption modelOption, ModelOption texOption) {
         int modelSel = config.getOption(modelOption.getId());

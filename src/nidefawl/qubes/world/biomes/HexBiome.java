@@ -1,22 +1,22 @@
 /**
  * 
  */
-package nidefawl.qubes.biomes;
+package nidefawl.qubes.world.biomes;
 
 import java.io.*;
-import java.util.*;
-
-import com.google.common.collect.Sets;
+import java.util.Collection;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.hex.HexCell;
 import nidefawl.qubes.hex.HexagonGrid;
 import nidefawl.qubes.hex.HexagonGridStorage;
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.nbt.TagReader;
 import nidefawl.qubes.nbt.Tag.Compound;
-import nidefawl.qubes.util.RegionMap;
-import nidefawl.qubes.worldgen.trees.Tree;
+import nidefawl.qubes.nbt.TagReader;
+import nidefawl.qubes.world.structure.StructureFactory;
+import nidefawl.qubes.world.structure.StructureMap;
+import nidefawl.qubes.world.structure.mine.Mine;
+import nidefawl.qubes.world.structure.tree.Tree;
 
 /**
  * @author Michael Hept 2015
@@ -26,8 +26,18 @@ public class HexBiome extends HexCell<HexBiome> {
     public boolean needsSave = false;
     public int version;
     public Biome biome;
-    Set<Tree> treeList = Sets.newConcurrentHashSet();
-    RegionMap<Tree> trees = new RegionMap<Tree>(2);
+    StructureMap<Tree> trees = new StructureMap<Tree>(new StructureFactory<Tree>() {
+        @Override
+        public Tree newInstance() {
+            return new Tree();
+        }
+    });
+    StructureMap<Mine> mines = new StructureMap<Mine>(new StructureFactory<Mine>() {
+        @Override
+        public Mine newInstance() {
+            return new Mine();
+        }
+    });
     public int subtype;
 
     public HexBiome(HexagonGridStorage<HexBiome> hexBiomes, int x, int z) {
@@ -54,18 +64,13 @@ public class HexBiome extends HexCell<HexBiome> {
             this.z = cmp.getInt("z");
             this.biome = Biome.get(cmp.getInt("biome"));
             this.subtype = cmp.getInt("subtype");
-            List list = cmp.getList("trees");
-            Iterator it = list.iterator();
-            while (it.hasNext()) {
-                Compound cmpTree = (Compound) it.next();
-                Tree tree = new Tree();
-                tree.load(cmpTree);
-                treeList.add(tree);
-                trees.add(tree);
-            }
+            Tag cmpTree = cmp.get("trees");
+            if (cmpTree != null)
+                trees.load((Tag.Compound)cmpTree);
+            Tag cmpMines = cmp.get("mines");
+            if (cmpMines != null)
+                mines.load((Tag.Compound)cmpMines);
             
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (fis != null) {
                 fis.close();
@@ -83,14 +88,10 @@ public class HexBiome extends HexCell<HexBiome> {
         cmp.setInt("z", z);
         cmp.setInt("biome", this.biome.id);
         cmp.setInt("subtype", this.subtype);
-        Iterator<Tree> treeIt = this.treeList.iterator();
-        Tag.TagList list = new Tag.TagList();
-        while (treeIt.hasNext()) {
-            Tree tree = treeIt.next();
-            Compound compound = tree.save();
-            list.add(compound);
-        }
-        cmp.set("trees", list);
+        Compound cmpTrees = this.trees.save();
+        Compound cmpMines = this.mines.save();
+        cmp.set("trees", cmpTrees);
+        cmp.set("mines", cmpMines);
         
         //TODO: move to thread!
         FileOutputStream fos = null;
@@ -115,7 +116,11 @@ public class HexBiome extends HexCell<HexBiome> {
 
     public void registerTree(Tree tree) {
         this.trees.add(tree);
-        this.treeList.add(tree);
+        this.grid.flag(this.x, this.z);
+    }
+
+    public void registerMine(Mine m) {
+        this.mines.add(m);
         this.grid.flag(this.x, this.z);
     }
 
@@ -143,9 +148,12 @@ public class HexBiome extends HexCell<HexBiome> {
         return new HexBiome[] { this, hex1, hex2 };
     }
 
-    public Collection<Tree> getNearbyTrees(int x, int y, int z, int i) {
-        Collection<Tree> list = trees.getRegions(x, z, i);
-        return list;
+    
+    public StructureMap<Tree> getTrees() {
+        return this.trees;
+    }
+    public StructureMap<Mine> getMines() {
+        return this.mines;
     }
 
 }

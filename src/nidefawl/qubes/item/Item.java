@@ -19,7 +19,7 @@ import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.worldgen.trees.Tree;
+import nidefawl.qubes.world.structure.tree.Tree;
 
 /**
  * @author Michael Hept 2015

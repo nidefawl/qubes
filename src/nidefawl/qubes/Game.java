@@ -32,6 +32,7 @@ import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
+import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
@@ -46,15 +47,14 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
-import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
+import sun.misc.FpUtils;
 
 public class Game extends GameBase implements IErrorHandler {
 
@@ -132,10 +132,15 @@ public class Game extends GameBase implements IErrorHandler {
     public void initGame() {
         loadProfile();
         loadSettings();
+        if (this.serverAddr == null) {
+            this.serverAddr = this.settings.lastserver;
+        }
+        if (this.serverAddr == null) {
+            this.serverAddr = "nide.ddns.net:21087";
+        }
         InputController.initKeybinds();
         selection.init();
         dig.init();
-        AssetManager.init();
         FontRenderer.init();
         Engine.init();
         loadRender(0, 0, "Initializing");
@@ -168,6 +173,10 @@ public class Game extends GameBase implements IErrorHandler {
     public boolean loadRender(int step, float f, String string) {
         int tw = Game.displayWidth;
         int th = Game.displayHeight;
+        if (step > loadProgress.length-1) {
+            System.err.println("step > loadprogress-1!");
+            step = loadProgress.length-1;
+        }
         int oldW = (int) (tw*0.6f*loadProgress[step]);
         int newW = (int) (tw*0.6f*(f));
         float fd=Math.abs(newW-oldW);
@@ -260,7 +269,11 @@ public class Game extends GameBase implements IErrorHandler {
             AsyncTasks.submit(new AsyncTask() {
                 @Override
                 public void pre() {
-                    arr.preUpdate();
+                    try {
+                        arr.preUpdate();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 @Override
                 public void post() {
@@ -268,7 +281,11 @@ public class Game extends GameBase implements IErrorHandler {
                 }
                 @Override
                 public Void call() throws Exception {
-                    arr.load();
+                    try {
+                        arr.load();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     return null;
                 }
                 @Override
@@ -467,6 +484,9 @@ public class Game extends GameBase implements IErrorHandler {
             if (GuiWindowManager.onMouseClick(button, action)) {
                 return;
             }
+            if (GuiWindowManager.getInstance().anyWindowVisible()) {
+                return;
+            }
 
 
             boolean b = Mouse.isGrabbed();
@@ -483,18 +503,9 @@ public class Game extends GameBase implements IErrorHandler {
                         this.player.clicked(button, isDown);
                     }
                     break;
-                case 1:
-                    if (isDown ) {
-                        setGrabbed(!b);
-                        b = !b;
-                    }
-                    break;
                 case 2:
                     selection.clicked(button, isDown);
                     break;
-            }
-            if (b != this.movement.grabbed()) {
-                setGrabbed(b);
             }
         }
     }
@@ -507,6 +518,13 @@ public class Game extends GameBase implements IErrorHandler {
             Mouse.setGrabbed(b);
             this.dig.onGrabChange(this.movement.grabbed());
         }
+    }
+
+    public boolean needsGrab() {
+        if (this.world == null) {
+            return false;
+        }
+        return this.gui==null&&!GuiWindowManager.anyWindowVisible();
     }
 
 
@@ -630,6 +648,16 @@ public class Game extends GameBase implements IErrorHandler {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
+
+            if (Engine.outRenderer.getSsr() > 0) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("SSR");
+                Engine.outRenderer.raytraceSSR(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+            }
+
+
             boolean firstPerson = !this.thirdPerson && this.mode == GameMode.PLAY;
             if (firstPerson) {
                 if (GPUProfiler.PROFILING_ENABLED)
@@ -668,15 +696,21 @@ public class Game extends GameBase implements IErrorHandler {
                     GPUProfiler.end();
             }
             
-            
 
             if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("SSR + CalcLum");
+                GPUProfiler.start("Lum");
 
-            glDisable(GL_BLEND); // don't blend ssr
+            if (Engine.outRenderer.getSsr() > 0) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("SSR2");
+                Engine.outRenderer.combineSSR(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+            }
+            glDisable(GL_BLEND);
             glDisable(GL_DEPTH_TEST);
             Engine.enableDepthMask(false);
-            Engine.outRenderer.renderReflAndBlur(this.world, fTime);
+            Engine.outRenderer.renderBlur(this.world, fTime);
 
 
             if (GPUProfiler.PROFILING_ENABLED)
@@ -944,13 +978,15 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >=6000/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >=10200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+            System.out.println(lastFPS);
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
 ////          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //          Engine.worldRenderer.initShaders();
+//          Engine.blurRenderer.initShaders();
             
 ////          Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
@@ -1240,5 +1276,10 @@ public class Game extends GameBase implements IErrorHandler {
 
     public Selection getSelection() {
         return this.selection;
+    }
+
+    public ClientHandler getClientHandler() {
+        NetworkClient client = this.client;
+        return client != null ? client.getClient() : null;
     }
 }

@@ -25,7 +25,7 @@ public class QModelTexture {
     public int get() {
         //TODO: load textures in thread/dynamic, globally
         if (this.glid <= 0) {
-            AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path);
+            AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
             int maxDim = Math.max(t.getWidth(), t.getHeight());
             int mipmapLevel = 1+GameMath.log2(maxDim);
             this.glid = TextureManager.getInstance().makeNewTexture(t, false, true, mipmapLevel);

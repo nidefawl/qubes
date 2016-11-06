@@ -14,6 +14,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
@@ -82,12 +83,31 @@ public class RegionRenderer extends AbstractRenderer {
     float camX; float camY; float camZ;
     MeshedRegion[][] regions;
     public int numV;
+    /*
+     * typedef struct {
+     *   GLuint   index;
+     *   GLuint   reserved;
+     *   GLuint64 address;
+     *   GLuint64 length;
+     * } BindlessPtrNV;
+     * 
+     * typedef struct {
+     *   uint count;
+     *   uint primCount;
+     *   uint firstIndex;
+     *   uint baseVertex;
+     *   uint baseInstance;
+     *   DrawElementsIndirectCommand cmd;
+     *   GLuint                      reserved;
+     *   BindlessPtrNV               indexBuffer;
+     *   BindlessPtrNV               vertexBuffers[];
+     * } DrawElementsIndirectBindlessCommandNV;
+     */
     
-//    protected static ByteBuffer[] buffers = new ByteBuffer[NUM_PASSES];
-//    protected static IntBuffer[] intbuffers = new IntBuffer[NUM_PASSES];
-//    protected static ByteBuffer[] idxByteBuffers = new ByteBuffer[NUM_PASSES];
     protected static ReallocIntBuffer[] buffers = new ReallocIntBuffer[NUM_PASSES*4];
     protected static ReallocIntBuffer[] idxShortBuffers = new ReallocIntBuffer[NUM_PASSES*4];
+    protected static MultiDrawIndirectBuffer buffer = new MultiDrawIndirectBuffer();
+    
     static {
         for (int i = 0; i < idxShortBuffers.length; i++) {
             idxShortBuffers[i] = new ReallocIntBuffer();
@@ -315,90 +335,90 @@ public class RegionRenderer extends AbstractRenderer {
         }
     }
     
-    ArrayList<MeshedRegion> justrendered = Lists.newArrayList();
-    public void renderMainPost(World world, float fTime, WorldRenderer worldRenderer) {
-        for (MeshedRegion r : this.justrendered) {
-
-            if (r.hasPass(PASS_SOLID)) {
-                r.renderRegion(fTime, PASS_SOLID);
-                this.numV += r.getNumVertices(PASS_SOLID);
-            }
-            if (numV < 2000000) {
-                if (r.hasPass(PASS_LOD)) {
-                    r.renderRegion(fTime, PASS_LOD);
-                    this.numV += r.getNumVertices(PASS_LOD);
-                }
-            }
-        }
-    }
-    public void renderMainPre(World world, float fTime, WorldRenderer worldRenderer) {
-        justrendered.clear();
-        int size = renderList.size();
-        this.occlCulled=0;
-        this.numV = 0;
-        int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
-        Shader cur = worldRenderer.terrainShader;
-        for (int dist = 0; dist < 1; dist++)  {
-            for (int i = 0; i < size; i++) {
-                MeshedRegion r = renderList.get(i);
-                if (!r.hasAnyPass()) {
-                    continue;
-                }
-                if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
-                    continue;
-                }
-//                if ((dist == 0) != (r.distance < LOD_DISTANCE)) continue;
-                if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
-                        && r.distance > MIN_DIST_OCCL 
-                        && r.frustumStates[0] >= MIN_STATE_OCCL) {
-                    if (r.occlusionQueryState == 0 && r.occlusionResult < 1) {
-                        int idx = -1;
-                        int j = 0;
-                        for (; j < this.occlQueriesRunning.length; j++) {
-                            if (this.occlQueriesRunning[j] == null) {
-                                idx = j;
-                                break;
-                            }
-                        }
-                        r.occlusionQueryState = 1;
-                        occlQueriesRunning[idx] = r;
-                        r.queryPos.set(camX, camY, camZ);
-                        occlQueryShader.enable();
-                        GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
-                        GL11.glColorMask(false, false, false, false);
-                        Engine.enableDepthMask(false);
-                        r.renderRegion(fTime, PASS_SHADOW_SOLID);
-                        r.renderRegion(fTime, PASS_LOD);
-                        cur.enable();
-                        GL11.glColorMask(true, true, true, true);
-                        Engine.enableDepthMask(true);
-                        GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
-                        queriesRunning++;
-                    }
-                }
-                this.rendered++;  
-                if (ENABLE_OCCL && r.distance > MIN_DIST_OCCL && r.occlusionResult == 1) {
-                    this.occlCulled++;
-                    continue;
-                }
-                if (r.hasPass(PASS_SOLID) || r.hasPass(PASS_LOD)) {
-                    justrendered.add(r);
-                }
-                r.renderRegion(fTime, PASS_SOLID);
-                if (numV < 2000000) {
-                    if (r.hasPass(PASS_LOD)) {
-                        r.renderRegion(fTime, PASS_LOD);
-                        this.numV += r.getNumVertices(PASS_LOD);
-                    }
-                }
-            }
-//            if (dist == 0) {
-//                cur = worldRenderer.terrainShaderFar;
-//                cur.enable();
-//                GL11.glDisable(GL11.GL_BLEND);
+//    ArrayList<MeshedRegion> justrendered = Lists.newArrayList();
+//    public void renderMainPost(World world, float fTime, WorldRenderer worldRenderer) {
+//        for (MeshedRegion r : this.justrendered) {
+//
+//            if (r.hasPass(PASS_SOLID)) {
+//                r.renderRegion(fTime, PASS_SOLID);
+//                this.numV += r.getNumVertices(PASS_SOLID);
 //            }
-        }
-    }
+//            if (numV < 2000000) {
+//                if (r.hasPass(PASS_LOD)) {
+//                    r.renderRegion(fTime, PASS_LOD);
+//                    this.numV += r.getNumVertices(PASS_LOD);
+//                }
+//            }
+//        }
+//    }
+//    public void renderMainPre(World world, float fTime, WorldRenderer worldRenderer) {
+//        justrendered.clear();
+//        int size = renderList.size();
+//        this.occlCulled=0;
+//        this.numV = 0;
+//        int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
+//        Shader cur = worldRenderer.terrainShader;
+//        for (int dist = 0; dist < 1; dist++)  {
+//            for (int i = 0; i < size; i++) {
+//                MeshedRegion r = renderList.get(i);
+//                if (!r.hasAnyPass()) {
+//                    continue;
+//                }
+//                if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
+//                    continue;
+//                }
+////                if ((dist == 0) != (r.distance < LOD_DISTANCE)) continue;
+//                if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
+//                        && r.distance > MIN_DIST_OCCL 
+//                        && r.frustumStates[0] >= MIN_STATE_OCCL) {
+//                    if (r.occlusionQueryState == 0 && r.occlusionResult < 1) {
+//                        int idx = -1;
+//                        int j = 0;
+//                        for (; j < this.occlQueriesRunning.length; j++) {
+//                            if (this.occlQueriesRunning[j] == null) {
+//                                idx = j;
+//                                break;
+//                            }
+//                        }
+//                        r.occlusionQueryState = 1;
+//                        occlQueriesRunning[idx] = r;
+//                        r.queryPos.set(camX, camY, camZ);
+//                        occlQueryShader.enable();
+//                        GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
+//                        GL11.glColorMask(false, false, false, false);
+//                        Engine.enableDepthMask(false);
+//                        r.renderRegion(fTime, PASS_SHADOW_SOLID);
+//                        r.renderRegion(fTime, PASS_LOD);
+//                        cur.enable();
+//                        GL11.glColorMask(true, true, true, true);
+//                        Engine.enableDepthMask(true);
+//                        GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
+//                        queriesRunning++;
+//                    }
+//                }
+//                this.rendered++;  
+//                if (ENABLE_OCCL && r.distance > MIN_DIST_OCCL && r.occlusionResult == 1) {
+//                    this.occlCulled++;
+//                    continue;
+//                }
+//                if (r.hasPass(PASS_SOLID) || r.hasPass(PASS_LOD)) {
+//                    justrendered.add(r);
+//                }
+//                r.renderRegion(fTime, PASS_SOLID);
+//                if (numV < 2000000) {
+//                    if (r.hasPass(PASS_LOD)) {
+//                        r.renderRegion(fTime, PASS_LOD);
+//                        this.numV += r.getNumVertices(PASS_LOD);
+//                    }
+//                }
+//            }
+////            if (dist == 0) {
+////                cur = worldRenderer.terrainShaderFar;
+////                cur.enable();
+////                GL11.glDisable(GL11.GL_BLEND);
+////            }
+//        }
+//    }
 
     public void renderMain(World world, float fTime, WorldRenderer worldRenderer) {
         int size = renderList.size();
@@ -407,7 +427,12 @@ public class RegionRenderer extends AbstractRenderer {
         int totalv=0;
         int LOD_DISTANCE = 14; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
-        Engine.bindVAO(GLVAO.vaoBlocks);
+        
+        boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
+        Engine.bindVAO(GLVAO.vaoBlocksBindless);
+        if (bindless) {
+            buffer.reset(GLVAO.vaoBlocksBindless);
+        }
         for (int dist = 0; dist < 2; dist++)  {
             for (int i = 0; i < size; i++) {
                 MeshedRegion r = renderList.get(i);
@@ -430,6 +455,10 @@ public class RegionRenderer extends AbstractRenderer {
                                 break;
                             }
                         }
+                        if (bindless && buffer.getDrawCount() > 0) {
+                            buffer.render();
+                            buffer.reset(GLVAO.vaoBlocksBindless);
+                        }
                         r.occlusionQueryState = 1;
                         occlQueriesRunning[idx] = r;
                         r.queryPos.set(camX, camY, camZ);
@@ -441,7 +470,7 @@ public class RegionRenderer extends AbstractRenderer {
                         r.renderRegion(fTime, PASS_SHADOW_SOLID);
 //                        r.renderRegion(fTime, PASS_TRANSPARENT);
                         r.renderRegion(fTime, PASS_LOD);
-                        Engine.bindVAO(GLVAO.vaoBlocks);
+                        Engine.bindVAO(GLVAO.vaoBlocksBindless);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
                         Engine.enableDepthMask(true);
@@ -457,12 +486,20 @@ public class RegionRenderer extends AbstractRenderer {
                 if (dist == 0)
                 if (r.hasPass(PASS_SOLID)) {
                     //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
-                    r.renderRegion(fTime, PASS_SOLID);
+                    if (bindless) {
+                        r.renderRegionIndirect(buffer, PASS_SOLID);
+                    } else {
+                        r.renderRegion(fTime, PASS_SOLID);
+                    }
                     this.numV += r.getNumVertices(PASS_SOLID);
                 }
                 if (dist == 1) {
                     if (r.hasPass(PASS_LOD)) {
-                        r.renderRegion(fTime, PASS_LOD);
+                        if (bindless) {
+                            r.renderRegionIndirect(buffer, PASS_LOD);
+                        } else {
+                            r.renderRegion(fTime, PASS_LOD);
+                        }
                         this.numV += r.getNumVertices(PASS_LOD);
                     }
                     if (numV > 1000000) {
@@ -481,6 +518,11 @@ public class RegionRenderer extends AbstractRenderer {
 //                GL11.glDisable(GL11.GL_BLEND);
 //            }
         }
+        if (bindless && buffer.getDrawCount() > 0) {
+            buffer.render();
+        }
+        
+        
         numV=totalv;
     }
 
@@ -493,10 +535,14 @@ public class RegionRenderer extends AbstractRenderer {
             }
         }
         int requiredShadowMode = Game.instance.settings.shadowDrawMode;
+        boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
 
         Engine.bindVAO(vao);
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
+        if (bindless) {
+            buffer.reset(vao);
+        }
         for (int i = 0; i < size; i++) {
             MeshedRegion r = list.get(i);
             if (!r.hasPass(pass)) {
@@ -508,7 +554,17 @@ public class RegionRenderer extends AbstractRenderer {
             if (r.getShadowDrawMode() != requiredShadowMode) {
                 continue;
             }
-            r.renderRegion(fTime, pass);
+            if (bindless) {
+                r.renderRegionIndirect(buffer, pass);
+            } else {
+                r.renderRegion(fTime, pass);
+            }
+//            if (vao == GLVAO.vaoBlocksShadow ){
+//                System.out.println("success "+i);
+//            }
+        }
+        if (bindless && buffer.getDrawCount() > 0) {
+            buffer.render();
         }
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderRegions");

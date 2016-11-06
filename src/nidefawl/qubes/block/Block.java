@@ -44,6 +44,8 @@ public class Block {
     public final static Block sand_red = new BlockSand("red_sand").setTextures("ground/sand_red");
     public final static Block snow = new Block("snow").setTextures("ground/snow").setCategory(BlockCategory.GROUND);
     public final static Block ice = new BlockIce("ice").setTextures("ground/ice").setCategory(BlockCategory.GROUND);
+    public final static Block gravel = new BlockGravel("gravel");
+//    public final static Block glass = new BlockGlass("glass").setTextures("glass/glass_0", "glass/glass_1").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
 
     
     public final static BlockGroupLogs logs = new BlockGroupLogs();
@@ -58,9 +60,6 @@ public class Block {
     public final static Block vines = new BlockVine("vine").setTextures("plants/vines");
     public final static Block treemoss = new BlockVine("treemoss").setTextures("plants/treemoss");
     public final static Block quarter = new BlockQuarterBlock("quarter");
-    public final static Block ore_diamond = new Block("ore_diamond").setTextures("rocks/ore_diamond");
-    public final static Block ore_gold = new Block("ore_gold").setTextures("rocks/ore_gold");
-    public final static Block ore_silver = new Block("ore_silver").setTextures("rocks/ore_silver");
     
     public final static BlockGroupOres ores = new BlockGroupOres(stones);
     public final static BlockGroup bricks = new BlockGroupBricks(stones);
@@ -73,6 +72,7 @@ public class Block {
     public final static BlockGroup walls = new BlockGroupWalls(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks, logs, wood);
     public final static BlockGroup fences = new BlockGroupFences(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks, logs, wood);
 
+    public final static BlockGroup parquets = new BlockGroupParquets();
     public final static Block flower_fmn_black = new BlockFlowerFMN("forget_me_not_black").setTextures("flowers/bush_forget_me_not_black.layer0","flowers/bush_forget_me_not_black.layer1","flowers/bush_forget_me_not_black.layer2");
     public final static Block flower_fmn_blue = new BlockFlowerFMN("forget_me_not_blue").setTextures("flowers/bush_forget_me_not_blue.layer0","flowers/bush_forget_me_not_blue.layer1","flowers/bush_forget_me_not_blue.layer2");
     public final static Block flower_compositae_camille = new BlockPlantCrossedSquares("compositae_camille", true).setTextures("flowers/compositae_stem", "flowers/compositae_camille");

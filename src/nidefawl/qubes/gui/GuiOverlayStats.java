@@ -84,6 +84,13 @@ public class GuiOverlayStats extends Gui {
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
             info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
+            if (GL.isBindlessSuppported()) {
+                info.add( "Bindless  supported" );
+                info.add( String.format("Bindless: %b", Engine.userSettingUseBindless) );
+            } else if (Engine.userSettingUseBindless) {
+                info.add( "Bindless not supported" );
+                
+            }
             info.add( String.format("Lights: %d", world.lights.size()) );
             info.add( String.format("UpdateRenderers (R): %s", Game.instance.updateRenderers ? "On" : "Off") );
             info.add( String.format("External resources (F11): %s", AssetManager.getInstance().isExternalResources() ? "On" : "Off") );

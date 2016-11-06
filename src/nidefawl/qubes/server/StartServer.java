@@ -35,8 +35,7 @@ public class StartServer {
 			    throw err;
 			}
 	        GameContext.lateInit();
-	        AssetManager.init();
-            TerrainGen.init();
+	        TerrainGen.init();
             err = GameContext.getInitError();
             if (err != null) {
                 throw err;

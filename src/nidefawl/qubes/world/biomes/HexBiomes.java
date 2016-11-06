@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.biomes;
+package nidefawl.qubes.world.biomes;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;

@@ -62,6 +62,9 @@ public abstract class Packet {
         register(PacketSDebugPath.class, true, false);
         register(PacketCSetProperty.class, false, true);
         register(PacketSEntityProperties.class, true, false);
+        register(PacketSEntityEquip.class, true, false);
+        register(PacketCListRequest.class, false, true);
+        register(PacketSList.class, true, false);
     }
     
     private int id;

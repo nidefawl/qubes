@@ -12,9 +12,9 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.BufferedMatrix;
+import nidefawl.qubes.io.BinaryStreamReader;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
-import nidefawl.qubes.util.BinaryStreamReader;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.*;
 

@@ -7,10 +7,10 @@ import java.util.Random;
 
 import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.*;
 
-import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.world.biomes.HexBiome;
 
 /**
  * @author Michael Hept 2015

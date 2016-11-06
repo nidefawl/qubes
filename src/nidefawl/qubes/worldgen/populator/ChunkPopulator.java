@@ -7,15 +7,18 @@ import java.util.*;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.biomes.HexBiome;
-import nidefawl.qubes.biomes.HexBiomesServer;
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
-import nidefawl.qubes.worldgen.trees.Tree;
+import nidefawl.qubes.world.biomes.HexBiome;
+import nidefawl.qubes.world.biomes.HexBiomesServer;
+import nidefawl.qubes.world.structure.tree.Tree;
+import nidefawl.qubes.worldgen.structure.GenTask;
+import nidefawl.qubes.worldgen.structure.MineGen;
 
 /**
  * @author Michael Hept 2015
@@ -33,17 +36,22 @@ public class ChunkPopulator implements IChunkPopulator {
     
     @Override
     public void populate(Chunk c) {
-//        if (1==1)return;
-        int cX = c.getBlockX()+8;
-        int cZ= c.getBlockZ()+8;
+        //        if (1==1)return;
+        int cX = c.getBlockX() + 8;
+        int cZ = c.getBlockZ() + 8;
         HexBiome hex = this.world.getHex(cX, cZ);
         Biome b = hex.biome;
+        double distCenter = GameMath.dist2d(hex.getCenterX(), hex.getCenterY(), cX, cZ);
+        double distScale = Math.max(0, 1 - (distCenter / (hex.getGrid().radius * 0.8)));
+        if (distScale > 0.4) {
+            this.world.queueGenTask(new GenTask(this.world, c.x, c.z, new MineGen()));
+        }
         if (b == Biome.DESERT || b == Biome.DESERT_RED) {
             return;
         }
-        Random rand = new Random();
+        Random rand = new Random(c.x*2938921874L+c.z+3574985345L);
         int a = 0;
-        Random r = new Random();
+        Random r = new Random(rand.nextLong());
         ArrayList<Block> bl = Lists.newArrayList();
         for (int i = 0; i < IDMappingBlocks.HIGHEST_BLOCK_ID+1; i++) {
             Block b1 = Block.get(i);
@@ -83,8 +91,6 @@ public class ChunkPopulator implements IChunkPopulator {
         list.add(4);
         list.add(4);
         list.add(4);
-        double distCenter = GameMath.dist2d(hex.getCenterX(), hex.getCenterY(), cX, cZ);
-        double distScale = Math.max(0, 1-(distCenter/(hex.getGrid().radius*0.8)));
         int nTrees = (int) (3+distScale*64);
         Block bush = Block.grassbush;
         if (rand.nextInt(44) > 22) {
@@ -169,14 +175,55 @@ public class ChunkPopulator implements IChunkPopulator {
                 }   
             }
         }
+        for (int i = 0; i < 3; i++) {
+            int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
+            int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
+            int h = world.getHeight(x, z);
+            if (world.getType(x, h+1, z) != 0) {
+                continue;
+            }
+            if (world.getType(x, h, z) != 0) {
+                continue;
+            }
+            int w1 = world.getWater(x, h+1, z);
+            int w2 = world.getWater(x, h, z);
+            if (w1==0&&w2>0) {
+                int depth = 0;
+                while (h+depth>0) {
+                    int t = world.getType(x, h+depth, z);
+                    if (t != 0 || world.getWater(x, h+depth, z) == 0) {
+                        break;
+                    }
+                    depth--;
+                }
+                if (depth >-3) {
+                    for (int j = 0; j < 6; j++) {
+                        int x1 = x+rand.nextInt(8)-4;
+                        int z1 = z+rand.nextInt(8)-4;
+                        if (world.getType(x1, h+1, z1) != 0) {
+                            continue;
+                        }
+                        if (world.getType(x1, h, z1) != 0) {
+                            continue;
+                        }
+                        int w3 = world.getWater(x1, h+1, z1);
+                        int w4 = world.getWater(x1, h, z1);
+                        if (w3==0&&w4>0) {
+                            world.setType(x1, h, z1, Block.waterlily.id, Flags.MARK);
+                        }
+                    }
+                }
+                
+            }
+        }
         for (int i = 0; i < 70; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
-            int w = world.getWater(x, h, z);
             if (world.getType(x, h, z) != 0) {
                 continue;
             }
+            int w = world.getWater(x, h, z);
             int min1 = world.getType(x, h-1, z);
             int min2 = world.getType(x, h-2, z);
             if (w>0 && (isSoil(min1)||min1==Block.sand.id)) {

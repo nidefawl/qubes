@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.util;
+package nidefawl.qubes.io;
 
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept

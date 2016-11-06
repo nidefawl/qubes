@@ -794,17 +794,10 @@ public class BlockRenderer {
         }
     }
 
-    protected void incVertCount(Block block, int targetBuffer, int vIdx) {
-        this.vbuffer[targetBuffer].incVertCount(vIdx);
+    protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx, int numIdx, int numVerts) {
+        this.vbuffer[targetBuffer].putTriVertIndex(vertexIdx, numIdx, numVerts);
         if (block.getRenderShadow()>0) {
-            this.vbuffer[PASS_SHADOW_SOLID].incVertCount(vIdx);
-        }
-    }
-
-    protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx) {
-        this.vbuffer[targetBuffer].putTriIndex(vertexIdx);
-        if (block.getRenderShadow()>0) {
-            this.vbuffer[PASS_SHADOW_SOLID].putTriIndex(vertexIdx);
+            this.vbuffer[PASS_SHADOW_SOLID].putTriVertIndex(vertexIdx, numIdx, numVerts);
         }
     }
     protected void putBuffer(Block block, int targetBuffer) {
@@ -956,6 +949,8 @@ public class BlockRenderer {
         }
         return f;
     }
+    final int[] vPos_model = new int[64];
+    final int[] vIdx_model = new int[128];
     private int renderBlockModel(Block block, int ix, int iy, int iz, int texturepass, int targetBuffer) {
         int f = 0;
         try {
@@ -965,75 +960,44 @@ public class BlockRenderer {
                 return renderBlock(block, ix, iy, iz, texturepass, targetBuffer);
             }
             QModelObject obj = model.loader.listObjects.get(0);
-            int vPos[] = new int[obj.listVertex.size()]; //could be much smaller (when vertex are grouped by face(group)
-            int vIdx = 0;
+            int vPos[] = vPos_model;
+            int vIdx[] = vIdx_model;
+            int iPos = 0;
+            int iIdx = 0;
             Arrays.fill(vPos, -1);
             for (int faceDir = 0; faceDir < 6; faceDir++) {
-    //            int faceDir = Dir.DIR_POS_Y;
-//                if (faceDir != Dir.DIR_NEG_X) continue;
                 int axis = (faceDir)/2;
                 int side = (faceDir)%2;
                 final float vScale = 1/8f;
                 BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, false, this.bs, texturepass);
                 if (surface != null) {
-                    //TODO: precalc this, cache, cache, cache!
-                    
                     setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
-//                    f+= renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
-                    
-    
                     QModelGroup group = model.faceGroups[faceDir];
-                    QModelMaterial mat = group.material;
+//                    QModelMaterial mat = group.material;
                     int numTris = group.listTri.size();
-//                    int vertexIdx[] = new int[numTris*3*2]; // could be smaller
-                    final int faceCount = numTris/2;
-                    int[] vertexIdx = new int[3];
                     for (int i = 0; i < numTris; i++) {
                         QModelTriangle tri = group.listTri.get(i);
-                        int vIdxOut = 0;
                         for (int v = 0; v < 3; v++) {
-                            int triVertIdx = tri.vertIdx[v];
-                            if (vPos[triVertIdx] < 0) {
-                                vPos[triVertIdx] = vIdx++;
+                            int triVIdx = tri.vertIdx[v];
+                            if (vPos[triVIdx] < 0) {
+                                vPos[triVIdx] = iPos++;
                                 QModelVertex vertex = obj.listVertex.get(tri.vertIdx[v]);
-                                
                                 attr.v[0].setNormal(tri.normal[v].x, tri.normal[v].y, tri.normal[v].z);
                                 attr.v[0].setUV(tri.texCoord[0][v], tri.texCoord[1][v]);
-                                attr.v[0].setPos(ix + vertex.x*vScale, iy + vertex.y*vScale, iz + vertex.z*vScale);
+                                attr.v[0].setPos(ix + vertex.x * vScale, iy + vertex.y * vScale, iz + vertex.z * vScale);
                                 attr.setFaceDir(-1);
                                 putSingleVert(block, targetBuffer, 0);
                             }
-                            vertexIdx[vIdxOut] = vPos[triVertIdx];
-                            vIdxOut++;
+                            vIdx[iIdx++] = vPos[triVIdx];
                         }
-                        putTriIndex(block, targetBuffer, vertexIdx);
                     }
-//                    putIndex(block, targetBuffer, vertexIdx, vIdxOut, faceCount);
-                    
-                    f+=faceCount;
                 }
-
-            
             }
-            incVertCount(block, targetBuffer, vIdx);
+            putTriIndex(block, targetBuffer, vIdx, iIdx, iPos);
+            f = iPos/4;
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-////        renderYPos(block, ix, iy, iz);
-//        putBuffer(block, targetBuffer);
-//        for (int n = 0; n < 6; n++) {
-//            int axis = n/2;
-//            int side = n%2;
-//            BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, axis, side, true, this.bs, texturepass);
-//            if (surface != null) {
-//                int faceDir = axis<<1|side;
-//                setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
-//                
-//                f += renderFace(block, faceDir, ix, iy, iz, targetBuffer);    
-//            }
-//            
-//        }
         return f;
         
     }
@@ -1153,7 +1117,13 @@ public class BlockRenderer {
         if (w instanceof SingleBlockWorld) {
             out.maskedAO=BlockSurface.maskAO(2, 2, 2, 2);
         } else {
+            out.maskedAO = 0;
+            out.maskedLightBlock = 0;
+            out.maskedLightSky = 0;
             out.calcAO(this.w);
+        }
+        if (ix==-293 &&iy==115 &&iz==266) {
+            System.out.println(axis+"/"+side+"/"+Integer.toHexString(bs.maskedLightSky));
         }
         return out;
     }

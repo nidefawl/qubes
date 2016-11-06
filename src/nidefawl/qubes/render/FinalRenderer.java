@@ -186,22 +186,18 @@ public class FinalRenderer extends AbstractRenderer {
         renderDeferred(world, fTime, pass);
         
     }
-
-    public void renderReflAndBlur(World world, float fTime) {
-        if (ssr > 0) {
-            renderReflection(world, fTime);
-        }
+    public void renderBlur(World world, float fTime) {
         calcLum(world, fTime);
     }
 
+    public int getSsr() {
+        return this.ssr;
+    }
     /**
      * @param world
      * @param fTime
      */
-    private void renderReflection(World world, float fTime) {
-
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SSR");
-        
+    public void raytraceSSR(World world, float fTime) {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("raytrace");
         Engine.setViewport(0, 0, fbSSR.getWidth(), fbSSR.getHeight());
         fbSSR.bind();
@@ -214,7 +210,14 @@ public class FinalRenderer extends AbstractRenderer {
         Engine.drawFullscreenQuad();
         Engine.setDefaultViewport();
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
-        
+    }
+
+    /**
+     * @param world
+     * @param fTime
+     */
+    public void combineSSR(World world, float fTime) {
+      
         
         
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("blur");
@@ -234,7 +237,7 @@ public class FinalRenderer extends AbstractRenderer {
         Shader.disable();
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
 
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+  
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("SSR", "DeferredInput", fbDeferred.getTexture(0), 1);
             GLDebugTextures.readTexture("SSR", "SSROutput", fbSSR.getTexture(0), 1);
@@ -367,9 +370,8 @@ public class FinalRenderer extends AbstractRenderer {
                 @Override
                 public String getDefinition(String define) {
                     if ("SSR".equals(define)) {
-                        System.err.println("DEFINE");
                         int ssr = Game.instance.settings.ssr;
-                        return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
+                        return "#define SSR_"+(ssr<1?1:ssr>2?2:ssr);
                     }
                     return null;
                 }
@@ -650,7 +652,7 @@ public class FinalRenderer extends AbstractRenderer {
         fbSSAO.setup(this);
         fbSSAO.bind();
         fbSSAO.clearFrameBuffer();
-        int[] ssrSize = GameMath.downsample(displayWidth, displayHeight, 2);
+        int[] ssrSize = GameMath.downsample(displayWidth, displayHeight, this.ssr>2?1:2);
         fbSSR = new FrameBuffer(ssrSize[0], ssrSize[1]);
         fbSSR.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
         fbSSR.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);

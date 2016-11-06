@@ -27,6 +27,7 @@ public class GLTriBuffer {
 
 
     public int upload(VertexBuffer buf) {
+        Engine.checkGLError("upload");
         ReallocIntBuffer buffer1 = Engine.getIntBuffer();
         ReallocIntBuffer buffer2 = Engine.getIntBuffer();
         int numInts = buf.storeVertexData(buffer1);
@@ -57,8 +58,8 @@ public class GLTriBuffer {
             throw new GameError("this.triCount <= 0");
         }
         Stats.modelDrawCalls++;
-        Engine.bindBuffer(this.vbo.getVboId());
-        Engine.bindIndexBuffer(this.vboIndices.getVboId());
+        Engine.bindBuffer(this.vbo);
+        Engine.bindIndexBuffer(this.vboIndices);
         GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount, GL11.GL_UNSIGNED_INT, 0);
     }
 

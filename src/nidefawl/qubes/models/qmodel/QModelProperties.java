@@ -1,39 +1,33 @@
 package nidefawl.qubes.models.qmodel;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.Arrays;
 
 import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.gl.BufferedMatrix;
-import nidefawl.qubes.models.EntityModel;
+import nidefawl.qubes.entity.EntityProperties;
 import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
 import nidefawl.qubes.vec.Vector3f;
 
 public class QModelProperties {
-    public HashMap<Integer, Integer> options = Maps.newHashMap();
+    final static int MAX_PROPERTIES = EntityProperties.MAX_PROPERTIES;
+    final static int MAX_ACTIONS = 2;
+    int[] properties = new int[MAX_PROPERTIES];
+    private final QModelAction[] actions = new QModelAction[MAX_ACTIONS];
+    private final float[] actionOffsets = new float[MAX_ACTIONS];
+    private final float[] actionSpeed = new float[MAX_ACTIONS];
     public Vector3f pos = new Vector3f();
     public Vector3f rot = new Vector3f();
     public Entity entity;
-    private ArrayList<QModelAction> actions = Lists.newArrayList();
-    private ArrayList<Float> actionOffsets = Lists.newArrayList();
+    ModelQModel modelAtt = null;
     public QModelProperties() {
     }
     public int getOption(int id) {
-        Integer i = this.options.get(id);
-        return i == null ? 0 : i.intValue();
-    }
-    public int getOption(int id, int defaultOption) {
-        Integer i = this.options.get(id);
-        return i == null ? defaultOption : i.intValue();
+        return this.properties[id];
     }
 
 
     public void clear() {
-       this.options.clear();
+        Arrays.fill(this.properties, 0);
     }
 
     public void setRot(Vector3f rot) {
@@ -46,26 +40,23 @@ public class QModelProperties {
     public void setEntity(Entity e) {
         this.entity = e;
     }
-    public ArrayList<QModelAction> getActions() {
-        return this.actions;
-    }
+
     public void setActionOffset(int idx, float f) {
-            
-        this.actionOffsets.set(idx, f);
+        this.actionOffsets[idx] = f;
+    }
+    public void setActionSpeed(int idx, float f) {
+        this.actionSpeed[idx] = f;
     }
     public void setAction(int idx, QModelAction act) {
-        while (this.actions.size() <= idx)
-            this.actions.add(null);
-        while (this.actionOffsets.size() <= idx)
-            this.actionOffsets.add(Float.valueOf(0));
-        this.actions.set(idx, act);
-        this.actionOffsets.set(idx, 0.0F);
+        this.actions[idx] = act;
+        this.actionOffsets[idx] = 0;
+        this.actionSpeed[idx] = 1;
     }
     public int getChannelIdx(String name) {
         int idx=-1;
         QAnimationChannel anim=null;
-        for (int i = 0; i < actions.size(); i++) {
-            QModelAction action = actions.get(i);
+        for (int i = 0; i < MAX_ACTIONS; i++) {
+            QModelAction action = actions[i];
             if (action == null) {
                 continue;
             }
@@ -78,13 +69,27 @@ public class QModelProperties {
         return idx;
     }
     public QAnimationChannel getActionChannel(int idx, String name) {
-        return idx < 0  || idx >= this.actions.size() ? null : this.actions.get(idx).map.get(name);
+        return idx < 0  || idx >= MAX_ACTIONS ? null : this.actions[idx].map.get(name);
     }
     public QModelAction getAction(int idx) {
-        return idx < 0  || idx >= this.actions.size() ? null : this.actions.get(idx);
+        return idx < 0  || idx >= MAX_ACTIONS ? null : this.actions[idx];
     }
-    public Float getActionOffset(int idx) {
-        Float f = idx < 0 || idx >= this.actionOffsets.size() ? null : this.actionOffsets.get(idx);;
-        return f == null ? 0 : f.floatValue();
+    public float getActionOffset(int idx) {
+        return idx < 0  || idx >= MAX_ACTIONS ? 0.0f : this.actionOffsets[idx];
+    }
+    public float getActionSpeed(int idx) {
+        return idx < 0  || idx >= MAX_ACTIONS ? 0.0f : this.actionSpeed[idx];
+    }
+    public void setModelAtt(ModelQModel modelAtt) {
+        this.modelAtt = modelAtt;
+    }
+    public ModelQModel getModelAtt() {
+        return this.modelAtt;
+    }
+    public void setOption(int id, int value) {
+        this.properties[id] = value;
+    }
+    public void setProperties(int[] properties) {
+        System.arraycopy(properties, 0, this.properties, 0, properties.length);
     }
 }

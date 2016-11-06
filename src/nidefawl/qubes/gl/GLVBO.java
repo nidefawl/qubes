@@ -1,8 +1,11 @@
 package nidefawl.qubes.gl;
 
+import static org.lwjgl.opengl.NVShaderBufferLoad.GL_BUFFER_GPU_ADDRESS_NV;
+
 import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.NVShaderBufferLoad;
 
 import nidefawl.qubes.GameBase;
 
@@ -13,6 +16,10 @@ public class GLVBO {
     public int vboId = 0;
     public long vboSize = 0;
     private final int usage;
+    public long        addr;
+    public long        size;
+    public boolean canUseBindless;
+    
     public GLVBO(int usage) {
         this.usage = usage;
     }
@@ -41,6 +48,10 @@ public class GLVBO {
         this.vboSize = len;
     }
     public void upload(int type, ByteBuffer buffer, long len) {
+        upload(type, buffer, len, true);
+    }
+    public void upload(int type, ByteBuffer buffer, long len, boolean bindless) {
+        boolean newBuffer = false;
         GL15.glBindBuffer(type, getVboId());
         if (this.usage == GL15.GL_DYNAMIC_DRAW) {
             if (this.vboSize  < MIN_BUF_SIZE && len < MIN_BUF_SIZE) {
@@ -52,6 +63,7 @@ public class GLVBO {
                 this.vboSize = len;
                 GL15.glBufferData(type, len, this.usage);
                 GL15.glBufferData(type, len, buffer, this.usage);
+                newBuffer = true;
             } else {
                 GL15.glBufferSubData(type, 0, len, buffer);
             }
@@ -59,12 +71,27 @@ public class GLVBO {
             this.vboSize = len;
             GL15.glBufferData(type, len, this.usage);
             GL15.glBufferData(type, len, buffer, this.usage);
+            newBuffer = true;
         }
         if (GameBase.GL_ERROR_CHECKS)
             Engine.checkGLError("vbo update");
+        this.canUseBindless = false;
+
+        if (bindless && GL.isBindlessSuppported()) {
+            if (newBuffer) {
+                NVShaderBufferLoad.glMakeBufferResidentNV(type, GL15.GL_READ_ONLY);
+            }
+            this.addr = NVShaderBufferLoad.glGetBufferParameterui64NV(type, GL_BUFFER_GPU_ADDRESS_NV);
+            this.size = GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
+            this.canUseBindless = true;
+        }
+        
     }
     public void release() {
         if (this.vboId != 0) {
+            this.size = 0L;
+            this.addr = 0L;
+            this.canUseBindless = false;
             GL15.glDeleteBuffers(this.vboId);
             this.vboId = 0;
             ALLOC_VBOS--;
@@ -72,5 +99,10 @@ public class GLVBO {
                 ALLOC_VBOS_TERRAIN--;
             }
         }
+    }
+    public void makeBindless(int type) {
+        this.addr = NVShaderBufferLoad.glGetBufferParameterui64NV(type, GL_BUFFER_GPU_ADDRESS_NV);
+        this.size = GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
+        this.canUseBindless = true;
     }
 }

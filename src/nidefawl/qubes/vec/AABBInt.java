@@ -143,5 +143,11 @@ public class AABBInt {
         return contains(bPos.x, bPos.y, bPos.z);
     }
 
+    public boolean equalBB(AABBInt bb) {
+        return bb.minX==this.minX && bb.minX==this.minX
+            && bb.minY==this.minY && bb.maxY==this.maxY
+            && bb.minZ==this.minZ && bb.maxZ==this.maxZ;
+    }
+
 }
 

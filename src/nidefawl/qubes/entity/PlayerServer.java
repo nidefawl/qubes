@@ -9,7 +9,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
@@ -35,7 +34,9 @@ import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.WorldServer;
-import nidefawl.qubes.worldgen.trees.Tree;
+import nidefawl.qubes.world.biomes.HexBiome;
+import nidefawl.qubes.world.structure.mine.Mine;
+import nidefawl.qubes.world.structure.tree.Tree;
 
 /**
  * @author Michael Hept 2015
@@ -65,6 +66,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
      */
     public PlayerServer() {
         super();
+        this.equipment = new BaseStack[1];
         this.slotsInventory = new SlotsInventory(this);
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
             this.slotsCrafting[i] = new SlotsCrafting(this, i+1);
@@ -102,6 +104,7 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 }
             }
         }
+        this.equipment[0] = this.inventory.getItem(0);
 //        if (lastLight++>444) {
 //            lastLight = 0;
 //            Iterator<Long> it  = this.chunks.iterator();
@@ -133,10 +136,11 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
         if (this.ticks1++%20==0) {
             HexBiome biome = this.world.getHex(GameMath.floor(this.pos.x), GameMath.floor(this.pos.z));
             if (biome != null) {
-                HexBiome[] neighbours = biome.getClosest3(this.pos.x, this.pos.z);
                 ArrayList<AABB> trees = new ArrayList<>();
+                HexBiome[] neighbours = biome.getClosest3(this.pos.x, this.pos.z);
                 for (int i = 0; i < neighbours.length; i++) {
-                    Collection<Tree> list = neighbours[i].getNearbyTrees(GameMath.floor(this.pos.x), GameMath.floor(this.pos.y), GameMath.floor(this.pos.z), 16);
+                    Collection<Tree> list = neighbours[i].getTrees().getRegions(GameMath.floor(this.pos.x), GameMath.floor(this.pos.z), 16);
+                    Collection<Mine> list2 = neighbours[i].getMines().getRegions(GameMath.floor(this.pos.x), GameMath.floor(this.pos.z), 16);
                     if (list != null) {
                         for (Tree tree : list) {
                             AABB bb1 = new AABB(tree.bb);
@@ -145,6 +149,13 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                             bb2.expandTo(1, 1, 1);
                             trees.add(bb1);
                             trees.add(bb2);
+                        }
+                    }
+                    if (list2 != null) {
+                        for (Mine tree : list2) {
+                            AABB bb1 = new AABB(tree.bb);
+                            bb1.expandTo(1, 1, 1);  
+                            trees.add(bb1);
                         }
                     }
                 }

@@ -280,6 +280,11 @@ public class InputController {
                 game.setVSync(!game.getVSync());
             }
         });
+        addKeyBinding(new Keybinding("toggle_bindless", GLFW.GLFW_KEY_F7) {
+            public void onDown() {
+                Engine.userSettingUseBindless=!Engine.userSettingUseBindless;
+            }
+        });
         addKeyBinding(new Keybinding("wireframe", GLFW.GLFW_KEY_F9) {
             public void onDown() {
                 Engine.toggleWireFrame();
@@ -311,10 +316,16 @@ public class InputController {
                 Game.showGrid = !Game.showGrid;
             }
         });
+//        addKeyBinding(new Keybinding("show_windows", GLFW.GLFW_KEY_TAB) {
+//            public void onDown() {
+//                Game.instance.setGrabbed(!Game.instance.isGrabbed());
+//            }
+//        });
         addKeyBinding(new Keybinding("flush_renderers", GLFW.GLFW_KEY_F1) {
             public void onDown() {
-                Mesher.avgUsage=0;
+//                Mesher.avgUsage=0;
                 Engine.regionRenderer.reRender();
+//                EntityModelManager.getInstance().reload();
                 
             }
         });

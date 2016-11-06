@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.util;
+package nidefawl.qubes.io;
 
 import java.io.IOException;
 import java.io.OutputStream;

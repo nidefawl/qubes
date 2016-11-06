@@ -53,11 +53,7 @@ public class SingleBlockRenderer extends BlockRenderer {
     protected void putSingleVert(Block block, int targetBuffer, int attrIdx) {
         attr.putSingleVert(attrIdx, this.singleBlockBuffer);
     }
-    protected void incVertCount(Block block, int targetBuffer, int vIdx) {
-        singleBlockBuffer.incVertCount(vIdx);
-    }
-
-    protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx) {
-        singleBlockBuffer.putTriIndex(vertexIdx);
+    protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx, int numIdx, int numVerts) {
+        singleBlockBuffer.putTriVertIndex(vertexIdx, numIdx, numVerts);
     }
 }

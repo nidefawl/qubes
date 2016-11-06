@@ -1,5 +1,6 @@
 package nidefawl.qubes.util;
 
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
@@ -55,6 +56,7 @@ public class GameContext {
     public static void earlyInit() {
         try {
             AsyncTasks.init();
+            AssetManager.init();
             IDMappingBlocks.load();
             IDMappingItems.load();
             EntityType.load();

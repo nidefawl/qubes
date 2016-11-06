@@ -14,6 +14,7 @@ import org.yaml.snakeyaml.representer.Representer;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableBiMap;
 
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.util.GameContext;
@@ -32,25 +33,29 @@ public class IDMappingBlocks {
         InputStream is = null;
         try {
             synchronized (sync) {
-                File inFile = new File(WorkingEnv.getConfigFolder(), "blockmapping.yml");
-                if (inFile.exists()) {
-                    is = new FileInputStream(inFile);
-                    is = new BufferedInputStream(is);
-                    Yaml yaml = new Yaml();
-                    Object o = yaml.load(new InputStreamReader(is, Charsets.UTF_8));
-                    if (!(o instanceof Map)) {
-                        throw new InvalidConfigException("config file has invalid format");
+                if (GameContext.getSide() == Side.SERVER) {
+                    File inFile = new File(WorkingEnv.getConfigFolder(), "blockmapping.yml");
+                    if (inFile.exists()) {
+                        is = new FileInputStream(inFile);
                     }
-                    map = ImmutableBiMap.<String, Integer>builder().putAll((Map)o).build();
-                    for (int i = 0; i < Block.NUM_BLOCKS; i++) {
-                        if (map.inverse().get(i) != null) {
-                            if (i > HIGHEST_BLOCK_ID) {
-                                HIGHEST_BLOCK_ID = i;
-                            }
+                } else {
+                    is = AssetManager.getInstance().getInputStream("config/blockmapping.yml");
+                }
+                is = new BufferedInputStream(is);
+                Yaml yaml = new Yaml();
+                Object o = yaml.load(new InputStreamReader(is, Charsets.UTF_8));
+                if (!(o instanceof Map)) {
+                    throw new InvalidConfigException("config file has invalid format");
+                }
+                map = ImmutableBiMap.<String, Integer>builder().putAll((Map)o).build();
+                for (int i = 0; i < Block.NUM_BLOCKS; i++) {
+                    if (map.inverse().get(i) != null) {
+                        if (i > HIGHEST_BLOCK_ID) {
+                            HIGHEST_BLOCK_ID = i;
                         }
                     }
-                    System.out.println("HIGHEST "+HIGHEST_BLOCK_ID);
                 }
+                System.out.println("HIGHEST "+HIGHEST_BLOCK_ID);
             }
         } catch (Exception e) {
             throw new GameError("Failed loading block id mapping", e);

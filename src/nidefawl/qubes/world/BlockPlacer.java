@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.world;
 
-import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockQuarterBlock;
 import nidefawl.qubes.chunk.blockdata.BlockData;
@@ -17,7 +16,8 @@ import nidefawl.qubes.util.Side;
 import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.worldgen.trees.Tree;
+import nidefawl.qubes.world.biomes.HexBiome;
+import nidefawl.qubes.world.structure.tree.Tree;
 
 /**
  * @author Michael Hept 2015 

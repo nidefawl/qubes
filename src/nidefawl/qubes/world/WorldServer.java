@@ -8,7 +8,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import nidefawl.qubes.GameRegistry;
-import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.blocklight.BlockLightThread;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -21,7 +20,10 @@ import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.biomes.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
+import nidefawl.qubes.worldgen.structure.GenTask;
+import nidefawl.qubes.worldgen.structure.MineGen;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 
 @SideOnly(value = Side.SERVER)
@@ -34,6 +36,8 @@ public class WorldServer extends World {
     private final ITerrainGen              generator;
     private final IChunkPopulator populator;
 
+    public Set<GenTask> generatorQueue = Sets.newConcurrentHashSet();
+    
 //    private Queue<Long> lightUpdateQueue = Queues.newConcurrentLinkedQueue();
     private Set<Long> lightUpdateQueue = Sets.newConcurrentHashSet();
     private final BlockLightThread lightUpdater;
@@ -91,6 +95,7 @@ public class WorldServer extends World {
             this.removeEntity(e);
         }
         updateChunks();
+        genStructures();
     }
     
     public void resyncTime() {
@@ -255,6 +260,9 @@ public class WorldServer extends World {
     public void flagBlock(int x, int y, int z) {
         this.chunkTracker.flagBlock(x, y, z);
     }
+    public void flagChunk(int x, int z) {
+        this.chunkTracker.flagChunk(x, z);
+    }
 
     public PlayerChunkTracker getPlayerChunkTracker() {
         return this.chunkTracker;
@@ -327,7 +335,8 @@ public class WorldServer extends World {
             PlayerServer PlayerServer = this.players.get(i);
             tr.addPlayer(PlayerServer);
         }
-//        this.biomeManager.deleteAll();
+        this.generatorQueue.clear();
+        this.biomeManager.deleteAll();
         return n;
     }
     public int regenChunks(Collection<Long> chunks) {
@@ -366,5 +375,31 @@ public class WorldServer extends World {
      */
     public IBiomeManager getBiomeManager() {
         return this.biomeManager;
+    }
+    public void queueGenTask(GenTask mineGen) {
+        generatorQueue.add(mineGen);
+    }
+    public void genStructures() {
+        if (this.generatorQueue.isEmpty()) return;
+        Iterator<GenTask> it = this.generatorQueue.iterator();
+        GenTask task;
+        int limit = 3;
+        while (it.hasNext()) {
+            task = it.next();
+            try {
+                if (task.run()) {
+                    it.remove();
+                    if (limit--<0) {
+                        return;
+                    }
+                }
+            } catch(Exception e) {
+                if (task != null) {
+                    System.err.println("exception while running task "+task);
+                    it.remove();
+                }
+                e.printStackTrace();
+            }
+        }
     }
 }

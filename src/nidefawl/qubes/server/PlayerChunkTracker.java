@@ -308,6 +308,21 @@ public class PlayerChunkTracker {
         }
     }
 
+    /**
+     * Flag block.
+     *
+     * @param x the x
+     * @param y the y
+     * @param z the z
+     */
+    public void flagChunk(int x, int z) {
+        Entry e = getEntry(x, z, false);
+        if (e != null) {
+            e.wholeChunkUpdate = true;
+            this.flaggedInstances.add(e);
+        }
+    }
+
     /** The blocks to send. */
     final List<Short>  blocksToSend = Lists.newArrayList();
     

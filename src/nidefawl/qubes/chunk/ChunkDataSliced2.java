@@ -6,10 +6,10 @@ package nidefawl.qubes.chunk;
 import java.io.IOException;
 import java.util.List;
 
+import nidefawl.qubes.io.ByteArrIO;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.ByteArray;
 import nidefawl.qubes.nbt.Tag.TagList;
-import nidefawl.qubes.util.ByteArrIO;
 import nidefawl.qubes.world.World;
 
 /**

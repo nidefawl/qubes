@@ -14,6 +14,7 @@ import org.yaml.snakeyaml.representer.Representer;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableBiMap;
 
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.util.GameContext;
@@ -32,25 +33,29 @@ public class IDMappingItems {
         InputStream is = null;
         try {
             synchronized (sync) {
-                File inFile = new File(WorkingEnv.getConfigFolder(), "itemmapping.yml");
-                if (inFile.exists()) {
-                    is = new FileInputStream(inFile);
-                    is = new BufferedInputStream(is);
-                    Yaml yaml = new Yaml();
-                    Object o = yaml.load(new InputStreamReader(is, Charsets.UTF_8));
-                    if (!(o instanceof Map)) {
-                        throw new InvalidConfigException("config file has invalid format");
+                if (GameContext.getSide() == Side.SERVER) {
+                    File inFile = new File(WorkingEnv.getConfigFolder(), "itemmapping.yml");
+                    if (inFile.exists()) {
+                        is = new FileInputStream(inFile);
                     }
-                    map = ImmutableBiMap.<String, Integer>builder().putAll((Map)o).build();
-                    for (int i = 0; i < Item.NUM_ITEMS; i++) {
-                        if (map.inverse().get(i) != null) {
-                            if (i > HIGHEST_ITEM_ID) {
-                                HIGHEST_ITEM_ID = i;
-                            }
+                } else {
+                    is = AssetManager.getInstance().getInputStream("config/itemmapping.yml");
+                }
+                is = new BufferedInputStream(is);
+                Yaml yaml = new Yaml();
+                Object o = yaml.load(new InputStreamReader(is, Charsets.UTF_8));
+                if (!(o instanceof Map)) {
+                    throw new InvalidConfigException("config file has invalid format");
+                }
+                map = ImmutableBiMap.<String, Integer>builder().putAll((Map)o).build();
+                for (int i = 0; i < Item.NUM_ITEMS; i++) {
+                    if (map.inverse().get(i) != null) {
+                        if (i > HIGHEST_ITEM_ID) {
+                            HIGHEST_ITEM_ID = i;
                         }
                     }
-                    System.out.println("HIGHEST "+HIGHEST_ITEM_ID);
                 }
+                System.out.println("HIGHEST "+HIGHEST_ITEM_ID);
             }
         } catch (Exception e) {
             throw new GameError("Failed loading item id mapping", e);
@@ -123,7 +128,7 @@ public class IDMappingItems {
                 }
                 System.out.println("Finding id for new item "+sid);
                 Integer newId = null;
-                for (int i = 0; i < Item.NUM_ITEMS; i++) {
+                for (int i = 1; i < Item.NUM_ITEMS; i++) {
                     if (map.inverse().get(i) == null) {
                         newId = i;
                         break;

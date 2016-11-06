@@ -46,13 +46,6 @@ public abstract class Player extends Entity {
         }
     }
 
-    /**
-     * 
-     */
-    public BaseStack getEquippedItem() {
-        return inventory.getItem(0);
-    }
-
 
     public final PlayerInventory getInventory() {
         return inventory;
@@ -93,7 +86,7 @@ public abstract class Player extends Entity {
     public EntityModel getEntityModel() {
         EntityProperties properties = this.properties;
         if (properties != null) {
-            int n = properties.getOption(100, 0);
+            int n = properties.getOption(15, 0);
             if (n != 0) {
                 return EntityModel.modelPlayerFemale;
             }

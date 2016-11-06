@@ -16,7 +16,6 @@ public class VertexBuffer {
     int left = 0;
     int left2 = 0;
     public int vertexCount;
-    public int faceCount;
     /**
      * @param i
      */
@@ -40,7 +39,6 @@ public class VertexBuffer {
         pos = 0;
         triIdxPos = 0;
         vertexCount = 0;
-        faceCount = 0;
         left = this.buffer.length - this.pos;
         left2 = this.triIdxBuffer.length - this.triIdxPos;
     }
@@ -100,22 +98,10 @@ public class VertexBuffer {
         this.vertexCount++;
     }
     /**
-     * 
-     */
-    public void increaseFace() {
-        this.faceCount++;
-    }
-    /**
      * @return
      */
     public int getVertexCount() {
         return this.vertexCount;
-    }
-    /**
-     * @return
-     */
-    public int getFaceCount() {
-        return this.faceCount;
     }
     /**
      * @return
@@ -167,24 +153,27 @@ public class VertexBuffer {
         }
         System.arraycopy(vertexIdx, 0, this.triIdxBuffer, this.triIdxPos, vIdxOut);
         this.triIdxPos += vIdxOut;
-        this.faceCount += faces;
     }
 
     public void incVertCount(int vIdx) {
         this.vertexCount+=vIdx;
     }
 
-    public void putTriIndex(int[] vertexIdx) {
-        for (int i = 0; i < vertexIdx.length; i++) {
+
+    public void putTriVertIndex(int[] vertexIdx, int numIdx, int numVerts) {
+        for (int i = 0; i < numIdx; i++) {
             int index = vertexIdx[i] + this.vertexCount;
             putIdx(index);
-//            System.out.println(index);
         }
-        increaseFace();
+        this.vertexCount+=numVerts;
     }
 
     public void makeTriIdx() {
-        for (int i = 0; i < this.faceCount; i++) {
+        if (this.vertexCount%4 != 0) {
+            throw new IllegalStateException("Cannot make tri idx: vertexcount%4 != 0");
+        }
+        int quads = this.vertexCount/4;
+        for (int i = 0; i < quads; i++) {
             int vIdx = i*4;
             putIdx(vIdx+0);
             putIdx(vIdx+1);

@@ -12,14 +12,14 @@ import nidefawl.qubes.render.AbstractRenderer;
 public abstract class QModelRender extends AbstractRenderer {
 
     public ArrayList<QModelObject> rendered = Lists.newArrayList();
-    public EntityModel model;
+    public ModelQModel model;
     public BufferedMatrix normalMat;
     public BufferedMatrix modelMat;
     public QModelRender() {
         this.normalMat = new BufferedMatrix();
         this.modelMat = new BufferedMatrix();
     }
-    public void setModel(EntityModel model) {
+    public void setModel(ModelQModel model) {
         this.model = model;
     }
 

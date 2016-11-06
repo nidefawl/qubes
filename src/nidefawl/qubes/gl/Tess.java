@@ -190,7 +190,7 @@ public class Tess extends AbstractTesselatorState {
             int len = vIdx * 4;
             bufInt.put(rawBuffer, 0, vIdx);
             GLVBO vbo = out.getVBO();
-            vbo.upload(GL15.GL_ARRAY_BUFFER, bufInt.getByteBuf(), len);
+            vbo.upload(GL15.GL_ARRAY_BUFFER, bufInt.getByteBuf(), len, false);
             if (out == this) {
                 bindAndDraw(mode);
                 this.vboIdx++;

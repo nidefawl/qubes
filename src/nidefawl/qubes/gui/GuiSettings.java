@@ -92,12 +92,13 @@ public class GuiSettings extends Gui {
                 Game.instance.saveSettings();
             }
         }));
-        final String[] reflections = new String[] { "Disabled", "Basic", "Detailed", "Can't play" };
+        final String[] reflections = new String[] { "Disabled", "Basic", "Detailed", "Ultra" };
         list.add((this.reflectionSetting = new Setting(this, "Reflections", reflections[Game.instance.settings.ssr & 3], reflections) {
             void callback(int id) {
                 Game.instance.settings.ssr = id;
                 Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
+                Engine.outRenderer.resize(Game.displayWidth, Game.displayHeight);
             }
         }));
         final String[] strAOSettings = new String[] { "Disabled", "Enabled" };

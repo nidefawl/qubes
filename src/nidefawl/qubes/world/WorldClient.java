@@ -6,9 +6,6 @@ import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
-import nidefawl.qubes.biomes.EmptyBiomeManager;
-import nidefawl.qubes.biomes.HexBiomesClient;
-import nidefawl.qubes.biomes.IBiomeManager;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
 import nidefawl.qubes.entity.Entity;
@@ -18,6 +15,9 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.biomes.EmptyBiomeManager;
+import nidefawl.qubes.world.biomes.HexBiomesClient;
+import nidefawl.qubes.world.biomes.IBiomeManager;
 
 public class WorldClient extends World {
     float dayLightIntensity;

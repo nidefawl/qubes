@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE2;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
@@ -38,6 +37,7 @@ import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.util.Color;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Frustum;
@@ -299,7 +299,7 @@ public class WorldRenderer extends AbstractRenderer {
         Engine.enableDepthMask(false);
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texNoise3D);
         skyShader2.enable();
-        Engine.drawFullscreenQuad();
+//        Engine.drawFullscreenQuad();
         
 //        skyShader.enable();
 //        skybox1.bindAndDraw(GL_QUAD_STRIP);
@@ -330,23 +330,23 @@ public class WorldRenderer extends AbstractRenderer {
 //        System.out.println(glGetBoolean(GL_BLEND));
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("pre renderMain");
-        boolean zPre = false; //sucks, not faster
-        if (zPre) {
-            glColorMask(false, false, false, false);
-            glDepthFunc(GL_LESS);
-            shaderZPre.enable();
-            Engine.regionRenderer.renderMainPre(world, fTime, this);
-            glColorMask(true, true, true, true);
-            glDepthFunc(GL_EQUAL);
-            Engine.enableDepthMask(false);
-            terrainShader.enable();
-            Engine.regionRenderer.renderMainPost(world, fTime, this);
-            glDepthFunc(GL_LEQUAL);
-            Engine.enableDepthMask(true);
-        } else {
+//        boolean zPre = false; //sucks, not faster
+//        if (zPre) {
+//            glColorMask(false, false, false, false);
+//            glDepthFunc(GL_LESS);
+//            shaderZPre.enable();
+//            Engine.regionRenderer.renderMainPre(world, fTime, this);
+//            glColorMask(true, true, true, true);
+//            glDepthFunc(GL_EQUAL);
+//            Engine.enableDepthMask(false);
+//            terrainShader.enable();
+//            Engine.regionRenderer.renderMainPost(world, fTime, this);
+//            glDepthFunc(GL_LEQUAL);
+//            Engine.enableDepthMask(true);
+//        } else {
             terrainShader.enable();
             Engine.regionRenderer.renderMain(world, fTime, this);
-        }
+//        }
 //        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
         
@@ -446,23 +446,31 @@ public class WorldRenderer extends AbstractRenderer {
         if (pass == PASS_SOLID) {
             modelRender.reset();
             for (int i = 0; i < size*EXTRA_RENDER; i++) {
-    //            if (mappedBuffer && modelRender.isOverCapacity()) {
-    //                modelRender.end();
-    //                mappedBuffer = false;
-    //                _renderBatch(model, shader, pass, shadowVP, needStateSetup);
-    //                needStateSetup = false;
-    //            }
+
                 Entity e = ents.get(i/EXTRA_RENDER);
                 if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
                     continue;
-    //            if (e.getEntityModel() != model) {
-    //                continue;
-    //            }
+
+
+                BaseStack stack = e.getActiveItem(0);
+                ItemModel itemmodel = null;
+                if (stack != null && stack.isItem()) {
+                    ItemStack itemstack = (ItemStack) stack;
+                    Item item = itemstack.getItem();
+                    itemmodel = item.getItemModel();
+                }
                 if (!mappedBuffer) {
                     mappedBuffer = true;
                     modelRender.begin();
                 }
                 QModelProperties renderProps = this.modelProperties;
+                this.modelProperties.clear();
+                if (itemmodel != null) {
+                    renderProps.setModelAtt(itemmodel.loadedModels[0]);
+                } else {
+
+                    renderProps.setModelAtt(null);
+                }
                 Vector3f pos = e.getRenderPos(fTime);
                 Vector3f rot = e.getRenderRot(fTime);
                 EntityModel model = e.getEntityModel();
@@ -470,7 +478,8 @@ public class WorldRenderer extends AbstractRenderer {
                 renderProps.setRot(rot);
                 renderProps.setEntity(e);
                 e.adjustRenderProps(renderProps, fTime);
-                modelRender.setModel(model);
+                
+                modelRender.setModel(model.model);
                 model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
                 model.setPose(modelRender, renderProps, GameBase.absTime, fTime);
                 if (Game.GL_ERROR_CHECKS)
@@ -515,7 +524,7 @@ public class WorldRenderer extends AbstractRenderer {
         if (p == null) {
             return;
         }
-        BaseStack stack = p.getEquippedItem();
+        BaseStack stack = p.getActiveItem(0);
         if (stack == null) {
             return;
         }
@@ -605,10 +614,10 @@ public class WorldRenderer extends AbstractRenderer {
         Shaders.wireframe.setProgramUniform1f("maxDistance", 110);
         Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0.2f, 0.2f, 1);
         Engine.regionRenderer.renderRegions(world, fTime, 0, 0, Frustum.FRUSTUM_INSIDE);
-        Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);
-        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
-        Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
-        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
+//        Shaders.wireframe.setProgramUniform4f("linecolor", 1, 1, 0.2f, 1);
+//        Engine.regionRenderer.renderRegions(world, fTime, 1, 0, Frustum.FRUSTUM_INSIDE);
+//        Shaders.wireframe.setProgramUniform4f("linecolor",  1, 0.2f, 0.2f, 1);
+//        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         Engine.pxStack.pop();
         Shader.disable();
     }
@@ -628,7 +637,7 @@ public class WorldRenderer extends AbstractRenderer {
             for (Integer i : debugBBs.keySet()) {
                 AABB bb = debugBBs.get(i);
                 int iColor = GameMath.randomI(i*19)%33;
-                iColor = Color.getHSBColor(iColor/33F, 0.8F, 1.0F).getRGB();
+                iColor = Color.HSBtoRGB(iColor/33F, 0.8F, 1.0F);
                 
                 float fMinX = (float) bb.minX;
                 float fMinY = (float) bb.minY;
@@ -676,7 +685,7 @@ public class WorldRenderer extends AbstractRenderer {
             for (Integer i : debugPaths.keySet()) {
                 List<PathPoint> bb = debugPaths.get(i);
                 int iColor = GameMath.randomI(i*19)%33;
-                iColor = Color.getHSBColor(iColor/33F, 0.8F, 1.0F).getRGB();
+                iColor = Color.HSBtoRGB(iColor/33F, 0.8F, 1.0F);
                 Tess.instance.setColor(iColor, 255);
                 for (PathPoint p : bb) {
                     Tess.instance.add(p.x+0.5f, p.y+0.1f, p.z+0.5f);

@@ -3,9 +3,9 @@ package nidefawl.qubes.chunk.server;
 import java.io.IOException;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.io.ByteArrIO;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.TagReader;
-import nidefawl.qubes.util.ByteArrIO;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.nbt.Tag.Compound;
 

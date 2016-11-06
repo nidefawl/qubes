@@ -39,7 +39,7 @@ public class DigController {
                 startDigging();
             }
         }
-        speed = 15;
+        speed = 10;
     }
 
 
@@ -61,7 +61,7 @@ public class DigController {
      * @return
      */
     public boolean isDigAnimation() {
-        return tick != 0;
+        return tick != 0||digging;
     }
 
     /**
@@ -130,7 +130,7 @@ public class DigController {
             int faceHit = intersect.face;
             BlockPos pos = intersect.blockPos;
             transaction++;
-            Game.instance.sendPacket(new PacketCDigState(world.getId(), transaction<<2|state, pos, intersect.pos, faceHit, Game.instance.getPlayer().getEquippedItem()));
+            Game.instance.sendPacket(new PacketCDigState(world.getId(), transaction<<2|state, pos, intersect.pos, faceHit, Game.instance.getPlayer().getActiveItem(0)));
         }
     }
 
@@ -236,7 +236,7 @@ public class DigController {
 
 
     public float getSwingProgress(float fTime) {
-        if (!isDigAnimation()) {
+        if (this.tick==0) {
             return 0f;
         }
         float pr = ((Math.max(0,tick-1))+fTime)/(float)(speed);

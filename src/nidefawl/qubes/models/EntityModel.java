@@ -34,11 +34,13 @@ public abstract class EntityModel {
   public final static EntityModel modelPlayerFemale = new EntityModelPlayer("player_female", false).setModelPath("female.qmodel");
 //
 //
+  
     public final static EntityModel modelArcher = new EntityModelArcher("archer", true).setModelPath("archer.qmodel");
     public final static EntityModel modelWarrior = new EntityModelArcher("warrior", false).setModelPath("warrior.qmodel");
     public final static EntityModel modelSkeleton = new EntityModelSkeleton("skeleton").setModelPath("skeleton.qmodel");
     public final static EntityModel modelZombie = new EntityModelZombie("zombie").setModelPath("zombie.qmodel");
     public final static EntityModel modelDemon = new EntityModelDemon("demon").setModelPath("demon.qmodel");
+    
     public final static EntityModel modelCat = new EntityModelAnimal("cat").setModelPath("cat.qmodel");
     public final static EntityModel modelCow = new EntityModelAnimal("cow").setModelPath("cow.qmodel");
     public final static EntityModel modelChicken = new EntityModelAnimal("chicken").setModelPath("chicken.qmodel");
@@ -49,6 +51,7 @@ public abstract class EntityModel {
     public final static EntityModel modelPony = new EntityModelAnimal("pony").setModelPath("pony.qmodel");
     public final static EntityModel modelPuppy = new EntityModelAnimal("puppy").setModelPath("puppy.qmodel");
     public final static EntityModel modelSheep = new EntityModelAnimal("sheep").setModelPath("sheep.qmodel");
+    
     public final static EntityModel modelTest = new EntityModelTest("test").setModelPath("test.qmodel");
 
     public static void preInit() {

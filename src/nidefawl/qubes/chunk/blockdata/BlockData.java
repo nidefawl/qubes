@@ -8,7 +8,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import nidefawl.qubes.block.BlockQuarterBlock;
-import nidefawl.qubes.util.ByteArrIO;
+import nidefawl.qubes.io.ByteArrIO;
 
 /**
  * @author Michael Hept 2015

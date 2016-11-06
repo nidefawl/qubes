@@ -492,6 +492,9 @@ public class BlockSurface {
     void resolve(ChunkRenderCache cache) {
         this.resolved = true;
         if (this.calcLight) {
+            this.maskedAO = 0;
+            this.maskedLightBlock = 0;
+            this.maskedLightSky = 0;
             this.calcAO(cache);
         }
         if (this.type == Block.water.id) {

@@ -257,6 +257,7 @@ public class GuiWindowManager implements Renderable  {
         float windowDepth = 220F;
         float z = 0;
         highestIdx = getHighestIndex();
+        int nDrawn = 0;
         for (; a < highestIdx; a++) {
             final GuiWindow w = windowList.get(a);
             if (w == null)
@@ -270,6 +271,7 @@ public class GuiWindowManager implements Renderable  {
             double mY = (w == mouseOver||w==btnGui) ? mouseY : -111;
             w.renderFrame(fTime, mX, mY);
             w.render(fTime, mX, mY);
+            nDrawn++;
             z+=windowDepth;
             Engine.pxStack.pop();
             
@@ -282,21 +284,23 @@ public class GuiWindowManager implements Renderable  {
             double mY = (windowFocus == mouseOver||windowFocus==btnGui) ? mouseY : -111;
             windowFocus.renderFrame(fTime, mX, mY);
             windowFocus.render(fTime, mX, mY);
+            nDrawn++;
         }
         Engine.pxStack.push(0, 0, windowDepth+windowDepth);
 //        super.drawScreen(i, j, f);
-
-        Player player = Game.instance != null ? Game.instance.getPlayer() : null;
-        BaseStack stack = player == null? null:player.getInventory().getCarried();
-        if (stack != null) {
-            int slotW = 48;
-            float inset = 4;
-            float inset2 = 2;
-            Engine.itemRender.drawItem(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
-            Shaders.textured.enable();
-            Engine.itemRender.drawItemOverlay(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
-        } else {
-            renderTooltip(fTime, mouseX, mouseY);
+        if (nDrawn > 0) {
+            Player player = Game.instance != null ? Game.instance.getPlayer() : null;
+            BaseStack stack = player == null? null:player.getInventory().getCarried();
+            if (stack != null) {
+                int slotW = 48;
+                float inset = 4;
+                float inset2 = 2;
+                Engine.itemRender.drawItem(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
+                Shaders.textured.enable();
+                Engine.itemRender.drawItemOverlay(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
+            } else {
+                renderTooltip(fTime, mouseX, mouseY);
+            }
         }
         Engine.pxStack.pop();
         Engine.pxStack.pop();
@@ -419,15 +423,19 @@ public class GuiWindowManager implements Renderable  {
         }
         boolean anyVisible = anyWindowVisible();
         if (!anyVisible) {
-            if (Game.instance != null)
-                GameBase.baseInstance.setGrabbed(Game.instance.getWorld()!=null);
+            onWindowManagerClose();
         }
     }
+    public static void onWindowManagerClose() {
+//        if (Game.instance != null)
+//            GameBase.baseInstance.setGrabbed(Game.instance.getWorld()!=null);
+    }
+
     public static void onWindowOpened(GuiWindow guiWindow) {
-        boolean anyVisible = anyWindowVisible();
-        if (anyVisible) {
-            GameBase.baseInstance.setGrabbed(false);
-        }
+//        boolean anyVisible = anyWindowVisible();
+//        if (anyVisible) {
+//            GameBase.baseInstance.setGrabbed(false);
+//        }
     }
     public static void update() {
         for (final Integer a : windowList.keySet()) {

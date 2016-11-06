@@ -68,7 +68,7 @@ public class QModelDirectRender extends QModelRender {
                 } else {
                     GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, TMgr.getEmptyWhite());
                 }
-                renderGroup(this.model.model, obj, grp, fTime);
+                renderGroup(this.model, obj, grp, fTime);
             }
             rendered.add(obj);
         }

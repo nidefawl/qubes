@@ -2,7 +2,7 @@ package nidefawl.qubes.test;
 
 import java.util.Random;
 
-import nidefawl.qubes.util.ByteArrIO;
+import nidefawl.qubes.io.ByteArrIO;
 
 public class ShortArrayToByteArray {
 

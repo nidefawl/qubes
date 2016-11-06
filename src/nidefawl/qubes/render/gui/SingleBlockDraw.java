@@ -125,12 +125,13 @@ public class SingleBlockDraw {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
         int numInts = buffer.storeVertexData(this.vboBuf);
         int numInts2 = buffer.storeIndexData(this.vboIdxBuf);
+//        System.out.println("numInts2 "+numInts2);
         this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
         this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);
         Engine.bindVAO(GLVAO.vaoBlocks);
-        Engine.bindBuffer(vbo.getVboId());
-        Engine.bindIndexBuffer(vboIdx.getVboId());
-        GL11.glDrawElements(GL11.GL_TRIANGLES, buffer.faceCount * 2 * 3, GL11.GL_UNSIGNED_INT, 0);
+        Engine.bindBuffer(vbo);
+        Engine.bindIndexBuffer(vboIdx);
+        GL11.glDrawElements(GL11.GL_TRIANGLES, numInts2, GL11.GL_UNSIGNED_INT, 0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("SingleBlockDraw.doRender");
     }

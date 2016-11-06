@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nidefawl.qubes.biomes;
+package nidefawl.qubes.world.biomes;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -98,20 +98,14 @@ public class HexBiomesServer extends HexBiomes {
         System.out.println("biome at "+gridX+","+gridY+": "+id);
         b.biome = Biome.biomes[id];
         b.subtype = subtype;
-        if (SAVE_LOAD) {
-            try {
-                b.save(getFile(gridX, gridY));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            System.out.println("save cell "+gridX+"/"+gridY);   
-        }
         this.flagBiome(gridX, gridY);
         return b;
     }
 
     private synchronized void flagBiome(int gridX, int gridY) {
-        flaggedInstances.add(GameMath.toLong(gridX, gridY));
+        long s = GameMath.toLong(gridX, gridY);
+        flaggedInstances.add(s);
+        flaggedInstances2.add(s);
     }
 
     //TODO: compress or make ensure we never have too much data to send
@@ -193,22 +187,29 @@ public class HexBiomesServer extends HexBiomes {
     @Override
     public void deleteAll() {
         synchronized (this) {
-            File[] regionFiles = dir.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File pathname) {
-                    return pathname.isFile() && pathname.getName().endsWith(".dat");
-                }
-            });
-            for (int i = 0; regionFiles != null && i < regionFiles.length; i++) {
-                File f = regionFiles[i];
-                Matcher m = FILE_PATTERN.matcher(f.getName());
-                if (m.matches()) {
-                    f.delete();
-                }
+
+            for (HexBiome c : this.getLoaded()) {
+                c.trees.clear();
+                c.mines.clear();
             }
-            this.flaggedInstances.clear();
-            this.flaggedInstances2.clear();
-            super.reset();
         }
+//      synchronized (this) {
+//      File[] regionFiles = dir.listFiles(new FileFilter() {
+//          @Override
+//          public boolean accept(File pathname) {
+//              return pathname.isFile() && pathname.getName().endsWith(".dat");
+//          }
+//      });
+//      for (int i = 0; regionFiles != null && i < regionFiles.length; i++) {
+//          File f = regionFiles[i];
+//          Matcher m = FILE_PATTERN.matcher(f.getName());
+//          if (m.matches()) {
+//              f.delete();
+//          }
+//      }
+//      this.flaggedInstances.clear();
+//      this.flaggedInstances2.clear();
+//      super.reset();
+//  }
     }
 }

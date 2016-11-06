@@ -2,6 +2,8 @@ package nidefawl.qubes.util;
 
 import java.util.Set;
 
+import nidefawl.qubes.vec.AABBInt;
+
 public interface RegionEntry {
     public Set<Integer> getKeys();
     public void addKey(int key);
@@ -10,4 +12,5 @@ public interface RegionEntry {
     public int getMinZ();
     public int getMaxX();
     public int getMaxZ();
+    public AABBInt getBB();
 }

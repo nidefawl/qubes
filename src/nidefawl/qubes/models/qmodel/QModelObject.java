@@ -256,4 +256,8 @@ public class QModelObject extends QModelAbstractNode {
     public Matrix4f getMatDeformNormal() {
         return this.matDeformNormal;
     }
+    
+    public void setAttachmentEmpty(QModelAbstractNode attachmentEmpty) {
+        this.attachmentEmpty = attachmentEmpty;
+    }
 }

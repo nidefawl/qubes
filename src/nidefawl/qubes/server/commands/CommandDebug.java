@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.biomes.HexBiome;
-import nidefawl.qubes.biomes.HexBiomesServer;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.SlotStack;
@@ -17,6 +15,8 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.WorldServer;
+import nidefawl.qubes.world.biomes.HexBiome;
+import nidefawl.qubes.world.biomes.HexBiomesServer;
 
 public class CommandDebug extends Command {
 

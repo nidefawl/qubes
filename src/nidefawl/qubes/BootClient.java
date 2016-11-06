@@ -37,7 +37,7 @@ public class BootClient {
         Configuration.MEMORY_ALLOCATOR.set("jemalloc");
         Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
         GameContext.setSideAndPath(Side.CLIENT, ".");
-        String serverAddr = "nide.ddns.net:21087";
+        String serverAddr = null;
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-") && args[i].length()>1) {
                 String arg = args[i].substring(1);

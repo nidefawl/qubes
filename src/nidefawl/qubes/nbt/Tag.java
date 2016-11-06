@@ -9,13 +9,14 @@ import java.util.Map.Entry;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
+import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 
 public abstract class Tag {
 
     public static enum TagType {
-        END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTEARRAY, STRING, LIST, COMPOUND, VEC3, UUID, INT_MAP;
+        END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTEARRAY, STRING, LIST, COMPOUND, VEC3, UUID, INT_MAP, BLOCK_POS;
         public int getID() {
             return ordinal();
         }
@@ -341,11 +342,13 @@ public abstract class Tag {
         @Override
         protected void readData(DataInput in, TagReadLimiter l) throws IOException {
             int size = in.readInt();
+            l.add(4);
             if (size > MAX_COMPOUND_TAG_ENTRIES) {
                 throw new IOException("Maximum int map size exceeded");
             }
             for (int i = 0; i < size; i++) {
                 this.data.put(in.readInt(), in.readInt());
+                l.add(8);
             }
         }
         public Map<Integer, Integer> getData() {
@@ -413,7 +416,6 @@ public abstract class Tag {
 
         public void set(String s, Tag t) {
             t.setName(s);
-            ;
             this.data.put(s, t);
         }
 
@@ -520,6 +522,14 @@ public abstract class Tag {
             Tag t = this.data.get(string);
             return t instanceof Tag.StringTag ? ((Tag.StringTag) t).getString() : null;
         }
+
+        public void setBlockPos(String string, BlockPos pos) {
+            this.data.put(string, new Tag.BlockPos3(pos));
+        }
+        public BlockPos getBlockPos(String string) {
+            Tag t = this.data.get(string);
+            return t instanceof Tag.BlockPos3 ? ((Tag.BlockPos3) t).data : null;
+        }
     }
 
     public static class Float extends Tag {
@@ -597,6 +607,48 @@ public abstract class Tag {
         }
     }
 
+    public static class BlockPos3 extends Tag {
+
+        BlockPos data;
+
+        public BlockPos3(BlockPos data) {
+            this.data = data;
+        }
+
+        public BlockPos3() {
+        }
+
+        @Override
+        protected void writeData(DataOutput out) throws IOException {
+            out.writeInt(this.data.x);
+            out.writeInt(this.data.y);
+            out.writeInt(this.data.z);
+        }
+        @Override
+        protected void readData(DataInput in, TagReadLimiter limit) throws IOException {
+            this.data = new BlockPos();
+            this.data.x = in.readInt();
+            this.data.y = in.readInt();
+            this.data.z = in.readInt();
+            limit.add(12);
+        }
+
+        @Override
+        public TagType getType() {
+            return TagType.BLOCK_POS;
+        }
+
+        @Override
+        public Object getValue() {
+            return this.data;
+        }
+        public void setData(BlockPos data) {
+            this.data = data;
+        }
+        public BlockPos getData() {
+            return this.data;
+        }
+    }
     public static class StringTag extends Tag {
 
         String data;
@@ -813,6 +865,8 @@ public abstract class Tag {
                 return new UUIDTag();
             case INT_MAP:
                 return new IntMap();
+            case BLOCK_POS:
+                return new BlockPos3();
             default:
                 break;
         }

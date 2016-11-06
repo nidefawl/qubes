@@ -53,7 +53,7 @@ public class GLDebugLog {
                 }
                 buf = buf == null ? MemoryUtil.memByteBuffer(message, length) : MemoryUtil.memSetupBuffer(buf, message, length);
                 String msg = MemoryUtil.memDecodeUTF8(buf);
-//                stream.println("OpenGL " + typeStr +  " [" + srcStr +"]: " + msg);
+                stream.println("OpenGL " + typeStr +  " [" + srcStr +"]: " + msg);
             }
         }, 0);
     }

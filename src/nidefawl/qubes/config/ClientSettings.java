@@ -21,6 +21,7 @@ public class ClientSettings extends AbstractYMLConfig {
     public boolean dirty;
     private int saveTicks;
     public int ao;
+    public String lastserver;
     
     @Override
     public void setDefaults() {
@@ -35,6 +36,7 @@ public class ClientSettings extends AbstractYMLConfig {
 
     @Override
     public void load() {
+        lastserver = getString("lastserver", "nide.ddns.net:21087");
         thirdpersonDistance = getFloat("thirdpersonDistance", thirdpersonDistance);
         chunkLoadDistance = getInt("chunkLoadDistance", chunkLoadDistance);
         shadowDrawMode = getInt("shadowDrawMode", shadowDrawMode);
@@ -46,6 +48,7 @@ public class ClientSettings extends AbstractYMLConfig {
 
     @Override
     public void save() {
+        setString("lastserver", lastserver);
         setInt("chunkLoadDistance", chunkLoadDistance);
         setInt("shadowDrawMode", shadowDrawMode);
         setInt("ssr", ssr);

@@ -19,7 +19,7 @@ public class PacketCTeleportAck extends AbstractPacketWorldRef {
     @Override
     public void readPacket(DataInput stream) throws IOException {
         super.readPacket(stream);
-        sync = stream.readInt();
+        this.sync = stream.readInt();
     }
 
     @Override

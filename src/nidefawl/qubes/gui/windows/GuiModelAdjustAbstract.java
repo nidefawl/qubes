@@ -106,7 +106,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 	                    Game.instance.sendPacket(new PacketCSetProperty(option.getId(), curVal));
 	                }
 	            } else {
-	                this.gui.properties.options.put(option.getId(), curVal);
+	                this.gui.properties.setOption(option.getId(), curVal);
 	            }
 			}
 		}
@@ -243,7 +243,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
                         this.curVal = id;
                         if (GuiModelAdjustAbstract.this.isPlayerAdjust()) {
                             if (Game.instance!=null) {
-                                Game.instance.sendPacket(new PacketCSetProperty(100, id));
+                                Game.instance.sendPacket(new PacketCSetProperty(15, id));
                             }
                         } else {
                             GuiModelAdjustAbstract.this.setModel(id);
@@ -252,7 +252,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
                 }
             }));
             if (self != null) {
-                int gender = self.getEntityProperties().getOption(100, 0);
+                int gender = self.getEntityProperties().getOption(15, 0);
                 this.testSetting.box.setValue(l.get(gender));
                 this.testSetting.curVal = gender;
             }
@@ -323,7 +323,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 		renderModel(fTime, mX, mY);
         PlayerSelf self = Game.instance!=null?Game.instance.getPlayer():null;
         if (self != null) {
-            int modelIdx = self.getEntityProperties().getOption(100, 0);
+            int modelIdx = self.getEntityProperties().getOption(15, 0);
             if (this.modelidx != modelIdx) {
                 setModel(modelIdx);
             }
@@ -366,10 +366,10 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
         Matrix4f.mul(temp, temp2, temp);
         temp.update();
         renderBatched.setForwardRenderMVP(temp);
-        renderBatched.setModel(entityModel);
+        renderBatched.setModel(entityModel.model);
         this.properties.rot.x = 0;
         this.properties.rot.y = -90;
-        this.properties.pos.set(0,0,0);
+        this.properties.pos.set(Engine.GLOBAL_OFFSET.x, Engine.GLOBAL_OFFSET.y, Engine.GLOBAL_OFFSET.z);
         if (isPlayerAdjust()) {
             PlayerSelf p = Game.instance != null ? Game.instance.getPlayer() : null;
             if (p != null) {

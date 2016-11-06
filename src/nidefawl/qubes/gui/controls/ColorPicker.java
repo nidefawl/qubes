@@ -1,18 +1,18 @@
 package nidefawl.qubes.gui.controls;
 
-import java.awt.Color;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.biomes.HexBiome;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.Color;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.biomes.HexBiome;
 
 public class ColorPicker extends AbstractUI {
     private Button[] colorPick;

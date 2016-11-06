@@ -1,11 +1,11 @@
-package nidefawl.qubes.biomes;
+package nidefawl.qubes.world.biomes;
 
 import java.io.File;
 import java.io.IOException;
 
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.hex.HexagonGridStorage;
-import nidefawl.qubes.worldgen.trees.Tree;
+import nidefawl.qubes.world.structure.tree.Tree;
 
 public class HexBiomeEnd extends HexBiome {
     public HexBiomeEnd(HexagonGridStorage<HexBiome> grid, int x, int z) {

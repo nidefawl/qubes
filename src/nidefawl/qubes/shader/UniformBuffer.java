@@ -82,6 +82,8 @@ public class UniformBuffer {
     }
     public void update() {
         GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindBuffer "+this.buffer);
         this.floatBuffer.position(0).limit(this.len);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");

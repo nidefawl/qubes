@@ -134,4 +134,7 @@ public class GL {
             GL11.glDeleteTextures(tex);
         }
     }
+    public static boolean isBindlessSuppported() {
+        return GL.getCaps().GL_NV_shader_buffer_load;
+    }
 }

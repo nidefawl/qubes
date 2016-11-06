@@ -99,7 +99,9 @@ public class GuiSelectBlock extends Gui {
 
     public void render(float fTime, double mX, double mY) {
         float animRot = lastRot+(rot-lastRot)*fTime;
-        
+////        System.out.println(mX+"/"+mY);
+//        mX=630;
+//        mY=670;
         Shaders.colored.enable();
         Tess.instance.setColor(2, 128);
         Tess.instance.add(this.posX, this.posY + this.height);

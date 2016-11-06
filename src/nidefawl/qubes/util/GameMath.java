@@ -149,6 +149,17 @@ public class GameMath {
     public static long toLong(int x, int z) {
         return ((long) x << 32) | ((long)z-Integer.MIN_VALUE);
     }
+
+    public static int ihToZ(int l) {
+        return (int) (l&0xFFFF) +Short.MIN_VALUE;
+    }
+    public static int ihToX(int l) {
+        return (int) (l >> 16);
+    }
+    public static int toInt(int x, int z) {
+        return ((int) x << 16) | ((int)z-Short.MIN_VALUE);
+    }
+    
     public static double dist2d(double x, double z, double xx, double zz) {
         x = x - xx;
         z = z - zz;

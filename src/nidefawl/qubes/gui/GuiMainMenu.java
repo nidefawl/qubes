@@ -123,7 +123,9 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         if (!s.isEmpty() && !s2.isEmpty()) {
             Game.instance.getProfile().setName(s2);
             Game.instance.saveProfile();
-            Game.instance.connectTo(s);    
+            Game.instance.connectTo(s);
+            Game.instance.settings.lastserver = s;
+            Game.instance.saveSettings();
         }
     }
     @Override

@@ -9,7 +9,7 @@ import nidefawl.qubes.util.TripletLongHash;
  * @author Michael Hept 2015
  * Copyright: Michael Hept
  */
-public class TestHashFunctions {
+public class TestLongHashFunctions {
 
 	public static void main(String[] args) {
 //		int bufLen = 32;

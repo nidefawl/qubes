@@ -36,7 +36,7 @@ public abstract class GameBase implements Runnable {
     public static String  appName         = "";
     public static int     displayWidth;
     public static int     displayHeight;
-    public static boolean GL_ERROR_CHECKS = false;
+    public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
     static int            initWidth       = (int) (1680*0.8);
     static int            initHeight      = (int) (1050*0.8);
@@ -81,7 +81,7 @@ public abstract class GameBase implements Runnable {
     public InputController  movement = new InputController();
     public Gui            gui;
     boolean               reinittexthook  = false;
-    boolean               wasGrabbed      = false;
+    boolean               wasGrabbed      = true;
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -308,10 +308,10 @@ public abstract class GameBase implements Runnable {
             }
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
             if (GL_ERROR_CHECKS) {
-                if (KHRDebug.getInstance() != null) {
-                    GLDebugLog.setup();
-                    _checkGLError("GLDebugLog.setup()");
-                }
+//                if (KHRDebug.getInstance() != null) {
+//                    GLDebugLog.setup();
+//                    _checkGLError("GLDebugLog.setup()");
+//                }
                 _checkGLError("Pre startup");
             }
 
@@ -522,7 +522,12 @@ public abstract class GameBase implements Runnable {
         if (!this.running) {
             return;
         }
-
+        if (Mouse.isGrabbed() != needsGrab()) {
+            Mouse.setGrabbed(needsGrab());
+//            if (b != this.movement.grabbed()) {
+//                setGrabbed(b);
+//            }
+        }
         boolean b = Mouse.isGrabbed();
         if (b != this.movement.grabbed()) {
             setGrabbed(b);
@@ -594,6 +599,10 @@ public abstract class GameBase implements Runnable {
                 GPUProfiler.recycle(tp);
             }
         }
+    }
+
+    public boolean needsGrab() {
+        return this.needsGrab;
     }
 
     public ArrayList<String> glProfileResults = new ArrayList<>();
@@ -923,6 +932,7 @@ public abstract class GameBase implements Runnable {
     }
 
     int throttleClick=0;
+    boolean needsGrab = false; // for non-game impl. only
     public void onMouseClick(long window, int button, int action, int mods) {
         if (this.gui != null) {
 //            if (this.world == null) {
@@ -954,8 +964,7 @@ public abstract class GameBase implements Runnable {
                     break;
                 case 1:
                     if (isDown ) {
-                        setGrabbed(!b);
-                        b = !b;
+                        this.needsGrab = !this.needsGrab;
                     }
                     break;
                 case 2:

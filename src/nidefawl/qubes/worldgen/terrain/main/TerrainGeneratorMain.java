@@ -6,7 +6,6 @@ import java.util.*;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.biome.Biome;
-import nidefawl.qubes.biomes.*;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.noise.NoiseLib;
@@ -15,13 +14,16 @@ import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.world.biomes.HexBiome;
+import nidefawl.qubes.world.biomes.HexBiomesServer;
+import nidefawl.qubes.world.biomes.IBiomeManager;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
 
 public class TerrainGeneratorMain implements ITerrainGen {
-    public final static String GENERATOR_NAME = "terrain_rivers";
+    public final static String GENERATOR_NAME = "terrain_main";
 
     WorldServer world;
     long  seed;
@@ -199,8 +201,6 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 int a = -1;
                 int curBlock = 0;
                 int q = -1;
-                double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
-                double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
     //                if (orenoise > 0.2)
     //                    System.out.println("orenoise "+orenoise);
                 for (int y = this.world.worldHeight - 1; y >= 0; y--) {
@@ -225,17 +225,11 @@ public class TerrainGeneratorMain implements ITerrainGen {
 //                            if (d2<=0) {
                                 if (a < 0) {
                                     if (wasWater) {
-                                        if (blockNoise > 0.1) {
-                                            curBlock = Block.sand.id;
-                                            if (q > 3)
-                                                curBlock = earth.id;
-//                                        } else if (blockNoise < -0.4) {
-//                                            curBlock = stone;
-                                        } else {
-                                            curBlock = top.id;
-                                            if (q > 3)
-                                                curBlock = earth.id;
-                                        }
+                                        curBlock = Block.gravel.id;
+//                                      curBlock = earth.id;
+//                                        } else {
+//                                            curBlock = top.id;
+//                                        }
                                     } else {
                                         curBlock = top.id;
                                     }
@@ -249,35 +243,25 @@ public class TerrainGeneratorMain implements ITerrainGen {
                         } else {
                             a = -1;
                             curBlock = 0;
-//                            if (y < 60) {
-//                                curBlock = Block.water.id;
-//                            }
-                            if (d3 > 0.5 || y <=93) {
-                                curBlock = Block.water.id;
-                                if (fromNonAir && curBlock == Block.water.id) {
-                                    waterMask[(y+1) << 8 | xz] = 1;
-                                }
-                                q++;
-                            } else {
+//                          if (y < 60) {
+//                              curBlock = Block.water.id;
+//                          }
+                          if (d3 > 0.5 || y <=93) {
+                              curBlock = Block.water.id;
+                              if (fromNonAir && curBlock == Block.water.id && (y+1<=93)) {
+                                  waterMask[(y+1) << 8 | xz] = 1;
+                              }
+                              q++;
+                          } else {
                                 q = 0;
                             }
                         }
                     }
                     int bid = curBlock;
-                    if (curBlock == stone ) {
-                        bid = getStone(this.world, cX+x, y, cZ+z, hex, rand);
-                        if (d2>0) {
-                          double orenoise1 = j7.eval((cX+x)*noiseScale5, y*noiseScale5, (cZ+z)*noiseScale5);
-                          double orenoise = j6.eval((cX+x+orenoise1*4)*noiseScale3, (y+orenoise1*4)*noiseScale3, (cZ+z+orenoise1*4)*noiseScale3);
-
-//                            System.out.println("ore at "+(cX+x)+","+y+","+(cZ+z));
-                            //todo: add mapping stone<->ore
-                          if (orenoise > 0.3)
-                            bid = Block.ores.getBlocks().get(0).id;
-                        //                            for (Block b2 : Block.ores.getBlocks()) {
-                        //                                if (b2.gette
-                        //                            }
-                        }
+                    if (curBlock == stone) {
+                        bid = hex.biome.getStone(this.world, cX + x, y, cZ + z, hex, rand);
+                        
+//                        this.biomes
                     }
                     if (curBlock == Block.water.id) {
                         blocks[y << 8 | xz] = 0;
@@ -296,7 +280,6 @@ public class TerrainGeneratorMain implements ITerrainGen {
                 if (blockNoise < 0.1) {
                     continue;
                 }
-                HexBiome hex = hexs[xz];
                 Biome b = biomes.getBiome(cX+x, cZ+z);
                 int y = 93;
                 if (b == Biome.ICE) {
@@ -314,51 +297,55 @@ public class TerrainGeneratorMain implements ITerrainGen {
 //                        blocks[y << 8 | xz] =(short) Block.ice.id;
 //                    }
 //                } else {
-                    if (waterMask[y << 8 | xz] == 0) {
-//                        Block.get(getStone(this.world, cX+x, y, cZ+z, hex, rand))
-                        Block coast = Block.sand;
+//              }
+          }
+      }
+        noiseScale2 = 1/250.0D;
+      for (int x = 0; x < 16; x++) {
+          for (int z = 0; z < 16; z++) {
+              int xz=z<<Chunk.SIZE_BITS|x;
 
-                        if (blocks[y << 8 | xz] != 0) {
-                            blocks[y << 8 | xz] =(short) coast.id;
-                        }
-                        if (blocks[(y+1) << 8 | xz] != 0) {
-                            blocks[(y+1) << 8 | xz] =(short) coast.id;
-                        }
-                        if (blocks[(y+2) << 8 | xz] != 0) {
-                            blocks[(y+2) << 8 | xz] =(short) coast.id;
-                        }
-                    }
-//                }
+              if (blocks[xz] != 0) {
+                  blocks[xz] = (short) Block.stones.getBlocks().get(0).id;
+              }
+              for (int y = 0; y < wh; y++) {
+                  int n = blocks[y << 8 | xz]&Block.BLOCK_MASK;
+                  if (n == Block.gravel.id) {
+                      int depth = 0;
+                      while (y+depth<wh) {
+                          int nID = blocks[(y+depth)<<8|xz]&Block.BLOCK_MASK;
+                          if (nID == 0 && waterMask[(y+depth)<<8|xz] == 0) {
+                              break;
+                          }
+                          depth++;
+                      }
+                      double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
+                      double blockNoise = j.eval((cX+x+blockNoise2)*noiseScale2, (cZ+z+blockNoise2)*noiseScale2);
+                      blockNoise += j4.eval((cX+x)*30, (cZ+z)*30)*0.1;
+                      double sandNoise = j6.eval((cX+x)*0.1, (cZ+z)*0.1)*0.5+0.5;
+                          
+                      blockNoise+=1.0;
+                      blockNoise*=0.5;
+                      blockNoise = clamp10(blockNoise);
+                      if (depth>0) {
+//                          System.out.println(depth);
+                          if (sandNoise<0.6-clamp10(depth/8.0)*0.6) {
+                              blocks[y << 8 | xz]=(short) Block.sand.id;
+                              continue;
+                          }
+                      }
+                      int m = (int) (blockNoise*140);
+                      m = (m / 10) % 9;
+//                      System.out.println(m);
+                      c.setData(x, y, z, m);
+//                      System.out.println(blockNoise);
+//                      blockNoise*=10;
+                      
+                  }
+                }
+            
             }
         }
-    }
-
-
-
-    public int getStone(WorldServer world, int x, int y, int z, HexBiome hex, Random rand) {
-        Block b = hex.biome.getStone();
-        if (b != null)
-            return b.id;
-        float centerX = (float) biomes.getCenterX(hex.x, hex.z);
-        float centerY = (float) biomes.getCenterY(hex.x, hex.z);
-        float fx = (float) biomes.getPointX(hex.x, hex.z, 0);
-        float fy = (float) biomes.getPointY(hex.x, hex.z, 0);
-        rand.setSeed(x * 89153 ^ z * 31 + y);
-        int randRange = 8;
-        float randX = -rand.nextInt(randRange)+rand.nextInt(randRange);
-        float randZ = -rand.nextInt(randRange)+rand.nextInt(randRange);
-        double angle = GameMath.getAngle(x-centerX+randX, z-centerY+randZ, fx-centerX, fy-centerY);
-        int scaleTangent = (int) (6+6*(angle/Math.PI)); // 0 == points to corner, 1/-1 == points to half of side
-        if (scaleTangent < 3) {
-            return Block.stones.basalt.id;
-        }
-        if (scaleTangent < 6) {
-            return Block.stones.diorite.id;
-        }
-        if (scaleTangent < 9) {
-            return Block.stones.marble.id;
-        }
-        return Block.stones.granite.id;
     }
     
     public static double func2(double m, double n, double j) {

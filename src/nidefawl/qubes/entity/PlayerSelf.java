@@ -10,6 +10,7 @@ import nidefawl.qubes.input.InputController;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
+import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.models.qmodel.QModelProperties;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.TagType;
@@ -219,5 +220,12 @@ public class PlayerSelf extends Player {
             this.punchTicks = 20;
             this.timePunch = GameBase.absTime;
         }
+    }
+
+    @Override
+    public BaseStack getActiveItem(int i) {
+        if (i == 0)
+            return inventory.getItem(0);
+        return super.getActiveItem(i);
     }
 }

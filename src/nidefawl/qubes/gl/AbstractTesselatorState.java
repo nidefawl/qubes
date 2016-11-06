@@ -88,8 +88,8 @@ public abstract class AbstractTesselatorState {
 
     public void bindAndDraw(int mode) {
         int tessSetting = getSetting();
-        Engine.bindVAO(GLVAO.vaoTesselator[tessSetting]);
-        Engine.bindBuffer(getVBO().getVboId());
+        Engine.bindVAO(GLVAO.vaoTesselator[tessSetting], false);
+        Engine.bindBuffer(getVBO());
         drawVBO(mode);
     }
     public int getSetting() {

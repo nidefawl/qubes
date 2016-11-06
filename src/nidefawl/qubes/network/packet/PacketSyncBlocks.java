@@ -3,8 +3,8 @@ package nidefawl.qubes.network.packet;
 import java.io.*;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.io.ByteArrIO;
 import nidefawl.qubes.network.Handler;
-import nidefawl.qubes.util.ByteArrIO;
 
 public class PacketSyncBlocks extends Packet {
     public short[] blockIds;

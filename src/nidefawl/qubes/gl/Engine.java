@@ -5,6 +5,8 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
+import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
+import static org.lwjgl.opengl.NVShaderBufferLoad.*;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -16,6 +18,7 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.models.render.QModelBatchedRender;
@@ -121,22 +124,81 @@ public class Engine {
     
     public final static SunLightModel sunlightmodel = new SunLightModel();
     private final static ReallocIntBuffer[] buffers = new ReallocIntBuffer[4];
-    
-    
+
+    public static boolean userSettingUseBindless=true;
+    static boolean isVAOSupportingBindless=false;
+    static boolean clientStateBindlessElement=false;
+    static boolean clientStateBindlessAttrib=false;
     public static void bindVAO(GLVAO vao) {
+        bindVAO(vao, userSettingUseBindless);
+    }
+    public static void bindVAO(GLVAO vao, boolean bindless) {
         if (active != vao) {
+            disableBindless();
             active = vao;
-            int id = active == null ? 0 : active.vaoId;
-            GL30.glBindVertexArray(id);
+            if (active != null) {
+                isVAOSupportingBindless = bindless&&vao.isBindless();
+                GL30.glBindVertexArray(isVAOSupportingBindless ? active.vaoIdBindless : active.vaoId);
+            } else {
+                isVAOSupportingBindless = false;
+                GL30.glBindVertexArray(0);
+            }
+        }
+    }
+    public static void enableBindless() {
+        if (!clientStateBindlessElement) {
+            clientStateBindlessElement = true;
+            GL11.glEnableClientState(GL_ELEMENT_ARRAY_UNIFIED_NV);
+        }
+        if (!clientStateBindlessAttrib) {
+            clientStateBindlessAttrib = true;
+            GL11.glEnableClientState(GL_VERTEX_ATTRIB_ARRAY_UNIFIED_NV);
+        }
+    }
+    public static void disableBindless() {
+        if (clientStateBindlessElement) {
+            clientStateBindlessElement = false;
+            GL11.glDisableClientState(GL_ELEMENT_ARRAY_UNIFIED_NV);
+        }
+        if (clientStateBindlessAttrib) {
+            clientStateBindlessAttrib = false;
+            GL11.glDisableClientState(GL_VERTEX_ATTRIB_ARRAY_UNIFIED_NV);
         }
     }
 
-    public static void bindIndexBuffer(int i) {
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, i);
+    public static void bindIndexBuffer(GLVBO vbo) {
+        if (isVAOSupportingBindless && !vbo.canUseBindless)
+        {
+            throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
+        }
+        if (isVAOSupportingBindless && vbo.canUseBindless) {
+            enableBindless();
+            glBufferAddressRangeNV(GL_ELEMENT_ARRAY_ADDRESS_NV, 0, vbo.addr, vbo.size);
+//            System.out.println("going bindless element index "+vbo.addr+"/"+vbo.size);
+        } else {
+            disableBindless();
+            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vbo.getVboId());
+        }
     }
 
-    public static void bindBuffer(int i) {
-        GL43.glBindVertexBuffer(0, i, 0, active.stride);
+    public static void bindBuffer(GLVBO vbo) {
+        if (isVAOSupportingBindless && !vbo.canUseBindless)
+        {
+            throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
+        }
+        if (isVAOSupportingBindless && vbo.canUseBindless) {
+            enableBindless();
+            for (int i = 0; i < active.list.size(); i++) {
+                VertexAttrib attrib = active.list.get(i);
+                glBufferAddressRangeNV(GL_VERTEX_ATTRIB_ARRAY_ADDRESS_NV, i, vbo.addr + attrib.offset*4, vbo.size - attrib.offset*4);
+//                System.out.println(vbo.addr+"/"+vbo.size+" - "+attrib.offset);
+            }
+//          System.out.println("Not bindless :(");
+//            System.out.println("going bindless attrib array "+vbo.addr+"/"+vbo.size);
+        } else {
+            disableBindless();
+            GL43.glBindVertexBuffer(0, vbo.getVboId(), 0, active.vertStride);
+        }
     }
     
 

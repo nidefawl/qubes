@@ -77,7 +77,7 @@ public class QModelBatchedRender extends QModelRender {
                 shader.setProgramUniform1i("shadowSplit", this.shadowVP);
                 Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
                 GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, n.tex.get());
-                ((ModelRigged) n.model).renderRestModel(n.object, n.group, n.instances);
+                n.model.renderRestModel(n.object, n.group, n.instances);
             } else {
                 this.begin();
                 FloatBuffer bufModel = this.getBufModelMat();
@@ -90,7 +90,7 @@ public class QModelBatchedRender extends QModelRender {
                 shader.setProgramUniform1i("shadowSplit", this.shadowVP);
                 Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
                 GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, n.tex.get());
-                ((ModelRigged) n.model).renderRestModel(n.object, n.group, n.instances);
+                n.model.renderRestModel(n.object, n.group, n.instances);
             }
         }
         if (GPUProfiler.PROFILING_ENABLED)
@@ -313,7 +313,7 @@ public class QModelBatchedRender extends QModelRender {
     private QModelRenderSubList getSubList(QModelObject model, QModelGroup grp) {
         for (int i = 0; i < this.subLists.size(); i++) {
             QModelRenderSubList s = this.subLists.get(i);
-            if (s.matches(this.model.model, model, grp)) {
+            if (s.matches(this.model, model, grp)) {
                 return s;
             }
         }
@@ -323,7 +323,7 @@ public class QModelBatchedRender extends QModelRender {
             s = new QModelRenderSubList();
             tmpLists[idx] = s;
         }
-        s.set(this.model.model, model, grp);
+        s.set(this.model, model, grp);
         this.subLists.add(s);
         return s;
     }

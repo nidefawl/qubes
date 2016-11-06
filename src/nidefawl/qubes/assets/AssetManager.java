@@ -1,7 +1,6 @@
 package nidefawl.qubes.assets;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import nidefawl.qubes.config.WorkingEnv;
@@ -20,7 +19,6 @@ public abstract class AssetManager {
     AssetManager() {
 
     }
-
     public static void init() {
         if (GameContext.getSide() == Side.CLIENT) {
             instance = new AssetManagerClient();
@@ -29,6 +27,7 @@ public abstract class AssetManager {
         }
         instance._init();
     }
+
     abstract void _init();
 
     public abstract void toggleExternalResources();
@@ -44,6 +43,11 @@ public abstract class AssetManager {
     public abstract Shader loadShader(IResourceManager mgr, String nameVSH, String nameFSH, String nameGSH, String nameCSH, IShaderDef def);
 
     public abstract ShaderSource getLastFailedShaderSource();
+
+    public InputStream getInputStream(String string) {
+        AssetBinary b = loadBin(string);
+        return new ByteArrayInputStream(b.getData());
+    }
     
     public AssetBinary loadBin(String name) {
         AssetInputStream is = null;

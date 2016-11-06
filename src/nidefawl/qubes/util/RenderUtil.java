@@ -26,7 +26,6 @@ public class RenderUtil {
         buf.putIdx(idxPos+2);
         buf.putIdx(idxPos+3);
         buf.putIdx(idxPos+1);
-        buf.increaseFace();
     }
     public static void makeCube(VertexBuffer buf, float len) {
         float hlen= len/4.0f;
@@ -65,7 +64,6 @@ public class RenderUtil {
                 buf.putIdx(idxPos+3);
                 buf.putIdx(idxPos+1);
             }
-            buf.increaseFace();
             idxPos+=4;
         }
     }
@@ -113,7 +111,6 @@ public class RenderUtil {
             buf.putIdx(0);
             buf.putIdx(1+s);
             buf.putIdx(1+s+1);
-            buf.increaseFace();
         }
         for(r = 1; r < rings-2; r++) {
             for(s = 1; s < sectors; s++) {
@@ -123,14 +120,12 @@ public class RenderUtil {
                 buf.putIdx((r) * sectors + s);
                 buf.putIdx((r - 1) * sectors + s + 1);
                 buf.putIdx((r - 1) * sectors + s);
-                buf.increaseFace();
             }
         }
         for(s = 0; s < sectors-1; s++) {
             buf.putIdx(lastIdx);
             buf.putIdx(lastIdx-s-1);
             buf.putIdx(lastIdx-s-2);
-            buf.increaseFace();
         }
 
     }

@@ -11,7 +11,9 @@ import org.lwjgl.opengl.*;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
@@ -53,12 +55,29 @@ public class MeshedRegion {
     public MeshedRegion() {
         Arrays.fill(frustumStates, -2);
     }
-    
+
     public void renderRegion(float fTime, int pass) {
-        Engine.bindBuffer(this.vbo[pass].getVboId());
-        Engine.bindIndexBuffer(this.vboIndices[pass].getVboId());
-        GL11.glDrawElements(GL11.GL_TRIANGLES, this.elementCount[pass]*3, GL11.GL_UNSIGNED_INT, 0);
-        Stats.regionDrawCalls++;
+        if (this.vertexCount[pass]>0) {
+            Engine.bindBuffer(this.vbo[pass]);
+            Engine.bindIndexBuffer(this.vboIndices[pass]);
+            GL11.glDrawElements(GL11.GL_TRIANGLES, this.elementCount[pass], GL11.GL_UNSIGNED_INT, 0);
+            Stats.regionDrawCalls++;
+        }
+    }
+
+
+    public void renderRegionIndirect(MultiDrawIndirectBuffer buf, int pass) {
+        if (this.vertexCount[pass]>0) {
+            if (!this.vbo[pass].canUseBindless)
+                throw new GameError("invalid vbo");
+            
+            buf.add(this.vbo[pass], this.vboIndices[pass], this.elementCount[pass]);
+//            Engine.bindBuffer(this.vbo[pass]);
+//            Engine.bindIndexBuffer(this.vboIndices[pass]);
+//            GL32.glDrawElementsInstancedBaseVertex(
+//                    GL11.GL_TRIANGLES, this.elementCount[pass], GL11.GL_UNSIGNED_INT, 0);
+//            Stats.regionDrawCalls++;
+        }
     }
 
 
@@ -90,14 +109,12 @@ public class MeshedRegion {
 
     public void uploadBuffer(int pass, VertexBuffer buffer, int shadowDrawMode) {
         int numV = buffer.getVertexCount();
-        int numF = buffer.getFaceCount();
         boolean wasEmpty = this.vertexCount[pass] == 0;
         boolean isEmpty = buffer.getVertexCount() == 0;
         if (wasEmpty && isEmpty) {
             return;
         }
         this.vertexCount[pass] = numV;
-        this.elementCount[pass] = numF * 2;
         this.hasPass[pass] |= numV > 0;
         this.hasAnyPass |= numV > 0;
         this.shadowDrawMode = shadowDrawMode;
@@ -106,8 +123,13 @@ public class MeshedRegion {
         ReallocIntBuffer shBuffer = RegionRenderer.idxShortBuffers[pass];
         int intlen = buffer.storeVertexData(buf);
         int intlenIdx = buffer.storeIndexData(shBuffer);
+        this.elementCount[pass] = intlenIdx;
         vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
         vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intlenIdx * 4L);
+//        if (GL.isBindlessSuppported()) {
+//            vbo[pass].makeBindless(GL15.GL_ARRAY_BUFFER);
+//            vboIndices[pass].makeBindless(GL15.GL_ELEMENT_ARRAY_BUFFER);
+//        }
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 

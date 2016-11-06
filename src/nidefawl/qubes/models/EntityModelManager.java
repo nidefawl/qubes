@@ -64,8 +64,7 @@ public class EntityModelManager {
             AssetBinary asset = modelAssets.get(modelname);
             model.setModel(this.models.get(asset));
             
-            System.out.println("loaded model "+model.name+" has id "+model.id);
-            Thread.dumpStack();
+//            System.out.println("loaded model "+model.name+" has id "+model.id);
         }
     }
 

@@ -99,12 +99,11 @@ public class ModelBlock extends ModelQModel {
                         int textureHalf2 = RenderUtil.packTexCoord(triangle.texCoord[0][i], triangle.texCoord[1][i]);
                         vBuf.put(textureHalf2);
                         vBuf.put(0xffffffff);
+                        vBuf.increaseVert();
 //                      }
                     idxArr[pos++] = vPos[idx];
                     vBuf.putIdx(vPos[idx]);
-                    vBuf.increaseVert();
                 }
-                vBuf.increaseFace();
             }
             
             

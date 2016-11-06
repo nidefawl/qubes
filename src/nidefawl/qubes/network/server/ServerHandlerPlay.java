@@ -1,5 +1,9 @@
 package nidefawl.qubes.network.server;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
+
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
@@ -9,6 +13,8 @@ import nidefawl.qubes.entity.EntityProperties;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.*;
+import nidefawl.qubes.io.network.DataListType;
+import nidefawl.qubes.io.network.WorldInfo;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.network.Connection;
@@ -354,7 +360,7 @@ public class ServerHandlerPlay extends ServerHandler {
     public void handleSetProperty(PacketCSetProperty p) {
         EntityProperties properties = this.player.getEntityProperties();
         switch (p.propId) {
-            case 100:
+            case 15:
                 if (p.propVal <0||p.propVal>1) {
                     kick("Invalid packet. Code 0x2100");
                 }
@@ -409,5 +415,33 @@ public class ServerHandlerPlay extends ServerHandler {
         packet.entId = this.player.id;
         packet.data = properties.save();
         this.player.getWorld().broadcastPacket(packet);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void handleListReq(PacketCListRequest p) {
+        List list=null;
+        DataListType type=p.type;
+        int reqId = p.reqId;
+        switch (p.type) {
+            case WORLDS:
+                list = Lists.newArrayList();
+                WorldServer[] worlds = this.server.getWorlds();
+                for (int a = 0; a < worlds.length; a++) {
+                    WorldServer wServer = worlds[a];
+                    if (wServer != null) {
+                        WorldInfo info = new WorldInfo();
+                        info.id = wServer.getId();
+                        info.uuid = wServer.getUUID();
+                        info.name = wServer.getName();
+                        list.add(info);
+                    }
+                }
+                break;
+            default:
+                return;
+        }
+        if (list != null && type != null) {
+            this.sendPacket(new PacketSList(reqId, type, list));
+        }
     }
 }

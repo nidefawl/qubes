@@ -71,4 +71,33 @@ public class InventoryUtil {
         return j;
     }
 
+    public static boolean isEqual(BaseStack[] equipment, BaseStack[] equip) {
+        if (equipment.length != equip.length) {
+            return false;
+        }
+        for (int i = 0; i < equipment.length; i++) {
+            if (!BaseStack.equalStacks(equip[i], equipment[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean copy(BaseStack[] equip, BaseStack[] equipment) {
+        if (equip.length != equipment.length) {
+            throw new IllegalArgumentException("Must provide equal sized arrays");
+        }
+        boolean isEqual = true;
+        for (int i = 0; isEqual && i < equipment.length; i++) {
+            BaseStack stack1 = equip[i];
+            BaseStack stack2 = equipment[i];
+            boolean eqstack = BaseStack.equalStacks(stack1, stack2);
+            isEqual &= eqstack;
+            if (!eqstack) {
+                equipment[i] = stack1 == null ? null : stack1.copy();
+            }
+        }
+        return isEqual;
+    }
+
 }

@@ -49,8 +49,13 @@ public abstract class HexagonGridStorage<T> extends HexagonGrid {
         } 
         T b = this.map.get(pos); 
         if (b == null) {
-            b = loadCell(GameMath.lhToX(pos), GameMath.lhToZ(pos));
-            this.map.put(pos, b);
+            synchronized(this.map) {
+                b = this.map.get(pos); 
+                if (b == null) {
+                    b = loadCell(GameMath.lhToX(pos), GameMath.lhToZ(pos));
+                    this.map.put(pos, b);
+                }
+            }
         }
         return b;
     }

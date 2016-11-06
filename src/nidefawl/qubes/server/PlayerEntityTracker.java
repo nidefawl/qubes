@@ -11,9 +11,9 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.network.packet.PacketSEntityMove;
-import nidefawl.qubes.network.packet.PacketSEntityTrack;
-import nidefawl.qubes.network.packet.PacketSEntityUnTrack;
+import nidefawl.qubes.inventory.InventoryUtil;
+import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Side;
 import nidefawl.qubes.util.SideOnly;
@@ -36,11 +36,18 @@ public class PlayerEntityTracker {
             this.yaw = this.entity.yaw;
             this.pitch = this.entity.pitch;
             this.yawBodyOffset = this.entity.yawBodyOffset;
+            BaseStack[] entEquip = entity.equipment;
+            this.equipment = new BaseStack[entEquip.length];
+            for (int i = 0; i < entEquip.length; i++) {
+                BaseStack stack = entEquip[i];
+                this.equipment[i] = stack == null ? null : stack.copy();
+            }
         }
         Entity entity;
         public Vec3D pos;
         public float yaw, pitch;
         public float yawBodyOffset;
+        BaseStack[] equipment;
     }
     /**
      * @param player 
@@ -81,7 +88,11 @@ public class PlayerEntityTracker {
             float dyaw = Math.abs(GameMath.wrapAngle(entry.yaw-entity.yaw));
             float dyawB = Math.abs(entry.yawBodyOffset-entity.yawBodyOffset);
             float dpitch = Math.abs(entry.pitch-entity.pitch);
+            BaseStack[] equip = entity.equipment;
             int flags = 0;
+            if (!InventoryUtil.copy(equip, entry.equipment)) {
+                flags |= 4;
+            }
             if (d > 1.0E-4) {
                 entry.pos.set(entity.pos);
                 flags |= 1;
@@ -95,6 +106,10 @@ public class PlayerEntityTracker {
             }
             if (flags > 0) {
                 PacketSEntityMove p = new PacketSEntityMove(entity.id, flags, entry.pos, entry.pitch, entry.yaw, entry.yawBodyOffset);
+                this.player.sendPacket(p);
+            }
+            if ((flags & 4) != 0) {
+                PacketSEntityEquip p = new PacketSEntityEquip(entity.id, entry.equipment);
                 this.player.sendPacket(p);
             }
         }
@@ -113,6 +128,10 @@ public class PlayerEntityTracker {
         PacketSEntityTrack p = getPacket(tNew);
         if (p != null)
             this.player.sendPacket(p);
+        if (tNew.equipment.length > 0) {
+            PacketSEntityEquip p2 = new PacketSEntityEquip(tNew.entity.id, tNew.equipment);
+            this.player.sendPacket(p2);
+        }
     }
 
     /**

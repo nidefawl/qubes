@@ -22,14 +22,10 @@ import nidefawl.qubes.vec.Vector3f;
  * Copyright: Michael Hept
  */
 public class ModelStatic extends ModelQModel {
-    public boolean needsDraw = true;
 
     public ModelStatic(ModelLoaderQModel loader) {
         super(loader);
     }
-
-    Vector3f tmpVec = new Vector3f();
-    private VertexBuffer vBuf;
     public void render(int object, int group, float f) {
         QModelObject obj = this.loader.listObjects.get(object);
         QModelGroup grp = obj.listGroups.get(group);
@@ -38,9 +34,9 @@ public class ModelStatic extends ModelQModel {
         if (this.needsDraw || System.currentTimeMillis()-rGroup.reRender>2100) {
             rGroup.reRender = System.currentTimeMillis();
             this.needsDraw = false;
-            if (this.vBuf == null)
-                this.vBuf = new VertexBuffer(1024*64);
-            this.vBuf.reset();
+            if (this.vbuf == null)
+                this.vbuf = new VertexBuffer(1024*64);
+            this.vbuf.reset();
             List<QModelTriangle> triList = obj.listTri; 
             List<QModelVertex> vList = obj.listVertex; 
             int numIdx = triList.size()*3;
@@ -54,27 +50,26 @@ public class ModelStatic extends ModelQModel {
 //                  if (vPos[idx]<0) {
                         vPos[idx] = vPosI++;
                         QModelVertex v = obj.listVertex.get(idx);
-                        this.vBuf.put(Float.floatToRawIntBits(v.x));
-                        this.vBuf.put(Float.floatToRawIntBits(v.y));
-                        this.vBuf.put(Float.floatToRawIntBits(v.z));
+                        this.vbuf.put(Float.floatToRawIntBits(v.x));
+                        this.vbuf.put(Float.floatToRawIntBits(v.y));
+                        this.vbuf.put(Float.floatToRawIntBits(v.z));
                         int normal = RenderUtil.packNormal(triangle.normal[i]);
-                        this.vBuf.put(normal);
+                        this.vbuf.put(normal);
                         int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
-                        this.vBuf.put(textureHalf2);
-                        this.vBuf.put(0xffffffff);
+                        this.vbuf.put(textureHalf2);
+                        this.vbuf.put(0xffffffff);
+                        this.vbuf.increaseVert();
 //                  }
 //                    idxArr[pos++] = vPos[idx];
-                    this.vBuf.putIdx(vPos[idx]);
-                    this.vBuf.increaseVert();
+                    this.vbuf.putIdx(vPos[idx]);
                 }
-                this.vBuf.increaseFace();
             }
             
             
             if (rGroup.gpuBuf == null) {
                 rGroup.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
             }
-            rGroup.gpuBuf.upload(vBuf);
+            rGroup.gpuBuf.upload(vbuf);
         }
         
 
