@@ -315,29 +315,18 @@ void main(void) {
 	float alpha = calculateAlphaForIntersection( hit, iterationCount, specularStrength, hitPixel, hitPoint, vsRayOrigin, vsRayDirection);
 	// float alpha = specularStrength;
 
-	vec4 cOut = vec4(albedo.rgb*albedo.a, 0);
-	if (isWater>0) {
+	vec4 cAlbedo = vec4(albedo.rgb*albedo.a, 1.0);
+	vec4 cRefl = vec4(0);
 	if (hit) {
-		if (!inScreen(hitPixel)) {
-			// cOut = vec4(1,1,0,1);
-		} else {
- 			// angle *= angle;
+		if (inScreen(hitPixel)) {
 			uvec4 type = texelFetch(texMaterial, int2(hitPixel), 0);
   			uint blockidHit = (type.y&0xFFFu);
-			if (blockidHit!=0u) {
+			if (blockidHit>0u) {
 				vec4 refl = texelFetch(texColor, int2(hitPixel), 0);
-				//alpha = mix(alpha, 0, float(blockid==0u));
-				cOut = vec4(refl.rgb,  min(1, alpha*angle*1.8));// isWater*float(type.y!=0u)*0.7);
-			// cOut = vec4(1,0,0,1);
-				// cOut = vec4(vec3(jitter),1);
-				// cOut = vec4(1,1,0,1);
-			} else {
-			// cOut = vec4(1,0,1,1);
+				cRefl.rgb = refl.rgb;
+				cRefl.a = min(1, alpha*angle*angle*1.4);
 			}
 		}
-	} else {
-			// cOut = vec4(1,0,0,1);
 	}
-	}
-	out_Color = cOut;
+	out_Color = vec4(mix(cAlbedo.rgb, cRefl.rgb, cRefl.a), 1.0);
 }

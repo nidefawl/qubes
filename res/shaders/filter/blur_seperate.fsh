@@ -56,5 +56,5 @@ void main(void)
 	processSample( pass_texcoord, -1 * 2.0, _BlurQuality, stepSize, accumulator, denominator);
 
 	vec4 blurred = accumulator / denominator;
-    out_Color = vec4(blurred.rgb, blurred.a);
+    out_Color = vec4(blurred.rgb, 1.0);
 }

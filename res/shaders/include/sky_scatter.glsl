@@ -8,13 +8,13 @@ vec3 Kr2 = vec3(0.3, 0.3, 0.14); // air
 // uniform float rayleigh_brightness, mie_brightness, spot_brightness, scatter_strength, rayleigh_strength, mie_strength;
 // uniform float rayleigh_collection_power, mie_collection_power, mie_distribution;
  float rayleigh_brightness = 1.0;
- float mie_brightness = 0.049;
- float spot_brightness = 12;
-float scatter_strength = 0.031;
- float rayleigh_strength = 0.139;
- float mie_strength = 0.77;
- float rayleigh_collection_power = 0.95;
- float mie_collection_power = 0.02;
+ float mie_brightness = 0.3;
+ float spot_brightness = 8;
+float scatter_strength = 0.061;
+ float rayleigh_strength = 3.639;
+ float mie_strength = 0.17;
+ float rayleigh_collection_power = 0.98;
+ float mie_collection_power = 0.65;
  float mie_distribution = 0.56;
 
 float surface_height = 0.98;

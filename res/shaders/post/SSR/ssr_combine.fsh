@@ -17,6 +17,6 @@ void main(void)
     uvec4 blockinfo = texture(texMaterial, pass_texcoord, 0);
     uint blockid = BLOCK_ID(blockinfo);
     float isWater = IS_WATER(blockid);
-    float a = blurred.a*0.58*isWater;
+    float a = blurred.a*0.9*isWater;
     out_Color = vec4( mix(albedo.rgb, blurred.rgb, a), 1.0 );
 }

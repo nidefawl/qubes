@@ -348,5 +348,5 @@ void main() {
     out_Color = cloudColor*0.4;
     out_Normal = vec4(0.5);
     renderData = ENCODE_RENDERPASS(8);
-    out_Material = uvec4(0u,1u+renderData,0u,0u);
+    out_Material = uvec4(0u,0u+renderData,0u,0u);
 }

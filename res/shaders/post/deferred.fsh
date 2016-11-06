@@ -275,9 +275,9 @@ float getShadow2() {
     return 1;
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
-#define G_SCATTERING 0.8f
-#define VOL_STRENGTH 0.1f
-#define NB_STEPS 8
+#define G_SCATTERING 0.6f
+#define VOL_STRENGTH 0.05f
+#define NB_STEPS 32
 // #define PI 10
 const float pi = 3.1415927;
 float ComputeScattering(float lightDotView)
@@ -553,8 +553,8 @@ void main() {
         finalLight+=prop.light.rgb*(occlusion);
         // finalLight*=2;
 #if RENDER_PASS ==1
-        float waterDepth = length(prop.position-viewSpacePosUnderWater);
-        alpha = clamp(clamp(waterDepth/6, 0.25, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.25, 1.0);
+        float waterDepth = length(prop.position-viewSpacePosUnderWater)*0.08;
+        alpha = clamp(clamp(waterDepth, 0.7, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.7, 1.0);
 #endif
 
         alpha = clamp(alpha, 0.0, 1.0);
