@@ -1,0 +1,1 @@
+java -Xms128M -Xmx2G -Djava.library.path=lib\lwjgl_dbg\ -cp bin;lib\lwjgl_dbg\lwjgl.jar;lib\guava\guava-18.0.jar;lib\snakeyaml\snakeyaml-1.16.jar;lib\jline\jline-2.13.jar nidefawl.qubes.BootClient
