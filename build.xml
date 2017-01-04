@@ -36,11 +36,10 @@
     	    <arg value="--side"/>
     	    <arg value="client"/>
 		    <arg value="--in"/>
-    	    <arg value="src/engine"/>
-		    <arg value="--in"/>
-    	    <arg value="src/game"/>
+    	    <arg value="src"/>
 		    <arg value="--out"/>
 		    <arg value="${compile_dir}/src/client"/>
+		    <arg value="--bypass"/>
 	    </exec>
         <mkdir dir="${compile_dir}/bin/client/res"/>
         <copy includeemptydirs="false" todir="${compile_dir}/bin/client/res">
