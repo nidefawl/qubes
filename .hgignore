@@ -5,6 +5,7 @@ syntax: regexp
 ^config\\*$
 ^worlds\\*$
 ^server\\*$
+^playerdata\\*$
 ^regions\\*$
 ^packs\\*$
 ^sphax\\*$
