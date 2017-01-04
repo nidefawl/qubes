@@ -100,10 +100,10 @@ public class GuiChatInput extends Gui implements ITextEdit {
     
     @Override
     public void render(float fTime, double mX, double mY) {
-        if (!field.focused) {
-            close();
-            return;
-        }
+//        if (!field.focused) {
+//            close();
+//            return;
+//        }
         field.focused = true;
         Shaders.textured.enable();
         if (this.mouseResize == 1) {

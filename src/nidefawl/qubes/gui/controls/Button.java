@@ -57,5 +57,8 @@ public class Button extends AbstractUI implements Renderable {
     public void initGui(boolean first) {
 
     }
+    public void setText(String text) {
+        this.text = text;
+    }
 
 }

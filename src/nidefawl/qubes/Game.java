@@ -8,7 +8,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL40;
 
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
@@ -27,7 +26,7 @@ import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.*;
-import nidefawl.qubes.item.*;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.EntityModelManager;
@@ -42,19 +41,21 @@ import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
+import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
+import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
-import sun.misc.FpUtils;
 
 public class Game extends GameBase implements IErrorHandler {
 
@@ -75,11 +76,12 @@ public class Game extends GameBase implements IErrorHandler {
     private NetworkClient      client;
     WorldClient                world     = null;
     PlayerSelf                 player;
-    public final DigController dig       = new DigController();
+    WorldPlayerController worldPlayerController = new WorldPlayerController();
+    public final DigController         dig                = new DigController();
     public final Selection     selection = new Selection();
     public boolean             follow    = true;
 
-    public BlockStack selBlock           = new BlockStack(0);
+    public BlockStack selBlock           = new BlockStack(Block.stones.getFirst());
     public long       lastShaderLoadTime = System.currentTimeMillis();
 
     public final Vector3f vCam               = new Vector3f();
@@ -89,7 +91,7 @@ public class Game extends GameBase implements IErrorHandler {
 
     public boolean        updateRenderers = true;
     public static boolean showGrid        = false;
-    public boolean        thirdPerson     = true;
+    public boolean        thirdPerson     = false;
     boolean               testMode        = false;
     public String         serverAddr;
     PlayerSelf            remotePlayer;
@@ -98,10 +100,9 @@ public class Game extends GameBase implements IErrorHandler {
     WorldClient           testWorld;
 
     int skipChars = 0;
-    private BaseStack testStack = new ItemStack(Item.pickaxe);
-    private BaseStack testStack2 = new ItemStack(Item.axe);
+    public final LocalGameServer server = new LocalGameServer();
     
-    private GameMode mode = GameMode.PLAY;
+    private GameMode mode = GameMode.BUILD;
     final float[] loadProgress = new float[2];
     
     public GameMode getMode() {
@@ -138,7 +139,7 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.serverAddr == null) {
             this.serverAddr = "nide.ddns.net:21087";
         }
-        InputController.initKeybinds();
+        KeybindManager.initKeybinds();
         selection.init();
         dig.init();
         FontRenderer.init();
@@ -304,7 +305,7 @@ public class Game extends GameBase implements IErrorHandler {
         }
         ChatManager.getInstance().loadInputHistory();
 
-        InputController.load();
+        KeybindManager.load();
     }
 
     public void toggleGameMode() {
@@ -359,6 +360,7 @@ public class Game extends GameBase implements IErrorHandler {
     
     @Override
     public void shutdown() {
+        this.server.stop();
         super.shutdown();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
@@ -395,7 +397,7 @@ public class Game extends GameBase implements IErrorHandler {
                     return;
                 }
             }
-            Keybinding k = InputController.getKeyBinding(key);
+            Keybinding k = KeybindManager.getKeyBinding(key);
             if (k != null && k.isEnabled() && k.isPressed()) {
                 k.update(action);
                 return;
@@ -494,11 +496,11 @@ public class Game extends GameBase implements IErrorHandler {
             if (throttleClick > 0) {
                 return;
             }
-            if (b)
-                dig.onMouseClick(button, isDown);
+//            if (b)
+//                dig.onMouseClick(button, isDown);
+            selection.clicked(button, isDown);
             switch (button) {
                 case 0:
-                    selection.clicked(button, isDown);
                     if (this.player != null) {
                         this.player.clicked(button, isDown);
                     }
@@ -521,6 +523,8 @@ public class Game extends GameBase implements IErrorHandler {
     }
 
     public boolean needsGrab() {
+        if (!hasWindowFocus) 
+            return false;
         if (this.world == null) {
             return false;
         }
@@ -536,6 +540,7 @@ public class Game extends GameBase implements IErrorHandler {
         glClearColor(0.71F, 0.82F, 1.00F, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
+            Engine.skyRenderer.renderSky(this.world, fTime);
             
             Engine.getSceneFB().bind();
             Engine.getSceneFB().clearFrameBuffer();
@@ -658,7 +663,7 @@ public class Game extends GameBase implements IErrorHandler {
             }
 
 
-            boolean firstPerson = !this.thirdPerson && this.mode == GameMode.PLAY;
+            boolean firstPerson = !this.thirdPerson;
             if (firstPerson) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("firstPerson");
@@ -978,17 +983,20 @@ public class Game extends GameBase implements IErrorHandler {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >=10200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
-            System.out.println(lastFPS);
+        if (System.currentTimeMillis()-lastShaderLoadTime >=1200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+//            System.out.println(lastFPS);
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
 //          Shaders.initShaders();
 ////          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
+//          Engine.renderBatched.initShaders();
 //          Engine.worldRenderer.initShaders();
-//          Engine.blurRenderer.initShaders();
+//            Engine.skyRenderer.initShaders();
+//            Engine.skyRenderer.redraw();
+//            Engine.outRenderer.initShaders();
             
-////          Engine.regionRenderer.initShaders();
+//          Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
@@ -1014,6 +1022,7 @@ public class Game extends GameBase implements IErrorHandler {
                 if (this.gui == null || !"userrequest".equals(reason)) {
                     showGUI(new GuiDisconnected(reason));
                 }
+                this.server.stop();
             } else {
                 this.client.update();
             }
@@ -1031,6 +1040,11 @@ public class Game extends GameBase implements IErrorHandler {
         if (player != null) {
             this.dig.preRenderUpdate();
             player.updateInputDirect(movement);
+            float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
+            distF = -distF*0.6f;
+            float f2 = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * f;
+            float f3 = player.prevCameraPitch + (player.cameraPitch - player.prevCameraPitch) * f;
+            Engine.camera.calcViewShake(distF, f2, f3, f);
             float yaw = player.yaw;
             float pitch = player.pitch;
             Engine.camera.setOrientation(yaw, pitch, thirdPerson, settings.thirdpersonDistance);
@@ -1129,11 +1143,15 @@ public class Game extends GameBase implements IErrorHandler {
        if (this.gui != null) {
            this.gui.update();
        }
+       if (this.selection != null) {
+           this.selection.update(getWorld());
+       }
        GuiWindowManager.update();
        this.dig.update();
        ChatManager.getInstance().saveInputHistory();
        Engine.regionRenderer.tickUpdate();
        Engine.worldRenderer.tickUpdate();
+       Engine.skyRenderer.tickUpdate();
 //       if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
 //           this.setWorld(null);
 //           showGUI(new GuiMainMenu());
@@ -1173,7 +1191,10 @@ public class Game extends GameBase implements IErrorHandler {
     }
 
     public synchronized void setConnection(NetworkClient client) {
-        this.connect.cancel();
+        ThreadConnect conn = this.connect;
+        if (conn != null) {
+            conn.cancel();
+        }
         this.connect = null;
         if (this.client != null) {
             this.client.disconnect("Quit");
@@ -1240,29 +1261,6 @@ public class Game extends GameBase implements IErrorHandler {
         }
     }
 
-    /**
-     * @param intersect
-     * @param quarterMode 
-     */
-    public void blockClicked(RayTraceIntersection intersect, boolean quarterMode) {
-        if (this.statsOverlay != null) {
-            this.statsOverlay.blockClicked(intersect);
-        }
-        int faceHit = intersect.face;
-        BlockPos pos = intersect.blockPos;
-        if (quarterMode) {
-            faceHit |= 0x8;
-            pos = new BlockPos();
-            pos.set(intersect.blockPos);
-            pos.x*=2;
-            pos.y*=2;
-            pos.z*=2;
-            pos.x+=intersect.q.x;
-            pos.y+=intersect.q.y;
-            pos.z+=intersect.q.z;
-        }
-        sendPacket(new PacketCSetBlock(world.getId(), pos, intersect.pos, faceHit, this.selBlock.copy()));
-    }
 
     /**
      * @param ix
@@ -1281,5 +1279,8 @@ public class Game extends GameBase implements IErrorHandler {
     public ClientHandler getClientHandler() {
         NetworkClient client = this.client;
         return client != null ? client.getClient() : null;
+    }
+    public WorldPlayerController getWPCtrl() {
+        return this.worldPlayerController;
     }
 }

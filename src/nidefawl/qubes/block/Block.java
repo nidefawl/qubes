@@ -11,7 +11,6 @@ import nidefawl.qubes.blocklight.LightChunkCache;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.models.qmodel.ModelBlock;
@@ -47,7 +46,7 @@ public class Block {
     public final static Block gravel = new BlockGravel("gravel");
 //    public final static Block glass = new BlockGlass("glass").setTextures("glass/glass_0", "glass/glass_1").setTextureMode(BlockTextureMode.SUBTYPED_TEX_PER_TYPE);
 
-    
+
     public final static BlockGroupLogs logs = new BlockGroupLogs();
     public final static BlockGroup wood = new BlockGroupWood();
     public final static BlockGroupLeaves leaves = new BlockGroupLeaves();
@@ -121,6 +120,7 @@ public class Block {
 
     public final static Block pad = new BlockPlantFlat("pad").setTextures("plants/pad");
     public final static BlockGroup modelled = new BlockGroupModelledStones(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
+    public final static Block torch = new BlockTorch("torch").setTextures("torch/torch_on");
 
     public static void preInit() {
         

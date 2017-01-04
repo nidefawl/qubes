@@ -14,7 +14,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ScrollList;
-import nidefawl.qubes.input.InputController;
+import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Keybinding;
 import nidefawl.qubes.input.Keyboard;
 import nidefawl.qubes.render.post.SMAA;
@@ -116,7 +116,7 @@ public class GuiControls extends Gui {
         int w1 = 520;
         int h = 30;
         int idx = 10;
-        for (Keybinding b : InputController.getBindings()) {
+        for (Keybinding b : KeybindManager.getBindings()) {
             if (b.isStaticBinding()){
                 continue;
             }
@@ -244,15 +244,15 @@ public class GuiControls extends Gui {
                     this.selected = null;
                     this.inUseKey = null;
                 } else {
-                    Keybinding k = InputController.getKeyBinding(key);
+                    Keybinding k = KeybindManager.getKeyBinding(key);
                     if (k != null && k != this.selected.b) {
                         inUseKey = k;
                         return true;
                     }
                     this.selected.b.setEnabled(true);
                     this.selected.b.setKey(key);
-                    InputController.updateKeybindMap();
-                    InputController.saveBindings();
+                    KeybindManager.updateKeybindMap();
+                    KeybindManager.saveBindings();
                     this.selected = null;
                     
                 }
@@ -268,8 +268,8 @@ public class GuiControls extends Gui {
         if (element == clear) {
             if (this.selected != null) {
                 this.selected.b.setKey(-1);
-                InputController.updateKeybindMap();
-                InputController.saveBindings();
+                KeybindManager.updateKeybindMap();
+                KeybindManager.saveBindings();
                 this.selected = null;
                 this.inUseKey = null;
             }
@@ -278,8 +278,8 @@ public class GuiControls extends Gui {
         if (element == defaultSet) {
             if (this.selected != null) {
                 this.selected.b.setKey(this.selected.b.getDefaultkey());
-                InputController.updateKeybindMap();
-                InputController.saveBindings();
+                KeybindManager.updateKeybindMap();
+                KeybindManager.saveBindings();
                 this.selected = null;
                 this.inUseKey = null;
             }

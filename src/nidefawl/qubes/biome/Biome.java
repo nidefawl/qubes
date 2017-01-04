@@ -19,7 +19,7 @@ public class Biome {
     public final static Biome[] biomes = new Biome[256];
     public static int maxBiome;
     public final static Biome MEADOW_GREEN = new BiomeMeadow(0)
-            .setColor(BiomeColor.GRASS, 0x408019)
+            .setColor(BiomeColor.GRASS, 0x4f923b)
             .setColor(BiomeColor.LEAVES, 0x4A7818)
             .setColor(BiomeColor.FOLIAGE, 0x408A10)
             .setColor(BiomeColor.FOLIAGE2, 0x64B051)
@@ -174,7 +174,7 @@ public class Biome {
     }
 
     public int getOre(WorldServer world, int x, int y, int z, HexBiome hex, Random rand) {
-        return Block.ores.getBlocks().get(0).id;
+        return Block.ores.getFirst().id;
 //        Block b = hex.biome.getStone();
 //        if (b != null)
 //            return b.id;

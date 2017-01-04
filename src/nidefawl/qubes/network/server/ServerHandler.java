@@ -47,7 +47,7 @@ public abstract class ServerHandler extends Handler {
         }
         if (state < STATE_CONNECTED) {
             if (System.currentTimeMillis() - time > netServer.packetTimeout) {
-                this.conn.disconnect(Connection.LOCAL, "Packet timed out");
+                this.conn.disconnect(Connection.LOCAL, "Server Packet timed out");
                 return;
             }
         } else {

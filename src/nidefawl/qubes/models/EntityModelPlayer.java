@@ -209,6 +209,8 @@ public class EntityModelPlayer extends EntityModel {
         float pitch = rot.z;
         yaw -= headYaw;
         float rotYBase = -1 * yaw - 90;
+         rotYBase = -rot.x-90;
+         float rotYH = rotYBase - (-rot.y-90);
         float scale = 1.0f / 50.0f;
         rend.modelMat.setIdentity();
         rend.modelMat.translate(pos.x, pos.y, pos.z);
@@ -224,7 +226,7 @@ public class EntityModelPlayer extends EntityModel {
         rend.normalMat.transpose();
         rend.normalMat.update();
         this.model.animate(properties, fabs, fTime);
-        this.model.setHeadOrientation(270 + headYaw, pitch);
+        this.model.setHeadOrientation(270 + rotYH, pitch);
         this.model.animateNodes(properties, fabs, fTime);
         
         int n = properties.getOption(this.modelSize.getId());

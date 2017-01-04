@@ -22,17 +22,19 @@ import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
     static int nextIdx = 0;
-    static UniformBuffer[] buffers = new UniformBuffer[7];
+    static UniformBuffer[] buffers = new UniformBuffer[8];
     String name;
     private int buffer;
     protected int len;
     private FloatBuffer floatBuffer;
     private int bindingPoint;
+    private boolean autoBind;
     UniformBuffer(String name) {
-        this(name, 0);
+        this(name, 0, true);
     }
-    UniformBuffer(String name, int len) {
+    UniformBuffer(String name, int len, boolean autoBind) {
         buffers[nextIdx++] = this;
+        this.autoBind = autoBind;
         this.bindingPoint = Engine.getBindingPoint(name);
         this.name = name;
         this.len = len;
@@ -52,10 +54,10 @@ public class UniformBuffer {
     void setPosition(int n) {
         this.floatBuffer.position(n);
     }
-    void reset() {
+    public void reset() {
         this.floatBuffer.position(0).limit(this.len);
     }
-    void put(FloatBuffer floatBuffer) {
+    public void put(FloatBuffer floatBuffer) {
         this.floatBuffer.put(floatBuffer);
     }
     private void put(float[] mat4x4) {
@@ -115,7 +117,7 @@ public class UniformBuffer {
         }
         
     }
-    static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D")
+    public static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D")
             .addMat4() //mvp
             .addMat4() //mv
             .addMat4() //view
@@ -124,6 +126,7 @@ public class UniformBuffer {
             .addMat4() //normal
             .addMat4() //mv_inv
             .addMat4(); // proj_inv
+    public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false);
     static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
             .addMat4() //mvp
             .addMat4() //3DOrthoP
@@ -135,11 +138,11 @@ public class UniformBuffer {
             .addMat4() //shadow_split_mvp
             .addVec4(); //shadow_split_depth
     static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData")
-            .addMat4() //vp
-            .addVec4() //cameraPosition
-            .addFloat() //frameTime
-            .addVec4() //viewport
-            .addVec4(); //in_offset
+            .addVec4() //camera (xyzw)
+            .addVec4() //globaloffset (xyz) time (w)
+            .addVec4() //viewport (xyzw)
+            .addVec4() //pxoffset (xyz) 1.0f (w)
+            .addVec4(); //prev camera (xyz) 1.0f (w)
     static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
             .addVec4() //dayLightTime
             .addVec4() //posSun
@@ -147,8 +150,8 @@ public class UniformBuffer {
             .addVec4() // Ambient light intensity
             .addVec4() // Diffuse light intensity
             .addVec4(); // Specular light intensity
-    static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4);
-    static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6);
+    static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4, true);
+    static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6, true);
 //    public static UniformBuffer BoneMatUBO = new UniformBuffer("BoneMatUBO", BatchedRiggedModelRenderer.STRUCT_SIZE*7);
     
     
@@ -182,18 +185,23 @@ public class UniformBuffer {
         for (int i = 0; i < buffers.length; i++) {
             final int blockIndex = glGetUniformBlockIndex(shader.shader, buffers[i].name);
             if (blockIndex != -1) {
-//                System.out.println("bind blockidx "+blockIndex+" of buffer "+buffers[i].name+"/"+i+"/"+buffers[i].buffer+" to shader "+shader.name);
-                glBindBufferBase(GL_UNIFORM_BUFFER, buffers[i].bindingPoint, buffers[i].buffer); //TODO: this needs to be done only once on buffer creation
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
+                buffers[i].addShader(shader);
                 glUniformBlockBinding(shader.shader, blockIndex, buffers[i].bindingPoint);
                 if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("glUniformBlockBinding blockIndex "+blockIndex);
-                buffers[i].addShader(shader);
+                    Engine.checkGLError("glUniformBlockBinding blockIndex " + blockIndex);
+                if (buffers[i].autoBind) {
+                    buffers[i].bind();
+                }
             }
         }
     }
 
+    public void bind() {
+        //      System.out.println("bind blockidx "+blockIndex+" of buffer "+buffers[i].name+"/"+i+"/"+buffers[i].buffer+" to shader "+shader.name);
+        glBindBufferBase(GL_UNIFORM_BUFFER, this.bindingPoint, this.buffer); 
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glBindBufferBase GL_UNIFORM_BUFFER");
+    }
     List<Shader> shaders = Lists.newArrayList();
     /**
      * @param shader
@@ -249,6 +257,7 @@ public class UniformBuffer {
 
         uboSceneData.reset();
         Vector3f vCam = Engine.camera.getPosition();
+        
         uboSceneData.put(vCam.x-Engine.GLOBAL_OFFSET.x);
         uboSceneData.put(vCam.y-Engine.GLOBAL_OFFSET.y);
         uboSceneData.put(vCam.z-Engine.GLOBAL_OFFSET.z);
@@ -267,6 +276,11 @@ public class UniformBuffer {
         uboSceneData.put(Engine.pxOffset.y);
         uboSceneData.put(Engine.pxOffset.z);
         uboSceneData.put(1F);
+        vCam = Engine.camera.getPrevPosition();
+        uboSceneData.put(vCam.x-Engine.GLOBAL_OFFSET.x);
+        uboSceneData.put(vCam.y-Engine.GLOBAL_OFFSET.y);
+        uboSceneData.put(vCam.z-Engine.GLOBAL_OFFSET.z);
+        uboSceneData.put(1F); // camera w component
         uboSceneData.update();
         
         LightInfo.reset();
@@ -295,9 +309,12 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
 
-        float ambIntens = 0.06f;
-        float diffIntens = 0.45F;
-        float specIntens = 0.35F;
+        float ambIntens = 0.1f;
+        float diffIntens = 0.1f;
+        float specIntens = 0.1F;
+//        float ambIntens = 0.12f;
+//        float diffIntens = 0.17F;
+//        float specIntens = 0.16F;
         float fNight = GameMath.easeInOutCubic(nightNoon);
         ambIntens*=Math.max(0, 1.0f-fNight*0.98f);
         diffIntens*=1.0f-fNight*0.97f;

@@ -14,6 +14,7 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.world.biomes.BiomeManagerType;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.biomes.HexBiomesServer;
 import nidefawl.qubes.world.structure.tree.Tree;
@@ -39,13 +40,22 @@ public class ChunkPopulator implements IChunkPopulator {
         //        if (1==1)return;
         int cX = c.getBlockX() + 8;
         int cZ = c.getBlockZ() + 8;
-        HexBiome hex = this.world.getHex(cX, cZ);
-        Biome b = hex.biome;
-        double distCenter = GameMath.dist2d(hex.getCenterX(), hex.getCenterY(), cX, cZ);
-        double distScale = Math.max(0, 1 - (distCenter / (hex.getGrid().radius * 0.8)));
-        if (distScale > 0.4) {
-            this.world.queueGenTask(new GenTask(this.world, c.x, c.z, new MineGen()));
+        Biome b;
+        double distScale;
+        if (this.world.getBiomeType() == BiomeManagerType.HEX) {
+            HexBiome hex = this.world.getHex(cX, cZ);
+            b = hex.biome;
+            double distCenter = GameMath.dist2d(hex.getCenterX(), hex.getCenterY(), cX, cZ);
+            distScale = Math.max(0, 1 - (distCenter / (hex.getGrid().radius * 0.8)));
+            if (distScale > 0.4) {
+                this.world.queueGenTask(new GenTask(this.world, c.x, c.z, new MineGen()));
+            }
         }
+        else {
+            distScale = 1;
+            b = c.getBiome(8, 8);
+        }
+//        System.out.println(b);
         if (b == Biome.DESERT || b == Biome.DESERT_RED) {
             return;
         }
@@ -96,7 +106,7 @@ public class ChunkPopulator implements IChunkPopulator {
         if (rand.nextInt(44) > 22) {
             bush = Block.thingrass;
         }
-        int amt = 133;
+        int amt = 223;
         for (int i = 0; i < amt; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
@@ -104,7 +114,7 @@ public class ChunkPopulator implements IChunkPopulator {
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= nTrees && rand.nextInt(44) == 0) {
+                if ( a <= nTrees && rand.nextInt(174) == 0) {
                     if (list != null && !list.isEmpty()) {
                         int treeType = list.get(rand.nextInt(list.size()));
                         TreeGeneratorLSystem g = TreeGenerators.get(treeType, rand);
@@ -112,10 +122,12 @@ public class ChunkPopulator implements IChunkPopulator {
                             g.setVines(Block.vines);
                         }
                         g.generate(world, x, h+1, z, rand);
-                        Tree tree = g.getTree();
-                        if (tree != null) {
-                            HexBiome hex2 = ((HexBiomesServer)world.biomeManager).blockToHex(x, z);
-                            hex2.registerTree(tree);
+                        if (this.world.getBiomeType() == BiomeManagerType.HEX) {
+                            Tree tree = g.getTree();
+                            if (tree != null) {
+                                HexBiome hex2 = ((HexBiomesServer)world.biomeManager).blockToHex(x, z);
+                                hex2.registerTree(tree);
+                            }
                         }
                     }
                 } else {
@@ -130,7 +142,7 @@ public class ChunkPopulator implements IChunkPopulator {
                 a++;
             }   
         }
-        int idx = r.nextInt(bl.size()*8);
+        int idx = r.nextInt(bl.size()*5);
         if (idx < bl.size()) {
             Block bg = bl.get(idx);
             for (int i = 0; i < 20; i++) {
@@ -144,7 +156,7 @@ public class ChunkPopulator implements IChunkPopulator {
                 }   
             }
         }
-        if (r.nextInt(30) == 0) {
+        if (r.nextInt(25) == 0) {
             int idx2 = r.nextInt(bl2.size());
             Block bg = bl2.get(idx2);
             for (int i = 0; i < 20; i++) {
@@ -159,7 +171,7 @@ public class ChunkPopulator implements IChunkPopulator {
                 }   
             }
         }
-        else if (r.nextInt(30) == 0) {
+        else if (r.nextInt(125) == 0) {
             int idx2 = r.nextInt(bl3.size());
             Block bg = bl3.get(idx2);
             for (int i = 0; i < 20; i++) {
@@ -175,7 +187,7 @@ public class ChunkPopulator implements IChunkPopulator {
                 }   
             }
         }
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 6; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
@@ -216,14 +228,14 @@ public class ChunkPopulator implements IChunkPopulator {
                 
             }
         }
-        for (int i = 0; i < 70; i++) {
+        for (int i = 0; i < 120; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int h = world.getHeight(x, z);
             if (world.getType(x, h, z) != 0) {
                 continue;
             }
-            int w = world.getWater(x, h, z);
+            int w = 1;//world.getWater(x, h, z);
             int min1 = world.getType(x, h-1, z);
             int min2 = world.getType(x, h-2, z);
             if (w>0 && (isSoil(min1)||min1==Block.sand.id)) {

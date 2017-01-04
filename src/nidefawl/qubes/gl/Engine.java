@@ -87,6 +87,7 @@ public class Engine {
     public static Camera         camera2;
     public static ShadowProjector shadowProj;
     public static WorldRenderer  worldRenderer;
+    public static SkyRenderer  skyRenderer;
     public static ShadowRenderer  shadowRenderer;
     public static BlurRenderer   blurRenderer;
     public static FinalRenderer  outRenderer;
@@ -249,6 +250,7 @@ public class Engine {
         if (initRenderers) {
             shadowProj = new ShadowProjector();
             worldRenderer = new WorldRenderer();
+            skyRenderer = new SkyRenderer();
             shadowRenderer = new ShadowRenderer();
             outRenderer = new FinalRenderer();
             blurRenderer = new BlurRenderer();
@@ -352,6 +354,9 @@ public class Engine {
         }
         if (worldRenderer != null) {
             worldRenderer.resize(displayWidth, displayHeight);
+        }
+        if (skyRenderer != null) {
+            skyRenderer.resize(displayWidth, displayHeight);
         }
         if (outRenderer != null) {
             outRenderer.resize(displayWidth, displayHeight);
@@ -613,17 +618,21 @@ public class Engine {
         if (outRenderer != null) outRenderer.release();
         if (shadowRenderer != null) shadowRenderer.release();
         if (blurRenderer != null) blurRenderer.release();
+        if (skyRenderer != null) skyRenderer.release();
         worldRenderer = new WorldRenderer();
+        skyRenderer = new SkyRenderer();
         outRenderer = new FinalRenderer();
         shadowRenderer = new ShadowRenderer();
         lightCompute = new LightCompute();
         blurRenderer = new BlurRenderer();
         blurRenderer.init();
         worldRenderer.init();
+        skyRenderer.init();
         outRenderer.init();
         shadowRenderer.init();
         lightCompute.init();
         blurRenderer.resize(Game.displayWidth, Game.displayHeight);
+        skyRenderer.resize(Game.displayWidth, Game.displayHeight);
         worldRenderer.resize(Game.displayWidth, Game.displayHeight);
         outRenderer.resize(Game.displayWidth, Game.displayHeight);
         shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
@@ -690,7 +699,7 @@ public class Engine {
     }
 
     public static int getBindingPoint(String name) {
-        Integer i = bufferBindingPoints.get(name);;
+        Integer i = bufferBindingPoints.get(name);
         if (i == null) {
             i = NEXT_BUFFER_BINDING_POINT;
             bufferBindingPoints.put(name, NEXT_BUFFER_BINDING_POINT++);

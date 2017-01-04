@@ -36,7 +36,7 @@ public class TerrainGenMines implements ITerrainGen {
     }
 
     private void generateTerrain(Chunk chunk, short[] blocks) {
-        Arrays.fill(blocks, (short)Block.stones.getBlocks().get(0).id);
+        Arrays.fill(blocks, (short)Block.stones.getFirst().id);
     }
 
 

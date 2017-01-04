@@ -14,6 +14,7 @@ import nidefawl.qubes.util.Side;
 public class EntityType {
     private final static EntityType[] mapping = new EntityType[255];
     public static EntityType PLAYER;
+    public static EntityType PLAYER_SERVER;
     public static EntityType CAT;
     public static EntityType CHICKEN;
     public static EntityType DOG;
@@ -29,11 +30,8 @@ public class EntityType {
     public static EntityType WARRIOR;
     public static EntityType DEMON;
     public static void load() {
-        if (GameContext.getSide() == Side.SERVER) {
-            PLAYER = new EntityType(1, nidefawl.qubes.entity.PlayerServer.class, 0.8D, 0.8D, 1.6D);
-        } else {
-            PLAYER = new EntityType(1, nidefawl.qubes.entity.PlayerRemote.class, 0.8D, 0.8D, 1.6D);
-        }
+        PLAYER_SERVER = new EntityType(1, nidefawl.qubes.entity.PlayerServer.class, 0.8D, 0.8D, 1.6D);
+        PLAYER = new EntityType(1, nidefawl.qubes.entity.PlayerRemote.class, 0.8D, 0.8D, 1.6D);
         CAT = new EntityType(2, nidefawl.qubes.entity.EntityCat.class, 0.5D, 0.6D, 0.8D);
         CHICKEN = new EntityType(3, nidefawl.qubes.entity.EntityChicken.class, 0.5D, 0.6D, 0.8D);
         DOG = new EntityType(4, nidefawl.qubes.entity.EntityDog.class, 0.5D, 0.6D, 0.8D);

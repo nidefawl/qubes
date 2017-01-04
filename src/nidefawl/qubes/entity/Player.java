@@ -9,6 +9,7 @@ import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.models.EntityModel;
+import nidefawl.qubes.util.GameMath;
 
 public abstract class Player extends Entity {
 
@@ -18,7 +19,11 @@ public abstract class Player extends Entity {
     protected SlotsInventory slotsInventory;
      final SlotsCrafting[] slotsCrafting = new SlotsCrafting[CraftingCategory.NUM_CATS];
     final PlayerInventoryCrafting[] inventoryCraft = new PlayerInventoryCrafting[CraftingCategory.NUM_CATS];
-
+    public float armOffsetPitchPrev;
+    public float armOffsetYawPrev;
+    public float armOffsetPitch;
+    public float armOffsetYaw;
+    
     public Player() {
         super();
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
@@ -32,13 +37,25 @@ public abstract class Player extends Entity {
     }
     
     @Override
-    public EntityType getEntityType() {
-        return EntityType.PLAYER;
-    }
-    @Override
     public void tickUpdate() {
         super.tickUpdate();
         updateTicks();
+//        if (yaw-armOffsetYawPrev < -180) {
+//            armOffsetYaw+=180;
+//        }
+//        if (yaw-armOffsetYawPrev > 180) {
+//            armOffsetYaw-=180;
+//        }
+//        if (Math.abs(yaw-armOffsetYawPrev) > 90) {
+//            System.out.println("err: "+(yaw-armOffsetYawPrev));
+//        }
+        armOffsetPitchPrev=armOffsetPitch;
+        armOffsetYawPrev=armOffsetYaw;
+        armOffsetYaw = armOffsetYaw + (yaw-armOffsetYaw)*0.38F;
+        armOffsetPitch = armOffsetPitch + (pitch-armOffsetPitch)*0.38F;
+
+//        armOffsetYaw=GameMath.wrapAngle(this.armOffsetYaw);
+//        armOffsetYawPrev=GameMath.wrapAngle(this.armOffsetYawPrev);
     }
     public void updateTicks() {
         if (this.punchTicks > 0) {
@@ -93,4 +110,5 @@ public abstract class Player extends Entity {
         }
         return EntityModel.modelPlayerMale;
     }
+
 }

@@ -357,4 +357,8 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
     public WorldServer getWorld() {
         return (WorldServer) this.world;
     }
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.PLAYER_SERVER;
+    }
 }

@@ -9,22 +9,26 @@ public class ListenThread extends Thread {
     private final ServerSocket serverSocket;
     private final NetworkServer       server;
 	private boolean finished;
-	private boolean started;
+	private boolean listening;
 
     public ListenThread(final NetworkServer server, final int port) throws IOException {
         setName("ListenThread");
         setDaemon(true);
         this.serverSocket = new ServerSocket(port);
         this.server = server;
+        this.finished = true;
+        this.listening = false;
     }
 
     @Override
     public void run() {
     	try {
-    	    started = true;
-            while (this.server.isRunning) {
+            this.finished = false;
+    	    this.listening = true;
+            while (this.listening && this.server.isRunning) {
                 try {
                     final Socket s = this.serverSocket.accept();
+                    System.out.println("serverSocket.accept ");
                     this.server.addConnection(s);
                 } catch (final IOException ioe) {
                 	if (this.server.isRunning) {
@@ -35,28 +39,31 @@ public class ListenThread extends Thread {
                 }
             }
     	} finally {
+            try {
+                this.serverSocket.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
     		this.finished = true;
     	}
     }
 	public void halt() {
-        if (!this.finished&&started) {
+        listening = false;
+        try {
+            this.serverSocket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        while (!this.finished) {
             try {
-            	this.serverSocket.close();
+                this.interrupt();
             } catch (Exception e) {
+                e.printStackTrace();
             }
             try {
                 Thread.sleep(60);
             } catch (Exception e) {
-            }
-            while (!this.finished) {
-                try {
-                    this.interrupt();
-                } catch (Exception e) {
-                }
-                try {
-                    Thread.sleep(60);
-                } catch (Exception e) {
-                }
+                e.printStackTrace();
             }
         }
 	}

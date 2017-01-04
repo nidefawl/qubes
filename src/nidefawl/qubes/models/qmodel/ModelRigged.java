@@ -279,7 +279,7 @@ public class ModelRigged extends ModelQModel {
             
             //clamp max angle 
             float hyaw = (yaw-270)*-1;
-            float max = 30;
+            float max = 85;
             if (hyaw < -max) {
                 hyaw = -max;
             }
@@ -321,7 +321,7 @@ public class ModelRigged extends ModelQModel {
 //            b.deformInterp.load(b.getMatDeform());
             //clamp max angle 
             float hyaw = (yaw-270)*-1;
-            float max = 40;
+            float max = 75;
             if (hyaw < -max) {
                 hyaw = -max;
             }

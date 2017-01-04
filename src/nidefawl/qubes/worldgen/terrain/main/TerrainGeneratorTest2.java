@@ -1,6 +1,8 @@
 package nidefawl.qubes.worldgen.terrain.main;
 
 
+import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.*;
+
 import java.util.*;
 
 import com.google.common.collect.Maps;
@@ -8,27 +10,29 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.noise.NoiseLib;
+import nidefawl.qubes.noise.*;
+import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.world.biomes.EmptyBiomeManager;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.biomes.HexBiomesServer;
 import nidefawl.qubes.worldgen.WorldGenInit;
+import nidefawl.qubes.worldgen.populator.ChunkPopulator;
 import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
+import nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish.NoiseData;
 
-public class TerrainGeneratorLight implements ITerrainGen {
-    public final static String GENERATOR_NAME = "terrain_light";
+public class TerrainGeneratorTest2 implements ITerrainGen {
+    public final static String GENERATOR_NAME = "terrain_test2";
 
     WorldServer world;
     long  seed;
     
-//    private TerrainNoiseScale nois234234e;
-    HexBiomesServer biomes;
     final static double smoothScale = 0.85;
     OpenSimplexNoise j;
     OpenSimplexNoise j2;
@@ -37,101 +41,200 @@ public class TerrainGeneratorLight implements ITerrainGen {
     OpenSimplexNoise j6;
     OpenSimplexNoise j7;
 
-    private SubTerrainGenFlattish gen;
-    public TerrainGeneratorLight(WorldServer world, long seed, WorldSettings settings) {
+    private  TerrainNoiseScale noise3;
+    private  TerrainNoiseScale noise;
+    private  TerrainNoise2D noiseM2;
+    private  TerrainNoiseScale noise2;
+    private  TerrainNoise2D noise2D;
+    private  RiverNoise2D r2D;
+    private  RiverNoise2D r2D2;
+    private TerrainNoiseScale noise5;
+    private TerrainGeneratorLight main;
+    
+    public TerrainGeneratorTest2(WorldServer world, long seed, WorldSettings settings) {
         this.world = world;
         this.seed = seed;
-        this.biomes = new HexBiomesServer(world, seed, settings);
-        this.gen = new SubTerrainGenFlattish(this);
         this.j = NoiseLib.makeGenerator(seed*33703^31);
         this.j2 = NoiseLib.makeGenerator(89153^23);
         this.j4 = NoiseLib.makeGenerator(89153^23);
         this.j5 = NoiseLib.makeGenerator(824112353^23);
         this.j6 = new OpenSimplexNoiseJava(266671);
         this.j7 = new OpenSimplexNoiseJava(121661);
+        Random rand = new Random(seed);
+
+        {
+
+            double scaleMixXZ = 12.80D;
+            double scaleMixY = scaleMixXZ*0.4D;
+            double scaleMix2XZ = 1.1D;
+            double scaleT1XZ = 0.3D;
+            double scaleT1Y = scaleT1XZ*0.3D;
+            double scaleT2XZ = 4.3D;
+            double scaleT2Y = scaleT1XZ*0.3D;
+            double scaleT5XZ = 3.6D;
+            double scaleT5Y = scaleT5XZ*3.4D;
+            this.noise = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleMixXZ, scaleMixY, scaleMixXZ)
+                    .setOctavesFreq(3, 2.0);
+            this.noiseM2 = new TerrainNoise2D(rand.nextLong(), scaleMix2XZ, scaleMix2XZ, 2);
+            this.noise2 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT1XZ, scaleT1Y, scaleT1XZ)
+                    .setOctavesFreq(3, 1.97D + 0.01);
+            this.noise5 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT5XZ, scaleT5Y, scaleT5XZ)
+                    .setOctavesFreq(3, 2.59D);
+            this.noise3 = NoiseLib.newNoiseScale(rand.nextLong())
+                    .setUpsampleFactor(4)
+                    .setScale(scaleT2XZ, scaleT2Y, scaleT2XZ)
+                    .setOctavesFreq(3, 2D);
+            
+            this.noise2D = new TerrainNoise2D(rand.nextLong(), 1, 1, 1);
+            double dRScale = 0.23D;
+            this.r2D = new RiverNoise2D(rand.nextLong(), dRScale, 8);
+             dRScale = 2.14D;
+            this.r2D2 = new RiverNoise2D(33, dRScale, 8);
+        }
     }
 
     @Override
     public Chunk generateChunk(int chunkX, int chunkZ) {
-        long rx = chunkX * 0x589638F52CL;
-        long rz = chunkZ * 0x3F94515BD5L;
         int heightBits = world.worldHeightBits;
         Chunk c = new Chunk(world, chunkX, chunkZ, heightBits);
-        HexBiome[] hexs = new HexBiome[Chunk.SIZE*Chunk.SIZE];
-        ArrayList<HexBiome> h = new ArrayList<>(); 
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                HexBiome hex = biomes.blockToHex(c.getBlockX()+x, c.getBlockZ()+z);
-                hexs[z<<Chunk.SIZE_BITS|x] = hex;
-                c.biomes[z<<Chunk.SIZE_BITS|x] = (byte) hex.biome.id;
-                if (!h.contains(hex)) {
-                    h.add(hex);
-                }
-            }
-        }
         short[] blocks = c.getBlocks();
         byte[] water = c.getWaterMask();
-        generateTerrain(c, blocks, water, hexs, h);
+        generateTerrain(c, blocks, water);
         c.checkIsEmtpy();
         return c;
     }
-    private SubTerrainGen getTerrainGenInstance(HexBiome b) {
-        return this.gen;
+    public static class NoiseData  {
+
+        public RiverNoiseResult r2Dn;
+        public RiverNoiseResult r2Dn2;
+        public double[] dNoise2_;
+        public double[] dnoise5_;
+        public double[] dnoise_;
+        public double[] dnoise3_;
+
     }
 
-    private void generateTerrain(Chunk c, short[] blocks, byte[] waterMask, HexBiome[] hexs, ArrayList<HexBiome> h) {
+    private void generateTerrain(Chunk c, short[] blocks, byte[] waterMask) {
         Map<HexBiome, SubTerrainData> map = Maps.newHashMap();
-        for (HexBiome b : h) {
-            
-            SubTerrainGen g = getTerrainGenInstance(b);
-            SubTerrainData data = g.prepare(c.getBlockX(), c.getBlockZ(), b);
-            map.put(b, data);
-        }
         int wh = this.world.worldHeight;
         int cX = c.getBlockX();
         int cZ = c.getBlockZ();
-        double gridRadius = biomes.hwidth*0.98;
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
-        double[] dSlice = new double[wh];
-        double[] dSlice2 = new double[wh];
-        double noiseScale4 = 1/32.0D;
-        double noiseScale6 = 1/256.0D;
-        double smoothScale = 0.9;
+
+        double scaleMixXZ = 0.80D;
+        double scaleMixY = scaleMixXZ*1.7D;
+        double scaleT1XZ = 0.8D;
+        double scaleT1Y = scaleT1XZ*4.1D;
+        double scaleT2XZ =0.8D;
+        double scaleT2Y = scaleT1XZ*4.3;
+        double scaleT5XZ =0.9D;
+        double scaleT5Y = scaleT5XZ*6.1;
+        this.noise.setScale(scaleMixXZ, scaleMixY, scaleMixXZ);
+        this.noise2.setScale(scaleT1XZ, scaleT1Y, scaleT1XZ);
+        this.noise5.setScale(scaleT5XZ, scaleT5Y, scaleT5XZ);
+        this.noise3.setScale(scaleT2XZ, scaleT2Y, scaleT2XZ);
+        NoiseData data = new NoiseData();
+        double dRScale = 1.43D;
+        this.r2D = new RiverNoise2D(214, dRScale, 8);
+        data.r2Dn = r2D.generate(cX, cZ);
+         dRScale = 4.23D;
+        this.r2D2 = new RiverNoise2D(144, dRScale, 8);
+        this.noise2D = new TerrainNoise2D(12412, 0.77, 0.77, 1);
+        data.r2Dn2 = r2D2.generate(cX, cZ);
+        data.dNoise2_ = noise2.gen(cX, cZ);
+        data.dnoise5_ = noise5.gen(cX, cZ);
+        data.dnoise_ = noise.gen(cX, cZ);
+        data.dnoise3_ = noise3.gen(cX, cZ);
+
+        double randomHeight = 0.004D;
+        double tallness = 12.8D;
+        double tallnessBase = 0.15D;
+        double heightOffset = 27.0D;
+        double dStr = 44.0D;
+        double yBrr = 110;
+        double yBrr2 = 115;
+        double brrrIntens = 0.8;
+        double brrrIntens2 = 0.2;
+        double riverY = 87;
+        double riverY2 = riverY +1;
+        double riverStr = 0.0;
+        double cavePos = 110;
+        double caveStrength = 44;
+        
+        
+
+        double gridRadius = 255;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int xz=z<<Chunk.SIZE_BITS|x;
-                HexBiome hex = hexs[xz];
-                double hx = hex.getCenterX();
-                double hz = hex.getCenterY();
-                double distHex = GameMath.dist2d(hx, hz, cX+x, cZ+z);
-                double outerDist = Math.max(distHex-gridRadius*smoothScale, 0);
-                double outerScale = clamp10(outerDist/(gridRadius*(1.0-smoothScale)));
-                outerScale=1-outerScale;
-                outerScale=Math.pow(outerScale, 2);
-                outerScale=1-outerScale;
-                SubTerrainGen g = getTerrainGenInstance(hex);
-                SubTerrainData data = map.get(hex);
-                double dStr2 = 12.0D*2;
-                double blockNoise2 = j4.eval((cX+x)*noiseScale4, (cZ+z)*noiseScale4);
-                double blockNoise3 = j5.eval((cX+x)*noiseScale6, (cZ+z)*noiseScale6);
-                Arrays.fill(dSlice2, 0.0D);
-                double power = 1.0D;
-                if (outerScale < 1.0D)
-                    power = g.generate(cX, cZ, x, 0, wh, z, hex, data, dSlice, dSlice2);
-                double noiseStr = clamp10(outerScale+(1-power));
+                double dBaseHeight = (tallnessBase+(noise2D.get(cX|x, cZ|z)))*tallness;
+                double dh2 = noiseM2.get(cX|x, cZ|z);
+                double xd = 0.9D;
+                dh2 = 1-clamp10((1-clamp10((dh2-(1-xd))/xd))*0.7);
+                double dBlurred = clamp10(data.r2Dn.getBlur(x, z, 8)*4)*0.4;
+                double dBlurredA = (clamp10(Math.pow(1+data.r2Dn2.getBlur(x, z, 4), 1.2)-1))*4;
+                double dBlurred2 = clamp10(data.r2Dn.getBlur(x, z, 2))*0.25;
+                double df = wh;
+                int idx_xz = (z * 16 + x) * (256);
+                double flattenScale = 0;
+                double coreScale = 0.7;
+                dStr = 12;
+                
                 for (int y = 0; y < wh; y++) {
-                    double dYH2 = clamp10((y+0+5)/(double)wh);
-                    double dBase2 = dStr2-dYH2*dStr2*2.0;
-                    dBase2+=blockNoise2*blockNoise3*2.3;
-                    dNoise[y<<8|xz] = mix(dSlice[y], dBase2, noiseStr);
-                    dNoise2[y<<8|xz] = mix(dSlice2[y], -111, noiseStr);
+                    double dYH = clamp10((y + 0 + heightOffset * flattenScale) / (double) df);
+                    double dyoff = 0.6D;
+                    if (dYH >= dyoff) {
+                        dYH*=1.0D+(dYH-dyoff);
+    //                    double dz = (dYH - dyoff) * 2.0D;
+    //                    dz = 1 - dz;
+    //                    dz *= dz * (0.23D);
+    //                    dz = 1 - dz;
+    //                    dz /= 2;
+    //                    dYH += dz;
+                    }
+                    int idx = idx_xz + y;
+                    int xz=z<<Chunk.SIZE_BITS|x;
+                    double dN1 = data.dnoise_[idx] * 32.9D;
+                    dYH = mix(dYH, dN1, randomHeight*coreScale);
+                    double dBase = dStr - dYH * dStr * 2.0;
+                    dBase = dBase + dBaseHeight;
+                    double dN = data.dNoise2_[idx] * 0.7;
+                    double dN7 = data.dnoise5_[idx];
+                    double dN2 = data.dnoise3_[idx] * 2.0D;
+                    dBase += dN * 3.7 * dh2 * coreScale;
+                    dBase += dN7 * 5.7 * dh2 * coreScale;
+                    double dRiverH = func2(riverY - dBaseHeight * 1.6D, y, 24);
+                    double dRiverH2 = func2(riverY2, y, 23);
+                    double xr = 0;
+                    xr += dRiverH * dBlurred2 * dStr * coreScale*1.2*riverStr;
+                    xr += dRiverH2 * dBlurred * dStr * coreScale*1.7*riverStr;
+                    double dt = func2(cavePos + dN1, y, 4.4D) * 0.25;
+                    dt *= clamp10((y-95.0D)/20.0D);
+                    double cavestr = dt * dStr * dBlurredA * (0.5D + dN1 * 0.7D + 0.2 * dN2);
+                    if (cavestr<0)cavestr=0;
+                    xr += cavestr * caveStrength;
+                    double brrr = y >= yBrr ? 1: func2(yBrr, y, 12);
+                    double brrr2 = y >= yBrr2 ? 1: func2(yBrr2, y, 12);
+                    if (brrr < 0) brrr = 0;
+                    if (brrr2 < 0) brrr2 = 0;
+                    dBase -= brrr*dh2*dStr*0.5*brrrIntens;
+                    dBase -= brrr2*dN2*dStr*0.5*brrrIntens2;
+                    dBase -= xr * coreScale;
+                    dBase=mix(dBase, -dStr, clamp10((y-(wh-20))/20.0D));
+                    dNoise[y<<8|xz] = dBase;
+                    dNoise2[y<<8|xz] = cavestr * 36;
                 }
-            }
+                
+            }    
         }
 
         Random rand = new Random(0L);
-        double noiseScale = 1/128.0D;
         double noiseScale2 = 1/2.0D;
         double noiseScale3 = 1/12.0D;
         double noiseScale5 = 1/6.0D;
@@ -142,8 +245,7 @@ public class TerrainGeneratorLight implements ITerrainGen {
                 int randRange = 24;
                 int randX = -rand.nextInt(randRange)+rand.nextInt(randRange);
                 int randZ = -rand.nextInt(randRange)+rand.nextInt(randRange);
-                HexBiome hex = hexs[xz];
-                Biome b = biomes.getBiome(cX+x+randX, cZ+z+randZ);
+                Biome b = this.world.biomeManager.getBiome(cX+x+randX, cZ+z+randZ);
                 Block top = b.getTopBlock();
                 Block earth = b.getSoilBlock();
                 int stone = 0xFFFFFF;
@@ -176,7 +278,7 @@ public class TerrainGeneratorLight implements ITerrainGen {
 //                            if (d2<=0) {
                                 if (a < 0) {
                                     if (wasWater) {
-                                        curBlock = Block.gravel.id;
+                                        curBlock = Block.stones.getFirst().id;
 //                                      curBlock = earth.id;
 //                                        } else {
 //                                            curBlock = top.id;
@@ -210,7 +312,7 @@ public class TerrainGeneratorLight implements ITerrainGen {
                     }
                     int bid = curBlock;
                     if (curBlock == stone ) {
-                        bid = getStone(this.world, cX+x, y, cZ+z, hex, rand);
+                        bid = Block.stones.getFirst().id;//getStone(this.world, cX+x, y, cZ+z, hex, rand);
                         if (d2>0) {
                           double orenoise1 = j7.eval((cX+x)*noiseScale5, y*noiseScale5, (cZ+z)*noiseScale5);
                           double orenoise = j6.eval((cX+x+orenoise1*4)*noiseScale3, (y+orenoise1*4)*noiseScale3, (cZ+z+orenoise1*4)*noiseScale3);
@@ -233,35 +335,35 @@ public class TerrainGeneratorLight implements ITerrainGen {
                 }
             }
         }
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                int xz=z<<Chunk.SIZE_BITS|x;
-                double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
-                double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
-                if (blockNoise < 0.1) {
-                    continue;
-                }
-                HexBiome hex = hexs[xz];
-                Biome b = biomes.getBiome(cX+x, cZ+z);
-                int y = 93;
-                if (b == Biome.ICE) {
-                    if (blocks[(y+1) << 8 | xz] == 0 && (y-8<0||waterMask[(y-8) << 8 | xz] == 0)) {
-                        blocks[y << 8 | xz] =(short) Block.ice.id;
-                        c.setData(x, y, z, 7);
-                        waterMask[y << 8 | xz] = 1;
-//                        waterMask[y << 8 | xz]++;   
-                    }
-                    continue;
-                }
+//        for (int x = 0; x < 16; x++) {
+//            for (int z = 0; z < 16; z++) {
+//                int xz=z<<Chunk.SIZE_BITS|x;
+//                double blockNoise2 = j2.eval((cX+x)*noiseScale2, (cZ+z)*noiseScale2);
+//                double blockNoise = j.eval((cX+x+blockNoise2*32)*noiseScale, (cZ+z+blockNoise2*32)*noiseScale);
+//                if (blockNoise < 0.1) {
+//                    continue;
+//                }
+//                HexBiome hex = hexs[xz];
+//                Biome b = biomes.getBiome(cX+x, cZ+z);
+//                int y = 93;
 //                if (b == Biome.ICE) {
-//                    int y = 93;
-//                    if (blocks[y << 8 | xz] != 0) {
+//                    if (blocks[(y+1) << 8 | xz] == 0 && (y-8<0||waterMask[(y-8) << 8 | xz] == 0)) {
 //                        blocks[y << 8 | xz] =(short) Block.ice.id;
+//                        c.setData(x, y, z, 7);
+//                        waterMask[y << 8 | xz] = 1;
+////                        waterMask[y << 8 | xz]++;   
 //                    }
-//                } else {
-//              }
-          }
-      }
+//                    continue;
+//                }
+////                if (b == Biome.ICE) {
+////                    int y = 93;
+////                    if (blocks[y << 8 | xz] != 0) {
+////                        blocks[y << 8 | xz] =(short) Block.ice.id;
+////                    }
+////                } else {
+////              }
+//          }
+//      }
         noiseScale2 = 1/250.0D;
       for (int x = 0; x < 16; x++) {
           for (int z = 0; z < 16; z++) {
@@ -272,7 +374,7 @@ public class TerrainGeneratorLight implements ITerrainGen {
               }
               for (int y = 0; y < wh; y++) {
                   int n = blocks[y << 8 | xz]&Block.BLOCK_MASK;
-                  if (n == Block.gravel.id) {
+                  if (n == Block.stones.getFirst().id) {
                       int depth = 0;
                       while (y+depth<wh) {
                           int nID = blocks[(y+depth)<<8|xz]&Block.BLOCK_MASK;
@@ -312,31 +414,6 @@ public class TerrainGeneratorLight implements ITerrainGen {
 
 
 
-    public int getStone(WorldServer world, int x, int y, int z, HexBiome hex, Random rand) {
-        Block b = hex.biome.getStone();
-        if (b != null)
-            return b.id;
-        float centerX = (float) biomes.getCenterX(hex.x, hex.z);
-        float centerY = (float) biomes.getCenterY(hex.x, hex.z);
-        float fx = (float) biomes.getPointX(hex.x, hex.z, 0);
-        float fy = (float) biomes.getPointY(hex.x, hex.z, 0);
-        rand.setSeed(x * 89153 ^ z * 31 + y);
-        int randRange = 8;
-        float randX = -rand.nextInt(randRange)+rand.nextInt(randRange);
-        float randZ = -rand.nextInt(randRange)+rand.nextInt(randRange);
-        double angle = GameMath.getAngle(x-centerX+randX, z-centerY+randZ, fx-centerX, fy-centerY);
-        int scaleTangent = (int) (6+6*(angle/Math.PI)); // 0 == points to corner, 1/-1 == points to half of side
-        if (scaleTangent < 3) {
-            return Block.stones.basalt.id;
-        }
-        if (scaleTangent < 6) {
-            return Block.stones.diorite.id;
-        }
-        if (scaleTangent < 9) {
-            return Block.stones.marble.id;
-        }
-        return Block.stones.granite.id;
-    }
     
     public static double func2(double m, double n, double j) {
         double x = Math.abs(m - n) / (j);
@@ -389,8 +466,8 @@ public class TerrainGeneratorLight implements ITerrainGen {
     public WorldGenInit getWorldGen(WorldServer world, long seed, WorldSettings settings) {
         WorldGenInit init = new WorldGenInit();
         init.generator = this;
-        init.biomeManager = this.biomes;
-        init.populator = new EmptyChunkPopulator(world, seed, settings);
+        init.biomeManager = new EmptyBiomeManager(world, seed, settings);
+        init.populator = new ChunkPopulator(world, seed, settings);
         return init;
     }
 }

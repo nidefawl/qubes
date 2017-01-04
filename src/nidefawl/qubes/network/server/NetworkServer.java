@@ -48,6 +48,7 @@ public class NetworkServer {
     }
 
     public void halt() {
+        System.out.println("halting network server "+handlersLogin+","+handlersPlay);
         this.isRunning = false;
         this.listenThread.halt();
         for (int a = 0; a < this.handlersLogin.size(); a++) {

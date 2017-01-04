@@ -127,7 +127,7 @@ public abstract class TextureArray {
             nSubTypes = Math.max(nSubTypes, tex.size());
         }
         this.subtypeBits = nSubTypes == 0 ? 0 : 1+GameMath.log2(nSubTypes);
-        System.err.println("nSubTypes "+nSubTypes+" requries "+subtypeBits+", max idx = "+(1<<this.subtypeBits));
+//        System.err.println("nSubTypes "+nSubTypes+" requries "+subtypeBits+", max idx = "+(1<<this.subtypeBits));
     }
     protected void findMaxTileWidth() {
         int maxTileW = 0;

@@ -24,10 +24,12 @@ import nidefawl.qubes.gui.crafting.GuiCraftingSelect;
 import nidefawl.qubes.gui.windows.*;
 import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiModelView;
 import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiPlayerAdjust;
+import nidefawl.qubes.io.network.DataListType;
 import nidefawl.qubes.meshing.Mesher;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
+import nidefawl.qubes.network.packet.PacketCListRequest;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
@@ -38,7 +40,7 @@ import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
-public class InputController {
+public class KeybindManager {
     private static AbstractYMLConfig settings = new AbstractYMLConfig(true) {
         
         @Override
@@ -75,8 +77,8 @@ public class InputController {
     boolean grabbed = false;
     public int mX;
     public int mY;
-    public float jump;
-    public float sneak;
+    public boolean jump;
+    public boolean sneak;
 
     static final Map<Integer, Keybinding> keyToKeyBinding = new MapMaker().makeMap();
     static final ArrayList<Keybinding> keybindings = Lists.newArrayList();
@@ -121,12 +123,17 @@ public class InputController {
     public void update(double mdX, double mdY) {
         this.strafe = 0;
         this.forward = 0;
-        this.jump = 0;
-        this.sneak = 0;
+        this.jump = false;
+        this.sneak = false;
         if (this.grabbed) {
             float mult = 1.0F;
-            if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
-                mult = 0.01F;
+            this.sneak=isKeyDown(kb_sneak.getKey());
+            this.jump=isKeyDown(kb_jump.getKey());
+            if (this.sneak) {
+                mult*=0.3f;
+            }
+//            if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
+//                mult = 0.01F;
             if (isKeyDown(kb_forward.getKey())) {
                 this.forward += mult;
             }
@@ -139,14 +146,8 @@ public class InputController {
             if (isKeyDown(kb_left.getKey())) {
                 this.strafe+=mult;
             }
-            if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
-                mult = 0.03F;
-            if (isKeyDown(kb_sneak.getKey())) {
-                this.sneak+=mult;
-            }
-            if (isKeyDown(kb_jump.getKey())) {
-                this.jump+=mult;
-            }
+//            if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
+//                mult = 0.03F;
             this.mX += mdX;
             this.mY += mdY;
         }
@@ -162,8 +163,8 @@ public class InputController {
             this.mY = 0;
             this.strafe = 0;
             this.forward = 0;
-            this.sneak = 0;
-            this.jump = 0;
+            this.sneak = false;
+            this.jump = false;
         }
         this.grabbed = b;
     }
@@ -249,7 +250,7 @@ public class InputController {
         });
         addKeyBinding(new Keybinding("show_select_world", GLFW.GLFW_KEY_N) {
             public void onDown() {
-                game.showGUI(new GuiSelectWorld());
+                Game.instance.sendPacket(new PacketCListRequest(0, DataListType.WORLDS));
             }
         });
         addKeyBinding(new Keybinding("spawn_light", GLFW.GLFW_KEY_O) {
@@ -264,7 +265,7 @@ public class InputController {
                     world.addLight(new Vector3f(player.pos).translate(0, 1, 0));
             }
         });
-        addKeyBinding(new Keybinding("remove_lights", GLFW.GLFW_KEY_KP_SUBTRACT) {
+        addKeyBinding(new Keybinding("remove_lights", -1) {
             public void onDown() {
                 World world = game.getWorld();
                 if (world != null) {
@@ -349,7 +350,7 @@ public class InputController {
             }
         });
 
-        addKeyBinding(new Keybinding("reload_models", GLFW.GLFW_KEY_KP_ADD) {
+        addKeyBinding(new Keybinding("reload_models", -1) {
             public void onDown() {
 
                 Engine.worldRenderer.reloadModel();
@@ -362,13 +363,23 @@ public class InputController {
                 GuiWindowManager.openWindow(GuiColor.class);
             }
         });
-        addKeyBinding(new Keybinding("spawn_random_lights", GLFW.GLFW_KEY_KP_MULTIPLY) {
+        addKeyBinding(new Keybinding("spawn_random_lights", -1) {
             public void onDown() {
                 PlayerSelf player = game.getPlayer();
                 World world = game.getWorld();
                 if (player != null && world != null) {
                     world.spawnLights(player.pos.toBlock());
                 }
+            }
+        });
+        addKeyBinding(new Keybinding("increase_clouds", GLFW.GLFW_KEY_KP_ADD) {
+            public void onRepeat() {
+                Engine.skyRenderer.increaseClouds();
+            }
+        });
+        addKeyBinding(new Keybinding("decrease_clouds", GLFW.GLFW_KEY_KP_SUBTRACT) {
+            public void onRepeat() {
+                Engine.skyRenderer.decreaseClouds();
             }
         });
     }

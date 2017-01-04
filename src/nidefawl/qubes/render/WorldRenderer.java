@@ -1,9 +1,7 @@
 package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE2;
+import static org.lwjgl.opengl.GL13.*;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -20,12 +18,11 @@ import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.input.DigController;
-import nidefawl.qubes.item.BaseStack;
-import nidefawl.qubes.item.Item;
-import nidefawl.qubes.item.ItemStack;
+import nidefawl.qubes.item.*;
 import nidefawl.qubes.models.*;
 import nidefawl.qubes.models.qmodel.ModelRigged;
 import nidefawl.qubes.models.qmodel.QModelProperties;
@@ -81,19 +78,20 @@ public class WorldRenderer extends AbstractRenderer {
     public int                  texWaterNoise;
     public Shader       terrainShader;
     public Shader       terrainShaderFar;
-    public Shader       skyShader;
-    public Shader       skyCloudShader;
+    //    public Shader       skyShader;
+    //    public Shader       skyCloudShader;
     public Shader       waterShader;
     public Shader       shaderModelVoxel;
-
+    
     public Shader       shaderModelfirstPerson;
     
-    private TesselatorState skybox1;
-    private TesselatorState skybox2;
-    private Shader shaderZPre;
-
-//  ModelVox vox;
-    private Shader skyShader2;
+    //    private TesselatorState skybox1;
+    //    private TesselatorState skybox2;
+        private Shader shaderZPre;
+    private Shader skybox;
+    
+    //  ModelVox vox;
+//    private Shader skyShader2;
 
     public void initShaders() {
         try {
@@ -124,13 +122,15 @@ public class WorldRenderer extends AbstractRenderer {
                 
             });
             Shader shaderModelfirstPerson = assetMgr.loadShader(this, "model/firstperson");
-            Shader sky = assetMgr.loadShader(this, "sky/sky");
-            Shader sky2 = assetMgr.loadShader(this, "sky/clouds");
+            Shader skybox = assetMgr.loadShader(this, "sky/skybox_cubemap");
+//            Shader sky = assetMgr.loadShader(this, "sky/sky");
+//            Shader sky2 = assetMgr.loadShader(this, "sky/clouds");
             popNewShaders();
             this.terrainShader = terrain;
             this.terrainShaderFar = terrainFar;
-            this.skyShader = sky;
-            this.skyShader2 = sky2;
+            this.skybox = skybox;
+//            this.skyShader = sky;
+//            this.skyShader2 = sky2;
             this.waterShader = new_waterShader;
             this.shaderModelVoxel = modelVoxel;
             this.shaderModelfirstPerson = shaderModelfirstPerson;
@@ -149,8 +149,8 @@ public class WorldRenderer extends AbstractRenderer {
             this.terrainShaderFar.setProgramUniform1i("noisetex", 1);
             this.terrainShaderFar.setProgramUniform1i("normalTextures", 2);
 
-            this.skyShader2.enable();
-            this.skyShader2.setProgramUniform1i("tex0", 0);
+//            this.skyShader2.enable();
+//            this.skyShader2.setProgramUniform1i("tex0", 0);
 
             this.waterShader.enable();
             this.waterShader.setProgramUniform1i("blockTextures", 0);
@@ -250,8 +250,8 @@ public class WorldRenderer extends AbstractRenderer {
     public void init() {
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         initShaders();
-        skybox1 = new TesselatorState(GL15.GL_STATIC_DRAW);
-        skybox2 = new TesselatorState(GL15.GL_STATIC_DRAW);
+//        skybox1 = new TesselatorState(GL15.GL_STATIC_DRAW);
+//        skybox2 = new TesselatorState(GL15.GL_STATIC_DRAW);
         AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/noise.png");
         texWaterNoise = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
 
@@ -293,13 +293,12 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderWorld(World world, float fTime) {
 
-
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("sky+sun+clouds");
         Engine.enableDepthMask(false);
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texNoise3D);
-        skyShader2.enable();
-//        Engine.drawFullscreenQuad();
+//        skyShader2.enable();
+        Engine.drawFullscreenQuad();
         
 //        skyShader.enable();
 //        skybox1.bindAndDraw(GL_QUAD_STRIP);
@@ -307,6 +306,10 @@ public class WorldRenderer extends AbstractRenderer {
 //        if (Game.GL_ERROR_CHECKS)
 //            Engine.checkGLError("skyShader.drawSkybox");
 //        Shader.disable();
+        skybox.enable();
+
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, Engine.skyRenderer.fbSkybox.getTexture(0));
+        Engine.drawFullscreenQuad();
         Engine.enableDepthMask(true);
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
@@ -363,6 +366,7 @@ public class WorldRenderer extends AbstractRenderer {
         renderEntities(world, PASS_SOLID, fTime, null, 0);
 
     }
+
 
     public void renderVoxModels(Shader modelShader, int pass, float fTime) {
 //        if (vox != null) {
@@ -511,7 +515,8 @@ public class WorldRenderer extends AbstractRenderer {
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         waterShader.enable();
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNoise);
+//        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.texWaterNoise);
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
         Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderSecondPass");
@@ -524,64 +529,102 @@ public class WorldRenderer extends AbstractRenderer {
         if (p == null) {
             return;
         }
-        BaseStack stack = p.getActiveItem(0);
-        if (stack == null) {
-            return;
-        }
-        if (!stack.isItem()) {
-            return;
-        }
-        ItemStack itemstack = (ItemStack) stack;
-        Item item = itemstack.getItem();
-        ItemModel model = item.getItemModel();
-        if (model == null) {
-            return;
-        }
         this.modelRot=this.lastModelRot=4;
-        BufferedMatrix mat = Engine.getTempMatrix();
         float modelScale = 1 / 2.7f;
         float f1=0;
         DigController dig = Game.instance.dig;
-        mat.setIdentity();
-//        mat.translate(0, 3, -4);
-        float angleX = -110;
-        float angleY = 180;
-        float angleZ = 0;
-        float swingProgress = dig.getSwingProgress(fTime);
-        float f17 = GameMath.sin(GameMath.PI*swingProgress);
-        float f23 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
-        mat.translate(-f23*0.25f, f17*0.1f+ GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI*2.0f)*0.3f, f17*-0.11f);
-        float f7 = 0.8f;
-        mat.translate(0.7F * f7, -0.55F * f7 - (1.0F - f1) * 0.6F, -1.2F * f7);
-        float f18 = GameMath.sin(swingProgress*swingProgress*GameMath.PI);
-        float f24 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
-        mat.rotate(angleY * GameMath.PI_OVER_180, 0, 1, 0);
-        mat.rotate(angleZ * GameMath.PI_OVER_180, 0, 0, 1);
-        mat.rotate(angleX * GameMath.PI_OVER_180, 1, 0, 0);
-        mat.rotate(f18*-17f * GameMath.PI_OVER_180, 0, 1, 0);
-        mat.rotate(f24*16f * GameMath.PI_OVER_180, 0, 0, 1);
-        mat.rotate(f24*40f * GameMath.PI_OVER_180, 1, 0, 0);
-        mat.scale(modelScale);
-//        mat.translate(0, -1, -4);
-        mat.rotate(90 * GameMath.PI_OVER_180, 1, 0, 0);
-        mat.rotate(-180 * GameMath.PI_OVER_180, 0, 1, 0);
-        mat.update();
-        shaderModelfirstPerson.enable();
-        shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+        float roffsetPArm = p.armOffsetPitchPrev+(p.armOffsetPitch-p.armOffsetPitchPrev)*fTime;
+        float roffsetYArm = p.armOffsetYawPrev+(p.armOffsetYaw-p.armOffsetYawPrev)*fTime;
+        float swingF = p.getSwingProgress(fTime);
+
+        BaseStack stack = p.getActiveItem(0);
+        BlockStack bstack = Game.instance.selBlock;
         if (true) { //TODO: fix me (Normal mat)
 
-            mat.load(Engine.getMatSceneV());
-            mat.transpose();
-            mat.update();
-            UniformBuffer.setNormalMat(mat.get());
+            BufferedMatrix mat2 = Engine.getTempMatrix2();
+            mat2.load(Engine.getMatSceneV());
+            mat2.transpose();
+            mat2.update();
+            UniformBuffer.setNormalMat(mat2.get());
         }
-        model.loadedModels[0].bindTextures(0);
-        //first person needs clear depth buffer, move somewhere else
-//            glDisable(GL_DEPTH_TEST);
-        Engine.bindVAO(GLVAO.vaoModel);
-        model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
-//            glEnable(GL_DEPTH_TEST);
+        if (stack != null) {
+            ItemStack itemstack = (ItemStack) stack;
+            Item item = itemstack.getItem();
+            ItemModel model = item.getItemModel();
+            if (model != null) {
+                //        mat.translate(0, 3, -4);
+                BufferedMatrix mat = Engine.getTempMatrix();
+                mat.setIdentity();
+                Engine.camera.addCameraShake(mat);
+                float angleX = -110;
+                float angleY = 180;
+                float angleZ = 0;
+                float swingProgress = dig.getSwingProgress(fTime);
+                float f17 = GameMath.sin(GameMath.PI*swingProgress);
+                float f23 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
+                mat.translate(-f23*0.25f, f17*0.1f+ GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI*2.0f)*0.3f, f17*-0.11f);
+                float f7 = 0.8f;
+                mat.translate(0.7F * f7, -0.55F * f7 - (1.0F - f1) * 0.6F, -1.2F * f7);
+                float f18 = GameMath.sin(swingProgress*swingProgress*GameMath.PI);
+                float f24 = GameMath.sin(GameMath.sqrtf(swingProgress)*GameMath.PI);
+                mat.rotate(angleY * GameMath.PI_OVER_180, 0, 1, 0);
+                mat.rotate(angleZ * GameMath.PI_OVER_180, 0, 0, 1);
+                mat.rotate(angleX * GameMath.PI_OVER_180, 1, 0, 0);
+                mat.rotate(f18*-17f * GameMath.PI_OVER_180, 0, 1, 0);
+                mat.rotate(f24*16f * GameMath.PI_OVER_180, 0, 0, 1);
+                mat.rotate(f24*40f * GameMath.PI_OVER_180, 1, 0, 0);
+                mat.scale(modelScale);
+//                mat.translate(0, -1, -4);
+                mat.rotate(90 * GameMath.PI_OVER_180, 1, 0, 0);
+                mat.rotate(-180 * GameMath.PI_OVER_180, 0, 1, 0);
+                mat.update();
+                
+                
+                shaderModelfirstPerson.enable();
+                shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+                model.loadedModels[0].bindTextures(0);
+                //first person needs clear depth buffer, move somewhere else
+//                    glDisable(GL_DEPTH_TEST);
+                Engine.bindVAO(GLVAO.vaoModel);
+                model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
+//                    glEnable(GL_DEPTH_TEST);
+            }
+            return;
+        } else if (bstack!=null) {
+            
+            Shaders.singleblock3D.enable();
+            BufferedMatrix mat = Engine.getTempMatrix();
+            mat.setIdentity();
+            Engine.camera.addCameraShake(mat);
+            mat.rotate((p.pitch - roffsetPArm) * 0.12f * GameMath.PI_OVER_180, 1, 0, 0);
+            mat.rotate((p.yaw - roffsetYArm) * 0.12f * GameMath.PI_OVER_180, 0, 1, 0);
+            float fsqrt = GameMath.sqrtf(swingF) * GameMath.PI;
+            if (swingF > 0) {
+                float scale = 1.5f;
+                mat.translate(
+                        scale*-GameMath.sin(fsqrt) * 0.4F, 
+                        scale*GameMath.sin(fsqrt * 2.0F) * 0.17F, 
+                        scale*-GameMath.sin(swingF * GameMath.PI) * 0.2F
+                        );
+            }
+            mat.translate(0.8f, -0.6f, -1f);
+            mat.rotate(50F * GameMath.PI_OVER_180, 0.0F, 1.0F, 0.0F);
+            if (swingF > 0) {
+                float f18 = GameMath.sin(swingF * swingF * GameMath.PI);
+                float f24 = GameMath.sin(fsqrt);
+                mat.rotate(f18 * 18F * GameMath.PI_OVER_180, 0.0F, 1.0F, 0.0F);
+                mat.rotate(f24 * 15f * GameMath.PI_OVER_180, 0.0F, 0.0F, 1.0F);
+                mat.rotate(-GameMath.sin(fsqrt) * -33F * GameMath.PI_OVER_180, 1.0F, 0.0F, 0.0F);
+            }
+            mat.scale(0.5f);
+            mat.update();
+            Shaders.singleblock3D.setProgramUniformMatrix4("in_modelMatrix", false, mat.get(), false);
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+            Engine.blockDraw.doRender(bstack.getBlock(), 0, null);
+        }
         UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
+        
+        
            
     }
 
@@ -732,7 +775,7 @@ public class WorldRenderer extends AbstractRenderer {
 //        tesselator.resetState();
 
         
-
+/*
         int scale = (int) (Engine.zfar / 1.43F);
         int x = -scale;
         int y = -scale / 16;
@@ -769,7 +812,7 @@ public class WorldRenderer extends AbstractRenderer {
         tesselator.add(x, y2, z2);
         //    tesselator.draw(GL_TRIANGLES);
         tesselator.draw(GL_QUADS, skybox2);
-        
+        */
     }
 
     /**

@@ -60,7 +60,6 @@ public class ServerHandlerLogin extends ServerHandler {
         this.state = STATE_CONNECTED;
         try {
             PlayerManager mgr = this.server.getPlayerManager();
-            System.out.println(this.name);
             PlayerServer exist = mgr.getPlayer(this.name);
             if (exist != null) {
                 exist.kick("Another player is using your account");

@@ -28,8 +28,8 @@ public class WorkingEnv {
         if (side == Side.CLIENT) {
         }
         if (side == Side.SERVER) {
-            playerdata.mkdirs();
         }
+        playerdata.mkdirs();
 		config.mkdirs();
 	}
 

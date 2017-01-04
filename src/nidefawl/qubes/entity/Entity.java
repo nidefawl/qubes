@@ -2,6 +2,7 @@ package nidefawl.qubes.entity;
 
 import java.util.Random;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.QModelProperties;
@@ -17,14 +18,14 @@ public abstract class Entity {
     static int NEXT_ENT_ID=0;
     public int id = ++NEXT_ENT_ID;
     public World world;
-	public Vec3D pos = new Vec3D();
-	public Vec3D lastPos = new Vec3D();
-	public Vec3D mot = new Vec3D();
-	public Vec3D lastMot = new Vec3D();
-	public float yaw, lastYaw;
+    public Vec3D pos = new Vec3D();
+    public Vec3D lastPos = new Vec3D();
+    public Vec3D mot = new Vec3D();
+    public Vec3D lastMot = new Vec3D();
+    public float yaw, lastYaw;
     public float yawBodyOffset, lastYawBodyOffset;
-	public float pitch, lastPitch;
-	public boolean noclip;
+    public float pitch, lastPitch;
+    public boolean noclip;
     public boolean hitGround;
     final AABB aabb = new AABB(0, 0, 0, 0, 0, 0);
     final AABB aabb2 = new AABB(0, 0, 0, 0, 0, 0);
@@ -34,8 +35,8 @@ public abstract class Entity {
     final CollisionQuery coll = new CollisionQuery();
     public Vector3f renderPos = new Vector3f();
     public Vector3f renderRot = new Vector3f();
-	
-	public Vec3D remotePos = new Vec3D();
+    
+    public Vec3D remotePos = new Vec3D();
     public Vector3f remoteRotation = new Vector3f();
     int rotticks, posticks;
     public double width;
@@ -52,29 +53,37 @@ public abstract class Entity {
     Random random = new Random();
     protected EntityProperties properties;
     public BaseStack[] equipment = new BaseStack[0];
+    int swingAnim = 0;
+    int swingProgress = -1;
+    public float swingProgressF;
+    public float prevSwingProgressF;
+    public float distanceMoved;
+    public float prevDistanceMoved;
     
-	public Entity() {
+    public Entity() {
         this.width = getEntityType().getWidth();
         this.height = getEntityType().getHeight();
         this.length = getEntityType().getLength();
-		this.aabb.set(-width/2.0D, 0, -length/2.0D, width/2.0D, height, length/2.0D);
-	}
-	
-	@Override
-	public int hashCode() {
-		return this.id;
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof Entity ? ((Entity)obj).id == this.id : false;
-	}
-	
-	public void tickUpdate() {
-	    this.preStep();
+        this.aabb.set(-width/2.0D, 0, -length/2.0D, width/2.0D, height, length/2.0D);
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.id;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Entity ? ((Entity)obj).id == this.id : false;
+    }
+    
+    public void tickUpdate() {
+        this.animUpdate();
+        this.preStep();
         this.step();
         this.postStep();
-	}
+    }
+
     public boolean doesFall() {
         return !doesFly() && this.world.getChunk(GameMath.floor(this.pos.x)>>4, GameMath.floor(this.pos.z)>>4) != null;
     }
@@ -93,6 +102,33 @@ public abstract class Entity {
         } else {
             this.mot.y *= slowdown;
         }
+        float fx = (float) (this.pos.x - this.lastPos.x);
+        float fz = (float) (this.pos.z - this.lastPos.z);
+        float dist = fx*fx+fz*fz;
+        float walkDir = this.yawBodyOffset;
+        float walkFactor = 0.0f;
+        if (dist > 0.02) {
+            walkDir = 180-(GameMath.atan2(fx, fz)*GameMath.P_180_OVER_PI);
+            walkFactor = Math.min(1, dist*2.2f);
+        } 
+        float walkOffset = GameMath.wrapAngle(walkDir - this.yawBodyOffset);
+        this.yawBodyOffset += walkOffset * walkFactor;
+        float bodyOffset = GameMath.wrapAngle(yaw - this.yawBodyOffset);
+        float maxHeadAngle = 120;
+        if (bodyOffset < -maxHeadAngle)
+            bodyOffset = -maxHeadAngle;
+        if (bodyOffset >= maxHeadAngle)
+            bodyOffset = maxHeadAngle;
+        this.yawBodyOffset = yaw - bodyOffset;
+        if (bodyOffset * bodyOffset > 0.6F) {
+            this.yawBodyOffset += bodyOffset * 0.07F;
+        }
+        if (bodyOffset * bodyOffset > 5500F)
+        {
+            this.yawBodyOffset += bodyOffset * 0.2F;
+        }
+        lastYaw=GameMath.wrapAngleToRange(yaw, lastYaw);
+        lastYawBodyOffset=GameMath.wrapAngleToRange(yawBodyOffset, lastYawBodyOffset);
     }
     protected void preStep() {
         this.lastYaw = this.yaw;
@@ -100,9 +136,10 @@ public abstract class Entity {
         this.lastPitch = this.pitch;
         this.lastMot.set(this.mot);
         this.lastPos.set(this.pos);
-        this.yaw = GameMath.wrapAngle(this.yaw);
-        this.yawBodyOffset = GameMath.wrapAngle(this.yawBodyOffset);
-        this.pitch = GameMath.wrapAngle(this.pitch);
+        this.prevDistanceMoved = this.distanceMoved;
+//        this.yaw = GameMath.wrapAngle(this.yaw);
+//        this.yawBodyOffset = GameMath.wrapAngle(this.yawBodyOffset);
+//        this.pitch = GameMath.wrapAngle(this.pitch);
     }
     protected void step() {
         if (this.noclip) {
@@ -112,15 +149,58 @@ public abstract class Entity {
             this.pos.z = aabb.getCenterZ();
             return;
         }
-//        if (this.getEntityType()==EntityType.CAT)
-//            System.out.println("cat "+this.pos);
-//        boolean debug = GameContext.getSide()==Side.CLIENT;
-//        if (debug) {
-//            Engine.worldRenderer.debugBBs.clear();
-//            Engine.worldRenderer.debugBBs.put(0, aabb);
-//            dbg.set(aabb);
-//        }
-////        aabb.set(dbg);
+        boolean findEdge = hitGround&&findEdge();
+        double preX = this.mot.x;
+        double preZ = this.mot.z;
+        double mx = this.mot.x;
+        double my = this.mot.y;
+        double mz = this.mot.z;
+        aabb3.set(this.aabb);
+        if (findEdge) {
+            double offset = 0.1;
+            while (mx != 0 && !this.coll.queryAny(world, aabb3.setWithOffset(this.aabb, mx, -1, 0))) {
+                if (mx >= -offset && mx < offset) {
+                    preX = mx *= 0.0D;
+                    break;
+                }
+                if (mx > 0.0D)
+                    mx -= offset;
+                else
+                    mx += offset;
+                preX = mx;
+            }
+            while (mz != 0 && !this.coll.queryAny(world, aabb3.setWithOffset(this.aabb, 0, -1, mz))) {
+                if (mz >= -offset && mz < offset) {
+                    preZ = mz *= 0.0D;
+                    break;
+                }
+                if (mz > 0.0D)
+                    mz -= offset;
+                else
+                    mz += offset;
+                preZ = mz;
+            }
+            while (mx != 0 && mz != 0 && !this.coll.queryAny(world, aabb3.setWithOffset(this.aabb, mx, -1, mz))) {
+                if (mx >= -offset && mx < offset) {
+                    mx = 0.0D;
+                } else if (mx > 0.0D) {
+                    mx -= offset;
+                } else {
+                    mx += offset;
+                }
+                if (mz >= -offset && mz < offset) {
+                    mz = 0.0D;
+                } else if (mz > 0.0D) {
+                    mz -= offset;
+                } else {
+                    mz += offset;
+                }
+                preX = mx;
+                preZ = mz;
+            }
+            this.mot.x = preX;
+            this.mot.z = preZ;
+        }
         aabb3.set(this.aabb);
         aabb2.set(this.aabb3);
         aabb2.expandTo(this.mot.x, this.mot.y, this.mot.z);
@@ -137,9 +217,6 @@ public abstract class Entity {
 //            }
 //        }
 //
-        double mx = this.mot.x;
-        double my = this.mot.y;
-        double mz = this.mot.z;
         for (i=0; i < a; i++) {
             BlockColl coll = this.coll.get(i);
             my = coll.blockBB.getYOffset(this.aabb, my);
@@ -215,6 +292,17 @@ public abstract class Entity {
         this.pos.x = aabb.getCenterX();
         this.pos.y = aabb.minY;
         this.pos.z = aabb.getCenterZ();
+        double xd = this.pos.x-this.lastPos.x;
+        double zd = this.pos.z-this.lastPos.z;
+        double dist = xd*xd+zd*zd;
+        if (dist > 0) {
+            distanceMoved += GameMath.sqrtf((float) dist);    
+        }
+        
+    }
+
+    protected boolean findEdge() {
+        return false;
     }
 
     public float getGravity() {
@@ -323,6 +411,8 @@ public abstract class Entity {
         difPitch = difPitch > 180 ? -(360-difPitch) : difPitch;
         difPitch = difPitch < -180 ? (360+difPitch) : difPitch;
         float ePitch = (float) (this.lastPitch + (difPitch) * fTime) + 0;
+//        if (Math.abs(eYaw)>30)
+//        System.out.println("eYaw "+eYaw);
         renderRot.set(eHeadYaw, eYaw, ePitch);
         return renderRot;
     }
@@ -405,8 +495,42 @@ public abstract class Entity {
     }
 
     public void setEquipment(BaseStack[] stacks) {
-        System.out.println("setequp "+(stacks==null||stacks.length==0?"<null>":stacks[0]));
+//        System.out.println("setequp "+(stacks==null||stacks.length==0?"<null>":stacks[0]));
         this.equipment = stacks;
     }
 
+    public int getSwinglen() {
+        return 6;
+    }
+    private void animUpdate() {
+        if (swingAnim>0) {
+            swingProgress++;
+            prevSwingProgressF = swingProgressF;
+            swingProgressF=swingAnim>0?(swingProgress/(float)(getSwinglen()+1)):0;
+            if (swingProgress>getSwinglen()) {
+                swingAnim=0;
+                swingProgress=0;
+//                swingProgressF = 0;
+//                prevSwingProgressF = 0;
+            }
+        } else {
+            swingProgress=0;
+        }
+    }
+    public void swing() {
+        if (swingAnim < 1||swingProgress>0) {
+            swingAnim = 1;
+            swingProgress = 0;
+            swingProgressF=0;
+            prevSwingProgressF = -1;
+        } 
+    }
+    public float getSwingProgress(float fTime) {
+//        if (1==1)
+//            return 0.5f;
+        if (swingAnim<1)
+            return 0;
+        return Math.max(0, this.prevSwingProgressF+(this.swingProgressF-this.prevSwingProgressF)*fTime);
+    }
+    
 }

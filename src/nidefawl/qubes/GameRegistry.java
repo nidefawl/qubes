@@ -77,5 +77,6 @@ public class GameRegistry {
             throw new GameError("Generator with name '"+name+"' already defined ("+alreadyDef+")");
         }
         terrainGenerators.put(name, implementingClass);
+     
     }
 }

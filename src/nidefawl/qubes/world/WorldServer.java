@@ -12,6 +12,7 @@ import nidefawl.qubes.blocklight.BlockLightThread;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.server.ChunkManagerServer;
+import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.Packet;
@@ -20,6 +21,8 @@ import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.world.biomes.BiomeManagerType;
+import nidefawl.qubes.world.biomes.BiomeSettingsHex;
 import nidefawl.qubes.world.biomes.IBiomeManager;
 import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
@@ -47,11 +50,14 @@ public class WorldServer extends World {
     ArrayList<Entity>         entityRemove = new ArrayList<>();                                           // use fast array list
 
 
-    public WorldServer(WorldSettings settings, GameServer server) {
+    public WorldServer(WorldSettings settings, GameServer server) throws InvalidConfigException {
         super(settings);
         this.server = server;
         this.chunkServer = (ChunkManagerServer) getChunkManager();
         WorldGenInit worldGen = GameRegistry.newGenerator(this, settings);
+        if (worldGen == null) {
+            throw new InvalidConfigException("Invalid generator settings for world "+settings.getName());
+        }
         this.generator = worldGen.getGenerator();
         this.biomeManager = worldGen.getBiomeManager();
         this.populator = worldGen.getPopulator();
@@ -397,5 +403,8 @@ public class WorldServer extends World {
                 e.printStackTrace();
             }
         }
+    }
+    public BiomeManagerType getBiomeType() {
+        return this.biomeManager.getBiomeSettings().getType();
     }
 }

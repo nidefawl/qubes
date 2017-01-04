@@ -100,12 +100,12 @@ public class AABBFloat {
     }
 
     public boolean intersects(AABBFloat b) {
-        if (b.maxX < this.minX) return false;
-        if (b.maxY < this.minY) return false;
-        if (b.maxZ < this.minZ) return false;
-        if (this.maxX < b.minX) return false;
-        if (this.maxY < b.minY) return false;
-        if (this.maxZ < b.minZ) return false;
+        if (b.maxX <= this.minX) return false;
+        if (b.maxY <= this.minY) return false;
+        if (b.maxZ <= this.minZ) return false;
+        if (this.maxX <= b.minX) return false;
+        if (this.maxY <= b.minY) return false;
+        if (this.maxZ <= b.minZ) return false;
         return true;
     }
     /**
@@ -113,12 +113,12 @@ public class AABBFloat {
      * @return
      */
     public boolean intersects(AABB b) {
-        if (b.maxX < this.minX) return false;
-        if (b.maxY < this.minY) return false;
-        if (b.maxZ < this.minZ) return false;
-        if (this.maxX < b.minX) return false;
-        if (this.maxY < b.minY) return false;
-        if (this.maxZ < b.minZ) return false;
+        if (b.maxX <= this.minX) return false;
+        if (b.maxY <= this.minY) return false;
+        if (b.maxZ <= this.minZ) return false;
+        if (this.maxX <= b.minX) return false;
+        if (this.maxY <= b.minY) return false;
+        if (this.maxZ <= b.minZ) return false;
         return true;
     }
 

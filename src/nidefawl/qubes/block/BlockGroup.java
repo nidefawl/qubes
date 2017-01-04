@@ -30,4 +30,7 @@ public abstract class BlockGroup {
     public List<Block> getBlocks() {
         return this.blocks;
     }
+    public Block getFirst() {
+        return this.blocks.isEmpty() ? null : this.blocks.get(0);
+    }
 }

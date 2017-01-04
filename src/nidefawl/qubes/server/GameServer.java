@@ -74,7 +74,6 @@ public class GameServer implements Runnable, IErrorHandler {
 	}
 
 	private void load() {
-        loadConfig();
         try {
             this.networkServer = new NetworkServer(this);
         } catch (Exception e) {
@@ -116,9 +115,13 @@ public class GameServer implements Runnable, IErrorHandler {
             } catch (InvalidConfigException e) {
                 e.printStackTrace();
             }
-            WorldServer world = new WorldServer(settings, this);
-            settings.setId(getNextWorldID());
-            worldsLoaded.add(world);
+            try {
+                WorldServer world = new WorldServer(settings, this);
+                settings.setId(getNextWorldID());
+                worldsLoaded.add(world);
+            } catch (InvalidConfigException e) {
+                e.printStackTrace();
+            }
         }
         this.worlds = worldsLoaded.toArray(new WorldServer[worldsLoaded.size()]);
         for (int i = 0; i < this.worlds.length; i++) {

@@ -70,6 +70,8 @@ public class SunLightModel {
             dayLightIntensity = GameMath.clamp(lightAngleUp, 0.5f, 1.0f);
             dayNoon = (ca < 0.5 ? 1 - ca : ca)*2-1;
             nightNoon = GameMath.clamp((1-dayNoon)*120*isnight, 0, 1);
+//            System.out.println(Math.max(1.0f-(lightAngleUp*lightAngleUp*2.0f), 0.0));
+//            System.out.println((1.0f-((dayLightIntensity)-0.5f)*2.0f)*22);
         }
     }
     public void setDayLen(long dayLen) {

@@ -123,9 +123,9 @@ public class IDMappingBlocks {
                 if (id != null && id.intValue() >= 0) {
                     return id;
                 }
-                if (GameContext.getSide() == Side.CLIENT) {
-                    throw new GameError("Missing block id for "+sid);
-                }
+//                if (GameContext.getSide() == Side.CLIENT) {
+//                    throw new GameError("Missing block id for "+sid);
+//                }
                 System.out.println("Finding id for new block "+sid);
                 Integer newId = null;
                 for (int i = 0; i < Block.NUM_BLOCKS; i++) {

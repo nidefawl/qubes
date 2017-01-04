@@ -56,6 +56,7 @@ public class StartServer {
             nidefawl.qubes.server.ConsoleReader.startThread(instance);
 	        Signal.handle(new Signal("INT"), handler);
 	        ErrorHandler.setHandler(instance);
+            instance.loadConfig();
 			instance.startServer();
 			GameContext.setMainThread(instance.getThread());
 		} catch (Exception e) {

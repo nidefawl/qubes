@@ -4,7 +4,6 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import java.nio.FloatBuffer;
 import java.util.List;
 
 import org.lwjgl.opengl.*;
@@ -19,7 +18,10 @@ import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.post.SMAA;
-import nidefawl.qubes.shader.*;
+import nidefawl.qubes.shader.IShaderDef;
+import nidefawl.qubes.shader.Shader;
+import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
@@ -81,9 +83,12 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_2D, Engine.shadowRenderer.getDepthTex());
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.lightCompute.getTexture());
         GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3));
-        GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.fbSSAO.getTexture(0));
         if (pass == 1) {
             GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.preWaterDepthTex);
+            GL.bindTexture(GL_TEXTURE8, GL_TEXTURE_2D, TMgr.getNoise());
+        } else {
+
+            GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.fbSSAO.getTexture(0));
         }
 
         Engine.drawFullscreenQuad();
@@ -129,7 +134,6 @@ public class FinalRenderer extends AbstractRenderer {
     public void clearFrameBuffer() {
         fbDeferred.clearFrameBuffer();
     }
-    private FloatBuffer scaleMatBuf;
     
     public void calcLum(World world, float fTime) {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Luminance");
@@ -207,6 +211,8 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1)); //NORMAL
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2)); //MATERIAL
         GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, this.fbFinal.getDepthTex()); //DEPTH
+        GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_CUBE_MAP, Engine.skyRenderer.fbSkybox.getTexture(0));//SKYBOX CUBEMAP
+        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, this.preWaterDepthTex); //DEPTH PreWater
         Engine.drawFullscreenQuad();
         Engine.setDefaultViewport();
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
@@ -240,9 +246,9 @@ public class FinalRenderer extends AbstractRenderer {
   
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture("SSR", "DeferredInput", fbDeferred.getTexture(0), 1);
-            GLDebugTextures.readTexture("SSR", "SSROutput", fbSSR.getTexture(0), 1);
-            GLDebugTextures.readTexture("SSR", "SSRBlurred", blurred, 1);
-            GLDebugTextures.readTexture("SSR", "SSRBlurCombined", fbSSRCombined.getTexture(0), 1);
+            GLDebugTextures.readTexture("SSR", "SSROutput", fbSSR.getTexture(0), 8);
+            GLDebugTextures.readTexture("SSR", "SSRBlurred", blurred, 8);
+            GLDebugTextures.readTexture("SSR", "SSRBlurCombined", fbSSRCombined.getTexture(0), 8);
             GLDebugTextures.readTexture("SSR", "texDepth", this.fbFinal.getDepthTex(), 2);
             GLDebugTextures.readTexture("SSR", "texColor", fbDeferred.getTexture(0));
             GLDebugTextures.readTexture("SSR", "texNormals", Engine.getSceneFB().getTexture(1));
@@ -460,9 +466,8 @@ public class FinalRenderer extends AbstractRenderer {
             shaderSSR.setProgramUniform1i("texNormals", 1);
             shaderSSR.setProgramUniform1i("texMaterial", 2);
             shaderSSR.setProgramUniform1i("texDepth", 3);
-            if (this.scaleMatBuf != null) {
-                this.shaderSSR.setProgramUniformMatrix4("pixelProj", false, scaleMatBuf, false);
-            }
+            shaderSSR.setProgramUniform1i("texSkybox", 4);
+            shaderSSR.setProgramUniform1i("texDepthPreWater", 5);
             shaderSSRCombine.enable();
             shaderSSRCombine.setProgramUniform1i("texColor", 0);
             shaderSSRCombine.setProgramUniform1i("texSSRBlurred", 1);
@@ -503,6 +508,7 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDeferredWater.setProgramUniform1i("texLight", 5);
             shaderDeferredWater.setProgramUniform1i("texBlockLight", 6);
             shaderDeferredWater.setProgramUniform1i("texAO", 7);
+            shaderDeferredWater.setProgramUniform1i("texWaterNoise", 8);
             shaderDeferredFirstPerson.enable();
             shaderDeferredFirstPerson.setProgramUniform1i("texColor", 0);
             shaderDeferredFirstPerson.setProgramUniform1i("texNormals", 1);
@@ -674,15 +680,6 @@ public class FinalRenderer extends AbstractRenderer {
         scale.scale(new Vector3f(Game.displayWidth, Game.displayHeight, 1));
         Matrix4f.mul(scale, trs, scale);
         Matrix4f.mul(scale, Engine.getMatSceneP(), scale);
-        if (this.scaleMatBuf == null)
-            this.scaleMatBuf=Memory.createFloatBuffer(16);
-        this.scaleMatBuf.position(0);
-        scale.store(scaleMatBuf);
-        scaleMatBuf.flip();
-        if (this.shaderSSR != null) {
-            this.shaderSSR.enable();
-            this.shaderSSR.setProgramUniformMatrix4("pixelProj", false, scaleMatBuf, false);
-        }
         aoNeedsInit = true;
         aoReinit();
     }

@@ -73,7 +73,6 @@ public class GuiSelectWorld extends Gui {
             int h = 30;
             this.btnBack.setPos(this.posX + this.width / 2 - w / 2, this.posY + this.height / 6*5);
             this.btnBack.setSize(w, h);
-            Game.instance.sendPacket(new PacketCListRequest(REQ_ID, DataListType.WORLDS));
         }
         scrolllist = new ScrollList(this);
 
@@ -127,7 +126,8 @@ public class GuiSelectWorld extends Gui {
 
     public boolean onGuiClicked(AbstractUI element) {
         if (element.id == 1) {
-            Game.instance.showGUI(null);
+            System.out.println(Game.instance.getWorld());
+            Game.instance.showGUI(Game.instance.getWorld()==null?new GuiMainMenu():null);
         }
         if (element instanceof WorldListControl) {
             WorldListControl list = (WorldListControl) element;

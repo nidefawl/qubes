@@ -30,6 +30,7 @@ public class Mine extends Structure {
     public void load(Compound cmpTree) {
         super.load(cmpTree);
         this.dir = cmpTree.getInt("dir");
+        this.pos = cmpTree.getBlockPos("pos");
     }
 
     public void regen(WorldServer world) {

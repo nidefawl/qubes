@@ -10,7 +10,8 @@ public abstract class Handler {
     public final static int STATE_SYNC = 2;
     public final static int STATE_CLIENT_SETTINGS = 3;
     public final static int STATE_CONNECTED = 4;
-    public final static int STATE_PLAYING = 5;
+    public final static int STATE_LOBBY = 5;
+    public final static int STATE_PLAYING = 6;
 
     public abstract boolean isServerSide();
 
@@ -199,5 +200,8 @@ public abstract class Handler {
     }
 
     public void handleList(PacketSList packetSList) {
+    }
+
+    public void handleLogin(PacketSLogin packetSLogin) {
     }
 }

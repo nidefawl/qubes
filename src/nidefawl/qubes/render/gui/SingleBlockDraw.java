@@ -121,7 +121,7 @@ public class SingleBlockDraw {
         doRender(block, data, stackData);
     }
 
-    protected void doRender(Block block, int data, StackData stackData) {
+    public void doRender(Block block, int data, StackData stackData) {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
         int numInts = buffer.storeVertexData(this.vboBuf);
         int numInts2 = buffer.storeIndexData(this.vboIdxBuf);

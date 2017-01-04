@@ -26,9 +26,11 @@ import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gui.GuiSelectWorld;
 import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.io.ByteArrIO;
+import nidefawl.qubes.io.network.DataListType;
 import nidefawl.qubes.io.network.WorldInfo;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.Connection;
@@ -73,9 +75,9 @@ public class ClientHandler extends Handler {
 
     @Override
     public void update() {
-        if (state != STATE_CONNECTED) {
+        if (state < STATE_CONNECTED || state > STATE_LOBBY) {
             if (System.currentTimeMillis() - time > timeout) {
-                this.client.disconnect("Packet timed out");
+                this.client.disconnect("Client Packet timed out");
                 return;
             }
         } else {
@@ -112,6 +114,13 @@ public class ClientHandler extends Handler {
         PlayerProfile profile = Game.instance.getProfile();
         this.player = new PlayerSelf(this, profile);
         this.sendPacket(new PacketCSettings(Game.instance.settings.chunkLoadDistance));
+    }
+    public void handleLogin(PacketSLogin packetSLogin) {
+        if (this.state != STATE_CLIENT_SETTINGS) {
+            this.client.disconnect("Invalid packet (STATE_CLIENT_SETTINGS)");
+            return;
+        }
+        this.state = STATE_CONNECTED;
     }
     @Override
     public void handleAuth(PacketAuth packetAuth) {
@@ -522,7 +531,16 @@ public class ClientHandler extends Handler {
     }
 
     public void handleList(PacketSList packetSList) {
-        this.worldList.clear();
-        this.worldList.addAll(packetSList.list);
+        switch (packetSList.type) {
+            case WORLDS:
+                if (this.state == STATE_CONNECTED) {
+                    this.state = STATE_LOBBY;
+                }
+                this.worldList.clear();
+                this.worldList.addAll(packetSList.list);
+                Game.instance.showGUI(new GuiSelectWorld());
+                break;
+
+        }
     }
 }

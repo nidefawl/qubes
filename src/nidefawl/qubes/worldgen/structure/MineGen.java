@@ -322,6 +322,10 @@ public class MineGen extends StructureGen {
         if (this.blocks.isEmpty()) {
             return null;
         }
+        if (this.minePos == null) {
+            System.err.println("missing pos for mine");
+            return null;
+        }
         Mine mine = new Mine();
         Iterator<Long> it = this.blocks.iterator();
         

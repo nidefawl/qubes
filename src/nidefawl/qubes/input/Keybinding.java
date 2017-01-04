@@ -101,6 +101,7 @@ public class Keybinding {
 
     public void onDown() {}
     public void onUp() {}
+    public void onRepeat() {}
 
     /**
      * @param action
@@ -108,6 +109,9 @@ public class Keybinding {
     public void update(int action) {
         boolean wasPressed = this.isPressed;
         this.isPressed = action != GLFW.GLFW_RELEASE;
+        if (action != GLFW.GLFW_RELEASE) {
+            onRepeat();
+        }
         if (wasPressed != isPressed) {
             if (isPressed) {
                 onDown();

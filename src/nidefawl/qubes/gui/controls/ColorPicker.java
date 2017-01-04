@@ -14,7 +14,7 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.biomes.HexBiome;
 
-public class ColorPicker extends AbstractUI {
+public abstract class ColorPicker extends AbstractUI {
     private Button[] colorPick;
     float valH=0;
     float valS=1;
@@ -80,30 +80,8 @@ public class ColorPicker extends AbstractUI {
         
     }
 
-    private void onColorChange(int rgb2) {
-        System.out.println("color "+rgb2);
-        if (Game.instance != null) {
-            World w = Game.instance.getWorld();
-            PlayerSelf p = Game.instance.getPlayer();
-            if (w != null && p != null) {
-                int x = GameMath.floor(p.pos.x);
-                int z = GameMath.floor(p.pos.z);
-                HexBiome hex = w.getHex(x, z);
-                if (hex != null) {
-                    hex.biome.colorGrass = rgb2;
-                    hex.biome.colorFoliage = rgb2;
-                    hex.biome.colorLeaves = rgb2;
-                    float[] hsb = Color.RGBtoHSB((rgb2>>8)&0xFF, (rgb2>>8)&0xFF, rgb2&0xFF, null);
-                    int rgb3 = Color.HSBtoRGB(hsb[0], hsb[1]*0.7f, hsb[2]*0.9f);
-                    hex.biome.colorFoliage2 = rgb3;
-                    
-                    Engine.regionRenderer.reRender();
-                }
-            }
-        }
-
-    }
-
+    public abstract void onColorChange(int rgb2);
+    
     @Override
     public void initGui(boolean first) {
         final int extendSize = 32;

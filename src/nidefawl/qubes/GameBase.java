@@ -21,7 +21,7 @@ import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
-import nidefawl.qubes.input.InputController;
+import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.logging.LogBufferStream;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -31,6 +31,7 @@ import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
+import nidefawl.qubes.worldgen.TerrainGen;
 
 public abstract class GameBase implements Runnable {
     public static String  appName         = "";
@@ -73,12 +74,13 @@ public abstract class GameBase implements Runnable {
     protected volatile boolean wasrunning  = false;
     protected volatile boolean sysExit     = true;
     protected volatile boolean minimized   = false;
+    protected volatile boolean hasWindowFocus = true;
     private Thread             thread;
     private int newWidth = initWidth;
     private int newHeight = initHeight;
     private GPUVendor vendor = GPUVendor.OTHER;
     static public GameBase baseInstance;
-    public InputController  movement = new InputController();
+    public KeybindManager  movement = new KeybindManager();
     public Gui            gui;
     boolean               reinittexthook  = false;
     boolean               wasGrabbed      = true;
@@ -154,6 +156,7 @@ public abstract class GameBase implements Runnable {
             GameContext.lateInit();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("GameContext.lateInit");
+            TerrainGen.init();
             if (this.showError == null) {
                 this.showError = GameContext.getInitError();
             }
@@ -212,10 +215,13 @@ public abstract class GameBase implements Runnable {
 
         };
         cbWindowFocus = new GLFWWindowFocusCallback() {
+
             @Override
             public void invoke(long window, int focused) {
                 try {
-                    Mouse.setGrabbed(false);
+                    hasWindowFocus = focused != GLFW.GLFW_FALSE;
+                    if (!hasWindowFocus)
+                        Mouse.setGrabbed(false);
                 } catch (Throwable t) {
                     setException(new GameError("GLFWWindowFocusCallback", t));
                 }
@@ -522,7 +528,9 @@ public abstract class GameBase implements Runnable {
         if (!this.running) {
             return;
         }
+        
         if (Mouse.isGrabbed() != needsGrab()) {
+            
             Mouse.setGrabbed(needsGrab());
 //            if (b != this.movement.grabbed()) {
 //                setGrabbed(b);
@@ -602,7 +610,7 @@ public abstract class GameBase implements Runnable {
     }
 
     public boolean needsGrab() {
-        return this.needsGrab;
+        return this.needsGrab && this.hasWindowFocus;
     }
 
     public ArrayList<String> glProfileResults = new ArrayList<>();

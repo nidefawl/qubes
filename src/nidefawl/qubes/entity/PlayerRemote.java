@@ -72,5 +72,9 @@ public class PlayerRemote extends Player {
     public void tickUpdate() {
         super.tickUpdate();
     }
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.PLAYER;
+    }
 
 }

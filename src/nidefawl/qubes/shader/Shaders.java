@@ -27,6 +27,7 @@ public class Shaders {
     public static Shader textured3D;
     public static Shader renderUINT;
     public static Shader singleblock;
+    public static Shader singleblock3D;
     public static Shader gui;
     public static Shader item;
     public static Shader tonemap;
@@ -57,6 +58,7 @@ public class Shaders {
             Shader new_colored = assetMgr.loadShader(newshaders, "colored");
             Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
             Shader new_singleblock = assetMgr.loadShader(newshaders, "singleblock");
+            Shader new_singleblock3D = assetMgr.loadShader(newshaders, "singleblock_3D");
             Shader new_gui = assetMgr.loadShader(newshaders, "gui");
             Shader new_item = assetMgr.loadShader(newshaders, "item");
             Shader new_tonemap = assetMgr.loadShader(newshaders, "post/finalstage");
@@ -74,6 +76,7 @@ public class Shaders {
             Shaders.colored3D = new_colored3D;
             Shaders.renderUINT = new_uint;
             Shaders.singleblock = new_singleblock;
+            Shaders.singleblock3D = new_singleblock3D;
             Shaders.tonemap = new_tonemap;
             Shaders.gui = new_gui;
             Shaders.item = new_item;
@@ -86,9 +89,13 @@ public class Shaders {
             Shaders.gui.setProgramUniform1f("valueL", 0.5f);
             Shaders.gui.setProgramUniform1f("fade", 0.3f);
             singleblock.enable();
-//            singleblock.setProgramUniform1f("in_scale", 1);
-            singleblock.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
-            singleblock.setProgramUniform1i("blockTextures", 0);
+//          singleblock.setProgramUniform1f("in_scale", 1);
+          singleblock.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
+          singleblock.setProgramUniform1i("blockTextures", 0);
+          singleblock3D.enable();
+//        singleblock.setProgramUniform1f("in_scale", 1);
+          singleblock3D.setProgramUniformMatrix4("in_modelMatrix", false, Engine.getIdentityMatrix().get(), false);
+        singleblock3D.setProgramUniform1i("blockTextures", 0);
 //            singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();
             Shaders.textured3D.enable();

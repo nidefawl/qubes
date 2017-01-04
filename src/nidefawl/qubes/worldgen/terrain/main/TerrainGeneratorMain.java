@@ -301,7 +301,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
               int xz=z<<Chunk.SIZE_BITS|x;
 
               if (blocks[xz] != 0) {
-                  blocks[xz] = (short) Block.stones.getBlocks().get(0).id;
+                  blocks[xz] = (short) Block.stones.getFirst().id;
               }
               for (int y = 0; y < wh; y++) {
                   int n = blocks[y << 8 | xz]&Block.BLOCK_MASK;

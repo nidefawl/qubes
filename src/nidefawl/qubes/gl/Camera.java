@@ -1,5 +1,7 @@
 package nidefawl.qubes.gl;
 
+import nidefawl.qubes.Game;
+import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vec3D;
@@ -15,6 +17,11 @@ public class Camera {
     protected final Matrix4f thirdPersonMat = new Matrix4f();
     protected final Vector3f thirdPersonOffset = new Vector3f();
     public boolean changed = true;
+    protected float xshake;
+    protected float yshake;
+    private float xshakeRot;
+    private float zshakeRot;
+    private float yshakeRot;
 
     public float getYaw() {
         return bearingAngle;
@@ -45,6 +52,8 @@ public class Camera {
     public void setPosition(Vec3D v) {
         this.prevposition.set(this.position);
         this.position.set(v);
+//        this.position.x+=xshake;
+//        this.position.y+=yshake;
     }
 
     public void setOrientation(float yaw, float pitch, boolean thirdPerson, float thirdPersonDistance) {
@@ -52,6 +61,7 @@ public class Camera {
         this.bearingAngle = yaw;
 
         this.viewMatrix.setIdentity();
+        addCameraShake(this.viewMatrix);
         this.viewMatrix.rotate(this.pitchAngle * GameMath.PI_OVER_180, 1f, 0f, 0f);
         this.viewMatrix.rotate(this.bearingAngle * GameMath.PI_OVER_180, 0f, 1f, 0f);
 
@@ -64,6 +74,14 @@ public class Camera {
         } else {
             this.thirdPersonOffset.set(0, 0, 0);
         }
+    }
+
+    public void addCameraShake(Matrix4f vm) {
+
+        vm.translate(xshake, yshake, 0);
+        vm.rotate(zshakeRot * GameMath.PI_OVER_180, 0f, 0f, 1f);
+        vm.rotate(yshakeRot * GameMath.PI_OVER_180, 1f, 0f, 0f);
+        vm.rotate(xshakeRot * GameMath.PI_OVER_180, 1f, 0f, 0f);
     }
 
     /**
@@ -94,6 +112,16 @@ public class Camera {
      */
     public Vector3f getCameraOffset() {
         return this.thirdPersonOffset;
+    }
+
+    public void calcViewShake(float distF, float f2, float f3, float f) {
+        xshake = GameMath.sin(distF * GameMath.PI) * f2 * 0.5F;
+        yshake = -1*Math.abs(GameMath.cos(distF * GameMath.PI) * f2);
+        float af = 3F;
+        zshakeRot=GameMath.sin(distF * (float)Math.PI) * f2 * af * 0;
+        yshakeRot=Math.abs(GameMath.cos(distF * (float)Math.PI - 0.2F) * f2) * 5F;
+        xshakeRot=f3;
+    
     }
 
 }

@@ -3,7 +3,7 @@ package nidefawl.qubes.gui;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gui.controls.Button;
-import nidefawl.qubes.input.InputController;
+import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Keybinding;
 import nidefawl.qubes.input.Keyboard;
 
@@ -34,7 +34,7 @@ public class GuiGameMenu extends Gui {
             resume.setSize(w1, h);
         }
         {
-            Keybinding key = InputController.getKeyBindingByName("show_select_world");
+            Keybinding key = KeybindManager.getKeyBindingByName("show_select_world");
             String name = Keyboard.getKeyName(key.getKey());
             String desc = " ("+name+")";
             Button controls = new Button(2, "Worlds"+desc);
@@ -43,7 +43,7 @@ public class GuiGameMenu extends Gui {
             controls.setSize(w1, h);
         }
         {
-            Keybinding key = InputController.getKeyBindingByName("show_look");
+            Keybinding key = KeybindManager.getKeyBindingByName("show_look");
             String name = Keyboard.getKeyName(key.getKey());
             String desc = " ("+name+")";
             Button controls = new Button(4, "Adjust Character"+desc);
@@ -52,7 +52,7 @@ public class GuiGameMenu extends Gui {
             controls.setSize(w1, h);
         }
         {
-            Keybinding key = InputController.getKeyBindingByName("show_inventory");
+            Keybinding key = KeybindManager.getKeyBindingByName("show_inventory");
             String name = Keyboard.getKeyName(key.getKey());
             String desc = " ("+name+")";
             Button controls = new Button(5, "Inventory"+desc);
@@ -61,7 +61,7 @@ public class GuiGameMenu extends Gui {
             controls.setSize(w1, h);
         }
         {
-            Keybinding key = InputController.getKeyBindingByName("show_crafting");
+            Keybinding key = KeybindManager.getKeyBindingByName("show_crafting");
             String name = Keyboard.getKeyName(key.getKey());
             String desc = " ("+name+")";
             Button controls = new Button(6, "Crafting"+desc);
@@ -101,22 +101,22 @@ public class GuiGameMenu extends Gui {
     public boolean onGuiClicked(AbstractUI element) {
         if (element.id == 4) {
             Game.instance.showGUI(null);
-            InputController.getKeyBindingByName("show_look").fire();
+            KeybindManager.getKeyBindingByName("show_look").fire();
             return true;
         }
         if (element.id == 5) {
             Game.instance.showGUI(null);
-            InputController.getKeyBindingByName("show_inventory").fire();
+            KeybindManager.getKeyBindingByName("show_inventory").fire();
             return true;
         }
         if (element.id == 6) {
             Game.instance.showGUI(null);
-            InputController.getKeyBindingByName("show_crafting").fire();
+            KeybindManager.getKeyBindingByName("show_crafting").fire();
             return true;
         }
         if (element.id == 2) {
             Game.instance.showGUI(null);
-            InputController.getKeyBindingByName("show_select_world").fire();
+            KeybindManager.getKeyBindingByName("show_select_world").fire();
             return true;
         }
         if (element == this.resume) {

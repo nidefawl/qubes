@@ -1,6 +1,7 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
@@ -34,6 +35,7 @@ public class FrameBuffer implements IManagedResource {
     private final float[][]      clearColor = new float[MAX_COLOR_ATT][];
     private int colorTexExtFmt=GL12.GL_BGRA;
     private int colorTexExtType=GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
+    private int textureType=GL11.GL_TEXTURE_2D;
     /**
      * @param colorTexExtFmt the colorTexExtFmt to set
      */
@@ -54,6 +56,9 @@ public class FrameBuffer implements IManagedResource {
             clearColor[a] = new float[4];
         }
         FRAMEBUFFERS++;
+    }
+    public void setTextureType(int textureType) {
+        this.textureType = textureType;
     }
     public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type, boolean clearBlack) {
         FrameBuffer f = new FrameBuffer(renderWidth, renderHeight);
@@ -150,7 +155,11 @@ public class FrameBuffer implements IManagedResource {
                 int tex = colorTextures.get();
                 setupTexture(tex, colorAttFormats[i], colorAttMinFilters[i], colorAttMagFilters[i]);
                 this.colorAttTextures[i] = tex;
-                GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, att, tex, 0);
+                if (this.textureType == GL13.GL_TEXTURE_CUBE_MAP) {
+                    GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, att, GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X+0, tex, 0);
+                } else {
+                    GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, att, tex, 0);
+                }
                 if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glFramebufferTexture (color " + i + ")");
                 this.drawBufAtt.put(att);
             }
@@ -168,6 +177,9 @@ public class FrameBuffer implements IManagedResource {
         GL20.glDrawBuffers(this.drawBufAtt);
 
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+    }
+    public void bindCubeMapFace(int i) {
+        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, this.colorAttTextures[0], 0);
     }
 
     public static void unbindFramebuffer() {
@@ -189,21 +201,28 @@ public class FrameBuffer implements IManagedResource {
     }
 
     public void setupTexture(int texture, int format, int minfilter, int magFilter) {
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(textureType, texture);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-        if (format == GL_RGBA16UI) {
-            glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGRA_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
+        glTexParameteri(textureType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(textureType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(textureType, GL_TEXTURE_MIN_FILTER, minfilter);
+        glTexParameteri(textureType, GL_TEXTURE_MAG_FILTER, magFilter);
+        glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, 0);
+        if (textureType == GL_TEXTURE_CUBE_MAP) {
+            glTexParameteri(textureType, GL12.GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_WRAP_R");
+            for (int i = 0; i < 6; i++) {
+                GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, renderWidth, renderHeight, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
+                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexImage2D GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X "+ i);
+            }
+        } else if (format == GL_RGBA16UI) {
+            glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGRA_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
         } else {
-            glTexImage2D(GL_TEXTURE_2D, 0, format, renderWidth, renderHeight, 0, colorTexExtFmt, colorTexExtType, (ByteBuffer) null);
+            glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, colorTexExtFmt, colorTexExtType, (ByteBuffer) null);
         }
         
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(textureType, 0);
     }
 
     private void createDepthTextureAttachment(int texture) {
@@ -220,7 +239,7 @@ public class FrameBuffer implements IManagedResource {
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
         }
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexParameteri (depth)");
 

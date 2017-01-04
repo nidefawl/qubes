@@ -28,6 +28,7 @@ public abstract class Packet {
         register(PacketHandshake.class, true, true);
         register(PacketDisconnect.class, true, true);
         register(PacketAuth.class, true, true);
+        register(PacketSLogin.class, true, false);
         register(PacketSSpawnInWorld.class, true, false);
         register(PacketCMovement.class, true, true);
         register(PacketSChunkData.class, true, false);

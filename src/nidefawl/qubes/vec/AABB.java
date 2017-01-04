@@ -88,6 +88,11 @@ public class AABB implements StreamIO {
         this.set(b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ);
     }
 
+    public AABB setWithOffset(AABB b, double x, double y, double z) {
+        this.set(b.minX+x, b.minY+y, b.minZ+z, b.maxX+x, b.maxY+y, b.maxZ+z);
+        return this;
+    }
+
     public void set(AABBFloat b) {
         this.set(b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ);
     }

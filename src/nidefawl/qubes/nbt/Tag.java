@@ -382,7 +382,13 @@ public abstract class Tag {
                 Tag tagEntry = entry.getValue();
                 out.writeByte(tagEntry.getType().getID());
                 writeString(entry.getKey(), out);
-                entry.getValue().writeData(out);
+                try {
+
+                    entry.getValue().writeData(out);
+                } catch (Exception e) {
+                    System.err.println("while writing "+this.getName()+"."+entry.getKey());
+                    throw e;
+                }
             }
             out.writeByte(0);
         }

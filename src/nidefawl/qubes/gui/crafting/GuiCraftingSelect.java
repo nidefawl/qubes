@@ -149,10 +149,10 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
                 stack = BaseStack.getTemp(Block.logs.oak);   
             }
             if (this.id%100==2) {
-                stack = BaseStack.getTemp(Block.stones.getBlocks().get(0));   
+                stack = BaseStack.getTemp(Block.stones.getFirst());   
             }
             if (this.id%100==3) {
-                stack = BaseStack.getTemp(Block.slabs.getBlocks().get(0));   
+                stack = BaseStack.getTemp(Block.slabs.getFirst());   
             }
             if (stack !=null) {
                 Engine.pxStack.translate(0, 0, 1);

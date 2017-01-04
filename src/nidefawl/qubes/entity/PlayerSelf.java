@@ -6,7 +6,7 @@ import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.input.InputController;
+import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
@@ -28,12 +28,16 @@ public class PlayerSelf extends Player {
     private float   maxSpeed = 0.82F;
     private boolean fly      = false;
     private boolean   jumped;
-    private float   sneak;
+    private boolean   sneak;
     private float jump;
     public float eyeHeight = 1.3F;
     public PlayerProfile profile;
     private ClientHandler clientHandler;
     public final CraftingManagerClient[] crafting = new CraftingManagerClient[CraftingCategory.NUM_CATS];
+    public float cameraYaw;
+    public float cameraPitch;
+    public float prevCameraPitch;
+    public float prevCameraYaw;
     
 
     public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
@@ -51,7 +55,7 @@ public class PlayerSelf extends Player {
         return id < 0 | id >= this.crafting.length ? null : this.crafting[id];
     }
 
-    public void updateInputDirect(InputController movement) {
+    public void updateInputDirect(KeybindManager movement) {
         float fa = 0.14F;
         float mx = movement.mX * fa;
         float my = -movement.mY * fa;
@@ -66,17 +70,17 @@ public class PlayerSelf extends Player {
         this.strafe = movement.strafe;
         this.forward = movement.forward;
         if (this.fly) {
-            this.jump = movement.jump;
+            this.jump = movement.jump?1:0;
             jumped = false;
         } else {
             if (jumped) {
-                if (movement.jump <= 0) {
+                if (!movement.jump) {
                     jumped = false;
                 }
-                movement.jump = 0;
+                movement.jump = false;
             } else {
                 if (hitGround) {
-                    if(movement.jump > 0) {
+                    if(movement.jump) {
                         jumped = true;
                         this.jump=4;
                         this.timeJump = GameBase.absTime;
@@ -97,7 +101,7 @@ public class PlayerSelf extends Player {
         if (this.fly) {
             maxSpeed = 0.9F;
             float var7 = 0.0F;
-            this.mot.y -= 0.98D * this.sneak;
+            this.mot.y -= 0.98D * (this.sneak?1:0);
             this.mot.y += 0.98D * this.jump;
 
 
@@ -157,28 +161,24 @@ public class PlayerSelf extends Player {
                 this.mot.z += forward * cosY + strafe * sinY;
             }
         }
-        float fx = (float) (this.pos.x - this.lastPos.x);
-        float fz = (float) (this.pos.z - this.lastPos.z);
-        float dist = fx*fx+fz*fz;
-        if (dist > 0.01) {
-            //Crappy test code to set body offset when left/right strafing
-            float walkDir = 180-(GameMath.atan2(fx, fz)*GameMath.P_180_OVER_PI);;
-            float offset=walkDir-this.yaw;
-            if(offset>180)
-                offset=-(360-offset);
-            if(offset<-180)
-                offset=(360+offset);
-            offset*=-1;
-            int max = 60;
-            if (offset < -max) {
-                offset = -max;
-            }
-            if (offset > max) {
-                offset = max;
-            }
-            this.yawBodyOffset = offset;
-        }
+        prevCameraPitch = cameraPitch;
+        prevCameraYaw = cameraYaw;
         super.tickUpdate();
+        float xzspeed = GameMath.sqrtf((float) (this.mot.x*this.mot.x+this.mot.z*this.mot.z));
+        float yMovement = (float) GameMath.atan((float) (-this.mot.y * 0.2D)) * 15F;
+        if (xzspeed > 0.1F) {
+            xzspeed = 0.1F;
+        }
+        if (isDead()) {
+            xzspeed = 0.0F;
+            yMovement = 0.0F;
+        } else if (hitGround) {
+            yMovement = 0.0F;
+        } else {
+            xzspeed = 0.0F;
+        }
+        cameraYaw += (xzspeed - cameraYaw) * 0.4F;
+        cameraPitch += (yMovement - cameraPitch) * 0.8F;
         int flags = 0;
         if (this.hitGround) {
             flags |= 1;
@@ -188,6 +188,9 @@ public class PlayerSelf extends Player {
         }
         this.clientHandler.sendPacket(new PacketCMovement(this.pos, this.yaw, this.pitch, flags));
         
+    }
+    public boolean isDead() {
+        return false;
     }
     public boolean doesFly() {
         return this.fly;
@@ -227,5 +230,8 @@ public class PlayerSelf extends Player {
         if (i == 0)
             return inventory.getItem(0);
         return super.getActiveItem(i);
+    }
+    protected boolean findEdge() {
+        return this.sneak;
     }
 }

@@ -284,4 +284,19 @@ public class GameMath {
             f+=360.0f;
         return f;
     }
+    public static float wrapAngle0_360(float f) {
+        f %= 360.0f;
+        while (f > 360.0f)
+            f-=360.0f;
+        while (f < 0.0f)
+            f+=360.0f;
+        return f;
+    }
+    public static float wrapAngleToRange(float target, float angle) {
+        while (target - angle < -180F)
+            angle -= 360F;
+        while (target - angle >= 180F)
+            angle += 360F;
+        return angle;
+    }
 }

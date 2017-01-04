@@ -35,10 +35,11 @@ public class ThreadConnect implements Runnable {
                 stateStr = "Authenticating"+(dots.substring(0, 1+(ticks%3)));
                 client.processLogin();
                 Thread.sleep(50);
-                if (handler.getState() == ClientHandler.STATE_CONNECTED) {
+                if (handler.getState() >= ClientHandler.STATE_CLIENT_SETTINGS) {
                     this.connected = true;
                     Game.instance.setConnection(client);
                     stateStr = "Connected!";
+                    
                     break;
                 }
             }

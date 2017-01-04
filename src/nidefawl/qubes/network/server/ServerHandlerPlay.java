@@ -43,6 +43,39 @@ public class ServerHandlerPlay extends ServerHandler {
     @Override
     public void update() {
         if (this.state == STATE_CONNECTED) {
+            this.sendPacket(new PacketSLogin());
+            this.state = STATE_LOBBY;
+            this.handleListReq(new PacketCListRequest(0, DataListType.WORLDS));
+        }
+        super.update();
+    }
+
+    @Override
+    public void handleSwitchWorld(PacketCSwitchWorld packetCSwitchWorld) {
+        if (this.state == STATE_PLAYING) {
+            int idx = packetCSwitchWorld.flags;
+            WorldServer[] worlds = this.server.getWorlds();
+            if (idx<0||idx>=worlds.length) idx = 0;
+            WorldServer worldCurrent = (WorldServer) this.player.world;
+            worldCurrent.removePlayer(this.player);
+            this.player.onWorldLeave();
+            WorldServer world = worlds[idx];
+            int flags = 0;
+            if (this.player.flying) {
+                flags |= 1;
+            }
+            sendPacket(new PacketSSpawnInWorld(player.id, world.getSettings(), world.biomeManager.getBiomeSettings(), this.player.pos, flags));
+            world.addPlayer(player);
+            player.syncInventory();
+            player.sendMessage("You are now in world "+world.getName());
+            PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
+            if (biomes != null) {
+                biomes.worldID = world.getId();
+                sendPacket(biomes);
+            }
+            
+        }
+        if (this.state == STATE_LOBBY) {
             this.state = STATE_PLAYING;
             WorldServer world = this.server.getWorld(player.spawnWorld);
             int flags = 0;
@@ -62,31 +95,6 @@ public class ServerHandlerPlay extends ServerHandler {
             packet.entId = this.player.id;
             packet.data = this.player.getEntityProperties().save();
             sendPacket(packet);
-        }
-        super.update();
-    }
-
-    @Override
-    public void handleSwitchWorld(PacketCSwitchWorld packetCSwitchWorld) {
-        int idx = packetCSwitchWorld.flags;
-        WorldServer[] worlds = this.server.getWorlds();
-        if (idx<0||idx>=worlds.length) idx = 0;
-        WorldServer worldCurrent = (WorldServer) this.player.world;
-        worldCurrent.removePlayer(this.player);
-        this.player.onWorldLeave();
-        WorldServer world = worlds[idx];
-        int flags = 0;
-        if (this.player.flying) {
-            flags |= 1;
-        }
-        sendPacket(new PacketSSpawnInWorld(player.id, world.getSettings(), world.biomeManager.getBiomeSettings(), this.player.pos, flags));
-        world.addPlayer(player);
-        player.syncInventory();
-        player.sendMessage("You are now in world "+world.getName());
-        PacketSWorldBiomes biomes = world.getBiomeManager().getPacket();
-        if (biomes != null) {
-            biomes.worldID = world.getId();
-            sendPacket(biomes);
         }
     }
 
