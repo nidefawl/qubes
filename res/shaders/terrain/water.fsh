@@ -7,9 +7,13 @@
 #pragma include "ubo_constants.glsl"
 #pragma include "blockinfo.glsl"
 
+
+
 uniform sampler2DArray blockTextures;
 uniform sampler2D waterNoiseTexture;
-
+#define noisetex waterNoiseTexture
+#pragma include "water.glsl"
+const float rainStrength = 0;
 
 in vec4 color;
 in vec4 texcoord;
@@ -32,93 +36,104 @@ out vec4 out_Normal;
 out uvec4 out_Material;
 out vec4 out_Light;
 
-
-vec4 texture2D_smooth(sampler2D tex, vec2 uv, vec2 res)
-{
-	uv = uv*res + 0.5;
-	vec2 iuv = floor( uv );
-	vec2 fuv = fract( uv );
-	uv = iuv + fuv*fuv*(3.0-2.0*fuv); // fuv*fuv*fuv*(fuv*(fuv*6.0-15.0)+10.0);;
-	uv = (uv - 0.5)/res;
-	return texture( tex, uv );
-}
-vec4 lookupNoiseTex(in vec2 noisePos)
-{
-	const vec2 noiseTexRes = vec2(NOISE_TEX_SIZE);
-	return texture2D_smooth(waterNoiseTexture, noisePos, noiseTexRes);
-}
-float waterDist(vec2 worldpos, vec2 offset) {
-	float timeF = FRAME_TIME;
-	float waterScale;
-	float waterSpeed;
-	float wave = 0;
-	float w1 = 0;
-	float w = 1;
-	const float fs=0.05;
-	{
-		waterSpeed = 0.0002f;
-		waterScale = 1/8.0f;
-		vec2 waterPos = (worldpos)+offset*fs;
-		waterPos.x+=timeF*waterSpeed;
-		waterPos.y+=timeF*waterSpeed;
-		wave += lookupNoiseTex(waterPos*0.1).x; 
-		// w+=2;
-	}
-
-	// {
-	// 	waterSpeed = 0.0003f;
-	// 	waterScale = 1/4.0f;
-	// 	vec2 waterPos = (worldpos+offset*fs/2)*waterScale;
-	// 	waterPos.x-=timeF*waterSpeed;
-	// 	waterPos.y-=timeF*waterSpeed;
-	// 	wave += lookupNoiseTex(waterPos).x; 
-	// 	// w+=2;
-	// }
-
-	// {
-	// 	waterSpeed = 0.00002f;
-	// 	waterScale = 1/11.0f;
-	// 	vec2 waterPos = (worldpos+offset*fs/3)*waterScale;
-	// 	waterPos.x+=timeF*waterSpeed;
-	// 	waterPos.y-=timeF*waterSpeed;
-	// 	wave += lookupNoiseTex(waterPos).x; 
-	// 	// w+=2;
-	// }
-	return wave/w;
-}
-
-
-vec4 getNoise(vec2 uv){
-	float timeF = FRAME_TIME*0.006;
-    vec2 uv0 = (uv/103.0)+vec2(timeF/17.0, timeF/29.0);
-    vec2 uv1 = uv/107.0-vec2(timeF/-19.0, timeF/31.0)+vec2(0.23);
-    vec2 uv2 = uv/vec2(897.0, 983.0)+vec2(timeF/101.0, timeF/97.0)+vec2(0.51);
-    vec2 uv3 = uv/vec2(991.0, 877.0)-vec2(timeF/109.0, timeF/-113.0)+vec2(0.71);
-    vec4 noise = (texture(waterNoiseTexture, uv0)) +
-                 (texture(waterNoiseTexture, uv1)) +
-                 (texture(waterNoiseTexture, uv2)) +
-                 (texture(waterNoiseTexture, uv3));
-    return noise*0.5-1.0;
-}
-
 void main() {
-	vec3 normal_out = normal;
-	vec2 texCoord2 = texcoord.st;
+	
+	#ifdef Watercolor_Vanila
+	vec3 watercolor = vec3(1.0);
+	float wateropacity = 0.8;
+	#endif
+	
+	#ifdef Watercolor_Clear
+	vec3 watercolor = vec3(0.02,0.08,0.14);
+	float wateropacity = 0.3;
+	#endif
+	
+	#ifdef Watercolor_Tropical
+	vec3 watercolor = vec3(0.1,0.6,0.6);
+	float wateropacity = 0.41;
+	#endif
+	
+	#ifdef Watercolor_Legacy
+	vec3 watercolor = vec3(0.0,0.3,0.7);
+	float wateropacity = 0.7;
+	#endif
+	
+	#ifdef Watercolor_Classic
+	vec3 watercolor = vec3(0.1,0.4,0.7);
+	float wateropacity = 0.4;
+	#endif
+	
+	#ifdef Watercolor_Original
+	vec3 watercolor = vec3(0.02,0.08,0.14);
+	float wateropacity = 0.8;
+	#endif
+	
+
+	vec4 raw = texture(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)));
+	// raw.a=1;
+    uint blockid = BLOCK_ID(blockinfo);
+    float iswater = IS_WATER(blockid);
+	float isEyeInWater = 0;
+	// vec4 raw = texture(texture, texcoord.xy);
+	vec4 tex = vec4(vec3(raw.b + (raw.r+raw.g)),max(wateropacity*(1-isEyeInWater),0.2));
+	tex *= vec4(watercolor,1);
+	
+	#ifdef Watercolor_Vanila
+	tex.rgb = raw.rgb*color.rgb;
+	#endif
+	tex.a = 1;
+	
+	if (iswater < 0.9) tex = raw*color;
+	
+	vec3 posxz = vwpos.xyz;
+
+	posxz.x += sin(posxz.z+frametime)*0.25;
+	posxz.z += cos(posxz.x+frametime)*0.25;
+	
+	float deltaPos = 0.4;
+	float h0 = waterH(posxz);
+	float h1 = waterH(posxz + vec3(deltaPos,0.0,0.0));
+	float h2 = waterH(posxz + vec3(-deltaPos,0.0,0.0));
+	float h3 = waterH(posxz + vec3(0.0,0.0,deltaPos));
+	float h4 = waterH(posxz + vec3(0.0,0.0,-deltaPos));
+	
+	float xDelta = ((h1-h0)+(h0-h2))/deltaPos;
+	float yDelta = ((h3-h0)+(h0-h4))/deltaPos;
+	
+	vec3 newnormal = normalize(vec3(xDelta,yDelta,1.0-xDelta*xDelta-yDelta*yDelta));
+	newnormal = newnormal + (xDelta*yDelta) / (sin(xDelta) + cos(yDelta)+frametime);
+	
+	vec4 frag2;
+		frag2 = vec4((normal) * 0.5f + 0.5f, 1.0f);		
+		
     if (isWater > 0 && faceDir != 0u) {
 		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
-		float dist = (14+length(vpos)/122);
-		vec2 vw = vec2(vwpos.x, vwpos.z);
-	    vec4 noise = getNoise(vw*2.5);
-	    vec3 nd = normalize(noise.xzy*vec3(2.0, clamp(dist, 2.0, 100.0), 2.0));
-		normal_out = normalize(tbnMat*nd);
-		texCoord2.st+=nd.xz*2.2;
-    }
-	vec4 tex = texture(blockTextures, vec3(texCoord2, BLOCK_TEX_SLOT(blockinfo)));
-    uint blockid = BLOCK_ID(blockinfo);
-    float isWater = IS_WATER(blockid);
-    // tex = mix(tex, vec4(0.2, 0.32, 0.43, 1)*1.1, isWater);
-    tex.a=1;
-	// tex.a=1;
+		vec3 bump = newnormal;
+			
+		
+		float bumpmult = 0.02;	
+		
+		bump = 	bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+		// mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
+		// 					tangent.y, binormal.y, normal.y,
+		// 					tangent.z, binormal.z, normal.z);
+		
+		frag2 = vec4(normalize(bump.xzy * tbnMat) * 0.5 + 0.5, 1.0);
+	}
+	
+	vec4 spec = vec4(0);
+	#ifdef RPSupport
+	vec4 normal = texture(normals,texcoord.xy);
+	spec = texture(specular, texcoord);
+	spec *= 1-pow(abs(normal.r-0.5)*2,2.2);
+	spec *= 1-pow(abs(normal.g-0.5)*2,2.2);
+	spec *= normal.b;
+	#endif
+	
+	// float matb = mat;
+	// if (iswater < 0.9 && tex.a > 0.9) matb = 0.15;
+	
+
 	float xPos2 = texPos.x;
 	float xPos = 1-texPos.x;
 	float yPos2 = texPos.y;
@@ -133,11 +148,12 @@ void main() {
 	lightLevelSky += faceLightSky.y * xPos2 * yPos;
 	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
 	lightLevelSky += faceLightSky.w * xPos  * yPos2;
-	vec3 color_adj = tex.rgb * color.rgb;
-	srgbToLin(color_adj.rgb);
-    out_Color = vec4(color_adj.rgb, color.a*tex.a);
-    out_Normal = vec4((normal_out) * 0.5f + 0.5f, roughness);
+	// gl_FragData[0] = tex;
+	// gl_FragData[1] = frag2;	
+	// gl_FragData[2] = vec4(lmcoord.t, matb, lmcoord.s, 1.0);
+	// gl_FragData[3] = spec;
+    out_Color = tex;
+    out_Normal = vec4(frag2.xyz, roughness);
     out_Material = blockinfo;
-    out_Light = vec4(lightLevelSky*0.2, lightLevelBlock, 1, 1);
-    // gl_FragData[0] = vec4(0,1,1,1);
+    out_Light = vec4(lightLevelSky*0.05, lightLevelBlock*0.05, 1, 1);
 }

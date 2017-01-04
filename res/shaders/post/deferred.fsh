@@ -6,6 +6,13 @@
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma define "RENDER_PASS"
+float isEyeInWater = 0.0;
+
+#if RENDER_PASS ==1
+uniform sampler2D texWaterNoise;
+#define noisetex texWaterNoise
+#pragma include "water.glsl"
+#endif
 
 layout(std140) uniform LightInfo {
   vec4 dayLightTime; 
@@ -314,44 +321,6 @@ float specularCookTorrance( float roughnessValue,
     float factor = (fresnel * geoAtt * roughness) / (NdotV * lambertFactor * IOR);
     return factor;
 }
-//------------------------------------------------------------------------------
-// Constants
-//  1/(2pi) = 0.159154943f
-//  1/pi    = 0.3183098861f
-//------------------------------------------------------------------------------
-// Cook-Torrance BRDF
-float CookBRDF( in vec3 _viewDir,
-                                in vec3 _lightDir,
-                                in vec3 _normal,
-                                in float _roughness,
-                                in float _specularity)
-{
-        vec3  h                 = normalize(_viewDir+_lightDir);
-        float VdotH     = max(0.0f,dot(_viewDir,h));
-        float NdotH     = max(0.0f,dot(_normal,h));
-        float NdotL     = max(0.0f,dot(_normal,_lightDir));
-        float NdotV     = max(0.0f,dot(_normal,_viewDir));
-        float sNdotH    = sqrt(1.f-NdotH*NdotH);
-
-        // Use Schlick approximation for Fresnel
-        // Use Kelemen and Szirmau-Kalos apprixmation for the geometric term
-        float F0                = 0.1f;
-        float F                 = F0 + (1.f-F0) * pow(1.f - VdotH,5.f);
-        #if 1
-        float G                 = min(1.f,min( 2.f*NdotH*NdotV/VdotH , 2.f*NdotH*NdotL/VdotH ));
-        float M0                = max(0.f,F *G / (NdotL * NdotV));
-        #else
-        float M0                = max(0.f,F / (VdotH * VdotH));
-        #endif
-
-        // Use Beckmann NDF
-        float kappa             = sNdotH/(NdotH*_roughness);
-        float D                 = max(0.f, 1.f / (3.141592654f * _roughness*_roughness * pow(NdotH,4.f)) * exp(-kappa*kappa));
-
-        float sRadiance = M0 * D;
-        float dRadiance = NdotL * 0.3183098861f;
-        return dRadiance + _specularity*sRadiance;
-}
 
 float VolumetricLight() {
     vec4 ditherPattern[4];
@@ -400,12 +369,21 @@ float VolumetricLight() {
 }
 #define SHADE
 void main() {
-
+    vec4 dbgcolor = vec4(0);
     vec4 sceneColor = texture(texColor, pass_texcoord);
 	prop.albedo = sceneColor.rgb;
 
     float alpha = 1.0;
 #ifdef SHADE
+    prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
+    float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
+    if (RENDER_PASS > 0) {
+        alpha = sceneColor.a;
+        if(renderpass != RENDER_PASS)
+            discard;
+        if(sceneColor.a < 0.1)
+            discard;
+    }
     vec4 ssao = vec4(1);
     if (RENDER_PASS < 1) {
         ssao=texture(texAO, pass_texcoord);
@@ -413,11 +391,11 @@ void main() {
     float depthUnderWater=0;
     vec4 viewSpacePosUnderWater=vec4(0);
     vec4 worldPosUnderWater=vec4(0);
-    if (RENDER_PASS == 1) {
-        depthUnderWater = texture(texAO, pass_texcoord).r;
-        viewSpacePosUnderWater = unprojectPos(pass_texcoord, depthUnderWater);
-        worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
-    }
+    // if (RENDER_PASS == 1) {
+    //     depthUnderWater = texture(texAO, pass_texcoord).r;
+    //     viewSpacePosUnderWater = unprojectPos(pass_texcoord, depthUnderWater);
+    //     worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
+    // }
 
 
     float lum = dot(prop.albedo, vec3(0.3333f));
@@ -430,12 +408,9 @@ void main() {
     prop.reflective = prop.blockLight.w;
     prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
-    prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
-    prop.linearDepth = expToLinearDepth(prop.depth);
     prop.position = unprojectPos(pass_texcoord, prop.depth);
-    // vec4 nearPos = unprojectPos(pass_texcoord, 0);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
-    // nearPos = in_matrix_3D.mv_inv * nearPos;
+    prop.linearDepth = expToLinearDepth(prop.depth);
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
     prop.NdotL = max(dot( prop.normal, SkyLight.lightDir.xyz ), 0.0);
     
@@ -444,30 +419,70 @@ void main() {
     float theta = max(dot(prop.viewVector, prop.normal), 0.0);
     prop.sunSpotDens = pow(sunTheta, 32.0)*1.0;
     uint blockid = BLOCK_ID(prop.blockinfo);
-    float renderpass = BLOCK_RENDERPASS(prop.blockinfo);
     float isWater = IS_WATER(blockid);
     float stone = float(blockid==6u||blockid==4u);
     float isLight = IS_LIGHT(blockid);
     float isIllum = float(renderpass==4);
     float isBackface = float(renderpass==3);
-    float isEntity = float(renderpass==5||renderpass==2);
+    float isEntity = float(renderpass==5);
     float isCloud = float(renderpass==8);
     float fIsSky = isCloud;
     bool isSky = bool(fIsSky==1.0f);
+    float fogDepth = length(prop.position);
+    vec3 fogColor = mix(vec3(0.5,0.6,0.8)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     // float isFlower = float(blockid>=48u);
-    if (RENDER_PASS > 0) {
-        alpha = sceneColor.a;
-        if(renderpass != RENDER_PASS)
-            discard;
-        if(sceneColor.a < 0.1)
-            discard;
+
+#if RENDER_PASS ==1
+    if (isWater > 0.9) {
+        vec3 refractv = vec3(0.0);
+        vec3 posxz = prop.worldposition.xyz+CAMERA_POS;
+        posxz.x += sin(posxz.z+frametime)*0.4;
+        posxz.z += cos(posxz.x+frametime*0.5)*0.4;
+        float h0 = 0.0;
+        float h1 = 0.0;
+        float h2 = 0.0;
+        float h3 = 0.0;
+        float h4 = 0.0;
+        float xDelta = 0.0;
+        float yDelta = 0.0;
+        float deltaPos = 0.4;
+        h0 = waterH2(posxz,1,1);
+        h1 = waterH2(posxz + vec3(deltaPos,0.0,0.0),1,1);
+        h2 = waterH2(posxz + vec3(-deltaPos,0.0,0.0),1,1);
+        h3 = waterH2(posxz + vec3(0.0,0.0,deltaPos),1,1);
+        h4 = waterH2(posxz + vec3(0.0,0.0,-deltaPos),1,1);
+        
+        xDelta = ((h1-h0)+(h0-h2))/deltaPos;
+        yDelta = ((h3-h0)+(h0-h4))/deltaPos;
+
+        
+        float refMult = (0.0005-dot(prop.normal,normalize(prop.viewVector).xyz)*0.0015)*3;
+        
+        refractv = normalize(vec3(xDelta,yDelta,1.0-xDelta*xDelta-yDelta*yDelta));
+        // vec4 rA = texture2D(gcolor, newtc.st + refractv.xy*refMult);
+        // rA.rgb = pow(rA.rgb,vec3(2.2));
+        // vec4 rB = texture2D(gcolor, newtc.st);
+        // rB.rgb = pow(rB.rgb,vec3(2.2));
+        // float mask = texture2D(gaux1, newtc.st + refractv.xy*refMult).g;
+        float mask =  isWater*(1-isEyeInWater);
+        vec2 newtc = (pass_texcoord.st + refractv.xy*refMult)*mask + pass_texcoord.st*(1-mask);
+
+            depthUnderWater = texture(texAO, newtc).r;
+            viewSpacePosUnderWater = unprojectPos(newtc, depthUnderWater);
+            worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
+            // sceneColor = texture(texColor, newtc);
+            // prop.albedo = sceneColor.rgb;
+        // float uDepth = texture2D(depthtex1,newtc.xy).x;
+        // color.rgb = pow(texture2D(gcolor,newtc.xy).rgb,vec3(2.2));
+        // uPos  = nvec3(gbufferProjectionInverse * nvec4(vec3(newtc.xy,uDepth) * 2.0 - 1.0)); 
     }
+#endif
     alpha += isEntity;
     alpha = min(alpha, 1.0);
     if (!isSky) {
-        float minAmb = 0.2;
+        float minAmb = 0.25;
         float minAmb2 = 0.1;
-         float diff = 1.2;
+         float diff = 1.5;
         // prop.roughness = 0.3;
         float roughness = pow(2.0, 1.0+(prop.roughness)*10.0)-1.0;
         // out_Color = vec4(vec3(prop.roughness), 1);
@@ -499,17 +514,9 @@ void main() {
         // float specAmb2 = pow(max(dot(halfDir2, prop.normal), 0.0), roughness);
 
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-        float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness)*1;
+        float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness)*1.5;
 
-        // float roughnessValue = 0.3; // 0 : smooth, 1: rough
-        // float F0 = 0.8; // fresnel reflectance at normal incidence
-        // float k = 0.2; // fraction of diffuse reflection (specular reflection = 1 - k)
-        // vec3 halfDir = normalize(SkyLight.lightDir.xyz + prop.viewVector.xyz);
-        // float specAngle = max(dot(halfDir, prop.normal), 0.0);
-        // float spec = pow(specAngle, roughness);
-         // spec = CookBRDF(prop.viewVector.xyz, SkyLight.lightDir.xyz, prop.normal.xyz, roughness, glossy);
-         // diff = k; spec = 1.0 - k;
-         // float spec = 1.0;
+
 
 
 
@@ -521,7 +528,7 @@ void main() {
         occlusion+=float(RENDER_PASS==1);
         occlusion = min(1.0, occlusion);/**3.5*/
 
-        float shadow = getShadow2()*(1.0-isBackface);
+        float shadow = getShadow2()*(1.0-isBackface)*(1.0-isWater*0.8);
         // float shadow = mix(getSoftShadow(), 1, 0.04);
 
         float sunLight = skyLightLvl * prop.NdotL * shadow * dayLightIntens *(1.0-fNight);
@@ -533,7 +540,7 @@ void main() {
         vec3 lightColor = mix(vec3(1.0), vec3(0.8, 0.9, 1.1), fNight);
         vec3 Ispec = SkyLight.Ls.rgb * lightColor * prop.NdotL *spec;
         vec3 Idiff = SkyLight.Ld.rgb * lightColor * prop.NdotL *diff;
-        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.8);
+        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.1);
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb1 *specAmb1 * 0.25;
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb2 *specAmb2 * 0.08;
 
@@ -548,34 +555,56 @@ void main() {
         finalLight += lum* (mix(1.0, occlusion, 0.19)) * blockLight*isLight*0.6;
         finalLight+=isIllum*4.0;
         finalLight += vec3(1.0, 0.9, 0.7) * pow(blockLightLvl/8.0,2.0)*((1.0-isLight*0.8)*blockLightConst);
-
-        finalLight *= max(0.3+ssao.r*0.7, isWater);
+        float mixSSAO = 0.1;
+        finalLight *= max(mixSSAO+ssao.r*(1.0-mixSSAO), isWater);
         finalLight+=prop.light.rgb*(occlusion);
         // finalLight*=2;
 #if RENDER_PASS ==1
-        float waterDepth = length(prop.position-viewSpacePosUnderWater)*0.08;
-        alpha = clamp(clamp(waterDepth, 0.7, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.7, 1.0);
+        // float waterDepth = length(prop.position-viewSpacePosUnderWater)*0.05;
+
+        // vec4 vNormal = in_matrix_3D.view* vec4(prop.normal.xyz, 1.0);
+        // vec3 uVec = (prop.position-viewSpacePosUnderWater).xyz;
+        // float UNdotUP = 0.5+abs(dot(normalize(uVec),normalize(vNormal.xyz)));
+
+    
+    
+        vec3 uVec = (prop.worldposition - worldPosUnderWater).xyz;
+        float len =length(uVec);
+        if (len > 0.001) {
+            float UNdotUP = 0.5+abs(dot(normalize(uVec),normalize(prop.normal.xyz)));
+            float depth = len*UNdotUP;
+            float sky_absorbance = mix(mix(1.0,exp(-depth/4.5),isWater),1.0,isEyeInWater);
+            // if (sky_absorbance < 0||sky_absorbance>1)
+            //     dbgcolor=vec4(1);
+            // alpha = prop.albedo.a;//clamp(clamp(depth, 0.4, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.5, 1.0);
+            // alpha = 0.5;
+            alpha = alpha*(0.95+0.05*(1-sky_absorbance));
+            // finalLight *= clamp(1-waterDepth, 0.1, 1.0);
+            // prop.albedo *=0.1;
+            finalLight *= 0.2+sky_absorbance*0.8;
+            fogColor = mix(fogColor, vec3(0.01, 0.016, 0.03)*12.0, isWater);
+            fogDepth = depth*60;
+vec3 watercolor = vec3(0.1,0.6,0.6);
+vec3 ambient_color = vec3(1)*lightColor;
+            prop.albedo=mix(watercolor*pow(length(ambient_color),0.2)*0.05,prop.albedo,exp(-depth/32));
+        }
 #endif
 
         alpha = clamp(alpha, 0.0, 1.0);
 
 
         vec3 terr=prop.albedo*finalLight;
-        spec*=shadow;//0.6+(shadow*0.1+sunLight*0.3);
-        // vec3 waterAlb = mix(prop.albedo*finalLight, spec*0.02*vec3(0.1), isWater*theta);
-        vec3 waterAlb = mix(prop.albedo*finalLight, spec*vec3(0.02), isWater*theta);
-        prop.albedo = mix (terr, waterAlb, isWater);
-        // prop.albedo=terr;
+        spec*=shadow;
+        prop.albedo = mix (terr, spec*vec3(0.02), isWater*theta);
+        prop.albedo=terr;
 
     } else {
 
     }
 
 #if RENDER_PASS < 2
-    vec3 fogColor = mix(vec3(0.5,0.6,0.7)*0.8, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
-    float fogDepth = length(prop.position);
-    fogDepth = min(fogDepth, in_scene.viewport.w/3.0);
-    fogDepth = max(fogDepth-40.0, 0.0);
+    fogDepth = min(fogDepth, in_scene.viewport.w/4.0);
+    fogDepth = max(fogDepth-100.0, 0.0);
     float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
     float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
     prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
@@ -592,6 +621,8 @@ void main() {
 
 
 #endif
-
+    if (dbgcolor.a>0)
+    out_Color = dbgcolor;
+    else
     out_Color = vec4(prop.albedo, alpha);
 }

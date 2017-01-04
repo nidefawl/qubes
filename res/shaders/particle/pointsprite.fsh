@@ -4,6 +4,8 @@
 #pragma include "blockinfo.glsl"
 
 uniform sampler2D tex0;
+uniform float transparency;
+uniform float spritebrightness;
 
 in vec3 normal;
 in vec4 color;
@@ -27,8 +29,8 @@ void main(void) {
     float hM = clamp(position.y/1220.0, 0.0002, 0.25);//+clamp((position.y-180)/80.0, 0.0, 1.0)*3;
    // float fogAmount = clamp(1.0 - exp( -dist*0.00001*222 ), 0.0, 1.0);
   // vec3 skycolor = mix(color.rgb, fogColor, dist*0.003);
-  out_Color = vec4(tex.rgb*color.rgb, tex.a*color.a); //vec4(skycolor*0.41, clamp(tex.a*(1-fogAmount)*color.a*0.2, 0, 1));
-  out_Normal = vec4(0.5);
+  out_Color = vec4(tex.rgb*color.rgb*spritebrightness, tex.a*transparency); //vec4(skycolor*0.41, clamp(tex.a*(1-fogAmount)*color.a*0.2, 0, 1));
+  out_Normal = vec4(vec3(0.5), 1.0);
     uint renderData = 0u;
   renderData = ENCODE_RENDERPASS(8);
   out_Material = uvec4(0u,0u+renderData,0u,0u);

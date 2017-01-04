@@ -18,20 +18,23 @@ out vec4 position;
 void main(void) {
 	float dists = 100;
 	float scale = in_position.w;
+	float rot = in_color.w;
 	vec3 nPos = normalize(in_position.xyz);
+
 	float d5 = nPos.x * dists;
 	float d6 = nPos.y * dists;
 	float d7 = nPos.z * dists;
 
 	float d8 = atan(nPos.x, nPos.z);
+	float fd = sqrt(nPos.x*nPos.x+nPos.z*nPos.z);
+	float d11 = atan(fd, nPos.y);
+
 	float d9 = sin(d8);
 	float d10 = cos(d8);
 
-	float fd = sqrt(nPos.x*nPos.x+nPos.z*nPos.z);
-	float d11 = atan(fd, nPos.y);
 	float d12 = sin(d11);
 	float d13 = cos(d11);
-	float rot = in_color.w;
+	
 	float d15 = sin(rot);
 	float d16 = cos(rot);
   	vec2 offsetxy = (in_texcoord.xy-vec2(0.5));
@@ -44,7 +47,7 @@ void main(void) {
   	float d27 = d21 * d12;
   	float d28 = d23 * d9 + d25 * d10;
   	vec3 oPos = vec3(d5 + d26, d6 + d27, d7 + d28);
-	vec4 pos = in_matrix_3D.view * vec4(oPos - RENDER_OFFSET + PX_OFFSET.xyz, 1.0);
+	vec4 pos = in_matrix_3D.view * vec4(oPos, 1.0);
 	pos /= pos.w;
 	position = vec4(oPos, 1.0);
     gl_Position = in_matrix_3D.p * pos;

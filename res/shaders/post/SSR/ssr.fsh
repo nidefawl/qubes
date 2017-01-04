@@ -7,39 +7,15 @@ uniform sampler2D texColor;
 uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
 uniform sampler2D texDepth;
-
-
-uniform mat4 pixelProj;
+uniform samplerCube texSkybox;
+uniform sampler2D texDepthPreWater;
 
 
 in vec2 pass_texcoord;
-flat in vec3 clipInfo;
-flat in vec2 renderBufferSize;
-flat in float nearPlaneZ;
-flat in float farPlaneZ;
-
-float reconstructCSZ(float depthBufferValue) {
-    return clipInfo[0] / (depthBufferValue * clipInfo[1] + clipInfo[2]);
-}
-
-float reconstructCSZ2(float depth) //same as above
-{
-    return 2.0f * nearPlaneZ * farPlaneZ / (farPlaneZ + nearPlaneZ - (2.0f * depth - 1.0f) * (farPlaneZ - nearPlaneZ));
-}
-float Linear01Depth(float depth) {
-	float camSpaceZ = reconstructCSZ(depth);
-	float clipSpaceZ= (camSpaceZ-nearPlaneZ) / (farPlaneZ-nearPlaneZ);
-	return clipSpaceZ;
-}
-#pragma include "math.glsl"
 
 
 out vec4 out_Color;
 
-
-float getBrightness(vec2 b) {
-	return (1-pow(1-b.x, 2))*(1-pow(1-b.y, 2));
-}
 #pragma define "SSR"
 
 #ifdef SSR_1
@@ -53,9 +29,9 @@ const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ra
 
 #endif
 #ifdef SSR_2
-const float _Iterations = 24;							// maximum ray iterations 
+const float _Iterations = 32;							// maximum ray iterations 
 const float _PixelStride = 25;							// number of pixels per ray step close to camera
-const float _PixelStrideZCuttoff = 80;					// ray origin Z at this distance will have a pixel stride of 1.0
+const float _PixelStrideZCuttoff = 1840;					// ray origin Z at this distance will have a pixel stride of 1.0
 const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
 const float _PixelZSize = 0.8f;							// Z size in camera space of a pixel in the depth buffer
 const float _MaxRayDistance = 1222.0f;						// maximum distance of a ray
@@ -75,258 +51,292 @@ const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
 const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
 
 #endif
-/*
 
-const float _Iterations = 8;							// maximum ray iterations
-const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
-const float _PixelZSize = 16.0f;							// Z size in camera space of a pixel in the depth buffer
-const float _PixelStride = 24;							// number of pixels per ray step close to camera
-const float _PixelStrideZCuttoff = 222;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _MaxRayDistance = 1024.0f;						// maximum distance of a ray
-const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
-
-*/
-
-// const float _Iterations = 16;							// maximum ray iterations
-// const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
-// const float _PixelZSize = 16.0f;							// Z size in camera space of a pixel in the depth buffer
-// const float _PixelStride = 16;							// number of pixels per ray step close to camera
-// const float _PixelStrideZCuttoff = 222;					// ray origin Z at this distance will have a pixel stride of 1.0
-// const float _MaxRayDistance = 1024.0f;						// maximum distance of a ray
-// const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
+//don't touch these lines if you don't know what you do!
+//default
+// const int maxf = 4;				//number of refinements
+// const float stp = 1.5;			//size of one step for raytracing algorithm
+// const float ref = 0.7;			//refinement multiplier
+// const float inc = 1.58;			//increasement factor at each step
+// default
+// const int maxf = 4;				//number of refinements
+// const float stp = 1.5;			//size of one step for raytracing algorithm
+// const float ref = 0.7;			//refinement multiplier
+// const float inc = 1.58;			//increasement factor at each step
 
 
+// const int maxf = 6;				//number of refinements
+// const float stp = 0.25;			//size of one step for raytracing algorithm
+// const float ref = 2.3;			//refinement multiplier
+// const float inc = 1.16;			//increasement factor at each step
+const int maxf = 4;				//number of refinements
+const float stp = 1.2;			//size of one step for raytracing algorithm
+const float ref = 0.1;			//refinement multiplier
+const float inc = 2.2;			//increasement factor at each step
 
-// NEEDS BLUR, LOTS OF
-
-
-
-float lastcameraz=0;
-bool isCamSpaceZ = false;
-bool rayIntersectsDepthBF( float zMin, float zMax, float2 uv)
-{
-	float depthFrag = texelFetch( texDepth, int2(uv), 0).r;
-	float cameraZ = Linear01Depth(depthFrag) * - farPlaneZ;
-    return zMax <= cameraZ && zMin >= cameraZ - _PixelZSize;
+vec3 nvec3(vec4 pos) {
+    return pos.xyz/pos.w;
 }
 
-// Trace a ray in screenspace from rayOrigin (in camera space) pointing in rayDirection (in camera space)
-// using jitter to offset the ray based on (jitter * _PixelStride).
-//
-// Returns true if the ray hits a pixel in the depth buffer
-// and outputs the hitPixel (in UV space), the hitPoint (in camera space) and the number
-// of iterations it took to get there.
-//
-// Based on Morgan McGuire & Mike Mara's GLSL implementation:
-// http://casual-effects.blogspot.com/2014/08/screen-space-ray-tracing.html
-bool traceScreenSpaceRay( float3 rayOrigin, 
-						  		 float3 rayDirection, 
-						  		 float jitter, float angle, 
-						  		 out float2 hitPixel, 
-						  		 out float3 hitPoint, 
-						  		 out float iterationCount) 
-{
-	vec2 _OneDividedByRenderBufferSize = vec2(1.0f) / renderBufferSize;
-	// Clip to the near plane    
-	float rayLength = ((rayOrigin.z + rayDirection.z * _MaxRayDistance) > -nearPlaneZ) ?
-	    			  (-nearPlaneZ - rayOrigin.z) / rayDirection.z : _MaxRayDistance;
-	float3 rayEnd = rayOrigin + rayDirection * rayLength;
-
-	// Project into homogeneous clip space
-	float4 H0 = pixelProj * float4( rayOrigin, 1.0);
-	float4 H1 = pixelProj * float4( rayEnd, 1.0);
-
-	float k0 = 1.0 / H0.w, k1 = 1.0 / H1.w;
-
-	// The interpolated homogeneous version of the camera-space points  
-	float3 Q0 = rayOrigin * k0, Q1 = rayEnd * k1;
-		
-	// Screen-space endpoints
-	float2 P0 = H0.xy * k0, P1 = H1.xy * k1;
-
-	// If the line is degenerate, make it cover at least one pixel
-	// to avoid handling zero-pixel extent as a special case later
-	P1 += (distanceSquared(P0, P1) < 0.0001) ? 0.01 : 0.0;
-
-	float2 delta = P1 - P0;
-
-    // Permute so that the primary iteration is in x to reduce
-    // large branches later
-    bool permute = (abs(delta.x) < abs(delta.y));
-	if (permute) {
-		// More-vertical line. Create a permutation that swaps x and y in the output
-        // by directly swizzling the inputs.
-		delta = delta.yx;
-		P1 = P1.yx;
-		P0 = P0.yx;        
-	}
-
-	float stepDir = sign(delta.x);
-	float invdx = stepDir / delta.x;
-
-	// Track the derivatives of Q and k
-	float3  dQ = (Q1 - Q0) * invdx;
-	float dk = (k1 - k0) * invdx;
-	float2  dP = float2(stepDir, delta.y * invdx);
-
-		// Calculate pixel stride based on distance of ray origin from camera.
-		// Since perspective means distant objects will be smaller in screen space
-		// we can use this to have higher quality reflections for far away objects
-		// while still using a large pixel stride for near objects (and increase performance)
-		// this also helps mitigate artifacts on distant reflections when we use a large
-		// pixel stride.
-		float strideScaler = 1 - min( 1.0, -rayOrigin.z / _PixelStrideZCuttoff);
-		float pixelStride = 1 + strideScaler * _PixelStride;
-
-	// Scale derivatives by the desired pixel stride and then
-	// offset the starting values by the jitter fraction
-	dP *= pixelStride; dQ *= pixelStride; dk *= pixelStride;
-	P0 += dP * jitter; Q0 += dQ * jitter; k0 += dk * jitter;
-
-	float i, rayZMin = 0.0, rayZMax = 0.0;
-
-	// Track ray step and derivatives in a float4 to parallelize
-	float4 pqk = float4( P0, Q0.z, k0);
-	float4 dPQK = float4( dP, dQ.z, dk);
-	bool intersect = false;
-
-	for( i=0; i<_Iterations && intersect == false; i++)
-	{
-    	pqk += dPQK;
-    	
-    	rayZMin = rayZMax;
-    	rayZMax = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);
-    	swapIfBigger( rayZMax, rayZMin);
-    	
-    	hitPixel = permute ? pqk.yx : pqk.xy;
-    	// hitPixel *= _OneDividedByRenderBufferSize;
-        
-        intersect = rayIntersectsDepthBF( rayZMin, rayZMax, hitPixel);
-	}
-
-	// Binary search refinement
-	if( pixelStride > 1.0 && intersect)
-	{
-		pqk -= dPQK;
-		dPQK /= pixelStride;
-		
-		float originalStride = pixelStride * 0.5;
-		float stride = originalStride;
-		
-		rayZMin = pqk.z / pqk.w;
-		rayZMax = rayZMin;
-		
-		for( float j=0; j<_BinarySearchIterations; j++)
-	    {
-	    	pqk += dPQK * stride;
-	    	
-	    	rayZMin = rayZMax;
-			rayZMax = (dPQK.z * -0.5 + pqk.z) / (dPQK.w * -0.5 + pqk.w);
-			swapIfBigger( rayZMax, rayZMin);
-    		float2 newHit = permute ? pqk.yx : pqk.xy;;
-			if (newHit.x < 0 || newHit.y < 0 || newHit.x > renderBufferSize.x || newHit.y > renderBufferSize.y) {
-				break;
-			}
-	    	hitPixel = newHit;
-	        
-	        originalStride *= 0.5;
-	        stride = rayIntersectsDepthBF( rayZMin, rayZMax, hitPixel) ? -originalStride : originalStride;
-	    }
-	}
-
-
-	Q0.xy += dQ.xy * i;
-	Q0.z = pqk.z;
-	hitPoint = Q0 / pqk.w;
-	iterationCount = i;
-	    	
-	return intersect;
+vec4 nvec4(vec3 pos) {
+    return vec4(pos.xyz, 1.0);
 }
-float calculateAlphaForIntersection( bool intersect, 
-								   float iterationCount, 
-								   float specularStrength,
-								   float2 hitPixel,
-								   float3 hitPoint,
-								   float3 vsRayOrigin,
-								   float3 vsRayDirection)
-{
-	float alpha = 1;
 
-	// Fade ray hits that approach the maximum iterations
-	float distBlend = pow((iterationCount / _Iterations), 1);
-	alpha *= 1.0 - clamp(distBlend*0.55, 0, 1);
-
-	// Fade ray hits based on distance from ray origin
-	alpha *= 1.0 - clamp( distance( vsRayOrigin, hitPoint) / _MaxRayDistance, 0.0, 1.0);
-
-	alpha = max(0.01, alpha);
-	alpha = min( 1.0, alpha*specularStrength * 1.0);
-	// Fade ray hits that approach the screen edge
-	float screenFade = _ScreenEdgeFadeStart;
-	hitPixel /= renderBufferSize;
-	float2 hitPixelNDC = (hitPixel * 2.0 - 1.0);
-	float maxDimension = min( 1.0, max( abs( hitPixelNDC.x), abs( hitPixelNDC.y)));
-	float screenFadeA = ((max( 0.0, maxDimension - screenFade) / (1.0 - screenFade)));
-
-	alpha *= 1.0 - pow(screenFadeA, 2);
-
-	return alpha*float(intersect);
+float cdist(vec2 coord) {
+	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
 }
-bool inScreen(vec2 hitPixel) {
-	return hitPixel.x >= 0 && hitPixel.y >= 0 && hitPixel.x < renderBufferSize.x && hitPixel.y < renderBufferSize.y;
+
+vec4 raytrace1(vec3 fragpos, vec3 normal,vec3 sky/*, vec3 sky_int*/) {
+    vec4 color = vec4(sky, 1.0);
+    float alphaVal = 0.0;
+    vec3 start = fragpos;
+    vec3 rvector = normalize(reflect(normalize(fragpos), normalize(normal)));
+    vec3 vector = stp * rvector;
+    vec3 oldpos = fragpos;
+    fragpos += vector;
+	vec3 tvector = vector;
+    int sr = 0;
+    int i=0;
+
+    for(;i<40;i++){
+        vec3 pos = nvec3(in_matrix_3D.p * nvec4(fragpos)) * 0.5 + 0.5;
+        if(pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1 || pos.z < 0 || pos.z > 1.0) {
+			color.rgb = sky;
+			color.a=1;
+        	break;
+    	}
+        vec3 spos = vec3(pos.st, texture(texDepth, pos.st).r);
+        spos = nvec3(in_matrix_3D.proj_inv * nvec4(spos * 2.0 - 1.0));
+        float err = abs(length(fragpos.xyz-spos.xyz));
+		if(err < pow(length(vector)*1.85,1.15)){
+
+                sr++;
+                if(sr >= maxf){
+                    float border = clamp(1.0 - pow(cdist(pos.st), 60.0), 0.0, 1.0);
+				    uvec4 blockinfo = texture(texMaterial, pos.st, 0);
+					uint blockidPixel = BLOCK_ID(blockinfo);
+					float isWater = IS_WATER(blockidPixel);
+					float isSky = IS_SKY(blockidPixel);
+					// float land = texture(gaux1, pos.st).g;
+					// land = float(land < 0.03);
+					spos.z = mix(fragpos.z, 2000.0, min(1.0, isWater+isSky));
+					color.a = 1.0;
+					color.rgb=sky;
+					if (isWater+isSky < 1) {
+                    color = texture(texColor, pos.st);
+						// color.rgb = sky;
+						// color.a*=0.02;
+					}
+					// #ifdef Cloud
+					// if (land > 0.1){
+						// #ifdef Reflect_Cloud
+					// 	color.rgb = drawCloud(sky_int,calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr),2);
+					// 	#else
+					// 	color.rgb = calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr);
+					// 	#endif
+					// 	}
+					// else color.rgb = calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr);
+					// #else
+					// color.rgb = calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr);
+					// #endif
+
+                    // alphaVal *= border;
+                    // color.a *= border;
+                    // color.a = border;
+                    // break;
+                }
+				tvector -= vector;
+                vector *= ref;
+
+
+		}
+        vector *= inc;
+        oldpos = fragpos;
+        tvector += vector;
+		fragpos = start + tvector;
+    }
+    // color.a = alphaVal;
+    return color;
+}
+vec4 raytrace3(vec3 fragpos, vec3 normal,vec3 sky/*, vec3 sky_int*/) {
+    vec4 color = vec4(sky, 0);
+    float alphaVal = 0.0;
+    vec3 start = fragpos;
+    vec3 rvector = normalize(reflect(normalize(fragpos), normalize(normal)));
+    vec3 vector = stp * rvector;
+    vec3 oldpos = fragpos;
+    fragpos += vector;
+	vec3 tvector = vector;
+    int sr = 0;
+    int i=0;
+    for(;i<40;i++){
+        vec3 pos = nvec3(in_matrix_3D.p * nvec4(fragpos)) * 0.5 + 0.5;
+        if(pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1 || pos.z < 0 || pos.z > 1.0) {
+			color.rgb = sky;
+			color.a=1;
+            break;
+    	}
+    	float de = texture(texDepthPreWater, pos.st).r;
+        vec3 spos = vec3(pos.st, de);
+        spos = nvec3(in_matrix_3D.proj_inv * nvec4(spos * 2.0 - 1.0));
+        float err = abs(length(fragpos.xyz-spos.xyz));
+		if(err < pow(length(vector)*1.85,1.15)){
+
+                sr++;
+                if(sr >= maxf){
+                    float border = clamp(pow(cdist(pos.st), 10.0), 0.0, 1.0);
+				    uvec4 blockinfo = texture(texMaterial, pos.st, 0);
+					uint blockidPixel = BLOCK_ID(blockinfo);
+					float isWater = IS_WATER(blockidPixel);
+					float isSky = IS_SKY(blockidPixel);
+					// // float land = texture(gaux1, pos.st).g;
+					// // land = float(land < 0.03);
+					spos.z = mix(2000.0, fragpos.z, min(1.0, isWater+isSky));
+                    color.a = 1.0;
+                    color.rgb=mix(texture(texColor, pos.st).rgb, sky, max(0, min(1, isWater+isSky+border)));
+					// #ifdef Cloud
+					// if (land > 0.1){
+						// #ifdef Reflect_Cloud
+					// 	color.rgb = drawCloud(sky_int,calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr),2);
+					// 	#else
+					// 	color.rgb = calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr);
+					// 	#endif
+					// 	}
+					// else color.rgb = calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr);
+					// #else
+					// color.rgb = calcFog(spos,pow(color.rgb,vec3(2.2))*MAX_COLOR_RANGE,fogclr);
+					// #endif
+
+                    // alphaVal *= border;
+                    // color.a *= border;
+                    // color.a = border;
+					// color.a = 1.0;
+                    // color.a *= border;
+    // return vec4(1,0,0,1);
+                    break;
+                }
+				tvector -= vector;
+                vector *= ref;
+
+
+		}
+        vector *= inc;
+        oldpos = fragpos;
+        tvector += vector;
+		fragpos = start + tvector;
+    }
+    // color.a = alphaVal;
+    return color;
+    // if (i==0)
+    // 	return vec4(0,0,1,1);
+    // return vec4(0,1,0,1);
+}
+
+vec4 raytrace(vec3 fragpos, vec3 normal,vec3 sky) {
+    vec4 color = vec4(0.0);
+    vec3 start = fragpos;
+    vec3 rvector = normalize(reflect(normalize(fragpos), normalize(normal)));
+    vec3 vector = stp * rvector;
+    vec3 oldpos = fragpos;
+    fragpos += vector;
+	vec3 tvector = vector;
+    int sr = 0;
+    int i=0;
+    for(i=0;i<40;i++){
+        vec3 pos = nvec3(in_matrix_3D.p * nvec4(fragpos)) * 0.5 + 0.5;
+        if(pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1 || pos.z < 0 || pos.z > 1.0) break;
+        float de = texture(texDepth, pos.st).r;
+#ifdef DBG_RAYTRACE
+        if (i > 10)
+        	return vec4(vec3(de), 1.0);
+#endif
+        vec3 spos = vec3(pos.st, de);
+        spos = nvec3(in_matrix_3D.proj_inv * nvec4(spos * 2.0 - 1.0));
+        float err = abs(length(fragpos.xyz-spos.xyz));
+		if(err < pow(length(vector)*1.005,1.008)){
+
+                sr++;
+                if(sr >= maxf){
+                    float border = clamp(1.0 - pow(cdist(pos.st), 20.0), 0.0, 1.0);
+				    uvec4 blockinfo = texture(texMaterial, pos.st, 0);
+					uint blockidPixel = BLOCK_ID(blockinfo);
+					float isWater = IS_WATER(blockidPixel);
+					float isSky = IS_SKY(blockidPixel);
+					// // float land = texture(gaux1, pos.st).g;
+					// // land = float(land < 0.03);
+					spos.z = mix(2000.0, fragpos.z, min(1.0, isWater+isSky));
+                    color = texture(texColor, pos.st);
+					
+					color.a = 1.0;
+                    // color.a *= border;
+#ifdef DBG_RAYTRACE
+			    return vec4(1,0,0,1);
+#endif
+                    break;
+                }
+				tvector -=vector;
+                vector *=ref;
+
+
+		}
+        vector *= inc;
+        oldpos = fragpos;
+        tvector += vector;
+		fragpos = start + tvector;
+    }
+#ifdef DBG_RAYTRACE
+    if (i==0)
+    	return vec4(0,0,1,1);
+    return vec4(0,1,0,1);
+#else
+	return vec4(color.rgb, 1.0);
+#endif
 }
 
 void main(void) {
 	vec4 albedo = texture(texColor, pass_texcoord);
 	vec3 normal = texture(texNormals, pass_texcoord).rgb * 2.0f - 1.0f;
     uvec4 blockinfo = texture(texMaterial, pass_texcoord, 0);
-	float depthFrag = texture(texDepth, pass_texcoord).r;
-	float cameraZ = Linear01Depth(depthFrag);
-    vec4 cameraRay = in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 1, 1.0f);
+    vec4 rayDirVS = in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 1, 1.0f);
+	rayDirVS /= rayDirVS.w;
+	vec4 normalVS4 = transpose(inverse(in_matrix_3D.mv)) * vec4(normal, 1);
+    vec3 normalVS = normalize( normalVS4.xyz);
+	vec3 nrayDirVS = normalize( rayDirVS.xyz);
 
-    cameraRay /= cameraRay.w;
-    // cameraRay.y+=0.4;
-    vec3 camRay3 = vec3(cameraRay.xyz);
-    camRay3 *= cameraZ;
-
-	float3 vsRayOrigin = camRay3.xyz;
-	// vsRayOrigin.y-=2.51;
-	vec4 normal4 = in_matrix_3D.view *  vec4(normal.xyz, 1);
-	normal4.xyz/=normal4.w;
-	float3 nvsRayOrigin = normalize( vsRayOrigin);
-	float3 vsRayDirection = normalize( reflect( nvsRayOrigin, normalize(normal4.xyz)));
-	vec4 textureSpace = pixelProj * cameraRay;
-	textureSpace = textureSpace / textureSpace.w;
-
-
-	float2 hitPixel; 
-	float3 hitPoint;
-	float iterationCount;
-	float2 uv2 = pass_texcoord * renderBufferSize;
-	float c = (uv2.x + uv2.y);
-	float jitter = mod(c*1,1);
- 			float angle = saturate( dot(nvsRayOrigin, normal4.xyz) + 1.0 );
-	// jitter = 0;
-	bool hit = traceScreenSpaceRay( vsRayOrigin, vsRayDirection, jitter, angle, hitPixel, hitPoint, iterationCount);
+	vec3 vsRayWorld = normalize( reflect( rayDirVS.xyz, normalVS));
+    vsRayWorld = mat3(in_matrix_3D.mv_inv) * vsRayWorld;
+	vec4 skyboxTex = texture(texSkybox, vsRayWorld * vec3(-1, -1, 1));
 
 	uint blockidPixel = BLOCK_ID(blockinfo);
 	float isWater = IS_WATER(blockidPixel);
-	float specularStrength = isWater;
-	float alpha = calculateAlphaForIntersection( hit, iterationCount, specularStrength, hitPixel, hitPoint, vsRayOrigin, vsRayDirection);
-	// float alpha = specularStrength;
+	if (isWater>0) {
+		vec4 cAlbedo = vec4(0.0);
 
-	vec4 cAlbedo = vec4(albedo.rgb*albedo.a, 1.0);
-	vec4 cRefl = vec4(0);
-	if (hit) {
-		if (inScreen(hitPixel)) {
-			uvec4 type = texelFetch(texMaterial, int2(hitPixel), 0);
-  			uint blockidHit = (type.y&0xFFFu);
-			if (blockidHit>0u) {
-				vec4 refl = texelFetch(texColor, int2(hitPixel), 0);
-				cRefl.rgb = refl.rgb;
-				cRefl.a = min(1, alpha*angle*angle*1.4);
-			}
-		}
+		vec3 fragpos = vec3(pass_texcoord.st, texture(texDepth, pass_texcoord.st).r);
+		fragpos = nvec3(in_matrix_3D.proj_inv * nvec4(fragpos * 2.0 - 1.0));
+		float normalDotEye = dot(normalVS, normalize(fragpos));
+		vec4 reflection = raytrace3(fragpos, normalVS, skyboxTex.rgb);
+
+        // if (pass_texcoord.x>0.5)
+        // out_Color=vec4(0,1,1,1);
+        // else
+		// out_Color = vec4(reflection.rgb, 1);
+
+		reflection.a = min(reflection.a, 1.0);
+		float angle = max ( min( pow(dot(nrayDirVS, normalVS.xyz) + 1.0, 2.9)*1.8, 1), 0 );
+		reflection.rgb = mix(skyboxTex.rgb, reflection.rgb, reflection.a);
+		
+
+		out_Color = vec4(reflection.rgb*angle*max(reflection.a,0.25), angle*isWater);
+
+
+
+		// if (texture(texDepth, pass_texcoord.st).r > 0) {
+		// 	out_Color=vec4(1,0,1,1);
+		// }
+	} else {
+
+		out_Color = vec4(0);
 	}
-	out_Color = vec4(mix(cAlbedo.rgb, cRefl.rgb, cRefl.a), 1.0);
+
 }

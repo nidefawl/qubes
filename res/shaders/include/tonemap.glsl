@@ -46,14 +46,30 @@ vec3 Uncharted2Tonemap(vec3 x)
     return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F; // E/F = Toe Angle
 }
 
+#define MAX_COLOR_RANGE 48.0//TONEMAP   
+vec3 Uncharted2Tonemap2(vec3 x) {
+float A2 = 1.0;    //brightness multiplier
+float B2 = 0.37;   //black level (lower means darker and more constrasted, higher make the image whiter and less constrasted)
+float C2 = 0.1;    //constrast level 
+  float D2 = 0.2;    
+  float E2 = 0.02;
+  float F2 = 0.3;
+  float W2 = MAX_COLOR_RANGE;
+  return ((x*(A2*x+C2*B2)+D2*E2)/(x*(A2*x+B2)+D2*F2))-E2/F2;
+}
+
 
 vec3 ToneMap( in vec3 texColor, float exposure)
 {
 
-   vec3 curr = Uncharted2Tonemap(exposure*texColor);
+  vec3 curr = Uncharted2Tonemap2(exposure*texColor);
+  
+  vec3 whiteScale = 1.0f/Uncharted2Tonemap2(vec3(MAX_COLOR_RANGE));
+ vec3 color = curr*whiteScale;
+   // vec3 curr = Uncharted2Tonemap(exposure*texColor);
 
-   vec3 whiteScale = 1.0f/Uncharted2Tonemap(vec3(W));
-   vec3 color = curr*whiteScale;
+   // vec3 whiteScale = 1.0f/Uncharted2Tonemap(vec3(W));
+   // vec3 color = curr*whiteScale;
 
    // vec3 retColor = pow(color,vec3(1/2.2));
    linToSrgb(color);
