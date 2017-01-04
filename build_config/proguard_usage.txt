@@ -1,3 +1,6 @@
+nidefawl.qubes.BootClientEmpty
+nidefawl.qubes.BootServer
+nidefawl.qubes.BootServer$1
 nidefawl.qubes.Game:
     static final java.lang.String buildName
     static final java.lang.String buildVersion
@@ -7,26 +10,25 @@ nidefawl.qubes.Game:
     nidefawl.qubes.world.WorldClient remoteWorld
     nidefawl.qubes.world.WorldClient testWorld
     325:339:protected void toggleTestMode()
-    1276:1276:public boolean isInSelection(int,int,int)
+    1257:1257:public boolean isInSelection(int,int,int)
 nidefawl.qubes.Game$1:
     294:294:public nidefawl.qubes.async.AsyncTask$TaskType getType()
 nidefawl.qubes.GameBase:
-    469:470:public void setTitle(java.lang.String)
-    473:486:protected void limitFpsTo(int)
-    858:858:public long getTime()
+    471:472:public void setTitle(java.lang.String)
+    475:488:protected void limitFpsTo(int)
+    869:869:public long getTime()
+nidefawl.qubes.GameRegistry:
+    26:26:public GameRegistry()
 nidefawl.qubes.PlayerProfile:
     28:28:public java.util.UUID getUUID()
 nidefawl.qubes.assets.AssetManager:
     public abstract nidefawl.qubes.assets.AssetVoxModel loadVoxModel(java.lang.String)
-    public abstract nidefawl.qubes.shader.ShaderSource getLastFailedShaderSource()
     76:81:public java.util.Collection collectAssets(java.lang.String,java.lang.String)
     111:133:public void reloadPNGAsset(nidefawl.qubes.assets.AssetTexture)
 nidefawl.qubes.assets.AssetManagerClient:
     27:47:public nidefawl.qubes.assets.AssetVoxModel loadVoxModel(java.lang.String)
-    111:111:public nidefawl.qubes.shader.ShaderSource getLastFailedShaderSource()
 nidefawl.qubes.assets.AssetManagerServer:
     25:25:public nidefawl.qubes.assets.AssetVoxModel loadVoxModel(java.lang.String)
-    40:40:public nidefawl.qubes.shader.ShaderSource getLastFailedShaderSource()
 nidefawl.qubes.assets.AssetPack:
     public abstract void collectAssets(java.lang.String,java.lang.String,java.util.LinkedHashSet)
 nidefawl.qubes.assets.AssetPackClassPath:
@@ -37,10 +39,7 @@ nidefawl.qubes.assets.AssetPackFolder$1
 nidefawl.qubes.assets.AssetPackZip
 nidefawl.qubes.assets.AssetPath
 nidefawl.qubes.assets.AssetTexture:
-    88:88:public int getBits()
-    91:91:public int getComponents()
     167:168:public void reload()
-    171:171:public short[] getUShortData()
 nidefawl.qubes.assets.AssetVoxModel
 nidefawl.qubes.async.AsyncTask:
     public abstract nidefawl.qubes.async.AsyncTask$TaskType getType()
@@ -48,48 +47,22 @@ nidefawl.qubes.async.AsyncTask$TaskType
 nidefawl.qubes.async.AsyncTasks:
     12:12:public AsyncTasks()
 nidefawl.qubes.biome.Biome:
-    147:170:public int getStone(nidefawl.qubes.world.WorldServer,int,int,int,nidefawl.qubes.world.biomes.HexBiome,java.util.Random)
-    174:174:public int getOre(nidefawl.qubes.world.WorldServer,int,int,int,nidefawl.qubes.world.biomes.HexBiome,java.util.Random)
-    201:201:public nidefawl.qubes.block.Block getStone()
-    204:204:public nidefawl.qubes.block.Block getTopBlock()
-    207:207:public nidefawl.qubes.block.Block getSoilBlock()
-    210:210:public nidefawl.qubes.block.Block getWaterBlock()
-nidefawl.qubes.biome.BiomeDesert:
-    22:22:public nidefawl.qubes.block.Block getStone()
-    25:25:public nidefawl.qubes.block.Block getTopBlock()
-    28:28:public nidefawl.qubes.block.Block getSoilBlock()
-nidefawl.qubes.biome.BiomeDesertRed:
-    22:22:public nidefawl.qubes.block.Block getStone()
-    25:25:public nidefawl.qubes.block.Block getTopBlock()
-    28:28:public nidefawl.qubes.block.Block getSoilBlock()
+    213:213:public nidefawl.qubes.block.Block getWaterBlock()
 nidefawl.qubes.biome.BiomeIce:
-    20:20:public nidefawl.qubes.block.Block getStone()
-    24:24:public nidefawl.qubes.block.Block getTopBlock()
-    28:28:public nidefawl.qubes.block.Block getSoilBlock()
     32:32:public nidefawl.qubes.block.Block getWaterBlock()
 nidefawl.qubes.block.Block:
     public static final int BLOCK_BITS
     public static final int NUM_BLOCKS
     public static final int BLOCK_MASK
     191:191:public nidefawl.qubes.block.BlockGroup getBlockGroup()
-    204:204:public nidefawl.qubes.block.BlockCategory getBlockCategory()
     215:215:public nidefawl.qubes.block.Block setName(java.lang.String)
     248:249:public varargs nidefawl.qubes.block.Block setAbsTextures(java.lang.String[])
-    408:408:public boolean canPlaceAt(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    420:420:public int prePlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    431:431:public void postPlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    442:443:public void place(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    451:454:public int placeOffset(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
     502:502:public boolean canStayAt(nidefawl.qubes.world.IBlockWorld,int,int,int)
-    549:549:public int getLightLoss(nidefawl.qubes.blocklight.LightChunkCache,int,int,int,int)
     556:575:public java.util.ArrayList resolveTextures(nidefawl.qubes.assets.AssetManager)
     583:583:public boolean isWaving()
-    596:596:public boolean canMineWith(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.world.World,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.entity.PlayerServer,nidefawl.qubes.item.ItemStack)
-    599:599:public void onBlockMine(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.world.World,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.entity.PlayerServer,nidefawl.qubes.item.ItemStack)
 nidefawl.qubes.block.BlockAir:
     37:37:public varargs nidefawl.qubes.block.Block setAbsTextures(java.lang.String[])
 nidefawl.qubes.block.BlockDoublePlant:
-    33:36:public void postPlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
     68:68:public boolean applyRandomOffset()
     94:94:public boolean isWaving()
 nidefawl.qubes.block.BlockGlass
@@ -97,18 +70,10 @@ nidefawl.qubes.block.BlockGrassBush:
     39:39:public boolean isWaving()
 nidefawl.qubes.block.BlockGroup:
     18:18:public int getId()
-nidefawl.qubes.block.BlockIce:
-    44:44:public int getLightLoss(nidefawl.qubes.blocklight.LightChunkCache,int,int,int,int)
-nidefawl.qubes.block.BlockLeaves:
-    46:46:public int getLightLoss(nidefawl.qubes.blocklight.LightChunkCache,int,int,int,int)
 nidefawl.qubes.block.BlockLight
 nidefawl.qubes.block.BlockLit
-nidefawl.qubes.block.BlockLog:
-    76:81:public void onBlockMine(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.world.World,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.entity.PlayerServer,nidefawl.qubes.item.ItemStack)
 nidefawl.qubes.block.BlockModelled:
     9:10:public BlockModelled(java.lang.String,boolean)
-nidefawl.qubes.block.BlockOre:
-    50:57:public void onBlockMine(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.world.World,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.entity.PlayerServer,nidefawl.qubes.item.ItemStack)
 nidefawl.qubes.block.BlockPane:
     49:50:public BlockPane(java.lang.String)
 nidefawl.qubes.block.BlockPlantCrossedSquares:
@@ -118,28 +83,32 @@ nidefawl.qubes.block.BlockPlantFlat:
 nidefawl.qubes.block.BlockQuarterBlock:
     public static final int Q_DATA_TYPEID
     public static final int Q_SIZE
-    201:205:public void postPlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
 nidefawl.qubes.block.BlockQuarterLog
-nidefawl.qubes.block.BlockSlab:
-    104:104:public boolean canPlaceAt(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    108:120:public int prePlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    124:131:public int placeOffset(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
 nidefawl.qubes.block.BlockSliced:
     5:6:public BlockSliced(java.lang.String)
 nidefawl.qubes.block.BlockSnowLayer
-nidefawl.qubes.block.BlockStairs:
-    141:160:public int prePlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
 nidefawl.qubes.block.BlockStone:
     6:7:public BlockStone(java.lang.String,boolean)
-nidefawl.qubes.block.BlockTorch
-nidefawl.qubes.block.BlockVine:
-    44:47:public boolean canPlaceAt(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-    52:87:public int prePlace(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.Vector3f,int,int,int)
-nidefawl.qubes.block.BlockWater:
-    47:47:public int getLightLoss(nidefawl.qubes.blocklight.LightChunkCache,int,int,int,int)
 nidefawl.qubes.block.IDMappingBlocks:
     24:24:public IDMappingBlocks()
-nidefawl.qubes.chat.ChatUser
+nidefawl.qubes.blocklight.BlockLightThread:
+    static final int NUM_CACHES
+    39:40:public void init()
+nidefawl.qubes.blocklight.BlockLightUpdate:
+    static final int STACK_SIZE
+nidefawl.qubes.blocklight.LightChunkCache:
+    public static final int NEXT
+    public static final int WIDTH
+    111:115:public int getLight(int,int,int,int,int,int)
+    210:210:public nidefawl.qubes.chunk.Chunk getCenter()
+nidefawl.qubes.chat.ChannelManager:
+    57:57:public nidefawl.qubes.chat.channel.GlobalChannel getGlobal()
+nidefawl.qubes.chat.channel.AbstractChannel:
+    24:24:public java.lang.String getName()
+    82:85:public void broadcastMessage(java.lang.String)
+nidefawl.qubes.chat.channel.Channel
+nidefawl.qubes.chat.channel.GlobalChannel:
+    public static final java.lang.String TAG
 nidefawl.qubes.chat.client.ChatManager:
     private static final long CHAT_LINE_MAX_AGE
     41:42:public void sendMessage(java.lang.String)
@@ -149,65 +118,33 @@ nidefawl.qubes.chunk.Chunk:
     public static final int MASK
     public static final int DATA_BITS
     private int top
-    53:61:public void checkIsEmtpy()
     64:64:public boolean isEmpty()
-    68:68:public int getBlockX()
-    72:72:public int getBlockZ()
-    89:89:public nidefawl.qubes.biome.Biome getBiome(int,int)
-    106:106:public short getFullData(int,int,int)
-    114:114:public boolean setData(int,int,int,int)
-    121:133:public int getTopBlock(int,int)
-    144:168:public boolean setTypeData(int,int,int,int,int)
     194:197:public int getTopBlock()
     201:212:private void updateChunk()
-    216:216:public boolean justLoaded()
-    228:239:public int getLight(int,int,int,int)
-    278:279:public int getHeightMap(int,int)
-    318:330:public void initLight()
-    334:353:public void initHeightMap()
     356:356:public int[] getHeightMap()
     359:360:public void preUnload()
-    363:368:public void postLoad()
-    371:372:public void postGenerate()
-    379:396:public byte[] getLights(nidefawl.qubes.vec.BlockBoundingBox)
-    440:440:public byte[] getWaterMask()
     444:444:public void getDestroyStage(int,int,int)
 nidefawl.qubes.chunk.ChunkData:
     public abstract short get(int,int,int)
     18:18:public boolean setUpper(int,int,int,int)
-    27:27:public nidefawl.qubes.nbt.Tag$Compound writeToTag()
-    33:33:public void readFromTag(nidefawl.qubes.nbt.Tag$Compound)
 nidefawl.qubes.chunk.ChunkDataFull
 nidefawl.qubes.chunk.ChunkDataSliced
 nidefawl.qubes.chunk.ChunkDataSliced2:
     public static final int DATA_HEIGHT_SLICES
     static final int DATA_HEIGHT_SLICE_MASK
     static final int SLICE_SIZE
-    76:96:public nidefawl.qubes.nbt.Tag$Compound writeToTag()
-    103:121:public void readFromTag(nidefawl.qubes.nbt.Tag$Compound)
-    127:131:public short[][] getArrays()
 nidefawl.qubes.chunk.ChunkManager:
     public static final int MAX_CHUNK
-    35:35:public void saveAll()
-    38:38:public void queueLoadChecked(long)
-    45:45:public int deleteAllChunks()
-    48:48:public int regenChunks(java.util.Collection)
 nidefawl.qubes.chunk.ChunkTable:
-    62:62:public nidefawl.qubes.chunk.Chunk get(long)
     87:92:public boolean containsKey(int,int)
     95:95:public int approxSize()
     116:116:public nidefawl.qubes.chunk.Chunk[] getEntries()
     120:129:public int getFixedSize()
     133:146:public boolean allRegionsLoaded(int,int,int)
-    150:152:public nidefawl.qubes.chunk.Chunk[][] clear()
-    156:156:public nidefawl.qubes.chunk.Chunk remove(long)
-    161:173:public java.util.List asList()
     222:230:public void replace(int,int,nidefawl.qubes.chunk.Chunk)
 nidefawl.qubes.chunk.blockdata.BlockData:
     public static final int HEADER_SIZE
-    50:57:public int writeHeader(byte[],int)
 nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock:
-    74:79:public void setType(int,int,int,int)
     81:83:public void setData(int,int,int,int)
     118:123:public boolean allFullBB()
 nidefawl.qubes.chunk.blockdata.BlockDataSliced:
@@ -215,40 +152,43 @@ nidefawl.qubes.chunk.blockdata.BlockDataSliced:
     static final int DATA_HEIGHT_SLICE_MASK
     static final int SLICE_SIZE
     static final int SLICE_SIZE_MASK
-    63:85:public nidefawl.qubes.nbt.Tag$Compound writeToTag()
-    92:113:public static final byte[] sliceToBytes(nidefawl.qubes.chunk.blockdata.BlockData[],byte[],int)
-    121:136:public void readFromTag(nidefawl.qubes.nbt.Tag$Compound)
-    143:161:public static final void sliceFromBytes(byte[],nidefawl.qubes.chunk.blockdata.BlockData[])
-    167:171:public nidefawl.qubes.chunk.blockdata.BlockData[][] getArrays()
 nidefawl.qubes.chunk.client.ChunkManagerBenchmark
+nidefawl.qubes.chunk.server.ChunkLoadThread:
+    105:106:public void queueLoad(int,int)
+nidefawl.qubes.chunk.server.ChunkManagerServer:
+    83:84:public void queueLoad(int,int)
+    130:133:public void saveChunk(int,int)
+nidefawl.qubes.chunk.server.ChunkUnloadThread:
+    27:28:public void init()
+nidefawl.qubes.chunk.server.RegionFile:
+    public static final int SECTOR_SIZE
+    public static final int REGION_SIZE_BITS
+    public static final int REGION_SIZE
+    public static final int CHUNK_MASK
+    public static final int NUM_CHUNKS
+    public static final int FILE_META_SIZE
+    public static final int CHUNK_META_SIZE
+    public static final int HEADER_SIZE
+    public static final int DATA_HEADER_SIZE
+nidefawl.qubes.chunk.server.RegionFileCache:
+    22:22:public static int lhToZ(long)
+    26:26:public static int lhToX(long)
 nidefawl.qubes.config.AbstractYMLConfig:
-    106:109:public java.lang.Boolean getBoolean(java.lang.String,boolean)
-    120:123:public long getLong(java.lang.String,long)
     134:137:public double getDouble(java.lang.String,double)
     145:146:protected void setDouble(java.lang.String,double)
-    148:149:protected void setBoolean(java.lang.String,boolean)
-    161:162:protected void setLong(java.lang.String,long)
 nidefawl.qubes.config.ConfigLoader
-nidefawl.qubes.config.ServerConfig
 nidefawl.qubes.config.WorkingEnv:
     9:9:public WorkingEnv()
     40:40:public static java.io.File getPacksFolder()
-    46:46:public static java.io.File getWorldsFolder()
-    50:50:public static java.io.File getPlayerData()
     57:57:public static java.io.File getWorkingDir()
 nidefawl.qubes.crafting.CraftingCategory:
     public static final int NUM_CATS
-    19:19:public static nidefawl.qubes.crafting.CraftingCategory getCatId(int)
     34:34:public java.lang.String getName()
-nidefawl.qubes.crafting.CraftingManagerBase:
-    22:30:public nidefawl.qubes.nbt.Tag$Compound save()
-    33:38:public void load(nidefawl.qubes.nbt.Tag$Compound)
 nidefawl.qubes.crafting.CraftingManagerClient:
     27:27:public int getState()
 nidefawl.qubes.crafting.recipes.CraftingRecipe:
     40:51:public boolean matches(nidefawl.qubes.inventory.slots.SlotsCrafting)
     55:55:public boolean isInput(nidefawl.qubes.item.Item)
-    58:58:public long getTime()
     88:88:public java.lang.String getSubCat()
 nidefawl.qubes.crafting.recipes.CraftingRecipes:
     17:17:public CraftingRecipes()
@@ -258,20 +198,10 @@ nidefawl.qubes.entity.Entity:
     public float yawfloat2
     public float yawfloat3
     public float yawfloat4
-    public int ticks1
     public int ticks2
     public int ticks3
-    229:230:public void move(nidefawl.qubes.vec.Vector3f)
-    252:257:public nidefawl.qubes.nbt.Tag writeClientData(boolean)
-    278:286:public int getLookDir()
-    367:368:public void remove()
 nidefawl.qubes.entity.EntityProperties:
     public static final int MAX_PROPERTIES
-    15:23:public nidefawl.qubes.nbt.Tag$Compound save()
-nidefawl.qubes.entity.EntityType:
-    99:99:public static boolean isValid(int)
-nidefawl.qubes.entity.Player:
-    31:31:public java.lang.String getName()
 nidefawl.qubes.entity.PlayerSelfBenchmark
 nidefawl.qubes.entity.ai.TaskEntry:
     19:20:public void setMask(int)
@@ -297,50 +227,58 @@ nidefawl.qubes.gl.Camera:
     20:20:public float getYaw()
     24:24:public float getPitch()
     46:48:public void setPosition(nidefawl.qubes.vec.Vec3D)
-    80:80:public nidefawl.qubes.vec.Vector3f getPrevPosition()
 nidefawl.qubes.gl.DisplayList
 nidefawl.qubes.gl.Engine:
     public static final int NUM_PROJECTIONS
     public static final int MAX_LIGHTS
     public static final int SIZE_OF_STRUCT_LIGHT
-    32:32:public Engine()
-    145:145:public static void generateLightMapTexture()
-    357:357:public static nidefawl.qubes.gl.BufferedMatrix getMatOrthoP()
-    360:360:public static nidefawl.qubes.gl.BufferedMatrix getMatOrthoMV()
-    467:481:public static void restartRenderThreads()
-    605:606:public static void toggleDrawMode()
-    612:615:public static void setOrthoMV(nidefawl.qubes.gl.BufferedMatrix)
-    621:624:public static void restoreOrtho()
-    627:627:public static nidefawl.qubes.vec.Vector3f getPxOffset()
+    35:35:public Engine()
+    208:208:public static void generateLightMapTexture()
+    424:424:public static nidefawl.qubes.gl.BufferedMatrix getMatOrthoP()
+    427:427:public static nidefawl.qubes.gl.BufferedMatrix getMatOrthoMV()
+    534:548:public static void restartRenderThreads()
+    676:677:public static void toggleDrawMode()
+    683:686:public static void setOrthoMV(nidefawl.qubes.gl.BufferedMatrix)
+    692:695:public static void restoreOrtho()
+    698:698:public static nidefawl.qubes.vec.Vector3f getPxOffset()
 nidefawl.qubes.gl.FrameBuffer:
     private static final int MAX_COLOR_ATT
-    41:42:public void setColorTexExtFmt(int)
-    47:48:public void setColorTexExtType(int)
+    43:44:public void setColorTexExtFmt(int)
+    49:50:public void setColorTexExtType(int)
 nidefawl.qubes.gl.GL:
     20:20:public GL()
     69:70:public static void glFogv(int,java.nio.FloatBuffer)
     72:73:public static void glGetFloatv(int,java.nio.FloatBuffer)
     75:76:public static void glLoadMatrixf(java.nio.FloatBuffer)
 nidefawl.qubes.gl.GLAttrBuffer
-nidefawl.qubes.gl.GLDebugLog:
-    14:14:public GLDebugLog()
+nidefawl.qubes.gl.GLDebugLog
+nidefawl.qubes.gl.GLDebugLog$1
 nidefawl.qubes.gl.GLDebugTextures:
     223:225:public static int getTexture(java.lang.String,java.lang.String)
 nidefawl.qubes.gl.GLTriBuffer:
-    50:51:public void drawElements()
-    80:80:public int getGLArrayBuffer()
-    83:83:public int getGLIndexBuffer()
-    87:87:public int getVertexCount()
-    97:97:public int getIdxCount()
+    51:52:public void drawElements()
+    81:81:public int getGLArrayBuffer()
+    84:84:public int getGLIndexBuffer()
+    88:88:public int getVertexCount()
+    98:98:public int getIdxCount()
 nidefawl.qubes.gl.GLVBO:
     static final int MIN_BUF_SIZE
-    24:24:public boolean isTerrain()
-    38:42:public void allocate(int,long)
+    31:31:public boolean isTerrain()
+    45:49:public void allocate(int,long)
+    104:107:public void makeBindless(int)
 nidefawl.qubes.gl.Memory:
     static final boolean DEBUG_ALLOC
     19:19:public Memory()
     43:48:public static java.nio.ByteBuffer createByteBuffer(int)
     100:102:public static java.nio.FloatBuffer createFloatBufferGC(int)
+nidefawl.qubes.gl.MultiDrawIndirectBuffer:
+    private int vertexBufferCount
+    32:33:public void setInUse(boolean)
+    35:35:public boolean isInUse()
+    26:162:public MultiDrawIndirectBuffer(int)
+    68:73:public void release()
+    79:80:public void put(int[])
+    98:98:public java.nio.ByteBuffer getByteBuf()
 nidefawl.qubes.gl.ReallocIntBuffer:
     66:67:public void put(int[])
 nidefawl.qubes.gl.ShadowProjector:
@@ -383,7 +321,11 @@ nidefawl.qubes.gui.GuiCrash
 nidefawl.qubes.gui.GuiGameMenu:
     141:141:public boolean requiresTextInput()
 nidefawl.qubes.gui.GuiMainMenu:
-    144:144:public boolean requiresTextInput()
+    152:152:public boolean requiresTextInput()
+nidefawl.qubes.gui.GuiMultiplayer:
+    91:91:public boolean requiresTextInput()
+nidefawl.qubes.gui.controls.Button:
+    61:62:public void setText(java.lang.String)
 nidefawl.qubes.gui.controls.CheckBox:
     public float stringWidth
     public int textColorDisabled
@@ -431,8 +373,6 @@ nidefawl.qubes.hex.HexCell:
     53:53:public java.lang.Object getTopRight()
     56:56:public java.lang.Object getBottomLeft()
     59:59:public java.lang.Object getBottomRight()
-    90:90:public nidefawl.qubes.hex.HexagonGridStorage getGrid()
-    94:202:public java.util.Collection getChunks()
 nidefawl.qubes.hex.HexagonGrid:
     72:76:public final nidefawl.qubes.hex.Point2F getPoint(int,int,int)
     80:88:public final nidefawl.qubes.hex.Point2F[] getPoints(int,int)
@@ -444,13 +384,14 @@ nidefawl.qubes.hex.HexagonGrid:
     107:107:public static long bottomRight(int,int)
 nidefawl.qubes.hex.HexagonGridStorage:
     34:36:public void reset()
-    80:80:public java.util.Collection getLoaded()
-    84:84:public void flag(int,int)
 nidefawl.qubes.hex.HexagonGridStorage$HexCellEnd
-nidefawl.qubes.hex.Point2F
+nidefawl.qubes.hex.Point2F:
+    18:21:public Point2F(float,float)
 nidefawl.qubes.input.DigController:
+    35:43:public void onMouseClick(int,boolean)
     50:50:public int getTicks()
     57:57:public int getSpeed()
+    75:79:private void startDigging()
     150:152:private void reset()
     168:217:public void renderBlockOver(nidefawl.qubes.gl.TesselatorState,nidefawl.qubes.vec.AABBFloat)
 nidefawl.qubes.input.EditBlockTask
@@ -462,61 +403,19 @@ nidefawl.qubes.input.Mouse:
     public static final boolean DISABLE_MOUSE_INPUT
     13:13:public Mouse()
 nidefawl.qubes.input.Selection:
-    551:562:public boolean contains(int,int,int)
-nidefawl.qubes.inventory.BaseInventory:
-    37:37:public boolean isDirty()
-    54:54:public int getId()
-    58:58:public int getSize()
-    62:69:public java.util.List copySlotStacks()
-    73:79:public void addStack(nidefawl.qubes.item.BaseStack)
-    106:116:public java.util.HashSet getUpdate()
-    119:121:public void flag(int)
-nidefawl.qubes.inventory.InventoryUtil
+    514:525:public boolean contains(int,int,int)
+nidefawl.qubes.inventory.InventoryUtil:
+    20:20:public InventoryUtil()
+    64:71:public static int count(nidefawl.qubes.inventory.BaseInventory,nidefawl.qubes.item.BaseStack)
+    75:83:public static boolean isEqual(nidefawl.qubes.item.BaseStack[],nidefawl.qubes.item.BaseStack[])
 nidefawl.qubes.inventory.PlayerInventory:
     25:29:public nidefawl.qubes.inventory.PlayerInventory copy(nidefawl.qubes.inventory.PlayerInventory)
-    33:38:public java.util.List copySlotStacks()
-    41:52:public void set(java.util.List)
 nidefawl.qubes.inventory.PlayerInventoryCrafting:
     21:21:public int getInputSlots()
     24:24:public int getOutputSlots()
     28:32:public nidefawl.qubes.inventory.PlayerInventoryCrafting copy(nidefawl.qubes.inventory.PlayerInventoryCrafting)
-nidefawl.qubes.inventory.slots.Slot:
-    public abstract boolean transferTo(nidefawl.qubes.inventory.slots.SlotsInventoryBase)
-    public abstract boolean isEmpty()
-    public abstract nidefawl.qubes.item.BaseStack drain()
-    public abstract nidefawl.qubes.item.BaseStack put(nidefawl.qubes.inventory.slots.SlotInventory)
-    48:48:public void flag()
-nidefawl.qubes.inventory.slots.SlotInventory:
-    29:36:public boolean transferTo(nidefawl.qubes.inventory.slots.SlotsInventoryBase)
-    41:41:public boolean isEmpty()
-    46:46:public nidefawl.qubes.item.BaseStack drain()
-    51:51:public nidefawl.qubes.item.BaseStack put(nidefawl.qubes.inventory.slots.SlotInventory)
-    73:74:public void flag()
-nidefawl.qubes.inventory.slots.SlotPreview:
-    21:21:public boolean transferTo(nidefawl.qubes.inventory.slots.SlotsInventoryBase)
-    26:26:public boolean isEmpty()
-    31:31:public nidefawl.qubes.item.BaseStack drain()
-    36:36:public nidefawl.qubes.item.BaseStack put(nidefawl.qubes.inventory.slots.SlotInventory)
-nidefawl.qubes.inventory.slots.SlotStack:
-    15:18:public SlotStack(int,nidefawl.qubes.item.BaseStack)
-nidefawl.qubes.inventory.slots.SlotStock:
-    28:28:public boolean transferTo(nidefawl.qubes.inventory.slots.SlotsInventoryBase)
-    33:33:public boolean isEmpty()
-    38:38:public nidefawl.qubes.item.BaseStack drain()
-    43:43:public nidefawl.qubes.item.BaseStack put(nidefawl.qubes.inventory.slots.SlotInventory)
 nidefawl.qubes.inventory.slots.SlotsCrafting:
-    11:12:public SlotsCrafting(nidefawl.qubes.entity.Player,int)
     22:22:public int getSize()
-    26:26:public int getInputSize()
-    30:31:public void unlock()
-    34:35:public void lock()
-    42:48:public int getNumItems()
-    51:60:public int transferSlots(nidefawl.qubes.inventory.slots.SlotsInventoryBase)
-nidefawl.qubes.inventory.slots.SlotsInventory:
-    24:25:public SlotsInventory(nidefawl.qubes.entity.PlayerServer)
-nidefawl.qubes.inventory.slots.SlotsInventoryBase:
-    43:50:public nidefawl.qubes.inventory.slots.Slot getFirstEmpty(nidefawl.qubes.item.BaseStack)
-    54:63:public nidefawl.qubes.item.BaseStack addStack(nidefawl.qubes.item.BaseStack)
 nidefawl.qubes.io.BinaryStreamReader:
     25:30:int[] readUByteArray(int)
     39:41:public double readDouble()
@@ -524,30 +423,15 @@ nidefawl.qubes.io.BinaryStreamReader:
     81:84:public int readSByte()
 nidefawl.qubes.io.ByteArrIO:
     9:9:public ByteArrIO()
-    17:21:public static int writeInt(byte[],int,int)
-    24:26:public static int writeShort(byte[],int,int)
-    36:37:private static void write(byte[],int,int)
-    69:70:public static void writeByte(byte[],int,int)
     88:92:public static short[] byteToShortArray(byte[])
 nidefawl.qubes.io.ByteInStream
 nidefawl.qubes.io.ByteOutStream
 nidefawl.qubes.item.BaseStack:
-    public abstract nidefawl.qubes.nbt.Tag save()
-    public abstract boolean isFullyEqual(nidefawl.qubes.item.BaseStack)
-    public abstract boolean isEqualId(nidefawl.qubes.item.BaseStack)
-    33:43:public static nidefawl.qubes.item.BaseStack load(nidefawl.qubes.nbt.Tag)
-    46:50:public static boolean equalStacks(nidefawl.qubes.item.BaseStack,nidefawl.qubes.item.BaseStack)
     56:56:public boolean is(nidefawl.qubes.block.Block)
     59:59:public boolean is(nidefawl.qubes.item.Item)
-    86:86:public int getId()
     89:89:public int getData()
     92:93:public void setId(int)
     95:96:public void setData(int)
-nidefawl.qubes.item.BlockStack:
-    64:78:public BlockStack(nidefawl.qubes.nbt.Tag$Compound)
-    82:96:public nidefawl.qubes.nbt.Tag save()
-    133:136:public boolean isEqualId(nidefawl.qubes.item.BaseStack)
-    139:142:public boolean isFullyEqual(nidefawl.qubes.item.BaseStack)
 nidefawl.qubes.item.IDMappingItems:
     24:24:public IDMappingItems()
 nidefawl.qubes.item.Item:
@@ -557,7 +441,6 @@ nidefawl.qubes.item.Item:
     57:57:public nidefawl.qubes.item.ItemGroup getItemGroup()
     96:97:public varargs nidefawl.qubes.item.Item setAbsTextures(java.lang.String[])
     136:141:public java.util.ArrayList resolveTextures(nidefawl.qubes.assets.AssetManager)
-    163:173:public boolean canMine(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.block.Block,nidefawl.qubes.world.World,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.entity.PlayerServer,nidefawl.qubes.item.ItemStack)
 nidefawl.qubes.item.ItemGroup:
     13:13:public int getId()
     public abstract java.util.List getNames()
@@ -571,11 +454,7 @@ nidefawl.qubes.item.ItemLog:
     13:13:public int getIndex()
 nidefawl.qubes.item.ItemPlank
 nidefawl.qubes.item.ItemStack:
-    25:29:public ItemStack(nidefawl.qubes.nbt.Tag$Compound)
     36:37:public ItemStack(nidefawl.qubes.nbt.Tag)
-    82:87:public nidefawl.qubes.nbt.Tag save()
-    92:95:public boolean isEqualId(nidefawl.qubes.item.BaseStack)
-    98:101:public boolean isFullyEqual(nidefawl.qubes.item.BaseStack)
 nidefawl.qubes.item.ItemStone:
     13:13:public int getIndex()
 nidefawl.qubes.item.StackData:
@@ -597,7 +476,8 @@ nidefawl.qubes.meshing.BlockFaceAttr:
     public static final int PASS_3_BLOCK_FACE_BYTE_SIZE
     167:186:public void putVertAttr(nidefawl.qubes.gl.VertexBuffer)
     189:200:public void putFaceAttr(nidefawl.qubes.gl.VertexBuffer)
-    337:364:public int calcNormal()
+    232:256:public void putFormat2(nidefawl.qubes.gl.VertexBuffer)
+    364:391:public int calcNormal()
 nidefawl.qubes.meshing.BlockRenderer:
     1006:1017:float f(int,int)
 nidefawl.qubes.meshing.BlockSurface:
@@ -610,7 +490,6 @@ nidefawl.qubes.meshing.ChunkRenderCache:
     151:151:public boolean setType(int,int,int,int,int)
     156:156:public int getHeight(int,int)
     161:161:public boolean setData(int,int,int,int,int)
-    174:174:public boolean setTypeData(int,int,int,int,int,int)
     178:178:public boolean setBlockData(int,int,int,nidefawl.qubes.chunk.blockdata.BlockData,int)
 nidefawl.qubes.meshing.Mesher:
     static final boolean MEASURE
@@ -668,7 +547,6 @@ nidefawl.qubes.models.qmodel.QModelPoseBone:
 nidefawl.qubes.models.qmodel.QModelProperties:
     static final int MAX_PROPERTIES
     static final int MAX_ACTIONS
-    30:31:public void clear()
 nidefawl.qubes.models.qmodel.QModelVertex:
     static final int MAX_BONES
 nidefawl.qubes.models.qmodel.animation.KeyFrame:
@@ -713,45 +591,18 @@ nidefawl.qubes.nbt.Tag:
     private static final int MAX_LIST_LEN
     private static final int MAX_COMPOUND_TAG_ENTRIES
     public abstract java.lang.Object getValue()
-    905:909:public static nidefawl.qubes.nbt.Tag$TagList wrapStringList(java.util.Collection)
-    917:921:public static java.util.ArrayList unwrapStringList(java.util.Collection)
 nidefawl.qubes.nbt.Tag$BlockPos3:
-    614:616:public Tag$BlockPos3(nidefawl.qubes.vec.BlockPos)
-    642:642:public java.lang.Object getValue()
-    645:646:public void setData(nidefawl.qubes.vec.BlockPos)
-    648:648:public nidefawl.qubes.vec.BlockPos getData()
+    643:643:public java.lang.Object getValue()
+    646:647:public void setData(nidefawl.qubes.vec.BlockPos)
+    649:649:public nidefawl.qubes.vec.BlockPos getData()
 nidefawl.qubes.nbt.Tag$Byte:
-    62:64:public Tag$Byte(int)
     81:81:public java.lang.Object getValue()
-    91:91:public byte getByte()
     95:96:public void setByte(byte)
 nidefawl.qubes.nbt.Tag$ByteArray:
-    103:105:public Tag$ByteArray(byte[])
     123:123:public java.lang.Object getValue()
-    139:140:public void setArray(byte[])
 nidefawl.qubes.nbt.Tag$Compound:
     374:374:public java.lang.Object getValue()
-    414:414:public java.util.Map getMap()
-    418:420:public void set(java.lang.String,nidefawl.qubes.nbt.Tag)
-    423:424:public void setInt(java.lang.String,int)
-    427:428:public void setLong(java.lang.String,long)
-    431:432:public void setByteArray(java.lang.String,byte[])
-    435:436:public nidefawl.qubes.nbt.Tag$ByteArray getByteArray(java.lang.String)
     444:445:public double getDouble(java.lang.String)
-    449:450:public nidefawl.qubes.vec.Vector3f getVec3(java.lang.String)
-    454:455:public void setVec3(java.lang.String,nidefawl.qubes.vec.Vector3f)
-    458:459:public java.util.UUID getUUID(java.lang.String)
-    463:464:public void setUUID(java.lang.String,java.util.UUID)
-    467:468:public int getByte(java.lang.String)
-    472:473:public void setByte(java.lang.String,int)
-    477:478:public void setBoolean(java.lang.String,boolean)
-    481:482:public int getInt(java.lang.String)
-    486:487:public long getLong(java.lang.String)
-    491:491:public boolean getBoolean(java.lang.String)
-    496:497:public java.util.List getList(java.lang.String)
-    506:507:public void setList(java.lang.String,nidefawl.qubes.nbt.Tag$TagList)
-    514:515:public void setString(java.lang.String,java.lang.String)
-    527:528:public void setBlockPos(java.lang.String,nidefawl.qubes.vec.BlockPos)
     530:531:public nidefawl.qubes.vec.BlockPos getBlockPos(java.lang.String)
 nidefawl.qubes.nbt.Tag$Double:
     149:151:public Tag$Double(double)
@@ -765,50 +616,41 @@ nidefawl.qubes.nbt.Tag$Float:
     561:561:public float getFloat()
     565:566:public void setFloat(float)
 nidefawl.qubes.nbt.Tag$Int:
-    573:575:public Tag$Int(int)
     592:592:public java.lang.Object getValue()
-    602:602:public int getInt()
     606:607:public void setInt(int)
 nidefawl.qubes.nbt.Tag$IntMap:
     328:328:public java.lang.Object getValue()
     355:355:public java.util.Map getData()
     359:361:public void set(java.util.HashMap)
 nidefawl.qubes.nbt.Tag$Long:
-    696:698:public Tag$Long(long)
-    714:714:public java.lang.Object getValue()
-    724:724:public long getLong()
-    728:729:public void setLong(long)
+    715:715:public java.lang.Object getValue()
+    729:730:public void setLong(long)
 nidefawl.qubes.nbt.Tag$Short:
-    789:789:public java.lang.Object getValue()
-    799:800:public void setShort(short)
-    803:803:public short getShort()
+    790:790:public java.lang.Object getValue()
+    800:801:public void setShort(short)
+    804:804:public short getShort()
 nidefawl.qubes.nbt.Tag$StringTag:
-    655:657:public Tag$StringTag(java.lang.String)
-    669:669:public java.lang.Object getValue()
-    684:685:public void setString(java.lang.String)
+    670:670:public java.lang.Object getValue()
+    685:686:public void setString(java.lang.String)
 nidefawl.qubes.nbt.Tag$TagList:
     267:267:public java.lang.Object getValue()
-    270:270:public int getSize()
-    299:299:public java.util.List getList()
-    303:309:public void add(nidefawl.qubes.nbt.Tag)
-    312:312:public nidefawl.qubes.nbt.Tag$TagType getListTagType()
 nidefawl.qubes.nbt.Tag$UUIDTag:
-    736:738:public Tag$UUIDTag(java.util.UUID)
-    756:756:public java.lang.Object getValue()
-    766:766:public java.util.UUID getUUID()
-    770:771:public void setUUID(java.util.UUID)
+    757:757:public java.lang.Object getValue()
+    771:772:public void setUUID(java.util.UUID)
 nidefawl.qubes.nbt.Tag$Vec3Tag:
     215:215:public java.lang.Object getValue()
     225:226:public void setVec3(nidefawl.qubes.vec.Vector3f)
     229:230:public void setVec3(nidefawl.qubes.vec.Vec3D)
-    233:233:public nidefawl.qubes.vec.Vector3f getVec3()
 nidefawl.qubes.nbt.TagReadLimiter:
     12:21:public TagReadLimiter(int,int)
-nidefawl.qubes.nbt.TagReader
+nidefawl.qubes.nbt.TagReader:
+    10:10:public TagReader()
+    13:14:public static nidefawl.qubes.nbt.Tag readTagFromBytes(byte[])
+    18:19:public static nidefawl.qubes.nbt.Tag readTagFromBytesLimited(byte[])
+    23:25:public static byte[] writeTagToBytes(nidefawl.qubes.nbt.Tag)
 nidefawl.qubes.network.Connection:
     public static final int REMOTE
     public static final int LOCAL
-    169:169:public java.net.InetSocketAddress getAddr()
 nidefawl.qubes.network.Handler:
     public static final int STATE_HANDSHAKE
     public static final int STATE_AUTH
@@ -819,62 +661,65 @@ nidefawl.qubes.network.Handler:
     public abstract boolean isServerSide()
     public abstract void update()
     public abstract java.lang.String getHandlerName()
-    public abstract void onDisconnect(int,java.lang.String)
 nidefawl.qubes.network.client.ClientHandler:
     public static final long timeout
     71:71:public boolean isServerSide()
 nidefawl.qubes.network.client.ClientHandler$1:
-    227:227:public nidefawl.qubes.async.AsyncTask$TaskType getType()
+    226:226:public nidefawl.qubes.async.AsyncTask$TaskType getType()
 nidefawl.qubes.network.packet.Packet:
     public static final int MAX_ID
     public static final int MAX_STR_LEN
     public static final int NET_VERSION
     134:134:public boolean handleSynchronized()
     138:138:public static void init()
-nidefawl.qubes.network.packet.PacketAuth:
-    22:25:public PacketAuth(java.lang.String,boolean)
 nidefawl.qubes.network.packet.PacketCSetBlock:
     21:22:public PacketCSetBlock(int,nidefawl.qubes.vec.BlockPos,int,nidefawl.qubes.item.BlockStack)
-nidefawl.qubes.network.packet.PacketChatChannels:
-    34:36:public PacketChatChannels(java.util.Collection)
-nidefawl.qubes.network.packet.PacketSChunkData:
-    18:19:public PacketSChunkData(int)
-nidefawl.qubes.network.packet.PacketSDebugBB:
-    18:20:public PacketSDebugBB(java.util.List)
 nidefawl.qubes.network.packet.PacketSDebugPath:
     19:21:public PacketSDebugPath(java.util.List)
-nidefawl.qubes.network.packet.PacketSDigState:
-    17:19:public PacketSDigState(int,int)
-nidefawl.qubes.network.packet.PacketSEntityEquip:
-    24:27:public PacketSEntityEquip(int,nidefawl.qubes.item.BaseStack[])
-nidefawl.qubes.network.packet.PacketSEntityMove:
-    26:33:public PacketSEntityMove(int,int,nidefawl.qubes.vec.Vec3D,float,float,float)
-nidefawl.qubes.network.packet.PacketSEntityUnTrack:
-    24:26:public PacketSEntityUnTrack(int)
-nidefawl.qubes.network.packet.PacketSInvCarried:
-    18:20:public PacketSInvCarried(nidefawl.qubes.inventory.slots.SlotStack)
-nidefawl.qubes.network.packet.PacketSInvSync:
-    20:24:public PacketSInvSync(int,int,java.util.Collection)
-nidefawl.qubes.network.packet.PacketSInvSyncIncr:
-    20:23:public PacketSInvSyncIncr(int,java.util.Collection)
-nidefawl.qubes.network.packet.PacketSLightChunk:
-    17:18:public PacketSLightChunk(int)
-nidefawl.qubes.network.packet.PacketSList:
-    22:26:public PacketSList(int,nidefawl.qubes.io.network.DataListType,java.util.List)
 nidefawl.qubes.network.packet.PacketSSetBlock:
     15:21:public PacketSSetBlock(int,int,int,int,int,int)
-nidefawl.qubes.network.packet.PacketSSetBlocks:
-    16:31:public PacketSSetBlocks(int,int,int,short[],short[],byte[],short[],nidefawl.qubes.chunk.blockdata.BlockData[])
-nidefawl.qubes.network.packet.PacketSSpawnInWorld:
-    21:27:public PacketSSpawnInWorld(int,int,nidefawl.qubes.world.IWorldSettings,nidefawl.qubes.vec.Vec3D,int)
-nidefawl.qubes.network.packet.PacketSTeleport:
-    21:27:public PacketSTeleport(int,int,nidefawl.qubes.vec.Vec3D,float,float,int)
-nidefawl.qubes.network.packet.PacketSTrackChunk:
-    16:20:public PacketSTrackChunk(int,int,int,boolean)
 nidefawl.qubes.network.packet.PacketSWorldBiomes:
     28:29:public PacketSWorldBiomes(int)
-nidefawl.qubes.network.packet.PacketSWorldTime:
-    17:21:public PacketSWorldTime(int,long,long,boolean)
+nidefawl.qubes.network.server.ServerHandler:
+    36:36:public boolean isServerSide()
+nidefawl.qubes.noise.AbstractNoiseGen:
+    public static final double gScale
+nidefawl.qubes.noise.NoiseLib:
+    15:15:public NoiseLib()
+    42:42:public static boolean isLibPresent()
+nidefawl.qubes.noise.NoiseMap2D:
+    48:56:public double eval(double,double)
+nidefawl.qubes.noise.RiverNoise2D:
+    static final int CHUNK_SIZE
+nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult:
+    16:16:public double getNoise(double[],int,int,int,int)
+nidefawl.qubes.noise.TerrainNoiseMap2D:
+    static final int CHUNK_SIZE
+nidefawl.qubes.noise.TerrainNoiseMap2DResult:
+    13:13:public double getNoise(double[],int,int,int,int)
+nidefawl.qubes.noise.opennoise.OpenSimplexNoise:
+    public abstract double eval(double,double,double,double)
+nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava:
+    private static final double STRETCH_CONSTANT_2D
+    private static final double SQUISH_CONSTANT_2D
+    static final double STRETCH_CONSTANT_3D
+    static final double SQUISH_CONSTANT_3D
+    private static final double STRETCH_CONSTANT_4D
+    private static final double SQUISH_CONSTANT_4D
+    private static final double NORM_CONSTANT_2D
+    static final double NORM_CONSTANT_3D
+    private static final double NORM_CONSTANT_4D
+    private static final long DEFAULT_SEED
+    40:48:public OpenSimplexNoiseJava(short[])
+    755:2062:public double eval(double,double,double,double)
+    2082:2083:private double extrapolate(int,int,int,int,double,double,double,double)
+nidefawl.qubes.noise.opennoise.OpenSimplexNoiseLib:
+    public static native double eval(long,double,double,double,double)
+    public static native void generateChunk(long,int,int,long)
+    36:36:public double eval(double,double,double,double)
+nidefawl.qubes.noise.opennoise.OpenSimplexNoiseTileable3D
+nidefawl.qubes.noise.opennoise.SimplexValueNoise
+nidefawl.qubes.noise.opennoise.SimplexValueSplineNoise
 nidefawl.qubes.path.Path:
     23:27:public void incr()
 nidefawl.qubes.path.PathList:
@@ -888,21 +733,13 @@ nidefawl.qubes.perf.TimingHelper:
     27:29:public static void endStart(java.lang.String)
     31:52:public static void startSec(java.lang.String)
     54:61:public static void endSec()
-    63:77:public static boolean start(int)
     85:93:public static long stopSilent(int)
-    96:116:public static long end(int)
-    124:136:static boolean hasChild(int)
-    139:180:public static void dump()
     182:183:public static void setName(int,java.lang.String)
-    185:185:public static boolean hasName(int)
     188:193:public static void reset(int,int)
     201:207:public static void check()
-nidefawl.qubes.perf.TimingHelper$1
-nidefawl.qubes.perf.TimingHelper$TimingEntry
 nidefawl.qubes.perf.TimingHelper2
 nidefawl.qubes.perf.TimingHelper2$1
 nidefawl.qubes.perf.TimingHelper2$TimingEntry
-nidefawl.qubes.player.EntityData
 nidefawl.qubes.render.BatchedRiggedModelRenderer
 nidefawl.qubes.render.BatchedRiggedModelRenderer$1
 nidefawl.qubes.render.BatchedRiggedModelRenderer2
@@ -911,23 +748,25 @@ nidefawl.qubes.render.FinalRenderer:
     private int blurTexture
     float curBrightness
     float brightness
-    297:303:public int renderNormals()
+    302:308:public int renderNormals()
 nidefawl.qubes.render.ShadowRenderer:
     public static final int MULTI_DRAW
     public static final int MULTI_DRAW_TEXUTED
     public static final int MAX_SHADOW_RENDER_MODE
+nidefawl.qubes.render.SkyRenderer:
+    static final int MAX_SPRITES
+    static final int SKYBOX_RES
 nidefawl.qubes.render.WorldRenderer:
     public static final int NUM_PASSES
     public static final int PASS_SOLID
     public static final int PASS_TRANSPARENT
     public static final int PASS_SHADOW_SOLID
     public static final int PASS_LOD
-    public nidefawl.qubes.shader.Shader skyCloudShader
     public static final int HALF_EXTRA_RENDER
     public static final int EXTRA_RENDER
     public static final float RDIST
-    400:400:public void renderVoxModels(nidefawl.qubes.shader.Shader,int,float)
-    625:625:public int getNumRendered()
+    405:405:public void renderVoxModels(nidefawl.qubes.shader.Shader,int,float)
+    632:632:public int getNumRendered()
 nidefawl.qubes.render.gui.SingleBlockDraw:
     156:158:public void reset()
 nidefawl.qubes.render.gui.SingleBlockRenderAtlas:
@@ -954,6 +793,19 @@ nidefawl.qubes.render.region.RegionRenderer:
     static final int MIN_DIST_OCCL
     static final int MIN_STATE_OCCL
     static final boolean ENABLE_OCCL
+nidefawl.qubes.server.ConsoleReader
+nidefawl.qubes.server.GameServer:
+    java.lang.Thread handshakeThread
+    static final long TICK_LEN_MS
+    240:248:public void loadConfig()
+    276:276:public java.lang.Thread getThread()
+nidefawl.qubes.server.LocalGameServer:
+    11:12:public boolean getStatus()
+nidefawl.qubes.server.PlayerChunkTracker$Entry:
+    104:108:public void flagLight(int,int,int)
+nidefawl.qubes.server.StartServer
+nidefawl.qubes.server.StartServer$1
+nidefawl.qubes.server.StartServer$2
 nidefawl.qubes.shader.AbstractUniform:
     public abstract boolean set()
 nidefawl.qubes.shader.Shader:
@@ -985,12 +837,36 @@ nidefawl.qubes.shader.Uniform2i
 nidefawl.qubes.shader.Uniform3f:
     40:41:public void set(nidefawl.qubes.vec.Vector3f)
 nidefawl.qubes.shader.UniformBuffer:
-    65:65:public java.nio.FloatBuffer getFloatBuffer()
-    71:72:void skip()
-    480:483:public static void setMVP(java.nio.FloatBuffer)
-    505:505:public static int getMaxBindingPoint()
+    51:52:nidefawl.qubes.shader.UniformBuffer addFloat()
+    67:67:public java.nio.FloatBuffer getFloatBuffer()
+    73:74:void skip()
+    496:499:public static void setMVP(java.nio.FloatBuffer)
+    521:521:public static int getMaxBindingPoint()
 nidefawl.qubes.shader.UniformMat4:
     43:53:public boolean set()
+nidefawl.qubes.test.ArrayAccessPerf
+nidefawl.qubes.test.ArrayAccessPerf$MyArray
+nidefawl.qubes.test.ArrayAccessPerf$MyArrayFlat
+nidefawl.qubes.test.ArrayAccessPerf$MyArrayMult
+nidefawl.qubes.test.ArrayAccessPerf$MyEntry
+nidefawl.qubes.test.CoordLongHash
+nidefawl.qubes.test.HalfTest
+nidefawl.qubes.test.ShortArrayToByteArray
+nidefawl.qubes.test.TestCP
+nidefawl.qubes.test.TestChunkDataSpeedConsistent
+nidefawl.qubes.test.TestChunkDataThread
+nidefawl.qubes.test.TestChunkDataThread$1
+nidefawl.qubes.test.TestFrustum
+nidefawl.qubes.test.TestIntHashFunctions
+nidefawl.qubes.test.TestLongHashFunctions
+nidefawl.qubes.test.TestNoise
+nidefawl.qubes.test.TestNormalCalc
+nidefawl.qubes.test.TestRegionFile
+nidefawl.qubes.test.TestRegionFile$1
+nidefawl.qubes.test.TestStructureMap
+nidefawl.qubes.test.TestStructureMap$1
+nidefawl.qubes.test.ThreadInterrupt
+nidefawl.qubes.test.ThreadInterrupt$MyThread
 nidefawl.qubes.texture.PNGDecoder:
     private static final int IHDR
     private static final int PLTE
@@ -1032,7 +908,6 @@ nidefawl.qubes.texture.array.ItemTextureArray:
     public static final int maxTextures
 nidefawl.qubes.texture.array.TextureArray:
     public static final boolean SKIP_LOAD_TEXTURES
-nidefawl.qubes.util.CharSequenceIterator
 nidefawl.qubes.util.ClipboardHelper:
     7:7:public ClipboardHelper()
 nidefawl.qubes.util.Color:
@@ -1057,11 +932,7 @@ nidefawl.qubes.util.GameMath:
     138:141:public static int randomI2(long)
     154:154:public static int ihToZ(int)
     157:157:public static int ihToX(int)
-    160:160:public static int toInt(int,int)
-    164:166:public static double dist2d(double,double,double,double)
     186:186:public static float mod(float,float)
-    206:206:public static final float powf(float,float)
-    214:233:public static float pow(float,int)
 nidefawl.qubes.util.Half:
     10:10:public Half()
     14:34:public static float toFloat(int)
@@ -1080,31 +951,31 @@ nidefawl.qubes.util.RayTrace:
     private static final float MAX_X
     private static final float MAX_Y
     private static final float MAX_Z
-nidefawl.qubes.util.RegionEntry
+nidefawl.qubes.util.RegionEntry:
+    public abstract java.util.Set getKeys()
+    public abstract void removeKey(int)
+    public abstract nidefawl.qubes.vec.AABBInt getBB()
 nidefawl.qubes.util.RegionMap:
-    20:20:private int toRegion(int)
     24:24:private int toBlock(int)
-    28:40:public void add(nidefawl.qubes.util.RegionEntry)
     43:47:public void remove(nidefawl.qubes.util.RegionEntry)
     51:60:public void debug()
     63:63:public boolean contains(nidefawl.qubes.util.RegionEntry)
     68:68:private int key(int,int)
     72:72:public java.util.Collection getRegion(int,int)
-    76:88:public java.util.Collection getRegions(int,int,int)
     91:103:boolean isInRegion(nidefawl.qubes.util.RegionEntry,int,int)
     107:124:public java.util.Collection getRegions(int,int,int,int)
     128:139:public boolean containsAny(int,int,int)
     143:169:public nidefawl.qubes.util.RegionEntry getNearest(int,int)
     173:177:public int getDistanceSq(nidefawl.qubes.util.RegionEntry,int,int)
-    181:183:public void clear()
-    186:186:public java.util.Collection values()
-    190:202:public void validate()
+    189:201:public void validate()
 nidefawl.qubes.util.RenderUtil:
     7:7:public RenderUtil()
     10:29:public static void makeCube2(nidefawl.qubes.gl.VertexBuffer,float)
     31:69:public static void makeCube(nidefawl.qubes.gl.VertexBuffer,float)
     72:131:public static void makeSphere(nidefawl.qubes.gl.VertexBuffer,float,int,int)
-nidefawl.qubes.util.ServerStats
+nidefawl.qubes.util.ServerStats:
+    12:12:public ServerStats()
+    25:35:public static void dump()
 nidefawl.qubes.util.SideOnly
 nidefawl.qubes.util.SingleBlockWorld:
     37:39:public void setAirBlock(int,int)
@@ -1112,42 +983,29 @@ nidefawl.qubes.util.SingleBlockWorld:
     65:65:public boolean setType(int,int,int,int,int)
     70:70:public int getHeight(int,int)
     75:75:public boolean setData(int,int,int,int,int)
-    95:95:public boolean setTypeData(int,int,int,int,int,int)
     117:117:public boolean setBlockData(int,int,int,nidefawl.qubes.chunk.blockdata.BlockData,int)
     122:122:public nidefawl.qubes.biome.Biome getBiome(int,int)
-nidefawl.qubes.util.SnakeIterator
+nidefawl.qubes.util.SnakeIterator:
+    27:27:public boolean hasMore(int)
+    59:59:public int getPos()
+    63:64:public void setMax(int)
 nidefawl.qubes.util.Stats:
     3:3:public Stats()
 nidefawl.qubes.util.StringUtil:
     5:5:public StringUtil()
-    8:18:public static java.lang.String[] dropArrIdx(java.lang.String[],int)
-    23:26:public static long parseLong(java.lang.String,long,int)
-    32:34:public static java.util.UUID parseUUID(java.lang.String,java.util.UUID)
-    47:54:public static java.lang.String combine(java.lang.String[],int,int)
 nidefawl.qubes.util.SysInfo:
     public java.lang.String lwjglVersion
 nidefawl.qubes.util.Timer:
     private static final long NS_IN_MS
 nidefawl.qubes.util.TripletIntHash:
     4:4:public TripletIntHash()
-    11:11:public static int getX(int)
-    14:14:public static int getZ(int)
-    17:17:public static int getY(int)
 nidefawl.qubes.util.TripletLongHash:
     4:4:public TripletLongHash()
-    11:11:public static int getX(long)
-    14:14:public static int getZ(long)
-    17:17:public static int getY(long)
 nidefawl.qubes.util.TripletShortHash:
     4:4:public TripletShortHash()
-    6:6:public static short toHash(int,int,int)
 nidefawl.qubes.util.UnsafeHelper:
     14:14:public UnsafeHelper()
-    147:147:public static long alloc(long)
-    150:151:public static void free(long)
-    183:187:public static void copyDoubleArray(long,double[])
 nidefawl.qubes.vec.AABB:
-    29:30:public AABB(nidefawl.qubes.vec.AABBInt)
     68:74:public void expand(double,double,double)
     85:85:public nidefawl.qubes.vec.AABB copy()
     101:101:public double getCenterY()
@@ -1164,44 +1022,32 @@ nidefawl.qubes.vec.AABBFloat:
     96:100:public void centerXZ(float,float,float)
     103:109:public boolean intersects(nidefawl.qubes.vec.AABBFloat)
 nidefawl.qubes.vec.AABBInt:
-    13:20:public AABBInt(int,int,int,int,int,int)
     26:26:public int getWidth()
     29:29:public int getHeight()
     32:32:public int getLength()
     36:42:public void offset(int,int,int)
     45:57:public void expandTo(int,int,int)
     61:67:public void expand(int,int,int)
-    70:76:public void set(int,int,int,int,int,int)
     78:78:public nidefawl.qubes.vec.AABBInt copy()
-    81:82:public void set(nidefawl.qubes.vec.AABBInt)
     85:85:public int getCenterX()
     89:89:public int getCenterY()
     93:93:public int getCenterZ()
     97:101:public void centerXZ(int,int,int)
     104:110:public boolean intersects(nidefawl.qubes.vec.AABBInt)
-    119:126:public nidefawl.qubes.nbt.Tag$Compound saveTag()
-    130:136:public void loadTag(nidefawl.qubes.nbt.Tag$Compound)
-    139:139:public boolean contains(int,int,int)
-    143:143:public boolean contains(nidefawl.qubes.vec.BlockPos)
     147:147:public boolean equalBB(nidefawl.qubes.vec.AABBInt)
 nidefawl.qubes.vec.BlockBoundingBox:
     public static final int MIN
     public static final int MAX
     public static final int MINY
     public static final int MAXY
-    30:32:public void expandTo(int,int,int,int,int,int)
-    35:54:public void flag(int,int,int)
-    62:64:public static void checkBounds(int,int,int)
-    76:77:public nidefawl.qubes.vec.BlockBoundingBox copyTo(nidefawl.qubes.vec.BlockBoundingBox)
-    93:93:public int getVolume()
     97:109:public void expand()
     116:116:public boolean contains(int,int,int)
-    123:125:public void extend(nidefawl.qubes.vec.BlockBoundingBox)
-    139:139:public short getMinHash()
-    145:145:public short getMaxHash()
 nidefawl.qubes.vec.BlockPos:
     86:86:public int getVolume()
-nidefawl.qubes.vec.ChunkPos
+nidefawl.qubes.vec.ChunkPos:
+    40:40:public nidefawl.qubes.vec.ChunkPos copy()
+    56:58:public void set(nidefawl.qubes.vec.BlockPos)
+    60:60:public boolean isEqualTo(int,int,int)
 nidefawl.qubes.vec.Dir:
     public static final int DIR_POS_X
     public static final int DIR_NEG_X
@@ -1230,7 +1076,6 @@ nidefawl.qubes.vec.Frustum:
     204:219:public int checkFrustum(nidefawl.qubes.vec.AABB)
     223:238:public int checkFrustumPnt(nidefawl.qubes.vec.Vector3f,double)
 nidefawl.qubes.vec.Matrix4f:
-    20:22:public Matrix4f(nidefawl.qubes.vec.Matrix4f)
     25:46:public Matrix4f(nidefawl.qubes.vec.Vector4f,nidefawl.qubes.vec.Vector3f,float)
     174:191:public nidefawl.qubes.vec.Matrix4f load(java.nio.FloatBuffer)
     228:245:public nidefawl.qubes.vec.Matrix4f loadTranspose(java.nio.FloatBuffer)
@@ -1247,7 +1092,6 @@ nidefawl.qubes.vec.Matrix4f:
     1019:1019:public nidefawl.qubes.vec.Matrix4f negate()
     1028:1028:public nidefawl.qubes.vec.Matrix4f negate(nidefawl.qubes.vec.Matrix4f)
     1038:1058:public static nidefawl.qubes.vec.Matrix4f negate(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f)
-    1063:1068:public final void transformVec(nidefawl.qubes.vec.Vector3f)
     1123:1147:public static nidefawl.qubes.vec.Matrix4f toRotationMatrix(nidefawl.qubes.vec.Quaternion,nidefawl.qubes.vec.Matrix4f)
     1150:1174:public static nidefawl.qubes.vec.Matrix4f toMatrix4f(nidefawl.qubes.vec.Quaternion)
     1177:1195:public final void setFromQuat(float,float,float,float)
@@ -1293,9 +1137,6 @@ nidefawl.qubes.vec.Vector3f:
     233:236:public nidefawl.qubes.vec.Vector3f load(java.nio.FloatBuffer)
     284:284:public final float getX()
     291:291:public final float getY()
-    300:301:public final void setX(float)
-    309:310:public final void setY(float)
-    318:319:public void setZ(float)
     325:325:public float getZ()
     359:359:public nidefawl.qubes.vec.Vector3f scaleN(float)
     366:367:public void set(nidefawl.qubes.vec.Vec3D)
@@ -1335,99 +1176,119 @@ nidefawl.qubes.world.IBlockWorld:
     public abstract boolean setType(int,int,int,int,int)
     public abstract int getHeight(int,int)
     public abstract boolean setData(int,int,int,int,int)
-    public abstract boolean setTypeData(int,int,int,int,int,int)
     public abstract boolean setBlockData(int,int,int,nidefawl.qubes.chunk.blockdata.BlockData,int)
     public abstract nidefawl.qubes.biome.Biome getBiome(int,int)
 nidefawl.qubes.world.SunLightModel:
-    42:74:public void updateFrame(float)
-    95:104:public float getSunAngle(float)
-    113:113:public nidefawl.qubes.vec.Vector3f getLightPosition()
+    42:76:public void updateFrame(float)
+    97:106:public float getSunAngle(float)
+    115:115:public nidefawl.qubes.vec.Vector3f getLightPosition()
 nidefawl.qubes.world.World:
     public static final float MAX_XZ
     public static final float MIN_XZ
     public static final int MAX_WORLDHEIGHT
     public abstract void tickUpdate()
-    166:182:public boolean setData(int,int,int,int,int)
-    210:226:public boolean setBlockData(int,int,int,nidefawl.qubes.chunk.blockdata.BlockData,int)
-    230:230:public boolean setBlockData(nidefawl.qubes.vec.BlockPos,nidefawl.qubes.chunk.blockdata.BlockData,int)
-    235:249:public boolean setTypeData(int,int,int,int,int,int)
-    311:315:public int getHeight(int,int)
-    323:323:public java.util.UUID getUUID()
     327:327:public long getSeed()
-    331:331:public long getTime()
-    335:335:public long getDayLength()
-    339:341:public long getDayTime()
     353:353:public nidefawl.qubes.chunk.Chunk getChunkFromBlock(int,int)
-    360:370:public nidefawl.qubes.chunk.Chunk getChunkIfNeightboursLoaded(int,int)
-    374:375:public boolean canSeeSky(int,int,int)
-    379:380:public boolean isTransparent(int,int,int)
     387:388:public int getHeightMap(int,int)
     401:404:public nidefawl.qubes.biome.Biome getBiome(int,int)
-    408:408:public void flagChunkLightUpdate(int,int)
-    431:431:public java.util.Random getRand()
     public abstract nidefawl.qubes.entity.Entity getEntity(int)
 nidefawl.qubes.world.WorldClientBenchmark
-nidefawl.qubes.world.WorldSettings
-nidefawl.qubes.world.biomes.EmptyBiomeManager:
-    22:22:public nidefawl.qubes.biome.Biome getBiome(int,int)
-    27:27:public int getWorldType()
-    37:37:public nidefawl.qubes.network.packet.PacketSWorldBiomes getPacket()
-    45:45:public void sendChanges()
-    49:49:public void saveChanges()
-    57:57:public void deleteAll()
-nidefawl.qubes.world.biomes.HexBiome:
-    public int version
-    public int subtype
-    53:81:public void load(java.io.File)
-    87:117:public void save(java.io.File)
-    120:122:public void registerTree(nidefawl.qubes.world.structure.tree.Tree)
-    125:127:public void registerMine(nidefawl.qubes.world.structure.mine.Mine)
-    130:140:public nidefawl.qubes.world.structure.tree.Tree getTree(int,int,int)
-    144:150:public nidefawl.qubes.world.biomes.HexBiome[] getClosest3(double,double)
-    155:155:public nidefawl.qubes.world.structure.StructureMap getTrees()
-    158:158:public nidefawl.qubes.world.structure.StructureMap getMines()
-nidefawl.qubes.world.biomes.HexBiome$1:
-    32:32:public nidefawl.qubes.world.structure.tree.Tree newInstance()
-    29:29:public bridge synthetic java.lang.Object newInstance()
-nidefawl.qubes.world.biomes.HexBiome$2:
-    38:38:public nidefawl.qubes.world.structure.mine.Mine newInstance()
-    35:35:public bridge synthetic java.lang.Object newInstance()
-nidefawl.qubes.world.biomes.HexBiomeEnd:
-    17:17:public void save(java.io.File)
-    20:20:public void registerTree(nidefawl.qubes.world.structure.tree.Tree)
-    23:23:public void load(java.io.File)
-nidefawl.qubes.world.biomes.HexBiomes:
-    27:28:public nidefawl.qubes.biome.Biome getBiome(int,int)
-    33:33:public int getWorldType()
-nidefawl.qubes.world.biomes.HexBiomesClient:
-    31:31:public nidefawl.qubes.network.packet.PacketSWorldBiomes getPacket()
-    46:46:public void sendChanges()
-    49:49:public void saveChanges()
-    53:53:public void deleteAll()
-nidefawl.qubes.world.biomes.IBiomeManager:
-    public abstract nidefawl.qubes.biome.Biome getBiome(int,int)
-    public abstract int getWorldType()
-    public abstract nidefawl.qubes.network.packet.PacketSWorldBiomes getPacket()
-    public abstract void sendChanges()
-    public abstract void saveChanges()
-    public abstract void deleteAll()
-nidefawl.qubes.world.structure.Structure
-nidefawl.qubes.world.structure.StructureBlockIterator
-nidefawl.qubes.world.structure.StructureFactory:
-    public abstract java.lang.Object newInstance()
+nidefawl.qubes.world.WorldServer:
+    193:193:public void updateGeneratedChunks()
+    364:364:public nidefawl.qubes.entity.Entity getEntity(int)
+nidefawl.qubes.world.WorldSettings:
+    java.lang.String generatorSettings
+nidefawl.qubes.world.biomes.HexBiomesServer:
+    32:89:public HexBiomesServer(java.io.File)
+nidefawl.qubes.world.structure.Structure:
+    29:29:public java.util.Set getKeys()
+    40:42:public void removeKey(int)
+    65:65:public nidefawl.qubes.vec.AABBInt getBB()
+    113:113:public boolean contains(int,int,int)
 nidefawl.qubes.world.structure.StructureMap:
-    28:36:public void load(nidefawl.qubes.nbt.Tag$Compound)
-    39:49:public nidefawl.qubes.nbt.Tag$Compound save()
     52:52:public java.util.Collection values()
-    60:61:public boolean add(nidefawl.qubes.world.structure.Structure)
     65:65:public boolean containsAny(int,int,int)
     69:69:public int size()
     73:81:public boolean canBuildStructure(nidefawl.qubes.vec.AABBInt)
     85:85:public nidefawl.qubes.world.structure.Structure getNextStructure(int,int,int)
-    89:89:public java.util.Collection getRegions(int,int,int)
     93:94:public void debug()
     97:98:public void validate()
-    101:102:public void clear()
-nidefawl.qubes.world.structure.mine.Mine
 nidefawl.qubes.world.structure.tree.StructureBlockIterator
-nidefawl.qubes.world.structure.tree.Tree
+nidefawl.qubes.worldgen.TerrainGen:
+    14:14:public TerrainGen()
+nidefawl.qubes.worldgen.populator.ChunkPopulator:
+    public static final java.lang.String POPULATOR_NAME
+nidefawl.qubes.worldgen.populator.EmptyChunkPopulator:
+    public static final java.lang.String POPULATOR_NAME
+nidefawl.qubes.worldgen.populator.IWorldGen
+nidefawl.qubes.worldgen.populator.TreeGen1:
+    33:107:public boolean generate(nidefawl.qubes.world.IBlockWorld,int,int,int,java.util.Random)
+    120:127:private boolean canReplaceAll(nidefawl.qubes.world.IBlockWorld,int,int,int,int,int)
+    135:135:private boolean canReplace(int)
+    139:139:public boolean isSoil(int)
+nidefawl.qubes.worldgen.populator.TreeGeneratorLSystem:
+    private int nPlaced
+nidefawl.qubes.worldgen.populator.TreeGenerators:
+    17:17:public TreeGenerators()
+nidefawl.qubes.worldgen.structure.MineGen:
+    static final int r
+    static final int l
+nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest:
+    public static final java.lang.String GENERATOR_NAME
+nidefawl.qubes.worldgen.terrain.TerrainGenFlatSand128:
+    public static final java.lang.String GENERATOR_NAME
+nidefawl.qubes.worldgen.terrain.TerrainGenMines:
+    public static final java.lang.String GENERATOR_NAME
+nidefawl.qubes.worldgen.terrain.TerrainGenQTest:
+    public static final java.lang.String GENERATOR_NAME
+    336:349:private double func2(double,double,double)
+    353:358:public static double mix(double,double,double)
+    366:374:public static double func(double,double,double)
+    377:379:public int distSq(int,int,int,int,int,int)
+nidefawl.qubes.worldgen.terrain.TerrainGeneratorOther:
+    public static final java.lang.String GENERATOR_NAME
+    75:151:private void generateTerrain2(nidefawl.qubes.chunk.Chunk)
+    282:287:public static double mix(double,double,double)
+    295:303:public static double func(double,double,double)
+    306:308:public int distSq(int,int,int,int,int,int)
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5:
+    private nidefawl.qubes.noise.RiverNoise2D r2D
+    private nidefawl.qubes.noise.RiverNoise2D r2D2
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5$NoiseData:
+    public nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn
+    public nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6:
+    private nidefawl.qubes.noise.RiverNoise2D r2D
+    private nidefawl.qubes.noise.RiverNoise2D r2D2
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6$NoiseData:
+    public nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn
+    public nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7:
+    private nidefawl.qubes.noise.RiverNoise2D r2D
+    private nidefawl.qubes.noise.RiverNoise2D r2D2
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7$NoiseData:
+    public nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn
+    public nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMountainPlateus
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMountainPlateus$NoiseData
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenUltraMountains
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenUltraMountains$NoiseData
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight:
+    public static final java.lang.String GENERATOR_NAME
+    static final double smoothScale
+    342:355:public static double func2(double,double,double)
+    372:380:public static double func(double,double,double)
+    383:385:public int distSq(int,int,int,int,int,int)
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain:
+    public static final java.lang.String GENERATOR_NAME
+    static final double smoothScale
+    377:385:public static double func(double,double,double)
+    388:390:public int distSq(int,int,int,int,int,int)
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2:
+    public static final java.lang.String GENERATOR_NAME
+    static final double smoothScale
+    private nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight main
+    449:457:public static double func(double,double,double)
+    460:462:public int distSq(int,int,int,int,int,int)
+nidefawl.swing.TextDialog:
+    132:133:public void setText(java.lang.String)
