@@ -77,7 +77,10 @@ public class ServerHandlerPlay extends ServerHandler {
         }
         if (this.state == STATE_LOBBY) {
             this.state = STATE_PLAYING;
-            WorldServer world = this.server.getWorld(player.spawnWorld);
+            int idx = packetCSwitchWorld.flags;
+            WorldServer[] worlds = this.server.getWorlds();
+            if (idx<0||idx>=worlds.length) idx = 0;
+            WorldServer world = worlds[idx];
             int flags = 0;
             if (this.player.flying) {
                 flags |= 1;
@@ -198,21 +201,22 @@ public class ServerHandlerPlay extends ServerHandler {
             for (int x = 0; x < w; x++) {
                 for (int z = 0; z < l; z++) {
                     for (int y = 0; y < h; y++) {
-                        if (hollow) {
-                            if (x != 0 && x != w-1)
-                                continue;
-                            if (y != 0 && y != h-1)
-                                continue;
-                            if (z != 0 && z != l-1)
-                                continue;
-                        }
                         int blockX = p.x + x;
                         int blockY = p.y + y;
                         int blockZ = p.z + z;
                         pos.set(blockX, blockY, blockZ);
+                        if (p.stack.id <= 0) {
+                            int current = this.player.world.getType(blockX, blockY, blockZ);
+                            if (current > 0) {
+                                this.player.world.spawnParticles(blockX, blockY, blockZ, 2, current);
+                            }
+                        }
                         this.player.world.setTypeData(blockX, blockY, blockZ, 0, 0, p.stack.id==0?(Flags.LIGHT|Flags.MARK):0);
                         if (p.stack.id > 0)
                         player.blockPlace.tryPlace(pos, p.fpos, p.stack, p.face);
+                        else {
+
+                        }
                     }
                 }
 

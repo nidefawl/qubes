@@ -56,4 +56,8 @@ public class SingleBlockRenderer extends BlockRenderer {
     protected void putTriIndex(Block block, int targetBuffer, int[] vertexIdx, int numIdx, int numVerts) {
         singleBlockBuffer.putTriVertIndex(vertexIdx, numIdx, numVerts);
     }
+    protected boolean isInventoryBlockRender() {
+        return true;
+    }
+
 }

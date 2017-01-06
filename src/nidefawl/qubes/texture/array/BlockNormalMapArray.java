@@ -2,6 +2,7 @@ package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -133,13 +134,15 @@ public class BlockNormalMapArray extends TextureArray {
 
     @Override
     protected void postUpload() {
-        boolean useDefault = false;
+        boolean useDefault = true;
         if (useDefault) {
 
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL12.GL_TEXTURE_MAX_LEVEL, 0);
+//            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         } else {// does not work with alpha testing
 
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -147,9 +150,9 @@ public class BlockNormalMapArray extends TextureArray {
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
+            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
             //        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
-        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
     }
     

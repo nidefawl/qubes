@@ -1,11 +1,16 @@
 package nidefawl.qubes.gui;
 
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
+import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Keybinding;
 import nidefawl.qubes.input.Keyboard;
+import nidefawl.qubes.shader.Shaders;
 
 public class GuiGameMenu extends Gui {
 
@@ -21,12 +26,35 @@ public class GuiGameMenu extends Gui {
         this.font = FontRenderer.get(0, 18, 0);
         this.fontSmall = FontRenderer.get(0, 14, 0);
     }
+    public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
+        if (Game.instance != null && Game.instance.getWorld() != null) {
+            a = 0.9f;
+        } else {
+            a = 1.0f;
+        }
+        int w1 = 320;
+        int left = this.posX+width/2-w1/2;
+        int c1 = this.hovered || this.focused ? this.color3 : this.color;
+        int c2 = this.hovered || this.focused ? this.color4 : this.color2;
+//        draw
+        Shaders.gui.enable();
+        if (this.resume != null&&this.back!=null)  {
+            int brd = 32;
+            shadowSigma=100;
+            renderRoundedBoxShadow(this.resume.posX-brd, this.resume.posY-brd, 0, this.resume.width+brd*2, (this.back.posY+this.back.height+brd)-(this.resume.posY-brd), c2, this.alpha2, true);
+            brd+=5;
+            resetShape();
+
+            renderRoundedBoxShadow(this.resume.posX-brd, this.resume.posY-brd, 0, this.resume.width+brd*2, (this.back.posY+this.back.height+brd)-(this.resume.posY-brd), c2, this.alpha2, false);
+        }
+    }
+
     @Override
     public void initGui(boolean first) {
         this.clearElements();
         int w1 = 240;
         int h = 30;
-        int left = this.posX+this.width/2-w1/2;
+        int left = this.posX+width/2-w1/2;
         {
             resume = new Button(1, "Resume");
             this.add(resume);
@@ -93,33 +121,33 @@ public class GuiGameMenu extends Gui {
             top += 20+b.height;
         }
     }
-
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
         super.renderButtons(fTime, mX, mY);
     }
     public boolean onGuiClicked(AbstractUI element) {
         if (element.id == 4) {
-            Game.instance.showGUI(null);
+//            Game.instance.showGUI(null);
             KeybindManager.getKeyBindingByName("show_look").fire();
             return true;
         }
         if (element.id == 5) {
-            Game.instance.showGUI(null);
+//            Game.instance.showGUI(null);
             KeybindManager.getKeyBindingByName("show_inventory").fire();
             return true;
         }
         if (element.id == 6) {
-            Game.instance.showGUI(null);
+//            Game.instance.showGUI(null);
             KeybindManager.getKeyBindingByName("show_crafting").fire();
             return true;
         }
         if (element.id == 2) {
-            Game.instance.showGUI(null);
+//            Game.instance.showGUI(null);
             KeybindManager.getKeyBindingByName("show_select_world").fire();
             return true;
         }
         if (element == this.resume) {
+            GuiWindowManager.closeAll();
             Game.instance.showGUI(null);
         }
         if (element == this.settings) {

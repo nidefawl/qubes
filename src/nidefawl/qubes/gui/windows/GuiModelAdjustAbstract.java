@@ -218,12 +218,18 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 		}
 		this.list.addAll(this.listDyn);
 		int he = layout();
+        int xPos = (Game.displayWidth-width)/2;
+        int yPos = (Game.displayHeight-height)/2;
+        setPos(xPos, yPos);
 	}
 
 	@Override
 	public void initGui(boolean first) {
-		setSize(340, 600);
-		setPos(20, 20);
+        setSize(340, 600);
+//        setPos(20, 20);
+        int xPos = (Game.displayWidth-width)/2;
+        int yPos = (Game.displayHeight-height)/2;
+        setPos(xPos, yPos);
 		this.clearElements();
 		this.list.clear();
 		int w1 = this.width / 2;

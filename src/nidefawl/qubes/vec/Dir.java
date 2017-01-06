@@ -83,4 +83,8 @@ public class Dir {
         }
         return "No direction";
     }
+
+    public static int opposite(int i) {
+        return i^1;
+    }
 }

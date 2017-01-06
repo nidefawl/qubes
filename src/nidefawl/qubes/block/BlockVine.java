@@ -6,6 +6,7 @@ package nidefawl.qubes.block;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
@@ -183,5 +184,22 @@ public class BlockVine extends Block {
      */
     public float getInvRenderRotation() {
         return GameMath.PI_OVER_180*45;
+    }
+    public void onUpdate(World w, int ix, int iy, int iz, int from) {
+        for (int i = 0; i < 6; i++) {
+            if (Dir.getDirY(i) != 0) {
+                continue;
+            }
+            int x1 = ix+Dir.getDirX(i);
+            int z1 = iz+Dir.getDirZ(i);
+            Block b = w.getBlock(x1, iy, z1);
+            if (!b.isReplaceable()&&b.isFullBB()) {
+                return;
+            }
+        }
+        if (w.getBlock(ix, iy+1, iz) == this) {
+            return;
+        }
+        w.setType(ix, iy, iz, 0, Flags.MARK|Flags.LIGHT);
     }
 }

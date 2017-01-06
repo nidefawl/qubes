@@ -34,6 +34,8 @@ public class BlockGroupStones extends BlockGroup {
         sandstone_red = getBlocks().get(6);
         granite.setNormalMaps("rocks/granite_normalmap");
         marble.setNormalMaps("rocks/granite_normalmap");
+        sandstone.setNormalMaps("rocks/granite_normalmap");
+        sandstone_red.setNormalMaps("rocks/granite_normalmap");
         basalt.setNormalMaps("rocks/basalt_normalmap");
         
     }

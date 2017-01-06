@@ -19,6 +19,7 @@ import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
+import nidefawl.qubes.gui.LoadingScreen;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.KeybindManager;
@@ -75,11 +76,13 @@ public abstract class GameBase implements Runnable {
     protected volatile boolean sysExit     = true;
     protected volatile boolean minimized   = false;
     protected volatile boolean hasWindowFocus = true;
+    protected boolean isStarting = true;
     private Thread             thread;
     private int newWidth = initWidth;
     private int newHeight = initHeight;
     private GPUVendor vendor = GPUVendor.OTHER;
     static public GameBase baseInstance;
+    public static LoadingScreen loadingScreen;
     public KeybindManager  movement = new KeybindManager();
     public Gui            gui;
     boolean               reinittexthook  = false;
@@ -355,7 +358,7 @@ public abstract class GameBase implements Runnable {
         AsyncTasks.shutdown();
     }
 
-    protected void checkResize() {
+    public void checkResize() {
         if (minimized && newWidth*newHeight>0) {
             minimized = false;
             if (isRunning())
@@ -456,7 +459,7 @@ public abstract class GameBase implements Runnable {
         }
     }
 
-    protected void updateInput() {
+    public void updateInput() {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
@@ -615,9 +618,7 @@ public abstract class GameBase implements Runnable {
 
     public ArrayList<String> glProfileResults = new ArrayList<>();
 
-    public boolean loadRender(int step, float f) {
-        return false;
-    }
+
     public void mainLoop() {
         try {
             this.running = true;
@@ -632,6 +633,7 @@ public abstract class GameBase implements Runnable {
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
             lateInitGame();
+            isStarting = false;
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame lateInitGame");
             setVSync(this.vsync);

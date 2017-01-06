@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL30;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
@@ -29,6 +30,9 @@ public class BlockTextureArray extends TextureArray {
     public static BlockTextureArray getInstance() {
         return instance;
     }
+
+
+    public int totalSlots;
 
     BlockTextureArray() {
         super(Block.NUM_BLOCKS << BLOCK_TEXTURE_BITS);
@@ -52,8 +56,9 @@ public class BlockTextureArray extends TextureArray {
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
             //      GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
-        if (this.report)
-        Game.instance.loadRender(2, 1);
+        if (this.report && GameBase.loadingScreen != null) {
+            GameBase.loadingScreen.render(2, 1);
+        }
     }
 
     protected void uploadTextures() {
@@ -99,6 +104,7 @@ public class BlockTextureArray extends TextureArray {
             }
             uploadprogress = ++nBlock / (float) totalBlocks;
         }
+        this.totalSlots = slot;
     }
 
 

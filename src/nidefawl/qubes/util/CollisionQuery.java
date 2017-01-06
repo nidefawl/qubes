@@ -98,6 +98,41 @@ public class CollisionQuery {
             }
         }
     }
+    public boolean queryAnyCollisions(World world, AABB aabb, float expand) {
+        this.numCollisions = 0;
+        int minX = GameMath.floor(aabb.minX-expand);
+        int minY = GameMath.floor(aabb.minY-expand);
+        int minZ = GameMath.floor(aabb.minZ-expand);
+        int maxX = GameMath.floor(aabb.maxX+expand);
+        int maxY = GameMath.floor(aabb.maxY+expand);
+        int maxZ = GameMath.floor(aabb.maxZ+expand);
+        if (minY < 0) minY = 0;
+        if (maxY < 0) {//out of world
+            return false;
+        }
+        AABBFloat[] tmp = this.tmpBBs;
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                for (int y = minY; y <= maxY; y++) {
+                    int type = world.getType(x, y, z);
+                    Block b = Block.get(type);
+                    if (b != null) {
+                        int boxes = b.getBBs(world, x, y, z, tmp);
+                        if (boxes > 0) {
+                            for (int i = 0; i < boxes; i++) {
+                                AABBFloat bb = tmp[i];
+                                if (bb.intersects(aabb)) {
+                                    numCollisions++;
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
     
     public int getNumCollisions() {
         return numCollisions;

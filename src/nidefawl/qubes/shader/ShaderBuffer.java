@@ -148,6 +148,9 @@ public class ShaderBuffer {
     public IntBuffer getIntBuffer() {
         return this.bufInt;
     }
+    public ByteBuffer getBuf() {
+        return this.buf;
+    }
     public ByteBuffer map(boolean write) {
         ByteBuffer cur = this.readBuf;
         ByteBuffer buf = _map(write);
@@ -205,6 +208,10 @@ public class ShaderBuffer {
     }
     public int getSize() {
         return this.len;
+    }
+    public void clearBuffers() {
+        this.bufFloat.clear();
+        this.bufInt.clear();
     }
 
 

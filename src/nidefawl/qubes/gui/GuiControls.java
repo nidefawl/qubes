@@ -158,7 +158,7 @@ public class GuiControls extends Gui {
         {
             back = new Button(6, "Back");
             this.add(back);
-            back.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
+            back.setPos(this.width / 2 - 160/2, this.scrolllist.posY+this.scrolllist.height+30);
             back.setSize(160, 30);
         }
         this.add(this.scrolllist.scrollbarbutton);

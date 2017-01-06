@@ -9,7 +9,7 @@ package nidefawl.qubes.vec;
  */
 public class Vector2f {
 
-    public float x; float y;
+    public float x; public float y;
     /**
      * 
      */

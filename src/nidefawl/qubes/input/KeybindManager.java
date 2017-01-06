@@ -111,7 +111,7 @@ public class KeybindManager {
     public static void updateKeybindMap() {
         keyToKeyBinding.clear();
         for (Keybinding keybinding : keybindings) {
-            if (keybinding.hasCallback())
+            if (keybinding.hasCallback()&&keybinding.getKey()!=-1)
                 keyToKeyBinding.put(keybinding.getKey(), keybinding);
         }
     }

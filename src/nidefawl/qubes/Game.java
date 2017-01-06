@@ -37,6 +37,7 @@ import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
@@ -103,7 +104,6 @@ public class Game extends GameBase implements IErrorHandler {
     public final LocalGameServer server = new LocalGameServer();
     
     private GameMode mode = GameMode.BUILD;
-    final float[] loadProgress = new float[2];
     
     public GameMode getMode() {
         return this.mode;
@@ -131,6 +131,7 @@ public class Game extends GameBase implements IErrorHandler {
 
     @Override
     public void initGame() {
+        GameBase.loadingScreen = new LoadingScreen();
         loadProfile();
         loadSettings();
         if (this.serverAddr == null) {
@@ -144,7 +145,7 @@ public class Game extends GameBase implements IErrorHandler {
         dig.init();
         FontRenderer.init();
         Engine.init();
-        loadRender(0, 0, "Initializing");
+        loadingScreen.render(0, 0, "Initializing");
         TextureManager.getInstance().init();
         BlockModelManager.getInstance().init();
         ItemModelManager.getInstance().init();
@@ -161,105 +162,23 @@ public class Game extends GameBase implements IErrorHandler {
         this.statsCached.setSize(displayWidth, displayHeight);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
-        loadRender(0, 0.5f, "Initializing");
+        loadingScreen.render(0, 0.5f, "Initializing");
     }
 
     public String getAppTitle() {
         return String.format("Qubes - %s", buildIdentifier);
     }
-    @Override
-    public boolean loadRender(int step, float f) {
-        return loadRender(step, f, "");
-    }
-    public boolean loadRender(int step, float f, String string) {
-        int tw = Game.displayWidth;
-        int th = Game.displayHeight;
-        if (step > loadProgress.length-1) {
-            System.err.println("step > loadprogress-1!");
-            step = loadProgress.length-1;
-        }
-        int oldW = (int) (tw*0.6f*loadProgress[step]);
-        int newW = (int) (tw*0.6f*(f));
-        float fd=Math.abs(newW-oldW);
-        if (fd<15f && f < 1 && f > 0) return false;
-        loadProgress[step] = f;
-        int nzero = 0;
-        for (int i = 0; i < loadProgress.length; i++) {
-            if (loadProgress[i] == 0)
-                nzero++;
-            else if (nzero > 0 && loadProgress[i] > 0) {
-                throw new GameError("out of order");
-            }
-        }
-        float x = 0;
-        float y = 0;
-        float l = tw*0.2f;
-        float barsH = 32;
-        float barsTop = (th-barsH)/2.0f;
-        if (isCloseRequested()) {
-            shutdown();
-            return false;
-        }
-        checkResize();
-        updateTime();
-        updateInput();
-        Engine.updateOrthoMatrix(displayWidth, displayHeight);
-        UniformBuffer.updateOrtho();
-        glClearColor(0, 0, 0, 0F);
-        glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("loadRender glClear");
-        Shaders.colored.enable();
-        Tess.instance.resetState();
-        Tess.instance.setColor(0x0, 0xff);
-        Tess.instance.add(x + tw, y, 0, 1, 1);
-        Tess.instance.add(x, y, 0, 0, 1);
-        Tess.instance.add(x, y + th, 0, 0, 0);
-        Tess.instance.add(x + tw, y + th, 0, 1, 0);
-        Tess.instance.drawQuads();
-        float p = 0;
-        for (int i = 0; i < loadProgress.length; i++) {
-            p+=loadProgress[i];
-        }
-        p/=(float)loadProgress.length;
-        float w = tw*0.6f*p;
-        Tess.instance.setColor(0xffffff, 0xff);
-        Tess.instance.add(x + l + w, y + barsTop-2, 0, 1, 1);
-        Tess.instance.add(x + l, y + barsTop-2, 0, 0, 1);
-        Tess.instance.add(x + l, y + barsTop+barsH+2, 0, 0, 0);
-        Tess.instance.add(x + l + w, y + barsTop+barsH+2, 0, 1, 0);
-        Tess.instance.drawQuads();
-        FontRenderer font = FontRenderer.get(0, 16, 1);
-        if (font != null) {
-            Shaders.textured.enable();
-            font.drawString(string, x+l+2, y+barsTop+barsH+10+font.getLineHeight(), -1, true, 1.0f);
-        }
-//        for (int i = 0; i < loadProgress.length; i++) {
-//            
-//             w = tw*0.6f*loadProgress[i];
-//            Tess.instance.setColor(0x666666, 0xff);
-//            Tess.instance.add(x + l + w, y + barsTop, 0, 1, 1);
-//            Tess.instance.add(x + l, y + barsTop, 0, 0, 1);
-//            Tess.instance.add(x + l, y + barsTop+barh, 0, 0, 0);
-//            Tess.instance.add(x + l + w, y + barsTop+barh, 0, 1, 0);
-//            Tess.instance.drawQuads();
-//            barsTop+=barh+2;
-//        }
-        Shader.disable();
-        updateDisplay();
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("loadRender updateDisplay");
-        return true;
-    }
+
+
     public void lateInitGame() {
         dig.reloadTextures();
-        loadRender(0, 0.8f, "Loading... Item Models");
+        loadingScreen.render(0, 0.8f, "Loading... Item Models");
         ItemModelManager.getInstance().reload();
-        loadRender(0, 0.9f, "Loading... Block Models");
+        loadingScreen.render(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
-        loadRender(0, 1f, "Loading... Entity Models");
+        loadingScreen.render(0, 1f, "Loading... Entity Models");
         EntityModelManager.getInstance().reload();
-        loadRender(0, 1f, "Loading... Item Textures");
+        loadingScreen.render(0, 1f, "Loading... Item Textures");
         TextureArray[] arrays = {
                 ItemTextureArray.getInstance(),
                 BlockNormalMapArray.getInstance(),
@@ -301,11 +220,12 @@ public class Game extends GameBase implements IErrorHandler {
                 pr+=arrays[i].getProgress();
             }
             pr/=(float)arrays.length;
-            loadRender(1, pr, "Loading...");
+            loadingScreen.render(1, pr, "Loading...");
         }
         ChatManager.getInstance().loadInputHistory();
 
         KeybindManager.load();
+        isStarting = true;
     }
 
     public void toggleGameMode() {
@@ -390,6 +310,9 @@ public class Game extends GameBase implements IErrorHandler {
     @Override
     protected void onKeyPress(long window, int key, int scancode, int action, int mods) {
         if (window == windowId) {
+            if (key == -1) { // ALT + Print Screen (maybe more)
+                return;
+            }
             if (GuiContext.input != null) {
                 if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_PRESS) {
                     GuiContext.input.focused = false;
@@ -476,9 +399,9 @@ public class Game extends GameBase implements IErrorHandler {
     public void onMouseClick(long window, int button, int action, int mods) {
         if (this.gui != null) {
             if (this.world == null) {
-                if (GuiWindowManager.onMouseClick(button, action)) {
-                    return;
-                }
+            }
+            if (GuiWindowManager.onMouseClick(button, action)) {
+                return;
             }
             if (!this.gui.onMouseClick(button, action)) {
             }
@@ -873,10 +796,10 @@ public class Game extends GameBase implements IErrorHandler {
                 GPUProfiler.end();
             if (this.world == null) {
 
-                glEnable(GL_DEPTH_TEST);
-                GuiWindowManager.getInstance().render(fTime, mx, my);
-                glDisable(GL_DEPTH_TEST);
             }
+            glEnable(GL_DEPTH_TEST);
+            GuiWindowManager.getInstance().render(fTime, mx, my);
+            glDisable(GL_DEPTH_TEST);
         } else if (this.world != null) {
             if (showGrid) {
                 int ipX = GameMath.floor(vCam.x);
@@ -987,16 +910,18 @@ public class Game extends GameBase implements IErrorHandler {
 //            System.out.println(lastFPS);
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
+//            Engine.particleRenderer.spawnParticles(10);
 //          Shaders.initShaders();
 ////          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //          Engine.renderBatched.initShaders();
 //          Engine.worldRenderer.initShaders();
-//            Engine.skyRenderer.initShaders();
+//          Engine.skyRenderer.initShaders();
+//          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
 //            Engine.outRenderer.initShaders();
-            
-//          Engine.regionRenderer.initShaders();
+
+//            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
@@ -1011,6 +936,7 @@ public class Game extends GameBase implements IErrorHandler {
     }
     @Override
     public void preRenderUpdate(float f) {
+        Engine.blockDraw.processQueue();
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
         if (this.client != null) {
@@ -1099,6 +1025,7 @@ public class Game extends GameBase implements IErrorHandler {
                 selection.update(world, vCam.x, vCam.y, vCam.z);
             }
         }
+        Engine.particleRenderer.preRenderUpdate(this.world, f);
         
         if (this.world != null && updateRenderers) {
             float renderRegionX = follow ? vCam.x : vLastCam.x;
@@ -1138,31 +1065,36 @@ public class Game extends GameBase implements IErrorHandler {
     }
     @Override
     public void tick() {
-       if (this.world != null)
-           this.world.tickUpdate();
-       if (this.gui != null) {
-           this.gui.update();
-       }
-       if (this.selection != null) {
-           this.selection.update(getWorld());
-       }
-       GuiWindowManager.update();
-       this.dig.update();
-       ChatManager.getInstance().saveInputHistory();
-       Engine.regionRenderer.tickUpdate();
-       Engine.worldRenderer.tickUpdate();
-       Engine.skyRenderer.tickUpdate();
-//       if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
-//           this.setWorld(null);
-//           showGUI(new GuiMainMenu());
-//       }
-//        matrixSetupMode = Main.ticksran%100<50;
-       if (this.settings.lazySave()) {
-           this.saveSettings();
-       }
-       if(this.throttleClick > 0) {
-           this.throttleClick--;
-       }
+
+        if (!isStarting) {
+            if (this.world != null)
+                this.world.tickUpdate();
+            if (this.gui != null) {
+                this.gui.update();
+            }
+            if (this.selection != null) {
+                this.selection.update(getWorld());
+            }
+            GuiWindowManager.update();
+            this.dig.update();
+            ChatManager.getInstance().saveInputHistory();
+            Engine.regionRenderer.tickUpdate();
+            Engine.worldRenderer.tickUpdate();
+            Engine.skyRenderer.tickUpdate();
+            Engine.particleRenderer.tickUpdate(this.world);
+//            if (this.connect == null && this.client != null && !this.client.isConnected() && this.world != null) {
+//                this.setWorld(null);
+//                showGUI(new GuiMainMenu());
+//            }
+//            matrixSetupMode = Main.ticksran % 100 < 50;
+            if (this.settings.lazySave()) {
+                this.saveSettings();
+            }
+            if (this.throttleClick > 0) {
+                this.throttleClick--;
+            }
+
+        }
        AsyncTasks.completeTasks();
     }
 

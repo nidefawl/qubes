@@ -421,4 +421,11 @@ public class Vector3f implements StreamIO {
                 a.z+(b.z-a.z)*f
                 );
     }
+    public static void interp(Vec3D a, Vec3D b, float f, Vector3f to) {
+        to.set(
+                (float)(a.x+(b.x-a.x)*f),
+                (float)(a.y+(b.y-a.y)*f),
+                (float)(a.z+(b.z-a.z)*f)
+                );
+    }
 }

@@ -12,6 +12,7 @@ import nidefawl.qubes.vec.Matrix4f;
 public class BatchedRiggedModelRenderer extends AbstractRenderer {
     public static final int MAX_INSTANCES = 16*1024;
     public static final int SIZE_OF_MAT4 = 16*4;
+    public static final int SIZE_OF_VEC4 = 4*4;
     public static final int NUM_BONE_MATRICES = 64;
     public Shader           shaderModelShadow;
     public Shader          shaderModelBatched;

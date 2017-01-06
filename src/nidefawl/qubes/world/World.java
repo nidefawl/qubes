@@ -12,6 +12,7 @@ import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.biomes.IBiomeManager;
@@ -201,10 +202,28 @@ public abstract class World implements IBlockWorld {
             }
             if ((flags & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
-            }   
+            }
+            updateBlocks(x, y, z, type, flags);
         }
         return true;
     }
+    public void updateBlocks(int x, int y, int z, int type, int flags) {
+        for (int i = 0; i < 6; i++) {
+            int x1 = x+Dir.getDirX(i);
+            int y1 = y+Dir.getDirY(i);
+            int z1 = z+Dir.getDirZ(i);
+            getBlock(x1, y1, z1).onUpdate(this, x1, y1, z1, Dir.opposite(i));
+        }
+    }
+
+    public Block getBlock(int x, int y, int z) {
+        int b = getType(x, y, z);
+        if (!Block.isValid(b)) {
+            return Block.air;
+        }
+        return Block.get(b);
+    }
+
     @Override
     public boolean setBlockData(int x, int y, int z, BlockData bd, int flags) {
         if (y >= this.worldHeight)
@@ -221,7 +240,8 @@ public abstract class World implements IBlockWorld {
             }
             if ((flags & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
-            }   
+            }
+            updateBlocks(x, y, z, c.getTypeId(x, y, z), flags);
         }
         return true;
     }
@@ -245,6 +265,7 @@ public abstract class World implements IBlockWorld {
             if ((render & Flags.MARK) != 0) {
                 flagBlock(x, y, z);
             }   
+            updateBlocks(x, y, z, type, render);
         }
         return true;
     }
@@ -279,6 +300,7 @@ public abstract class World implements IBlockWorld {
 //        float b = 0.8f;
         DynamicLight light = new DynamicLight(pos,color , 0.1f);
         this.lights.add(light);
+        Thread.dumpStack();
     }
 
     public void spawnLights(BlockPos block) {
@@ -443,5 +465,8 @@ public abstract class World implements IBlockWorld {
     
     public HexBiome getHex(int x, int z) {
         return this.biomeManager.blockToHex(x, z);
+    }
+
+    public void spawnParticles(int x, int y, int z, int type, int arg) {
     }
 }

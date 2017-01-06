@@ -346,17 +346,20 @@ public class Mesher {
             int pass = block.getRenderPass();
             int renderType = block.getRenderType();
             boolean renderTypeTransition = false;
+            boolean flagged = false;
             if (renderType != 0) {
-                if (center && strategy == 0 && axis == 0 && l == 0) {
+                if (center && strategy == 0 && axis == 0 && l == 0&&!flagged) {
                     renderTypeBlocks[this.nextBlockIDX++] = 
                             (short) (j<<(REGION_SIZE_BLOCK_SIZE_BITS*2)|i<<(REGION_SIZE_BLOCK_SIZE_BITS)|k);
                 }
-                if (block.isTransparent()) {
-                    return air;
+                if (!block.renderMeshedAndNormal()) {
+                    if (block.isTransparent()) {
+                        return air;
+                    }
+//                    if (strategy == 1)
+//                        return hidden;
+                    renderTypeTransition = true;
                 }
-//                if (strategy == 1)
-//                    return hidden;
-                renderTypeTransition = true;
             }
             if (strategy == 1 && block.getRenderShadow()<1) {
                 return air;

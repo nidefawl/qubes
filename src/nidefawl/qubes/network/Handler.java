@@ -204,4 +204,7 @@ public abstract class Handler {
 
     public void handleLogin(PacketSLogin packetSLogin) {
     }
+
+    public void handleParticles(PacketSParticles packetSParticles) {
+    }
 }

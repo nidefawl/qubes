@@ -161,6 +161,13 @@ public class GuiWindowManager implements Renderable  {
         }
         return false;
     }
+    public static void closeAll() {
+
+        for (final GuiWindow GuiWindow : windowList.values()) {
+            if (GuiWindow.visible)
+                GuiWindow.close();
+        }
+    }
 
 
     public static GuiWindow addWindow(final GuiWindow w, final boolean open) {
@@ -403,6 +410,7 @@ public class GuiWindowManager implements Renderable  {
         }
         return false;
     }
+
     public static void onWindowClosed(final GuiWindow window) {
         if (window.removeOnClose()) {
             windowList.values().remove(window);

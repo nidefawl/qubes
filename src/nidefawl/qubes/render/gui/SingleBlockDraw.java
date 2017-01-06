@@ -6,19 +6,23 @@ package nidefawl.qubes.render.gui;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
 import java.nio.IntBuffer;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import org.lwjgl.opengl.*;
 
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.item.StackData;
+import nidefawl.qubes.render.gui.SingleBlockRenderAtlas.TextureAtlas;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 
 /**
@@ -40,6 +44,23 @@ public class SingleBlockDraw {
     private float rotX;
     private float rotY;
     private float rotZ;
+    LinkedList<BlockDrawQueueEntry> queue = new LinkedList<>(); 
+    static class BlockDrawQueueEntry {
+        Block block;
+        int data;
+        StackData stackData;
+        public BlockDrawQueueEntry() {
+        }
+        public BlockDrawQueueEntry(Block block, int data, StackData stackData) {
+            this.block = block;
+            this.data = data;
+            this.stackData = stackData;
+        }
+        public boolean is(Block block, int data, StackData stackData) {
+            return this.block == block && this.data == data && (this.stackData==null?stackData==null:(stackData!=null&&StackData.isEqual(stackData, this.stackData)));
+        }
+        
+    }
 
     /**
      * 
@@ -65,26 +86,8 @@ public class SingleBlockDraw {
     public void drawBlockDefault(Block block, int data, StackData stackData) {
         SingleBlockRenderAtlas atlas = SingleBlockRenderAtlas.getInstance();
         if (atlas.needsRender(block, data, stackData)) {
-            Engine.setOverrideScissorTest(false);
-            Engine.setOverrideDepthMask(true);
-            this.modelMatrix.setIdentity();
-            this.projMatrix.setZero();
-            atlas.preRender(block, data, stackData, projMatrix, modelMatrix);
-            this.modelMatrix.scale(1, -1, 1);
-            this.modelMatrix.rotate(this.rotX*GameMath.PI_OVER_180, 1,0,0);
-            this.modelMatrix.rotate(this.rotY*GameMath.PI_OVER_180, 0,1,0);
-            this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
-            this.modelMatrix.update();
-            this.projMatrix.update();
-            Shaders.singleblock.enable();
-            Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
-            Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, this.projMatrix.get(), false);
-            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
-            doRender(block, data, stackData);
-            atlas.postRender();
-            Shaders.textured.enable();
-            Engine.restoreScissorTest();
-            Engine.restoreDepthMask();
+            addToQueue(block, data, stackData);
+            return;
         }
         int tex = atlas.getTexture(block, data, stackData);
         int texIdx = atlas.getTextureIdx(block, data, stackData);
@@ -105,6 +108,72 @@ public class SingleBlockDraw {
         Tess.instance.add(xPos, yPos, zPos, texX, texY+texW);
         Tess.instance.draw(GL11.GL_QUADS);
     }
+    private void addToQueue(Block block, int data, StackData stackData) {
+        if (!this.queue.isEmpty()) {
+            for (BlockDrawQueueEntry entry : this.queue) {
+                if (entry.is(block, data, stackData)) {
+                    return;
+                }
+            }
+        }
+        this.queue.add(new BlockDrawQueueEntry(block, data, stackData));
+    }
+
+    public void processQueue() {
+        int n = 0;
+        if (!this.queue.isEmpty()) {
+            SingleBlockRenderAtlas atlasRender = SingleBlockRenderAtlas.getInstance();
+            TextureAtlas lastAtlas = null;
+            Engine.setOverrideScissorTest(false);
+            Engine.setOverrideDepthMask(true);
+            this.modelMatrix.setIdentity();
+            this.projMatrix.setZero();
+            Project.orthoMat(-1, 1, -1, 1, -1, 1, projMatrix);
+            this.modelMatrix.scale(1, -1, 1);
+            this.modelMatrix.rotate(this.rotX*GameMath.PI_OVER_180, 1,0,0);
+            this.modelMatrix.rotate(this.rotY*GameMath.PI_OVER_180, 0,1,0);
+            this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
+            this.modelMatrix.update();
+            this.projMatrix.update();
+            Shaders.singleblock.enable();
+            Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
+            Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, this.projMatrix.get(), false);
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+
+            while (n < 10 && !this.queue.isEmpty()) {
+                BlockDrawQueueEntry entry = this.queue.removeFirst();
+                Block block = entry.block;
+                int data = entry.data;
+                StackData stackData = entry.stackData;
+                TextureAtlas targetAtlas = atlasRender.getAtlas(block, data, stackData);
+                if (targetAtlas == null) {
+                    System.err.println(getClass().getName() + " ran out of texture slots");
+                    break;
+                }
+                if (targetAtlas != lastAtlas) {
+                    targetAtlas.frameBuffer.bind();
+                }
+                int hash = atlasRender.getHash(block, data, stackData);
+                int idx = targetAtlas.getTextureIdx(hash);
+                targetAtlas.hashes[idx] = hash;
+                int x = SingleBlockRenderAtlas.getXPx(idx);
+                int y = SingleBlockRenderAtlas.getYPx(idx);
+                Engine.setViewport(x, y, SingleBlockRenderAtlas.tileSize, SingleBlockRenderAtlas.tileSize);
+                targetAtlas.frameBuffer.clearDepth();
+                doRender(block, data, stackData);
+                lastAtlas = targetAtlas;
+                n++;
+                if (n > 10)
+                    break;
+            }
+            Shaders.textured.enable();
+            Engine.restoreScissorTest();
+            Engine.restoreDepthMask();
+            FrameBuffer.unbindFramebuffer();
+            Engine.setDefaultViewport();
+        }
+    }
+
     public void drawBlock(Block block, int data, StackData stackData) {
         Shaders.singleblock.enable();
         this.modelMatrix.setIdentity();

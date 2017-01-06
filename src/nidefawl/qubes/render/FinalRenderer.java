@@ -604,6 +604,7 @@ public class FinalRenderer extends AbstractRenderer {
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
+        fbScene.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
         fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
         fbScene.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
         fbScene.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);

@@ -118,6 +118,7 @@ public class BlockRenderer {
 //        }
         int type = w.getType(ix, iy, iz);
         if (type < 1) {
+            System.out.println(w);
             //happens when chunk data gets changed by main thread
             System.err.println("type == " + type + " should not happen (" + ix + "," + iy + "," + iz + ")");
             return 0;
@@ -173,6 +174,14 @@ public class BlockRenderer {
                 case 13:
                     setDefaultBounds();
                     n += renderBlockModel(block, ix, iy, iz, pass, block.getLODPass());
+                    break;
+                case 15:
+                    setDefaultBounds();
+                    if (isInventoryBlockRender()) {
+                        n += renderBlock(block, ix, iy, iz, pass, block.getLODPass()); //Normal block with default bounds 
+                        break;
+                    }
+                    n += renderLeaves(block, ix, iy, iz, pass);
                     break;
             }
         }
@@ -236,7 +245,7 @@ public class BlockRenderer {
         float o = 1 / 64f;
         float o2 = 1 / 16f;
         if (zp || zn) {
-            this.attr.setOffset(0.5f, 0, 0);
+            this.attr.addOffset(0.5f, 0, 0);
             int faceDir = 0 << 1 | 1;
             BlockSurface surface = getSingleBlockSurface(block, ix, iy, iz, 0, 1, false, this.bs, texturepass);
             setFaceColor(block, ix, iy, iz, faceDir, surface, texturepass);
@@ -251,7 +260,7 @@ public class BlockRenderer {
             flipFace();
             putBuffer(block, targetBuffer);
             f++;
-            this.attr.setOffset(0, 0, 0);
+            this.attr.addOffset(-0.5f, 0, 0);
             this.bb.minX = 0.5f-o2;
             this.bb.maxX = 0.5f+o2;
 
@@ -353,7 +362,7 @@ public class BlockRenderer {
 
         int data = this.w.getData(ix, iy, iz);
         int tex = block.getTexture(Dir.DIR_POS_Y, data, 0);
-        
+
         attr.setAO(0);
         attr.setTex(tex);
         attr.setNormalMap(0);
@@ -376,7 +385,10 @@ public class BlockRenderer {
         attr.setType(block.id);
         attr.setNormal(0, 1, 0); // set upward normal
 
-        
+
+        if (isInventoryBlockRender()) {
+            data = 0;
+        }
 
         float h = 1f;
         float w = 1f;
@@ -416,7 +428,7 @@ public class BlockRenderer {
             int side = i&1;
             float tmin=0.33f;
             float tmax = 1-tmin;
-            attr.setOffset((0.5f+0.0625f*(-1+2*side))*(1-ax), 0, (0.5f+0.0625f*(-1+2*side))*(ax));
+            attr.addOffset((0.5f+0.0625f*(-1+2*side))*(1-ax), 0, (0.5f+0.0625f*(-1+2*side))*(ax));
             int ax2=1-ax;
             attr.v0.setUV(tmin, 0);
             attr.v0.setPos(x2+tmin*ax, yoff, z2+tmin*ax2);
@@ -430,6 +442,7 @@ public class BlockRenderer {
             putBuffer(block, targetBuffer);
             attr.setReverse(side!=ax);
             putBuffer(block, targetBuffer);
+            attr.addOffset(-(0.5f+0.0625f*(-1+2*side))*(1-ax), 0, -(0.5f+0.0625f*(-1+2*side))*(ax));
         }
         {
             x2 = ix + xoff*(1-0.625f);
@@ -439,7 +452,7 @@ public class BlockRenderer {
             float t = 0.0625f;
             h = 0.625f;
             float to = 0.05f;
-            attr.setOffset(0.5f, 0, 0.5f);
+            attr.addOffset(0.5f, 0, 0.5f);
             attr.v1.setUV(tmin, tmin+to);
             attr.v1.setPos(x2 - t, yoff + h, z2 + t);
             attr.v0.setUV(tmin, tmax+to);
@@ -450,7 +463,7 @@ public class BlockRenderer {
             attr.v2.setPos(x2 + t, yoff + h, z2 + t);
             attr.setReverse(false);
             putBuffer(block, targetBuffer);
-            attr.setOffset(0, 0, 0);
+            attr.addOffset(-0.5f, 0, -0.5f);
         }
         return 4*2+1;
     }
@@ -1114,7 +1127,7 @@ public class BlockRenderer {
         out.pass = block.getRenderPass();
         out.extraFace = false;
         out.calcLight = true;
-        if (w instanceof SingleBlockWorld) {
+        if (isInventoryBlockRender()) {
             out.maskedAO=BlockSurface.maskAO(2, 2, 2, 2);
         } else {
             out.maskedAO = 0;
@@ -1128,6 +1141,266 @@ public class BlockRenderer {
         return out;
     }
 
+    public boolean hasAnyOpenNeighbour(Block block, int ix, int iy, int iz, int pass) {
+        for (int faceDir = 0; faceDir < 6; faceDir++) {
+            int axis = (faceDir)/2;
+            int side = (faceDir)%2;
+            int offx = axis == 0 ? 1-side*2 : 0;
+            int offy = axis == 1 ? 1-side*2 : 0;
+            int offz = axis == 2 ? 1-side*2 : 0;
+            int neighbour = this.w.getType(ix+offx, iy+offy, iz+offz);
+            Block b = Block.get(neighbour);
+            if (b == null || (b.getRenderType()!=0&&b.isFaceVisible(this.w, ix+offx, iy+offy, iz+offz, axis, side, block, bb))) {
+                return true;
+            }
+        }
+        return false;
+    }
+    int renderLeaves(Block block, int ix, int iy, int iz, int pass) {
+        if (!hasAnyOpenNeighbour(block, ix, iy, iz, pass)) {
+            return 0;
+        }
+        int targetBuffer = block.getLODPass();
+        int brigthness = this.w.getLight(ix, iy+1, iz)+5;
+        float alpha = block.getAlpha();
+        int data = this.w.getData(ix, iy, iz);
+        int tex = block.getTexture(Dir.DIR_POS_Y, data, 1+pass);
+        if (tex == block.getTexture(Dir.DIR_POS_Y, data, 0))
+            return 0;
+        boolean bendNormal = false;
+        boolean randomOffset = true;
+        int topAO = !bendNormal?0:2;
+        int bottomAO = !bendNormal?0:1;
+        attr.setAO(BlockFaceAttr.maskAO(bottomAO,bottomAO,topAO,topAO));
+        attr.setTex(tex);
+        attr.setNormalMap(0);
+        attr.setRoughness(block.getRoughness(tex));
+        attr.setFaceDir(-1);
+        int br_pp = brigthness;
+        int br_cp = brigthness;
+        int br_pc = brigthness;
+        int br_nc = brigthness;
+        int br_np = brigthness;
+        int br_nn = brigthness;
+        int br_cn = brigthness;
+        int br_pn = brigthness;
+        int brPP = BlockFaceAttr.mix_light(brigthness, br_pp, br_cp, br_pc);
+        int brNP = BlockFaceAttr.mix_light(brigthness, br_np, br_cp, br_nc);
+        int brNN = BlockFaceAttr.mix_light(brigthness, br_nn, br_cn, br_nc);
+        int brPN = BlockFaceAttr.mix_light(brigthness, br_pn, br_cn, br_pc);
+        attr.maskLight(brNN, brPN, brPP, brNP, block.getLightValue());
+        attr.setType(block.id);
+        attr.setNormal(0, 1, 0); // set upward normal
+        attr.setPass(3);
+
+
+        float x = ix;
+        float y = iy;
+        float z = iz;
+        float h = 2.8f;
+        h = 2.4f;
+        float w = h;
+        y-=h/4f;
+        float rot = 0.25f;
+        int num = 2;
+        float rh=0;
+        if (randomOffset) {
+            int rotBits = 6;// isDoublePlant?4:2;
+            
+            final long multiplier = 0x5DEECE66DL;
+            final long addend = 0xBL;
+            final long mask = (1L << 48) - 1;
+            int ySeed = iy;//isDoublePlant?88:iy;
+            long seed = (ix * 5591 + ySeed * 19 + iz * 7919);
+            long iR = ((multiplier * seed + addend) & mask);
+            float fR = 0.6F;
+            int n = 12;
+            int ma = (1 << n) - 1;
+            x += ((iR & ma) / (float) (ma)) * fR - 0.5f * fR;
+            z += (((iR >> n) & ma) / (float) (ma)) * fR - 0.5f * fR;
+            rh += (((iR >> n*2) & ma) / (float) (ma)) * fR - 0.5f * fR;
+//            int wBits = (int) ((iR>>4)&0x7);
+//            float fw = wBits / 7.0f;
+//            w = 0.9f+ fw*0.2f;
+
+            int rBits = (int) ((iR>>7)&((1<<rotBits)-1));
+            rot += rBits / ((float)(1<<rotBits));
+//            int nBits = (int) ((iR>>15)&0x3);
+//            int nBits2 = (int) ((iR>>17)&0x3);
+//            nBits &= nBits2;
+//            num+=nBits;
+//            int hBits = (int) ((iR>>22)&0x3);
+//            float fh = hBits / 3.0f;
+////            if (!isDoublePlant)
+//            h = 0.5f+ fh*0.3f;
+        }
+        if (block.getTexturePasses() > 1) {
+            if (pass == 2)
+                num = 6;
+            if (pass == 0 && block.getTexturePasses() > 1)
+                num = 4;
+        }
+        num = 2;
+
+//        int rgb2 = Biome.MEADOW_GREEN.getFaceColor(BiomeColor.FOLIAGE2);
+        int rgb2 = this.w.getBiomeFaceColor(ix, iy, iz, Dir.DIR_POS_Y, pass, BiomeColor.FOLIAGE2);
+        float incr = 1/(float)num;
+//        num = 2;
+//        incr = 0.5f;
+//        rot = 0;
+        int nfaces = 0;
+        for (int i = 0; i < num; i++) {
+
+            float frot = rot*GameMath.PI_OVER_180*180;
+            float sin = GameMath.sin(frot);
+            float cos = GameMath.cos(frot);
+//            System.out.println("rot "+rot+" =" +sin+","+cos);
+
+            float sideOffset = 1 - w;
+            float sideTexOffset = 1 - Math.min(1, w);
+            int rgb = block.getFaceColor(this.w, ix, iy, iz, i, pass);
+            for (int v = 0; v < 4; v++) {
+                attr.v[v].setColorRGB(rgb);
+                attr.v[v].setFaceVertDir(0);
+                attr.v[v].setNoDirection();
+            }
+//            if (isDoublePlant) {
+//                {
+//                    int rgb3 = TextureUtil.mixRGB(rgb, rgb2, bendNormal ? 0.8f : 0.4f);
+//                    attr.v2.setColorRGB(rgb3);
+//                    attr.v1.setColorRGB(rgb3);
+//                }
+//                if (bendNormal)
+//                {
+//                    int rgb3 = TextureUtil.mixRGB(rgb, rgb2, 0.4f);
+//                    attr.v3.setColorRGB(rgb3);
+//                    attr.v0.setColorRGB(rgb3);
+//                }
+//            } else 
+//            if ((rgb&0xFFFFFF) != 0xFFFFFF) {
+//                int rgb3 = TextureUtil.mixRGB(rgb, rgb2, 0.1f);
+//                attr.v1.setColorRGB(rgb3);
+//                attr.v2.setColorRGB(rgb3);
+//            }
+            sideOffset  = 0;
+            sideTexOffset = 0;
+            float halfw = w/2.0f;
+            float minX = 0.5f-halfw*sin;
+            float maxX = 0.5f+halfw*sin;
+            float minZ = 0.5f-halfw*cos;
+            float maxZ = 0.5f+halfw*cos;
+            minX+=x;
+            maxX+=x;
+            minZ+=z;
+            maxZ+=z;
+            attr.v0.setUV(sideTexOffset, 0);
+            attr.v0.setPos(minX + sideOffset, y, minZ + sideOffset);
+
+            attr.v1.setUV(sideTexOffset, 1);
+            attr.v1.setPos(minX + sideOffset, y + h, minZ + sideOffset);
+
+            attr.v2.setUV(1 - sideTexOffset, 1);
+            attr.v2.setPos(maxX - sideOffset, y + h, maxZ - sideOffset);
+
+            attr.v3.setUV(1 - sideTexOffset, 0);
+            attr.v3.setPos(maxX - sideOffset, y, maxZ - sideOffset);
+            
+            
+            attr.setReverse(false);
+//            float bendupper=232222.9f;
+//            float bendlower = 0222222.4f;
+//            {
+//                attr.calcNormal(plantNormal);
+//                plantNormal.y += bendupper;
+//                plantNormal.normaliseNull();
+//                int normal = attr.packNormal(plantNormal);
+//                attr.v1.normal = normal;
+//                attr.v2.normal = normal;
+//                attr.calcNormal(plantNormal);
+//                plantNormal.y += bendlower;
+//                plantNormal.normaliseNull();
+//                normal = attr.packNormal(plantNormal);
+//                attr.v0.normal = normal;
+//                attr.v3.normal = normal;
+//            }
+//            
+            putBuffer(block, targetBuffer);
+            attr.setReverse(true);
+//            {
+//                attr.calcNormal(plantNormal);
+//                plantNormal.y += bendupper;
+//                plantNormal.normaliseNull();
+//                int normal = attr.packNormal(plantNormal);
+//                attr.v1.normal = normal;
+//                attr.v2.normal = normal;
+//                attr.calcNormal(plantNormal);
+//                plantNormal.y += bendlower;
+//                plantNormal.normaliseNull();
+//                normal = attr.packNormal(plantNormal);
+//                attr.v0.normal = normal;
+//                attr.v3.normal = normal;
+//            }
+//            attr.flipNormal();
+            
+
+            putBuffer(block, targetBuffer);
+            rot+=incr;
+            nfaces+=2;
+        }
+        w = 1.6f;
+        h = 1.6f;
+//        x = ix;
+        y = iy;
+//        z = iz;
+        float sideOffset = 1 - w;
+        float sideTexOffset = 1 - Math.min(1, w);
+        float halfw = w/2.0f;
+        float minX = 0.5f-halfw;
+        float maxX = 0.5f+halfw;
+        float minZ = 0.5f-halfw;
+        float maxZ = 0.5f+halfw;
+        minX+=x;
+        maxX+=x;
+        minZ+=z;
+        maxZ+=z;
+        y+=rh*0.3f;
+        sideOffset  = 0;
+        sideTexOffset = 0;
+        int rgb = block.getFaceColor(this.w, ix, iy, iz, 0, pass);
+        for (int v = 0; v < 4; v++) {
+            attr.v[v].setColorRGB(rgb);
+            attr.v[v].setFaceVertDir(0);
+            attr.v[v].setNoDirection();
+        }
+        attr.v0.setUV(sideTexOffset, 0);
+        attr.v0.setPos(minX + sideOffset, y+0.5f, minZ + sideOffset);
+
+        attr.v1.setUV(sideTexOffset, 1);
+        attr.v1.setPos(maxX - sideOffset, y+0.5f, minZ + sideOffset);
+
+        attr.v2.setUV(1 - sideTexOffset, 1);
+        attr.v2.setPos(maxX - sideOffset, y+0.5f, maxZ - sideOffset);
+
+        attr.v3.setUV(1 - sideTexOffset, 0);
+        attr.v3.setPos(minX + sideOffset, y+0.5f, maxZ - sideOffset);
+        
+        
+        attr.setReverse(false);
+        attr.calcNormal(plantNormal);
+        plantNormal.normaliseNull();
+        int normal = attr.packNormal(plantNormal);
+         for (int j = 0; j < 4; j++) {
+             attr.v[j].normal = normal;
+         }
+        putBuffer(block, targetBuffer);
+        attr.setReverse(true);
+        attr.flipNormal();
+        putBuffer(block, targetBuffer);
+        nfaces+=2;
+        return nfaces;
+    
+        
+    }
 
     /**
      * @param block
@@ -1181,34 +1454,38 @@ public class BlockRenderer {
         float w = 1f;
         float rot = 0.25f;
         int num = 2;
-        if (isDoublePlant|| (block instanceof BlockPlantCrossedSquares && ((BlockPlantCrossedSquares)block).applyRandomOffset())) {
-            int rotBits = isDoublePlant?4:2;
+        if (!isInventoryBlockRender()) {
+            if (isDoublePlant|| (block instanceof BlockPlantCrossedSquares && ((BlockPlantCrossedSquares)block).applyRandomOffset())) {
+    
+                int rotBits = isDoublePlant?4:2;
+                
+                final long multiplier = 0x5DEECE66DL;
+                final long addend = 0xBL;
+                final long mask = (1L << 48) - 1;
+                int ySeed = isDoublePlant?88:iy;
+                long seed = (ix * 5591 + ySeed * 19 + iz * 7919);
+                long iR = ((multiplier * seed + addend) & mask);
+                float fR = 0.6F;
+                int n = 12;
+                int ma = (1 << n) - 1;
+                x += ((iR & ma) / (float) (ma)) * fR - 0.5f * fR;
+                z += (((iR >> n) & ma) / (float) (ma)) * fR - 0.5f * fR;
+                int wBits = (int) ((iR>>4)&0x7);
+                float fw = wBits / 7.0f;
+                w = 0.9f+ fw*0.2f;
+    
+                int rBits = (int) ((iR>>7)&((1<<rotBits)-1));
+                rot = rBits / ((float)(1<<rotBits));
+                int nBits = (int) ((iR>>15)&0x3);
+                int nBits2 = (int) ((iR>>17)&0x3);
+                nBits &= nBits2;
+                num+=nBits;
+                int hBits = (int) ((iR>>22)&0x3);
+                float fh = hBits / 3.0f;
+                if (!isDoublePlant)
+                h = 0.5f+ fh*0.3f;
+            }
             
-            final long multiplier = 0x5DEECE66DL;
-            final long addend = 0xBL;
-            final long mask = (1L << 48) - 1;
-            int ySeed = isDoublePlant?88:iy;
-            long seed = (ix * 5591 + ySeed * 19 + iz * 7919);
-            long iR = ((multiplier * seed + addend) & mask);
-            float fR = 0.6F;
-            int n = 12;
-            int ma = (1 << n) - 1;
-            x += ((iR & ma) / (float) (ma)) * fR - 0.5f * fR;
-            z += (((iR >> n) & ma) / (float) (ma)) * fR - 0.5f * fR;
-            int wBits = (int) ((iR>>4)&0x7);
-            float fw = wBits / 7.0f;
-            w = 0.9f+ fw*0.2f;
-
-            int rBits = (int) ((iR>>7)&((1<<rotBits)-1));
-            rot = rBits / ((float)(1<<rotBits));
-            int nBits = (int) ((iR>>15)&0x3);
-            int nBits2 = (int) ((iR>>17)&0x3);
-            nBits &= nBits2;
-            num+=nBits;
-            int hBits = (int) ((iR>>22)&0x3);
-            float fh = hBits / 3.0f;
-            if (!isDoublePlant)
-            h = 0.5f+ fh*0.3f;
         }
         if (block.getTexturePasses() > 1) {
             if (pass == 2)
@@ -1286,10 +1563,8 @@ public class BlockRenderer {
                 plantNormal.y+=1.9f;
                 plantNormal.normalise();
                 int normal = attr.packNormal(plantNormal);
-                for (int j = 0; j < 4; j++) {
-                    attr.v1.normal = normal;
-                    attr.v2.normal = normal;
-                }
+                attr.v1.normal = normal;
+                attr.v2.normal = normal;
             }
             attr.v1.setPass(6);
             attr.v2.setPass(6);
@@ -1309,10 +1584,8 @@ public class BlockRenderer {
                 plantNormal.normalise();
 
                 int normal = attr.packNormal(plantNormal);
-                 for (int j = 0; j < 4; j++) {
-                     attr.v1.normal = normal;
-                     attr.v2.normal = normal;
-                 }
+                attr.v1.normal = normal;
+                attr.v2.normal = normal;
                 
             }
             attr.v1.setPass(6);
@@ -1362,6 +1635,10 @@ public class BlockRenderer {
 //
 //        putBuffer(block, targetBuffer);
         return 4;
+    }
+
+    protected boolean isInventoryBlockRender() {
+        return false;
     }
 
 }

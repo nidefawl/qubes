@@ -183,6 +183,7 @@ public class GuiSelectBlock extends Gui {
     
             }
         }
+        super.renderButtons(fTime, mX, mY);
 //        Engine.pxStack.push(0, 0, 420);
         if (this.sel != null) {
             Block block = this.sel.getBlock();
@@ -192,7 +193,7 @@ public class GuiSelectBlock extends Gui {
             float pX1 = sX+bSize/2.0f;
             float pY1 = sZ+bSize/2.0f;
             boolean topDown = false;
-            if (pY1+bSize+offset+32 > Game.displayHeight) {
+            if (pY1+bSize+offset+38 > Game.displayHeight) {
                 pY1 = sZ-bSize-bSize/2.0f;
 //                pY1 = (Game.displayHeight) - bSize*2+offset+32;
                 pY1-=16;
@@ -219,7 +220,7 @@ public class GuiSelectBlock extends Gui {
             pY2+=offset;
             pY1-=offset;
             Engine.pxStack.push(0, 0, 60);
-            renderRoundedBoxShadow(pX1, pY1, -5, pX2-pX1, pY2-pY1, color, 0.8f, true);
+//            renderRoundedBoxShadow(pX1, pY1, -5, pX2-pX1, pY2-pY1, color, 0.8f, true);
             if (sel != null) {
                 Shaders.gui.enable();
                 String s = sel.getBlock().getName();
@@ -227,15 +228,21 @@ public class GuiSelectBlock extends Gui {
                 float extraw=pX2-pX1<w?(w-(pX2-pX1))/2:0;
                 int h = 28;
                 int yPosText = (int) (topDown?pY1-h-2:pY2+6);
+                pX1-=4;
+                pX2+=4;
+                pY2+=4;
+                pY1-=4;
                 renderRoundedBoxShadow(pX1-extraw, yPosText, -3, pX2-pX1+extraw*2, h, color, 0.8f, true);
                 Shaders.textured.enable();
                 font.drawString(""+sel.getBlock().getName(), pX1+(pY2-pY1)/2.0f, yPosText+h-5, -1, true, 1, 2);
                 Shader.disable();
+            } else {
+
+                pX1-=4;
+                pX2+=4;
+                pY2+=4;
+                pY1-=4;
             }
-            pX1-=4;
-            pX2+=4;
-            pY2+=4;
-            pY1-=4;
             Shaders.gui.enable();
             renderRoundedBoxShadow(pX1, pY1, 0, pX2-pX1, pY2-pY1, color, 0.7f, true);
             Engine.blockDraw.setOffset(pX1+bSize, pY1+bSize, 125);
@@ -250,7 +257,6 @@ public class GuiSelectBlock extends Gui {
         Shader.disable();
 
         
-        super.renderButtons(fTime, mX, mY);
 
     }
 

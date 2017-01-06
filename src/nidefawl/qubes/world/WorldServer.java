@@ -16,10 +16,12 @@ import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.Packet;
+import nidefawl.qubes.network.packet.PacketSParticles;
 import nidefawl.qubes.network.packet.PacketSWorldTime;
 import nidefawl.qubes.server.GameServer;
 import nidefawl.qubes.server.PlayerChunkTracker;
 import nidefawl.qubes.util.*;
+import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.biomes.BiomeManagerType;
 import nidefawl.qubes.world.biomes.BiomeSettingsHex;
@@ -406,5 +408,10 @@ public class WorldServer extends World {
     }
     public BiomeManagerType getBiomeType() {
         return this.biomeManager.getBiomeSettings().getType();
+    }
+    public void spawnParticles(int x, int y, int z, int type, int arg) {
+        if (!players.isEmpty()) {
+            broadcastPacket(new PacketSParticles(this, new BlockPos(x, y, z), type, arg));
+        }
     }
 }

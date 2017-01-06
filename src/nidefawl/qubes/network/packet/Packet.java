@@ -66,6 +66,7 @@ public abstract class Packet {
         register(PacketSEntityEquip.class, true, false);
         register(PacketCListRequest.class, false, true);
         register(PacketSList.class, true, false);
+        register(PacketSParticles.class, true, false);
     }
     
     private int id;

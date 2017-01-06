@@ -2,6 +2,7 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
@@ -92,5 +93,18 @@ public class BlockDoublePlant extends Block {
     
     public boolean isWaving() {
         return true;
+    }
+    public void onUpdate(World w, int ix, int iy, int iz, int from) {
+        if (!canStayOn(w, ix, iy-1, iz)) {
+            w.setType(ix, iy, iz, 0, Flags.MARK|Flags.LIGHT);
+        }
+    }
+    public boolean canStayOn(World w, int x, int y, int z) {
+        int dataVal = w.getData(x, y, z);
+        boolean upper=(dataVal&8)!=0;
+        Block b = w.getBlock(x, y, z);
+        if (upper)
+            return b == this;
+        return b.isFullBB() && b.isOccluding();
     }
 }

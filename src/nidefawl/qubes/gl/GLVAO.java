@@ -131,7 +131,7 @@ public class GLVAO {
             //POS
             vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 3, GL11.GL_BYTE, false, 1);
+            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
             //TEXCOORD
             vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
             //COLOR
@@ -140,13 +140,23 @@ public class GLVAO {
 
         }
     };
+    public final static GLVAO vaoStaticModel = new GLVAO() {
+        void init() {
+            //POS
+            vertexAttribFormat(0, 3, GL30.GL_HALF_FLOAT, false, 2);
+            //NORMAL
+            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
+            //TEXCOORD
+            vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
+        }
+    };
     public final static GLVAO vaoModelGPUSkinned= new GLVAO() {
         void init() {
 
             //POS
             vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 3, GL11.GL_BYTE, false, 1);
+            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
             //TEXCOORD
             vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
             //BONEIDX 0-3

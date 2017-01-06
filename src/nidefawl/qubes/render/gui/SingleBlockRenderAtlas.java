@@ -1,19 +1,18 @@
 package nidefawl.qubes.render.gui;
 
+import static org.lwjgl.opengl.GL11.GL_LINEAR;
+import static org.lwjgl.opengl.GL11.GL_RGBA8;
+import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL30.*;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.gl.BufferedMatrix;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.item.StackData;
-import nidefawl.qubes.util.Project;
 
 public class SingleBlockRenderAtlas {
 
@@ -113,7 +112,6 @@ public class SingleBlockRenderAtlas {
         return idx < 0;
     }
     Map<Integer, TextureAtlas> map = Maps.newHashMap();
-    private boolean rendering;
     private TextureAtlas getAtlas(int hash, boolean make) {
         TextureAtlas atlas = map.get(hash);
         if (atlas == null && make) {
@@ -125,37 +123,12 @@ public class SingleBlockRenderAtlas {
         }
         return atlas;
     }
-
-    public void preRender(Block block, int data, StackData stackData, BufferedMatrix projMatrix, BufferedMatrix modelMatrix) {
+    public TextureAtlas getAtlas(Block block, int data, StackData stackData) {
         int hash = block.id<<8|data;
         TextureAtlas atlas = getAtlas(hash, true);
-        if (atlas != null) {
-            int idx = atlas.getTextureIdx(hash);
-            atlas.hashes[idx] = hash;
-            int x = getXPx(idx);
-            int y = getYPx(idx);
-//            System.out.println(x);
-            this.rendering = true;
-            atlas.frameBuffer.bind();
-            Engine.setViewport(x, y, tileSize, tileSize);
-            atlas.frameBuffer.clearDepth();
-            Project.orthoMat(-1, 1, -1, 1, -1, 1, projMatrix);
-//            modelMatrix.translate(-texSize/2+40,0,0);
-//            System.out.println((idx%10)+" -> "+x);
-//            modelMatrix.scale(1/(float)cols);
-        } else {
-            System.err.println(getClass().getName()+" ran out of texture slots");
-        }
+        return atlas;
     }
 
-
-    public void postRender() {
-        if (this.rendering) {
-            this.rendering = false;
-            FrameBuffer.unbindFramebuffer();
-            Engine.setDefaultViewport();
-        }
-    }
 
 
     public void init() {
@@ -202,5 +175,9 @@ public class SingleBlockRenderAtlas {
             return atlas.getTextureIdx(hash);
         }
         return 0;
+    }
+    public int getHash(Block block, int data, StackData stackData) {
+        int hash = block.id<<8|data;
+        return hash;
     }
 }

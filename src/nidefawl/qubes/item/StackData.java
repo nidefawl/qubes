@@ -66,4 +66,8 @@ public class StackData implements StreamIO {
         return new StackData(this);
     }
 
+    public static boolean isEqual(StackData stackData, StackData stackData2) {
+        return BlockData.isEqual(stackData.data, stackData2.data);
+    }
+
 }

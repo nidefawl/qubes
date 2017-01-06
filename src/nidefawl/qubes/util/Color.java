@@ -1,5 +1,7 @@
 package nidefawl.qubes.util;
 
+import nidefawl.qubes.vec.Vector3f;
+
 public class Color {
     public static int HSBtoRGB(float hue, float saturation, float brightness) {
         int r = 0, g = 0, b = 0;
@@ -82,7 +84,12 @@ public class Color {
         hsbvals[2] = brightness;
         return hsbvals;
     }
-    public static Object getHSBColor(float f, float g, float h) {
-        return null;
+    
+    public static void setColorVec(int uint32RGB, Vector3f vec) {
+        vec.z = (uint32RGB&0xFF)/255.0f;
+        uint32RGB>>=8;
+        vec.y = (uint32RGB&0xFF)/255.0f;
+        uint32RGB>>=8;
+        vec.x = (uint32RGB&0xFF)/255.0f;
     }
 }

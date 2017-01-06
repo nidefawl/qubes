@@ -97,8 +97,6 @@ public class BlockPlacer {
         int transaction = clientStage>>2;
         int stage = clientStage&3;
         if (stage > 0 && bAgainst.canMineWith(this, w, pos, this.player, itemstack)) {
-            long l = (System.currentTimeMillis()-startTime)/50;
-            l/=15;
             if (stage > 1) {
                 bAgainst.onBlockMine(this, w, pos, this.player, itemstack); 
             } else {
@@ -273,6 +271,7 @@ public class BlockPlacer {
         int type = getWorld().getType(x, y, z);
         Block block = Block.get(type);
         if (block != null) {
+            getWorld().spawnParticles(x, y, z, 1, block.id);
             getWorld().setType(x, y, z, 0, Flags.MARK|Flags.LIGHT);
         }
     }

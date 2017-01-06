@@ -4,6 +4,7 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
@@ -65,5 +66,14 @@ public class BlockSnowLayer extends Block {
 	public boolean isReplaceable() {
 		return true;
 	}
+    public void onUpdate(World w, int ix, int iy, int iz, int from) {
+        if (!canStayOn(w, ix, iy-1, iz)) {
+            w.setType(ix, iy, iz, 0, Flags.MARK|Flags.LIGHT);
+        }
+    }
+    public boolean canStayOn(World w, int x, int y, int z) {
+        Block b = w.getBlock(x, y, z);
+        return b.isFullBB() && b.isOccluding();
+    }
 
 }

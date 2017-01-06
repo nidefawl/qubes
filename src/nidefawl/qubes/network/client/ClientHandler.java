@@ -543,4 +543,8 @@ public class ClientHandler extends Handler {
 
         }
     }
+
+    public void handleParticles(PacketSParticles p) {
+        Engine.particleRenderer.spawnParticles(world, p.pos.x, p.pos.y, p.pos.z, p.type, p.arg);
+    }
 }

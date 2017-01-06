@@ -6,6 +6,7 @@ package nidefawl.qubes.block;
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -98,5 +99,14 @@ public class BlockPlantCrossedSquares extends Block {
     
     public boolean isWaving() {
         return true;
+    }
+    public void onUpdate(World w, int ix, int iy, int iz, int from) {
+        if (!canStayOn(w, ix, iy-1, iz)) {
+            w.setType(ix, iy, iz, 0, Flags.MARK|Flags.LIGHT);
+        }
+    }
+    public boolean canStayOn(World w, int x, int y, int z) {
+        Block b = w.getBlock(x, y, z);
+        return b.isFullBB() && b.isOccluding();
     }
 }

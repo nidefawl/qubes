@@ -23,6 +23,7 @@ import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.models.render.QModelRender;
+import nidefawl.qubes.particle.CubeParticleRenderer;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
@@ -92,6 +93,7 @@ public class Engine {
     public static BlurRenderer   blurRenderer;
     public static FinalRenderer  outRenderer;
     public static RegionRenderer regionRenderer;
+    public static CubeParticleRenderer  particleRenderer;
     public static LightCompute  lightCompute;
     public static MeshThread     regionRenderThread;
     public static QModelBatchedRender renderBatched;
@@ -119,9 +121,10 @@ public class Engine {
     
     public final static ShaderBuffer        ssbo_model_normalmat         = new ShaderBuffer("QModel_mat_normal")
             .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES);
-    
+
     public final static ShaderBuffer        ssbo_model_bonemat         = new ShaderBuffer("QModel_mat_bone")
             .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES*32);
+
     
     public final static SunLightModel sunlightmodel = new SunLightModel();
     private final static ReallocIntBuffer[] buffers = new ReallocIntBuffer[4];
@@ -251,6 +254,7 @@ public class Engine {
             shadowProj = new ShadowProjector();
             worldRenderer = new WorldRenderer();
             skyRenderer = new SkyRenderer();
+            particleRenderer = new CubeParticleRenderer();
             shadowRenderer = new ShadowRenderer();
             outRenderer = new FinalRenderer();
             blurRenderer = new BlurRenderer();
@@ -354,6 +358,9 @@ public class Engine {
         }
         if (worldRenderer != null) {
             worldRenderer.resize(displayWidth, displayHeight);
+        }
+        if (particleRenderer != null) {
+            particleRenderer.resize(displayWidth, displayHeight);
         }
         if (skyRenderer != null) {
             skyRenderer.resize(displayWidth, displayHeight);
@@ -615,11 +622,13 @@ public class Engine {
     public static void reloadRenderer(boolean useBasicShaders) {
         flushRenderTasks();
         if (worldRenderer != null) worldRenderer.release();
+        if (particleRenderer != null) particleRenderer.release();
         if (outRenderer != null) outRenderer.release();
         if (shadowRenderer != null) shadowRenderer.release();
         if (blurRenderer != null) blurRenderer.release();
         if (skyRenderer != null) skyRenderer.release();
         worldRenderer = new WorldRenderer();
+        particleRenderer = new CubeParticleRenderer();
         skyRenderer = new SkyRenderer();
         outRenderer = new FinalRenderer();
         shadowRenderer = new ShadowRenderer();
@@ -627,6 +636,7 @@ public class Engine {
         blurRenderer = new BlurRenderer();
         blurRenderer.init();
         worldRenderer.init();
+        particleRenderer.init();
         skyRenderer.init();
         outRenderer.init();
         shadowRenderer.init();
@@ -634,6 +644,7 @@ public class Engine {
         blurRenderer.resize(Game.displayWidth, Game.displayHeight);
         skyRenderer.resize(Game.displayWidth, Game.displayHeight);
         worldRenderer.resize(Game.displayWidth, Game.displayHeight);
+        particleRenderer.resize(Game.displayWidth, Game.displayHeight);
         outRenderer.resize(Game.displayWidth, Game.displayHeight);
         shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
         lightCompute.resize(Game.displayWidth, Game.displayHeight);

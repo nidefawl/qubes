@@ -597,6 +597,9 @@ public class Block {
     }
     public void onBlockMine(BlockPlacer placer, World w, BlockPos pos, PlayerServer player, ItemStack itemstack) {
     }
+    public void onUpdate(World w, int ix, int iy, int iz, int from) {
+        
+    }
     public ModelBlock getBlockModel(IBlockWorld w, int ix, int iy, int iz, int texturepass) {
         return loadedModels[0];
     }
@@ -614,5 +617,8 @@ public class Block {
     }
     public boolean canWalkThru(IBlockWorld w, int ix, int iy, int iz, Entity e) {
         return isReplaceable();
+    }
+    public boolean renderMeshedAndNormal() {
+        return false;
     }
 }

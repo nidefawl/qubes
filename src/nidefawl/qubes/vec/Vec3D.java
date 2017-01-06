@@ -208,4 +208,10 @@ public class Vec3D {
         return xd*xd+yd*yd+zd*zd;
     }
 
+    public void addVec(Vec3D dir) {
+        this.x+=dir.x;
+        this.y+=dir.y;
+        this.z+=dir.z;
+    }
+
 }

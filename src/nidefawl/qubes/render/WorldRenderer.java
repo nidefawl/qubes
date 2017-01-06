@@ -363,7 +363,9 @@ public class WorldRenderer extends AbstractRenderer {
 //        Shader.disable();
 //        if (this.qmodel != null)
 //            this.qmodel.animate(fTime);
+        Engine.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
         renderEntities(world, PASS_SOLID, fTime, null, 0);
+        
 
     }
 
@@ -590,7 +592,7 @@ public class WorldRenderer extends AbstractRenderer {
 //                    glEnable(GL_DEPTH_TEST);
             }
             return;
-        } else if (bstack!=null) {
+        } else if (bstack!=null&&bstack.id>0) {
             
             Shaders.singleblock3D.enable();
             BufferedMatrix mat = Engine.getTempMatrix();
