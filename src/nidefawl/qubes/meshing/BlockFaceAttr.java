@@ -71,6 +71,11 @@ public class BlockFaceAttr {
             this.zOff-=Engine.GLOBAL_OFFSET.z;
         }
     }
+    public void addOffset(float xOff, float yOff, float zOff) {
+        this.xOff += xOff;
+        this.yOff += yOff;
+        this.zOff += zOff;
+    }
 
     public void setNormal(int x, int y, int z) {
         byte byte0 = (byte)(int)(x * 127F);
@@ -396,10 +401,18 @@ public class BlockFaceAttr {
      * @return 
      */
     public int packNormal(Vector3f n) {
-        byte byte0 = (byte)(int)(n.x * 127F);
-        byte byte1 = (byte)(int)(n.y * 127F);
-        byte byte2 = (byte)(int)(n.z * 127F);
-        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+        int iX = (int) Math.round(n.x * 128F);
+        byte byte0 = (byte) (iX<-128?-128:iX>127?127:iX);
+        int iY = (int) Math.round(n.y * 128F);
+        byte byte1 = (byte) (iY<-128?-128:iY>127?127:iY);
+        int iZ = (int) Math.round(n.z * 128F);
+        byte byte2 = (byte) (iZ<-128?-128:iZ>127?127:iZ);
+        int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
+        return normal;
+//        byte byte0 = (byte)(int)(n.x * 127F);
+//        byte byte1 = (byte)(int)(n.y * 127F);
+//        byte byte2 = (byte)(int)(n.z * 127F);
+//        return byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
     }
 
     public boolean getReverse() {

@@ -1,5 +1,6 @@
 package nidefawl.qubes.util;
 
+import nidefawl.qubes.gl.GLVAO;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
@@ -27,7 +28,8 @@ public class RenderUtil {
         buf.putIdx(idxPos+3);
         buf.putIdx(idxPos+1);
     }
-    public static void makeCube(VertexBuffer buf, float len) {
+    public static void makeCube(VertexBuffer buf, float len, GLVAO format) {
+
         float hlen= len/4.0f;
         int idxPos = 0;
         for (int i = 0; i < 6; i++) {
@@ -40,12 +42,22 @@ public class RenderUtil {
                 float xOff = ((y)*xd+(z)*zd)*hlen;
                 float yOff = ((z)*xd+(x)*zd)*hlen;
                 float zOff = ((y)*zd+(x)*xd)*hlen;
-                buf.put(Float.floatToRawIntBits(x*hlen+xOff));
-                buf.put(Float.floatToRawIntBits(y*hlen+yOff));
-                buf.put(Float.floatToRawIntBits(z*hlen+zOff));
-                buf.put(packNormal(-x, -y, -z));
-                buf.put(packTexCoord(j&1, (j>>1)&1));
-                buf.put(0xffffffff);
+                if (format == GLVAO.vaoModel) {
+                    buf.put(Float.floatToRawIntBits(x*hlen+xOff));
+                    buf.put(Float.floatToRawIntBits(y*hlen+yOff));
+                    buf.put(Float.floatToRawIntBits(z*hlen+zOff));
+                    buf.put(packNormal(x, y, z));
+                    buf.put(packTexCoord(j&1, (j>>1)&1));
+                    buf.put(0xffffffff);
+                } else if (format == GLVAO.vaoStaticModel) {
+                    
+                    buf.put(Half.fromFloat(y*hlen+yOff) << 16 | (Half.fromFloat(x*hlen+xOff)));
+                    buf.put(Half.fromFloat(0) << 16 | (Half.fromFloat(z*hlen+zOff)));
+                    buf.put(packNormal(x, y, z));
+                    buf.put(packTexCoord(j&1, (j>>1)&1));
+                } else {
+                    throw new IllegalArgumentException("Don't know how to handle that format");
+                }
                 buf.increaseVert();
             }
             int backFace = (i&1);
@@ -66,6 +78,12 @@ public class RenderUtil {
             }
             idxPos+=4;
         }
+
+//        byte byte0 = (byte)(int)(-1 * 128F);
+//        byte byte1 = (byte)(int)(0x80);
+//        System.out.println(byte1);
+//        System.out.println(Integer.toHexString(byte0)+" - "+Integer.toHexString(byte1));
+//        System.out.println(Integer.toBinaryString(byte0)+" - "+Integer.toBinaryString(byte1));
     }
     public static void makeSphere(VertexBuffer buf, float radius, int rings, int sectors) {
 
@@ -133,9 +151,12 @@ public class RenderUtil {
         return packNormal(v.x, v.y, v.z);
     }
     public final static int packNormal(float x, float y, float z) {
-        byte byte0 = (byte)(int)(x * 127F);
-        byte byte1 = (byte)(int)(y * 127F);
-        byte byte2 = (byte)(int)(z * 127F);
+        int iX = (int) Math.round(x * 128F);
+        byte byte0 = (byte) (iX<-128?-128:iX>127?127:iX);
+        int iY = (int) Math.round(y * 128F);
+        byte byte1 = (byte) (iY<-128?-128:iY>127?127:iY);
+        int iZ = (int) Math.round(z * 128F);
+        byte byte2 = (byte) (iZ<-128?-128:iZ>127?127:iZ);
         int normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
         return normal;
     }
