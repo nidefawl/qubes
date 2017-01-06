@@ -1,4 +1,9 @@
 
+#define BLOCK_ID_u32(blockinfo32) ((blockinfo32 >> 16u) & 0xFFFu)
+#define BLOCK_RENDERPASS_u32(blockinfo32) ((blockinfo32 >> 28u) & 0xFu)
+#define BLOCK_TEX_SLOT_u32(blockinfo32) float(blockinfo32&0xFFFu)
+#define BLOCK_NORMAL_SLOT_u32(blockinfo32) float((blockinfo32&0xF000u)>>12u)
+
 #define BLOCK_ID(blockinfo) (blockinfo.y&0xFFFu)
 #define BLOCK_RENDERPASS(blockinfo) float((blockinfo.y&0xF000u)>>12u)
 #define BLOCK_TEX_SLOT(blockinfo) float(blockinfo.x&0xFFFu)

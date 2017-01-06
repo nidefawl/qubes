@@ -26,7 +26,7 @@ flat out vec4 faceLightSky;
 flat out uvec4 blockinfo;
 flat out float blockid; // duplicate data, not sure if faster than per fragment bitmasking (on blockinfo.y)
 flat out uint faceDir; // also duplicate, I really need to check if passing varyings costs more than bitmasking
-flat out uint vertDir; // also duplicate
+
 out vec2 texPos;
 out float roughness;
 
@@ -52,8 +52,8 @@ void main() {
 	float distCam = length(in_position.xyz - CAMERA_POS);
 
 	faceDir = BLOCK_FACEDIR(blockinfo);
-	vertDir = BLOCK_VERTDIR(blockinfo);
-	vec3 dir = vertexDir.dir[vertDir].xyz;
+	// vertDir = BLOCK_VERTDIR(blockinfo);
+	vec3 dir = vertexDir.dir[BLOCK_VERTDIR(blockinfo)].xyz;
     float renderpass = BLOCK_RENDERPASS(blockinfo);
 
 	if (renderpass>=6&&renderpass<=7) {

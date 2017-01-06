@@ -403,7 +403,8 @@ void main() {
 
     vec4 nl = texture(texNormals, pass_texcoord);
     prop.roughness = nl.w;
-	prop.normal = nl.rgb * 2.0f - 1.0f;
+	prop.normal = /*normalize*/(nl.rgb * 2.0f - 1.0f);
+    // dbgcolor = vec4(prop.normal.xyz, 1.0);
     prop.blockLight = texture(texBlockLight, pass_texcoord, 0);
     prop.reflective = prop.blockLight.w;
     prop.light = texture(texLight, pass_texcoord, 0);
@@ -431,7 +432,8 @@ void main() {
     float fogDepth = length(prop.position);
     vec3 fogColor = mix(vec3(0.5,0.6,0.8)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     // float isFlower = float(blockid>=48u);
-
+    // if (isBackface > 0) 
+    //     discard;
 #if RENDER_PASS ==1
     if (isWater > 0.9) {
         vec3 refractv = vec3(0.0);
@@ -480,8 +482,10 @@ void main() {
     alpha += isEntity;
     alpha = min(alpha, 1.0);
     if (!isSky) {
-        float minAmb = 0.25;
-        float minAmb2 = 0.1;
+        // float minAmb = 0.25;
+        // float minAmb2 = 0.1;
+        float minAmb = 0.05;
+        float minAmb2 = 0.03;
          float diff = 1.5;
         // prop.roughness = 0.3;
         float roughness = pow(2.0, 1.0+(prop.roughness)*10.0)-1.0;
@@ -551,12 +555,12 @@ void main() {
         finalLight += Ispec * sunLight;
         finalLight += Idiff * sunLight;
 
-        const float blockLightConst = 60.0;
+        const float blockLightConst = 15.0;
         finalLight += lum* (mix(1.0, occlusion, 0.19)) * blockLight*isLight*0.6;
         finalLight+=isIllum*4.0;
         finalLight += vec3(1.0, 0.9, 0.7) * pow(blockLightLvl/8.0,2.0)*((1.0-isLight*0.8)*blockLightConst);
         float mixSSAO = 0.1;
-        finalLight *= max(mixSSAO+ssao.r*(1.0-mixSSAO), isWater);
+        finalLight *= max(mixSSAO+ssao.r*(1.0-mixSSAO), isWater+isBackface*0.5);
         finalLight+=prop.light.rgb*(occlusion);
         // finalLight*=2;
 #if RENDER_PASS ==1

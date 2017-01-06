@@ -11,7 +11,7 @@
 
 uniform sampler2DArray blockTextures;
 uniform sampler2D noisetex;
-uniform sampler2DArray normalTextures; // needs to be another array later one (I guess)
+uniform sampler2DArray normalTextures;
 
 
 in vec4 color;
@@ -25,7 +25,7 @@ flat in vec4 faceLightSky;
 flat in uvec4 blockinfo;
 flat in float blockid;
 flat in uint faceDir;
-flat in uint vertDir;
+
 in vec2 texPos;
 in float roughness;
 
@@ -128,8 +128,8 @@ void main(void) {
 		// normalMapTex *= 1/1.1;
 
 		// vec3 normalMapTex = texture(normalTest, newCoords).xzy * 2.0 - 1.0; // swizzling is important here
-		outNormal = normalize((tbnMat * normalMapTex));
-		// if (length(outNormal) > 1) {
+		outNormal = normalize(outNormal+(tbnMat * normalMapTex));
+		// if (length(outNormal) > 1.01) {
 		// 	color_adj=vec3(1,0,0);
 		// }
 	}	
