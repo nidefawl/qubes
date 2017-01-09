@@ -213,5 +213,13 @@ public class Vec3D {
         this.y+=dir.y;
         this.z+=dir.z;
     }
+    public static void interp(Vec3D a, Vec3D b, double f, Vec3D to) {
+        double df = f;
+        to.set(
+                a.x+(b.x-a.x)*df,
+                a.y+(b.y-a.y)*df,
+                a.z+(b.z-a.z)*df
+                );
+    }
 
 }

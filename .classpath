@@ -11,6 +11,16 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/Game/lib/snakeyaml/snakeyaml-1.16-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="lib/jna/jna-4.2.2.jar" sourcepath="C:/Users/Michael/workspace_projects/JNA/src">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="Game/lib/jna"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="lib/openvr/JOpenVR.jar" sourcepath="/JOpenVR">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="Game/lib/openvr"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="lib/jline/jline-2.13.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/lwjgl3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

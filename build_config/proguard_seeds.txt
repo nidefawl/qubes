@@ -1,7 +1,120 @@
 nidefawl.qubes.BootClient
+nidefawl.qubes.BootClient: int appId
 nidefawl.qubes.BootClient: BootClient()
-nidefawl.qubes.BootClient: java.lang.String getValue(java.lang.String[],int,java.lang.String)
 nidefawl.qubes.BootClient: void main(java.lang.String[])
+nidefawl.qubes.BootClient: nidefawl.qubes.GameBase getInstance()
+nidefawl.qubes.BootClient: void <clinit>()
+nidefawl.qubes.GameBase: java.lang.String appName
+nidefawl.qubes.GameBase: int windowWidth
+nidefawl.qubes.GameBase: int windowHeight
+nidefawl.qubes.GameBase: int displayWidth
+nidefawl.qubes.GameBase: int displayHeight
+nidefawl.qubes.GameBase: boolean GL_ERROR_CHECKS
+nidefawl.qubes.GameBase: long windowId
+nidefawl.qubes.GameBase: int initWidth
+nidefawl.qubes.GameBase: int initHeight
+nidefawl.qubes.GameBase: int TICKS_PER_SEC
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWErrorCallback errorCallback
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWWindowSizeCallback cbWindowSize
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWKeyCallback cbKeyboard
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWMouseButtonCallback cbMouseButton
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWScrollCallback cbScrollCallback
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWWindowFocusCallback cbWindowFocus
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWCursorPosCallback cbCursorPos
+nidefawl.qubes.GameBase: org.lwjgl.glfw.GLFWCharCallback cbText
+nidefawl.qubes.GameBase: boolean hasTextHook
+nidefawl.qubes.GameBase: boolean toggleTiming
+nidefawl.qubes.GameBase: boolean DO_TIMING
+nidefawl.qubes.GameBase: float renderTime
+nidefawl.qubes.GameBase: float absTime
+nidefawl.qubes.GameBase: int ticksran
+nidefawl.qubes.GameBase: int lastFPS
+nidefawl.qubes.GameBase: long timeLastFPS
+nidefawl.qubes.GameBase: long timeLastFrame
+nidefawl.qubes.GameBase: nidefawl.qubes.util.Timer timer
+nidefawl.qubes.GameBase: int tick
+nidefawl.qubes.GameBase: boolean startRender
+nidefawl.qubes.GameBase: nidefawl.qubes.util.GameError showError
+nidefawl.qubes.GameBase: nidefawl.qubes.logging.LogBufferStream outStream
+nidefawl.qubes.GameBase: nidefawl.qubes.logging.LogBufferStream errStream
+nidefawl.qubes.GameBase: long frameTime
+nidefawl.qubes.GameBase: boolean vsync
+nidefawl.qubes.GameBase: boolean running
+nidefawl.qubes.GameBase: boolean wasrunning
+nidefawl.qubes.GameBase: boolean sysExit
+nidefawl.qubes.GameBase: boolean minimized
+nidefawl.qubes.GameBase: boolean hasWindowFocus
+nidefawl.qubes.GameBase: boolean useWindowSizeAsRenderResolution
+nidefawl.qubes.GameBase: boolean isStarting
+nidefawl.qubes.GameBase: java.lang.Thread thread
+nidefawl.qubes.GameBase: int newWidth
+nidefawl.qubes.GameBase: int newHeight
+nidefawl.qubes.GameBase: nidefawl.qubes.gl.GPUVendor vendor
+nidefawl.qubes.GameBase: nidefawl.qubes.GameBase baseInstance
+nidefawl.qubes.GameBase: nidefawl.qubes.gui.LoadingScreen loadingScreen
+nidefawl.qubes.GameBase: nidefawl.qubes.input.KeybindManager movement
+nidefawl.qubes.GameBase: nidefawl.qubes.gui.Gui gui
+nidefawl.qubes.GameBase: boolean reinittexthook
+nidefawl.qubes.GameBase: boolean wasGrabbed
+nidefawl.qubes.GameBase: java.util.ArrayList glProfileResults
+nidefawl.qubes.GameBase: int throttleClick
+nidefawl.qubes.GameBase: boolean needsGrab
+nidefawl.qubes.GameBase: void startGame()
+nidefawl.qubes.GameBase: GameBase()
+nidefawl.qubes.GameBase: boolean isRunning()
+nidefawl.qubes.GameBase: nidefawl.qubes.gl.GPUVendor getVendor()
+nidefawl.qubes.GameBase: void run()
+nidefawl.qubes.GameBase: void initCallbacks()
+nidefawl.qubes.GameBase: void initDisplay(boolean)
+nidefawl.qubes.GameBase: java.lang.String getAppTitle()
+nidefawl.qubes.GameBase: void destroyContext()
+nidefawl.qubes.GameBase: void onDestroy()
+nidefawl.qubes.GameBase: void shutdown()
+nidefawl.qubes.GameBase: void checkResize()
+nidefawl.qubes.GameBase: void onStatsUpdated()
+nidefawl.qubes.GameBase: void setVSync(boolean)
+nidefawl.qubes.GameBase: boolean getVSync()
+nidefawl.qubes.GameBase: java.lang.Thread getMainThread()
+nidefawl.qubes.GameBase: boolean _checkGLError(java.lang.String)
+nidefawl.qubes.GameBase: java.lang.String getGlErrorString(int)
+nidefawl.qubes.GameBase: void updateDisplay()
+nidefawl.qubes.GameBase: boolean isCloseRequested()
+nidefawl.qubes.GameBase: void setVSync_impl(boolean)
+nidefawl.qubes.GameBase: void updateInput()
+nidefawl.qubes.GameBase: void setTitle(java.lang.String)
+nidefawl.qubes.GameBase: void limitFpsTo(int)
+nidefawl.qubes.GameBase: void runFrame()
+nidefawl.qubes.GameBase: boolean needsGrab()
+nidefawl.qubes.GameBase: void mainLoop()
+nidefawl.qubes.GameBase: void initGLContext()
+nidefawl.qubes.GameBase: void updateTime()
+nidefawl.qubes.GameBase: void showErrorScreen(java.lang.String,java.util.List,java.lang.Throwable,boolean)
+nidefawl.qubes.GameBase: void setException(nidefawl.qubes.util.GameError)
+nidefawl.qubes.GameBase: long getTime()
+nidefawl.qubes.GameBase: boolean hasTextHook()
+nidefawl.qubes.GameBase: void setTextHook(boolean)
+nidefawl.qubes.GameBase: void onTextInput(long,int)
+nidefawl.qubes.GameBase: void onKeyPress(long,int,int,int,int)
+nidefawl.qubes.GameBase: void onWheelScroll(long,double,double)
+nidefawl.qubes.GameBase: void render(float)
+nidefawl.qubes.GameBase: void preRenderUpdate(float)
+nidefawl.qubes.GameBase: void postRenderUpdate(float)
+nidefawl.qubes.GameBase: void setRenderResolution(int,int)
+nidefawl.qubes.GameBase: void onWindowResize(int,int)
+nidefawl.qubes.GameBase: void tick()
+nidefawl.qubes.GameBase: void initGame()
+nidefawl.qubes.GameBase: void lateInitGame()
+nidefawl.qubes.GameBase: void showGUI(nidefawl.qubes.gui.Gui)
+nidefawl.qubes.GameBase: void onMouseClick(long,int,int,int)
+nidefawl.qubes.GameBase: void setGrabbed(boolean)
+nidefawl.qubes.GameBase: boolean isGrabbed()
+nidefawl.qubes.GameBase: void input(float)
+nidefawl.qubes.GameBase: nidefawl.qubes.gui.Gui getGui()
+nidefawl.qubes.GameBase: java.lang.String getValue(java.lang.String[],int,java.lang.String)
+nidefawl.qubes.GameBase: void parseCmdArgs(java.lang.String[])
+nidefawl.qubes.GameBase: int access$002(nidefawl.qubes.GameBase,int)
+nidefawl.qubes.GameBase: int access$102(nidefawl.qubes.GameBase,int)
+nidefawl.qubes.GameBase: void <clinit>()
 nidefawl.qubes.NativeClassLoader
 nidefawl.qubes.NativeClassLoader: nidefawl.qubes.NativeClassLoader instance
 nidefawl.qubes.NativeClassLoader: NativeClassLoader()
@@ -16,12 +129,20 @@ nidefawl.qubes.NativeInterface
 nidefawl.qubes.NativeInterface: nidefawl.qubes.NativeInterface instance
 nidefawl.qubes.NativeInterface: boolean isPresent
 nidefawl.qubes.NativeInterface: nidefawl.qubes.NativeInterface getInstance()
-nidefawl.qubes.NativeInterface: void start()
+nidefawl.qubes.NativeInterface: void start(int)
 nidefawl.qubes.NativeInterface: boolean isPresent()
 nidefawl.qubes.NativeInterface: NativeInterface()
 nidefawl.qubes.NativeInterface: void gameCrashed(nidefawl.qubes.util.CrashInfo)
 nidefawl.qubes.NativeInterface: void gameAlive()
 nidefawl.qubes.NativeInterface: void <clinit>()
+nidefawl.qubes.async.AsyncTask: java.util.concurrent.Future future
+nidefawl.qubes.async.AsyncTask: AsyncTask()
+nidefawl.qubes.async.AsyncTask: nidefawl.qubes.async.AsyncTask$TaskType getType()
+nidefawl.qubes.async.AsyncTask: void pre()
+nidefawl.qubes.async.AsyncTask: void post()
+nidefawl.qubes.async.AsyncTask: void setFuture(java.util.concurrent.Future)
+nidefawl.qubes.async.AsyncTask: boolean isDone()
+nidefawl.qubes.async.AsyncTask: boolean isCancelled()
 nidefawl.qubes.async.AsyncTask$TaskType: nidefawl.qubes.async.AsyncTask$TaskType[] values()
 nidefawl.qubes.async.AsyncTask$TaskType: nidefawl.qubes.async.AsyncTask$TaskType valueOf(java.lang.String)
 nidefawl.qubes.biome.BiomeColor: nidefawl.qubes.biome.BiomeColor[] values()
@@ -34,6 +155,127 @@ nidefawl.qubes.block.BlockTextureMode: nidefawl.qubes.block.BlockTextureMode[] v
 nidefawl.qubes.block.BlockTextureMode: nidefawl.qubes.block.BlockTextureMode valueOf(java.lang.String)
 nidefawl.qubes.gl.GPUVendor: nidefawl.qubes.gl.GPUVendor[] values()
 nidefawl.qubes.gl.GPUVendor: nidefawl.qubes.gl.GPUVendor valueOf(java.lang.String)
+nidefawl.qubes.gui.AbstractUI: nidefawl.qubes.gui.AbstractUI parent
+nidefawl.qubes.gui.AbstractUI: int id
+nidefawl.qubes.gui.AbstractUI: int width
+nidefawl.qubes.gui.AbstractUI: int height
+nidefawl.qubes.gui.AbstractUI: int posX
+nidefawl.qubes.gui.AbstractUI: int posY
+nidefawl.qubes.gui.AbstractUI: int[] overridebounds
+nidefawl.qubes.gui.AbstractUI: boolean hovered
+nidefawl.qubes.gui.AbstractUI: boolean enabled
+nidefawl.qubes.gui.AbstractUI: boolean draw
+nidefawl.qubes.gui.AbstractUI: boolean focused
+nidefawl.qubes.gui.AbstractUI: int zIndex
+nidefawl.qubes.gui.AbstractUI: nidefawl.qubes.gui.AbstractUI selectedButton
+nidefawl.qubes.gui.AbstractUI: int color
+nidefawl.qubes.gui.AbstractUI: float alpha
+nidefawl.qubes.gui.AbstractUI: int color2
+nidefawl.qubes.gui.AbstractUI: float alpha2
+nidefawl.qubes.gui.AbstractUI: int color3
+nidefawl.qubes.gui.AbstractUI: float alpha3
+nidefawl.qubes.gui.AbstractUI: int color4
+nidefawl.qubes.gui.AbstractUI: int color5
+nidefawl.qubes.gui.AbstractUI: int color6
+nidefawl.qubes.gui.AbstractUI: float alpha4
+nidefawl.qubes.gui.AbstractUI: float boxSigma
+nidefawl.qubes.gui.AbstractUI: float shadowSigma
+nidefawl.qubes.gui.AbstractUI: float round
+nidefawl.qubes.gui.AbstractUI: int extendx
+nidefawl.qubes.gui.AbstractUI: int extendy
+nidefawl.qubes.gui.AbstractUI: AbstractUI()
+nidefawl.qubes.gui.AbstractUI: void saveBounds()
+nidefawl.qubes.gui.AbstractUI: void restoreBounds()
+nidefawl.qubes.gui.AbstractUI: void setSize(int,int)
+nidefawl.qubes.gui.AbstractUI: void setPos(int,int)
+nidefawl.qubes.gui.AbstractUI: int right()
+nidefawl.qubes.gui.AbstractUI: int bottom()
+nidefawl.qubes.gui.AbstractUI: boolean hasElement(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.AbstractUI: void add(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.AbstractUI: void update()
+nidefawl.qubes.gui.AbstractUI: boolean mouseOver(double,double)
+nidefawl.qubes.gui.AbstractUI: boolean handleMouseUp(nidefawl.qubes.gui.Gui,int)
+nidefawl.qubes.gui.AbstractUI: boolean handleMouseDown(nidefawl.qubes.gui.Gui,int)
+nidefawl.qubes.gui.AbstractUI: boolean onKeyPress(int,int,int,int)
+nidefawl.qubes.gui.AbstractUI: boolean onTextInput(int)
+nidefawl.qubes.gui.AbstractUI: void setFocus()
+nidefawl.qubes.gui.AbstractUI: void resetShape()
+nidefawl.qubes.gui.AbstractUI: void renderRoundedBoxShadow(float,float,float,float,float,int,float,boolean)
+nidefawl.qubes.gui.AbstractUI: void renderRoundedBoxShadowInverse(float,float,float,float,float,int,float,boolean)
+nidefawl.qubes.gui.AbstractUI: void renderOutlinedBox()
+nidefawl.qubes.gui.AbstractUI: void renderBox()
+nidefawl.qubes.gui.AbstractUI: void renderBox(boolean,boolean,int,int,int)
+nidefawl.qubes.gui.AbstractUI: void renderBox(boolean,boolean,int,int)
+nidefawl.qubes.gui.AbstractUI: void renderBox2(boolean,boolean,int,int)
+nidefawl.qubes.gui.AbstractUI: int getWindowPosX()
+nidefawl.qubes.gui.AbstractUI: int getWindowPosY()
+nidefawl.qubes.gui.AbstractUI: void renderSlotBackground(float,float,float,float,float,int,float,boolean,float)
+nidefawl.qubes.gui.AbstractUI: void renderSlots(nidefawl.qubes.inventory.slots.Slots,float,double,double,float,float)
+nidefawl.qubes.gui.AbstractUI: void renderSlotOverlay(nidefawl.qubes.inventory.slots.Slot,float,float)
+nidefawl.qubes.gui.AbstractUI: void setDisableDraw(boolean)
+nidefawl.qubes.gui.Gui: java.util.ArrayList buttons
+nidefawl.qubes.gui.Gui: java.util.ArrayList prebackground
+nidefawl.qubes.gui.Gui: boolean firstOpen
+nidefawl.qubes.gui.Gui: nidefawl.qubes.gui.AbstractUI popup
+nidefawl.qubes.gui.Gui: int slotW
+nidefawl.qubes.gui.Gui: int slotBDist
+nidefawl.qubes.gui.Gui: int FONT_SIZE_WINDOW_TITLE
+nidefawl.qubes.gui.Gui: int FONT_SIZE_BUTTON
+nidefawl.qubes.gui.Gui: Gui()
+nidefawl.qubes.gui.Gui: nidefawl.qubes.gui.AbstractUI getPopup()
+nidefawl.qubes.gui.Gui: boolean hasElement(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.Gui: void add(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.Gui: void addBackground(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.Gui: nidefawl.qubes.gui.AbstractUI getElement(int)
+nidefawl.qubes.gui.Gui: void clearElements()
+nidefawl.qubes.gui.Gui: void sortElements()
+nidefawl.qubes.gui.Gui: void remove(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.Gui: void setPopup(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.Gui: void renderBackgroundElements(float,double,double)
+nidefawl.qubes.gui.Gui: void renderButtons(float,double,double)
+nidefawl.qubes.gui.Gui: void update()
+nidefawl.qubes.gui.Gui: void onClose()
+nidefawl.qubes.gui.Gui: boolean onMouseClick(int,int)
+nidefawl.qubes.gui.Gui: double mouseOffsetY()
+nidefawl.qubes.gui.Gui: double mouseOffsetX()
+nidefawl.qubes.gui.Gui: boolean onGuiClicked(nidefawl.qubes.gui.AbstractUI)
+nidefawl.qubes.gui.Gui: boolean onKeyPress(int,int,int,int)
+nidefawl.qubes.gui.Gui: void close()
+nidefawl.qubes.gui.Gui: boolean onTextInput(int)
+nidefawl.qubes.gui.Gui: boolean requiresTextInput()
+nidefawl.qubes.gui.Gui: void renderBackground(float,double,double,boolean,float)
+nidefawl.qubes.gui.Gui: void updateBounds()
+nidefawl.qubes.gui.Gui: boolean canResize()
+nidefawl.qubes.gui.Gui: boolean onWheelScroll(double,double)
+nidefawl.qubes.gui.Gui: void <clinit>()
+nidefawl.qubes.gui.windows.GuiWindow: int titleBarHeight
+nidefawl.qubes.gui.windows.GuiWindow: boolean allwaysVisible
+nidefawl.qubes.gui.windows.GuiWindow: boolean visible
+nidefawl.qubes.gui.windows.GuiWindow: boolean mouseOverResize
+nidefawl.qubes.gui.windows.GuiWindow: nidefawl.qubes.font.FontRenderer font
+nidefawl.qubes.gui.windows.GuiWindow: int[] bounds
+nidefawl.qubes.gui.windows.GuiWindow: GuiWindow()
+nidefawl.qubes.gui.windows.GuiWindow: void initGui(boolean)
+nidefawl.qubes.gui.windows.GuiWindow: java.lang.String getTitle()
+nidefawl.qubes.gui.windows.GuiWindow: void onDefocus()
+nidefawl.qubes.gui.windows.GuiWindow: void onFocus()
+nidefawl.qubes.gui.windows.GuiWindow: void setFocus()
+nidefawl.qubes.gui.windows.GuiWindow: boolean hasFocus()
+nidefawl.qubes.gui.windows.GuiWindow: void open()
+nidefawl.qubes.gui.windows.GuiWindow: void close()
+nidefawl.qubes.gui.windows.GuiWindow: void onClose()
+nidefawl.qubes.gui.windows.GuiWindow: boolean mouseOver(double,double)
+nidefawl.qubes.gui.windows.GuiWindow: boolean mouseOverResize(double,double)
+nidefawl.qubes.gui.windows.GuiWindow: boolean removeOnClose()
+nidefawl.qubes.gui.windows.GuiWindow: boolean doesPopupHandleClick(double,double)
+nidefawl.qubes.gui.windows.GuiWindow: void updateBounds()
+nidefawl.qubes.gui.windows.GuiWindow: boolean canResize()
+nidefawl.qubes.gui.windows.GuiWindow: void renderFrame(float,double,double)
+nidefawl.qubes.gui.windows.GuiWindow: void onDrag(double,double)
+nidefawl.qubes.gui.windows.GuiWindow: void onResize(double,double)
+nidefawl.qubes.gui.windows.GuiWindow: boolean onMouseClick(int,int)
+nidefawl.qubes.gui.windows.GuiWindow: int getWindowPosX()
+nidefawl.qubes.gui.windows.GuiWindow: int getWindowPosY()
 nidefawl.qubes.input.GameMode: nidefawl.qubes.input.GameMode[] values()
 nidefawl.qubes.input.GameMode: nidefawl.qubes.input.GameMode valueOf(java.lang.String)
 nidefawl.qubes.io.network.DataListType: nidefawl.qubes.io.network.DataListType[] values()
@@ -81,6 +323,40 @@ nidefawl.qubes.shader.Uniform4f: Uniform4f(java.lang.String,int)
 nidefawl.qubes.shader.UniformMat4: UniformMat4(java.lang.String,int)
 nidefawl.qubes.texture.PNGDecoder$Format: nidefawl.qubes.texture.PNGDecoder$Format[] values()
 nidefawl.qubes.texture.PNGDecoder$Format: nidefawl.qubes.texture.PNGDecoder$Format valueOf(java.lang.String)
+nidefawl.qubes.texture.array.TextureArray: boolean SKIP_LOAD_TEXTURES
+nidefawl.qubes.texture.array.TextureArray: java.util.HashMap texNameToAssetMap
+nidefawl.qubes.texture.array.TextureArray: java.util.HashMap blockIDToAssetList
+nidefawl.qubes.texture.array.TextureArray: java.util.HashMap slotTextureMap
+nidefawl.qubes.texture.array.TextureArray: boolean firstInit
+nidefawl.qubes.texture.array.TextureArray: int[] textures
+nidefawl.qubes.texture.array.TextureArray: int glid
+nidefawl.qubes.texture.array.TextureArray: int tileSize
+nidefawl.qubes.texture.array.TextureArray: int numTextures
+nidefawl.qubes.texture.array.TextureArray: int numMipmaps
+nidefawl.qubes.texture.array.TextureArray: int subtypeBits
+nidefawl.qubes.texture.array.TextureArray: boolean report
+nidefawl.qubes.texture.array.TextureArray: float loadprogress
+nidefawl.qubes.texture.array.TextureArray: float uploadprogress
+nidefawl.qubes.texture.array.TextureArray: TextureArray(int)
+nidefawl.qubes.texture.array.TextureArray: void unload()
+nidefawl.qubes.texture.array.TextureArray: void init()
+nidefawl.qubes.texture.array.TextureArray: void preUpdate()
+nidefawl.qubes.texture.array.TextureArray: void _load()
+nidefawl.qubes.texture.array.TextureArray: void load()
+nidefawl.qubes.texture.array.TextureArray: void reload()
+nidefawl.qubes.texture.array.TextureArray: void postUpdate()
+nidefawl.qubes.texture.array.TextureArray: void free()
+nidefawl.qubes.texture.array.TextureArray: java.nio.ByteBuffer put(java.nio.ByteBuffer,byte[])
+nidefawl.qubes.texture.array.TextureArray: int getTextureIdx(int,int)
+nidefawl.qubes.texture.array.TextureArray: void setTexture(int,int,int)
+nidefawl.qubes.texture.array.TextureArray: void calculateSubtypeBits()
+nidefawl.qubes.texture.array.TextureArray: void findMaxTileWidth()
+nidefawl.qubes.texture.array.TextureArray: void upscaleTextures()
+nidefawl.qubes.texture.array.TextureArray: void initGLStorage()
+nidefawl.qubes.texture.array.TextureArray: void uploadTextures()
+nidefawl.qubes.texture.array.TextureArray: void collectTextures(nidefawl.qubes.assets.AssetManager)
+nidefawl.qubes.texture.array.TextureArray: void postUpload()
+nidefawl.qubes.texture.array.TextureArray: float getProgress()
 nidefawl.qubes.util.CrashInfo
 nidefawl.qubes.util.CrashInfo: java.lang.String title
 nidefawl.qubes.util.CrashInfo: java.lang.String desc
@@ -105,7 +381,1408 @@ nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest: TerrainGenBlockTest(nidefaw
 nidefawl.qubes.worldgen.terrain.TerrainGenFlatSand128: TerrainGenFlatSand128(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.TerrainGenMines: TerrainGenMines(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.TerrainGenQTest: TerrainGenQTest(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
+nidefawl.qubes.worldgen.terrain.TerrainGeneratorIsland: TerrainGeneratorIsland(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.TerrainGeneratorOther: TerrainGeneratorOther(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight: TerrainGeneratorLight(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain: TerrainGeneratorMain(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2: TerrainGeneratorTest2(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
+test.game.CameraController
+test.game.CameraController: nidefawl.qubes.vec.Vec3D pos
+test.game.CameraController: nidefawl.qubes.vec.Vec3D lastPos
+test.game.CameraController: nidefawl.qubes.vec.Vec3D mot
+test.game.CameraController: nidefawl.qubes.vec.Vec3D lastMot
+test.game.CameraController: float yaw
+test.game.CameraController: float lastYaw
+test.game.CameraController: float pitch
+test.game.CameraController: float lastPitch
+test.game.CameraController: float forward
+test.game.CameraController: float strafe
+test.game.CameraController: float maxSpeed
+test.game.CameraController: float jump
+test.game.CameraController: boolean sneak
+test.game.CameraController: CameraController()
+test.game.CameraController: void update(nidefawl.qubes.input.KeybindManager)
+test.game.CameraController: void tickUpdate()
+test.game.CameraController: void set(float,float,float,float,float)
+test.game.EmptyGame
+test.game.EmptyGame: EmptyGame()
+test.game.EmptyGame: void main(java.lang.String[])
+test.game.EmptyGame: void onStatsUpdated()
+test.game.EmptyGame: void onTextInput(long,int)
+test.game.EmptyGame: void onKeyPress(long,int,int,int,int)
+test.game.EmptyGame: void render(float)
+test.game.EmptyGame: void preRenderUpdate(float)
+test.game.EmptyGame: void postRenderUpdate(float)
+test.game.EmptyGame: void setRenderResolution(int,int)
+test.game.EmptyGame: void tick()
+test.game.EmptyGame: void initGame()
+test.game.EmptyGame: void lateInitGame()
+test.game.EmptyGame: void onWheelScroll(long,double,double)
+test.game.FrameBufferChainTest
+test.game.FrameBufferChainTest: nidefawl.qubes.util.SimpleResourceManager resMgr
+test.game.FrameBufferChainTest: int NUM_FRAMEBUFFERS
+test.game.FrameBufferChainTest: int ticks
+test.game.FrameBufferChainTest: nidefawl.qubes.shader.Shader shader
+test.game.FrameBufferChainTest: nidefawl.qubes.shader.Shader shader2
+test.game.FrameBufferChainTest: nidefawl.qubes.gl.FrameBuffer[] buffers
+test.game.FrameBufferChainTest: FrameBufferChainTest()
+test.game.FrameBufferChainTest: void main(java.lang.String[])
+test.game.FrameBufferChainTest: void onStatsUpdated()
+test.game.FrameBufferChainTest: void reloadShaders()
+test.game.FrameBufferChainTest: void onTextInput(long,int)
+test.game.FrameBufferChainTest: void onKeyPress(long,int,int,int,int)
+test.game.FrameBufferChainTest: void render(float)
+test.game.FrameBufferChainTest: void preRenderUpdate(float)
+test.game.FrameBufferChainTest: void postRenderUpdate(float)
+test.game.FrameBufferChainTest: void setRenderResolution(int,int)
+test.game.FrameBufferChainTest: void tick()
+test.game.FrameBufferChainTest: void initGame()
+test.game.FrameBufferChainTest: void lateInitGame()
+test.game.FrameBufferChainTest: void onWheelScroll(long,double,double)
+test.game.FrustumTest
+test.game.FrustumTest: test.game.CameraController cameraController
+test.game.FrustumTest: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.FrustumTest: int tick
+test.game.FrustumTest: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.FrustumTest: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.FrustumTest: boolean startup
+test.game.FrustumTest: nidefawl.qubes.shader.Shader modelShader
+test.game.FrustumTest: int action
+test.game.FrustumTest: boolean once
+test.game.FrustumTest: nidefawl.qubes.vec.Vector3f tmp
+test.game.FrustumTest: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.FrustumTest: boolean hadContext
+test.game.FrustumTest: nidefawl.qubes.gl.VertexBuffer vertexBuf
+test.game.FrustumTest: nidefawl.qubes.gl.GLTriBuffer buf
+test.game.FrustumTest: FrustumTest()
+test.game.FrustumTest: void main(java.lang.String[])
+test.game.FrustumTest: void initShaders()
+test.game.FrustumTest: void onStatsUpdated()
+test.game.FrustumTest: void onTextInput(long,int)
+test.game.FrustumTest: void onKeyPress(long,int,int,int,int)
+test.game.FrustumTest: void render(float)
+test.game.FrustumTest: void preRenderUpdate(float)
+test.game.FrustumTest: void postRenderUpdate(float)
+test.game.FrustumTest: void setRenderResolution(int,int)
+test.game.FrustumTest: void tick()
+test.game.FrustumTest: void initGame()
+test.game.FrustumTest: void redraw()
+test.game.FrustumTest: void lateInitGame()
+test.game.FrustumTest: void onWheelScroll(long,double,double)
+test.game.FrustumTest: void <clinit>()
+test.game.GuiModelViewer
+test.game.GuiModelViewer: int nextID
+test.game.GuiModelViewer: nidefawl.qubes.gui.controls.Button back
+test.game.GuiModelViewer: java.util.List list
+test.game.GuiModelViewer: java.util.List listDyn
+test.game.GuiModelViewer: test.game.GuiModelViewer$Setting testSetting
+test.game.GuiModelViewer: test.game.ModelViewer viewer
+test.game.GuiModelViewer: nidefawl.qubes.gui.controls.CheckBox checkBoxRenderMode
+test.game.GuiModelViewer: nidefawl.qubes.gui.controls.CheckBox checkboxWireframe
+test.game.GuiModelViewer: nidefawl.qubes.gui.controls.CheckBox checkboxNormals
+test.game.GuiModelViewer: nidefawl.qubes.gui.controls.CheckBox checkboxBones
+test.game.GuiModelViewer: GuiModelViewer()
+test.game.GuiModelViewer: void setModel(nidefawl.qubes.models.EntityModel,nidefawl.qubes.models.render.QModelRender,nidefawl.qubes.models.qmodel.QModelProperties)
+test.game.GuiModelViewer: void initGui(boolean)
+test.game.GuiModelViewer: int layout()
+test.game.GuiModelViewer: void render(float,double,double)
+test.game.GuiModelViewer: java.lang.String getTitle()
+test.game.GuiModelViewer: boolean onGuiClicked(nidefawl.qubes.gui.AbstractUI)
+test.game.GuiModelViewer: test.game.ModelViewer access$000(test.game.GuiModelViewer)
+test.game.GuiModelViewer: void <clinit>()
+test.game.GuiModelViewer$1
+test.game.GuiModelViewer$1: java.util.List val$l
+test.game.GuiModelViewer$1: test.game.GuiModelViewer this$0
+test.game.GuiModelViewer$1: GuiModelViewer$1(test.game.GuiModelViewer,nidefawl.qubes.gui.Gui,java.lang.String,java.lang.Object,java.lang.Object[],java.util.List)
+test.game.GuiModelViewer$1: void callback(int)
+test.game.GuiModelViewer$2
+test.game.GuiModelViewer$2: test.game.GuiModelViewer$Setting val$s
+test.game.GuiModelViewer$2: test.game.GuiModelViewer this$0
+test.game.GuiModelViewer$2: GuiModelViewer$2(test.game.GuiModelViewer,test.game.GuiModelViewer$Setting)
+test.game.GuiModelViewer$2: void call(nidefawl.qubes.gui.controls.ComboBox$ComboBoxList,int)
+test.game.GuiModelViewer$ModelActionList
+test.game.GuiModelViewer$ModelActionList: nidefawl.qubes.models.EntityModel entityModel
+test.game.GuiModelViewer$ModelActionList: int idx
+test.game.GuiModelViewer$ModelActionList: GuiModelViewer$ModelActionList(nidefawl.qubes.gui.Gui,nidefawl.qubes.models.EntityModel,int)
+test.game.GuiModelViewer$ModelActionList: void callback(int)
+test.game.GuiModelViewer$ModelSettingControl
+test.game.GuiModelViewer$ModelSettingControl: nidefawl.qubes.models.ModelOption option
+test.game.GuiModelViewer$ModelSettingControl: GuiModelViewer$ModelSettingControl(nidefawl.qubes.gui.Gui,nidefawl.qubes.models.ModelOption)
+test.game.GuiModelViewer$ModelSettingControl: void callback(int)
+test.game.GuiModelViewer$Setting
+test.game.GuiModelViewer$Setting: java.lang.Object[] vals
+test.game.GuiModelViewer$Setting: nidefawl.qubes.gui.controls.ComboBox box
+test.game.GuiModelViewer$Setting: nidefawl.qubes.gui.controls.Button button1
+test.game.GuiModelViewer$Setting: nidefawl.qubes.gui.controls.Button button2
+test.game.GuiModelViewer$Setting: int curVal
+test.game.GuiModelViewer$Setting: GuiModelViewer$Setting()
+test.game.GuiModelViewer$Setting: GuiModelViewer$Setting(nidefawl.qubes.gui.Gui,java.lang.String,java.lang.Object,java.lang.Object[])
+test.game.GuiModelViewer$Setting: void callback(int)
+test.game.Hex
+test.game.Hex: test.game.CameraController cameraController
+test.game.Hex: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.Hex: boolean ortho
+test.game.Hex: int tick
+test.game.Hex: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.Hex: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.Hex: boolean startup
+test.game.Hex: double halfLen
+test.game.Hex: nidefawl.qubes.shader.Shader modelShader
+test.game.Hex: int action
+test.game.Hex: boolean drag
+test.game.Hex: java.util.Stack stack
+test.game.Hex: nidefawl.qubes.vec.Vector3f tmp
+test.game.Hex: boolean once
+test.game.Hex: nidefawl.qubes.world.biomes.HexBiomesServer biomes
+test.game.Hex: boolean update
+test.game.Hex: float mapOffsetX
+test.game.Hex: float mapOffsetZ
+test.game.Hex: float scale2
+test.game.Hex: float inOffsetX
+test.game.Hex: float inOffsetZ
+test.game.Hex: float scaleWidth
+test.game.Hex: float scaleHeight
+test.game.Hex: float floatzpos1
+test.game.Hex: int zPos1
+test.game.Hex: int zPos
+test.game.Hex: float rOffsetZ
+test.game.Hex: float floatxpos1
+test.game.Hex: int xPos1
+test.game.Hex: int xPos
+test.game.Hex: float rOffsetX
+test.game.Hex: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.Hex: nidefawl.qubes.vec.Vector3f hit
+test.game.Hex: float left
+test.game.Hex: float top
+test.game.Hex: float rWidth
+test.game.Hex: float rHeight
+test.game.Hex: boolean hadContext
+test.game.Hex: int tex
+test.game.Hex: double zoom
+test.game.Hex: boolean diddrag
+test.game.Hex: Hex()
+test.game.Hex: void main(java.lang.String[])
+test.game.Hex: void initShaders()
+test.game.Hex: void onStatsUpdated()
+test.game.Hex: void onTextInput(long,int)
+test.game.Hex: void onKeyPress(long,int,int,int,int)
+test.game.Hex: void onMouseClick(long,int,int,int)
+test.game.Hex: void updateOffset()
+test.game.Hex: void render(float)
+test.game.Hex: double mousePosX()
+test.game.Hex: double mousePosY()
+test.game.Hex: void render2(float)
+test.game.Hex: int getBlockColor(int,int)
+test.game.Hex: void preRenderUpdate(float)
+test.game.Hex: void postRenderUpdate(float)
+test.game.Hex: void setRenderResolution(int,int)
+test.game.Hex: void tick()
+test.game.Hex: void initGame()
+test.game.Hex: void lateInitGame()
+test.game.Hex: void renderQuad()
+test.game.Hex: void input(float)
+test.game.Hex: double mousePosX2()
+test.game.Hex: double mousePosY2()
+test.game.Hex: void onWheelScroll(long,double,double)
+test.game.Hex: void <clinit>()
+test.game.ModelAdjuster
+test.game.ModelAdjuster: test.game.CameraController cameraController
+test.game.ModelAdjuster: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.ModelAdjuster: boolean wasGrabbed
+test.game.ModelAdjuster: test.game.ModelAdjuster instance
+test.game.ModelAdjuster: int tick
+test.game.ModelAdjuster: boolean startup
+test.game.ModelAdjuster: boolean once
+test.game.ModelAdjuster: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.ModelAdjuster: ModelAdjuster()
+test.game.ModelAdjuster: void main(java.lang.String[])
+test.game.ModelAdjuster: void onStatsUpdated()
+test.game.ModelAdjuster: void onTextInput(long,int)
+test.game.ModelAdjuster: void onKeyPress(long,int,int,int,int)
+test.game.ModelAdjuster: void render(float)
+test.game.ModelAdjuster: void showGUI(nidefawl.qubes.gui.Gui)
+test.game.ModelAdjuster: void preRenderUpdate(float)
+test.game.ModelAdjuster: void postRenderUpdate(float)
+test.game.ModelAdjuster: void setRenderResolution(int,int)
+test.game.ModelAdjuster: void tick()
+test.game.ModelAdjuster: void initGame()
+test.game.ModelAdjuster: void lateInitGame()
+test.game.ModelAdjuster: void onWheelScroll(long,double,double)
+test.game.ModelViewer
+test.game.ModelViewer: test.game.CameraController cameraController
+test.game.ModelViewer: nidefawl.qubes.gl.FrameBuffer buf
+test.game.ModelViewer: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.ModelViewer: nidefawl.qubes.gl.TesselatorState tessState
+test.game.ModelViewer: nidefawl.qubes.shader.Shader shaderModelSingle
+test.game.ModelViewer: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.ModelViewer: int action
+test.game.ModelViewer: nidefawl.qubes.gui.Gui gui
+test.game.ModelViewer: boolean wasGrabbed
+test.game.ModelViewer: test.game.ModelViewer instance
+test.game.ModelViewer: int tick
+test.game.ModelViewer: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.ModelViewer: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.ModelViewer: boolean startup
+test.game.ModelViewer: boolean showNormals
+test.game.ModelViewer: boolean showBones
+test.game.ModelViewer: boolean showWireframe
+test.game.ModelViewer: boolean renderBatchedMode
+test.game.ModelViewer: nidefawl.qubes.models.render.QModelRender renderBatched
+test.game.ModelViewer: nidefawl.qubes.models.render.QModelRender renderSingle
+test.game.ModelViewer: nidefawl.qubes.models.render.QModelRender curRender
+test.game.ModelViewer: nidefawl.qubes.models.EntityModel entityModel
+test.game.ModelViewer: int modelidx
+test.game.ModelViewer: boolean once
+test.game.ModelViewer: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.ModelViewer: boolean hadContext
+test.game.ModelViewer: nidefawl.qubes.gl.FrameBuffer buf2
+test.game.ModelViewer: nidefawl.qubes.models.qmodel.QModelProperties config
+test.game.ModelViewer: java.util.Stack stack
+test.game.ModelViewer: nidefawl.qubes.vec.Vector3f tmp
+test.game.ModelViewer: ModelViewer()
+test.game.ModelViewer: void main(java.lang.String[])
+test.game.ModelViewer: void initShaders()
+test.game.ModelViewer: void onStatsUpdated()
+test.game.ModelViewer: void reloadModel()
+test.game.ModelViewer: void onTextInput(long,int)
+test.game.ModelViewer: void onKeyPress(long,int,int,int,int)
+test.game.ModelViewer: void setModel(int)
+test.game.ModelViewer: void render(float)
+test.game.ModelViewer: void showGUI(nidefawl.qubes.gui.Gui)
+test.game.ModelViewer: void renderBones(nidefawl.qubes.models.qmodel.ModelRigged,nidefawl.qubes.gl.BufferedMatrix)
+test.game.ModelViewer: void preRenderUpdate(float)
+test.game.ModelViewer: void postRenderUpdate(float)
+test.game.ModelViewer: void setRenderResolution(int,int)
+test.game.ModelViewer: void tick()
+test.game.ModelViewer: void initGame()
+test.game.ModelViewer: void lateInitGame()
+test.game.ModelViewer: void onWheelScroll(long,double,double)
+test.game.ModelViewer: void <clinit>()
+test.game.ModelViewer$1
+test.game.ModelViewer$1: test.game.ModelViewer this$0
+test.game.ModelViewer$1: ModelViewer$1(test.game.ModelViewer)
+test.game.ModelViewer$1: java.lang.String getDefinition(java.lang.String)
+test.game.ParticlePerformanceTest
+test.game.ParticlePerformanceTest: int MAX_PARTICLES
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes_blockinfo
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_structs
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_arrays
+test.game.ParticlePerformanceTest: int MAX_SPRITES
+test.game.ParticlePerformanceTest: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.ParticlePerformanceTest: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.ParticlePerformanceTest: boolean startup
+test.game.ParticlePerformanceTest: nidefawl.qubes.vec.Vector3f tmp
+test.game.ParticlePerformanceTest: nidefawl.qubes.font.FontRenderer font
+test.game.ParticlePerformanceTest: test.game.CameraController cameraController
+test.game.ParticlePerformanceTest: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.ParticlePerformanceTest: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.ParticlePerformanceTest: nidefawl.qubes.gl.GLTriBuffer cubeFormat1
+test.game.ParticlePerformanceTest: nidefawl.qubes.gl.GLTriBuffer cubeFormat2
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.Shader skybox
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.Shader particleShaderStruct
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.Shader particleShaderSeperateBuffer
+test.game.ParticlePerformanceTest: nidefawl.qubes.shader.Shader particleShaderArrays
+test.game.ParticlePerformanceTest: nidefawl.qubes.gl.TesselatorState tessState
+test.game.ParticlePerformanceTest: boolean once
+test.game.ParticlePerformanceTest: boolean hadContext
+test.game.ParticlePerformanceTest: int fireUpdate
+test.game.ParticlePerformanceTest: float lastUpdate
+test.game.ParticlePerformanceTest: boolean pause
+test.game.ParticlePerformanceTest: float pauseTime
+test.game.ParticlePerformanceTest: int totalSpritesRendered
+test.game.ParticlePerformanceTest: int storedSprites
+test.game.ParticlePerformanceTest: int tick
+test.game.ParticlePerformanceTest: int renderMode
+test.game.ParticlePerformanceTest: int selFormat
+test.game.ParticlePerformanceTest: int selShader
+test.game.ParticlePerformanceTest: java.lang.String error
+test.game.ParticlePerformanceTest: java.lang.String stats
+test.game.ParticlePerformanceTest: int maxSprites
+test.game.ParticlePerformanceTest: java.util.List particles
+test.game.ParticlePerformanceTest: java.util.Random r
+test.game.ParticlePerformanceTest: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.ParticlePerformanceTest: boolean init
+test.game.ParticlePerformanceTest: float SPEED
+test.game.ParticlePerformanceTest: boolean draw
+test.game.ParticlePerformanceTest: ParticlePerformanceTest()
+test.game.ParticlePerformanceTest: void main(java.lang.String[])
+test.game.ParticlePerformanceTest: void initGame()
+test.game.ParticlePerformanceTest: void initShaders()
+test.game.ParticlePerformanceTest: void lateInitGame()
+test.game.ParticlePerformanceTest: void onKeyPress(long,int,int,int,int)
+test.game.ParticlePerformanceTest: void onWindowResize(int,int)
+test.game.ParticlePerformanceTest: void setRenderResolution(int,int)
+test.game.ParticlePerformanceTest: void onStatsUpdated()
+test.game.ParticlePerformanceTest: void onTextInput(long,int)
+test.game.ParticlePerformanceTest: void onWheelScroll(long,double,double)
+test.game.ParticlePerformanceTest: void postRenderUpdate(float)
+test.game.ParticlePerformanceTest: void preRenderUpdate(float)
+test.game.ParticlePerformanceTest: void preRenderUpdateParticles(float)
+test.game.ParticlePerformanceTest: void redraw()
+test.game.ParticlePerformanceTest: void render(float)
+test.game.ParticlePerformanceTest: void renderParticles(float)
+test.game.ParticlePerformanceTest: void spawnParticles(int)
+test.game.ParticlePerformanceTest: void storeParticles(float,int)
+test.game.ParticlePerformanceTest: void tick()
+test.game.ParticlePerformanceTest: void updateTickParticles()
+test.game.ParticlePerformanceTest: float access$000()
+test.game.ParticlePerformanceTest: void <clinit>()
+test.game.ParticlePerformanceTest$1
+test.game.ParticlePerformanceTest$1: test.game.ParticlePerformanceTest this$0
+test.game.ParticlePerformanceTest$1: ParticlePerformanceTest$1(test.game.ParticlePerformanceTest)
+test.game.ParticlePerformanceTest$1: java.lang.String getDefinition(java.lang.String)
+test.game.ParticlePerformanceTest$2
+test.game.ParticlePerformanceTest$2: test.game.ParticlePerformanceTest this$0
+test.game.ParticlePerformanceTest$2: ParticlePerformanceTest$2(test.game.ParticlePerformanceTest)
+test.game.ParticlePerformanceTest$2: java.lang.String getDefinition(java.lang.String)
+test.game.ParticlePerformanceTest$3
+test.game.ParticlePerformanceTest$3: test.game.ParticlePerformanceTest this$0
+test.game.ParticlePerformanceTest$3: ParticlePerformanceTest$3(test.game.ParticlePerformanceTest)
+test.game.ParticlePerformanceTest$3: java.lang.String getDefinition(java.lang.String)
+test.game.ParticlePerformanceTest$4
+test.game.ParticlePerformanceTest$4: test.game.ParticlePerformanceTest this$0
+test.game.ParticlePerformanceTest$4: ParticlePerformanceTest$4(test.game.ParticlePerformanceTest)
+test.game.ParticlePerformanceTest$4: java.lang.String getDefinition(java.lang.String)
+test.game.ParticlePerformanceTest$5
+test.game.ParticlePerformanceTest$5: nidefawl.qubes.texture.array.TextureArray val$arr
+test.game.ParticlePerformanceTest$5: test.game.ParticlePerformanceTest this$0
+test.game.ParticlePerformanceTest$5: ParticlePerformanceTest$5(test.game.ParticlePerformanceTest,nidefawl.qubes.texture.array.TextureArray)
+test.game.ParticlePerformanceTest$5: void pre()
+test.game.ParticlePerformanceTest$5: void post()
+test.game.ParticlePerformanceTest$5: java.lang.Void call()
+test.game.ParticlePerformanceTest$5: nidefawl.qubes.async.AsyncTask$TaskType getType()
+test.game.ParticlePerformanceTest$5: java.lang.Object call()
+test.game.ParticlePerformanceTest$Particle
+test.game.ParticlePerformanceTest$Particle: boolean dead
+test.game.ParticlePerformanceTest$Particle: int maxLive
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f mot
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f lastMot
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f pos
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f lastPos
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f renderPos
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f renderRot
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f rot
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f lastRot
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector3f rotspeed
+test.game.ParticlePerformanceTest$Particle: nidefawl.qubes.vec.Vector2f texOffset
+test.game.ParticlePerformanceTest$Particle: float size
+test.game.ParticlePerformanceTest$Particle: float initSize
+test.game.ParticlePerformanceTest$Particle: float lastSize
+test.game.ParticlePerformanceTest$Particle: float renderSize
+test.game.ParticlePerformanceTest$Particle: int tick
+test.game.ParticlePerformanceTest$Particle: int tex
+test.game.ParticlePerformanceTest$Particle: int normalMap
+test.game.ParticlePerformanceTest$Particle: int type
+test.game.ParticlePerformanceTest$Particle: int pass
+test.game.ParticlePerformanceTest$Particle: ParticlePerformanceTest$Particle()
+test.game.ParticlePerformanceTest$Particle: void setTex(int)
+test.game.ParticlePerformanceTest$Particle: void setType(int)
+test.game.ParticlePerformanceTest$Particle: void die()
+test.game.ParticlePerformanceTest$Particle: void setMotion(float,float,float)
+test.game.ParticlePerformanceTest$Particle: void setPos(float,float,float)
+test.game.ParticlePerformanceTest$Particle: void setRot(float,float,float)
+test.game.ParticlePerformanceTest$Particle: void setRotSpeed(float,float,float)
+test.game.ParticlePerformanceTest$Particle: void setSize(float)
+test.game.ParticlePerformanceTest$Particle: int store(int,java.nio.FloatBuffer,java.nio.IntBuffer)
+test.game.ParticlePerformanceTest$Particle: int storeInterlacedStruct(int,nidefawl.qubes.shader.ShaderBuffer)
+test.game.ParticlePerformanceTest$Particle: int storeArrays(int,nidefawl.qubes.shader.ShaderBuffer)
+test.game.ParticlePerformanceTest$Particle: void tick()
+test.game.ParticlePerformanceTest$Particle: void update(float)
+test.game.ParticlePerformanceTest$Particle: void setTextureOffset(float,float)
+test.game.ParticleTest
+test.game.ParticleTest: int MAX_PARTICLES
+test.game.ParticleTest: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes
+test.game.ParticleTest: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes_blockinfo
+test.game.ParticleTest: int MAX_SPRITES
+test.game.ParticleTest: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.ParticleTest: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.ParticleTest: boolean startup
+test.game.ParticleTest: nidefawl.qubes.vec.Vector3f tmp
+test.game.ParticleTest: nidefawl.qubes.font.FontRenderer font
+test.game.ParticleTest: test.game.CameraController cameraController
+test.game.ParticleTest: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.ParticleTest: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.ParticleTest: nidefawl.qubes.gl.GLTriBuffer cubeFormat1
+test.game.ParticleTest: nidefawl.qubes.gl.GLTriBuffer cubeFormat2
+test.game.ParticleTest: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.ParticleTest: nidefawl.qubes.shader.Shader skybox
+test.game.ParticleTest: nidefawl.qubes.shader.Shader spriteShader
+test.game.ParticleTest: nidefawl.qubes.gl.TesselatorState tessState
+test.game.ParticleTest: int texNoise
+test.game.ParticleTest: boolean once
+test.game.ParticleTest: boolean hadContext
+test.game.ParticleTest: int fireUpdate
+test.game.ParticleTest: float lastUpdate
+test.game.ParticleTest: boolean pause
+test.game.ParticleTest: float pauseTime
+test.game.ParticleTest: int totalSpritesRendered
+test.game.ParticleTest: int storedSprites
+test.game.ParticleTest: int tick
+test.game.ParticleTest: int renderMode
+test.game.ParticleTest: int selFormat
+test.game.ParticleTest: java.lang.String error
+test.game.ParticleTest: java.lang.String stats
+test.game.ParticleTest: int maxSprites
+test.game.ParticleTest: java.util.List particles
+test.game.ParticleTest: java.util.Random r
+test.game.ParticleTest: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.ParticleTest: ParticleTest()
+test.game.ParticleTest: void main(java.lang.String[])
+test.game.ParticleTest: void initGame()
+test.game.ParticleTest: void initShaders()
+test.game.ParticleTest: void lateInitGame()
+test.game.ParticleTest: void onKeyPress(long,int,int,int,int)
+test.game.ParticleTest: void setRenderResolution(int,int)
+test.game.ParticleTest: void onStatsUpdated()
+test.game.ParticleTest: void onTextInput(long,int)
+test.game.ParticleTest: void onWheelScroll(long,double,double)
+test.game.ParticleTest: void postRenderUpdate(float)
+test.game.ParticleTest: void preRenderUpdate(float)
+test.game.ParticleTest: void preRenderUpdateParticles(float)
+test.game.ParticleTest: void redraw()
+test.game.ParticleTest: void render(float)
+test.game.ParticleTest: void renderParticles(float)
+test.game.ParticleTest: void spawnParticles(int)
+test.game.ParticleTest: void storeParticles(float,int)
+test.game.ParticleTest: void tick()
+test.game.ParticleTest: void updateTickParticles()
+test.game.ParticleTest: void <clinit>()
+test.game.ParticleTest$1
+test.game.ParticleTest$1: test.game.ParticleTest this$0
+test.game.ParticleTest$1: ParticleTest$1(test.game.ParticleTest)
+test.game.ParticleTest$1: java.lang.String getDefinition(java.lang.String)
+test.game.ParticleTest$Particle
+test.game.ParticleTest$Particle: boolean dead
+test.game.ParticleTest$Particle: int maxLive
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f mot
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f lastMot
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f pos
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f lastPos
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f renderPos
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f renderRot
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f rot
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f lastRot
+test.game.ParticleTest$Particle: nidefawl.qubes.vec.Vector3f rotspeed
+test.game.ParticleTest$Particle: float size
+test.game.ParticleTest$Particle: float initSize
+test.game.ParticleTest$Particle: float lastSize
+test.game.ParticleTest$Particle: float renderSize
+test.game.ParticleTest$Particle: int texture
+test.game.ParticleTest$Particle: int tick
+test.game.ParticleTest$Particle: ParticleTest$Particle()
+test.game.ParticleTest$Particle: void die()
+test.game.ParticleTest$Particle: void setMotion(float,float,float)
+test.game.ParticleTest$Particle: void setPos(float,float,float)
+test.game.ParticleTest$Particle: void setRot(float,float,float)
+test.game.ParticleTest$Particle: void setRotSpeed(float,float,float)
+test.game.ParticleTest$Particle: void setSize(float)
+test.game.ParticleTest$Particle: int store(java.nio.FloatBuffer)
+test.game.ParticleTest$Particle: void tick()
+test.game.ParticleTest$Particle: void update(float)
+test.game.ParticleTextured
+test.game.ParticleTextured: int MAX_PARTICLES
+test.game.ParticleTextured: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes
+test.game.ParticleTextured: nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes_blockinfo
+test.game.ParticleTextured: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.ParticleTextured: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.ParticleTextured: boolean startup
+test.game.ParticleTextured: nidefawl.qubes.vec.Vector3f tmp
+test.game.ParticleTextured: nidefawl.qubes.font.FontRenderer font
+test.game.ParticleTextured: test.game.CameraController cameraController
+test.game.ParticleTextured: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.ParticleTextured: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.ParticleTextured: nidefawl.qubes.gl.GLTriBuffer cubeFormat1
+test.game.ParticleTextured: nidefawl.qubes.gl.GLTriBuffer cubeFormat2
+test.game.ParticleTextured: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.ParticleTextured: nidefawl.qubes.shader.Shader skybox
+test.game.ParticleTextured: nidefawl.qubes.shader.Shader particleShaderSeperateBuffer
+test.game.ParticleTextured: nidefawl.qubes.gl.TesselatorState tessState
+test.game.ParticleTextured: boolean once
+test.game.ParticleTextured: boolean hadContext
+test.game.ParticleTextured: int fireUpdate
+test.game.ParticleTextured: float lastUpdate
+test.game.ParticleTextured: boolean pause
+test.game.ParticleTextured: float pauseTime
+test.game.ParticleTextured: int totalSpritesRendered
+test.game.ParticleTextured: int storedSprites
+test.game.ParticleTextured: int tick
+test.game.ParticleTextured: int renderMode
+test.game.ParticleTextured: int selFormat
+test.game.ParticleTextured: java.lang.String error
+test.game.ParticleTextured: java.lang.String stats
+test.game.ParticleTextured: int maxSprites
+test.game.ParticleTextured: java.util.List particles
+test.game.ParticleTextured: java.util.Random r
+test.game.ParticleTextured: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.ParticleTextured: boolean init
+test.game.ParticleTextured: ParticleTextured()
+test.game.ParticleTextured: void main(java.lang.String[])
+test.game.ParticleTextured: void initGame()
+test.game.ParticleTextured: void initShaders()
+test.game.ParticleTextured: void lateInitGame()
+test.game.ParticleTextured: void onKeyPress(long,int,int,int,int)
+test.game.ParticleTextured: void setRenderResolution(int,int)
+test.game.ParticleTextured: void onStatsUpdated()
+test.game.ParticleTextured: void onTextInput(long,int)
+test.game.ParticleTextured: void onWheelScroll(long,double,double)
+test.game.ParticleTextured: void postRenderUpdate(float)
+test.game.ParticleTextured: void preRenderUpdate(float)
+test.game.ParticleTextured: void preRenderUpdateParticles(float)
+test.game.ParticleTextured: void redraw()
+test.game.ParticleTextured: void render(float)
+test.game.ParticleTextured: void renderParticles(float)
+test.game.ParticleTextured: void spawnParticles(int)
+test.game.ParticleTextured: void storeParticles(float,int)
+test.game.ParticleTextured: void tick()
+test.game.ParticleTextured: void updateTickParticles()
+test.game.ParticleTextured: void <clinit>()
+test.game.ParticleTextured$1
+test.game.ParticleTextured$1: test.game.ParticleTextured this$0
+test.game.ParticleTextured$1: ParticleTextured$1(test.game.ParticleTextured)
+test.game.ParticleTextured$1: java.lang.String getDefinition(java.lang.String)
+test.game.ParticleTextured$2
+test.game.ParticleTextured$2: test.game.ParticleTextured this$0
+test.game.ParticleTextured$2: ParticleTextured$2(test.game.ParticleTextured)
+test.game.ParticleTextured$2: java.lang.String getDefinition(java.lang.String)
+test.game.ParticleTextured$3
+test.game.ParticleTextured$3: nidefawl.qubes.texture.array.TextureArray val$arr
+test.game.ParticleTextured$3: test.game.ParticleTextured this$0
+test.game.ParticleTextured$3: ParticleTextured$3(test.game.ParticleTextured,nidefawl.qubes.texture.array.TextureArray)
+test.game.ParticleTextured$3: void pre()
+test.game.ParticleTextured$3: void post()
+test.game.ParticleTextured$3: java.lang.Void call()
+test.game.ParticleTextured$3: nidefawl.qubes.async.AsyncTask$TaskType getType()
+test.game.ParticleTextured$3: java.lang.Object call()
+test.game.ParticleTextured$Particle
+test.game.ParticleTextured$Particle: boolean dead
+test.game.ParticleTextured$Particle: int maxLive
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f mot
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f lastMot
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f pos
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f lastPos
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f renderPos
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f renderRot
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f rot
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f lastRot
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector3f rotspeed
+test.game.ParticleTextured$Particle: nidefawl.qubes.vec.Vector2f texOffset
+test.game.ParticleTextured$Particle: float size
+test.game.ParticleTextured$Particle: float initSize
+test.game.ParticleTextured$Particle: float lastSize
+test.game.ParticleTextured$Particle: float renderSize
+test.game.ParticleTextured$Particle: int tick
+test.game.ParticleTextured$Particle: int tex
+test.game.ParticleTextured$Particle: int normalMap
+test.game.ParticleTextured$Particle: int type
+test.game.ParticleTextured$Particle: int pass
+test.game.ParticleTextured$Particle: ParticleTextured$Particle()
+test.game.ParticleTextured$Particle: void setTex(int)
+test.game.ParticleTextured$Particle: void setType(int)
+test.game.ParticleTextured$Particle: void die()
+test.game.ParticleTextured$Particle: void setMotion(float,float,float)
+test.game.ParticleTextured$Particle: void setPos(float,float,float)
+test.game.ParticleTextured$Particle: void setRot(float,float,float)
+test.game.ParticleTextured$Particle: void setRotSpeed(float,float,float)
+test.game.ParticleTextured$Particle: void setSize(float)
+test.game.ParticleTextured$Particle: int store(int,java.nio.FloatBuffer,java.nio.IntBuffer)
+test.game.ParticleTextured$Particle: void tick()
+test.game.ParticleTextured$Particle: void update(float)
+test.game.ParticleTextured$Particle: void setTextureOffset(float,float)
+test.game.SkyboxSpriteTest
+test.game.SkyboxSpriteTest: int MAX_SPRITES
+test.game.SkyboxSpriteTest: int SKYBOX_RES
+test.game.SkyboxSpriteTest: test.game.CameraController cameraController
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.FrameBuffer fbSkybox
+test.game.SkyboxSpriteTest: int tick
+test.game.SkyboxSpriteTest: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.SkyboxSpriteTest: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.SkyboxSpriteTest: boolean startup
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.GLVBO vboAttr
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.GLVBO vboStaticQuad
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.GLVBO vboIdx
+test.game.SkyboxSpriteTest: nidefawl.qubes.shader.Shader spriteShader
+test.game.SkyboxSpriteTest: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.SkyboxSpriteTest: nidefawl.qubes.shader.Shader skyShader
+test.game.SkyboxSpriteTest: nidefawl.qubes.shader.Shader cloudsShader
+test.game.SkyboxSpriteTest: nidefawl.qubes.shader.Shader skybox
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.TesselatorState skybox1
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.TesselatorState skybox2
+test.game.SkyboxSpriteTest: nidefawl.qubes.vec.Vector3f skyColor
+test.game.SkyboxSpriteTest: nidefawl.qubes.vec.Vector3f fogColor
+test.game.SkyboxSpriteTest: java.lang.String error
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.CubeMapCamera cubeMatrix
+test.game.SkyboxSpriteTest: int action
+test.game.SkyboxSpriteTest: java.lang.String stats
+test.game.SkyboxSpriteTest: boolean once
+test.game.SkyboxSpriteTest: nidefawl.qubes.vec.Vector3f tmp
+test.game.SkyboxSpriteTest: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.SkyboxSpriteTest: float curWeather
+test.game.SkyboxSpriteTest: float lastWeather
+test.game.SkyboxSpriteTest: boolean hadContext
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.VertexBuffer vertexBuf
+test.game.SkyboxSpriteTest: nidefawl.qubes.meshing.BlockFaceAttr attr
+test.game.SkyboxSpriteTest: int vaoPos
+test.game.SkyboxSpriteTest: java.util.List clouds
+test.game.SkyboxSpriteTest: java.nio.ByteBuffer bufMat
+test.game.SkyboxSpriteTest: java.nio.FloatBuffer bufMatFloat
+test.game.SkyboxSpriteTest: nidefawl.qubes.gl.ReallocIntBuffer vertexUploadDirectBuf
+test.game.SkyboxSpriteTest: nidefawl.qubes.font.FontRenderer font
+test.game.SkyboxSpriteTest: int storedSprites
+test.game.SkyboxSpriteTest: int totalSpritesRendered
+test.game.SkyboxSpriteTest: int[] texClouds
+test.game.SkyboxSpriteTest: int texNoise
+test.game.SkyboxSpriteTest: float WEATHER
+test.game.SkyboxSpriteTest: int TIME
+test.game.SkyboxSpriteTest: SkyboxSpriteTest()
+test.game.SkyboxSpriteTest: void main(java.lang.String[])
+test.game.SkyboxSpriteTest: void initShaders()
+test.game.SkyboxSpriteTest: void onStatsUpdated()
+test.game.SkyboxSpriteTest: void onTextInput(long,int)
+test.game.SkyboxSpriteTest: void onKeyPress(long,int,int,int,int)
+test.game.SkyboxSpriteTest: void render(float)
+test.game.SkyboxSpriteTest: void renderSky(float)
+test.game.SkyboxSpriteTest: void preRenderUpdate(float)
+test.game.SkyboxSpriteTest: void postRenderUpdate(float)
+test.game.SkyboxSpriteTest: void setRenderResolution(int,int)
+test.game.SkyboxSpriteTest: void tick()
+test.game.SkyboxSpriteTest: void initGame()
+test.game.SkyboxSpriteTest: void updateSprites(float)
+test.game.SkyboxSpriteTest: void storeSprites(float,int)
+test.game.SkyboxSpriteTest: void updateSpritesTick()
+test.game.SkyboxSpriteTest: void redraw()
+test.game.SkyboxSpriteTest: void buildQuad(nidefawl.qubes.gl.VertexBuffer)
+test.game.SkyboxSpriteTest: void lateInitGame()
+test.game.SkyboxSpriteTest: void onWheelScroll(long,double,double)
+test.game.SkyboxSpriteTest: void <clinit>()
+test.game.SkyboxSpriteTest$1
+test.game.SkyboxSpriteTest$1: test.game.SkyboxSpriteTest this$0
+test.game.SkyboxSpriteTest$1: SkyboxSpriteTest$1(test.game.SkyboxSpriteTest)
+test.game.SkyboxSpriteTest$1: java.lang.String getDefinition(java.lang.String)
+test.game.SkyboxSpriteTest$Cloud
+test.game.SkyboxSpriteTest$Cloud: int texture
+test.game.SkyboxSpriteTest$Cloud: java.util.List sprites
+test.game.SkyboxSpriteTest$Cloud: nidefawl.qubes.vec.Vector3f mot
+test.game.SkyboxSpriteTest$Cloud: nidefawl.qubes.vec.Vector3f pos
+test.game.SkyboxSpriteTest$Cloud: nidefawl.qubes.vec.Vector3f lastPos
+test.game.SkyboxSpriteTest$Cloud: nidefawl.qubes.vec.Vector3f renderPos
+test.game.SkyboxSpriteTest$Cloud: SkyboxSpriteTest$Cloud()
+test.game.SkyboxSpriteTest$Cloud: int store(java.nio.FloatBuffer)
+test.game.SkyboxSpriteTest$Cloud: void update(float)
+test.game.SkyboxSpriteTest$Cloud: void tick()
+test.game.SkyboxSpriteTest$PointSprite
+test.game.SkyboxSpriteTest$PointSprite: float size
+test.game.SkyboxSpriteTest$PointSprite: float initSize
+test.game.SkyboxSpriteTest$PointSprite: float lastSize
+test.game.SkyboxSpriteTest$PointSprite: float renderSize
+test.game.SkyboxSpriteTest$PointSprite: float rotspeed
+test.game.SkyboxSpriteTest$PointSprite: float rot
+test.game.SkyboxSpriteTest$PointSprite: float lastRot
+test.game.SkyboxSpriteTest$PointSprite: float renderRot
+test.game.SkyboxSpriteTest$PointSprite: float xoffset
+test.game.SkyboxSpriteTest$PointSprite: float yoffset
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f posOffset
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f col
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f lastCol
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f initCol
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f renderCol
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f renderPos
+test.game.SkyboxSpriteTest$PointSprite: int tick
+test.game.SkyboxSpriteTest$PointSprite: SkyboxSpriteTest$PointSprite()
+test.game.SkyboxSpriteTest$PointSprite: void setSize(float)
+test.game.SkyboxSpriteTest$PointSprite: void setCol(float,float,float)
+test.game.SkyboxSpriteTest$PointSprite: void update(float)
+test.game.SkyboxSpriteTest$PointSprite: void tick()
+test.game.SkyboxSpriteTest$PointSprite: nidefawl.qubes.vec.Vector3f access$000(test.game.SkyboxSpriteTest$PointSprite)
+test.game.SkyboxTest
+test.game.SkyboxTest: int MAX_SPRITES
+test.game.SkyboxTest: test.game.CameraController cameraController
+test.game.SkyboxTest: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.SkyboxTest: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.SkyboxTest: int tick
+test.game.SkyboxTest: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.SkyboxTest: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.SkyboxTest: boolean startup
+test.game.SkyboxTest: nidefawl.qubes.gl.GLVBO vboMat
+test.game.SkyboxTest: nidefawl.qubes.gl.GLVBO vboQuad
+test.game.SkyboxTest: nidefawl.qubes.gl.GLVBO vboIdx
+test.game.SkyboxTest: nidefawl.qubes.shader.Shader spriteShader
+test.game.SkyboxTest: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.SkyboxTest: nidefawl.qubes.shader.Shader skyShader
+test.game.SkyboxTest: nidefawl.qubes.shader.Shader cloudsShader
+test.game.SkyboxTest: nidefawl.qubes.gl.TesselatorState skybox1
+test.game.SkyboxTest: nidefawl.qubes.gl.TesselatorState skybox2
+test.game.SkyboxTest: nidefawl.qubes.vec.Vector3f skyColor
+test.game.SkyboxTest: nidefawl.qubes.vec.Vector3f fogColor
+test.game.SkyboxTest: java.lang.String error
+test.game.SkyboxTest: int action
+test.game.SkyboxTest: java.lang.String stats
+test.game.SkyboxTest: boolean once
+test.game.SkyboxTest: nidefawl.qubes.vec.Vector3f tmp
+test.game.SkyboxTest: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.SkyboxTest: boolean hadContext
+test.game.SkyboxTest: nidefawl.qubes.gl.VertexBuffer vertexBuf
+test.game.SkyboxTest: nidefawl.qubes.meshing.BlockFaceAttr attr
+test.game.SkyboxTest: int vaoPos
+test.game.SkyboxTest: java.util.List clouds
+test.game.SkyboxTest: java.nio.ByteBuffer bufMat
+test.game.SkyboxTest: java.nio.FloatBuffer bufMatFloat
+test.game.SkyboxTest: nidefawl.qubes.gl.ReallocIntBuffer vertexUploadDirectBuf
+test.game.SkyboxTest: int texCloud
+test.game.SkyboxTest: nidefawl.qubes.font.FontRenderer font
+test.game.SkyboxTest: int totalSprites
+test.game.SkyboxTest: int image
+test.game.SkyboxTest: SkyboxTest()
+test.game.SkyboxTest: void main(java.lang.String[])
+test.game.SkyboxTest: void initShaders()
+test.game.SkyboxTest: void onStatsUpdated()
+test.game.SkyboxTest: void onTextInput(long,int)
+test.game.SkyboxTest: void onKeyPress(long,int,int,int,int)
+test.game.SkyboxTest: void render(float)
+test.game.SkyboxTest: void preRenderUpdate(float)
+test.game.SkyboxTest: void postRenderUpdate(float)
+test.game.SkyboxTest: void setRenderResolution(int,int)
+test.game.SkyboxTest: void tick()
+test.game.SkyboxTest: void initGame()
+test.game.SkyboxTest: void updateSprites(float)
+test.game.SkyboxTest: void updateSpritesTick()
+test.game.SkyboxTest: void redraw()
+test.game.SkyboxTest: void buildQuad(nidefawl.qubes.gl.VertexBuffer)
+test.game.SkyboxTest: void lateInitGame()
+test.game.SkyboxTest: void onWheelScroll(long,double,double)
+test.game.SkyboxTest: void <clinit>()
+test.game.SkyboxTest$1
+test.game.SkyboxTest$1: test.game.SkyboxTest this$0
+test.game.SkyboxTest$1: SkyboxTest$1(test.game.SkyboxTest)
+test.game.SkyboxTest$1: java.lang.String getDefinition(java.lang.String)
+test.game.SkyboxTest$Cloud
+test.game.SkyboxTest$Cloud: java.util.List sprites
+test.game.SkyboxTest$Cloud: nidefawl.qubes.vec.Vector3f mot
+test.game.SkyboxTest$Cloud: nidefawl.qubes.vec.Vector3f pos
+test.game.SkyboxTest$Cloud: nidefawl.qubes.vec.Vector3f lastPos
+test.game.SkyboxTest$Cloud: nidefawl.qubes.vec.Vector3f renderPos
+test.game.SkyboxTest$Cloud: SkyboxTest$Cloud()
+test.game.SkyboxTest$Cloud: int store(java.nio.FloatBuffer)
+test.game.SkyboxTest$Cloud: void update(float)
+test.game.SkyboxTest$Cloud: void tick()
+test.game.SkyboxTest$PointSprite
+test.game.SkyboxTest$PointSprite: float size
+test.game.SkyboxTest$PointSprite: float rotspeed
+test.game.SkyboxTest$PointSprite: float rot
+test.game.SkyboxTest$PointSprite: float lastRot
+test.game.SkyboxTest$PointSprite: float renderRot
+test.game.SkyboxTest$PointSprite: float xoffset
+test.game.SkyboxTest$PointSprite: float yoffset
+test.game.SkyboxTest$PointSprite: nidefawl.qubes.vec.Vector3f posOffset
+test.game.SkyboxTest$PointSprite: nidefawl.qubes.vec.Vector3f col
+test.game.SkyboxTest$PointSprite: nidefawl.qubes.vec.Vector3f renderPos
+test.game.SkyboxTest$PointSprite: int tick
+test.game.SkyboxTest$PointSprite: SkyboxTest$PointSprite()
+test.game.SkyboxTest$PointSprite: void update(float)
+test.game.SkyboxTest$PointSprite: void tick()
+test.game.SkyboxTest$PointSprite: nidefawl.qubes.vec.Vector3f access$000(test.game.SkyboxTest$PointSprite)
+test.game.TestBlending
+test.game.TestBlending: TestBlending()
+test.game.TestBlending: void main(java.lang.String[])
+test.game.TestBlending: void onStatsUpdated()
+test.game.TestBlending: void onTextInput(long,int)
+test.game.TestBlending: void onKeyPress(long,int,int,int,int)
+test.game.TestBlending: void render(float)
+test.game.TestBlending: void input(float)
+test.game.TestBlending: void preRenderUpdate(float)
+test.game.TestBlending: void postRenderUpdate(float)
+test.game.TestBlending: void setRenderResolution(int,int)
+test.game.TestBlending: void tick()
+test.game.TestBlending: void initGame()
+test.game.TestBlending: void lateInitGame()
+test.game.TestBlending: void onWheelScroll(long,double,double)
+test.game.TestEarlyZDiscard
+test.game.TestEarlyZDiscard: test.game.CameraController cameraController
+test.game.TestEarlyZDiscard: int image
+test.game.TestEarlyZDiscard: nidefawl.qubes.render.post.SMAA smaa
+test.game.TestEarlyZDiscard: nidefawl.qubes.gl.FrameBuffer fb
+test.game.TestEarlyZDiscard: nidefawl.qubes.gl.FrameBuffer fb2
+test.game.TestEarlyZDiscard: int a
+test.game.TestEarlyZDiscard: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestEarlyZDiscard: nidefawl.qubes.shader.Shader shaderHeavy
+test.game.TestEarlyZDiscard: nidefawl.qubes.shader.Shader shaderTexture
+test.game.TestEarlyZDiscard: TestEarlyZDiscard()
+test.game.TestEarlyZDiscard: void main(java.lang.String[])
+test.game.TestEarlyZDiscard: void onStatsUpdated()
+test.game.TestEarlyZDiscard: void onTextInput(long,int)
+test.game.TestEarlyZDiscard: void onKeyPress(long,int,int,int,int)
+test.game.TestEarlyZDiscard: void render(float)
+test.game.TestEarlyZDiscard: void preRenderUpdate(float)
+test.game.TestEarlyZDiscard: void postRenderUpdate(float)
+test.game.TestEarlyZDiscard: void setRenderResolution(int,int)
+test.game.TestEarlyZDiscard: void loadShader()
+test.game.TestEarlyZDiscard: void tick()
+test.game.TestEarlyZDiscard: void initGame()
+test.game.TestEarlyZDiscard: void lateInitGame()
+test.game.TestEarlyZDiscard: void onWheelScroll(long,double,double)
+test.game.TestEarlyZDiscard$1
+test.game.TestEarlyZDiscard$1: test.game.TestEarlyZDiscard this$0
+test.game.TestEarlyZDiscard$1: TestEarlyZDiscard$1(test.game.TestEarlyZDiscard)
+test.game.TestEarlyZDiscard$1: java.lang.String getDefinition(java.lang.String)
+test.game.TestFontRenderer
+test.game.TestFontRenderer: test.game.CameraController cameraController
+test.game.TestFontRenderer: int image
+test.game.TestFontRenderer: nidefawl.qubes.render.post.SMAA smaa
+test.game.TestFontRenderer: nidefawl.qubes.gl.FrameBuffer fb
+test.game.TestFontRenderer: nidefawl.qubes.gl.FrameBuffer fb2
+test.game.TestFontRenderer: int a
+test.game.TestFontRenderer: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestFontRenderer: nidefawl.qubes.shader.Shader shaderHeavy
+test.game.TestFontRenderer: nidefawl.qubes.shader.Shader shaderTexture
+test.game.TestFontRenderer: TestFontRenderer()
+test.game.TestFontRenderer: void main(java.lang.String[])
+test.game.TestFontRenderer: void onStatsUpdated()
+test.game.TestFontRenderer: void onTextInput(long,int)
+test.game.TestFontRenderer: void onKeyPress(long,int,int,int,int)
+test.game.TestFontRenderer: void render(float)
+test.game.TestFontRenderer: void preRenderUpdate(float)
+test.game.TestFontRenderer: void postRenderUpdate(float)
+test.game.TestFontRenderer: void setRenderResolution(int,int)
+test.game.TestFontRenderer: void loadShader()
+test.game.TestFontRenderer: void tick()
+test.game.TestFontRenderer: void initGame()
+test.game.TestFontRenderer: void lateInitGame()
+test.game.TestFontRenderer: void onWheelScroll(long,double,double)
+test.game.TestFontRenderer$1
+test.game.TestFontRenderer$1: test.game.TestFontRenderer this$0
+test.game.TestFontRenderer$1: TestFontRenderer$1(test.game.TestFontRenderer)
+test.game.TestFontRenderer$1: java.lang.String getDefinition(java.lang.String)
+test.game.TestNanoVG
+test.game.TestNanoVG: test.game.CameraController cameraController
+test.game.TestNanoVG: org.lwjgl.nanovg.NVGColor colorA
+test.game.TestNanoVG: org.lwjgl.nanovg.NVGColor colorB
+test.game.TestNanoVG: org.lwjgl.nanovg.NVGColor colorC
+test.game.TestNanoVG: long vg
+test.game.TestNanoVG: int GRAPH_RENDER_FPS
+test.game.TestNanoVG: int GRAPH_RENDER_MS
+test.game.TestNanoVG: int GRAPH_RENDER_PERCENT
+test.game.TestNanoVG: int GRAPH_HISTORY_COUNT
+test.game.TestNanoVG: test.game.TestNanoVG$PerfGraph fps
+test.game.TestNanoVG: test.game.TestNanoVG$DemoData data
+test.game.TestNanoVG: int image
+test.game.TestNanoVG: nidefawl.qubes.render.post.SMAA smaa
+test.game.TestNanoVG: nidefawl.qubes.gl.FrameBuffer fb
+test.game.TestNanoVG: nidefawl.qubes.gl.FrameBuffer fb2
+test.game.TestNanoVG: int a
+test.game.TestNanoVG: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestNanoVG: nidefawl.qubes.shader.Shader shaderHeavy
+test.game.TestNanoVG: nidefawl.qubes.shader.Shader shaderTexture
+test.game.TestNanoVG: org.lwjgl.nanovg.NVGColor rgba(int,int,int,int,org.lwjgl.nanovg.NVGColor)
+test.game.TestNanoVG: int loadDemoData(long,test.game.TestNanoVG$DemoData)
+test.game.TestNanoVG: java.nio.ByteBuffer resizeBuffer(java.nio.ByteBuffer,int)
+test.game.TestNanoVG: java.nio.ByteBuffer ioResourceToByteBuffer(java.lang.String,int)
+test.game.TestNanoVG: java.nio.ByteBuffer loadResource(java.lang.String,int)
+test.game.TestNanoVG: void initGraph(test.game.TestNanoVG$PerfGraph,int,java.lang.String)
+test.game.TestNanoVG: void updateGraph(test.game.TestNanoVG$PerfGraph,float)
+test.game.TestNanoVG: float getGraphAverage(test.game.TestNanoVG$PerfGraph)
+test.game.TestNanoVG: void renderGraph(long,float,float,test.game.TestNanoVG$PerfGraph)
+test.game.TestNanoVG: TestNanoVG()
+test.game.TestNanoVG: void main(java.lang.String[])
+test.game.TestNanoVG: void onStatsUpdated()
+test.game.TestNanoVG: void onTextInput(long,int)
+test.game.TestNanoVG: void onKeyPress(long,int,int,int,int)
+test.game.TestNanoVG: void render(float)
+test.game.TestNanoVG: void nvgStart()
+test.game.TestNanoVG: void nvgEnd()
+test.game.TestNanoVG: void preRenderUpdate(float)
+test.game.TestNanoVG: void postRenderUpdate(float)
+test.game.TestNanoVG: void setRenderResolution(int,int)
+test.game.TestNanoVG: void loadShader()
+test.game.TestNanoVG: void tick()
+test.game.TestNanoVG: void initGame()
+test.game.TestNanoVG: void lateInitGame()
+test.game.TestNanoVG: void onWheelScroll(long,double,double)
+test.game.TestNanoVG: void <clinit>()
+test.game.TestNanoVG$1
+test.game.TestNanoVG$1: test.game.TestNanoVG this$0
+test.game.TestNanoVG$1: TestNanoVG$1(test.game.TestNanoVG)
+test.game.TestNanoVG$1: java.lang.String getDefinition(java.lang.String)
+test.game.TestNanoVG$DemoData
+test.game.TestNanoVG$DemoData: java.nio.ByteBuffer entypo
+test.game.TestNanoVG$DemoData: java.nio.ByteBuffer RobotoRegular
+test.game.TestNanoVG$DemoData: java.nio.ByteBuffer RobotoBold
+test.game.TestNanoVG$DemoData: int fontNormal
+test.game.TestNanoVG$DemoData: int fontBold
+test.game.TestNanoVG$DemoData: int fontIcons
+test.game.TestNanoVG$DemoData: int[] images
+test.game.TestNanoVG$DemoData: TestNanoVG$DemoData()
+test.game.TestNanoVG$PerfGraph
+test.game.TestNanoVG$PerfGraph: int style
+test.game.TestNanoVG$PerfGraph: java.nio.ByteBuffer name
+test.game.TestNanoVG$PerfGraph: float[] values
+test.game.TestNanoVG$PerfGraph: int head
+test.game.TestNanoVG$PerfGraph: TestNanoVG$PerfGraph()
+test.game.TestPointSprites
+test.game.TestPointSprites: int MAX_SPRITES
+test.game.TestPointSprites: nidefawl.qubes.input.KeybindManager movement
+test.game.TestPointSprites: test.game.CameraController cameraController
+test.game.TestPointSprites: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.TestPointSprites: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.TestPointSprites: int tick
+test.game.TestPointSprites: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.TestPointSprites: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.TestPointSprites: boolean startup
+test.game.TestPointSprites: nidefawl.qubes.gl.GLVBO vboMat
+test.game.TestPointSprites: nidefawl.qubes.gl.GLVBO vboQuad
+test.game.TestPointSprites: nidefawl.qubes.gl.GLVBO vboIdx
+test.game.TestPointSprites: nidefawl.qubes.shader.Shader spriteShader
+test.game.TestPointSprites: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.TestPointSprites: nidefawl.qubes.vec.Vector3f skyColor
+test.game.TestPointSprites: nidefawl.qubes.vec.Vector3f fogColor
+test.game.TestPointSprites: int action
+test.game.TestPointSprites: java.lang.String stats
+test.game.TestPointSprites: boolean once
+test.game.TestPointSprites: nidefawl.qubes.vec.Vector3f tmp
+test.game.TestPointSprites: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestPointSprites: boolean hadContext
+test.game.TestPointSprites: nidefawl.qubes.gl.VertexBuffer vertexBuf
+test.game.TestPointSprites: nidefawl.qubes.meshing.BlockFaceAttr attr
+test.game.TestPointSprites: int vaoPos
+test.game.TestPointSprites: java.util.List clouds
+test.game.TestPointSprites: java.nio.ByteBuffer bufMat
+test.game.TestPointSprites: java.nio.FloatBuffer bufMatFloat
+test.game.TestPointSprites: nidefawl.qubes.gl.ReallocIntBuffer vertexUploadDirectBuf
+test.game.TestPointSprites: int texCloud
+test.game.TestPointSprites: nidefawl.qubes.font.FontRenderer font
+test.game.TestPointSprites: int totalSprites
+test.game.TestPointSprites: TestPointSprites()
+test.game.TestPointSprites: void main(java.lang.String[])
+test.game.TestPointSprites: void initShaders()
+test.game.TestPointSprites: void onStatsUpdated()
+test.game.TestPointSprites: void onTextInput(long,int)
+test.game.TestPointSprites: void onKeyPress(long,int,int,int,int)
+test.game.TestPointSprites: void render(float)
+test.game.TestPointSprites: void preRenderUpdate(float)
+test.game.TestPointSprites: void postRenderUpdate(float)
+test.game.TestPointSprites: void setRenderResolution(int,int)
+test.game.TestPointSprites: void tick()
+test.game.TestPointSprites: void initGame()
+test.game.TestPointSprites: void updateSprites(float)
+test.game.TestPointSprites: void updateSpritesTick()
+test.game.TestPointSprites: void redraw()
+test.game.TestPointSprites: void buildQuad(nidefawl.qubes.gl.VertexBuffer)
+test.game.TestPointSprites: void lateInitGame()
+test.game.TestPointSprites: void onWheelScroll(long,double,double)
+test.game.TestPointSprites: void <clinit>()
+test.game.TestPointSprites$1
+test.game.TestPointSprites$1: test.game.TestPointSprites this$0
+test.game.TestPointSprites$1: TestPointSprites$1(test.game.TestPointSprites)
+test.game.TestPointSprites$1: java.lang.String getDefinition(java.lang.String)
+test.game.TestPointSprites$Cloud
+test.game.TestPointSprites$Cloud: java.util.List sprites
+test.game.TestPointSprites$Cloud: nidefawl.qubes.vec.Vector3f mot
+test.game.TestPointSprites$Cloud: nidefawl.qubes.vec.Vector3f pos
+test.game.TestPointSprites$Cloud: nidefawl.qubes.vec.Vector3f lastPos
+test.game.TestPointSprites$Cloud: nidefawl.qubes.vec.Vector3f renderPos
+test.game.TestPointSprites$Cloud: TestPointSprites$Cloud()
+test.game.TestPointSprites$Cloud: int store(java.nio.FloatBuffer)
+test.game.TestPointSprites$Cloud: void update(float)
+test.game.TestPointSprites$Cloud: void tick()
+test.game.TestPointSprites$PointSprite
+test.game.TestPointSprites$PointSprite: float size
+test.game.TestPointSprites$PointSprite: float rotspeed
+test.game.TestPointSprites$PointSprite: float rot
+test.game.TestPointSprites$PointSprite: float lastRot
+test.game.TestPointSprites$PointSprite: float renderRot
+test.game.TestPointSprites$PointSprite: float xoffset
+test.game.TestPointSprites$PointSprite: float yoffset
+test.game.TestPointSprites$PointSprite: nidefawl.qubes.vec.Vector3f posOffset
+test.game.TestPointSprites$PointSprite: nidefawl.qubes.vec.Vector3f col
+test.game.TestPointSprites$PointSprite: nidefawl.qubes.vec.Vector3f renderPos
+test.game.TestPointSprites$PointSprite: int tick
+test.game.TestPointSprites$PointSprite: TestPointSprites$PointSprite()
+test.game.TestPointSprites$PointSprite: void update(float)
+test.game.TestPointSprites$PointSprite: void tick()
+test.game.TestPointSprites$PointSprite: nidefawl.qubes.vec.Vector3f access$000(test.game.TestPointSprites$PointSprite)
+test.game.TestSMAA
+test.game.TestSMAA: test.game.CameraController cameraController
+test.game.TestSMAA: int image
+test.game.TestSMAA: nidefawl.qubes.render.post.SMAA smaa
+test.game.TestSMAA: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestSMAA: TestSMAA()
+test.game.TestSMAA: void main(java.lang.String[])
+test.game.TestSMAA: void onStatsUpdated()
+test.game.TestSMAA: void onTextInput(long,int)
+test.game.TestSMAA: void onKeyPress(long,int,int,int,int)
+test.game.TestSMAA: void render(float)
+test.game.TestSMAA: void preRenderUpdate(float)
+test.game.TestSMAA: void postRenderUpdate(float)
+test.game.TestSMAA: void setRenderResolution(int,int)
+test.game.TestSMAA: void tick()
+test.game.TestSMAA: void initGame()
+test.game.TestSMAA: void lateInitGame()
+test.game.TestSMAA: void onWheelScroll(long,double,double)
+test.game.TestSSAO
+test.game.TestSSAO: test.game.CameraController cameraController
+test.game.TestSSAO: nidefawl.qubes.gl.FrameBuffer buf
+test.game.TestSSAO: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.TestSSAO: nidefawl.qubes.gl.TesselatorState tessState
+test.game.TestSSAO: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestSSAO: boolean hadContext
+test.game.TestSSAO: TestSSAO()
+test.game.TestSSAO: void main(java.lang.String[])
+test.game.TestSSAO: void onStatsUpdated()
+test.game.TestSSAO: void onTextInput(long,int)
+test.game.TestSSAO: void onKeyPress(long,int,int,int,int)
+test.game.TestSSAO: void render(float)
+test.game.TestSSAO: void preRenderUpdate(float)
+test.game.TestSSAO: void postRenderUpdate(float)
+test.game.TestSSAO: void setRenderResolution(int,int)
+test.game.TestSSAO: void tick()
+test.game.TestSSAO: void initGame()
+test.game.TestSSAO: void lateInitGame()
+test.game.TestSSAO: void onWheelScroll(long,double,double)
+test.game.TestShader
+test.game.TestShader: test.game.CameraController cameraController
+test.game.TestShader: int image
+test.game.TestShader: nidefawl.qubes.render.post.SMAA smaa
+test.game.TestShader: nidefawl.qubes.gl.FrameBuffer fb2
+test.game.TestShader: int a
+test.game.TestShader: boolean down
+test.game.TestShader: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.TestShader: nidefawl.qubes.shader.Shader shaderHeavy
+test.game.TestShader: nidefawl.qubes.shader.Shader shaderTexture
+test.game.TestShader: nidefawl.qubes.font.FontRenderer font
+test.game.TestShader: nidefawl.qubes.font.TextInput text
+test.game.TestShader: float lastMx
+test.game.TestShader: float lastMy
+test.game.TestShader: boolean first
+test.game.TestShader: int image2
+test.game.TestShader: TestShader()
+test.game.TestShader: void main(java.lang.String[])
+test.game.TestShader: void onStatsUpdated()
+test.game.TestShader: void onTextInput(long,int)
+test.game.TestShader: void onKeyPress(long,int,int,int,int)
+test.game.TestShader: void render(float)
+test.game.TestShader: void updateMousePos()
+test.game.TestShader: void preRenderUpdate(float)
+test.game.TestShader: void postRenderUpdate(float)
+test.game.TestShader: void setRenderResolution(int,int)
+test.game.TestShader: void updateInput()
+test.game.TestShader: void loadShader()
+test.game.TestShader: void tick()
+test.game.TestShader: void initGame()
+test.game.TestShader: void lateInitGame()
+test.game.TestShader: void onWheelScroll(long,double,double)
+test.game.TestShader: void submit(nidefawl.qubes.font.TextInput)
+test.game.TestShader: void onEscape(nidefawl.qubes.font.TextInput)
+test.game.TestShader$1
+test.game.TestShader$1: test.game.TestShader this$0
+test.game.TestShader$1: TestShader$1(test.game.TestShader)
+test.game.TestShader$1: java.lang.String getDefinition(java.lang.String)
+test.game.meshregion.MeshList
+test.game.meshregion.MeshList: test.game.meshregion.VMeshBuffer[] array
+test.game.meshregion.MeshList: MeshList(java.lang.Class)
+test.game.meshregion.MeshList: test.game.meshregion.VMeshBuffer getMesh(int,int)
+test.game.meshregion.MeshList: void bindVAO()
+test.game.meshregion.MeshList: void init()
+test.game.meshregion.MeshList: void draw()
+test.game.meshregion.MeshList: void reset()
+test.game.meshregion.MeshList: void upload(int,int)
+test.game.meshregion.MeshList: void addFace(nidefawl.qubes.meshing.BlockFaceAttr)
+test.game.meshregion.MeshList: java.lang.String getName()
+test.game.meshregion.MeshListInterleaved
+test.game.meshregion.MeshListInterleaved: int vao
+test.game.meshregion.MeshListInterleaved: int VERT_LEN1
+test.game.meshregion.MeshListInterleaved: nidefawl.qubes.gl.VertexBuffer bufferDataVertex
+test.game.meshregion.MeshListInterleaved: MeshListInterleaved()
+test.game.meshregion.MeshListInterleaved: void init()
+test.game.meshregion.MeshListInterleaved: void draw()
+test.game.meshregion.MeshListInterleaved: void bindVAO()
+test.game.meshregion.MeshListInterleaved: void addFace(nidefawl.qubes.meshing.BlockFaceAttr)
+test.game.meshregion.MeshListInterleaved: void reset()
+test.game.meshregion.MeshListInterleaved: void upload(int,int)
+test.game.meshregion.MeshListInterleaved: void setupVAO()
+test.game.meshregion.MeshListInterleaved: void <clinit>()
+test.game.meshregion.MeshListInterleavedNV
+test.game.meshregion.MeshListInterleavedNV: int vao
+test.game.meshregion.MeshListInterleavedNV: int VERT_LEN1
+test.game.meshregion.MeshListInterleavedNV: nidefawl.qubes.gl.VertexBuffer bufferDataVertex
+test.game.meshregion.MeshListInterleavedNV: int[] attrOffsets
+test.game.meshregion.MeshListInterleavedNV: nidefawl.qubes.gl.MultiDrawIndirectBuffer buffer
+test.game.meshregion.MeshListInterleavedNV: boolean bindless
+test.game.meshregion.MeshListInterleavedNV: boolean first
+test.game.meshregion.MeshListInterleavedNV: MeshListInterleavedNV(boolean)
+test.game.meshregion.MeshListInterleavedNV: void init()
+test.game.meshregion.MeshListInterleavedNV: void draw()
+test.game.meshregion.MeshListInterleavedNV: void draw2()
+test.game.meshregion.MeshListInterleavedNV: void draw1()
+test.game.meshregion.MeshListInterleavedNV: void bindVAO()
+test.game.meshregion.MeshListInterleavedNV: void addFace(nidefawl.qubes.meshing.BlockFaceAttr)
+test.game.meshregion.MeshListInterleavedNV: void reset()
+test.game.meshregion.MeshListInterleavedNV: void upload(int,int)
+test.game.meshregion.MeshListInterleavedNV: void setupVAO()
+test.game.meshregion.MeshListInterleavedNV: java.lang.String getName()
+test.game.meshregion.MeshListInterleavedNV: void <clinit>()
+test.game.meshregion.MeshListInterleavedNV_Half
+test.game.meshregion.MeshListInterleavedNV_Half: int vao
+test.game.meshregion.MeshListInterleavedNV_Half: int VERT_LEN1
+test.game.meshregion.MeshListInterleavedNV_Half: nidefawl.qubes.gl.VertexBuffer bufferDataVertex
+test.game.meshregion.MeshListInterleavedNV_Half: int[] attrOffsets
+test.game.meshregion.MeshListInterleavedNV_Half: MeshListInterleavedNV_Half()
+test.game.meshregion.MeshListInterleavedNV_Half: void init()
+test.game.meshregion.MeshListInterleavedNV_Half: void draw()
+test.game.meshregion.MeshListInterleavedNV_Half: void bindVAO()
+test.game.meshregion.MeshListInterleavedNV_Half: void addFace(nidefawl.qubes.meshing.BlockFaceAttr)
+test.game.meshregion.MeshListInterleavedNV_Half: void reset()
+test.game.meshregion.MeshListInterleavedNV_Half: void upload(int,int)
+test.game.meshregion.MeshListInterleavedNV_Half: void setupVAO()
+test.game.meshregion.MeshListInterleavedNV_Half: void <clinit>()
+test.game.meshregion.MeshListSeperate
+test.game.meshregion.MeshListSeperate: int vao
+test.game.meshregion.MeshListSeperate: int VERT_LEN1
+test.game.meshregion.MeshListSeperate: int VERT_LEN2
+test.game.meshregion.MeshListSeperate: nidefawl.qubes.gl.VertexBuffer bufferDataVertex
+test.game.meshregion.MeshListSeperate: nidefawl.qubes.gl.VertexBuffer bufferDataFace
+test.game.meshregion.MeshListSeperate: MeshListSeperate()
+test.game.meshregion.MeshListSeperate: void init()
+test.game.meshregion.MeshListSeperate: void draw()
+test.game.meshregion.MeshListSeperate: void bindVAO()
+test.game.meshregion.MeshListSeperate: void addFace(nidefawl.qubes.meshing.BlockFaceAttr)
+test.game.meshregion.MeshListSeperate: void reset()
+test.game.meshregion.MeshListSeperate: void upload(int,int)
+test.game.meshregion.MeshListSeperate: void setupVAO()
+test.game.meshregion.MeshListSeperate: void <clinit>()
+test.game.meshregion.VMeshBuffer
+test.game.meshregion.VMeshBuffer: int x
+test.game.meshregion.VMeshBuffer: int z
+test.game.meshregion.VMeshBuffer: VMeshBuffer()
+test.game.meshregion.VMeshBufferInterleaved
+test.game.meshregion.VMeshBufferInterleaved: nidefawl.qubes.gl.GLTriBuffer vertexBuffer
+test.game.meshregion.VMeshBufferInterleaved: VMeshBufferInterleaved()
+test.game.meshregion.VMeshBufferInterleavedNV
+test.game.meshregion.VMeshBufferInterleavedNV: nidefawl.qubes.gl.GLTriBuffer vertexBuffer
+test.game.meshregion.VMeshBufferInterleavedNV: VMeshBufferInterleavedNV()
+test.game.meshregion.VMeshBufferInterleavedNV_Half
+test.game.meshregion.VMeshBufferInterleavedNV_Half: nidefawl.qubes.gl.GLTriBuffer vertexBuffer
+test.game.meshregion.VMeshBufferInterleavedNV_Half: long addr
+test.game.meshregion.VMeshBufferInterleavedNV_Half: long addrIdx
+test.game.meshregion.VMeshBufferInterleavedNV_Half: long size
+test.game.meshregion.VMeshBufferInterleavedNV_Half: long sizeIdx
+test.game.meshregion.VMeshBufferInterleavedNV_Half: VMeshBufferInterleavedNV_Half()
+test.game.meshregion.VMeshBufferSeperate
+test.game.meshregion.VMeshBufferSeperate: nidefawl.qubes.gl.GLTriBuffer vertexBuffer
+test.game.meshregion.VMeshBufferSeperate: nidefawl.qubes.gl.GLAttrBuffer faceAttrBuffer
+test.game.meshregion.VMeshBufferSeperate: VMeshBufferSeperate()
+test.game.meshregion.VertexPointerTest
+test.game.meshregion.VertexPointerTest: int REGION_DIST
+test.game.meshregion.VertexPointerTest: test.game.CameraController cameraController
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.gl.FrameBuffer fbDeferred
+test.game.meshregion.VertexPointerTest: boolean hadContext
+test.game.meshregion.VertexPointerTest: boolean once
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.vec.Vector3f tmp
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.vec.Vector3f skyColor
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.vec.Vector3f fogColor
+test.game.meshregion.VertexPointerTest: int tick
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.meshregion.VertexPointerTest: boolean startup
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.shader.Shader modelShader
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.shader.Shader terrainShader
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.shader.Shader shaderDeferred
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.shader.Shader skyShader
+test.game.meshregion.VertexPointerTest: int action
+test.game.meshregion.VertexPointerTest: java.lang.String stats
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.meshregion.VertexPointerTest: boolean reverse
+test.game.meshregion.VertexPointerTest: test.game.meshregion.MeshList listIntNV_Half
+test.game.meshregion.VertexPointerTest: test.game.meshregion.MeshList listIntNVBuf
+test.game.meshregion.VertexPointerTest: test.game.meshregion.MeshList listIntNV
+test.game.meshregion.VertexPointerTest: test.game.meshregion.MeshList listInt
+test.game.meshregion.VertexPointerTest: test.game.meshregion.MeshList listSep
+test.game.meshregion.VertexPointerTest: test.game.meshregion.MeshList[] lists
+test.game.meshregion.VertexPointerTest: int size
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.meshing.BlockFaceAttr attr
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.texture.array.TextureArray arr
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.gl.TesselatorState skybox1
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.gl.TesselatorState skybox2
+test.game.meshregion.VertexPointerTest: nidefawl.qubes.font.FontRenderer font
+test.game.meshregion.VertexPointerTest: VertexPointerTest()
+test.game.meshregion.VertexPointerTest: void main(java.lang.String[])
+test.game.meshregion.VertexPointerTest: void initShaders()
+test.game.meshregion.VertexPointerTest: void onStatsUpdated()
+test.game.meshregion.VertexPointerTest: void onTextInput(long,int)
+test.game.meshregion.VertexPointerTest: void onKeyPress(long,int,int,int,int)
+test.game.meshregion.VertexPointerTest: void render(float)
+test.game.meshregion.VertexPointerTest: void preRenderUpdate(float)
+test.game.meshregion.VertexPointerTest: void postRenderUpdate(float)
+test.game.meshregion.VertexPointerTest: void setRenderResolution(int,int)
+test.game.meshregion.VertexPointerTest: void tick()
+test.game.meshregion.VertexPointerTest: void initGame()
+test.game.meshregion.VertexPointerTest: void redraw()
+test.game.meshregion.VertexPointerTest: void drawFace(float,float,float,int)
+test.game.meshregion.VertexPointerTest: void lateInitGame()
+test.game.meshregion.VertexPointerTest: void onWheelScroll(long,double,double)
+test.game.meshregion.VertexPointerTest: void <clinit>()
+test.game.meshregion.VertexPointerTest$1
+test.game.meshregion.VertexPointerTest$1: test.game.meshregion.VertexPointerTest this$0
+test.game.meshregion.VertexPointerTest$1: VertexPointerTest$1(test.game.meshregion.VertexPointerTest)
+test.game.meshregion.VertexPointerTest$1: java.lang.String getDefinition(java.lang.String)
+test.game.meshregion.VertexPointerTest$2
+test.game.meshregion.VertexPointerTest$2: test.game.meshregion.VertexPointerTest this$0
+test.game.meshregion.VertexPointerTest$2: VertexPointerTest$2(test.game.meshregion.VertexPointerTest)
+test.game.meshregion.VertexPointerTest$2: java.lang.String getDefinition(java.lang.String)
+test.game.meshregion.VertexPointerTest$3
+test.game.meshregion.VertexPointerTest$3: test.game.meshregion.VertexPointerTest this$0
+test.game.meshregion.VertexPointerTest$3: VertexPointerTest$3(test.game.meshregion.VertexPointerTest,int)
+test.game.meshregion.VertexPointerTest$3: void uploadTextures()
+test.game.meshregion.VertexPointerTest$3: void findMaxTileWidth()
+test.game.meshregion.VertexPointerTest$3: void collectTextures(nidefawl.qubes.assets.AssetManager)
+test.game.meshregion.VertexPointerTest$3: void postUpload()
+test.game.vr.OpenVRUtil
+test.game.vr.OpenVRUtil: long SLEEP_PRECISION
+test.game.vr.OpenVRUtil: long SPIN_YIELD_PRECISION
+test.game.vr.OpenVRUtil: OpenVRUtil()
+test.game.vr.OpenVRUtil: void sleepNanos(long)
+test.game.vr.OpenVRUtil: void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float)
+test.game.vr.OpenVRUtil: void Matrix4fCopy(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtil: void Matrix4fSetIdentity(nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtil: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtil: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtil: void <clinit>()
+test.game.vr.OpenVRUtilColMajor
+test.game.vr.OpenVRUtilColMajor: long SLEEP_PRECISION
+test.game.vr.OpenVRUtilColMajor: long SPIN_YIELD_PRECISION
+test.game.vr.OpenVRUtilColMajor: OpenVRUtilColMajor()
+test.game.vr.OpenVRUtilColMajor: void sleepNanos(long)
+test.game.vr.OpenVRUtilColMajor: void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float)
+test.game.vr.OpenVRUtilColMajor: void Matrix4fCopy(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtilColMajor: void Matrix4fSetIdentity(nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtilColMajor: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtilColMajor: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.OpenVRUtilColMajor: void <clinit>()
+test.game.vr.VR
+test.game.vr.VR: boolean DEBUG_PRINT
+test.game.vr.VR: boolean READ_MATS
+test.game.vr.VR: jopenvr.VR_IVRSystem_FnTable vrsystem
+test.game.vr.VR: test.game.vr.VR$VRSettings settings
+test.game.vr.VR: test.game.vr.VR$VRViewProjection cam
+test.game.vr.VR: java.nio.FloatBuffer tlastVsync
+test.game.vr.VR: java.nio.LongBuffer _tframeCount
+test.game.vr.VR: java.nio.IntBuffer hmdDisplayFrequency
+test.game.vr.VR: jopenvr.TrackedDevicePose_t$ByReference hmdTrackedDevicePoseReference
+test.game.vr.VR: jopenvr.TrackedDevicePose_t[] hmdTrackedDevicePoses
+test.game.vr.VR: double timePerFrame
+test.game.vr.VR: boolean initSuccess
+test.game.vr.VR: boolean initDone
+test.game.vr.VR: java.lang.String initStatus
+test.game.vr.VR: jopenvr.VR_IVRCompositor_FnTable vrCompositor
+test.game.vr.VR: java.nio.IntBuffer hmdErrorStore
+test.game.vr.VR: jopenvr.VR_IVROverlay_FnTable vrOverlay
+test.game.vr.VR: jopenvr.VR_IVRRenderModels_FnTable vrRenderModels
+test.game.vr.VR: jopenvr.VR_IVRSettings_FnTable vrSettings
+test.game.vr.VR: jopenvr.VRTextureBounds_t texBounds
+test.game.vr.VR: jopenvr.Texture_t texType0
+test.game.vr.VR: jopenvr.Texture_t texType1
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] poseMatrices
+test.game.vr.VR: nidefawl.qubes.vec.Vec3D[] deviceVelocity
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f hmdPose
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f hmdPose2
+test.game.vr.VR: boolean headIsTracking
+test.game.vr.VR: int RIGHT_CONTROLLER
+test.game.vr.VR: int LEFT_CONTROLLER
+test.game.vr.VR: boolean[] controllerTracking
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] controllerPose
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] controllerRotation
+test.game.vr.VR: int[] controllerDeviceIndex
+test.game.vr.VR: jopenvr.VRControllerState_t$ByReference[] inputStateRefernceArray
+test.game.vr.VR: jopenvr.VRControllerState_t[] lastControllerState
+test.game.vr.VR: jopenvr.VRControllerState_t[] controllerStateReference
+test.game.vr.VR: int maxControllerVelocitySamples
+test.game.vr.VR: nidefawl.qubes.vec.Vec3D[][] controllerVelocitySamples
+test.game.vr.VR: int[] controllerVelocitySampleCount
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] controllerTipTransform
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] handRotation
+test.game.vr.VR: int renderWidth
+test.game.vr.VR: int renderHeight
+test.game.vr.VR: boolean hasRead
+test.game.vr.VR: nidefawl.qubes.gl.FrameBuffer fbLeft
+test.game.vr.VR: nidefawl.qubes.gl.FrameBuffer fbRight
+test.game.vr.VR: nidefawl.qubes.vec.Matrix4f tmpMat
+test.game.vr.VR: VR()
+test.game.vr.VR: com.sun.jna.Pointer ptrFomrString(java.lang.String)
+test.game.vr.VR: boolean InitVR()
+test.game.vr.VR: void initOpenVRRenderModels()
+test.game.vr.VR: void initOpenVROverlay()
+test.game.vr.VR: void initOpenVROSettings()
+test.game.vr.VR: void initializeJOpenVR()
+test.game.vr.VR: void initOpenVRCompositor(boolean)
+test.game.vr.VR: java.lang.String getCompostiorError(int)
+test.game.vr.VR: void readMat4s(java.lang.String,nidefawl.qubes.vec.Matrix4f)
+test.game.vr.VR: void readMats()
+test.game.vr.VR: void updatePose(float)
+test.game.vr.VR: void getTipTransforms()
+test.game.vr.VR: void findControllerDevices()
+test.game.vr.VR: void Submit()
+test.game.vr.VR: void initApp(nidefawl.qubes.GameBase)
+test.game.vr.VR: void initVRFB(int,int)
+test.game.vr.VR: void setupCamera(int,float)
+test.game.vr.VR: void bindAndClearFramebuffer(int)
+test.game.vr.VR: boolean isInit()
+test.game.vr.VR: nidefawl.qubes.gl.FrameBuffer getFB(int)
+test.game.vr.VR: void setViewPort(int)
+test.game.vr.VR: void <clinit>()
+test.game.vr.VR$VRSettings
+test.game.vr.VR$VRSettings: boolean seated
+test.game.vr.VR$VRSettings: boolean vrReverseHands
+test.game.vr.VR$VRSettings: VR$VRSettings()
+test.game.vr.VR$VRViewProjection
+test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f projLeft
+test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f projRight
+test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f poseEyeLeft
+test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f poseEyeRight
+test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f viewLeft
+test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f viewRight
+test.game.vr.VR$VRViewProjection: VR$VRViewProjection()
+test.game.vr.VR$VRViewProjection: void setEyeToHeadTransform()
+test.game.vr.VR$VRViewProjection: void setEyeProj(float,float)
+test.game.vr.VR$VRViewProjection: void update(float)
+test.game.vr.VRApp
+test.game.vr.VRApp: test.game.vr.VRApp$InputSource selInputSource
+test.game.vr.VRApp: nidefawl.qubes.util.SimpleResourceManager shaders
+test.game.vr.VRApp: nidefawl.qubes.util.SimpleResourceManager newshaders
+test.game.vr.VRApp: test.game.CameraController cameraController
+test.game.vr.VRApp: nidefawl.qubes.gl.FrameBuffer sceneFB
+test.game.vr.VRApp: nidefawl.qubes.gl.GLTriBuffer cube
+test.game.vr.VRApp: nidefawl.qubes.shader.Shader modelShader
+test.game.vr.VRApp: int tick
+test.game.vr.VRApp: boolean startup
+test.game.vr.VRApp: int action
+test.game.vr.VRApp: boolean once
+test.game.vr.VRApp: nidefawl.qubes.vec.Vector3f tmp
+test.game.vr.VRApp: nidefawl.qubes.vec.Vec3D tmpPos
+test.game.vr.VRApp: boolean hadContext
+test.game.vr.VRApp: VRApp()
+test.game.vr.VRApp: void main(java.lang.String[])
+test.game.vr.VRApp: void initShaders()
+test.game.vr.VRApp: void onStatsUpdated()
+test.game.vr.VRApp: void onTextInput(long,int)
+test.game.vr.VRApp: void onKeyPress(long,int,int,int,int)
+test.game.vr.VRApp: void renderScene(float)
+test.game.vr.VRApp: void render(float)
+test.game.vr.VRApp: void preRenderUpdate(float)
+test.game.vr.VRApp: void postRenderUpdate(float)
+test.game.vr.VRApp: void setRenderResolution(int,int)
+test.game.vr.VRApp: void tick()
+test.game.vr.VRApp: void initGame()
+test.game.vr.VRApp: void redraw()
+test.game.vr.VRApp: void lateInitGame()
+test.game.vr.VRApp: void onWheelScroll(long,double,double)
+test.game.vr.VRApp: void <clinit>()
+test.game.vr.VRApp$InputSource
+test.game.vr.VRApp$InputSource: test.game.vr.VRApp$InputSource MOUSE
+test.game.vr.VRApp$InputSource: test.game.vr.VRApp$InputSource HEADTRACKING
+test.game.vr.VRApp$InputSource: test.game.vr.VRApp$InputSource[] $VALUES
+test.game.vr.VRApp$InputSource: test.game.vr.VRApp$InputSource[] values()
+test.game.vr.VRApp$InputSource: test.game.vr.VRApp$InputSource valueOf(java.lang.String)
+test.game.vr.VRApp$InputSource: VRApp$InputSource(java.lang.String,int)
+test.game.vr.VRApp$InputSource: void <clinit>()

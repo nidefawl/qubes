@@ -48,17 +48,15 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
-import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
 
-public class Game extends GameBase implements IErrorHandler {
+public class Game extends GameBase {
 
     static public Game instance;
     static final String buildName = "Indev alpha ";
@@ -127,6 +125,7 @@ public class Game extends GameBase implements IErrorHandler {
     
     public Game() {
         super();
+        instance = this;
     }
 
     @Override
@@ -934,6 +933,17 @@ public class Game extends GameBase implements IErrorHandler {
     public void postRenderUpdate(float f) {
         Engine.worldRenderer.rendered = Engine.regionRenderer.rendered;
     }
+    private float lastTpDistance;
+    public Vector3f t = new Vector3f();
+    public Vector3f t2 = new Vector3f();
+    RayTrace rayTrace = new RayTrace() {
+        public boolean rayTraceBlock(Block block) {
+            if (block.isFullBB())
+                return true;
+            return !block.isTransparent();
+        };
+    };
+    
     @Override
     public void preRenderUpdate(float f) {
         Engine.blockDraw.processQueue();
@@ -964,6 +974,7 @@ public class Game extends GameBase implements IErrorHandler {
         this.world.updateFrame(f);
         PlayerSelf player = getPlayer();
         if (player != null) {
+            float tpDistance = this.lastTpDistance + (settings.thirdpersonDistance - this.lastTpDistance) * f;
             this.dig.preRenderUpdate();
             player.updateInputDirect(movement);
             float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
@@ -973,7 +984,7 @@ public class Game extends GameBase implements IErrorHandler {
             Engine.camera.calcViewShake(distF, f2, f3, f);
             float yaw = player.yaw;
             float pitch = player.pitch;
-            Engine.camera.setOrientation(yaw, pitch, thirdPerson, settings.thirdpersonDistance);
+            Engine.camera.setOrientation(yaw, pitch, thirdPerson, tpDistance);
 
             if (follow) {
                 vLastCam.set(vCam);
@@ -985,8 +996,36 @@ public class Game extends GameBase implements IErrorHandler {
             vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
             vCam.set(vPlayer);
             if (thirdPerson) {
-                Vector3f camPos = Engine.camera.getCameraOffset();
-                vCam.addVec(camPos);
+                Vector3f camOffset = Engine.camera.getCameraOffset();
+//                float dist = camOffset.length();
+                float minDist = tpDistance;
+                for (int x = -1; x <= 1; x++) {
+                    for (int z = -1; z <= 1; z++) {
+                        for (int y = -1; y <= 1; y++) {
+                            t.set(camOffset);
+                            t.normalise();
+                            t2.set(vCam);
+                            t2.x+=x*0.1f;
+                            t2.y+=y*0.1f;
+                            t2.z+=z*0.1f;
+                            this.rayTrace.doRaytrace(getWorld(), t2, t, (int) Math.ceil(tpDistance * 2));
+                            if (this.rayTrace.hasHit()) {
+                                Vector3f hitPos = this.rayTrace.getHit().pos;
+                                hitPos.subtract(t2);
+                                float intersectDist = hitPos.length();
+                                if (intersectDist < minDist) {
+                                    minDist = intersectDist;
+                                }
+                            }
+
+                        }
+                    }
+                }
+                if (minDist < tpDistance) {
+                    camOffset.normalise();
+                    camOffset.scale(minDist);
+                }
+                vCam.addVec(camOffset);
             }
             
             if (this.world.lights.size() > 0) {
@@ -1043,7 +1082,7 @@ public class Game extends GameBase implements IErrorHandler {
     
 
     @Override
-    public void onResize(int displayWidth, int displayHeight) {
+    public void setRenderResolution(int displayWidth, int displayHeight) {
         if (isRunning()) {
             Engine.resize(displayWidth, displayHeight);
             if (this.statsCached != null) {
@@ -1067,6 +1106,7 @@ public class Game extends GameBase implements IErrorHandler {
     public void tick() {
 
         if (!isStarting) {
+            this.lastTpDistance = settings.thirdpersonDistance;
             if (this.world != null)
                 this.world.tickUpdate();
             if (this.gui != null) {
@@ -1214,5 +1254,25 @@ public class Game extends GameBase implements IErrorHandler {
     }
     public WorldPlayerController getWPCtrl() {
         return this.worldPlayerController;
+    }
+    @Override
+    public void parseCmdArgs(String[] args) {
+        String serverAddr = null;
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("-") && args[i].length()>1) {
+                String arg = args[i].substring(1);
+                if (arg.startsWith("-") && arg.length()>1) {
+                    arg = arg.substring(1);
+                }
+                switch (arg) {
+                    case "server": {
+                        serverAddr = getValue(args, i, arg);
+                        break;
+                    }
+                        
+                }
+            }
+        }
+        Game.instance.serverAddr = serverAddr;
     }
 }

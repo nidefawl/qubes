@@ -65,7 +65,6 @@ public class RayTrace {
         int x = GameMath.floor(origin.x);
         int y = GameMath.floor(origin.y);
         int z = GameMath.floor(origin.z);
-//        System.out.println(x+"/"+y+"/"+z);
 //        System.out.println(MIN_X+"/"+MAX_X);
         // Break out direction vector.
         float dx = direction.x;
@@ -87,7 +86,8 @@ public class RayTrace {
         float tDeltaZ = stepZ/dz;
         
         // Avoids an infinite loop.
-        
+
+//        System.out.println(dx+"/"+dy+"/"+dz);
         if ((!GameMath.isNormalFloat(dx) && !GameMath.isNormalFloat(dy) && !GameMath.isNormalFloat(dz))) {
             System.err.println("Raycast in zero direction ("+dx+"/"+dy+"/"+dz+")!");
             return;
@@ -152,7 +152,7 @@ public class RayTrace {
 //                }
 //            }
             this.intersection.hit = HitType.NONE;
-            if (block.raytrace(this, world, x, y, z, origin, direction, dirFrac)) {
+            if (rayTraceBlock(block) && block.raytrace(this, world, x, y, z, origin, direction, dirFrac)) {
                 if (this.quarterMode && block != Block.quarter) {
                     this.intersection.q.set(0, 0, 0);
                     if (this.intersection.face == Dir.DIR_POS_X || this.intersection.pos.x-x >= 0.5f) {
@@ -171,6 +171,10 @@ public class RayTrace {
             }
         }
         return false;
+    }
+
+    public boolean rayTraceBlock(Block block) {
+        return true;
     }
 
     float intbound(float s, float ds) {

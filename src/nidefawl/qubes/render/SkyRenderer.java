@@ -83,7 +83,7 @@ public class SkyRenderer extends AbstractRenderer {
             return this.sprites.size();
         }
         public void update(float f) {
-            Vector3f.interp(this.pos, this.lastPos, f, this.renderPos);
+            Vector3f.interp(this.lastPos, this.pos, f, this.renderPos);
 
             for (PointSprite s : this.sprites) {
                 s.update(f);

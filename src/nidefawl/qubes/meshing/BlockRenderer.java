@@ -1135,9 +1135,6 @@ public class BlockRenderer {
             out.maskedLightSky = 0;
             out.calcAO(this.w);
         }
-        if (ix==-293 &&iy==115 &&iz==266) {
-            System.out.println(axis+"/"+side+"/"+Integer.toHexString(bs.maskedLightSky));
-        }
         return out;
     }
 
@@ -1161,7 +1158,7 @@ public class BlockRenderer {
             return 0;
         }
         int targetBuffer = block.getLODPass();
-        int brigthness = this.w.getLight(ix, iy+1, iz)+5;
+        int brigthness = this.w.getLight(ix, iy+1, iz);
         float alpha = block.getAlpha();
         int data = this.w.getData(ix, iy, iz);
         int tex = block.getTexture(Dir.DIR_POS_Y, data, 1+pass);
@@ -1304,7 +1301,8 @@ public class BlockRenderer {
 
             attr.v3.setUV(1 - sideTexOffset, 0);
             attr.v3.setPos(maxX - sideOffset, y, maxZ - sideOffset);
-            
+//            attr.cal
+//            setLight();
             
             attr.setReverse(false);
 //            float bendupper=232222.9f;
@@ -1383,6 +1381,7 @@ public class BlockRenderer {
 
         attr.v3.setUV(1 - sideTexOffset, 0);
         attr.v3.setPos(minX + sideOffset, y+0.5f, maxZ - sideOffset);
+//        setLight();
         
         
         attr.setReverse(false);
@@ -1400,6 +1399,27 @@ public class BlockRenderer {
         return nfaces;
     
         
+    }
+
+    private void setLight() {
+        int nSkyLight = 0;
+        int nBlockLight = 0;
+        for (int i = 0; i < 4; i++) {
+            BlockFaceVert n = attr.v[i];
+            int iX = GameMath.floor(n.x+attr.xOff);
+            int iY = GameMath.floor(n.y+attr.yOff);
+            int iZ = GameMath.floor(n.z+attr.zOff);
+            int light = this.w.getLight(iX, iY, iZ);
+            nBlockLight |= light & 0xF;
+            light >>= 4;
+            nSkyLight |= light & 0xF;
+            nBlockLight <<= 4;
+            nSkyLight <<= 4;
+        }
+        if (nBlockLight != 0||nSkyLight!=0) {
+            System.out.println(Integer.toHexString(nBlockLight)+"/"+Integer.toHexString(nSkyLight));
+        }
+        attr.setLight(nSkyLight, nBlockLight);
     }
 
     /**

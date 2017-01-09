@@ -6,10 +6,12 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
@@ -24,6 +26,7 @@ import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Mouse;
+import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.logging.LogBufferStream;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.GPUTaskProfile;
@@ -34,14 +37,16 @@ import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.worldgen.TerrainGen;
 
-public abstract class GameBase implements Runnable {
+public abstract class GameBase implements Runnable, IErrorHandler {
     public static String  appName         = "";
+    public static int     windowWidth;
+    public static int     windowHeight;
     public static int     displayWidth;
     public static int     displayHeight;
     public static boolean GL_ERROR_CHECKS = true;
     public static long    windowId        = 0;
-    static int            initWidth       = (int) (1680*0.8);
-    static int            initHeight      = (int) (1050*0.8);
+    protected static int            initWidth       = (int) (1680 * 0.8);
+    protected static int            initHeight      = (int) (1050 * 0.8);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
@@ -76,6 +81,7 @@ public abstract class GameBase implements Runnable {
     protected volatile boolean sysExit     = true;
     protected volatile boolean minimized   = false;
     protected volatile boolean hasWindowFocus = true;
+    protected volatile boolean useWindowSizeAsRenderResolution = true;
     protected boolean isStarting = true;
     private Thread             thread;
     private int newWidth = initWidth;
@@ -364,25 +370,29 @@ public abstract class GameBase implements Runnable {
             if (isRunning())
                 Engine.setDefaultViewport();
         }
-        if (newWidth != displayWidth || newHeight != displayHeight) {
+        if (newWidth != windowWidth || newHeight != windowHeight) {
             if (newWidth*newHeight <= 0) {
                 minimized = true;
                 return;
             }
             System.out.println("resize " + newWidth + "/" + newHeight);
             minimized = false;
-            displayWidth = newWidth;
-            displayHeight = newHeight;
+            windowWidth = newWidth;
+            windowHeight = newHeight;
             if (displayWidth <= 0) {
                 displayWidth = 1;
             }
-            if (displayHeight <= 0) {
-                displayHeight = 1;
+            if (windowHeight <= 0) {
+                windowHeight = 1;
+            }
+            if (useWindowSizeAsRenderResolution) {
+                displayWidth = windowWidth;
+                displayHeight = windowHeight;
             }
             try {
                 if (isRunning())
                     Engine.setDefaultViewport();
-                onResize(displayWidth, displayHeight);
+                onWindowResize(windowWidth, windowHeight);
             } catch (Throwable t) {
                 setException(new GameError("GLFWWindowSizeCallback", t));
             }
@@ -626,7 +636,8 @@ public abstract class GameBase implements Runnable {
             initGame();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame");
-            onResize(displayWidth, displayHeight);
+            onWindowResize(displayWidth, displayHeight);
+            Engine.setDefaultViewport();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame onResize");
             timer.calculate();
@@ -902,7 +913,11 @@ public abstract class GameBase implements Runnable {
 
     public abstract void postRenderUpdate(float f);
 
-    public abstract void onResize(int displayWidth, int displayHeight);
+    public abstract void setRenderResolution(int renderWidth, int renderHeight);
+    
+    public void onWindowResize(int displayWidth, int displayHeight) {
+        setRenderResolution(displayWidth, displayHeight);
+    }
 
     public abstract void tick();
 
@@ -1010,6 +1025,28 @@ public abstract class GameBase implements Runnable {
 
     public Gui getGui() {
         return this.gui;
+    }
+
+    static String getValue(String[] args, int i, String arg) {
+        String val = i+1<args.length ? args[i+1] : null;
+        int idx = args[i].indexOf("=");
+        if (idx > 0 && args[i].length()>idx+1) {
+            val = args[i].substring(idx+1);
+        }
+        if (val != null) {
+            if (val.startsWith("\"") && val.endsWith("\"")) {
+                val = val.substring(1, val.length()-1);
+            }
+            if (val.startsWith("'") && val.endsWith("'")) {
+                val = val.substring(1, val.length()-1);
+            }
+        }
+        if (val == null || val.isEmpty()) {
+            throw new RuntimeException("Please provide arg for --"+arg);
+        }
+        return val;
+    }
+    public void parseCmdArgs(String[] args) {
     }
 
 }

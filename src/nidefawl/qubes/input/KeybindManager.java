@@ -132,6 +132,9 @@ public class KeybindManager {
             if (this.sneak) {
                 mult*=0.3f;
             }
+            if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+                mult = 0.05f;
+            }
 //            if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
 //                mult = 0.01F;
             if (isKeyDown(kb_forward.getKey())) {

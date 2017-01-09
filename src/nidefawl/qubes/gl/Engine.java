@@ -50,6 +50,7 @@ public class Engine {
     private static IntBuffer   allocBuffer;
 
     private static BufferedMatrix projection;
+    private static BufferedMatrix _projection;
     private static BufferedMatrix view;
     private static BufferedMatrix viewInvYZ;
     private static BufferedMatrix viewprojection;
@@ -72,8 +73,8 @@ public class Engine {
 
     public static FrameBuffer fbScene;
     public static FrameBuffer fbDbg;
-    public static float znear;
-    public static float zfar;
+    public static float znear = 0.1f;
+    public static float zfar = 1024F;
 
     static TesselatorState fullscreenquad;
     static TesselatorState quad;
@@ -85,7 +86,6 @@ public class Engine {
     public static Vector3f       lightDirection;
     public static float          sunAngle     = 0F;
     public static Camera         camera;
-    public static Camera         camera2;
     public static ShadowProjector shadowProj;
     public static WorldRenderer  worldRenderer;
     public static SkyRenderer  skyRenderer;
@@ -225,6 +225,7 @@ public class Engine {
         position = Memory.createFloatBufferHeap(3);
         allocBuffer = Memory.createIntBuffer(8);
         projection = new BufferedMatrix();
+        _projection = new BufferedMatrix();
         view = new BufferedMatrix();
         viewInvYZ = new BufferedMatrix();
         viewprojection = new BufferedMatrix();
@@ -249,7 +250,6 @@ public class Engine {
         lightDirection = new Vector3f();
         back = new Vector4f();
         camera = new Camera();
-        camera2 = new Camera();
         if (initRenderers) {
             shadowProj = new ShadowProjector();
             worldRenderer = new WorldRenderer();
@@ -300,8 +300,8 @@ public class Engine {
     public static void resize(int displayWidth, int displayHeight) {
         fieldOfView = 70;
         aspectRatio = (float) displayWidth / (float) displayHeight;
-        znear = 0.1F;
-        zfar = 1024F;
+//        znear = 0.1F;
+//        zfar = 1024F;
         viewportBuf.position(0);
         viewportBuf.put(0);
         viewportBuf.put(0);
@@ -310,9 +310,11 @@ public class Engine {
         viewportBuf.flip();
         
 
-        Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+        Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
         camFrustum.setCamInternals(fieldOfView, aspectRatio, znear, zfar);
-        projection.update();
+        _projection.update();
+        _projection.update();
+        projection.load(_projection);
         projection.update();
         if (initRenderers) {
             shadowProj.setSplits(new float[] {znear, 14, 64, 420}, fieldOfView, aspectRatio);
@@ -403,6 +405,9 @@ public class Engine {
     }
 
 
+    public static BufferedMatrix getMatSceneP_internal() {
+        return _projection;
+    }
     public static BufferedMatrix getMatSceneP() {
         return projection;
     }
@@ -458,21 +463,25 @@ public class Engine {
     public static void updateCamera() {
         updateCamera(camera);
     }
-
     public static void updateCamera(Camera camera) {
+        Matrix4f camView = camera.getViewMatrix();
+        Vector3f camPos = camera.getPosition();
+        updateCamera(camView, camPos);
+    }
+
+    public static void updateCamera(Matrix4f camView, Vector3f camPos) {
         up.set(0, 100, 0);
 //        back.set(0, -10, 0);
-        Matrix4f cam = camera.getViewMatrix();
-        view.load(cam);
+//        System.out.println(view);
+        view.load(camView);
         view.update();
         viewInvYZ.load(view);
         viewInvYZ.mulMat(invertYZ);
         viewInvYZ.update();
         
-        Vector3f vec = camera.getPosition();
-        updateRenderOffset = updateGlobalRenderOffset(vec.x, vec.y, vec.z);
+        updateRenderOffset = updateGlobalRenderOffset(camPos.x, camPos.y, camPos.z);
         modelview.setIdentity();
-        modelview.translate(-vec.x, -vec.y, -vec.z);
+        modelview.translate(-camPos.x, -camPos.y, -camPos.z);
         modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
 //        System.out.println(GLOBAL_OFFSET);
         
@@ -485,7 +494,7 @@ public class Engine {
         normalMatrix.setIdentity();
         normalMatrix.invert().transpose();
         normalMatrix.update();
-        camFrustum.setPos(vec, view);
+        camFrustum.setPos(camPos, view);
         camFrustum.set(modelviewprojection);
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
         updateOrthoMatrix(Game.displayWidth, Game.displayHeight);//TODO: this only needs to be updated when resolution has changed

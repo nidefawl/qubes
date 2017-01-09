@@ -55,6 +55,14 @@ public class Matrix4f {
         buf.append(m03).append(' ').append(m13).append(' ').append(m23).append(' ').append(m33).append('\n');
         return buf.toString();
     }
+    public String toStringShort() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(String.format("%.2f",m00)).append(' ').append(String.format("%.2f",m10)).append(' ').append(String.format("%.2f",m20)).append(' ').append(String.format("%.2f",m30)).append('\n');
+        buf.append(String.format("%.2f",m01)).append(' ').append(String.format("%.2f",m11)).append(' ').append(String.format("%.2f",m21)).append(' ').append(String.format("%.2f",m31)).append('\n');
+        buf.append(String.format("%.2f",m02)).append(' ').append(String.format("%.2f",m12)).append(' ').append(String.format("%.2f",m22)).append(' ').append(String.format("%.2f",m32)).append('\n');
+        buf.append(String.format("%.2f",m03)).append(' ').append(String.format("%.2f",m13)).append(' ').append(String.format("%.2f",m23)).append(' ').append(String.format("%.2f",m33)).append('\n');
+        return buf.toString();
+    }
 
     /**
      * Set this matrix to be the identity matrix.
@@ -70,22 +78,22 @@ public class Matrix4f {
      * @return m
      */
     public static Matrix4f setIdentity(Matrix4f m) {
-        m.m00 = 1.0f;
+        m.m00 = 1.0f;//0
         m.m01 = 0.0f;
         m.m02 = 0.0f;
         m.m03 = 0.0f;
-        m.m10 = 0.0f;
-        m.m11 = 1.0f;
+        m.m10 = 0.0f; //4
+        m.m11 = 1.0f;//5
         m.m12 = 0.0f;
         m.m13 = 0.0f;
         m.m20 = 0.0f;
         m.m21 = 0.0f;
-        m.m22 = 1.0f;
+        m.m22 = 1.0f;//10
         m.m23 = 0.0f;
-        m.m30 = 0.0f;
+        m.m30 = 0.0f;//12
         m.m31 = 0.0f;
         m.m32 = 0.0f;
-        m.m33 = 1.0f;
+        m.m33 = 1.0f;//15
 
         return m;
     }

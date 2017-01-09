@@ -203,8 +203,8 @@ public class FrameBuffer implements IManagedResource {
     public void setupTexture(int texture, int format, int minfilter, int magFilter) {
         glBindTexture(textureType, texture);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindTexture");
-        glTexParameteri(textureType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(textureType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(textureType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(textureType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(textureType, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(textureType, GL_TEXTURE_MAG_FILTER, magFilter);
         glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, 0);

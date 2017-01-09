@@ -1,5 +1,6 @@
 package nidefawl.qubes;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import nidefawl.qubes.util.CrashInfo;
@@ -14,9 +15,11 @@ public class NativeInterface {
     public static NativeInterface getInstance() {
         return instance;
     }
-    public static void start() {
+    public static void start(int appId) {
         try {
             Class s = NativeClassLoader.getInstance().loadClass("nidefawl.qubes.BootClient");
+            Field f = s.getDeclaredField("appId");
+            f.set(null, appId);  
             isPresent = true;
             Object o = s.newInstance();
             String[] args = new String[0];

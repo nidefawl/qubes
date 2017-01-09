@@ -39,7 +39,7 @@ public class DynamicLight {
     }
 
     public void updatePreRender(WorldClient w, float f) {
-        Vector3f.interp(this.pos, this.lastPos, f, this.renderPos);
+        Vector3f.interp(this.lastPos, this.pos, f, this.renderPos);
         this.renderPos.x-=Engine.GLOBAL_OFFSET.x;
         this.renderPos.y-=Engine.GLOBAL_OFFSET.y;
         this.renderPos.z-=Engine.GLOBAL_OFFSET.z;

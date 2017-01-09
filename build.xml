@@ -15,6 +15,8 @@
         <pathelement location="lib/lwjgl_dbg/lwjgl.jar"/>
         <pathelement location="lib/guava/guava-18.0.jar"/>
         <pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
+        <pathelement location="lib/jna/jna-4.2.2.jar"/>
+        <pathelement location="lib/openvr/JOpenVR.jar"/>
     </path>
 	
     <target name="clean">
@@ -37,6 +39,19 @@
     	    <arg value="client"/>
 		    <arg value="--in"/>
     	    <arg value="src"/>
+		    <arg value="--out"/>
+		    <arg value="${compile_dir}/src/client"/>
+		    <arg value="--bypass"/>
+	    </exec>
+    	<exec executable="java">
+    	    <arg value="-jar"/>
+    	    <arg value="../preprocessor.jar"/>
+    	    <arg value="--config"/>
+    	    <arg value="build_config/client_drop_pkg.txt"/>
+    	    <arg value="--side"/>
+    	    <arg value="client"/>
+		    <arg value="--in"/>
+    	    <arg value="../GLFW/src"/>
 		    <arg value="--out"/>
 		    <arg value="${compile_dir}/src/client"/>
 		    <arg value="--bypass"/>
@@ -80,6 +95,8 @@
         <libraryjar name="lib/lwjgl_dbg/lwjgl.jar"/>
         <libraryjar name="lib/guava/guava-18.0.jar"/>
         <libraryjar name="lib/snakeyaml/snakeyaml-1.16.jar"/>
+        <libraryjar name="lib/jna/jna-4.2.2.jar"/>
+        <libraryjar name="lib/openvr/JOpenVR.jar"/>
         <outjar name="../game_obf.jar"/>
       </proguard>
     	<exec executable="${cryptfilepath}/CryptFile.exe">
@@ -116,28 +133,40 @@
 	<target name="build_deps">
         <echo message="${ant.project.name}: ${ant.file}"/>
 	    <delete file="../game_deps.dat" failonerror="no"/>
-	    <delete dir="compile/deps" failonerror="no"/>
-        <mkdir dir="compile/deps"/>
-		<copy file="lib/lwjgl_dbg/lwjgl.jar" tofile="compile/deps/lwjgl.jar"/>
-		<copy file="lib/guava/guava-18.0.jar" tofile="compile/deps/guava.jar"/>
-		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="compile/deps/snakeyaml.jar"/>
-        <mkdir dir="compile/deps/natives"/>
-    	<copy includeemptydirs="false" todir="compile/deps/natives">
+	    <delete dir="${compile_dir}/deps" failonerror="no"/>
+        <mkdir dir="${compile_dir}/deps"/>
+		<copy file="lib/jna/jna-4.2.2.jar" tofile="${compile_dir}/deps/jna-4.2.2.jar"/>
+		<copy file="lib/openvr/JOpenVR.jar" tofile="${compile_dir}/deps/JOpenVR.jar"/>
+		<copy file="lib/lwjgl_dbg/lwjgl.jar" tofile="${compile_dir}/deps/lwjgl.jar"/>
+		<copy file="lib/guava/guava-18.0.jar" tofile="${compile_dir}/deps/guava.jar"/>
+		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="${compile_dir}/deps/snakeyaml.jar"/>
+        <mkdir dir="${compile_dir}/deps/natives"/>
+    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
     		<fileset dir="lib/lwjgl_dbg">
     			<include name="*.dll"/>
     		</fileset>
     	</copy>
-    	<copy includeemptydirs="false" todir="compile/deps/natives">
+    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
+    		<fileset dir="lib/jna">
+    			<include name="*.dll"/>
+    		</fileset>
+    	</copy>
+    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
+    		<fileset dir="lib/openvr">
+    			<include name="*.dll"/>
+    		</fileset>
+    	</copy>
+    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
     		<fileset dir="lib/hbaoplus">
     			<include name="*.*"/>
     		</fileset>
     	</copy>
-    	<delete dir="compile/deps/META-INF" />
+    	<delete dir="${compile_dir}/deps/META-INF" />
 		<jar destfile="../game_deps.jar" compress="false">
-	        <fileset dir="compile/deps" includes="**/*" /> 
+	        <fileset dir="${compile_dir}/deps" includes="**/*" /> 
 		</jar>
         <copy includeemptydirs="false" todir="U:/qubes/files">
-            <fileset file="../game_deps.dat" />
+            <fileset file="../game_deps.jar" />
         </copy>
 	</target>
 

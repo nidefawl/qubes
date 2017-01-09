@@ -10,6 +10,7 @@ import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MAS
 import java.util.List;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -130,6 +131,9 @@ public class MeshUpdateTask {
                     attr.setOffset(xOff, yOff, zOff);
                     for (int m = 0; m < numMeshedFaces; m++) {
                         BlockFace face = mesh.get(m);
+//                        if (Block.leaves.getBlocks().contains(Block.get(face.bs.type))) {
+//                            continue;
+//                        }
                         if (i == PASS_SHADOW_SOLID) {
                             if (shadowDrawMode == 0)
                                 face.drawBasic(attr, vbuffer[i]);
