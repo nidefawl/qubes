@@ -68,10 +68,17 @@ public class GuiControls extends Gui {
             fr.drawString(b.getName(), this.posX, this.posY+fr.centerY(height), -1, true, 0.9f);
 ////            GLfw.g
             String keyname = "";
+            int c = -1;
             if (b.isEnabled() && b.getKey() != -1) {
                 keyname = Keyboard.getKeyName(b.getKey());
+                for (Keybinding b2 : KeybindManager.getBindings()) {
+                    if (b2 != b && b.getKey() == b2.getKey()) {
+                        c = 0xff6666;
+                    }
+                }
             }
-            fr.drawString(keyname, r+rw/2, this.posY+fr.centerY(height), -1, true, 0.9f, 2);
+            
+            fr.drawString(keyname, r+rw/2, this.posY+fr.centerY(height), c, true, 0.9f, 2);
             Shaders.colored.enable();
             Tess tessellator = Tess.instance;
 //          OpenGlHelper.glColor3f(fa, fa, fa);
