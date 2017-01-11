@@ -94,17 +94,12 @@ public class Memory {
         return createByteBufferAligned(alignment, len);
     }
 
-    public static FloatBuffer createFloatBufferGC(int i) {
-        ByteBuffer buf = BufferUtils.createAlignedByteBufferPage(i*4);
-        mallocd += buf.capacity();
-        return buf.asFloatBuffer();
-    }
     /**
      * @param numColorTextures
      * @return
      */
     public static IntBuffer createIntBufferGC(int i) {
-        ByteBuffer buf = BufferUtils.createAlignedByteBufferPage(i*4);
+        ByteBuffer buf = BufferUtils.createByteBuffer(i*4);
         mallocd += buf.capacity();
         return buf.asIntBuffer();
     }
