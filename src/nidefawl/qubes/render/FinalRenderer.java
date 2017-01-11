@@ -549,7 +549,8 @@ public class FinalRenderer extends AbstractRenderer {
         if (!HBAOPlus.hasContext && enableAO) {
             updateHBAOSettings();
             Engine.checkGLError("pre GLNativeLib.createContext");
-            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight, Game.instance.caps);
+//            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight, Game.instance.caps);
+            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight, null);
             Engine.checkGLError("post GLNativeLib.createContext");
             HBAOPlus.hasContext = true;
         }

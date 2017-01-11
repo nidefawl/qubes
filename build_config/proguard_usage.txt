@@ -9,8 +9,8 @@ nidefawl.qubes.Game:
     nidefawl.qubes.entity.PlayerSelf testPlayer
     nidefawl.qubes.world.WorldClient remoteWorld
     nidefawl.qubes.world.WorldClient testWorld
-    244:258:protected void toggleTestMode()
-    1244:1244:public boolean isInSelection(int,int,int)
+    243:257:protected void toggleTestMode()
+    1269:1269:public boolean isInSelection(int,int,int)
 nidefawl.qubes.GameRegistry:
     26:26:public GameRegistry()
 nidefawl.qubes.PlayerProfile:
@@ -710,7 +710,7 @@ nidefawl.qubes.render.FinalRenderer:
     private int blurTexture
     float curBrightness
     float brightness
-    303:309:public int renderNormals()
+    311:317:public int renderNormals()
 nidefawl.qubes.render.ShadowRenderer:
     public static final int MULTI_DRAW
     public static final int MULTI_DRAW_TEXUTED
@@ -1129,6 +1129,15 @@ nidefawl.qubes.vec.Vector4f:
     315:315:public final float lengthXYZ()
     318:319:public nidefawl.qubes.vec.Vector4f normalise()
     329:338:public boolean setChecked(float,float,float,float)
+nidefawl.qubes.vr.VR:
+    private static final int maxControllerVelocitySamples
+    29:59:public VR()
+    439:452:private static void getTipTransforms()
+    456:466:private static void findControllerDevices()
+    593:593:public static boolean isInit()
+nidefawl.qubes.vr.VR$VRSettings:
+    boolean seated
+    public boolean vrReverseHands
 nidefawl.qubes.world.BlockState
 nidefawl.qubes.world.IBlockWorld:
     public abstract boolean setType(int,int,int,int,int)

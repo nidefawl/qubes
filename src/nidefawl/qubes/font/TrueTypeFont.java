@@ -96,7 +96,7 @@ public class TrueTypeFont {
         if (offset < 0) {
             throw new GameError("Failed loading "+fontPath);
         }
-        if (!stbtt_InitFont(info, ttf, offset)) {
+        if (1!=stbtt_InitFont(info, ttf, offset)) {
             throw new GameError("Failed loading "+fontPath);
         }
         int oversample = 2;
@@ -148,7 +148,7 @@ public class TrueTypeFont {
         yb2.put(0, 0);
         
         int idx = getIndex((char) ch);
-        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
         return xb2.get(0);
     }
 
@@ -181,7 +181,7 @@ public class TrueTypeFont {
                 continue;
             }
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
         }
         return xb2.get(0);
     }
@@ -208,7 +208,7 @@ public class TrueTypeFont {
             if (charCurrent == '\n')
                 continue;
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
         }
         return xb2.get(0);
     }
@@ -224,7 +224,7 @@ public class TrueTypeFont {
     }
     public void readQuad(int charCurrent) {
         int idx = getIndex(charCurrent);
-        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
     }
     public void renderQuad(Tess tess, float x, float y) {
         tess.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
@@ -254,7 +254,7 @@ public class TrueTypeFont {
                 }
             }
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
             if (xb2.get(0) >= mX) {
                 return Math.max(0, i);
             }
@@ -277,9 +277,9 @@ public class TrueTypeFont {
         this.info.free();
         this.q.free();
         this.q2.free();
-//        memFree(this.chardata);
-        this.chardata.free();
-        this.chardata = null;
+        memFree(this.chardata);
+//        this.chardata.free();
+//        this.chardata = null;
         memFree(this.yb);
         memFree(this.xb);
         memFree(this.yb2);
@@ -413,7 +413,7 @@ public class TrueTypeFont {
                 }
             }
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
             xPos = xb.get(0);
             tess.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
             tess.add(x + q.x1(), y + q.y0(), 0F, q.s1(), q.t0());
@@ -438,7 +438,7 @@ public class TrueTypeFont {
         yb.put(0, 0);
         
         int idx = getIndex((char) ch);
-        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
 
         return xb.get(0);
     }

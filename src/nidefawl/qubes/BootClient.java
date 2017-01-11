@@ -21,7 +21,7 @@ public class BootClient {
         Configuration.DISABLE_CHECKS.set(true);
         Configuration.GLFW_CHECK_THREAD0.set(false);
         Configuration.MEMORY_ALLOCATOR.set("jemalloc");
-//        Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
+        Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
         System.setProperty("jna.debug_load.jna", "true");
         System.setProperty("jna.nounpack", "true");
         System.setProperty("jna.boot.library.path", ".");

@@ -10,6 +10,7 @@ nidefawl.qubes.GameBase: int windowHeight
 nidefawl.qubes.GameBase: int displayWidth
 nidefawl.qubes.GameBase: int displayHeight
 nidefawl.qubes.GameBase: boolean GL_ERROR_CHECKS
+nidefawl.qubes.GameBase: boolean VR_SUPPORT
 nidefawl.qubes.GameBase: long windowId
 nidefawl.qubes.GameBase: int initWidth
 nidefawl.qubes.GameBase: int initHeight
@@ -705,7 +706,6 @@ test.game.ParticlePerformanceTest: java.util.Random r
 test.game.ParticlePerformanceTest: nidefawl.qubes.vec.Vec3D tmpPos
 test.game.ParticlePerformanceTest: boolean init
 test.game.ParticlePerformanceTest: float SPEED
-test.game.ParticlePerformanceTest: boolean draw
 test.game.ParticlePerformanceTest: ParticlePerformanceTest()
 test.game.ParticlePerformanceTest: void main(java.lang.String[])
 test.game.ParticlePerformanceTest: void initGame()
@@ -1638,114 +1638,6 @@ test.game.meshregion.VertexPointerTest$3: void uploadTextures()
 test.game.meshregion.VertexPointerTest$3: void findMaxTileWidth()
 test.game.meshregion.VertexPointerTest$3: void collectTextures(nidefawl.qubes.assets.AssetManager)
 test.game.meshregion.VertexPointerTest$3: void postUpload()
-test.game.vr.OpenVRUtil
-test.game.vr.OpenVRUtil: long SLEEP_PRECISION
-test.game.vr.OpenVRUtil: long SPIN_YIELD_PRECISION
-test.game.vr.OpenVRUtil: OpenVRUtil()
-test.game.vr.OpenVRUtil: void sleepNanos(long)
-test.game.vr.OpenVRUtil: void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float)
-test.game.vr.OpenVRUtil: void Matrix4fCopy(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtil: void Matrix4fSetIdentity(nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtil: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtil: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtil: void <clinit>()
-test.game.vr.OpenVRUtilColMajor
-test.game.vr.OpenVRUtilColMajor: long SLEEP_PRECISION
-test.game.vr.OpenVRUtilColMajor: long SPIN_YIELD_PRECISION
-test.game.vr.OpenVRUtilColMajor: OpenVRUtilColMajor()
-test.game.vr.OpenVRUtilColMajor: void sleepNanos(long)
-test.game.vr.OpenVRUtilColMajor: void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float)
-test.game.vr.OpenVRUtilColMajor: void Matrix4fCopy(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtilColMajor: void Matrix4fSetIdentity(nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtilColMajor: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtilColMajor: nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.OpenVRUtilColMajor: void <clinit>()
-test.game.vr.VR
-test.game.vr.VR: boolean DEBUG_PRINT
-test.game.vr.VR: boolean READ_MATS
-test.game.vr.VR: jopenvr.VR_IVRSystem_FnTable vrsystem
-test.game.vr.VR: test.game.vr.VR$VRSettings settings
-test.game.vr.VR: test.game.vr.VR$VRViewProjection cam
-test.game.vr.VR: java.nio.FloatBuffer tlastVsync
-test.game.vr.VR: java.nio.LongBuffer _tframeCount
-test.game.vr.VR: java.nio.IntBuffer hmdDisplayFrequency
-test.game.vr.VR: jopenvr.TrackedDevicePose_t$ByReference hmdTrackedDevicePoseReference
-test.game.vr.VR: jopenvr.TrackedDevicePose_t[] hmdTrackedDevicePoses
-test.game.vr.VR: double timePerFrame
-test.game.vr.VR: boolean initSuccess
-test.game.vr.VR: boolean initDone
-test.game.vr.VR: java.lang.String initStatus
-test.game.vr.VR: jopenvr.VR_IVRCompositor_FnTable vrCompositor
-test.game.vr.VR: java.nio.IntBuffer hmdErrorStore
-test.game.vr.VR: jopenvr.VR_IVROverlay_FnTable vrOverlay
-test.game.vr.VR: jopenvr.VR_IVRRenderModels_FnTable vrRenderModels
-test.game.vr.VR: jopenvr.VR_IVRSettings_FnTable vrSettings
-test.game.vr.VR: jopenvr.VRTextureBounds_t texBounds
-test.game.vr.VR: jopenvr.Texture_t texType0
-test.game.vr.VR: jopenvr.Texture_t texType1
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] poseMatrices
-test.game.vr.VR: nidefawl.qubes.vec.Vec3D[] deviceVelocity
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f hmdPose
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f hmdPose2
-test.game.vr.VR: boolean headIsTracking
-test.game.vr.VR: int RIGHT_CONTROLLER
-test.game.vr.VR: int LEFT_CONTROLLER
-test.game.vr.VR: boolean[] controllerTracking
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] controllerPose
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] controllerRotation
-test.game.vr.VR: int[] controllerDeviceIndex
-test.game.vr.VR: jopenvr.VRControllerState_t$ByReference[] inputStateRefernceArray
-test.game.vr.VR: jopenvr.VRControllerState_t[] lastControllerState
-test.game.vr.VR: jopenvr.VRControllerState_t[] controllerStateReference
-test.game.vr.VR: int maxControllerVelocitySamples
-test.game.vr.VR: nidefawl.qubes.vec.Vec3D[][] controllerVelocitySamples
-test.game.vr.VR: int[] controllerVelocitySampleCount
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] controllerTipTransform
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f[] handRotation
-test.game.vr.VR: int renderWidth
-test.game.vr.VR: int renderHeight
-test.game.vr.VR: boolean hasRead
-test.game.vr.VR: nidefawl.qubes.gl.FrameBuffer fbLeft
-test.game.vr.VR: nidefawl.qubes.gl.FrameBuffer fbRight
-test.game.vr.VR: nidefawl.qubes.vec.Matrix4f tmpMat
-test.game.vr.VR: VR()
-test.game.vr.VR: com.sun.jna.Pointer ptrFomrString(java.lang.String)
-test.game.vr.VR: boolean InitVR()
-test.game.vr.VR: void initOpenVRRenderModels()
-test.game.vr.VR: void initOpenVROverlay()
-test.game.vr.VR: void initOpenVROSettings()
-test.game.vr.VR: void initializeJOpenVR()
-test.game.vr.VR: void initOpenVRCompositor(boolean)
-test.game.vr.VR: java.lang.String getCompostiorError(int)
-test.game.vr.VR: void readMat4s(java.lang.String,nidefawl.qubes.vec.Matrix4f)
-test.game.vr.VR: void readMats()
-test.game.vr.VR: void updatePose(float)
-test.game.vr.VR: void getTipTransforms()
-test.game.vr.VR: void findControllerDevices()
-test.game.vr.VR: void Submit()
-test.game.vr.VR: void initApp(nidefawl.qubes.GameBase)
-test.game.vr.VR: void initVRFB(int,int)
-test.game.vr.VR: void setupCamera(int,float)
-test.game.vr.VR: void bindAndClearFramebuffer(int)
-test.game.vr.VR: boolean isInit()
-test.game.vr.VR: nidefawl.qubes.gl.FrameBuffer getFB(int)
-test.game.vr.VR: void setViewPort(int)
-test.game.vr.VR: void <clinit>()
-test.game.vr.VR$VRSettings
-test.game.vr.VR$VRSettings: boolean seated
-test.game.vr.VR$VRSettings: boolean vrReverseHands
-test.game.vr.VR$VRSettings: VR$VRSettings()
-test.game.vr.VR$VRViewProjection
-test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f projLeft
-test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f projRight
-test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f poseEyeLeft
-test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f poseEyeRight
-test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f viewLeft
-test.game.vr.VR$VRViewProjection: nidefawl.qubes.vec.Matrix4f viewRight
-test.game.vr.VR$VRViewProjection: VR$VRViewProjection()
-test.game.vr.VR$VRViewProjection: void setEyeToHeadTransform()
-test.game.vr.VR$VRViewProjection: void setEyeProj(float,float)
-test.game.vr.VR$VRViewProjection: void update(float)
 test.game.vr.VRApp
 test.game.vr.VRApp: test.game.vr.VRApp$InputSource selInputSource
 test.game.vr.VRApp: nidefawl.qubes.util.SimpleResourceManager shaders

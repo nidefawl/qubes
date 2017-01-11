@@ -37,55 +37,56 @@ nidefawl.qubes.Game -> Ij1LIjL1jIL1iJIj:
     nidefawl.qubes.vec.Vector3f t -> new
     nidefawl.qubes.vec.Vector3f t2 -> try
     nidefawl.qubes.util.RayTrace rayTrace -> do
-    107:107:nidefawl.qubes.input.GameMode getMode() -> do
-    112:124:void connectTo(java.lang.String) -> do
-    133:165:void initGame() -> initGame
-    168:168:java.lang.String getAppTitle() -> getAppTitle
-    173:228:void lateInitGame() -> lateInitGame
-    231:241:void toggleGameMode() -> do
-    264:265:void reposModel() -> if
-    268:278:void setWorld(nidefawl.qubes.world.WorldClient) -> do
-    282:286:void shutdown() -> shutdown
-    293:307:void onTextInput(long,int) -> onTextInput
-    311:353:void onKeyPress(long,int,int,int,int) -> onKeyPress
-    357:396:void onWheelScroll(long,double,double) -> onWheelScroll
-    399:435:void onMouseClick(long,int,int,int) -> onMouseClick
-    438:445:void setGrabbed(boolean) -> setGrabbed
-    448:453:boolean needsGrab() -> needsGrab
-    460:901:void render(float) -> render
-    905:930:void onStatsUpdated() -> onStatsUpdated
-    934:935:void postRenderUpdate(float) -> postRenderUpdate
-    949:1081:void preRenderUpdate(float) -> preRenderUpdate
-    1086:1104:void setRenderResolution(int,int) -> setRenderResolution
-    1108:1139:void tick() -> tick
-    1142:1149:void returnToMenu() -> for
-    1152:1152:boolean isConnected() -> do
-    1156:1159:void addDebugOnScreen(java.lang.String) -> if
-    1162:1162:nidefawl.qubes.world.World getWorld() -> do
-    1166:1176:void setConnection(nidefawl.qubes.network.client.NetworkClient) -> do
-    1179:1179:nidefawl.qubes.entity.PlayerSelf getPlayer() -> do
-    1183:1184:void setPlayer(nidefawl.qubes.entity.PlayerSelf) -> do
-    1187:1190:void sendPacket(nidefawl.qubes.network.packet.Packet) -> do
-    1193:1193:nidefawl.qubes.PlayerProfile getProfile() -> do
-    1201:1206:void saveSettings() -> int
-    1209:1214:void saveProfile() -> new
-    1217:1224:void loadProfile() -> try
-    1227:1234:void loadSettings() -> byte
-    1248:1248:nidefawl.qubes.input.Selection getSelection() -> do
-    1252:1253:nidefawl.qubes.network.client.ClientHandler getClientHandler() -> do
-    1256:1256:nidefawl.qubes.input.WorldPlayerController getWPCtrl() -> do
-    1260:1277:void parseCmdArgs(java.lang.String[]) -> parseCmdArgs
+    105:105:nidefawl.qubes.input.GameMode getMode() -> do
+    110:122:void connectTo(java.lang.String) -> do
+    131:163:void initGame() -> initGame
+    166:166:java.lang.String getAppTitle() -> getAppTitle
+    171:227:void lateInitGame() -> lateInitGame
+    230:240:void toggleGameMode() -> do
+    263:264:void reposModel() -> if
+    267:277:void setWorld(nidefawl.qubes.world.WorldClient) -> do
+    281:285:void shutdown() -> shutdown
+    292:306:void onTextInput(long,int) -> onTextInput
+    310:352:void onKeyPress(long,int,int,int,int) -> onKeyPress
+    356:395:void onWheelScroll(long,double,double) -> onWheelScroll
+    398:434:void onMouseClick(long,int,int,int) -> onMouseClick
+    437:444:void setGrabbed(boolean) -> setGrabbed
+    447:452:boolean needsGrab() -> needsGrab
+    459:916:void render(float) -> render
+    920:945:void onStatsUpdated() -> onStatsUpdated
+    949:950:void postRenderUpdate(float) -> postRenderUpdate
+    964:1097:void preRenderUpdate(float) -> preRenderUpdate
+    1102:1108:void onWindowResize(int,int) -> onWindowResize
+    1111:1129:void setRenderResolution(int,int) -> setRenderResolution
+    1133:1164:void tick() -> tick
+    1167:1174:void returnToMenu() -> for
+    1177:1177:boolean isConnected() -> do
+    1181:1184:void addDebugOnScreen(java.lang.String) -> if
+    1187:1187:nidefawl.qubes.world.World getWorld() -> do
+    1191:1201:void setConnection(nidefawl.qubes.network.client.NetworkClient) -> do
+    1204:1204:nidefawl.qubes.entity.PlayerSelf getPlayer() -> do
+    1208:1209:void setPlayer(nidefawl.qubes.entity.PlayerSelf) -> do
+    1212:1215:void sendPacket(nidefawl.qubes.network.packet.Packet) -> do
+    1218:1218:nidefawl.qubes.PlayerProfile getProfile() -> do
+    1226:1231:void saveSettings() -> int
+    1234:1239:void saveProfile() -> new
+    1242:1249:void loadProfile() -> try
+    1252:1259:void loadSettings() -> byte
+    1273:1273:nidefawl.qubes.input.Selection getSelection() -> do
+    1277:1278:nidefawl.qubes.network.client.ClientHandler getClientHandler() -> do
+    1281:1281:nidefawl.qubes.input.WorldPlayerController getWPCtrl() -> do
+    1285:1302:void parseCmdArgs(java.lang.String[]) -> parseCmdArgs
 nidefawl.qubes.Game$1 -> jI1LJi1LllJi:
     nidefawl.qubes.texture.array.TextureArray val$arr -> do
     nidefawl.qubes.Game this$0 -> do
-    192:196:void pre() -> pre
-    199:200:void post() -> post
-    204:208:java.lang.Void call() -> do
-    212:212:nidefawl.qubes.async.AsyncTask$TaskType getType() -> getType
-    188:188:java.lang.Object call() -> call
+    190:194:void pre() -> pre
+    197:198:void post() -> post
+    202:206:java.lang.Void call() -> do
+    210:210:nidefawl.qubes.async.AsyncTask$TaskType getType() -> getType
+    186:186:java.lang.Object call() -> call
 nidefawl.qubes.Game$2 -> Ij1LL1JiIjIjjI:
     nidefawl.qubes.Game this$0 -> do
-    941:943:boolean rayTraceBlock(nidefawl.qubes.block.Block) -> do
+    956:958:boolean rayTraceBlock(nidefawl.qubes.block.Block) -> do
 nidefawl.qubes.GameBase -> ll1LL1JiiJL1iJL1:
     java.lang.String appName -> appName
     int windowWidth -> windowWidth
@@ -93,6 +94,7 @@ nidefawl.qubes.GameBase -> ll1LL1JiiJL1iJL1:
     int displayWidth -> displayWidth
     int displayHeight -> displayHeight
     boolean GL_ERROR_CHECKS -> GL_ERROR_CHECKS
+    boolean VR_SUPPORT -> VR_SUPPORT
     long windowId -> windowId
     int initWidth -> initWidth
     int initHeight -> initHeight
@@ -142,39 +144,39 @@ nidefawl.qubes.GameBase -> ll1LL1JiiJL1iJL1:
     java.util.ArrayList glProfileResults -> glProfileResults
     int throttleClick -> throttleClick
     boolean needsGrab -> needsGrab
-    98:101:void startGame() -> startGame
-    117:117:boolean isRunning() -> isRunning
-    121:121:nidefawl.qubes.gl.GPUVendor getVendor() -> getVendor
-    127:180:void run() -> run
-    183:259:void initCallbacks() -> initCallbacks
-    264:336:void initDisplay(boolean) -> initDisplay
-    339:339:java.lang.String getAppTitle() -> getAppTitle
-    343:353:void destroyContext() -> destroyContext
-    356:359:void onDestroy() -> onDestroy
-    362:365:void shutdown() -> shutdown
-    368:400:void checkResize() -> checkResize
+    99:102:void startGame() -> startGame
+    118:118:boolean isRunning() -> isRunning
+    122:122:nidefawl.qubes.gl.GPUVendor getVendor() -> getVendor
+    128:181:void run() -> run
+    184:260:void initCallbacks() -> initCallbacks
+    265:337:void initDisplay(boolean) -> initDisplay
+    340:340:java.lang.String getAppTitle() -> getAppTitle
+    344:354:void destroyContext() -> destroyContext
+    357:360:void onDestroy() -> onDestroy
+    363:366:void shutdown() -> shutdown
+    369:401:void checkResize() -> checkResize
     void onStatsUpdated() -> onStatsUpdated
-    405:407:void setVSync(boolean) -> setVSync
-    410:410:boolean getVSync() -> getVSync
-    414:414:java.lang.Thread getMainThread() -> getMainThread
-    418:423:boolean _checkGLError(java.lang.String) -> _checkGLError
-    427:447:java.lang.String getGlErrorString(int) -> getGlErrorString
-    452:453:void updateDisplay() -> updateDisplay
-    456:456:boolean isCloseRequested() -> isCloseRequested
-    460:470:void setVSync_impl(boolean) -> setVSync_impl
-    475:485:void updateInput() -> updateInput
-    488:489:void setTitle(java.lang.String) -> setTitle
-    492:505:void limitFpsTo(int) -> limitFpsTo
-    508:623:void runFrame() -> runFrame
-    626:626:boolean needsGrab() -> needsGrab
-    634:690:void mainLoop() -> mainLoop
-    693:750:void initGLContext() -> initGLContext
-    753:761:void updateTime() -> updateTime
-    765:881:void showErrorScreen(java.lang.String,java.util.List,java.lang.Throwable,boolean) -> showErrorScreen
-    884:885:void setException(nidefawl.qubes.util.GameError) -> setException
-    888:888:long getTime() -> getTime
-    892:892:boolean hasTextHook() -> hasTextHook
-    895:901:void setTextHook(boolean) -> setTextHook
+    406:408:void setVSync(boolean) -> setVSync
+    411:411:boolean getVSync() -> getVSync
+    415:415:java.lang.Thread getMainThread() -> getMainThread
+    419:424:boolean _checkGLError(java.lang.String) -> _checkGLError
+    428:448:java.lang.String getGlErrorString(int) -> getGlErrorString
+    453:454:void updateDisplay() -> updateDisplay
+    457:457:boolean isCloseRequested() -> isCloseRequested
+    461:471:void setVSync_impl(boolean) -> setVSync_impl
+    476:486:void updateInput() -> updateInput
+    489:490:void setTitle(java.lang.String) -> setTitle
+    493:506:void limitFpsTo(int) -> limitFpsTo
+    509:624:void runFrame() -> runFrame
+    627:627:boolean needsGrab() -> needsGrab
+    635:691:void mainLoop() -> mainLoop
+    694:751:void initGLContext() -> initGLContext
+    754:762:void updateTime() -> updateTime
+    766:882:void showErrorScreen(java.lang.String,java.util.List,java.lang.Throwable,boolean) -> showErrorScreen
+    885:886:void setException(nidefawl.qubes.util.GameError) -> setException
+    889:889:long getTime() -> getTime
+    893:893:boolean hasTextHook() -> hasTextHook
+    896:902:void setTextHook(boolean) -> setTextHook
     void onTextInput(long,int) -> onTextInput
     void onKeyPress(long,int,int,int,int) -> onKeyPress
     void onWheelScroll(long,double,double) -> onWheelScroll
@@ -182,41 +184,41 @@ nidefawl.qubes.GameBase -> ll1LL1JiiJL1iJL1:
     void preRenderUpdate(float) -> preRenderUpdate
     void postRenderUpdate(float) -> postRenderUpdate
     void setRenderResolution(int,int) -> setRenderResolution
-    919:920:void onWindowResize(int,int) -> onWindowResize
+    920:921:void onWindowResize(int,int) -> onWindowResize
     void tick() -> tick
     void initGame() -> initGame
     void lateInitGame() -> lateInitGame
-    931:957:void showGUI(nidefawl.qubes.gui.Gui) -> showGUI
-    962:1003:void onMouseClick(long,int,int,int) -> onMouseClick
-    1005:1010:void setGrabbed(boolean) -> setGrabbed
-    1013:1013:boolean isGrabbed() -> isGrabbed
-    1017:1024:void input(float) -> input
-    1027:1027:nidefawl.qubes.gui.Gui getGui() -> getGui
-    1031:1047:java.lang.String getValue(java.lang.String[],int,java.lang.String) -> getValue
-    1050:1050:void parseCmdArgs(java.lang.String[]) -> parseCmdArgs
+    932:958:void showGUI(nidefawl.qubes.gui.Gui) -> showGUI
+    963:1004:void onMouseClick(long,int,int,int) -> onMouseClick
+    1006:1011:void setGrabbed(boolean) -> setGrabbed
+    1014:1014:boolean isGrabbed() -> isGrabbed
+    1018:1025:void input(float) -> input
+    1028:1028:nidefawl.qubes.gui.Gui getGui() -> getGui
+    1032:1048:java.lang.String getValue(java.lang.String[],int,java.lang.String) -> getValue
+    1051:1051:void parseCmdArgs(java.lang.String[]) -> parseCmdArgs
     40:40:int access$002(nidefawl.qubes.GameBase,int) -> access$002
     40:40:int access$102(nidefawl.qubes.GameBase,int) -> access$102
 nidefawl.qubes.GameBase$1 -> jI1LJi1L1LJiiJll:
     nidefawl.qubes.GameBase this$0 -> do
-    188:190:void invoke(long,int,int) -> invoke
+    189:191:void invoke(long,int,int) -> invoke
 nidefawl.qubes.GameBase$2 -> IjllL1JiJiiJJiJi:
     nidefawl.qubes.GameBase this$0 -> do
-    196:200:void invoke(long,int,int,int,int) -> invoke
+    197:201:void invoke(long,int,int,int,int) -> invoke
 nidefawl.qubes.GameBase$3 -> JiL1lljI1Lll1LL1:
     nidefawl.qubes.GameBase this$0 -> do
-    207:211:void invoke(long,int,int,int) -> invoke
+    208:212:void invoke(long,int,int,int) -> invoke
 nidefawl.qubes.GameBase$4 -> Ij1LIjiJllL11LJi:
     nidefawl.qubes.GameBase this$0 -> do
-    217:223:void invoke(long,double,double) -> invoke
+    218:224:void invoke(long,double,double) -> invoke
 nidefawl.qubes.GameBase$5 -> iJlljI1LiJiJiJJi:
     nidefawl.qubes.GameBase this$0 -> do
-    231:237:void invoke(long,int) -> invoke
+    232:238:void invoke(long,int) -> invoke
 nidefawl.qubes.GameBase$6 -> iJll1LjIL1IjJiIj:
     nidefawl.qubes.GameBase this$0 -> do
-    243:247:void invoke(long,double,double) -> invoke
+    244:248:void invoke(long,double,double) -> invoke
 nidefawl.qubes.GameBase$7 -> IjJillL1ll1LJiL1:
     nidefawl.qubes.GameBase this$0 -> do
-    253:257:void invoke(long,int) -> invoke
+    254:258:void invoke(long,int) -> invoke
 nidefawl.qubes.GameRegistry -> L1JiJiiJ1L1LJiJi:
     java.util.Map terrainGenerators -> do
     java.util.Map terrainPopulators -> if
@@ -3183,92 +3185,93 @@ nidefawl.qubes.input.KeybindManager -> lliJIjll1LIjJiJi:
     java.util.Map keyToKeyBinding -> do
     java.util.ArrayList keybindings -> do
     java.util.concurrent.ConcurrentMap keybindingsStr -> do
-    105:107:void addKeyBinding(nidefawl.qubes.input.Keybinding) -> do
-    109:109:nidefawl.qubes.input.Keybinding getKeyBindingByName(java.lang.String) -> do
-    112:117:void updateKeybindMap() -> do
-    120:120:nidefawl.qubes.input.Keybinding getKeyBinding(int) -> do
-    124:157:void update(double,double) -> do
-    160:160:boolean isKeyDown(int) -> do
-    164:173:void setGrabbed(boolean) -> do
-    176:176:boolean grabbed() -> do
-    180:388:void initKeybinds() -> if
-    392:400:void load() -> for
-    402:410:void saveBindings() -> int
-    412:412:java.util.Collection getBindings() -> do
+    float SPEED_MODIFIER -> for
+    106:108:void addKeyBinding(nidefawl.qubes.input.Keybinding) -> do
+    110:110:nidefawl.qubes.input.Keybinding getKeyBindingByName(java.lang.String) -> do
+    113:118:void updateKeybindMap() -> do
+    121:121:nidefawl.qubes.input.Keybinding getKeyBinding(int) -> do
+    125:158:void update(double,double) -> do
+    161:161:boolean isKeyDown(int) -> do
+    165:174:void setGrabbed(boolean) -> do
+    177:177:boolean grabbed() -> do
+    181:389:void initKeybinds() -> if
+    393:401:void load() -> for
+    403:411:void saveBindings() -> int
+    413:413:java.util.Collection getBindings() -> do
 nidefawl.qubes.input.KeybindManager$1 -> iJllL1IjIjllllll:
     48:48:void setDefaults() -> do
     52:55:void save() -> for
     59:68:void load() -> if
 nidefawl.qubes.input.KeybindManager$10 -> L1L1jIjIllL1Ijll:
-    246:247:void onDown() -> do
+    247:248:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$11 -> JiiJjIlliJL1Ij1L:
-    251:252:void onDown() -> do
+    252:253:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$12 -> llL1JijIJiL1iJjI:
-    256:257:void onDown() -> do
+    257:258:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$13 -> lljIIjjIL1iJjIL1:
     nidefawl.qubes.Game val$game -> do
-    265:269:void onDown() -> do
+    266:270:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$14 -> jIJiIj1L1LiJllll:
     nidefawl.qubes.Game val$game -> do
-    273:280:void onDown() -> do
+    274:281:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$15 -> iJjIjI1LL1iJIjJi:
     nidefawl.qubes.Game val$game -> do
-    284:285:void onDown() -> do
+    285:286:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$16 -> IjllIjllllIjIjIj:
-    289:290:void onDown() -> do
+    290:291:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$17 -> iJjIJiL1iJllIjIj:
-    294:295:void onDown() -> do
+    295:296:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$18 -> Ji1LllIjjIiJjI:
-    302:306:void onDown() -> do
+    303:307:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$19 -> llL1iJiJlljIL1:
-    310:311:void onDown() -> do
+    311:312:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$2 -> L1JiJi1LIjllL1Ji:
     nidefawl.qubes.Game val$game -> do
-    184:186:void onDown() -> do
+    185:187:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$20 -> llIjllIj1LiJiJll:
     nidefawl.qubes.Game val$game -> do
-    315:316:void onDown() -> do
+    316:317:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$21 -> L1jIllJiiJiJllll:
-    320:321:void onDown() -> do
+    321:322:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$22 -> iJllL1JiiJIjJill:
-    331:334:void onDown() -> do
+    332:335:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$23 -> llIjL1iJjIjIJill:
-    339:340:void onDown() -> do
+    340:341:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$24 -> JiL1L11LL11LIj1L:
     nidefawl.qubes.Game val$game -> do
-    344:346:void onDown() -> do
+    345:347:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$25 -> JiIjjI1LJijIjIjI:
-    352:353:void onDown() -> do
+    353:354:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$26 -> IjllJiL1JijI1LL1:
-    359:362:void onDown() -> do
+    360:363:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$27 -> jIL1Ijll1LiJJiIj:
-    366:367:void onDown() -> do
+    367:368:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$28 -> iJIjjIjI1LL1IjL1:
     nidefawl.qubes.Game val$game -> do
-    371:376:void onDown() -> do
+    372:377:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$29 -> llJiiJiJ1LllJi1L:
-    380:381:void onRepeat() -> if
+    381:382:void onRepeat() -> if
 nidefawl.qubes.input.KeybindManager$3 -> jIllL1llIjJiiJL1:
     nidefawl.qubes.Game val$game -> do
-    198:206:void onDown() -> do
+    199:207:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$30 -> llIjL11LiJIj1LjI:
-    385:386:void onRepeat() -> if
+    386:387:void onRepeat() -> if
 nidefawl.qubes.input.KeybindManager$4 -> IjJiJijIL1IjiJL1:
     nidefawl.qubes.Game val$game -> do
-    210:211:void onDown() -> do
+    211:212:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$5 -> iJjI1LjIL11LjIIj:
     nidefawl.qubes.Game val$game -> do
-    215:216:void onDown() -> do
+    216:217:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$6 -> IjIjllll1LL11L1L:
     nidefawl.qubes.Game val$game -> do
-    220:225:void onDown() -> do
+    221:226:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$7 -> Ji1L1LJi1LL1Jill:
     nidefawl.qubes.Game val$game -> do
-    229:230:void onDown() -> do
+    230:231:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$8 -> IjllJilliJL1jIIj:
-    234:235:void onDown() -> do
+    235:236:void onDown() -> do
 nidefawl.qubes.input.KeybindManager$9 -> llL1iJL1L11LL1Ji:
-    240:241:void onDown() -> do
+    241:242:void onDown() -> do
 nidefawl.qubes.input.Keybinding -> iJ1LllL1L1lljIL1:
     boolean enabled -> do
     int key -> do
@@ -5653,40 +5656,40 @@ nidefawl.qubes.render.FinalRenderer -> JiiJJilllljIjIll:
     198:198:int getSsr() -> do
     206:219:void raytraceSSR(nidefawl.qubes.world.World,float) -> for
     230:257:void combineSSR(nidefawl.qubes.world.World,float) -> int
-    261:300:void renderFinal(nidefawl.qubes.world.World,float) -> new
-    312:316:void copyPreWaterDepth() -> for
-    318:324:void copySceneDepthBuffer() -> int
-    326:367:void renderBloom(nidefawl.qubes.world.World,float) -> try
-    372:533:void initShaders() -> new
-    538:565:void initAO() -> else
-    575:586:void updateHBAOSettings() -> goto
-    588:596:void initAA() -> long
-    599:686:void resize(int,int) -> do
-    689:693:void aoReinit() -> this
-    697:699:void release() -> try
-    704:707:void init() -> void
-    712:714:void setSSR(int) -> do
+    261:308:void renderFinal(nidefawl.qubes.world.World,float,nidefawl.qubes.gl.FrameBuffer) -> do
+    320:324:void copyPreWaterDepth() -> for
+    326:332:void copySceneDepthBuffer() -> int
+    334:375:void renderBloom(nidefawl.qubes.world.World,float) -> new
+    380:541:void initShaders() -> new
+    546:573:void initAO() -> else
+    583:594:void updateHBAOSettings() -> goto
+    596:604:void initAA() -> long
+    607:694:void resize(int,int) -> do
+    697:701:void aoReinit() -> this
+    705:707:void release() -> try
+    712:715:void init() -> void
+    720:722:void setSSR(int) -> do
 nidefawl.qubes.render.FinalRenderer$1 -> L1iJL1iJ1LIjlljI:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    378:382:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    386:390:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.FinalRenderer$2 -> L1Ij1LL1IjjIIjJi:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    389:392:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    397:400:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.FinalRenderer$3 -> lllliJJilliJjIL1:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    398:401:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    406:409:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.FinalRenderer$4 -> llJiJiL1L1jIiJ1L:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    407:410:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    415:418:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.FinalRenderer$5 -> llL11LIjlllliJJi:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    416:419:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    424:427:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.FinalRenderer$6 -> L1Ij1LL1L1L1jIjI:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    426:428:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    434:436:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.FinalRenderer$7 -> jIjI1L1LL1Ji1LIj:
     nidefawl.qubes.render.FinalRenderer this$0 -> do
-    439:441:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    447:449:java.lang.String getDefinition(java.lang.String) -> getDefinition
 nidefawl.qubes.render.LightCompute -> L1ll1LiJIj1LiJjI:
     nidefawl.qubes.shader.Shader shaderComputerLight -> do
     int[] lightTiles -> do
@@ -7184,7 +7187,79 @@ nidefawl.qubes.vec.Vector4f -> JiiJiJiJ1L1LJi:
     67:67:float lengthSquared() -> do
     239:239:java.lang.String toString() -> toString
     308:308:float length() -> if
-nidefawl.qubes.world.BlockPlacer -> Ij1LJiIjL1IjJi1L:
+nidefawl.qubes.vr.VR -> Ij1LJiIjL1IjJi1L:
+    jopenvr.VR_IVRSystem_FnTable vrsystem -> do
+    nidefawl.qubes.vr.VR$VRSettings settings -> do
+    nidefawl.qubes.vr.VR$VRViewProjection cam -> do
+    java.nio.FloatBuffer tlastVsync -> do
+    java.nio.LongBuffer _tframeCount -> do
+    java.nio.IntBuffer hmdDisplayFrequency -> do
+    jopenvr.TrackedDevicePose_t$ByReference hmdTrackedDevicePoseReference -> do
+    jopenvr.TrackedDevicePose_t[] hmdTrackedDevicePoses -> do
+    double timePerFrame -> do
+    boolean initSuccess -> do
+    boolean initDone -> if
+    java.lang.String initStatus -> do
+    jopenvr.VR_IVRCompositor_FnTable vrCompositor -> do
+    java.nio.IntBuffer hmdErrorStore -> if
+    jopenvr.VR_IVROverlay_FnTable vrOverlay -> do
+    jopenvr.VR_IVRRenderModels_FnTable vrRenderModels -> do
+    jopenvr.VR_IVRSettings_FnTable vrSettings -> do
+    jopenvr.Texture_t texType0 -> do
+    jopenvr.Texture_t texType1 -> if
+    nidefawl.qubes.vec.Matrix4f[] poseMatrices -> do
+    nidefawl.qubes.vec.Vec3D[] deviceVelocity -> do
+    nidefawl.qubes.vec.Matrix4f hmdPose -> do
+    boolean headIsTracking -> for
+    int RIGHT_CONTROLLER -> for
+    int LEFT_CONTROLLER -> int
+    boolean[] controllerTracking -> do
+    nidefawl.qubes.vec.Matrix4f[] controllerPose -> if
+    nidefawl.qubes.vec.Matrix4f[] controllerRotation -> for
+    int[] controllerDeviceIndex -> do
+    jopenvr.VRControllerState_t$ByReference[] inputStateRefernceArray -> do
+    jopenvr.VRControllerState_t[] lastControllerState -> do
+    jopenvr.VRControllerState_t[] controllerStateReference -> if
+    nidefawl.qubes.vec.Vec3D[][] controllerVelocitySamples -> do
+    int[] controllerVelocitySampleCount -> if
+    nidefawl.qubes.vec.Matrix4f[] controllerTipTransform -> int
+    nidefawl.qubes.vec.Matrix4f[] handRotation -> new
+    int renderWidth -> do
+    int renderHeight -> if
+    nidefawl.qubes.gl.FrameBuffer fbLeft -> do
+    nidefawl.qubes.gl.FrameBuffer fbRight -> if
+    nidefawl.qubes.vec.Matrix4f tmpMat -> if
+    143:145:com.sun.jna.Pointer ptrFomrString(java.lang.String) -> do
+    158:186:boolean InitVR() -> do
+    193:208:void initOpenVRRenderModels() -> do
+    212:220:void initOpenVROverlay() -> if
+    223:238:void initOpenVROSettings() -> for
+    240:282:void initializeJOpenVR() -> new
+    286:350:void initOpenVRCompositor(boolean) -> do
+    355:379:java.lang.String getCompostiorError(int) -> do
+    386:436:void updatePose(float) -> do
+    469:509:void Submit() -> int
+    512:527:void initApp(nidefawl.qubes.GameBase) -> do
+    531:547:void initVRFB(int,int) -> do
+    550:571:void setupCamera(int,float) -> do
+    574:589:void bindAndClearFramebuffer(int) -> do
+    597:605:nidefawl.qubes.gl.FrameBuffer getFB(int) -> do
+    610:621:void setViewPort(int) -> if
+    626:632:nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f) -> do
+    637:641:nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f) -> do
+    645:661:void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float) -> do
+nidefawl.qubes.vr.VR$VRSettings -> jIL1L1IjIjIjlliJ:
+nidefawl.qubes.vr.VR$VRViewProjection -> jIiJjIiJL1L1IjiJ:
+    nidefawl.qubes.vec.Matrix4f projLeft -> do
+    nidefawl.qubes.vec.Matrix4f projRight -> if
+    nidefawl.qubes.vec.Matrix4f poseEyeLeft -> for
+    nidefawl.qubes.vec.Matrix4f poseEyeRight -> int
+    nidefawl.qubes.vec.Matrix4f viewLeft -> new
+    nidefawl.qubes.vec.Matrix4f viewRight -> try
+    40:46:void setEyeToHeadTransform() -> do
+    49:53:void setEyeProj(float,float) -> do
+    55:57:void update(float) -> do
+nidefawl.qubes.world.BlockPlacer -> L1JillIjJiL11LjI:
     nidefawl.qubes.entity.PlayerServer player -> do
     nidefawl.qubes.item.BlockStack stack -> do
     long startTime -> do
@@ -7202,7 +7277,7 @@ nidefawl.qubes.world.BlockPlacer -> Ij1LJiIjL1IjJi1L:
     291:300:boolean canPlaceDefault(nidefawl.qubes.block.Block,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.vec.BlockPos,int,int,int) -> do
     310:315:void placeDefault(nidefawl.qubes.vec.BlockPos,int,int,int) -> do
     320:325:nidefawl.qubes.chunk.blockdata.BlockData getBlockData() -> do
-nidefawl.qubes.world.IBlockWorld -> jIL1L1IjIjIjlliJ:
+nidefawl.qubes.world.IBlockWorld -> JiiJjIL1JiIj1LJi:
     int getType(int,int,int) -> if
     int getData(int,int,int) -> do
     boolean isNormalBlock(int,int,int,int) -> do
@@ -7211,7 +7286,7 @@ nidefawl.qubes.world.IBlockWorld -> jIL1L1IjIjIjlliJ:
     nidefawl.qubes.chunk.blockdata.BlockData getBlockData(int,int,int) -> do
     int getBiomeFaceColor(int,int,int,int,int,nidefawl.qubes.biome.BiomeColor) -> do
     int getWater(int,int,int) -> for
-nidefawl.qubes.world.IWorldSettings -> jIiJjIiJL1L1IjiJ:
+nidefawl.qubes.world.IWorldSettings -> jI1LiJL11LiJL1Ji:
     long getSeed() -> do
     java.util.UUID getUUID() -> do
     long getTime() -> if
@@ -7222,7 +7297,7 @@ nidefawl.qubes.world.IWorldSettings -> jIiJjIiJL1L1IjiJ:
     void setTime(long) -> do
     void setDayLen(long) -> if
     void setFixedTime(boolean) -> do
-nidefawl.qubes.world.SunLightModel -> L1JillIjJiL11LjI:
+nidefawl.qubes.world.SunLightModel -> jIiJIjllJiiJ1Lll:
     float dayLightIntensity -> do
     float nightNoon -> if
     float dayNoon -> for
@@ -7247,7 +7322,7 @@ nidefawl.qubes.world.SunLightModel -> L1JillIjJiL11LjI:
     122:122:float getDayLightIntensity() -> if
     126:126:float getDayNoonFloat() -> for
     130:130:float getNightNoonFloat() -> int
-nidefawl.qubes.world.World -> JiiJjIL1JiIj1LJi:
+nidefawl.qubes.world.World -> L1L1jI1LJilllljI:
     java.util.ArrayList lights -> do
     int worldHeight -> do
     int worldHeightMinusOne -> if
@@ -7305,7 +7380,7 @@ nidefawl.qubes.world.World -> JiiJjIL1JiIj1LJi:
     463:463:int getBiomeFaceColor(int,int,int,int,int,nidefawl.qubes.biome.BiomeColor) -> do
     467:467:nidefawl.qubes.world.biomes.HexBiome getHex(int,int) -> do
     471:471:void spawnParticles(int,int,int,int,int) -> if
-nidefawl.qubes.world.WorldClient -> jI1LiJL11LiJL1Ji:
+nidefawl.qubes.world.WorldClient -> L1IjlljIIjlljI:
     float dayLightIntensity -> do
     float nightNoon -> if
     float dayNoon -> for
@@ -7335,9 +7410,9 @@ nidefawl.qubes.world.WorldClient -> jI1LiJL11LiJL1Ji:
     172:178:boolean removeEntity(nidefawl.qubes.entity.Entity) -> if
     183:183:nidefawl.qubes.entity.Entity getEntity(int) -> do
     187:187:java.util.List getEntityList() -> do
-nidefawl.qubes.world.WorldClient$1 -> jIiJIjllJiiJ1Lll:
+nidefawl.qubes.world.WorldClient$1 -> llllL11L1L1LiJjI:
     int[] $SwitchMap$nidefawl$qubes$world$biomes$BiomeManagerType -> do
-nidefawl.qubes.world.WorldServer -> L1L1jI1LJilllljI:
+nidefawl.qubes.world.WorldServer -> JiL1iJJiJiL1L11L:
     nidefawl.qubes.server.GameServer server -> do
     nidefawl.qubes.server.PlayerChunkTracker chunkTracker -> do
     java.util.List players -> do
@@ -7383,7 +7458,7 @@ nidefawl.qubes.world.WorldServer -> L1L1jI1LJilllljI:
     387:408:void genStructures() -> byte
     410:410:nidefawl.qubes.world.biomes.BiomeManagerType getBiomeType() -> do
     413:416:void spawnParticles(int,int,int,int,int) -> if
-nidefawl.qubes.world.WorldSettings -> L1IjlljIIjlljI:
+nidefawl.qubes.world.WorldSettings -> jIJi1LiJ1LJiL1L1:
     long time -> do
     long dayLen -> if
     boolean isFixedTime -> do
@@ -7411,7 +7486,7 @@ nidefawl.qubes.world.WorldSettings -> L1IjlljIIjlljI:
     140:141:void setTime(long) -> do
     145:146:void setFixedTime(boolean) -> do
     150:151:void setDayLen(long) -> if
-nidefawl.qubes.world.WorldSettingsClient -> llllL11L1L1LiJjI:
+nidefawl.qubes.world.WorldSettingsClient -> L11LjIIjJiiJiJ1L:
     java.util.UUID uuid -> do
     long seed -> do
     long time -> if
@@ -7431,18 +7506,18 @@ nidefawl.qubes.world.WorldSettingsClient -> llllL11L1L1LiJjI:
     76:77:void setTime(long) -> do
     81:82:void setFixedTime(boolean) -> do
     86:87:void setDayLen(long) -> if
-nidefawl.qubes.world.biomes.BiomeManagerType -> JiL1iJJiJiL1L11L:
+nidefawl.qubes.world.biomes.BiomeManagerType -> IjiJjIjIIj1LL1L1:
     nidefawl.qubes.world.biomes.BiomeManagerType SINGLE -> do
     nidefawl.qubes.world.biomes.BiomeManagerType HEX -> if
     nidefawl.qubes.world.biomes.BiomeManagerType[] $VALUES -> do
     3:3:nidefawl.qubes.world.biomes.BiomeManagerType[] values() -> values
     3:3:nidefawl.qubes.world.biomes.BiomeManagerType valueOf(java.lang.String) -> valueOf
     7:7:nidefawl.qubes.world.biomes.BiomeManagerType fromId(int) -> do
-nidefawl.qubes.world.biomes.BiomeSettingsHex -> jIJi1LiJ1LJiL1L1:
+nidefawl.qubes.world.biomes.BiomeSettingsHex -> Ij1L1LJiiJL1IjjI:
     6:6:nidefawl.qubes.world.biomes.BiomeManagerType getType() -> do
-nidefawl.qubes.world.biomes.BiomeSettingsStatic -> L11LjIIjJiiJiJ1L:
+nidefawl.qubes.world.biomes.BiomeSettingsStatic -> jIll1L1LiJJijIL1:
     6:6:nidefawl.qubes.world.biomes.BiomeManagerType getType() -> do
-nidefawl.qubes.world.biomes.EmptyBiomeManager -> IjiJjIjIIj1LL1L1:
+nidefawl.qubes.world.biomes.EmptyBiomeManager -> L1L1JijIJiiJL1ll:
     nidefawl.qubes.world.biomes.BiomeSettingsStatic settings -> do
     28:28:nidefawl.qubes.biome.Biome getBiome(int,int) -> do
     33:33:int getBiomeFaceColor(nidefawl.qubes.world.World,int,int,int,int,int,nidefawl.qubes.biome.BiomeColor) -> do
@@ -7453,7 +7528,7 @@ nidefawl.qubes.world.biomes.EmptyBiomeManager -> IjiJjIjIIj1LL1L1:
     53:53:nidefawl.qubes.world.biomes.HexBiome blockToHex(int,int) -> do
     58:58:void deleteAll() -> for
     62:62:nidefawl.qubes.world.biomes.IBiomeSettings getBiomeSettings() -> do
-nidefawl.qubes.world.biomes.HexBiome -> Ij1L1LJiiJL1IjjI:
+nidefawl.qubes.world.biomes.HexBiome -> lljIjIlliJllL1iJ:
     boolean needsSave -> do
     int version -> for
     nidefawl.qubes.biome.Biome biome -> do
@@ -7468,24 +7543,24 @@ nidefawl.qubes.world.biomes.HexBiome -> Ij1L1LJiiJL1IjjI:
     142:148:nidefawl.qubes.world.biomes.HexBiome[] getClosest3(double,double) -> do
     153:153:nidefawl.qubes.world.structure.StructureMap getTrees() -> do
     156:156:nidefawl.qubes.world.structure.StructureMap getMines() -> if
-nidefawl.qubes.world.biomes.HexBiome$1 -> jIll1L1LiJJijIL1:
+nidefawl.qubes.world.biomes.HexBiome$1 -> L1llIjjIIjjI1LIj:
     nidefawl.qubes.world.biomes.HexBiome this$0 -> do
     32:32:nidefawl.qubes.world.structure.tree.Tree newInstance() -> do
     29:29:java.lang.Object newInstance() -> do
-nidefawl.qubes.world.biomes.HexBiome$2 -> L1L1JijIJiiJL1ll:
+nidefawl.qubes.world.biomes.HexBiome$2 -> JiIjiJIjIjIjiJJi:
     nidefawl.qubes.world.biomes.HexBiome this$0 -> do
     38:38:nidefawl.qubes.world.structure.mine.Mine newInstance() -> do
     35:35:java.lang.Object newInstance() -> do
-nidefawl.qubes.world.biomes.HexBiomeEnd -> lljIjIlliJllL1iJ:
+nidefawl.qubes.world.biomes.HexBiomeEnd -> iJ1LJiIjIjjIL1L1:
     17:17:void save(java.io.File) -> if
     20:20:void registerTree(nidefawl.qubes.world.structure.tree.Tree) -> do
     23:23:void load(java.io.File) -> do
-nidefawl.qubes.world.biomes.HexBiomes -> L1llIjjIIjjI1LIj:
+nidefawl.qubes.world.biomes.HexBiomes -> JiIjIjL1JiiJiJL1:
     nidefawl.qubes.world.World world -> do
     27:28:nidefawl.qubes.biome.Biome getBiome(int,int) -> do
     35:91:int getBiomeFaceColor(nidefawl.qubes.world.World,int,int,int,int,int,nidefawl.qubes.biome.BiomeColor) -> do
     18:18:nidefawl.qubes.world.biomes.HexBiome blockToHex(int,int) -> do
-nidefawl.qubes.world.biomes.HexBiomesClient -> JiIjiJIjIjIjiJJi:
+nidefawl.qubes.world.biomes.HexBiomesClient -> L1IjjIjIlliJIjjI:
     22:22:nidefawl.qubes.world.biomes.HexBiome loadCell(int,int) -> if
     26:26:nidefawl.qubes.world.biomes.HexBiome oobCell(int,int) -> for
     31:31:nidefawl.qubes.network.packet.PacketSWorldBiomes getPacket() -> do
@@ -7496,7 +7571,7 @@ nidefawl.qubes.world.biomes.HexBiomesClient -> JiIjiJIjIjIjiJJi:
     56:56:nidefawl.qubes.world.biomes.IBiomeSettings getBiomeSettings() -> do
     15:15:java.lang.Object oobCell(int,int) -> for
     15:15:java.lang.Object loadCell(int,int) -> if
-nidefawl.qubes.world.biomes.HexBiomesServer -> iJ1LJiIjIjjIL1L1:
+nidefawl.qubes.world.biomes.HexBiomesServer -> L1jI1LJijIjIjIJi:
     java.util.regex.Pattern FILE_PATTERN -> do
     boolean SAVE_LOAD -> do
     java.io.File dir -> do
@@ -7518,10 +7593,10 @@ nidefawl.qubes.world.biomes.HexBiomesServer -> iJ1LJiIjIjjIL1L1:
     219:219:nidefawl.qubes.world.biomes.IBiomeSettings getBiomeSettings() -> do
     27:27:java.lang.Object oobCell(int,int) -> for
     27:27:java.lang.Object loadCell(int,int) -> if
-nidefawl.qubes.world.biomes.HexBiomesServer$1 -> JiIjIjL1JiiJiJL1:
+nidefawl.qubes.world.biomes.HexBiomesServer$1 -> iJL1jIL1Ij1LJi:
     nidefawl.qubes.world.biomes.HexBiomesServer this$0 -> do
     60:60:boolean accept(java.io.File) -> accept
-nidefawl.qubes.world.biomes.IBiomeManager -> L1IjjIjIlliJIjjI:
+nidefawl.qubes.world.biomes.IBiomeManager -> iJjIjIJiJi1LiJ:
     nidefawl.qubes.biome.Biome getBiome(int,int) -> do
     nidefawl.qubes.world.biomes.IBiomeSettings getBiomeSettings() -> do
     int getBiomeFaceColor(nidefawl.qubes.world.World,int,int,int,int,int,nidefawl.qubes.biome.BiomeColor) -> do
@@ -7531,15 +7606,15 @@ nidefawl.qubes.world.biomes.IBiomeManager -> L1IjjIjIlliJIjjI:
     void saveChanges() -> if
     nidefawl.qubes.world.biomes.HexBiome blockToHex(int,int) -> do
     void deleteAll() -> for
-nidefawl.qubes.world.biomes.IBiomeSettings -> L1jI1LJijIjIjIJi:
+nidefawl.qubes.world.biomes.IBiomeSettings -> llll1L1LiJL11LIj:
     8:15:nidefawl.qubes.world.biomes.IBiomeSettings fromId(int) -> do
     18:25:int getId(nidefawl.qubes.world.biomes.IBiomeSettings) -> do
     nidefawl.qubes.world.biomes.BiomeManagerType getType() -> do
     29:29:void read(java.io.DataInput) -> do
     31:31:void write(java.io.DataOutput) -> do
-nidefawl.qubes.world.biomes.IBiomeSettings$1 -> iJL1jIL1Ij1LJi:
+nidefawl.qubes.world.biomes.IBiomeSettings$1 -> IjlliJjIL1JijIJi:
     int[] $SwitchMap$nidefawl$qubes$world$biomes$BiomeManagerType -> do
-nidefawl.qubes.world.structure.Structure -> iJjIjIJiJi1LiJ:
+nidefawl.qubes.world.structure.Structure -> IjjIJiIjJiiJiJ1L:
     java.util.Set keys -> do
     nidefawl.qubes.vec.AABBInt bb -> do
     int[] blocks -> do
@@ -7555,7 +7630,7 @@ nidefawl.qubes.world.structure.Structure -> iJjIjIJiJi1LiJ:
     117:117:java.util.Iterator iterator() -> do
     120:129:void setBlocks(long[]) -> do
     132:134:boolean has(int,int,int) -> do
-nidefawl.qubes.world.structure.StructureBlockIterator -> llll1L1LiJL11LIj:
+nidefawl.qubes.world.structure.StructureBlockIterator -> JiIjIj1Lll1LjI1L:
     nidefawl.qubes.world.structure.Structure tree -> do
     int pos -> do
     int[] blocks -> do
@@ -7565,9 +7640,9 @@ nidefawl.qubes.world.structure.StructureBlockIterator -> llll1L1LiJL11LIj:
     49:53:nidefawl.qubes.vec.BlockPos next() -> do
     58:58:void remove() -> remove
     11:11:java.lang.Object next() -> next
-nidefawl.qubes.world.structure.StructureFactory -> IjlliJjIL1JijIJi:
+nidefawl.qubes.world.structure.StructureFactory -> Ij1LiJJiL1IjiJL1:
     java.lang.Object newInstance() -> do
-nidefawl.qubes.world.structure.StructureMap -> IjjIJiIjJiiJiJ1L:
+nidefawl.qubes.world.structure.StructureMap -> JiIjIjIjiJJiiJ1L:
     nidefawl.qubes.world.structure.StructureFactory fac -> do
     nidefawl.qubes.util.RegionMap structures -> do
     28:36:void load(nidefawl.qubes.nbt.Tag$Compound) -> do
@@ -7575,40 +7650,40 @@ nidefawl.qubes.world.structure.StructureMap -> IjjIJiIjJiiJiJ1L:
     60:61:boolean add(nidefawl.qubes.world.structure.Structure) -> do
     89:89:java.util.Collection getRegions(int,int,int) -> do
     101:102:void clear() -> do
-nidefawl.qubes.world.structure.mine.Mine -> JiIjIj1Lll1LjI1L:
+nidefawl.qubes.world.structure.mine.Mine -> L1IjiJL1llJilliJ:
     int dir -> do
     nidefawl.qubes.vec.BlockPos pos -> do
     23:26:nidefawl.qubes.nbt.Tag$Compound save() -> do
     31:34:void load(nidefawl.qubes.nbt.Tag$Compound) -> do
     37:51:void regen(nidefawl.qubes.world.WorldServer) -> do
-nidefawl.qubes.world.structure.tree.Tree -> Ij1LiJJiL1IjiJL1:
+nidefawl.qubes.world.structure.tree.Tree -> iJjIllL1L11LllL1:
     nidefawl.qubes.vec.AABBInt trunkBB -> if
     26:29:nidefawl.qubes.nbt.Tag$Compound save() -> do
     33:36:void load(nidefawl.qubes.nbt.Tag$Compound) -> do
     39:39:java.util.Iterator trunkIterator() -> if
     43:110:void onMine(nidefawl.qubes.world.BlockPlacer,nidefawl.qubes.block.Block,nidefawl.qubes.world.World,nidefawl.qubes.vec.BlockPos,nidefawl.qubes.entity.PlayerServer,nidefawl.qubes.item.ItemStack) -> do
-nidefawl.qubes.worldgen.TerrainGen -> JiIjIjIjiJJiiJ1L:
+nidefawl.qubes.worldgen.TerrainGen -> IjjIJiiJjIIjjIIj:
     17:28:void init() -> do
-nidefawl.qubes.worldgen.WorldGenInit -> L1IjiJL1llJilliJ:
+nidefawl.qubes.worldgen.WorldGenInit -> jIiJ1LJi1LIjll1L:
     nidefawl.qubes.worldgen.terrain.ITerrainGen generator -> do
     nidefawl.qubes.world.biomes.IBiomeManager biomeManager -> do
     nidefawl.qubes.worldgen.populator.IChunkPopulator populator -> do
     14:14:nidefawl.qubes.worldgen.terrain.ITerrainGen getGenerator() -> do
     18:18:nidefawl.qubes.world.biomes.IBiomeManager getBiomeManager() -> do
     22:22:nidefawl.qubes.worldgen.populator.IChunkPopulator getPopulator() -> do
-nidefawl.qubes.worldgen.populator.ChunkPopulator -> iJjIllL1L11LllL1:
+nidefawl.qubes.worldgen.populator.ChunkPopulator -> jIIjL1iJjIjIJi1L:
     nidefawl.qubes.world.WorldServer world -> do
     nidefawl.qubes.worldgen.populator.TreeGen1 tree -> do
     41:257:void populate(nidefawl.qubes.chunk.Chunk) -> do
     263:263:boolean isSoil(int) -> do
-nidefawl.qubes.worldgen.populator.EmptyChunkPopulator -> IjjIJiiJjIIjjIIj:
+nidefawl.qubes.worldgen.populator.EmptyChunkPopulator -> iJlliJIjiJll1L:
     24:24:void populate(nidefawl.qubes.chunk.Chunk) -> do
-nidefawl.qubes.worldgen.populator.IChunkPopulator -> jIiJ1LJi1LIjll1L:
+nidefawl.qubes.worldgen.populator.IChunkPopulator -> L1llll1LllJiiJ:
     void populate(nidefawl.qubes.chunk.Chunk) -> do
-nidefawl.qubes.worldgen.populator.TreeGen1 -> jIIjL1iJjIjIJi1L:
+nidefawl.qubes.worldgen.populator.TreeGen1 -> jIIjllllJi1LllL1:
     int log -> do
     int leaves -> if
-nidefawl.qubes.worldgen.populator.TreeGeneratorLSystem -> iJlliJIjiJll1L:
+nidefawl.qubes.worldgen.populator.TreeGeneratorLSystem -> jIllllJijIIjiJiJ:
     float MAX_ANGLE_OFFSET -> do
     int maxDepth -> do
     float angle -> if
@@ -7632,14 +7707,14 @@ nidefawl.qubes.worldgen.populator.TreeGeneratorLSystem -> iJlliJIjiJll1L:
     370:371:void safelySetBlock(nidefawl.qubes.world.IBlockWorld,int,int,int,int) -> do
     373:382:void safelySetBlock(nidefawl.qubes.world.IBlockWorld,int,int,int,int,int,int) -> do
     385:440:nidefawl.qubes.world.structure.tree.Tree getTree() -> do
-nidefawl.qubes.worldgen.populator.TreeGenerators -> L1llll1LllJiiJ:
+nidefawl.qubes.worldgen.populator.TreeGenerators -> IjJijIL1iJL1Ij1L:
     20:84:nidefawl.qubes.worldgen.populator.TreeGeneratorLSystem get(int,java.util.Random) -> do
-nidefawl.qubes.worldgen.populator.TreeRule -> jIIjllllJi1LllL1:
+nidefawl.qubes.worldgen.populator.TreeRule -> JijIIjjI1LIjJiIj:
     java.lang.String string -> do
     float weight -> do
     27:27:java.lang.String getRule() -> do
     34:34:float getWeight() -> do
-nidefawl.qubes.worldgen.structure.GenTask -> jIllllJijIIjiJiJ:
+nidefawl.qubes.worldgen.structure.GenTask -> llIjjIIj1LiJiJll:
     nidefawl.qubes.worldgen.structure.StructureGen generator -> do
     int chunkX -> do
     int chunkZ -> if
@@ -7647,7 +7722,7 @@ nidefawl.qubes.worldgen.structure.GenTask -> jIllllJijIIjiJiJ:
     java.util.List neededChunks -> do
     boolean prepared -> do
     27:51:boolean run() -> do
-nidefawl.qubes.worldgen.structure.MineGen -> IjJijIL1iJL1Ij1L:
+nidefawl.qubes.worldgen.structure.MineGen -> iJ1L1LIj1LiJll:
     nidefawl.qubes.vec.BlockPos pos -> do
     int[] lvl -> do
     int height -> do
@@ -7664,30 +7739,30 @@ nidefawl.qubes.worldgen.structure.MineGen -> IjJijIL1iJL1Ij1L:
     115:185:boolean canBuild(nidefawl.qubes.world.World) -> do
     190:318:int gen(nidefawl.qubes.world.WorldServer) -> if
     322:357:nidefawl.qubes.world.structure.mine.Mine getMine() -> do
-nidefawl.qubes.worldgen.structure.StructureGen -> JijIIjjI1LIjJiIj:
+nidefawl.qubes.worldgen.structure.StructureGen -> iJiJll1LJiL1iJiJ:
     java.util.List prepare(nidefawl.qubes.world.WorldServer,int,int) -> do
     int generate(nidefawl.qubes.world.WorldServer) -> do
-nidefawl.qubes.worldgen.terrain.ITerrainGen -> llIjjIIj1LiJiJll:
+nidefawl.qubes.worldgen.terrain.ITerrainGen -> JiJiJi1LjIJijIiJ:
     nidefawl.qubes.chunk.Chunk generateChunk(int,int) -> do
     nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest -> iJ1L1LIj1LiJll:
+nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest -> llJijIIjjIiJL1Ji:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     25:33:nidefawl.qubes.chunk.Chunk generateChunk(int,int) -> do
     37:58:void generateTerrain(nidefawl.qubes.chunk.Chunk,short[]) -> do
     62:66:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.TerrainGenFlatSand128 -> iJiJll1LJiL1iJiJ:
+nidefawl.qubes.worldgen.terrain.TerrainGenFlatSand128 -> iJjI1Lll1LL1JiJi:
     nidefawl.qubes.world.WorldServer world -> do
     22:27:nidefawl.qubes.chunk.Chunk generateChunk(int,int) -> do
     31:38:void generateTerrain(nidefawl.qubes.chunk.Chunk,short[]) -> do
     42:46:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.TerrainGenMines -> JiJiJi1LjIJijIiJ:
+nidefawl.qubes.worldgen.terrain.TerrainGenMines -> iJ1LIj1LJiIjlljI:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     27:35:nidefawl.qubes.chunk.Chunk generateChunk(int,int) -> do
     39:40:void generateTerrain(nidefawl.qubes.chunk.Chunk,short[]) -> do
     45:49:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.TerrainGenQTest -> llJijIIjjIiJL1Ji:
+nidefawl.qubes.worldgen.terrain.TerrainGenQTest -> IjIjJiJi1LIjll1L:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7696,14 +7771,14 @@ nidefawl.qubes.worldgen.terrain.TerrainGenQTest -> llJijIIjjIiJL1Ji:
     265:297:double[] generateNoise(int,int) -> do
     362:362:double clamp10(double) -> do
     384:388:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.TerrainGeneratorIsland -> iJjI1Lll1LL1JiJi:
+nidefawl.qubes.worldgen.terrain.TerrainGeneratorIsland -> IjiJ1LlliJIjllll:
     nidefawl.qubes.world.WorldServer world -> do
     nidefawl.qubes.noise.TerrainNoiseMap2D test2d -> do
     28:39:nidefawl.qubes.chunk.Chunk generateChunk(int,int) -> do
     69:69:double clamp10(double) -> do
     89:184:void generateTerrain(nidefawl.qubes.chunk.Chunk,short[],byte[]) -> do
     188:192:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.TerrainGeneratorOther -> iJ1LIj1LJiIjlljI:
+nidefawl.qubes.worldgen.terrain.TerrainGeneratorOther -> iJIjL1jIJiJiIj:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     nidefawl.qubes.noise.TerrainNoise noise3 -> do
@@ -7720,12 +7795,12 @@ nidefawl.qubes.worldgen.terrain.TerrainGeneratorOther -> iJ1LIj1LJiIjlljI:
     265:278:double func2(double,double,double) -> do
     291:291:double clamp10(double) -> do
     313:317:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen -> IjIjJiJi1LIjll1L:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen -> llL1L1L1jIL1L11L:
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData -> IjiJ1LlliJIjllll:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData -> L11LJiiJL11LJi1L:
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGen this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4 -> iJIjL1jIJiJiIj:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4 -> jIiJIjIjllJill1L:
     nidefawl.qubes.noise.TerrainNoiseScale noise3 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise -> if
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7737,7 +7812,7 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4 -> iJIjL1jIJiJiIj:
     nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain main -> do
     89:96:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     100:181:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4$NoiseData -> llL1L1L1jIL1L11L:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4$NoiseData -> jIL1L1jIjIiJIjL1:
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn -> do
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2 -> if
     double[] dNoise2_ -> do
@@ -7745,7 +7820,7 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4$NoiseData -> llL1L1L1jIL1L11
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGen4 this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5 -> L11LJiiJL11LJi1L:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5 -> jIjIIjIj1LiJll:
     nidefawl.qubes.noise.TerrainNoiseScale noise3 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise -> if
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7756,14 +7831,14 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5 -> L11LJiiJL11LJi1L:
     nidefawl.qubes.noise.TerrainNoiseMap2D test2d -> do
     83:104:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     108:193:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5$NoiseData -> jIiJIjIjllJill1L:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5$NoiseData -> JiiJJiJilljI1LjI:
     double[] dNoise2_ -> do
     double[] dnoise5_ -> if
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
     nidefawl.qubes.noise.TerrainNoiseMap2DResult dnoise2da -> do
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGen5 this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6 -> jIL1L1jIjIiJIjL1:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6 -> JiL1JiL1L1JijIll:
     nidefawl.qubes.noise.TerrainNoiseScale noise3 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise -> if
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7774,14 +7849,14 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6 -> jIL1L1jIjIiJIjL1:
     nidefawl.qubes.noise.TerrainNoiseMap2D test2d -> do
     83:104:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     108:193:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6$NoiseData -> jIjIIjIj1LiJll:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6$NoiseData -> iJjIJiIj1LIjiJIj:
     double[] dNoise2_ -> do
     double[] dnoise5_ -> if
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
     nidefawl.qubes.noise.TerrainNoiseMap2DResult dnoise2da -> do
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGen6 this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7 -> JiiJJiJilljI1LjI:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7 -> IjIjL1JiIjiJjIJi:
     nidefawl.qubes.noise.TerrainNoiseScale noise3 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise -> if
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7792,14 +7867,14 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7 -> JiiJJiJilljI1LjI:
     nidefawl.qubes.noise.TerrainNoiseMap2D test2d -> do
     81:108:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     112:200:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7$NoiseData -> JiL1JiL1L1JijIll:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7$NoiseData -> L1L1lljIiJ1LL1Ij:
     double[] dNoise2_ -> do
     double[] dnoise5_ -> if
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
     nidefawl.qubes.noise.TerrainNoiseMap2DResult dnoise2da -> do
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGen7 this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenDesert -> iJjIJiIj1LIjiJIj:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenDesert -> jIJiL1llIjjIll1L:
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise2 -> do
     nidefawl.qubes.noise.TerrainNoise2D noise2D -> if
@@ -7807,13 +7882,13 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGenDesert -> iJjIJiIj1LIjiJIj:
     nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain main -> do
     61:73:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     77:122:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenDesert$NoiseData -> IjIjL1JiIjiJjIJi:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenDesert$NoiseData -> IjL1jIjIL11LIj1L:
     double[] dNoise -> do
     double[] dNoise2 -> if
     double[] dNoise2_ -> for
     double[] dnoise5_ -> int
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGenDesert this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish -> L1L1lljIiJ1LL1Ij:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish -> ll1LllJi1LJijIL1:
     nidefawl.qubes.noise.TerrainNoiseScale noise3 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise -> if
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7825,7 +7900,7 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish -> L1L1lljIiJ1LL1Ij:
     nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight main -> do
     96:120:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     124:235:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish$NoiseData -> jIJiL1llIjjIll1L:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish$NoiseData -> iJ1LiJ1LJijIiJ:
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn -> do
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2 -> if
     double[] dNoise2_ -> do
@@ -7833,7 +7908,7 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish$NoiseData -> jIJiL1ll
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow -> IjL1jIjIL11LIj1L:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow -> IjiJllllIjjIL1ll:
     nidefawl.qubes.noise.TerrainNoiseScale noise3 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise -> if
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
@@ -7845,7 +7920,7 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow -> IjL1jIjIL11LIj1L:
     nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain main -> do
     96:120:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     124:235:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow$NoiseData -> ll1LllJi1LJijIL1:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow$NoiseData -> iJJi1LiJIjIjiJll:
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn -> do
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2 -> if
     double[] dNoise2_ -> do
@@ -7853,7 +7928,7 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow$NoiseData -> ll1LllJi1L
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGenMeadow this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenSnowHills -> iJ1LiJ1LJijIiJ:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenSnowHills -> JiIjllJiIjllIjIj:
     nidefawl.qubes.noise.TerrainNoise2D noiseM2 -> do
     nidefawl.qubes.noise.TerrainNoiseScale noise2 -> do
     nidefawl.qubes.noise.TerrainNoise2D noise2D -> if
@@ -7861,13 +7936,13 @@ nidefawl.qubes.worldgen.terrain.main.SubTerrainGenSnowHills -> iJ1LiJ1LJijIiJ:
     nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain main -> do
     61:73:nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData prepare(int,int,nidefawl.qubes.world.biomes.HexBiome) -> do
     77:122:double generate(int,int,int,int,int,int,nidefawl.qubes.world.biomes.HexBiome,nidefawl.qubes.worldgen.terrain.main.SubTerrainGen$SubTerrainData,double[],double[]) -> do
-nidefawl.qubes.worldgen.terrain.main.SubTerrainGenSnowHills$NoiseData -> IjiJllllIjjIL1ll:
+nidefawl.qubes.worldgen.terrain.main.SubTerrainGenSnowHills$NoiseData -> lliJjI1L1LL1iJjI:
     double[] dNoise -> do
     double[] dNoise2 -> if
     double[] dNoise2_ -> for
     double[] dnoise5_ -> int
     nidefawl.qubes.worldgen.terrain.main.SubTerrainGenSnowHills this$0 -> do
-nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight -> iJJi1LiJIjIjiJll:
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight -> L1iJIjll1L1L1L:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     nidefawl.qubes.world.biomes.HexBiomesServer biomes -> do
@@ -7885,7 +7960,7 @@ nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight -> iJJi1LiJIjIjiJll:
     359:364:double mix(double,double,double) -> do
     368:368:double clamp10(double) -> do
     390:394:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain -> JiIjllJiIjllIjIj:
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain -> iJ1LL1jIL1L11LL1:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     nidefawl.qubes.world.biomes.HexBiomesServer biomes -> do
@@ -7903,7 +7978,7 @@ nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain -> JiIjllJiIjllIjIj:
     364:369:double mix(double,double,double) -> if
     373:373:double clamp10(double) -> do
     394:398:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2 -> lliJjI1L1LL1iJjI:
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2 -> llIjJiIj1LiJJiIj:
     nidefawl.qubes.world.WorldServer world -> do
     long seed -> do
     nidefawl.qubes.noise.opennoise.OpenSimplexNoise j -> do
@@ -7926,14 +8001,14 @@ nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2 -> lliJjI1L1LL1iJjI:
     436:441:double mix(double,double,double) -> if
     445:445:double clamp10(double) -> do
     467:471:nidefawl.qubes.worldgen.WorldGenInit getWorldGen(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings) -> do
-nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2$NoiseData -> L1iJIjll1L1L1L:
+nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2$NoiseData -> IjjIL1iJjIIjJill:
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn -> do
     nidefawl.qubes.noise.RiverNoise2D$RiverNoiseResult r2Dn2 -> if
     double[] dNoise2_ -> do
     double[] dnoise5_ -> if
     double[] dnoise_ -> for
     double[] dnoise3_ -> int
-nidefawl.swing.TextDialog -> iJ1LL1jIL1L11LL1:
+nidefawl.swing.TextDialog -> llJiiJiJL11L1Lll:
     javax.swing.JPanel topPanel -> do
     nidefawl.swing.TextDialog$JTextAreaWithScroll errorText -> do
     javax.swing.JLabel errorOccured -> do
@@ -7947,7 +8022,7 @@ nidefawl.swing.TextDialog -> iJ1LL1jIL1L11LL1:
     141:144:void prepend(java.lang.String) -> if
     148:175:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
     179:179:void lostOwnership(java.awt.datatransfer.Clipboard,java.awt.datatransfer.Transferable) -> lostOwnership
-nidefawl.swing.TextDialog$JTextAreaWithScroll -> llIjJiIj1LiJJiIj:
+nidefawl.swing.TextDialog$JTextAreaWithScroll -> jIlliJ1L1LIjjIll:
     javax.swing.JScrollPane scrollPane -> do
     nidefawl.swing.TextDialog this$0 -> do
     36:36:javax.swing.JScrollPane getScrollPane() -> do
@@ -8251,48 +8326,47 @@ test.game.ParticlePerformanceTest -> test.game.ParticlePerformanceTest:
     nidefawl.qubes.vec.Vec3D tmpPos -> tmpPos
     boolean init -> init
     float SPEED -> SPEED
-    boolean draw -> draw
-    218:221:void main(java.lang.String[]) -> main
-    272:282:void initGame() -> initGame
-    286:386:void initShaders() -> initShaders
-    390:490:void lateInitGame() -> lateInitGame
-    493:587:void onKeyPress(long,int,int,int,int) -> onKeyPress
-    590:593:void onWindowResize(int,int) -> onWindowResize
-    596:620:void setRenderResolution(int,int) -> setRenderResolution
-    623:637:void onStatsUpdated() -> onStatsUpdated
-    640:640:void onTextInput(long,int) -> onTextInput
-    644:644:void onWheelScroll(long,double,double) -> onWheelScroll
-    647:647:void postRenderUpdate(float) -> postRenderUpdate
-    651:669:void preRenderUpdate(float) -> preRenderUpdate
-    672:677:void preRenderUpdateParticles(float) -> preRenderUpdateParticles
-    679:687:void redraw() -> redraw
-    693:794:void render(float) -> render
-    796:827:void renderParticles(float) -> renderParticles
-    830:864:void spawnParticles(int) -> spawnParticles
-    867:908:void storeParticles(float,int) -> storeParticles
-    912:928:void tick() -> tick
-    931:938:void updateTickParticles() -> updateTickParticles
-    36:36:float access$000() -> access$000
+    219:222:void main(java.lang.String[]) -> main
+    273:283:void initGame() -> initGame
+    287:387:void initShaders() -> initShaders
+    391:492:void lateInitGame() -> lateInitGame
+    495:583:void onKeyPress(long,int,int,int,int) -> onKeyPress
+    586:589:void onWindowResize(int,int) -> onWindowResize
+    592:616:void setRenderResolution(int,int) -> setRenderResolution
+    619:633:void onStatsUpdated() -> onStatsUpdated
+    636:636:void onTextInput(long,int) -> onTextInput
+    640:640:void onWheelScroll(long,double,double) -> onWheelScroll
+    643:643:void postRenderUpdate(float) -> postRenderUpdate
+    647:665:void preRenderUpdate(float) -> preRenderUpdate
+    668:673:void preRenderUpdateParticles(float) -> preRenderUpdateParticles
+    675:683:void redraw() -> redraw
+    688:788:void render(float) -> render
+    790:821:void renderParticles(float) -> renderParticles
+    824:858:void spawnParticles(int) -> spawnParticles
+    861:902:void storeParticles(float,int) -> storeParticles
+    906:922:void tick() -> tick
+    925:932:void updateTickParticles() -> updateTickParticles
+    37:37:float access$000() -> access$000
 test.game.ParticlePerformanceTest$1 -> test.game.ParticlePerformanceTest$1:
     test.game.ParticlePerformanceTest this$0 -> this$0
-    290:299:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    291:300:java.lang.String getDefinition(java.lang.String) -> getDefinition
 test.game.ParticlePerformanceTest$2 -> test.game.ParticlePerformanceTest$2:
     test.game.ParticlePerformanceTest this$0 -> this$0
-    305:314:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    306:315:java.lang.String getDefinition(java.lang.String) -> getDefinition
 test.game.ParticlePerformanceTest$3 -> test.game.ParticlePerformanceTest$3:
     test.game.ParticlePerformanceTest this$0 -> this$0
-    320:329:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    321:330:java.lang.String getDefinition(java.lang.String) -> getDefinition
 test.game.ParticlePerformanceTest$4 -> test.game.ParticlePerformanceTest$4:
     test.game.ParticlePerformanceTest this$0 -> this$0
-    335:338:java.lang.String getDefinition(java.lang.String) -> getDefinition
+    336:339:java.lang.String getDefinition(java.lang.String) -> getDefinition
 test.game.ParticlePerformanceTest$5 -> test.game.ParticlePerformanceTest$5:
     nidefawl.qubes.texture.array.TextureArray val$arr -> val$arr
     test.game.ParticlePerformanceTest this$0 -> this$0
-    408:412:void pre() -> pre
-    415:416:void post() -> post
-    420:424:java.lang.Void call() -> call
-    428:428:nidefawl.qubes.async.AsyncTask$TaskType getType() -> getType
-    404:404:java.lang.Object call() -> call
+    410:414:void pre() -> pre
+    417:418:void post() -> post
+    422:426:java.lang.Void call() -> call
+    430:430:nidefawl.qubes.async.AsyncTask$TaskType getType() -> getType
+    406:406:java.lang.Object call() -> call
 test.game.ParticlePerformanceTest$Particle -> test.game.ParticlePerformanceTest$Particle:
     boolean dead -> dead
     int maxLive -> maxLive
@@ -8315,20 +8389,20 @@ test.game.ParticlePerformanceTest$Particle -> test.game.ParticlePerformanceTest$
     int normalMap -> normalMap
     int type -> type
     int pass -> pass
-    79:80:void setTex(int) -> setTex
-    82:83:void setType(int) -> setType
-    86:87:void die() -> die
-    90:92:void setMotion(float,float,float) -> setMotion
-    95:97:void setPos(float,float,float) -> setPos
-    100:102:void setRot(float,float,float) -> setRot
-    105:106:void setRotSpeed(float,float,float) -> setRotSpeed
-    109:110:void setSize(float) -> setSize
-    114:127:int store(int,java.nio.FloatBuffer,java.nio.IntBuffer) -> store
-    131:150:int storeInterlacedStruct(int,nidefawl.qubes.shader.ShaderBuffer) -> storeInterlacedStruct
-    153:171:int storeArrays(int,nidefawl.qubes.shader.ShaderBuffer) -> storeArrays
-    175:191:void tick() -> tick
-    194:198:void update(float) -> update
-    201:202:void setTextureOffset(float,float) -> setTextureOffset
+    80:81:void setTex(int) -> setTex
+    83:84:void setType(int) -> setType
+    87:88:void die() -> die
+    91:93:void setMotion(float,float,float) -> setMotion
+    96:98:void setPos(float,float,float) -> setPos
+    101:103:void setRot(float,float,float) -> setRot
+    106:107:void setRotSpeed(float,float,float) -> setRotSpeed
+    110:111:void setSize(float) -> setSize
+    115:128:int store(int,java.nio.FloatBuffer,java.nio.IntBuffer) -> store
+    132:151:int storeInterlacedStruct(int,nidefawl.qubes.shader.ShaderBuffer) -> storeInterlacedStruct
+    154:172:int storeArrays(int,nidefawl.qubes.shader.ShaderBuffer) -> storeArrays
+    176:192:void tick() -> tick
+    195:199:void update(float) -> update
+    202:203:void setTextureOffset(float,float) -> setTextureOffset
 test.game.ParticleTest -> test.game.ParticleTest:
     int MAX_PARTICLES -> MAX_PARTICLES
     nidefawl.qubes.shader.ShaderBuffer ssbo_particle_cubes -> ssbo_particle_cubes
@@ -9118,106 +9192,6 @@ test.game.meshregion.VertexPointerTest$3 -> test.game.meshregion.VertexPointerTe
     504:506:void findMaxTileWidth() -> findMaxTileWidth
     509:509:void collectTextures(nidefawl.qubes.assets.AssetManager) -> collectTextures
     513:530:void postUpload() -> postUpload
-test.game.vr.OpenVRUtil -> test.game.vr.OpenVRUtil:
-    long SLEEP_PRECISION -> SLEEP_PRECISION
-    long SPIN_YIELD_PRECISION -> SPIN_YIELD_PRECISION
-    24:36:void sleepNanos(long) -> sleepNanos
-    41:57:void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float) -> Matrix4fSet
-    61:77:void Matrix4fCopy(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f) -> Matrix4fCopy
-    81:85:void Matrix4fSetIdentity(nidefawl.qubes.vec.Matrix4f) -> Matrix4fSetIdentity
-    88:94:nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f) -> convertSteamVRMatrix3ToMatrix4f
-    99:103:nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f) -> convertSteamVRMatrix4ToMatrix4f
-test.game.vr.OpenVRUtilColMajor -> test.game.vr.OpenVRUtilColMajor:
-    long SLEEP_PRECISION -> SLEEP_PRECISION
-    long SPIN_YIELD_PRECISION -> SPIN_YIELD_PRECISION
-    24:36:void sleepNanos(long) -> sleepNanos
-    41:57:void Matrix4fSet(nidefawl.qubes.vec.Matrix4f,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float) -> Matrix4fSet
-    61:77:void Matrix4fCopy(nidefawl.qubes.vec.Matrix4f,nidefawl.qubes.vec.Matrix4f) -> Matrix4fCopy
-    81:85:void Matrix4fSetIdentity(nidefawl.qubes.vec.Matrix4f) -> Matrix4fSetIdentity
-    88:94:nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix3ToMatrix4f(jopenvr.HmdMatrix34_t,nidefawl.qubes.vec.Matrix4f) -> convertSteamVRMatrix3ToMatrix4f
-    99:103:nidefawl.qubes.vec.Matrix4f convertSteamVRMatrix4ToMatrix4f(jopenvr.HmdMatrix44_t,nidefawl.qubes.vec.Matrix4f) -> convertSteamVRMatrix4ToMatrix4f
-test.game.vr.VR -> test.game.vr.VR:
-    boolean DEBUG_PRINT -> DEBUG_PRINT
-    boolean READ_MATS -> READ_MATS
-    jopenvr.VR_IVRSystem_FnTable vrsystem -> vrsystem
-    test.game.vr.VR$VRSettings settings -> settings
-    test.game.vr.VR$VRViewProjection cam -> cam
-    java.nio.FloatBuffer tlastVsync -> tlastVsync
-    java.nio.LongBuffer _tframeCount -> _tframeCount
-    java.nio.IntBuffer hmdDisplayFrequency -> hmdDisplayFrequency
-    jopenvr.TrackedDevicePose_t$ByReference hmdTrackedDevicePoseReference -> hmdTrackedDevicePoseReference
-    jopenvr.TrackedDevicePose_t[] hmdTrackedDevicePoses -> hmdTrackedDevicePoses
-    double timePerFrame -> timePerFrame
-    boolean initSuccess -> initSuccess
-    boolean initDone -> initDone
-    java.lang.String initStatus -> initStatus
-    jopenvr.VR_IVRCompositor_FnTable vrCompositor -> vrCompositor
-    java.nio.IntBuffer hmdErrorStore -> hmdErrorStore
-    jopenvr.VR_IVROverlay_FnTable vrOverlay -> vrOverlay
-    jopenvr.VR_IVRRenderModels_FnTable vrRenderModels -> vrRenderModels
-    jopenvr.VR_IVRSettings_FnTable vrSettings -> vrSettings
-    jopenvr.VRTextureBounds_t texBounds -> texBounds
-    jopenvr.Texture_t texType0 -> texType0
-    jopenvr.Texture_t texType1 -> texType1
-    nidefawl.qubes.vec.Matrix4f[] poseMatrices -> poseMatrices
-    nidefawl.qubes.vec.Vec3D[] deviceVelocity -> deviceVelocity
-    nidefawl.qubes.vec.Matrix4f hmdPose -> hmdPose
-    nidefawl.qubes.vec.Matrix4f hmdPose2 -> hmdPose2
-    boolean headIsTracking -> headIsTracking
-    int RIGHT_CONTROLLER -> RIGHT_CONTROLLER
-    int LEFT_CONTROLLER -> LEFT_CONTROLLER
-    boolean[] controllerTracking -> controllerTracking
-    nidefawl.qubes.vec.Matrix4f[] controllerPose -> controllerPose
-    nidefawl.qubes.vec.Matrix4f[] controllerRotation -> controllerRotation
-    int[] controllerDeviceIndex -> controllerDeviceIndex
-    jopenvr.VRControllerState_t$ByReference[] inputStateRefernceArray -> inputStateRefernceArray
-    jopenvr.VRControllerState_t[] lastControllerState -> lastControllerState
-    jopenvr.VRControllerState_t[] controllerStateReference -> controllerStateReference
-    int maxControllerVelocitySamples -> maxControllerVelocitySamples
-    nidefawl.qubes.vec.Vec3D[][] controllerVelocitySamples -> controllerVelocitySamples
-    int[] controllerVelocitySampleCount -> controllerVelocitySampleCount
-    nidefawl.qubes.vec.Matrix4f[] controllerTipTransform -> controllerTipTransform
-    nidefawl.qubes.vec.Matrix4f[] handRotation -> handRotation
-    int renderWidth -> renderWidth
-    int renderHeight -> renderHeight
-    boolean hasRead -> hasRead
-    nidefawl.qubes.gl.FrameBuffer fbLeft -> fbLeft
-    nidefawl.qubes.gl.FrameBuffer fbRight -> fbRight
-    nidefawl.qubes.vec.Matrix4f tmpMat -> tmpMat
-    160:162:com.sun.jna.Pointer ptrFomrString(java.lang.String) -> ptrFomrString
-    175:203:boolean InitVR() -> InitVR
-    210:225:void initOpenVRRenderModels() -> initOpenVRRenderModels
-    229:237:void initOpenVROverlay() -> initOpenVROverlay
-    240:255:void initOpenVROSettings() -> initOpenVROSettings
-    257:299:void initializeJOpenVR() -> initializeJOpenVR
-    303:377:void initOpenVRCompositor(boolean) -> initOpenVRCompositor
-    382:406:java.lang.String getCompostiorError(int) -> getCompostiorError
-    413:443:void readMat4s(java.lang.String,nidefawl.qubes.vec.Matrix4f) -> readMat4s
-    452:455:void readMats() -> readMats
-    458:516:void updatePose(float) -> updatePose
-    519:532:void getTipTransforms() -> getTipTransforms
-    536:546:void findControllerDevices() -> findControllerDevices
-    549:589:void Submit() -> Submit
-    592:606:void initApp(nidefawl.qubes.GameBase) -> initApp
-    610:626:void initVRFB(int,int) -> initVRFB
-    629:648:void setupCamera(int,float) -> setupCamera
-    651:666:void bindAndClearFramebuffer(int) -> bindAndClearFramebuffer
-    670:670:boolean isInit() -> isInit
-    674:674:nidefawl.qubes.gl.FrameBuffer getFB(int) -> getFB
-    678:689:void setViewPort(int) -> setViewPort
-test.game.vr.VR$VRSettings -> test.game.vr.VR$VRSettings:
-    boolean seated -> seated
-    boolean vrReverseHands -> vrReverseHands
-test.game.vr.VR$VRViewProjection -> test.game.vr.VR$VRViewProjection:
-    nidefawl.qubes.vec.Matrix4f projLeft -> projLeft
-    nidefawl.qubes.vec.Matrix4f projRight -> projRight
-    nidefawl.qubes.vec.Matrix4f poseEyeLeft -> poseEyeLeft
-    nidefawl.qubes.vec.Matrix4f poseEyeRight -> poseEyeRight
-    nidefawl.qubes.vec.Matrix4f viewLeft -> viewLeft
-    nidefawl.qubes.vec.Matrix4f viewRight -> viewRight
-    41:51:void setEyeToHeadTransform() -> setEyeToHeadTransform
-    54:66:void setEyeProj(float,float) -> setEyeProj
-    69:72:void update(float) -> update
 test.game.vr.VRApp -> test.game.vr.VRApp:
     test.game.vr.VRApp$InputSource selInputSource -> selInputSource
     nidefawl.qubes.util.SimpleResourceManager shaders -> shaders
@@ -9233,24 +9207,24 @@ test.game.vr.VRApp -> test.game.vr.VRApp:
     nidefawl.qubes.vec.Vector3f tmp -> tmp
     nidefawl.qubes.vec.Vec3D tmpPos -> tmpPos
     boolean hadContext -> hadContext
-    32:35:void main(java.lang.String[]) -> main
-    53:71:void initShaders() -> initShaders
-    76:91:void onStatsUpdated() -> onStatsUpdated
-    95:95:void onTextInput(long,int) -> onTextInput
-    99:99:void onKeyPress(long,int,int,int,int) -> onKeyPress
-    104:140:void renderScene(float) -> renderScene
-    144:155:void render(float) -> render
-    160:167:void preRenderUpdate(float) -> preRenderUpdate
-    171:171:void postRenderUpdate(float) -> postRenderUpdate
-    177:196:void setRenderResolution(int,int) -> setRenderResolution
-    200:201:void tick() -> tick
-    205:210:void initGame() -> initGame
-    213:217:void redraw() -> redraw
-    221:227:void lateInitGame() -> lateInitGame
-    232:232:void onWheelScroll(long,double,double) -> onWheelScroll
+    33:36:void main(java.lang.String[]) -> main
+    54:72:void initShaders() -> initShaders
+    77:92:void onStatsUpdated() -> onStatsUpdated
+    96:96:void onTextInput(long,int) -> onTextInput
+    100:100:void onKeyPress(long,int,int,int,int) -> onKeyPress
+    105:141:void renderScene(float) -> renderScene
+    145:156:void render(float) -> render
+    161:168:void preRenderUpdate(float) -> preRenderUpdate
+    172:172:void postRenderUpdate(float) -> postRenderUpdate
+    178:197:void setRenderResolution(int,int) -> setRenderResolution
+    201:202:void tick() -> tick
+    206:211:void initGame() -> initGame
+    214:218:void redraw() -> redraw
+    222:228:void lateInitGame() -> lateInitGame
+    233:233:void onWheelScroll(long,double,double) -> onWheelScroll
 test.game.vr.VRApp$InputSource -> test.game.vr.VRApp$InputSource:
     test.game.vr.VRApp$InputSource MOUSE -> MOUSE
     test.game.vr.VRApp$InputSource HEADTRACKING -> HEADTRACKING
     test.game.vr.VRApp$InputSource[] $VALUES -> $VALUES
-    36:36:test.game.vr.VRApp$InputSource[] values() -> values
-    36:36:test.game.vr.VRApp$InputSource valueOf(java.lang.String) -> valueOf
+    37:37:test.game.vr.VRApp$InputSource[] values() -> values
+    37:37:test.game.vr.VRApp$InputSource valueOf(java.lang.String) -> valueOf

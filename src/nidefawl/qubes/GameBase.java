@@ -234,9 +234,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         cbWindowFocus = new GLFWWindowFocusCallback() {
 
             @Override
-            public void invoke(long window, boolean focused) {
+            public void invoke(long window, int focused) {
                 try {
-                    hasWindowFocus = focused;
+                    hasWindowFocus = focused>0;
                     if (!hasWindowFocus)
                         Mouse.setGrabbed(false);
                 } catch (Throwable t) {
@@ -272,7 +272,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             initCallbacks();
             glfwSetErrorCallback(errorCallback);
             // Initialize GLFW. Most GLFW functions will not work before doing this.
-            if (glfwInit() != true)
+            if (glfwInit() != 1)
                 throw new IllegalStateException("Unable to initialize GLFW");
 
             // Configure our window
@@ -349,14 +349,14 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 
     protected void destroyContext() {
         //TODO: maybe this crashes?
-        cbKeyboard.free();
-        cbMouseButton.free();
-        cbScrollCallback.free();
-        cbWindowSize.free();
-        cbWindowFocus.free();
-        cbCursorPos.free();
-        errorCallback.free();
-        cbText.free();
+        cbKeyboard.release();
+        cbMouseButton.release();
+        cbScrollCallback.release();
+        cbWindowSize.release();
+        cbWindowFocus.release();
+        cbCursorPos.release();
+        errorCallback.release();
+        cbText.release();
         glfwTerminate();
         windowId = 0;
     }
@@ -468,7 +468,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public boolean isCloseRequested() {
-        return glfwWindowShouldClose(windowId) != false;
+        return glfwWindowShouldClose(windowId) != 0;
     }
 
     protected void setVSync_impl(boolean b) {
