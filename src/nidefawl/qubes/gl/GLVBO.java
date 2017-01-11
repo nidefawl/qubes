@@ -4,10 +4,13 @@ import static org.lwjgl.opengl.NVShaderBufferLoad.GL_BUFFER_GPU_ADDRESS_NV;
 
 import java.nio.ByteBuffer;
 
+import javax.management.RuntimeErrorException;
+
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.NVShaderBufferLoad;
 
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.util.GameError;
 
 public class GLVBO {
     public static int ALLOC_VBOS = 0;
@@ -51,26 +54,32 @@ public class GLVBO {
         upload(type, buffer, len, true);
     }
     public void upload(int type, ByteBuffer buffer, long len, boolean bindless) {
+        if (len != buffer.remaining()) {
+            System.err.println("buffer remaining ("+buffer.remaining()+") is not matching len " + len);
+            throw new GameError("Fix your buffer");
+        }
+
         boolean newBuffer = false;
         GL15.glBindBuffer(type, getVboId());
+
         if (this.usage == GL15.GL_DYNAMIC_DRAW) {
-            if (this.vboSize  < MIN_BUF_SIZE && len < MIN_BUF_SIZE) {
+            if (this.vboSize < MIN_BUF_SIZE && len < MIN_BUF_SIZE) {
                 GL15.glBufferData(type, MIN_BUF_SIZE, this.usage);
                 this.vboSize = MIN_BUF_SIZE;
             }
-//            GL15.glBufferData(type, 0, this.usage);
+            //          GL15.glBufferData(type, 0, this.usage);
             if (this.vboSize < len) {
                 this.vboSize = len;
-                GL15.glBufferData(type, len, this.usage);
-                GL15.glBufferData(type, len, buffer, this.usage);
+                GL15.glBufferData(type, len, this.usage);//invalidate previous buffer ('handoff' to driver as explained by some guru) 
+                GL15.glBufferData(type, buffer, this.usage);
                 newBuffer = true;
             } else {
-                GL15.glBufferSubData(type, 0, len, buffer);
+                GL15.glBufferSubData(type, 0, buffer);
             }
         } else {
             this.vboSize = len;
-            GL15.glBufferData(type, len, this.usage);
-            GL15.glBufferData(type, len, buffer, this.usage);
+            GL15.glBufferData(type, len, this.usage);//invalidate previous buffer ('handoff' to driver as explained by some guru)
+            GL15.glBufferData(type, buffer, this.usage);
             newBuffer = true;
         }
         if (GameBase.GL_ERROR_CHECKS)
