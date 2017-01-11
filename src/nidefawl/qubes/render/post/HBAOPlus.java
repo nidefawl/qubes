@@ -5,7 +5,7 @@ package nidefawl.qubes.render.post;
 
 import java.io.File;
 
-import nidefawl.qubes.vec.Matrix4f;
+import org.lwjgl.opengl.GLCapabilities;
 
 /**
  * @author Michael Hept 2015
@@ -21,7 +21,7 @@ public class HBAOPlus {
 //     * Setting the DetailAO parameter to 0.0 (default value) is fastest and avoids over-occlusion artifacts on alpha-tested geometry.
 //     * Setting the DepthStorage parameter to FP16_VIEW_DEPTHS can be slightly faster but may introduce artifacts for large view depths.
  //---------------------------------------------------------------------------------------------------
-    native public static void createContext(int width, int height);
+    native public static void createContext(int width, int height, GLCapabilities caps);
 	native public static void deleteContext();
 	native public static void renderAO();
     native public static void setProjMatrix(long projMatPtr);

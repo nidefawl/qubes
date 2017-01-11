@@ -98,7 +98,10 @@ public class Shaders {
         singleblock3D.setProgramUniform1i("blockTextures", 0);
 //            singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();
+            Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
+            
             Shaders.textured3D.enable();
+//            Shaders.textured3D.setProgramUniformMatrix4("model_matrix", false, Engine.getIdentityMatrix().get(), false);
             Shaders.tonemap.enable();
             Shaders.tonemap.setProgramUniform1i("texColor", 0);
             Shaders.tonemap.setProgramUniform1f("constexposure", 660);

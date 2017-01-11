@@ -12,6 +12,7 @@ import org.lwjgl.system.MemoryUtil;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
@@ -27,6 +28,7 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.world.World;
 
 public class FinalRenderer extends AbstractRenderer {
@@ -87,7 +89,6 @@ public class FinalRenderer extends AbstractRenderer {
             GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.preWaterDepthTex);
             GL.bindTexture(GL_TEXTURE8, GL_TEXTURE_2D, TMgr.getNoise());
         } else {
-
             GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.fbSSAO.getTexture(0));
         }
 
@@ -119,7 +120,7 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(name, "DeferredOut", this.fbDeferred.getTexture(0), 1);
             GLDebugTextures.readTexture(name, "light", Engine.lightCompute.getTexture());
             if (pass == 0) {
-                GLDebugTextures.readTexture(name, "texShadow", Engine.shadowRenderer.getDebugTexture());
+                GLDebugTextures.readTexture(name, "texShadow", Engine.shadowRenderer.getDepthTex(), 2);
                 GLDebugTextures.readTexture(name, "AOOut", this.fbSSAO.getTexture(0));
             }
             if (pass == 1) {
@@ -257,7 +258,7 @@ public class FinalRenderer extends AbstractRenderer {
     }
 
 
-    public void renderFinal(World world, float fTime) {
+    public void renderFinal(World world, float fTime, FrameBuffer finalTarget) {
         int outputColor = fbFinal.getTexture(0);
         if (smaa != null) {
             fbDeferred.bind();
@@ -266,7 +267,11 @@ public class FinalRenderer extends AbstractRenderer {
             outputColor = fbDeferred.getTexture(0);
         } else {
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
-            FrameBuffer.unbindFramebuffer();
+            if (finalTarget == null) FrameBuffer.unbindFramebuffer();
+            else {
+                finalTarget.bind();
+                finalTarget.clearFrameBuffer();
+            }
         }
         shaderFinal.enable();
         int indexIn = this.frame%2;
@@ -274,9 +279,8 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.fbLuminanceInterp[indexOut].getTexture(0));
         Engine.drawFullscreenQuad();
         if (smaa != null) {
-            FrameBuffer.unbindFramebuffer();
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
-            this.smaa.render(outputColor, 0);
+            this.smaa.render(outputColor, 0, finalTarget);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         }
 
@@ -545,7 +549,7 @@ public class FinalRenderer extends AbstractRenderer {
         if (!HBAOPlus.hasContext && enableAO) {
             updateHBAOSettings();
             Engine.checkGLError("pre GLNativeLib.createContext");
-            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight);
+            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight, Game.instance.caps);
             Engine.checkGLError("post GLNativeLib.createContext");
             HBAOPlus.hasContext = true;
         }
@@ -563,6 +567,7 @@ public class FinalRenderer extends AbstractRenderer {
         Shader.disable();
         FrameBuffer.unbindFramebuffer();
     }
+
     public void updateHBAOSettings() {
 //      HBAOPlus.setRadius(1);
 //      HBAOPlus.setBias(0.2f);
@@ -615,6 +620,7 @@ public class FinalRenderer extends AbstractRenderer {
         Engine.setSceneFB(fbScene);
 
         GL.deleteTexture(this.preWaterDepthTex);
+        System.out.println("pre water depth tex "+displayWidth+"x"+displayHeight);
         this.preWaterDepthTex = GL.genStorage(displayWidth, displayHeight, GL14.GL_DEPTH_COMPONENT32, GL_NEAREST, GL12.GL_CLAMP_TO_EDGE);
 
 

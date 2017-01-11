@@ -150,6 +150,17 @@ public class GLVAO {
             vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
         }
     };
+    public final static GLVAO openVRModel = new GLVAO() {
+        void init() {
+            //POS
+            vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
+            //NORMAL
+            vertexAttribFormat(1, 3, GL11.GL_FLOAT, true, 3);
+            //TEXCOORD
+            vertexAttribFormat(2, 2, GL11.GL_FLOAT, false, 2);
+
+        }
+    };
     public final static GLVAO vaoModelGPUSkinned= new GLVAO() {
         void init() {
 

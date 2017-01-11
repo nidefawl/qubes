@@ -88,7 +88,7 @@ public class TrueTypeFont {
         this.xb2 = memAllocFloat(1);
         this.yb2 = memAllocFloat(1);
         this.info = STBTTFontinfo.malloc();
-        this.chardata = STBTTPackedchar.malloc(6 * 128);
+        this.chardata = STBTTPackedchar.malloc(this.numChars);
         AssetBinary bin = AssetManager.getInstance().loadBin(fontPath);
         ByteBuffer bitmap = BufferUtils.createByteBuffer(texW*texW);
         ByteBuffer ttf = (ByteBuffer)BufferUtils.createByteBuffer(bin.getData().length).put(bin.getData()).flip();
@@ -96,8 +96,7 @@ public class TrueTypeFont {
         if (offset < 0) {
             throw new GameError("Failed loading "+fontPath);
         }
-        int n = stbtt_InitFont(info, ttf, offset);
-        if (n == 0) {
+        if (!stbtt_InitFont(info, ttf, offset)) {
             throw new GameError("Failed loading "+fontPath);
         }
         int oversample = 2;
@@ -120,10 +119,10 @@ public class TrueTypeFont {
         }
         
         STBTTPackContext pc = STBTTPackContext.malloc();
-        stbtt_PackBegin(pc, bitmap, texW, texW, 0, 1, null);
+        stbtt_PackBegin(pc, bitmap, texW, texW, 0, 1);
         stbtt_PackSetOversampling(pc, oversample, oversample);
         this.chardata.position(rangeStart);
-        stbtt_PackFontRange(pc, ttf, 0, size, this.rangeStart, this.numChars, chardata);
+        stbtt_PackFontRange(pc, ttf, 0, size, this.rangeStart, chardata);
         stbtt_PackEnd(pc);
         pc.free();
         chardata.position(0);
@@ -149,7 +148,7 @@ public class TrueTypeFont {
         yb2.put(0, 0);
         
         int idx = getIndex((char) ch);
-        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
         return xb2.get(0);
     }
 
@@ -182,7 +181,7 @@ public class TrueTypeFont {
                 continue;
             }
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
         }
         return xb2.get(0);
     }
@@ -209,7 +208,7 @@ public class TrueTypeFont {
             if (charCurrent == '\n')
                 continue;
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
         }
         return xb2.get(0);
     }
@@ -225,7 +224,7 @@ public class TrueTypeFont {
     }
     public void readQuad(int charCurrent) {
         int idx = getIndex(charCurrent);
-        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
     }
     public void renderQuad(Tess tess, float x, float y) {
         tess.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
@@ -255,7 +254,7 @@ public class TrueTypeFont {
                 }
             }
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, 0);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb2, yb2, q2, false);
             if (xb2.get(0) >= mX) {
                 return Math.max(0, i);
             }
@@ -278,7 +277,9 @@ public class TrueTypeFont {
         this.info.free();
         this.q.free();
         this.q2.free();
-        memFree(this.chardata);
+//        memFree(this.chardata);
+        this.chardata.free();
+        this.chardata = null;
         memFree(this.yb);
         memFree(this.xb);
         memFree(this.yb2);
@@ -412,7 +413,7 @@ public class TrueTypeFont {
                 }
             }
             int idx = getIndex(charCurrent);
-            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
+            stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
             xPos = xb.get(0);
             tess.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
             tess.add(x + q.x1(), y + q.y0(), 0F, q.s1(), q.t0());
@@ -437,7 +438,7 @@ public class TrueTypeFont {
         yb.put(0, 0);
         
         int idx = getIndex((char) ch);
-        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, 0);
+        stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
 
         return xb.get(0);
     }

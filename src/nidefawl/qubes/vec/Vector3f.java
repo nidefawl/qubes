@@ -428,4 +428,18 @@ public class Vector3f implements StreamIO {
                 (float)(a.z+(b.z-a.z)*f)
                 );
     }
+
+    public void setElement(int i, float f) {
+        switch (i) {
+            case 0:
+                this.x = f;
+                break;
+            case 1:
+                this.y = f;
+                break;
+            case 2:
+                this.z = f;
+                break;
+        }
+    }
 }

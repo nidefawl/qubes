@@ -33,8 +33,10 @@ import nidefawl.qubes.perf.GPUTaskProfile;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
+import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
+import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.worldgen.TerrainGen;
 
 public abstract class GameBase implements Runnable, IErrorHandler {
@@ -43,7 +45,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static int     windowHeight;
     public static int     displayWidth;
     public static int     displayHeight;
+    public static int     guiWidth;
+    public static int     guiHeight;
     public static boolean GL_ERROR_CHECKS = true;
+    public static boolean VR_SUPPORT = false;
     public static long    windowId        = 0;
     protected static int            initWidth       = (int) (1680 * 0.8);
     protected static int            initHeight      = (int) (1050 * 0.8);
@@ -93,6 +98,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public Gui            gui;
     boolean               reinittexthook  = false;
     boolean               wasGrabbed      = true;
+    public GLCapabilities caps;
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -105,6 +111,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         this.timer = new Timer(TICKS_PER_SEC);
         displayWidth = initWidth;
         displayHeight = initHeight;
+        guiWidth = displayWidth;
+        guiHeight = displayHeight;
         outStream = new LogBufferStream(System.out);
         errStream = new LogBufferStream(System.err);
         System.out.flush();
@@ -226,9 +234,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         cbWindowFocus = new GLFWWindowFocusCallback() {
 
             @Override
-            public void invoke(long window, int focused) {
+            public void invoke(long window, boolean focused) {
                 try {
-                    hasWindowFocus = focused != GLFW.GLFW_FALSE;
+                    hasWindowFocus = focused;
                     if (!hasWindowFocus)
                         Mouse.setGrabbed(false);
                 } catch (Throwable t) {
@@ -264,7 +272,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             initCallbacks();
             glfwSetErrorCallback(errorCallback);
             // Initialize GLFW. Most GLFW functions will not work before doing this.
-            if (glfwInit() != GL11.GL_TRUE)
+            if (glfwInit() != true)
                 throw new IllegalStateException("Unable to initialize GLFW");
 
             // Configure our window
@@ -301,7 +309,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             glfwSetWindowPos(windowId, (vidmode.width() - displayWidth) / 2, (vidmode.height() - displayHeight) / 2);
 
             glfwMakeContextCurrent(windowId);
-            org.lwjgl.opengl.GL.createCapabilities();
+            caps = org.lwjgl.opengl.GL.createCapabilities();
             // Make the window visible
             glfwShowWindow(windowId);
             glfwSetWindowSizeCallback(windowId, cbWindowSize);
@@ -340,14 +348,15 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     protected void destroyContext() {
-        cbKeyboard.release();
-        cbMouseButton.release();
-        cbScrollCallback.release();
-        cbWindowSize.release();
-        cbWindowFocus.release();
-        cbCursorPos.release();
-        errorCallback.release();
-        cbText.release();
+        //TODO: maybe this crashes?
+        cbKeyboard.free();
+        cbMouseButton.free();
+        cbScrollCallback.free();
+        cbWindowSize.free();
+        cbWindowFocus.free();
+        cbCursorPos.free();
+        errorCallback.free();
+        cbText.free();
         glfwTerminate();
         windowId = 0;
     }
@@ -362,6 +371,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         this.running = false;
         Engine.stop();
         AsyncTasks.shutdown();
+        if (VR.isInit()) VR.shutdown();
     }
 
     public void checkResize() {
@@ -379,20 +389,22 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             minimized = false;
             windowWidth = newWidth;
             windowHeight = newHeight;
-            if (displayWidth <= 0) {
-                displayWidth = 1;
+            if (windowWidth <= 0) {
+                windowWidth = 1;
             }
             if (windowHeight <= 0) {
                 windowHeight = 1;
             }
+            guiWidth = windowWidth;
+            guiHeight = windowHeight;
             if (useWindowSizeAsRenderResolution) {
                 displayWidth = windowWidth;
                 displayHeight = windowHeight;
             }
             try {
+                onWindowResize(windowWidth, windowHeight);
                 if (isRunning())
                     Engine.setDefaultViewport();
-                onWindowResize(windowWidth, windowHeight);
             } catch (Throwable t) {
                 setException(new GameError("GLFWWindowSizeCallback", t));
             }
@@ -402,6 +414,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public abstract void onStatsUpdated();
 
     public void setVSync(boolean b) {
+        if (VR_SUPPORT) {
+            b = false;
+        }
         this.vsync = b;
         setVSync_impl(b);
     }
@@ -453,7 +468,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public boolean isCloseRequested() {
-        return glfwWindowShouldClose(windowId) != GL_FALSE;
+        return glfwWindowShouldClose(windowId) != false;
     }
 
     protected void setVSync_impl(boolean b) {
@@ -461,9 +476,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             int vsync = 0;
             if (b) {
                 vsync = 1;
-                if (GL.getCaps().WGL_EXT_swap_control && GL.getCaps().WGL_EXT_swap_control_tear) {
-                    vsync = -1;
-                }
+//                if (GL.getCaps().WGL_EXT_swap_control && GL.getCaps().WGL_EXT_swap_control_tear) {
+//                    vsync = -1;
+//                }
             }
             glfwSwapInterval(vsync);
         }
@@ -940,7 +955,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         this.gui = gui;
         if (this.gui != null) {
             this.gui.setPos(0, 0);
-            this.gui.setSize(displayWidth, displayHeight);
+            this.gui.setSize(guiWidth, guiHeight);
             this.gui.initGui(this.gui.firstOpen);
             this.gui.firstOpen = false;
             if (Mouse.isGrabbed()) {
@@ -1049,4 +1064,38 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public void parseCmdArgs(String[] args) {
     }
 
+    public void toggleVR() {
+        boolean hadVR = VR_SUPPORT;
+        VR_SUPPORT = VR.isInit() && !VR_SUPPORT;
+        if (!VR_SUPPORT && hadVR) {
+            Game.displayWidth=windowWidth;
+            Game.displayHeight=windowHeight;
+            setRenderResolution(displayWidth, displayHeight);
+            Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
+            Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+        } else if (VR_SUPPORT && !hadVR) {
+            Game.displayWidth=VR.renderWidth;
+            Game.displayHeight=VR.renderHeight;
+            setRenderResolution(displayWidth, displayHeight);
+            Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
+            Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+            setVSync(false);
+        }
+    }
+
+    protected void setVRProjection() {
+        Game.displayWidth=VR.renderWidth;
+        Game.displayHeight=VR.renderHeight;
+        updateProjection();
+    }
+    protected void setGUIProjection() {
+        Game.displayWidth=guiWidth;
+        Game.displayHeight=guiHeight;
+        updateProjection();
+    }
+    protected void updateProjection() {
+        Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
+        Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+        UniformBuffer.updateOrtho();
+    }
 }

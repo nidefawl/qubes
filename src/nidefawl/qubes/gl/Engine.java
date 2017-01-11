@@ -72,7 +72,6 @@ public class Engine {
     
 
     public static FrameBuffer fbScene;
-    public static FrameBuffer fbDbg;
     public static float znear = 0.1f;
     public static float zfar = 1024F;
 
@@ -296,8 +295,19 @@ public class Engine {
         });
         System.out.println("Engine.init: "+GameContext.getTimeSinceStart());
     }
-    
+
     public static void resize(int displayWidth, int displayHeight) {
+        resizeProjection(displayWidth, displayHeight);
+        resizeRenderers(displayWidth, displayHeight);
+    }
+
+    /**
+     * Resizes 3d projection matrix, 2d orthogonal projection for gui, 2D fullscreen quad.
+     * Fast - can be called each frame.
+     * @param displayWidth
+     * @param displayHeight
+     */
+    public static void resizeProjection(int displayWidth, int displayHeight) {
         fieldOfView = 70;
         aspectRatio = (float) displayWidth / (float) displayHeight;
 //        znear = 0.1F;
@@ -316,20 +326,10 @@ public class Engine {
         _projection.update();
         projection.load(_projection);
         projection.update();
-        if (initRenderers) {
-            shadowProj.setSplits(new float[] {znear, 14, 64, 420}, fieldOfView, aspectRatio);
-        }
 
 
         updateOrthoMatrix(displayWidth, displayHeight);
         
-
-        if (fbDbg != null)
-            fbDbg.release();
-        fbDbg = new FrameBuffer(displayWidth, displayHeight);
-        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
-        fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
-        fbDbg.setup(null);
 
         if (fullscreenquad == null) {
             fullscreenquad = new TesselatorState(GL15.GL_STATIC_DRAW);
@@ -355,6 +355,18 @@ public class Engine {
         Tess.instance.add(0, 1, 0, 0, 1);
         Tess.instance.add(1, 1, 0, 1, 1);
         Tess.instance.draw(GL_QUADS, quad);
+    }
+
+    /**
+     * Resizes renderers framebuffers, may reload shaders
+     * Slow - cannot be called each frame
+     * @param displayWidth
+     * @param displayHeight
+     */
+    public static void resizeRenderers(int displayWidth, int displayHeight) {
+        if (initRenderers) {
+            shadowProj.setSplits(new float[] {znear, 14, 64, 420}, fieldOfView, aspectRatio);
+        }
         if (blurRenderer != null) {
             blurRenderer.resize(displayWidth, displayHeight);
         }
@@ -469,6 +481,9 @@ public class Engine {
         updateCamera(camView, camPos);
     }
 
+    public static void updateGlobalRenderOffset(Vector3f camPos) {
+        updateRenderOffset = updateGlobalRenderOffset(camPos.x, camPos.y, camPos.z);
+    }
     public static void updateCamera(Matrix4f camView, Vector3f camPos) {
         up.set(0, 100, 0);
 //        back.set(0, -10, 0);
@@ -479,7 +494,6 @@ public class Engine {
         viewInvYZ.mulMat(invertYZ);
         viewInvYZ.update();
         
-        updateRenderOffset = updateGlobalRenderOffset(camPos.x, camPos.y, camPos.z);
         modelview.setIdentity();
         modelview.translate(-camPos.x, -camPos.y, -camPos.z);
         modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
@@ -497,7 +511,7 @@ public class Engine {
         camFrustum.setPos(camPos, view);
         camFrustum.set(modelviewprojection);
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
-        updateOrthoMatrix(Game.displayWidth, Game.displayHeight);//TODO: this only needs to be updated when resolution has changed
+//        updateOrthoMatrix(Game.displayWidth, Game.displayHeight);//TODO: this only needs to be updated when resolution has changed
     }
 
     

@@ -76,6 +76,7 @@ public class ReallocIntBuffer {
         intbuffers.clear();
         intbuffers.put(buffer, offset, len);
         buffers.position(0).limit(len*4);
+        intbuffers.position(0).limit(len);
     }
 
     /**

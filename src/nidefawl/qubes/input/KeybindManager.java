@@ -1,8 +1,9 @@
 package nidefawl.qubes.input;
 
 import java.io.File;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import org.lwjgl.glfw.GLFW;
@@ -19,19 +20,19 @@ import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLDebugTextures;
-import nidefawl.qubes.gui.*;
+import nidefawl.qubes.gui.GuiChatInput;
+import nidefawl.qubes.gui.GuiGameMenu;
+import nidefawl.qubes.gui.GuiSelectBlock;
 import nidefawl.qubes.gui.crafting.GuiCraftingSelect;
-import nidefawl.qubes.gui.windows.*;
+import nidefawl.qubes.gui.windows.GuiColor;
+import nidefawl.qubes.gui.windows.GuiInventory;
 import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiModelView;
 import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiPlayerAdjust;
+import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.io.network.DataListType;
-import nidefawl.qubes.meshing.Mesher;
 import nidefawl.qubes.models.BlockModelManager;
-import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.packet.PacketCListRequest;
-import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.perf.TimingHelper2;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.texture.array.BlockNormalMapArray;
 import nidefawl.qubes.texture.array.BlockTextureArray;
@@ -83,6 +84,7 @@ public class KeybindManager {
     static final Map<Integer, Keybinding> keyToKeyBinding = new MapMaker().makeMap();
     static final ArrayList<Keybinding> keybindings = Lists.newArrayList();
     static final ConcurrentMap<String, Keybinding> keybindingsStr = new MapMaker().makeMap();
+    public static float SPEED_MODIFIER = 1.0f;
     static {
 
         kb_forward = new Keybinding("forward", GLFW.GLFW_KEY_W).setNoCallBack();
@@ -126,7 +128,7 @@ public class KeybindManager {
         this.jump = false;
         this.sneak = false;
         if (this.grabbed) {
-            float mult = 1.0F;
+            float mult = SPEED_MODIFIER;
             this.sneak=isKeyDown(kb_sneak.getKey());
             this.jump=isKeyDown(kb_jump.getKey());
             if (this.sneak) {
@@ -183,26 +185,6 @@ public class KeybindManager {
             public void onDown() {
                 if (game.getWorld() != null)
                     game.showGUI(new GuiChatInput());
-            }
-        });
-        addKeyBinding(new Keybinding("firstperson", GLFW.GLFW_KEY_F5) {
-            public void onDown() {
-//              setWorld(new WorldClient(null));
-//              Engine.worldRenderer.flush();
-//              Engine.textures.refreshNoiseTextures();
-//              PlayerSelf p = getPlayer();
-//              if (p != null) {
-//                  Random rand = new Random();
-//                  p.move(rand.nextInt(300)-150, rand.nextInt(100)+100, rand.nextInt(300)-150);
-//              }
-                game.lastShaderLoadTime = System.currentTimeMillis();
-                game.thirdPerson = !game.thirdPerson;
-//                Shaders.initShaders();
-//                Engine.worldRenderer.initShaders();
-//////                Engine.worldRenderer.reloadModel();
-//                  Engine.regionRenderer.initShaders();
-//////                  Engine.shadowRenderer.initShaders();
-                  Engine.outRenderer.initShaders();
             }
         });
         addKeyBinding(new Keybinding("toggle_gamemode", GLFW.GLFW_KEY_M) {
@@ -279,14 +261,40 @@ public class KeybindManager {
                 }
             }
         });
-        addKeyBinding(new Keybinding("vsync", GLFW.GLFW_KEY_F8) {
+        addKeyBinding(new Keybinding("toggle_vr", GLFW.GLFW_KEY_F1) {
             public void onDown() {
-                game.setVSync(!game.getVSync());
+                Game.instance.toggleVR();
+            }
+        });
+        addKeyBinding(new Keybinding("show_chunk_grid", GLFW.GLFW_KEY_F2) {
+            public void onDown() {
+                Game.showGrid = !Game.showGrid;
+            }
+        });
+        addKeyBinding(new Keybinding("show_debug_textures", GLFW.GLFW_KEY_F3) {
+            public void onDown() {
+                GLDebugTextures.setShow(!GLDebugTextures.show);
+            }
+        });
+        addKeyBinding(new Keybinding("flush_renderers", GLFW.GLFW_KEY_F4) {
+            public void onDown() {
+                Engine.regionRenderer.reRender();
+            }
+        });
+        addKeyBinding(new Keybinding("firstperson", GLFW.GLFW_KEY_F5) {
+            public void onDown() {
+                game.lastShaderLoadTime = System.currentTimeMillis();
+                game.thirdPerson = !game.thirdPerson;
             }
         });
         addKeyBinding(new Keybinding("toggle_bindless", GLFW.GLFW_KEY_F7) {
             public void onDown() {
                 Engine.userSettingUseBindless=!Engine.userSettingUseBindless;
+            }
+        });
+        addKeyBinding(new Keybinding("vsync", GLFW.GLFW_KEY_F8) {
+            public void onDown() {
+                game.setVSync(!game.getVSync());
             }
         });
         addKeyBinding(new Keybinding("wireframe", GLFW.GLFW_KEY_F9) {
@@ -305,38 +313,15 @@ public class KeybindManager {
                 SingleBlockRenderAtlas.getInstance().reset();
             }
         });
-        addKeyBinding(new Keybinding("show_debug_textures", GLFW.GLFW_KEY_F3) {
+        addKeyBinding(new Keybinding("toggle_external_resources", GLFW.GLFW_KEY_F11) {
             public void onDown() {
-                GLDebugTextures.setShow(!GLDebugTextures.show);
+//                toggleTiming = true;
+                AssetManager.getInstance().toggleExternalResources();
             }
         });
         addKeyBinding(new Keybinding("repos_vox_model", GLFW.GLFW_KEY_F) {
             public void onDown() {
                 game.reposModel();
-            }
-        });
-        addKeyBinding(new Keybinding("show_chunk_grid", GLFW.GLFW_KEY_F2) {
-            public void onDown() {
-                Game.showGrid = !Game.showGrid;
-            }
-        });
-//        addKeyBinding(new Keybinding("show_windows", GLFW.GLFW_KEY_TAB) {
-//            public void onDown() {
-//                Game.instance.setGrabbed(!Game.instance.isGrabbed());
-//            }
-//        });
-        addKeyBinding(new Keybinding("flush_renderers", GLFW.GLFW_KEY_F1) {
-            public void onDown() {
-//                Mesher.avgUsage=0;
-                Engine.regionRenderer.reRender();
-//                EntityModelManager.getInstance().reload();
-                
-            }
-        });
-        addKeyBinding(new Keybinding("toggle_external_resources", GLFW.GLFW_KEY_F11) {
-            public void onDown() {
-//                toggleTiming = true;
-                AssetManager.getInstance().toggleExternalResources();
             }
         });
         addKeyBinding((new Keybinding("show_menu", GLFW.GLFW_KEY_ESCAPE) {

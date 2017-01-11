@@ -1,11 +1,13 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE4;
 
 import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL40;
 
 import nidefawl.qubes.async.AsyncTask;
@@ -27,7 +29,6 @@ import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
@@ -35,9 +36,7 @@ import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
-import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
@@ -46,12 +45,15 @@ import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.util.*;
-import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
-import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.RayTrace;
+import nidefawl.qubes.util.StringUtil;
+import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
@@ -125,6 +127,7 @@ public class Game extends GameBase {
     
     public Game() {
         super();
+        useWindowSizeAsRenderResolution = false;
         instance = this;
     }
 
@@ -225,6 +228,8 @@ public class Game extends GameBase {
 
         KeybindManager.load();
         isStarting = true;
+        VR.initApp(this);
+        VR_SUPPORT = VR.isInit();
     }
 
     public void toggleGameMode() {
@@ -456,13 +461,216 @@ public class Game extends GameBase {
 
 
     public void render(float fTime) {
-
         glDisable(GL_BLEND);
         
         glClearColor(0.71F, 0.82F, 1.00F, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
             Engine.skyRenderer.renderSky(this.world, fTime);
+        } else {
+            Engine.setDefaultViewport();
+        }
+
+        for (int eye = 0; eye < (VR_SUPPORT ? 2 : 1); eye++) {
+            if (VR_SUPPORT) {
+                Engine.getMatSceneP().load(VR.cam.projRight);
+                Engine.getMatSceneP().update();
+                Engine.updateCamera(VR.getViewMat(eye), Engine.camera.getPosition());
+                UniformBuffer.updateUBO(world, fTime);
+                VR.setViewPort(eye);
+                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("setCameraAndViewport");
+            }
+            renderWorld(fTime, eye);
+            if (VR_SUPPORT) {
+                FrameBuffer finalTarget = VR.getFB(eye);
+                finalTarget.bind();
+//                glEnable(GL11.GL_DEPTH_TEST);
+                glDisable(GL11.GL_CULL_FACE);
+                Engine.updateCamera(VR.getViewMat(eye), Vector3f.ZERO);
+                UniformBuffer.updateUBO(null, fTime);
+                VR.renderControllers();
+                glEnable(GL11.GL_CULL_FACE);
+//                glDisable(GL11.GL_DEPTH_TEST);
+            }
+        }
+            
+        if (VR_SUPPORT) {
+
+            if (GLDebugTextures.isShow()) {
+                GLDebugTextures.readTexture("VR", "left", VR.getFB(0).getTexture(0));
+                GLDebugTextures.readTexture("VR", "right", VR.getFB(1).getTexture(0));
+            }
+
+            
+            FrameBuffer.unbindFramebuffer();
+            VR.Submit();
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("VR.Submit");
+            setGUIProjection();
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("setGUIProjection");
+            VR.drawFullscreenCompanion(guiWidth, guiHeight);
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("drawFullscreenCompanion");
+        }
+        
+        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+
+        
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("gui");
+
+        if (this.world != null && this.gui == null && this.movement.grabbed()) {
+            Shaders.colored.enable();
+            Tess.instance.setColor(-1, 100);
+            Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
+            float height = 1;
+            float w = 8;
+            Tess.instance.add(-w, height, 0);
+            Tess.instance.add(w, height, 0);
+            Tess.instance.add(w, -height, 0);
+            Tess.instance.add(-w, -height, 0);
+            Tess.instance.add(-height, w, 0);
+            Tess.instance.add(height, w, 0);
+            Tess.instance.add(height, -w, 0);
+            Tess.instance.add(-height, -w, 0);
+            Tess.instance.draw(GL_QUADS);
+            Shader.disable();
+        }
+
+        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (this.gui != null) {
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("gui");
+            double mx = Mouse.getX();
+            double my = Mouse.getY();
+            GuiWindow window = GuiWindowManager.getMouseOver(mx, my);
+            if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
+                mx-=10000;
+                my-=10000;
+            }
+            this.gui.render(fTime, mx, my);
+            if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
+                mx+=10000;
+                my+=10000;
+            }
+            
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            if (this.world == null) {
+
+            }
+            glEnable(GL_DEPTH_TEST);
+            GuiWindowManager.getInstance().render(fTime, mx, my);
+            glDisable(GL_DEPTH_TEST);
+        } else if (this.world != null) {
+            if (showGrid) {
+                int ipX = GameMath.floor(vCam.x);
+                int ipY = GameMath.floor(vCam.y);
+                int ipZ = GameMath.floor(vCam.z);
+                int icX = ipX >> 4;
+                int icZ = ipZ >> 4;
+                int lenOver = RegionRenderer.LENGTH_OVER;
+                lenOver += 8;
+                int chunksW = lenOver * RegionRenderer.REGION_SIZE;
+                int chunkHalfW = ((lenOver - 1) / 2) * RegionRenderer.REGION_SIZE;
+//                int minChunkX = (ipX) - chunkW;
+//                int minChunkZ = (ipZ) - chunkW;
+//                int maxChunkX = (ipX) + chunkW;
+                Tess t = Tess.instance;
+                float chunkWPx = 12.0f;
+                float screenX = 140;
+                float screenZ = 140;
+                for (int cX = 0; cX < chunksW; cX++) {
+                    for (int cZ = 0; cZ < chunksW; cZ++) {
+                        t.setOffset(screenX + chunkWPx * cX, screenZ + chunkWPx * cZ, 0);
+                        int worldChunkX = icX - chunkHalfW + cX;
+                        int worldChunkZ = icZ - chunkHalfW + cZ;
+                        Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
+
+                        float border = 2;
+                        MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
+                        if (region == null) {
+                            t.setColorF(0xff0000, 1);
+                        } else /*if (!region.isRenderable) {
+                            t.setColorF(0x555500, 1);
+                        } else*/
+                        {
+                            int r = 0x777777;
+                            if (Math.abs(region.rX) % 2 == Math.abs(region.rZ) % 2)
+                                r = 0;
+
+                            t.setColorF(r, 1);
+                        }
+                        t.add(0, chunkWPx);
+                        t.add(chunkWPx, chunkWPx);
+                        t.add(chunkWPx, 0);
+                        t.add(0, 0);
+                        if (c == null) {
+                            t.setColorF(0x993333, 1);
+                        } else if (!c.isValid) {
+                            t.setColorF(0x999933, 1);
+                        } else if (worldChunkX == icX && worldChunkZ == icZ) {
+                            t.setColorF(0x333399, 1);
+                        } else {
+                            t.setColorF(0x339933, 1);
+                        }
+                        t.add(border, chunkWPx - border);
+                        t.add(chunkWPx - border, chunkWPx - border);
+                        t.add(chunkWPx - border, border);
+                        t.add(border, border);
+                    }
+                }
+                Shaders.colored.enable();
+                t.drawQuads();
+                Shader.disable();
+            }
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("stats");
+            if (this.statsCached != null) {
+                this.statsCached.render(fTime, 0, 0);
+            }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_DEPTH_TEST);
+            GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
+            glDisable(GL_DEPTH_TEST);
+            Shaders.textured.enable();
+//            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2, 32, 32);
+            
+//            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
+            if (this.chatOverlay != null) {
+                this.chatOverlay.render(fTime, 0, 0);
+            }
+        }else {
+        }
+
+        if (GLDebugTextures.show) {
+//          
+//          if (this.debugOverlay != null) {
+//              this.debugOverlay.render(fTime, 0, 0);
+//          }
+//          
+            
+          GLDebugTextures.drawAll(displayWidth, displayHeight);
+      }
+        
+        glEnable(GL_DEPTH_TEST);
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+        if (VR_SUPPORT) {
+            setVRProjection(); // do this at the end of the frame to leave displayHeight/displayWidth at VR render resolution
+        }
+    }
+
+    private void renderWorld(float fTime, int eye) {
+        if (this.world != null) {
             
             Engine.getSceneFB().bind();
             Engine.getSceneFB().clearFrameBuffer();
@@ -525,6 +733,7 @@ public class Game extends GameBase {
             Engine.outRenderer.bindFB();
             Engine.outRenderer.clearFrameBuffer();
             Engine.outRenderer.render(this.world, fTime, 0);
+            Engine.checkGLError("Engine.outRenderer.render 0");
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
@@ -539,6 +748,7 @@ public class Game extends GameBase {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("copyPreWaterDepth");
                 Engine.outRenderer.copyPreWaterDepth();
+                Engine.checkGLError("copyPreWaterDepth");
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
                 glEnable(GL_BLEND);
@@ -717,14 +927,19 @@ public class Game extends GameBase {
                 GPUProfiler.start("Final");
             GLDebugTextures selTex = GLDebugTextures.getSelected();
 //            &&ticksran%40<20
+            FrameBuffer finalTarget = VR_SUPPORT ? VR.getFB(eye) : null;
             if (selTex != null) {
+                if (finalTarget == null) FrameBuffer.unbindFramebuffer();
+                else {
+                    finalTarget.bind();
+                    finalTarget.clearFrameBuffer();
+                }
                 GLDebugTextures.drawFullScreen(selTex);
                 if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
                     Engine.lightCompute.renderDebug();
                 }
             } else {
-
-                Engine.outRenderer.renderFinal(this.world, fTime);
+                Engine.outRenderer.renderFinal(this.world, fTime, finalTarget);
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
@@ -744,160 +959,6 @@ public class Game extends GameBase {
                 System.err.println("Expected GL_BLEND == false post render");
             }
         }
-        
-        glEnable(GL_BLEND);
-//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-
-        
-
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("gui");
-
-        if (this.world != null && this.gui == null && this.movement.grabbed()) {
-            Shaders.colored.enable();
-            Tess.instance.setColor(-1, 100);
-            Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
-            float height = 1;
-            float w = 8;
-            Tess.instance.add(-w, height, 0);
-            Tess.instance.add(w, height, 0);
-            Tess.instance.add(w, -height, 0);
-            Tess.instance.add(-w, -height, 0);
-            Tess.instance.add(-height, w, 0);
-            Tess.instance.add(height, w, 0);
-            Tess.instance.add(height, -w, 0);
-            Tess.instance.add(-height, -w, 0);
-            Tess.instance.draw(GL_QUADS);
-            Shader.disable();
-        }
-
-        glEnable(GL_BLEND);
-//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (this.gui != null) {
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("gui");
-            double mx = Mouse.getX();
-            double my = Mouse.getY();
-            GuiWindow window = GuiWindowManager.getMouseOver(mx, my);
-            if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
-                mx-=10000;
-                my-=10000;
-            }
-            this.gui.render(fTime, mx, my);
-            if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
-                mx+=10000;
-                my+=10000;
-            }
-            
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-            if (this.world == null) {
-
-            }
-            glEnable(GL_DEPTH_TEST);
-            GuiWindowManager.getInstance().render(fTime, mx, my);
-            glDisable(GL_DEPTH_TEST);
-        } else if (this.world != null) {
-            if (showGrid) {
-                int ipX = GameMath.floor(vCam.x);
-                int ipY = GameMath.floor(vCam.y);
-                int ipZ = GameMath.floor(vCam.z);
-                int icX = ipX >> 4;
-                int icZ = ipZ >> 4;
-                int lenOver = RegionRenderer.LENGTH_OVER;
-                lenOver += 8;
-                int chunksW = lenOver * RegionRenderer.REGION_SIZE;
-                int chunkHalfW = ((lenOver - 1) / 2) * RegionRenderer.REGION_SIZE;
-//                int minChunkX = (ipX) - chunkW;
-//                int minChunkZ = (ipZ) - chunkW;
-//                int maxChunkX = (ipX) + chunkW;
-                Tess t = Tess.instance;
-                float chunkWPx = 12.0f;
-                float screenX = 140;
-                float screenZ = 140;
-                for (int cX = 0; cX < chunksW; cX++) {
-                    for (int cZ = 0; cZ < chunksW; cZ++) {
-                        t.setOffset(screenX + chunkWPx * cX, screenZ + chunkWPx * cZ, 0);
-                        int worldChunkX = icX - chunkHalfW + cX;
-                        int worldChunkZ = icZ - chunkHalfW + cZ;
-                        Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
-
-                        float border = 2;
-                        MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
-                        if (region == null) {
-                            t.setColorF(0xff0000, 1);
-                        } else /*if (!region.isRenderable) {
-                            t.setColorF(0x555500, 1);
-                        } else*/
-                        {
-                            int r = 0x777777;
-                            if (Math.abs(region.rX) % 2 == Math.abs(region.rZ) % 2)
-                                r = 0;
-
-                            t.setColorF(r, 1);
-                        }
-                        t.add(0, chunkWPx);
-                        t.add(chunkWPx, chunkWPx);
-                        t.add(chunkWPx, 0);
-                        t.add(0, 0);
-                        if (c == null) {
-                            t.setColorF(0x993333, 1);
-                        } else if (!c.isValid) {
-                            t.setColorF(0x999933, 1);
-                        } else if (worldChunkX == icX && worldChunkZ == icZ) {
-                            t.setColorF(0x333399, 1);
-                        } else {
-                            t.setColorF(0x339933, 1);
-                        }
-                        t.add(border, chunkWPx - border);
-                        t.add(chunkWPx - border, chunkWPx - border);
-                        t.add(chunkWPx - border, border);
-                        t.add(border, border);
-                    }
-                }
-                Shaders.colored.enable();
-                t.drawQuads();
-                Shader.disable();
-            }
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("stats");
-            if (this.statsCached != null) {
-                this.statsCached.render(fTime, 0, 0);
-            }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_DEPTH_TEST);
-            GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
-            glDisable(GL_DEPTH_TEST);
-            Shaders.textured.enable();
-//            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2, 32, 32);
-            
-//            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
-            if (this.chatOverlay != null) {
-                this.chatOverlay.render(fTime, 0, 0);
-            }
-        }else {
-        }
-
-        if (GLDebugTextures.show) {
-//          
-//          if (this.debugOverlay != null) {
-//              this.debugOverlay.render(fTime, 0, 0);
-//          }
-//          
-            
-          GLDebugTextures.drawAll(displayWidth, displayHeight);
-      }
-        
-        glEnable(GL_DEPTH_TEST);
-
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-
     }
 
     @Override
@@ -906,6 +967,11 @@ public class Game extends GameBase {
             this.statsCached.refresh();
         }
         if (System.currentTimeMillis()-lastShaderLoadTime >=1200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+            int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
+            int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
+            String s = String.format("%s - Display %dx%d - Window %dx%d - SceneFB %dx%d - Gui %dx%d", 
+                    getAppTitle(), displayWidth, displayHeight, windowWidth, windowHeight, iw, ih, guiWidth, guiHeight);
+            setTitle(s);
 //            System.out.println(lastFPS);
 //          System.out.println("initShaders");
             lastShaderLoadTime = System.currentTimeMillis();
@@ -946,6 +1012,7 @@ public class Game extends GameBase {
     
     @Override
     public void preRenderUpdate(float f) {
+        if (VR_SUPPORT) VR.updatePose(f);
         Engine.blockDraw.processQueue();
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
@@ -981,6 +1048,7 @@ public class Game extends GameBase {
             distF = -distF*0.6f;
             float f2 = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * f;
             float f3 = player.prevCameraPitch + (player.cameraPitch - player.prevCameraPitch) * f;
+            if (!VR_SUPPORT)
             Engine.camera.calcViewShake(distF, f2, f3, f);
             float yaw = player.yaw;
             float pitch = player.pitch;
@@ -994,7 +1062,9 @@ public class Game extends GameBase {
             vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
             vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
             vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+            
             vCam.set(vPlayer);
+            
             if (thirdPerson) {
                 Vector3f camOffset = Engine.camera.getCameraOffset();
 //                float dist = camOffset.length();
@@ -1028,23 +1098,29 @@ public class Game extends GameBase {
                 vCam.addVec(camOffset);
             }
             
-            if (this.world.lights.size() > 0) {
-//                DynamicLight l = this.world.lights.get(0);
-//                l.loc.set(vPlayer);
-//                int colorI = Color.HSBtoRGB((ticksran+f)/60, 1, 1);
-//                l.intensity = 0.4F;
-//                l.color = new Vector3f(1*l.intensity);
-//                l.color.x = (float) (((colorI>>16)&0xFF) / 255.0F * l.intensity);
-//                l.color.y = (float) (((colorI>>8)&0xFF) / 255.0F * l.intensity);
-//                l.color.z = (float) (((colorI>>0)&0xFF) / 255.0F * l.intensity);
-            }
-          Engine.camera.setPosition(vCam);
-//          if (Engine.worldRenderer.qmodel!=null)
-//          Engine.worldRenderer.qmodel.setHeadOrientation(yaw, pitch);
+            Engine.camera.setPosition(vCam);
         }
 
         Engine.setLightPosition(this.world.getLightPosition());
-        Engine.updateCamera();
+        Engine.updateGlobalRenderOffset(vCam);
+        if (VR_SUPPORT) {
+
+            vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
+            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
+            vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+
+            vCam.set(vPlayer);
+            
+            //calc negative z offset camera to contain both view frustums
+            t.set(vCam);
+            Vector3f.add(t, VR.cam.unifiedFrustumCameraOffset, t);
+            Matrix4f left = VR.getViewMat(0);
+            Engine.getMatSceneP().load(VR.cam.projLeft);
+            Engine.getMatSceneP().update();
+            Engine.updateCamera(left, t);
+        } else {
+            Engine.updateCamera();
+        }
         Engine.updateShadowProjections(f);
         UniformBuffer.updateUBO(this.world, f);
         if (player != null) {
@@ -1082,21 +1158,33 @@ public class Game extends GameBase {
     
 
     @Override
-    public void setRenderResolution(int displayWidth, int displayHeight) {
+    public void onWindowResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
-            Engine.resize(displayWidth, displayHeight);
             if (this.statsCached != null) {
-                this.statsCached.setSize(displayWidth, displayHeight);
+                this.statsCached.setSize(guiWidth, guiHeight);
                 this.statsCached.setPos(0, 0);
             }
             if (this.gui != null) {
                 this.gui.setPos(0, 0);
-                this.gui.setSize(displayWidth, displayHeight);
+                this.gui.setSize(guiWidth, guiHeight);
                 this.gui.initGui(this.gui.firstOpen);
             }
             this.chatOverlay = new GuiOverlayChat();
-            this.chatOverlay.setPos(8, displayHeight-displayHeight/3-8);
-            this.chatOverlay.setSize(displayWidth/2, displayHeight/3);
+            this.chatOverlay.setPos(8, guiHeight-guiHeight/3-8);
+            this.chatOverlay.setSize(guiWidth/2, guiHeight/3);
+        }
+        if (!VR_SUPPORT||isStarting) {
+            Game.displayWidth=displayWidth;
+            Game.displayHeight=displayHeight;
+            setRenderResolution(displayWidth, displayHeight);
+        }
+    }
+    @Override
+    public void setRenderResolution(int displayWidth, int displayHeight) {
+        if (isRunning()) {
+            Game.displayWidth=displayWidth;
+            Game.displayHeight=displayHeight;
+            Engine.resize(displayWidth, displayHeight);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("onResize");
             GLDebugTextures.onResize();
@@ -1104,7 +1192,7 @@ public class Game extends GameBase {
     }
     @Override
     public void tick() {
-
+        if (VR_SUPPORT) VR.tick();
         if (!isStarting) {
             this.lastTpDistance = settings.thirdpersonDistance;
             if (this.world != null)
@@ -1275,4 +1363,5 @@ public class Game extends GameBase {
         }
         Game.instance.serverAddr = serverAddr;
     }
+
 }

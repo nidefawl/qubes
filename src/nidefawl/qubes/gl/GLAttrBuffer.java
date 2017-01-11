@@ -32,7 +32,7 @@ public class GLAttrBuffer {
         ReallocIntBuffer buffer1 = Engine.getIntBuffer();
         int numInts = buf.storeVertexData(buffer1);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, numInts * 4L, buffer1.getByteBuf(), GL15.GL_STATIC_DRAW);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer1.getByteBuf(), GL15.GL_STATIC_DRAW);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glBufferData ");
         buffer1.setInUse(false);

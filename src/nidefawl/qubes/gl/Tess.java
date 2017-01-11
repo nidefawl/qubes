@@ -6,6 +6,9 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
+import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vec.Vector4f;
+
 public class Tess extends AbstractTesselatorState {
     final public static String[] attributes = new String[] {
             "in_position",
@@ -246,6 +249,12 @@ public class Tess extends AbstractTesselatorState {
     public static void destroyAll() {
         instance.destroy();
         tessFont.destroy();
+    }
+    public void add(Vector4f tmp1) {
+        add(tmp1.x, tmp1.y, tmp1.z);
+    }
+    public void add(Vector3f tmp1) {
+        add(tmp1.x, tmp1.y, tmp1.z);
     }
 
 }

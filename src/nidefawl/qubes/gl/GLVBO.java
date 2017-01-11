@@ -62,19 +62,23 @@ public class GLVBO {
             if (this.vboSize < len) {
                 this.vboSize = len;
                 GL15.glBufferData(type, len, this.usage);
-                GL15.glBufferData(type, len, buffer, this.usage);
+                GL15.glBufferData(type, buffer, this.usage);
                 newBuffer = true;
             } else {
-                GL15.glBufferSubData(type, 0, len, buffer);
+                GL15.glBufferSubData(type, 0, buffer);
             }
         } else {
             this.vboSize = len;
             GL15.glBufferData(type, len, this.usage);
-            GL15.glBufferData(type, len, buffer, this.usage);
+            GL15.glBufferData(type, buffer, this.usage);
             newBuffer = true;
         }
         if (GameBase.GL_ERROR_CHECKS)
             Engine.checkGLError("vbo update");
+        makeResident(type, bindless, newBuffer);
+        
+    }
+    public void makeResident(int type, boolean bindless, boolean newBuffer) {
         this.canUseBindless = false;
 
         if (bindless && GL.isBindlessSuppported()) {
@@ -85,7 +89,6 @@ public class GLVBO {
             this.size = GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
             this.canUseBindless = true;
         }
-        
     }
     public void release() {
         if (this.vboId != 0) {

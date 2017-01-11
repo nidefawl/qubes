@@ -337,5 +337,21 @@ public class Vector4f {
         changed |= w != this.w; this.w = w;
         return changed;
     }
+    public void setElement(int i, float f) {
+        switch (i) {
+            case 0:
+                this.x = f;
+                break;
+            case 1:
+                this.y = f;
+                break;
+            case 2:
+                this.z = f;
+                break;
+            case 3:
+                this.w = f;
+                break;
+        }
+    }
 
 }

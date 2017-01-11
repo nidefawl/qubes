@@ -22,6 +22,10 @@ public class BufferedMatrix extends Matrix4f {
         needInv = false;
     }
     
+    /**
+     * Calculates the inverted matrix and puts both m and m^-1 matrices into native memory.
+     * 
+     */
     public void update() {
         cur.rewind();
         curInv.rewind();

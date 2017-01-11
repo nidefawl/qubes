@@ -118,6 +118,7 @@ public class GLDebugTextures {
         double mouseY = Mouse.getY();
         boolean grab = !Mouse.isGrabbed();
         GLDebugTextures mouseOver = null;
+        int titleY = 0;
         while (itMaps.hasNext()) {
             String mapName = itMaps.next();
             HashMap<String, GLDebugTextures> map = textures.get(mapName);
@@ -125,7 +126,8 @@ public class GLDebugTextures {
             int y = 0;
             float left = xpos+x*(w+gap);
             float right = left+w;
-            FontRenderer.get(0, 18, 0).drawString(mapName, left, ypos, -1, true, 1);
+            titleY=(x%2)*16;
+            FontRenderer.get(0, 18, 0).drawString(mapName, left, ypos-titleY, -1, true, 1);
             while (it.hasNext()) {
                 GLDebugTextures tex = it.next();
                 GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, tex.tex);
@@ -233,8 +235,6 @@ public class GLDebugTextures {
     }
     public static void drawFullScreen(GLDebugTextures t) {
         try {
-
-            FrameBuffer.unbindFramebuffer();
             t.bindShader();
             GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, t.get());
             Engine.drawFullscreenQuad();

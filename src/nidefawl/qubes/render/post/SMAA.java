@@ -152,8 +152,9 @@ public class SMAA {
 
     /**
      * @param texture
+     * @param finalTarget 
      */
-    public void render(int texture, int debugTexture) {
+    public void render(int texture, int debugTexture, FrameBuffer finalTarget) {
         if (true||Game.GL_ERROR_CHECKS) {
             boolean b = glGetBoolean(GL_DEPTH_TEST);
             if (!b) {
@@ -198,7 +199,11 @@ public class SMAA {
         glDepthFunc(GL_EQUAL); // only draw equal z fragments, +30% speed
         
         Engine.drawFullscreenQuad();
-        FrameBuffer.unbindFramebuffer();
+        if (finalTarget == null) FrameBuffer.unbindFramebuffer();
+        else {
+            finalTarget.bind();
+            finalTarget.clearFrameBuffer();
+        }
         glDepthFunc(GL_LEQUAL);
         if (debugTexture == 1) {
             Shaders.textured.enable();

@@ -386,7 +386,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 
         renderBatched.render(fTime);
         renderBatched.reset();
-
+ 
         Engine.setDefaultViewport();
         GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
