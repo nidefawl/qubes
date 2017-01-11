@@ -111,6 +111,8 @@ void main(void) {
 	// 	colorizeLeaves(color_adj, position.xyz);
 	// }
 	float indexNormalMap = BLOCK_NORMAL_SLOT(blockinfo);
+
+	#ifdef NORMAL_MAPPING
 	if (indexNormalMap > 0 && faceDir > 0u) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
  		// vec2 newCoords = texcoord.st;//
 		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
@@ -133,6 +135,7 @@ void main(void) {
 		// 	color_adj=vec3(1,0,0);
 		// }
 	}	
+	#endif
 
 #endif
 	// color_adj*=ambientOccl;
