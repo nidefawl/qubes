@@ -35,8 +35,10 @@ public class AIMove {
             return;
         }
         float f = (GameMath.atan2((float)zD, (float)xD)*180F/GameMath.PI)+90F;
+//        entity.yawBodyOffset=clampAngle(entity.yawBodyOffset, f, 30);
         entity.yaw=clampAngle(entity.yaw, f, 30);
         entity.setMoveForward(this.speed);
+//        entity.setMoveForward(0);
 //        System.out.println("yaw "+entity.yaw);
         if (yD > 0.0D && xD*xD+zD*zD < 1.0D) {
             entity.jump=true;

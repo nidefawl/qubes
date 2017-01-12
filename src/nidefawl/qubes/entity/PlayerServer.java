@@ -64,8 +64,8 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
     /**
      * 
      */
-    public PlayerServer() {
-        super();
+    public PlayerServer(boolean isServerEntity) {
+        super(true);
         this.equipment = new BaseStack[1];
         this.slotsInventory = new SlotsInventory(this);
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {

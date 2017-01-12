@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityPig extends EntityAnimal {
     
-    public EntityPig() {
-        super();
+    public EntityPig(boolean isServerEntity) {
+        super(isServerEntity);
     }
 
     @Override

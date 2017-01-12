@@ -420,7 +420,7 @@ public class ClientHandler extends Handler {
      * @param packetSEntityTrack
      */
     public void handleEntityTrack(PacketSEntityTrack p) {
-        Entity e = EntityType.newById(p.entType);
+        Entity e = EntityType.newById(p.entType, false);
         e.id = p.entId;
         e.pitch = p.pitch;
         e.yaw = p.yaw;

@@ -59,8 +59,10 @@ public abstract class Entity {
     public float prevSwingProgressF;
     public float distanceMoved;
     public float prevDistanceMoved;
+    public final boolean isServerSide;
     
-    public Entity() {
+    public Entity(boolean isServerEntity) {
+        this.isServerSide = isServerEntity;
         this.width = getEntityType().getWidth();
         this.height = getEntityType().getHeight();
         this.length = getEntityType().getLength();
@@ -107,25 +109,35 @@ public abstract class Entity {
         float dist = fx*fx+fz*fz;
         float walkDir = this.yawBodyOffset;
         float walkFactor = 0.0f;
-        if (dist > 0.02) {
+        if (dist > 0.005) {
             walkDir = 180-(GameMath.atan2(fx, fz)*GameMath.P_180_OVER_PI);
             walkFactor = Math.min(1, dist*2.2f);
         } 
-        float walkOffset = GameMath.wrapAngle(walkDir - this.yawBodyOffset);
-        this.yawBodyOffset += walkOffset * walkFactor;
-        float bodyOffset = GameMath.wrapAngle(yaw - this.yawBodyOffset);
-        float maxHeadAngle = 120;
-        if (bodyOffset < -maxHeadAngle)
-            bodyOffset = -maxHeadAngle;
-        if (bodyOffset >= maxHeadAngle)
-            bodyOffset = maxHeadAngle;
-        this.yawBodyOffset = yaw - bodyOffset;
-        if (bodyOffset * bodyOffset > 0.6F) {
-            this.yawBodyOffset += bodyOffset * 0.07F;
-        }
-        if (bodyOffset * bodyOffset > 5500F)
-        {
-            this.yawBodyOffset += bodyOffset * 0.2F;
+        if (!isServerSide) {
+            float walkOffset = GameMath.wrapAngle(walkDir - this.yawBodyOffset);
+            float bodyOffset = GameMath.wrapAngle(yaw - this.yawBodyOffset);
+//            System.out.println(this +" yawBodyOffset "+yawBodyOffset);
+//            System.out.println(this +" yaw "+yaw);
+//            System.out.println(this +" walkDir "+walkDir);
+//            System.out.println(this +" yaw "+GameMath.wrapAngleToRange(walkDir, yaw));
+            this.yawBodyOffset += walkOffset * walkFactor;
+            float maxHeadAngle = 120;
+            if (bodyOffset < -maxHeadAngle)
+                bodyOffset = -maxHeadAngle;
+            if (bodyOffset >= maxHeadAngle)
+                bodyOffset = maxHeadAngle;
+            this.yawBodyOffset = yaw - bodyOffset;
+            if (bodyOffset * bodyOffset > 0.6F) {
+                this.yawBodyOffset += bodyOffset * 0.07F;
+            }
+            if (bodyOffset * bodyOffset > 5500F)
+            {
+                this.yawBodyOffset += bodyOffset * 0.2F;
+            }
+//            this.yawBodyOffset=0;
+        } else {
+            this.yawBodyOffset+=GameMath.wrapAngle(yaw - this.lastYaw)*0.7;
+            this.yawBodyOffset*=0.9f;
         }
         lastYaw=GameMath.wrapAngleToRange(yaw, lastYaw);
         lastYawBodyOffset=GameMath.wrapAngleToRange(yawBodyOffset, lastYawBodyOffset);

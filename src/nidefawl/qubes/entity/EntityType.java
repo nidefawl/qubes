@@ -66,17 +66,17 @@ public class EntityType {
     }
 
     
-    public static Entity newById(int id) {
+    public static Entity newById(int id, boolean serverEntity) {
         EntityType type = mapping[id];
         if (type == null) {
             throw new GameError("Invalid entity type id "+id);
         }
-        return type.newInstance();
+        return type.newInstance(serverEntity);
     }
 
-    public Entity newInstance() {
+    public Entity newInstance(boolean serverEntity) {
         try {
-            return this.clazz.newInstance();
+            return this.clazz.getDeclaredConstructor(boolean.class).newInstance(serverEntity);
         } catch (Exception e) {
             throw new GameError("Failed spawning entity", e);
         }

@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityZombie extends EntityMob {
     
-    public EntityZombie() {
-        super();
+    public EntityZombie(boolean isServerEntity) {
+        super(isServerEntity);
         this.properties = new EntityProperties();
         this.properties.setOption(0, this.random.nextInt(5));
         this.properties.setOption(1, this.random.nextInt(3));

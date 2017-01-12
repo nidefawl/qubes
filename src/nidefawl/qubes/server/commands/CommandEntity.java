@@ -22,6 +22,9 @@ public class CommandEntity extends Command {
                 if (e.getEntityType() == EntityType.PLAYER) {
                     continue;
                 }
+                if (e.getEntityType() == EntityType.PLAYER_SERVER) {
+                    continue;
+                }
                 e.remove();
             }
         } else if ("spawnsome".equals(args[0])) {
@@ -29,14 +32,15 @@ public class CommandEntity extends Command {
             if (args.length > 1) {
                 t= StringUtil.parseInt(args[1], t);
             }
-            for (int i = 0; i < t; i++) {
+            while (t > 0) {
                 int n = p.getRandom().nextInt(23)+2;
                 if (!EntityType.isValid(n)) {
                     continue;
                 }
-                Entity e = EntityType.newById(n);
+                Entity e = EntityType.newById(n, true);
                 e.move(p.pos);
                 w.addEntity(e);
+                t--;
             }
         } else if ("spawn".equals(args[0])) {
             int t = 2;
@@ -51,7 +55,7 @@ public class CommandEntity extends Command {
                 return;
             }
             for (int i = 0; i < n; i++) {
-                Entity e = EntityType.newById(t);
+                Entity e = EntityType.newById(t, true);
                 e.move(p.pos);
                 w.addEntity(e);
             }

@@ -6,8 +6,8 @@ import nidefawl.qubes.entity.ai.AITaskWander;
 
 public abstract class EntityMob extends EntityAI {
     
-    public EntityMob() {
-        super();
+    public EntityMob(boolean isServerEntity) {
+        super(isServerEntity);
         this.taskManager.add(new AITaskWander(this)).setPriority(1);
     }
 }

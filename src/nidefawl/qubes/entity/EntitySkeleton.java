@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntitySkeleton extends EntityMob {
     
-    public EntitySkeleton() {
-        super();
+    public EntitySkeleton(boolean isServerEntity) {
+        super(isServerEntity);
         this.properties = new EntityProperties();
         this.properties.setOption(0, this.random.nextInt(10));
         this.properties.setOption(1, this.random.nextInt(4));

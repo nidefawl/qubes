@@ -71,7 +71,7 @@ public class PlayerManager {
     }
 
     public synchronized PlayerServer addPlayer(String name) {
-        PlayerServer player = (PlayerServer) EntityType.PLAYER_SERVER.newInstance();
+        PlayerServer player = (PlayerServer) EntityType.PLAYER_SERVER.newInstance(true);
         player.name = name;
         PlayerData data = loadPlayer(name);
         Iterator<Map.Entry<UUID, Vector3f>> wpos = data.worldPositions.entrySet().iterator();

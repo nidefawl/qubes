@@ -24,8 +24,8 @@ public abstract class Player extends Entity {
     public float armOffsetPitch;
     public float armOffsetYaw;
     
-    public Player() {
-        super();
+    public Player(boolean isServerEntity) {
+        super(isServerEntity);
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
             inventoryCraft[i] = new PlayerInventoryCrafting(1+i, 4, 4);
         }

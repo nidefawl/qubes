@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityWarrior extends EntityMob {
     
-    public EntityWarrior() {
-        super();
+    public EntityWarrior(boolean isServerEntity) {
+        super(isServerEntity);
         this.properties = new EntityProperties();
         for (int i = 0; i < 9; i++)
             this.properties.setOption(i, this.random.nextInt(3));

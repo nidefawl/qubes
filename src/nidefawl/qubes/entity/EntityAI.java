@@ -16,21 +16,35 @@ public abstract class EntityAI extends Entity {
     public boolean jump;
     private float landMovementFactor = 0.1f;
     private float airMovementFactor = 0.02f;
+
+    public EntityAI(boolean isServerEntity) {
+        super(isServerEntity);
+    }
+    
     
     @Override
     public void tickUpdate() {
-        if (GameContext.getSide() == Side.SERVER) {
+        if (isServerSide) {
             this.taskManager.update();
+//            super.tickUpdate();
+//            this.animUpdate();
+            this.preStep();
+            this.step();
             this.nav.update();
             this.move.update();
-            super.tickUpdate();
-//            this.yaw-=11;
-//            System.out.println(yaw);
+            this.postStep();
         } else {
             this.lastYaw = this.yaw;
+//            System.out.println(yawBodyOffset );
+            this.lastYawBodyOffset = this.yawBodyOffset;
             this.lastPitch = this.pitch;
             this.lastMot.set(this.mot);
             this.lastPos.set(this.pos);
+            this.prevDistanceMoved = this.distanceMoved;
+//            this.lastYaw = this.yaw;
+//            this.lastPitch = this.pitch;
+//            this.lastMot.set(this.mot);
+//            this.lastPos.set(this.pos);
             if (this.posticks>0) {
                 if (this.posticks==1) {
                     this.pos.set(this.remotePos);
@@ -78,8 +92,9 @@ public abstract class EntityAI extends Entity {
             speed = maxSpeed / speed;
             strafe *= speed;
             forward *= speed;
-            float f4 = -GameMath.sin(this.yaw*GameMath.PI_OVER_180);
-            float f5 = -GameMath.cos(this.yaw*GameMath.PI_OVER_180);
+            float f1 = this.yaw-this.yawBodyOffset;
+            float f4 = -GameMath.sin(f1*GameMath.PI_OVER_180);
+            float f5 = -GameMath.cos(f1*GameMath.PI_OVER_180);
             this.mot.x+=(strafe*f5-forward*f4);
             this.mot.z+=(forward*f5+strafe*f4);
         }

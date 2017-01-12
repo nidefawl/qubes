@@ -4,8 +4,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityDemon extends EntityMob {
     
-    public EntityDemon() {
-        super();
+    public EntityDemon(boolean isServerEntity) {
+        super(isServerEntity);
 
         this.properties = new EntityProperties();
         this.properties.setOption(0, this.random.nextInt(6));

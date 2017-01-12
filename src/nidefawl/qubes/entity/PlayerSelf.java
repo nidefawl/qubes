@@ -41,7 +41,7 @@ public class PlayerSelf extends Player {
     
 
     public PlayerSelf(ClientHandler clientHandler, PlayerProfile profile) {
-        super();
+        super(false);
         this.slotsInventory = new SlotsInventory(this, 0, 0, Gui.slotW, Gui.slotBDist);
         for (int i = 0; i < CraftingCategory.NUM_CATS; i++) {
             this.slotsCrafting[i] = new SlotsCrafting(this, 1+i, 0, 0, Gui.slotW, Gui.slotBDist);

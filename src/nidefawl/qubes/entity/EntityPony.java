@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityPony extends EntityAnimal {
     
-    public EntityPony() {
-        super();
+    public EntityPony(boolean isServerEntity) {
+        super(isServerEntity);
     }
 
     @Override

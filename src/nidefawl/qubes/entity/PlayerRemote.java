@@ -21,6 +21,7 @@ public class PlayerRemote extends Player {
      * 
      */
     public PlayerRemote() {
+        super(false);
     }
 
     public void readClientData(Tag tag) {

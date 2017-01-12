@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityPuppy extends EntityAnimal {
     
-    public EntityPuppy() {
-        super();
+    public EntityPuppy(boolean isServerEntity) {
+        super(isServerEntity);
     }
 
     @Override

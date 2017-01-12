@@ -6,8 +6,8 @@ import nidefawl.qubes.models.EntityModel;
 
 public class EntityArcher extends EntityMob {
     
-    public EntityArcher() {
-        super();
+    public EntityArcher(boolean isServerEntity) {
+        super(isServerEntity);
         this.properties = new EntityProperties();
         for (int i = 0; i < 9; i++)
             this.properties.setOption(i, this.random.nextInt(3));
