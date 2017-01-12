@@ -683,12 +683,14 @@ public class VR {
         fbLeft = new FrameBuffer(w, h);
         fbLeft.setColorAtt(GL_COLOR_ATTACHMENT0, GL11.GL_RGBA8);
         fbLeft.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 1F, 1F);
+        fbLeft.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 1F);
         fbLeft.setColorTexExtFmt(GL11.GL_RGBA);
         fbLeft.setColorTexExtType(GL11.GL_UNSIGNED_BYTE);
         fbLeft.setup(null);
         fbRight = new FrameBuffer(w, h);
         fbRight.setColorAtt(GL_COLOR_ATTACHMENT0, GL11.GL_RGBA8);
         fbRight.setClearColor(GL_COLOR_ATTACHMENT0, 1F, 0F, 0F, 1F);
+        fbRight.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 1F);
         fbRight.setColorTexExtFmt(GL11.GL_RGBA);
         fbRight.setColorTexExtType(GL11.GL_UNSIGNED_BYTE);
         fbRight.setHasDepthAttachment();
