@@ -475,10 +475,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (this.vendor != GPUVendor.INTEL) {
             int vsync = 0;
             if (b) {
-                vsync = 1;
-//                if (GL.getCaps().WGL_EXT_swap_control && GL.getCaps().WGL_EXT_swap_control_tear) {
-//                    vsync = -1;
-//                }
+                vsync = -1;
             }
             glfwSwapInterval(vsync);
         }
@@ -675,8 +672,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 if (s > a*2L) {
 //                    System.out.println("slow frame "+s);
                 }
-                if (i%200==0) {
-//                    System.out.println(a);
+//                if (i%200==0) {
+////                    System.out.println(a);
+//                }
+                if (i == 1000) {
+                    GL_ERROR_CHECKS=false;
                 }
             }
         } catch (Throwable t) {
@@ -952,6 +952,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (this.gui != null) {
             this.gui.onClose();
         }
+        System.out.println("gui is now "+gui);
         this.gui = gui;
         if (this.gui != null) {
             this.gui.setPos(0, 0);

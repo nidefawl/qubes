@@ -503,7 +503,9 @@ public class Game extends GameBase {
 
             
             FrameBuffer.unbindFramebuffer();
-            VR.Submit();
+            if (this.world != null) {
+                VR.Submit();
+            }
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("VR.Submit");
             setGUIProjection();
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("setGUIProjection");
@@ -670,6 +672,7 @@ public class Game extends GameBase {
     }
 
     private void renderWorld(float fTime, int eye) {
+        FrameBuffer finalTarget = VR_SUPPORT ? VR.getFB(eye) : null;
         if (this.world != null) {
             
             Engine.getSceneFB().bind();
@@ -696,6 +699,7 @@ public class Game extends GameBase {
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("ShadowPass");
+            if (!VR_SUPPORT || eye == 0)
             Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
@@ -709,6 +713,7 @@ public class Game extends GameBase {
 //            FrameBuffer.unbindFramebuffer();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("lightCompute 0");
+            if (!VR_SUPPORT || eye == 0)
             Engine.lightCompute.render(this.world, fTime, 0);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
@@ -789,6 +794,7 @@ public class Game extends GameBase {
             if (Engine.outRenderer.getSsr() > 0) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("SSR");
+                if (!VR_SUPPORT || eye == 0)
                 Engine.outRenderer.raytraceSSR(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
@@ -816,6 +822,7 @@ public class Game extends GameBase {
                     GPUProfiler.end();
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("lightCompute 1");
+                if (!VR_SUPPORT || eye == 0)
                 Engine.lightCompute.render(this.world, fTime, 1);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
@@ -840,6 +847,7 @@ public class Game extends GameBase {
             if (Engine.outRenderer.getSsr() > 0) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("SSR2");
+                if (!VR_SUPPORT || eye == 0)
                 Engine.outRenderer.combineSSR(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
@@ -927,7 +935,6 @@ public class Game extends GameBase {
                 GPUProfiler.start("Final");
             GLDebugTextures selTex = GLDebugTextures.getSelected();
 //            &&ticksran%40<20
-            FrameBuffer finalTarget = VR_SUPPORT ? VR.getFB(eye) : null;
             if (selTex != null) {
                 if (finalTarget == null) FrameBuffer.unbindFramebuffer();
                 else {
@@ -944,6 +951,13 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
+        } else {
+
+            if (finalTarget == null) FrameBuffer.unbindFramebuffer();
+            else {
+                finalTarget.bind();
+                finalTarget.clearFrameBuffer();
+            }
         }
         if (GL_ERROR_CHECKS) {
             if (glGetInteger(GL_DEPTH_FUNC) != GL_LEQUAL) {
@@ -1022,10 +1036,14 @@ public class Game extends GameBase {
                 setWorld(null);
                 setPlayer(null);
                 this.client = null;
-                if (this.gui == null || !"userrequest".equals(reason)) {
+                System.out.println("disco "+this.server.getStatus());
+                if (this.server.getStatus()) {
+                    this.server.stop();
+                    showGUI(new GuiShutdownServer());
+                }else if (this.gui == null || !"userrequest".equals(reason)) {
                     showGUI(new GuiDisconnected(reason));
-                }
-                this.server.stop();
+                } else
+                    showGUI(null);
             } else {
                 this.client.update();
             }
@@ -1230,7 +1248,6 @@ public class Game extends GameBase {
         if (world != null) {
             setWorld(null);
         }
-        showGUI(new GuiMainMenu());  
         if (client != null) {
             client.disconnect("userrequest");
         }

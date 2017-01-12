@@ -68,7 +68,7 @@ public class GameServer implements Runnable, IErrorHandler {
 			e.printStackTrace();
 		} finally {
 		    onShutdown();
-			System.out.println("server ended");
+			System.out.println("server ended. try again");
 			this.finished = true;
 		}
 	}
@@ -213,7 +213,6 @@ public class GameServer implements Runnable, IErrorHandler {
 
 	private void onShutdown() {
 		if (!this.finished) {
-			this.finished = true;
 			System.out.println("Shutting down server...");
             try {
                 save(true);
@@ -236,6 +235,7 @@ public class GameServer implements Runnable, IErrorHandler {
                     e.printStackTrace();
                 }
             }
+            this.finished = true;
 		}
 	}
 
@@ -310,4 +310,7 @@ public class GameServer implements Runnable, IErrorHandler {
         return System.currentTimeMillis();
     }
 
+    public boolean isFinished() {
+        return this.finished;
+    }
 }

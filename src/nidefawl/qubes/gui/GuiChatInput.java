@@ -52,8 +52,8 @@ public class GuiChatInput extends Gui implements ITextEdit {
             int yP = 8;
             this.field = new TextField(this, 2, "");
             this.field.getTextInput().setHistory(ChatManager.getInstance());
-            field.setPos(xP, Game.displayHeight-h-yP);
-            field.setSize(Game.displayWidth/2, h);
+            field.setPos(xP, Game.guiHeight-h-yP);
+            field.setSize(Game.guiWidth/2, h);
             field.focused = true;
             GuiContext.input=field;
             this.field.alpha = 0.1f;

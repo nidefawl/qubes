@@ -3,6 +3,7 @@ package nidefawl.qubes.server;
 public class LocalGameServer {
 
     GameServer server;
+    private GameServer shutdownServ;
     
     public LocalGameServer() {
         this.server = new GameServer();
@@ -24,8 +25,16 @@ public class LocalGameServer {
     public void stop() {
         GameServer serv = this.server;
         if (serv != null) {
+            this.shutdownServ = serv;
             serv.stopServer(); 
         }
         this.server = null;
+    }
+    public boolean isShutdownDone() {
+        GameServer serv = this.shutdownServ;
+        if (serv != null) {
+            return this.shutdownServ.isFinished();
+        }
+        return false;
     }
 }
