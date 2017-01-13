@@ -23,11 +23,13 @@ import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.IThreadedWork;
+import nidefawl.qubes.util.ThreadedWorker;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
-public class RegionRenderer extends AbstractRenderer {
+public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
     public static final int REGION_SIZE_BITS            = 1;
     public static final int REGION_SIZE                 = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK            = REGION_SIZE - 1;
@@ -68,6 +70,12 @@ public class RegionRenderer extends AbstractRenderer {
     private ArrayList<MeshedRegion> shadowRenderList      = new ArrayList<>();
     
     private ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
+    static class ThreadContext {
+         ArrayList<MeshedRegion> renderList      = new ArrayList<>();
+         ArrayList<MeshedRegion> shadowRenderList      = new ArrayList<>();
+         ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
+         int workedOn=0;
+    }
     boolean                         needsSortingUpdateRenderers    = false;
     
     
@@ -83,6 +91,12 @@ public class RegionRenderer extends AbstractRenderer {
     float camX; float camY; float camZ;
     MeshedRegion[][] regions;
     public int numV;
+    private ThreadedWorker worker;
+    private ThreadContext[] threadCtx;
+    int rChunkX, rChunkY, rChunkZ;
+    public boolean threadedCulling = false;
+    
+    
     /*
      * typedef struct {
      *   GLuint   index;
@@ -133,6 +147,13 @@ public class RegionRenderer extends AbstractRenderer {
         setRenderDistance(Game.instance.settings.chunkLoadDistance>>(REGION_SIZE_BITS));
         IntBuffer intbuf = Engine.glGenBuffers(this.occlQueries.length);
         intbuf.get(this.occlQueries);
+
+        worker = new ThreadedWorker(4);
+        worker.init();
+        threadCtx = new ThreadContext[4];
+        for (int i = 0; i < 4; i++) {
+            this.threadCtx[i] = new ThreadContext();
+        }
     }
     
     public void initShaders() {
@@ -575,21 +596,18 @@ public class RegionRenderer extends AbstractRenderer {
         renderList.clear();
         shadowRenderList.clear();
     }
-     void putRegion(MeshedRegion r) {
-        renderList.add(r);
-    }
-
-
-
+    
     public void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         TimingHelper.startSilent(2);
         flushRegions();
         camX=lastCamX;
         camY=lastCamY;
         camZ=lastCamZ;
-        int rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-        int rChunkY = GameMath.floor(lastCamY)>>(RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
-        int rChunkZ = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+
+        rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+        rChunkY = GameMath.floor(lastCamY)>>(RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
+        rChunkZ = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+        
         boolean reposition = false;
         //TODO: only move center every n regions
         if (rChunkX != this.renderChunkX || rChunkZ != this.renderChunkZ) {
@@ -616,50 +634,32 @@ public class RegionRenderer extends AbstractRenderer {
 //        long n, timespent;
 //        timespent = 0L;
 //        TimingHelper.startSilent(1);
-        for (int i = 0; i < this.regions.length; i++) {
-            MeshedRegion[] regions = this.regions[i];
-            for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
-                MeshedRegion m = regions[yy];
-                if (m != null) {
-                    int newDistance = GameMath.distSq3Di(rChunkX, rChunkY, rChunkZ, m.rX, m.rY, m.rZ);
-                    m.distance = newDistance;
-                    if (m.occlusionQueryState == 0 && m.occlusionResult > 0) {
-//                        //m.occlFrameSkips > 100
-//                        if (/*queriesRunning < this.occlQueries.length || */m.queryPos.distanceSq(camX, camY, camZ) >= 3) {
-//                            m.occlusionResult = 0;
-//                            m.occlFrameSkips = 0;
-//                        }
-                        if (queriesRunning < this.occlQueries.length && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
-                            m.occlusionResult = 0;
-                            m.occlFrameSkips = 0;
-                        }
-                    }
-                    if (m.isRenderable && m.hasAnyPass()) {
-//                        n=System.nanoTime();
-                        updateFrustum(m);
-//                        timespent+=System.nanoTime()-n;
-                        int a = 0;
-                        for (;a<4;a++) {
-                            if (m.frustumStates[a]>-1) {
-                                if (a == 0)
-                                    putRegion(m);
-                                if (a > 0) {
-                                    shadowRenderList.add(m);
-                                    break;
-                                }
-                            }
-                        }
-                    } /* else if (m.ticksSinceFrustumUpdate++>20) { 
-                        updateFrustum(m);...
-                        */ 
-                    if (m.needsUpdate && !m.isUpdating) {
-                        m.isUpdating = true;
-                        regionsToUpdate.add(m);
-                        needsSortingUpdateRenderers = true;
-                    }
-                }
+        
+        if (threadedCulling) {
+            for (int i = 0; i < 4; i++) {
+                threadCtx[i].regionsToUpdate.clear();
+                threadCtx[i].renderList.clear();
+                threadCtx[i].shadowRenderList.clear();
+                threadCtx[i].workedOn=0;
             }
+            TimingHelper.start(4);
+            worker.work(this);
+            TimingHelper.end(4);
+            for (int i = 0; i < 4; i++) {
+                this.regionsToUpdate.addAll(threadCtx[i].regionsToUpdate);
+                this.renderList.addAll(threadCtx[i].renderList);
+                this.shadowRenderList.addAll(threadCtx[i].shadowRenderList);
+            }
+//            for (int i = 0; i < 4; i++) {
+//                System.out.println("thread "+i+" worked on "+threadCtx[i].workedOn);
+//            }
+            
+        } else {
+            TimingHelper.start(3);
+            traverseRenderers();
+            TimingHelper.end(3);
         }
+//        traverseRenderers(rChunkX, rChunkY, rChunkZ);
 //        System.out.println(timespent/1000L);
 //        long took = TimingHelper.stopSilent(1);
 //        System.out.println("array "+took);
@@ -710,6 +710,110 @@ public class RegionRenderer extends AbstractRenderer {
             System.err.println("queries running < 0!!!!!!!!!!");
         }
     }
+
+    @Override
+    public void fromThread(int threadId, int maxThreads) {
+        ThreadContext t = this.threadCtx[threadId];
+        int perThread = (int) Math.ceil(this.regions.length/(float)maxThreads);
+        int start = threadId*perThread;
+        int end = start+perThread;
+        if (threadId==maxThreads-1)
+            end=this.regions.length;
+        for (int i = start; i < end; i++) {
+            MeshedRegion[] regions = this.regions[i];
+            for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
+                MeshedRegion m = regions[yy];
+                if (m != null) {
+                    t.workedOn++;
+                    int newDistance = GameMath.distSq3Di(rChunkX, rChunkY, rChunkZ, m.rX, m.rY, m.rZ);
+                    m.distance = newDistance;
+                    if (m.occlusionQueryState == 0 && m.occlusionResult > 0) {
+//                        //m.occlFrameSkips > 100
+//                        if (/*queriesRunning < this.occlQueries.length || */m.queryPos.distanceSq(camX, camY, camZ) >= 3) {
+//                            m.occlusionResult = 0;
+//                            m.occlFrameSkips = 0;
+//                        }
+                        if (queriesRunning < this.occlQueries.length && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
+                            m.occlusionResult = 0;
+                            m.occlFrameSkips = 0;
+                        }
+                    }
+                    if (m.isRenderable && m.hasAnyPass()) {
+//                        n=System.nanoTime();
+                        updateFrustum(m);
+//                        timespent+=System.nanoTime()-n;
+                        int a = 0;
+                        for (;a<4;a++) {
+                            if (m.frustumStates[a]>-1) {
+                                if (a == 0)
+                                    t.renderList.add(m);
+                                if (a > 0) {
+                                    t.shadowRenderList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                    } /* else if (m.ticksSinceFrustumUpdate++>20) { 
+                        updateFrustum(m);...
+                        */ 
+                    if (m.needsUpdate && !m.isUpdating) {
+                        m.isUpdating = true;
+                        t.regionsToUpdate.add(m);
+                        needsSortingUpdateRenderers = true;
+                    }
+                }
+            }
+        }
+    
+    }
+    public void traverseRenderers() {
+
+        for (int i = 0; i < this.regions.length; i++) {
+            MeshedRegion[] regions = this.regions[i];
+            for (int yy = 0; yy < HEIGHT_SLICES; yy++) {
+                MeshedRegion m = regions[yy];
+                if (m != null) {
+                    int newDistance = GameMath.distSq3Di(rChunkX, rChunkY, rChunkZ, m.rX, m.rY, m.rZ);
+                    m.distance = newDistance;
+                    if (m.occlusionQueryState == 0 && m.occlusionResult > 0) {
+//                        //m.occlFrameSkips > 100
+//                        if (/*queriesRunning < this.occlQueries.length || */m.queryPos.distanceSq(camX, camY, camZ) >= 3) {
+//                            m.occlusionResult = 0;
+//                            m.occlFrameSkips = 0;
+//                        }
+                        if (queriesRunning < this.occlQueries.length && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
+                            m.occlusionResult = 0;
+                            m.occlFrameSkips = 0;
+                        }
+                    }
+                    if (m.isRenderable && m.hasAnyPass()) {
+//                        n=System.nanoTime();
+                        updateFrustum(m);
+//                        timespent+=System.nanoTime()-n;
+                        int a = 0;
+                        for (;a<4;a++) {
+                            if (m.frustumStates[a]>-1) {
+                                if (a == 0)
+                                    renderList.add(m);
+                                if (a > 0) {
+                                    shadowRenderList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                    } /* else if (m.ticksSinceFrustumUpdate++>20) { 
+                        updateFrustum(m);...
+                        */ 
+                    if (m.needsUpdate && !m.isUpdating) {
+                        m.isUpdating = true;
+                        regionsToUpdate.add(m);
+                        needsSortingUpdateRenderers = true;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @param m
      */

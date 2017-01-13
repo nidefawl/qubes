@@ -7,7 +7,7 @@
 	<property name="target" value="1.8"/>
 	<property name="source" value="1.8"/>
 	<property name="cryptfilepath" value="C:\Users\Michael\workspace_projects" />
-	<property name="server_target_jar" value="U:/game/server.jar" />
+	<property name="server_target_jar" value="D:/webserver/www/files/server.jar" />
 	<property name="compile_dir" value="../compile" />
 	<path id="Game.classpath">
 		<pathelement location="bin"/>
@@ -106,7 +106,7 @@
 			<arg value="-i"/>
 			<arg value="../game.jar"/>
 			<arg value="-o"/>
-			<arg value="U:/qubes/files/game.dat"/>
+			<arg value="D:/webserver/www/files/game.dat"/>
 		</exec>
 	</target>
 	<target name="fastobfuscate">
@@ -134,7 +134,7 @@
 			<arg value="-i"/>
 			<arg value="../game_obf.jar"/>
 			<arg value="-o"/>
-			<arg value="U:/qubes/files/game.dat"/>
+			<arg value="D:/webserver/www/files/game.dat"/>
 		</exec>
 	</target>
 	<target name="build_copy_shader_and_jar">
@@ -157,7 +157,7 @@
 			<arg value="-i"/>
 			<arg value="../game_res.dat"/>
 			<arg value="-o"/>
-			<arg value="U:/qubes/files/game_res.dat"/>
+			<arg value="D:/webserver/www/files/game_res.dat"/>
 		</exec>
 	</target>
 
@@ -209,7 +209,7 @@
 		<jar destfile="../game_deps.jar" compress="false">
 			<fileset dir="${compile_dir}/deps" includes="**/*" />
 		</jar>
-		<copy includeemptydirs="false" todir="U:/qubes/files">
+		<copy includeemptydirs="false" todir="D:/webserver/www/files">
 			<fileset file="../game_deps.jar" />
 		</copy>
 	</target>
