@@ -2,9 +2,7 @@ package nidefawl.qubes.server;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import nidefawl.qubes.chat.ChannelManager;
@@ -21,6 +19,11 @@ import nidefawl.qubes.util.Side;
 import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
+import nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest;
+import nidefawl.qubes.worldgen.terrain.TerrainGeneratorIsland;
+import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight;
+import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
+import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2;
 
 @SideOnly(value = Side.SERVER)
 public class GameServer implements Runnable, IErrorHandler {
@@ -80,9 +83,9 @@ public class GameServer implements Runnable, IErrorHandler {
             throw new RuntimeException(e);
         }
         this.playerManager.init();
-        File worldFolder = WorkingEnv.getWorldsFolder();
-        worldFolder.mkdirs();
-        File[] worldList = worldFolder.listFiles(new FileFilter() {
+        File worldsFolder = WorkingEnv.getWorldsFolder();
+        worldsFolder.mkdirs();
+        File[] worldList = worldsFolder.listFiles(new FileFilter() {
             
             @Override
             public boolean accept(File pathname) {
@@ -92,41 +95,83 @@ public class GameServer implements Runnable, IErrorHandler {
         ArrayList<WorldServer> worldsLoaded = new ArrayList<>();
         for (int i = 0; worldList != null && i < worldList.length; i++) {
             File worldDirectory = worldList[i];
-            try {
-                WorldSettings settings = new WorldSettings(worldDirectory);
-                File settingsFile = new File(worldDirectory, "world.yml");
-                settings.load(settingsFile);
-                settings.setId(getNextWorldID());
-                settings.write(settingsFile);
-                WorldServer world = new WorldServer(settings, this);
-                worldsLoaded.add(world);
-            } catch (InvalidConfigException e) {
-                e.printStackTrace();
-            }
+            WorldServer world = loadWorld(worldDirectory);
+            worldsLoaded.add(world);
         }
         if (worldsLoaded.isEmpty()) {
-            String name = "world";
-            File f = new File(worldFolder, name);
-            f.mkdirs();
-            WorldSettings settings = new WorldSettings(f);
-            File fConfig = new File(f, "world.yml");
-            try {
-                settings.write(fConfig);
-            } catch (InvalidConfigException e) {
-                e.printStackTrace();
-            }
-            try {
-                WorldServer world = new WorldServer(settings, this);
-                settings.setId(getNextWorldID());
-                worldsLoaded.add(world);
-            } catch (InvalidConfigException e) {
-                e.printStackTrace();
-            }
+            tryCreateDefaultWorlds(worldsFolder, worldsLoaded);
         }
         this.worlds = worldsLoaded.toArray(new WorldServer[worldsLoaded.size()]);
         for (int i = 0; i < this.worlds.length; i++) {
             this.worlds[i].onLoad();
             this.worldsMap.put(this.worlds[i].getUUID(), this.worlds[i]);
+        }
+    }
+
+    private WorldServer loadWorld(File worldDirectory) {
+        try {
+            WorldSettings settings = new WorldSettings(worldDirectory);
+            File settingsFile = new File(worldDirectory, "world.yml");
+            settings.load(settingsFile);
+            settings.setId(getNextWorldID());
+            settings.save();
+            WorldServer world = new WorldServer(settings, this);
+            return world;
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void tryCreateDefaultWorlds(File worldsFolder, ArrayList<WorldServer> worldsLoaded) {
+        Random r = new Random();
+        File f1 = new File(worldsFolder, "island");
+        if (!f1.exists() || !new File(f1, "world.yml").exists()) {
+            f1.mkdirs();
+            WorldSettings settings = new WorldSettings(f1);
+            settings.seed = r.nextLong();
+            settings.generatorName = TerrainGeneratorIsland.GENERATOR_NAME;
+            settings.saveFile();
+            WorldServer world = loadWorld(f1);
+            if (world != null) {
+                worldsLoaded.add(world);
+            }
+        }
+        f1 = new File(worldsFolder, "world_biomes");
+        if (!f1.exists() || !new File(f1, "world.yml").exists()) {
+            f1.mkdirs();
+            WorldSettings settings = new WorldSettings(f1);
+            settings.seed = r.nextLong();
+            settings.generatorName = TerrainGeneratorMain.GENERATOR_NAME;
+            settings.saveFile();
+            WorldServer world = loadWorld(f1);
+            if (world != null) {
+                worldsLoaded.add(world);
+            }
+        }
+        f1 = new File(worldsFolder, "world_single_biome");
+        if (!f1.exists() || !new File(f1, "world.yml").exists()) {
+            f1.mkdirs();
+            WorldSettings settings = new WorldSettings(f1);
+            settings.seed = r.nextLong();
+            settings.generatorName = TerrainGeneratorTest2.GENERATOR_NAME;
+            settings.saveFile();
+            WorldServer world = loadWorld(f1);
+            if (world != null) {
+                worldsLoaded.add(world);
+            }
+        }
+        f1 = new File(worldsFolder, "world_block_test");
+        if (!f1.exists() || !new File(f1, "world.yml").exists()) {
+            f1.mkdirs();
+            WorldSettings settings = new WorldSettings(f1);
+            settings.seed = r.nextLong();
+            settings.generatorName = TerrainGenBlockTest.GENERATOR_NAME;
+            settings.saveFile();
+            WorldServer world = loadWorld(f1);
+            if (world != null) {
+                worldsLoaded.add(world);
+            }
         }
     }
 
@@ -196,11 +241,13 @@ public class GameServer implements Runnable, IErrorHandler {
         this.playerManager.updateTick();
     }
     private void saveAndUnloadData() {
-        int idx = this.lastSaveStep++%this.worlds.length;
-        try {
-            this.worlds[idx].unloadUnused();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (this.worlds.length > 0) {
+            int idx = this.lastSaveStep++%this.worlds.length;
+            try {
+                this.worlds[idx].unloadUnused();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
