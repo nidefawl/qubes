@@ -88,7 +88,7 @@ public class Particle {
     public void tickUpdate(World world) {
         this.preStep();
          
-        if (sleeping&&tick%4==0) {
+        if (world != null && sleeping&&tick%4==0) {
             aabb2.set(this.aabb);
             aabb2.expandTo(this.mot.x, this.mot.y, this.mot.z);
             if (!this.coll.queryAnyCollisions(world, aabb2, 0.1f)) {
@@ -107,7 +107,7 @@ public class Particle {
             }
         }
         this.postStep();
-        if ((!sleeping&&sleepTicks > 4) || sleeping) {
+        if (world != null && ((!sleeping&&sleepTicks > 4) || sleeping)) {
             int iX = GameMath.floor(this.pos.x);
             int iY = GameMath.floor(this.pos.y);
             int iZ = GameMath.floor(this.pos.z);
