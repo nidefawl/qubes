@@ -1,230 +1,274 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
-<project basedir="." default="build_game" name="Game">
-    <taskdef resource="proguard/ant/task.properties" classpath="D:/proguard5.1/lib/proguard.jar" />
-    <property environment="env"/>
-    <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.7"/>
-    <property name="source" value="1.7"/>
-	<property name="cryptfilepath" value="..\" />
+<project basedir="." default="build_game_no_obf" name="Game">
+	<taskdef resource="proguard/ant/task.properties" classpath="D:/proguard5.1/lib/proguard.jar" />
+	<property environment="env"/>
+	<property name="debuglevel" value="source,lines,vars"/>
+	<property name="target" value="1.8"/>
+	<property name="source" value="1.8"/>
+	<property name="cryptfilepath" value="C:\Users\Michael\workspace_projects" />
 	<property name="server_target_jar" value="U:/game/server.jar" />
 	<property name="compile_dir" value="../compile" />
-    <path id="Game.classpath">
-        <pathelement location="bin"/>
-        <pathelement location="lib/jline/jline-2.13.jar"/>
-        <pathelement location="lib/lwjgl_dbg/lwjgl.jar"/>
-        <pathelement location="lib/guava/guava-18.0.jar"/>
-        <pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
-        <pathelement location="lib/jna/jna-4.2.2.jar"/>
-        <pathelement location="lib/openvr/JOpenVR.jar"/>
-    </path>
-	
-    <target name="clean">
-        <delete dir="${compile_dir}/bin/client" failonerror="no"/>
-        <delete dir="${compile_dir}/src/client" failonerror="no"/>
-        <delete dir="${compile_dir}/bin/server" failonerror="no"/>
-        <delete dir="${compile_dir}/src/server" failonerror="no"/>
-    </target>
-    <target name="build_game_init_copy_src">
-    	<delete dir="${compile_dir}/bin/client" failonerror="no"/>
-    	<delete dir="${compile_dir}/src/client" failonerror="no"/>
-        <mkdir dir="${compile_dir}/bin/client"/>
-        <mkdir dir="${compile_dir}/src/client"/>
-    	<exec executable="java">
-    	    <arg value="-jar"/>
-    	    <arg value="../preprocessor.jar"/>
-    	    <arg value="--config"/>
-    	    <arg value="build_config/client_drop_pkg.txt"/>
-    	    <arg value="--side"/>
-    	    <arg value="client"/>
-		    <arg value="--in"/>
-    	    <arg value="src"/>
-		    <arg value="--out"/>
-		    <arg value="${compile_dir}/src/client"/>
-		    <arg value="--bypass"/>
-	    </exec>
-    	<exec executable="java">
-    	    <arg value="-jar"/>
-    	    <arg value="../preprocessor.jar"/>
-    	    <arg value="--config"/>
-    	    <arg value="build_config/client_drop_pkg.txt"/>
-    	    <arg value="--side"/>
-    	    <arg value="client"/>
-		    <arg value="--in"/>
-    	    <arg value="../GLFW/src"/>
-		    <arg value="--out"/>
-		    <arg value="${compile_dir}/src/client"/>
-		    <arg value="--bypass"/>
-	    </exec>
-        <mkdir dir="${compile_dir}/bin/client/res"/>
-        <copy includeemptydirs="false" todir="${compile_dir}/bin/client/res">
-	        <fileset dir="res" includes="shaders/**/*" /> 
-        </copy>
-    </target>
-    <target name="build_game_compile">
-        <buildnumber file="../build.number"/>
-        <replace>
-            <fileset dir="${compile_dir}/src/client" includes="nidefawl/qubes/Game.java" />
-            <replacefilter token="::BUILD_CODE::" value="${build.number}" />
-    	</replace>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/client" source="${source}" target="${target}">
-            <src path="${compile_dir}/src/client"/>
-            <classpath refid="Game.classpath"/>
-        </javac>
-    </target>
-    <target name="build_game_jar">
-	    <delete file="../game.jar" failonerror="no"/>
+	<path id="Game.classpath">
+		<pathelement location="bin"/>
+		<pathelement location="lib/jline/jline-2.13.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-opengl.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-opencl.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-openal.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-glfw.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-jemalloc.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-sse.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-nanovg.jar"/>
+		<pathelement location="lib/lwjgl3.1/lwjgl-stb.jar"/>
+		<pathelement location="lib/guava/guava-18.0.jar"/>
+		<pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
+		<pathelement location="lib/jna/jna-4.2.2.jar"/>
+		<pathelement location="lib/openvr/JOpenVR.jar"/>
+	</path>
+
+	<target name="clean">
+		<delete dir="${compile_dir}/bin/client" failonerror="no"/>
+		<delete dir="${compile_dir}/src/client" failonerror="no"/>
+		<delete dir="${compile_dir}/bin/server" failonerror="no"/>
+		<delete dir="${compile_dir}/src/server" failonerror="no"/>
+	</target>
+	<target name="build_game_init_copy_src">
+		<delete dir="${compile_dir}/bin/client" failonerror="no"/>
+		<delete dir="${compile_dir}/src/client" failonerror="no"/>
+		<mkdir dir="${compile_dir}/bin/client"/>
+		<mkdir dir="${compile_dir}/src/client"/>
+		<exec executable="java">
+			<arg value="-jar"/>
+			<arg value="../preprocessor.jar"/>
+			<arg value="--config"/>
+			<arg value="build_config/client_drop_pkg.txt"/>
+			<arg value="--side"/>
+			<arg value="client"/>
+			<arg value="--in"/>
+			<arg value="src"/>
+			<arg value="--out"/>
+			<arg value="${compile_dir}/src/client"/>
+			<arg value="--bypass"/>
+		</exec>
+		<exec executable="java">
+			<arg value="-jar"/>
+			<arg value="../preprocessor.jar"/>
+			<arg value="--config"/>
+			<arg value="build_config/client_drop_pkg.txt"/>
+			<arg value="--side"/>
+			<arg value="client"/>
+			<arg value="--in"/>
+			<arg value="../GLFW/src"/>
+			<arg value="--out"/>
+			<arg value="${compile_dir}/src/client"/>
+			<arg value="--bypass"/>
+		</exec>
+		<mkdir dir="${compile_dir}/bin/client/res"/>
+		<copy includeemptydirs="false" todir="${compile_dir}/bin/client/res">
+			<fileset dir="res" includes="shaders/**/*" />
+		</copy>
+	</target>
+	<target name="build_game_compile">
+		<buildnumber file="../build.number"/>
+		<replace>
+			<fileset dir="${compile_dir}/src/client" includes="nidefawl/qubes/Game.java" />
+			<replacefilter token="::BUILD_CODE::" value="${build.number}" />
+		</replace>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/client" source="${source}" target="${target}">
+			<src path="${compile_dir}/src/client"/>
+			<classpath refid="Game.classpath"/>
+		</javac>
+	</target>
+	<target name="build_game_jar">
+		<delete file="../game.jar" failonerror="no"/>
 		<jar destfile="../game.jar" basedir="${compile_dir}/bin/client" includes="**/*" compress="false">
 		</jar>
-    </target>
+	</target>
 
 
-    <target name="build_game">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-    	<antcall target="build_game_init_copy_src" />
-    	<antcall target="build_game_compile" />
-    	<antcall target="build_game_jar" />
-    	<antcall target="fastobfuscate" />
-    </target>
-    <target name="fastobfuscate">
-      <proguard configuration="build_config/proguard.cfg">
-        <injar name="../game.jar"/>
-        <libraryjar name="${java.home}/lib/rt.jar"/>
-        <libraryjar name="${java.home}/lib/jce.jar"/>
-        <libraryjar name="lib/jline/jline-2.13.jar"/>
-        <libraryjar name="lib/lwjgl_dbg/lwjgl.jar"/>
-        <libraryjar name="lib/guava/guava-18.0.jar"/>
-        <libraryjar name="lib/snakeyaml/snakeyaml-1.16.jar"/>
-        <libraryjar name="lib/jna/jna-4.2.2.jar"/>
-        <libraryjar name="lib/openvr/JOpenVR.jar"/>
-        <outjar name="../game_obf.jar"/>
-      </proguard>
-    	<exec executable="${cryptfilepath}/CryptFile.exe">
-  		  <arg value="-i"/>
-		  <arg value="../game_obf.jar"/>
-  		  <arg value="-o"/>
-  		  <arg value="U:/qubes/files/game.dat"/>
-    	</exec>
-    </target>
-    <target name="build_copy_shader_and_jar">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-    	<antcall target="build_game_init_copy_src" />
-    	<antcall target="build_game_jar" />
-    </target>
-    <target name="build_compile_and_jar">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-    	<antcall target="build_game_compile" />
-    	<antcall target="build_game_jar" />
+	<target name="build_game">
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<antcall target="build_game_init_copy_src" />
+		<antcall target="build_game_compile" />
+		<antcall target="build_game_jar" />
+		<antcall target="fastobfuscate" />
+	</target>
+	<target name="build_game_no_obf">
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<antcall target="build_game_init_copy_src" />
+		<antcall target="build_game_compile" />
+		<antcall target="build_game_jar" />
+		<antcall target="build_gamecopy_out" />
+	</target>
+	<target name="build_gamecopy_out">
+		<exec executable="${cryptfilepath}/CryptFile.exe">
+			<arg value="-i"/>
+			<arg value="../game.jar"/>
+			<arg value="-o"/>
+			<arg value="U:/qubes/files/game.dat"/>
+		</exec>
+	</target>
+	<target name="fastobfuscate">
+		<proguard configuration="build_config/proguard.cfg">
+			<injar name="../game.jar"/>
+			<libraryjar name="${java.home}/lib/rt.jar"/>
+			<libraryjar name="${java.home}/lib/jce.jar"/>
+			<libraryjar name="lib/jline/jline-2.13.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-opengl.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-opencl.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-openal.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-glfw.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-jemalloc.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-sse.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-stb.jar"/>
+			<libraryjar name="lib/lwjgl3.1/lwjgl-nanovg.jar"/>
+			<libraryjar name="lib/guava/guava-18.0.jar"/>
+			<libraryjar name="lib/snakeyaml/snakeyaml-1.16.jar"/>
+			<libraryjar name="lib/jna/jna-4.2.2.jar"/>
+			<libraryjar name="lib/openvr/JOpenVR.jar"/>
+			<outjar name="../game_obf.jar"/>
+		</proguard>
+		<exec executable="${cryptfilepath}/CryptFile.exe">
+			<arg value="-i"/>
+			<arg value="../game_obf.jar"/>
+			<arg value="-o"/>
+			<arg value="U:/qubes/files/game.dat"/>
+		</exec>
+	</target>
+	<target name="build_copy_shader_and_jar">
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<antcall target="build_game_init_copy_src" />
+		<antcall target="build_game_jar" />
+	</target>
+	<target name="build_compile_and_jar">
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<antcall target="build_game_compile" />
+		<antcall target="build_game_jar" />
 	</target>
 	<target name="build_resources">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-	    <delete file="../game_res.dat" failonerror="no"/>
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<delete file="../game_res.dat" failonerror="no"/>
 		<zip destfile="../game_res.dat" level="9">
-	        <fileset dir="." includes="res/**/*" excludes="res/shaders/**/*" /> 
+			<fileset dir="." includes="res/**/*" excludes="res/shaders/**/*" />
 		</zip>
-    	<exec executable="${cryptfilepath}/CryptFile.exe">
-  		  <arg value="-i"/>
-		  <arg value="../game_res.dat"/>
-  		  <arg value="-o"/>
-  		  <arg value="U:/qubes/files/game_res.dat"/>
-    	</exec>
+		<exec executable="${cryptfilepath}/CryptFile.exe">
+			<arg value="-i"/>
+			<arg value="../game_res.dat"/>
+			<arg value="-o"/>
+			<arg value="U:/qubes/files/game_res.dat"/>
+		</exec>
 	</target>
-	
+
 	<target name="build_deps">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-	    <delete file="../game_deps.dat" failonerror="no"/>
-	    <delete dir="${compile_dir}/deps" failonerror="no"/>
-        <mkdir dir="${compile_dir}/deps"/>
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<delete file="../game_deps.dat" failonerror="no"/>
+		<delete dir="${compile_dir}/deps" failonerror="no"/>
+		<mkdir dir="${compile_dir}/deps"/>
 		<copy file="lib/jna/jna-4.2.2.jar" tofile="${compile_dir}/deps/jna-4.2.2.jar"/>
 		<copy file="lib/openvr/JOpenVR.jar" tofile="${compile_dir}/deps/JOpenVR.jar"/>
-		<copy file="lib/lwjgl_dbg/lwjgl.jar" tofile="${compile_dir}/deps/lwjgl.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl.jar" tofile="${compile_dir}/deps/lwjgl.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-opengl.jar" tofile="${compile_dir}/deps/lwjgl-opengl.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-opencl.jar" tofile="${compile_dir}/deps/lwjgl-opencl.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-openal.jar" tofile="${compile_dir}/deps/lwjgl-openal.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-glfw.jar" tofile="${compile_dir}/deps/lwjgl-glfw.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-jemalloc.jar" tofile="${compile_dir}/deps/lwjgl-jemalloc.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-sse.jar" tofile="${compile_dir}/deps/lwjgl-sse.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-stb.jar" tofile="${compile_dir}/deps/lwjgl-stb.jar"/>
+		<copy file="lib/lwjgl3.1/lwjgl-nanovg.jar" tofile="${compile_dir}/deps/lwjgl-nanovg.jar"/>
+		
 		<copy file="lib/guava/guava-18.0.jar" tofile="${compile_dir}/deps/guava.jar"/>
 		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="${compile_dir}/deps/snakeyaml.jar"/>
-        <mkdir dir="${compile_dir}/deps/natives"/>
-    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
-    		<fileset dir="lib/lwjgl_dbg">
-    			<include name="*.dll"/>
-    		</fileset>
-    	</copy>
-    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
-    		<fileset dir="lib/jna">
-    			<include name="*.dll"/>
-    		</fileset>
-    	</copy>
-    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
-    		<fileset dir="lib/openvr">
-    			<include name="*.dll"/>
-    		</fileset>
-    	</copy>
-    	<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
-    		<fileset dir="lib/hbaoplus">
-    			<include name="*.*"/>
-    		</fileset>
-    	</copy>
-    	<delete dir="${compile_dir}/deps/META-INF" />
+		<mkdir dir="${compile_dir}/deps/natives"/>
+		<unzip src="lib/lwjgl3.1/lwjgl-glfw-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-jemalloc-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-openal-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-opengl-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-sse-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-stb-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-nanovg-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl3.1/lwjgl-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+
+		<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
+			<fileset dir="lib/jna">
+				<include name="*.dll"/>
+			</fileset>
+		</copy>
+		<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
+			<fileset dir="lib/openvr">
+				<include name="*.dll"/>
+			</fileset>
+		</copy>
+		<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
+			<fileset dir="lib/hbaoplus">
+				<include name="*.*"/>
+			</fileset>
+		</copy>
+		<delete dir="${compile_dir}/deps/META-INF" />
 		<jar destfile="../game_deps.jar" compress="false">
-	        <fileset dir="${compile_dir}/deps" includes="**/*" /> 
+			<fileset dir="${compile_dir}/deps" includes="**/*" />
 		</jar>
-        <copy includeemptydirs="false" todir="U:/qubes/files">
-            <fileset file="../game_deps.jar" />
-        </copy>
+		<copy includeemptydirs="false" todir="U:/qubes/files">
+			<fileset file="../game_deps.jar" />
+		</copy>
 	</target>
 
 	<target name="copy_blockmapping">
-        <copy includeemptydirs="false" todir="config">
-            <fileset file="U:\game\dev\config\blockmapping.yml" />
-        </copy>
+		<copy includeemptydirs="false" todir="config">
+			<fileset file="U:\game\dev\config\blockmapping.yml" />
+		</copy>
 	</target>
 	<target name="wipe_worlds">
-	    <delete dir="server/worlds/world/biomes" failonerror="no"/>
-	    <delete dir="server/worlds/world/data" failonerror="no"/>
-	    <delete dir="server/worlds/mine/data" failonerror="no"/>
+		<delete dir="server/worlds/world/biomes" failonerror="no"/>
+		<delete dir="server/worlds/world/data" failonerror="no"/>
+		<delete dir="server/worlds/mine/data" failonerror="no"/>
 	</target>
-		
+
 
 	<target name="buildserver_quick">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/server" source="${source}" target="${target}">
-            <src path="src"/>
-            <classpath refid="Game.classpath"/>
-        </javac>
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/server" source="${source}" target="${target}">
+			<src path="src"/>
+			<classpath refid="Game.classpath"/>
+		</javac>
 		<jar destfile="../server.jar" basedir="${compile_dir}/bin/server" includes="**/*">
-	        <manifest>
-	            <attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
-	        </manifest>
+			<manifest>
+				<attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
+			</manifest>
 		</jar>
-        <delete file="${targetfile}"/>
-        <copy file="../server.jar" tofile="${server_target_jar}"/>
-    </target>
+		<delete file="${targetfile}"/>
+		<copy file="../server.jar" tofile="${server_target_jar}"/>
+	</target>
 	<target name="buildserver">
-    	<delete dir="${compile_dir}/bin/server"  failonerror="no"/>
-    	<delete dir="${compile_dir}/src/server" failonerror="no"/>
-        <mkdir dir="${compile_dir}/bin/server"/>
-        <mkdir dir="${compile_dir}/src/server"/>
-    	<exec executable="java">
-    	    <arg value="-jar"/>
-    	    <arg value="../preprocessor.jar"/>
-    	    <arg value="--config"/>
-    	    <arg value="build_config/server_drop_pkg.txt"/>
-    	    <arg value="--side"/>
-    	    <arg value="server"/>
-		    <arg value="--in"/>
-    	    <arg value="src"/>
-		    <arg value="--out"/>
-		    <arg value="${compile_dir}/src/server"/>
-	    </exec>
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/server" source="${source}" target="${target}">
-            <src path="${compile_dir}/src/server"/>
-            <classpath refid="Game.classpath"/>
-        </javac>
+		<delete dir="${compile_dir}/bin/server"  failonerror="no"/>
+		<delete dir="${compile_dir}/src/server" failonerror="no"/>
+		<mkdir dir="${compile_dir}/bin/server"/>
+		<mkdir dir="${compile_dir}/src/server"/>
+		<exec executable="java">
+			<arg value="-jar"/>
+			<arg value="../preprocessor.jar"/>
+			<arg value="--config"/>
+			<arg value="build_config/server_drop_pkg.txt"/>
+			<arg value="--side"/>
+			<arg value="server"/>
+			<arg value="--in"/>
+			<arg value="src"/>
+			<arg value="--out"/>
+			<arg value="${compile_dir}/src/server"/>
+		</exec>
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="${compile_dir}/bin/server" source="${source}" target="${target}">
+			<src path="${compile_dir}/src/server"/>
+			<classpath refid="Game.classpath"/>
+		</javac>
 		<delete file="../server.jar"/>
 		<jar destfile="../server.jar" basedir="${compile_dir}/bin/server" includes="**/*">
-	        <manifest>
-	            <attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
-	        </manifest>
+			<manifest>
+				<attribute name="Main-Class" value="nidefawl.qubes.BootServer"/>
+			</manifest>
 		</jar>
-        <delete file="${targetfile}"/>
-        <copy file="../server.jar" tofile="${server_target_jar}"/>
-    </target>
+		<delete file="${targetfile}"/>
+		<copy file="../server.jar" tofile="${server_target_jar}"/>
+	</target>
 </project>
