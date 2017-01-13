@@ -102,7 +102,6 @@ public class GuiControls extends Gui {
     }
     Control selected = null;
 
-    final public FontRenderer font;
     private Button            back;
     List<Control>             list = Lists.newArrayList();
     ScrollList scrolllist;
@@ -111,7 +110,6 @@ public class GuiControls extends Gui {
     private Button            cancel;
     private Button            defaultSet;
     public GuiControls(Gui parent) {
-        this.font = FontRenderer.get(0, 18, 0);
         this.parent = parent;
     }
 
@@ -120,8 +118,11 @@ public class GuiControls extends Gui {
         scrolllist = new ScrollList(this);
         this.clearElements();
         this.list.clear();
-        int w1 = 520;
-        int h = 30;
+        this.width = 630;
+        this.posX = (Game.guiWidth-this.width)/2;
+        this.posY = Game.guiHeight / 4;
+        int scrollListHeight = 500;
+        int w1 = this.width;
         int idx = 10;
         for (Keybinding b : KeybindManager.getBindings()) {
             if (b.isStaticBinding()){
@@ -131,8 +132,6 @@ public class GuiControls extends Gui {
             c.id = idx++;
             list.add(c);
         }
-        int left =this.width / 2 - (w1/2);
-        this.scrolllist.setPos(left, this.height / 6 + 40);
         int y = 0;
         for (Control s : list) {
             s.setPos(0, y);
@@ -140,7 +139,8 @@ public class GuiControls extends Gui {
             y += 36;
             scrolllist.add(s);
         }
-        this.scrolllist.setSize(w1, this.height / 2);
+        this.scrolllist.setSize(width-50, scrollListHeight);
+        this.height = scrollListHeight+titleBarOffset+50;
         {
             clear = new Button(3, "None");
             clear.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
@@ -165,9 +165,11 @@ public class GuiControls extends Gui {
         {
             back = new Button(6, "Back");
             this.add(back);
-            back.setPos(this.width / 2 - 160/2, this.scrolllist.posY+this.scrolllist.height+30);
             back.setSize(160, 30);
+            back.setPos(this.width / 2 - 160/2, scrollListHeight+titleBarOffset+15);
         }
+        this.posY = Game.guiHeight/2-this.height/2;
+        this.scrolllist.setPos(posX+25, posY+titleBarOffset);
         this.add(this.scrolllist.scrollbarbutton);
     }
 
@@ -184,6 +186,9 @@ public class GuiControls extends Gui {
     }
     
     Keybinding inUseKey = null;
+    protected String getTitle() {
+        return "Controls";
+    }
     public void render(float fTime, double mX, double mY) {
         double mmX = mX;
         double mmY = mY;
@@ -194,7 +199,7 @@ public class GuiControls extends Gui {
         }
         renderBackground(fTime, mmX, mmY, true, 0.7f);
         Shaders.textured.enable();
-        this.font.drawString("Controls", this.width / 2.0f, this.height / 6, -1, true, 1.0f, 2);
+//        this.font.drawString("Controls", this.posX+this.width / 2.0f, this.posY+5, -1, true, 1.0f, 2);
         this.scrolllist.render(fTime, mmX, mmY);
         this.clear.draw = this.selected != null;
         this.defaultSet.draw = this.selected != null;
@@ -204,8 +209,8 @@ public class GuiControls extends Gui {
             String name = Keyboard.getKeyName(selected.b.getKey());
             int w = 300;
             int h = 150;
-            int x = width/2-w/2;
-            int y = height/2-h/2;
+            int x = 0+width/2-w/2;
+            int y = 0+height/2-h/2;
             int h2=h;
             if (inUseKey != null) {
                 h2+=70;
@@ -223,6 +228,8 @@ public class GuiControls extends Gui {
             this.clear.height = 24;
             this.clear.posX = x+w/2+10;
             this.clear.posY = this.cancel.posY-30;
+            x += posX;
+            y += posY;
             Shaders.gui.enable();
             renderRoundedBoxShadow(x, y, 2, w, h2, color2, 0.7f, true);
             Shaders.textured.enable();

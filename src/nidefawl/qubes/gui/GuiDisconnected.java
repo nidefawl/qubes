@@ -7,11 +7,13 @@ import nidefawl.qubes.shader.Shaders;
 
 public class GuiDisconnected extends Gui {
 
-    final public FontRenderer font;
     private String reason;
+    public GuiDisconnected() {
+        this.isFullscreen=true;
+    }
 
     public GuiDisconnected(String reason) {
-        this.font = FontRenderer.get(0, 18, 0);
+        this();
         this.reason = reason;
     }
 

@@ -19,14 +19,13 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 
 public class TextField extends AbstractUI implements Renderable {
-    private FontRenderer font;
     private TextInput    inputRenderer;
     private Gui gui;
 
     public TextField(ITextEdit gui, int id, String text) {
+        super();
         this.id = id;
-        this.font = FontRenderer.get(0, 18, 0);
-        this.inputRenderer = new TextInput(this.font, gui);
+        this.inputRenderer = new TextInput(FontRenderer.get(0, 18, 0), gui);
         this.inputRenderer.editText = text;
         this.focused = false;
     }

@@ -1,18 +1,15 @@
-package nidefawl.qubes;
+package nidefawl.qubes.gui;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gui.AbstractUI;
-import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.gui.GuiMainMenu;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiShutdownServer extends Gui {
 
-    final public FontRenderer font;
 
     public GuiShutdownServer() {
-        this.font = FontRenderer.get(0, 18, 0);
+        isFullscreen = true;
     }
 
     @Override

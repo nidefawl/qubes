@@ -11,14 +11,11 @@ import nidefawl.qubes.util.GameMath;
 
 public abstract class GuiWindow extends Gui {
 
-    public static final int titleBarHeight = 26;
     public boolean allwaysVisible;
     public boolean visible;
     private boolean mouseOverResize;
-    final public FontRenderer font;
     int[] bounds;
     public GuiWindow() {
-        this.font = FontRenderer.get(0, Gui.FONT_SIZE_WINDOW_TITLE, 0);
     }
     @Override
     public void initGui(boolean first) {
@@ -102,65 +99,6 @@ public abstract class GuiWindow extends Gui {
     }
 
     
-    public void renderFrame(float fTime, double mX, double mY) {
-        renderBackgroundElements(fTime, mX, mY);
-        this.posY+=5;
-        this.round = 1;
-        this.extendx = 0;
-        this.round = 2;
-        Shaders.gui.enable();
-        this.shadowSigma = 3f;
-        this.round = 3;
-        int bw = 3;
-        int out=2;
-        float alpha = 0.8f;
-        int color = -1;//this.hasFocus() ? -1 : 0x9a9a9a;
-        if (this.hasFocus()) {
-            int n = 4;
-            Shaders.gui.enable();
-            Shaders.gui.setProgramUniform1f("zpos", -18);
-            Shaders.gui.setProgramUniform4f("box", posX-n, posY-n, posX+width+n, posY+height+n);
-//          Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
-//          float blink = GameMath.sin((((Game.ticksran+fTime)/20f)%20.0f)*GameMath.PI*2f)*0.5f+0.5f;
-//          float c = 0.8f*blink;
-//            Shaders.gui.setProgramUniform1f("sigma", 4+c*5);
-//        Shaders.gui.setProgramUniform4f("color", c,c,c, c);
-//        shadowSigma = c*10;
-            float c = 0.1f;
-            Shaders.gui.setProgramUniform4f("color", c,c,c, 0.3f);
-            Shaders.gui.setProgramUniform1f("sigma", 2);
-            Shaders.gui.setProgramUniform1f("corner", 8);
-            Engine.drawQuad();
-        }
-        int z = -10;
-
-        resetShape();
-        alpha = 0.3f;
-        Shaders.gui.setProgramUniform1f("fade", 0.1f);
-        renderBox();
-        Shaders.gui.setProgramUniform1f("fade", 0.3f);
-        out=-30;
-        alpha = 1;
-        color = this.hasFocus() ? 0xdadada : 0xbababa;
-//        color = 0xdadada;
-        this.shadowSigma = 4f;
-        int titleWidth = 220;
-        int top = (posY-4);
-        int left = posX+width/2-titleWidth/2;
-        renderRoundedBoxShadow(left, top, 5, titleWidth, titleBarHeight, color, 1f, true);
-        resetShape();
-//        GL11.glDepthFunc(GL11.GL_EQUAL);
-//        this.shadowSigma = 3f;
-//        this.round = 32;
-//        renderRoundedBoxShadow(posX-titleBarHeight, posY-out*2-1, 5, width/3+4, titleBarHeight+out*2, -1, 0.7f, true);
-//        GL11.glDepthFunc(GL11.GL_LEQUAL);
-        resetShape();
-        Shaders.textured.enable();
-        Engine.pxStack.push(0, 0, 6);
-        font.drawString(getTitle(), posX+width/2, posY + font.centerY(titleBarHeight-16), -1, true, 1f, 2);
-        Engine.pxStack.pop();
-        this.posY-=5;
-    }
     public void onDrag(double mX, double mY) {
         int displayWidth = Game.displayWidth;
         int displayHeight = Game.displayHeight;

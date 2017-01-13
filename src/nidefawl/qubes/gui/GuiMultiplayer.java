@@ -11,15 +11,15 @@ import nidefawl.qubes.gui.windows.GuiContext;
 public class GuiMultiplayer extends Gui implements ITextEdit {
 
     final public FontRenderer font;
-    final FontRenderer fontSmall;
     private TextField field;
     private Button connect;
     private Button back;
     public GuiMultiplayer(GuiMainMenu parent) {
+        this.isFullscreen=true;
         this.parent = parent;
         this.font = parent.font;
-        this.fontSmall = parent.fontSmall;
     }
+    
     @Override
     public void initGui(boolean first) {
         this.clearElements();

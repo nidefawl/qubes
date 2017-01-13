@@ -7,10 +7,12 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.crafting.CraftingManagerClient;
+import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.PopupHolder;
@@ -23,12 +25,21 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public ArrayList<AbstractUI> buttons   = new ArrayList<>();
     public ArrayList<AbstractUI> prebackground   = new ArrayList<>();
     public boolean    firstOpen = true;
+    public boolean isFullscreen = false;
     public AbstractUI popup;
     public static final int slotW = 48;
     public static final int slotBDist = 2;
+    public static final int titleBarHeight = 26;
+    public static final int titleBarOffset = titleBarHeight+20;
     public static int FONT_SIZE_WINDOW_TITLE = 22;
     public static int FONT_SIZE_BUTTON = 18;
+    final public FontRenderer titleFont;
+    final public FontRenderer font;
     
+    public Gui() {
+        this.titleFont = FontRenderer.get(0, Gui.FONT_SIZE_WINDOW_TITLE, 0);
+        this.font = FontRenderer.get(0, 18, 0);
+    }
 
     @Override
     public AbstractUI getPopup() {
@@ -235,21 +246,100 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public boolean requiresTextInput() {
         return false;
     }
-    public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
-        if (Game.instance != null && Game.instance.getWorld() != null) {
-            a = 0.7f;
-        } else {
-            a = 1.0f;
+    
+    
+
+    public void renderFrame(float fTime, double mX, double mY) {
+        float c = 0.1f;
+        float ac = 0.3f;
+        if (Game.instance.getWorld() == null) {
+            GL11.glClearColor(c,c,c, ac);
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
         }
-        Shaders.colored.enable();
-        Tess.instance.setColorF(0x1f1f1f, a);
-        Tess.instance.add(this.posX, this.posY+this.height);
-        Tess.instance.add(this.posX+this.width, this.posY+this.height);
-        Tess.instance.add(this.posX+this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.draw(GL_QUADS);
+        if (this.isFullscreen) {
+            renderBackgroundElements(fTime, mX, mY);
+            if (Game.instance.getWorld() != null) {
+                Shaders.colored.enable();
+                Tess.instance.setColorRGBAF(c, c, c, ac);
+                Tess.instance.add(posX, posY+height);
+                Tess.instance.add(posX+width, posY+height);
+                Tess.instance.add(posX+width, posY);
+                Tess.instance.add(posX, posY);
+                Tess.instance.drawQuads();
+            }
+        } else {
+            renderBackgroundElements(fTime, mX, mY);
+            this.posY+=5;
+            this.round = 1;
+            this.extendx = 0;
+            this.round = 2;
+            Shaders.gui.enable();
+            this.shadowSigma = 3f;
+            this.round = 3;
+            int bw = 3;
+            int out=2;
+            float alpha = 0.8f;
+            int color = -1;//this.hasFocus() ? -1 : 0x9a9a9a;
+            if (this.hasFocus()) {
+                int n = 4;
+                Shaders.gui.enable();
+                Shaders.gui.setProgramUniform1f("zpos", -18);
+                Shaders.gui.setProgramUniform4f("box", posX-n, posY-n, posX+width+n, posY+height+n);
+//              Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
+//              float blink = GameMath.sin((((Game.ticksran+fTime)/20f)%20.0f)*GameMath.PI*2f)*0.5f+0.5f;
+//              float c = 0.8f*blink;
+//                Shaders.gui.setProgramUniform1f("sigma", 4+c*5);
+//            Shaders.gui.setProgramUniform4f("color", c,c,c, c);
+//            shadowSigma = c*10;
+                Shaders.gui.setProgramUniform4f("color", c,c,c, ac);
+                Shaders.gui.setProgramUniform1f("sigma", 2);
+                Shaders.gui.setProgramUniform1f("corner", 8);
+                Engine.drawQuad();
+            }
+            int z = -10;
+
+            resetShape();
+            alpha = 0.3f;
+            Shaders.gui.setProgramUniform1f("fade", 0.1f);
+            renderBox();
+            Shaders.gui.setProgramUniform1f("fade", 0.3f);
+            out=-30;
+            alpha = 1;
+            color = this.hasFocus() ? 0xdadada : 0xbababa;
+//            color = 0xdadada;
+            this.shadowSigma = 4f;
+            int titleWidth = 220;
+            int top = (posY-4);
+            int left = posX+width/2-titleWidth/2;
+            renderRoundedBoxShadow(left, top, 5, titleWidth, titleBarHeight, color, 1f, true);
+            resetShape();
+//            GL11.glDepthFunc(GL11.GL_EQUAL);
+//            this.shadowSigma = 3f;
+//            this.round = 32;
+//            renderRoundedBoxShadow(posX-titleBarHeight, posY-out*2-1, 5, width/3+4, titleBarHeight+out*2, -1, 0.7f, true);
+//            GL11.glDepthFunc(GL11.GL_LEQUAL);
+            resetShape();
+            if (!this.isFullscreen) {
+                Shaders.textured.enable();
+                Engine.pxStack.push(0, 0, 6);
+                titleFont.drawString(getTitle(), posX+width/2, posY + titleFont.centerY(titleBarHeight-16), -1, true, 1f, 2);
+                Engine.pxStack.pop();
+            }
+            this.posY-=5;
+        }
+    }
+    
+    public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
+        renderFrame(fTime, mX, mY);
     }
 
+    protected String getTitle() {
+        return "";
+    }
+
+    protected boolean hasFocus() {
+        return focused;
+    }
     protected void updateBounds() {
     }
 

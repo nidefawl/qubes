@@ -15,11 +15,9 @@ import nidefawl.qubes.shader.Shaders;
 
 public class GuiOverlayChat extends Gui {
 
-    final public FontRenderer font;
     public boolean mouseRes;
 
     public GuiOverlayChat() {
-        this.font = FontRenderer.get(0, 18, 0);
     }
 
 

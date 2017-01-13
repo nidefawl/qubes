@@ -54,56 +54,59 @@ public class GuiSelectWorld extends Gui {
         public void initGui(boolean first) {
         }
     }
-    final public FontRenderer font;
+    
     ScrollList scrolllist;
     private ArrayList<Button> list = Lists.newArrayList();
-    private Button btnBack;
+    private Button back;
     static int REQ_ID = 0;
 
     public GuiSelectWorld() {
-        this.font = FontRenderer.get(0, 18, 0);
     }
 
     @Override
+    protected String getTitle() {
+        return "Worlds";
+    }
+    @Override
     public void initGui(boolean first) {
+        this.list.clear();
+        scrolllist = new ScrollList(this);
+        this.width = 430;
+        this.posX = (Game.guiWidth-this.width)/2;
+        this.posY = Game.guiHeight / 4;
+        int scrollListHeight = 200;
+        this.scrolllist.setSize(width-50, scrollListHeight);
+        this.height = scrollListHeight+titleBarOffset+50;
+        this.posY = Game.guiHeight/2-this.height/2;
+        this.scrolllist.setPos(posX+25, posY+titleBarOffset);
         this.clearElements();
         {
-            this.btnBack = new Button(1, "Back");
-            int w = 200;
-            int h = 30;
-            this.btnBack.setPos(this.posX + this.width / 2 - w / 2, this.posY + this.height / 6*5);
-            this.btnBack.setSize(w, h);
+            back = new Button(6, "Back");
+            this.add(back);
+            back.setSize(160, 30);
+            back.setPos(this.width / 2 - 160/2, scrollListHeight+titleBarOffset+15);
         }
-        scrolllist = new ScrollList(this);
-
-        this.list.clear();
-        this.add(this.btnBack);
+        this.add(this.scrolllist.scrollbarbutton);
+        this.add(this.back);
         
     }
 
     public void fillList(ArrayList<WorldInfo> worldList) {
-
         this.clearElements();
         this.list.clear();
-        int w1 = 520;
         int idx = 10;
         for (WorldInfo b : worldList) {
             WorldListControl c = new WorldListControl(idx++, b);
             list.add(c);
             System.err.println(b.name);
         }
-        int left = this.width / 2 - (w1 / 2);
-        this.scrolllist.setPos(left, this.height / 6 + 40);
         int y = 0;
         for (Button s : list) {
             s.setPos(0, y);
-            s.setSize(w1 - 14, 30);
+            s.setSize(this.scrolllist.width-14, 30);
             y += 36;
             scrolllist.add(s);
         }
-        this.scrolllist.setSize(w1, this.height / 2);
-        this.add(this.scrolllist.scrollbarbutton);
-        this.add(this.btnBack);
     }
     public boolean onMouseClick(int button, int action) {
         return super.onMouseClick(button, action) || this.scrolllist.onMouseClick(button, action);
@@ -116,8 +119,6 @@ public class GuiSelectWorld extends Gui {
         }
 
         renderBackground(fTime, mX, mY, true, 0.7f);
-        Shaders.textured.enable();
-        this.font.drawString("Worlds", this.width / 2.0f, this.height / 6, -1, true, 1.0f, 2);
         this.scrolllist.render(fTime, mX, mY);
 
         super.renderButtons(fTime, mX, mY);

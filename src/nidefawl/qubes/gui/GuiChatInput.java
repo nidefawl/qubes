@@ -8,7 +8,6 @@ import org.lwjgl.glfw.GLFW;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chat.client.ChatManager;
-import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gui.controls.TextField;
@@ -22,14 +21,12 @@ import nidefawl.qubes.shader.Shaders;
  */
 public class GuiChatInput extends Gui implements ITextEdit {
 
-    final public FontRenderer font;
     private TextField         field;
     private boolean wasGrab;
     private GuiOverlayChat overlay;
     private int mouseResize;
 
     public GuiChatInput() {
-        this.font = FontRenderer.get(0, 18, 0);
         this.overlay = Game.instance.chatOverlay;
     }
     /* (non-Javadoc)

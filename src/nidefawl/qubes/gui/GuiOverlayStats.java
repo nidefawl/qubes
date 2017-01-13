@@ -23,8 +23,8 @@ import nidefawl.qubes.world.WorldClient;
 
 public class GuiOverlayStats extends Gui {
 
-    final public FontRenderer font;
-    FontRenderer fontSmall;
+    final public FontRenderer statsFontBig;
+    FontRenderer statsFontSmall;
 
     ArrayList<String>  info1        = new ArrayList<String>();
     ArrayList<String>  info        = new ArrayList<String>();
@@ -36,14 +36,14 @@ public class GuiOverlayStats extends Gui {
     boolean render = false;
     private String stats5;
     public GuiOverlayStats() {
-        this.font = FontRenderer.get(0, 18, 0);
-        this.fontSmall = FontRenderer.get(0, 16, 0);
+        this.statsFontBig = FontRenderer.get(0, 18, 0);
+        this.statsFontSmall = FontRenderer.get(0, 16, 0);
     }
     SysInfo sysInfo = null;
 
     public void refresh() {
         int smallSize = 12;
-        this.fontSmall = FontRenderer.get(0, smallSize, 1);
+        this.statsFontSmall = FontRenderer.get(0, smallSize, 1);
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F / 1024F;
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
@@ -146,19 +146,19 @@ public class GuiOverlayStats extends Gui {
 
         int y = 20;
         float maxW = 250;
-            font.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
-            font.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
-            y += font.getLineHeight();
+            statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
+            statsFontBig.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
+            y += statsFontBig.getLineHeight();
             for (String s : info1) {
-                font.drawString(s, 5, y, 0xFFFFFF, true, 1.0F);
-                y += font.getLineHeight();
+                statsFontBig.drawString(s, 5, y, 0xFFFFFF, true, 1.0F);
+                y += statsFontBig.getLineHeight();
             }
             if (stats5 != null) {
-                font.drawString(stats5, GameBase.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
-                y += font.getLineHeight();
+                statsFontBig.drawString(stats5, GameBase.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
+                y += statsFontBig.getLineHeight();
             }
-            float totalHeight = (fontSmall.getLineHeight())*info.size();
-            y-=font.getLineHeight()*1.7f;
+            float totalHeight = (statsFontSmall.getLineHeight())*info.size();
+            y-=statsFontBig.getLineHeight()*1.7f;
             Tess.instance.setColorF(0, 0.8f);
             Tess.instance.add(0, y+totalHeight+8);
             Tess.instance.add(maxW, y+totalHeight+8);
@@ -166,11 +166,11 @@ public class GuiOverlayStats extends Gui {
             Tess.instance.add(0, y);
             Shaders.colored.enable();
             Tess.instance.drawQuads();
-            y+=fontSmall.getLineHeight()*1.2f;
+            y+=statsFontSmall.getLineHeight()*1.2f;
             Shaders.textured.enable();
             for (String st : info) {
-                fontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
-                y += fontSmall.getLineHeight();
+                statsFontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
+                y += statsFontSmall.getLineHeight();
             }
 
         if (System.currentTimeMillis() - messageTime < 5000) {
@@ -178,10 +178,10 @@ public class GuiOverlayStats extends Gui {
 
             String[] split = message.split("\n");
             for (int i = 0; i < split.length; i++) {
-                strwidth = Math.max(font.getStringWidth(split[i]), strwidth);
+                strwidth = Math.max(statsFontBig.getStringWidth(split[i]), strwidth);
             }
             for (int i = 0; i < split.length; i++) {
-                font.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+                statsFontBig.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
         }
         int w = 64;
@@ -209,7 +209,7 @@ public class GuiOverlayStats extends Gui {
         Block b = Game.instance.selBlock.getBlock();
         Shaders.textured.enable();
         if (b != null)
-            font.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
+            statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 
         Shader.disable();
  

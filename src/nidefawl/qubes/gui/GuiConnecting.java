@@ -8,14 +8,14 @@ import nidefawl.qubes.shader.Shaders;
 
 public class GuiConnecting extends Gui {
 
-    final public FontRenderer font;
-    final FontRenderer        fontSmall;
     String                    stateStr = "Connecting...";
     private ThreadConnect     thread;
+    public GuiConnecting() {
+        this.isFullscreen=true;
+    }
 
     public GuiConnecting(ThreadConnect connect) {
-        this.font = FontRenderer.get(0, 18, 0);
-        this.fontSmall = FontRenderer.get(0, 14, 0);
+        this();
         this.thread = connect;
     }
 

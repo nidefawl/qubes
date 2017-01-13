@@ -19,7 +19,6 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.vec.Vector3f;
 
 public class ScrollList extends Gui {
-    final public FontRenderer font;
     float scrollOffset=0f;
     final public Button scrollbarbutton;
     public float scrollY;
@@ -29,7 +28,6 @@ public class ScrollList extends Gui {
         this.parent = parent;
     }
     public ScrollList() {
-        this.font = FontRenderer.get(0, 18, 0);
         scrollbarbutton = new Button(-2, "");
     }
     float getMinY() {
@@ -143,7 +141,9 @@ public class ScrollList extends Gui {
         Shaders.gui.setProgramUniform1f("fade", 0.3f);
         resetShape();
         int scrollbarOffsetY = (int) (this.scrollOffset*(scH-scrollbarHeight));
-        this.scrollbarbutton.setPos(scX, scY+scrollbarOffsetY);
+        this.scrollbarbutton.setPos(scX-this.parent.posX+this.getWindowPosX(), scY+scrollbarOffsetY-this.parent.posY+this.getWindowPosY());
+//        this.scrollbarbutton.setPos(scX+this.parent.posX-this.getWindowPosX(), scY+scrollbarOffsetY+this.parent.posY-this.getWindowPosY());
+
         this.scrollbarbutton.setSize(scrollBarW, (int) scrollbarHeight);
 //        renderRoundedBoxShadow(scX, scY+scrollBarW/2+scrollbarOffsetY, 1, scrollBarW, scrollBarW*1.4f, -1, 1.0f, true);
     }

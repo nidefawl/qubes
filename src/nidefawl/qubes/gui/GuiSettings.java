@@ -39,7 +39,6 @@ public class GuiSettings extends Gui {
         };
     }
 
-    final public FontRenderer font;
     private Button            back;
     List<Setting>             list = Lists.newArrayList();
     private Setting testSetting;
@@ -51,27 +50,18 @@ public class GuiSettings extends Gui {
     private Setting aoSetting;
 
     public GuiSettings(Gui parent) {
-        this.font = FontRenderer.get(0, 18, 0);
         this.parent = parent;
     }
 
     @Override
     public void initGui(boolean first) {
+        this.width = 430;
+        if (Game.instance.getWorld() != null) {
+        }
         this.clearElements();
         this.list.clear();
         int w1 = 160;
         int h = 30;
-        List<String> l = Lists.newArrayList();
-        l.addAll(Arrays.asList(new String[] { "Awesome!!!", "Well, pretty Okay", "Man, this sucks" }));
-        for (int j = 0; j < 20; j++) {
-            l.add("Option "+(j+1));
-        }
-        String[] arr = l.toArray(new String[l.size()]);
-        list.add((this.testSetting = new Setting(this, "String test", "Please pick", arr) {
-            void callback(int id) {
-
-            }
-        }));
         List<Integer> clist = Lists.newArrayList();
         for (int i = 4; i <= 24; i++) {
             clist.add(i);
@@ -127,28 +117,34 @@ public class GuiSettings extends Gui {
                 Engine.outRenderer.initAA();
             }
         }));
-        int left = this.posX + this.width / 2;
-        int y = this.posY + this.height / 6 + 40;
+        int left = this.width / 2+15;
+        int y = titleBarOffset;
         for (Setting s : list) {
             s.box.setPos(left, y);
             s.box.setSize(w1, h);
-            s.box.titleWidth = 185;
+            s.box.titleWidth = 205;
             y += 45;
             this.add(s.box);
         }
         {
-             left = this.posX + this.width / 2 - (w1) / 2;
+             left = this.width / 2 - (w1) / 2;
             back = new Button(6, "Back");
             this.add(back);
-            back.setPos(left, this.posY + this.height / 2 + 120);
             back.setSize(w1, h);
+            back.setPos(left, y+5);
         }
+        this.height = back.posY+back.height+10;
+        this.posX = (Game.guiWidth-this.width)/2;
+        this.posY = Game.guiHeight / 4;
     }
 
+    protected String getTitle() {
+        return "Settings";
+    }
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
-        Shaders.textured.enable();
-        this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + this.height / 6, -1, true, 1.0f, 2);
+//        Shaders.textured.enable();
+//        this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + 5, -1, true, 1.0f, 2);
         this.smaaQSetting.box.enabled = Game.instance.settings.aa==1;
         
         // Disable non-runtime options

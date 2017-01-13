@@ -12,18 +12,15 @@ import nidefawl.qubes.shader.Shaders;
 
 public class GuiMainMenu extends Gui implements ITextEdit {
 
-    final public FontRenderer font;
-    final FontRenderer fontSmall;
     private TextField fieldN;
     private Button singleplayer;
     private Button multiplayer;
     private Button settings;
     private Button controls;
     private Button quit;
-    private Button crash;
+    
     public GuiMainMenu() {
-        this.font = FontRenderer.get(0, 18, 0);
-        this.fontSmall = FontRenderer.get(0, 14, 0);
+        this.isFullscreen=true;
     }
     @Override
     public void initGui(boolean first) {
@@ -81,13 +78,6 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             quit.setSize(w1, h);
             offset+=40;
         }
-        {
-            crash = new Button(5, "Crash");
-            this.add(crash);
-            crash.setPos(left, this.posY+this.height/2+offset);
-            crash.setSize(w1, h);
-            offset+=40;
-        }
     }
 
     public void render(float fTime, double mX, double mY) {
@@ -111,10 +101,6 @@ public class GuiMainMenu extends Gui implements ITextEdit {
                 Game.instance.saveProfile();
             }
             Game.instance.showGUI(new GuiMultiplayer(this));
-        }
-        if (element == this.crash) {
-            String s = null;
-            int a = s.length();
         }
         if (element == this.settings) {
             Game.instance.showGUI(new GuiSettings(this));

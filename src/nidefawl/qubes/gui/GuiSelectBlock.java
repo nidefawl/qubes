@@ -29,14 +29,13 @@ import nidefawl.qubes.util.GameMath;
 
 public class GuiSelectBlock extends Gui {
 
-    final public FontRenderer font;
     private List<BlockStack> blocks;
     private Button fakeButton;
     private BlockStack sel;
 
     public GuiSelectBlock() {
-        this.font = FontRenderer.get(0, 18, 0);
     }
+    
     @Override
     public void initGui(boolean first) {
         this.clearElements();

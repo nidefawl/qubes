@@ -14,8 +14,6 @@ import nidefawl.qubes.shader.Shaders;
 
 public class GuiGameMenu extends Gui {
 
-    final public FontRenderer font;
-    final FontRenderer fontSmall;
     private Button resume;
     private Button settings;
     private Button controls;
@@ -23,8 +21,6 @@ public class GuiGameMenu extends Gui {
     private Button quit;
 
     public GuiGameMenu() {
-        this.font = FontRenderer.get(0, 18, 0);
-        this.fontSmall = FontRenderer.get(0, 14, 0);
     }
     public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
         if (Game.instance != null && Game.instance.getWorld() != null) {
@@ -32,11 +28,7 @@ public class GuiGameMenu extends Gui {
         } else {
             a = 1.0f;
         }
-        int w1 = 320;
-        int left = this.posX+width/2-w1/2;
-        int c1 = this.hovered || this.focused ? this.color3 : this.color;
         int c2 = this.hovered || this.focused ? this.color4 : this.color2;
-//        draw
         Shaders.gui.enable();
         if (this.resume != null&&this.back!=null)  {
             int brd = 32;
