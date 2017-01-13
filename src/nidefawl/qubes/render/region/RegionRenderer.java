@@ -431,7 +431,7 @@ public class RegionRenderer extends AbstractRenderer {
         boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
         Engine.bindVAO(GLVAO.vaoBlocksBindless);
         if (bindless) {
-            buffer.reset(GLVAO.vaoBlocksBindless);
+            buffer.preDraw(GLVAO.vaoBlocksBindless);
         }
         for (int dist = 0; dist < 2; dist++)  {
             for (int i = 0; i < size; i++) {
@@ -457,7 +457,7 @@ public class RegionRenderer extends AbstractRenderer {
                         }
                         if (bindless && buffer.getDrawCount() > 0) {
                             buffer.render();
-                            buffer.reset(GLVAO.vaoBlocksBindless);
+                            buffer.preDraw(GLVAO.vaoBlocksBindless);
                         }
                         r.occlusionQueryState = 1;
                         occlQueriesRunning[idx] = r;
@@ -541,7 +541,7 @@ public class RegionRenderer extends AbstractRenderer {
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
         if (bindless) {
-            buffer.reset(vao);
+            buffer.preDraw(vao);
         }
         for (int i = 0; i < size; i++) {
             MeshedRegion r = list.get(i);

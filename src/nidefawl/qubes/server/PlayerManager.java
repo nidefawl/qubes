@@ -54,8 +54,8 @@ public class PlayerManager {
                 e.printStackTrace();
             }
         } else {
-            data.invStacks.add(new SlotStack(0, new ItemStack(Item.axe)));
-            data.invStacks.add(new SlotStack(1, new ItemStack(Item.pickaxe)));
+            data.invStacks.add(new SlotStack(1, new ItemStack(Item.axe)));
+            data.invStacks.add(new SlotStack(2, new ItemStack(Item.pickaxe)));
         }
         return data;
     }

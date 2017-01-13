@@ -20,6 +20,7 @@ import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLDebugTextures;
+import nidefawl.qubes.gl.MultiDrawIndirectBuffer;
 import nidefawl.qubes.gui.GuiChatInput;
 import nidefawl.qubes.gui.GuiGameMenu;
 import nidefawl.qubes.gui.GuiSelectBlock;
@@ -42,6 +43,7 @@ import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class KeybindManager {
+    protected static final int VERSION = 1;
     private static AbstractYMLConfig settings = new AbstractYMLConfig(true) {
         
         @Override
@@ -57,6 +59,7 @@ public class KeybindManager {
         
         @Override
         public void load() throws InvalidConfigException {
+            if (getInt("version", 0) == KeybindManager.VERSION)
             for (Keybinding keybinding : keybindings) {
                 String s = getString(keybinding.getName(), "kb:"+keybinding.getKey());
                 if (s.startsWith("kb:")&&s.length()>3) {
@@ -238,7 +241,7 @@ public class KeybindManager {
                 Game.instance.sendPacket(new PacketCListRequest(0, DataListType.WORLDS));
             }
         });
-        addKeyBinding(new Keybinding("spawn_light", GLFW.GLFW_KEY_O) {
+        addKeyBinding(new Keybinding("spawn_light", -1) {
             public void onDown() {
 //                if (step+1 < edits.size()) {
 //                    step++;
@@ -287,9 +290,15 @@ public class KeybindManager {
                 game.thirdPerson = !game.thirdPerson;
             }
         });
+        addKeyBinding(new Keybinding("show_vr_controllers", GLFW.GLFW_KEY_F6) {
+            public void onDown() {
+                game.showControllers = !game.showControllers;
+            }
+        });
         addKeyBinding(new Keybinding("toggle_bindless", GLFW.GLFW_KEY_F7) {
             public void onDown() {
                 Engine.userSettingUseBindless=!Engine.userSettingUseBindless;
+                
             }
         });
         addKeyBinding(new Keybinding("vsync", GLFW.GLFW_KEY_F8) {

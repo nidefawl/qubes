@@ -47,17 +47,21 @@ public class VR {
 		public Vector3f unifiedFrustumCameraOffset = new Vector3f();
 		public void setEyeToHeadTransform() {
 			HmdMatrix34_t matL = vrsystem.GetEyeToHeadTransform.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left);
+			matL.read();
 			convertSteamVRMatrix3ToMatrix4f(matL, this.poseEyeLeft);
 			this.poseEyeLeft.invert();
 			HmdMatrix34_t matR = vrsystem.GetEyeToHeadTransform.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Right);
+			matR.read();
 			convertSteamVRMatrix3ToMatrix4f(matR, this.poseEyeRight);
 			this.poseEyeRight.invert();
 		}
 		public void setEyeProj(float nearClip, float farClip)
 		{
 			HmdMatrix44_t matL = vrsystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
+			matL.read();
 			convertSteamVRMatrix4ToMatrix4f(matL, this.projLeft);
 			HmdMatrix44_t matR = vrsystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Right, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
+			matR.read();
 			convertSteamVRMatrix4ToMatrix4f(matR, this.projRight);
 		}
 		public void update(float f) {
@@ -66,8 +70,8 @@ public class VR {
 		}
         public void calcFrustumOffset() {
             //TODO: optimize if called each frame
-            Matrix4f left = VR.getViewMat(0);
-            Matrix4f right = VR.getViewMat(1);
+            Matrix4f left = this.poseEyeLeft;
+            Matrix4f right = this.poseEyeRight;
             Vector3f vL = new Vector3f();
             Vector3f vR = new Vector3f();
             Vector3f vCamDir = new Vector3f(0, 0, 1);
@@ -77,7 +81,7 @@ public class VR {
             Matrix4f.transform(right, vCamDir, vCamDir);
             Vector3f.sub(vL, vR, ipd);
             float fipd = ipd.x/2.0f*left.m00;
-            vCamDir.scale(fipd);
+            vCamDir.scale(fipd*2.1f);
             unifiedFrustumCameraOffset.set(vCamDir);
         }
 	}
@@ -93,8 +97,9 @@ public class VR {
 	public static ByReference hmdTrackedDevicePoseReference;
 	public static TrackedDevicePose_t[] hmdTrackedDevicePoses;
 	public static double timePerFrame;
+    public static boolean initCalled=false;
 	public static boolean initSuccess;
-	public static boolean initDone;
+    public static boolean initDone;
 	public static String initStatus;
 	public static VR_IVRCompositor_FnTable vrCompositor;
 	public static IntBuffer hmdErrorStore;
@@ -192,15 +197,18 @@ public class VR {
 //	}
 
 	static boolean InitVR() {
-
-		NativeLibrary.addSearchPath("openvr_api", ".");		
-
-		if(jopenvr.JOpenVRLibrary.VR_IsHmdPresent() == 0){
-			initStatus =  "VR Headset not detected.";
-			return false;
-		}
-
+        initSuccess = false;
 		try {
+		    System.out.println("INIT VR");
+		    
+	        NativeLibrary.addSearchPath("openvr_api", ".");     
+
+	        if(jopenvr.JOpenVRLibrary.VR_IsHmdPresent() == 0){
+	            initStatus =  "VR Headset not detected.";
+	            initSuccess = false;
+	            return false;
+	        }
+
 			initializeJOpenVR();
 			initOpenVRCompositor(true) ;
 			initOpenVROverlay() ;	
@@ -639,27 +647,24 @@ public class VR {
 	}
 
 	public static void initApp(GameBase instance) {
-		if (!VR.InitVR()) {
-			throw new GameError("VR NOT PRESENT");
-		}
-		
-		IntBuffer rtx = IntBuffer.allocate(1);
-		IntBuffer rty = IntBuffer.allocate(1);
-		VR.vrsystem.GetRecommendedRenderTargetSize.apply(rtx, rty);
-		renderWidth = rtx.get(0);
-		renderHeight = rty.get(0);
-		System.out.printf("GetRecommendedRenderTargetSize %d %d\n", renderWidth, renderHeight);
-		instance.setRenderResolution(renderWidth, renderHeight);
-		initVRFB(renderWidth, renderHeight);
-		tick();
-		initDone = true;
+	    initCalled = true;
+		if (VR.InitVR()) {
+    		IntBuffer rtx = IntBuffer.allocate(1);
+    		IntBuffer rty = IntBuffer.allocate(1);
+    		VR.vrsystem.GetRecommendedRenderTargetSize.apply(rtx, rty);
+    		renderWidth = rtx.get(0);
+    		renderHeight = rty.get(0);
+    	    System.out.printf("GetRecommendedRenderTargetSize %d %d\n", renderWidth, renderHeight);
+    		initVRFB(renderWidth, renderHeight);
+            VR.cam.setEyeProj(Engine.znear, Engine.zfar);
+            VR.cam.setEyeToHeadTransform();
+            VR.cam.calcFrustumOffset();
+    		initDone = true;
+        }
 	}
 
 	static int ticka = 0;
     public static void tick() {
-        VR.cam.setEyeProj(Engine.znear, Engine.zfar);
-        VR.cam.setEyeToHeadTransform();
-        VR.cam.calcFrustumOffset();
         for (int unTrackedDevice = JOpenVRLibrary.k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < JOpenVRLibrary.k_unMaxTrackedDeviceCount; unTrackedDevice++) {
             trackedDeviceClass[unTrackedDevice] = vrsystem.GetTrackedDeviceClass.apply(unTrackedDevice);
             isTrackedDeviceConnected[unTrackedDevice] = vrsystem.IsTrackedDeviceConnected.apply(unTrackedDevice) > 0;
@@ -686,6 +691,7 @@ public class VR {
         fbLeft.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 1F);
         fbLeft.setColorTexExtFmt(GL11.GL_RGBA);
         fbLeft.setColorTexExtType(GL11.GL_UNSIGNED_BYTE);
+        fbLeft.setHasDepthAttachment();
         fbLeft.setup(null);
         fbRight = new FrameBuffer(w, h);
         fbRight.setColorAtt(GL_COLOR_ATTACHMENT0, GL11.GL_RGBA8);
@@ -722,12 +728,13 @@ public class VR {
 	public static Matrix4f getViewMat(int i) {
         switch (i) {
         case 0:
-            Matrix4f.mul(Engine.getIdentityMatrix(), Engine.camera.getViewMatrix(), tmpMat);
+//            Matrix4f.mul(cam.viewLeft, Engine.getIdentityMatrix(), tmpMat);
+                return cam.viewLeft;
         case 1:
         default:
-            Matrix4f.mul(Engine.getIdentityMatrix(), Engine.camera.getViewMatrix(), tmpMat);
+//            Matrix4f.mul(cam.viewRight, Engine.getIdentityMatrix(), tmpMat);
+            return cam.viewRight;
         }
-        return tmpMat;
 	}
 
 	
@@ -860,10 +867,6 @@ public class VR {
                 renderControllerAxes(iDevice, n);
             }
 
-            bufMat.setIdentity();
-            bufMat.scale(10);
-            bufMat.update();
-            renderControllerAxes(0, bufMat);
             Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
         }
         Engine.bindVAO(GLVAO.openVRModel);
@@ -880,6 +883,8 @@ public class VR {
                 continue;
             }
             CGLRenderModelNative model = m_rTrackedDeviceToRenderModel[iDevice];
+            if (model == null)
+                continue;
             Matrix4f n = poseMatrices[iDevice];
             bufMat.load(n);
             bufMat.update();
@@ -892,7 +897,7 @@ public class VR {
             model.render();
             
         }
-        if (true) {
+        if (false) {
             CGLRenderModelNative pRenderModel = FindOrLoadRenderModel( "oculus_cv1_controller_right" );
             if (pRenderModel != null) {
                 bufMat.setIdentity();

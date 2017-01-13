@@ -101,6 +101,8 @@ public class Game extends GameBase {
     WorldClient           testWorld;
 
     int skipChars = 0;
+    int throttleClick=0;
+    public boolean showControllers;
     public final LocalGameServer server = new LocalGameServer();
     
     private GameMode mode = GameMode.BUILD;
@@ -228,8 +230,7 @@ public class Game extends GameBase {
 
         KeybindManager.load();
         isStarting = true;
-        VR.initApp(this);
-        VR_SUPPORT = VR.isInit();
+        
     }
 
     public void toggleGameMode() {
@@ -399,7 +400,7 @@ public class Game extends GameBase {
         }
         
     }
-    int throttleClick=0;
+    
     public void onMouseClick(long window, int button, int action, int mods) {
         if (this.gui != null) {
             if (this.world == null) {
@@ -473,24 +474,26 @@ public class Game extends GameBase {
 
         for (int eye = 0; eye < (VR_SUPPORT ? 2 : 1); eye++) {
             if (VR_SUPPORT) {
-                Engine.getMatSceneP().load(VR.cam.projRight);
+                Engine.getMatSceneP().load(eye == 0 ? VR.cam.projLeft : VR.cam.projRight);
                 Engine.getMatSceneP().update();
                 Engine.updateCamera(VR.getViewMat(eye), Engine.camera.getPosition());
                 UniformBuffer.updateUBO(world, fTime);
                 VR.setViewPort(eye);
-                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("setCameraAndViewport");
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("setCameraAndViewport");
             }
             renderWorld(fTime, eye);
-            if (VR_SUPPORT) {
+            if (VR_SUPPORT && showControllers) {
                 FrameBuffer finalTarget = VR.getFB(eye);
                 finalTarget.bind();
-//                glEnable(GL11.GL_DEPTH_TEST);
+                finalTarget.clearDepth();
                 glDisable(GL11.GL_CULL_FACE);
                 Engine.updateCamera(VR.getViewMat(eye), Vector3f.ZERO);
                 UniformBuffer.updateUBO(null, fTime);
                 VR.renderControllers();
                 glEnable(GL11.GL_CULL_FACE);
-//                glDisable(GL11.GL_DEPTH_TEST);
+                FrameBuffer.unbindFramebuffer();
+                
             }
         }
             
@@ -847,7 +850,7 @@ public class Game extends GameBase {
             if (Engine.outRenderer.getSsr() > 0) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("SSR2");
-                if (!VR_SUPPORT || eye == 0)
+//                if (!VR_SUPPORT || eye == 0)
                 Engine.outRenderer.combineSSR(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();

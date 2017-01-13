@@ -27,7 +27,7 @@ public class ClientSettings extends AbstractYMLConfig {
     public void setDefaults() {
         this.chunkLoadDistance = 12; 
         this.shadowDrawMode = 0;
-        this.ssr = 0;
+        this.ssr = 2;
         this.aa = 1;
         this.ao = 1;
         this.smaaQuality = 1;

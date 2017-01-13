@@ -1067,6 +1067,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 
     public void toggleVR() {
         boolean hadVR = VR_SUPPORT;
+        if (!VR.initCalled) {
+            VR.initApp(this);
+        }
         VR_SUPPORT = VR.isInit() && !VR_SUPPORT;
         if (!VR_SUPPORT && hadVR) {
             Game.displayWidth=windowWidth;

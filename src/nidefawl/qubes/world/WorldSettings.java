@@ -13,15 +13,14 @@ import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2;
 
 public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {
 
-    public long  time;
+    public long  time = 78888;
     public long  dayLen = 120000;
-    public boolean isFixedTime;
+    public boolean isFixedTime = true;
     public long seed;
     public UUID uuid;
-    private final File dir;
+    private File dir;
     private int id;
-    String generatorName;
-    String generatorSettings;
+    public String generatorName;
     private String worldName;
 
     @Override
