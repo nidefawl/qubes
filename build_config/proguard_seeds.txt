@@ -9,6 +9,8 @@ nidefawl.qubes.GameBase: int windowWidth
 nidefawl.qubes.GameBase: int windowHeight
 nidefawl.qubes.GameBase: int displayWidth
 nidefawl.qubes.GameBase: int displayHeight
+nidefawl.qubes.GameBase: int guiWidth
+nidefawl.qubes.GameBase: int guiHeight
 nidefawl.qubes.GameBase: boolean GL_ERROR_CHECKS
 nidefawl.qubes.GameBase: boolean VR_SUPPORT
 nidefawl.qubes.GameBase: long windowId
@@ -57,6 +59,7 @@ nidefawl.qubes.GameBase: nidefawl.qubes.input.KeybindManager movement
 nidefawl.qubes.GameBase: nidefawl.qubes.gui.Gui gui
 nidefawl.qubes.GameBase: boolean reinittexthook
 nidefawl.qubes.GameBase: boolean wasGrabbed
+nidefawl.qubes.GameBase: org.lwjgl.opengl.GLCapabilities caps
 nidefawl.qubes.GameBase: java.util.ArrayList glProfileResults
 nidefawl.qubes.GameBase: int throttleClick
 nidefawl.qubes.GameBase: boolean needsGrab
@@ -113,6 +116,10 @@ nidefawl.qubes.GameBase: void input(float)
 nidefawl.qubes.GameBase: nidefawl.qubes.gui.Gui getGui()
 nidefawl.qubes.GameBase: java.lang.String getValue(java.lang.String[],int,java.lang.String)
 nidefawl.qubes.GameBase: void parseCmdArgs(java.lang.String[])
+nidefawl.qubes.GameBase: void toggleVR()
+nidefawl.qubes.GameBase: void setVRProjection()
+nidefawl.qubes.GameBase: void setGUIProjection()
+nidefawl.qubes.GameBase: void updateProjection()
 nidefawl.qubes.GameBase: int access$002(nidefawl.qubes.GameBase,int)
 nidefawl.qubes.GameBase: int access$102(nidefawl.qubes.GameBase,int)
 nidefawl.qubes.GameBase: void <clinit>()
@@ -154,6 +161,30 @@ nidefawl.qubes.block.BlockConnect: nidefawl.qubes.block.BlockConnect[] values()
 nidefawl.qubes.block.BlockConnect: nidefawl.qubes.block.BlockConnect valueOf(java.lang.String)
 nidefawl.qubes.block.BlockTextureMode: nidefawl.qubes.block.BlockTextureMode[] values()
 nidefawl.qubes.block.BlockTextureMode: nidefawl.qubes.block.BlockTextureMode valueOf(java.lang.String)
+nidefawl.qubes.entity.Entity: Entity(boolean)
+nidefawl.qubes.entity.EntityAI: EntityAI(boolean)
+nidefawl.qubes.entity.EntityAnimal: EntityAnimal(boolean)
+nidefawl.qubes.entity.EntityArcher: EntityArcher(boolean)
+nidefawl.qubes.entity.EntityCat: EntityCat(boolean)
+nidefawl.qubes.entity.EntityChicken: EntityChicken(boolean)
+nidefawl.qubes.entity.EntityDemon: EntityDemon(boolean)
+nidefawl.qubes.entity.EntityDog: EntityDog(boolean)
+nidefawl.qubes.entity.EntityDuck: EntityDuck(boolean)
+nidefawl.qubes.entity.EntityGoat: EntityGoat(boolean)
+nidefawl.qubes.entity.EntityMob: EntityMob(boolean)
+nidefawl.qubes.entity.EntityPig: EntityPig(boolean)
+nidefawl.qubes.entity.EntityPony: EntityPony(boolean)
+nidefawl.qubes.entity.EntityPuppy: EntityPuppy(boolean)
+nidefawl.qubes.entity.EntitySheep: EntitySheep(boolean)
+nidefawl.qubes.entity.EntitySkeleton: EntitySkeleton(boolean)
+nidefawl.qubes.entity.EntityWarrior: EntityWarrior(boolean)
+nidefawl.qubes.entity.EntityZombie: EntityZombie(boolean)
+nidefawl.qubes.entity.Player: Player(boolean)
+nidefawl.qubes.entity.PlayerRemote: PlayerRemote()
+nidefawl.qubes.entity.PlayerSelf: PlayerSelf(nidefawl.qubes.network.client.ClientHandler,nidefawl.qubes.PlayerProfile)
+nidefawl.qubes.entity.PlayerSelfBenchmark: PlayerSelfBenchmark(nidefawl.qubes.network.client.ClientHandler,nidefawl.qubes.PlayerProfile)
+nidefawl.qubes.entity.PlayerSelfBenchmark: PlayerSelfBenchmark()
+nidefawl.qubes.entity.PlayerServer: PlayerServer(boolean)
 nidefawl.qubes.gl.GPUVendor: nidefawl.qubes.gl.GPUVendor[] values()
 nidefawl.qubes.gl.GPUVendor: nidefawl.qubes.gl.GPUVendor valueOf(java.lang.String)
 nidefawl.qubes.gui.AbstractUI: nidefawl.qubes.gui.AbstractUI parent
@@ -291,7 +322,7 @@ nidefawl.qubes.render.post.HBAOPlus
 nidefawl.qubes.render.post.HBAOPlus: boolean hasContext
 nidefawl.qubes.render.post.HBAOPlus: boolean needsInit
 nidefawl.qubes.render.post.HBAOPlus: HBAOPlus()
-nidefawl.qubes.render.post.HBAOPlus: void createContext(int,int)
+nidefawl.qubes.render.post.HBAOPlus: void createContext(int,int,org.lwjgl.opengl.GLCapabilities)
 nidefawl.qubes.render.post.HBAOPlus: void deleteContext()
 nidefawl.qubes.render.post.HBAOPlus: void renderAO()
 nidefawl.qubes.render.post.HBAOPlus: void setProjMatrix(long)
@@ -388,6 +419,7 @@ nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight: TerrainGeneratorLigh
 nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain: TerrainGeneratorMain(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2: TerrainGeneratorTest2(nidefawl.qubes.world.WorldServer,long,nidefawl.qubes.world.WorldSettings)
 test.game.CameraController
+test.game.CameraController: float SPEED_MODIFIER
 test.game.CameraController: nidefawl.qubes.vec.Vec3D pos
 test.game.CameraController: nidefawl.qubes.vec.Vec3D lastPos
 test.game.CameraController: nidefawl.qubes.vec.Vec3D mot
@@ -704,7 +736,6 @@ test.game.ParticlePerformanceTest: int maxSprites
 test.game.ParticlePerformanceTest: java.util.List particles
 test.game.ParticlePerformanceTest: java.util.Random r
 test.game.ParticlePerformanceTest: nidefawl.qubes.vec.Vec3D tmpPos
-test.game.ParticlePerformanceTest: boolean init
 test.game.ParticlePerformanceTest: float SPEED
 test.game.ParticlePerformanceTest: ParticlePerformanceTest()
 test.game.ParticlePerformanceTest: void main(java.lang.String[])
@@ -1022,6 +1053,7 @@ test.game.SkyboxSpriteTest: nidefawl.qubes.vec.Vector3f tmp
 test.game.SkyboxSpriteTest: nidefawl.qubes.vec.Vec3D tmpPos
 test.game.SkyboxSpriteTest: float curWeather
 test.game.SkyboxSpriteTest: float lastWeather
+test.game.SkyboxSpriteTest: boolean renderIntoCubemap
 test.game.SkyboxSpriteTest: boolean hadContext
 test.game.SkyboxSpriteTest: nidefawl.qubes.gl.VertexBuffer vertexBuf
 test.game.SkyboxSpriteTest: nidefawl.qubes.meshing.BlockFaceAttr attr
@@ -1646,13 +1678,14 @@ test.game.vr.VRApp: test.game.CameraController cameraController
 test.game.vr.VRApp: nidefawl.qubes.gl.FrameBuffer sceneFB
 test.game.vr.VRApp: nidefawl.qubes.gl.GLTriBuffer cube
 test.game.vr.VRApp: nidefawl.qubes.shader.Shader modelShader
+test.game.vr.VRApp: nidefawl.qubes.font.FontRenderer font
 test.game.vr.VRApp: int tick
-test.game.vr.VRApp: boolean startup
 test.game.vr.VRApp: int action
+test.game.vr.VRApp: java.lang.String stats
+test.game.vr.VRApp: boolean startup
 test.game.vr.VRApp: boolean once
 test.game.vr.VRApp: nidefawl.qubes.vec.Vector3f tmp
 test.game.vr.VRApp: nidefawl.qubes.vec.Vec3D tmpPos
-test.game.vr.VRApp: boolean hadContext
 test.game.vr.VRApp: VRApp()
 test.game.vr.VRApp: void main(java.lang.String[])
 test.game.vr.VRApp: void initShaders()
@@ -1663,6 +1696,7 @@ test.game.vr.VRApp: void renderScene(float)
 test.game.vr.VRApp: void render(float)
 test.game.vr.VRApp: void preRenderUpdate(float)
 test.game.vr.VRApp: void postRenderUpdate(float)
+test.game.vr.VRApp: void onWindowResize(int,int)
 test.game.vr.VRApp: void setRenderResolution(int,int)
 test.game.vr.VRApp: void tick()
 test.game.vr.VRApp: void initGame()
