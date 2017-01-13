@@ -3,9 +3,6 @@
  */
 package nidefawl.qubes.gl;
 
-import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.GL_VERTEX_ATTRIB_ARRAY_ADDRESS_NV;
-import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.glBufferAddressRangeNV;
-
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -20,35 +17,21 @@ import nidefawl.qubes.gl.GLVAO.VertexAttrib;
  * Copyright: Michael Hept
  */
 public class MultiDrawIndirectBuffer {
-
     ByteBuffer buffers;
     IntBuffer intbuffers;
-    boolean inUse = true;
+    int[] heapBuffer = new int[0];
+    int pos = 0;
     private int drawCount;
     private int stride;
-    private int vertexBufferCount;
     private GLVAO vao;
-    public void setInUse(boolean inUse) {
-        this.inUse = inUse;
-    }
-    public boolean isInUse() {
-        return this.inUse;
-    }
-    
-    /**
-     * @param i
-     */
-    public MultiDrawIndirectBuffer(int i) {
-        if (i > 0) {
-            reallocBuffer(i);
-        }
-    }
 
     /**
      * 
      */
     public MultiDrawIndirectBuffer() {
+        reallocBuffer(4*1024*1024);
     }
+    
 
     public void reallocBuffer(int intLen) {
         intLen *= 4;
@@ -56,6 +39,9 @@ public class MultiDrawIndirectBuffer {
             if (intLen*2 < 2*1024*1024) {
                 intLen = intLen*2;
             }
+            int[] newBuf = new int[intLen];
+            System.arraycopy(heapBuffer, 0, newBuf, 0, heapBuffer.length);
+            heapBuffer = newBuf;
             if (buffers != null) {
                 buffers = Memory.reallocByteBufferAligned(buffers, 64, intLen);
             } else {
@@ -72,31 +58,6 @@ public class MultiDrawIndirectBuffer {
         }
     }
 
-    /**
-     * @param idx
-     */
-    public void put(int[] buffer) {
-        put(buffer, 0, buffer.length);
-    }
-
-    /**
-     * @param buffer
-     * @param i
-     * @param intLen
-     */
-    public void put(int[] buffer, int offset, int len) {
-        reallocBuffer(offset+len);
-        intbuffers.clear();
-        intbuffers.put(buffer, offset, len);
-        buffers.position(0).limit(len*4);
-    }
-
-    /**
-     * @return
-     */
-    public ByteBuffer getByteBuf() {
-        return this.buffers;
-    }
     /*
       typedef struct {
           GLuint count;
@@ -119,50 +80,47 @@ public class MultiDrawIndirectBuffer {
           BindlessPtrNV               vertexBuffers[];
         } DrawElementsIndirectBindlessCommandNV;
      */
-    
     public void add(GLVBO vVBO, GLVBO iVBO, int elementcount) {
-        int pos = this.intbuffers.position();
-        this.intbuffers.put(elementcount);
-        this.intbuffers.put(1);
-        this.intbuffers.put(0);
-        this.intbuffers.put(0);
-        this.intbuffers.put(0);
+        int pos = this.pos;
+        int startpos = this.pos;
+        final int[] heap = this.heapBuffer;
+        heap[pos++] = elementcount;
+        heap[pos++] = 1;
+        heap[pos++] = 0;
+        heap[pos++] = 0;
+        heap[pos++] = 0;
 
-        this.intbuffers.put(0);
-
-        this.intbuffers.put(0);
-        this.intbuffers.put(0);
-        putLong(iVBO.addr);
-        putLong(iVBO.size);
+        heap[pos++] = 0;
+        
+        heap[pos++] = 0;
+        heap[pos++] = 0;
+        pos += putLong(heap, pos, iVBO.addr);
+        pos += putLong(heap, pos, iVBO.size);
         for (int i = 0; i < vao.list.size(); i++) {
             
             VertexAttrib attrib = vao.list.get(i);
-            this.intbuffers.put(i);
-            this.intbuffers.put(0);
+            heap[pos++] = i;
+            heap[pos++] = 0;
             long attrAddr = vVBO.addr + attrib.offset * 4;
             long attrSize = vVBO.size - attrib.offset * 4;
-            putLong(attrAddr);
-            putLong(attrSize);
+            pos += putLong(heap, pos, attrAddr);
+            pos += putLong(heap, pos, attrSize);
         }
-
-        this.stride = (this.intbuffers.position()-pos)<<2;
-//        while (this.intbuffers.position()%64!=0) {
-//            this.intbuffers.put(0);
-//        }
-//        System.out.println(this.intbuffers.position()+"/"+drawCount);
-
+        this.pos = pos;
+        this.stride = (pos-startpos)<<2;
         drawCount++;
     }
-    private void putLong(long l) {
-        this.intbuffers.put((int) (l&0xFFFFFFFF));
-        int msb = (int) (l>>>32);
-//        System.out.println(msb);
-        this.intbuffers.put(msb);
+    
+
+    private int putLong(int[] heap, int pos, long l) {
+        heap[pos++] = (int) (l&0xFFFFFFFF);
+        heap[pos++] = (int) (l>>>32);
+        return 2;
     }
-    int[] emptyData = new int[1024*1024];
-    public void reset(GLVAO bindlessVAO) {
+    
+    public void preDraw(GLVAO bindlessVAO) {
         this.vao = bindlessVAO;
-        put(emptyData, 0, emptyData.length);
+        pos = 0;
         intbuffers.clear();
         buffers.clear();
         drawCount = 0;
@@ -171,16 +129,9 @@ public class MultiDrawIndirectBuffer {
         return this.drawCount;
     }
     public void render() {
-////
-//        for (int i = 0; i < vao.list.size(); i++) {
-//            VertexAttrib attrib = vao.list.get(i);
-//            glBufferAddressRangeNV(GL_VERTEX_ATTRIB_ARRAY_ADDRESS_NV, i, 0 + attrib.offset*4, 0 - attrib.offset*4);
-////            System.out.println(vbo.addr+"/"+vbo.size+" - "+attrib.offset);
-//        }
-        intbuffers.flip();
-//        for (int i = 0; i < intbuffers.limit(); i++) {
-//            System.out.println(intbuffers.get(i));
-//        }
+        intbuffers.clear();
+        intbuffers.put(heapBuffer, 0, pos);
+        intbuffers.position(0).limit(pos);
         buffers.position(0).limit(intbuffers.limit()<<2);
         Engine.bindVAO(this.vao, true);
         if (Game.GL_ERROR_CHECKS)
