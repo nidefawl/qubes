@@ -31,6 +31,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.SimpleResourceManager;
 import nidefawl.qubes.vec.*;
 
@@ -47,21 +48,21 @@ public class VR {
 		public Vector3f unifiedFrustumCameraOffset = new Vector3f();
 		public void setEyeToHeadTransform() {
 			HmdMatrix34_t matL = vrsystem.GetEyeToHeadTransform.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left);
-			matL.read();
+//			matL.read();
 			convertSteamVRMatrix3ToMatrix4f(matL, this.poseEyeLeft);
 			this.poseEyeLeft.invert();
 			HmdMatrix34_t matR = vrsystem.GetEyeToHeadTransform.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Right);
-			matR.read();
+//			matR.read();
 			convertSteamVRMatrix3ToMatrix4f(matR, this.poseEyeRight);
 			this.poseEyeRight.invert();
 		}
 		public void setEyeProj(float nearClip, float farClip)
 		{
 			HmdMatrix44_t matL = vrsystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
-			matL.read();
+//			matL.read();
 			convertSteamVRMatrix4ToMatrix4f(matL, this.projLeft);
 			HmdMatrix44_t matR = vrsystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Right, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
-			matR.read();
+//			matR.read();
 			convertSteamVRMatrix4ToMatrix4f(matR, this.projRight);
 		}
 		public void update(float f) {
@@ -110,31 +111,32 @@ public class VR {
 	final static Texture_t texType1 = new Texture_t();
 
 
-	private static Matrix4f[] poseMatrices;
-	private static Vec3D	[] deviceVelocity;
-	public static final Matrix4f hmdPose = new Matrix4f();
+	public static Matrix4f[] poseMatrices;
+	public static Vec3D	[] deviceVelocity;
+    public static final Matrix4f hmdPose = new Matrix4f();
+    public static final Matrix4f lasthmdPose = new Matrix4f();
 	private static boolean headIsTracking;
 	// Controllers
 	private static int RIGHT_CONTROLLER = 0;
 	private static int LEFT_CONTROLLER = 1;
 	
 	static boolean[] controllerTracking = new boolean[2];
-	private static Matrix4f[] controllerPose = new Matrix4f[2];
-	private static Matrix4f[] controllerRotation = new Matrix4f[2];
-	private static int[] controllerDeviceIndex = new int[2];
-	private static VRControllerState_t.ByReference[] inputStateRefernceArray = new VRControllerState_t.ByReference[2];
-	private static VRControllerState_t[] lastControllerState = new VRControllerState_t[2];
-	private static VRControllerState_t[] controllerStateReference = new VRControllerState_t[2];
-	private static final int maxControllerVelocitySamples = 5;
-	private static Vec3D[][] controllerVelocitySamples = new Vec3D[2][maxControllerVelocitySamples];
-	private static int[] controllerVelocitySampleCount = new int[2];
-	private static Matrix4f[] controllerTipTransform = new Matrix4f[2];
-	private static Matrix4f[] handRotation = new Matrix4f[2];
+	public static Matrix4f[] controllerPose = new Matrix4f[2];
+	public static Matrix4f[] controllerRotation = new Matrix4f[2];
+	public static int[] controllerDeviceIndex = new int[2];
+	public static VRControllerState_t.ByReference[] inputStateRefernceArray = new VRControllerState_t.ByReference[2];
+	public static VRControllerState_t[] lastControllerState = new VRControllerState_t[2];
+	public static VRControllerState_t[] controllerStateReference = new VRControllerState_t[2];
+	public static final int maxControllerVelocitySamples = 5;
+	public static Vec3D[][] controllerVelocitySamples = new Vec3D[2][maxControllerVelocitySamples];
+	public static int[] controllerVelocitySampleCount = new int[2];
+	public static Matrix4f[] controllerTipTransform = new Matrix4f[2];
+	public static Matrix4f[] handRotation = new Matrix4f[2];
 	public static int renderWidth;
 	public static int renderHeight;
-    private static CGLRenderModelNative[] m_rTrackedDeviceToRenderModel;
-    private static boolean[] isTrackedDeviceConnected;
-    private static int[] trackedDeviceClass;
+    public static CGLRenderModelNative[] m_rTrackedDeviceToRenderModel;
+    public static boolean[] isTrackedDeviceConnected;
+    public static int[] trackedDeviceClass;
     static HashMap<String, CGLRenderModelNative> models = new HashMap<>();
     static HashSet<String> missingModels = new HashSet<>();
     public static boolean isInputCaptured;
@@ -545,6 +547,9 @@ public class VR {
 			hmdPose.load(poseMatrices[JOpenVRLibrary.k_unTrackedDeviceIndex_Hmd]);
 			//hellovr does hmdPose.invert() here
 			hmdPose.invert();
+//			Matrix4f.sub(hmdPose, lasthmdPose, lasthmdPose);
+//			System.out.println(lasthmdPose.toString());
+//			lasthmdPose.load(hmdPose);
 			headIsTracking = true;
 //			System.out.println("headIsTracking "+hmdPose);
 		}
@@ -555,28 +560,28 @@ public class VR {
 			hmdPose.m31 = 1.62f;
 		}
 
-//		findControllerDevices();
+		findControllerDevices();
 //
-//		for (int c=0;c<2;c++)
-//		{
-//			if (controllerDeviceIndex[c] != -1)
-//			{
-//				controllerTracking[c] = true;
-//				OpenVRUtil.Matrix4fCopy(poseMatrices[controllerDeviceIndex[c]], controllerPose[c]);
-//			}
-//			else
-//			{
-//				controllerTracking[c] = false;
-////				OpenVRUtil.Matrix4fSetIdentity(controllerPose[c]);
-//			}
-//		}
-//		getTipTransforms();
+		for (int c=0;c<2;c++)
+		{
+			if (controllerDeviceIndex[c] != -1)
+			{
+				controllerTracking[c] = true;
+				controllerPose[c].load(poseMatrices[controllerDeviceIndex[c]]);
+			}
+			else
+			{
+				controllerTracking[c] = false;
+				controllerPose[c].setIdentity();
+			}
+		}
+		getTipTransforms();
 		cam.update(f);
 	}
-	
+	static Pointer pointer;
 	private static void getTipTransforms(){
-		int count = vrRenderModels.GetRenderModelCount.apply();
-		Pointer pointer = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+		if (pointer == null)
+		    pointer = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
 		for (int i = 0; i < 2; i++) {
 			if (controllerDeviceIndex[i] != -1 && !settings.seated) {
 				vrsystem.GetStringTrackedDeviceProperty.apply(controllerDeviceIndex[i], JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String, pointer, JOpenVRLibrary.k_unMaxPropertyStringSize - 1, hmdErrorStore);
@@ -643,7 +648,7 @@ public class VR {
 //			throw new RuntimeException("res changed: vr: "+rtx.get(0)+"x"+rty.get(0)+ " prev: "+renderWidth+"x"+renderHeight + " Game "+Game.displayWidth+"x"+Game.displayHeight);		
 //		}
 
-		VR.vrCompositor.PostPresentHandoff.apply();
+//		VR.vrCompositor.PostPresentHandoff.apply();
 	}
 
 	public static void initApp(GameBase instance) {
@@ -726,15 +731,18 @@ public class VR {
         UniformBuffer.updateUBO(null, f);
 	}
 	public static Matrix4f getViewMat(int i) {
+        tmpMat.setIdentity();
+//        tmpMat.rotate(Engine.camera.bearingAngle * GameMath.PI_OVER_180, 0f, 1f, 0f);
         switch (i) {
         case 0:
-//            Matrix4f.mul(cam.viewLeft, Engine.getIdentityMatrix(), tmpMat);
-                return cam.viewLeft;
+            Matrix4f.mul(cam.viewLeft, tmpMat, tmpMat);
+            break;
         case 1:
         default:
-//            Matrix4f.mul(cam.viewRight, Engine.getIdentityMatrix(), tmpMat);
-            return cam.viewRight;
+            Matrix4f.mul(cam.viewRight, tmpMat, tmpMat);
+            break;
         }
+        return tmpMat;
 	}
 
 	
@@ -839,7 +847,7 @@ public class VR {
 
     public static void shutdown() {
         if (vrsystem!=null) {
-            
+            JOpenVRLibrary.VR_ShutdownInternal();
         }
     }
 
@@ -885,6 +893,7 @@ public class VR {
             CGLRenderModelNative model = m_rTrackedDeviceToRenderModel[iDevice];
             if (model == null)
                 continue;
+//            System.out.println(iDevice+","+GetTrackedDeviceString( iDevice, JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String ));
             Matrix4f n = poseMatrices[iDevice];
             bufMat.load(n);
             bufMat.update();

@@ -41,9 +41,6 @@ void main() {
 
 	vec4 camNormal = in_matrix_3D.normal * vec4(in_normal.xyz, 1);
 	normal = normalize(camNormal.xyz);
-	// mat4 normalMat = transpose(inverse(in_modelMatrix));
-	// vec4 camNormal = normalMat * vec4(in_normal.xyz, 1);
-	// normal = normalize(camNormal.xyz);
 	vec4 lightPos1V = vec4(lightPos1, 1);
 	vec4 lightPos2V = vec4(lightPos2, 1);
 	color = in_color;
@@ -52,23 +49,7 @@ void main() {
 	vec4 pos = in_position;
 	texcoord = in_texcoord;
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
-	float distCam = length(in_position.xyz - CAMERA_POS);
 
-	uint vertDir = BLOCK_VERTDIR(blockinfo);
-	vec3 dir = vertexDir.dir[vertDir].xyz;
-
-	vec3 L1 = -normalize(lightPos1V.xyz);
-	vec3 L2 = -normalize(lightPos2V.xyz);
-	Idiff = max(dot(normal,L1), 0.03)*1.3;
-	Idiff+= max(dot(normal,L2), 0.03)*0.7;
-
-
-	// const float face_offset = 1/32.0;
-	// float distScale = face_offset*clamp(pow((distCam+8)/200, 1.35), 0.0008, 1);
-	// pos.x += dir.x*distScale;
-	// pos.y += dir.y*distScale;
-	// pos.z += dir.z*distScale;
-	// pos.xyz *= 1/32.0;
 
 
 	vec4 position = in_matrix_3D.p * in_modelMatrix * in_position;

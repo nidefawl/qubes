@@ -797,7 +797,7 @@ public class Game extends GameBase {
             if (Engine.outRenderer.getSsr() > 0) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("SSR");
-                if (!VR_SUPPORT || eye == 0)
+//                if (!VR_SUPPORT || eye == 0)
                 Engine.outRenderer.raytraceSSR(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
@@ -1001,7 +1001,7 @@ public class Game extends GameBase {
 //          Engine.skyRenderer.initShaders();
 //          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
-//            Engine.outRenderer.initShaders();
+            //Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
@@ -1015,6 +1015,7 @@ public class Game extends GameBase {
     @Override
     public void postRenderUpdate(float f) {
         Engine.worldRenderer.rendered = Engine.regionRenderer.rendered;
+        if (VR_SUPPORT) VR.updatePose(f);
     }
     private float lastTpDistance;
     public Vector3f t = new Vector3f();
@@ -1029,7 +1030,6 @@ public class Game extends GameBase {
     
     @Override
     public void preRenderUpdate(float f) {
-        if (VR_SUPPORT) VR.updatePose(f);
         Engine.blockDraw.processQueue();
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
@@ -1079,9 +1079,9 @@ public class Game extends GameBase {
                 vLastCam.set(vCam);
             }
             vLastPlayer.set(vPlayer);
-            
+            float yOffset = VR_SUPPORT?0.f:1.62F;
             vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
-            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
+            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + yOffset;
             vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
             
             vCam.set(vPlayer);

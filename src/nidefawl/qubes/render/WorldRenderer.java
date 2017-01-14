@@ -36,9 +36,8 @@ import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Color;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.vec.AABB;
-import nidefawl.qubes.vec.Frustum;
-import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vec.*;
+import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.world.World;
 
 public class WorldRenderer extends AbstractRenderer {
@@ -580,7 +579,27 @@ public class WorldRenderer extends AbstractRenderer {
                 mat.rotate(90 * GameMath.PI_OVER_180, 1, 0, 0);
                 mat.rotate(-180 * GameMath.PI_OVER_180, 0, 1, 0);
                 mat.update();
-                
+
+                if (Game.VR_SUPPORT) {
+                    mat.setIdentity();
+                    mat.load(Engine.getMatSceneV());
+                    float t = -0.5f;
+                    Matrix4f.mul(mat, VR.poseMatrices[3], mat);
+//                    mat.translate(t,t,t);
+                    mat.scale(modelScale);
+                    mat.scale(0.4f);
+                    mat.translate(0, 0, 2);
+                    mat.rotate(-90 * GameMath.PI_OVER_180, 1, 0, 0);
+//                    mat.rotate(-180 * GameMath.PI_OVER_180, 0, 1, 0);
+                    
+                    mat.update();
+                    BufferedMatrix mat2 = Engine.getTempMatrix2();
+                    mat2.load(mat);
+//                    mat2.clearTranslation();
+                    mat2.invert().transpose();
+                    mat2.update();
+                    UniformBuffer.setNormalMat(mat2.get());
+                }
                 
                 shaderModelfirstPerson.enable();
                 shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
@@ -620,9 +639,27 @@ public class WorldRenderer extends AbstractRenderer {
             }
             mat.scale(0.5f);
             mat.update();
+            if (Game.VR_SUPPORT) {
+                mat.setIdentity();
+                mat.load(Engine.getMatSceneV());
+                float t = -0.5f;
+                Matrix4f.mul(mat, VR.poseMatrices[3], mat);
+//                mat.translate(t,t,t);
+                mat.scale(0.4f);
+                
+                mat.update();
+                BufferedMatrix mat2 = Engine.getTempMatrix2();
+                mat2.load(mat);
+//                mat2.clearTranslation();
+                mat2.invert().transpose();
+                mat2.update();
+                UniformBuffer.setNormalMat(mat2.get());
+            }
+            glDisable(GL11.GL_CULL_FACE);
             Shaders.singleblock3D.setProgramUniformMatrix4("in_modelMatrix", false, mat.get(), false);
             GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
             Engine.blockDraw.doRender(bstack.getBlock(), 0, null);
+            glEnable(GL11.GL_CULL_FACE);
         }
         UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
         

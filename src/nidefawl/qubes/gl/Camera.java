@@ -10,7 +10,7 @@ import nidefawl.qubes.vec.Vector3f;
 public class Camera {
 
     protected float          pitchAngle   = 0;
-    protected float          bearingAngle = 0;
+    public float          bearingAngle = 0;
     protected final Vector3f position     = new Vector3f();
     protected final Vector3f prevposition = new Vector3f();
     protected final Matrix4f viewMatrix   = new Matrix4f();

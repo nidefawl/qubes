@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL40;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.IShaderDef;
@@ -185,7 +186,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
     public void resize(int displayWidth, int displayHeight) {
         releaseAll(EResourceType.FRAMEBUFFER);
-        SHADOW_BUFFER_SIZE = 1024*4;
+        SHADOW_BUFFER_SIZE = GameBase.VR_SUPPORT?1024*1:1024*4;
         this.fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
         this.fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
         this.fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);

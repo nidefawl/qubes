@@ -642,9 +642,9 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                 threadCtx[i].shadowRenderList.clear();
                 threadCtx[i].workedOn=0;
             }
-            TimingHelper.start(4);
+//            TimingHelper.start(4);
             worker.work(this);
-            TimingHelper.end(4);
+//            TimingHelper.end(4);
             for (int i = 0; i < 4; i++) {
                 this.regionsToUpdate.addAll(threadCtx[i].regionsToUpdate);
                 this.renderList.addAll(threadCtx[i].renderList);
@@ -655,9 +655,9 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
 //            }
             
         } else {
-            TimingHelper.start(3);
+//            TimingHelper.start(3);
             traverseRenderers();
-            TimingHelper.end(3);
+//            TimingHelper.end(3);
         }
 //        traverseRenderers(rChunkX, rChunkY, rChunkZ);
 //        System.out.println(timespent/1000L);
