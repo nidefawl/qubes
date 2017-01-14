@@ -22,6 +22,7 @@ public class ClientSettings extends AbstractYMLConfig {
     private int saveTicks;
     public int ao;
     public String lastserver;
+    public int anisotropicFiltering;
     
     @Override
     public void setDefaults() {
@@ -31,6 +32,7 @@ public class ClientSettings extends AbstractYMLConfig {
         this.aa = 1;
         this.ao = 1;
         this.smaaQuality = 1;
+        this.anisotropicFiltering = 0;
         this.thirdpersonDistance = 4.0f;
     }
 
@@ -41,6 +43,7 @@ public class ClientSettings extends AbstractYMLConfig {
         chunkLoadDistance = getInt("chunkLoadDistance", chunkLoadDistance);
         shadowDrawMode = getInt("shadowDrawMode", shadowDrawMode);
         smaaQuality = getInt("smaaQuality", smaaQuality);
+        anisotropicFiltering = getInt("anisotropicFiltering", anisotropicFiltering);
         ssr = getInt("ssr", ssr);
         aa = getInt("aa", aa);
         ao = getInt("ao", ao);
@@ -56,6 +59,7 @@ public class ClientSettings extends AbstractYMLConfig {
         setInt("ao", ao);
         setInt("smaaQuality", smaaQuality);
         setFloat("thirdpersonDistance", thirdpersonDistance);
+        setInt("anisotropicFiltering", anisotropicFiltering);
     }
 
     /**

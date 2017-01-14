@@ -393,6 +393,9 @@ public class FinalRenderer extends AbstractRenderer {
                     if ("RENDER_PASS".equals(define)) {
                         return "#define RENDER_PASS 0";
                     }
+                    if ("SHADOW_MAP_RESOLUTION".equals(define)) {
+                        return "#define SHADOW_MAP_RESOLUTION "+Engine.shadowRenderer.getTextureSize()+".0";
+                    }
                     return null;
                 }
             });
@@ -402,6 +405,9 @@ public class FinalRenderer extends AbstractRenderer {
                     if ("RENDER_PASS".equals(define)) {
                         return "#define RENDER_PASS 1";
                     }
+                    if ("SHADOW_MAP_RESOLUTION".equals(define)) {
+                        return "#define SHADOW_MAP_RESOLUTION "+Engine.shadowRenderer.getTextureSize()+".0";
+                    }
                     return null;
                 }
             });
@@ -410,6 +416,9 @@ public class FinalRenderer extends AbstractRenderer {
                 public String getDefinition(String define) {
                     if ("RENDER_PASS".equals(define)) {
                         return "#define RENDER_PASS 2";
+                    }
+                    if ("SHADOW_MAP_RESOLUTION".equals(define)) {
+                        return "#define SHADOW_MAP_RESOLUTION "+Engine.shadowRenderer.getTextureSize()+".0";
                     }
                     return null;
                 }

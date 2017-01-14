@@ -1,5 +1,8 @@
 package nidefawl.qubes.gui;
 
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
+import static org.lwjgl.opengl.GL11.glGetFloat;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,6 +18,7 @@ import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.ShaderBuffer;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 
 public class GuiSettings extends Gui {
     static int nextID = 3;
@@ -48,6 +52,7 @@ public class GuiSettings extends Gui {
     private Setting smaaSetting;
     private Setting smaaQSetting;
     private Setting aoSetting;
+    private Setting anisotropySetting;
 
     public GuiSettings(Gui parent) {
         this.parent = parent;
@@ -80,6 +85,7 @@ public class GuiSettings extends Gui {
                 Game.instance.settings.shadowDrawMode = id;
                 Engine.shadowRenderer.init();
                 Game.instance.saveSettings();
+                Engine.regionRenderer.reRender();
             }
         }));
         final String[] reflections = new String[] { "Disabled", "Basic", "Detailed", "Ultra" };
@@ -115,6 +121,31 @@ public class GuiSettings extends Gui {
                 Game.instance.settings.smaaQuality = id;
                 Game.instance.saveSettings();
                 Engine.outRenderer.initAA();
+            }
+        }));
+        List<String> alist = Lists.newArrayList();
+        alist.add("Disabled");
+        final float f = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+        int nf = 2;
+        while (nf <= f) {
+            alist.add("" + nf+"x");
+            nf *= 2;
+        }
+        String curValue = Game.instance.settings.anisotropicFiltering == 0 ? "Disabled" : (""+Game.instance.settings.anisotropicFiltering+"x");
+        final String[] avalues = alist.toArray(new String[alist.size()]);
+        list.add((this.anisotropySetting = new Setting(this, "Anisotropic Filtering", curValue, avalues) {
+            void callback(int id) {
+                int level = 0;
+                if (id > 0) {
+                    level = 2;
+                    while (level <= f&&--id>0) {
+                        level *= 2;
+                    }
+                }
+                Game.instance.settings.anisotropicFiltering = level;
+                Game.instance.saveSettings();
+                BlockTextureArray.getInstance().setAnisotropicFiltering(level);
+                BlockTextureArray.getInstance().reload();// make sync task?
             }
         }));
         int left = this.width / 2+15;

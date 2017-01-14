@@ -1,6 +1,7 @@
 package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
@@ -26,6 +27,7 @@ import nidefawl.qubes.util.GameError;
 public class BlockTextureArray extends TextureArray {
     public static final int        BLOCK_TEXTURE_BITS = 4;
     static final BlockTextureArray instance           = new BlockTextureArray();
+    public float anisotropicFiltering = 0;
 
     public static BlockTextureArray getInstance() {
         return instance;
@@ -40,21 +42,22 @@ public class BlockTextureArray extends TextureArray {
 
     protected void postUpload() {
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
-        boolean useDefault = true;
-        if (useDefault) {
 
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        } else {// does not work with alpha testing
-
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
-            //      GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        if (anisotropicFiltering > 0) {// does not work well with alpha testing
+            float f = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+            System.out.println("MAX ANISOTROPY: "+f);
+            if (anisotropicFiltering < f) {
+                f = anisotropicFiltering;
+            }
+            if (f > 0) {
+                System.out.println("anisotropicFiltering level: "+f);
+                glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, f);
+            }
         }
         if (this.report && GameBase.loadingScreen != null) {
             GameBase.loadingScreen.render(2, 1);
@@ -79,6 +82,7 @@ public class BlockTextureArray extends TextureArray {
                     byte[] data = tex.getData();
                     TextureUtil.clampAlpha(data, this.tileSize, this.tileSize);
                     int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
+                    TextureUtil.setTransparentPixelsColor(data, this.tileSize, this.tileSize, avg);
                     int mipmapSize = this.tileSize;
                     for (int m = 0; m < numMipmaps; m++) {
                         directBuf = put(directBuf, data);
@@ -133,6 +137,10 @@ public class BlockTextureArray extends TextureArray {
             }
             loadprogress = (i / (float) len);
         }
+    }
+
+    public void setAnisotropicFiltering(int anisotropicFiltering) {
+        this.anisotropicFiltering = anisotropicFiltering;
     }
 
 }

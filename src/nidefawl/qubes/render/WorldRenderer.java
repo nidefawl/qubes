@@ -655,11 +655,11 @@ public class WorldRenderer extends AbstractRenderer {
                 mat2.update();
                 UniformBuffer.setNormalMat(mat2.get());
             }
-            glDisable(GL11.GL_CULL_FACE);
+//            glDisable(GL11.GL_CULL_FACE); //face culling is off already
             Shaders.singleblock3D.setProgramUniformMatrix4("in_modelMatrix", false, mat.get(), false);
             GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
             Engine.blockDraw.doRender(bstack.getBlock(), 0, null);
-            glEnable(GL11.GL_CULL_FACE);
+//            glEnable(GL11.GL_CULL_FACE);
         }
         UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
         

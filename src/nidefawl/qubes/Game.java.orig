@@ -183,7 +183,6 @@ public class Game extends GameBase {
         loadingScreen.render(0, 1f, "Loading... Entity Models");
         EntityModelManager.getInstance().reload();
         loadingScreen.render(0, 1f, "Loading... Item Textures");
-        BlockTextureArray.getInstance().setAnisotropicFiltering(this.settings.anisotropicFiltering);
         TextureArray[] arrays = {
                 ItemTextureArray.getInstance(),
                 BlockNormalMapArray.getInstance(),

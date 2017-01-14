@@ -370,5 +370,17 @@ public class TextureUtil {
         b = b>255?255:b<0?0:b;
         return r<<16|g<<8|b;
     }
+    public static void setTransparentPixelsColor(byte[] data, int w, int h, int avg) {
+        for (int x = 0; x < w; x++)
+            for (int y = 0; y < h; y++) {
+                int idx = (x+y*w)*4;
+                int alpha = data[idx+3]&0xFF;
+                if (alpha == 0) {
+                    data[idx+2] = (byte) ((avg>>16)&0xFF);
+                    data[idx+1] = (byte) ((avg>>8)&0xFF);
+                    data[idx+0] = (byte) ((avg>>0)&0xFF);
+                }
+            }
+    }
 
 }

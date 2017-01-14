@@ -11,6 +11,7 @@ import java.util.HashMap;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;

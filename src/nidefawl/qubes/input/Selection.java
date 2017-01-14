@@ -112,9 +112,10 @@ public class Selection {
     private void renderMouseOver() {
         if (this.renderBB != null) {
             glDepthFunc(GL_LESS);
-
             Engine.pxStack.push(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
+//            glDisable(GL_CULL_FACE);
             this.renderBB.drawQuads();
+//            glEnable(GL_CULL_FACE);
             Engine.pxStack.pop();
             glDepthFunc(GL_LEQUAL);
         }
