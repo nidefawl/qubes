@@ -1020,6 +1020,7 @@ public class Game extends GameBase {
     private float lastTpDistance;
     public Vector3f t = new Vector3f();
     public Vector3f t2 = new Vector3f();
+    final static Vector3f tmp = new Vector3f();
     RayTrace rayTrace = new RayTrace() {
         public boolean rayTraceBlock(Block block) {
             if (block.isFullBB())
@@ -1064,7 +1065,17 @@ public class Game extends GameBase {
         if (player != null) {
             float tpDistance = this.lastTpDistance + (settings.thirdpersonDistance - this.lastTpDistance) * f;
             this.dig.preRenderUpdate();
-            player.updateInputDirect(movement);
+//            player.updateInputDirect(movement);
+
+
+            {
+//                float yaw = 180-(tmp.y*GameMath.P_180_OVER_PI);
+//                float pitch = (tmp.x*GameMath.P_180_OVER_PI);
+//                float forward = VR.getAxis(0, 0, 1)*-0.1f;
+//                float strafe = VR.getAxis(0, 0, 0)*0.1f;
+//                this.player.update(pitch, yaw, forward, strafe, 0, false);
+            }
+            
             float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
             distF = -distF*0.6f;
             float f2 = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * f;

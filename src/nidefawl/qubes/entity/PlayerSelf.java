@@ -3,17 +3,12 @@ package nidefawl.qubes.entity;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.PlayerProfile;
 import nidefawl.qubes.crafting.CraftingCategory;
-import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.KeybindManager;
-import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
 import nidefawl.qubes.item.BaseStack;
-import nidefawl.qubes.models.qmodel.QModelProperties;
-import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.nbt.Tag.TagType;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
@@ -92,6 +87,19 @@ public class PlayerSelf extends Player {
         this.sneak = movement.sneak;
         movement.mX = 0;
         movement.mY = 0;
+    }
+
+    public void update(float newP, float newY, float forward, float strafe, float jump, boolean sneak) {
+        float diffP = newP - this.pitch;
+        float diffY = newY - this.yaw;
+        this.pitch = newP;
+        this.yaw = newY;
+        this.lastPitch += diffP;
+        this.lastYaw += diffY;
+        this.forward = forward;
+        this.strafe = strafe;
+        this.jump = jump;
+        this.sneak = sneak;
     }
     
     @Override
