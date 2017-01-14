@@ -6,6 +6,8 @@
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma define "RENDER_PASS"
+#pragma define "SHADOW_MAP_RESOLUTION"
+
 float isEyeInWater = 0.0;
 
 #if RENDER_PASS ==1
@@ -151,10 +153,10 @@ const float clampmax = 1-clampmin;
 bool canLookup(in vec4 v, in float zPos, in float mapZ) {
     return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && zPos < mapZ;
 }
-#define SAMPLE_DISTANCE ((1.0/2048.0) / 4.0)
+#define SAMPLE_DISTANCE ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_TAP_RANGE 1
 #define SOFT_SHADOW_TAP_RANGE2 1
-#define SAMPLE_DISTANCE2 ((1.0/2048.0) / 4.0)
+#define SAMPLE_DISTANCE2 ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_WEIGHT ((SOFT_SHADOW_TAP_RANGE*2+1)*(SOFT_SHADOW_TAP_RANGE*2+1))
 #define SOFT_SHADOW_WEIGHT2 ((SOFT_SHADOW_TAP_RANGE2*2+1)*(SOFT_SHADOW_TAP_RANGE2*2+1))
 #if 1

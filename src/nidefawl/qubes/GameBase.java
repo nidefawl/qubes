@@ -50,8 +50,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static boolean GL_ERROR_CHECKS = true;
     public static boolean VR_SUPPORT = false;
     public static long    windowId        = 0;
-    protected static int            initWidth       = (int) (1680 * 0.8);
-    protected static int            initHeight      = (int) (1050 * 0.8);
+    protected static int            initWidth       = (int) (1920);
+    protected static int            initHeight      = (int) (1080);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
@@ -1077,12 +1077,14 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             setRenderResolution(displayWidth, displayHeight);
             Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
             Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+            Engine.outRenderer.initShaders();
         } else if (VR_SUPPORT && !hadVR) {
             Game.displayWidth=VR.renderWidth;
             Game.displayHeight=VR.renderHeight;
             setRenderResolution(displayWidth, displayHeight);
             Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
             Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+            Engine.outRenderer.initShaders();
             setVSync(false);
         }
     }

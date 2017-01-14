@@ -80,7 +80,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
 
     public void init() {
-        this.renderMode = renderMode>MULTI_DRAW_TEXUTED||renderMode<0?MULTI_DRAW:renderMode;
+        this.renderMode = Game.instance.settings.shadowDrawMode>MULTI_DRAW_TEXUTED||Game.instance.settings.shadowDrawMode<0?MULTI_DRAW:Game.instance.settings.shadowDrawMode;
         initShaders();
     }
     
@@ -96,11 +96,10 @@ public class ShadowRenderer extends AbstractRenderer {
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
         final int shadowPass = 2;
-//        Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
-//      Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 1, Frustum.FRUSTUM_INSIDE);
+//      Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
+//    Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 1, Frustum.FRUSTUM_INSIDE);
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
-//        Engine.worldRenderer.re
         Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 0); //TODO: FRUSTUM CULLING
 
         shadowShader.enable();
@@ -186,7 +185,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
     public void resize(int displayWidth, int displayHeight) {
         releaseAll(EResourceType.FRAMEBUFFER);
-        SHADOW_BUFFER_SIZE = GameBase.VR_SUPPORT?1024*1:1024*4;
+        SHADOW_BUFFER_SIZE = getTextureSize();
         this.fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
         this.fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
         this.fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
@@ -202,8 +201,8 @@ public class ShadowRenderer extends AbstractRenderer {
         return this.fbShadow.getTexture(0);
     }
 
-    public float getTextureSize() {
-        return SHADOW_BUFFER_SIZE;
+    public int getTextureSize() {
+        return GameBase.VR_SUPPORT?1024*1:1024*4;
     }
 
 }

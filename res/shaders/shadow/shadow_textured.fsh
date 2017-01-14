@@ -1,5 +1,7 @@
 #version 150 core
 
+#pragma include "blockinfo.glsl"
+
 uniform sampler2DArray blockTextures;
 
 in vec2 texcoord;
