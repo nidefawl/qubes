@@ -25,6 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
 import jopenvr.*;
 import jopenvr.JOpenVRLibrary.ETrackedDeviceClass;
 import jopenvr.JOpenVRLibrary.EVRCompositorError;
+import jopenvr.JOpenVRLibrary.EVREventType;
 import jopenvr.TrackedDevicePose_t.ByReference;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
@@ -125,8 +126,6 @@ public class VR {
 	public static Matrix4f[] controllerRotation = new Matrix4f[2];
 	public static int[] controllerDeviceIndex = new int[2];
 	public static VRControllerState_t.ByReference[] inputStateRefernceArray = new VRControllerState_t.ByReference[2];
-	public static VRControllerState_t[] lastControllerState = new VRControllerState_t[2];
-	public static VRControllerState_t[] controllerStateReference = new VRControllerState_t[2];
 	public static final int maxControllerVelocitySamples = 5;
 	public static Vec3D[][] controllerVelocitySamples = new Vec3D[2][maxControllerVelocitySamples];
 	public static int[] controllerVelocitySampleCount = new int[2];
@@ -140,43 +139,28 @@ public class VR {
     static HashMap<String, CGLRenderModelNative> models = new HashMap<>();
     static HashSet<String> missingModels = new HashSet<>();
     public static boolean isInputCaptured;
+    private static jopenvr.VREvent_t.ByReference eventStructReference;
 
 	static {
 
+        m_rTrackedDeviceToRenderModel = new CGLRenderModelNative[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
+        isTrackedDeviceConnected = new boolean[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
+        trackedDeviceClass = new int[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
+        poseMatrices = new Matrix4f[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
+        for(int i=0;i<poseMatrices.length;i++) poseMatrices[i] = new Matrix4f();
 		for (int c=0;c<2;c++)
 		{
-//			aimSource[c] = Vec3.createVectorHelper(0.0D, 0.0D, 0.0D);
-			for (int sample = 0; sample < 5; sample++)
-			{
-//				touchpadSamples[c][sample] = new Vector2f(0, 0);
-			}
-//			touchpadSampleCount[c] = 0;
-            m_rTrackedDeviceToRenderModel = new CGLRenderModelNative[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
-            isTrackedDeviceConnected = new boolean[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
-            trackedDeviceClass = new int[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
-            poseMatrices = new Matrix4f[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
-
-            for(int i=0;i<poseMatrices.length;i++) poseMatrices[i] = new Matrix4f();
-            
 			controllerPose[c] = new Matrix4f();
 			controllerRotation[c] = new Matrix4f();
 			controllerDeviceIndex[c] = -1;
 			controllerTipTransform[c] = new Matrix4f();
 			handRotation[c] = new Matrix4f();
 			
-			lastControllerState[c] = new VRControllerState_t();
-			controllerStateReference[c] = new VRControllerState_t();
 			inputStateRefernceArray[c] = new VRControllerState_t.ByReference();
-
 			inputStateRefernceArray[c].setAutoRead(false);
 			inputStateRefernceArray[c].setAutoWrite(false);
 			inputStateRefernceArray[c].setAutoSynch(false);
-			for (int i = 0; i < 5; i++)
-			{
-				lastControllerState[c].rAxis[i] = new VRControllerAxis_t();
-			}
 
-			//controllerVelocitySamples[c] = new Vec3[2][maxControllerVelocitySamples];
 			controllerVelocitySampleCount[c] = 0;
 			for (int i=0;i<maxControllerVelocitySamples;i++)
 			{
@@ -190,13 +174,6 @@ public class VR {
 		return p;
 
 	}
-//	public static void main(String[] args) {
-//		if (!InitVR()) {
-//			System.out.println("fail");
-//			System.out.println("init "+initStatus);
-//		}
-//		
-//	}
 
 	static boolean InitVR() {
         initSuccess = false;
@@ -400,7 +377,9 @@ public class VR {
 
 			hmdDisplayFrequency = IntBuffer.allocate(1);
 			hmdDisplayFrequency.put( (int) JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_DisplayFrequency_Float);
-			hmdTrackedDevicePoseReference = new TrackedDevicePose_t.ByReference();
+            hmdTrackedDevicePoseReference = new TrackedDevicePose_t.ByReference();
+            
+            eventStructReference = new VREvent_t.ByReference();
 			hmdTrackedDevicePoses = (TrackedDevicePose_t[])hmdTrackedDevicePoseReference.toArray(JOpenVRLibrary.k_unMaxTrackedDeviceCount);
 
 			timePerFrame = 1.0 / hmdDisplayFrequency.get(0);
@@ -559,6 +538,22 @@ public class VR {
 			hmdPose.setIdentity();
 			hmdPose.m31 = 1.62f;
 		}
+		
+		while (vrsystem.PollNextEvent.apply(eventStructReference, eventStructReference.size()) > 0) {
+		    String s = VREvents.evtToName(eventStructReference.eventType);
+		    
+		    System.out.println(""+s+","+eventStructReference.eventAgeSeconds+","+eventStructReference.trackedDeviceIndex);
+		    if (eventStructReference.data == null) {
+		        System.err.println("null data for event");
+		    } else {
+//		        System.err.println(eventStructReference.data.
+		    }
+//		    switch (eventStructReference.eventType) {
+//		        case VREvents.ApplicationListUpdated:
+//		            
+//		    }
+		}
+		
 
 		findControllerDevices();
 //
@@ -577,22 +572,46 @@ public class VR {
 		}
 		getTipTransforms();
 		cam.update(f);
+        for (int i = 0; i < 2; i++) {
+            if (controllerDeviceIndex[i] != -1 && !settings.seated) {
+                if (vrsystem.GetControllerState.apply(controllerDeviceIndex[i], inputStateRefernceArray[i], inputStateRefernceArray[i].size()) > 0) {
+                    inputStateRefernceArray[i].read();
+                    if (i==0) {
+//                        VRControllerAxis_t axis = inputStateRefernceArray[i].rAxis[3];
+//                        System.out.println(axis.x+","+axis.y);
+                    }
+//                    System.out.println(inputStateRefernceArray[i].rAxis.length);
+                    
+//                    inputStateRefernceArray[i].
+//                    inputStateRefernceArray[i].
+                    
+//                    System.out.println("got it");
+                }
+            }
+
+        }
+//		System.out.println(controllerDeviceIndex[0]);
+//        vrsystem.TriggerHapticPulse.apply(controllerDeviceIndex[1], 0, (short)3999);
 	}
 	static Pointer pointer;
 	private static void getTipTransforms(){
-		if (pointer == null)
-		    pointer = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
-		for (int i = 0; i < 2; i++) {
-			if (controllerDeviceIndex[i] != -1 && !settings.seated) {
-				vrsystem.GetStringTrackedDeviceProperty.apply(controllerDeviceIndex[i], JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String, pointer, JOpenVRLibrary.k_unMaxPropertyStringSize - 1, hmdErrorStore);
-				RenderModel_ControllerMode_State_t modeState = new RenderModel_ControllerMode_State_t();
-				RenderModel_ComponentState_t componentState = new RenderModel_ComponentState_t();
-				vrRenderModels.GetComponentState.apply(pointer, ptrFomrString("tip"), controllerStateReference[i], modeState, componentState);
-				convertSteamVRMatrix3ToMatrix4f(componentState.mTrackingToComponentLocal, controllerTipTransform[i]);
-			} else {
-				controllerTipTransform[i].setIdentity();
-			}
-		}
+//		if (pointer == null)
+//		    pointer = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+//		for (int i = 0; i < 2; i++) {
+//			if (controllerDeviceIndex[i] != -1 && !settings.seated) {
+//				vrsystem.GetStringTrackedDeviceProperty.apply(controllerDeviceIndex[i], JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String, pointer, JOpenVRLibrary.k_unMaxPropertyStringSize - 1, hmdErrorStore);
+//				RenderModel_ControllerMode_State_t modeState = new RenderModel_ControllerMode_State_t();
+//				RenderModel_ComponentState_t componentState = new RenderModel_ComponentState_t();
+//				vrRenderModels.GetComponentState.apply(pointer, ptrFomrString("tip"), controllerStateReference[i], modeState, componentState);
+//				convertSteamVRMatrix3ToMatrix4f(componentState.mTrackingToComponentLocal, controllerTipTransform[i]);
+//				tmp1.set(0, 0, 0, 1);
+//				Matrix4f.transform(controllerTipTransform[i], tmp1, tmp1);
+////				System.out.println(i+" = "+tmp1);
+////				System.out.println(controllerTipTransform[i]);
+//			} else {
+//				controllerTipTransform[i].setIdentity();
+//			}
+//		}
 	}
 
 	private static void findControllerDevices()
@@ -677,7 +696,7 @@ public class VR {
                 SetupRenderModelForTrackedDevice( unTrackedDevice );
             }
         }
-        if (ticka++>20) {
+        if (ticka++>40) {
             ticka=0;
 //            CGLRenderModelNative pRenderModel = FindOrLoadRenderModel( "oculus_cv1_controller_right" );
 //            modelShader.release();
@@ -953,6 +972,19 @@ public class VR {
         GL11.glLineWidth(2.0f);
         t.draw(GL11.GL_LINES);
         Engine.checkGLError("t.draw(GL11.GL_LINES)");
+    }
+
+    public static float getAxis(int iDevice, int jInput, int kAxis) {
+        VRControllerAxis_t[] axis = inputStateRefernceArray[iDevice].rAxis;
+        if (axis != null && axis[jInput] != null) {
+            switch (kAxis) {
+                case 0:
+                    return axis[jInput].x;
+                case 1:
+                    return axis[jInput].y;
+            }
+        }
+        return 0;
     }
 
 }
