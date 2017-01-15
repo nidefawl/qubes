@@ -1,5 +1,7 @@
 package nidefawl.qubes.vr;
 
+import jopenvr.JOpenVRLibrary.EVRButtonId;
+
 public class VREvents {
     public static final int None = 0;
     public static final int TrackedDeviceActivated = 100;
@@ -102,6 +104,11 @@ public class VREvents {
     public static final int PerformanceTest_FidelityLevel = 1602;
     public static final int VendorSpecific_Reserved_Start = 10000;
     public static final int VendorSpecific_Reserved_End = 19999;
+    public static final int BUTTON_BACK = EVRButtonId.EVRButtonId_k_EButton_Axis1;
+    public static final int BUTTON_SIDE = EVRButtonId.EVRButtonId_k_EButton_Axis2;
+    public static final int BUTTON_TIP = EVRButtonId.EVRButtonId_k_EButton_Axis0;
+    public static final int BUTTON_A = EVRButtonId.EVRButtonId_k_EButton_A;
+    public static final int BUTTON_B = EVRButtonId.EVRButtonId_k_EButton_ApplicationMenu;
 
     public static String evtToName(int evt) {
         switch (evt)

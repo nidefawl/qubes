@@ -23,9 +23,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import jopenvr.*;
-import jopenvr.JOpenVRLibrary.ETrackedDeviceClass;
-import jopenvr.JOpenVRLibrary.EVRCompositorError;
-import jopenvr.JOpenVRLibrary.EVREventType;
+import jopenvr.JOpenVRLibrary.*;
 import jopenvr.TrackedDevicePose_t.ByReference;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
@@ -380,6 +378,11 @@ public class VR {
             hmdTrackedDevicePoseReference = new TrackedDevicePose_t.ByReference();
             
             eventStructReference = new VREvent_t.ByReference();
+            eventStructReference.setAutoRead(true);
+            eventStructReference.setAutoWrite(true);
+            eventStructReference.setAutoSynch(true);
+            
+            
 			hmdTrackedDevicePoses = (TrackedDevicePose_t[])hmdTrackedDevicePoseReference.toArray(JOpenVRLibrary.k_unMaxTrackedDeviceCount);
 
 			timePerFrame = 1.0 / hmdDisplayFrequency.get(0);
@@ -539,9 +542,31 @@ public class VR {
 			hmdPose.m31 = 1.62f;
 		}
 		
+
+        
 		while (vrsystem.PollNextEvent.apply(eventStructReference, eventStructReference.size()) > 0) {
 		    String s = VREvents.evtToName(eventStructReference.eventType);
-		    
+		    if (eventStructReference.eventType==VREvents.ButtonPress
+                    ||eventStructReference.eventType==VREvents.ButtonUnpress
+                    ||eventStructReference.eventType==VREvents.ButtonTouch
+                    ||eventStructReference.eventType==VREvents.ButtonUntouch) {
+		        eventStructReference.data.setType(VREvent_Controller_t.class);
+		        int controllerID = -1;
+                if (eventStructReference.trackedDeviceIndex == controllerDeviceIndex[0]) {
+                    controllerID = 0;
+                }
+                if (eventStructReference.trackedDeviceIndex == controllerDeviceIndex[1]) {
+                    controllerID = 1;
+                }
+                GameBase.baseInstance.onControllerButton(controllerID, eventStructReference.data.controller.button, eventStructReference.eventType);
+
+                /*
+                 * 
+            eventStructReference = new VREvent_t.ByReference();
+            eventStructReference.data = new VREvent_Data_t.ByReference();
+            eventStructReference.data.controller = new VREvent_Controller_t.ByReference();
+                 */
+		    }
 		    System.out.println(""+s+","+eventStructReference.eventAgeSeconds+","+eventStructReference.trackedDeviceIndex);
 		    if (eventStructReference.data == null) {
 		        System.err.println("null data for event");
@@ -945,7 +970,10 @@ public class VR {
 //        Shaders.textured3D.setProgramUniformMatrix4("model_matrix", false, Engine.getIdentityMatrix().get(), false);
         
     }
-    private static void renderControllerAxes(int iDevice, Matrix4f n) {
+    private static void renderControllerAxes(int iDevice, Matrix4f devicePose) {
+        BufferedMatrix n = Engine.getTempMatrix();
+        n.load(devicePose);
+        n.rotate(-33*GameMath.PI_OVER_180, 1, 0, 0);
         tmp1.set(0, 0, 0, 1);
         Matrix4f.transform(n, tmp1, tmp1);
         Tess t = Tess.instance;
@@ -969,7 +997,7 @@ public class VR {
         t.setColorRGBAF(.92f, .92f, .71f, 1.0f);
         t.add(tmp1);
         t.add(tmp2);
-        GL11.glLineWidth(2.0f);
+        GL11.glLineWidth(4);
         t.draw(GL11.GL_LINES);
         Engine.checkGLError("t.draw(GL11.GL_LINES)");
     }

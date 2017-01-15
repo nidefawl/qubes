@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL40;
 
+import jopenvr.JOpenVRLibrary.EVRButtonId;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
@@ -54,6 +55,7 @@ import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
+import nidefawl.qubes.vr.VREvents;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
@@ -435,7 +437,7 @@ public class Game extends GameBase {
                     }
                     break;
                 case 2:
-                    selection.clicked(button, isDown);
+//                    selection.clicked(button, isDown);
                     break;
             }
         }
@@ -819,7 +821,9 @@ public class Game extends GameBase {
                 for (int i = 0; i < 3; i++) {
                     GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
                 }
-                Engine.worldRenderer.renderFirstPerson(world, fTime);
+                if (!Game.VR_SUPPORT) {
+                    Engine.worldRenderer.renderFirstPerson(world, fTime);
+                }
                 GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                 if (GPUProfiler.PROFILING_ENABLED)
@@ -880,7 +884,7 @@ public class Game extends GameBase {
                 glDisable(GL_CULL_FACE);
                 glEnable(GL_BLEND);
 //                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                if (firstPerson) {
+                if (firstPerson && !VR_SUPPORT) {
                     glDepthRange(0, 0.04);
                     glColorMask(false, false, false, false);
                     Engine.worldRenderer.renderFirstPerson(world, fTime);
@@ -1066,15 +1070,19 @@ public class Game extends GameBase {
         if (player != null) {
             float tpDistance = this.lastTpDistance + (settings.thirdpersonDistance - this.lastTpDistance) * f;
             this.dig.preRenderUpdate();
-//            player.updateInputDirect(movement);
 
 
+            if (VR_SUPPORT)
             {
-//                float yaw = 180-(tmp.y*GameMath.P_180_OVER_PI);
-//                float pitch = (tmp.x*GameMath.P_180_OVER_PI);
-//                float forward = VR.getAxis(0, 0, 1)*-0.1f;
-//                float strafe = VR.getAxis(0, 0, 0)*0.1f;
-//                this.player.update(pitch, yaw, forward, strafe, 0, false);
+                VR.hmdPose.toEuler(tmp);
+                float yaw = 180-(tmp.y*GameMath.P_180_OVER_PI);
+                float pitch = (tmp.x*GameMath.P_180_OVER_PI);
+                float forward = VR.getAxis(0, 0, 1)*-1.f;
+                float strafe = VR.getAxis(0, 0, 0)*1.f;
+                player.update(pitch, yaw, forward, strafe, 0, false);
+            } else {
+
+                player.updateInputDirect(movement);
             }
             
             float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
@@ -1169,7 +1177,36 @@ public class Game extends GameBase {
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
             if (this.gui == null) {
-                Engine.updateMouseOverView(winX, winY, this.movement.grabbed());
+                if (VR_SUPPORT) {
+                    int idx = VR.controllerDeviceIndex[0];
+                    if (idx > -1) {
+                        BufferedMatrix n = Engine.getTempMatrix();
+                        BufferedMatrix n2 = Engine.getTempMatrix2();
+                        n2.load(VR.poseMatrices[idx]);
+                        n2.rotate(-33*GameMath.PI_OVER_180, 1, 0, 0);
+                        Matrix4f.mul(n2, Engine.getIdentityMatrix(), n);
+                        tmp.set(0, 0, 0);
+                        Matrix4f.transform(n, tmp, tmp);
+                        Engine.vOrigin.set(tmp);
+                        tmp.set(0, 0, -10);
+                        Matrix4f.transform(n, tmp, tmp);
+                        tmp.subtract(Engine.vOrigin);
+                        if (tmp.normaliseNull() == null) {
+                            tmp.set(0, 0, 0);
+                        }
+                        Engine.vDir.set(tmp);
+                        Engine.vOrigin.addVec(Engine.camera.getPosition());
+//                        Engine.vOrigin.x += Engine.GLOBAL_OFFSET.x;
+//                        Engine.vOrigin.y += Engine.GLOBAL_OFFSET.y;
+//                        Engine.vOrigin.z += Engine.GLOBAL_OFFSET.z;
+                        System.out.println(Engine.vOrigin);
+                    }
+                } else {
+                    Engine.updateMouseOverView(winX, winY, this.movement.grabbed());
+                }
+//                System.out.println(Engine.vOrigin);
+//                System.out.println(Engine.vDir);
+                
                 selection.update(world, vCam.x, vCam.y, vCam.z);
             }
         }
@@ -1396,4 +1433,23 @@ public class Game extends GameBase {
         Game.instance.serverAddr = serverAddr;
     }
 
+    @Override
+    public void onControllerButton(int controllerIdx, int button, int eventType) {
+        if (eventType == VREvents.ButtonPress||eventType == VREvents.ButtonUnpress) {
+            switch (button) {
+                case VREvents.BUTTON_BACK:
+                    selection.clicked(0, eventType == VREvents.ButtonPress);
+                    break;
+                case VREvents.BUTTON_SIDE:
+                    selection.clicked(1, eventType == VREvents.ButtonPress);
+                    break;
+                case VREvents.BUTTON_TIP:
+                    break;
+                case VREvents.BUTTON_A:
+                    break;
+                case VREvents.BUTTON_B:
+                    break;
+            }
+        }
+    }
 }
