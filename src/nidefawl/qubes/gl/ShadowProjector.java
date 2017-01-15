@@ -83,7 +83,7 @@ public class ShadowProjector {
         //        scale.scale(new Vector3f(texelsPerUnit, texelsPerUnit, texelsPerUnit));
         Project.lookAt(0, 0, 0, lightDirection.x, lightDirection.y, lightDirection.z, 0, 1, 0, matLookAt);
         //        Matrix4f.mul(matLookAt, scale, matLookAt);
-        texelsPerUnit=4;
+//        texelsPerUnit=1f;
         Matrix4f.invert(matLookAt, matLookAtInv);
         Matrix4f.transform(matLookAt, frustumCenter, frustumCenter);
         frustumCenter.scale(1.0f / texelsPerUnit);
