@@ -81,6 +81,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
     public void init() {
         this.renderMode = Game.instance.settings.shadowDrawMode>MULTI_DRAW_TEXUTED||Game.instance.settings.shadowDrawMode<0?MULTI_DRAW:Game.instance.settings.shadowDrawMode;
+        SHADOW_BUFFER_SIZE = getTextureSize();
         initShaders();
     }
     
