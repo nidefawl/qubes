@@ -202,7 +202,8 @@ public class ShadowRenderer extends AbstractRenderer {
     }
 
     public int getTextureSize() {
-        return GameBase.VR_SUPPORT?1024*1:1024*4;
+//        return GameBase.VR_SUPPORT?1024*1:1024*4;
+        return 1024*2;
     }
 
 }
