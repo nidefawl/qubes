@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL40;
 
+import jopenvr.JOpenVRLibrary.EVRButtonId;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
@@ -54,6 +55,7 @@ import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
+import nidefawl.qubes.vr.VREvents;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
@@ -437,7 +439,7 @@ public class Game extends GameBase {
                     }
                     break;
                 case 2:
-                    selection.clicked(button, isDown);
+//                    selection.clicked(button, isDown);
                     break;
             }
         }
@@ -821,7 +823,9 @@ public class Game extends GameBase {
                 for (int i = 0; i < 3; i++) {
                     GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
                 }
-                Engine.worldRenderer.renderFirstPerson(world, fTime);
+                if (!Game.VR_SUPPORT) {
+                    Engine.worldRenderer.renderFirstPerson(world, fTime);
+                }
                 GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                 if (GPUProfiler.PROFILING_ENABLED)
@@ -882,7 +886,7 @@ public class Game extends GameBase {
                 glDisable(GL_CULL_FACE);
                 glEnable(GL_BLEND);
 //                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                if (firstPerson) {
+                if (firstPerson && !VR_SUPPORT) {
                     glDepthRange(0, 0.04);
                     glColorMask(false, false, false, false);
                     Engine.worldRenderer.renderFirstPerson(world, fTime);
@@ -1023,6 +1027,7 @@ public class Game extends GameBase {
     private float lastTpDistance;
     public Vector3f t = new Vector3f();
     public Vector3f t2 = new Vector3f();
+    final static Vector3f tmp = new Vector3f();
     RayTrace rayTrace = new RayTrace() {
         public boolean rayTraceBlock(Block block) {
             if (block.isFullBB())
@@ -1067,7 +1072,21 @@ public class Game extends GameBase {
         if (player != null) {
             float tpDistance = this.lastTpDistance + (settings.thirdpersonDistance - this.lastTpDistance) * f;
             this.dig.preRenderUpdate();
-            player.updateInputDirect(movement);
+
+
+            if (VR_SUPPORT)
+            {
+                VR.hmdPose.toEuler(tmp);
+                float yaw = 180-(tmp.y*GameMath.P_180_OVER_PI);
+                float pitch = (tmp.x*GameMath.P_180_OVER_PI);
+                float forward = VR.getAxis(0, 0, 1)*-1.f;
+                float strafe = VR.getAxis(0, 0, 0)*1.f;
+                player.update(pitch, yaw, forward, strafe, 0, false);
+            } else {
+
+                player.updateInputDirect(movement);
+            }
+            
             float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
             distF = -distF*0.6f;
             float f2 = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * f;
@@ -1147,6 +1166,7 @@ public class Game extends GameBase {
         }
         Engine.updateShadowProjections(f);
         UniformBuffer.updateUBO(this.world, f);
+        this.rightMouseOver.reset();
         if (player != null) {
             float winX, winY;
 
@@ -1160,7 +1180,16 @@ public class Game extends GameBase {
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
             if (this.gui == null) {
-                this.rightMouseOver.updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+                if (VR_SUPPORT) {
+                    int idx = VR.controllerDeviceIndex[0];
+                    if (idx > -1) {
+                        this.rightMouseOver.updateFromController(VR.poseMatrices[idx]);
+                    }
+                } else {
+                    this.rightMouseOver.updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight,
+                            this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+
+                }
                 selection.update(world, this.rightMouseOver, vCam);
             }
         }
@@ -1387,4 +1416,23 @@ public class Game extends GameBase {
         Game.instance.serverAddr = serverAddr;
     }
 
+    @Override
+    public void onControllerButton(int controllerIdx, int button, int eventType) {
+        if (eventType == VREvents.ButtonPress||eventType == VREvents.ButtonUnpress) {
+            switch (button) {
+                case VREvents.BUTTON_BACK:
+                    selection.clicked(0, eventType == VREvents.ButtonPress);
+                    break;
+                case VREvents.BUTTON_SIDE:
+                    selection.clicked(1, eventType == VREvents.ButtonPress);
+                    break;
+                case VREvents.BUTTON_TIP:
+                    break;
+                case VREvents.BUTTON_A:
+                    break;
+                case VREvents.BUTTON_B:
+                    break;
+            }
+        }
+    }
 }

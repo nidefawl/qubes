@@ -48,11 +48,12 @@ public class GuiColor extends GuiWindow {
                         }
                         else {
                             Biome.MEADOW_GREEN
-//                            .setColor(BiomeColor.GRASS, 0x4f923b)
+                            .setColor(BiomeColor.GRASS, rgb2)
 //                            .setColor(BiomeColor.LEAVES, 0x4A7818)
 //                            .setColor(BiomeColor.FOLIAGE, 0x408A10)
 //                            .setColor(BiomeColor.FOLIAGE2, 0x64B051)
                             .setColor(BiomeColor.LEAVES, rgb2);
+                            ;
                             Engine.regionRenderer.reRender();
                         }
                     }
@@ -70,8 +71,8 @@ public class GuiColor extends GuiWindow {
 //        } else {
             int width = 390;
             int height = titleBarHeight+160;
-            int xPos = (Game.displayWidth-width)/2;
-            int yPos = (Game.displayHeight-height)/2;
+            int xPos = (Game.guiWidth-width)/2;
+            int yPos = (Game.guiHeight-height)/2;
             setPos(xPos, yPos);
             setSize(width, height);
 //        }
