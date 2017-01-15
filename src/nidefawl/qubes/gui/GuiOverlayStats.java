@@ -97,13 +97,13 @@ public class GuiOverlayStats extends Gui {
             info.add( String.format("External resources (F11): %s", AssetManager.getInstance().isExternalResources() ? "On" : "Off") );
 
             this.stats5 = "";
-            BlockPos p = Game.instance.selection.pos[0];
-            BlockPos p2 = Game.instance.selection.pos[1];
+            BlockPos p = Game.instance.getSelection(0).pos[0];
+            BlockPos p2 = Game.instance.getSelection(0).pos[0];
             if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
             } else {
 
-                RayTraceIntersection intersect = Game.instance.selection.getHit();
+                RayTraceIntersection intersect = Game.instance.getSelection(0).getHit();
                 if (intersect != null) {
                     p = intersect.blockPos;
                     int lvl = world.getLight(p.x, p.y, p.z);
@@ -137,8 +137,8 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("z: %.2f", v.z));
         info.addAll(Game.instance.glProfileResults);
         
-        info.add(String.format("Mode: %s", Game.instance.selection.getMode().toString()));
-        info.add(Game.instance.selection.quarterMode ? "Quarter" : "Full");
+        info.add(String.format("Mode: %s", Game.instance.getSelection().getMode().toString()));
+        info.add(Game.instance.getSelection().quarterMode ? "Quarter" : "Full");
         render = true;
     }
 

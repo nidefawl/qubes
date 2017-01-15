@@ -500,8 +500,8 @@ public class Selection {
         this.mouseOver = null;
         this.mouseDown = false;
         this.mouseStateChanged = false;
-        pos[0] = new BlockPos();
-        pos[1] = new BlockPos();
+        pos[0] = null;
+        pos[1] = null;
     }
 
     /**

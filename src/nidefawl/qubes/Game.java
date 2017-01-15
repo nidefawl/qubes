@@ -81,7 +81,8 @@ public class Game extends GameBase {
     PlayerSelf                 player;
     WorldPlayerController worldPlayerController = new WorldPlayerController();
     public final DigController         dig                = new DigController();
-    public final Selection     selection = new Selection();
+    public final Selection     leftSelection = new Selection();
+    public final Selection     rightSelection = new Selection();
     public final PositionMouseOver rightMouseOver = new PositionMouseOver();
     public final PositionMouseOver leftMouseOver = new PositionMouseOver();
     public boolean             follow    = true;
@@ -149,7 +150,8 @@ public class Game extends GameBase {
             this.serverAddr = "nide.ddns.net:21087";
         }
         KeybindManager.initKeybinds();
-        selection.init();
+        leftSelection.init();
+        rightSelection.init();
         dig.init();
         FontRenderer.init();
         Engine.init();
@@ -248,7 +250,8 @@ public class Game extends GameBase {
         } else {
             this.mode = GameMode.PLAY;
         }
-        this.selection.reset();
+        leftSelection.reset();
+        rightSelection.reset();
     }
 
     protected void toggleTestMode() {
@@ -276,7 +279,8 @@ public class Game extends GameBase {
     }
 
     public void setWorld(WorldClient world) {
-        this.selection.reset();
+        leftSelection.reset();
+        rightSelection.reset();
         if (this.world != null) {
             this.world.onLeave();
             Engine.flushRenderTasks();
@@ -431,7 +435,8 @@ public class Game extends GameBase {
             }
 //            if (b)
 //                dig.onMouseClick(button, isDown);
-            selection.clicked(button, isDown);
+            getSelection(0).clicked(button, isDown);
+//            rightSelection.clicked(button, isDown);
             switch (button) {
                 case 0:
                     if (this.player != null) {
@@ -448,7 +453,8 @@ public class Game extends GameBase {
     public void setGrabbed(boolean b) {
         if (b != this.movement.grabbed()) {
             this.movement.setGrabbed(b);
-            selection.resetSelection();
+            leftSelection.resetSelection();
+            rightSelection.resetSelection();
             Mouse.setCursorPosition(displayWidth / 2, displayHeight / 2);
             Mouse.setGrabbed(b);
             this.dig.onGrabChange(this.movement.grabbed());
@@ -926,7 +932,8 @@ public class Game extends GameBase {
                 
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("BlockHighlight");
-                selection.renderBlockHighlight(this.world, fTime);
+                leftSelection.renderBlockHighlight(this.world, fTime);
+                rightSelection.renderBlockHighlight(this.world, fTime);
 
                 dig.renderDigging(world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
@@ -1167,6 +1174,7 @@ public class Game extends GameBase {
         Engine.updateShadowProjections(f);
         UniformBuffer.updateUBO(this.world, f);
         this.rightMouseOver.reset();
+        this.leftMouseOver.reset();
         if (player != null) {
             float winX, winY;
 
@@ -1181,16 +1189,20 @@ public class Game extends GameBase {
             }
             if (this.gui == null) {
                 if (VR_SUPPORT) {
-                    int idx = VR.controllerDeviceIndex[0];
-                    if (idx > -1) {
-                        this.rightMouseOver.updateFromController(VR.poseMatrices[idx]);
+                    for (int i = 0; i < 2; i++) {
+                        int idx = VR.controllerDeviceIndex[i];
+                        if (idx > -1) {
+                            getMouseOver(i).updateFromController(VR.poseMatrices[idx]);
+                            getSelection(i).update(world, getMouseOver(i), vCam);
+                        } else {
+                            getSelection(i).reset();
+                        }
                     }
                 } else {
-                    this.rightMouseOver.updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight,
-                            this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+                    getMouseOver(0).updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+                    getSelection(0).update(world, getMouseOver(0), vCam);
 
                 }
-                selection.update(world, this.rightMouseOver, vCam);
             }
         }
         Engine.particleRenderer.preRenderUpdate(this.world, f);
@@ -1253,8 +1265,11 @@ public class Game extends GameBase {
             if (this.gui != null) {
                 this.gui.update();
             }
-            if (this.selection != null) {
-                this.selection.update(getWorld());
+            if (this.leftSelection != null) {
+                this.leftSelection.update(getWorld());
+            }
+            if (this.rightSelection != null) {
+                this.rightSelection.update(getWorld());
             }
             GuiWindowManager.update();
             this.dig.update();
@@ -1381,11 +1396,17 @@ public class Game extends GameBase {
      * @return
      */
     public boolean isInSelection(int ix, int iy, int iz) {
-        return this.selection.contains(ix, iy, iz);
+        return this.leftSelection.contains(ix, iy, iz);
     }
 
     public Selection getSelection() {
-        return this.selection;
+        return getSelection(0);
+    }
+    public Selection getSelection(int n) {
+        return n == 0 ? this.leftSelection : this.rightSelection;
+    }
+    public PositionMouseOver getMouseOver(int n) {
+        return n == 0 ? this.leftMouseOver : this.rightMouseOver;
     }
 
     public ClientHandler getClientHandler() {
@@ -1421,10 +1442,10 @@ public class Game extends GameBase {
         if (eventType == VREvents.ButtonPress||eventType == VREvents.ButtonUnpress) {
             switch (button) {
                 case VREvents.BUTTON_BACK:
-                    selection.clicked(0, eventType == VREvents.ButtonPress);
+                    getSelection(controllerIdx).clicked(0, eventType == VREvents.ButtonPress);
                     break;
                 case VREvents.BUTTON_SIDE:
-                    selection.clicked(1, eventType == VREvents.ButtonPress);
+                    getSelection(controllerIdx).clicked(1, eventType == VREvents.ButtonPress);
                     break;
                 case VREvents.BUTTON_TIP:
                     break;

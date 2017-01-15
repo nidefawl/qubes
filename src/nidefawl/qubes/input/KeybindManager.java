@@ -197,7 +197,8 @@ public class KeybindManager {
         });
         addKeyBinding(new Keybinding("toggle_quarter_mode", GLFW.GLFW_KEY_Q) {
             public void onDown() {
-                game.getSelection().toggleQuarterMode();
+                game.getSelection(0).toggleQuarterMode();
+                game.getSelection(1).toggleQuarterMode();
             }
         });
         addKeyBinding(new Keybinding("toggle_noclip", GLFW.GLFW_KEY_H) {
