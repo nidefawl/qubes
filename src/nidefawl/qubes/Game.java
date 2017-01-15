@@ -80,6 +80,8 @@ public class Game extends GameBase {
     WorldPlayerController worldPlayerController = new WorldPlayerController();
     public final DigController         dig                = new DigController();
     public final Selection     selection = new Selection();
+    public final PositionMouseOver rightMouseOver = new PositionMouseOver();
+    public final PositionMouseOver leftMouseOver = new PositionMouseOver();
     public boolean             follow    = true;
 
     public BlockStack selBlock           = new BlockStack(Block.stones.getFirst());
@@ -1114,7 +1116,7 @@ public class Game extends GameBase {
                     }
                 }
                 if (minDist < tpDistance) {
-                    camOffset.normalise();
+                    camOffset.normalise(); // we do not work on copy here, so we can query the collision distance offset from elsewhere during frame
                     camOffset.scale(minDist);
                 }
                 vCam.addVec(camOffset);
@@ -1158,8 +1160,8 @@ public class Game extends GameBase {
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
             if (this.gui == null) {
-                Engine.updateMouseOverView(winX, winY, this.movement.grabbed());
-                selection.update(world, vCam.x, vCam.y, vCam.z);
+                this.rightMouseOver.updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+                selection.update(world, this.rightMouseOver, vCam);
             }
         }
         Engine.particleRenderer.preRenderUpdate(this.world, f);

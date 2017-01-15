@@ -56,6 +56,7 @@ public class Project {
         in[3] = 1.0f;
 
         // Map x and y from window coordinates
+//        System.out.println("in1 "+(in[0]-viewport.get(viewport.position() + 0))+"/"+viewport.get(viewport.position() + 2));
         in[0] = (in[0] - viewport.get(viewport.position() + 0)) / viewport.get(viewport.position() + 2);
         in[1] = (in[1] - viewport.get(viewport.position() + 1)) / viewport.get(viewport.position() + 3);
 
@@ -63,7 +64,7 @@ public class Project {
         in[0] = in[0] * 2 - 1;
         in[1] = in[1] * 2 - 1;
         in[2] = in[2] * 2 - 1;
-
+//        System.out.println("in1 "+in[0]+","+in[1]+","+in[2]);
         __gluMultMatrixVecf(finalMatrix, in, out);
 
         if (out[3] == 0.0)

@@ -28,12 +28,8 @@ public class BufferedMatrix extends Matrix4f {
      */
     public void update() {
         cur.rewind();
-        curInv.rewind();
         store(cur);
         cur.rewind();
-        GameMath.invertMat4x(cur, curInv);
-        cur.rewind();
-        curInv.rewind();
         needInv = true;
     }
 
@@ -62,6 +58,7 @@ public class BufferedMatrix extends Matrix4f {
         inv.invert();
         curInv.rewind();
         inv.store(curInv);
+        curInv.rewind();
     }
 
     /**

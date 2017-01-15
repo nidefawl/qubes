@@ -7,7 +7,7 @@ import java.io.IOException;
 import nidefawl.qubes.network.StreamIO;
 import nidefawl.qubes.util.TripletIntHash;
 
-public class BlockPos implements StreamIO {
+public class BlockPos implements StreamIO, IVec3 {
     public int x, y, z;
 	public BlockPos() {
 	}
@@ -93,5 +93,18 @@ public class BlockPos implements StreamIO {
      */
     public boolean isEqualTo(int x, int y, int z) {
         return this.x == x && this.y == y && this.z == z;
+    }
+    
+    @Override
+    public float x() {
+        return this.x;
+    }
+    @Override
+    public float y() {
+        return this.y;
+    }
+    @Override
+    public float z() {
+        return this.z;
     }
 }

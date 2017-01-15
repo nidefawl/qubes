@@ -599,47 +599,20 @@ public class Engine {
     }
 
 
-    public static final Vector3f vOrigin = new Vector3f();
-    public static Vector3f vDir = null;
 
-    public static final Vector3f vDirTmp = new Vector3f();
-    public static final Vector3f vTarget = new Vector3f();
-    public static final Vector3f t = new Vector3f();
-
-    public static void updateMouseOverView(float winX, float winY, boolean cameraOffset) {
-        viewportBuf.position(0);
-        position.position(0);
-        if (!Project.gluUnProject(winX, winY, 1F, getMatSceneMV().get(), getMatSceneP().get(), viewportBuf, position)) {
+    public static void unprojectScreenSpace(float winX, float winY, float screenZ, float rW, float rH, Vector3f out) {
+        float screenX = (winX / rW) * 2.0f - 1.0f;
+        float screenY = (winY / rH) * 2.0f - 1.0f;
+        screenZ = (screenZ) * 2.0f - 1.0f;
+        out.set(screenX, screenY, screenZ);
+        Matrix4f.transform(getMatSceneMVP().getInvMat4(), out, out);
+    }
+    public static void unprojectScreenSpaceOld(float winX, float winY, float screenZ, float rW, float rH, Vector3f out) {
+        if (!Project.gluUnProject(winX, winY, screenZ, getMatSceneMV().get(), getMatSceneP().get(), viewportBuf, position)) {
             System.err.println("unproject fail 1");
         }
-        vTarget.x = position.get(0)+Engine.GLOBAL_OFFSET.x;
-        vTarget.y = position.get(1)+Engine.GLOBAL_OFFSET.y;
-        vTarget.z = position.get(2)+Engine.GLOBAL_OFFSET.z;
-//        Vector4f zdepth = new Vector4f(0,0,-100, 0);
-//        Matrix4f.transform(view, zdepth, zdepth);
-//        System.out.println(vTarget); 
-        viewportBuf.position(0);
-        position.position(0);
-        //TODO: optimize
-        if (!Project.gluUnProject(winX, winY, 0F, getMatSceneMV().get(), getMatSceneP().get(), viewportBuf, position)) {
-            System.err.println("unproject fail 2");
-        }
-        vOrigin.x = position.get(0)+Engine.GLOBAL_OFFSET.x;
-        vOrigin.y = position.get(1)+Engine.GLOBAL_OFFSET.y;
-        vOrigin.z = position.get(2)+Engine.GLOBAL_OFFSET.z;
-        Vector3f.sub(vTarget, vOrigin, vDirTmp);
-        vDir = vDirTmp.normaliseNull();
-        if (vDir != null) {
-            if (cameraOffset) {
-
-                vOrigin.subtract(camera.getCameraOffset());
-                vDir.subtract(camera.getCameraOffset());
-            }
-            t.set(vDir);
-            t.scale(-0.1F);
-            Vector3f.add(vOrigin, t, vOrigin);
-        }
-//      System.out.println(vDir); 
+        out.load(position);
+        position.clear();
     }
 
     public static void reloadRenderer(boolean useBasicShaders) {

@@ -123,5 +123,4 @@ public class Camera {
         xshakeRot=f3;
     
     }
-
 }

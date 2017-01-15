@@ -10,9 +10,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.gl.TesselatorState;
+import nidefawl.qubes.gl.*;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.network.packet.PacketCSetBlock;
 import nidefawl.qubes.network.packet.PacketCSetBlocks;
@@ -23,6 +21,7 @@ import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
+import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class Selection {
@@ -325,7 +324,7 @@ public class Selection {
         }
     }
 
-    public void update(World world, double px, double py, double pz) {
+    public void update(World world, PositionMouseOver mouseOver, Vector3f cam) {
         this.rayTrace.reset();
         this.mouseOver = null;
         if (world == null) {
@@ -333,9 +332,9 @@ public class Selection {
             this.mouseStateChanged = false;
             return;
         }
-        if (Engine.vDir != null) {
+        if (mouseOver.vDir != null) {
             this.rayTrace.quarterMode = this.quarterMode;
-            this.rayTrace.doRaytrace(world, Engine.vOrigin, Engine.vDir, extendReach() ? 200 : 55);
+            this.rayTrace.doRaytrace(world, mouseOver.vOrigin, mouseOver.vDir, extendReach() ? 200 : 55);
             if (this.rayTrace.hasHit()) {
                 RayTraceIntersection hit = this.rayTrace.getHit();
                 BlockPos p = hit.blockPos.copy();
@@ -354,7 +353,7 @@ public class Selection {
                 if (getMode() == GameMode.EDIT) {
                     //EDIT MODE
                     //TODO: add some better logic for highlighting, don't render "into" camera
-                    if (p != null && !(p.x == GameMath.floor(px) && p.y == GameMath.floor(py) && p.z == GameMath.floor(pz))) {
+                    if (p != null && !(p.x == GameMath.floor(cam.x) && p.y == GameMath.floor(cam.y) && p.z == GameMath.floor(cam.z))) {
                         if (this.buttonDown == 1) {
                             p = p.copy();
                             p.offset(hit.face);
