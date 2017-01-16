@@ -102,6 +102,7 @@ public class GuiSelectBlock extends Gui {
 //        mX=630;
 //        mY=670;
         Shaders.colored.enable();
+//        System.out.println(GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)+","+GL11.glGetBoolean(GL11.GL_DEPTH_TEST)+","+GL11.glGetBoolean(GL11.GL_BLEND));
         Tess.instance.setColor(2, 128);
         Tess.instance.add(this.posX, this.posY + this.height);
         Tess.instance.add(this.posX + this.width, this.posY + this.height);

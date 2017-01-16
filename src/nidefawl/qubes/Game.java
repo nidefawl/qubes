@@ -493,9 +493,10 @@ public class Game extends GameBase {
             setGUIProjection();
             Gui.RENDER_BACKGROUNDS = false;
             this.fbGUIFixed.bind();
-            fbGUIFixed.setClearColor(GL_COLOR_ATTACHMENT0, 0,0,0, 0F);
+            fbGUIFixed.setClearColor(GL_COLOR_ATTACHMENT0, 0.71F, 0.82F, 1.00F, 0F);
             this.fbGUIFixed.clearFrameBuffer();
-            
+
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
             renderGui(fTime);
 
             Gui.RENDER_BACKGROUNDS = true;
@@ -504,12 +505,14 @@ public class Game extends GameBase {
                 GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
                 glDisable(GL_DEPTH_TEST);
             }
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             FrameBuffer.unbindFramebuffer();
             if (GLDebugTextures.isShow()) {
                 GLDebugTextures.readTexture("VR_GUI", "texColor", this.fbGUIFixed.getTexture(0), 0x8);
             }
             setVRProjection();
         }
+        glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
         glClearColor(0.71F, 0.82F, 1.00F, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -536,7 +539,7 @@ public class Game extends GameBase {
                 finalTarget.clearDepth();
                 glDisable(GL11.GL_CULL_FACE);
                 Engine.updateCamera(VR.getPoseMat(eye), Vector3f.ZERO);
-                UniformBuffer.updateUBO(null, fTime);
+                UniformBuffer.updateUBO(/*null*/world, fTime);
                 VR.renderControllers();
                 
 
@@ -550,13 +553,14 @@ public class Game extends GameBase {
                 float rH = 1080*scale;
                 float rZ = -16f;
 //                System.out.println(Engine.GLOBAL_OFFSET);
+                glEnable(GL11.GL_BLEND);
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 Tess.instance.setColorF(-1, 1.0f);
                 Tess.instance.add(-rW, rH, rZ, 0, 1);
                 Tess.instance.add(rW, rH, rZ, 1, 1);
                 Tess.instance.add(rW, -rH, rZ, 1, 0);
                 Tess.instance.add(-rW, -rH, rZ, 0, 0);
-                glEnable(GL11.GL_BLEND);
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
                 Tess.instance.draw(GL_QUADS);
                 GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -743,7 +747,6 @@ public class Game extends GameBase {
             GLDebugTextures.drawAll(displayWidth, displayHeight);
         }
         
-        glEnable(GL_DEPTH_TEST);
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
