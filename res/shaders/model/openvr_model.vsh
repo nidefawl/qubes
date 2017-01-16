@@ -18,7 +18,9 @@ void main(void) {
 	vec4 camNormal = normal_matrix * vec4(in_normal.xyz, 1);
 	pass_normal = normalize(camNormal.xyz);
 	
-	vec4 pos = model_matrix * vec4(in_position.xyz - RENDER_OFFSET + PX_OFFSET.xyz, in_position.w);
+	vec4 pos = model_matrix * in_position;
+	
+	pos.xyz = pos.xyz - RENDER_OFFSET + PX_OFFSET.xyz;
 	
     gl_Position = in_matrix_3D.mvp * pos;
 }

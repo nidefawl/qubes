@@ -6,7 +6,7 @@
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma define "RENDER_PASS"
-#pragma define "SHADOW_MAP_RESOLUTION"
+#pragma define "SHADOW_MAP_RESOLUTION" "2048"
 
 float isEyeInWater = 0.0;
 

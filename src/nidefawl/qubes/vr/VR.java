@@ -42,8 +42,10 @@ public class VR {
 		public Matrix4f projRight = new Matrix4f();
 		public Matrix4f poseEyeLeft = new Matrix4f();
 		public Matrix4f poseEyeRight = new Matrix4f();
-		public Matrix4f viewLeft=new Matrix4f();
-		public Matrix4f viewRight=new Matrix4f();
+        public Matrix4f viewLeft=new Matrix4f();
+        public Matrix4f viewRight=new Matrix4f();
+        public Matrix4f poseLeft=new Matrix4f();
+        public Matrix4f poseRight=new Matrix4f();
 		public Vector3f unifiedFrustumCameraOffset = new Vector3f();
 		public void setEyeToHeadTransform() {
 			HmdMatrix34_t matL = vrsystem.GetEyeToHeadTransform.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left);
@@ -65,8 +67,10 @@ public class VR {
 			convertSteamVRMatrix4ToMatrix4f(matR, this.projRight);
 		}
 		public void update(float f) {
-			Matrix4f.mul(this.poseEyeLeft, VR.hmdPose, viewLeft);
-			Matrix4f.mul(this.poseEyeRight, VR.hmdPose, viewRight);
+            Matrix4f.mul(this.poseEyeLeft, VR.pose, viewLeft);
+            Matrix4f.mul(this.poseEyeRight, VR.pose, viewRight);
+            Matrix4f.mul(this.poseEyeLeft, VR.hmdPose, poseLeft);
+            Matrix4f.mul(this.poseEyeRight, VR.hmdPose, poseRight);
 		}
         public void calcFrustumOffset() {
             //TODO: optimize if called each frame
@@ -113,7 +117,9 @@ public class VR {
 	public static Matrix4f[] poseMatrices;
 	public static Vec3D	[] deviceVelocity;
     public static final Matrix4f hmdPose = new Matrix4f();
-    public static final Matrix4f lasthmdPose = new Matrix4f();
+    public static final Matrix4f pose = new Matrix4f();
+    public static final Matrix4f offsetPose = new Matrix4f();
+    public static final Matrix4f offsetPoseInv = new Matrix4f();
 	private static boolean headIsTracking;
 	// Controllers
 	private static int RIGHT_CONTROLLER = 0;
@@ -139,6 +145,15 @@ public class VR {
     public static boolean isInputCaptured;
     private static jopenvr.VREvent_t.ByReference eventStructReference;
 
+    static Pointer pointer;
+    static Vector4f tmp1 = new Vector4f();
+    static Vector4f tmp2 = new Vector4f();
+    static Vector3f tmp3 = new Vector3f();
+    public static float rotationSpeed;
+    public static float lastRotationSpeed;
+    public static float rotation;
+    public static float lastRotation;
+    
 	static {
 
         m_rTrackedDeviceToRenderModel = new CGLRenderModelNative[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
@@ -508,6 +523,9 @@ public class VR {
 		if ( vrsystem == null || vrCompositor == null || vrCompositor.WaitGetPoses == null)
 			return;
 
+//        float fRotSpeed = lastRotationSpeed + (rotationSpeed - lastRotationSpeed) * f;
+        
+        float fRotation = lastRotation + (rotation - lastRotation) * f;
         isInputCaptured = VR.vrsystem.IsInputFocusCapturedByAnotherProcess.apply()<=0;
 		vrCompositor.WaitGetPoses.apply(hmdTrackedDevicePoseReference, JOpenVRLibrary.k_unMaxTrackedDeviceCount, null, 0);
 
@@ -521,6 +539,7 @@ public class VR {
 				deviceVelocity[nDevice].x = hmdTrackedDevicePoses[nDevice].vVelocity.v[0];
 				deviceVelocity[nDevice].y = hmdTrackedDevicePoses[nDevice].vVelocity.v[1];
 				deviceVelocity[nDevice].z = hmdTrackedDevicePoses[nDevice].vVelocity.v[2];
+			} else {
 			}
 		}
 
@@ -529,6 +548,8 @@ public class VR {
 			hmdPose.load(poseMatrices[JOpenVRLibrary.k_unTrackedDeviceIndex_Hmd]);
 			//hellovr does hmdPose.invert() here
 			hmdPose.invert();
+            
+//			pose.load(hmdPose);
 //			Matrix4f.sub(hmdPose, lasthmdPose, lasthmdPose);
 //			System.out.println(lasthmdPose.toString());
 //			lasthmdPose.load(hmdPose);
@@ -541,6 +562,11 @@ public class VR {
 			hmdPose.setIdentity();
 			hmdPose.m31 = 1.62f;
 		}
+		offsetPose.setIdentity();
+        offsetPose.rotate(fRotation*GameMath.P_180_OVER_PI, 0, 1, 0);
+        offsetPoseInv.load(offsetPose);
+        offsetPoseInv.invert();
+        Matrix4f.mul(hmdPose, offsetPose, pose);
 		
 
         
@@ -598,7 +624,8 @@ public class VR {
 		getTipTransforms();
 		cam.update(f);
         for (int i = 0; i < 2; i++) {
-            if (controllerDeviceIndex[i] != -1 && !settings.seated) {
+            if (controllerDeviceIndex[i] != -1) {
+//                System.out.println(hmdTrackedDevicePoses[controllerDeviceIndex[i]].vVelocity.v[0]);
                 if (vrsystem.GetControllerState.apply(controllerDeviceIndex[i], inputStateRefernceArray[i], inputStateRefernceArray[i].size()) > 0) {
                     inputStateRefernceArray[i].read();
                     if (i==0) {
@@ -618,7 +645,7 @@ public class VR {
 //		System.out.println(controllerDeviceIndex[0]);
 //        vrsystem.TriggerHapticPulse.apply(controllerDeviceIndex[1], 0, (short)3999);
 	}
-	static Pointer pointer;
+	
 	private static void getTipTransforms(){
 //		if (pointer == null)
 //		    pointer = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
@@ -721,6 +748,16 @@ public class VR {
                 SetupRenderModelForTrackedDevice( unTrackedDevice );
             }
         }
+//        float f1 = VR.getAxis(1, 0, 0);
+//        VR.offsetRotation = f1;
+//        public static float rotationSpeed;
+//        public static float lastRotationSpeed;
+//        public static float rotation;
+//        public static float lastRotation;
+        lastRotationSpeed=rotationSpeed;
+        lastRotation=rotation;
+        rotationSpeed = VR.getAxis(1, 0, 0);
+        rotation+=rotationSpeed*0.005f;
         if (ticka++>40) {
             ticka=0;
 //            CGLRenderModelNative pRenderModel = FindOrLoadRenderModel( "oculus_cv1_controller_right" );
@@ -774,20 +811,24 @@ public class VR {
     	Engine.updateCamera(tmpMat, Engine.camera.getPosition());
         UniformBuffer.updateUBO(null, f);
 	}
-	public static Matrix4f getViewMat(int i) {
-        tmpMat.setIdentity();
-//        tmpMat.rotate(Engine.camera.bearingAngle * GameMath.PI_OVER_180, 0f, 1f, 0f);
+    public static Matrix4f getViewMat(int i) {
         switch (i) {
         case 0:
-            Matrix4f.mul(cam.viewLeft, tmpMat, tmpMat);
-            break;
+            return cam.viewLeft;
         case 1:
         default:
-            Matrix4f.mul(cam.viewRight, tmpMat, tmpMat);
-            break;
+            return cam.viewRight;
         }
-        return tmpMat;
-	}
+    }
+    public static Matrix4f getPoseMat(int i) {
+        switch (i) {
+        case 0:
+            return cam.poseLeft;
+        case 1:
+        default:
+            return cam.poseRight;
+        }
+    }
 
 	
 	public static boolean isInit() {
@@ -895,9 +936,6 @@ public class VR {
         }
     }
 
-    static Vector4f tmp1 = new Vector4f();
-    static Vector4f tmp2 = new Vector4f();
-    static Vector3f tmp3 = new Vector3f();
     public static void renderControllers() {
         if (modelShader == null) return;
         BufferedMatrix bufMat = Engine.getTempMatrix();

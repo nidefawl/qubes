@@ -21,19 +21,23 @@ public class GuiCached extends Gui {
     }
     @Override
     public void setPos(int x, int y) {
+        super.setPos(x, y);
         this.gui.setPos(x, y);
     }
 
     @Override
     public void setSize(int w, int h) {
-        if (fbDbg != null) fbDbg.release();
-        fbDbg = new FrameBuffer(w, h);
-        fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16);
-        fbDbg.setFilter(GL_COLOR_ATTACHMENT0, GL_NEAREST, GL_NEAREST);
-        fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
-        fbDbg.setHasDepthAttachment();
-        fbDbg.setup(null);
-        this.gui.setSize(w, h);
+        if (w != this.width || h != this.height) {
+            super.setSize(w, h);
+            if (fbDbg != null) fbDbg.release();
+            fbDbg = new FrameBuffer(w, h);
+            fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16);
+            fbDbg.setFilter(GL_COLOR_ATTACHMENT0, GL_NEAREST, GL_NEAREST);
+            fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+            fbDbg.setHasDepthAttachment();
+            fbDbg.setup(null);
+            this.gui.setSize(w, h);
+        }
     }
 
     public void render(float fTime, double mx, double mY) {

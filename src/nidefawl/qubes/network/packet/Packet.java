@@ -32,7 +32,7 @@ public abstract class Packet {
         register(PacketSSpawnInWorld.class, true, false);
         register(PacketCMovement.class, true, true);
         register(PacketSChunkData.class, true, false);
-        register(PacketCSetBlock.class, false, true);
+        register(PacketCBlockAction.class, false, true);
         register(PacketCSetBlocks.class, false, true);
         register(PacketSSetBlock.class, true, false);
         register(PacketSSetBlocks.class, true, false);

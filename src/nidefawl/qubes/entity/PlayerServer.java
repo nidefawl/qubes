@@ -9,14 +9,19 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.block.BlockQuarterBlock;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.blockdata.BlockData;
+import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.inventory.PlayerInventoryCrafting;
 import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.packet.*;
 import nidefawl.qubes.network.server.ServerHandlerPlay;
@@ -31,8 +36,10 @@ import nidefawl.qubes.server.compress.CompressChunks;
 import nidefawl.qubes.server.compress.CompressThread;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.AABB;
+import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.BlockPlacer;
+import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.structure.mine.Mine;
@@ -360,5 +367,32 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
     @Override
     public EntityType getEntityType() {
         return EntityType.PLAYER_SERVER;
+    }
+    public void jumpTo(BlockPos pos, Vector3f fpos, BlockStack stack, int face) {
+
+        World w = this.world;
+        boolean isQuarter = (face & 8) != 0;
+        if (isQuarter)
+            return;
+        
+        face &= 0x7;
+//        if (pos.y < 0 || pos.y >= w.worldHeight) {
+//            return;
+//        }
+//        int typeAt = getWorld().getType(pos);
+//        Block bAgainst = Block.get(typeAt);
+        this.aabb2.set(aabb);
+        for (int i = pos.y; i < w.worldHeight; i++) {
+            this.aabb2.centerXZ(pos.x, i, pos.z);
+            this.coll.query(this.world, aabb2);
+            int num = this.coll.getNumCollisions();
+            if (num == 0) {
+                move(pos.x + 0.5f, i + 0.1f, pos.z + 0.5f);
+                break;
+            }
+        }
+        
+        
+    
     }
 }

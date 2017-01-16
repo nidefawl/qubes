@@ -46,7 +46,7 @@ public abstract class Handler {
     public void handleChunkDataMulti(PacketSChunkData packetChunkDataMulti, int light) {
     }
 
-    public void handleSetBlock(PacketCSetBlock packetCSetBlock) {
+    public void handleBlockAction(PacketCBlockAction packetCSetBlock) {
     }
 
     public void handleSetBlocks(PacketCSetBlocks packetCSetBlocks) {

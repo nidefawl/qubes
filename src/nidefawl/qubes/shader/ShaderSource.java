@@ -17,7 +17,7 @@ import nidefawl.qubes.util.GameError;
 
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
-    static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"");
+    static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
@@ -98,13 +98,17 @@ public class ShaderSource {
                             insertLine = true;
                         } else if ((m = patternDefine.matcher(line)).matches()) {
                             String define = m.group(1);
+                            String defineDefault = m.groupCount() > 2 ? m.group(3) : null;
                             String s = null;
                             if (def != null) {
                                 s = def.getDefinition(define);
                             }
                             if (s == null)
                                 s = getGlobalDef(define);
+                            if (s == null && defineDefault != null)
+                                s = "#define "+define+" "+defineDefault;
                             String replace = s == null ? "" : s;
+                            
                             code += replace + "\r\n";
                         } else if ((m = patternAttr.matcher(line)).matches()) {
                             this.attrTypes = m.group(1);

@@ -98,7 +98,7 @@ public class GuiOverlayStats extends Gui {
 
             this.stats5 = "";
             BlockPos p = Game.instance.getSelection(0).pos[0];
-            BlockPos p2 = Game.instance.getSelection(0).pos[0];
+            BlockPos p2 = Game.instance.getSelection(0).pos[1];
             if (p != null && p2 != null && !p.equals(p2)) {
                 this.stats5 = String.format("%d %d %d - %d %d %d", p.x, p.y, p.z, p2.x, p2.y, p2.z);
             } else {
@@ -147,6 +147,7 @@ public class GuiOverlayStats extends Gui {
 
         int y = 20;
         float maxW = 250;
+//        statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             statsFontBig.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
             y += statsFontBig.getLineHeight();

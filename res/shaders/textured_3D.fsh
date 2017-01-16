@@ -4,6 +4,7 @@
 #pragma include "tonemap.glsl"
 
 uniform sampler2D tex0;
+uniform float color_brightness;
 
 in vec4 pass_Color;
 in vec2 pass_texcoord;
@@ -18,5 +19,5 @@ void main(void) {
 // #endif
 	vec4 color = tex*pass_Color;
 	srgbToLin(color.rgb);
-    out_Color = vec4(color.rgb*0.1, tex.a*pass_Color.a);
+    out_Color = vec4(color.rgb*color_brightness, tex.a*pass_Color.a);
 }

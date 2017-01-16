@@ -9,23 +9,29 @@ import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 
-public class PacketCSetBlock extends AbstractPacketWorldRef {
-    public PacketCSetBlock() {
+public class PacketCBlockAction extends AbstractPacketWorldRef {
+    public static final int SET_BLOCK = 0;
+    public static final int JUMP = 1;
+
+    public PacketCBlockAction() {
     }
     public final BlockPos pos = new BlockPos();
     public final Vector3f fpos = new Vector3f();
     public int face;
     public BlockStack stack;
+    public int action;
+    public int selBlock;
 
-    public PacketCSetBlock(int id, BlockPos blockPos, int face, BlockStack stack) {
-        this(id, blockPos, Vector3f.ZERO, face, stack);
+    public PacketCBlockAction(int id, BlockPos blockPos, int face, BlockStack stack) {
+        this(id, blockPos, Vector3f.ZERO, face, stack, SET_BLOCK);
     }
-    public PacketCSetBlock(int id, BlockPos blockPos, Vector3f pos, int face, BlockStack stack) {
+    public PacketCBlockAction(int id, BlockPos blockPos, Vector3f pos, int face, BlockStack stack, int action) {
         super(id);
         this.pos.set(blockPos);
         this.fpos.set(pos);
         this.face = face;
         this.stack = stack;
+        this.action = action;
     }
 
     @Override
@@ -33,10 +39,10 @@ public class PacketCSetBlock extends AbstractPacketWorldRef {
         super.readPacket(stream);
         this.pos.read(stream);
         this.fpos.read(stream);
-        face = stream.readInt();
-        stack = new BlockStack();
-        stack.read(stream);
-
+        this.face = stream.readInt();
+        this.stack = new BlockStack();
+        this.stack.read(stream);
+        this.action = stream.readInt();
     }
 
     @Override
@@ -44,8 +50,9 @@ public class PacketCSetBlock extends AbstractPacketWorldRef {
         super.writePacket(stream);
         this.pos.write(stream);
         this.fpos.write(stream);
-        stream.writeInt(face);
-        stack.write(stream);
+        stream.writeInt(this.face);
+        this.stack.write(stream);
+        stream.writeInt(this.action);
     }
 
 
@@ -53,7 +60,7 @@ public class PacketCSetBlock extends AbstractPacketWorldRef {
     @Override
     public void handle(Handler h) {
         if (h.isValidWorld(this)) {
-            h.handleSetBlock(this);    
+            h.handleBlockAction(this);    
         }   
     }
 

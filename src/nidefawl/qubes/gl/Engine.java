@@ -485,6 +485,9 @@ public class Engine {
         updateRenderOffset = updateGlobalRenderOffset(camPos.x, camPos.y, camPos.z);
     }
     public static void updateCamera(Matrix4f camView, Vector3f camPos) {
+        updateCamera(camView, camPos, true);
+    }
+    public static void updateCamera(Matrix4f camView, Vector3f camPos, boolean b) {
         up.set(0, 100, 0);
 //        back.set(0, -10, 0);
 //        System.out.println(view);
@@ -496,8 +499,10 @@ public class Engine {
         
         modelview.setIdentity();
         modelview.translate(-camPos.x, -camPos.y, -camPos.z);
-        modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
-//        System.out.println(GLOBAL_OFFSET);
+        
+        if (b) {
+            modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);    
+        }
         
         Matrix4f.mul(view, modelview, modelview);
         Matrix4f.mul(projection, modelview, modelviewprojection);
@@ -606,6 +611,7 @@ public class Engine {
         screenZ = (screenZ) * 2.0f - 1.0f;
         out.set(screenX, screenY, screenZ);
         Matrix4f.transform(getMatSceneMVP().getInvMat4(), out, out);
+        out.add(Engine.GLOBAL_OFFSET);
     }
     public static void unprojectScreenSpaceOld(float winX, float winY, float screenZ, float rW, float rH, Vector3f out) {
         if (!Project.gluUnProject(winX, winY, screenZ, getMatSceneMV().get(), getMatSceneP().get(), viewportBuf, position)) {

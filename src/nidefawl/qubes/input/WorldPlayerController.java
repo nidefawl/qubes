@@ -6,7 +6,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.network.packet.PacketCSetBlock;
+import nidefawl.qubes.network.packet.PacketCBlockAction;
 import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.BlockPos;
@@ -41,7 +41,21 @@ public class WorldPlayerController {
             pos.y+=hit.q.y;
             pos.z+=hit.q.z;
         }
-        Game.instance.sendPacket(new PacketCSetBlock(Game.instance.getWorld().getId(), pos, hit.pos, faceHit, stack));
+        int action = PacketCBlockAction.SET_BLOCK;
+        if (button == 2) {
+            action = PacketCBlockAction.JUMP;
+        }
+        Game.instance.sendPacket(new PacketCBlockAction(Game.instance.getWorld().getId(), pos, hit.pos, faceHit, stack, action));
+    }
+
+    public void jumpTo(World world, BlockPos p, RayTraceIntersection hit) {
+        if (Game.instance.statsOverlay != null) {
+            Game.instance.statsOverlay.blockClicked(hit);
+        }
+        int faceHit = hit.face;
+        BlockPos pos = hit.blockPos;
+        BlockStack stack = Game.instance.selBlock.copy();
+        Game.instance.sendPacket(new PacketCBlockAction(Game.instance.getWorld().getId(), pos, hit.pos, faceHit, stack, PacketCBlockAction.JUMP));
     }
 
     public void pickBlock(World world, BlockPos p, RayTraceIntersection hit) {

@@ -12,7 +12,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.network.packet.PacketCSetBlock;
+import nidefawl.qubes.network.packet.PacketCBlockAction;
 import nidefawl.qubes.network.packet.PacketCSetBlocks;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -60,6 +60,9 @@ public class Selection {
     }
 
     public boolean hasSelection() {
+        if (getMode() == GameMode.PLAY || getMode() == GameMode.BUILD) {
+            return this.rayTrace.hasHit();
+        }
         return pos[0] != null && pos[1] != null;
     }
 
@@ -448,6 +451,12 @@ public class Selection {
             }
             return;
         }
+        if (button == 3) {
+            if (isDown && this.mouseOver != null) {
+                Game.instance.getWPCtrl().jumpTo(world, this.mouseOver, getHit());
+            }
+            return;
+        }
         this.mouseStateChanged = this.mouseDown != isDown;
         this.mouseDown = isDown;
         if (this.mouseDown) {
@@ -500,8 +509,8 @@ public class Selection {
         this.mouseOver = null;
         this.mouseDown = false;
         this.mouseStateChanged = false;
-        pos[0] = null;
-        pos[1] = null;
+//        pos[0] = null;
+//        pos[1] = null;
     }
 
     /**

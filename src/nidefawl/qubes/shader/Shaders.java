@@ -25,6 +25,7 @@ public class Shaders {
     public static Shader colored;
     public static Shader colored3D;
     public static Shader textured3D;
+    public static Shader textured3DAlphaTest;
     public static Shader renderUINT;
     public static Shader singleblock;
     public static Shader singleblock3D;
@@ -55,6 +56,16 @@ public class Shaders {
             });
             Shader new_textured = assetMgr.loadShader(newshaders, "textured");
             Shader new_textured3D = assetMgr.loadShader(newshaders, "textured_3D");
+            Shader new_textured3D_alpha_test = assetMgr.loadShader(newshaders, "textured_3D", new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("ALPHA_TEST".equals(define)) {
+                        return "#define ALPHA_TEST 1";
+                    }
+                    return null;
+                }
+            });
             Shader new_colored = assetMgr.loadShader(newshaders, "colored");
             Shader new_colored3D = assetMgr.loadShader(newshaders, "colored_3D");
             Shader new_singleblock = assetMgr.loadShader(newshaders, "singleblock");
@@ -72,6 +83,7 @@ public class Shaders {
             Shaders.textured = new_textured;
             Shaders.texturedAlphaTest = new_textured_alpha_test;
             Shaders.textured3D = new_textured3D;
+            Shaders.textured3DAlphaTest = new_textured3D_alpha_test;
             Shaders.colored = new_colored;
             Shaders.colored3D = new_colored3D;
             Shaders.renderUINT = new_uint;
@@ -99,8 +111,11 @@ public class Shaders {
 //            singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();
             Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
-            
+
             Shaders.textured3D.enable();
+            Shaders.textured3D.setProgramUniform1f("color_brightness", 0.1f);
+            Shaders.textured3DAlphaTest.enable();
+            Shaders.textured3DAlphaTest.setProgramUniform1f("color_brightness", 0.1f);
 //            Shaders.textured3D.setProgramUniformMatrix4("model_matrix", false, Engine.getIdentityMatrix().get(), false);
             Shaders.tonemap.enable();
             Shaders.tonemap.setProgramUniform1i("texColor", 0);

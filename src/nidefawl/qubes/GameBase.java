@@ -87,6 +87,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     protected volatile boolean minimized   = false;
     protected volatile boolean hasWindowFocus = true;
     protected volatile boolean useWindowSizeAsRenderResolution = true;
+    protected volatile boolean fixedGUISize = false;
     protected boolean isStarting = true;
     private Thread             thread;
     private int newWidth = initWidth;
@@ -395,8 +396,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             if (windowHeight <= 0) {
                 windowHeight = 1;
             }
-            guiWidth = windowWidth;
-            guiHeight = windowHeight;
+            if (!fixedGUISize) {
+                guiWidth = windowWidth;
+                guiHeight = windowHeight;
+            }
             if (useWindowSizeAsRenderResolution) {
                 displayWidth = windowWidth;
                 displayHeight = windowHeight;
@@ -1072,6 +1075,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         }
         VR_SUPPORT = VR.isInit() && !VR_SUPPORT;
         if (!VR_SUPPORT && hadVR) {
+            fixedGUISize = false;
+            guiWidth = windowWidth;
+            guiHeight = windowHeight;
             Game.displayWidth=windowWidth;
             Game.displayHeight=windowHeight;
             setRenderResolution(displayWidth, displayHeight);
@@ -1079,12 +1085,16 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
             Engine.outRenderer.initShaders();
         } else if (VR_SUPPORT && !hadVR) {
+            fixedGUISize = true;
+            guiWidth = 1920;
+            guiHeight = 1080;
             Game.displayWidth=VR.renderWidth;
             Game.displayHeight=VR.renderHeight;
             setRenderResolution(displayWidth, displayHeight);
             Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
             Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
-            Engine.outRenderer.initShaders();
+            if (Engine.outRenderer != null)
+                Engine.outRenderer.initShaders();
             setVSync(false);
         }
     }

@@ -131,8 +131,15 @@ public class ServerHandlerPlay extends ServerHandler {
         this.conn.sendPacket(packet);
     }
 
-    public void handleSetBlock(PacketCSetBlock p) {
-        player.blockPlace.tryPlace(p.pos, p.fpos, p.stack, p.face);
+    public void handleBlockAction(PacketCBlockAction p) {
+        switch (p.action) {
+            case PacketCBlockAction.SET_BLOCK:
+                player.blockPlace.tryPlace(p.pos, p.fpos, p.stack, p.face);
+                break;
+            case PacketCBlockAction.JUMP:
+                player.jumpTo(p.pos, p.fpos, p.stack, p.face);
+                break;
+        }
         
     }
 

@@ -12,14 +12,11 @@ public class PositionMouseOver {
     public final Vector3f vDirTmp = new Vector3f();
     public final Vector3f vTarget = new Vector3f();
     public final Vector3f t       = new Vector3f();
-    Matrix4f matTmp1;
-    Matrix4f matTmp2;
+    Matrix4f matTmp1 = new Matrix4f();
 
     public void updateMouseFromScreenPos(float winX, float winY, float renderWidth, float renderHeight, Vector3f cameraOffset) {
         Engine.unprojectScreenSpace(winX, winY, 1, renderWidth, renderHeight, vTarget);
-        vTarget.add(Engine.GLOBAL_OFFSET);
         Engine.unprojectScreenSpace(winX, winY, 0, renderWidth, renderHeight, vOrigin);
-        vOrigin.add(Engine.GLOBAL_OFFSET);
         Vector3f.sub(vTarget, vOrigin, vDirTmp);
         vDir = vDirTmp.normaliseNull();
         if (vDir != null) {
@@ -33,17 +30,19 @@ public class PositionMouseOver {
         }
     }
 
-    public void updateFromController(Matrix4f matrix4f) {
+    public void updateFromController(int idx, float f) {
         Matrix4f m = matTmp1;
-        m.load(matrix4f);
+        Matrix4f.mul(VR.offsetPoseInv, VR.poseMatrices[idx], m);
         m.rotate(-33 * GameMath.PI_OVER_180, 1, 0, 0);
         t.set(0, 0, 0);
         Matrix4f.transform(m, t, vOrigin);
-        t.set(0, 0, -10);
+        t.set(0, 0, 10);
         Matrix4f.transform(m, t, t);
         t.subtract(vOrigin);
         vOrigin.addVec(Engine.camera.getPosition());
         vDir = t.normaliseNull();
+        
+        
         if (vDir != null) {
 //            if (cameraOffset != null) {
 //                vOrigin.subtract(cameraOffset);
@@ -53,6 +52,9 @@ public class PositionMouseOver {
             t.scale(-0.1F);
             Vector3f.add(vOrigin, t, vOrigin);
         }
+        
+        
+
     }
 
     public void reset() {

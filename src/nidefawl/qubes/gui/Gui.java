@@ -31,6 +31,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public static final int slotBDist = 2;
     public static final int titleBarHeight = 26;
     public static final int titleBarOffset = titleBarHeight+20;
+    public static boolean RENDER_BACKGROUNDS = true;
     public static int FONT_SIZE_WINDOW_TITLE = 22;
     public static int FONT_SIZE_BUTTON = 18;
     final public FontRenderer titleFont;
@@ -330,7 +331,11 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
     
     public void renderBackground(float fTime, double mX, double mY, boolean b, float a) {
-        renderFrame(fTime, mX, mY);
+        if (RENDER_BACKGROUNDS) {
+            renderFrame(fTime, mX, mY);   
+        } else {
+            renderBackgroundElements(fTime, mX, mY);
+        }
     }
 
     protected String getTitle() {
