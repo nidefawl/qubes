@@ -110,8 +110,9 @@ public class ChunkManagerServer extends ChunkManager {
                 this.unloadThread.queueUnloadChecked(GameMath.toLong(c.x, c.z));
             } else if (c.needsSave) {
                 saveChunk(c);
+                saved++;
+                c.needsSave = false;
             }
-            saved++;
         }
     }
     public void unloadChunk(int x, int z) {
