@@ -41,7 +41,7 @@ public class PositionMouseOver {
         t.subtract(vOrigin);
         vOrigin.addVec(Engine.camera.getPosition());
         vDir = t.normaliseNull();
-        
+
         
         if (vDir != null) {
 //            if (cameraOffset != null) {
@@ -51,6 +51,7 @@ public class PositionMouseOver {
             t.set(vDir);
             t.scale(-0.1F);
             Vector3f.add(vOrigin, t, vOrigin);
+            
         }
         
         

@@ -1,17 +1,14 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE4;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL40;
 
-import jopenvr.JOpenVRLibrary.EVRButtonId;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
@@ -38,9 +35,9 @@ import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
-import nidefawl.qubes.network.packet.PacketCBlockAction;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
+import nidefawl.qubes.render.gui.VRGui;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -48,13 +45,11 @@ import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.StringUtil;
-import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
@@ -483,7 +478,7 @@ public class Game extends GameBase {
         return this.gui==null&&!GuiWindowManager.anyWindowVisible();
     }
 
-
+    VRGui vrGui = new VRGui();
 
     public void render(float fTime) {
         if (VR_SUPPORT) {
@@ -496,13 +491,15 @@ public class Game extends GameBase {
             fbGUIFixed.setClearColor(GL_COLOR_ATTACHMENT0, 0.71F, 0.82F, 1.00F, 0F);
             this.fbGUIFixed.clearFrameBuffer();
 
+            
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-            renderGui(fTime);
+            renderGui(fTime, 0, 0);
 
             Gui.RENDER_BACKGROUNDS = true;
             if (this.gui == null && this.world != null) {
                 glEnable(GL_DEPTH_TEST);
-                GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
+//                Mouse.getX(), Mouse.getY()
+                GuiWindowManager.getInstance().render(fTime, 0, 0);
                 glDisable(GL_DEPTH_TEST);
             }
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -537,38 +534,13 @@ public class Game extends GameBase {
                 FrameBuffer finalTarget = VR.getFB(eye);
                 finalTarget.bind();
                 finalTarget.clearDepth();
-                glDisable(GL11.GL_CULL_FACE);
+                
                 Engine.updateCamera(VR.getPoseMat(eye), Vector3f.ZERO);
                 UniformBuffer.updateUBO(/*null*/world, fTime);
                 VR.renderControllers();
-                
-
-                Shaders.textured3D.enable();
-                Shaders.textured3D.setProgramUniform1f("color_brightness", 1f);
-
-                GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, this.fbGUIFixed.getTexture(0));
-//                GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, TMgr.getEmptyWhite());
-                float scale = 0.015f;
-                float rW = 1920*scale;
-                float rH = 1080*scale;
-                float rZ = -16f;
-//                System.out.println(Engine.GLOBAL_OFFSET);
-                glEnable(GL11.GL_BLEND);
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                Tess.instance.setColorF(-1, 1.0f);
-                Tess.instance.add(-rW, rH, rZ, 0, 1);
-                Tess.instance.add(rW, rH, rZ, 1, 1);
-                Tess.instance.add(rW, -rH, rZ, 1, 0);
-                Tess.instance.add(-rW, -rH, rZ, 0, 0);
-
-                Tess.instance.draw(GL_QUADS);
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                
-                Shaders.textured3D.setProgramUniform1f("color_brightness", 0.1f);
-                Shader.disable();
-              glDisable(GL11.GL_BLEND);
-                glEnable(GL11.GL_CULL_FACE);
+                Engine.updateCamera(VR.getViewMat(eye), Vector3f.ZERO);
+                UniformBuffer.updateUBO(/*null*/world, fTime);
+                vrGui.render(fTime, fbGUIFixed.getTexture(0));
                 FrameBuffer.unbindFramebuffer();
                 
             }
@@ -617,6 +589,7 @@ public class Game extends GameBase {
         }
         
         glEnable(GL_BLEND);
+        
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glClear(GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
@@ -627,123 +600,39 @@ public class Game extends GameBase {
             GPUProfiler.start("gui");
 
         if (this.world != null && this.gui == null && this.movement.grabbed()) {
-            Shaders.colored.enable();
-            Tess.instance.setColor(-1, 100);
-            Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
-            float height = 1;
-            float w = 8;
-            Tess.instance.add(-w, height, 0);
-            Tess.instance.add(w, height, 0);
-            Tess.instance.add(w, -height, 0);
-            Tess.instance.add(-w, -height, 0);
-            Tess.instance.add(-height, w, 0);
-            Tess.instance.add(height, w, 0);
-            Tess.instance.add(height, -w, 0);
-            Tess.instance.add(-height, -w, 0);
-            Tess.instance.draw(GL_QUADS);
-            Shader.disable();
+            renderCrossHair(fTime);
         }
 
         glEnable(GL_BLEND);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        double mx = Mouse.getX();
+        double my = Mouse.getY();
         if (!VR_SUPPORT) {
-            renderGui(fTime);
+            renderGui(fTime, mx, my);
         }
         if (this.gui == null && this.world != null) {
 
             if (showGrid) {
-                int ipX = GameMath.floor(vCam.x);
-                int ipY = GameMath.floor(vCam.y);
-                int ipZ = GameMath.floor(vCam.z);
-                int icX = ipX >> 4;
-                int icZ = ipZ >> 4;
-                int lenOver = RegionRenderer.LENGTH_OVER;
-                lenOver += 8;
-                int chunksW = lenOver * RegionRenderer.REGION_SIZE;
-                int chunkHalfW = ((lenOver - 1) / 2) * RegionRenderer.REGION_SIZE;
-                //                int minChunkX = (ipX) - chunkW;
-                //                int minChunkZ = (ipZ) - chunkW;
-                //                int maxChunkX = (ipX) + chunkW;
-                Tess t = Tess.instance;
-                float chunkWPx = 12.0f;
-                float screenX = 140;
-                float screenZ = 140;
-                for (int cX = 0; cX < chunksW; cX++) {
-                    for (int cZ = 0; cZ < chunksW; cZ++) {
-                        t.setOffset(screenX + chunkWPx * cX, screenZ + chunkWPx * cZ, 0);
-                        int worldChunkX = icX - chunkHalfW + cX;
-                        int worldChunkZ = icZ - chunkHalfW + cZ;
-                        Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
-
-                        float border = 2;
-                        MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
-                        if (region == null) {
-                            t.setColorF(0xff0000, 1);
-                        } else /*if (!region.isRenderable) {
-                               t.setColorF(0x555500, 1);
-                               } else*/
-                        {
-                            int r = 0x777777;
-                            if (Math.abs(region.rX) % 2 == Math.abs(region.rZ) % 2)
-                                r = 0;
-
-                            t.setColorF(r, 1);
-                        }
-                        t.add(0, chunkWPx);
-                        t.add(chunkWPx, chunkWPx);
-                        t.add(chunkWPx, 0);
-                        t.add(0, 0);
-                        if (c == null) {
-                            t.setColorF(0x993333, 1);
-                        } else if (!c.isValid) {
-                            t.setColorF(0x999933, 1);
-                        } else if (worldChunkX == icX && worldChunkZ == icZ) {
-                            t.setColorF(0x333399, 1);
-                        } else {
-                            t.setColorF(0x339933, 1);
-                        }
-                        t.add(border, chunkWPx - border);
-                        t.add(chunkWPx - border, chunkWPx - border);
-                        t.add(chunkWPx - border, border);
-                        t.add(border, border);
-                    }
-                }
-                Shaders.colored.enable();
-                t.drawQuads();
-                Shader.disable();
+                renderChunkGrid(fTime);
             }
 
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("stats");
             if (this.statsCached != null) {
                 this.statsCached.setSize(displayWidth, displayHeight);
                 this.statsCached.render(fTime, 0, 0);
             }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-            //            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            
             if (!VR_SUPPORT) {
                 glEnable(GL_DEPTH_TEST);
-                GuiWindowManager.getInstance().render(fTime, Mouse.getX(), Mouse.getY());
+                GuiWindowManager.getInstance().render(fTime, mx, my);
                 glDisable(GL_DEPTH_TEST);
             }
             Shaders.textured.enable();
-            //            Engine.itemRender.drawItem(this.testStack, displayWidth/2, displayHeight/2, 32, 32);
-
-            //            Engine.itemRender.drawItem(this.testStack2, displayWidth/2+32, displayHeight/2, 32, 32);
             if (this.chatOverlay != null) {
                 this.chatOverlay.render(fTime, 0, 0);
             }
-        
         }
 
         if (GLDebugTextures.show) {
-            //          
-            //          if (this.debugOverlay != null) {
-            //              this.debugOverlay.render(fTime, 0, 0);
-            //          }
-            //          
-
             GLDebugTextures.drawAll(displayWidth, displayHeight);
         }
         
@@ -756,13 +645,93 @@ public class Game extends GameBase {
         }
     }
 
-    protected void renderGui(float fTime) {
+    private void renderCrossHair(float fTime) {
+        Shaders.colored.enable();
+        Tess.instance.setColor(-1, 100);
+        Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
+        float height = 1;
+        float w = 8;
+        Tess.instance.add(-w, height, 0);
+        Tess.instance.add(w, height, 0);
+        Tess.instance.add(w, -height, 0);
+        Tess.instance.add(-w, -height, 0);
+        Tess.instance.add(-height, w, 0);
+        Tess.instance.add(height, w, 0);
+        Tess.instance.add(height, -w, 0);
+        Tess.instance.add(-height, -w, 0);
+        Tess.instance.draw(GL_QUADS);
+        Shader.disable();
+    }
+
+    private void renderChunkGrid(float fTime) {
+
+        int ipX = GameMath.floor(vCam.x);
+        int ipY = GameMath.floor(vCam.y);
+        int ipZ = GameMath.floor(vCam.z);
+        int icX = ipX >> 4;
+        int icZ = ipZ >> 4;
+        int lenOver = RegionRenderer.LENGTH_OVER;
+        lenOver += 8;
+        int chunksW = lenOver * RegionRenderer.REGION_SIZE;
+        int chunkHalfW = ((lenOver - 1) / 2) * RegionRenderer.REGION_SIZE;
+        //                int minChunkX = (ipX) - chunkW;
+        //                int minChunkZ = (ipZ) - chunkW;
+        //                int maxChunkX = (ipX) + chunkW;
+        Tess t = Tess.instance;
+        float chunkWPx = 12.0f;
+        float screenX = 140;
+        float screenZ = 140;
+        for (int cX = 0; cX < chunksW; cX++) {
+            for (int cZ = 0; cZ < chunksW; cZ++) {
+                t.setOffset(screenX + chunkWPx * cX, screenZ + chunkWPx * cZ, 0);
+                int worldChunkX = icX - chunkHalfW + cX;
+                int worldChunkZ = icZ - chunkHalfW + cZ;
+                Chunk c = this.world.getChunk(worldChunkX, worldChunkZ);
+
+                float border = 2;
+                MeshedRegion region = Engine.regionRenderer.getByChunkCoord(worldChunkX, -1, worldChunkZ);
+                if (region == null) {
+                    t.setColorF(0xff0000, 1);
+                } else /*if (!region.isRenderable) {
+                       t.setColorF(0x555500, 1);
+                       } else*/
+                {
+                    int r = 0x777777;
+                    if (Math.abs(region.rX) % 2 == Math.abs(region.rZ) % 2)
+                        r = 0;
+
+                    t.setColorF(r, 1);
+                }
+                t.add(0, chunkWPx);
+                t.add(chunkWPx, chunkWPx);
+                t.add(chunkWPx, 0);
+                t.add(0, 0);
+                if (c == null) {
+                    t.setColorF(0x993333, 1);
+                } else if (!c.isValid) {
+                    t.setColorF(0x999933, 1);
+                } else if (worldChunkX == icX && worldChunkZ == icZ) {
+                    t.setColorF(0x333399, 1);
+                } else {
+                    t.setColorF(0x339933, 1);
+                }
+                t.add(border, chunkWPx - border);
+                t.add(chunkWPx - border, chunkWPx - border);
+                t.add(chunkWPx - border, border);
+                t.add(border, border);
+            }
+        }
+        Shaders.colored.enable();
+        t.drawQuads();
+        Shader.disable();
+    
+    }
+
+    protected void renderGui(float fTime, double mx, double my) {
 
         if (this.gui != null) {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("gui");
-            double mx = Mouse.getX();
-            double my = Mouse.getY();
             GuiWindow window = GuiWindowManager.getMouseOver(mx, my);
             if (window != null && (Gui.selectedButton == null || Gui.selectedButton.parent != gui)) {
                 mx -= 10000;
@@ -1257,6 +1226,7 @@ public class Game extends GameBase {
         }
 
         Engine.setLightPosition(this.world.getLightPosition());
+//        vrGui.update(VR.pose, Vector3f.ZERO);
         Engine.updateGlobalRenderOffset(vCam);
         if (VR_SUPPORT) {
 
@@ -1292,12 +1262,19 @@ public class Game extends GameBase {
                 if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
                 if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
             }
+            if (VR_SUPPORT) {
+                for (int i = 0; i < 2; i++) {
+                    int idx = VR.controllerDeviceIndex[i];
+                    if (idx > -1) {
+                        getMouseOver(i).updateFromController(idx, f);
+                    }
+                }
+            }
             if (this.gui == null) {
                 if (VR_SUPPORT) {
                     for (int i = 0; i < 2; i++) {
                         int idx = VR.controllerDeviceIndex[i];
                         if (idx > -1) {
-                            getMouseOver(i).updateFromController(idx, f);
                             getSelection(i).update(world, getMouseOver(i), vCam);
                         } else {
                             getSelection(i).reset();
@@ -1324,6 +1301,7 @@ public class Game extends GameBase {
             Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
             Engine.lightCompute.updateLights(this.world, f);
         }
+        vrGui.update(VR.pose, Engine.camera.getPosition(), getMouseOver(0));
     }
     
 

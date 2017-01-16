@@ -487,6 +487,16 @@ public class Engine {
     public static void updateCamera(Matrix4f camView, Vector3f camPos) {
         updateCamera(camView, camPos, true);
     }
+    public static void composeModelView(Matrix4f camView, Vector3f camPos, boolean b, Matrix4f out) {
+        out.setIdentity();
+        out.translate(-camPos.x, -camPos.y, -camPos.z);
+        
+        if (b) {
+            out.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);    
+        }
+        
+        Matrix4f.mul(camView, out, out);
+    }
     public static void updateCamera(Matrix4f camView, Vector3f camPos, boolean b) {
         up.set(0, 100, 0);
 //        back.set(0, -10, 0);
