@@ -534,6 +534,22 @@ public class Game extends GameBase {
                 FrameBuffer finalTarget = VR.getFB(eye);
                 finalTarget.bind();
                 finalTarget.clearDepth();
+//                for (int i = 0; i < 1; i++) {
+//                    PositionMouseOver ctrlPos = getMouseOver(i);
+//                    if (ctrlPos.vDir != null) {
+////                        System.out.println(eye+":"+i+ " > "+ctrlPos.vOrigin);
+//                        Tess t = Tess.instance;
+//                        t.setColorRGBAF(.92f, .92f, .71f, 1.0f);
+//                        t.add(ctrlPos.vOrigin);
+//                        Vector3f vt = ctrlPos.t2;
+//                        vt.set(ctrlPos.vDir);
+//                        vt.scale(120);
+//                        Vector3f.add(ctrlPos.vOrigin, vt, vt);
+//                        t.add(vt);
+//                        GL11.glLineWidth(4);
+//                        t.draw(GL11.GL_LINES);
+//                    }
+//                }
                 
                 Engine.updateCamera(VR.getPoseMat(eye), Vector3f.ZERO);
                 UniformBuffer.updateUBO(/*null*/world, fTime);
@@ -1004,7 +1020,7 @@ public class Game extends GameBase {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("BlockHighlight");
 //                System.out.println(VR.controllerDeviceIndex[1]);
-                if (VR.controllerDeviceIndex[0]>0)
+//                if (VR.controllerDeviceIndex[0]>0)
                 leftSelection.renderBlockHighlight(this.world, fTime);
                 if (VR.controllerDeviceIndex[1]>0)
                 rightSelection.renderBlockHighlight(this.world, fTime);
