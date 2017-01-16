@@ -12,6 +12,7 @@ public class PositionMouseOver {
     public final Vector3f vDirTmp = new Vector3f();
     public final Vector3f vTarget = new Vector3f();
     public final Vector3f t       = new Vector3f();
+    public final Vector3f t2       = new Vector3f();
     Matrix4f matTmp1 = new Matrix4f();
 
     public void updateMouseFromScreenPos(float winX, float winY, float renderWidth, float renderHeight, Vector3f cameraOffset) {

@@ -943,24 +943,24 @@ public class VR {
         if (modelShader == null) return;
         BufferedMatrix bufMat = Engine.getTempMatrix();
         if (isInputCaptured) {
-//            Shaders.colored3D.enable();
-//            Shaders.colored3D.setProgramUniform1f("color_brightness", 1f);
-//            Engine.checkGLError("Shaders.textured3D.enable");
-//            for (int iDevice = 0; iDevice < JOpenVRLibrary.k_unMaxTrackedDeviceCount; iDevice++) {
-//                if (!isTrackedDeviceConnected[iDevice]) {
-//                    continue;
-//                }
-//                if (trackedDeviceClass[iDevice] != ETrackedDeviceClass.ETrackedDeviceClass_TrackedDeviceClass_Controller) {
-//                    continue;
-//                }
-//                if (hmdTrackedDevicePoses[iDevice].bPoseIsValid <= 0 ){
-//                    continue;
-//                }
-//                Matrix4f n = poseMatrices[iDevice];
-//                renderControllerAxes(iDevice, n);
-//            }
-//
-//            Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
+            Shaders.colored3D.enable();
+            Shaders.colored3D.setProgramUniform1f("color_brightness", 1f);
+            Engine.checkGLError("Shaders.textured3D.enable");
+            for (int iDevice = 0; iDevice < JOpenVRLibrary.k_unMaxTrackedDeviceCount; iDevice++) {
+                if (!isTrackedDeviceConnected[iDevice]) {
+                    continue;
+                }
+                if (trackedDeviceClass[iDevice] != ETrackedDeviceClass.ETrackedDeviceClass_TrackedDeviceClass_Controller) {
+                    continue;
+                }
+                if (hmdTrackedDevicePoses[iDevice].bPoseIsValid <= 0 ){
+                    continue;
+                }
+                Matrix4f n = poseMatrices[iDevice];
+                renderControllerAxes(iDevice, n);
+            }
+
+            Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
         }
         Engine.bindVAO(GLVAO.openVRModel);
         Engine.checkGLError("bindVAO");
