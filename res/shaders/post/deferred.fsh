@@ -239,13 +239,19 @@ float getShadow2() {
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, v.xy*0.5+offs).r;   
+                if (v.z <= texture(texShadow, v.xy*0.5+offs).r) {
+                    s += 1;
+                }
             }
         }
         s /= SOFT_SHADOW_WEIGHT;
         // shadow.x = v.z > s ? 0 : 1;
         // shadow.w += 1;
-        return v.z > s ? 0 : 1;
+        // if (v.z>s){
+        //     return 1.0-clamp((v.z-s)*1281, 0.0, 1.0);
+        // }
+        return s;
+        //return v.z > s ? 0 : 1;
     }
     if (canLookup(v2, prop.linearDepth, mapZSplits.y*weight)) {
         v2.z*=0.9999;
@@ -256,13 +262,16 @@ float getShadow2() {
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, v2.xy*0.5+vec2(0.5,0)+offs).r;   
+                if (v2.z <= texture(texShadow, v2.xy*0.5+vec2(0.5,0)+offs).r) {
+                    s += 1;  
+                } 
             }
         }
         s /= SOFT_SHADOW_WEIGHT;
         // shadow.y += v2.z > s ? 0 : 1;
         // shadow.w += 1;
-        return v2.z > s ? 0 : 1;
+        //return v2.z > s ? 0 : 1;
+        return s;
     }
     if (canLookup(v3, prop.linearDepth, mapZSplits.z)) {
         v3.z*=0.9997;
@@ -270,7 +279,9 @@ float getShadow2() {
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, v3.xy*0.5+vec2(0,0.5)+offs).r;   
+                if (v3.z <= texture(texShadow, v3.xy*0.5+vec2(0,0.5)+offs).r) {
+                    s += 1; 
+                }  
             }
         }
         s /= SOFT_SHADOW_WEIGHT;
@@ -278,7 +289,8 @@ float getShadow2() {
         // shadow.w += 1;
         // shadow.z = texture(texShadow, v3.xy*0.5+vec2(0,0.5)).r;
         // shadow.w += 1;
-        return v3.z > s ? 0 : 1;
+        //return v3.z > s ? 0 : 1;
+        return s;
     }
     // return (shadow.x+shadow.y+shadow.z) / shadow.w;
     return 1;
