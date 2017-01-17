@@ -96,6 +96,7 @@ public class Engine {
     public static LightCompute  lightCompute;
     public static MeshThread     regionRenderThread;
     public static QModelBatchedRender renderBatched;
+    final static FastArrayList<IRenderComponent> components = new FastArrayList<>(16);
     private static float         aspectRatio;
     private static int           fieldOfView;
 
@@ -249,18 +250,6 @@ public class Engine {
         lightDirection = new Vector3f();
         back = new Vector4f();
         camera = new Camera();
-        if (initRenderers) {
-            shadowProj = new ShadowProjector();
-            worldRenderer = new WorldRenderer();
-            skyRenderer = new SkyRenderer();
-            particleRenderer = new CubeParticleRenderer();
-            shadowRenderer = new ShadowRenderer();
-            outRenderer = new FinalRenderer();
-            blurRenderer = new BlurRenderer();
-            regionRenderer = new RegionRenderer();
-            regionRenderThread = new MeshThread(3);
-        }
-        renderBatched = new QModelBatchedRender();
         sunlightmodel.setDayLen(10000);
         sunlightmodel.setTime(7500);
         System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
@@ -276,14 +265,16 @@ public class Engine {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("GL30.glBindVertexArray");
         UniformBuffer.init();
-        Shaders.init();
-        ShaderBuffer.init();
         if (initRenderers) {
+            flushRenderTasks();
+            registerRenderers();
+            regionRenderThread = new MeshThread(3);
             regionRenderThread.init();
-            regionRenderer.init();
-            reloadRenderer(true);
+            regionRenderer.reRender();
+        } else {
+            Shaders.init();
+            ShaderBuffer.init();
         }
-        renderBatched.init();
         blockDraw.init();
         itemRender.init();
         pxStack.setCallBack(new StackChangeCallBack() {
@@ -365,7 +356,7 @@ public class Engine {
      */
     public static void resizeRenderers(int displayWidth, int displayHeight) {
         if (initRenderers) {
-            shadowProj.setSplits(new float[] {znear, 14, 64, 420}, fieldOfView, aspectRatio);
+            shadowProj.updateProjection(znear, zfar, aspectRatio, fieldOfView);
         }
         if (blurRenderer != null) {
             blurRenderer.resize(displayWidth, displayHeight);
@@ -631,38 +622,46 @@ public class Engine {
         position.clear();
     }
 
-    public static void reloadRenderer(boolean useBasicShaders) {
-        flushRenderTasks();
-        if (worldRenderer != null) worldRenderer.release();
-        if (particleRenderer != null) particleRenderer.release();
-        if (outRenderer != null) outRenderer.release();
-        if (shadowRenderer != null) shadowRenderer.release();
-        if (blurRenderer != null) blurRenderer.release();
-        if (skyRenderer != null) skyRenderer.release();
-        worldRenderer = new WorldRenderer();
-        particleRenderer = new CubeParticleRenderer();
-        skyRenderer = new SkyRenderer();
-        outRenderer = new FinalRenderer();
-        shadowRenderer = new ShadowRenderer();
-        lightCompute = new LightCompute();
-        blurRenderer = new BlurRenderer();
-        blurRenderer.init();
-        worldRenderer.init();
-        particleRenderer.init();
-        skyRenderer.init();
-        outRenderer.init();
-        shadowRenderer.init();
-        lightCompute.init();
-        blurRenderer.resize(Game.displayWidth, Game.displayHeight);
-        skyRenderer.resize(Game.displayWidth, Game.displayHeight);
-        worldRenderer.resize(Game.displayWidth, Game.displayHeight);
-        particleRenderer.resize(Game.displayWidth, Game.displayHeight);
-        outRenderer.resize(Game.displayWidth, Game.displayHeight);
-        shadowRenderer.resize(Game.displayWidth, Game.displayHeight);
-        lightCompute.resize(Game.displayWidth, Game.displayHeight);
-        regionRenderer.reRender();
+    /** RELOAD HAS MEM LEAK!! */
+    public static void registerRenderers() {
+        for (int i = 0; i < components.size(); i++) {
+            IRenderComponent r = components.get(i);
+            r.release();
+        }
+        components.clear();
+        shadowProj = addComponent(new ShadowProjector());
+        worldRenderer = addComponent(new WorldRenderer());
+        particleRenderer = addComponent(new CubeParticleRenderer());
+        skyRenderer = addComponent(new SkyRenderer());
+        outRenderer = addComponent(new FinalRenderer());
+        shadowRenderer = addComponent(new ShadowRenderer());
+        lightCompute = addComponent(new LightCompute());
+        blurRenderer = addComponent(new BlurRenderer());
+        regionRenderer = addComponent(new RegionRenderer());
+        renderBatched = addComponent(new QModelBatchedRender());
+        for (int i = 0; i < components.size(); i++) {
+            IRenderComponent r = components.get(i);
+            r.preinit();
+        }
+        Shaders.init();
+        ShaderBuffer.init();
+        for (int i = 0; i < components.size(); i++) {
+            IRenderComponent r = components.get(i);
+            r.init();
+        }
+        for (int i = 0; i < components.size(); i++) {
+            IRenderComponent r = components.get(i);
+            if (r instanceof AbstractRenderer) {
+                ((AbstractRenderer) r).resize(Game.displayWidth, Game.displayHeight);    
+            }
+        }
     }
 
+    private static <T> T addComponent(IRenderComponent component) {
+        components.add((IRenderComponent) component);
+        System.out.println("ADD COMPONENT "+component);
+        return (T) component;
+    }
     public static void setSceneFB(FrameBuffer fb) {
         fbScene = fb;
     }
@@ -797,5 +796,4 @@ public class Engine {
         }
         return null;
     }
-
 }

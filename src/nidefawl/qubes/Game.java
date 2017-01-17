@@ -498,7 +498,6 @@ public class Game extends GameBase {
             Gui.RENDER_BACKGROUNDS = true;
             if (this.gui == null && this.world != null) {
                 glEnable(GL_DEPTH_TEST);
-//                Mouse.getX(), Mouse.getY()
                 GuiWindowManager.getInstance().render(fTime, 0, 0);
                 glDisable(GL_DEPTH_TEST);
             }
@@ -655,10 +654,6 @@ public class Game extends GameBase {
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
-
-        if (VR_SUPPORT) {
-            setVRProjection(); // do this at the end of the frame to leave displayHeight/displayWidth at VR render resolution
-        }
     }
 
     private void renderCrossHair(float fTime) {
@@ -1109,7 +1104,7 @@ public class Game extends GameBase {
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            ItemModelManager.getInstance().reload();
 //            

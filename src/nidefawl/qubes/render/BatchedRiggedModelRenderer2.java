@@ -143,4 +143,8 @@ public class BatchedRiggedModelRenderer2 extends AbstractRenderer {
         return this.position+1>=MAX_INSTANCES;
 //        return this.buf.remaining()<STRUCT_SIZE;
     }
+
+    @Override
+    public void preinit() {
+    }
 }

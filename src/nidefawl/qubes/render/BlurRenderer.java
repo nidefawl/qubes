@@ -123,4 +123,7 @@ public class BlurRenderer extends AbstractRenderer {
     public void init() {
         initShaders();
     }
+    @Override
+    public void preinit() {
+    }
 }

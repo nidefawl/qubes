@@ -271,5 +271,8 @@ public class CubeParticleRenderer extends AbstractParticleRenderer {
     public int getNumParticles() {
         return this.particles.size();
     }
+    @Override
+    public void preinit() {
+    }
     
 }

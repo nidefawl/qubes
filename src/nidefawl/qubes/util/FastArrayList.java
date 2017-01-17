@@ -117,6 +117,9 @@ public class FastArrayList<T> implements List<T> {
     public T set(int index, T element) {
         T t = this.array[index];
         this.array[index] = element;
+        if (size < index+1) {
+            size = index+1;
+        }
         return t;
     }
 

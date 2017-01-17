@@ -7,14 +7,12 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.util.EResourceType;
-import nidefawl.qubes.util.IManagedResource;
-import nidefawl.qubes.util.IResourceManager;
+import nidefawl.qubes.util.*;
 
 /**
  * @author Michael Hept 2015 Copyright: Michael Hept
  */
-public abstract class AbstractRenderer implements IResourceManager {
+public abstract class AbstractRenderer implements IResourceManager, IRenderComponent {
     boolean                recompileShaders    = false;
     List<IManagedResource> resourcesShaders    = Lists.newArrayList();
     List<IManagedResource> resourcesShadersNew = Lists.newArrayList();
@@ -94,6 +92,14 @@ public abstract class AbstractRenderer implements IResourceManager {
             }
                 return;
         }
+    }
+
+    public void resize(int displayWidth, int displayHeight) {
+    }
+    
+    @Override
+    public void preinit() {
+        
     }
 
 }

@@ -78,6 +78,9 @@ public class QModelDirectRender extends QModelRender {
     public void addObject(QModelObject model) {
         subLists.add(model);
     }
-
+    @Override
+    public void init() {
+        initShaders();
+    }
 
 }

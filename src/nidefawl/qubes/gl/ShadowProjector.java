@@ -2,11 +2,17 @@ package nidefawl.qubes.gl;
 
 import java.nio.FloatBuffer;
 
+import jopenvr.HmdMatrix44_t;
+import jopenvr.JOpenVRLibrary;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.util.Project;
 import nidefawl.qubes.vec.*;
+import nidefawl.qubes.vr.VR;
 
-public class ShadowProjector {
+public class ShadowProjector implements IRenderComponent {
+    final static int NUM_SPLITS = 3;
     private Matrix4f[]       shadowSplitProj;
     private BufferedMatrix[] shadowSplitMVP;
     public float[]           shadowSplitDepth;
@@ -20,6 +26,7 @@ public class ShadowProjector {
     Vector3f frustumCenter = new Vector3f(0, 0, 0);
     Vector3f tmp = new Vector3f(0, 0, 0);
     Vector3f eye = new Vector3f();
+    private float[] splits;
 
     static Vector3f[] furstumCornersIn = new Vector3f[] {
             new Vector3f(-1,  1, 0),
@@ -41,8 +48,21 @@ public class ShadowProjector {
             new Vector3f( 1, -1, 1),
             new Vector3f(-1, -1, 1), 
     };
-    private float[] splits;
     public void init() {
+        int i;
+        shadowSplitProj = new Matrix4f[NUM_SPLITS];
+        shadowSplitMVP = new BufferedMatrix[NUM_SPLITS];
+        shadowSplitDepth = new float[NUM_SPLITS];
+        shadowCamFrustum = new Frustum[NUM_SPLITS];
+        for (i = 0; i < shadowSplitProj.length; i++) {
+            shadowSplitProj[i] = new Matrix4f();
+        }
+        for (i = 0; i < shadowSplitMVP.length; i++) {
+            shadowSplitMVP[i] = new BufferedMatrix();
+        }
+        for (i = 0; i < shadowCamFrustum.length; i++) {
+            shadowCamFrustum[i] = new Frustum();
+        }
     }
 
     public void calcShadow(int split, Matrix4f modelview, Vector3f lightDirection, float shadowTextureSize) {
@@ -71,27 +91,37 @@ public class ShadowProjector {
         }
         frustumCenter.scale(1.0f / 8.0f);
 //                Engine.worldRenderer.debugBBs.put(split, bb);
-        float radius = Vector3f.sub(furstumCornersOut[0], furstumCornersOut[6], tmp).length() / 2.0f;
+        float radius = Vector3f.sub(furstumCornersOut[0], furstumCornersOut[6], tmp).length() / 2.0f; //constant with aspect ratio/fov/and mv scaling
+        float snap = 5f;
+        radius = GameMath.floor(radius/snap)*snap;
+//        System.out.println(""+split+"/"+radius);
         float len = Vector3f.sub(furstumCornersOut[5], furstumCornersOut[1], tmp).length();
 //        radius*=1.3f;
         /** SNAP TO TEXTURE INCREMENTS, (Seems not to work with deferred) */
         /*
         */
         //        Matrix4f scale = new Matrix4f();
-        float texelsPerUnit = (radius * 2.0f) / (float) shadowTextureSize;
+        float texelsPerUnit = (radius * 2.0f) / (float) (shadowTextureSize);
 //        
         //        scale.scale(new Vector3f(texelsPerUnit, texelsPerUnit, texelsPerUnit));
         Project.lookAt(0, 0, 0, lightDirection.x, lightDirection.y, lightDirection.z, 0, 1, 0, matLookAt);
         //        Matrix4f.mul(matLookAt, scale, matLookAt);
-//        texelsPerUnit=1f;
+//        
         Matrix4f.invert(matLookAt, matLookAtInv);
-        Matrix4f.transform(matLookAt, frustumCenter, frustumCenter);
-        frustumCenter.scale(1.0f / texelsPerUnit);
-        frustumCenter.x = GameMath.floor(frustumCenter.x);
-        frustumCenter.y = GameMath.floor(frustumCenter.y);
-        frustumCenter.z = GameMath.floor(frustumCenter.z);
-        frustumCenter.scale(texelsPerUnit);
-        Matrix4f.transform(matLookAtInv, frustumCenter, frustumCenter);
+
+//        texelsPerUnit = (1+split);
+//        if (split != 0) {
+            Matrix4f.transform(matLookAt, frustumCenter, frustumCenter);
+            frustumCenter.scale(1.0f / texelsPerUnit);
+//            frustumCenter.x = GameMath.floor(frustumCenter.x)+0.5f;
+//            frustumCenter.y = GameMath.floor(frustumCenter.y)+0.5f;
+//            frustumCenter.z = GameMath.floor(frustumCenter.z)+0.5f;
+            frustumCenter.x = GameMath.floor(frustumCenter.x);
+            frustumCenter.y = GameMath.floor(frustumCenter.y);
+            frustumCenter.z = GameMath.floor(frustumCenter.z);
+            frustumCenter.scale(texelsPerUnit);
+            Matrix4f.transform(matLookAtInv, frustumCenter, frustumCenter);
+//        }
         tmp.set(lightDirection);
         Vector3f.sub(frustumCenter, tmp.scale(-(512 + radius * 2.0f)), eye);
 
@@ -106,6 +136,7 @@ public class ShadowProjector {
 //        Matrix4f.invert(matLookAt, matLookAtInv);
 //                Project.lookAt(eye.x-frustumCenter.x, eye.y-frustumCenter.y, eye.z-frustumCenter.z, 0,0,0, 0, 1, 0, shadowSplitMVP[split]);
         Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
+//        System.out.println(matOrtho);
 //        Matrix4f.mul(matOrtho, matLookAt, matLookAt);
 
         Matrix4f.mul(matOrtho, shadowSplitMVP[split], shadowSplitMVP[split]);
@@ -122,43 +153,8 @@ public class ShadowProjector {
 //        tmp.set(0, 0, radius);
 //        Matrix4f.transform(matLookAtInv, tmp, tmp);
 //        System.out.println(radius);
-      shadowSplitDepth[split] = radius;//tmp.z*2;//splits[split+1];
+        shadowSplitDepth[split] = radius;//tmp.z*2;//splits[split+1];
 //    System.out.println(split+"="+radius+"/"+farZ+"/"+tmp.z);
-    }
-
-    public void setSplits(float[] splits, float fieldOfView, float aspectRatio) {
-        this.splits = splits;
-        int i;
-        for (i = 0; shadowSplitMVP != null && i < shadowSplitMVP.length; i++) {
-            if (shadowSplitMVP[i] != null) {
-                shadowSplitMVP[i].free();
-            }
-        }
-        shadowSplitProj = new Matrix4f[splits.length - 1];
-        shadowSplitMVP = new BufferedMatrix[splits.length - 1];
-        shadowSplitDepth = new float[splits.length - 1];
-        shadowCamFrustum = new Frustum[splits.length - 1];
-        for (i = 0; i < shadowSplitProj.length; i++) {
-            shadowSplitProj[i] = new Matrix4f();
-        }
-        for (i = 0; i < shadowSplitMVP.length; i++) {
-            if (shadowSplitMVP[i] != null) {
-                shadowSplitMVP[i].free();
-            }
-            shadowSplitMVP[i] = new BufferedMatrix();
-        }
-        for (i = 0; i < shadowCamFrustum.length; i++) {
-            shadowCamFrustum[i] = new Frustum();
-        }
-        for (i = 0; i < splits.length-1; i++) {
-            float fov = fieldOfView;
-//            if (i == 0)
-//                fov *= 1.15f;
-            Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
-//            shadowSplitDepth[i] = splits[i+1] / 0.11F;
-
-        }
-
     }
 
     public void calcSplits(Matrix4f modelview, Vector3f lightDirection, float textureSize) {
@@ -177,6 +173,50 @@ public class ShadowProjector {
 
     public FloatBuffer getSMVP(int i) {
         return shadowSplitMVP[i].get();
+    }
+
+
+    public void setSplits(float[] splits, float fieldOfView, float aspectRatio) {
+        this.splits = splits;
+        for (int i = 0; i < splits.length-1; i++) {
+            float fov = fieldOfView;
+//            if (i == 0)
+//                fov *= 1.15f;
+            if (!GameBase.VR_SUPPORT) {
+                Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
+            } else {
+                Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
+            }
+//            shadowSplitDepth[i] = splits[i+1] / 0.11F;
+
+        }
+    }
+    public void updateProjection(float znear, float zfar, float aspectRatio, float fov) {
+        float splits[] = new float[] {znear, 14, 64, 420};
+        if (!GameBase.VR_SUPPORT) {
+            for (int i = 0; i < NUM_SPLITS; i++) {
+                Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
+            }
+        } else {
+            for (int i = 0; i < NUM_SPLITS; i++) {
+                HmdMatrix44_t matR = VR.vrsystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left, splits[i], splits[i+1], JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
+                VR.convertSteamVRMatrix4ToMatrix4f(matR, shadowSplitProj[i]);
+            }
+        }
+    }
+
+    @Override
+    public void release() {
+        int i;
+        for (i = 0; shadowSplitMVP != null && i < shadowSplitMVP.length; i++) {
+            if (shadowSplitMVP[i] != null) {
+                shadowSplitMVP[i].free();
+            }
+        }
+    }
+
+    @Override
+    public void preinit() {
     }
 
 }
