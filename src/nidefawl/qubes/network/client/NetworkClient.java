@@ -3,9 +3,13 @@ package nidefawl.qubes.network.client;
 import java.io.IOException;
 import java.net.*;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.network.Connection;
+import nidefawl.qubes.network.MemoryConnection;
+import nidefawl.qubes.network.TCPConnection;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
+import nidefawl.qubes.server.GameServer;
 
 public class NetworkClient {
 
@@ -14,10 +18,24 @@ public class NetworkClient {
     public int netVersion = Packet.NET_VERSION;
 
     public NetworkClient(final String host, final short port) throws UnknownHostException, IOException {
-    	Socket s = new Socket();
-    	s.connect(new InetSocketAddress(host, port), 10000);
-    	s.setSoTimeout(10000);
-        this.conn = new Connection(s);
+        this(host, port, false);
+    }
+    public NetworkClient(final String host, final short port, boolean isLocalAttempt) throws UnknownHostException, IOException {
+        Connection conn = null;
+        if (isLocalAttempt) {
+            try {
+                conn = Game.instance.server.newMemoryConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (conn == null) {
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress(host, port), 10000);
+            s.setSoTimeout(10000);
+            conn = new TCPConnection(s);
+        }
+        this.conn = conn;
         this.handler = new ClientHandler(this);
         this.conn.startThreads();
     }

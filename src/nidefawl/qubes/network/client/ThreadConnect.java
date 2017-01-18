@@ -15,10 +15,12 @@ public class ThreadConnect implements Runnable {
     public boolean cancelled = false;
     public boolean connected;
     String stateStr = "Connecting...";
+    private boolean isLocalAttempt;
 
-    public ThreadConnect(String host, int port) {
+    public ThreadConnect(String host, int port, boolean isLocalAttempt) {
         this.host = host;
         this.port = port;
+        this.isLocalAttempt = isLocalAttempt;
     }
 
     @Override
@@ -26,7 +28,7 @@ public class ThreadConnect implements Runnable {
         NetworkClient client = null;
         try {
             stateStr = "Connecting to "+host+":"+port;
-            client = new NetworkClient(host, (short) port);
+            client = new NetworkClient(host, (short) port, isLocalAttempt);
             client.sendPacket(new PacketHandshake(client.netVersion));
             ClientHandler handler = client.getClient();
             String dots = "...";

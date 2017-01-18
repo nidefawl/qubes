@@ -1,8 +1,6 @@
 package nidefawl.qubes.network.client;
 
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -10,9 +8,9 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.PlayerProfile;
+import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTaskThread;
 import nidefawl.qubes.async.AsyncTasks;
-import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
@@ -20,7 +18,6 @@ import nidefawl.qubes.chunk.ChunkDataSliced2;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
 import nidefawl.qubes.chunk.client.ChunkManagerClient;
-import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.EntityType;
@@ -30,13 +27,14 @@ import nidefawl.qubes.gui.GuiSelectWorld;
 import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.io.ByteArrIO;
-import nidefawl.qubes.io.network.DataListType;
 import nidefawl.qubes.io.network.WorldInfo;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.network.Connection;
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.network.packet.*;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.Flags;
+import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.TripletShortHash;
 import nidefawl.qubes.vec.BlockBoundingBox;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldClient;
@@ -372,8 +370,13 @@ public class ClientHandler extends Handler {
             return;
         }
         BlockBoundingBox box = BlockBoundingBox.fromShorts(packet.min, packet.max);
-        byte[] decompressed = inflate(packet.data);
-        if (c.setLights(decompressed, box)) {
+        byte[] data = null;
+        if ((packet.flags & 1) != 0) {
+            data = inflate(packet.data);
+        } else {
+            data = packet.data;
+        }
+        if (c.setLights(data, box)) {
             Engine.regionRenderer.flagChunk(c.x, c.z); //TODO: do not flag whole y-slice
         } else {
 //            System.out.println("not flagging empty light update "+packet.coordX+"/"+packet.coordZ+" - "+box);  

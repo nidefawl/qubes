@@ -20,12 +20,14 @@ public class CompressChunks implements ICompressTask {
     private int[][] coords;
     private ServerHandlerPlay[] handlers;
     private boolean hasLight;
+    private int compressionLvl;
 
-    public CompressChunks(int worldid, Collection<Chunk> chunks, ServerHandlerPlay[] handlers, boolean hasLight) {
+    public CompressChunks(int worldid, Collection<Chunk> chunks, ServerHandlerPlay[] handlers, boolean hasLight, int compressionLvl) {
         this.chunks = chunks;
         this.handlers = handlers;
         this.worldid = worldid;
         this.hasLight = hasLight;
+        this.compressionLvl = compressionLvl;
     }
 
 
@@ -114,14 +116,15 @@ public class CompressChunks implements ICompressTask {
     }
 
     @Override
-    public void finish(byte[] compressed) {
+    public void finish(byte[] data, int compression) {
         PacketSChunkData packet = new PacketSChunkData(this.worldid);
-        packet.blocks = compressed;
+        packet.blocks = data;
         packet.len = this.chunks.size();
         packet.coords = this.coords;
-        packet.flags |= 1;
+        if (compression > 0)
+            packet.flags |= 1;
         if (this.hasLight)
-        packet.flags |= 2;
+            packet.flags |= 2;
         for (int i = 0; i < handlers.length; i++) {
             ServerHandlerPlay h = handlers[i];
             if (h == null || h.finished()) {
@@ -162,6 +165,12 @@ public class CompressChunks implements ICompressTask {
             }
         }
         return false;
+    }
+
+
+    @Override
+    public int getCompression() {
+        return this.compressionLvl;
     }
 
 }

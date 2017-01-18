@@ -342,7 +342,7 @@ public class PlayerChunkTracker {
                     if (e.wholeChunkUpdate) {
                         e.wholeChunkUpdate = false;
                         handlers = getHandlerArr(e);
-                        CompressThread.submit(new CompressChunks(this.worldServer.getId(), ImmutableList.of(c), handlers, false));
+                        CompressThread.submit(new CompressChunks(this.worldServer.getId(), ImmutableList.of(c), handlers, false, 1));
                     } else if (!e.flaggedBlocks.isEmpty()) {
                         blocksToSend.clear();
                         Iterator<Short> it = e.flaggedBlocks.iterator();
@@ -387,7 +387,7 @@ public class PlayerChunkTracker {
                             System.err.println("volumue <= 0");
                             continue;
                         }
-                        CompressThread.submit(new CompressLight(this.worldServer.getId(), c, bb, handlers));
+                        CompressThread.submit(new CompressLight(this.worldServer.getId(), c, bb, 1, handlers));
 //                        System.out.println("send "+len.length+" bytes of light data to PlayerServer");
                     }
                 }

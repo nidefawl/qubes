@@ -1,5 +1,10 @@
 package nidefawl.qubes.server;
 
+import java.io.IOException;
+
+import nidefawl.qubes.Game;
+import nidefawl.qubes.network.Connection;
+
 public class LocalGameServer {
 
     GameServer server;
@@ -34,6 +39,20 @@ public class LocalGameServer {
         GameServer serv = this.shutdownServ;
         if (serv != null) {
             return this.shutdownServ.isFinished();
+        }
+        return true;
+    }
+    public Connection newMemoryConnection() throws IOException {
+        GameServer serv = this.server;
+        if (serv != null) {
+            return serv.networkServer.newMemoryConnection();
+        }
+        return null;
+    }
+    public boolean isReady() {
+        GameServer serv = this.server;
+        if (serv != null) {
+            return serv.isListening();
         }
         return false;
     }

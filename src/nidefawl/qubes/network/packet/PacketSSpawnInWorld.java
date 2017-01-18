@@ -4,8 +4,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import nidefawl.qubes.network.Handler;
+import nidefawl.qubes.util.IOHelper;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.world.IWorldSettings;
+import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.world.WorldSettingsClient;
 import nidefawl.qubes.world.biomes.IBiomeSettings;
 
@@ -55,6 +57,11 @@ public class PacketSSpawnInWorld extends Packet {
 
     @Override
     public void handle(Handler h) {
+        if (this.worldSettings instanceof WorldSettings) {
+            WorldSettingsClient worldSettingsClient = new WorldSettingsClient();
+            IOHelper.copyTo(this.worldSettings, worldSettingsClient);
+            this.worldSettings = worldSettingsClient;
+        }
         h.handleSpawnInWorld(this);
     }
 

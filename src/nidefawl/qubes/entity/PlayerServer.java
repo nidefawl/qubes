@@ -104,10 +104,11 @@ public class PlayerServer extends Player implements ChatUser, ICommandSource {
                 }
             }
             if (chunks != null) {
+                int compression = this.netHandler.getCompression();
 //                System.out.println("got list with "+chunks.size()+" chunks for client ");
                 Iterable<List<Chunk>> iter = Iterables.partition(chunks, 16);
                 for (List<Chunk> list : iter) {
-                    CompressThread.submit(new CompressChunks(this.world.getId(), list, new ServerHandlerPlay[] {this.netHandler}, true));
+                    CompressThread.submit(new CompressChunks(this.world.getId(), list, new ServerHandlerPlay[] {this.netHandler}, true, compression));
                 }
             }
         }

@@ -20,12 +20,14 @@ public class CompressLight implements ICompressTask {
     private int coordZ;
     private int coordX;
     private BlockBoundingBox box;
+    private int compressionLvl;
 
-    public CompressLight(int worldid, Chunk chunks, BlockBoundingBox box, ServerHandlerPlay... handlers) {
+    public CompressLight(int worldid, Chunk chunks, BlockBoundingBox box, int compressionLvl, ServerHandlerPlay... handlers) {
         this.chunks = chunks;
         this.handlers = handlers;
         this.worldid = worldid;
         this.box = box;
+        this.compressionLvl = compressionLvl;
     }
 
     @Override
@@ -41,8 +43,11 @@ public class CompressLight implements ICompressTask {
     }
 
     @Override
-    public void finish(byte[] compressed) {
+    public void finish(byte[] compressed, int compression) {
         PacketSLightChunk packet = new PacketSLightChunk(this.worldid);
+        packet.flags = 0;
+        if (compression > 0)
+            packet.flags |= 1;
         packet.coordX = this.coordX;
         packet.coordZ = this.coordZ;
         packet.min = this.box.getMinHash();
@@ -88,6 +93,11 @@ public class CompressLight implements ICompressTask {
             }
         }
         return false;
+    }
+
+    @Override
+    public int getCompression() {
+        return this.compressionLvl;
     }
 
 }

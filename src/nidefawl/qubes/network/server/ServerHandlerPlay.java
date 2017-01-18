@@ -463,4 +463,8 @@ public class ServerHandlerPlay extends ServerHandler {
             this.sendPacket(new PacketSList(reqId, type, list));
         }
     }
+
+    public int getCompression() {
+        return this.conn.getCompression();
+    }
 }

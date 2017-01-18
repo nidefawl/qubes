@@ -11,66 +11,28 @@ import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
 import nidefawl.qubes.util.GameContext;
 
-public class Connection {
+public abstract class Connection {
     public final static int REMOTE = 0;
     public final static int LOCAL  = 1;
 
-    public final Socket           socket;
-    public final DataInputStream  inStream;
-    public final DataOutputStream outStream;
-    private final ReaderThread    readThread;
-    private final WriterThread    writeThread;
     public volatile boolean       isConnected      = true;
     private boolean               cleanUp          = false;
     LinkedBlockingQueue<Packet>   incoming         = new LinkedBlockingQueue<Packet>();
     LinkedBlockingQueue<Packet>   outgoing         = new LinkedBlockingQueue<Packet>();
-    private InputStream           sIn;
     private Throwable             readWriteException;
     private int                   disconnectFrom   = -1;
     private String                disconnectReason = null;
 
-    public Connection(final Socket s) throws IOException {
-        this.socket = s;
-        this.sIn = s.getInputStream();
-        this.inStream = new DataInputStream(new BufferedInputStream(this.sIn));
-        this.outStream = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()));
-        this.readThread = new ReaderThread(this);
-        this.writeThread = new WriterThread(this);
-    }
-
-    public void startThreads() {
-        this.readThread.start();
-        this.writeThread.start();
-        //        this.handler.startThread();
+    public Connection() throws IOException {
     }
 
     public boolean isConnected() {
         return this.isConnected;
     }
 
-    public boolean readPackets() throws IOException, InvalidPacketException {
-        final Packet p = Packet.read(this.inStream);
-        if (p != null) {
-            this.incoming.add(p);
-            return true;
-        } else {
-            System.out.println("NOTHING!");
-        }
-        return false;
-    }
+    public abstract boolean readPackets() throws IOException, InvalidPacketException;
 
-    public boolean writePackets() throws InterruptedException, IOException {
-        Packet p = this.outgoing.take();
-        if (p != null) {
-            Packet.write(p, this.outStream);
-            while ((p = this.outgoing.poll()) != null) {
-                Packet.write(p, this.outStream);
-            }
-            this.outStream.flush();
-            return true;
-        }
-        return false;
-    }
+    public abstract boolean writePackets() throws InterruptedException, IOException;
 
     public void onError(final Exception e) {
         // TODO: check if we always catch the correct error 
@@ -114,25 +76,15 @@ public class Connection {
 
             this.cleanUp = true;
             this.interruptThreads();
-            try {
-                this.inStream.close();
-            } catch (final Exception e) {
-            }
-            try {
-                this.outStream.close();
-            } catch (final Exception e) {
-            }
-            try {
-                this.socket.close();
-            } catch (final Exception e) {
-            }
+            closeSocket();
 
         }
     }
 
+    protected void closeSocket() {
+    }
+
     public void interruptThreads() {
-        this.readThread.interruptThread();
-        this.writeThread.interruptThread();
     }
 
     public void disconnect(int from, String reason) {
@@ -147,9 +99,7 @@ public class Connection {
             try {
                 this.interruptThreads();
                 if (from != Connection.REMOTE) {
-                    Packet.write(new PacketDisconnect(0, reason), this.outStream);
-                    this.outStream.flush();
-                    this.socket.shutdownOutput();
+                    immediateDisconnect(reason);
                 }
             } catch (Exception e) {
                 if (!(e instanceof SocketException)) {
@@ -161,12 +111,11 @@ public class Connection {
         }
     }
 
-    public boolean finished() {
-        return this.cleanUp;
+    protected void immediateDisconnect(String reason) throws IOException {
     }
 
-    public InetSocketAddress getAddr() {
-        return (InetSocketAddress) this.socket.getRemoteSocketAddress();
+    public boolean finished() {
+        return this.cleanUp;
     }
 
     public Packet pollPacket() {
@@ -184,4 +133,15 @@ public class Connection {
     public String getDisconnectReason() {
         return disconnectReason;
     }
+
+    public InetSocketAddress getAddr() {
+        return null;
+    }
+
+    public abstract String getHostnameString();
+
+    public void startThreads() {
+    }
+
+    public abstract int getCompression();
 }

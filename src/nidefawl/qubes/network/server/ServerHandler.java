@@ -22,7 +22,7 @@ public abstract class ServerHandler extends Handler {
     public ServerHandler(GameServer server, NetworkServer netServer, Connection conn) {
         this.conn = conn;
         this.addr = this.conn.getAddr();
-        this.handlerName = this.addr.getHostString();
+        this.handlerName = this.conn.getHostnameString();
         this.time = System.currentTimeMillis();
         this.server = server;
         this.netServer = netServer;

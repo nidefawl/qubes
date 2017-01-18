@@ -28,19 +28,26 @@ public class CompressThread implements Runnable {
                 ICompressTask task = queue.take();
                 if (task != null && task.isValid()) {
                     int len = task.fill(tmpBuffer);
-                    if (!task.isValid()) {
-                        continue;
+                    int compression = task.getCompression();
+                    byte[] data = null;
+                    if (compression > 0) {
+                        if (!task.isValid()) {
+                            continue;
+                        }
+                        deflate.reset();
+                        deflate.setInput(tmpBuffer, 0, len);
+                        deflate.finish();
+                        int lenOut = deflate.deflate(tmpBuffer2);
+                        if (!task.isValid()) {
+                            continue;
+                        }
+                        data = new byte[lenOut];
+                        System.arraycopy(tmpBuffer2, 0, data, 0, lenOut);
+                    } else {
+                        data = new byte[len];
+                        System.arraycopy(tmpBuffer, 0, data, 0, len);
                     }
-                    deflate.reset();
-                    deflate.setInput(tmpBuffer, 0, len);
-                    deflate.finish();
-                    int lenOut = deflate.deflate(tmpBuffer2);
-                    if (!task.isValid()) {
-                        continue;
-                    }
-                    byte[] compressed = new byte[lenOut];
-                    System.arraycopy(tmpBuffer2, 0, compressed, 0, lenOut);
-                    task.finish(compressed);
+                    task.finish(data, compression);
 
                 }
             } catch (Exception e) {

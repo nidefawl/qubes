@@ -33,7 +33,8 @@ public class GameServer implements Runnable, IErrorHandler {
 	Thread handshakeThread;
 	NetworkServer networkServer;
 	private boolean running;
-	private boolean finished = false;
+    private boolean finished = false;
+    private boolean listening = false;
     private WorldServer[] worlds;
     private HashMap<UUID, WorldServer> worldsMap = new HashMap<>();
     static final long TICK_LEN_MS = 50;
@@ -61,6 +62,7 @@ public class GameServer implements Runnable, IErrorHandler {
 			CompressThread.startNewThread(this);
 			networkServer.startListener();
 			System.out.println("server is running");
+			this.listening = true;
 			while (this.running) {
 				loop();
 				if (reportedException != null) {
@@ -359,5 +361,9 @@ public class GameServer implements Runnable, IErrorHandler {
 
     public boolean isFinished() {
         return this.finished;
+    }
+
+    public boolean isListening() {
+        return this.listening;
     }
 }

@@ -8,6 +8,8 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.network.Connection;
+import nidefawl.qubes.network.MemoryConnection;
+import nidefawl.qubes.network.TCPConnection;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.server.GameServer;
 
@@ -40,11 +42,21 @@ public class NetworkServer {
 
     public void addConnection(final Socket s) throws IOException {
 
-        final Connection c = new Connection(s);
+        final Connection c = new TCPConnection(s);
         c.startThreads();
         final ServerHandlerLogin loginHandler = new ServerHandlerLogin(this.server, this, c);
         this.handlersLogin.add(loginHandler);
         System.out.println("New connection: " + loginHandler.getHandlerName());
+    }
+    public Connection newMemoryConnection() throws IOException {
+        MemoryConnection connOtherEnd = new MemoryConnection(true);
+        MemoryConnection connHere = new MemoryConnection(false);
+        connOtherEnd.setOtherEnd(connHere);
+        connHere.setOtherEnd(connOtherEnd);
+        final ServerHandlerLogin loginHandler = new ServerHandlerLogin(this.server, this, connHere);
+        this.handlersLogin.add(loginHandler);
+        System.out.println("New connection: " + loginHandler.getHandlerName());
+        return connOtherEnd;
     }
 
     public void halt() {

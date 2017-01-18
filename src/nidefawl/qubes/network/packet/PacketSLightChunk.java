@@ -11,6 +11,7 @@ public class PacketSLightChunk extends AbstractPacketWorldRef {
     public int coordX, coordZ;
     public byte[] data;
     public short min, max;
+    public byte flags;
     public PacketSLightChunk() {
     }
     public PacketSLightChunk(int id) {
@@ -20,6 +21,7 @@ public class PacketSLightChunk extends AbstractPacketWorldRef {
     @Override
     public void readPacket(DataInput stream) throws IOException {
         super.readPacket(stream);
+        this.flags = stream.readByte();
         this.coordX = stream.readInt();
         this.coordZ = stream.readInt();
         this.min = stream.readShort();
@@ -32,6 +34,7 @@ public class PacketSLightChunk extends AbstractPacketWorldRef {
     @Override
     public void writePacket(DataOutput stream) throws IOException {
         super.writePacket(stream);
+        stream.writeByte(this.flags);
         stream.writeInt(this.coordX);
         stream.writeInt(this.coordZ);
         stream.writeShort(this.min);

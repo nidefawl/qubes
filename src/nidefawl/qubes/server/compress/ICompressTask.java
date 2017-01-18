@@ -8,8 +8,9 @@ public interface ICompressTask {
 
     public int fill(byte[] tmpBuffer);
 
-    public void finish(byte[] compressed);
+    public void finish(byte[] compressed, int compression);
 
     public boolean isValid();
 
+    public int getCompression();
 }
