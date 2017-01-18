@@ -296,9 +296,9 @@ float getShadow2() {
     return 1;
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
-#define G_SCATTERING 0.6f
-#define VOL_STRENGTH 0.05f
-#define NB_STEPS 32
+#define G_SCATTERING 0.97f
+#define VOL_STRENGTH 0.15f
+#define NB_STEPS 10
 // #define PI 10
 const float pi = 3.1415927;
 float ComputeScattering(float lightDotView)
@@ -444,7 +444,8 @@ void main() {
     float fIsSky = isCloud;
     bool isSky = bool(fIsSky==1.0f);
     float fogDepth = length(prop.position);
-    vec3 fogColor = mix(vec3(0.5,0.6,0.8)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
+    // vec3 fogColor = mix(vec3(0.5,0.6,0.8)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
+    vec3 fogColor = mix(vec3(0.55,0.6,0.66)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     // float isFlower = float(blockid>=48u);
     // if (isBackface > 0) 
     //     discard;
@@ -502,7 +503,7 @@ void main() {
         float minAmb2 = 0.03;
          float diff = 1.5;
         // prop.roughness = 0.3;
-        float roughness = pow(2.0, 1.0+(prop.roughness)*10.0)-1.0;
+        float roughness = pow(2.0, 1.0+(prop.roughness)*24.0)-1.0;
         // out_Color = vec4(vec3(prop.roughness), 1);
         // return;
         // float glossy = 0.02;
@@ -532,7 +533,7 @@ void main() {
         // float specAmb2 = pow(max(dot(halfDir2, prop.normal), 0.0), roughness);
 
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-        float spec = pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness)*1.5;
+        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0);
 
 
 
@@ -591,20 +592,22 @@ void main() {
         if (len > 0.001) {
             float UNdotUP = 0.5+abs(dot(normalize(uVec),normalize(prop.normal.xyz)));
             float depth = len*UNdotUP;
-            float sky_absorbance = mix(mix(1.0,exp(-depth/4.5),isWater),1.0,isEyeInWater);
+            float sky_absorbance = mix(mix(1.0,exp(-depth/12.5),isWater),1.0,isEyeInWater);
             // if (sky_absorbance < 0||sky_absorbance>1)
             //     dbgcolor=vec4(1);
             // alpha = prop.albedo.a;//clamp(clamp(depth, 0.4, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.5, 1.0);
             // alpha = 0.5;
-            alpha = alpha*(0.95+0.05*(1-sky_absorbance));
-            // finalLight *= clamp(1-waterDepth, 0.1, 1.0);
+            alpha = mix(alpha, 0.99, sky_absorbance);//alpha*(0.99+0.01*(1-sky_absorbance));
+            finalLight *= clamp(sky_absorbance, 0.005, 0.08);
             // prop.albedo *=0.1;
-            finalLight *= 0.2+sky_absorbance*0.8;
-            fogColor = mix(fogColor, vec3(0.01, 0.016, 0.03)*12.0, isWater);
-            fogDepth = depth*60;
-vec3 watercolor = vec3(0.1,0.6,0.6);
-vec3 ambient_color = vec3(1)*lightColor;
-            prop.albedo=mix(watercolor*pow(length(ambient_color),0.2)*0.05,prop.albedo,exp(-depth/32));
+            // finalLight *= 0.01+sky_absorbance*1;
+            // fogColor = mix(fogColor, vec3(0.006, 0.236, 0.03)*4.0, isWater);
+            // fogDepth = depth*1*(sky_absorbance*100+0.3);
+            prop.albedo+=min(depth*0.01, 1.8)*mix(fogColor, vec3(0.006, 0.076, 0.03)*4.0, isWater);
+            // finalLight*=4;
+// vec3 watercolor = vec3(0.71,0.6,0.6);
+// vec3 ambient_color = vec3(1)*lightColor;
+            // prop.albedo=mix(watercolor*pow(length(ambient_color),0.1)*1,prop.albedo,exp(-depth/32));
         }
 #endif
 
@@ -621,11 +624,21 @@ vec3 ambient_color = vec3(1)*lightColor;
     }
 
 #if RENDER_PASS < 2
+    // fogDepth = min(fogDepth, in_scene.viewport.w/4.0);
+    // fogDepth = max(fogDepth-100.0, 0.0);
+    // float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
+    // float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
+    // prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
+
     fogDepth = min(fogDepth, in_scene.viewport.w/4.0);
-    fogDepth = max(fogDepth-100.0, 0.0);
+    fogDepth = max((fogDepth-16.0)*0.1f, 0.0);
+    float fogeye = clamp(1.0 - clamp(dot(-prop.viewVector, vec3(0,1,0)), 0.0, 1.0) / 0.8, 0, 1)*0.4;
+    fogeye += fogeye*clamp(1.0 - clamp((
+        dot(-prop.viewVector, vec3(0,-1,0))
+        *dot(-prop.viewVector, vec3(0,1,0)))*3.2, 0.0, 1.0) -0.8, 0, 1)*1.4;
     float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
-    float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
-    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
+    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.00005*(fIsSky*2.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
+    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0) );
 #endif
     // prop.albedo = vec3(fIsSky);
 

@@ -111,7 +111,7 @@ void main() {
 		vec3 bump = newnormal;
 			
 		
-		float bumpmult = 0.02;	
+		float bumpmult = 0.04;	
 		
 		bump = 	bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 		// mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
@@ -155,5 +155,5 @@ void main() {
     out_Color = tex;
     out_Normal = vec4(frag2.xyz, roughness);
     out_Material = blockinfo;
-    out_Light = vec4(lightLevelSky*0.05, lightLevelBlock*0.05, 1, 1);
+    out_Light = vec4(lightLevelSky, lightLevelBlock, 1, 1);
 }

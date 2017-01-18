@@ -1,6 +1,7 @@
 #version 150 core
 
 
+#pragma define "NORMAL_MAPPING"
 #pragma define "FAR_BLOCKFACE"
 #pragma define "MODEL_RENDER"
 #pragma include "ubo_scene.glsl"

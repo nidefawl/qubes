@@ -610,7 +610,7 @@ public class Block {
         return 0;
     }
     public float getRoughness(int texture) {
-        return 0.05f;
+        return 0.95f;
     }
     public Block getBaseBlock() {
         return this;
