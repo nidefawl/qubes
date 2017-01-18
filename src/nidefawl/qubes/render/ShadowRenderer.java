@@ -139,19 +139,20 @@ public class ShadowRenderer extends AbstractRenderer {
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
-        Engine.setBlend(true);
         Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
+        this.fbShadow.bind();
+        this.fbShadow.clearFrameBuffer();
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
         shadowShader.setProgramUniform1i("blockTextures", 0);
 
-        this.fbShadow.bind();
-        this.fbShadow.clearFrameBuffer();
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
 //        GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        Engine.setBlend(true);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
+        Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 0); //TODO: FRUSTUM CULLING
+        
+        shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
         glPolygonOffset(1.2f, 2.f);
@@ -159,12 +160,18 @@ public class ShadowRenderer extends AbstractRenderer {
         Engine.setViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
+        Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 1); //TODO: FRUSTUM CULLING
+
+        shadowShader.enable();
+//        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
-        glPolygonOffset(2.4f, 2.f);
+        glPolygonOffset(1.4f, 2.f);
 
         Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
+        Engine.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 2); //TODO: FRUSTUM CULLING
+//        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
 
 //        FrameBuffer.unbindFramebuffer();
 

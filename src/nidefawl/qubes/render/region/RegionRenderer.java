@@ -562,6 +562,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         if (bindless) {
             buffer.preDraw(vao);
         }
+        int nDraw = 0;
         for (int i = 0; i < size; i++) {
             MeshedRegion r = list.get(i);
             if (!r.hasPass(pass)) {
@@ -577,10 +578,19 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                 r.renderRegionIndirect(buffer, pass);
             } else {
                 r.renderRegion(fTime, pass);
+//                if (pass == PASS_SHADOW_SOLID) {
+//                    System.out.println(r.vertexCount[pass]);
+//                }
+                nDraw++;
             }
 //            if (vao == GLVAO.vaoBlocksShadow ){
 //                System.out.println("success "+i);
 //            }
+        }
+        
+        if (pass == PASS_SHADOW_SOLID) {
+//            System.out.println(r.vertexCount[pass]);
+//            System.out.println(nDraw);
         }
         if (bindless && buffer.getDrawCount() > 0) {
             buffer.render();

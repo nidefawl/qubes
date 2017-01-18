@@ -1593,9 +1593,10 @@ public class Game extends GameBase {
                 //            Engine.lightCompute.initShaders();
 //                Engine.worldRenderer.reloadModel();
 //                Engine.renderBatched.initShaders();
-                Engine.worldRenderer.initShaders();
-                Engine.skyRenderer.initShaders();
-                Engine.outRenderer.initShaders();
+                Engine.shadowRenderer.initShaders();
+//                Engine.worldRenderer.initShaders();
+//                Engine.skyRenderer.initShaders();
+//                Engine.outRenderer.initShaders();
 //                Engine.particleRenderer.initShaders();
                 return;
             }
