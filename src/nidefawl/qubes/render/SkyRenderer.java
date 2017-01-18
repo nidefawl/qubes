@@ -36,7 +36,7 @@ import nidefawl.qubes.world.WorldClient;
 
 public class SkyRenderer extends AbstractRenderer {
     final static int      MAX_SPRITES          = 1024 * 64;
-    final static int      SKYBOX_RES           = 512;
+    final static int      SKYBOX_RES           = 256; //crappy, but works
 
     public FrameBuffer    fbSkybox;
     Shader                spriteShader;
@@ -130,16 +130,16 @@ public class SkyRenderer extends AbstractRenderer {
             renderRot = lastRot+(rot-lastRot)*f;
             Vector3f.interp(lastCol, col, f, renderCol);
             this.renderPos.set(this.posOffset);
-            {
-                float f2 = (tick+f+xoffset)/15520.0f;
-                f2 = (f2*GameMath.PI)%GameMath.PI*2;
-                posOffset.x += 0.0001f*GameMath.sin(f2);
-            }
-            {
-                float f2 = (tick+f+yoffset)/21220.0f;
-                f2 = (f2*GameMath.PI)%GameMath.PI*2;
-                posOffset.y += 0.0001f*GameMath.sin(f2);
-            }
+//            {
+//                float f2 = (tick+f+xoffset)/15520.0f;
+//                f2 = (f2*GameMath.PI)%GameMath.PI*2;
+//                posOffset.x += 0.0001f*GameMath.sin(f2);
+//            }
+//            {
+//                float f2 = (tick+f+yoffset)/21220.0f;
+//                f2 = (f2*GameMath.PI)%GameMath.PI*2;
+//                posOffset.y += 0.0001f*GameMath.sin(f2);
+//            }
             
         }
 
@@ -292,8 +292,8 @@ public class SkyRenderer extends AbstractRenderer {
     public void redraw() {
         clouds.clear();
         Random r = new Random(4444);
-        float l = 0.2f;
-        float hl = 0.7f;
+        float l = 2.2f;
+        float hl = 0.6f;
         float hu = 1.6f;
         float motRange = 0.05f;
         float rotRange = 0.0005f;
@@ -302,28 +302,31 @@ public class SkyRenderer extends AbstractRenderer {
         float sizeScale = 0.5f;
         float minSize = 33*sizeScale;
         float maxSize = 100*sizeScale;
-        float l2 = minSize*0.6f;
-        float h2 = minSize*0.3f;
-        for (int i = 0; i < 4; i++) {
+        float l2 = 0.5f;
+        float h2 = 0.2f;
+        for (int i = 0; i < 12; i++) {
             Cloud cloud = new Cloud();
             cloud.texture = r.nextInt(this.texClouds.length);
             cloud.pos.x = r.nextFloat()*l*2.0f-l;
             cloud.pos.y = hl+(hu-hl)*r.nextFloat();
             cloud.pos.z = r.nextFloat()*l*2.0f-l;
+            float fSize2 = 0.5f*(cloud.pos.y-hl)/(hu-hl);
 //          cloud.mot.x = (r.nextFloat()*2.0f-1.0f)*motRange;
 //          cloud.mot.y = 0;
 //          cloud.mot.z = (r.nextFloat()*2.0f-1.0f)*motRange;
-            for (int j = 0; j < 7; j++) {
+            for (int j = 0; j < 12; j++) {
                 PointSprite sprite = new PointSprite();
                 sprite.xoffset = r.nextFloat();
                 sprite.yoffset = r.nextFloat();
                 sprite.posOffset.x = r.nextFloat()*l2*2.0f-l2;
                 sprite.posOffset.y = r.nextFloat()*h2*2.0f-h2;
                 sprite.posOffset.z = r.nextFloat()*l2*2.0f-l2;
-                sprite.setSize(minSize+r.nextFloat()*(maxSize-minSize));
+                float size = minSize+(r.nextFloat()+fSize2)*(maxSize-minSize);
+//              sprite.setSize(size*0.5f+fSize2*(minSize));
+              sprite.setSize(53);
                 float f1 = (minBr+r.nextFloat()*(maxBr-minBr));
-                float f2 = f1*0.7f+0.3f*(minBr+r.nextFloat()*(maxBr-minBr));
-                sprite.setCol(f1, f2, f2);
+                float f2 = f1*0.9f+0.1f*(minBr+r.nextFloat()*(maxBr-minBr));
+                sprite.setCol(f1, f1, f2);
                 sprite.rot = sprite.lastRot = r.nextFloat()*0.43f;
                 
                 sprite.rotspeed = (r.nextFloat()*2.0f-1.0f)*rotRange;
@@ -345,15 +348,39 @@ public class SkyRenderer extends AbstractRenderer {
     public void resize(int displayWidth, int displayHeight) {
     }
     public void renderSky(WorldClient world, float fTime) {
+        if (GPUProfiler.PROFILING_ENABLED) {
+            GPUProfiler.start("clouds");
+        }
         this.updateSprites(fTime);
         glDisable(GL11.GL_DEPTH_TEST);
         UniformBuffer.uboMatrix3D_Temp.bind();
         this.fbSkybox.bind();
-        Engine.setViewport(0, 0, SKYBOX_RES, SKYBOX_RES);
+//        GL11.glFinish();
+//        GL11.glFlush();
+        Engine.setViewport(0, 0, this.fbSkybox.getWidth(), this.fbSkybox.getHeight());
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        float weatherStr = (WEATHER);
+        weatherStr = GameMath.powf(weatherStr*0.9f, 1.6f);
+        cloudsShader.enable();
+        cloudsShader.setProgramUniform1f("rainStrength", WEATHER);
+        cloudsShader.setProgramUniform1i("worldTime", (int) world.getDayTime());
+        spriteShader.enable();
+        spriteShader.setProgramUniform1f("transparency", weatherStr);
+        spriteShader.setProgramUniform1f("spritebrightness", 0.1f);
+        glEnable(GL_BLEND);
+        if (this.texClouds.length == 1) { //TODO: optimize multi texture by using multiple buffers
+            storeSprites(fTime, 0);
+        }
         for (int c = 0; c < 6; c++) {
+            if (GPUProfiler.PROFILING_ENABLED) {
+                GPUProfiler.start("clouds_"+c);
+            }
             this.fbSkybox.bindCubeMapFace(c);
             cubeMatrix.setupScene(c, Engine.camera.getPosition());
             renderSkyBox(world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED) {
+                GPUProfiler.end();
+            }
         }
         Engine.setDefaultViewport();
         glDisable(GL_BLEND);
@@ -362,35 +389,21 @@ public class SkyRenderer extends AbstractRenderer {
         
         Engine.enableDepthMask(true);
         glEnable(GL11.GL_DEPTH_TEST);
-    }
-
-    private void renderSkyBox(WorldClient world, float f) {
-        glDisable(GL_BLEND);
-        cloudsShader.enable();
-//        WEATHER = 0.21f;
-        cloudsShader.setProgramUniform1f("rainStrength", WEATHER);
-        cloudsShader.setProgramUniform1i("worldTime", (int) world.getDayTime());
-        if (GPUProfiler.PROFILING_ENABLED) {
-            GPUProfiler.start("clouds");
-        }
-        Engine.drawFullscreenQuad();
         if (GPUProfiler.PROFILING_ENABLED) {
             GPUProfiler.end();
         }
+    }
 
-
-        glEnable(GL_BLEND);
-//        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    private void renderSkyBox(WorldClient world, float f) {
+//        glDisable(GL_BLEND);
+        cloudsShader.enable();
+        Engine.drawFullscreenQuad();
+//        glEnable(GL_BLEND);
         spriteShader.enable();
-        float weatherStr = (WEATHER);
-        weatherStr = GameMath.powf(weatherStr*0.9f, 1.6f);
-        spriteShader.setProgramUniform1f("transparency", weatherStr);
-        spriteShader.setProgramUniform1f("spritebrightness", 0.27f);
-//      int nSprites = (int) GameMath.clamp(Math.round(this.totalSprites*(WEATHER*0.7f+0.3f)), 0, this.totalSprites);
         GL30.glBindVertexArray(vaoPos);
         for (int i = 0; i < this.texClouds.length; i++) {
-            storeSprites(f, i);
+            if (texClouds.length != 1) // uploaded outside
+                storeSprites(f, i);
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdx.getVboId());
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texClouds[i]);
             GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, 6, GL11.GL_UNSIGNED_INT, 0, this.storedSprites);
