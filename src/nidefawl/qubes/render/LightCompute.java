@@ -170,7 +170,7 @@ public class LightCompute extends AbstractRenderer {
             float screenX = 0;
             float screenZ = 0;
             float border = 1;
-            GL11.glEnable(GL11.GL_BLEND);
+            Engine.setBlend(true);
             for (int x = 0; x < this.lightTiles[0]; x++) {
                 for (int y = 0; y < this.lightTiles[1]; y++) {
                     int idx = y * this.lightTiles[0] + x;
@@ -228,7 +228,7 @@ public class LightCompute extends AbstractRenderer {
                     font.drawString("" + n, screenX + chunkWPx * x + chunkWPx / 3, screenY + font.getLineHeight() / 2.0f + chunkWPx / 2.0f, -1, true, 0.7f);
                 }
             }
-            GL11.glDisable(GL11.GL_BLEND);
+            Engine.setBlend(false);
             Shader.disable();
         } catch (Exception e) {
             e.printStackTrace();

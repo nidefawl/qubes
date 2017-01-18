@@ -84,12 +84,19 @@ public class Color {
         hsbvals[2] = brightness;
         return hsbvals;
     }
-    
+
     public static void setColorVec(int uint32RGB, Vector3f vec) {
         vec.z = (uint32RGB&0xFF)/255.0f;
         uint32RGB>>=8;
         vec.y = (uint32RGB&0xFF)/255.0f;
         uint32RGB>>=8;
         vec.x = (uint32RGB&0xFF)/255.0f;
+    }
+    
+    public static int toRGBAInt32(Vector3f vec) {
+        int r = (int) (vec.x < 0 ? 0 : vec.x > 1 ? 255 : vec.x*255f);
+        int g = (int) (vec.y < 0 ? 0 : vec.y > 1 ? 255 : vec.y*255f);
+        int b = (int) (vec.z < 0 ? 0 : vec.z > 1 ? 255 : vec.z*255f);
+        return r<<16|g<<8|b;
     }
 }

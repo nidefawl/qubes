@@ -117,4 +117,7 @@ public class GLVBO {
         this.size = GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
         this.canUseBindless = true;
     }
+    public int getBufferSize(int type) {
+        return GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
+    }
 }

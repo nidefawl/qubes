@@ -160,7 +160,7 @@ public class SMAA {
             if (!b) {
                 System.err.println("NEED DEPTH TESTING!");
             }
-//             b = glGetBoolean(GL_BLEND);
+//            b = glGetBoolean(GL_BLEND);
 //            if (!b) {
 //                System.err.println("NEED GL_BLEND for discard!");
 //            }

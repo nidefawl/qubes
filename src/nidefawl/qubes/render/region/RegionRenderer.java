@@ -436,7 +436,6 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
 ////            if (dist == 0) {
 ////                cur = worldRenderer.terrainShaderFar;
 ////                cur.enable();
-////                GL11.glDisable(GL11.GL_BLEND);
 ////            }
 //        }
 //    }
@@ -446,7 +445,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         this.occlCulled=0;
         this.numV = 0;
         int totalv=0;
-        int LOD_DISTANCE = 42; //TODO: move solid/slab blocks out of LOD PASS
+        int LOD_DISTANCE = 16; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
         
         boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
@@ -536,7 +535,6 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
 //            if (dist == 0) {
 //                cur = worldRenderer.terrainShaderFar;
 //                cur.enable();
-//                GL11.glDisable(GL11.GL_BLEND);
 //            }
         }
         if (bindless && buffer.getDrawCount() > 0) {

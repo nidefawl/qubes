@@ -5,6 +5,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
@@ -451,6 +452,7 @@ public class TextInput {
         Tess tessellator = Tess.instance;
         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
         tessellator.setColor(-1, 255);
+        Engine.setBlend(true);
         if (hasSelection() && this.focused) {
             float width = trueType.getWidthAtLine(editText.substring(selEnd > selStart ? selStart : selEnd, selEnd > selStart ? selEnd : selStart));
             float widthPre = trueType.getWidthAtLine(editText.substring(0, selEnd > selStart ? selStart : selEnd));
@@ -462,7 +464,6 @@ public class TextInput {
             if (selRight > getRight()+shiftPX+30) {
                 selRight = getRight()+shiftPX+30;
             }
-            GL11.glEnable(3042 /*GL_BLEND*/);
 //            GL11.glBlendFunc(770, 771);
             Shaders.colored.enable();
             tessellator.setColorRGBAF(1.2F, 0.2F, 1.0F, 0.4F);
@@ -474,10 +475,8 @@ public class TextInput {
             tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
             tessellator.setColor(-1, 255);
             Shaders.textured.enable();
-            GL11.glDisable(3042 /*GL_BLEND*/);
         }
 
-        GL11.glEnable(GL11.GL_BLEND);
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.getTexture());
 //        tessellator.startDrawingQuads();
 //        tessellator.setColorRGBA_F(1, 1, 1, 1);

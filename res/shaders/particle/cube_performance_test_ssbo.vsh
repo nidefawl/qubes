@@ -40,6 +40,28 @@ out vec4 position;
 	    mat4 modelMatrix[MAX_PARTICLES];
 	    uint blockinfo[MAX_PARTICLES];
 	} particlecube_buffer_data_arrays;
+  #elif defined USE_PERSIST_BUFFER
+#define WRAPDATA
+
+	struct ParticleData {
+	    uint blockinfo;
+	    float scale;
+	    float tx;
+	    float ty;
+	};
+	layout (std430) buffer ParticleCube_blockinfo_persist
+	{
+#ifdef WRAPDATA
+	    ParticleData data[];
+#else
+	    uint blockinfo[];
+#endif
+	} particlecube_buffer_blockinfo_per;
+
+	layout (std430) buffer ParticleCube_mat_model_persist
+	{
+	    mat4 modelMatrix[];
+	} particlecube_buffer_mat_per;
   #else // SEPERATE BUFFERS
 #define WRAPDATA
 
@@ -84,6 +106,19 @@ void main(void) {
 	mat4 modelMatrix = particlecube_buffer_data_arrays.modelMatrix[gl_InstanceID];
 	#ifdef PARTICLE_TYPE_BLOCK
 		blockinfo32 = particlecube_buffer_data_arrays.blockinfo[gl_InstanceID];
+	#endif
+#elif defined USE_PERSIST_BUFFER
+	mat4 modelMatrix = particlecube_buffer_mat_per.modelMatrix[gl_InstanceID];
+	#ifdef PARTICLE_TYPE_BLOCK
+		#ifdef WRAPDATA
+			blockinfo32 = particlecube_buffer_blockinfo_per.data[gl_InstanceID].blockinfo;
+			scale = particlecube_buffer_blockinfo_per.data[gl_InstanceID].scale;
+			texcoord.x += particlecube_buffer_blockinfo_per.data[gl_InstanceID].tx;
+			texcoord.y += particlecube_buffer_blockinfo_per.data[gl_InstanceID].ty;
+			texcoord*=scale;
+		#else
+		blockinfo32 = particlecube_buffer_blockinfo_per.blockinfo[gl_InstanceID];
+		#endif
 	#endif
 #else
 	mat4 modelMatrix = particlecube_buffer_mat.modelMatrix[gl_InstanceID];

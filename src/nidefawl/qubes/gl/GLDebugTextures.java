@@ -98,7 +98,7 @@ public class GLDebugTextures {
         glDepthFunc(519);
         Engine.enableDepthMask(false);
         glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
+        GL30.glEnablei(GL_BLEND, 0);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         Iterator<String> itMaps = textures.keySet().iterator();
         float w = 100;

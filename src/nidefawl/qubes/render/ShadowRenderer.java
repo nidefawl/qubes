@@ -139,7 +139,7 @@ public class ShadowRenderer extends AbstractRenderer {
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
-        glEnable(GL_BLEND);
+        Engine.setBlend(true);
         Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
@@ -150,7 +150,7 @@ public class ShadowRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
 //        GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_BLEND);
+        Engine.setBlend(true);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 

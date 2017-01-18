@@ -338,13 +338,13 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
             }
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-//            if (GL_ERROR_CHECKS) {
-////                if (KHRDebug. != null) {
+            if (GL_ERROR_CHECKS) {
+//                if (KHRDebug. != null) {
 //                    GLDebugLog.setup();
 //                    _checkGLError("GLDebugLog.setup()");
 ////                }
 //                _checkGLError("Pre startup");
-//            }
+            }
 
         } catch (Throwable t) {
             throw new RuntimeException(t);
@@ -723,7 +723,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             Engine.checkGLError("glActiveTexture");
         glDisable(GL_DITHER);
         if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glEnable(GL_BLEND)");
+            Engine.checkGLError("glEnable(GL_DITHER)");
         glEnable(GL_BLEND);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glEnable(GL_BLEND)");

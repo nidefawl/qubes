@@ -7,6 +7,7 @@ import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL40;
 
 import nidefawl.qubes.async.AsyncTask;
@@ -514,7 +515,7 @@ public class Game extends GameBase {
             setVRProjection();
         }
         glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
+        Engine.setBlend(false);
         glClearColor(0.71F, 0.82F, 1.00F, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
@@ -586,7 +587,7 @@ public class Game extends GameBase {
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("setGUIProjection");
             VR.drawFullscreenCompanion(windowWidth, windowHeight);
             {
-//                glEnable(GL_BLEND);
+//                Engine.setBlend(true);
 //                GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, this.fbGUIFixed.getTexture(0));
 //
 //                Shaders.textured.enable();
@@ -603,12 +604,12 @@ public class Game extends GameBase {
 //                Tess.instance.drawQuads();
 ////                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-//                glDisable(GL_BLEND);
+//                Engine.setBlend(false);
             }
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("drawFullscreenCompanion");
         }
         
-        glEnable(GL_BLEND);
+        Engine.setBlend(true);
         
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -623,7 +624,7 @@ public class Game extends GameBase {
             renderCrossHair(fTime);
         }
 
-        glEnable(GL_BLEND);
+        Engine.setBlend(true);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         double mx = Mouse.getX();
         double my = Mouse.getY();
@@ -794,18 +795,18 @@ public class Game extends GameBase {
 
             
 
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("HBAO");
-            if (HBAOPlus.hasContext) {
-
-                HBAOPlus.renderAO();
-                Shader.disable();
-            }
-
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("GLNativeLib.renderAO");
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
+//            if (GPUProfiler.PROFILING_ENABLED)
+//                GPUProfiler.start("HBAO");
+//            if (HBAOPlus.hasContext) {
+//
+//                HBAOPlus.renderAO();
+//                Shader.disable();
+//            }
+//
+//            if (Game.GL_ERROR_CHECKS)
+//                Engine.checkGLError("GLNativeLib.renderAO");
+//            if (GPUProfiler.PROFILING_ENABLED)
+//                GPUProfiler.end();
 
             
 
@@ -829,20 +830,20 @@ public class Game extends GameBase {
             Engine.lightCompute.render(this.world, fTime, 0);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-//            
-//
-//            if (GPUProfiler.PROFILING_ENABLED)
-//                GPUProfiler.start("HBAO");
-//            if (HBAOPlus.hasContext) {
-//
-//                HBAOPlus.renderAO();
-//                Shader.disable();
-//            }
-//
-//            if (Game.GL_ERROR_CHECKS)
-//                Engine.checkGLError("GLNativeLib.renderAO");
-//            if (GPUProfiler.PROFILING_ENABLED)
-//                GPUProfiler.end();
+            
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("HBAO");
+            if (HBAOPlus.hasContext) {
+
+                HBAOPlus.renderAO();
+                Shader.disable();
+            }
+
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("GLNativeLib.renderAO");
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
 
 
             if (GPUProfiler.PROFILING_ENABLED)
@@ -868,7 +869,7 @@ public class Game extends GameBase {
                 Engine.checkGLError("copyPreWaterDepth");
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
-                glEnable(GL_BLEND);
+                Engine.setBlend(true);
 //                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 Engine.getSceneFB().bind();
                 Engine.getSceneFB().clearColorBlack();
@@ -917,7 +918,7 @@ public class Game extends GameBase {
             if (firstPerson) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("firstPerson");
-                glEnable(GL_BLEND);
+                Engine.setBlend(true);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 Engine.getSceneFB().bind();
                 Engine.getSceneFB().clearDepth();
@@ -966,7 +967,7 @@ public class Game extends GameBase {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
             }
-            glDisable(GL_BLEND);
+            Engine.setBlend(false);
             glDisable(GL_DEPTH_TEST);
             Engine.enableDepthMask(false);
             Engine.outRenderer.renderBlur(this.world, fTime);
@@ -988,7 +989,7 @@ public class Game extends GameBase {
             boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
             if (pass) {
                 glDisable(GL_CULL_FACE);
-                glEnable(GL_BLEND);
+                Engine.setBlend(true);
 //                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 if (firstPerson && !VR_SUPPORT) {
                     glDepthRange(0, 0.04);
@@ -1049,7 +1050,7 @@ public class Game extends GameBase {
                     GPUProfiler.end();
                 
                 glEnable(GL_CULL_FACE);
-                glDisable(GL_BLEND);
+                Engine.setBlend(false);
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Final");
@@ -1089,7 +1090,7 @@ public class Game extends GameBase {
             if (!glGetBoolean(GL_DEPTH_WRITEMASK)) {
                 System.err.println("Expected GL_DEPTH_WRITEMASK == true post render");
             }
-            if (glGetBoolean(GL_BLEND)) {
+            if (GL30.glIsEnabledi(GL_BLEND, 0)) {
                 System.err.println("Expected GL_BLEND == false post render");
             }
         }

@@ -336,9 +336,8 @@ public class WorldRenderer extends AbstractRenderer {
         
         
         //TODO check what effect blendign has on alpha testing (writing to z-buffer)
-//        glEnable(GL_BLEND);
+//        Engine.setBlend(true);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//        System.out.println(glGetBoolean(GL_BLEND));
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("pre renderMain");
 //        boolean zPre = false; //sucks, not faster
@@ -365,7 +364,7 @@ public class WorldRenderer extends AbstractRenderer {
             Engine.checkGLError("renderFirstPass");
 //
 //        
-//        glDisable(GL_BLEND);
+//        Engine.setBlend(false);
 //        shaderModelVoxel.enable();
 //        renderVoxModels(shaderModelVoxel, PASS_SOLID, fTime);
 //        Shader.disable();
@@ -521,7 +520,7 @@ public class WorldRenderer extends AbstractRenderer {
 //            Engine.checkGLError("_renderBatch post");
 //    }
     public void renderTransparent(World world, float fTime) {
-//      glEnable(GL_BLEND);
+//      Engine.setBlend(true);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         waterShader.enable();
@@ -720,8 +719,8 @@ public class WorldRenderer extends AbstractRenderer {
     public void renderDebugBB(World world, float fTime) {
         if (!this.debugBBs.isEmpty()) {
             glPushAttrib(-1);
-//            glEnable(GL_BLEND);
-            glDisable(GL_BLEND);
+//            Engine.setBlend(true);
+//            Engine.setBlend(false);
 //            glDepthFunc(GL_LEQUAL);
 //          glDisable(GL_DEPTH_TEST);
             Shaders.colored3D.enable();
@@ -768,7 +767,7 @@ public class WorldRenderer extends AbstractRenderer {
         }
         if (!this.debugPaths.isEmpty()) {
             glPushAttrib(-1);
-            glDisable(GL_BLEND);
+            Engine.setBlend(false);
 //            glDepthFunc(GL_LEQUAL);
 //          glDisable(GL_DEPTH_TEST);
             Shaders.colored3D.enable();

@@ -104,6 +104,7 @@ public class Engine {
     private static boolean isDepthMask = true;
 
     public static boolean isScissors = false;
+    public static boolean isBlend = false;
 
     public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
@@ -186,6 +187,9 @@ public class Engine {
     }
 
     public static void bindBuffer(GLVBO vbo) {
+        bindBuffer(vbo, 0, active.vertStride);
+    }
+    public static void bindBuffer(GLVBO vbo, int bindingPoint, int stride) {
         if (isVAOSupportingBindless && !vbo.canUseBindless)
         {
             throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
@@ -201,7 +205,7 @@ public class Engine {
 //            System.out.println("going bindless attrib array "+vbo.addr+"/"+vbo.size);
         } else {
             disableBindless();
-            GL43.glBindVertexBuffer(0, vbo.getVboId(), 0, active.vertStride);
+            GL43.glBindVertexBuffer(bindingPoint, vbo.getVboId(), 0, stride);
         }
     }
     
@@ -259,6 +263,13 @@ public class Engine {
         glActiveTexture(GL_TEXTURE0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glActiveTexture(GL_TEXTURE0)");
+        for (int i = 1; i < 4; i++) {
+            GL30.glDisablei(GL_BLEND, i);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("GL30.glDisablei(GL_BLEND, "+i+")");
+        }
+        isBlend = true;
+        GL30.glEnablei(GL_BLEND, 0);
         baseInit();
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("baseInit");
@@ -762,6 +773,17 @@ public class Engine {
     //May need stack sometime
     public static void setOverrideDepthMask(boolean b) {
         GL11.glDepthMask(b);
+    }
+    public static void setBlend(boolean b) {
+        if (isBlend == b) {
+            return;
+        }
+        if (b) {
+            GL30.glEnablei(GL_BLEND, 0);
+        } else {
+            GL30.glDisablei(GL_BLEND, 0);
+        }
+        isBlend = b;
     }
 
     public static void setViewport(int x, int y, int w, int h) {

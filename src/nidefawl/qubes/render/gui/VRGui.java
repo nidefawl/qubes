@@ -55,7 +55,7 @@ public class VRGui {
         GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, texture);
         
         glDisable(GL11.GL_CULL_FACE);
-        glEnable(GL11.GL_BLEND);
+        Engine.setBlend(true);
         
         float scale = 0.015f;
         float rW = 1920 * scale;
@@ -92,7 +92,7 @@ public class VRGui {
         }
         Shader.disable();
         GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDisable(GL11.GL_BLEND);
+        Engine.setBlend(false);
         glEnable(GL11.GL_CULL_FACE);
     }
 }

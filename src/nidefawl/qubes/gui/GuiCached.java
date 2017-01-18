@@ -46,12 +46,12 @@ public class GuiCached extends Gui {
             fbDbg.bind();
             fbDbg.clearFrameBuffer();
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
+            Engine.setBlend(true);
             this.gui.render(fTime, 0, 0);
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             FrameBuffer.unbindFramebuffer();
         }
-        glEnable(GL_BLEND);
+        Engine.setBlend(true);
         Shaders.textured.enable();
         Engine.pxStack.push(0, 0, -20);
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));

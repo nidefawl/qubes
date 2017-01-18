@@ -367,7 +367,7 @@ public class SkyRenderer extends AbstractRenderer {
         spriteShader.enable();
         spriteShader.setProgramUniform1f("transparency", weatherStr);
         spriteShader.setProgramUniform1f("spritebrightness", 0.1f);
-        glEnable(GL_BLEND);
+        Engine.setBlend(true);
         if (this.texClouds.length == 1) { //TODO: optimize multi texture by using multiple buffers
             storeSprites(fTime, 0);
         }
@@ -383,7 +383,7 @@ public class SkyRenderer extends AbstractRenderer {
             }
         }
         Engine.setDefaultViewport();
-        glDisable(GL_BLEND);
+        Engine.setBlend(false);
         
         UniformBuffer.uboMatrix3D.bind();
         
@@ -395,10 +395,10 @@ public class SkyRenderer extends AbstractRenderer {
     }
 
     private void renderSkyBox(WorldClient world, float f) {
-//        glDisable(GL_BLEND);
+//        Engine.setBlend(false);
         cloudsShader.enable();
         Engine.drawFullscreenQuad();
-//        glEnable(GL_BLEND);
+//        Engine.setBlend(true);
         spriteShader.enable();
         GL30.glBindVertexArray(vaoPos);
         for (int i = 0; i < this.texClouds.length; i++) {
