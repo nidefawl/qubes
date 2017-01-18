@@ -97,7 +97,16 @@ public class WorldRenderer extends AbstractRenderer {
             pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_waterShader = assetMgr.loadShader(this, "terrain/water");
-            Shader terrain = assetMgr.loadShader(this, "terrain/terrain");
+            Shader terrain = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("NORMAL_MAPPING".equals(define)) {
+                        return "#define NORMAL_MAPPING";
+                    }
+                    return null;
+                }
+                
+            });
             Shader terrainFar = assetMgr.loadShader(this, "terrain/terrain", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
