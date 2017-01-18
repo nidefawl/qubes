@@ -118,7 +118,6 @@ public class GraphicShader extends Shader {
             glBindAttribLocation(this.shader, 0, "in_position");
             glBindAttribLocation(this.shader, 1, "in_normal");
             glBindAttribLocation(this.shader, 2, "in_texcoord");
-            glBindAttribLocation(this.shader, 3, "in_color");
         } else if ("model".equals(attr)) {
             glBindAttribLocation(this.shader, 0, "in_position");
             glBindAttribLocation(this.shader, 1, "in_normal");

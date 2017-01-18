@@ -13,6 +13,7 @@ import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
+import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.config.ClientSettings;
@@ -35,6 +36,7 @@ import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.client.NetworkClient;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
+import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.gui.VRGui;
@@ -116,17 +118,20 @@ public class Game extends GameBase {
     }
 
     public void connectTo(String host) {
+        String[] split = host.split(":");
+        int port = 21087;
+        if (split.length > 1) {
+            port = StringUtil.parseInt(split[1], port);
+        }
+        connectTo(split[0], port, true);
+    }
+    public void connectTo(String host, int port, boolean isLocalAttempt) {
         try {
-            String[] split = host.split(":");
-            int port = 21087;
-            if (split.length > 1) {
-                port = StringUtil.parseInt(split[1], port);
-            }
-            host = split[0];
-            connect = new ThreadConnect(host, port);
+            connect = new ThreadConnect(host, port, isLocalAttempt);
             connect.startThread();
             showGUI(new GuiConnecting(connect));
         } catch (Exception e) {
+            showGUI(new GuiDisconnected("Failed connecting to "+host+"\n"+e.getMessage()));
             e.printStackTrace();
         }
     }
@@ -622,18 +627,18 @@ public class Game extends GameBase {
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         double mx = Mouse.getX();
         double my = Mouse.getY();
+        if (this.statsCached != null) {
+            this.statsCached.setSize(displayWidth, displayHeight);
+            this.statsCached.render(fTime, 0, 0);
+        }
         if (!VR_SUPPORT) {
             renderGui(fTime, mx, my);
         }
+
         if (this.gui == null && this.world != null) {
 
             if (showGrid) {
                 renderChunkGrid(fTime);
-            }
-
-            if (this.statsCached != null) {
-                this.statsCached.setSize(displayWidth, displayHeight);
-                this.statsCached.render(fTime, 0, 0);
             }
             
             if (!VR_SUPPORT) {
@@ -789,6 +794,19 @@ public class Game extends GameBase {
 
             
 
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("HBAO");
+            if (HBAOPlus.hasContext) {
+
+                HBAOPlus.renderAO();
+                Shader.disable();
+            }
+
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("GLNativeLib.renderAO");
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
             
 
             if (GPUProfiler.PROFILING_ENABLED)
@@ -811,20 +829,20 @@ public class Game extends GameBase {
             Engine.lightCompute.render(this.world, fTime, 0);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-            
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("HBAO");
-            if (HBAOPlus.hasContext) {
-
-                HBAOPlus.renderAO();
-                Shader.disable();
-            }
-
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("GLNativeLib.renderAO");
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
+//            
+//
+//            if (GPUProfiler.PROFILING_ENABLED)
+//                GPUProfiler.start("HBAO");
+//            if (HBAOPlus.hasContext) {
+//
+//                HBAOPlus.renderAO();
+//                Shader.disable();
+//            }
+//
+//            if (Game.GL_ERROR_CHECKS)
+//                Engine.checkGLError("GLNativeLib.renderAO");
+//            if (GPUProfiler.PROFILING_ENABLED)
+//                GPUProfiler.end();
 
 
             if (GPUProfiler.PROFILING_ENABLED)
@@ -1100,11 +1118,11 @@ public class Game extends GameBase {
 //          Engine.skyRenderer.initShaders();
 //          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
-            //Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
-            Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            ItemModelManager.getInstance().reload();
 //            
@@ -1561,5 +1579,26 @@ public class Game extends GameBase {
                     break;
             }
         }
+    }
+
+    public void processChatInput(String text) {
+        if (text.startsWith("/")) {
+            if (text.equals("/redrawsky")) {
+                Engine.skyRenderer.redraw();
+                return;
+            }
+            if (text.equals("/reloadshaders")) {
+                Shaders.initShaders();
+                //            Engine.lightCompute.initShaders();
+//                Engine.worldRenderer.reloadModel();
+//                Engine.renderBatched.initShaders();
+                Engine.worldRenderer.initShaders();
+                Engine.skyRenderer.initShaders();
+                Engine.outRenderer.initShaders();
+//                Engine.particleRenderer.initShaders();
+                return;
+            }
+        }
+        sendPacket(new PacketChatMessage(GlobalChannel.TAG, text));
     }
 }

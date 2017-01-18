@@ -522,8 +522,8 @@ public class Engine {
 
     
     private static boolean updateGlobalRenderOffset(float x, float y, float z) {
-        final int OFFSET_BITS = 5;
-        final int OFFSET_REPOS_DIST = 512;
+        final int OFFSET_BITS = 7;
+        final int OFFSET_REPOS_DIST = 1024;
         int ix = GameMath.floor(x);
         int iz = GameMath.floor(z);
 //        int dbgX = -(3<<OFFSET_BITS);
@@ -771,6 +771,8 @@ public class Engine {
             viewport[2] = w;
             viewport[3] = h;
             GL11.glViewport(x, y, w, h);
+//            System.out.println(Stats.fpsCounter + ", "+w+","+h);
+//            Thread.dumpStack();
         }
     }
 

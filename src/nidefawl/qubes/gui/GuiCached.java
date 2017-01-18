@@ -53,8 +53,10 @@ public class GuiCached extends Gui {
         }
         glEnable(GL_BLEND);
         Shaders.textured.enable();
+        Engine.pxStack.push(0, 0, -20);
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));
         Engine.drawFullscreenQuad();
+        Engine.pxStack.pop();
         Shader.disable();
     }
     public void refresh() {

@@ -311,7 +311,7 @@ public class UniformBuffer {
 
         float ambIntens = 0.1f;
         float diffIntens = 0.1f;
-        float specIntens = 0.1F;
+        float specIntens = 0.7F;
 //        float ambIntens = 0.12f;
 //        float diffIntens = 0.17F;
 //        float specIntens = 0.16F;

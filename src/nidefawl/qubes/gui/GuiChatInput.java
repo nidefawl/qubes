@@ -129,10 +129,12 @@ public class GuiChatInput extends Gui implements ITextEdit {
         String text = textInput.editText;
         if (text.length() > 0) {
             textInput.saveHistory();
-            Game.instance.sendPacket(new PacketChatMessage(GlobalChannel.TAG, text));
         }
         textInput.resetInput();
         Game.instance.showGUI(null);
+        if (text.length() > 0) {
+            Game.instance.processChatInput(text);
+        }
     }
 
     @Override
