@@ -101,7 +101,9 @@ public class WorldRenderer extends AbstractRenderer {
                 @Override
                 public String getDefinition(String define) {
                     if ("NORMAL_MAPPING".equals(define)) {
+                        if (isNormalMappingActive()) {
                         return "#define NORMAL_MAPPING";
+                        }
                     }
                     return null;
                 }
@@ -882,4 +884,7 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
 
+    public boolean isNormalMappingActive() {
+        return Game.instance.settings.normalMapping > 0 && !Game.VR_SUPPORT;
+    }
 }

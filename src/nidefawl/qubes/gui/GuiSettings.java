@@ -52,6 +52,7 @@ public class GuiSettings extends Gui {
     private Setting smaaSetting;
     private Setting smaaQSetting;
     private Setting aoSetting;
+    private Setting normalMappingSetting;
     private Setting anisotropySetting;
 
     public GuiSettings(Gui parent) {
@@ -104,6 +105,12 @@ public class GuiSettings extends Gui {
                 Engine.outRenderer.initAO();
                 UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
                 ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
+            }
+        }));
+        list.add((this.normalMappingSetting = new Setting(this, "Normal Mapping", strAOSettings[Game.instance.settings.normalMapping & 1], strAOSettings) {
+            void callback(int id) {
+                Game.instance.settings.normalMapping = id;
+                Engine.worldRenderer.initShaders();
             }
         }));
         final String[] smaa = new String[] { "Disabled", "1x SMAA" };
@@ -166,7 +173,7 @@ public class GuiSettings extends Gui {
         }
         this.height = back.posY+back.height+10;
         this.posX = (Game.guiWidth-this.width)/2;
-        this.posY = Game.guiHeight / 4;
+        this.posY = (Game.guiHeight-this.height) / 2;
     }
 
     protected String getTitle() {
