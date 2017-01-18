@@ -319,6 +319,13 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             glfwSetScrollCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
             glfwSetCursorPosCallback(windowId, cbCursorPos);
+//            glfwSetFramebufferSizeCallback(windowId, new GLFWFramebufferSizeCallback() {
+//                
+//                @Override
+//                public void invoke(long window, int width, int height) {
+//                    System.out.println("FRAMEBUFFER NOW "+width+"/"+height);
+//                }
+//            });
 
             int major, minor, rev;
             major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
@@ -331,13 +338,13 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
             }
             // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-            if (GL_ERROR_CHECKS) {
-//                if (KHRDebug.getInstance() != null) {
+//            if (GL_ERROR_CHECKS) {
+////                if (KHRDebug. != null) {
 //                    GLDebugLog.setup();
 //                    _checkGLError("GLDebugLog.setup()");
-//                }
-                _checkGLError("Pre startup");
-            }
+////                }
+//                _checkGLError("Pre startup");
+//            }
 
         } catch (Throwable t) {
             throw new RuntimeException(t);
@@ -714,6 +721,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         glActiveTexture(GL_TEXTURE0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glActiveTexture");
+        glDisable(GL_DITHER);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glEnable(GL_BLEND)");
         glEnable(GL_BLEND);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glEnable(GL_BLEND)");
