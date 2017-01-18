@@ -135,6 +135,6 @@ public class GL {
         }
     }
     public static boolean isBindlessSuppported() {
-        return GL.getCaps().GL_NV_shader_buffer_load;
+        return false;//GL.getCaps().GL_NV_shader_buffer_load;
     }
 }
