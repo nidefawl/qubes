@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL30.GL_RGBA16UI;
+import static org.lwjgl.opengl.GL30.GL_RGB16UI;
 import static org.lwjgl.opengl.GL30.glFramebufferTexture2D;
 
 import java.nio.ByteBuffer;
@@ -217,6 +218,8 @@ public class FrameBuffer implements IManagedResource {
             }
         } else if (format == GL_RGBA16UI) {
             glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGRA_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
+        } else if (format == GL_RGB16UI) {
+            glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGR_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
         } else {
             glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, colorTexExtFmt, colorTexExtType, (ByteBuffer) null);
         }
