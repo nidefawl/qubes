@@ -128,7 +128,7 @@ public abstract class Entity {
                 bodyOffset = maxHeadAngle;
             this.yawBodyOffset = yaw - bodyOffset;
             if (bodyOffset * bodyOffset > 0.6F) {
-                this.yawBodyOffset += bodyOffset * 0.07F;
+                this.yawBodyOffset += bodyOffset * (0.07F+walkFactor*1.7f);
             }
             if (bodyOffset * bodyOffset > 5500F)
             {
