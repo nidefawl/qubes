@@ -76,7 +76,6 @@ public class VRGui {
         if (hasHit) {
 //            System.out.println(vTmp);
             Shaders.colored3D.enable();
-
             Shaders.colored3D.setProgramUniform1f("color_brightness", 1f);
             float w = 16f*scale;
             tess.setColorF(-1, 1.0f);

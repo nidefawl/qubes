@@ -12,6 +12,7 @@ public class PositionMouseOver {
     public final Vector3f vDirTmp = new Vector3f();
     public final Vector3f vTarget = new Vector3f();
     public final Vector3f t       = new Vector3f();
+    public final Vector3f t3       = new Vector3f();
     public final Vector3f t2       = new Vector3f();
     Matrix4f matTmp1 = new Matrix4f();
 
@@ -25,9 +26,9 @@ public class PositionMouseOver {
                 vOrigin.subtract(cameraOffset);
                 vDir.subtract(cameraOffset);
             }
-            t.set(vDir);
-            t.scale(-0.1F);
-            Vector3f.add(vOrigin, t, vOrigin);
+            t3.set(vDir);
+            t3.scale(-0.1F);
+            Vector3f.add(vOrigin, t3, vOrigin);
         }
     }
 
@@ -37,21 +38,22 @@ public class PositionMouseOver {
         m.rotate(-33 * GameMath.PI_OVER_180, 1, 0, 0);
         t.set(0, 0, 0);
         Matrix4f.transform(m, t, vOrigin);
-        t.set(0, 0, 10);
+        t.set(0, 0, -10);
         Matrix4f.transform(m, t, t);
         t.subtract(vOrigin);
         vOrigin.addVec(Engine.camera.getPosition());
         vDir = t.normaliseNull();
-
+        
         
         if (vDir != null) {
+            vDir.normalise();
 //            if (cameraOffset != null) {
 //                vOrigin.subtract(cameraOffset);
 //                vDir.subtract(cameraOffset);
 //            }
-            t.set(vDir);
-            t.scale(-0.1F);
-            Vector3f.add(vOrigin, t, vOrigin);
+            t3.set(vDir);
+            t3.scale(-0.1F);
+            Vector3f.add(vOrigin, t3, vOrigin);
             
         }
         

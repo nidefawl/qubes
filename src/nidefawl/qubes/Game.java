@@ -539,29 +539,17 @@ public class Game extends GameBase {
                 FrameBuffer finalTarget = VR.getFB(eye);
                 finalTarget.bind();
                 finalTarget.clearDepth();
-//                for (int i = 0; i < 1; i++) {
-//                    PositionMouseOver ctrlPos = getMouseOver(i);
-//                    if (ctrlPos.vDir != null) {
-////                        System.out.println(eye+":"+i+ " > "+ctrlPos.vOrigin);
-//                        Tess t = Tess.instance;
-//                        t.setColorRGBAF(.92f, .92f, .71f, 1.0f);
-//                        t.add(ctrlPos.vOrigin);
-//                        Vector3f vt = ctrlPos.t2;
-//                        vt.set(ctrlPos.vDir);
-//                        vt.scale(120);
-//                        Vector3f.add(ctrlPos.vOrigin, vt, vt);
-//                        t.add(vt);
-//                        GL11.glLineWidth(4);
-//                        t.draw(GL11.GL_LINES);
-//                    }
-//                }
+//                System.out.println(glGetBoolean(GL_DEPTH_TEST));
+//                glDisable(GL_DEPTH_TEST);
+
+//                glEnable(GL_DEPTH_TEST);
                 
                 Engine.updateCamera(VR.getPoseMat(eye), Vector3f.ZERO);
                 UniformBuffer.updateUBO(/*null*/world, fTime);
-                VR.renderControllers();
+//                VR.renderControllers();
                 Engine.updateCamera(VR.getViewMat(eye), Vector3f.ZERO);
                 UniformBuffer.updateUBO(/*null*/world, fTime);
-                vrGui.render(fTime, fbGUIFixed.getTexture(0));
+//                vrGui.render(fTime, fbGUIFixed.getTexture(0));
                 FrameBuffer.unbindFramebuffer();
                 
             }
@@ -1048,6 +1036,40 @@ public class Game extends GameBase {
                 
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
+
+
+                
+                if (VR_SUPPORT) {
+                    for (int i = 0; i < 1; i++) {
+                        PositionMouseOver ctrlPos = getMouseOver(i);
+                        if (ctrlPos.vDir != null) {
+//                            System.out.println(eye+":"+i+ " > "+ctrlPos.vOrigin);
+//                            
+//                            System.out.println(Engine.camera.getPosition());
+//                            System.out.println(Engine.GLOBAL_OFFSET);
+                            Shaders.colored3D.enable();
+                            Shaders.colored3D.setProgramUniform1f("color_brightness", 1.0f);
+                            Tess t = Tess.instance;
+                            t.setColorRGBAF(.92f, .92f, .11f, 1.0f);
+                            t.add(ctrlPos.vOrigin);
+                            Vector3f vt = ctrlPos.t2;
+                            vt.set(ctrlPos.vDir);
+                            vt.normalise();
+                            vt.scale(2);
+                            Vector3f.add(ctrlPos.vOrigin, vt, vt);
+                            t.setColorRGBAF(.97f, .97f, .97f, 1.0f);
+                            t.add(vt);
+//                          System.out.println(vt);
+                            GL11.glLineWidth(5);
+                            t.draw(GL11.GL_LINES);
+                            Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
+                        }
+                    }
+                    Vector3f cpos = Engine.camera.getPosition();
+                    Engine.pxStack.push(cpos.x, cpos.y, cpos.z);
+                    vrGui.render(fTime, fbGUIFixed.getTexture(0));
+                    Engine.pxStack.pop();
+                }
                 
                 glEnable(GL_CULL_FACE);
                 Engine.setBlend(false);

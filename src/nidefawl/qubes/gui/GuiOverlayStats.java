@@ -135,10 +135,10 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
-        info.addAll(Game.instance.glProfileResults);
-        
         info.add(String.format("Mode: %s", Game.instance.getSelection().getMode().toString()));
         info.add(Game.instance.getSelection().quarterMode ? "Quarter" : "Full");
+        info.addAll(Game.instance.glProfileResults);
+        
         render = true;
     }
 
