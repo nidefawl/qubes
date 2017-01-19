@@ -33,14 +33,20 @@ import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.WorldClient;
 
 public class LightCompute extends AbstractRenderer {
+
+    public final static int SIZE_OF_STRUCT_LIGHT  = 16*4;
+    public final static ShaderBuffer        ssbo_lights = new ShaderBuffer("PointLightStorageBuffer").setSize(Engine.MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT);
     public Shader       shaderComputerLight;
     private int[]       lightTiles;
-    ShaderBuffer        lights         = Engine.ssbo_lights;
     private int         lightTilesTex;
     private boolean     startup        = true;
     private int[] debugResults;
     private int numLights;
 
+    @Override
+    public void preinit() {
+        
+    }
     public void initShaders() {
         try {
             pushCurrentShaders();
@@ -83,14 +89,14 @@ public class LightCompute extends AbstractRenderer {
         GL.deleteTexture(this.lightTilesTex);
         this.lightTilesTex = GL.genStorage(displayWidth, displayHeight, GL_RGBA16F, GL_LINEAR, GL12.GL_CLAMP_TO_EDGE);
         Engine.checkGLError("lightTilesTex");
-        Engine.debugOutput.update();
-        lights.update();
+//        Engine.debugOutput.update();
+//        ssbo_lights.update();
     }
 
     public void updateLights(WorldClient world, float fTime) {
         ArrayList<DynamicLight> lights = world.lights;
-        FloatBuffer lightBuf = this.lights.getFloatBuffer();
-        lightBuf.clear();
+        ssbo_lights.nextFrame();
+        FloatBuffer lightBuf = ssbo_lights.getFloatBuffer();
         int a = 0;
         int nLights = 0;
         for (; a < lights.size() && a < Engine.MAX_LIGHTS; a++) {
@@ -109,9 +115,8 @@ public class LightCompute extends AbstractRenderer {
 //                System.out.println("outside!");
             }
         }
-        lightBuf.flip();
         this.numLights = nLights;
-        this.lights.update();
+        ssbo_lights.update();
     }
     public void render(WorldClient world, float fTime, int pass) {
         if (this.numLights > 0) {
@@ -131,6 +136,7 @@ public class LightCompute extends AbstractRenderer {
 //          }
             
         }
+        ssbo_lights.sync();
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("compute light 5");
         if (GLDebugTextures.isShow()) {

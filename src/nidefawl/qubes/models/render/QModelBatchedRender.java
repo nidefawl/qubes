@@ -9,20 +9,41 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.AbstractRenderer;
-import nidefawl.qubes.render.BatchedRiggedModelRenderer;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.shader.IShaderDef;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.*;
 import nidefawl.qubes.vec.Matrix4f;
 
 public class QModelBatchedRender extends QModelRender {
+    public final static int NUM_FRAMES = 1000;
+//    public final static ShaderBuffer        ssbo_model_modelmat         = new ShaderBuffer("QModel_mat_model")
+//            .setSize(ModelConstants.SIZE_OF_MAT4*ModelConstants.MAX_INSTANCES, NUM_FRAMES).setMakePersistantMapped(true);
+//    
+//    public final static ShaderBuffer        ssbo_model_normalmat         = new ShaderBuffer("QModel_mat_normal")
+//            .setSize(ModelConstants.SIZE_OF_MAT4*ModelConstants.MAX_INSTANCES, NUM_FRAMES).setMakePersistantMapped(true);
+//
+//    public final static ShaderBuffer        ssbo_model_bonemat         = new ShaderBuffer("QModel_mat_bone")
+//            .setSize(ModelConstants.SIZE_OF_MAT4*ModelConstants.MAX_INSTANCES*ModelConstants.NUM_BONE_MATRICES, NUM_FRAMES).setMakePersistantMapped(true);
+    
+    public final static ShaderBuffer        ssbo_model_modelmat         = new ShaderBuffer("QModel_mat_model")
+            .setSize(ModelConstants.SIZE_OF_MAT4*ModelConstants.MAX_INSTANCES);
+    
+    public final static ShaderBuffer        ssbo_model_normalmat         = new ShaderBuffer("QModel_mat_normal")
+            .setSize(ModelConstants.SIZE_OF_MAT4*ModelConstants.MAX_INSTANCES);
+
+    public final static ShaderBuffer        ssbo_model_bonemat         = new ShaderBuffer("QModel_mat_bone")
+            .setSize(ModelConstants.SIZE_OF_MAT4*ModelConstants.MAX_INSTANCES*ModelConstants.NUM_BONE_MATRICES);
+    @Override
+    public void preinit() {
+//        System.out.println(ssbo_model_bonemat.getSize());
+    }
+    
     public static final int MAX_INSTANCES = 16*1024;
     public static final int SIZE_OF_MAT4 = 16*4;
     public static final int NUM_BONE_MATRICES = 64;
@@ -65,6 +86,8 @@ public class QModelBatchedRender extends QModelRender {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("renderModel");
 //        System.out.println(renderer);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.render");
         for (QModelRenderSubList n : this.subLists) {
             if (!n.isSkinned) {
                 this.begin();
@@ -78,6 +101,7 @@ public class QModelBatchedRender extends QModelRender {
                 Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
                 GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, n.tex.get());
                 n.model.renderRestModel(n.object, n.group, n.instances);
+                this.sync();
             } else {
                 this.begin();
                 FloatBuffer bufModel = this.getBufModelMat();
@@ -91,6 +115,7 @@ public class QModelBatchedRender extends QModelRender {
                 Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
                 GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, n.tex.get());
                 n.model.renderRestModel(n.object, n.group, n.instances);
+                this.sync();
             }
         }
         if (GPUProfiler.PROFILING_ENABLED)
@@ -118,6 +143,12 @@ public class QModelBatchedRender extends QModelRender {
                     public String getDefinition(String define) {
                         if ("RENDERER".equals(define))
                             return "#define RENDERER "+iRENDER;
+                        if ("MAX_MODEL_MATS".equals(define))
+                            return "#define MAX_MODEL_MATS "+ModelConstants.MAX_INSTANCES;
+                        if ("MAX_NORMAL_MATS".equals(define))
+                            return "#define MAX_NORMAL_MATS "+ModelConstants.MAX_INSTANCES;
+                        if ("MAX_BONES".equals(define))
+                            return "#define MAX_BONES "+(ModelConstants.MAX_INSTANCES*ModelConstants.NUM_BONE_MATRICES);
                         return null;
                     }
                 });
@@ -144,21 +175,36 @@ public class QModelBatchedRender extends QModelRender {
     }
 
     public void begin() {
-        this.bufModelMat = Engine.ssbo_model_modelmat.getFloatBuffer();
-        this.bufNormalMat = Engine.ssbo_model_normalmat.getFloatBuffer();
-        this.bufBoneMat = Engine.ssbo_model_bonemat.getFloatBuffer();
-        this.bufModelMat.clear();
-        this.bufNormalMat.clear();
-        this.bufBoneMat.clear();
+        ssbo_model_modelmat.nextFrame();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.nextFrame1");
+        ssbo_model_normalmat.nextFrame();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.nextFrame2");
+        ssbo_model_bonemat.nextFrame();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.nextFrame3");
+        this.bufModelMat = ssbo_model_modelmat.getFloatBuffer();
+        this.bufNormalMat = ssbo_model_normalmat.getFloatBuffer();
+        this.bufBoneMat = ssbo_model_bonemat.getFloatBuffer();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.begin");
     }
 
     public void end() {
-        this.bufModelMat.flip();
-        this.bufNormalMat.flip();
-        this.bufBoneMat.flip();
-        Engine.ssbo_model_modelmat.update();
-        Engine.ssbo_model_normalmat.update();
-        Engine.ssbo_model_bonemat.update();
+        ssbo_model_modelmat.update();
+        ssbo_model_normalmat.update();
+        ssbo_model_bonemat.update();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.end");
+    }
+
+    public void sync() {
+        ssbo_model_modelmat.sync();
+        ssbo_model_normalmat.sync();
+        ssbo_model_bonemat.sync();
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("modelbatchedssboupdate.sync");
     }
 
 
@@ -253,7 +299,7 @@ public class QModelBatchedRender extends QModelRender {
             this.buf1.store(tmpMatrix1);
             this.buf2.store(tmpMatrix2);
             if (model.isSkinned) {
-                for (int j = 0; j < BatchedRiggedModelRenderer.NUM_BONE_MATRICES; j++) {
+                for (int j = 0; j < ModelConstants.NUM_BONE_MATRICES; j++) {
                     if (j < model.listBones.size()) {
                         QModelBone b1 = model.listBones.get(j);
                         QModelPoseBone jt = b1.posebone;
@@ -270,17 +316,12 @@ public class QModelBatchedRender extends QModelRender {
 
         
         public void put(FloatBuffer bufModel, FloatBuffer bufNormal) {
-            bufModel.position(0);
             bufModel.put(this.buf1.matBuf, 0, this.buf1.pos);
-            bufNormal.position(0);
             bufNormal.put(this.buf2.matBuf, 0, this.buf2.pos);
         }
         public void putSkinned(FloatBuffer bufModel, FloatBuffer bufNormal, FloatBuffer bufBones) {
-            bufModel.position(0);
             bufModel.put(this.buf1.matBuf, 0, this.buf1.pos);
-            bufNormal.position(0);
             bufNormal.put(this.buf2.matBuf, 0, this.buf2.pos);
-            bufBones.position(0);
             bufBones.put(this.buf3.matBuf, 0, this.buf3.pos);
         }
         public void reset() {

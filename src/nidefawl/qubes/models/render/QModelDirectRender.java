@@ -13,7 +13,6 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.*;
-import nidefawl.qubes.render.BatchedRiggedModelRenderer;
 import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;

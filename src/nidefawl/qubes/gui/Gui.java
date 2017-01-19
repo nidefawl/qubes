@@ -253,7 +253,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public void renderFrame(float fTime, double mX, double mY) {
         float c = 0.1f;
         float ac = 0.3f;
-        if (Game.instance.getWorld() == null) {
+        if (Game.instance != null&&Game.instance.getWorld() == null) {
             GL11.glClearColor(c,c,c, ac);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
         }

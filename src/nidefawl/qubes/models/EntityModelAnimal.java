@@ -10,7 +10,6 @@ import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
 import nidefawl.qubes.models.render.QModelRender;
-import nidefawl.qubes.render.BatchedRiggedModelRenderer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;

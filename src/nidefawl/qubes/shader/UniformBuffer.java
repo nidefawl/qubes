@@ -13,7 +13,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
-import nidefawl.qubes.render.BatchedRiggedModelRenderer;
+import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
@@ -232,7 +232,7 @@ public class UniformBuffer {
 
         uboMatrixShadow.reset();
         
-        if (Engine.initRenderers) {
+        if (Engine.shadowProj != null) {
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(0));
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(1));
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));

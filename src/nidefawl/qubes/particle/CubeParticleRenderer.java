@@ -17,8 +17,8 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.perf.TimingHelper;
-import nidefawl.qubes.render.BatchedRiggedModelRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.array.BlockTextureArray;
@@ -32,9 +32,9 @@ public class CubeParticleRenderer extends AbstractParticleRenderer {
     public final static int MAX_PARTICLES       = 1024*16;
     
     public final static ShaderBuffer        ssbo_particle_cubes        = new ShaderBuffer("ParticleCube_mat_model")
-            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*MAX_PARTICLES);
+            .setSize(ModelConstants.SIZE_OF_MAT4*MAX_PARTICLES);
     public final static ShaderBuffer        ssbo_particle_cubes_blockinfo = new ShaderBuffer("ParticleCube_blockinfo")
-            .setSize(BatchedRiggedModelRenderer.SIZE_OF_VEC4*2*MAX_PARTICLES);
+            .setSize(ModelConstants.SIZE_OF_VEC4*2*MAX_PARTICLES);
     
     private boolean startup   = true;
     private int     fireUpdate;
@@ -208,10 +208,10 @@ public class CubeParticleRenderer extends AbstractParticleRenderer {
     }
     
     void storeParticles(World w, float iPass, float fTime) {
+        ssbo_particle_cubes.nextFrame();
+        ssbo_particle_cubes_blockinfo.nextFrame();
         IntBuffer bufBlockInfo = ssbo_particle_cubes_blockinfo.getIntBuffer();
         FloatBuffer bufModelMat = ssbo_particle_cubes.getFloatBuffer();
-        bufModelMat.clear();
-        bufBlockInfo.clear();
         storedSprites = 0;
         int offset=0;
         for (int i = 0; i < particles.size(); i++) {
@@ -223,8 +223,6 @@ public class CubeParticleRenderer extends AbstractParticleRenderer {
             storedSprites+=cloud.store(offset, bufModelMat, bufBlockInfo);
             offset++;
         }
-        bufModelMat.flip();
-        bufBlockInfo.flip();
         ssbo_particle_cubes.update();
         ssbo_particle_cubes_blockinfo.update();
         

@@ -21,6 +21,7 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
+import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.particle.CubeParticleRenderer;
@@ -36,7 +37,6 @@ import nidefawl.qubes.world.SunLightModel;
 public class Engine {
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
     public final static int MAX_LIGHTS       = 1024;
-    public final static int SIZE_OF_STRUCT_LIGHT  = 16*4;
 
     public final static BlockPos GLOBAL_OFFSET = new BlockPos();
     private final static BlockPos LAST_REPOS = new BlockPos();
@@ -113,19 +113,6 @@ public class Engine {
     static GLVAO active = null;
     final static int[] viewport = new int[] {0,0,0,0};
     public final static ShaderBuffer        debugOutput         = new ShaderBuffer("DebugOutputBuffer").setSize(4096*4);
-    
-    public final static ShaderBuffer        ssbo_lights = new ShaderBuffer("PointLightStorageBuffer").setSize(MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT);
-    
-    
-    public final static ShaderBuffer        ssbo_model_modelmat         = new ShaderBuffer("QModel_mat_model")
-            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES);
-    
-    public final static ShaderBuffer        ssbo_model_normalmat         = new ShaderBuffer("QModel_mat_normal")
-            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES);
-
-    public final static ShaderBuffer        ssbo_model_bonemat         = new ShaderBuffer("QModel_mat_bone")
-            .setSize(BatchedRiggedModelRenderer.SIZE_OF_MAT4*BatchedRiggedModelRenderer.MAX_INSTANCES*32);
-
     
     public final static SunLightModel sunlightmodel = new SunLightModel();
     private final static ReallocIntBuffer[] buffers = new ReallocIntBuffer[4];
@@ -279,9 +266,11 @@ public class Engine {
         if (initRenderers) {
             flushRenderTasks();
             registerRenderers();
-            regionRenderThread = new MeshThread(3);
-            regionRenderThread.init();
-            regionRenderer.reRender();
+            if (regionRenderer != null) {
+                regionRenderThread = new MeshThread(3);
+                regionRenderThread.init();
+                regionRenderer.reRender();
+            }
         } else {
             Shaders.init();
             ShaderBuffer.init();
@@ -366,7 +355,7 @@ public class Engine {
      * @param displayHeight
      */
     public static void resizeRenderers(int displayWidth, int displayHeight) {
-        if (initRenderers) {
+        if (shadowProj != null) {
             shadowProj.updateProjection(znear, zfar, aspectRatio, fieldOfView);
         }
         if (blurRenderer != null) {
@@ -640,15 +629,17 @@ public class Engine {
             r.release();
         }
         components.clear();
-        shadowProj = addComponent(new ShadowProjector());
-        worldRenderer = addComponent(new WorldRenderer());
-        particleRenderer = addComponent(new CubeParticleRenderer());
-        skyRenderer = addComponent(new SkyRenderer());
-        outRenderer = addComponent(new FinalRenderer());
-        shadowRenderer = addComponent(new ShadowRenderer());
-        lightCompute = addComponent(new LightCompute());
-        blurRenderer = addComponent(new BlurRenderer());
-        regionRenderer = addComponent(new RegionRenderer());
+        if (!QModelBatchedRender.isModelViewer) {
+            shadowProj = addComponent(new ShadowProjector());
+            worldRenderer = addComponent(new WorldRenderer());
+            particleRenderer = addComponent(new CubeParticleRenderer());
+            skyRenderer = addComponent(new SkyRenderer());
+            outRenderer = addComponent(new FinalRenderer());
+            shadowRenderer = addComponent(new ShadowRenderer());
+            lightCompute = addComponent(new LightCompute());
+            blurRenderer = addComponent(new BlurRenderer());
+            regionRenderer = addComponent(new RegionRenderer());
+        }
         renderBatched = addComponent(new QModelBatchedRender());
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);

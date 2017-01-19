@@ -68,7 +68,7 @@ public class TimingHelper {
             init = true;
         }
         if (calls[i]>10000) {
-            reset();
+//            reset();
         }
         beginMillis[i] = System.currentTimeMillis();
         if (useNanos)
@@ -113,7 +113,7 @@ public class TimingHelper {
             }
         }
         calls[i]++;
-        if (calls[i]%100==0) {
+        if (calls[i]%2000==0) {
             dump();
         }
         return timeTaken;

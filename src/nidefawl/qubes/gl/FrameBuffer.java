@@ -298,10 +298,13 @@ public class FrameBuffer implements IManagedResource {
         GL20.glDrawBuffers(this.drawBufAtt);
     }
     
-    
+
     public void setDrawAll() {
         if (this.numColorTextures > 0)
             GL20.glDrawBuffers(this.drawBufAtt);
+    }
+    public void setDraw(int i) {
+        GL20.glDrawBuffers(GL_COLOR_ATTACHMENT0+i);
     }
     
     public void clearFrameBuffer() {
