@@ -4,6 +4,9 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "tonemap.glsl"
 #pragma define "RENDERER"
+#pragma define "MAX_MODEL_MATS"
+#pragma define "MAX_NORMAL_MATS"
+#pragma define "MAX_BONES"
 #pragma attributes "model"
 #define RENDERER_WORLD_MAIN 0
 #define RENDERER_WORLD_SHADOW 1
@@ -33,17 +36,17 @@ uniform mat4 mvp;
 
 layout (std430) buffer QModel_mat_model
 {
-    mat4 modelMatrix[];
+    mat4 modelMatrix[MAX_MODEL_MATS];
 } qmodelmatbuffer_model;
 
 layout (std430) buffer QModel_mat_normal
 {
-    mat4 normalMatrix[];
+    mat4 normalMatrix[MAX_NORMAL_MATS];
 } qmodelmatbuffer_normal;
 
 layout (std430) buffer QModel_mat_bone
 {
-    mat4 boneMatrices[];
+    mat4 boneMatrices[MAX_BONES];
 } qmodelmatbuffer_bones;
 
 out vec4 pass_color;
