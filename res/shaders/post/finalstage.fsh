@@ -3,6 +3,7 @@
 #pragma define "DO_AUTOEXPOSURE"
 #pragma include "ubo_scene.glsl"
 #pragma include "tonemap.glsl"
+#pragma include "dither.glsl"
 
 uniform sampler2D texColor;
 #ifdef DO_AUTOEXPOSURE
@@ -28,5 +29,5 @@ void main(void) {
 #else 
 	vec3 toneMapped = ToneMap(tex.rgb, constexposure);
 #endif
-	out_Color = vec4(toneMapped, 1);
+	out_Color = vec4(toneMapped+dither8BitSS(), 1);
 }

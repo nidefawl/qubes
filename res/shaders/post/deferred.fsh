@@ -44,11 +44,6 @@ struct SurfaceProperties {
     float reflective;
 } prop;
 
-layout (std430) buffer DebugOutputBuffer
-{
-    float debugVals[16];
-    int tileLights[];
-} debugBuf;
 
 
 uniform sampler2D texColor;
@@ -383,7 +378,6 @@ float VolumetricLight() {
 }
 #define SHADE
 void main() {
-    vec4 dbgcolor = vec4(0);
     vec4 sceneColor = texture(texColor, pass_texcoord);
 	prop.albedo = sceneColor.rgb;
 
@@ -398,10 +392,22 @@ void main() {
         if(sceneColor.a < 0.1)
             discard;
     }
+
+    uint blockid = BLOCK_ID(prop.blockinfo);
+    float isWater = IS_WATER(blockid);
+    float stone = float(blockid==6u||blockid==4u);
+    float isLight = IS_LIGHT(blockid);
+    float isIllum = float(renderpass==4);
+    float isBackface = float(renderpass==3);
+    float isEntity = float(renderpass==5);
+    float isCloud = float(renderpass==8);
+    float fIsSky = isCloud;
+    bool isSky = bool(fIsSky==1.0f);
+#if RENDER_PASS < 1
+    vec4 ssao =texture(texAO, pass_texcoord);
+#else
     vec4 ssao = vec4(1);
-    if (RENDER_PASS < 1) {
-        ssao=texture(texAO, pass_texcoord);
-    }
+#endif
     float depthUnderWater=0;
     vec4 viewSpacePosUnderWater=vec4(0);
     vec4 worldPosUnderWater=vec4(0);
@@ -417,8 +423,7 @@ void main() {
 
     vec4 nl = texture(texNormals, pass_texcoord);
     prop.roughness = nl.w;
-	prop.normal = /*normalize*/(nl.rgb * 2.0f - 1.0f);
-    // dbgcolor = vec4(prop.normal.xyz, 1.0);
+	prop.normal = normalize(nl.rgb * 2.0f - 1.0f);
     prop.blockLight = texture(texBlockLight, pass_texcoord, 0);
     prop.reflective = prop.blockLight.w;
     prop.light = texture(texLight, pass_texcoord, 0);
@@ -433,16 +438,7 @@ void main() {
     float sunTheta = max( prop.sunTheta, 0.0 );
     float theta = max(dot(prop.viewVector, prop.normal), 0.0);
     prop.sunSpotDens = pow(sunTheta, 32.0)*1.0;
-    uint blockid = BLOCK_ID(prop.blockinfo);
-    float isWater = IS_WATER(blockid);
-    float stone = float(blockid==6u||blockid==4u);
-    float isLight = IS_LIGHT(blockid);
-    float isIllum = float(renderpass==4);
-    float isBackface = float(renderpass==3);
-    float isEntity = float(renderpass==5);
-    float isCloud = float(renderpass==8);
-    float fIsSky = isCloud;
-    bool isSky = bool(fIsSky==1.0f);
+
     float fogDepth = length(prop.position);
     // vec3 fogColor = mix(vec3(0.5,0.6,0.8)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     vec3 fogColor = mix(vec3(0.55,0.6,0.66)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
@@ -533,7 +529,7 @@ void main() {
         // float specAmb2 = pow(max(dot(halfDir2, prop.normal), 0.0), roughness);
 
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0);
+        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*40.0;
 
 
 
@@ -557,8 +553,8 @@ void main() {
 
         float blockLight = (1.0-pow(1.0-blockLightLvl,0.05))*1.1;
         vec3 lightColor = mix(vec3(1.0), vec3(0.8, 0.9, 1.1), fNight);
-        vec3 Ispec = SkyLight.Ls.rgb * lightColor * prop.NdotL *spec;
-        vec3 Idiff = SkyLight.Ld.rgb * lightColor * prop.NdotL *diff;
+        vec3 Ispec = SkyLight.Ls.rgb * vec3(1.0) *spec;
+        vec3 Idiff = SkyLight.Ld.rgb * vec3(1.0) *diff;
         vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.1);
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb1 *specAmb1 * 0.25;
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb2 *specAmb2 * 0.08;
@@ -593,8 +589,6 @@ void main() {
             float UNdotUP = 0.5+abs(dot(normalize(uVec),normalize(prop.normal.xyz)));
             float depth = len*UNdotUP;
             float sky_absorbance = mix(mix(1.0,exp(-depth/12.5),isWater),1.0,isEyeInWater);
-            // if (sky_absorbance < 0||sky_absorbance>1)
-            //     dbgcolor=vec4(1);
             // alpha = prop.albedo.a;//clamp(clamp(depth, 0.4, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.5, 1.0);
             // alpha = 0.5;
             alpha = mix(alpha, 0.99, sky_absorbance);//alpha*(0.99+0.01*(1-sky_absorbance));
@@ -652,8 +646,5 @@ void main() {
 
 
 #endif
-    if (dbgcolor.a>0)
-    out_Color = dbgcolor;
-    else
     out_Color = vec4(prop.albedo, alpha);
 }

@@ -19,7 +19,7 @@ in vec4 in_color;
 
 
 out vec4 color;
-out vec3 normal;
+// out vec3 normal;
 out vec4 texcoord;
 out vec4 position;
 
@@ -81,8 +81,8 @@ void main(void) {
 	vec4 pos = in_matrix_3D.view * vec4(oPos, 1.0);
 	position = vec4(oPos, 1.0);//&vec4(pos, 1.0);
     gl_Position = in_matrix_3D.p * pos;
-	vec4 camNormal = in_matrix_3D.normal * vec4(0, 0, -1, 1);
-	normal = normalize(camNormal.xyz);
+	// vec4 camNormal = in_matrix_3D.normal * vec4(0, 0, -1, 1);
+	// normal = normalize(camNormal.xyz);
 	texcoord = in_texcoord;
 	color = vec4(in_color.rgb, 1.0*upness);
 }

@@ -1,6 +1,6 @@
 #version 150 core
-
 #pragma include "ubo_scene.glsl"
+#pragma include "dither.glsl"
 
 
 // A standard gaussian function, used for weighting samples
@@ -116,6 +116,7 @@ void main(void) {
     out_Color = color;
     out_Color.rgb *= (1-fade)+texcoord.y*fade;
   }
+  out_Color.rgb+=dither8BitSS();
 
     
   out_Color.a *= roundedBoxShadow(box.xy+PX_OFFSET.xy, box.zw+PX_OFFSET.xy, vertex, sigma, corner);

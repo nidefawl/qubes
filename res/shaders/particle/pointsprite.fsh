@@ -16,7 +16,7 @@ uniform sampler2D tex0;
 uniform float transparency;
 uniform float spritebrightness;
 
-in vec3 normal;
+// in vec3 normal;
 in vec4 color;
 in vec4 texcoord;
 in vec4 position;
@@ -28,8 +28,8 @@ in float moonSunFlip;
 
 
 out vec4 out_Color;
-out vec4 out_Normal;
-out uvec4 out_Material;
+// out vec4 out_Normal;
+// out uvec4 out_Material;
 
 
 void main(void) {
@@ -40,9 +40,6 @@ void main(void) {
   float sunLight = dayLightIntens *(0.008+0.67*(1.0-fNight)+0.3*sun);
 	vec4 tex = texture(tex0, texcoord.st);
   float dist = length(position);
-  out_Color = vec4(tex.rgb*color.rgb*spritebrightness*sunLight, tex.a*transparency*color.a); //vec4(skycolor*0.41, clamp(tex.a*(1-fogAmount)*color.a*0.2, 0, 1));
-  out_Normal = vec4(vec3(0.5), 1.0);
-    uint renderData = 0u;
-  renderData = ENCODE_RENDERPASS(8);
-  out_Material = uvec4(0u,0u+renderData,0u,0u);
+  vec3 rgb = tex.rgb*color.rgb*spritebrightness*sunLight;
+  out_Color = vec4(rgb, tex.a*transparency*color.a); //vec4(skycolor*0.41, clamp(tex.a*(1-fogAmount)*color.a*0.2, 0, 1));
 }

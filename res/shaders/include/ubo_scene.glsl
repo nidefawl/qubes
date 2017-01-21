@@ -31,6 +31,7 @@ layout(std140) uniform uboSceneData
     vec4 viewport;
     vec4 pxoffset;
     vec4 prevCameraPosition;
+    vec4 sceneSettings;
 } in_scene;
 
 #define FRAME_TIME in_scene.framePos.w
