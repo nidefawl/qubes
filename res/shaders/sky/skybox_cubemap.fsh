@@ -37,7 +37,8 @@ void main() {
 
     // out_Color = cloudColor*0.4;
     // out_Color = vec4(1.0, 1.0, 0.0, 1.0);
-    out_Color = texture(tex0, rayDir*vec3(1,1,-1));
+    vec4 sampledColor = texture(tex0, rayDir*vec3(1,1,-1));
+    out_Color = vec4(sampledColor.rgb*0.02, 1.0);
     out_Normal = vec4(0.5);
     renderData = ENCODE_RENDERPASS(8);
     out_Material = uvec4(0u,0u+renderData,0u,0u);
