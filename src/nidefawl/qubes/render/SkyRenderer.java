@@ -29,6 +29,7 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Half;
 import nidefawl.qubes.vec.Vector3f;
@@ -252,11 +253,6 @@ public class SkyRenderer extends AbstractRenderer {
         for (int i = 0; i < clouds.size(); i++) {
             this.texClouds[i] = TextureManager.getInstance().makeNewTexture(clouds.get(i), false, true, -1);
         }
-        fbSkybox = new FrameBuffer(SKYBOX_RES, SKYBOX_RES);
-        fbSkybox.setTextureType(GL13.GL_TEXTURE_CUBE_MAP);
-        fbSkybox.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
-//      fbSkybox.setHasDepthAttachment();
-        fbSkybox.setup(this);
         redraw();
 
     }
@@ -346,6 +342,12 @@ public class SkyRenderer extends AbstractRenderer {
         vertexBuf.put(Half.fromFloat(0) << 16 | Half.fromFloat(0));
     }
     public void resize(int displayWidth, int displayHeight) {
+        releaseAll(EResourceType.FRAMEBUFFER);
+        fbSkybox = new FrameBuffer(SKYBOX_RES, SKYBOX_RES);
+        fbSkybox.setTextureType(GL13.GL_TEXTURE_CUBE_MAP);
+        fbSkybox.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
+//      fbSkybox.setHasDepthAttachment();
+        fbSkybox.setup(this);
     }
     public void renderSky(WorldClient world, float fTime) {
         if (GPUProfiler.PROFILING_ENABLED) {
@@ -366,7 +368,7 @@ public class SkyRenderer extends AbstractRenderer {
         cloudsShader.setProgramUniform1i("worldTime", (int) world.getDayTime());
         spriteShader.enable();
         spriteShader.setProgramUniform1f("transparency", weatherStr);
-        spriteShader.setProgramUniform1f("spritebrightness", 0.1f);
+        spriteShader.setProgramUniform1f("spritebrightness", 5f);
         Engine.setBlend(true);
         if (this.texClouds.length == 1) { //TODO: optimize multi texture by using multiple buffers
             storeSprites(fTime, 0);

@@ -1,8 +1,16 @@
 package nidefawl.qubes.shader;
 
-import java.io.IOException;
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BLOCK;
+import static org.lwjgl.opengl.GL43.glGetProgramResourceIndex;
+import static org.lwjgl.opengl.GL43.glShaderStorageBlockBinding;
 
+import java.io.IOException;
+import java.util.HashMap;
+
+import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.shader.DebugShaders.Var;
 
 public class ShaderSourceBundle {
 
@@ -10,6 +18,7 @@ public class ShaderSourceBundle {
     ShaderSource vertCode = new ShaderSource(this);
     ShaderSource fragCode = new ShaderSource(this);
     ShaderSource geomCode = new ShaderSource(this);
+    DebugShaders s;
     private String name;
     public ShaderSourceBundle(String name) {
         this.name = name;
@@ -36,6 +45,16 @@ public class ShaderSourceBundle {
 
     public ShaderSource getFragment() {
         return this.fragCode;
+    }
+
+    public String addDebugVar(String defType, String defName, String defExpr) {
+        if (this.s == null) {
+            this.s = new DebugShaders();
+        }
+        return this.s.registerDebugVar(defType, defName, defExpr);
+    }
+    public DebugShaders getDebugVars() {
+        return this.s;
     }
 
 }

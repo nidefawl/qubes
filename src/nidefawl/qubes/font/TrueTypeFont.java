@@ -9,6 +9,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.*;
 import org.lwjgl.stb.STBTTPackedchar.Buffer;
 
@@ -137,7 +138,7 @@ public class TrueTypeFont {
             data[i*4+3] = b;
         }
 
-        this.font_tex = TextureManager.getInstance().makeNewTexture(data, texW, texW, false, true, 0);
+        this.font_tex = TextureManager.getInstance().makeNewTexture(data, texW, texW, false, true, 0, GL11.GL_RGBA);
 
         this.spaceWidth = getCharWidth(' ');
     }

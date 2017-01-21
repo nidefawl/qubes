@@ -22,6 +22,8 @@ public class Shaders {
     public static Shader wireframe;
     public static Shader texturedAlphaTest;
     public static Shader textured;
+    public static Shader textured_to_srgb;
+    public static Shader textured_to_lin;
     public static Shader colored;
     public static Shader colored3D;
     public static Shader textured3D;
@@ -54,6 +56,26 @@ public class Shaders {
                     return null;
                 }
             });
+            Shader new_textured_srgb_to_lin = assetMgr.loadShader(newshaders, "textured", new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("SAMPLER_CONVERT_GAMMA".equals(define)) {
+                        return "#define SAMPLER_SRGB_TO_LIN 1";
+                    }
+                    return null;
+                }
+            });
+            Shader new_textured_lin_to_srgb = assetMgr.loadShader(newshaders, "textured", new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("SAMPLER_CONVERT_GAMMA".equals(define)) {
+                        return "#define SAMPLER_LIN_TO_SRGB 1";
+                    }
+                    return null;
+                }
+            });
             Shader new_textured = assetMgr.loadShader(newshaders, "textured");
             Shader new_textured3D = assetMgr.loadShader(newshaders, "textured_3D");
             Shader new_textured3D_alpha_test = assetMgr.loadShader(newshaders, "textured_3D", new IShaderDef() {
@@ -81,6 +103,8 @@ public class Shaders {
             Shaders.depthBufShader = new_depthBufShader;
             Shaders.normals = new_normals;
             Shaders.textured = new_textured;
+            Shaders.textured_to_srgb = new_textured_lin_to_srgb;
+            Shaders.textured_to_lin = new_textured_srgb_to_lin;
             Shaders.texturedAlphaTest = new_textured_alpha_test;
             Shaders.textured3D = new_textured3D;
             Shaders.textured3DAlphaTest = new_textured3D_alpha_test;
@@ -127,8 +151,12 @@ public class Shaders {
             Shaders.colored.enable();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("setProgramUniform3f");
-            Shaders.textured.enable();
+            textured.enable();
             textured.setProgramUniform1i("tex0", 0);
+            textured_to_srgb.enable();
+            textured_to_srgb.setProgramUniform1i("tex0", 0);
+            textured_to_lin.enable();
+            textured_to_lin.setProgramUniform1i("tex0", 0);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("setProgramUniform1i");
             Shader.disable();

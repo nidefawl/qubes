@@ -47,13 +47,13 @@ public class TextureManager {
 //        texNoise2 = glGenTextures();
         reload();
         byte[] emptyTexData = new byte[16*16*4];
-        texEmpty = makeNewTexture(emptyTexData, 16, 16, true, false, 0);
+        texEmpty = makeNewTexture(emptyTexData, 16, 16, true, false, 0, GL11.GL_RGBA);
         Arrays.fill(emptyTexData, (byte)0xff);
-        texEmptyWhite = makeNewTexture(emptyTexData, 16, 16, true, false, 0);
+        texEmptyWhite = makeNewTexture(emptyTexData, 16, 16, true, false, 0, GL11.GL_RGBA);
         int[] normalBumpMap = new int[16*16*4];
         Arrays.fill(normalBumpMap, 0xff7f7fff);
         byte[] ndata = TextureUtil.toBytesRGBA(normalBumpMap);
-        texEmptyNormal = makeNewTexture(ndata, 16, 16, true, false, 0);
+        texEmptyNormal = makeNewTexture(ndata, 16, 16, true, false, 0, GL11.GL_RGBA);
     }
 
     public void reload() {
@@ -73,11 +73,11 @@ public class TextureManager {
 
     }
 
-    public int makeNewTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter, int mipmapLevel) {
+    public int makeNewTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter, int mipmapLevel, int format) {
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
         int fmt = GL11.GL_RGBA;
-        int ifmt = GL11.GL_RGBA;
+        int ifmt = format;
         int bytespp = 4;
         if (w*h*4 > rgba.length) {
             if (rgba.length<w*h) {
@@ -93,7 +93,10 @@ public class TextureManager {
     }
     
     public int makeNewTexture(AssetTexture tex, boolean repeat, boolean filter, int mipmapLevel) {
-        return makeNewTexture(tex.getData(), tex.getWidth(), tex.getHeight(), repeat, filter, mipmapLevel);
+        return makeNewTexture(tex.getData(), tex.getWidth(), tex.getHeight(), repeat, filter, mipmapLevel, GL11.GL_RGBA);
+    }
+    public int makeNewTexture(AssetTexture tex, boolean repeat, boolean filter, int mipmapLevel, int format) {
+        return makeNewTexture(tex.getData(), tex.getWidth(), tex.getHeight(), repeat, filter, mipmapLevel, format);
     }
     
     public int makeNewTexture(AssetTexture tex) {
@@ -155,7 +158,7 @@ public class TextureManager {
     }
 
     public int setupTexture(AssetTexture assetTexture, boolean repeat, boolean filter, int mipmapLvls) {
-        return makeNewTexture(assetTexture.getData(), assetTexture.getWidth(), assetTexture.getHeight(), repeat, filter, mipmapLvls);
+        return makeNewTexture(assetTexture.getData(), assetTexture.getWidth(), assetTexture.getHeight(), repeat, filter, mipmapLvls, GL11.GL_RGBA);
     }
     public void destroy() {
         

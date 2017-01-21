@@ -19,6 +19,7 @@ public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
+    static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
 
@@ -82,7 +83,18 @@ public class ShaderSource {
                 boolean insertLine = true;
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
-                    if (line.startsWith("#pragma")) {
+                    if (line.startsWith("#print")) {
+                        Matcher m;
+                        if ((m = patternDebug.matcher(line)).matches()) {
+                            String defType = m.group(1);
+                            String defName = m.group(2);
+                            String defExpr = m.group(3);
+                            String replace = this.shaderSourceBundle.addDebugVar(defType, defName, defExpr);
+                            code += replace + "\r\n";
+                        } else {
+                            throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse print directive");
+                        }
+                    } else if (line.startsWith("#pragma")) {
                         Matcher m;
                         if ((m = patternInclude.matcher(line)).matches()) {
                             if (resolve) {

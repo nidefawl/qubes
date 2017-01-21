@@ -317,7 +317,12 @@ public class TextInput {
     }
     
     public void makeCursorVisible() {
-        float cursorPosPX = editText.isEmpty() ? 0 : trueType.getWidth(editText.substring(0, mpos));
+        String sub = editText.substring(0, mpos);
+        int nlast = sub.lastIndexOf("\n");
+        if (nlast >= 0) {
+            sub = sub.substring(nlast);
+        }
+        float cursorPosPX = editText.isEmpty() ? 0 : trueType.getWidth(sub);
         int boxWidthPX = getWidth()-2;
         if (shiftPX == 0 || (cursorPosPX > boxWidthPX)) {
             shiftPX = cursorPosPX - boxWidthPX;
@@ -329,6 +334,17 @@ public class TextInput {
             shiftPX = 0;
     }
 
+    public int getLineStart(int n) {
+        if (!multiline)
+            return 0;
+        return getLineStart(this.editText, n);
+    }
+
+    public static int getLineStart(String s, int n) {
+        String sub = s.substring(0, n);
+        int nlast = sub.lastIndexOf("\n");
+        return nlast;
+    }
     public boolean hasSelection() {
         return this.editText.length() > 0 && selEnd != selStart && selEnd <= editText.length() && selEnd >= 0 && selStart <= editText.length() && selStart >= 0;
     }

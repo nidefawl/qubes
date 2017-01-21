@@ -51,7 +51,7 @@ public class FinalRenderer extends AbstractRenderer {
     public FrameBuffer  fbSSRCombined;
     public FrameBuffer  fbDeferred;
     public FrameBuffer  fbSSAO;
-    public FrameBuffer  fbFinal;
+    public FrameBuffer  fbBloomOut;
     private FrameBuffer fbLuminanceDownsample[];
     private FrameBuffer fbLuminanceInterp[];
 
@@ -211,7 +211,7 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbDeferred.getTexture(0)); //COLOR
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1)); //NORMAL
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2)); //MATERIAL
-        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, this.fbFinal.getDepthTex()); //DEPTH
+        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, this.fbBloomOut.getDepthTex()); //DEPTH
         GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_CUBE_MAP, Engine.skyRenderer.fbSkybox.getTexture(0));//SKYBOX CUBEMAP
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, this.preWaterDepthTex); //DEPTH PreWater
         Engine.drawFullscreenQuad();
@@ -250,7 +250,7 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture("SSR", "SSROutput", fbSSR.getTexture(0), 8);
             GLDebugTextures.readTexture("SSR", "SSRBlurred", blurred, 8);
             GLDebugTextures.readTexture("SSR", "SSRBlurCombined", fbSSRCombined.getTexture(0), 8);
-            GLDebugTextures.readTexture("SSR", "texDepth", this.fbFinal.getDepthTex(), 2);
+            GLDebugTextures.readTexture("SSR", "texDepth", this.fbBloomOut.getDepthTex(), 2);
             GLDebugTextures.readTexture("SSR", "texColor", fbDeferred.getTexture(0));
             GLDebugTextures.readTexture("SSR", "texNormals", Engine.getSceneFB().getTexture(1));
             GLDebugTextures.readTexture("SSR", "texMaterial", Engine.getSceneFB().getTexture(2));
@@ -259,7 +259,7 @@ public class FinalRenderer extends AbstractRenderer {
 
 
     public void renderFinal(World world, float fTime, FrameBuffer finalTarget) {
-        int outputColor = fbFinal.getTexture(0);
+        int outputColor = fbBloomOut.getTexture(0);
         if (smaa != null) {
             fbDeferred.bind();
             fbDeferred.clearColorBlack();
@@ -304,13 +304,13 @@ public class FinalRenderer extends AbstractRenderer {
     }
     
     public int renderNormals() {
-        fbFinal.bind();
-        fbFinal.clearFrameBuffer();
+        fbBloomOut.bind();
+        fbBloomOut.clearFrameBuffer();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbScene.getTexture(1));
         this.shaderNormals.enable();
         Engine.drawFullscreenQuad();
         GLDebugTextures.readTexture("fixNormals", "texNormals", Engine.getSceneFB().getTexture(1), 8);
-        return GLDebugTextures.readTexture("fixNormals", "output", fbFinal.getTexture(0), 8);
+        return GLDebugTextures.readTexture("fixNormals", "output", fbBloomOut.getTexture(0), 8);
     }
     public void copyPreWaterDepth() {
         FrameBuffer.unbindReadFramebuffer();
@@ -319,7 +319,7 @@ public class FinalRenderer extends AbstractRenderer {
         
     }
     public void copySceneDepthBuffer() {
-        fbFinal.bind();
+        fbBloomOut.bind();
 
         fbScene.bindRead();
         //             
@@ -351,7 +351,7 @@ public class FinalRenderer extends AbstractRenderer {
         }
         
 
-        fbFinal.bind();
+        fbBloomOut.bind();
 //        fbFinal.clearFrameBuffer();
         shaderBloomCombine.enable();
         
@@ -365,7 +365,7 @@ public class FinalRenderer extends AbstractRenderer {
 
         Engine.drawFullscreenQuad();
         if (GLDebugTextures.isShow()) {
-            GLDebugTextures.readTexture("Bloom", "bloomCombined", fbFinal.getTexture(0));
+            GLDebugTextures.readTexture("Bloom", "bloomCombined", fbBloomOut.getTexture(0));
         }
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
     }
@@ -657,14 +657,14 @@ public class FinalRenderer extends AbstractRenderer {
         }
 
         fbDeferred = FrameBuffer.make(this, displayWidth, displayHeight, GL_RGB16F);
-        fbFinal = new FrameBuffer(displayWidth, displayHeight);
-        fbFinal.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
-        fbFinal.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        fbFinal.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
-        fbFinal.setHasDepthAttachment();
-        fbFinal.setup(this);
-        fbFinal.bind();
-        fbFinal.clearFrameBuffer();
+        fbBloomOut = new FrameBuffer(displayWidth, displayHeight);
+        fbBloomOut.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        fbBloomOut.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
+        fbBloomOut.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        fbBloomOut.setHasDepthAttachment();
+        fbBloomOut.setup(this);
+        fbBloomOut.bind();
+        fbBloomOut.clearFrameBuffer();
         
         this.aoSize = GameMath.downsample(displayWidth, displayHeight, 1);
 

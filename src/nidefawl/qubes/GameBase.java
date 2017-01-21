@@ -965,7 +965,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (this.gui != null) {
             this.gui.onClose();
         }
-        System.out.println("gui is now "+gui);
         this.gui = gui;
         if (this.gui != null) {
             this.gui.setPos(0, 0);

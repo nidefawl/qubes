@@ -142,7 +142,8 @@ public class UniformBuffer {
             .addVec4() //globaloffset (xyz) time (w)
             .addVec4() //viewport (xyzw)
             .addVec4() //pxoffset (xyz) 1.0f (w)
-            .addVec4(); //prev camera (xyz) 1.0f (w)
+            .addVec4() //prev camera (xyz) 1.0f (w)
+            .addVec4(); //scene settings (x = dither, yzw = unused)
     static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
             .addVec4() //dayLightTime
             .addVec4() //posSun
@@ -281,6 +282,12 @@ public class UniformBuffer {
         uboSceneData.put(vCam.y-Engine.GLOBAL_OFFSET.y);
         uboSceneData.put(vCam.z-Engine.GLOBAL_OFFSET.z);
         uboSceneData.put(1F); // camera w component
+        
+        //scene settings
+        uboSceneData.put(Engine.isDither?1.0f:0.0f);//dither
+        uboSceneData.put(0);
+        uboSceneData.put(0);
+        uboSceneData.put(0);
         uboSceneData.update();
         
         LightInfo.reset();
@@ -309,12 +316,15 @@ public class UniformBuffer {
         LightInfo.put(Engine.lightDirection.z);
         LightInfo.put(1F);
 
-        float ambIntens = 0.1f;
-        float diffIntens = 0.1f;
-        float specIntens = 0.7F;
+//        float ambIntens = 0.1f;
+//        float diffIntens = 0.1f;
+//        float specIntens = 0.7F;
 //        float ambIntens = 0.12f;
 //        float diffIntens = 0.17F;
 //        float specIntens = 0.16F;
+        float ambIntens = 0.08f;
+        float diffIntens = 0.1F;
+        float specIntens = 0.1F;
         float fNight = GameMath.easeInOutCubic(nightNoon);
         ambIntens*=Math.max(0, 1.0f-fNight*0.98f);
         diffIntens*=1.0f-fNight*0.97f;
@@ -324,7 +334,7 @@ public class UniformBuffer {
         }
         LightInfo.put(1);
         for (int a = 0; a < 3; a++) {
-            LightInfo.put(diffIntens);
+            LightInfo.put(diffIntens*(1.0f-a/6.0f));
         }
         LightInfo.put(1);
         for (int a = 0; a < 3; a++) {

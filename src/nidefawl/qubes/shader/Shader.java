@@ -1,15 +1,19 @@
 package nidefawl.qubes.shader;
 
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BLOCK;
+import static org.lwjgl.opengl.GL43.glGetProgramResourceIndex;
+import static org.lwjgl.opengl.GL43.glShaderStorageBlockBinding;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.HashMap;
+import java.util.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Memory;
+import nidefawl.qubes.shader.DebugShaders.Var;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.IManagedResource;
 import nidefawl.qubes.util.Stats;
@@ -27,6 +31,8 @@ public abstract class Shader implements IManagedResource {
     private int setProgramUniformCalls;
     public boolean valid = true;
     private ShaderSourceBundle src;
+    private DebugShaders debugVars;
+    ShaderBuffer buffer;
     void incUniformCalls() {
         Stats.uniformCalls++;
     }
@@ -118,6 +124,9 @@ public abstract class Shader implements IManagedResource {
             if (lastBoundShader != this.shader) {
                 lastBoundShader = this.shader;
                 glUseProgram(this.shader);
+                if (this.debugVars != null) {
+                    this.debugVars.enable();
+                }
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUseProgramObjectARB "+this.name +" ("+this.shader+")");
 //                numUses++;
@@ -249,6 +258,17 @@ public abstract class Shader implements IManagedResource {
     }
     public ShaderSourceBundle getSource() {
         return this.src;
+    }
+
+
+    public void initDebug(DebugShaders debugVars) {
+        this.debugVars = debugVars;
+        if (this.debugVars != null) {
+            this.debugVars.initDebug(this);
+        }
+    }
+    public List<Var> readDebugVars() {
+        return this.debugVars != null ? this.debugVars.readBack() : Collections.<Var>emptyList();
     }
 }
         

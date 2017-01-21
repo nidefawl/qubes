@@ -20,6 +20,7 @@ public class LocalGameServer {
     public void start() {
         GameServer serv = this.server;
         if (serv != null) {
+            System.out.println("First halt previous session server");
             serv.stopServer(); 
         }
         serv = this.server = new GameServer(); 
@@ -36,11 +37,16 @@ public class LocalGameServer {
         this.server = null;
     }
     public boolean isShutdownDone() {
-        GameServer serv = this.shutdownServ;
-        if (serv != null) {
-            return this.shutdownServ.isFinished();
+        if (this.shutdownServ != null) {
+            if (this.shutdownServ.isFinished()) {
+                this.shutdownServ = null;
+                return true;
+            }
+            return false;
         }
-        return true;
+        if (this.server != null)
+            return false;
+        return this.server == null;
     }
     public Connection newMemoryConnection() throws IOException {
         GameServer serv = this.server;

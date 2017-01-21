@@ -62,6 +62,9 @@ public class FrameBuffer implements IManagedResource {
         this.textureType = textureType;
     }
     public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type, boolean clearBlack) {
+        return make(resMgr, renderWidth, renderHeight, type, clearBlack, false);
+    }
+    public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type, boolean clearBlack, boolean depthBuffer) {
         FrameBuffer f = new FrameBuffer(renderWidth, renderHeight);
         f.setColorAtt(GL_COLOR_ATTACHMENT0, type);
         f.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
@@ -70,6 +73,8 @@ public class FrameBuffer implements IManagedResource {
         } else {
             f.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
         }
+        if (depthBuffer)
+            f.setHasDepthAttachment();
         f.setup(resMgr);
         f.clearFrameBuffer();
         return f;
@@ -346,6 +351,17 @@ public class FrameBuffer implements IManagedResource {
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
         }
         FRAMEBUFFERS--;
+    }
+    public int detachColorTexture(int att) {
+        if (colorAttTextures.length <= att || colorAttFormats[att] == 0) {
+            throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " is not set");
+        }
+        if (att+1 == this.numColorTextures) {
+            this.numColorTextures--;
+        }
+        int t = this.colorAttTextures[att];
+        this.colorAttTextures[att] = 0;
+        return t;
     }
 
     public int getWidth() {

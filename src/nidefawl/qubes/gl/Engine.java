@@ -75,7 +75,7 @@ public class Engine {
     public static float znear = 0.1f;
     public static float zfar = 1024F;
 
-    static TesselatorState fullscreenquad;
+    static TesselatorState[] fullscreenquads;
     static TesselatorState quad;
 
     public static Frustum        camFrustum;
@@ -121,6 +121,7 @@ public class Engine {
     static boolean isVAOSupportingBindless=false;
     static boolean clientStateBindlessElement=false;
     static boolean clientStateBindlessAttrib=false;
+    public static boolean isDither=true;
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
     }
@@ -322,30 +323,58 @@ public class Engine {
         updateOrthoMatrix(displayWidth, displayHeight);
         
 
-        if (fullscreenquad == null) {
-            fullscreenquad = new TesselatorState(GL15.GL_STATIC_DRAW);
+        if (fullscreenquads == null) {
+            fullscreenquads = new TesselatorState[4];
+            for (int i = 0; i < fullscreenquads.length; i++)
+                fullscreenquads[i] = new TesselatorState(GL15.GL_STATIC_DRAW);
+            
         }
         if (quad == null) {
             quad = new TesselatorState(GL15.GL_STATIC_DRAW);
         }
-        Tess.instance.resetState();
+        Tess tess = Tess.instance;
+        tess.resetState();
         int tw = Game.displayWidth;
         int th = Game.displayHeight;
         float x = 0;
         float y = 0;
-        Tess.instance.setColor(0xFFFFFF, 0xff);
-        Tess.instance.add(x + tw, y, 0, 1, 1);
-        Tess.instance.add(x, y, 0, 0, 1);
-        Tess.instance.add(x, y + th, 0, 0, 0);
-        Tess.instance.add(x + tw, y + th, 0, 1, 0);
-        Tess.instance.draw(GL_QUADS, fullscreenquad);
-        Tess.instance.resetState();
-        Tess.instance.setColor(0xFFFFFF, 0xff);
-        Tess.instance.add(1, 0, 0, 1, 0);
-        Tess.instance.add(0, 0, 0, 0, 0);
-        Tess.instance.add(0, 1, 0, 0, 1);
-        Tess.instance.add(1, 1, 0, 1, 1);
-        Tess.instance.draw(GL_QUADS, quad);
+        tess.resetState();
+        //Draw some quads with fullscreen resultions, 2 different windings, flipped/non-flipped y texcoord
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y,      0, 1, 1);
+        tess.add(x,        y,      0, 0, 1);
+        tess.add(x,        y + th, 0, 0, 0);
+        tess.add(x + tw,   y + th, 0, 1, 0);
+        tess.draw(GL_QUADS, fullscreenquads[0]); // == Engine.drawFullscreenQuad
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y,      0, 1, 0);
+        tess.add(x,        y,      0, 0, 0);
+        tess.add(x,        y + th, 0, 0, 1);
+        tess.add(x + tw,   y + th, 0, 1, 1);
+        tess.draw(GL_QUADS, fullscreenquads[1]);
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y + th, 0, 1, 1);
+        tess.add(x,        y + th, 0, 0, 1);
+        tess.add(x,        y,      0, 0, 0);
+        tess.add(x + tw,   y,      0, 1, 0);
+        tess.draw(GL_QUADS, fullscreenquads[2]);
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y + th, 0, 1, 0);
+        tess.add(x,        y + th, 0, 0, 0);
+        tess.add(x,        y,      0, 0, 1);
+        tess.add(x + tw,   y,      0, 1, 1);
+        tess.draw(GL_QUADS, fullscreenquads[3]);
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(1, 0, 0, 1, 0);
+        tess.add(0, 0, 0, 0, 0);
+        tess.add(0, 1, 0, 0, 1);
+        tess.add(1, 1, 0, 1, 1);
+        tess.draw(GL_QUADS, quad);
+        tess.resetState();
     }
 
     /**
@@ -383,10 +412,17 @@ public class Engine {
         ShaderBuffer.rebindShaders();
     }
     public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
+        updateOrthoMatrix(displayWidth, displayHeight, false);
+    }
+    public static void updateOrthoMatrix(float displayWidth, float displayHeight, boolean flipY) {
         orthoMV.setIdentity();
         orthoMV.update();
         orthoP.setZero();
-        Project.orthoMat(0, displayWidth, 0, displayHeight, -4200, 200, orthoP);
+        Project.orthoMat(0, displayWidth, flipY?displayHeight:0, flipY?0:displayHeight, -4200, 200, orthoP);
+//        if (flipY) {
+//            orthoP.m11*=-1.0;
+//            orthoP.m31*=-1.0;
+//        }
         orthoP.update();
         Matrix4f.mul(orthoP, orthoMV, orthoMVP);
         orthoMVP.update();
@@ -395,12 +431,19 @@ public class Engine {
         ortho3DMV.update();
         
         ortho3DP.setZero();
-        Project.orthoMat(0, displayWidth, 0, displayHeight, -400, 400, ortho3DP);
+        Project.orthoMat(0, displayWidth, flipY?displayHeight:0, flipY?0:displayHeight, -400, 400, ortho3DP);
+//        if (flipY) {
+//            ortho3DP.m11*=-1.0;
+//            ortho3DP.m31*=-1.0;
+//        }
         ortho3DP.update();
     }
 
     public static void drawFullscreenQuad() {
-        fullscreenquad.drawQuads();
+        fullscreenquads[0].drawQuads();
+    }
+    public static void drawFSQuad(int n) {
+        fullscreenquads[n].drawQuads();
     }
 
     public static void drawQuad() {
@@ -758,6 +801,12 @@ public class Engine {
             GL11.glEnable(GL11.GL_SCISSOR_TEST);
         }
     }
+    public static boolean isDepthMask() {
+        return isDepthMask;
+    }
+    public static boolean isBlend() {
+        return isBlend;
+    }
     public static void restoreDepthMask() {
         GL11.glDepthMask(isDepthMask);
     }
@@ -787,6 +836,9 @@ public class Engine {
 //            System.out.println(Stats.fpsCounter + ", "+w+","+h);
 //            Thread.dumpStack();
         }
+    }
+    public static int[] getViewport() {
+        return viewport;
     }
 
     public static void setDefaultViewport() {

@@ -32,7 +32,7 @@ public class GameServer implements Runnable, IErrorHandler {
 	Thread mainThread;
 	Thread handshakeThread;
 	NetworkServer networkServer;
-	private boolean running;
+	private volatile boolean running = true;
     private boolean finished = false;
     private boolean listening = false;
     private WorldServer[] worlds;
@@ -57,7 +57,6 @@ public class GameServer implements Runnable, IErrorHandler {
 	@Override
 	public void run() {
 		try {
-			this.running = true;
 			load();
 			CompressThread.startNewThread(this);
 			networkServer.startListener();

@@ -83,6 +83,7 @@ public class ChunkPopulator implements IChunkPopulator {
         bl4.add(Block.cattail);
         bl4.add(Block.cattail);
         bl4.add(Block.grassbush);
+        bl4.add(Block.aloe_vera);
         List<Integer> list = new ArrayList<Integer>();
         list.add(0);
         list.add(0);
@@ -106,7 +107,7 @@ public class ChunkPopulator implements IChunkPopulator {
         if (rand.nextInt(44) > 22) {
             bush = Block.thingrass;
         }
-        int amt = 223;
+        int amt = 44;
         for (int i = 0; i < amt; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
@@ -137,12 +138,15 @@ public class ChunkPopulator implements IChunkPopulator {
                         if (rand.nextInt(44) > 22) {
                             bush = Block.thingrass;
                         }
+                        if (rand.nextInt(34) > 22) {
+                            bush = Block.aloe_vera;
+                        }
                     }
                 }
                 a++;
             }   
         }
-        int idx = r.nextInt(bl.size()*5);
+        int idx = r.nextInt(bl.size()*9);
         if (idx < bl.size()) {
             Block bg = bl.get(idx);
             for (int i = 0; i < 20; i++) {
@@ -156,10 +160,10 @@ public class ChunkPopulator implements IChunkPopulator {
                 }   
             }
         }
-        if (r.nextInt(25) == 0) {
+        if (r.nextInt(12) == 0) {
             int idx2 = r.nextInt(bl2.size());
             Block bg = bl2.get(idx2);
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 60; i++) {
                 int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
                 int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
                 int h = world.getHeight(x, z);
@@ -171,10 +175,10 @@ public class ChunkPopulator implements IChunkPopulator {
                 }   
             }
         }
-        else if (r.nextInt(125) == 0) {
+        if (r.nextInt(12) == 0) {
             int idx2 = r.nextInt(bl3.size());
             Block bg = bl3.get(idx2);
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 60; i++) {
                 int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
                 int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
                 int h = world.getHeight(x, z);

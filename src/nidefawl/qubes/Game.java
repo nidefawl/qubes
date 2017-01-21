@@ -1123,7 +1123,7 @@ public class Game extends GameBase {
         if (this.statsCached != null) {
             this.statsCached.refresh();
         }
-        if (System.currentTimeMillis()-lastShaderLoadTime >=1200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+        if (System.currentTimeMillis()-lastShaderLoadTime >=2200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
             int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
             String s = String.format("%s - Display %dx%d - Window %dx%d - SceneFB %dx%d - Gui %dx%d", 
@@ -1141,7 +1141,7 @@ public class Game extends GameBase {
 //          Engine.skyRenderer.initShaders();
 //          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();

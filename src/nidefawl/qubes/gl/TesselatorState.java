@@ -12,5 +12,8 @@ public class TesselatorState extends AbstractTesselatorState {
     public GLVBO getVBO() {
         return vbo;
     }
+    public void release() {
+        this.vbo.release();
+    }
 
 }

@@ -49,10 +49,11 @@ public class ShaderBuffer {
     private long[] fences;
     
     public ShaderBuffer(String name) {
-        this(name, 0);
+        this(name, 0, true);
     }
-    ShaderBuffer(String name, int len) {
-        buffers.add(this);
+    ShaderBuffer(String name, int len, boolean isGlobal) {
+        if (isGlobal)
+            buffers.add(this);
         this.bindingPoint = Engine.getBindingPoint(name);
         this.name = name;
         this.len = len;
@@ -342,6 +343,15 @@ public class ShaderBuffer {
     public int offset() {
         return this.framePooled ? (this.frameOffset*this.frameLen) : 0;
     }
+    public int getBuffer() {
+        return this.buffer;
+    }
 
+    public ByteBuffer getMappedBuffer() {
+        return this.mappedBuffer;
+    }
+    public FloatBuffer getMappedBufferFloat() {
+        return this.mappedBufferFloat;
+    }
 
 }

@@ -29,9 +29,6 @@ public class GuiLoadingServer extends Gui {
     @Override
     public void update() {
         super.update();
-        if (Game.instance.server.isShutdownDone()) {
-            Game.instance.showGUI(null);
-        }
         if (Game.instance.server.isReady()) {
             Game.instance.connectTo("localhost:21087");
         }

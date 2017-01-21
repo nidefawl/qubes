@@ -238,6 +238,15 @@ public class Vector4f {
     public String toString() {
         return "Vector4f: " + x + " " + y + " " + z + " " + w;
     }
+    public String toShortString(int i) {
+        if (i <= 1)
+            return ""+x;
+        if (i == 2)
+            return x + " " + y;
+        if (i == 3)
+            return x + " " + y + " " + z;
+        return x + " " + y + " " + z + " " + w;
+    }
 
     /**
      * @return x
