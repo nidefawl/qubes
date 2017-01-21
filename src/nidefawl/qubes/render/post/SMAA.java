@@ -10,14 +10,13 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameError;
@@ -33,10 +32,13 @@ public class SMAA {
     public Shader       shaderAAEdge;
     public Shader       shaderAABlendWeight;
     public Shader       shaderAANeighborBlend;
+    private FrameBuffer fbFlipInput;
     private FrameBuffer fbAAEdge;
     private FrameBuffer fbAAWeightBlend;
     private int areaTex;
     private int searchTex;
+
+    private boolean srgb;
     /**
      * 
      */
@@ -47,6 +49,10 @@ public class SMAA {
     final static String[] qualDefines = { "SMAA_PRESET_LOW", "SMAA_PRESET_MEDIUM", "SMAA_PRESET_HIGH", "SMAA_PRESET_ULTRA" };
     public static String[] qualDesc = { "Low", "Medium", "High", "Ultra" };
     public SMAA(final int quality) {
+        this(quality, false);
+    }
+    public SMAA(final int quality, boolean srgb) {
+        this.srgb = srgb;
         AssetManager assetMgr = AssetManager.getInstance();
         AssetBinary areaTexData = assetMgr.loadBin("textures/areatex.bin");
         AssetBinary searchTexData = assetMgr.loadBin("textures/searchtex.bin");
@@ -64,6 +70,7 @@ public class SMAA {
         
 
         try {
+            System.out.println("l");
             Shader new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
             Shader new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
             Shader new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
@@ -87,23 +94,13 @@ public class SMAA {
             throw new GameError(e);
         }
     }
+    
     public void init(int displayWidth, int displayHeight) {
-        fbAAEdge = new FrameBuffer(displayWidth, displayHeight);
-        fbAAEdge.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
-        fbAAEdge.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        fbAAEdge.setClearColor(GL_COLOR_ATTACHMENT0,0F, 0F, 0F, 0F);
-        fbAAEdge.setHasDepthAttachment();
-        fbAAEdge.setup(mgr);
-        fbAAEdge.bind();
-        fbAAEdge.clearColor();
-        fbAAWeightBlend = new FrameBuffer(displayWidth, displayHeight);
-        fbAAWeightBlend.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
-        fbAAWeightBlend.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        fbAAWeightBlend.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
-        fbAAWeightBlend.setHasDepthAttachment();
-        fbAAWeightBlend.setup(mgr);
-        fbAAWeightBlend.bind();
-        fbAAWeightBlend.clearColor();
+//        this.fbFlipInput = FrameBuffer.make(mgr, displayWidth, displayHeight, GL_RGBA8);
+        int format = srgb?GL21.GL_SRGB8_ALPHA8:GL_RGBA8;
+        this.fbFlipInput = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, false);
+        this.fbAAEdge = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, true);
+        this.fbAAWeightBlend = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, true);
         FrameBuffer.unbindFramebuffer();
     }
     
@@ -120,13 +117,6 @@ public class SMAA {
         }
 
         byte[] data =  dataIn;
-//        byte[] data = new byte[dataIn.length];
-//      for (int y = 0; y < h; y++) {
-//          int srcY = h - 1 - y;
-//          for (int x = 0; x < stride; x++) {
-//              data[y*stride+x] = dataIn[srcY*stride+x];
-//          }
-//      }      
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, i);
@@ -160,10 +150,9 @@ public class SMAA {
             if (!b) {
                 System.err.println("NEED DEPTH TESTING!");
             }
-//            b = glGetBoolean(GL_BLEND);
-//            if (!b) {
-//                System.err.println("NEED GL_BLEND for discard!");
-//            }
+            if (Engine.isBlend()) {
+                System.err.println("NEED disabled blend!");
+            }
             b = glGetBoolean(GL_DEPTH_WRITEMASK);
             if (!b) {
                 System.err.println("NEED GL_DEPTH_WRITEMASK for discard!");
@@ -174,15 +163,55 @@ public class SMAA {
             }
            
         }
-        
-        
+
+        Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, true);
+        UniformBuffer.updateOrtho();
+        fbFlipInput.bind();
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
+        Shaders.textured.enable();
+        Engine.drawFSQuad(3);
+        if (debugTexture != 1) {
+            renderSMAA(fbFlipInput.getTexture(0), debugTexture, finalTarget);
+        }
+        Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, false);
+        UniformBuffer.updateOrtho();
+        if (debugTexture > 0) {
+            if (finalTarget == null) {
+                FrameBuffer.unbindFramebuffer();
+            } else {
+                finalTarget.bind();
+                finalTarget.clearFrameBuffer();
+            }
+            int tex = 0;
+            switch (debugTexture) {
+                case 1:
+                    Shaders.textured.enable();
+                    tex = fbFlipInput.getTexture(0);
+                    break;
+                case 2:
+                    Shaders.textured_to_srgb.enable();
+                    tex = fbAAEdge.getTexture(0);
+                    break;
+                case 3:
+                    Shaders.textured_to_srgb.enable();
+                    tex = fbAAWeightBlend.getTexture(0);
+                    break;
+            }
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, tex);
+            Engine.drawFSQuad(1);
+        }
+    }
+    public void renderSMAA(int texture, int debugTexture, FrameBuffer finalTarget) {
         
         
         fbAAEdge.bind();
         fbAAEdge.clearFrameBuffer();
         shaderAAEdge.enable();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
-        Engine.drawFullscreenQuad();
+        Engine.drawFSQuad(2);
+        if (debugTexture == 1) {
+            return;
+        }
         fbAAWeightBlend.bind();
         fbAAWeightBlend.clearFrameBuffer();
         
@@ -197,30 +226,21 @@ public class SMAA {
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, this.searchTex);
         
         glDepthFunc(GL_EQUAL); // only draw equal z fragments, +30% speed
-        
-        Engine.drawFullscreenQuad();
+//        Shaders.colored.enable();
+        Engine.drawFSQuad(2);
+        glDepthFunc(GL_LEQUAL);
+        if (debugTexture == 2) {
+            return;
+        }
         if (finalTarget == null) FrameBuffer.unbindFramebuffer();
         else {
             finalTarget.bind();
             finalTarget.clearFrameBuffer();
         }
-        glDepthFunc(GL_LEQUAL);
-        if (debugTexture == 1) {
-            Shaders.textured.enable();
-            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbAAEdge.getTexture(0));
-            Engine.drawFullscreenQuad();
-            return;
-        }
-        if (debugTexture == 2) {
-            Shaders.textured.enable();
-            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbAAWeightBlend.getTexture(0));
-            Engine.drawFullscreenQuad();
-            return;
-        }
         shaderAANeighborBlend.enable();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, fbAAWeightBlend.getTexture(0));
-        Engine.drawFullscreenQuad();
+        Engine.drawFSQuad(3);
     }
 
 
