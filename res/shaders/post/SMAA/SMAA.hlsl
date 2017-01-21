@@ -559,9 +559,12 @@ SamplerState PointSampler { Filter = MIN_MAG_MIP_POINT; AddressU = Clamp; Addres
 #if defined(SMAA_GLSL_3) || defined(SMAA_GLSL_4)
 #define SMAATexture2D(tex) sampler2D tex
 #define SMAATexturePass2D(tex) tex
-#define SMAASampleLevelZero(tex, coord) textureLod(tex, coord, 0.0)
-#define SMAASampleLevelZeroPoint(tex, coord) textureLod(tex, coord, 0.0)
-#define SMAASampleLevelZeroOffset(tex, coord, offset) textureLodOffset(tex, coord, 0.0, offset)
+// #define SMAASampleLevelZero(tex, coord) textureLod(tex, coord, 0.0)
+// #define SMAASampleLevelZeroPoint(tex, coord) textureLod(tex, coord, 0.0)
+// #define SMAASampleLevelZeroOffset(tex, coord, offset) textureLodOffset(tex, coord, 0.0, offset)
+#define SMAASampleLevelZero(tex, coord) texture(tex, coord)
+#define SMAASampleLevelZeroPoint(tex, coord) texture(tex, coord)
+#define SMAASampleLevelZeroOffset(tex, coord, offset) texture(tex, float2(coord + offset * SMAA_RT_METRICS.xy))
 #define SMAASample(tex, coord) texture(tex, coord)
 #define SMAASamplePoint(tex, coord) texture(tex, coord)
 #define SMAASampleOffset(tex, coord, offset) texture(tex, coord, offset)
