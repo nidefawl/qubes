@@ -107,7 +107,7 @@ public class ChunkPopulator implements IChunkPopulator {
         if (rand.nextInt(44) > 22) {
             bush = Block.thingrass;
         }
-        int amt = 44;
+        int amt = 122;
         for (int i = 0; i < amt; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
