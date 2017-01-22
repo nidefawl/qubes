@@ -2,8 +2,8 @@
 
 //Audio by Dave_Hoskins
 
-#define ITR 700
-#define FAR 120.
+#define ITR 3000
+#define FAR 140.
 #define time iGlobalTime
 
 /*
@@ -198,9 +198,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec2 p = fragCoord.xy/iResolution.xy-0.5;
     vec2 q = fragCoord.xy/iResolution.xy;
     p.x*=iResolution.x/iResolution.y;
-    
-    vec3 rd=pass_rayDir;
-    vec3 ro = pass_rayOrigin;
+
+    vec3 rd= GET_RD();
+    vec3 ro = GET_RO();
         // ro.y -= height(ro.zx)+0.05;
 
     vec3 ligt = normalize( vec3(.5, .05, -.2) );

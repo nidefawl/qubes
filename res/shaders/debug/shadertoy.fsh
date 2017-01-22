@@ -26,8 +26,16 @@ vec4 lookupTex(sampler2D sampler0, vec2 texcoord) {
 vec4 lookupTex(sampler2D sampler0, vec2 texcoord, float offset) {
   return texture(sampler0, vec2(texcoord.x, 1-texcoord.y), offset);
 }
+vec3 GET_RD() {
+	return normalize(mat3(in_matrix_3D.mv_inv)*(in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 1.0f, 1.0f)).xyz);
+}
+vec3 GET_RO() {
+    vec3 ro = (mat3(in_matrix_3D.mv_inv)*(in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 0.0f, 1.0f)).xyz);
+    ro.xyz += CAMERA_POS.xyz;
+    return ro;
+}
 
-#pragma include "st_dither_test.fsh"
+#pragma include "st_lightcolumns.fsh"
 
 void main() {
 	// out_Color=vec4(1);
