@@ -162,6 +162,7 @@ vec4 raytrace3(vec3 fragpos, vec3 normal,vec3 sky/*, vec3 sky_int*/) {
     vec4 color = vec4(sky, 0);
     float alphaVal = 0.0;
     vec3 start = fragpos;
+    float depthAt = fragpos.z;
     vec3 rvector = normalize(reflect(normalize(fragpos), normalize(normal)));
     vec3 vector = stp * rvector;
     vec3 oldpos = fragpos;
@@ -179,11 +180,16 @@ vec4 raytrace3(vec3 fragpos, vec3 normal,vec3 sky/*, vec3 sky_int*/) {
     	float de = texture(texDepthPreWater, pos.st).r;
         vec3 spos = vec3(pos.st, de);
         spos = nvec3(in_matrix_3D.proj_inv * nvec4(spos * 2.0 - 1.0));
+        // if (spos.z > depthAt) {
+        //     color.rgb = sky;
+        //     color.a=1;
+        //     break;
+        // }
         float err = abs(length(fragpos.xyz-spos.xyz));
 		if(err < pow(length(vector)*1.85,1.15)){
 
                 sr++;
-                if(sr >= maxf){
+                if(sr >= maxf&&spos.z < depthAt){
                     float border = clamp(pow(cdist(pos.st), 10.0), 0.0, 1.0);
 				    uvec4 blockinfo = texture(texMaterial, pos.st, 0);
 					uint blockidPixel = BLOCK_ID(blockinfo);
@@ -191,7 +197,7 @@ vec4 raytrace3(vec3 fragpos, vec3 normal,vec3 sky/*, vec3 sky_int*/) {
 					float isSky = IS_SKY(blockidPixel);
 					// // float land = texture(gaux1, pos.st).g;
 					// // land = float(land < 0.03);
-					spos.z = mix(2000.0, fragpos.z, min(1.0, isWater+isSky));
+					// spos.z = mix(2000.0, fragpos.z, min(1.0, isWater+isSky));
                     color.a = 1.0;
                     color.rgb=mix(texture(texColor, pos.st).rgb, sky, max(0, min(1, isWater+isSky+border)));
 					// #ifdef Cloud

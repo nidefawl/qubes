@@ -67,65 +67,6 @@ in float moonSunFlip;
 out vec4 out_Color;
 
 
-/*
-
-float getSoftShadow() {
-
-    float gdistance = max((length(prop.position.xyz)-26.0f)/17.0f, 0);
-    vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], worldPos);
-    vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], worldPos);
-    vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], worldPos);
-
-    vec2 cPos = pass_texcoord*2.0-1.0;
-    float dst = sqrt(cPos.x*cPos.x+cPos.y*cPos.y);
-    float weight = max(0.68, 1.3-dst);
-
-    if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && prop.linearDepth<in_matrix_shadow.shadow_split_depth.x*weight) {
-        v.z-=0.00004f;
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, vec3(v.xy*0.5+offs, v.z));        
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
-    }
-    if (clamp(v2.x, clampmin, clampmax) == v2.x && clamp(v2.z, clampmin, clampmax) == v2.z && prop.linearDepth<in_matrix_shadow.shadow_split_depth.y*weight) {
-    // v.z *= (1.0f-0.001f * gdistance);
-        v2.z-=0.00007f;
-
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, vec3(v2.xy*0.5+vec2(0.5,0)+offs, v2.z));        
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
-    }
-    if (clamp(v3.x, clampmin, clampmax) == v3.x && clamp(v3.z, clampmin, clampmax) == v3.z && prop.linearDepth<in_matrix_shadow.shadow_split_depth.z) {
-    // v.z *= (1.0f-0.001f * gdistance);
-        // v3.z-=bias;
-        v2.z-=0.00007f;
-
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                s += texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5)+offs,v3.z));   
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
-
-        // return texture(texShadow, vec3(v3.xy*0.5+vec2(0,0.5),v3.z));   
-    }
-    return 1;
-}
-*/
 float expToLinearDepth(in float depth)
 {
     return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
@@ -148,6 +89,9 @@ const float clampmax = 1-clampmin;
 bool canLookup(in vec4 v, in float zPos, in float mapZ) {
     return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && zPos < mapZ;
 }
+
+
+
 #define SAMPLE_DISTANCE ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_TAP_RANGE 1
 #define SOFT_SHADOW_TAP_RANGE2 1
@@ -303,33 +247,6 @@ float ComputeScattering(float lightDotView)
     result /= (4.0f * pi * pow(1.0f + G_SCATTERING * G_SCATTERING - (2.0f * G_SCATTERING) * lightDotView, 1.7f));
     return result;
 }
-float specularCookTorrance( float roughnessValue, 
-    float fresnelReflectance, 
-    float IOR, 
-    vec3 surfacePosition, vec3 surfaceNormal, vec3 lightDirection, float lambertFactor ) {
-    vec3 viewDirection = normalize( -surfacePosition );
-    vec3 halfDirection = normalize( lightDirection + viewDirection );
-
-    float NdotH = max(dot(surfaceNormal, halfDirection), 0.0); 
-    float NdotV = max(dot(surfaceNormal, viewDirection), 0.0);
-    float VdotH = max(dot(viewDirection, halfDirection), 0.0);
-    
-    float roughnessSquared = roughnessValue * roughnessValue;
-
-    float NH2 = 2.0 * NdotH;
-    float g1 = (NH2 * NdotV) / VdotH;
-    float g2 = (NH2 * lambertFactor) / VdotH;
-    float geoAtt = min(1.0, min(g1, g2));
-    float r1 = 1.0 / ( 4.0 * roughnessSquared * pow(NdotH, 4.0));
-    float r2 = (NdotH * NdotH - 1.0) / (roughnessSquared * NdotH * NdotH);
-    float roughness = r1 * exp(r2);
-    float fresnel = pow(1.0 - VdotH, 5.0);
-    fresnel *= (1.0 - fresnelReflectance);
-    fresnel += fresnelReflectance;
-
-    float factor = (fresnel * geoAtt * roughness) / (NdotV * lambertFactor * IOR);
-    return factor;
-}
 
 float VolumetricLight() {
     vec4 ditherPattern[4];
@@ -376,11 +293,82 @@ float VolumetricLight() {
     accumFog /= NB_STEPS;
     return clamp(accumFog, 0, 1);
 }
+
+#define EDO_Size 20.0                               //Set ambient occlusion size. [10.0 20.0 30.0 40.0 50.0 60.0]
+#define EDOPASS 3.0
+#define EDOSTR 1.0   
+#define EDO   
+#ifdef EDO
+
+float pw = 1.0/ in_scene.viewport.x;
+float ph = 1.0/ in_scene.viewport.y;
+float ld(float depth) {
+    return (2.0 * in_scene.viewport.z) / (in_scene.viewport.w + in_scene.viewport.z - depth * (in_scene.viewport.w - in_scene.viewport.z));
+}
+float getdist(float rng, vec2 texcoord) {
+    return 1-clamp(ld(texture(texDepth,texcoord.xy).r)/rng*in_scene.viewport.w,0,1);
+}
+
+float getnoise(vec2 pos) {
+    return abs(fract(sin(dot(pos ,vec2(18.9898f,28.633f))) * 4378.5453f));
+}
+
+float edepth(vec2 coord) {
+    return texture(texDepth,coord).z;
+}
+float edo() {
+    vec2 texcoord = pass_texcoord.st;
+    //edge detect
+    float total = 0;
+    float d = edepth(texcoord.xy);
+    float dtresh = 1.0/(in_scene.viewport.w-in_scene.viewport.z)/1.0;
+    vec4 dc = vec4(d,d,d,d);
+    vec4 sa;
+    vec4 sb;
+    
+    float dist = (getdist(32,texcoord)*2+getdist(512,texcoord))/3;
+    float noise = 1+getnoise(texcoord.xy)*3/EDOPASS;
+    float border = floor(EDO_Size/EDOPASS*in_scene.viewport.x/1280);
+    float strn = border*dist*noise;
+    
+    float e = 0;
+    
+    for (int i = 0; i < EDOPASS; i++) {
+        sa.x = edepth(texcoord.xy + vec2(-pw,-ph)*strn*i);
+        sa.y = edepth(texcoord.xy + vec2(pw,-ph)*strn*i);
+        sa.z = edepth(texcoord.xy + vec2(-pw,0.0)*strn*i);
+        sa.w = edepth(texcoord.xy + vec2(0.0,ph)*strn*i);
+        // if (sa.w > d) {
+        //     sa.w = 1.0;
+        // }
+        //opposite side samples
+        sb.x = edepth(texcoord.xy + vec2(pw,ph)*strn*i);
+        sb.y = edepth(texcoord.xy + vec2(-pw,ph)*strn*i);
+        // if (sb.y > d) {
+        //     sb.y = 1.0;
+        // }
+        sb.z = edepth(texcoord.xy + vec2(pw,0.0)*strn*i);
+        sb.w = edepth(texcoord.xy + vec2(0.0,-ph)*strn*i);
+        
+        vec4 dd = (2.0* dc - sa - sb) - dtresh;
+        dd = vec4(step(dd.x,0.0),step(dd.y,0.0),step(dd.z,0.0),step(dd.w,0.0));
+        
+        e = clamp(dot(dd,vec4(0.25f)),0.0,1.0);
+        e = e*(dist)+1-dist;
+        total += e;
+    }
+    total /= EDOPASS;
+    return total;
+}
+#endif
 #define SHADE
 void main() {
     vec4 sceneColor = texture(texColor, pass_texcoord);
 	prop.albedo = sceneColor.rgb;
-
+    // if (RENDER_PASS < 1) {
+    //     out_Color = vec4(vec3(edo()*0.1), 1.0);
+    //     return;
+    // }
     float alpha = 1.0;
 #ifdef SHADE
     prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
@@ -404,7 +392,7 @@ void main() {
     float fIsSky = isCloud;
     bool isSky = bool(fIsSky==1.0f);
 #if RENDER_PASS < 1
-    vec4 ssao =texture(texAO, pass_texcoord);
+    vec4 ssao =vec4(edo());//texture(texAO, pass_texcoord);
 #else
     vec4 ssao = vec4(1);
 #endif
@@ -570,7 +558,7 @@ void main() {
         finalLight += lum* (mix(1.0, occlusion, 0.19)) * blockLight*isLight*0.6;
         finalLight+=isIllum*4.0;
         finalLight += vec3(1.0, 0.9, 0.7) * pow(blockLightLvl/8.0,2.0)*((1.0-isLight*0.8)*blockLightConst);
-        float mixSSAO = 0.1;
+        float mixSSAO = 0.1+shadow*0.7;
         finalLight *= max(mixSSAO+ssao.r*(1.0-mixSSAO), isWater+isBackface*0.5);
         finalLight+=prop.light.rgb*(occlusion);
         // finalLight*=2;
