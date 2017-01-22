@@ -6,9 +6,7 @@ import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL40;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
@@ -1039,6 +1037,39 @@ public class Game extends GameBase {
 
 
                 
+                glEnable(GL_CULL_FACE);
+                Engine.setBlend(false);
+            }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("Final");
+            GLDebugTextures selTex = GLDebugTextures.getSelected();
+//            &&ticksran%40<20
+            if (selTex != null) {
+                if (finalTarget == null) FrameBuffer.unbindFramebuffer();
+                else {
+                    finalTarget.bind();
+                    finalTarget.clearFrameBuffer();
+                }
+                GLDebugTextures.drawFullScreen(selTex);
+                if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
+                    Engine.lightCompute.renderDebug();
+                }
+            } else {
+                Engine.outRenderer.renderFinal(this.world, fTime, finalTarget);
+            }
+            if (VR_SUPPORT) {
+
+                finalTarget.bind();
+                FrameBuffer bloomOut = Engine.outRenderer.fbBloomOut;//bloom has our current scene depth information
+                bloomOut.bindRead();
+                GL30.glBlitFramebuffer(0, 0, bloomOut.getWidth(), bloomOut.getHeight(), 0, 0, finalTarget.getWidth(), finalTarget.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                FrameBuffer.unbindReadFramebuffer();
+                FrameBuffer.unbindFramebuffer();
+
+
+                finalTarget.bind();
+                Engine.setBlend(true);
+                glDisable(GL_CULL_FACE);
                 if (VR_SUPPORT) {
                     for (int i = 0; i < 1; i++) {
                         PositionMouseOver ctrlPos = getMouseOver(i);
@@ -1073,23 +1104,7 @@ public class Game extends GameBase {
                 
                 glEnable(GL_CULL_FACE);
                 Engine.setBlend(false);
-            }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("Final");
-            GLDebugTextures selTex = GLDebugTextures.getSelected();
-//            &&ticksran%40<20
-            if (selTex != null) {
-                if (finalTarget == null) FrameBuffer.unbindFramebuffer();
-                else {
-                    finalTarget.bind();
-                    finalTarget.clearFrameBuffer();
-                }
-                GLDebugTextures.drawFullScreen(selTex);
-                if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
-                    Engine.lightCompute.renderDebug();
-                }
-            } else {
-                Engine.outRenderer.renderFinal(this.world, fTime, finalTarget);
+            
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();

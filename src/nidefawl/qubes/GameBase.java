@@ -1092,7 +1092,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             setRenderResolution(displayWidth, displayHeight);
             Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
             Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
-            Engine.outRenderer.initShaders();
+            if (Engine.outRenderer != null)
+                Engine.outRenderer.initShaders();
         } else if (VR_SUPPORT && !hadVR) {
             fixedGUISize = true;
             guiWidth = 1920;

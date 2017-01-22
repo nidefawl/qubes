@@ -260,12 +260,12 @@ public class FinalRenderer extends AbstractRenderer {
 
     public void renderFinal(World world, float fTime, FrameBuffer finalTarget) {
         int outputColor = fbBloomOut.getTexture(0);
-        if (smaa != null) {
+        if (smaa != null) { // render to fbDefered, contents no longer used
             fbDeferred.bind();
             fbDeferred.clearColorBlack();
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
             outputColor = fbDeferred.getTexture(0);
-        } else {
+        } else { // render to backbuffer or final target
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
             if (finalTarget == null) FrameBuffer.unbindFramebuffer();
             else {
@@ -283,7 +283,7 @@ public class FinalRenderer extends AbstractRenderer {
             this.smaa.render(outputColor, 0, finalTarget);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         }
-
+        
         this.frame++;
         
         

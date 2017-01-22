@@ -26,16 +26,20 @@ public class VRGui {
     public void update(Matrix4f pose, Vector3f camPos, PositionMouseOver ctrlPos) {
         Engine.composeModelView(VR.pose, camPos, true, tmp);
         tmp.invert();
-        float z = -8;
-        this.pos.set(0, 0, z);
+        float z = -2;
+        float y = 1;
+        this.pos.set(0, y, z);
         Matrix4f.transform(tmp, this.pos, this.pos);
         normal.set(0, 0, 1);
         hasHit = false;
         if (ctrlPos.vDir != null) {
-            float f = Vector3f.dot(this.normal, ctrlPos.vDir);
-            if (Math.abs(f) > 0.0001f) {
+            float nd = Vector3f.dot(this.normal, ctrlPos.vDir);
+            if (nd < -0.0001f) {
                 Vector3f.sub(pos, ctrlPos.vOrigin, vTmp);
-                float t = Vector3f.dot(this.vTmp, this.normal) / f;
+//                System.out.println(vTmp);
+                float len = vTmp.length();
+                System.out.println(len);
+                float t = (len-Vector3f.dot(this.vTmp, this.normal)) / nd;
                 if (t >= 0) {
                     vTmp.set(ctrlPos.vDir);
                     vTmp.scale(t*1.00f);
@@ -43,9 +47,11 @@ public class VRGui {
 //                    Vector3f.sub(vTmp, pos, vTmp);
                     hasHit = true;
                 }
+            } else {
+                System.out.println("no hit");
             }
         }
-        this.pos.set(0, 0, z);
+        this.pos.set(0, y, z);
     }
     
     public void render(float fTime, int texture) {
@@ -57,7 +63,7 @@ public class VRGui {
         glDisable(GL11.GL_CULL_FACE);
         Engine.setBlend(true);
         
-        float scale = 0.015f;
+        float scale = 0.0015f;
         float rW = 1920 * scale;
         float rH = 1080 * scale;
         Tess tess = Tess.instance;
