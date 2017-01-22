@@ -1,6 +1,8 @@
 package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.GL11.GL_RGBA8;
+import static org.lwjgl.opengl.GL11.glTexParameteri;
+import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -170,6 +172,7 @@ public abstract class TextureArray {
                 this.tileSize, this.tileSize,   //width,height
                 this.numTextures       //Number of layers
         );
+        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, numMipmaps-1);
         Engine.checkGLError("glTexStorage3D");
     }
 

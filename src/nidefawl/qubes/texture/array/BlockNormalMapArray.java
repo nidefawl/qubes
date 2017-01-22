@@ -21,6 +21,7 @@ import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 
 public class BlockNormalMapArray extends TextureArray {
     static final BlockNormalMapArray instance = new BlockNormalMapArray();
@@ -33,6 +34,11 @@ public class BlockNormalMapArray extends TextureArray {
 
     public BlockNormalMapArray() {
         super(256);
+    }
+    @Override
+    public void load() {
+        super.load();
+        this.numMipmaps = 1;
     }
 
     @Override
@@ -134,7 +140,7 @@ public class BlockNormalMapArray extends TextureArray {
 
     @Override
     protected void postUpload() {
-        boolean useDefault = true;
+        boolean useDefault = false;
         if (useDefault) {
 
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -150,7 +156,7 @@ public class BlockNormalMapArray extends TextureArray {
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
+//            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
             //        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
