@@ -17,6 +17,9 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     List<IManagedResource> resourcesShaders    = Lists.newArrayList();
     List<IManagedResource> resourcesShadersNew = Lists.newArrayList();
     List<IManagedResource> resourcesFramebuffers      = Lists.newArrayList();
+    int rendererWidth;
+    int rendererHeight;
+    
 
     @Override
     public void addResource(IManagedResource r) {
@@ -94,7 +97,13 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
         }
     }
 
+    public void resizeRenderer(int displayWidth, int displayHeight) {
+        this.rendererWidth = displayWidth;
+        this.rendererHeight = displayHeight;
+        resize(this.rendererWidth, this.rendererHeight);
+    }
     public void resize(int displayWidth, int displayHeight) {
+        
     }
     
     @Override

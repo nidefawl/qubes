@@ -109,10 +109,10 @@ public class BlurRenderer extends AbstractRenderer {
         this.fbSSRBlurredX =FrameBuffer.make(this, displayWidth, displayHeight, GL_RGBA16F, true);
         this.fbSSRBlurredY =FrameBuffer.make(this, displayWidth, displayHeight, GL_RGBA16F, true);
     }
-    public void initBlurKawase(int displayWidth, int displayHeight, int blurDownSample) {
-        this.w1 = 1.0f/(float)Game.displayWidth;
-        this.h1 = 1.0f/(float)Game.displayHeight;
-        int[] blurSize = GameMath.downsample(displayWidth, displayHeight, blurDownSample);
+    public void initBlurKawase(int inputWidth, int inputHeight, int blurDownSample) {
+        this.w1 = 1.0f/(float)inputWidth;
+        this.h1 = 1.0f/(float)inputHeight;
+        int[] blurSize = GameMath.downsample(inputWidth, inputHeight, blurDownSample);
         fbBlur1 = FrameBuffer.make(this, blurSize[0], blurSize[1], GL_RGB16F);
         fbBlur2 = FrameBuffer.make(this, blurSize[0], blurSize[1], GL_RGB16F);
     }

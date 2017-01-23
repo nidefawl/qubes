@@ -85,7 +85,6 @@ public abstract class EntityModel {
         this.name = name;
         this.id = (HIGHEST_MODEL_ID++);
         models[this.id] = this;
-        System.out.println("model "+this.name+" has id "+this.id);
     }
     public int addOption(ModelOption modelOption) {
         int id = this.modelOptions.size();

@@ -113,7 +113,6 @@ public class TrueTypeFont {
         this.descent=scale*buf2.get(0);
         this.lineGap=scale*buf3.get(0);
         this.lineOffset = ascent - descent + lineGap;
-        System.err.println(ascent +","+ descent +","+ lineGap);
         if (lineOffset == 0) {
             System.err.println(ascent +","+ descent +","+ lineGap);
             throw new GameError("Failed loading "+fontPath);

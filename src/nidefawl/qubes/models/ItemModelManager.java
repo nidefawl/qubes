@@ -69,7 +69,6 @@ public class ItemModelManager {
                 AssetBinary asset = modelAssets.get(modelnames[j]);
                 models[j] = this.models.get(asset);
             }
-            System.out.println("loaded model "+model.name+" has id "+model.id);
             model.loadedModels = models;
         }
     }

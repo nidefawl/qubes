@@ -80,10 +80,9 @@ public class LightCompute extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-        System.out.println("resize "+displayWidth+"/"+displayHeight);
         int groupsX = displayWidth / 32 + (displayWidth % 32 != 0 ? 1 : 0);
         int groupsY = displayHeight / 32 + (displayHeight % 32 != 0 ? 1 : 0);
-        System.out.println("tilescover "+(groupsX*32)+"/"+(groupsY*32));
+//        System.out.println("tilescover "+(groupsX*32)+"/"+(groupsY*32));
         this.lightTiles = new int[] { groupsX, groupsY };
         GL.deleteTexture(this.lightTilesTex);
         this.lightTilesTex = GL.genStorage(displayWidth, displayHeight, GL_RGBA16F, GL_LINEAR, GL12.GL_CLAMP_TO_EDGE);

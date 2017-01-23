@@ -328,11 +328,6 @@ public class KeybindManager {
                 AssetManager.getInstance().toggleExternalResources();
             }
         });
-        addKeyBinding(new Keybinding("repos_vox_model", GLFW.GLFW_KEY_F) {
-            public void onDown() {
-                game.reposModel();
-            }
-        });
         addKeyBinding((new Keybinding("show_menu", GLFW.GLFW_KEY_ESCAPE) {
             public void onDown() {
                 if( game.getGui() == null && game.getWorld() != null)
@@ -349,8 +344,6 @@ public class KeybindManager {
 
         addKeyBinding(new Keybinding("reload_models", -1) {
             public void onDown() {
-
-                Engine.worldRenderer.reloadModel();
                 ItemModelManager.getInstance().reload();
                 BlockModelManager.getInstance().reload();
             }

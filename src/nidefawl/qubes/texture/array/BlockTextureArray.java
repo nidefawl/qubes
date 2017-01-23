@@ -49,12 +49,10 @@ public class BlockTextureArray extends TextureArray {
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
         if (anisotropicFiltering > 0) {// does not work well with alpha testing
             float f = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
-            System.out.println("MAX ANISOTROPY: "+f);
             if (anisotropicFiltering < f) {
                 f = anisotropicFiltering;
             }
             if (f > 0) {
-                System.out.println("anisotropicFiltering level: "+f);
                 glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, f);
             }
         }

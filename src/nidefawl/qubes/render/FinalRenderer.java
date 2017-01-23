@@ -536,7 +536,7 @@ public class FinalRenderer extends AbstractRenderer {
         if (!HBAOPlus.hasContext && enableAO) {
             updateHBAOSettings();
             Engine.checkGLError("pre GLNativeLib.createContext");
-            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight, Game.instance.caps);
+            HBAOPlus.createContext(128, 128, Game.instance.caps);
 //            HBAOPlus.createContext(Game.displayWidth, Game.displayHeight, null);
             Engine.checkGLError("post GLNativeLib.createContext");
             HBAOPlus.hasContext = true;
@@ -584,7 +584,7 @@ public class FinalRenderer extends AbstractRenderer {
         }
         if (Game.instance.getVendor() != GPUVendor.INTEL && Game.instance.settings.aa > 0) {
             smaa = new SMAA(Game.instance.settings.smaaQuality);
-            this.smaa.init(Game.displayWidth, Game.displayHeight);
+            this.smaa.init(this.rendererWidth, this.rendererHeight);
         }
     }
 
@@ -608,7 +608,6 @@ public class FinalRenderer extends AbstractRenderer {
         Engine.setSceneFB(fbScene);
 
         GL.deleteTexture(this.preWaterDepthTex);
-        System.out.println("pre water depth tex "+displayWidth+"x"+displayHeight);
         this.preWaterDepthTex = GL.genStorage(displayWidth, displayHeight, GL14.GL_DEPTH_COMPONENT32, GL_NEAREST, GL12.GL_CLAMP_TO_EDGE);
 
 
@@ -668,13 +667,6 @@ public class FinalRenderer extends AbstractRenderer {
         fbSSRCombined.bind();
         fbSSRCombined.clearFrameBuffer();
         
-        Matrix4f trs = new Matrix4f();
-        trs.translate(0.5f, 0.5f, 0);
-        trs.scale(new Vector3f(0.5f, 0.5f, 1.0F));
-        Matrix4f scale = new Matrix4f();
-        scale.scale(new Vector3f(Game.displayWidth, Game.displayHeight, 1));
-        Matrix4f.mul(scale, trs, scale);
-        Matrix4f.mul(scale, Engine.getMatSceneP(), scale);
         aoNeedsInit = true;
         aoReinit();
     }

@@ -3,25 +3,23 @@ package nidefawl.qubes.render;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 
-import java.io.File;
-import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.List;
 
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.item.*;
-import nidefawl.qubes.models.*;
+import nidefawl.qubes.models.EntityModel;
+import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.QModelProperties;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.path.PathPoint;
@@ -55,37 +53,26 @@ public class WorldRenderer extends AbstractRenderer {
         }
         return "PASS_"+i;
     }
+    private boolean                          startup    = true;
 
     public Vector3f           skyColor        = new Vector3f(0.43F, .69F, 1.F);
-//    public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
     public Vector3f           fogColor        = new Vector3f(0.7F, 0.82F, 1F);
     public HashMap<Integer, AABB> debugBBs = new HashMap<>();
     public HashMap<Integer, List<PathPoint>> debugPaths = new HashMap<>();
 
-    
+    public int                               rendered;
+    public int                               texWaterNoise;
+    private int                              texNoise3D;
 
-    public int rendered;
+    public Shader                            terrainShader;
+    public Shader                            terrainShaderFar;
+    public Shader                            waterShader;
+    public Shader                            shaderModelVoxel;
 
-    private boolean startup = true;
+    public Shader                            shaderModelfirstPerson;
 
-
-    public int                  texWaterNoise;
-    public Shader       terrainShader;
-    public Shader       terrainShaderFar;
-    //    public Shader       skyShader;
-    //    public Shader       skyCloudShader;
-    public Shader       waterShader;
-    public Shader       shaderModelVoxel;
-    
-    public Shader       shaderModelfirstPerson;
-    
-    //    private TesselatorState skybox1;
-    //    private TesselatorState skybox2;
-        private Shader shaderZPre;
-    private Shader skybox;
-    
-    //  ModelVox vox;
-//    private Shader skyShader2;
+    private Shader                           shaderZPre;
+    private Shader                           skybox;
 
     public void initShaders() {
         try {
@@ -128,14 +115,10 @@ public class WorldRenderer extends AbstractRenderer {
             });
             Shader shaderModelfirstPerson = assetMgr.loadShader(this, "model/firstperson");
             Shader skybox = assetMgr.loadShader(this, "sky/skybox_cubemap");
-//            Shader sky = assetMgr.loadShader(this, "sky/sky");
-//            Shader sky2 = assetMgr.loadShader(this, "sky/clouds");
             popNewShaders();
             this.terrainShader = terrain;
             this.terrainShaderFar = terrainFar;
             this.skybox = skybox;
-//            this.skyShader = sky;
-//            this.skyShader2 = sky2;
             this.waterShader = new_waterShader;
             this.shaderModelVoxel = modelVoxel;
             this.shaderModelfirstPerson = shaderModelfirstPerson;
@@ -153,9 +136,6 @@ public class WorldRenderer extends AbstractRenderer {
             this.terrainShaderFar.setProgramUniform1i("blockTextures", 0);
             this.terrainShaderFar.setProgramUniform1i("noisetex", 1);
             this.terrainShaderFar.setProgramUniform1i("normalTextures", 2);
-
-//            this.skyShader2.enable();
-//            this.skyShader2.setProgramUniform1i("tex0", 0);
 
             this.waterShader.enable();
             this.waterShader.setProgramUniform1i("blockTextures", 0);
@@ -177,123 +157,14 @@ public class WorldRenderer extends AbstractRenderer {
         }
         startup = false;
     }
-    int idx = -1;
-    private int texNoise3D;
-    public void reloadModel() {
-        File[] list = (new File(WorkingEnv.getAssetFolder(), "models")).listFiles(new FileFilter() {
-            
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isFile()&&pathname.getName().endsWith(".vox");
-            }
-        });
-        if (list != null&&list.length>0) {
-            
-            idx++;
-            if (idx >= list.length) {
-                idx = 0;
-            }
-            String mName = list[idx].getName();
-
-//            AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/" + mName);
-//            if (this.vox != null)
-//                this.vox.release();
-//            vox = new ModelVox(asset);   
-        }
-
-//        AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/normals_psd_03.png");
-//        AssetTexture tex1 = AssetManager.getInstance().loadPNGAsset("textures/heightmap_03.png");
-//        
-//        if (tex.getWidth() == tex1.getWidth() && tex.getHeight() == tex1.getHeight()) {
-//            for (int x = 0; x < tex.getWidth(); x++) {
-//                for (int y = 0; y < tex.getHeight(); y++) {
-//                    int idx = y*tex.getWidth()+x;
-//                    int height = tex1.getData()[idx*4+0]&0xFF;
-//                    height-=118;
-//                    height*=2;
-//                    if (height < 0 || height > 255)
-//                    System.out.println(height);
-//                    if (height > 255) {
-//                        height = 255;
-//                    }
-//                    if (height < 0) height = 0;
-//                    tex.getData()[idx*4+3] = (byte) height;
-//                }
-//            }
-//            System.err.println("copied alpha channel");
-//        } else {
-//            System.err.println("!");
-//        }
-//        this.texNormalTest = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
-        
-
-//        byte[] rgba = tex.getData();
-//        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
-//        int w = tex.getWidth();
-//        int h = tex.getWidth();
-//        for (int x = 0; x < 10; x++) {
-//
-//            for (int y = 0; y < 10; y++) {
-//                int idx = y*w+x;
-//                int pixel = rgba_int[idx];
-//                String s = Integer.toHexString(pixel);
-//                while(s.length()<8) {
-//                    s = "0"+s;
-//                }
-//                float a = (((pixel>>24)&0xFF) / 255.0f);
-//                float nx = (((pixel>>16)&0xFF) / 255.0f) * 2.0f - 1.0f;
-//                float ny = (((pixel>>8)&0xFF) / 255.0f) * 2.0f - 1.0f;
-//                float nz = (((pixel>>0)&0xFF) / 255.0f) * 2.0f - 1.0f;
-//                System.out.println(""+x+","+y+" = 0x"+s+" = "+String.format("%.2f %.2f %.2f %.2f", nx, ny, nz, a));
-////                break;
-//            }
-//        }
-//        
-        
-    }
-
+    
     public void init() {
-//        skyColor = new Vector3f(0.43F, .69F, 1.F);
         initShaders();
-//        skybox1 = new TesselatorState(GL15.GL_STATIC_DRAW);
-//        skybox2 = new TesselatorState(GL15.GL_STATIC_DRAW);
         AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/noise.png");
         texWaterNoise = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
 
         AssetTexture t = AssetManager.getInstance().loadPNGAsset("textures/tex10.png");
         this.texNoise3D = TextureManager.getInstance().makeNewTexture(t, true, true, 0);
-//        reloadModel();
-        
-//
-//        AssetTexture texNormalTest = AssetManager.getInstance().loadPNGAsset("textures/normalmaptest.png");
-//        
-//        this.texNormalTest = TextureManager.getInstance().makeNewTexture(texNormalTest, true, true, 10);
-
-//        byte[] rgba = tex.getData();
-//        int[] rgba_int = TextureUtil.toIntRGBA(rgba);
-//        int w = tex.getWidth();
-//        int h = tex.getWidth();
-//        for (int x = 0; x < 10; x++) {
-//
-//            for (int y = 0; y < 10; y++) {
-//                int idx = y*w+x;
-//                int pixel = rgba_int[idx];
-//                String s = Integer.toHexString(pixel);
-//                while(s.length()<8) {
-//                    s = "0"+s;
-//                }
-//                float nx = (((pixel>>16)&0xFF) / 255.0f) * 2.0f - 1.0f;
-//                float ny = (((pixel>>8)&0xFF) / 255.0f) * 2.0f - 1.0f;
-//                float nz = (((pixel>>0)&0xFF) / 255.0f) * 2.0f - 1.0f;
-//                System.out.println(""+x+","+y+" = 0x"+s+" = "+String.format("%.2f %.2f %.2f", nx, ny, nz));
-//            }
-//        }
-//        
-//        AssetVoxModel asset = AssetManager.getInstance().loadVoxModel("models/dragon.vox");
-//        if (this.vox != null) this.vox.release();
-//        vox = new ModelVox(asset);
-        reloadModel();
-
     }
 
     public void renderWorld(World world, float fTime) {
@@ -302,15 +173,8 @@ public class WorldRenderer extends AbstractRenderer {
             GPUProfiler.start("sky+sun+clouds");
         Engine.enableDepthMask(false);
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texNoise3D);
-//        skyShader2.enable();
         Engine.drawFullscreenQuad();
         
-//        skyShader.enable();
-//        skybox1.bindAndDraw(GL_QUAD_STRIP);
-//        skybox2.bindAndDraw(GL_QUADS);
-//        if (Game.GL_ERROR_CHECKS)
-//            Engine.checkGLError("skyShader.drawSkybox");
-//        Shader.disable();
         skybox.enable();
 
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, Engine.skyRenderer.fbSkybox.getTexture(0));
@@ -374,40 +238,6 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
 
-    public void renderVoxModels(Shader modelShader, int pass, float fTime) {
-//        if (vox != null) {
-//            GLVAO vao = GLVAO.vaoBlocks;
-//            if (pass == PASS_SHADOW_SOLID) {
-//                vao = GLVAO.vaoBlocksShadow;
-//            }
-//            Engine.bindVAO(vao);
-//            BufferedMatrix mat = Engine.getTempMatrix();
-//            BufferedMatrix mat2 = Engine.getTempMatrix2();
-//            float modelScale = 1 / 16f;
-//            mat.setIdentity();
-//            mat.translate(mPos.x, mPos.y, mPos.z);
-//            mat.translate(-Engine.GLOBAL_OFFSET.x, -Engine.GLOBAL_OFFSET.y, -Engine.GLOBAL_OFFSET.z);
-//            float w = (vox.size.x);
-//            float l = (vox.size.z);
-//            mat.translate(w * 0.5f * modelScale, 0, l * 0.5f * modelScale);
-//            mat.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-//
-//            mat.translate(-w * 0.5f * modelScale, 0, -l * 0.5f * modelScale);
-//            mat.scale(modelScale);
-//            mat.update();
-//            modelShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-//            mat2.setIdentity();
-//            mat2.rotate((float) Math.toRadians(this.lastModelRot + (this.modelRot - this.lastModelRot) * fTime), 0, 1, 0);
-//            mat2.invert().transpose();
-//            mat2.update();
-//            UniformBuffer.setNormalMat(mat2.get());
-//            vox.render(pass);
-//            UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
-//        }
-//    
-        
-        
-    }
     
     /**
      * @param world 
@@ -535,7 +365,6 @@ public class WorldRenderer extends AbstractRenderer {
         if (p == null) {
             return;
         }
-        this.modelRot=this.lastModelRot=4;
         float modelScale = 1 / 2.7f;
         float f1=0;
         DigController dig = Game.instance.dig;
@@ -786,96 +615,9 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-        float ext = 1/32F;
-        float zero = -ext;
-        float one = 1+ext;
-        Tess tesselator = Tess.instance;
-//        tesselator.setColorRGBAF(1, 1, 1, 0.2F);
-//        tesselator.add(zero, zero, zero);
-//        tesselator.add(one, zero, zero);
-//        tesselator.add(one, one, zero);
-//        tesselator.add(zero, one, zero);
-//        tesselator.add(zero, one, one);
-//        tesselator.add(one, one, one);
-//        tesselator.add(one, zero, one);
-//        tesselator.add(zero, zero, one);
-//        tesselator.add(one, zero, one);
-//        tesselator.add(one, one, one);
-//        tesselator.add(one, one, zero);
-//        tesselator.add(one, zero, zero);
-//        tesselator.add(zero, one, one);
-//        tesselator.add(zero, zero, one);
-//        tesselator.add(zero, zero, zero);
-//        tesselator.add(zero, one, zero);
-//        tesselator.add(zero, zero, one);
-//        tesselator.add(one, zero, one);
-//        tesselator.add(one, zero, zero);
-//        tesselator.add(zero, zero, zero);
-//        tesselator.add(one, one, one);
-//        tesselator.add(zero, one, one);
-//        tesselator.add(zero, one, zero);
-//        tesselator.add(one, one, zero);
-//        tesselator.draw(GL_QUADS, highlightCube);
-//        tesselator.resetState();
-
-        
-/*
-        int scale = (int) (Engine.zfar / 1.43F);
-        int x = -scale;
-        int y = -scale / 16;
-        int z = -scale;
-        int x2 = scale;
-        int y2 = scale / 16;
-        int z2 = scale;
-        int rgbai = 0;
-        rgbai = ((int) (fogColor.x * 255.0F)) << 16 | ((int) (fogColor.y * 255.0F)) << 8 | ((int) (fogColor.z * 255.0F));
-        //      Shaders.colored.enable();
-        tesselator.setColor(rgbai, 255);
-        tesselator.add(x, y2, z);
-        tesselator.add(x, y, z);
-        tesselator.add(x2, y2, z);
-        tesselator.add(x2, y, z);
-        tesselator.add(x2, y2, z2);
-        tesselator.add(x2, y, z2);
-        tesselator.add(x, y2, z2);
-        tesselator.add(x, y, z2);
-        tesselator.add(x, y2, z);
-        tesselator.add(x, y, z);
-        tesselator.draw(GL_QUAD_STRIP, skybox1);
-        //      tesselator.draw(GL_TRIANGLE_STRIP);
-
-        rgbai = ((int) (skyColor.x * 255.0F)) << 16 | ((int) (skyColor.y * 255.0F)) << 8 | ((int) (skyColor.z * 255.0F));
-        tesselator.setColor(-1, 255);
-        tesselator.add(x, y, z2);
-        tesselator.add(x2, y, z2);
-        tesselator.add(x2, y, z);
-        tesselator.add(x, y, z);
-        tesselator.add(x, y2, z);
-        tesselator.add(x2, y2, z);
-        tesselator.add(x2, y2, z2);
-        tesselator.add(x, y2, z2);
-        //    tesselator.draw(GL_TRIANGLES);
-        tesselator.draw(GL_QUADS, skybox2);
-        */
     }
 
-    /**
-     * @param x
-     * @param y
-     * @param z
-     */
-    Vector3f mPos = new Vector3f();
-    public void setModelPos(float x, float y, float z) {
-        mPos.set(x, y, z);;
-    }
-    float modelRot, lastModelRot;
     public void tickUpdate() {
-        this.lastModelRot = modelRot;
-//        this.modelRot+=3.8f;
-        if (this.modelRot > 180) {
-            this.modelRot -= 360;
-            this.lastModelRot-=360;
-        }
     }
 
 

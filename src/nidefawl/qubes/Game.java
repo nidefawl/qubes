@@ -292,13 +292,6 @@ public class Game extends GameBase {
         }
     }
 
-    /**
-     * 
-     */
-    public void reposModel() {
-        Engine.worldRenderer.setModelPos(vPlayer.x, vPlayer.y-1, vPlayer.z);
-    }
-
     public void setWorld(WorldClient world) {
         leftSelection.reset();
         rightSelection.reset();

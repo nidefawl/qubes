@@ -276,7 +276,7 @@ public class Engine {
                 UniformBuffer.updatePxOffset();
             }
         });
-        System.out.println("Engine.init: "+GameContext.getTimeSinceStart());
+        System.out.println("Engine.init @"+GameContext.getTimeSinceStart()+"ms");
     }
 
     public static void resize(int displayWidth, int displayHeight) {
@@ -378,26 +378,12 @@ public class Engine {
         if (shadowProj != null) {
             shadowProj.updateProjection(znear, zfar, aspectRatio, fieldOfView);
         }
-        if (blurRenderer != null) {
-            blurRenderer.resize(displayWidth, displayHeight);
-        }
-        if (worldRenderer != null) {
-            worldRenderer.resize(displayWidth, displayHeight);
-        }
-        if (particleRenderer != null) {
-            particleRenderer.resize(displayWidth, displayHeight);
-        }
-        if (skyRenderer != null) {
-            skyRenderer.resize(displayWidth, displayHeight);
-        }
-        if (outRenderer != null) {
-            outRenderer.resize(displayWidth, displayHeight);
-        }
-        if (shadowRenderer != null) {
-            shadowRenderer.resize(displayWidth, displayHeight);
-        }
-        if (lightCompute != null) {
-            lightCompute.resize(displayWidth, displayHeight);
+        for (int i = 0; i < components.size(); i++) {
+            IRenderComponent r = components.get(i);
+            if (r instanceof AbstractRenderer) {
+                System.out.println("Resize "+r.getClass());
+                ((AbstractRenderer) r).resizeRenderer(displayWidth, displayHeight);    
+            }
         }
         UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
         ShaderBuffer.rebindShaders();
@@ -747,17 +733,16 @@ public class Engine {
             IRenderComponent r = components.get(i);
             r.init();
         }
-        for (int i = 0; i < components.size(); i++) {
-            IRenderComponent r = components.get(i);
-            if (r instanceof AbstractRenderer) {
-                ((AbstractRenderer) r).resize(Game.displayWidth, Game.displayHeight);    
-            }
-        }
+//        for (int i = 0; i < components.size(); i++) {
+//            IRenderComponent r = components.get(i);
+//            if (r instanceof AbstractRenderer) {
+//                ((AbstractRenderer) r).resize(Game.displayWidth, Game.displayHeight);    
+//            }
+//        }
     }
 
     private static <T> T addComponent(IRenderComponent component) {
         components.add((IRenderComponent) component);
-        System.out.println("ADD COMPONENT "+component);
         return (T) component;
     }
     public static void setSceneFB(FrameBuffer fb) {

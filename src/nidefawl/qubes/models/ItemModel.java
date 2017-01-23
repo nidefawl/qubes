@@ -68,7 +68,6 @@ public class ItemModel {
         this.name = name;
         this.id = (HIGHEST_MODEL_ID++) + 1;
         model[this.id] = this;
-        System.out.println("model "+this.name+" has id "+this.id);
     }
 
     protected ItemModel setModels(String... models) {

@@ -163,7 +163,7 @@ public abstract class TextureArray {
 
 
     protected void initGLStorage() {
-        System.err.println(glid+"/"+numMipmaps+"/"+this.tileSize+"/"+this.numTextures);
+//        System.err.println(glid+"/"+numMipmaps+"/"+this.tileSize+"/"+this.numTextures);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         Engine.checkGLError("pre glTexStorage3D");
         nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, 

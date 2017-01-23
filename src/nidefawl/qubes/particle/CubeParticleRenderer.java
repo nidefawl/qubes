@@ -65,12 +65,10 @@ public class CubeParticleRenderer extends AbstractParticleRenderer {
         cubeFormat2 = new GLTriBuffer(GL15.GL_STREAM_DRAW);
         VertexBuffer buf = new VertexBuffer(1024*1024);
         RenderUtil.makeCube(buf, 1.0f, GLVAO.vaoStaticModel);
-        int data = cubeFormat1.upload(buf);
-        System.out.println("uploaded "+(data*4)+" bytes for format 1");
+        cubeFormat1.upload(buf);
         VertexBuffer buf2 = new VertexBuffer(1024*1024);
         RenderUtil.makeCube(buf2, 1.0f, GLVAO.vaoModel);
-        int data2 = cubeFormat2.upload(buf2);
-        System.out.println("uploaded "+(data2*4)+" bytes for format 2");
+        cubeFormat2.upload(buf2);
     }
     public void initShaders() {
         try {

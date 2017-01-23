@@ -111,6 +111,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         displayHeight = initHeight;
         guiWidth = displayWidth;
         guiHeight = displayHeight;
+        windowWidth = displayWidth;
+        windowHeight = displayHeight;
         outStream = new LogBufferStream(System.out);
         errStream = new LogBufferStream(System.err);
         System.out.flush();
@@ -390,7 +392,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 minimized = true;
                 return;
             }
-            System.out.println("resize " + newWidth + "/" + newHeight);
+            System.out.printf("Resize %d,%d -> %d,%d\n", windowWidth, windowHeight, newWidth, newHeight);
             minimized = false;
             windowWidth = newWidth;
             windowHeight = newHeight;

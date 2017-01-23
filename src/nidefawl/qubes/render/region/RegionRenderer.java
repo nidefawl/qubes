@@ -713,7 +713,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
             }
         }
         if (queriesRunning < 0) {
-            System.err.println("queries running < 0!!!!!!!!!!");
+            System.err.println("queries running < 0!");
         }
     }
 
