@@ -2,9 +2,27 @@ package nidefawl.qubes.vec;
 
 import java.nio.FloatBuffer;
 
+import nidefawl.qubes.util.DumbPool;
 import nidefawl.qubes.util.GameMath;
 
 public class Matrix4f {
+
+    final private static DumbPool<Matrix4f> pool = new DumbPool<Matrix4f>(Matrix4f.class);
+
+    public static Matrix4f pool() {
+        return pool.get();
+    }
+    public static Matrix4f poolZero() {
+        return pool.get().setZero();
+    }
+    public static Matrix4f poolIdentity() {
+        return pool.get().setIdentity();
+    }
+    public static Matrix4f pool(Matrix4f f) {
+        Matrix4f v3f = pool.get();
+        v3f.load(f);
+        return v3f;
+    }
 
     public float m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33;
 
@@ -508,6 +526,10 @@ public class Matrix4f {
         dest.z = z / w;
 
         return dest;
+    }
+    public final void transformVec(Vector3f normal)
+    {
+        transform(this, normal, normal);
     }
 
     /**
@@ -1066,7 +1088,7 @@ public class Matrix4f {
         return dest;
     }
 
-    public final void transformVec(Vector3f normal)
+    public final void transformVecTransposed(Vector3f normal)
     {
       float x = this.m00 * normal.x + this.m01 * normal.y + this.m02 * normal.z;
       float y = this.m10 * normal.x + this.m11 * normal.y + this.m12 * normal.z;

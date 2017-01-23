@@ -2,9 +2,25 @@ package nidefawl.qubes.vec;
 
 import java.nio.FloatBuffer;
 
+import nidefawl.qubes.util.DumbPool;
+
 public class Vector4f {
 
-    private static final long serialVersionUID = 1L;
+    final private static DumbPool<Vector4f> pool = new DumbPool<Vector4f>(Vector4f.class);
+    
+    public static Vector4f pool() {
+        return pool.get();
+    }
+    public static Vector4f pool(Vector4f f) {
+        Vector4f v3f = pool.get();
+        v3f.set(f);
+        return v3f;
+    }
+    public static Vector4f pool(float x, float y, float z) {
+        Vector4f v3f = pool.get();
+        v3f.set(x, y, z);
+        return v3f;
+    }
 
     public float x, y, z, w;
 

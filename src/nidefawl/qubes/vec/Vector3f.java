@@ -6,10 +6,30 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 
 import nidefawl.qubes.network.StreamIO;
+import nidefawl.qubes.util.DumbPool;
+import nidefawl.qubes.util.Pool;
 
-public class Vector3f implements StreamIO {
+public class Vector3f implements StreamIO, IVec3 {
+    
     final public static Vector3f ZERO = new Vector3f();
     final public static Vector3f ONE = new Vector3f(1);
+
+    final private static DumbPool<Vector3f> pool = new DumbPool<Vector3f>(Vector3f.class);
+    
+    public static Vector3f pool() {
+        return pool.get();
+    }
+    public static Vector3f pool(Vector3f f) {
+        Vector3f v3f = pool.get();
+        v3f.set(f);
+        return v3f;
+    }
+    public static Vector3f pool(float x, float y, float z) {
+        Vector3f v3f = pool.get();
+        v3f.set(x, y, z);
+        return v3f;
+    }
+    
     public float x, y, z;
 
     /**
@@ -59,10 +79,17 @@ public class Vector3f implements StreamIO {
     /* (non-Javadoc)
      * @see org.lwjgl.util.vector.WritableVector3f#set(float, float, float)
      */
-    public void set(float x, float y, float z) {
+    public Vector3f set(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
+        return this;
+    }
+
+    public void add(float x, float y, float z) {
+        this.x += x;
+        this.y += y;
+        this.z += z;
     }
 
     /**
@@ -346,6 +373,15 @@ public class Vector3f implements StreamIO {
             throw new IllegalStateException("Zero length vector");
     }
 
+    public final Vector3f normaliseZero() {
+        float len = length();
+        if (len > 1E-8F)
+            scale(1.0f / len);
+        else
+            set(0, 0, 0);
+        return this;
+    }
+
     public Vector3f normaliseNull() {
         float len = length();
         if (len > 1E-8F) {
@@ -386,6 +422,13 @@ public class Vector3f implements StreamIO {
         camY -= this.y;
         camZ -= this.z;
         return camX*camX+camY*camY+camZ*camZ;
+    }
+    public float distance(Vector3f other) {
+        Vector3f tmp = pool();
+        tmp.x = this.x - other.x;
+        tmp.y = this.y - other.y;
+        tmp.z = this.z - other.z;
+        return tmp.x*tmp.x+tmp.y*tmp.y+tmp.z*tmp.z;
     }
     @Override
     public void write(DataOutput out) throws IOException {
@@ -443,9 +486,20 @@ public class Vector3f implements StreamIO {
         }
     }
 
-    public void add(IVec3 v) {
+    public Vector3f add(IVec3 v) {
         this.x += v.x();
         this.y += v.y();
         this.z += v.z();
+        return this;
+    }
+
+    public float x() {
+        return x;
+    }
+    public float y() {
+        return y;
+    }
+    public float z() {
+        return z;
     }
 }
