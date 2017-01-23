@@ -5,7 +5,6 @@ package nidefawl.qubes.inventory.slots;
 
 import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.item.BaseStack;
-import nidefawl.qubes.item.ItemStack;
 
 /**
  * @author Michael Hept 2015

@@ -13,7 +13,6 @@ import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.SingleBlockWorld;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;

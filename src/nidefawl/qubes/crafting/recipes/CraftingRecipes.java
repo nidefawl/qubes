@@ -1,15 +1,9 @@
 package nidefawl.qubes.crafting.recipes;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import nidefawl.qubes.block.*;
 import nidefawl.qubes.crafting.CraftingCategory;
-import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.item.ItemStack;

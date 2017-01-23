@@ -8,7 +8,6 @@ import org.lwjgl.opengl.*;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiCached extends Gui {

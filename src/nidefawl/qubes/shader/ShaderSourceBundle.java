@@ -5,12 +5,7 @@ import static org.lwjgl.opengl.GL43.glGetProgramResourceIndex;
 import static org.lwjgl.opengl.GL43.glShaderStorageBlockBinding;
 
 import java.io.IOException;
-import java.util.HashMap;
-
-import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.shader.DebugShaders.Var;
 
 public class ShaderSourceBundle {
 

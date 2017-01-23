@@ -18,13 +18,11 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.models.render.ModelConstants;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.util.Color;
 import nidefawl.qubes.util.RenderUtil;
-import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 

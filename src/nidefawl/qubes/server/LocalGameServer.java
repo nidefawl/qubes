@@ -2,7 +2,6 @@ package nidefawl.qubes.server;
 
 import java.io.IOException;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.network.Connection;
 
 public class LocalGameServer {

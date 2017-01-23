@@ -3,7 +3,6 @@ package nidefawl.qubes.gui;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.inventory.slots.Slot;

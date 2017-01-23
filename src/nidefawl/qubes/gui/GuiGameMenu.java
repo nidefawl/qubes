@@ -3,8 +3,6 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.KeybindManager;

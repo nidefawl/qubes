@@ -15,10 +15,7 @@ import org.lwjgl.opengl.GL31;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderGroup;
-import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderObject;
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
-import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.util.Half;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.util.Stats;

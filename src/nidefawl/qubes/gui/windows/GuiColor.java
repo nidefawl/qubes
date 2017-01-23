@@ -3,7 +3,6 @@ package nidefawl.qubes.gui.windows;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.biome.BiomeColor;
-import nidefawl.qubes.biome.BiomeMeadow;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;

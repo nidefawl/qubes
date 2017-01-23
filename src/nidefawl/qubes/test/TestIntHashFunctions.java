@@ -4,7 +4,6 @@
 package nidefawl.qubes.test;
 
 import static nidefawl.qubes.util.GameMath.*;
-import nidefawl.qubes.util.TripletLongHash;
 
 /**
  * @author Michael Hept 2015

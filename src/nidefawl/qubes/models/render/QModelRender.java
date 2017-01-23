@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.gl.BufferedMatrix;
-import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.render.AbstractRenderer;
 

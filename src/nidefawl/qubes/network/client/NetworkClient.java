@@ -5,11 +5,9 @@ import java.net.*;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.network.Connection;
-import nidefawl.qubes.network.MemoryConnection;
 import nidefawl.qubes.network.TCPConnection;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketDisconnect;
-import nidefawl.qubes.server.GameServer;
 
 public class NetworkClient {
 

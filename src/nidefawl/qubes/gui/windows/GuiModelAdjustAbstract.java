@@ -27,7 +27,6 @@ import nidefawl.qubes.models.qmodel.animation.QModelAction;
 import nidefawl.qubes.models.render.*;
 import nidefawl.qubes.network.packet.PacketCSetProperty;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Project;
 import nidefawl.qubes.vec.Matrix4f;

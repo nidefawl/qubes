@@ -3,11 +3,7 @@ package nidefawl.qubes.gl;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
-import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
-import static org.lwjgl.opengl.NVShaderBufferLoad.*;
-
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Map;
@@ -15,16 +11,12 @@ import java.util.Map;
 import org.lwjgl.opengl.*;
 
 import com.google.common.collect.Maps;
-import com.sun.glass.ui.TouchInputSupport;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
-import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.models.render.QModelBatchedRender;
-import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.particle.CubeParticleRenderer;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;

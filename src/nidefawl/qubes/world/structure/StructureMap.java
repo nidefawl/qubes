@@ -1,20 +1,14 @@
 package nidefawl.qubes.world.structure;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
-import javax.swing.plaf.synth.Region;
 
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.util.RegionEntry;
 import nidefawl.qubes.util.RegionMap;
 import nidefawl.qubes.vec.AABBInt;
-import nidefawl.qubes.world.structure.tree.Tree;
 
 public class StructureMap<T extends Structure> {
     private StructureFactory<T> fac;

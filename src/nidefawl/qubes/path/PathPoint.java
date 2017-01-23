@@ -3,7 +3,6 @@ package nidefawl.qubes.path;
 import nidefawl.qubes.entity.EntityAI;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.TripletIntHash;
-import nidefawl.qubes.util.TripletLongHash;
 import nidefawl.qubes.vec.Vec3D;
 
 public class PathPoint {

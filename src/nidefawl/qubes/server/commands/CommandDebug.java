@@ -2,8 +2,6 @@ package nidefawl.qubes.server.commands;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-
 import nidefawl.qubes.biome.Biome;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;

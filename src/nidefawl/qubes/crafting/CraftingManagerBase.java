@@ -4,7 +4,6 @@ import java.util.HashMap;
 
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
-import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.SlotsInventoryBase;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.nbt.Tag;

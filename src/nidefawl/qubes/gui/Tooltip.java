@@ -1,9 +1,7 @@
 package nidefawl.qubes.gui;
 
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.windows.GuiWindow;
-import nidefawl.qubes.inventory.slots.SlotInventory;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.shader.Shaders;

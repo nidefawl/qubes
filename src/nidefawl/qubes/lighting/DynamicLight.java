@@ -4,7 +4,6 @@ import java.nio.FloatBuffer;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.WorldClient;
 

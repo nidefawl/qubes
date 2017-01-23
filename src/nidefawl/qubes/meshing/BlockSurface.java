@@ -1,7 +1,6 @@
 package nidefawl.qubes.meshing;
 
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.IBlockWorld;
 
 public class BlockSurface {

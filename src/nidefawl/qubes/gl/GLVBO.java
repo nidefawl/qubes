@@ -4,8 +4,6 @@ import static org.lwjgl.opengl.NVShaderBufferLoad.GL_BUFFER_GPU_ADDRESS_NV;
 
 import java.nio.ByteBuffer;
 
-import javax.management.RuntimeErrorException;
-
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.NVShaderBufferLoad;
 

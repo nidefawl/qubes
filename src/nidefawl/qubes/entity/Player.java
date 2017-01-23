@@ -7,9 +7,7 @@ import nidefawl.qubes.inventory.PlayerInventoryCrafting;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
-import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.models.EntityModel;
-import nidefawl.qubes.util.GameMath;
 
 public abstract class Player extends Entity {
 

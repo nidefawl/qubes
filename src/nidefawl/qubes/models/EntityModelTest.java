@@ -1,16 +1,11 @@
 package nidefawl.qubes.models;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.entity.Entity;
-import nidefawl.qubes.entity.Player;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.models.qmodel.*;
-import nidefawl.qubes.models.render.QModelDirectRender;
 import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;

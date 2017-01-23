@@ -1,12 +1,9 @@
 package nidefawl.qubes.crafting.recipes;
 
 import nidefawl.qubes.crafting.CraftingCategory;
-import nidefawl.qubes.inventory.slots.SlotInventory;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
-import nidefawl.qubes.inventory.slots.SlotsInventoryBase;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
-import nidefawl.qubes.item.ItemStack;
 
 public class CraftingRecipe {
     static int NEXT_ID = 0;

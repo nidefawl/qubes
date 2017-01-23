@@ -5,12 +5,10 @@ import java.util.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
-import nidefawl.qubes.models.render.QModelDirectRender;
 import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;

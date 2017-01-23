@@ -27,7 +27,6 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.WorldClient;

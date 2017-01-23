@@ -5,25 +5,19 @@ package nidefawl.qubes.render.gui;
 
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
-import java.nio.IntBuffer;
 import java.util.LinkedList;
-import java.util.Queue;
-
 import org.lwjgl.opengl.*;
 
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas.TextureAtlas;
-import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.*;
-import nidefawl.qubes.vec.Vector3f;
 
 /**
  * @author Michael Hept 2015

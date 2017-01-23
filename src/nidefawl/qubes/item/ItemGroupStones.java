@@ -3,8 +3,6 @@ package nidefawl.qubes.item;
 import java.util.Arrays;
 import java.util.List;
 
-import nidefawl.qubes.block.BlockGroupLogs;
-
 public class ItemGroupStones extends ItemGroup {
 
     final static List<String> names = Arrays.asList(new String[] {"granite", "basalt"});

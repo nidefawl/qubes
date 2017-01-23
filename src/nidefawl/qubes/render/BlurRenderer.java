@@ -15,12 +15,9 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.util.*;
-import nidefawl.qubes.world.World;
 
 public class BlurRenderer extends AbstractRenderer {
 

@@ -3,20 +3,17 @@ package nidefawl.qubes.gui;
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.glGetFloat;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ComboBox;
 import nidefawl.qubes.gui.controls.ComboBox.ComboBoxList;
 import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.ShaderBuffer;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.array.BlockTextureArray;
 

@@ -3,29 +3,19 @@
  */
 package nidefawl.qubes.models.qmodel;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL31;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
-import nidefawl.qubes.models.qmodel.animation.QModelAction;
-import nidefawl.qubes.models.qmodel.animation.QModelKeyFrameMatrix;
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
-import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
-import nidefawl.qubes.vec.Quaternion;
 import nidefawl.qubes.vec.Vector3f;
 
 /**

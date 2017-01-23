@@ -1,6 +1,5 @@
 package nidefawl.qubes.inventory.slots;
 
-import nidefawl.qubes.inventory.InventoryUtil;
 import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.item.BaseStack;
 

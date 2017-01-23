@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.models.qmodel;
 
-import java.io.EOFException;
 import java.io.IOException;
 
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;

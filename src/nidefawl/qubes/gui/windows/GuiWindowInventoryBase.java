@@ -1,16 +1,10 @@
 package nidefawl.qubes.gui.windows;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gui.Tooltip;
-import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.inventory.slots.SlotInventory;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.network.packet.PacketCInvClick;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
 
 public abstract class GuiWindowInventoryBase extends GuiWindow {
 

@@ -1,10 +1,6 @@
 package nidefawl.qubes.network;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import nidefawl.qubes.network.packet.InvalidPacketException;
 import nidefawl.qubes.network.packet.Packet;
 

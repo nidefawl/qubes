@@ -1,6 +1,5 @@
 package nidefawl.qubes.server;
 
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.noise.NoiseLib;
 import nidefawl.qubes.noise.TerrainNoiseScale;

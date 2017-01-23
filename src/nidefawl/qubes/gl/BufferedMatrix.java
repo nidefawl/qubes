@@ -2,7 +2,6 @@ package nidefawl.qubes.gl;
 
 import java.nio.FloatBuffer;
 
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 
 public class BufferedMatrix extends Matrix4f {

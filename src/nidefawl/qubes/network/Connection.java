@@ -2,13 +2,11 @@ package nidefawl.qubes.network;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.network.packet.InvalidPacketException;
 import nidefawl.qubes.network.packet.Packet;
-import nidefawl.qubes.network.packet.PacketDisconnect;
 import nidefawl.qubes.util.GameContext;
 
 public abstract class Connection {

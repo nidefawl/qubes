@@ -1,7 +1,6 @@
 package nidefawl.qubes.inventory.slots;
 
 import nidefawl.qubes.entity.Player;
-import nidefawl.qubes.inventory.PlayerInventoryCrafting;
 import nidefawl.qubes.item.BaseStack;
 
 public class SlotsCrafting extends SlotsInventoryBase {

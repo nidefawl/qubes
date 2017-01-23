@@ -9,13 +9,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockQuarterBlock;
 import nidefawl.qubes.chat.ChatUser;
 import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.chunk.blockdata.BlockData;
-import nidefawl.qubes.chunk.blockdata.BlockDataQuarterBlock;
 import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.inventory.PlayerInventoryCrafting;

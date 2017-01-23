@@ -4,7 +4,6 @@
 
 package nidefawl.qubes.util;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;

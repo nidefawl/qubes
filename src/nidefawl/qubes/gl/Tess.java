@@ -4,8 +4,6 @@ import java.nio.ByteOrder;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
-
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 

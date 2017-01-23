@@ -3,7 +3,6 @@ package nidefawl.qubes.assets;
 import java.io.*;
 import java.util.*;
 
-import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.*;
 

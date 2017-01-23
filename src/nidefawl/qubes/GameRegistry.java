@@ -10,7 +10,6 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.world.*;
-import nidefawl.qubes.world.biomes.IBiomeManager;
 import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;

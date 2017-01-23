@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;

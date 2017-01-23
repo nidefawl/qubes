@@ -3,7 +3,6 @@ package nidefawl.qubes.gui.controls;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
-import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.shader.Shaders;
 
 public class ProgressBar extends AbstractUI {

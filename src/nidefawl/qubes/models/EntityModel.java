@@ -7,12 +7,10 @@ import java.util.*;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.models.render.QModelRender;
-import nidefawl.qubes.vec.Vector3f;
 
 
 /**

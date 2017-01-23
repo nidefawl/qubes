@@ -4,7 +4,6 @@ import java.util.*;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.models.qmodel.*;

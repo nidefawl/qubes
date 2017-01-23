@@ -3,9 +3,7 @@ package nidefawl.qubes.entity;
 import nidefawl.qubes.entity.ai.AIMove;
 import nidefawl.qubes.entity.ai.AINav;
 import nidefawl.qubes.entity.ai.TaskManager;
-import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.Side;
 
 public abstract class EntityAI extends Entity {
 

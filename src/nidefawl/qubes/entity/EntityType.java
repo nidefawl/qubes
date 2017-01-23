@@ -3,9 +3,7 @@
  */
 package nidefawl.qubes.entity;
 
-import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.Side;
 
 /**
  * @author Michael Hept 2015

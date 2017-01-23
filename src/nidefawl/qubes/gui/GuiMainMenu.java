@@ -7,7 +7,6 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.gui.windows.GuiContext;

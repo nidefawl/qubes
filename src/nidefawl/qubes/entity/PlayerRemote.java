@@ -4,7 +4,6 @@
 package nidefawl.qubes.entity;
 
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.nbt.Tag.IntMap;
 import nidefawl.qubes.nbt.Tag.TagType;
 import nidefawl.qubes.util.Side;
 import nidefawl.qubes.util.SideOnly;

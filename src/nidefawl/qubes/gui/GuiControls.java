@@ -1,6 +1,5 @@
 package nidefawl.qubes.gui;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
@@ -10,17 +9,13 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Keybinding;
 import nidefawl.qubes.input.Keyboard;
-import nidefawl.qubes.render.post.SMAA;
-import nidefawl.qubes.shader.ShaderBuffer;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.shader.UniformBuffer;
 
 public class GuiControls extends Gui {
 

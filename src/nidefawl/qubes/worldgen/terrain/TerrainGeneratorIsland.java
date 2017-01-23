@@ -11,7 +11,6 @@ import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.world.biomes.EmptyBiomeManager;
 import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
-import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 
 public class TerrainGeneratorIsland implements ITerrainGen {
     public final static String GENERATOR_NAME = "terrain_island";

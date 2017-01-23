@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.network.Handler;
-import nidefawl.qubes.vec.Vec3D;
 
 /**
  * @author Michael Hept 2015

@@ -11,8 +11,6 @@ import java.nio.LongBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import javax.management.RuntimeErrorException;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
@@ -29,9 +27,7 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.*;
-import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.SimpleResourceManager;
 import nidefawl.qubes.vec.*;
 
 public class VR {

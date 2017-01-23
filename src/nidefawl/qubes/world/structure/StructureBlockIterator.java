@@ -6,7 +6,6 @@ import java.util.Iterator;
 import nidefawl.qubes.util.TripletIntHash;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.world.structure.tree.Tree;
 
 public class StructureBlockIterator implements Iterator<BlockPos> {
     final Structure tree;

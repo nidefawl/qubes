@@ -4,18 +4,11 @@ import java.util.*;
 
 import com.google.common.collect.Sets;
 
-import nidefawl.qubes.block.Block;
-import nidefawl.qubes.block.BlockLog;
-import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.item.Item;
-import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.world.BlockPlacer;
-import nidefawl.qubes.world.World;
 
 public class Structure implements RegionEntry {
 

@@ -17,7 +17,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultCaret;
 
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.util.NoDeploy;

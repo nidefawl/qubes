@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 

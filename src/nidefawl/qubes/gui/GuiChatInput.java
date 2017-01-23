@@ -6,14 +6,11 @@ package nidefawl.qubes.gui;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.chat.channel.GlobalChannel;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
 import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.gui.windows.GuiContext;
-import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.shader.Shaders;
 
 /**

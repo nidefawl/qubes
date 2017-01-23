@@ -12,7 +12,6 @@ import org.lwjgl.system.MemoryUtil;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
@@ -26,7 +25,6 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.world.World;
 
 public class FinalRenderer extends AbstractRenderer {

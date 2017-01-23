@@ -1,6 +1,5 @@
 package nidefawl.qubes.crafting;
 
-import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gui.crafting.GuiCraftingProgressEntry;

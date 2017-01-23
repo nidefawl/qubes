@@ -1,6 +1,5 @@
 package nidefawl.qubes.inventory.slots;
 
-import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.item.BaseStack;
 
 public abstract class Slot {

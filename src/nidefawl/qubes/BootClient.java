@@ -2,8 +2,6 @@ package nidefawl.qubes;
 
 import org.lwjgl.system.Configuration;
 
-import com.sun.jna.Native;
-
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.GameContext;
 import nidefawl.qubes.util.Side;

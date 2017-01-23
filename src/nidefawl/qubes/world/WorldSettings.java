@@ -8,7 +8,6 @@ import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.util.StringUtil;
-import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
 import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2;
 
 public class WorldSettings extends AbstractYMLConfig implements IWorldSettings {

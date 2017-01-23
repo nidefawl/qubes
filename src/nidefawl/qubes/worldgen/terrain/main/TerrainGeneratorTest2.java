@@ -1,8 +1,6 @@
 package nidefawl.qubes.worldgen.terrain.main;
 
 
-import static nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain.*;
-
 import java.util.*;
 
 import com.google.common.collect.Maps;
@@ -14,18 +12,14 @@ import nidefawl.qubes.noise.*;
 import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.world.biomes.EmptyBiomeManager;
 import nidefawl.qubes.world.biomes.HexBiome;
-import nidefawl.qubes.world.biomes.HexBiomesServer;
 import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
-import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 import nidefawl.qubes.worldgen.terrain.main.SubTerrainGen.SubTerrainData;
-import nidefawl.qubes.worldgen.terrain.main.SubTerrainGenFlattish.NoiseData;
 
 public class TerrainGeneratorTest2 implements ITerrainGen {
     public final static String GENERATOR_NAME = "terrain_test2";

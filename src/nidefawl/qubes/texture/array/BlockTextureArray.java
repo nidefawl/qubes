@@ -15,7 +15,6 @@ import org.lwjgl.opengl.GL30;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;

@@ -14,15 +14,11 @@ import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
-import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.PopupHolder;
-import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.gui.windows.GuiContext;
-import nidefawl.qubes.gui.windows.GuiWindow;
-import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {

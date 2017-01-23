@@ -4,8 +4,6 @@ import java.util.*;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.perf.TimingHelper;
-
 public class PathList {
     LinkedList<PathPoint> list = new LinkedList<>();
     private Comparator<PathPoint> comparator = new Comparator<PathPoint>() {

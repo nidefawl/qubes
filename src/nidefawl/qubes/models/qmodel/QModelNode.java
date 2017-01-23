@@ -1,13 +1,7 @@
 package nidefawl.qubes.models.qmodel;
 
 import java.io.EOFException;
-import java.util.*;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
-import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.Matrix4f;
 
 public class QModelNode extends QModelAbstractNode {

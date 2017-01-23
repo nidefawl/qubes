@@ -2,7 +2,6 @@ package nidefawl.qubes.gui.controls;
 
 import org.lwjgl.opengl.GL11;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;

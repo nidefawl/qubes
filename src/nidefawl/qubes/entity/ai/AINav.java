@@ -1,15 +1,10 @@
 package nidefawl.qubes.entity.ai;
 
-import java.util.ArrayList;
-
 import nidefawl.qubes.entity.EntityAI;
-import nidefawl.qubes.network.packet.PacketSDebugPath;
 import nidefawl.qubes.path.Path;
 import nidefawl.qubes.path.PathFinder;
 import nidefawl.qubes.path.PathPoint;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.vec.Vec3D;
-import nidefawl.qubes.world.WorldServer;
 
 public class AINav {
     PathFinder finder = new PathFinder();

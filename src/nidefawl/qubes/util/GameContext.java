@@ -5,8 +5,6 @@ import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
 import nidefawl.qubes.config.WorkingEnv;
-import nidefawl.qubes.crafting.CraftingManager;
-import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.entity.EntityType;
 import nidefawl.qubes.item.IDMappingItems;

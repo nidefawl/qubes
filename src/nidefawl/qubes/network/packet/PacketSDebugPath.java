@@ -9,7 +9,6 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.network.Handler;
 import nidefawl.qubes.path.PathPoint;
-import nidefawl.qubes.vec.AABB;
 
 public class PacketSDebugPath extends Packet {
     

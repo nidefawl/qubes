@@ -8,14 +8,11 @@ import org.lwjgl.opengl.GL11;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ScrollList;
-import nidefawl.qubes.io.network.DataListType;
 import nidefawl.qubes.io.network.WorldInfo;
 import nidefawl.qubes.network.client.ClientHandler;
-import nidefawl.qubes.network.packet.PacketCListRequest;
 import nidefawl.qubes.network.packet.PacketCSwitchWorld;
 import nidefawl.qubes.shader.Shaders;
 

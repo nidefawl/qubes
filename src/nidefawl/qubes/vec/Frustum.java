@@ -1,6 +1,5 @@
 package nidefawl.qubes.vec;
 
-import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
 

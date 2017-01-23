@@ -3,7 +3,6 @@ package nidefawl.qubes.server.compress;
 import java.util.Collection;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.blockdata.BlockData;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.io.ByteArrIO;
 import nidefawl.qubes.network.packet.PacketSChunkData;

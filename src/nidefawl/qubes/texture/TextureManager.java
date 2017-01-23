@@ -7,7 +7,6 @@ import static org.lwjgl.opengl.GL30.GL_R8;
 import static org.lwjgl.opengl.GL30.GL_RG;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
 
-import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -18,7 +17,6 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 

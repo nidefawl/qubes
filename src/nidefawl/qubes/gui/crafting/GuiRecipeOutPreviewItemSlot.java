@@ -1,12 +1,10 @@
 package nidefawl.qubes.gui.crafting;
 
-import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.Tooltip;
-import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.item.BaseStack;

@@ -1,7 +1,6 @@
 package nidefawl.qubes.server.compress;
 
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.network.packet.PacketSLightChunk;
 import nidefawl.qubes.network.server.ServerHandlerPlay;

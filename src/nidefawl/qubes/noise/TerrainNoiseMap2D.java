@@ -1,8 +1,5 @@
 package nidefawl.qubes.noise;
 
-import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.noise.RiverNoise2D.RiverNoiseResult;
-import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.util.GameMath;
 
 public class TerrainNoiseMap2D extends AbstractNoiseGen {

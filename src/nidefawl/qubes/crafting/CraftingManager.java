@@ -3,15 +3,9 @@ package nidefawl.qubes.crafting;
 import java.util.List;
 
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
-import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.entity.PlayerServer;
-import nidefawl.qubes.inventory.BaseInventory;
-import nidefawl.qubes.inventory.InventoryUtil;
 import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
-import nidefawl.qubes.item.Item;
-import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketSCraftingProgress;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Side;

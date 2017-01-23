@@ -11,7 +11,6 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.ClipboardHelper;
-import nidefawl.qubes.util.GameMath;
 
 public class TextInput {
 

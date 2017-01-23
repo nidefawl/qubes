@@ -1,7 +1,5 @@
 package nidefawl.qubes.util;
 
-import nidefawl.qubes.Game;
-
 public class ThreadedWorker {
     private final Object                   sync = new Object();
     public final int                       numThreads;

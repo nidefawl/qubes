@@ -4,12 +4,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.slots.SlotStack;
 import nidefawl.qubes.network.Handler;
 

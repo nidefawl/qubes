@@ -5,7 +5,6 @@ import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.BlockPos;
-import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.structure.Structure;

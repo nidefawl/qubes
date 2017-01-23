@@ -3,7 +3,6 @@
  */
 package nidefawl.qubes.models.qmodel.animation;
 
-import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 
 /**

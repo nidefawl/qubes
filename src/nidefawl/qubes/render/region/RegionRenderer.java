@@ -8,8 +8,6 @@ import java.util.*;
 
 import org.lwjgl.opengl.*;
 
-import com.google.common.collect.Lists;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.Chunk;

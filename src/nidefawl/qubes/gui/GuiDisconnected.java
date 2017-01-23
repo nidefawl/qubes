@@ -1,7 +1,6 @@
 package nidefawl.qubes.gui;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.shader.Shaders;
 

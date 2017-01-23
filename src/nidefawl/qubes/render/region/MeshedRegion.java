@@ -1,18 +1,12 @@
 package nidefawl.qubes.render.region;
 
 import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
-import static nidefawl.qubes.meshing.BlockFaceAttr.*;
-
-import java.nio.IntBuffer;
 import java.util.Arrays;
 
 import org.lwjgl.opengl.*;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;

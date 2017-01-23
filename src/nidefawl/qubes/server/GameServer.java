@@ -21,7 +21,6 @@ import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest;
 import nidefawl.qubes.worldgen.terrain.TerrainGeneratorIsland;
-import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight;
 import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
 import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2;
 

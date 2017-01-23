@@ -24,12 +24,10 @@ import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.biomes.BiomeManagerType;
-import nidefawl.qubes.world.biomes.BiomeSettingsHex;
 import nidefawl.qubes.world.biomes.IBiomeManager;
 import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.IChunkPopulator;
 import nidefawl.qubes.worldgen.structure.GenTask;
-import nidefawl.qubes.worldgen.structure.MineGen;
 import nidefawl.qubes.worldgen.terrain.ITerrainGen;
 
 @SideOnly(value = Side.SERVER)

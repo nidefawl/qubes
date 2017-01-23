@@ -12,7 +12,6 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.*;
-import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;

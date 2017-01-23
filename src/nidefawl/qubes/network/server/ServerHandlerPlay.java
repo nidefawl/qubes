@@ -10,7 +10,6 @@ import nidefawl.qubes.crafting.CraftingManager;
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.entity.EntityProperties;
-import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.io.network.DataListType;

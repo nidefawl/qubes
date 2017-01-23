@@ -20,7 +20,6 @@ import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLDebugTextures;
-import nidefawl.qubes.gl.MultiDrawIndirectBuffer;
 import nidefawl.qubes.gui.GuiChatInput;
 import nidefawl.qubes.gui.GuiGameMenu;
 import nidefawl.qubes.gui.GuiSelectBlock;

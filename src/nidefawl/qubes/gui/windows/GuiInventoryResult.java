@@ -5,7 +5,6 @@ import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.controls.Button;
-import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.item.BaseStack;

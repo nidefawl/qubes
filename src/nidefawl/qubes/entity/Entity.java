@@ -2,7 +2,6 @@ package nidefawl.qubes.entity;
 
 import java.util.Random;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.QModelProperties;

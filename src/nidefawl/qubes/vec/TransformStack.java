@@ -2,7 +2,6 @@ package nidefawl.qubes.vec;
 
 import org.lwjgl.opengl.GL11;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 
 public class TransformStack {

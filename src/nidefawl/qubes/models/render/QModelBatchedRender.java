@@ -4,7 +4,6 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -12,10 +11,8 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.*;
 import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.vec.Matrix4f;

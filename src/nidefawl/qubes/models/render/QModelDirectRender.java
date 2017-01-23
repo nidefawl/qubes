@@ -3,21 +3,16 @@ package nidefawl.qubes.models.render;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.qmodel.*;
-import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.vec.Matrix4f;
 
 public class QModelDirectRender extends QModelRender {
     public List<QModelObject> subLists = Lists.newArrayList();

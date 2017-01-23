@@ -1,7 +1,5 @@
 package nidefawl.qubes.gl;
 
-import org.lwjgl.opengl.GL15;
-
 public class TesselatorState extends AbstractTesselatorState {
 
     final GLVBO vbo;

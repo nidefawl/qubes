@@ -10,10 +10,8 @@ import org.lwjgl.opengl.GL15;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
-import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;

@@ -1,11 +1,8 @@
 package nidefawl.qubes.input;
 
 import java.util.HashMap;
-import java.util.Map;
-
 import org.lwjgl.glfw.GLFW;
 
-import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.GameBase;

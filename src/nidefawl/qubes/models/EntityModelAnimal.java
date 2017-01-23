@@ -1,13 +1,8 @@
 package nidefawl.qubes.models;
 
-import java.util.ArrayList;
-
-import com.google.common.collect.Lists;
-
 import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.models.qmodel.*;
-import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
 import nidefawl.qubes.models.qmodel.animation.QModelAction;
 import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.util.GameMath;

@@ -3,11 +3,9 @@ package nidefawl.qubes.gui.controls;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.font.FontRenderer;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 

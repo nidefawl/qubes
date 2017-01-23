@@ -5,11 +5,8 @@ import java.util.List;
 
 import org.lwjgl.opengl.GL15;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
-import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderGroup;
-import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderObject;
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.RenderUtil;

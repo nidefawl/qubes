@@ -22,15 +22,12 @@ import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.item.BaseStack;
-import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Ease;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.vec.Vector4f;
 
 public class VRGuiRenderer {
     public final static float         GUI_3D_SCALE = 1f / 256f;

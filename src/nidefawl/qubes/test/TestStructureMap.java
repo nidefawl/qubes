@@ -7,7 +7,6 @@ import java.util.Random;
 import nidefawl.qubes.nbt.Tag;
 import nidefawl.qubes.nbt.Tag.Compound;
 import nidefawl.qubes.nbt.TagReader;
-import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.world.structure.StructureFactory;
 import nidefawl.qubes.world.structure.StructureMap;
 import nidefawl.qubes.world.structure.tree.Tree;

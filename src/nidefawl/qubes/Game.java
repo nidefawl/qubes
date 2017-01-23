@@ -1,8 +1,6 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import java.io.File;
 
@@ -23,7 +21,6 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
@@ -48,14 +45,12 @@ import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Matrix4f;
-import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.vr.VREvents;
@@ -471,7 +466,7 @@ public class Game extends GameBase {
             if (GuiWindowManager.onMouseClick(button, action)) {
                 return;
             }
-            if (!canRenderGui3d() && GuiWindowManager.getInstance().anyWindowVisible()) {
+            if (!canRenderGui3d() && GuiWindowManager.anyWindowVisible()) {
                 return;
             }
 
@@ -705,7 +700,6 @@ public class Game extends GameBase {
     private void renderChunkGrid(float fTime) {
 
         int ipX = GameMath.floor(vCam.x);
-        int ipY = GameMath.floor(vCam.y);
         int ipZ = GameMath.floor(vCam.z);
         int icX = ipX >> 4;
         int icZ = ipZ >> 4;

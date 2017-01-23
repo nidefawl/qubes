@@ -1,6 +1,5 @@
 package nidefawl.qubes.assets;
 
-import java.util.Collection;
 import java.util.Collections;
 
 import nidefawl.qubes.config.WorkingEnv;

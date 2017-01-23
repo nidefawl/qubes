@@ -2,8 +2,6 @@ package nidefawl.qubes.world.structure.tree;
 
 import java.util.*;
 
-import com.google.common.collect.Sets;
-
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockLog;
 import nidefawl.qubes.entity.PlayerServer;

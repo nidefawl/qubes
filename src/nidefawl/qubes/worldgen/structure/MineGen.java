@@ -1,8 +1,6 @@
 package nidefawl.qubes.worldgen.structure;
 
 import java.util.*;
-import java.util.Map.Entry;
-
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.block.Block;

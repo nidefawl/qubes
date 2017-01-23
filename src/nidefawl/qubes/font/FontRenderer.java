@@ -1,6 +1,5 @@
 package nidefawl.qubes.font;
 
-import java.awt.Font;
 import java.util.HashMap;
 
 import org.lwjgl.opengl.GL11;
@@ -8,8 +7,6 @@ import org.lwjgl.opengl.GL13;
 
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
 public class FontRenderer {

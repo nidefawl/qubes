@@ -1,7 +1,6 @@
 package nidefawl.qubes.gui.crafting;
 
 import java.util.*;
-import java.util.Locale.Category;
 import java.util.Map.Entry;
 
 import org.lwjgl.glfw.GLFW;
@@ -14,7 +13,6 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.crafting.CraftingCategory;
 import nidefawl.qubes.crafting.CraftingManagerClient;
 import nidefawl.qubes.crafting.recipes.CraftingRecipe;
-import nidefawl.qubes.crafting.recipes.CraftingRecipes;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.font.FontRenderer;
@@ -27,13 +25,11 @@ import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.gui.windows.*;
-import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.inventory.BaseInventory;
 import nidefawl.qubes.inventory.PlayerInventory;
 import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
-import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.network.packet.PacketCCrafting;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;

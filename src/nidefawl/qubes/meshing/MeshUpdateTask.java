@@ -10,7 +10,6 @@ import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MAS
 import java.util.List;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.perf.GPUProfiler;

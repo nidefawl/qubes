@@ -7,7 +7,6 @@ import java.nio.FloatBuffer;
 
 import nidefawl.qubes.network.StreamIO;
 import nidefawl.qubes.util.DumbPool;
-import nidefawl.qubes.util.Pool;
 
 public class Vector3f implements StreamIO, IVec3 {
     

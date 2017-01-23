@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.crafting.recipes.CraftingRecipe;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;

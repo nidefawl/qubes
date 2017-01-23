@@ -7,7 +7,6 @@ import org.lwjgl.opengl.GL11;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.chat.client.ChatLine;
 import nidefawl.qubes.chat.client.ChatManager;
-import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.shader.Shader;
