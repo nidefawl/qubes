@@ -76,8 +76,8 @@ public abstract class GuiInventoryResult extends Gui {
 //        } else {
         int x = (int) ((Gui)this.parent).mouseOffsetX();
         int y = (int) ((Gui)this.parent).mouseOffsetY();
-        x = (int) (Mouse.getX()-x);
-        y = (int) (Mouse.getY()-y);
+        x = (int) (mouseGetX()-x);
+        y = (int) (mouseGetY()-y);
             int rows = this.slots.getSlots().size()/4;
             int width = 20 + (slotBDist+slotW)*4;
             int height = 15+ (slotBDist+slotW)*rows+32;
@@ -121,8 +121,8 @@ public abstract class GuiInventoryResult extends Gui {
         float posx = (float) (10+mouseOffsetX());
         float posy  = (float) (10+mouseOffsetY());
         if (this.slots != null) {
-            System.out.println(this.slots.getSlot(0).x+", "+(Mouse.getX()-posx));
-            Slot s = this.slots.getSlotAt(Mouse.getX()-posx, Mouse.getY()-posy);
+            System.out.println(this.slots.getSlot(0).x+", "+(mouseGetX()-posx));
+            Slot s = this.slots.getSlotAt(mouseGetX()-posx, mouseGetY()-posy);
             if (s != null) {
                 BaseStack stack = this.slots.slotClicked(s, button, action);
                 Game.instance.sendPacket(new PacketCInvClick(slots.getId(), s.idx, button, action, stack));

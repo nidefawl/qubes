@@ -25,11 +25,9 @@ import nidefawl.qubes.gui.GuiChatInput;
 import nidefawl.qubes.gui.GuiGameMenu;
 import nidefawl.qubes.gui.GuiSelectBlock;
 import nidefawl.qubes.gui.crafting.GuiCraftingSelect;
-import nidefawl.qubes.gui.windows.GuiColor;
-import nidefawl.qubes.gui.windows.GuiInventory;
+import nidefawl.qubes.gui.windows.*;
 import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiModelView;
 import nidefawl.qubes.gui.windows.GuiModelAdjustAbstract.GuiPlayerAdjust;
-import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.io.network.DataListType;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.ItemModelManager;
@@ -130,7 +128,8 @@ public class KeybindManager {
         this.forward = 0;
         this.jump = false;
         this.sneak = false;
-        if (this.grabbed) {
+        boolean hasTextInput=(GuiContext.input != null && GuiContext.input.isFocusedAndContext());
+        if (this.grabbed && (!hasTextInput)) {
             float mult = SPEED_MODIFIER;
             this.sneak=isKeyDown(kb_sneak.getKey());
             this.jump=isKeyDown(kb_jump.getKey());
@@ -337,7 +336,7 @@ public class KeybindManager {
         });
         addKeyBinding((new Keybinding("show_menu", GLFW.GLFW_KEY_ESCAPE) {
             public void onDown() {
-                if( game.getGui() == null)
+                if( game.getGui() == null && game.getWorld() != null)
                     game.showGUI(new GuiGameMenu());
             }
         }).setStatic());

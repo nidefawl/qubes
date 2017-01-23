@@ -51,13 +51,11 @@ public class GuiCached extends Gui {
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             FrameBuffer.unbindFramebuffer();
         }
-        Engine.setBlend(true);
         Shaders.textured.enable();
         Engine.pxStack.push(0, 0, -20);
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));
         Engine.drawFullscreenQuad();
         Engine.pxStack.pop();
-        Shader.disable();
     }
     public void refresh() {
         ((GuiOverlayStats) this.gui).refresh(); // TODO: make interface, or something

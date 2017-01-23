@@ -218,8 +218,8 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 		}
 		this.list.addAll(this.listDyn);
 		int he = layout();
-        int xPos = (Game.displayWidth-width)/2;
-        int yPos = (Game.displayHeight-height)/2;
+        int xPos = (Game.guiWidth-width)/2;
+        int yPos = (Game.guiHeight-height)/2;
         setPos(xPos, yPos);
 	}
 
@@ -227,8 +227,8 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 	public void initGui(boolean first) {
         setSize(340, 600);
 //        setPos(20, 20);
-        int xPos = (Game.displayWidth-width)/2;
-        int yPos = (Game.displayHeight-height)/2;
+        int xPos = (Game.guiWidth-width)/2;
+        int yPos = (Game.guiHeight-height)/2;
         setPos(xPos, yPos);
 		this.clearElements();
 		this.list.clear();
@@ -326,7 +326,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
 	}
 
 	public void render(float fTime, double mX, double mY) {
-		renderModel(fTime, mX, mY);
+//		renderModel(fTime, mX, mY);
         PlayerSelf self = Game.instance!=null?Game.instance.getPlayer():null;
         if (self != null) {
             int modelIdx = self.getEntityProperties().getOption(15, 0);
@@ -395,8 +395,8 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
         Shaders.texturedAlphaTest.enable();
         int xOffset = 400;
         Engine.pxStack.push(posX + xOffset, posY + 20, 4);
-        float ftexW = w / (float) Game.displayWidth;
-        float ftexH = h / (float) Game.displayHeight;
+        float ftexW = w / (float) Game.guiWidth;
+        float ftexH = h / (float) Game.guiHeight;
         GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
         Tess.instance.setColorF(-1, 1.0f);
         Tess.instance.add(w, h, 0, ftexW, 0);

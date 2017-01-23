@@ -23,8 +23,19 @@ public class GuiOverlayChat extends Gui {
 
     public void render(float fTime, double mx, double mY) {
         Shaders.textured.enable();
-        this.posY = Game.displayHeight-12;
-        renderAt(Game.displayHeight-12, false);
+        if (Game.instance.canRenderGui3d()) {
+            int x = Game.guiWidth/2-Game.guiWidth/6;
+            setPos(x, 0);
+            setSize(Game.guiWidth/3, Game.guiHeight/3);
+            renderAt(posX, posY+height, false);
+        } else {
+
+            this.posY = Game.guiHeight-12;
+            renderAt(0, Game.guiHeight-12, false);
+        }
+        if (Game.instance.canRenderGui3d()) {
+            
+        }
         
         Shader.disable();
  
@@ -40,7 +51,7 @@ public class GuiOverlayChat extends Gui {
     /**
      * @param posY
      */
-    public void renderAt(int posY, boolean full) {
+    public void renderAt(int posX, int posY, boolean full) {
         float fLine = font.getLineHeight()*1.2f;
         float n = this.height / fLine;
         int maxLines = (int) Math.ceil(n);
@@ -53,11 +64,11 @@ public class GuiOverlayChat extends Gui {
             }
             this.height = 8+(int) (maxLines*fLine);
         }
-        int py=posY;
         int h = 16;
         int insetX = 2;
         int insetY = 2;
         Engine.enableDepthMask(false);
+        this.posX = posX;
         this.posY=posY-this.height;
         Shaders.colored.enable();
         renderOutlinedBox();
@@ -84,11 +95,11 @@ public class GuiOverlayChat extends Gui {
         }
         Shader.disable();
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(this.posX + 2, Game.displayHeight-(this.posY+this.height), this.width - insetX , height);
+        GL11.glScissor(this.posX + 2, Engine.getViewport()[3]-(this.posY+this.height), this.width - insetX , height);
         Shaders.textured.enable();
         for (int i = 0; i < lines.size() && i < maxLines; i++) {
             ChatLine s = lines.get(i);
-            font.drawString(s.getLine(), 12, posY-6-(i)*fLine, 0xFFFFFF, true, 1.0F);    
+            font.drawString(s.getLine(), this.posX+4, posY-6-(i)*fLine, 0xFFFFFF, true, 1.0F);    
         }
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
         Engine.enableDepthMask(true);

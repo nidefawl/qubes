@@ -28,7 +28,7 @@ public abstract class GuiWindowInventoryBase extends GuiWindow {
         float posx = this.posX+10;
         float posy  = this.posY+titleBarHeight+5;
         if (this.slots != null) {
-            Slot s = this.slots.getSlotAt(Mouse.getX()-posx, Mouse.getY()-posy);
+            Slot s = this.slots.getSlotAt(mouseGetX()-posx, mouseGetY()-posy);
             if (s != null) {
                 BaseStack stack = this.slots.slotClicked(s, button, action);
                 Game.instance.sendPacket(new PacketCInvClick(slots.getId(), s.idx, button, action, stack));

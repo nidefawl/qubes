@@ -9,7 +9,7 @@ public class GuiDisconnected extends Gui {
 
     private String reason;
     public GuiDisconnected() {
-        this.isFullscreen=true;
+        this.isFullscreen=!Game.instance.canRenderGui3d();
     }
 
     public GuiDisconnected(String reason) {

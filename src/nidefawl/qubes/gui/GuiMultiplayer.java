@@ -15,7 +15,7 @@ public class GuiMultiplayer extends Gui implements ITextEdit {
     private Button connect;
     private Button back;
     public GuiMultiplayer(GuiMainMenu parent) {
-        this.isFullscreen=true;
+        this.isFullscreen=!Game.instance.canRenderGui3d();
         this.parent = parent;
         this.font = parent.font;
     }

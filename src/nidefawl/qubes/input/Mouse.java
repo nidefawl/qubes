@@ -75,8 +75,10 @@ public class Mouse {
         bx.position(0);
         by.position(0);
         GLFW.glfwGetCursorPos(GameBase.windowId, bx, by);    
-        lastX = bx.get();
-        lastY = by.get();
+        double bX = bx.get();
+        double bY = by.get();
+        lastX = bX;
+        lastY = bY;
         if (DISABLE_MOUSE_INPUT)
             lastX = lastY = 0;
     }
@@ -89,8 +91,15 @@ public class Mouse {
 	        mx = my = 0;
 		x = mx;
 		y = my;
-        dx += x-lastX;
-        dy += y-lastY;
+		
+		//make sure input doesn't jump when loosing windows focus
+//		if (isGrabbed) {
+            dx += x-lastX;
+            dy += y-lastY;
+//		} else {
+//		    dx = 0;
+//		    dy = 0;
+//		}
         lastX = mx;
         lastY = my;
 	}

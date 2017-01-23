@@ -188,21 +188,21 @@ public class TreeGeneratorLSystem implements IWorldGen {
                         safelySetBlock(view, posX + (int) position.x+1, posY + (int) position.y, posZ + (int) position.z+1, this.log, 0, 1);
                         safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z+1, this.log, 0, 1);
                         dir2.set(1, 0, 0);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
                         position.addVec(dir2);
                         trunkDepth++;
                         break;
                     case 'T':
                         safelySetBlock(view, posX + (int) position.x, posY + (int) position.y, posZ + (int) position.z, this.log, 0, 1);
                         dir2.set(1, 0, 0);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
                         position.addVec(dir2);
                         trunkDepth++;
                         break;
                     case 'Z':
 
                         dir2.set(dir);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
 //                        float n = Vector3f.dot(dir2, down);
 //                        n = Math.min(1, Math.max(1 - n*3, 0));
 //                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
@@ -233,7 +233,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
                             }
                         }
                         dir2.set(dir);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
 //                        float n = Vector3f.dot(dir2, down);
 //                        n = Math.min(1, Math.max(1 - n*3, 0));
 //                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
@@ -259,7 +259,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
                             }
                         }
                         dir2.set(dir);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
 //                        float n = Vector3f.dot(dir2, down);
 //                        n = Math.min(1, Math.max(1 - n*3, 0));
 //                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
@@ -281,7 +281,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
                             }
                         }
                         dir2.set(dir);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
 //                        float n = Vector3f.dot(dir2, down);
 //                        n = Math.min(1, Math.max(1 - n*3, 0));
 //                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));
@@ -299,7 +299,7 @@ public class TreeGeneratorLSystem implements IWorldGen {
 //                        //
 //                      }
                         dir2.set(dir);
-                        rotation.transformVec(dir2);
+                        rotation.transformVecTransposed(dir2);
 //                        float n = Vector3f.dot(dir2, down);
 //                        n = Math.min(1, Math.max(1 - n*3, 0));
 //                        dir2.scale(n*((maxDepth-depth)/(float)maxDepth));

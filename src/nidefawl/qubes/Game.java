@@ -1,6 +1,7 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 
 import java.io.File;
@@ -22,6 +23,7 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
@@ -38,7 +40,7 @@ import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
-import nidefawl.qubes.render.gui.VRGui;
+import nidefawl.qubes.render.gui.VRGuiRenderer;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -46,12 +48,14 @@ import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Matrix4f;
+import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.vr.VREvents;
@@ -78,6 +82,8 @@ public class Game extends GameBase {
     private NetworkClient      client;
     WorldClient                world     = null;
     PlayerSelf                 player;
+    
+    final CameraController cameraController = new CameraController();
     WorldPlayerController worldPlayerController = new WorldPlayerController();
     public final DigController         dig                = new DigController();
     public final Selection     leftSelection = new Selection();
@@ -94,6 +100,11 @@ public class Game extends GameBase {
     public final Vector3f vLastCam           = new Vector3f();
     public final Vector3f vLastPlayer        = new Vector3f();
 
+    /**
+     * third person distance
+     */
+    private float                  lastTpDistance;
+
     public boolean        updateRenderers = true;
     public static boolean showGrid        = false;
     public boolean        thirdPerson     = false;
@@ -104,11 +115,18 @@ public class Game extends GameBase {
     WorldClient           remoteWorld;
     WorldClient           testWorld;
 
-    int skipChars = 0;
     int throttleClick=0;
     public boolean showControllers;
     public final LocalGameServer server = new LocalGameServer();
-    FrameBuffer fbGUIFixed;
+    VRGuiRenderer vrGui = new VRGuiRenderer();
+    final static Vector3f tmp = new Vector3f();
+    RayTrace rayTrace = new RayTrace() {
+        public boolean rayTraceBlock(Block block) {
+            if (block.isFullBB())
+                return true;
+            return !block.isTransparent();
+        };
+    };
     
     private GameMode mode = GameMode.BUILD;
     
@@ -137,6 +155,7 @@ public class Game extends GameBase {
     
     public Game() {
         super();
+        appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
     }
@@ -176,19 +195,13 @@ public class Game extends GameBase {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
         loadingScreen.render(0, 0.5f, "Initializing");
-        fbGUIFixed = new FrameBuffer(1920, 1080);
-        fbGUIFixed.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA8);
-        fbGUIFixed.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        fbGUIFixed.setClearColor(GL_COLOR_ATTACHMENT0, 0.71F, 0.82F, 1.00F, 0F);
-        fbGUIFixed.setHasDepthAttachment();
-        fbGUIFixed.setup(null);
-        fbGUIFixed.bind();
+        this.vrGui.init();
         
         
     }
 
     public String getAppTitle() {
-        return String.format("Qubes - %s", buildIdentifier);
+        return String.format("%s - %s", appName, buildIdentifier);
     }
 
 
@@ -249,6 +262,7 @@ public class Game extends GameBase {
 
         KeybindManager.load();
         isStarting = true;
+        updateGui3dMode();
         
     }
 
@@ -302,6 +316,28 @@ public class Game extends GameBase {
         if (this.world != null) {
             this.world.onLoad();
         }
+        updateGui3dMode();
+    }
+    public void updateGui3dMode() {
+        this.vrGui.reset();
+        this.renderGui3d = VR_SUPPORT || this.settings.gui3d;
+        if (this.renderGui3d) {
+            guiWidth = 1920;
+            guiHeight = 1080;
+            int x = guiWidth/2-guiWidth/6;
+            this.chatOverlay.setPos(x, guiHeight/2-guiHeight/6);
+            this.chatOverlay.setSize(guiWidth/3, guiHeight/3);
+        } else {
+            guiWidth = windowWidth;
+            guiHeight = windowHeight;
+            this.chatOverlay.setPos(8, guiHeight-guiHeight/3-8);
+            this.chatOverlay.setSize(guiWidth/2, guiHeight/3);
+        }
+        GuiContext.canDragWindows=!this.renderGui3d;
+        GuiContext.canWindowsFocusChange=!this.renderGui3d;
+        GuiContext.hasOverride=false;
+        GuiContext.mouseOverOverride=null;
+        showGUI(null);
     }
     
     @Override
@@ -343,8 +379,8 @@ public class Game extends GameBase {
                 if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_PRESS) {
                     GuiContext.input.focused = false;
                     GuiContext.input = null;
-                    return;
                 }
+//                return;
             }
             Keybinding k = KeybindManager.getKeyBinding(key);
             if (k != null && k.isEnabled() && k.isPressed()) {
@@ -435,12 +471,11 @@ public class Game extends GameBase {
             if (GuiWindowManager.onMouseClick(button, action)) {
                 return;
             }
-            if (GuiWindowManager.getInstance().anyWindowVisible()) {
+            if (!canRenderGui3d() && GuiWindowManager.getInstance().anyWindowVisible()) {
                 return;
             }
 
 
-            boolean b = Mouse.isGrabbed();
             boolean isDown = Mouse.getState(action);
             if (throttleClick > 0) {
                 return;
@@ -474,6 +509,9 @@ public class Game extends GameBase {
     }
 
     public boolean needsGrab() {
+        if (canRenderGui3d()) {
+            return true;
+        }
         if (!hasWindowFocus) 
             return false;
         if (this.world == null) {
@@ -482,75 +520,73 @@ public class Game extends GameBase {
         return this.gui==null&&!GuiWindowManager.anyWindowVisible();
     }
 
-    VRGui vrGui = new VRGui();
 
     public void render(float fTime) {
+        if (canRenderGui3d()) {
+            setGUIViewport();
+            Engine.checkGLError("setGUIProjection");
+            vrGui.renderGUIs(fTime);
+            if (!VR_SUPPORT) {
+                setWindowViewport();
+            }
+        }
         if (VR_SUPPORT) {
-//            if (VR_SUPPORT) {
-//                setVRProjection(); // do this at the end of the frame to leave displayHeight/displayWidth at VR render resolution
-//            }
-            setGUIProjection();
-            Gui.RENDER_BACKGROUNDS = false;
-            this.fbGUIFixed.bind();
-            fbGUIFixed.setClearColor(GL_COLOR_ATTACHMENT0, 0.71F, 0.82F, 1.00F, 0F);
-            this.fbGUIFixed.clearFrameBuffer();
-
-            
-            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-            renderGui(fTime, 0, 0);
-
-            Gui.RENDER_BACKGROUNDS = true;
-            if (this.gui == null && this.world != null) {
-                glEnable(GL_DEPTH_TEST);
-                GuiWindowManager.getInstance().render(fTime, 0, 0);
-                glDisable(GL_DEPTH_TEST);
-            }
-            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            FrameBuffer.unbindFramebuffer();
-            if (GLDebugTextures.isShow()) {
-                GLDebugTextures.readTexture("VR_GUI", "texColor", this.fbGUIFixed.getTexture(0), 0x8);
-            }
-            setVRProjection();
+            setVRViewport();
         }
         glEnable(GL_DEPTH_TEST);
         Engine.setBlend(false);
-        glClearColor(0.71F, 0.82F, 1.00F, 1F);
+        glClearColor(0f, 0f, 0f, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
             Engine.skyRenderer.renderSky(this.world, fTime);
-        } else {
-            Engine.setDefaultViewport();
-        }
+        } 
+//        else {
+//            Engine.setDefaultViewport();
+//        }
 
         for (int eye = 0; eye < (VR_SUPPORT ? 2 : 1); eye++) {
             if (VR_SUPPORT) {
                 Engine.getMatSceneP().load(eye == 0 ? VR.cam.projLeft : VR.cam.projRight);
                 Engine.getMatSceneP().update();
-                Engine.updateCamera(VR.getViewMat(eye), Engine.camera.getPosition());
-                UniformBuffer.updateUBO(world, fTime);
+                Engine.setViewMatrix(VR.getViewMat(eye));
                 VR.setViewPort(eye);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("setCameraAndViewport");
             }
-            renderWorld(fTime, eye);
-            if (VR_SUPPORT && (showControllers||gui!=null||true)) {
-                FrameBuffer finalTarget = VR.getFB(eye);
-                finalTarget.bind();
-                finalTarget.clearDepth();
-//                System.out.println(glGetBoolean(GL_DEPTH_TEST));
-//                glDisable(GL_DEPTH_TEST);
-
-//                glEnable(GL_DEPTH_TEST);
+            FrameBuffer finalTarget = VR_SUPPORT ? VR.getFB(eye) : null;
+            if (this.world != null) {
+                renderWorld(fTime, eye, finalTarget);    
+            } else if (canRenderGui3d()) {
+                Engine.getSceneFB().bind();
+                Engine.getSceneFB().clearColor();
+                Engine.setBlend(true);
+                glDisable(GL_DEPTH_TEST);
+//                Shaders.textured.enable();
+//                GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, TMgr.getEmptyWhite());
+//                Engine.drawFullscreenQuad();
                 
-                Engine.updateCamera(VR.getPoseMat(eye), Vector3f.ZERO);
-                UniformBuffer.updateUBO(/*null*/world, fTime);
-//                VR.renderControllers();
-                Engine.updateCamera(VR.getViewMat(eye), Vector3f.ZERO);
-                UniformBuffer.updateUBO(/*null*/world, fTime);
-//                vrGui.render(fTime, fbGUIFixed.getTexture(0));
-                FrameBuffer.unbindFramebuffer();
+                render3dGUI(fTime);
                 
+                glEnable(GL_DEPTH_TEST);
+                Engine.setBlend(false);
+            
+                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), fTime, finalTarget);
             }
+            
+//            if (VR_SUPPORT && (showControllers||gui!=null||true)) {
+//                FrameBuffer finalTarget = VR.getFB(eye);
+//                finalTarget.bind();
+//                finalTarget.clearDepth();
+//                
+//                Engine.updateCamera(VR.getPoseMat(eye), Vector3f.ZERO);
+//                UniformBuffer.updateUBO(/*null*/world, fTime);
+//                VR.renderControllers();
+//                Engine.updateCamera(VR.getViewMat(eye), Vector3f.ZERO);
+//                UniformBuffer.updateUBO(/*null*/world, fTime);
+//                vrGui.render(fTime, fbGUIFixed.getTexture(0));
+//                FrameBuffer.unbindFramebuffer();
+//                
+//            }
         }
             
         if (VR_SUPPORT) {
@@ -562,7 +598,7 @@ public class Game extends GameBase {
 
             
             FrameBuffer.unbindFramebuffer();
-            if (this.world != null) {
+            if (this.world != null||canRenderGui3d()) {
                 VR.Submit();
             }
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("VR.Submit");
@@ -570,7 +606,7 @@ public class Game extends GameBase {
             Game.displayWidth=windowWidth;
             Game.displayHeight=windowHeight;
             updateProjection();
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("setGUIProjection");
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("updateProjection");
             VR.drawFullscreenCompanion(windowWidth, windowHeight);
             {
 //                Engine.setBlend(true);
@@ -596,8 +632,7 @@ public class Game extends GameBase {
         }
         
         Engine.setBlend(true);
-        
-//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         glClear(GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
 
@@ -606,23 +641,24 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("gui");
 
-        if (this.world != null && this.gui == null && this.movement.grabbed()) {
-            renderCrossHair(fTime);
+        if (this.world != null && this.movement.grabbed()) {
+            boolean gui3d = canRenderGui3d();
+            if ((gui3d && !has3dGUIMouseFocus()) || (!gui3d && this.gui == null)) {
+                renderCrossHair(fTime);
+            }
         }
 
-        Engine.setBlend(true);
-//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         double mx = Mouse.getX();
         double my = Mouse.getY();
         if (this.statsCached != null) {
             this.statsCached.setSize(displayWidth, displayHeight);
             this.statsCached.render(fTime, 0, 0);
         }
-        if (!VR_SUPPORT) {
+        if (!canRenderGui3d()) {
             renderGui(fTime, mx, my);
         }
 
-        if (this.gui == null && this.world != null) {
+        if (this.gui == null && this.world != null && !canRenderGui3d()) {
 
             if (showGrid) {
                 renderChunkGrid(fTime);
@@ -730,7 +766,7 @@ public class Game extends GameBase {
     
     }
 
-    protected void renderGui(float fTime, double mx, double my) {
+    public void renderGui(float fTime, double mx, double my) {
 
         if (this.gui != null) {
             if (GPUProfiler.PROFILING_ENABLED)
@@ -757,366 +793,336 @@ public class Game extends GameBase {
         }
     }
 
-    private void renderWorld(float fTime, int eye) {
-        FrameBuffer finalTarget = VR_SUPPORT ? VR.getFB(eye) : null;
-        if (this.world != null) {
-            
-            Engine.getSceneFB().bind();
-            Engine.getSceneFB().clearFrameBuffer();
+    private void renderWorld(float fTime, int eye, FrameBuffer finalTarget) {
+        
+        Engine.getSceneFB().bind();
+        Engine.getSceneFB().clearFrameBuffer();
 
 
-            
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("renderWorld");
-
-
-            Engine.worldRenderer.renderWorld(this.world, fTime);
-            
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("renderWorld");
-
-            
-
-//            if (GPUProfiler.PROFILING_ENABLED)
-//                GPUProfiler.start("HBAO");
-//            if (HBAOPlus.hasContext) {
-//
-//                HBAOPlus.renderAO();
-//                Shader.disable();
-//            }
-//
-//            if (Game.GL_ERROR_CHECKS)
-//                Engine.checkGLError("GLNativeLib.renderAO");
-//            if (GPUProfiler.PROFILING_ENABLED)
-//                GPUProfiler.end();
-
-            
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("ShadowPass");
-            if (!VR_SUPPORT || eye == 0)
-            Engine.shadowRenderer.renderShadowPass(this.world, fTime);
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-            FrameBuffer.unbindFramebuffer();
-        }
         
 
-        if (this.world != null) {
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("renderWorld");
+
+
+        Engine.worldRenderer.renderWorld(this.world, fTime);
+        
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderWorld");
+
+        
+
+//        if (GPUProfiler.PROFILING_ENABLED)
+//            GPUProfiler.start("HBAO");
+//        if (HBAOPlus.hasContext) {
+//
+//            HBAOPlus.renderAO();
+//            Shader.disable();
+//        }
+//
+//        if (Game.GL_ERROR_CHECKS)
+//            Engine.checkGLError("GLNativeLib.renderAO");
+//        if (GPUProfiler.PROFILING_ENABLED)
+//            GPUProfiler.end();
+
+        
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("ShadowPass");
+        if (!VR_SUPPORT || eye == 0)
+        Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        FrameBuffer.unbindFramebuffer();
+        
+        
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("MainPass");
+//        FrameBuffer.unbindFramebuffer();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("lightCompute 0");
+        if (!VR_SUPPORT || eye == 0)
+        Engine.lightCompute.render(this.world, fTime, 0);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("HBAO");
+        if (HBAOPlus.hasContext) {
+
+            HBAOPlus.renderAO();
+            Shader.disable();
+        }
+
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("GLNativeLib.renderAO");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("Deferred");
+        Engine.outRenderer.bindFB();
+        Engine.outRenderer.clearFrameBuffer();
+        Engine.outRenderer.render(this.world, fTime, 0);
+        Engine.checkGLError("Engine.outRenderer.render 0");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("TransparentPass");
+
+        boolean secondPass = true;
+        if (secondPass) {
             if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("MainPass");
-//            FrameBuffer.unbindFramebuffer();
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("lightCompute 0");
-            if (!VR_SUPPORT || eye == 0)
-            Engine.lightCompute.render(this.world, fTime, 0);
+                GPUProfiler.start("copyPreWaterDepth");
+            Engine.outRenderer.copyPreWaterDepth();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-            
-
+            Engine.setBlend(true);
+//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            Engine.getSceneFB().bind();
+            Engine.getSceneFB().clearColorBlack();
             if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("HBAO");
-            if (HBAOPlus.hasContext) {
-
-                HBAOPlus.renderAO();
-                Shader.disable();
+                GPUProfiler.start("World");
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+            for (int i = 0; i < 3; i++) {
+                GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
             }
-
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("GLNativeLib.renderAO");
+            Engine.worldRenderer.renderTransparent(world, fTime);
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
+            Engine.outRenderer.bindFB();
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Deferred");
+
+            Engine.outRenderer.render(this.world, fTime, 1);
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+        }
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("copySceneDepthBuffer");
+        Engine.outRenderer.copySceneDepthBuffer();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+
+        if (Engine.outRenderer.getSsr() > 0) {
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("SSR");
+//            if (!VR_SUPPORT || eye == 0)
+            Engine.outRenderer.raytraceSSR(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+        }
+
+
+        boolean firstPerson = !this.thirdPerson;
+        if (firstPerson) {
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("firstPerson");
+            Engine.setBlend(true);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            Engine.getSceneFB().bind();
+            Engine.getSceneFB().clearDepth();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("World");
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+            for (int i = 0; i < 3; i++) {
+                GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+            }
+            if (!Game.VR_SUPPORT) {
+                Engine.worldRenderer.renderFirstPerson(world, fTime);
+            }
+            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("lightCompute 1");
+            if (!VR_SUPPORT || eye == 0)
+            Engine.lightCompute.render(this.world, fTime, 1);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
             Engine.outRenderer.bindFB();
-            Engine.outRenderer.clearFrameBuffer();
-            Engine.outRenderer.render(this.world, fTime, 0);
-            Engine.checkGLError("Engine.outRenderer.render 0");
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("Deferred");
+
+            Engine.outRenderer.render(this.world, fTime, 2);
+
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
-
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
+        }
+        
 
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("Lum");
+
+        if (Engine.outRenderer.getSsr() > 0) {
             if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("TransparentPass");
+                GPUProfiler.start("SSR2");
+//            if (!VR_SUPPORT || eye == 0)
+            Engine.outRenderer.combineSSR(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+        }
+        Engine.setBlend(false);
+        glDisable(GL_DEPTH_TEST);
+        Engine.enableDepthMask(false);
+        Engine.outRenderer.renderBlur(this.world, fTime);
 
-            boolean secondPass = true;
-            if (secondPass) {
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("copyPreWaterDepth");
-                Engine.outRenderer.copyPreWaterDepth();
-                Engine.checkGLError("copyPreWaterDepth");
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-                Engine.setBlend(true);
-//                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                Engine.getSceneFB().bind();
-                Engine.getSceneFB().clearColorBlack();
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("World");
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-                for (int i = 0; i < 3; i++) {
-                    GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-                }
-                Engine.worldRenderer.renderTransparent(world, fTime);
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
 
-                Engine.outRenderer.bindFB();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("Bloom");
+        
+        Engine.outRenderer.renderBloom(this.world, fTime);
+        
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
 
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("Deferred");
-
-                Engine.outRenderer.render(this.world, fTime, 1);
-
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
+        glEnable(GL_DEPTH_TEST);
+        Engine.enableDepthMask(true);
+        
+        boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
+        if (pass) {
+            glDisable(GL_CULL_FACE);
+            Engine.setBlend(true);
+            if (firstPerson && !VR_SUPPORT) {
+                glDepthRange(0, 0.04);
+                glColorMask(false, false, false, false);
+                Engine.worldRenderer.renderFirstPerson(world, fTime);
+                glColorMask(true, true, true, true);
+                glDepthRange(0, 1f);
             }
             if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("copySceneDepthBuffer");
-            Engine.outRenderer.copySceneDepthBuffer();
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-
-            if (Engine.outRenderer.getSsr() > 0) {
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("SSR");
-//                if (!VR_SUPPORT || eye == 0)
-                Engine.outRenderer.raytraceSSR(this.world, fTime);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-            }
-
-
-            boolean firstPerson = !this.thirdPerson;
-            if (firstPerson) {
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("firstPerson");
-                Engine.setBlend(true);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                Engine.getSceneFB().bind();
-                Engine.getSceneFB().clearDepth();
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("World");
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-                for (int i = 0; i < 3; i++) {
-                    GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-                }
-                if (!Game.VR_SUPPORT) {
-                    Engine.worldRenderer.renderFirstPerson(world, fTime);
-                }
-                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("lightCompute 1");
-                if (!VR_SUPPORT || eye == 0)
-                Engine.lightCompute.render(this.world, fTime, 1);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-
-                Engine.outRenderer.bindFB();
-
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("Deferred");
-
-                Engine.outRenderer.render(this.world, fTime, 2);
-
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-            }
+                GPUProfiler.start("ForwardPass");
+            
             
 
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("Lum");
 
-            if (Engine.outRenderer.getSsr() > 0) {
+            if (!VR_SUPPORT) {
                 if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("SSR2");
-//                if (!VR_SUPPORT || eye == 0)
-                Engine.outRenderer.combineSSR(this.world, fTime);
+                    GPUProfiler.start("BB Debug");
+                Engine.worldRenderer.renderDebugBB(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
             }
+
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("renderDebugBB");
+            if (Engine.renderWireFrame) {
+
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("Wireframe Debug");
+                
+                Engine.worldRenderer.renderNormals(this.world, fTime);
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                glPolygonOffset(-3.4f, 2.f);
+                Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
+                glDisable(GL_POLYGON_OFFSET_FILL);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("renderNormals");
+                
+            }
+            
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("BlockHighlight");
+//            System.out.println(VR.controllerDeviceIndex[1]);
+//            if (VR.controllerDeviceIndex[0]>0)
+            leftSelection.renderBlockHighlight(this.world, fTime);
+            if (VR.controllerDeviceIndex[1]>0)
+            rightSelection.renderBlockHighlight(this.world, fTime);
+
+            dig.renderDigging(world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("BlockHighlight");
+            
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+
+
+            
+            glEnable(GL_CULL_FACE);
             Engine.setBlend(false);
-            glDisable(GL_DEPTH_TEST);
-            Engine.enableDepthMask(false);
-            Engine.outRenderer.renderBlur(this.world, fTime);
+        }
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("Tonemap");
+        FrameBuffer fbOut = Engine.outRenderer.renderTonemap(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
 
-
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("Bloom");
-            
-            Engine.outRenderer.renderBloom(this.world, fTime);
-            
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-            glEnable(GL_DEPTH_TEST);
-            Engine.enableDepthMask(true);
-            
-            boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
-            if (pass) {
-                glDisable(GL_CULL_FACE);
-                Engine.setBlend(true);
-//                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                if (firstPerson && !VR_SUPPORT) {
-                    glDepthRange(0, 0.04);
-                    glColorMask(false, false, false, false);
-                    Engine.worldRenderer.renderFirstPerson(world, fTime);
-                    glColorMask(true, true, true, true);
-                    glDepthRange(0, 1f);
-                }
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("ForwardPass");
-                
-                
-
-
-                if (!VR_SUPPORT) {
-                    if (GPUProfiler.PROFILING_ENABLED)
-                        GPUProfiler.start("BB Debug");
-                    Engine.worldRenderer.renderDebugBB(this.world, fTime);
-                    if (GPUProfiler.PROFILING_ENABLED)
-                        GPUProfiler.end();
-                }
-
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("renderDebugBB");
-                if (Engine.renderWireFrame) {
-
-                    if (GPUProfiler.PROFILING_ENABLED)
-                        GPUProfiler.start("Wireframe Debug");
-                    
-                    Engine.worldRenderer.renderNormals(this.world, fTime);
-                    glEnable(GL_POLYGON_OFFSET_FILL);
-                    glPolygonOffset(-3.4f, 2.f);
-                    Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-                    glDisable(GL_POLYGON_OFFSET_FILL);
-                    if (GPUProfiler.PROFILING_ENABLED)
-                        GPUProfiler.end();
-                    if (Game.GL_ERROR_CHECKS)
-                        Engine.checkGLError("renderNormals");
-                    
-                }
-                
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("BlockHighlight");
-//                System.out.println(VR.controllerDeviceIndex[1]);
-//                if (VR.controllerDeviceIndex[0]>0)
-                leftSelection.renderBlockHighlight(this.world, fTime);
-                if (VR.controllerDeviceIndex[1]>0)
-                rightSelection.renderBlockHighlight(this.world, fTime);
-
-                dig.renderDigging(world, fTime);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("BlockHighlight");
-                
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-
-
-                
-                glEnable(GL_CULL_FACE);
-                Engine.setBlend(false);
+        //fbOut is still bound (is defferred buffer (16 bit RGBA + depth)
+        
+        GLDebugTextures selTex = GLDebugTextures.getSelected();
+        if (selTex != null) {
+            if (finalTarget != null) finalTarget.bindAndClear();
+            else FrameBuffer.unbindFramebuffer();
+            GLDebugTextures.drawFullScreen(selTex);
+            if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
+                Engine.lightCompute.renderDebug();
             }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("Final");
-            GLDebugTextures selTex = GLDebugTextures.getSelected();
-//            &&ticksran%40<20
-            if (selTex != null) {
+            return;
+        }
+
+        //fbOut is still bound (is defferred buffer (16 bit RGBA + depth)
+        if (canRenderGui3d()) 
+        {
+
+            boolean blitDepthBuffer = false;
+            if (blitDepthBuffer) {
                 if (finalTarget == null) FrameBuffer.unbindFramebuffer();
                 else {
                     finalTarget.bind();
-                    finalTarget.clearFrameBuffer();
                 }
-                GLDebugTextures.drawFullScreen(selTex);
-                if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
-                    Engine.lightCompute.renderDebug();
-                }
-            } else {
-                Engine.outRenderer.renderFinal(this.world, fTime, finalTarget);
-            }
-            if (VR_SUPPORT) {
-
-                finalTarget.bind();
                 FrameBuffer bloomOut = Engine.outRenderer.fbBloomOut;//bloom has our current scene depth information
                 bloomOut.bindRead();
-                GL30.glBlitFramebuffer(0, 0, bloomOut.getWidth(), bloomOut.getHeight(), 0, 0, finalTarget.getWidth(), finalTarget.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                int outWidth = finalTarget != null ? finalTarget.getWidth() : displayWidth;
+                int outHeight = finalTarget != null ? finalTarget.getHeight() : displayHeight;
+                GL30.glBlitFramebuffer(0, 0, bloomOut.getWidth(), bloomOut.getHeight(), 0, 0, outWidth, outHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
                 FrameBuffer.unbindReadFramebuffer();
-                FrameBuffer.unbindFramebuffer();
+            }
 
-
-                finalTarget.bind();
-                Engine.setBlend(true);
-                glDisable(GL_CULL_FACE);
-                if (VR_SUPPORT) {
-                    for (int i = 0; i < 1; i++) {
-                        PositionMouseOver ctrlPos = getMouseOver(i);
-                        if (ctrlPos.vDir != null) {
-//                            System.out.println(eye+":"+i+ " > "+ctrlPos.vOrigin);
-//                            
-//                            System.out.println(Engine.camera.getPosition());
-//                            System.out.println(Engine.GLOBAL_OFFSET);
-                            Shaders.colored3D.enable();
-                            Shaders.colored3D.setProgramUniform1f("color_brightness", 1.0f);
-                            Tess t = Tess.instance;
-                            t.setColorRGBAF(.92f, .92f, .11f, 1.0f);
-                            t.add(ctrlPos.vOrigin);
-                            Vector3f vt = ctrlPos.t2;
-                            vt.set(ctrlPos.vDir);
-                            vt.normalise();
-                            vt.scale(2);
-                            Vector3f.add(ctrlPos.vOrigin, vt, vt);
-                            t.setColorRGBAF(.97f, .97f, .97f, 1.0f);
-                            t.add(vt);
-//                          System.out.println(vt);
-                            GL11.glLineWidth(5);
-                            t.draw(GL11.GL_LINES);
-                            Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
-                        }
-                    }
-                    Vector3f cpos = Engine.camera.getPosition();
-                    Engine.pxStack.push(cpos.x, cpos.y, cpos.z);
-                    vrGui.render(fTime, fbGUIFixed.getTexture(0));
-                    Engine.pxStack.pop();
-                }
-                
-                glEnable(GL_CULL_FACE);
-                Engine.setBlend(false);
             
-            }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-        } else {
-
-            if (finalTarget == null) FrameBuffer.unbindFramebuffer();
-            else {
-                finalTarget.bind();
-                finalTarget.clearFrameBuffer();
-            }
+            Engine.setBlend(true);
+            glDisable(GL_DEPTH_TEST);
+            
+            render3dGUI(fTime);
+            
+            glEnable(GL_DEPTH_TEST);
+            Engine.setBlend(false);
+        
         }
+    
+        Engine.outRenderer.renderAA(fbOut.getTexture(0), fTime, finalTarget);
+        
+
+
+    
         if (GL_ERROR_CHECKS) {
             if (glGetInteger(GL_DEPTH_FUNC) != GL_LEQUAL) {
                 System.err.println("Expected GL_DEPTH_FUNC == GL_LEQUAL post render: "+glGetInteger(GL_DEPTH_FUNC));
@@ -1129,6 +1135,38 @@ public class Game extends GameBase {
             }
             if (GL30.glIsEnabledi(GL_BLEND, 0)) {
                 System.err.println("Expected GL_BLEND == false post render");
+            }
+        }
+    }
+
+    private void render3dGUI(float fTime) {
+        if (vrGui.hasAny() && canRenderGui3d()) {
+            vrGui.render(fTime);
+        }
+      
+        if (VR_SUPPORT) {
+            for (int i = 0; i < 1; i++) {
+                PositionMouseOver ctrlPos = getMouseOver(i);
+                if (ctrlPos.vDir != null) {
+                    Shaders.colored3D.enable();
+                    Shaders.colored3D.setProgramUniform1f("color_brightness", 1.0f);
+                    Tess t = Tess.instance;
+                    t.setColorRGBAF(.92f, .92f, .11f, 1.0f);
+                    Vector3f vo = Vector3f.pool(ctrlPos.vOrigin);
+                    Vector3f vd = Vector3f.pool(ctrlPos.vDir);
+                    
+                    vd.scale(2);
+                    vo.addVec(vd);
+                    t.add(vo);
+                    
+                    vd.scale(10);
+                    vo.addVec(vd);
+                    t.setColorRGBAF(.97f, .97f, .97f, 1.0f);
+                    t.add(vo);
+                    GL11.glLineWidth(4);
+                    t.draw(GL11.GL_LINES);
+                    Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
+                }
             }
         }
     }
@@ -1156,7 +1194,7 @@ public class Game extends GameBase {
 //          Engine.skyRenderer.initShaders();
 //          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
-            Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();
@@ -1172,17 +1210,7 @@ public class Game extends GameBase {
         Engine.worldRenderer.rendered = Engine.regionRenderer.rendered;
         if (VR_SUPPORT) VR.updatePose(f);
     }
-    private float lastTpDistance;
-    public Vector3f t = new Vector3f();
-    public Vector3f t2 = new Vector3f();
-    final static Vector3f tmp = new Vector3f();
-    RayTrace rayTrace = new RayTrace() {
-        public boolean rayTraceBlock(Block block) {
-            if (block.isFullBB())
-                return true;
-            return !block.isTransparent();
-        };
-    };
+    
     
     @Override
     public void preRenderUpdate(float f) {
@@ -1208,136 +1236,91 @@ public class Game extends GameBase {
             }
         }
         if (this.world == null) {
-            UniformBuffer.updateUBO(this.world, f);
-            if (this.gui == null && this.client == null) {
-                this.showGUI(new GuiMainMenu());
+            if (!canRenderGui3d()) {
+                if (this.gui == null && this.client == null) {
+                    this.showGUI(new GuiMainMenu());
+                }
+                UniformBuffer.updateUBO(this.world, f);
+                return;
             }
-            return;
         }
-        
-        this.world.updateFrame(f);
         PlayerSelf player = getPlayer();
-        if (player != null) {
-            float tpDistance = this.lastTpDistance + (settings.thirdpersonDistance - this.lastTpDistance) * f;
-            this.dig.preRenderUpdate();
-
-
-            if (VR_SUPPORT)
-            {
-                VR.pose.toEuler(tmp);
-                float yaw = 180-(tmp.y*GameMath.P_180_OVER_PI);
-                float pitch = (tmp.x*GameMath.P_180_OVER_PI);
-                float forward = VR.getAxis(0, 0, 1)*-1.0f;
-                float strafe = VR.getAxis(0, 0, 0)*1.0f;
-                player.update(pitch, yaw, forward, strafe, 0, false);
+        if (player != null && this.world != null) {
+            updateCameraFromPlayer(player, f);
+            Engine.setLightPosition(this.world.getLightPosition());
+        } else {
+            if (VR_SUPPORT) {
+                this.cameraController.updateVR();
             } else {
-
-                player.updateInputDirect(movement);
+                this.cameraController.update(movement);
             }
-            
-            float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
-            distF = -distF*0.6f;
-            float f2 = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * f;
-            float f3 = player.prevCameraPitch + (player.cameraPitch - player.prevCameraPitch) * f;
-            if (!VR_SUPPORT)
-            Engine.camera.calcViewShake(distF, f2, f3, f);
-            float yaw = player.yaw;
-            float pitch = player.pitch;
-            Engine.camera.setOrientation(yaw, pitch, thirdPerson, tpDistance);
-
-            if (follow) {
-                vLastCam.set(vCam);
+            Vector3f renderPos = this.cameraController.getRenderPos(f);
+            Engine.camera.setPosition(renderPos);
+            vCam.set(renderPos);
+            vPlayer.set(renderPos);
+            if (!VR_SUPPORT) {
+                Engine.camera.setOrientation(this.cameraController.yaw, this.cameraController.pitch, false, 4.0f);   
             }
-            vLastPlayer.set(vPlayer);
-            float yOffset = VR_SUPPORT?0.f:1.62F;
-            vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
-            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + yOffset;
-            vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
-            
-            vCam.set(vPlayer);
-            
-            if (thirdPerson) {
-                Vector3f camOffset = Engine.camera.getCameraOffset();
-//                float dist = camOffset.length();
-                float minDist = tpDistance;
-                for (int x = -1; x <= 1; x++) {
-                    for (int z = -1; z <= 1; z++) {
-                        for (int y = -1; y <= 1; y++) {
-                            t.set(camOffset);
-                            t.normalise();
-                            t2.set(vCam);
-                            t2.x+=x*0.1f;
-                            t2.y+=y*0.1f;
-                            t2.z+=z*0.1f;
-                            this.rayTrace.doRaytrace(getWorld(), t2, t, (int) Math.ceil(tpDistance * 2));
-                            if (this.rayTrace.hasHit()) {
-                                Vector3f hitPos = this.rayTrace.getHit().pos;
-                                hitPos.subtract(t2);
-                                float intersectDist = hitPos.length();
-                                if (intersectDist < minDist) {
-                                    minDist = intersectDist;
-                                }
-                            }
-
-                        }
-                    }
-                }
-                if (minDist < tpDistance) {
-                    camOffset.normalise(); // we do not work on copy here, so we can query the collision distance offset from elsewhere during frame
-                    camOffset.scale(minDist);
-                }
-                vCam.addVec(camOffset);
-            }
-            
-            Engine.camera.setPosition(vCam);
+            Engine.getSunLightModel().setTime(5850);
+            Engine.getSunLightModel().updateFrame(f);
+            Engine.setLightPosition(Engine.getSunLightModel().getLightPosition());
         }
 
-        Engine.setLightPosition(this.world.getLightPosition());
-//        vrGui.update(VR.pose, Vector3f.ZERO);
         Engine.updateGlobalRenderOffset(vCam);
+        Engine.updateCamera();
         if (VR_SUPPORT) {
 
-            vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
-            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
-            vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
-
-            vCam.set(vPlayer);
+//            vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
+//            vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + 1.62F;
+//            vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+//
+//            vCam.set(vPlayer);
             
             //calc negative z offset camera to contain both view frustums
-            t.set(vCam);
-            Vector3f.add(t, VR.cam.unifiedFrustumCameraOffset, t);
+            Vector3f combinedEyePos = Vector3f.pool(vCam).add(VR.cam.unifiedFrustumCameraOffset);
+            
+            Matrix4f mvpHMD = Matrix4f.pool();
+            Matrix4f viewInvHMD = Matrix4f.pool();
+            
             Matrix4f left = VR.getViewMat(0);
-            Engine.getMatSceneP().load(VR.cam.projLeft);
-            Engine.getMatSceneP().update();
-            Engine.updateCamera(left, t);
+            Matrix4f.invert(left, viewInvHMD);
+            Matrix4f.mul(VR.cam.projLeft, left, mvpHMD);
+            Matrix4f.mul(mvpHMD, Engine.getMatSceneM(), mvpHMD); // multiply with our scene translation (MatSceneM)
+            
+            Engine.setFrustum(mvpHMD, viewInvHMD, combinedEyePos);
         } else {
-            Engine.updateCamera();
+            Engine.updateFrustumFromInternal();
         }
         Engine.updateShadowProjections(f);
         UniformBuffer.updateUBO(this.world, f);
         this.rightMouseOver.reset();
         this.leftMouseOver.reset();
-        if (player != null) {
-            float winX, winY;
+        float winX, winY;
 
-            if (this.movement.grabbed() || (GuiWindowManager.anyWindowVisible())) {
-                winX = (float) displayWidth/2.0F;
-                winY = (float) displayHeight/2.0F;
-            } else {
-                winX = (float) Mouse.getX();
-                winY = (float) (displayHeight-Mouse.getY());
-                if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
-                if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
-            }
-            if (VR_SUPPORT) {
-                for (int i = 0; i < 2; i++) {
-                    int idx = VR.controllerDeviceIndex[i];
-                    if (idx > -1) {
-                        getMouseOver(i).updateFromController(idx, f);
-                    }
+        if (this.movement.grabbed() || (GuiWindowManager.anyWindowVisible())) {
+            winX = (float) displayWidth/2.0F;
+            winY = (float) displayHeight/2.0F;
+        } else {
+            winX = (float) Mouse.getX();
+            winY = (float) (displayHeight-Mouse.getY());
+            if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
+            if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
+        }
+        if (VR_SUPPORT) {
+            for (int i = 0; i < 2; i++) {
+                int idx = VR.controllerDeviceIndex[i];
+                if (idx > -1) {
+                    getMouseOver(i).updateFromController(idx, f);
                 }
             }
-            if (this.gui == null) {
+        } else {
+            getMouseOver(0).updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+
+        }
+        if (this.world != null && this.player != null) {
+
+            boolean b = canRenderGui3d();
+            if ((b&&!has3dGUIMouseFocus())||(!b&&this.gui==null)) {
                 if (VR_SUPPORT) {
                     for (int i = 0; i < 2; i++) {
                         int idx = VR.controllerDeviceIndex[i];
@@ -1348,27 +1331,147 @@ public class Game extends GameBase {
                         }
                     }
                 } else {
-                    getMouseOver(0).updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
                     getSelection(0).update(world, getMouseOver(0), vCam);
 
                 }
+            } else {
+
+                for (int i = 0; i < 2; i++) {
+                    getSelection(i).reset();
+                }
             }
         }
-        Engine.particleRenderer.preRenderUpdate(this.world, f);
         
-        if (this.world != null && updateRenderers) {
-            float renderRegionX = follow ? vCam.x : vLastCam.x;
-//            float renderRegionY = follow ? py : lastCamY;
-            float renderRegionZ = follow ? vCam.z : vLastCam.x;
-            int xPosP = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-            int zPosP = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-            if (Engine.updateRenderOffset) {
-                Engine.regionRenderer.reRender();
+        
+        if (this.world != null) {
+            Engine.particleRenderer.preRenderUpdate(this.world, f);
+            if (updateRenderers) {
+              float renderRegionX = follow ? vCam.x : vLastCam.x;
+//              float renderRegionY = follow ? py : lastCamY;
+              float renderRegionZ = follow ? vCam.z : vLastCam.x;
+              int xPosP = GameMath.floor(renderRegionX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+              int zPosP = GameMath.floor(renderRegionZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+              if (Engine.updateRenderOffset) {
+                  Engine.regionRenderer.reRender();
+              }
+              Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
+              Engine.lightCompute.updateLights(this.world, f);
             }
-            Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
-            Engine.lightCompute.updateLights(this.world, f);
         }
-        vrGui.update(VR.pose, Engine.camera.getPosition(), getMouseOver(0));
+        Matrix4f pose = VR.pose;
+        if (!VR_SUPPORT) {
+            pose = Matrix4f.pool();
+            Engine.camera.calcViewMatrix(pose, false);
+        }
+        Engine.camera.updateViewDirection(pose);
+        if (canRenderGui3d()) {
+            
+            if (vrGui.hasAny()) {
+                vrGui.update(pose, Engine.camera.getPosition(), Engine.camera.getViewDirection(), getMouseOver(0));
+            } else { 
+                vrGui.reset();
+            }
+        }
+        if (canRenderGui3d()) {
+            if (this.gui == null && this.client == null) {
+                this.showGUI(new GuiMainMenu());
+            }
+        }
+    }
+    private void updateCameraFromPlayer(PlayerSelf player, float f) {
+
+
+        this.world.updateFrame(f);
+        float tpDistance = this.lastTpDistance + (settings.thirdpersonDistance - this.lastTpDistance) * f;
+        this.dig.preRenderUpdate();
+
+
+        if (VR_SUPPORT)
+        {
+            VR.pose.toEuler(tmp);
+            float yaw = 180-(tmp.y*GameMath.P_180_OVER_PI);
+            float pitch = (tmp.x*GameMath.P_180_OVER_PI);
+            float forward = VR.getAxis(0, 0, 1)*-1.0f;
+            float strafe = VR.getAxis(0, 0, 0)*1.0f;
+            player.update(pitch, yaw, forward, strafe, 0, false);
+        } else {
+
+            player.updateInputDirect(movement);
+        }
+        
+        float distF = player.distanceMoved + (player.distanceMoved-player.prevDistanceMoved)*f;
+        distF = -distF*0.6f;
+        float f2 = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * f;
+        float f3 = player.prevCameraPitch + (player.cameraPitch - player.prevCameraPitch) * f;
+        if (!VR_SUPPORT)
+        Engine.camera.calcViewShake(distF, f2, f3, f);
+        float yaw = player.yaw;
+        float pitch = player.pitch;
+        Engine.camera.setOrientation(yaw, pitch, thirdPerson, tpDistance);
+
+        if (follow) {
+            vLastCam.set(vCam);
+        }
+        vLastPlayer.set(vPlayer);
+        float yOffset = VR_SUPPORT?0.f:1.62F;
+        vPlayer.x = (float) (player.lastPos.x + (player.pos.x - player.lastPos.x) * f) + 0;
+        vPlayer.y = (float) (player.lastPos.y + (player.pos.y - player.lastPos.y) * f) + yOffset;
+        vPlayer.z = (float) (player.lastPos.z + (player.pos.z - player.lastPos.z) * f) + 0;
+        
+        vCam.set(vPlayer);
+        
+        if (thirdPerson) {
+            Vector3f camOffset = Engine.camera.getCameraOffset();
+//            float dist = camOffset.length();
+            Vector3f t = Vector3f.pool();
+            Vector3f t2 = Vector3f.pool();
+            float minDist = tpDistance;
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    for (int y = -1; y <= 1; y++) {
+                        t.set(camOffset);
+                        t.normalise();
+                        t2.set(vCam);
+                        t2.x+=x*0.1f;
+                        t2.y+=y*0.1f;
+                        t2.z+=z*0.1f;
+                        this.rayTrace.doRaytrace(getWorld(), t2, t, (int) Math.ceil(tpDistance * 2));
+                        if (this.rayTrace.hasHit()) {
+                            Vector3f hitPos = this.rayTrace.getHit().pos;
+                            hitPos.subtract(t2);
+                            float intersectDist = hitPos.length();
+                            if (intersectDist < minDist) {
+                                minDist = intersectDist;
+                            }
+                        }
+
+                    }
+                }
+            }
+            if (minDist < tpDistance) {
+                camOffset.normalise(); // we do not work on copy here, so we can query the collision distance offset from elsewhere during frame
+                camOffset.scale(minDist);
+            }
+            vCam.addVec(camOffset);
+        }
+        
+        Engine.camera.setPosition(vCam);
+    
+    }
+
+    private boolean has3dGUIMouseFocus() {
+        return canRenderGui3d() && this.vrGui.isMouseOverGui();
+    }
+    public void onGuiClosed(Gui gui, Gui targetGui) {
+        if (canRenderGui3d()) {
+            vrGui.removeGui(gui);
+        }
+    }
+
+    public void onGuiOpened(Gui gui, Gui prevGui) {
+        if (canRenderGui3d()) {
+            vrGui.addGui(gui, prevGui, Engine.camera.getPosition(), Engine.camera.getViewDirection());
+        }
     }
     
 
@@ -1407,10 +1510,13 @@ public class Game extends GameBase {
     }
     @Override
     public void tick() {
-        if (VR_SUPPORT) {
-            VR.tick();
-        }
         if (!isStarting) {
+            if (VR_SUPPORT) {
+                VR.tick();
+            }
+            this.vrGui.tickUpdate();
+            if (this.world == null)
+                this.cameraController.tickUpdate();
             this.lastTpDistance = settings.thirdpersonDistance;
             if (this.world != null)
                 this.world.tickUpdate();
@@ -1625,6 +1731,11 @@ public class Game extends GameBase {
                 Engine.skyRenderer.redraw();
                 return;
             }
+            if (text.equals("/gui3d")) {
+                this.settings.gui3d = !settings.gui3d;
+                updateGui3dMode();
+                return;
+            }
             if (text.equals("/reloadshaders")) {
                 Shaders.initShaders();
                 //            Engine.lightCompute.initShaders();
@@ -1639,5 +1750,10 @@ public class Game extends GameBase {
             }
         }
         sendPacket(new PacketChatMessage(GlobalChannel.TAG, text));
+    }
+    
+    @Override
+    public boolean canRenderGui3d() {
+        return this.renderGui3d;
     }
 }

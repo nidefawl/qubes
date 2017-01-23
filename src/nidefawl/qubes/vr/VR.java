@@ -792,28 +792,6 @@ public class VR {
         fbRight.setup(null);
         FrameBuffer.unbindFramebuffer();
 	}
-	final static Matrix4f tmpMat = new Matrix4f();
-	public static void setupCamera(int i, float f) {
-		switch (i) {
-		case 0:
-			Engine.getMatSceneP().load(VR.cam.projLeft);
-			Engine.getMatSceneP().update();
-			getViewMat(0);
-			break;
-		case 1:
-			Engine.getMatSceneP().load(VR.cam.projRight);
-			Engine.getMatSceneP().update();
-            getViewMat(1);
-			break;
-		case 2:
-			Engine.getMatSceneP().load(Engine.getMatSceneP_internal());
-			Engine.getMatSceneP().update();
-			tmpMat.load(Engine.camera.getViewMatrix());
-			break;
-		}
-    	Engine.updateCamera(tmpMat, Engine.camera.getPosition());
-        UniformBuffer.updateUBO(null, f);
-	}
     public static Matrix4f getViewMat(int i) {
         switch (i) {
         case 0:

@@ -233,7 +233,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
                 font.drawString(""+nMult, posX+inset+slotW-inset*2-w2-1, posY+inset+slotW-inset*2+2, 0xf0f0f0, true, 1.0f);
             }
             if (this.hovered) {
-                Tooltip tip = Tooltip.item.set(stack, null, null);
+                Tooltip tip = Tooltip.item.set(stack, null, findParentWindow());
                 float offsetY = 0;
                 if (GuiContext.scrolllist != null) {
                     offsetY+=GuiContext.scrolllist.scrollY;
@@ -359,8 +359,8 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 //      } else {
           int width = 800;
           int height = titleBarHeight + 600;
-          int xPos = (Game.displayWidth-width)/2;
-          int yPos = (Game.displayHeight-height)/2;
+          int xPos = (Game.guiWidth-width)/2;
+          int yPos = (Game.guiHeight-height)/2;
           setPos(xPos, yPos);
           setSize(width, height);
 //      }
@@ -821,7 +821,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
         btnMax.setDisableDraw(b);
     }
     public boolean onWheelScroll(double xoffset, double yoffset) {
-        if (this.scr2.mouseOver(Mouse.getX()-mouseOffsetX(), Mouse.getY()-mouseOffsetY())) {
+        if (this.scr2.mouseOver(mouseGetX()-mouseOffsetX(), mouseGetY()-mouseOffsetY())) {
             return this.scr2.onWheelScroll(xoffset, yoffset);
         }
         return this.cat.getScrollList().onWheelScroll(xoffset, yoffset) || this.scr2.onWheelScroll(xoffset, yoffset);

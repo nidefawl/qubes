@@ -10,10 +10,10 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 
 public abstract class Tooltip extends Gui {
+    protected GuiWindow window;
     public static class ItemToolTip extends Tooltip {
         private BaseStack stack;
         private Slot slot;
-        private GuiWindow window;
         private String title;
         FontRenderer fr;
         FontRenderer fr2;
@@ -61,4 +61,7 @@ public abstract class Tooltip extends Gui {
     }
     public static ItemToolTip item = new ItemToolTip() {
     };
+    public GuiWindow getTooltipOwner() {
+        return this.window;
+    }
 }

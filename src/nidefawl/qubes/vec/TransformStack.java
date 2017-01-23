@@ -77,6 +77,6 @@ public class TransformStack {
     
     public void setScissors(int posX, int posY, int width, int height) {
         Vector3f v = get();
-        GL11.glScissor((int)(v.x+posX), (int)(Math.max(Game.windowHeight, Game.displayHeight)-((int)v.y+posY+height)), (int)width, (int)height);
+        GL11.glScissor((int)(v.x+posX), (int)(Engine.getViewport()[3]-((int)v.y+posY+height)), (int)width, (int)height);
     }
 }

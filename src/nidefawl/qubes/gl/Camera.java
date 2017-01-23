@@ -1,7 +1,5 @@
 package nidefawl.qubes.gl;
 
-import nidefawl.qubes.Game;
-import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vec3D;
@@ -13,6 +11,7 @@ public class Camera {
     public float          bearingAngle = 0;
     protected final Vector3f position     = new Vector3f();
     protected final Vector3f prevposition = new Vector3f();
+    protected final Vector3f viewDirection = new Vector3f();
     protected final Matrix4f viewMatrix   = new Matrix4f();
     protected final Matrix4f thirdPersonMat = new Matrix4f();
     protected final Vector3f thirdPersonOffset = new Vector3f();
@@ -75,6 +74,14 @@ public class Camera {
             this.thirdPersonOffset.set(0, 0, 0);
         }
     }
+    public void calcViewMatrix(Matrix4f out, boolean addShake) {
+        out.setIdentity();
+        if (addShake) {
+            addCameraShake(out);
+        }
+        out.rotate(this.pitchAngle * GameMath.PI_OVER_180, 1f, 0f, 0f);
+        out.rotate(this.bearingAngle * GameMath.PI_OVER_180, 0f, 1f, 0f);
+    }
 
     public void addCameraShake(Matrix4f vm) {
 
@@ -99,9 +106,7 @@ public class Camera {
     }
 
     /**
-     * Call GL11.glMultMatrix() on this matrix in your render loop to set the camera's view.
-     * 
-     * @return buffer of a 4x4 matrix for the view transformation
+     * <b>Do not store a reference to this matrix!!</b>
      */
     public Matrix4f getViewMatrix() {
         return viewMatrix;
@@ -122,5 +127,13 @@ public class Camera {
         yshakeRot=Math.abs(GameMath.cos(distF * (float)Math.PI - 0.2F) * f2) * 5F;
         xshakeRot=f3;
     
+    }
+
+    public void updateViewDirection(Matrix4f finalViewMatrix) {
+        Matrix4f poseInv = Matrix4f.pool(finalViewMatrix);
+        poseInv.transformVecTransposed(this.viewDirection.set(0, 0, -1));
+    }
+    public Vector3f getViewDirection() {
+        return this.viewDirection;
     }
 }

@@ -11,7 +11,7 @@ public class GuiConnecting extends Gui {
     String                    stateStr = "Connecting...";
     private ThreadConnect     thread;
     public GuiConnecting() {
-        this.isFullscreen=true;
+        this.isFullscreen=!Game.instance.canRenderGui3d();
     }
 
     public GuiConnecting(ThreadConnect connect) {

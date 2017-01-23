@@ -9,7 +9,7 @@ public class GuiLoadingServer extends Gui {
 
 
     public GuiLoadingServer() {
-        isFullscreen = true;
+        this.isFullscreen=!Game.instance.canRenderGui3d();
     }
 
     @Override

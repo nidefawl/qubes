@@ -127,16 +127,18 @@ public class GuiOverlayStats extends Gui {
             }
         }
 
-        info.add(String.format("M: %.1fs (%.2fk calls %.2fms/call)", (Stats.timeMeshing)/1000.0, Stats.regionUpdates/1000.0, Stats.timeMeshing/(float)(Stats.regionUpdates+1)));
-        info.add(String.format("GPU-upload: %.2fms", Stats.timeRendering));
         if (world != null) {
+            info.add(String.format("M: %.1fs (%.2fk calls %.2fms/call)", (Stats.timeMeshing)/1000.0, Stats.regionUpdates/1000.0, Stats.timeMeshing/(float)(Stats.regionUpdates+1)));
+            info.add(String.format("GPU-upload: %.2fms", Stats.timeRendering));
             info.add(String.format("World: %s", world.getName()));
+            info.add(String.format("Mode: %s", Game.instance.getSelection().getMode().toString()));
+            info.add(Game.instance.getSelection().quarterMode ? "Quarter" : "Full");
         }
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
-        info.add(String.format("Mode: %s", Game.instance.getSelection().getMode().toString()));
-        info.add(Game.instance.getSelection().quarterMode ? "Quarter" : "Full");
+        Vector3f viewDir = Engine.camera.getViewDirection();
+        info.add(String.format("viewdir: %s", viewDir.toString()));
         info.addAll(Game.instance.glProfileResults);
         
         render = true;

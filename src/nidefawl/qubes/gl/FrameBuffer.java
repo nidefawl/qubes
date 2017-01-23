@@ -1,5 +1,7 @@
 package nidefawl.qubes.gl;
 
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
@@ -37,6 +39,9 @@ public class FrameBuffer implements IManagedResource {
     private int colorTexExtFmt=GL12.GL_BGRA;
     private int colorTexExtType=GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
     private int textureType=GL11.GL_TEXTURE_2D;
+    private int depthFmt=GL14.GL_DEPTH_COMPONENT32;
+    private int mipmapLevels;
+    private int anisotropicFilterLevel = -1;
     /**
      * @param colorTexExtFmt the colorTexExtFmt to set
      */
@@ -197,6 +202,10 @@ public class FrameBuffer implements IManagedResource {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentReadBuffer");
     }
 
+    public void bindAndClear() {
+        bind();
+        clearFrameBuffer();
+    }
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
@@ -213,7 +222,7 @@ public class FrameBuffer implements IManagedResource {
         glTexParameteri(textureType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(textureType, GL_TEXTURE_MIN_FILTER, minfilter);
         glTexParameteri(textureType, GL_TEXTURE_MAG_FILTER, magFilter);
-        glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, 0);
+        glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, this.mipmapLevels);
         if (textureType == GL_TEXTURE_CUBE_MAP) {
             glTexParameteri(textureType, GL12.GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_WRAP_R");
@@ -227,6 +236,18 @@ public class FrameBuffer implements IManagedResource {
             glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, GL30.GL_BGR_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
         } else {
             glTexImage2D(textureType, 0, format, renderWidth, renderHeight, 0, colorTexExtFmt, colorTexExtType, (ByteBuffer) null);
+        }
+        if (anisotropicFilterLevel > 0) {
+
+            float f = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+            System.out.println("MAX ANISOTROPY: "+f);
+            if (anisotropicFilterLevel < f) {
+                f = anisotropicFilterLevel;
+            }
+            if (f > 0) {
+                System.out.println("anisotropicFiltering level: "+f);
+                glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, f);
+            }
         }
         
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D");
@@ -257,7 +278,7 @@ public class FrameBuffer implements IManagedResource {
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 //        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT32, renderWidth, renderHeight, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (ByteBuffer) null);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, this.depthFmt, renderWidth, renderHeight, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (ByteBuffer) null);
 
 //        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexImage2D (depth)");
@@ -371,6 +392,13 @@ public class FrameBuffer implements IManagedResource {
     public int getHeight() {
         return this.renderHeight;
     }
+    public void generateMipMaps(int i) {
+        unbindFramebuffer();
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.colorAttTextures[i]);
+        GL30.glGenerateMipmap(GL_TEXTURE_2D);
+        Engine.checkGLError("generateMipmap");
+//        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, 0);
+    }
     /**
      * @return
      */
@@ -380,5 +408,14 @@ public class FrameBuffer implements IManagedResource {
     @Override
     public EResourceType getType() {
         return EResourceType.FRAMEBUFFER;
+    }
+    public void setMipmapLevels(int mipmapLevels) {
+        this.mipmapLevels = mipmapLevels;
+    }
+    public void setAnisotropicFilterLevel(int anisotropicFilterLevel) {
+        this.anisotropicFilterLevel = anisotropicFilterLevel;
+    }
+    public void setDepthFmt(int depthFmt) {
+        this.depthFmt = depthFmt;
     }
 }

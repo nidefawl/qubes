@@ -9,7 +9,7 @@ public class GuiShutdownServer extends Gui {
 
 
     public GuiShutdownServer() {
-        isFullscreen = true;
+        this.isFullscreen=!Game.instance.canRenderGui3d();
     }
 
     @Override

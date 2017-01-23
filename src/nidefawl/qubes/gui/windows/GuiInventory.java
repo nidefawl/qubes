@@ -27,8 +27,8 @@ public class GuiInventory extends GuiWindowInventoryBase {
             int rows = this.slots.getSlots().size()/10;
             int width = 20 + (slotBDist+slotW)*10;
             int height = titleBarHeight + 15+ (slotBDist+slotW)*rows;
-            int xPos = (Game.displayWidth-width)/2;
-            int yPos = (Game.displayHeight-height)/2;
+            int xPos = (Game.guiWidth-width)/2;
+            int yPos = (Game.guiHeight-height)/2;
             setPos(xPos, yPos);
             setSize(width, height);
 //        }

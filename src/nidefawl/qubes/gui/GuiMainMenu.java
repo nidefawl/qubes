@@ -1,13 +1,16 @@
 package nidefawl.qubes.gui;
 
+import org.lwjgl.opengl.GL11;
+
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.gui.windows.GuiContext;
-import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiMainMenu extends Gui implements ITextEdit {
@@ -20,7 +23,11 @@ public class GuiMainMenu extends Gui implements ITextEdit {
     private Button quit;
     
     public GuiMainMenu() {
-        this.isFullscreen=true;
+        this.isFullscreen=!Game.instance.canRenderGui3d();
+    }
+    @Override
+    protected String getTitle() {
+        return GameBase.appName;
     }
     @Override
     public void initGui(boolean first) {
@@ -36,7 +43,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             FontRenderer f = FontRenderer.get(0, Gui.FONT_SIZE_BUTTON, 0);
             int a = (int) (f.getStringWidth(nName)+12);
             this.fieldN = new TextField(this, 10, Game.instance.getProfile().getName());
-            fieldN.setPos(left+a, this.posY+this.height/2-60);
+            fieldN.setPos(left+a, this.posY+this.height/2-40);
             fieldN.setSize(w1-a, h);
             this.add(fieldN);
         }
@@ -78,6 +85,30 @@ public class GuiMainMenu extends Gui implements ITextEdit {
             quit.setSize(w1, h);
             offset+=40;
         }
+        if (!isFullscreen) {
+            int minY = 111110;
+            int maxY = 0;
+            for (AbstractUI b : this.buttons) {
+                if (b.posY + b.height > maxY) {
+                    maxY = b.posY + b.height;
+                }
+                if (b.posY-titleBarOffset < minY) {
+                    minY = b.posY;
+                }
+            }
+            
+            minY -= titleBarOffset-20;
+            
+            int brd = 32;
+            AbstractUI btnFirst = this.buttons.get(0);
+            this.posX = btnFirst.posX-brd;
+            this.posY = minY-brd;
+            this.width = btnFirst.width+brd*2;
+            this.height = maxY-minY+brd*2;
+            for (AbstractUI b : this.buttons) {
+                b.setPos(b.posX-this.posX, b.posY-this.posY);
+            }
+        }
     }
 
     public void render(float fTime, double mX, double mY) {
@@ -85,9 +116,12 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         FontRenderer f = FontRenderer.get(0, Gui.FONT_SIZE_BUTTON, 0);
         int w1 = 300;
         int h = 30;
-        int left = this.posX+this.width/2-w1/2;
+//        int left = this.posX+this.width/2-w1/2;
         Shaders.textured.enable();
-        f.drawString("Name", left, this.posY+this.height/2-35, -1, true, 1);
+//        f.drawString("Name", left, this.posY+this.height/2-35, -1, true, 1);
+        int left = this.posX+this.buttons.get(0).posX;
+        f.drawString("Name", 
+                left, this.posY+this.fieldN.posY+f.getLineHeight()-2, -1, true, 1);
         super.renderButtons(fTime, mX, mY);
     }
     public boolean onGuiClicked(AbstractUI element) {

@@ -24,6 +24,7 @@ public class ClientSettings extends AbstractYMLConfig {
     public String lastserver;
     public int anisotropicFiltering;
     public int normalMapping;
+    public boolean gui3d;
     
     @Override
     public void setDefaults() {
@@ -36,6 +37,7 @@ public class ClientSettings extends AbstractYMLConfig {
         this.normalMapping = 1;
         this.anisotropicFiltering = 0;
         this.thirdpersonDistance = 4.0f;
+        this.gui3d = false;
     }
 
     @Override
@@ -47,6 +49,7 @@ public class ClientSettings extends AbstractYMLConfig {
         smaaQuality = getInt("smaaQuality", smaaQuality);
         anisotropicFiltering = getInt("anisotropicFiltering", anisotropicFiltering);
         normalMapping = getInt("normalMapping", normalMapping);
+        gui3d = getBoolean("gui3d", gui3d);
         ssr = getInt("ssr", ssr);
         aa = getInt("aa", aa);
         ao = getInt("ao", ao);
@@ -64,6 +67,7 @@ public class ClientSettings extends AbstractYMLConfig {
         setFloat("thirdpersonDistance", thirdpersonDistance);
         setInt("anisotropicFiltering", anisotropicFiltering);
         setInt("normalMapping", normalMapping);
+        setBoolean("gui3d", gui3d);
     }
 
     /**

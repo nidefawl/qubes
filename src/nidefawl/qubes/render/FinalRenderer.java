@@ -19,9 +19,7 @@ import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.post.SMAA;
-import nidefawl.qubes.shader.IShaderDef;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
+import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
@@ -258,49 +256,30 @@ public class FinalRenderer extends AbstractRenderer {
     }
 
 
-    public void renderFinal(World world, float fTime, FrameBuffer finalTarget) {
-        int outputColor = fbBloomOut.getTexture(0);
-        if (smaa != null) { // render to fbDefered, contents no longer used
-            fbDeferred.bind();
-            fbDeferred.clearColorBlack();
-            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
-            outputColor = fbDeferred.getTexture(0);
-        } else { // render to backbuffer or final target
-            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, outputColor);
-            if (finalTarget == null) FrameBuffer.unbindFramebuffer();
-            else {
-                finalTarget.bind();
-                finalTarget.clearFrameBuffer();
-            }
-        }
-        shaderFinal.enable();
-        int indexIn = this.frame%2;
-        int indexOut = 1-indexIn;
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.fbLuminanceInterp[indexOut].getTexture(0));
-        Engine.drawFullscreenQuad();
+    public void renderAA(int inputTexture, float fTime, FrameBuffer output) {
         if (smaa != null) {
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
-            this.smaa.render(outputColor, 0, finalTarget);
+            this.smaa.render(inputTexture, 0, output);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
+        } else {
+            if (output != null) output.bindAndClear();
+            else FrameBuffer.unbindFramebuffer();
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, inputTexture);
+            Shaders.textured.enable();
+            Engine.drawFullscreenQuad();
         }
-        
+    }
+    public FrameBuffer renderTonemap(World world, float fTime) {
         this.frame++;
-        
-        
-//
-//        if(Stats.fpsCounter==0) {
-//            Engine.debugOutput.bind();
-//            ByteBuffer buf = Engine.debugOutput.map(false);
-//            
-//            float[] debugVals = new float[16];
-//            FloatBuffer fbuf = buf.asFloatBuffer();
-//            fbuf.get(debugVals);
-//            System.out.println("a "+String.format("%10f", debugVals[0]));
-//            System.out.println("b "+String.format("%10f", debugVals[1]));
-//            Engine.debugOutput.unmap();
-//            Engine.debugOutput.unbind();
-//        }
-        
+        int indexIn = this.frame%2;
+        int indexOut = 1-indexIn;
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbBloomOut.getTexture(0));
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.fbLuminanceInterp[indexOut].getTexture(0));
+        fbDeferred.bind();
+        fbDeferred.clearColorBlack();
+        shaderFinal.enable();
+        Engine.drawFullscreenQuad();
+        return fbDeferred;
     }
     
     public int renderNormals() {
@@ -313,9 +292,10 @@ public class FinalRenderer extends AbstractRenderer {
         return GLDebugTextures.readTexture("fixNormals", "output", fbBloomOut.getTexture(0), 8);
     }
     public void copyPreWaterDepth() {
-        FrameBuffer.unbindReadFramebuffer();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.preWaterDepthTex);
-        ARBCopyImage.glCopyImageSubData(fbScene.getDepthTex(), GL_TEXTURE_2D, 0, 0, 0, 0, this.preWaterDepthTex, GL_TEXTURE_2D, 0, 0, 0, 0, Game.displayWidth, Game.displayHeight, 1);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("bindTexture "+this.preWaterDepthTex);
+        ARBCopyImage.glCopyImageSubData(fbScene.getDepthTex(), GL_TEXTURE_2D, 0, 0, 0, 0, this.preWaterDepthTex, GL_TEXTURE_2D, 0, 0, 0, 0, fbScene.getWidth(), fbScene.getHeight(), 1);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glCopyImageSubData "+fbScene.getDepthTex()+" -> "+this.preWaterDepthTex);
         
     }
     public void copySceneDepthBuffer() {

@@ -21,8 +21,8 @@ public abstract class GuiWindow extends Gui {
     public void initGui(boolean first) {
         int width = 320;
         int height = 240;
-        int xPos = (Game.displayWidth-width)/2;
-        int yPos = (Game.displayHeight-height)/2;
+        int xPos = (Game.guiWidth-width)/2;
+        int yPos = (Game.guiHeight-height)/2;
         setPos(xPos, yPos);
         setSize(width, height);
     }
@@ -41,7 +41,7 @@ public abstract class GuiWindow extends Gui {
 
 
     public void setFocus() {
-        GuiWindowManager.setWindowFocus(this);
+        GuiWindowManager.setWindowFocus(this);   
     }
 
     public boolean hasFocus() {
@@ -100,8 +100,8 @@ public abstract class GuiWindow extends Gui {
 
     
     public void onDrag(double mX, double mY) {
-        int displayWidth = Game.displayWidth;
-        int displayHeight = Game.displayHeight;
+        int displayWidth = Game.guiWidth;
+        int displayHeight = Game.guiHeight;
         this.posX += mX;
         this.posY -= mY; //crap
         if (this.posX + this.width / 2 < 0)
@@ -127,8 +127,8 @@ public abstract class GuiWindow extends Gui {
         }
     }
     public void onResize(double mX, double mY) {
-        int displayWidth = Game.displayWidth;
-        int displayHeight = Game.displayHeight;
+        int displayWidth = Game.guiWidth;
+        int displayHeight = Game.guiHeight;
         if (canResize()) {
             // XXX: calculate relative mouse position and resize according to
             // the calculated x/y coords
@@ -142,8 +142,8 @@ public abstract class GuiWindow extends Gui {
         }
     }
     public boolean onMouseClick(int button, int action) {
-        double mx = Mouse.getX();
-        double my = Mouse.getY();
+        double mx = mouseGetX();
+        double my = mouseGetY();
         if (this.popup != null) {
             float popupMx=(float) (mx-(this.posX + this.popup.posX));
             float popupMy=(float) (my-(this.posY + this.popup.posY));
@@ -160,14 +160,15 @@ public abstract class GuiWindow extends Gui {
         if (action == GLFW.GLFW_PRESS) {
                 
             this.setFocus();
-                
-            if (mx>=this.posX&&mx<=this.posX+width&&my <= this.posY + titleBarHeight) {
-                GuiWindowManager.dragged = this;
-                return true;
-            }
-            if (mx>=this.posX&&mx<=this.posX+width&&canResize() && mouseOverResize(mx, my)) {
-                GuiWindowManager.resized = this;
-                return true;
+            if (GuiContext.canDragWindows) {
+                if (mx>=this.posX&&mx<=this.posX+width&&my <= this.posY + titleBarHeight) {
+                    GuiWindowManager.dragged = this;
+                    return true;
+                }
+                if (mx>=this.posX&&mx<=this.posX+width&&canResize() && mouseOverResize(mx, my)) {
+                    GuiWindowManager.resized = this;
+                    return true;
+                }
             }
         }
 //        return false;
@@ -178,5 +179,9 @@ public abstract class GuiWindow extends Gui {
     }
     public int getWindowPosY() {
         return this.posY;
+    }
+    public void render3D(float fTime, double mX, double mY) {
+        this.renderFrame(fTime, mX, mY);
+        this.render(fTime, mX, mY);
     }
 }

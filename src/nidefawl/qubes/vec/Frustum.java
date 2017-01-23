@@ -277,15 +277,14 @@ public class Frustum {
         return result;
     }
 
-    public void setPos(Vector3f vec, BufferedMatrix view) {
+    public void setPos(Vector3f vec, Matrix4f viewInv) {
         this.cam.set(vec);
         this.cam.x-=Engine.GLOBAL_OFFSET.x;
         this.cam.y-=Engine.GLOBAL_OFFSET.y;
         this.cam.z-=Engine.GLOBAL_OFFSET.z;
-        Matrix4f mat = view.getInvMat4();
         up.set(0, 1, 0);
         forward.set(0, 0, zfar - znear);
-        Matrix4f.transform(mat, forward, forward);
+        Matrix4f.transform(viewInv, forward, forward);
 
         forward.scale(-1);
 

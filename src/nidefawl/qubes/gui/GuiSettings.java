@@ -45,7 +45,7 @@ public class GuiSettings extends Gui {
 
     private Button            back;
     List<Setting>             list = Lists.newArrayList();
-    private Setting testSetting;
+    private Setting gui3dSetting;
     private Setting distanceSetting;
     private Setting shadowSetting;
     private Setting reflectionSetting;
@@ -66,6 +66,15 @@ public class GuiSettings extends Gui {
         }
         this.clearElements();
         this.list.clear();
+        final String[] str3dSettings = new String[] { "VR Only", "Always On" };
+        list.add((this.gui3dSetting = new Setting(this, "Render 3D GUI", str3dSettings[Game.instance.settings.gui3d ? 1 : 0], str3dSettings) {
+            void callback(int id) {
+                Game.instance.settings.gui3d = id == 1;
+                Game.instance.saveSettings();
+                Game.instance.updateGui3dMode();
+                Game.instance.showGUI(new GuiSettings(null));
+            }
+        }));
         int w1 = 160;
         int h = 30;
         List<Integer> clist = Lists.newArrayList();
@@ -95,7 +104,7 @@ public class GuiSettings extends Gui {
                 Game.instance.settings.ssr = id;
                 Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
-                Engine.outRenderer.resize(Game.displayWidth, Game.displayHeight);
+                Engine.outRenderer.resize(Game.guiWidth, Game.guiHeight);
             }
         }));
         final String[] strAOSettings = new String[] { "Disabled", "Enabled" };

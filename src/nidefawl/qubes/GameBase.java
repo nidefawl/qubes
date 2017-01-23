@@ -87,7 +87,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     protected volatile boolean minimized   = false;
     protected volatile boolean hasWindowFocus = true;
     protected volatile boolean useWindowSizeAsRenderResolution = true;
-    protected volatile boolean fixedGUISize = false;
+    protected boolean renderGui3d = false;
     protected boolean isStarting = true;
     private Thread             thread;
     private int newWidth = initWidth;
@@ -403,7 +403,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             if (windowHeight <= 0) {
                 windowHeight = 1;
             }
-            if (!fixedGUISize) {
+            if (!canRenderGui3d()) {
                 guiWidth = windowWidth;
                 guiHeight = windowHeight;
             }
@@ -495,6 +495,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
+        updateGuiContext();
+    }
+
+    private void updateGuiContext() {
         if (GuiContext.input != null && !GuiContext.input.focused) {
             GuiContext.input.focused=false;
             GuiContext.input = null;
@@ -503,6 +507,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (hasTextHook()!=reqTextHook) {
             System.out.println("reinit text hook -> "+reqTextHook);
             setTextHook(reqTextHook);
+        }
+        if (!canRenderGui3d()) {
+            GuiContext.mouseX = Mouse.getX();
+            GuiContext.mouseY = Mouse.getY();   
         }
     }
 
@@ -688,6 +696,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 if (i == 1000) {
                     GL_ERROR_CHECKS=false;
                 }
+                DumbPool.reset();
             }
         } catch (Throwable t) {
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
@@ -813,93 +822,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 NativeInterface.getInstance().gameCrashed(info);
                 return;
             }
-            nidefawl.swing.TextDialog dlg = new nidefawl.swing.TextDialog(title, desc, throwable, b);
-            dlg.prepend(buf1);
-            dlg.prepend(buf2);
-            dlg.setVisible(displayWidth, displayHeight);
-            while (dlg.isVisible()) {
-                Thread.sleep(100);
-            }
-            if (dlg.reqRestart) {
-                this.wasrunning = false;
-                this.running = false;
-                this.sysExit = false;
-                //                Client.main(Main.lastargs);
-                return;
-            }
-            /*Tess.useClientStates = true;
-            
-            initDisplay(true);
-            
-            Engine.baseInit();
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - initdisplay");
-            GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glClearColor");
-            GL11.glShadeModel(GL11.GL_SMOOTH);
-            glActiveTexture(GL_TEXTURE0);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glActiveTexture(GL_TEXTURE0)");
-            glEnable(GL_ALPHA_TEST);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - GL_ALPHA_TEST");
-            glEnable(GL_BLEND);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - GL_BLEND");
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glBlendFunc");
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LEQUAL);
-            glDepthMask(true);
-            glColorMask(true, true, true, true);
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("errorscreen - glColorMask");
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-            //            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
-            //            GL11.glHint(GL11.GL_POLYGON_SMOOTH_HINT, GL11.GL_NICEST);
-            setVSync(true);
-            
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen");
-            Mouse.setGrabbed(false);
-            GuiCrash guiCrash = new GuiCrash(title, desc, throwable);
-            GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            glActiveTexture(GL_TEXTURE0);
-            glEnable(GL_ALPHA_TEST);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LEQUAL);
-            glDepthMask(true);
-            glColorMask(true, true, true, true);
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-            GL11.glViewport(0, 0, displayWidth, displayHeight);
-            //            Engine.updateOrthoMatrix(displayWidth, displayHeight);
-            //            Shaders.updateUBO();
-            if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glViewport");
-            while (!isCloseRequested()) {
-                checkResize();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen checkResize");
-                updateInput();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateInput");
-                guiCrash.setPos(0, 0);
-                guiCrash.setSize(displayWidth, displayHeight);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.setSize");
-                GL11.glMatrixMode(GL_PROJECTION);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_PROJECTION)");
-                GL11.glLoadIdentity();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
-                GL11.glOrtho(0, displayWidth, displayHeight, 0, 0, 10);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glOrtho");
-                GL11.glMatrixMode(GL_MODELVIEW);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glMatrixMode(GL_MODELVIEW)");
-                GL11.glLoadIdentity();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glLoadIdentity");
-                GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClearColor");
-                GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen glClear");
-                guiCrash.render(0);
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen guiCrash.render");
-                updateDisplay();
-                if (Main.GL_ERROR_CHECKS) Engine.checkGLError("showErrorScreen updateDisplay");
-            }*/
+            throwable.printStackTrace();
+            Thread.sleep(1500);
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
@@ -955,23 +879,28 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 
     
     public void showGUI(Gui gui) {
-
+        if (gui==this.gui) {
+            return;
+        }
         if (gui != null && this.gui == null) {
-            if (Mouse.isGrabbed()) {
+            if (!canRenderGui3d() && Mouse.isGrabbed()) {
                 setGrabbed(false);
                 wasGrabbed = true;
             }
         }
         if (this.gui != null) {
             this.gui.onClose();
+            onGuiClosed(this.gui, gui);
         }
+        Gui prevGui = this.gui;
         this.gui = gui;
         if (this.gui != null) {
             this.gui.setPos(0, 0);
             this.gui.setSize(guiWidth, guiHeight);
             this.gui.initGui(this.gui.firstOpen);
+            onGuiOpened(this.gui, prevGui);
             this.gui.firstOpen = false;
-            if (Mouse.isGrabbed()) {
+            if (!canRenderGui3d() && Mouse.isGrabbed()) {
                 setGrabbed(false);
                 wasGrabbed = true;
             }
@@ -982,6 +911,12 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             wasGrabbed = false;
         }
         reinittexthook = true;
+    }
+
+    public void onGuiClosed(Gui gui, Gui targetGui) {
+    }
+
+    public void onGuiOpened(Gui gui, Gui prevGui) {
     }
 
     int throttleClick=0;
@@ -1084,9 +1019,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         }
         VR_SUPPORT = VR.isInit() && !VR_SUPPORT;
         if (!VR_SUPPORT && hadVR) {
-            fixedGUISize = false;
-            guiWidth = windowWidth;
-            guiHeight = windowHeight;
+            updateGui3dMode();
             Game.displayWidth=windowWidth;
             Game.displayHeight=windowHeight;
             setRenderResolution(displayWidth, displayHeight);
@@ -1095,9 +1028,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             if (Engine.outRenderer != null)
                 Engine.outRenderer.initShaders();
         } else if (VR_SUPPORT && !hadVR) {
-            fixedGUISize = true;
-            guiWidth = 1920;
-            guiHeight = 1080;
+            updateGui3dMode();
             Game.displayWidth=VR.renderWidth;
             Game.displayHeight=VR.renderHeight;
             setRenderResolution(displayWidth, displayHeight);
@@ -1108,13 +1039,21 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             setVSync(false);
         }
     }
+    protected void updateGui3dMode() {
+        
+    }
 
-    protected void setVRProjection() {
+    protected void setVRViewport() {
         Game.displayWidth=VR.renderWidth;
         Game.displayHeight=VR.renderHeight;
         updateProjection();
     }
-    protected void setGUIProjection() {
+    protected void setWindowViewport() {
+        Game.displayWidth=windowWidth;
+        Game.displayHeight=windowHeight;
+        updateProjection();
+    }
+    protected void setGUIViewport() {
         Game.displayWidth=guiWidth;
         Game.displayHeight=guiHeight;
         updateProjection();
@@ -1126,5 +1065,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public void onControllerButton(int controllerIdx, int button, int eventType) {
+    }
+    
+    public boolean canRenderGui3d() {
+        return this.renderGui3d;
     }
 }

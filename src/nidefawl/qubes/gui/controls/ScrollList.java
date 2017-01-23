@@ -153,8 +153,8 @@ public class ScrollList extends Gui {
     }
     @Override
     public boolean onMouseClick(int button, int action) {
-        double mx=Mouse.getX()-(getWindowPosX());
-        double my=Mouse.getY()-(getWindowPosY());
+        double mx=mouseGetX()-(getWindowPosX());
+        double my=mouseGetY()-(getWindowPosY());
         if (mx>=posX&&mx<=posX+this.width &&my>=posY&&my<=posY+this.height) {
             return super.onMouseClick(button, action);    
         } else {

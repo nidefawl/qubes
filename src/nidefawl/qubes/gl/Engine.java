@@ -15,6 +15,7 @@ import java.util.Map;
 import org.lwjgl.opengl.*;
 
 import com.google.common.collect.Maps;
+import com.sun.glass.ui.TouchInputSupport;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
@@ -57,6 +58,7 @@ public class Engine {
     private static BufferedMatrix modelviewprojection;
     private static Matrix4f       modelviewprojectionInv;
     private static BufferedMatrix modelview;
+    private static BufferedMatrix modelmatrix;
     private static BufferedMatrix normalMatrix;
     private static BufferedMatrix orthoP;
     private static BufferedMatrix orthoMV;
@@ -79,8 +81,6 @@ public class Engine {
     static TesselatorState quad;
 
     public static Frustum        camFrustum;
-    public static Vector3f       up;
-    public static Vector4f       back;
     public static Vector3f       lightPosition;
     public static Vector3f       lightDirection;
     public static float          sunAngle     = 0F;
@@ -222,6 +222,7 @@ public class Engine {
         viewInvYZ = new BufferedMatrix();
         viewprojection = new BufferedMatrix();
         modelview = new BufferedMatrix();
+        modelmatrix = new BufferedMatrix();
         modelviewprojection = new BufferedMatrix();
         modelviewprojectionInv = new Matrix4f();
         normalMatrix = new BufferedMatrix();
@@ -237,10 +238,8 @@ public class Engine {
         identity.update();
         identity.update();
         camFrustum = new Frustum();
-        up = new Vector3f();
         lightPosition = new Vector3f();
         lightDirection = new Vector3f();
-        back = new Vector4f();
         camera = new Camera();
         sunlightmodel.setDayLen(10000);
         sunlightmodel.setTime(7500);
@@ -470,6 +469,11 @@ public class Engine {
     public static BufferedMatrix getMatSceneMV() {
         return modelview;
     }
+    
+    public static BufferedMatrix getMatSceneM() {
+        return modelmatrix;
+    }
+    
     public static BufferedMatrix getMatSceneMVP() {
         return modelviewprojection;
     }
@@ -514,41 +518,76 @@ public class Engine {
         Vector3f camPos = camera.getPosition();
         updateCamera(camView, camPos);
     }
+    public static void updateFrustumFromInternal() {
+        camFrustum.setPos(camera.getPosition(), view.getInvMat4());
+        camFrustum.set(modelviewprojection);
+    }
 
+    public static void setFrustum(Matrix4f mvp, Matrix4f viewInv, Vector3f cameraPosition) {
+        camFrustum.setPos(cameraPosition, viewInv);
+        camFrustum.set(mvp);
+    }
     public static void updateGlobalRenderOffset(Vector3f camPos) {
         updateRenderOffset = updateGlobalRenderOffset(camPos.x, camPos.y, camPos.z);
     }
-    public static void updateCamera(Matrix4f camView, Vector3f camPos) {
-        updateCamera(camView, camPos, true);
+    public static Matrix4f composeView(boolean addShake, Matrix4f out) {
+        Matrix4f tempView = Matrix4f.pool();
+        camera.calcViewMatrix(tempView, addShake);
+        if (out == null)
+            return tempView;
+        out.load(tempView);
+        return out;
     }
-    public static void composeModelView(Matrix4f camView, Vector3f camPos, boolean b, Matrix4f out) {
-        out.setIdentity();
-        out.translate(-camPos.x, -camPos.y, -camPos.z);
-        
-        if (b) {
-            out.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);    
+    
+    public static Matrix4f composeModelMatrix(boolean addCameraPos, boolean addGlobalOffset, Matrix4f out) {
+        Matrix4f tempView = Matrix4f.poolIdentity(); 
+        if (addCameraPos) {
+            Vector3f cam = camera.getPosition();
+            tempView.m30 -= cam.x;
+            tempView.m31 -= cam.y;
+            tempView.m32 -= cam.z;
         }
-        
-        Matrix4f.mul(camView, out, out);
+        if (addGlobalOffset) {
+            tempView.m30 -= GLOBAL_OFFSET.x;
+            tempView.m32 -= GLOBAL_OFFSET.x;
+        }
+        if (out == null)
+            return tempView;
+        out.load(tempView);
+        return out;
     }
-    public static void updateCamera(Matrix4f camView, Vector3f camPos, boolean b) {
-        up.set(0, 100, 0);
-//        back.set(0, -10, 0);
-//        System.out.println(view);
+    public static Matrix4f composeModelView(boolean addCameraPos, boolean addGlobalOffset, boolean addShake, Matrix4f out) {
+        Matrix4f tempView = Matrix4f.pool();
+        camera.calcViewMatrix(tempView, addShake);
+        if (addCameraPos) {
+            Vector3f cam = camera.getPosition();
+            tempView.m30 -= cam.x;
+            tempView.m31 -= cam.y;
+            tempView.m32 -= cam.z;
+        }
+        if (addGlobalOffset) {
+            tempView.m30 -= GLOBAL_OFFSET.x;
+            tempView.m32 -= GLOBAL_OFFSET.x;
+        }
+        if (out == null)
+            return tempView;
+        out.load(tempView);
+        return out;
+    }
+    private static void updateCamera(Matrix4f camView, Vector3f camPos) {
         view.load(camView);
+        modelmatrix.setIdentity();
+        modelmatrix.translate(-camPos.x, -camPos.y, -camPos.z);
+        modelmatrix.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
+        _updateInternalMatrices();
+    }
+    public static void _updateInternalMatrices() {
         view.update();
+        modelmatrix.update();
         viewInvYZ.load(view);
         viewInvYZ.mulMat(invertYZ);
         viewInvYZ.update();
-        
-        modelview.setIdentity();
-        modelview.translate(-camPos.x, -camPos.y, -camPos.z);
-        
-        if (b) {
-            modelview.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);    
-        }
-        
-        Matrix4f.mul(view, modelview, modelview);
+        Matrix4f.mul(view, modelmatrix, modelview);
         Matrix4f.mul(projection, modelview, modelviewprojection);
         Matrix4f.mul(projection, view, viewprojection);
         viewprojection.update();
@@ -557,10 +596,32 @@ public class Engine {
         normalMatrix.setIdentity();
         normalMatrix.invert().transpose();
         normalMatrix.update();
-        camFrustum.setPos(camPos, view);
-        camFrustum.set(modelviewprojection);
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
-//        updateOrthoMatrix(Game.displayWidth, Game.displayHeight);//TODO: this only needs to be updated when resolution has changed
+        
+    }
+    public static void setViewAndModelMatrix(Matrix4f v, Matrix4f m) {
+        view.load(v);
+        modelmatrix.load(m);
+        _updateInternalMatrices();
+        UniformBuffer.updateSceneMatrices();
+    }
+    public static void setViewMatrixCameraPos(Matrix4f v, Vector3f cameraPos) {
+        view.load(v);
+        modelmatrix.setIdentity();
+        modelmatrix.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+        modelmatrix.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
+        _updateInternalMatrices();
+        UniformBuffer.updateSceneMatrices();
+    }
+    public static void setModelMatrix(Matrix4f m) {
+        modelmatrix.load(m);
+        _updateInternalMatrices();
+        UniformBuffer.updateSceneMatrices();
+    }
+    public static void setViewMatrix(Matrix4f v) {
+        view.load(v);
+        _updateInternalMatrices();
+        UniformBuffer.updateSceneMatrices();
     }
 
     

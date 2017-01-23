@@ -31,13 +31,13 @@ public class GuiGameMenu extends Gui {
         int c2 = this.hovered || this.focused ? this.color4 : this.color2;
         Shaders.gui.enable();
         if (this.resume != null&&this.back!=null)  {
-            int brd = 32;
+            int brd = 0;
             shadowSigma=100;
-            renderRoundedBoxShadow(this.resume.posX-brd, this.resume.posY-brd, 0, this.resume.width+brd*2, (this.back.posY+this.back.height+brd)-(this.resume.posY-brd), c2, this.alpha2, true);
+            renderRoundedBoxShadow(this.posX-brd, this.posY-brd, 0, this.width+brd*2, this.height+brd*2, c2, this.alpha2, true);
             brd+=5;
             resetShape();
 
-            renderRoundedBoxShadow(this.resume.posX-brd, this.resume.posY-brd, 0, this.resume.width+brd*2, (this.back.posY+this.back.height+brd)-(this.resume.posY-brd), c2, this.alpha2, false);
+            renderRoundedBoxShadow(this.posX-brd, this.posY-brd, 0, this.width+brd*2, this.height+brd*2, c2, this.alpha2, false);
         }
     }
 
@@ -111,6 +111,15 @@ public class GuiGameMenu extends Gui {
         for (AbstractUI b : this.buttons) {
             b.posY = top;
             top += 20+b.height;
+        }
+        int brd = 32;
+        this.posX = this.resume.posX-brd;
+        this.posY = this.resume.posY-brd;
+        this.width = this.resume.width+brd*2;
+        this.height = (this.back.posY+this.back.height+brd)-(this.resume.posY-brd);
+        for (AbstractUI b : this.buttons) {
+            b.posX -= this.posX;
+            b.posY -= this.posY;
         }
     }
     public void render(float fTime, double mX, double mY) {

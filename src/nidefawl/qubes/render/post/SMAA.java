@@ -52,6 +52,7 @@ public class SMAA {
         this(quality, false);
     }
     public SMAA(final int quality, boolean srgb) {
+        System.out.println("SMAA init");
         this.srgb = srgb;
         AssetManager assetMgr = AssetManager.getInstance();
         AssetBinary areaTexData = assetMgr.loadBin("textures/areatex.bin");
@@ -70,7 +71,6 @@ public class SMAA {
         
 
         try {
-            System.out.println("l");
             Shader new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
             Shader new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
             Shader new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);

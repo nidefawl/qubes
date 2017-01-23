@@ -1,6 +1,9 @@
 package nidefawl.qubes.gui;
 
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.glDisable;
+import static org.lwjgl.opengl.GL11.glEnable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +20,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.gui.controls.ScrollList;
+import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.shader.Shaders;
@@ -115,7 +119,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         if (this.popup != null) {
             mx -= (this.posX + this.popup.posX);
             my -= (this.posY + this.popup.posY);
-            if (mx > 0 && mx < this.popup.width && my > Math.min(this.posX + this.popup.posX, 0) && my <= this.popup.height) {
+            if (mx > 0 && mx < this.popup.width && my > 0 && my <= this.popup.height) {
                 mX-=1000;
                 mY-=1000;
             }
@@ -153,8 +157,8 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     public boolean onMouseClick(int button, int action) {
-        double mx=Mouse.getX()-mouseOffsetX();
-        double my=Mouse.getY()-mouseOffsetY();
+        double mx=mouseGetX()-mouseOffsetX();
+        double my=mouseGetY()-mouseOffsetY();
         if (action == GLFW.GLFW_PRESS) {
             for (int i = 0; i < this.buttons.size(); i++) {
                 AbstractUI b = this.buttons.get(i);
@@ -353,6 +357,29 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     public boolean onWheelScroll(double xoffset, double yoffset) {
+        return false;
+    }
+    public double mouseGetX() {
+        return GuiContext.mouseX;
+    }
+    public double mouseGetY() {
+        return GuiContext.mouseY;
+    }
+    public void render3D(float fTime, double mX, double mY) {
+        this.render(fTime, mX, mY);
+    }
+    public boolean mouseOver(double mX, double mY) {
+        boolean b = super.mouseOver(mX, mY);
+        if (b)
+            return true;
+
+        if (this.popup != null) {
+            mX -= (this.posX + this.popup.posX);
+            mY -= (this.posY + this.popup.posY);
+            if (mX > 0 && mX < this.popup.width && mY > 0 && mY <= this.popup.height) {
+                return true;
+            }
+        }
         return false;
     }
 }

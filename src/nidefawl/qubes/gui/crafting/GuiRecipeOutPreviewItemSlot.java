@@ -66,7 +66,7 @@ class GuiRecipeOutPreviewItemSlot extends AbstractUI {
                 font.drawString(""+nMult, posX+inset+width-inset*2-w2-1, posY+inset+width-inset*2+2, 0xf0f0f0, true, 1.0f);
             }
             if (this.hovered) {
-                Tooltip tip = Tooltip.item.set(stack, null, null);
+                Tooltip tip = Tooltip.item.set(stack, null, findParentWindow());
                 float offsetY = 0;
                 float mxoffset = (float) ((Gui)parent).mouseOffsetX();
                 float myoffset = (float) ((Gui)parent).mouseOffsetY();

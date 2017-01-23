@@ -26,32 +26,34 @@ public class GuiWindowManager implements Renderable  {
     }
 
     public static void setWindowFocus(final GuiWindow newFocus) {
-        do_setWindowFocus(newFocus);
-        boolean hasAlwaysOnTop = false;
-        for (final Integer a : windowList.keySet()) {
-            if (windowList.get(a).allwaysVisible)
-                hasAlwaysOnTop = true;
-        }
-        if (hasAlwaysOnTop) {
-            ArrayList<GuiWindow> onTop = new ArrayList<GuiWindow>();
-            int low = -1;
+        if (GuiContext.canWindowsFocusChange) {
+            do_setWindowFocus(newFocus);
+            boolean hasAlwaysOnTop = false;
             for (final Integer a : windowList.keySet()) {
-                if (windowList.get(a).allwaysVisible) {
-                    onTop.add(windowList.get(a));
-                }
+                if (windowList.get(a).allwaysVisible)
+                    hasAlwaysOnTop = true;
             }
-            boolean hasNormalWindowsOnTop = false;
-            for (final Integer a : windowList.keySet()) {
-                if (a > low) {
-                    if (!windowList.get(a).allwaysVisible) {
-                        hasNormalWindowsOnTop = true;
-                        break;
+            if (hasAlwaysOnTop) {
+                ArrayList<GuiWindow> onTop = new ArrayList<GuiWindow>();
+                int low = -1;
+                for (final Integer a : windowList.keySet()) {
+                    if (windowList.get(a).allwaysVisible) {
+                        onTop.add(windowList.get(a));
                     }
                 }
-            }
-            if (hasNormalWindowsOnTop) {
-                for (GuiWindow toRemove : onTop) {
-                    do_setWindowFocus(toRemove);
+                boolean hasNormalWindowsOnTop = false;
+                for (final Integer a : windowList.keySet()) {
+                    if (a > low) {
+                        if (!windowList.get(a).allwaysVisible) {
+                            hasNormalWindowsOnTop = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasNormalWindowsOnTop) {
+                    for (GuiWindow toRemove : onTop) {
+                        do_setWindowFocus(toRemove);
+                    }
                 }
             }
         }
@@ -202,8 +204,8 @@ public class GuiWindowManager implements Renderable  {
 //        int mouseY = -9999;
 //        boolean handleMouse = GuiAction.isAct(GuiAction.ACTION_NONE) && mc.currentScreen instanceof GuiChatCland;
 //        if (handleMouse) {
-//            mouseX = Mouse.getX();
-//            mouseY = Mouse.getY();
+//            mouseX = mouseGetX();
+//            mouseY = mouseGetY();
 //        }
 //        boolean has = false;
 //        for (GuiWindow w : windowList.values()) {
@@ -357,7 +359,7 @@ public class GuiWindowManager implements Renderable  {
         if (action == GLFW.GLFW_RELEASE) {
             dragged = resized = null;
         }
-        GuiWindow window = getMouseOver(Mouse.getX(), Mouse.getY());
+        GuiWindow window = getMouseOver(GuiContext.mouseX, GuiContext.mouseY);
         if (window != null) {
             /*return*/ window.onMouseClick(button, action);
             return true;
@@ -368,6 +370,9 @@ public class GuiWindowManager implements Renderable  {
         return false;
     }
     public static GuiWindow getMouseOver(double mX, double mY) {
+        if (GuiContext.hasOverride) {
+            return GuiContext.mouseOverOverride;
+        }
         if (GameBase.baseInstance.isGrabbed()) {
             return null;
         }
@@ -412,6 +417,9 @@ public class GuiWindowManager implements Renderable  {
     }
 
     public static void onWindowClosed(final GuiWindow window) {
+        if (Game.instance != null) {
+            Game.instance.onGuiClosed(window, null);
+        }
         if (window.removeOnClose()) {
             windowList.values().remove(window);
         }
@@ -444,6 +452,9 @@ public class GuiWindowManager implements Renderable  {
 //        if (anyVisible) {
 //            GameBase.baseInstance.setGrabbed(false);
 //        }
+        if (Game.instance != null) {
+            Game.instance.onGuiOpened(guiWindow, null);
+        }
     }
     public static void update() {
         for (final Integer a : windowList.keySet()) {

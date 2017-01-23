@@ -4,6 +4,7 @@ import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.Button;
+import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.inventory.slots.Slots;
@@ -244,6 +245,15 @@ public abstract class AbstractUI implements Renderable {
     public int getWindowPosY() {
         return this.parent != null ? this.parent.getWindowPosY() : 0;
     }
+    public GuiWindow findParentWindow() {
+        if (this instanceof GuiWindow) {
+            return (GuiWindow) this;
+        }
+        if (this.parent != null) {
+            return this.parent.findParentWindow();
+        }
+        return null;
+    }
 
     public void renderSlotBackground(float x, float y, float z, float w, float h, int color, float alpha, boolean shadow, float i) {
         shadowSigma = 4;
@@ -269,7 +279,8 @@ public abstract class AbstractUI implements Renderable {
         float inset2 = 3;
         Engine.pxStack.push();
         Engine.pxStack.translate(0, 0, 5);
-        
+
+        if (slots != null)
         for (Slot s : slots.getSlots()) {
             if (s.isAt(mX-posx, mY-posy)) {
                 sHover = s;
@@ -283,6 +294,7 @@ public abstract class AbstractUI implements Renderable {
         }
         Engine.pxStack.translate(0, 0, 5);
         Shaders.textured.enable();
+        if (slots != null)
         for (Slot s : slots.getSlots()) {
             BaseStack stack = s.getItem();
             if (stack != null) {
@@ -290,6 +302,7 @@ public abstract class AbstractUI implements Renderable {
             }
         }
         Engine.pxStack.translate(0, 0, 5);
+        if (slots != null)
         for (Slot s : slots.getSlots()) {
             renderSlotOverlay(s, posx, posy);
         }
@@ -301,7 +314,7 @@ public abstract class AbstractUI implements Renderable {
         Engine.pxStack.pop();
         BaseStack stack = sHover != null ? sHover.getItem() : null;
         if (stack != null) {
-            Tooltip tip = Tooltip.item.set(stack, sHover, null);
+            Tooltip tip = Tooltip.item.set(stack, sHover, findParentWindow());
             int x = (int)(posx+sHover.x+sHover.w+4);
             int y = (int)(posy+sHover.y+sHover.w/2);
             if (this.parent instanceof Gui) {

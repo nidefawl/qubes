@@ -27,8 +27,8 @@ public class LoadingScreen {
 
     public boolean render(int step, float f, String string) {
         GameBase g = GameBase.baseInstance;
-        int tw = GameBase.displayWidth;
-        int th = GameBase.displayHeight;
+        int tw = GameBase.guiWidth;
+        int th = GameBase.guiHeight;
         if (step > loadProgress.length - 1) {
             System.err.println("step > loadprogress-1!");
             step = loadProgress.length - 1;
@@ -59,7 +59,7 @@ public class LoadingScreen {
         g.checkResize();
         g.updateTime();
         g.updateInput();
-        Engine.updateOrthoMatrix(GameBase.displayWidth, GameBase.displayHeight);
+        Engine.updateOrthoMatrix(GameBase.guiWidth, GameBase.guiHeight);
         UniformBuffer.updateOrtho();
         glClearColor(0, 0, 0, 0F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
