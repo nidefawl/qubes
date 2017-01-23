@@ -18,7 +18,7 @@ public class SingleBlockRenderAtlas {
 
     static SingleBlockRenderAtlas instance = new SingleBlockRenderAtlas();
     static final int cols = 16;
-    static final int tileSize = 256;
+    static final int tileSize = 512;
     static final int slots = cols*cols;
     static final int texSize = tileSize*cols;
     static byte[] defaultData = new byte[texSize*texSize*4];
