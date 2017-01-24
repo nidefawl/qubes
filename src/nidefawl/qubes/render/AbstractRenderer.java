@@ -19,6 +19,7 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     List<IManagedResource> resourcesFramebuffers      = Lists.newArrayList();
     int rendererWidth;
     int rendererHeight;
+    int downsample = 1;
     
 
     @Override
@@ -96,10 +97,11 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
                 return;
         }
     }
-
     public void resizeRenderer(int displayWidth, int displayHeight) {
-        this.rendererWidth = displayWidth;
-        this.rendererHeight = displayHeight;
+
+        int[] blurSize = GameMath.downsample(displayWidth, displayHeight, downsample);
+        this.rendererWidth = blurSize[0];
+        this.rendererHeight = blurSize[1];
         resize(this.rendererWidth, this.rendererHeight);
     }
     public void resize(int displayWidth, int displayHeight) {
@@ -109,6 +111,10 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     @Override
     public void preinit() {
         
+    }
+    
+    public void setDownsample(int downsample) {
+        this.downsample = downsample;
     }
 
 }

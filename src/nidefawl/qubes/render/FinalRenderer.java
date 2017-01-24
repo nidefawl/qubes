@@ -20,6 +20,7 @@ import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
+import nidefawl.qubes.texture.array.NoiseTextureArray;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
@@ -42,7 +43,6 @@ public class FinalRenderer extends AbstractRenderer {
     public Shader       shaderDownsample4xLum;
     private Shader shaderNormals;
 
-    private FrameBuffer fbScene;
     public FrameBuffer  fbSSR;
     public FrameBuffer  fbSSRCombined;
     public FrameBuffer  fbDeferred;
@@ -60,8 +60,10 @@ public class FinalRenderer extends AbstractRenderer {
     private int         frame;
     SMAA smaa;
     public boolean aoNeedsInit = false;
+    int texSlotNoise = 0;
 
     public void renderDeferred(World world, float fTime, int pass) {
+        texSlotNoise++;
         Shader shaderDeferred = this.shaderDeferred;
         if (pass == 1) {
             shaderDeferred = this.shaderDeferredWater;
@@ -73,7 +75,7 @@ public class FinalRenderer extends AbstractRenderer {
         
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("enable shaderDeferred");
-
+//        System.out.println(GL11.glGetInteger(GL20.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS));
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2));
@@ -87,6 +89,9 @@ public class FinalRenderer extends AbstractRenderer {
         } else {
             GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.fbSSAO.getTexture(0));
         }
+        GL.bindTexture(GL_TEXTURE9, GL_TEXTURE_2D_ARRAY, TMgr.getNoiseArr());
+        
+        shaderDeferred.setProgramUniform1i("texSlotNoise", texSlotNoise%NoiseTextureArray.getInstance().getNumTextures());
 
         Engine.drawFullscreenQuad();
 
@@ -283,7 +288,7 @@ public class FinalRenderer extends AbstractRenderer {
     public int renderNormals() {
         fbBloomOut.bind();
         fbBloomOut.clearFrameBuffer();
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbScene.getTexture(1));
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
         this.shaderNormals.enable();
         Engine.drawFullscreenQuad();
         GLDebugTextures.readTexture("fixNormals", "texNormals", Engine.getSceneFB().getTexture(1), 8);
@@ -292,16 +297,16 @@ public class FinalRenderer extends AbstractRenderer {
     public void copyPreWaterDepth() {
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.preWaterDepthTex);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("bindTexture "+this.preWaterDepthTex);
-        ARBCopyImage.glCopyImageSubData(fbScene.getDepthTex(), GL_TEXTURE_2D, 0, 0, 0, 0, this.preWaterDepthTex, GL_TEXTURE_2D, 0, 0, 0, 0, fbScene.getWidth(), fbScene.getHeight(), 1);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glCopyImageSubData "+fbScene.getDepthTex()+" -> "+this.preWaterDepthTex);
+        ARBCopyImage.glCopyImageSubData(Engine.getSceneFB().getDepthTex(), GL_TEXTURE_2D, 0, 0, 0, 0, this.preWaterDepthTex, GL_TEXTURE_2D, 0, 0, 0, 0, Engine.getSceneFB().getWidth(), Engine.getSceneFB().getHeight(), 1);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glCopyImageSubData "+Engine.getSceneFB().getDepthTex()+" -> "+this.preWaterDepthTex);
         
     }
     public void copySceneDepthBuffer() {
         fbBloomOut.bind();
 
-        fbScene.bindRead();
+        Engine.getSceneFB().bindRead();
         //             
-        GL30.glBlitFramebuffer(0, 0, fbScene.getWidth(), fbScene.getHeight(), 0, 0, fbScene.getWidth(), fbScene.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        GL30.glBlitFramebuffer(0, 0, Engine.getSceneFB().getWidth(), Engine.getSceneFB().getHeight(), 0, 0, fbBloomOut.getWidth(), fbBloomOut.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         FrameBuffer.unbindReadFramebuffer();
     }
     public void renderBloom(World world, float fTime) {
@@ -490,6 +495,7 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDeferred.setProgramUniform1i("texLight", 5);
             shaderDeferred.setProgramUniform1i("texBlockLight", 6);
             shaderDeferred.setProgramUniform1i("texAO", 7);
+            shaderDeferred.setProgramUniform1i("texArrayNoise", 9);
             shaderDeferredWater.enable();
             shaderDeferredWater.setProgramUniform1i("texColor", 0);
             shaderDeferredWater.setProgramUniform1i("texNormals", 1);
@@ -500,6 +506,7 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDeferredWater.setProgramUniform1i("texBlockLight", 6);
             shaderDeferredWater.setProgramUniform1i("texAO", 7);
             shaderDeferredWater.setProgramUniform1i("texWaterNoise", 8);
+            shaderDeferredWater.setProgramUniform1i("texArrayNoise", 9);
             shaderDeferredFirstPerson.enable();
             shaderDeferredFirstPerson.setProgramUniform1i("texColor", 0);
             shaderDeferredFirstPerson.setProgramUniform1i("texNormals", 1);
@@ -509,6 +516,7 @@ public class FinalRenderer extends AbstractRenderer {
             shaderDeferredFirstPerson.setProgramUniform1i("texLight", 5);
             shaderDeferredFirstPerson.setProgramUniform1i("texBlockLight", 6);
             shaderDeferredFirstPerson.setProgramUniform1i("texAO", 7);
+            shaderDeferredFirstPerson.setProgramUniform1i("texArrayNoise", 9);
             Shader.disable();
         } catch (ShaderCompileError e) {
             releaseNewShaders();
@@ -592,20 +600,6 @@ public class FinalRenderer extends AbstractRenderer {
         releaseAll(EResourceType.FRAMEBUFFER);
         Engine.checkGLError("releaseAll(EResourceType.FRAMEBUFFER)");
         initAA();
-        fbScene = new FrameBuffer(displayWidth, displayHeight);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
-        fbScene.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
-        fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
-        fbScene.setHasDepthAttachment();
-        fbScene.setup(this);
-        Engine.setSceneFB(fbScene);
 
         GL.deleteTexture(this.preWaterDepthTex);
         this.preWaterDepthTex = GL.genStorage(displayWidth, displayHeight, GL14.GL_DEPTH_COMPONENT32, GL_NEAREST, GL12.GL_CLAMP_TO_EDGE);

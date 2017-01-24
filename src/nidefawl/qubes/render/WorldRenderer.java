@@ -2,6 +2,7 @@ package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL30.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Color;
+import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.vr.VR;
@@ -615,6 +617,22 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
+        releaseAll(EResourceType.FRAMEBUFFER);
+        Engine.checkGLError("releaseAll(EResourceType.FRAMEBUFFER)");
+        FrameBuffer fbScene = new FrameBuffer(displayWidth, displayHeight);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
+        fbScene.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
+        fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
+        fbScene.setHasDepthAttachment();
+        fbScene.setup(this);
+        Engine.setSceneFB(fbScene);
     }
 
     public void tickUpdate() {

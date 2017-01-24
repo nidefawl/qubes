@@ -1,8 +1,6 @@
 package nidefawl.qubes.texture;
 
-import nidefawl.qubes.texture.array.BlockNormalMapArray;
-import nidefawl.qubes.texture.array.BlockTextureArray;
-import nidefawl.qubes.texture.array.ItemTextureArray;
+import nidefawl.qubes.texture.array.*;
 
 /** Shortcut class to keep code small */
 public class TMgr {
@@ -13,6 +11,10 @@ public class TMgr {
 
     public static int getBlocks() {
         return BlockTextureArray.getInstance().glid;
+    }
+    
+    public static int getNoiseArr() {
+        return NoiseTextureArray.getInstance().glid;
     }
 
     public static int getItems() {

@@ -22,9 +22,9 @@ import nidefawl.qubes.util.GameMath;
 
 public abstract class TextureArray {
     public final static boolean SKIP_LOAD_TEXTURES = false;
-    HashMap<String, AssetTexture>             texNameToAssetMap  = new HashMap<>();
-    HashMap<Integer, ArrayList<AssetTexture>> blockIDToAssetList = new HashMap<>();
-    HashMap<Integer, AssetTexture> slotTextureMap = new HashMap<>();
+    protected HashMap<String, AssetTexture>             texNameToAssetMap  = new HashMap<>();
+    protected HashMap<Integer, ArrayList<AssetTexture>> blockIDToAssetList = new HashMap<>();
+    protected HashMap<Integer, AssetTexture> slotTextureMap = new HashMap<>();
 
     protected boolean firstInit = true;
 
@@ -181,6 +181,14 @@ public abstract class TextureArray {
 
     public float getProgress() {
         return (loadprogress+uploadprogress)/2.0f;
+    }
+    
+    public int getNumMipmaps() {
+        return this.numMipmaps;
+    }
+    
+    public int getNumTextures() {
+        return this.numTextures;
     }
 
 }

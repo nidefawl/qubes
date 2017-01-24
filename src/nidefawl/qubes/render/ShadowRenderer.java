@@ -89,10 +89,10 @@ public class ShadowRenderer extends AbstractRenderer {
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
-        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
+        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
         final int shadowPass = 2;
@@ -138,9 +138,9 @@ public class ShadowRenderer extends AbstractRenderer {
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.1f, 2.f);
-        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
+        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
         shadowShader.setProgramUniform1i("blockTextures", 0);

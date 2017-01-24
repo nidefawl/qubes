@@ -214,6 +214,7 @@ public class Game extends GameBase {
                 ItemTextureArray.getInstance(),
                 BlockNormalMapArray.getInstance(),
                 BlockTextureArray.getInstance(),
+                NoiseTextureArray.getInstance(),
         };
         for (int i = 0; i < arrays.length; i++) {
             final TextureArray arr = arrays[i];
@@ -784,7 +785,6 @@ public class Game extends GameBase {
         
         Engine.getSceneFB().bind();
         Engine.getSceneFB().clearFrameBuffer();
-
 
         
 
@@ -1718,6 +1718,9 @@ public class Game extends GameBase {
                 Engine.skyRenderer.redraw();
                 return;
             }
+            if (text.equals("/resize")) {
+                return;
+            }
             if (text.equals("/gui3d")) {
                 this.settings.gui3d = !settings.gui3d;
                 updateGui3dMode();
@@ -1728,10 +1731,10 @@ public class Game extends GameBase {
                 //            Engine.lightCompute.initShaders();
 //                Engine.worldRenderer.reloadModel();
 //                Engine.renderBatched.initShaders();
-                Engine.shadowRenderer.initShaders();
+//                Engine.shadowRenderer.initShaders();
 //                Engine.worldRenderer.initShaders();
 //                Engine.skyRenderer.initShaders();
-//                Engine.outRenderer.initShaders();
+                Engine.outRenderer.initShaders();
 //                Engine.particleRenderer.initShaders();
                 return;
             }

@@ -209,6 +209,7 @@ public class FrameBuffer implements IManagedResource {
     public void bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
+//        Engine.setViewport(0, 0, getWidth(), getHeight());
     }
     public void bindRead() {
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, this.fb);
