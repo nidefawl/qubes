@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <project basedir="." default="build_game_no_obf" name="Game">
-	<taskdef resource="proguard/ant/task.properties" classpath="D:/proguard5.1/lib/proguard.jar" />
+	<taskdef resource="proguard/ant/task.properties" classpath="D:/proguard5.3.2/lib/proguard.jar" />
 	<property environment="env"/>
 	<property name="debuglevel" value="source,lines,vars"/>
 	<property name="target" value="1.8"/>
@@ -94,15 +94,18 @@
 		<antcall target="build_game_compile" />
 		<antcall target="build_game_jar" />
 		<antcall target="fastobfuscate" />
+		<exec executable="${cryptfilepath}/CryptFile.exe">
+			<arg value="-i"/>
+			<arg value="../game_obf.jar"/>
+			<arg value="-o"/>
+			<arg value="${output_path}/game.dat"/>
+		</exec>
 	</target>
 	<target name="build_game_no_obf">
 		<echo message="${ant.project.name}: ${ant.file}"/>
 		<antcall target="build_game_init_copy_src" />
 		<antcall target="build_game_compile" />
 		<antcall target="build_game_jar" />
-		<antcall target="build_gamecopy_out" />
-	</target>
-	<target name="build_gamecopy_out">
 		<exec executable="${cryptfilepath}/CryptFile.exe">
 			<arg value="-i"/>
 			<arg value="../game.jar"/>
@@ -131,12 +134,6 @@
 			<libraryjar name="lib/openvr/JOpenVR.jar"/>
 			<outjar name="../game_obf.jar"/>
 		</proguard>
-		<exec executable="${cryptfilepath}/CryptFile.exe">
-			<arg value="-i"/>
-			<arg value="../game_obf.jar"/>
-			<arg value="-o"/>
-			<arg value="${output_path}/game.dat"/>
-		</exec>
 	</target>
 	<target name="build_copy_shader_and_jar">
 		<echo message="${ant.project.name}: ${ant.file}"/>
