@@ -80,8 +80,8 @@ void main(void) {
 
 	float alpha = tex.a*1;
     out_Color = vec4(color_adj, alpha);
-    out_Normal = vec4((pass_normal.xyz) * 0.5f + 0.5f, 0.05f);
-    out_Material = uvec4(0u,1u+ENCODE_RENDERPASS(5),0u,1u);
+    out_Normal = vec4((pass_normal.xyz) * 0.5f + 0.5f, 0.9f);
+    out_Material = uvec4(0u,1u+ENCODE_RENDERPASS(5),0u,0u);
     out_Light = vec4(1, 0,  1, 1);
 }
 

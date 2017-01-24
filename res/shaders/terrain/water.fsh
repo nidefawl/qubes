@@ -68,8 +68,44 @@ void main() {
 	float wateropacity = 0.8;
 	#endif
 	
+	vec3 posxz = vwpos.xyz;
 
-	vec4 raw = texture(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)));
+	posxz.x += sin(posxz.z+frametime)*0.25;
+	posxz.z += cos(posxz.x+frametime)*0.25;
+	
+	float deltaPos = 0.5;
+	float bumpmult = 0.02;
+	float h0 = waterH(posxz);
+	float h1 = waterH(posxz + vec3(deltaPos,0.0,0.0));
+	float h2 = waterH(posxz + vec3(-deltaPos,0.0,0.0));
+	float h3 = waterH(posxz + vec3(0.0,0.0,deltaPos));
+	float h4 = waterH(posxz + vec3(0.0,0.0,-deltaPos));
+	
+	float xDelta = ((h1-h0)+(h0-h2))/deltaPos;
+	float yDelta = ((h3-h0)+(h0-h4))/deltaPos;
+	
+	vec3 newnormal = normalize(vec3(xDelta,yDelta,1.0-xDelta*xDelta-yDelta*yDelta));
+	newnormal = newnormal + (xDelta*yDelta) / (sin(xDelta) + cos(yDelta)+frametime);
+	vec2 texCoordWater = texcoord.st;
+	vec3 waterNormal = normal;
+	texCoordWater.s+=h0*0.08f;
+	texCoordWater.t+=h1*0.08f;
+	texCoordWater.s+=h3*0.08f;
+	texCoordWater.t+=h4*0.08f;
+    if (isWater > 0 && faceDir != 0u) {
+		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
+		vec3 bump = newnormal;
+			
+		
+		
+		bump = 	bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+		
+		waterNormal = normalize(bump.xzy * tbnMat);
+	}
+	
+	
+
+	vec4 raw = texture(blockTextures, vec3(texCoordWater, BLOCK_TEX_SLOT(blockinfo)));
 	// raw.a=1;
     uint blockid = BLOCK_ID(blockinfo);
     float iswater = IS_WATER(blockid);
@@ -84,54 +120,7 @@ void main() {
 	tex.a = 1;
 	
 	if (iswater < 0.9) tex = raw*color;
-	
-	vec3 posxz = vwpos.xyz;
 
-	posxz.x += sin(posxz.z+frametime)*0.25;
-	posxz.z += cos(posxz.x+frametime)*0.25;
-	
-	float deltaPos = 0.4;
-	float h0 = waterH(posxz);
-	float h1 = waterH(posxz + vec3(deltaPos,0.0,0.0));
-	float h2 = waterH(posxz + vec3(-deltaPos,0.0,0.0));
-	float h3 = waterH(posxz + vec3(0.0,0.0,deltaPos));
-	float h4 = waterH(posxz + vec3(0.0,0.0,-deltaPos));
-	
-	float xDelta = ((h1-h0)+(h0-h2))/deltaPos;
-	float yDelta = ((h3-h0)+(h0-h4))/deltaPos;
-	
-	vec3 newnormal = normalize(vec3(xDelta,yDelta,1.0-xDelta*xDelta-yDelta*yDelta));
-	newnormal = newnormal + (xDelta*yDelta) / (sin(xDelta) + cos(yDelta)+frametime);
-	
-	vec4 frag2;
-		frag2 = vec4((normal) * 0.5f + 0.5f, 1.0f);		
-		
-    if (isWater > 0 && faceDir != 0u) {
-		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
-		vec3 bump = newnormal;
-			
-		
-		float bumpmult = 0.04;	
-		
-		bump = 	bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-		// mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
-		// 					tangent.y, binormal.y, normal.y,
-		// 					tangent.z, binormal.z, normal.z);
-		
-		frag2 = vec4(normalize(bump.xzy * tbnMat) * 0.5 + 0.5, 1.0);
-	}
-	
-	vec4 spec = vec4(0);
-	#ifdef RPSupport
-	vec4 normal = texture(normals,texcoord.xy);
-	spec = texture(specular, texcoord);
-	spec *= 1-pow(abs(normal.r-0.5)*2,2.2);
-	spec *= 1-pow(abs(normal.g-0.5)*2,2.2);
-	spec *= normal.b;
-	#endif
-	
-	// float matb = mat;
-	// if (iswater < 0.9 && tex.a > 0.9) matb = 0.15;
 	
 
 	float xPos2 = texPos.x;
@@ -148,12 +137,9 @@ void main() {
 	lightLevelSky += faceLightSky.y * xPos2 * yPos;
 	lightLevelSky += faceLightSky.z * xPos2 * yPos2;
 	lightLevelSky += faceLightSky.w * xPos  * yPos2;
-	// gl_FragData[0] = tex;
-	// gl_FragData[1] = frag2;	
-	// gl_FragData[2] = vec4(lmcoord.t, matb, lmcoord.s, 1.0);
-	// gl_FragData[3] = spec;
+
     out_Color = tex;
-    out_Normal = vec4(frag2.xyz, roughness);
+    out_Normal = vec4(waterNormal.xyz* 0.5f + 0.5f, roughness);
     out_Material = blockinfo;
     out_Light = vec4(lightLevelSky, lightLevelBlock, 1, 1);
 }

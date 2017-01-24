@@ -46,9 +46,9 @@ vec3 Uncharted2Tonemap(vec3 x)
     return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F; // E/F = Toe Angle
 }
 
-#define MAX_COLOR_RANGE 48.0//TONEMAP   
+#define MAX_COLOR_RANGE 2.0//TONEMAP   
 vec3 Uncharted2Tonemap2(vec3 x) {
-float A2 = 1.0;    //brightness multiplier
+float A2 = .8;    //brightness multiplier
 float B2 = 0.37;   //black level (lower means darker and more constrasted, higher make the image whiter and less constrasted)
 float C2 = 0.1;    //constrast level 
   float D2 = 0.2;    

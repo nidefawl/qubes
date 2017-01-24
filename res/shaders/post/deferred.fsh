@@ -379,6 +379,32 @@ float edo() {
     return total;
 }
 #endif
+
+
+// constant that are used to adjust lighting
+const float C1 = 0.429043;
+const float C2 = 0.511664;
+const float C3 = 0.743125;
+const float C4 = 0.886227;
+const float C5 = 0.247708;
+
+// scale for restored amount of lighting
+const float u_scaleFactor = 1.0;
+
+// coefficients of spherical harmonics and possible values
+const vec3 u_L00 = vec3(0.79, 0.44, 0.54);
+const vec3 u_L1m1 = vec3(0.39, 0.35, 0.60);
+const vec3 u_L10 = vec3(-0.34, -0.18, -0.27);
+const vec3 u_L11 = vec3(-0.29, -0.06, 0.01);
+const vec3 u_L2m2 = vec3(-0.26, -0.22, -0.47);
+const vec3 u_L2m1 = vec3(-0.11, -0.05, -0.12);
+const vec3 u_L20 = vec3(-0.16, -0.09, -0.15);
+const vec3 u_L21 = vec3(0.56, 0.21, 0.14);
+const vec3 u_L22 = vec3(0.21, -0.05, -0.30);
+
+///////////////////////////////////////////
+
+
 #define SHADE
 void main() {
     vec4 sceneColor = texture(texColor, pass_texcoord);
@@ -410,7 +436,8 @@ void main() {
     float fIsSky = isCloud;
     bool isSky = bool(fIsSky==1.0f);
 #if RENDER_PASS < 1
-    vec4 ssao =vec4(edo());//texture(texAO, pass_texcoord);
+    // vec4 ssao =vec4(edo());
+    vec4 ssao=texture(texAO, pass_texcoord);
 #else
     vec4 ssao = vec4(1);
 #endif
@@ -535,7 +562,7 @@ void main() {
         // float specAmb2 = pow(max(dot(halfDir2, prop.normal), 0.0), roughness);
 
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*40.0;
+        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*22.0;
 
 
 
@@ -549,7 +576,8 @@ void main() {
         occlusion+=float(RENDER_PASS==1);
         occlusion = min(1.0, occlusion);/**3.5*/
 
-        float shadow = getShadow2()*(1.0-isBackface)*(1.0-isWater*0.8);
+        float shadowRaw = getShadow2();
+        float shadow = shadowRaw*(1.0-isBackface)*(1.0-isWater*0.8);
         // float shadow = mix(getSoftShadow(), 1, 0.04);
 
         float sunLight = skyLightLvl * prop.NdotL * shadow * dayLightIntens *(1.0-fNight);
@@ -561,7 +589,7 @@ void main() {
         vec3 lightColor = mix(vec3(1.0), vec3(0.8, 0.9, 1.1), fNight);
         vec3 Ispec = SkyLight.Ls.rgb * vec3(1.0) *spec;
         vec3 Idiff = SkyLight.Ld.rgb * vec3(1.0) *diff;
-        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.1);
+        vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.0);
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb1 *specAmb1 * 0.25;
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb2 *specAmb2 * 0.08;
 
@@ -594,16 +622,15 @@ void main() {
         if (len > 0.001) {
             float UNdotUP = 0.5+abs(dot(normalize(uVec),normalize(prop.normal.xyz)));
             float depth = len*UNdotUP;
-            float sky_absorbance = mix(mix(1.0,exp(-depth/12.5),isWater),1.0,isEyeInWater);
+            float sky_absorbance = mix(mix(1.0,exp(-depth/16.5),isWater),1.0,isEyeInWater);
             // alpha = prop.albedo.a;//clamp(clamp(depth, 0.4, (sceneColor.a*1.4)*(1-clamp(sunLight, 0.0, 1.0))), 0.5, 1.0);
             // alpha = 0.5;
-            alpha = mix(alpha, 0.99, sky_absorbance);//alpha*(0.99+0.01*(1-sky_absorbance));
-            finalLight *= clamp(sky_absorbance, 0.005, 0.08);
-            // prop.albedo *=0.1;
-            // finalLight *= 0.01+sky_absorbance*1;
-            // fogColor = mix(fogColor, vec3(0.006, 0.236, 0.03)*4.0, isWater);
-            // fogDepth = depth*1*(sky_absorbance*100+0.3);
-            prop.albedo+=min(depth*0.01, 1.8)*mix(fogColor, vec3(0.006, 0.076, 0.03)*4.0, isWater);
+            float minShadow = max(shadowRaw, 0.7);
+            // alpha = 0.999+0.001*clamp((depth-4.5) / 4.5, 0.0, 1.0);
+            finalLight *= clamp(sky_absorbance, 0.2, 1.0)*minShadow*0.26;
+            fogDepth = min(depth, 12)*15;
+            fogColor *= vec3(0.05, 0.18, 0.12)*6;
+            prop.albedo+=pow(1.0-min(depth/12.0, 1.0), 4.0)*(vec3(0.02, 0.035, 0.035)*2)*minShadow*1.0;
             // finalLight*=4;
 // vec3 watercolor = vec3(0.71,0.6,0.6);
 // vec3 ambient_color = vec3(1)*lightColor;

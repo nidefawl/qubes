@@ -20,6 +20,7 @@ in vec3 normal;
 in vec4 texcoord;
 in vec4 position;
 in vec2 light;
+in float camDistance;
 flat in vec4 faceAO;
 flat in vec4 faceLight;
 flat in vec4 faceLightSky;
@@ -114,27 +115,37 @@ void main(void) {
 	float indexNormalMap = BLOCK_NORMAL_SLOT(blockinfo);
 
 	#ifdef NORMAL_MAPPING
+	#define NORMAL_DISTANCE 32.0
+	#define NORMAL_FADEOUT 4.0
 	if (indexNormalMap > 0 && faceDir > 0u) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
- 		// vec2 newCoords = texcoord.st;//
-		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
-		// float height = texture(normalTextures, texcoord.st).a;
-		 //Our heightmap only has one color channel.
-		 // const vec2 scaleBias = vec2(0.04, 0.02);
-		 // float v = height * scaleBias.r - scaleBias.g; 
-		// vec3 eye = normalize(tbnMat * (CAMERA_POS-position.xyz));
- 		// newCoords = texcoord.st + (eye.xy * v);
-		//  tex=texture(blockTextures, vec3(newCoords, BLOCK_TEX_SLOT(blockinfo)));
-		//  color_adj = tex.rgb;
-		// color_adj *= color.rgb;
-		// srgbToLin(color_adj.rgb);
-		vec3 normalMapTex=texture(normalTextures, vec3(texcoord.st, indexNormalMap)).xzy * 2.0 - 1.0; // swizzling is important here
-		// normalMapTex *= 1/1.1;
 
-		// vec3 normalMapTex = texture(normalTest, newCoords).xzy * 2.0 - 1.0; // swizzling is important here
-		outNormal = normalize(outNormal+(tbnMat * normalMapTex));
-		// if (length(outNormal) > 1.01) {
-		// 	color_adj=vec3(1,0,0);
-		// }
+		if (camDistance < NORMAL_DISTANCE)
+		{
+	        float scale = clamp((NORMAL_DISTANCE-camDistance) / NORMAL_FADEOUT, 0.0, 1.0);
+	        // color_adj.r = scale;
+	        // color_adj.g = 1.0-scale;
+	 		// vec2 newCoords = texcoord.st;//
+			mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
+			// float height = texture(normalTextures, texcoord.st).a;
+			 //Our heightmap only has one color channel.
+			 // const vec2 scaleBias = vec2(0.04, 0.02);
+			 // float v = height * scaleBias.r - scaleBias.g; 
+			// vec3 eye = normalize(tbnMat * (CAMERA_POS-position.xyz));
+	 		// newCoords = texcoord.st + (eye.xy * v);
+			//  tex=texture(blockTextures, vec3(newCoords, BLOCK_TEX_SLOT(blockinfo)));
+			//  color_adj = tex.rgb;
+			// color_adj *= color.rgb;
+			// srgbToLin(color_adj.rgb);
+			vec3 normalMapTex=texture(normalTextures, vec3(texcoord.st, indexNormalMap)).xzy * 2.0 - 1.0; // swizzling is important here
+			// normalMapTex *= 1/1.1;
+
+			// vec3 normalMapTex = texture(normalTest, newCoords).xzy * 2.0 - 1.0; // swizzling is important here
+			outNormal = normalize(outNormal+(tbnMat * normalMapTex)*scale);
+			// if (length(outNormal) > 1.01) {
+			// 	color_adj=vec3(1,0,0);
+			// }
+
+		}
 	}	
 	#endif
 

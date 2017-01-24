@@ -22,5 +22,6 @@ void main(void)
 	// blurred.rgb = mix(blurred.rgb, gray, 1);
     // float a = blurred.a*0.2*isWater;
     // out_Color = vec4( mix(albedo.rgb, blurred.rgb, a), 1.0 );
-    out_Color = vec4(albedo.rgb+blurred.rgb*blurred.a*isWater*0.15, 1.0);
+    vec3 color = mix(albedo.rgb, blurred.rgb, blurred.a*isWater*0.4);
+    out_Color = vec4(color, 1.0);
 }

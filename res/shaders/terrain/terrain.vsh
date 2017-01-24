@@ -20,6 +20,7 @@ out vec3 normal;
 out vec4 texcoord;
 out vec4 position;
 out vec2 light;
+out float camDistance;
 flat out vec4 faceAO;
 flat out vec4 faceLight;
 flat out vec4 faceLightSky;
@@ -115,6 +116,7 @@ void main() {
     gl_Position = in_matrix_3D.mvp * model_matrix * in_position;
 #else 
 	position = pos;
+	camDistance = length(pos.xyz - CAMERA_POS);
 	gl_Position = in_matrix_3D.mvp * pos;
 #endif
 }
