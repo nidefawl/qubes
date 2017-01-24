@@ -320,9 +320,9 @@ public class UniformBuffer {
 //        float ambIntens = 0.12f;
 //        float diffIntens = 0.17F;
 //        float specIntens = 0.16F;
-        float ambIntens = 0.08f;
-        float diffIntens = 0.1F;
-        float specIntens = 0.1F;
+        float ambIntens = 0.04f;
+        float diffIntens = 0.07F;
+        float specIntens = 0.08F;
         float fNight = GameMath.easeInOutCubic(nightNoon);
         ambIntens*=Math.max(0, 1.0f-fNight*0.98f);
         diffIntens*=1.0f-fNight*0.97f;
@@ -331,9 +331,13 @@ public class UniformBuffer {
             LightInfo.put(ambIntens);
         }
         LightInfo.put(1);
-        for (int a = 0; a < 3; a++) {
-            LightInfo.put(diffIntens*(1.0f-a/6.0f));
-        }
+//        for (int a = 0; a < 3; a++) {
+////            LightInfo.put(diffIntens*(1.0f-a/2.0f));
+//            LightInfo.put(diffIntens);
+//        }
+        LightInfo.put(1.0f*diffIntens);
+        LightInfo.put(0.88f*diffIntens);
+        LightInfo.put(0.7f*diffIntens);
         LightInfo.put(1);
         for (int a = 0; a < 3; a++) {
             LightInfo.put(specIntens);

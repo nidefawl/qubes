@@ -22,10 +22,10 @@ public class LoadingScreen {
     final float[] loadProgress = new float[2];
 
     public boolean render(int step, float f) {
-        return render(step, f, "");
+        return setProgress(step, f, "");
     }
 
-    public boolean render(int step, float f, String string) {
+    public boolean setProgress(int step, float f, String string) {
         GameBase g = GameBase.baseInstance;
         int tw = GameBase.guiWidth;
         int th = GameBase.guiHeight;
@@ -56,9 +56,9 @@ public class LoadingScreen {
             g.shutdown();
             return false;
         }
-        g.checkResize();
-        g.updateTime();
-        g.updateInput();
+//        g.checkResize();
+//        g.updateTime();
+//        g.updateInput();
         Engine.updateOrthoMatrix(GameBase.guiWidth, GameBase.guiHeight);
         UniformBuffer.updateOrtho();
         glClearColor(0, 0, 0, 0F);

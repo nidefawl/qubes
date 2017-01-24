@@ -36,7 +36,7 @@ public class BlockNormalMapArray extends TextureArray {
     @Override
     public void load() {
         super.load();
-        this.numMipmaps = 1;
+//        this.numMipmaps = 1;
     }
 
     @Override
@@ -149,12 +149,12 @@ public class BlockNormalMapArray extends TextureArray {
 //            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         } else {// does not work with alpha testing
 
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//GL_LINEAR_MIPMAP_NEAREST
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-//            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
+            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
             //        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
         }
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);

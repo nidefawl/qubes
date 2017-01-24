@@ -445,7 +445,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         int totalv=0;
         int LOD_DISTANCE = 16; //TODO: move solid/slab blocks out of LOD PASS
         Shader cur = worldRenderer.terrainShader;
-        
+        int occlTestThisFrame = 0;
         boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
         Engine.bindVAO(GLVAO.vaoBlocksBindless);
         if (bindless) {
@@ -461,7 +461,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                     continue;
                 }
                 if ((dist == 1) && (r.distance > LOD_DISTANCE)) continue;
-                if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
+                if (ENABLE_OCCL && occlTestThisFrame < 1&& queriesRunning < occlQueriesRunning.length 
                         && r.distance > MIN_DIST_OCCL 
                         && r.frustumStates[0] >= MIN_STATE_OCCL) {
                     if (r.occlusionQueryState == 0 && r.occlusionResult < 1) {
@@ -477,6 +477,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                             buffer.render();
                             buffer.preDraw(GLVAO.vaoBlocksBindless);
                         }
+                        occlTestThisFrame++;
                         r.occlusionQueryState = 1;
                         occlQueriesRunning[idx] = r;
                         r.queryPos.set(camX, camY, camZ);
@@ -538,8 +539,10 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         if (bindless && buffer.getDrawCount() > 0) {
             buffer.render();
         }
-        
-        
+//        if (occlTestThisFrame > 0) {
+//            System.out.println(occlTestThisFrame);
+//        }
+//        
         numV=totalv;
     }
 

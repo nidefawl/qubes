@@ -172,7 +172,7 @@ public class Game extends GameBase {
         dig.init();
         FontRenderer.init();
         Engine.init();
-        loadingScreen.render(0, 0, "Initializing");
+        loadingScreen.setProgress(0, 0, "Initializing");
         TextureManager.getInstance().init();
         BlockModelManager.getInstance().init();
         ItemModelManager.getInstance().init();
@@ -189,7 +189,7 @@ public class Game extends GameBase {
         this.statsCached.setSize(displayWidth, displayHeight);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
-        loadingScreen.render(0, 0.5f, "Initializing");
+        loadingScreen.setProgress(0, 0.5f, "Initializing");
         this.vrGui.init();
         
         
@@ -202,13 +202,13 @@ public class Game extends GameBase {
 
     public void lateInitGame() {
         dig.reloadTextures();
-        loadingScreen.render(0, 0.8f, "Loading... Item Models");
+        loadingScreen.setProgress(0, 0.8f, "Loading... Item Models");
         ItemModelManager.getInstance().reload();
-        loadingScreen.render(0, 0.9f, "Loading... Block Models");
+        loadingScreen.setProgress(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
-        loadingScreen.render(0, 1f, "Loading... Entity Models");
+        loadingScreen.setProgress(0, 1f, "Loading... Entity Models");
         EntityModelManager.getInstance().reload();
-        loadingScreen.render(0, 1f, "Loading... Item Textures");
+        loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
         BlockTextureArray.getInstance().setAnisotropicFiltering(this.settings.anisotropicFiltering);
         TextureArray[] arrays = {
                 ItemTextureArray.getInstance(),
@@ -252,7 +252,7 @@ public class Game extends GameBase {
                 pr+=arrays[i].getProgress();
             }
             pr/=(float)arrays.length;
-            loadingScreen.render(1, pr, "Loading...");
+            loadingScreen.setProgress(1, pr, "Loading...");
         }
         ChatManager.getInstance().loadInputHistory();
 

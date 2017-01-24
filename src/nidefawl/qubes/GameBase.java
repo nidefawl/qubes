@@ -491,8 +491,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public void updateInput() {
-        // Poll for window events. The key callback above will only be
-        // invoked during this call.
         glfwPollEvents();
         updateGuiContext();
     }

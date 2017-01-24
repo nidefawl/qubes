@@ -195,11 +195,11 @@ public class Engine {
     }
 
     public static boolean checkGLError(String s) {
-        int i = GL11.glGetError();
-        if (i != 0) {
-            String s1 = GameBase.getGlErrorString(i);
-            throw new GameError("Error - " + s + ": " + s1);
-        }
+//        int i = GL11.glGetError();
+//        if (i != 0) {
+//            String s1 = GameBase.getGlErrorString(i);
+//            throw new GameError("Error - " + s + ": " + s1);
+//        }
         return false;
     }
 
