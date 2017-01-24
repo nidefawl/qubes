@@ -54,6 +54,8 @@ uniform sampler2D texShadow;
 uniform sampler2D texBlockLight;
 uniform sampler2D texLight;
 uniform sampler2D texAO;
+uniform sampler2DArray texArrayNoise;
+uniform int texSlotNoise;
 
 
 in vec2 pass_texcoord;
@@ -235,9 +237,9 @@ float getShadow2() {
     return 1;
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
-#define G_SCATTERING 0.97f
-#define VOL_STRENGTH 0.15f
-#define NB_STEPS 10
+#define G_SCATTERING 0.87f
+#define VOL_STRENGTH 0.05f
+#define NB_STEPS 5
 // #define PI 10
 const float pi = 3.1415927;
 float ComputeScattering(float lightDotView)
@@ -248,15 +250,24 @@ float ComputeScattering(float lightDotView)
     return result;
 }
 
+#define BLUE_NOISE 
 float VolumetricLight() {
+#ifdef BLUE_NOISE
+    ivec3 texSize = textureSize(texArrayNoise, 0);
+    vec2 pixelSize = vec2(in_scene.viewport.xy)/vec2(texSize.xy);
+    vec4 tex = texture(texArrayNoise, vec3(pass_texcoord*pixelSize, texSlotNoise), 0);
+    float dither = tex.r;
+#else 
+    ivec2 pixelPos = ivec2(pass_texcoord.xy*in_scene.viewport.xy);
     vec4 ditherPattern[4];
     ditherPattern[0] = vec4(0.0f, 0.5f, 0.125f, 0.625f);
     ditherPattern[1] = vec4( 0.75f, 0.22f, 0.875f, 0.375f);
     ditherPattern[2] = vec4( 0.1875f, 0.6875f, 0.0625f, 0.5625);
     ditherPattern[3] = vec4( 0.9375f, 0.4375f, 0.8125f, 0.3125);
 
-    ivec2 pixelPos = ivec2(pass_texcoord.xy*in_scene.viewport.xy);
     float dither = ditherPattern[pixelPos.x%4][pixelPos.y%4];
+#endif
+
     vec3 startPosition = CAMERA_POS;
      
     vec3 rayVector = prop.worldposition.xyz - startPosition;
@@ -295,7 +306,7 @@ float VolumetricLight() {
 }
 
 #define EDO_Size 20.0                               //Set ambient occlusion size. [10.0 20.0 30.0 40.0 50.0 60.0]
-#define EDOPASS 3.0
+#define EDOPASS 8.0
 #define EDOSTR 1.0   
 #define EDO   
 #ifdef EDO
@@ -327,7 +338,14 @@ float edo() {
     vec4 sb;
     
     float dist = (getdist(32,texcoord)*2+getdist(512,texcoord))/3;
+#ifdef BLUE_NOISE
+    ivec3 texSize = textureSize(texArrayNoise, 0);
+    vec2 pixelSize = vec2(in_scene.viewport.xy)/vec2(texSize.xy);
+    vec4 tex = texture(texArrayNoise, vec3(pass_texcoord*pixelSize, texSlotNoise), 0);
+    float noise = 1+tex.r*3/EDOPASS;
+#else 
     float noise = 1+getnoise(texcoord.xy)*3/EDOPASS;
+#endif
     float border = floor(EDO_Size/EDOPASS*in_scene.viewport.x/1280);
     float strn = border*dist*noise;
     
