@@ -30,6 +30,7 @@ public class SMAA {
     SimpleResourceManager mgr = new SimpleResourceManager();
 
     public Shader       shaderAAEdge;
+    public Shader       shaderCopyTexture;
     public Shader       shaderAABlendWeight;
     public Shader       shaderAANeighborBlend;
     private FrameBuffer fbFlipInput;
@@ -39,6 +40,10 @@ public class SMAA {
     private int searchTex;
 
     private boolean srgb;
+
+    private boolean usePredicatedThresholding;
+
+    private boolean useQuads;
     /**
      * 
      */
@@ -49,11 +54,13 @@ public class SMAA {
     final static String[] qualDefines = { "SMAA_PRESET_LOW", "SMAA_PRESET_MEDIUM", "SMAA_PRESET_HIGH", "SMAA_PRESET_ULTRA" };
     public static String[] qualDesc = { "Low", "Medium", "High", "Ultra" };
     public SMAA(final int quality) {
-        this(quality, false);
+        this(quality, false, false, false);
     }
-    public SMAA(final int quality, boolean srgb) {
+    public SMAA(final int quality, final boolean usePredTex, boolean srgb, boolean useQuads) {
         System.out.println("SMAA init");
         this.srgb = srgb;
+        this.useQuads = useQuads;
+        this.usePredicatedThresholding = usePredTex;
         AssetManager assetMgr = AssetManager.getInstance();
         AssetBinary areaTexData = assetMgr.loadBin("textures/areatex.bin");
         AssetBinary searchTexData = assetMgr.loadBin("textures/searchtex.bin");
@@ -65,20 +72,44 @@ public class SMAA {
                 if ("SMAA_QUALITY".equals(define)) {
                     return "#define "+qualDefines[quality];
                 }
+                if ("SMAA_PREDICATION".equals(define)) {
+                    return "#define SMAA_PREDICATION "+(usePredTex?"1":"0");
+                }
                 return null;
             }
         };
         
 
         try {
-            Shader new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
-            Shader new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
-            Shader new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
+            Shader new_CopyTexture;
+            Shader new_AAEdge;
+            Shader new_BlendWeight;
+            Shader new_neighbor_blend;
+            if (useQuads) {
+                new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", "screen_scaled_quad", null, null, def);
+                new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", "post/SMAA/SMAA_edgedetection_quad", null, null, def);
+                new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", "post/SMAA/SMAA_blend_weight_quad", null, null, def);
+                new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", "post/SMAA/SMAA_neighbor_blend_quad", null, null, def);
+            } else {
+                new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", def);
+                new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
+                new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
+                new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
+            }
+            shaderCopyTexture = new_CopyTexture;
             shaderAAEdge = new_AAEdge;
             shaderAABlendWeight = new_BlendWeight;
             shaderAANeighborBlend = new_neighbor_blend;
+            shaderCopyTexture.enable();
+            shaderCopyTexture.setProgramUniform1i("texColor", 0);
+            if (usePredTex) {
+                shaderCopyTexture.setProgramUniform1i("texMaterial", 1);    
+            }
             shaderAAEdge.enable();
             shaderAAEdge.setProgramUniform1i("texColor", 0);
+            if (usePredTex) {
+                shaderAAEdge.setProgramUniform1i("texMaterial", 1);    
+            }
             shaderAABlendWeight.enable();
             shaderAABlendWeight.setProgramUniform1i("edgesTex", 0);
             shaderAABlendWeight.setProgramUniform1i("areaTex", 1);
@@ -98,7 +129,16 @@ public class SMAA {
     public void init(int displayWidth, int displayHeight) {
 //        this.fbFlipInput = FrameBuffer.make(mgr, displayWidth, displayHeight, GL_RGBA8);
         int format = srgb?GL21.GL_SRGB8_ALPHA8:GL_RGBA8;
-        this.fbFlipInput = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, false);
+        this.fbFlipInput = new FrameBuffer(displayWidth, displayHeight);
+        this.fbFlipInput.setColorAtt(GL_COLOR_ATTACHMENT0, format);
+        this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
+        this.fbFlipInput.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        if (this.usePredicatedThresholding) {
+            this.fbFlipInput.setColorAtt(GL_COLOR_ATTACHMENT1, GL_R16F);
+            this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
+            this.fbFlipInput.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
+        }
+        this.fbFlipInput.setup(mgr);
         this.fbAAEdge = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, true);
         this.fbAAWeightBlend = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, true);
         FrameBuffer.unbindFramebuffer();
@@ -144,7 +184,7 @@ public class SMAA {
      * @param texture
      * @param finalTarget 
      */
-    public void render(int texture, int debugTexture, FrameBuffer finalTarget) {
+    public void render(int texture, int material, int debugTexture, FrameBuffer finalTarget) {
         if (true||Game.GL_ERROR_CHECKS) {
             boolean b = glGetBoolean(GL_DEPTH_TEST);
             if (!b) {
@@ -168,10 +208,17 @@ public class SMAA {
         UniformBuffer.updateOrtho();
         fbFlipInput.bind();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
-        Shaders.textured.enable();
-        Engine.drawFSQuad(3);
+        if (this.usePredicatedThresholding) {
+            GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, material);
+        }
+        shaderCopyTexture.enable();
+        if (useQuads) {
+            Engine.drawFSQuad(3);
+        } else {
+            Engine.drawFSTri();
+        }
         if (debugTexture != 1) {
-            renderSMAA(fbFlipInput.getTexture(0), debugTexture, finalTarget);
+            renderSMAA(fbFlipInput.getTexture(0), usePredicatedThresholding?fbFlipInput.getTexture(1):0, debugTexture, finalTarget);
         }
         Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, false);
         UniformBuffer.updateOrtho();
@@ -198,17 +245,28 @@ public class SMAA {
                     break;
             }
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, tex);
-            Engine.drawFSQuad(1);
+//            if (useQuads) {
+                Engine.drawFSQuad(1);
+//            } else {
+//                Engine.drawFSTri();
+//            }
         }
     }
-    public void renderSMAA(int texture, int debugTexture, FrameBuffer finalTarget) {
+    public void renderSMAA(int texture, int material, int debugTexture, FrameBuffer finalTarget) {
         
         
         fbAAEdge.bind();
         fbAAEdge.clearFrameBuffer();
         shaderAAEdge.enable();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
-        Engine.drawFSQuad(2);
+        if (this.usePredicatedThresholding) {
+            GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, material);
+        }
+        if (useQuads) {
+            Engine.drawFSQuad(2);
+        } else {
+            Engine.drawFSTri();
+        }
         if (debugTexture == 1) {
             return;
         }
@@ -227,7 +285,11 @@ public class SMAA {
         
         glDepthFunc(GL_EQUAL); // only draw equal z fragments, +30% speed
 //        Shaders.colored.enable();
-        Engine.drawFSQuad(2);
+        if (useQuads) {
+            Engine.drawFSQuad(2);
+        } else {
+            Engine.drawFSTri();
+        }
         glDepthFunc(GL_LEQUAL);
         if (debugTexture == 2) {
             return;
@@ -240,7 +302,11 @@ public class SMAA {
         shaderAANeighborBlend.enable();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, fbAAWeightBlend.getTexture(0));
-        Engine.drawFSQuad(3);
+        if (useQuads) {
+            Engine.drawFSQuad(3);
+        } else {
+            Engine.drawFSTri();
+        }
     }
 
 

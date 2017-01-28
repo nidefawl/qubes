@@ -59,7 +59,6 @@ public class QModelBatchedRender extends QModelRender {
     public static Matrix4f tmpMat1 = new Matrix4f();
 
     private int nxtIdx;
-    public static boolean isModelViewer = false;
     
 
     private int pass = 0;
@@ -127,7 +126,7 @@ public class QModelBatchedRender extends QModelRender {
             Shader[] newShaderSkinned = new Shader[4];
             for (int i = 0; i < 4; i++) {
                 final int iRENDER = i;
-                newShader[i] = assetMgr.loadShader(this, "model/model_batched", "model/model_fragment", null, null, new IShaderDef() {
+                newShader[i] = assetMgr.loadShader(this, "model/model_fragment", "model/model_batched", null, null, new IShaderDef() {
                     @Override
                     public String getDefinition(String define) {
                         if ("RENDERER".equals(define))
@@ -135,7 +134,7 @@ public class QModelBatchedRender extends QModelRender {
                         return null;
                     }
                 });
-                newShaderSkinned[i] = assetMgr.loadShader(this, "model/model_batched_skinned", "model/model_fragment", null, null, new IShaderDef() {
+                newShaderSkinned[i] = assetMgr.loadShader(this, "model/model_fragment", "model/model_batched_skinned", null, null, new IShaderDef() {
                     @Override
                     public String getDefinition(String define) {
                         if ("RENDERER".equals(define))

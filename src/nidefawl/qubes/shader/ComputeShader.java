@@ -6,31 +6,13 @@ import org.lwjgl.opengl.GL43;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.util.GameError;
 
 public class ComputeShader extends Shader {
     int computeShader = -1;
 
     public ComputeShader(String name, ShaderSource source) {
         super(name);
-        this.computeShader = glCreateShader(GL43.GL_COMPUTE_SHADER);
-        Engine.checkGLError("glCreateShader");
-        if (computeShader == 0) {
-            throw new GameError("Failed creating compute shader");
-        }
-
-        glShaderSource(this.computeShader, source.getSource());
-        Engine.checkGLError("glShaderSourceARB");
-        glCompileShader(this.computeShader);
-        String log = getLog(0, this.computeShader);
-        Engine.checkGLError("getLog");
-        if (getStatus(this.computeShader, GL_COMPILE_STATUS) != 1) {
-            Engine.checkGLError("getStatus");
-            throw new ShaderCompileError(source, this.name+" compute", log);
-        } else if (!log.isEmpty()) {
-            System.out.println(this.name+" compute");
-            System.out.println(log);
-        }
+        this.computeShader = compileShader(GL43.GL_COMPUTE_SHADER, source, name);
         attach();
         linkProgram();
     }

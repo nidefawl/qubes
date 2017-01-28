@@ -19,11 +19,11 @@ public class ShaderSourceBundle {
         this.name = name;
     }
 
-    public void load(AssetManager assetManager, String path, String nameVsh, String nameFsh, String nameGsh, String nameCsh, IShaderDef def) throws IOException {
-        computeCode.load(assetManager, path, nameCsh + ".csh", def);
-        vertCode.load(assetManager, path, nameVsh + ".vsh", def);
-        fragCode.load(assetManager, path, nameFsh + ".fsh", def);
-        geomCode.load(assetManager, path, nameGsh + ".gsh", def);
+    public void load(AssetManager assetManager, String[] nameFsh, String[] nameVsh, String[] nameGsh, String[] nameCsh, IShaderDef def) throws IOException {
+        fragCode.load(assetManager, nameFsh[0], nameFsh[1] + ".fsh", def);
+        vertCode.load(assetManager, nameVsh[0], nameVsh[1] + ".vsh", def);
+        computeCode.load(assetManager, nameCsh[0], nameCsh[1] + ".csh", def);
+        geomCode.load(assetManager, nameGsh[0], nameGsh[1] + ".gsh", def);
     }
     
     public Shader compileShader() {

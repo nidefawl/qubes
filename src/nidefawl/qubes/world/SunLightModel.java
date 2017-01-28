@@ -125,4 +125,15 @@ public class SunLightModel {
     public float getNightNoonFloat() {
         return nightNoon;
     }
+    public long getTime() {
+        return this.time;
+    }
+    public long getDayLen() {
+        return this.dayLen;
+    }
+    public long getDayTime() {
+        long time = this.getTime();
+        long dayLen = this.getDayLen();
+        return time % dayLen;
+    }
 }

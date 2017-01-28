@@ -74,7 +74,6 @@ public class WorldRenderer extends AbstractRenderer {
     public Shader                            shaderModelfirstPerson;
 
     private Shader                           shaderZPre;
-    private Shader                           skybox;
 
     public void initShaders() {
         try {
@@ -116,11 +115,9 @@ public class WorldRenderer extends AbstractRenderer {
                 
             });
             Shader shaderModelfirstPerson = assetMgr.loadShader(this, "model/firstperson");
-            Shader skybox = assetMgr.loadShader(this, "sky/skybox_cubemap");
             popNewShaders();
             this.terrainShader = terrain;
             this.terrainShaderFar = terrainFar;
-            this.skybox = skybox;
             this.waterShader = new_waterShader;
             this.shaderModelVoxel = modelVoxel;
             this.shaderModelfirstPerson = shaderModelfirstPerson;
@@ -171,27 +168,17 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderWorld(World world, float fTime) {
 
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("sky+sun+clouds");
-        Engine.enableDepthMask(false);
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texNoise3D);
-        Engine.drawFullscreenQuad();
         
-        skybox.enable();
-
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, Engine.skyRenderer.fbSkybox.getTexture(0));
-        Engine.drawFullscreenQuad();
-        Engine.enableDepthMask(true);
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
-        
-
-
-        GLDebugTextures.readTexture("Sky", "skyColor", Engine.getSceneFB().getTexture(0));
         
 
         if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("terrain shader");
+            Engine.checkGLError("skybox");
+//
+//
+//        if (GLDebugTextures.isShow()) {
+////            GLDebugTextures.readTexture(false, "Sky", "skyCubemap", Engine.skyRenderer.fbSkybox.getTexture(0), 1);
+//            GLDebugTextures.readTexture(true, "Sky", "skyColor", Engine.getSceneFB().getTexture(0), 1);
+//        }
         
         GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
@@ -617,22 +604,6 @@ public class WorldRenderer extends AbstractRenderer {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-        releaseAll(EResourceType.FRAMEBUFFER);
-        Engine.checkGLError("releaseAll(EResourceType.FRAMEBUFFER)");
-        FrameBuffer fbScene = new FrameBuffer(displayWidth, displayHeight);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
-        fbScene.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
-        fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
-        fbScene.setHasDepthAttachment();
-        fbScene.setup(this);
-        Engine.setSceneFB(fbScene);
     }
 
     public void tickUpdate() {
@@ -640,6 +611,6 @@ public class WorldRenderer extends AbstractRenderer {
 
 
     public boolean isNormalMappingActive() {
-        return Game.instance.settings.normalMapping > 0 && !Game.VR_SUPPORT;
+        return Engine.RENDER_SETTINGS.normalMapping > 0 && !Game.VR_SUPPORT;
     }
 }

@@ -76,7 +76,7 @@ public class BlurRenderer extends AbstractRenderer {
             buffer.bind();
             buffer.clearFrameBuffer();
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input);
-            Engine.drawFullscreenQuad();
+            Engine.drawFSTri();
             input = buffer.getTexture(0);
             buffer = buffer == fbBlur1 ? fbBlur2 : fbBlur1;
         }
@@ -90,12 +90,12 @@ public class BlurRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture); //SSR
         shaderBlurSeperate.enable();
         shaderBlurSeperate.setProgramUniform2f("_TexelOffsetScale", maxBlurRadius / (float)fbSSRBlurredX.getWidth(), 0f);
-        Engine.drawFullscreenQuad();
+        Engine.drawFSTri();
         fbSSRBlurredY.bind();
         fbSSRBlurredY.clearFrameBuffer();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbSSRBlurredX.getTexture(0)); //COLOR
         shaderBlurSeperate.setProgramUniform2f("_TexelOffsetScale", 0f, maxBlurRadius / (float)fbSSRBlurredX.getHeight());
-        Engine.drawFullscreenQuad();
+        Engine.drawFSTri();
         return fbSSRBlurredY.getTexture(0);
     }
     public void resize(int displayWidth, int displayHeight) {

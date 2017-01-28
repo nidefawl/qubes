@@ -52,7 +52,7 @@ public class AssetManagerClient extends AssetManager {
     }
 
     public Shader loadShader(IResourceManager mgr, String name, IShaderDef def) {
-        return loadShader(mgr, name, name, name, name, def);
+        return loadShader(mgr, name, null, null, null, def);
     }
     
     static String[] splitPath(String name) {
@@ -66,30 +66,34 @@ public class AssetManagerClient extends AssetManager {
             path = name.substring(0, idx);
             fname = name.substring(idx+1);
         }
+        if (path.isEmpty()) {
+            path = "shaders";
+        } else if (!path.startsWith("/")) {
+            path = "shaders/"+path;
+        }
         return new String[] { path, fname };
     }
     
-    public Shader loadShader(IResourceManager mgr, String nameVSH, String nameFSH, String nameGSH, String nameCSH, IShaderDef def) {
-        if (nameFSH == null)
-            nameFSH = nameVSH;
-        if (nameGSH == null)
-            nameGSH = nameVSH;
-        if (nameCSH == null)
-            nameCSH = nameVSH;
-        
-        if (!nameVSH.startsWith("/"))
-            nameVSH = "shaders/" + nameVSH;
+    public Shader loadShader(IResourceManager mgr, String nameFSH, String nameVSH, String nameGSH, String nameCSH, IShaderDef def) {
 
-        ShaderSourceBundle shaderSrc = new ShaderSourceBundle(nameVSH);
+        
+        if (nameVSH == null)
+            nameVSH = nameFSH;
+        if (nameGSH == null)
+            nameGSH = nameFSH;
+        if (nameCSH == null)
+            nameCSH = nameFSH;
+        
+
+        ShaderSourceBundle shaderSrc = new ShaderSourceBundle(nameFSH);
         try {
 
-            final String[] pathNameVSH = splitPath(nameVSH);
             final String[] pathNameFSH = splitPath(nameFSH);
+            final String[] pathNameVSH = splitPath(nameVSH);
             final String[] pathNameGSH = splitPath(nameGSH);
             final String[] pathNameCSH = splitPath(nameCSH);
             
-            shaderSrc.load(this, pathNameVSH[0], pathNameVSH[1], pathNameFSH[1], pathNameGSH[1], pathNameCSH[1], def);
-            
+            shaderSrc.load(this, pathNameFSH, pathNameVSH, pathNameGSH, pathNameCSH, def);
             Shader shader = shaderSrc.compileShader();
             if (mgr != null && shader != null)
                 mgr.addResource(shader);

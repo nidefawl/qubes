@@ -519,7 +519,7 @@ public class VRGuiRenderer {
             }
             pos.fbGUIFixed.generateMipMaps(0);
             if (GLDebugTextures.isShow()) {
-                GLDebugTextures.readTexture("VR_GUI", "texColor" + i, pos.fbGUIFixed.getTexture(0), 0x8);
+                GLDebugTextures.readTexture(true, "VR_GUI", "texColor" + i, pos.fbGUIFixed.getTexture(0), 0x8);
             }
 //            Game.instance.renderGui(fTime, mouseX, mouseY);
 //            if (this.gui == null && this.world != null) {

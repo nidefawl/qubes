@@ -20,74 +20,22 @@ public class GraphicShader extends Shader {
     public GraphicShader(String name, ShaderSource vertCode, ShaderSource fragCode, ShaderSource geomCode) {
         super(name);
 
-        if (vertCode.isEmpty() && fragCode.isEmpty()) {
+        if (fragCode.isEmpty()) {
             throw new GameError("Failed reading shader source: "+name);
         }
-        if (!fragCode.isEmpty()) {
-            this.fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-            Engine.checkGLError("glCreateShader");
-            if (fragShader == 0) {
-                throw new GameError("Failed creating fragment shader");
-            }
-
-            glShaderSource(this.fragShader, fragCode.getSource());
-            Engine.checkGLError("glShaderSourceARB");
-            glCompileShader(this.fragShader);
-            String log = getLog(0, this.fragShader);
-            Engine.checkGLError("getLog");
-            if (getStatus(this.fragShader, GL_COMPILE_STATUS) != 1) {
-                Engine.checkGLError("getStatus");
-                System.err.println(log);
-                throw new ShaderCompileError(fragCode, this.name+" fragment", log);
-            } else if (!log.isEmpty()) {
-                System.out.println(this.name+" fragment");
-                System.out.println(log);
-            }
-        }
-
-
+        
+        this.fragShader = compileShader(GL_FRAGMENT_SHADER, fragCode, name);
+        
         if (!vertCode.isEmpty()) {
-            this.vertShader = glCreateShader(GL_VERTEX_SHADER);
-            Engine.checkGLError("glCreateShader");
-            if (this.vertShader == 0) {
-                throw new GameError("Failed creating vertex shader");
-            }
-
-            glShaderSource(this.vertShader, vertCode.getSource());
-            Engine.checkGLError("glShaderSourceARB");
-            glCompileShader(this.vertShader);
-            String log = getLog(0, this.vertShader);
-            Engine.checkGLError("getLog");
-            if (getStatus(this.vertShader, GL_COMPILE_STATUS) != 1) {
-                Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(vertCode, this.name+" vertex", log);
-            } else if (!log.isEmpty()) {
-                System.out.println(this.name+" vertex");
-                System.out.println(log);
-            }
+            this.vertShader = compileShader(GL_VERTEX_SHADER, vertCode, name);
             this.attr = vertCode.getAttrTypes();
+        } else {
+            this.vertShader = Shader.shVertexFullscreenTri;
+            this.attr = "none";
         }
-
 
         if (!geomCode.isEmpty()) {
-            this.geometryShader = glCreateShader(ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);
-            Engine.checkGLError("glCreateShader");
-            if (this.geometryShader == 0) {
-                throw new GameError("Failed creating geometry shader");
-            }
-
-            glShaderSource(this.geometryShader, geomCode.getSource());
-            Engine.checkGLError("glShaderSourceARB");
-            glCompileShader(this.geometryShader);
-            String log = getLog(0, this.geometryShader);
-            Engine.checkGLError("getLog");
-            if (getStatus(this.geometryShader, GL_COMPILE_STATUS) != 1) {
-                Engine.checkGLError("getStatus");
-                throw new ShaderCompileError(geomCode, this.name+" geometry", log);
-            } else if (!log.isEmpty()) {
-                System.out.println(this.name+" geometryShader");
-                System.out.println(log);
-            }
+            this.geometryShader = compileShader(ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB, geomCode, name);
         }
         attach();
         linkProgram();
@@ -110,7 +58,9 @@ public class GraphicShader extends Shader {
             glAttachShader(this.shader, this.geometryShader);
             Engine.checkGLError("glAttachObjectARB");
         }
-        if ("particle".equals(attr)) {
+        if ("none".equals(attr)) {
+            //skip
+        } else if ("particle".equals(attr)) {
             glBindAttribLocation(this.shader, 0, "in_texcoord");
             glBindAttribLocation(this.shader, 1, "in_position");
             glBindAttribLocation(this.shader, 2, "in_color");
@@ -148,6 +98,7 @@ public class GraphicShader extends Shader {
         GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
         GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
         GL30.glBindFragDataLocation(this.shader, 3, "out_Light");
+        GL30.glBindFragDataLocation(this.shader, 1, "out_FinalMaterial");
     }
     public void release() {
         this.valid = false;
@@ -160,7 +111,7 @@ public class GraphicShader extends Shader {
                 glDetachShader(this.shader, this.geometryShader);
             if (this.fragShader > 0)
                 glDeleteShader(this.fragShader);
-            if (this.vertShader > 0)
+            if (this.vertShader > 0 && !isGlobalProgram(this.vertShader))
                 glDeleteShader(this.vertShader);
             if (this.geometryShader > 0)
                 glDeleteShader(this.geometryShader);
@@ -176,5 +127,6 @@ public class GraphicShader extends Shader {
         }
         SHADERS--;
     }
+
 
 }

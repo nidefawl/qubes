@@ -5,18 +5,21 @@ import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BLOCK;
 import static org.lwjgl.opengl.GL43.glGetProgramResourceIndex;
 import static org.lwjgl.opengl.GL43.glShaderStorageBlockBinding;
 
+import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
 
+import org.lwjgl.opengl.ARBGeometryShader4;
+import org.lwjgl.opengl.GL43;
+
 import nidefawl.qubes.Game;
+import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.shader.DebugShaders.Var;
-import nidefawl.qubes.util.EResourceType;
-import nidefawl.qubes.util.IManagedResource;
-import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
@@ -37,6 +40,58 @@ public abstract class Shader implements IManagedResource {
         Stats.uniformCalls++;
     }
 
+    protected static int shVertexFullscreenTri = 0;
+    public static boolean isGlobalProgram(int shader) {
+        return shader == shVertexFullscreenTri;
+    }
+    public static void init() {
+        ShaderSource vertCode = new ShaderSource(null);
+        try {
+            vertCode.load(AssetManager.getInstance(), "shaders", "screen_triangle.vsh", null);
+        } catch (IOException e) {
+            throw new GameError("Failed loading fullscreen vertex program");
+        }
+        if (vertCode.isEmpty()) {
+            throw new GameError("Missing source");
+        }
+        shVertexFullscreenTri = compileShader(GL_VERTEX_SHADER, vertCode, "fullscreen_triangle");
+    }
+    
+    static String typeToString(int shaderTypeConstant) {
+        switch (shaderTypeConstant)
+        {
+            case GL_VERTEX_SHADER:
+                return "vertex";
+            case GL_FRAGMENT_SHADER:
+                return "fragment";
+            case ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB:
+                return "geometry";
+            case GL43.GL_COMPUTE_SHADER:
+                return "compute";
+        }
+        throw new GameLogicError("Invalid shader type");
+    }
+    static int compileShader(int type, ShaderSource src, String name) {
+        int iShader = glCreateShader(type);
+        Engine.checkGLError("glCreateShader");
+        if (iShader == 0) {
+            throw new GameError(String.format("Failed creating %s shader", typeToString(type)));
+        }
+
+        glShaderSource(iShader, src.getSource());
+        Engine.checkGLError("glShaderSourceARB");
+        glCompileShader(iShader);
+        String log = getLog(0, iShader);
+        Engine.checkGLError("getLog");
+        if (getStatus(iShader, GL_COMPILE_STATUS) != 1) {
+            Engine.checkGLError("getStatus");
+            throw new ShaderCompileError(src, String.format("%s %s", name, typeToString(type)), log);
+        } else if (!log.isEmpty()) {
+            System.out.println(String.format("%s %s", name, typeToString(type)));
+            System.out.println(log);
+        }
+        return iShader;
+    }
     
     public int getUniformLocation(String name) {
         Integer blub = locations.get(name);
@@ -102,13 +157,13 @@ public abstract class Shader implements IManagedResource {
     }
     
     static IntBuffer buf = Memory.createIntBuffer(1);
-    public int getStatus(int obj, int a) {
+    public static int getStatus(int obj, int a) {
         buf.clear();
         GL.glGetObjectParameterivARB(obj, a, buf);
         return buf.get();
     }
 
-    public String getLog(int logtype, int obj) {
+    public static String getLog(int logtype, int obj) {
         int length = getStatus(obj, GL_INFO_LOG_LENGTH);
         if (length > 1) {
             String out = logtype == 0 ? glGetShaderInfoLog(obj, length) : glGetProgramInfoLog(obj, length);
@@ -151,6 +206,13 @@ public abstract class Shader implements IManagedResource {
         }
     }
 
+    public void setProgramUniform1ui(String name, int x) {
+        Uniform1ui uni = getUniform(name, Uniform1ui.class);
+        if (uni.set(x)) {
+            incUniformCalls();
+        }
+    }
+
     public void setProgramUniform2i(String name, int x, int y) {
         Uniform2i uni = getUniform(name, Uniform2i.class);
         if (uni.set(x, y)) {
@@ -179,10 +241,10 @@ public abstract class Shader implements IManagedResource {
         T uni = (T) uniforms.get(name);
         if (uni == null) {
             int loc = getUniformLocation(name);
-//            if (loc < 0) {
-//                if (Game.GL_ERROR_CHECKS)
-//                    System.out.println("invalid uniform "+getName()+":"+type.getSimpleName().replaceFirst("Uniform", "")+" "+name);
-//            }
+            if (loc < 0) {
+                if (Game.GL_ERROR_CHECKS)
+                    System.out.println("invalid uniform "+getName()+":"+type.getSimpleName().replaceFirst("Uniform", "")+" "+name);
+            }
             try {
                 uni = type.getDeclaredConstructor(String.class, int.class).newInstance(name, loc);
             } catch (Exception e) {
@@ -270,5 +332,6 @@ public abstract class Shader implements IManagedResource {
     public List<Var> readDebugVars() {
         return this.debugVars != null ? this.debugVars.readBack() : Collections.<Var>emptyList();
     }
+
 }
         

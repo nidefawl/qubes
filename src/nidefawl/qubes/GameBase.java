@@ -820,6 +820,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 return;
             }
             throwable.printStackTrace();
+
+            if (throwable instanceof ShaderCompileError) {
+                ShaderCompileError sce = (ShaderCompileError) throwable;
+                System.out.println(sce.getLog());
+            }
             Thread.sleep(1500);
         } catch (Throwable t) {
             t.printStackTrace();

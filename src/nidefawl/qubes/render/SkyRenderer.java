@@ -2,6 +2,7 @@ package nidefawl.qubes.render;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
 
@@ -41,6 +42,7 @@ public class SkyRenderer extends AbstractRenderer {
     public FrameBuffer    fbSkybox;
     Shader                spriteShader;
     public Shader         cloudsShader;
+    public Shader         shaderSampleCubemap;
     private boolean       startup              = true;
     GLVBO                 vboAttr;
     GLVBO                 vboStaticQuad;
@@ -172,11 +174,15 @@ public class SkyRenderer extends AbstractRenderer {
         try {
             pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader spriteShader = assetMgr.loadShader(this, "particle/pointsprite");
-            Shader cloudsShader = assetMgr.loadShader(this, "sky/clouds");
+            Shader spriteShader = assetMgr.loadShader(this, "particle/clouds");
+            Shader cloudsShader = assetMgr.loadShader(this, "sky/skybox_generate");
+            Shader shaderSampleCubemap = assetMgr.loadShader(this, "sky/skybox_sample_cubemap");
             popNewShaders();
             this.spriteShader = spriteShader;
             this.cloudsShader = cloudsShader;
+            this.shaderSampleCubemap = shaderSampleCubemap;
+            this.shaderSampleCubemap.enable();
+            this.shaderSampleCubemap.setProgramUniform1i("tex0", 0);
             this.spriteShader.enable();
             this.spriteShader.setProgramUniform1i("tex0", 0);
             this.cloudsShader.enable();
@@ -190,6 +196,7 @@ public class SkyRenderer extends AbstractRenderer {
             if (startup) {
                 throw e;
             } else {
+                if (Game.instance != null)
                 Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
             }
         }
@@ -349,6 +356,9 @@ public class SkyRenderer extends AbstractRenderer {
         fbSkybox.setup(this);
     }
     public void renderSky(WorldClient world, float fTime) {
+        renderSky(world.getDayTime(), fTime);
+    }
+    public void renderSky(long daytime, float fTime) {
         if (GPUProfiler.PROFILING_ENABLED) {
             GPUProfiler.start("clouds");
         }
@@ -364,7 +374,7 @@ public class SkyRenderer extends AbstractRenderer {
         weatherStr = GameMath.powf(weatherStr*0.9f, 1.6f);
         cloudsShader.enable();
         cloudsShader.setProgramUniform1f("rainStrength", WEATHER);
-        cloudsShader.setProgramUniform1i("worldTime", (int) world.getDayTime());
+        cloudsShader.setProgramUniform1i("worldTime", (int) daytime);
         spriteShader.enable();
         spriteShader.setProgramUniform1f("transparency", weatherStr);
         spriteShader.setProgramUniform1f("spritebrightness", 5f);
@@ -378,7 +388,7 @@ public class SkyRenderer extends AbstractRenderer {
             }
             this.fbSkybox.bindCubeMapFace(c);
             cubeMatrix.setupScene(c, Engine.camera.getPosition());
-            renderSkyBox(world, fTime);
+            renderSkyBox(fTime);
             if (GPUProfiler.PROFILING_ENABLED) {
                 GPUProfiler.end();
             }
@@ -395,10 +405,10 @@ public class SkyRenderer extends AbstractRenderer {
         }
     }
 
-    private void renderSkyBox(WorldClient world, float f) {
+    private void renderSkyBox(float f) {
 //        Engine.setBlend(false);
         cloudsShader.enable();
-        Engine.drawFullscreenQuad();
+        Engine.drawFSTri();
 //        Engine.setBlend(true);
         spriteShader.enable();
         GL30.glBindVertexArray(vaoPos);
@@ -414,6 +424,21 @@ public class SkyRenderer extends AbstractRenderer {
     }
     public void tickUpdate() {
         updateSpritesTick();
+    }
+    public void renderSkybox() {
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("sky+sun+clouds");
+        Engine.enableDepthMask(false);
+        
+        shaderSampleCubemap.enable();
+
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_CUBE_MAP, fbSkybox.getTexture(0));
+
+        Engine.drawFSTri();
+        Engine.enableDepthMask(true);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
     }
 
 }

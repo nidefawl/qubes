@@ -2,8 +2,7 @@ package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 import org.lwjgl.opengl.*;
 
@@ -24,9 +23,10 @@ public class GLDebugTextures {
     public int d;
     public int flags;
     public boolean valid;
+    private boolean isOutput;
     public static boolean show    = false;
 
-    GLDebugTextures(String pass, String name, int format, int w, int h, int d, int flags) {
+    GLDebugTextures(String pass, String name, int format, int w, int h, int d, int flags, boolean isOutput) {
         this.pass = pass;
         this.name = name;
         this.format = format;
@@ -35,19 +35,58 @@ public class GLDebugTextures {
         this.d = d;
         this.flags = flags;
         this.valid = true;
+        this.isOutput = isOutput;
     }
-    static HashMap<String, HashMap<String, GLDebugTextures>> textures = Maps.newLinkedHashMap();
+    static class StageMap {
+        final HashMap<String, GLDebugTextures> map = new HashMap<>();
+        final ArrayList<String> inputs = new ArrayList<>();
+        final ArrayList<String> outputs = new ArrayList<>();
+        public GLDebugTextures get(String string) {
+            return map.get(string);
+        }
+        public void put(boolean isOutput, String string, GLDebugTextures tex) {
+            map.put(string, tex);
+            if (isOutput) {
+                outputs.add(string);
+            } else {
+                inputs.add(string);
+            }
+        }
+        public Collection<GLDebugTextures> values() {
+            return map.values();
+        }
+        public Iterator<String> keysOrderedIterator() {
+            return new Iterator<String>() {
+                int idx = 0;
+                @Override
+                public String next() {
+                    int curIdx = idx;
+                    idx++;
+                    if (curIdx < inputs.size())
+                        return inputs.get(curIdx);
+                    curIdx-=inputs.size();
+                    return outputs.get(curIdx);
+                }
+                
+                @Override
+                public boolean hasNext() {
+                    return (idx) < (inputs.size()+outputs.size());
+                }
+            };
+        }
+    }
+    static HashMap<String, StageMap> textures = Maps.newLinkedHashMap();
     static HashMap<Integer, GLDebugTextures> alltextures = Maps.newLinkedHashMap();
     private static GLDebugTextures selTex;
     private static boolean triggered;
 
-    public static void readTexture(String name, String string, int texture) {
-        readTexture(name, string, texture, 0);
+    public static void readTexture(boolean isOutput, String name, String string, int texture) {
+        readTexture(isOutput, name, string, texture, 0);
     }
-    public static int readTexture(String name, String string, int texture, int flags) {
-        HashMap<String, GLDebugTextures> texMap = textures.get(name);
+    public static int readTexture(boolean isOutput, String name, String string, int texture, int flags) {
+        StageMap texMap = textures.get(name);
         if (texMap == null) {
-            texMap = Maps.newLinkedHashMap();
+            texMap = new StageMap();
             textures.put(name, texMap);
         }
         GLDebugTextures tex = texMap.get(string);
@@ -64,8 +103,8 @@ public class GLDebugTextures {
             tex = null;
         }
         if (tex == null) {
-            tex = new GLDebugTextures(name, string, int_format, w, h, d, flags);
-            texMap.put(string, tex);
+            tex = new GLDebugTextures(name, string, int_format, w, h, d, flags, isOutput);
+            texMap.put(isOutput, string, tex);
             tex.tex = GL11.glGenTextures();
             if (int_format == GL11.GL_RGBA) {
                 int_format = GL11.GL_RGBA8;
@@ -76,6 +115,7 @@ public class GLDebugTextures {
         }
         ARBCopyImage.glCopyImageSubData(texture, target, 0, 0, 0, 0, tex.tex, target, 0, 0, 0, 0, w, h, d);
         GL.bindTexture(GL13.GL_TEXTURE0, target, 0);
+        Engine.checkGLError("readtexture "+name+":"+string);
         return tex.tex;
     }
 
@@ -84,7 +124,7 @@ public class GLDebugTextures {
         GL.deleteTexture(this.tex);
     }
     public static void onResize() {
-        for (HashMap<String, GLDebugTextures> texMap : textures.values()) {
+        for (StageMap texMap : textures.values()) {
             for (GLDebugTextures tex : texMap.values()) {
                 tex.release();
             }
@@ -101,7 +141,7 @@ public class GLDebugTextures {
         GL30.glEnablei(GL_BLEND, 0);
 //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         Iterator<String> itMaps = textures.keySet().iterator();
-        float w = 100;
+        float w = displayWidth/(textures.keySet().size()+1);
         
         float gap = 10;
         float maxW = 200;
@@ -119,28 +159,51 @@ public class GLDebugTextures {
         boolean grab = !Mouse.isGrabbed();
         GLDebugTextures mouseOver = null;
         int titleY = 0;
+        int n = 0;
         while (itMaps.hasNext()) {
+            float yposOffset = ypos;
             String mapName = itMaps.next();
-            HashMap<String, GLDebugTextures> map = textures.get(mapName);
-            Iterator<GLDebugTextures> it = map.values().iterator();
+            StageMap map = textures.get(mapName);
+            Iterator<String> it = map.keysOrderedIterator();
             int y = 0;
             float left = xpos+x*(w+gap);
             float right = left+w;
-            titleY=(x%2)*16;
-            FontRenderer.get(0, 18, 0).drawString(mapName, left, ypos-titleY, -1, true, 1);
+            titleY=w < 150 ? ((x%2)*16) : 0;
+            FontRenderer.get(0, 18, 0).drawString(mapName, left, yposOffset-titleY, -1, true, 1);
+            boolean isOutput = false;
             while (it.hasNext()) {
-                GLDebugTextures tex = it.next();
+                GLDebugTextures tex = map.get(it.next());
                 GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, tex.tex);
-                float top = ypos+y*(h+gap);
+                float top = yposOffset+y*(h+gap);
                 float bottom = top+h;
                 if (bottom >= displayHeight-gap*2) {
                     x++;
                     y= 0;
-                     top = ypos+y*(h+gap);
+                    if (isOutput) {
+                        yposOffset-=40;
+                    }
+                     top = yposOffset+y*(h+gap);
                      bottom = top+h;
                      left = xpos+x*(w+gap);
                      right = left+w;
                 }
+                if (tex.isOutput && !isOutput) {
+//                  y = 0;
+//                  x = 0;
+                  isOutput = true;
+                  Shaders.colored.enable();
+                  float c = left+(right-left)/2;
+                  float topt = yposOffset+y*(h+gap);
+                  float bottomt = top+32;
+                  Tess.instance.setColorF(0xababab, 1);
+                  Tess.instance.add(c-32, topt, 0, 0, 1);
+                  Tess.instance.add(c, bottomt, 0, 1, 0);
+                  Tess.instance.add(c+32, topt, 0, 1, 1);
+                  Tess.instance.draw(GL11.GL_TRIANGLES);
+                  yposOffset+=40;
+                  top = yposOffset+y*(h+gap);
+                  bottom = top+h;
+              }
                 Shaders.colored.enable();
                 Tess.instance.setColorF(background, 1);
                 if (grab && mouseX > left && mouseX < right && mouseY > top && mouseY < bottom) {
@@ -158,6 +221,8 @@ public class GLDebugTextures {
                 Tess.instance.add(right, top, 0, 1, 1);
                 Tess.instance.add(left, top, 0, 0, 1);
                 Tess.instance.draw(GL11.GL_QUADS);
+
+                n++;
                 Shaders.colored.enable();
                 Tess.tessFont.setColorF(222, 0.5F);
                 Tess.tessFont.add(left, bottom, 0, 0, 0);
@@ -222,7 +287,7 @@ public class GLDebugTextures {
         }
     }
     public static int getTexture(String s, String s2) {
-        HashMap<String, GLDebugTextures> map = textures.get(s);
+        StageMap map = textures.get(s);
         GLDebugTextures tex = map == null ? null : map.get(s2);
         return tex == null ? 0 : tex.tex;
     }
@@ -252,7 +317,7 @@ public class GLDebugTextures {
         
         GLDebugTextures lightOut1 = null;
         GLDebugTextures lightOut2 = null;
-        HashMap<String, GLDebugTextures> map = textures.get("compute_light_0");
+        StageMap map = textures.get("compute_light_0");
         if (map != null) {
             lightOut1 = map.get("output");
             lightOut2 = map.get("output2");

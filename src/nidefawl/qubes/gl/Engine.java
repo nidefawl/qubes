@@ -13,6 +13,7 @@ import org.lwjgl.opengl.*;
 import com.google.common.collect.Maps;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
+import nidefawl.qubes.config.RenderSettings;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
@@ -23,6 +24,7 @@ import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.*;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.SunLightModel;
@@ -30,13 +32,12 @@ import nidefawl.qubes.world.SunLightModel;
 public class Engine {
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
     public final static int MAX_LIGHTS       = 1024;
-
+    public final static RenderSettings RENDER_SETTINGS = new RenderSettings();
     public final static BlockPos GLOBAL_OFFSET = new BlockPos();
     private final static BlockPos LAST_REPOS = new BlockPos();
     private static Map<String, Integer> bufferBindingPoints = Maps.newHashMap();
     private static int NEXT_BUFFER_BINDING_POINT = 0;
 
-    public static boolean initRenderers = true;
 
     private static IntBuffer   viewportBuf;
     private static FloatBuffer position;
@@ -195,11 +196,11 @@ public class Engine {
     }
 
     public static boolean checkGLError(String s) {
-//        int i = GL11.glGetError();
-//        if (i != 0) {
-//            String s1 = GameBase.getGlErrorString(i);
-//            throw new GameError("Error - " + s + ": " + s1);
-//        }
+        int i = GL11.glGetError();
+        if (i != 0) {
+            String s1 = GameBase.getGlErrorString(i);
+            throw new GameError("Error - " + s + ": " + s1);
+        }
         return false;
     }
 
@@ -237,8 +238,11 @@ public class Engine {
         sunlightmodel.setTime(7500);
         System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
     }
-    
+
     public static void init() {
+        init(EngineInitSettings.INIT_NONE);
+    }
+    public static void init(EngineInitSettings init) {
         glActiveTexture(GL_TEXTURE0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glActiveTexture(GL_TEXTURE0)");
@@ -255,18 +259,27 @@ public class Engine {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("GL30.glBindVertexArray");
         UniformBuffer.init();
-        if (initRenderers) {
-            flushRenderTasks();
-            registerRenderers();
-            if (regionRenderer != null) {
-                regionRenderThread = new MeshThread(3);
-                regionRenderThread.init();
-                regionRenderer.reRender();
-            }
-        } else {
-            Shaders.init();
-            ShaderBuffer.init();
+        Shader.init();
+
+        flushRenderTasks();
+        registerRenderers(init);
+        if (regionRenderer != null) {
+            regionRenderThread = new MeshThread(3);
+            regionRenderThread.init();
+            regionRenderer.reRender();
         }
+//        if (initRenderers) {
+//            flushRenderTasks();
+//            registerRenderers();
+//            if (regionRenderer != null) {
+//                regionRenderThread = new MeshThread(3);
+//                regionRenderThread.init();
+//                regionRenderer.reRender();
+//            }
+//        } else {
+//            Shaders.init();
+//            ShaderBuffer.init();
+//        }
         blockDraw.init();
         itemRender.init();
         pxStack.setCallBack(new StackChangeCallBack() {
@@ -421,6 +434,14 @@ public class Engine {
     }
     public static void drawFSQuad(int n) {
         fullscreenquads[n].drawQuads();
+    }
+    public static void drawFSTri() {
+        active = null;
+        GL30.glBindVertexArray(0);
+        glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+//        if (active != null) {
+//            GL30.glBindVertexArray(isVAOSupportingBindless ? active.vaoIdBindless : active.vaoId);
+//        }
     }
 
     public static void drawQuad() {
@@ -705,24 +726,37 @@ public class Engine {
     }
 
     /** RELOAD HAS MEM LEAK!! */
-    public static void registerRenderers() {
+    public static void registerRenderers(EngineInitSettings init) {
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.release();
         }
         components.clear();
-        if (!QModelBatchedRender.isModelViewer) {
+        if (init.initShadowRenderer) {
             shadowProj = addComponent(new ShadowProjector());
-            worldRenderer = addComponent(new WorldRenderer());
-            particleRenderer = addComponent(new CubeParticleRenderer());
-            skyRenderer = addComponent(new SkyRenderer());
-            outRenderer = addComponent(new FinalRenderer());
             shadowRenderer = addComponent(new ShadowRenderer());
-            lightCompute = addComponent(new LightCompute());
-            blurRenderer = addComponent(new BlurRenderer());
-            regionRenderer = addComponent(new RegionRenderer());
         }
-        renderBatched = addComponent(new QModelBatchedRender());
+        if (init.initWorldRenderer) {
+            worldRenderer = addComponent(new WorldRenderer());
+            regionRenderer = addComponent(new RegionRenderer());
+            particleRenderer = addComponent(new CubeParticleRenderer());
+        }
+        if (init.initBlurRenderer) {
+            blurRenderer = addComponent(new BlurRenderer());
+        }
+        if (init.initLightCompute) {
+            lightCompute = addComponent(new LightCompute());
+            
+        }
+        if (init.initSkyRenderer) {
+            skyRenderer = addComponent(new SkyRenderer());
+        }
+        if (init.initFinalRenderer) {
+            outRenderer = addComponent(new FinalRenderer());
+        }
+        if (init.initModelRenderer) {
+            renderBatched = addComponent(new QModelBatchedRender());
+        }
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.preinit();
@@ -900,5 +934,26 @@ public class Engine {
             }
         }
         return null;
+    }
+    public static int getShadowMapTextureSize() {
+        if (shadowRenderer != null)
+            return shadowRenderer.getTextureSize();
+        return 1024;
+    }
+    public static int getShadowDepthTex() {
+        if (shadowRenderer != null)
+            return shadowRenderer.getDepthTex();
+        return TMgr.getEmptyWhite();
+    }
+    public static int getLightTexture() {
+        if (Engine.lightCompute != null)
+            return Engine.lightCompute.getTexture();
+        return TMgr.getEmpty();
+    }
+    public static int getAOTexture() {
+        if (RENDER_SETTINGS.ao > 0) {
+            return outRenderer.fbSSAO.getTexture(0);
+        }
+        return TMgr.getEmptyWhite();
     }
 }

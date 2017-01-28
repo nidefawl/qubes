@@ -188,9 +188,9 @@ public class UniformBuffer {
                 glUniformBlockBinding(shader.shader, blockIndex, buffers[i].bindingPoint);
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("glUniformBlockBinding blockIndex " + blockIndex);
-                if (buffers[i].autoBind) {
-                    buffers[i].bind();
-                }
+            }
+            if (buffers[i].autoBind) {
+                buffers[i].bind();
             }
         }
     }
@@ -534,6 +534,9 @@ public class UniformBuffer {
     }
     public static int getMaxBindingPoint() {
         return buffers.length-1;
+    }
+    public int getBindingPoint() {
+        return this.bindingPoint;
     }
 
 }

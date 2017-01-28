@@ -14,6 +14,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.GPUVendor;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameLogicError;
 
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
@@ -84,6 +85,9 @@ public class ShaderSource {
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
                     if (line.startsWith("#print")) {
+                        if (this.shaderSourceBundle == null) {
+                            throw new GameLogicError("Cannot initialize shader debugging without reference to source bundle");
+                        }
                         Matcher m;
                         if ((m = patternDebug.matcher(line)).matches()) {
                             String defType = m.group(1);

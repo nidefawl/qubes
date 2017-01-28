@@ -120,6 +120,7 @@ public class GL {
         glActiveTexture(GL_TEXTURE0);
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, i);
         GL.glTexStorage2D(GL_TEXTURE_2D, 1, format, w, h);
+        Engine.checkGLError("glTexStorage2D");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, wrap);

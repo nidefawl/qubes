@@ -7,6 +7,7 @@ import java.io.File;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.*;
 
+import nidefawl.qubes.assets.RenderAssets;
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
@@ -171,7 +172,7 @@ public class Game extends GameBase {
         rightSelection.init();
         dig.init();
         FontRenderer.init();
-        Engine.init();
+        Engine.init(EngineInitSettings.INIT_ALL);
         loadingScreen.setProgress(0, 0, "Initializing");
         TextureManager.getInstance().init();
         BlockModelManager.getInstance().init();
@@ -202,60 +203,8 @@ public class Game extends GameBase {
 
     public void lateInitGame() {
         dig.reloadTextures();
-        loadingScreen.setProgress(0, 0.8f, "Loading... Item Models");
-        ItemModelManager.getInstance().reload();
-        loadingScreen.setProgress(0, 0.9f, "Loading... Block Models");
-        BlockModelManager.getInstance().reload();
-        loadingScreen.setProgress(0, 1f, "Loading... Entity Models");
-        EntityModelManager.getInstance().reload();
-        loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
-        BlockTextureArray.getInstance().setAnisotropicFiltering(this.settings.anisotropicFiltering);
-        TextureArray[] arrays = {
-                ItemTextureArray.getInstance(),
-                BlockNormalMapArray.getInstance(),
-                BlockTextureArray.getInstance(),
-                NoiseTextureArray.getInstance(),
-        };
-        for (int i = 0; i < arrays.length; i++) {
-            final TextureArray arr = arrays[i];
-            AsyncTasks.submit(new AsyncTask() {
-                @Override
-                public void pre() {
-                    try {
-                        arr.preUpdate();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                @Override
-                public void post() {
-                    arr.postUpdate();
-                }
-                @Override
-                public Void call() throws Exception {
-                    try {
-                        arr.load();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-                @Override
-                public TaskType getType() {
-                    return TaskType.LOAD_TEXTURES;
-                }
-            });
-        }
-        while(!AsyncTasks.completeTasks()) {
-            float pr = 0;
-            for (int i = 0; i < arrays.length; i++) {
-                pr+=arrays[i].getProgress();
-            }
-            pr/=(float)arrays.length;
-            loadingScreen.setProgress(1, pr, "Loading...");
-        }
+        RenderAssets.load(this.settings.renderSettings, loadingScreen);
         ChatManager.getInstance().loadInputHistory();
-
         KeybindManager.load();
         isStarting = true;
         updateGui3dMode();
@@ -558,8 +507,8 @@ public class Game extends GameBase {
                 
                 glEnable(GL_DEPTH_TEST);
                 Engine.setBlend(false);
-            
-                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), fTime, finalTarget);
+                //TODO: add material info for predicated thresholidng 
+                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), 0, finalTarget);
             }
             
 //            if (VR_SUPPORT && (showControllers||gui!=null||true)) {
@@ -581,8 +530,8 @@ public class Game extends GameBase {
         if (VR_SUPPORT) {
 
             if (GLDebugTextures.isShow()) {
-                GLDebugTextures.readTexture("VR", "left", VR.getFB(0).getTexture(0));
-                GLDebugTextures.readTexture("VR", "right", VR.getFB(1).getTexture(0));
+                GLDebugTextures.readTexture(true, "VR", "left", VR.getFB(0).getTexture(0));
+                GLDebugTextures.readTexture(true, "VR", "right", VR.getFB(1).getTexture(0));
             }
 
             
@@ -791,6 +740,7 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("renderWorld");
 
+        Engine.skyRenderer.renderSkybox();
 
         Engine.worldRenderer.renderWorld(this.world, fTime);
         
@@ -853,8 +803,6 @@ public class Game extends GameBase {
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Deferred");
-        Engine.outRenderer.bindFB();
-        Engine.outRenderer.clearFrameBuffer();
         Engine.outRenderer.render(this.world, fTime, 0);
         Engine.checkGLError("Engine.outRenderer.render 0");
         if (GPUProfiler.PROFILING_ENABLED)
@@ -888,7 +836,6 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
-            Engine.outRenderer.bindFB();
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Deferred");
@@ -912,7 +859,7 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("SSR");
 //            if (!VR_SUPPORT || eye == 0)
-            Engine.outRenderer.raytraceSSR(this.world, fTime);
+            Engine.outRenderer.raytraceSSR();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
         }
@@ -926,6 +873,7 @@ public class Game extends GameBase {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             Engine.getSceneFB().bind();
             Engine.getSceneFB().clearDepth();
+            Engine.getSceneFB().setDrawAll();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("World");
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
@@ -946,7 +894,6 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
-            Engine.outRenderer.bindFB();
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Deferred");
@@ -967,14 +914,14 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("SSR2");
 //            if (!VR_SUPPORT || eye == 0)
-            Engine.outRenderer.combineSSR(this.world, fTime);
+            Engine.outRenderer.combineSSR();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
         }
         Engine.setBlend(false);
         glDisable(GL_DEPTH_TEST);
         Engine.enableDepthMask(false);
-        Engine.outRenderer.renderBlur(this.world, fTime);
+        Engine.outRenderer.renderBlur();
 
 
         if (GPUProfiler.PROFILING_ENABLED)
@@ -982,7 +929,7 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Bloom");
         
-        Engine.outRenderer.renderBloom(this.world, fTime);
+        Engine.outRenderer.renderBloom();
         
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
@@ -1059,7 +1006,7 @@ public class Game extends GameBase {
         }
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Tonemap");
-        FrameBuffer fbOut = Engine.outRenderer.renderTonemap(this.world, fTime);
+        FrameBuffer fbOut = Engine.outRenderer.renderTonemap();
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 
@@ -1104,8 +1051,8 @@ public class Game extends GameBase {
             Engine.setBlend(false);
         
         }
-    
-        Engine.outRenderer.renderAA(fbOut.getTexture(0), fTime, finalTarget);
+
+        Engine.outRenderer.renderAA(fbOut.getTexture(0), Engine.outRenderer.fbDeferred.getTexture(1), finalTarget);
         
 
 
@@ -1181,7 +1128,7 @@ public class Game extends GameBase {
 //          Engine.skyRenderer.initShaders();
 //          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
-//            Engine.outRenderer.initShaders();
+            Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();

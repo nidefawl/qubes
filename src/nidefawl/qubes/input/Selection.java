@@ -71,9 +71,7 @@ public class Selection {
         if (mouseOver != null) {
 
             if (!(getMode() == GameMode.SELECT && hasSelection())) {
-                Shaders.colored3D.enable();
                 renderMouseOver();
-                Shader.disable();
             }
         }
         if (getMode() == GameMode.PLAY) {
@@ -109,12 +107,15 @@ public class Selection {
      */
     private void renderMouseOver() {
         if (this.renderBB != null) {
+            Shaders.colored3D.enable();
             glDepthFunc(GL_LESS);
+            Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1,0.3f);
             Engine.pxStack.push(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
 //            glDisable(GL_CULL_FACE);
             this.renderBB.drawQuads();
 //            glEnable(GL_CULL_FACE);
             Engine.pxStack.pop();
+            Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1, 1);
             glDepthFunc(GL_LEQUAL);
         }
 
@@ -133,7 +134,8 @@ public class Selection {
         float w = 1 / 32f;
         Tess tesselator = Tess.instance;
         float br = 1f;
-        tesselator.setColorRGBAF(br, br, br, 1f);
+        float alpha = 1f;
+        tesselator.setColorRGBAF(br, br, br, alpha);
         float minX = box.minX - ext;
         float minY = box.minY - ext;
         float minZ = box.minZ - ext;
@@ -256,7 +258,7 @@ public class Selection {
 
         float ext = 1 / 32.0f;
         Tess tesselator = Tess.instance;
-        tesselator.setColorRGBAF(0.4f, 0.4f, 0.4f, 0.5F);
+        tesselator.setColorRGBAF(0.4f, 0.4f, 0.4f, 1F);
         BlockPos sel1 = pos[0];
         BlockPos sel2 = pos[1];
         float minX = Math.min(sel1.x, sel2.x) - ext;

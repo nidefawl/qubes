@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.config;
 
+import nidefawl.qubes.gl.Engine;
+
 /**
  * @author Michael Hept 2015
  * Copyright: Michael Hept
@@ -12,32 +14,21 @@ public class ClientSettings extends AbstractYMLConfig {
         super(true);
     }
 
+    public final RenderSettings renderSettings = Engine.RENDER_SETTINGS;
     public int chunkLoadDistance;
-    public int shadowDrawMode;
-    public int ssr;
-    public int aa;
-    public int smaaQuality;
     public float thirdpersonDistance;
     public boolean dirty;
     private int saveTicks;
-    public int ao;
     public String lastserver;
-    public int anisotropicFiltering;
-    public int normalMapping;
     public boolean gui3d;
     
     @Override
     public void setDefaults() {
         this.chunkLoadDistance = 12; 
-        this.shadowDrawMode = 0;
-        this.ssr = 2;
-        this.aa = 1;
-        this.ao = 1;
-        this.smaaQuality = 1;
-        this.normalMapping = 1;
-        this.anisotropicFiltering = 0;
         this.thirdpersonDistance = 4.0f;
         this.gui3d = false;
+        if (this.renderSettings != null) // null from constructor -> already called from own cstr
+        this.renderSettings.setDefaults();
     }
 
     @Override
@@ -45,29 +36,31 @@ public class ClientSettings extends AbstractYMLConfig {
         lastserver = getString("lastserver", "nide.ddns.net:21087");
         thirdpersonDistance = getFloat("thirdpersonDistance", thirdpersonDistance);
         chunkLoadDistance = getInt("chunkLoadDistance", chunkLoadDistance);
-        shadowDrawMode = getInt("shadowDrawMode", shadowDrawMode);
-        smaaQuality = getInt("smaaQuality", smaaQuality);
-        anisotropicFiltering = getInt("anisotropicFiltering", anisotropicFiltering);
-        normalMapping = getInt("normalMapping", normalMapping);
+        this.renderSettings.shadowDrawMode = getInt("shadowDrawMode", this.renderSettings.shadowDrawMode);
+        this.renderSettings.anisotropicFiltering = getInt("anisotropicFiltering", this.renderSettings.anisotropicFiltering);
+        this.renderSettings.normalMapping = getInt("normalMapping", this.renderSettings.normalMapping);
         gui3d = getBoolean("gui3d", gui3d);
-        ssr = getInt("ssr", ssr);
-        aa = getInt("aa", aa);
-        ao = getInt("ao", ao);
+        this.renderSettings.ssr = getInt("ssr", this.renderSettings.ssr);
+        this.renderSettings.ao = getInt("ao", this.renderSettings.ao);
+        this.renderSettings.aa = getInt("aa", this.renderSettings.aa);
+        this.renderSettings.smaaPredication = getBoolean("smaaPredication", this.renderSettings.smaaPredication);
+        this.renderSettings.smaaQuality = getInt("smaaQuality", this.renderSettings.smaaQuality);
     }
 
     @Override
     public void save() {
         setString("lastserver", lastserver);
         setInt("chunkLoadDistance", chunkLoadDistance);
-        setInt("shadowDrawMode", shadowDrawMode);
-        setInt("ssr", ssr);
-        setInt("aa", aa);
-        setInt("ao", ao);
-        setInt("smaaQuality", smaaQuality);
+        setInt("shadowDrawMode", this.renderSettings.shadowDrawMode);
+        setInt("ssr", this.renderSettings.ssr);
+        setInt("ao", this.renderSettings.ao);
         setFloat("thirdpersonDistance", thirdpersonDistance);
-        setInt("anisotropicFiltering", anisotropicFiltering);
-        setInt("normalMapping", normalMapping);
+        setInt("anisotropicFiltering", this.renderSettings.anisotropicFiltering);
+        setInt("normalMapping", this.renderSettings.normalMapping);
         setBoolean("gui3d", gui3d);
+        setInt("aa", this.renderSettings.aa);
+        setInt("smaaQuality", this.renderSettings.smaaQuality);
+        setBoolean("smaaPredication", this.renderSettings.smaaPredication);
     }
 
     /**

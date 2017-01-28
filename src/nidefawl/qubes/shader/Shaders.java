@@ -107,7 +107,7 @@ public class Shaders {
             Shader new_singleblock3D = assetMgr.loadShader(newshaders, "singleblock_3D");
             Shader new_gui = assetMgr.loadShader(newshaders, "gui");
             Shader new_item = assetMgr.loadShader(newshaders, "item");
-            Shader new_tonemap = assetMgr.loadShader(newshaders, "post/finalstage");
+            Shader new_tonemap = assetMgr.loadShader(newshaders, "post/finalstage", "screen_scaled_quad", null, null, null);
             shaders.release();
             SimpleResourceManager tmp = shaders;
             shaders = newshaders;
@@ -149,6 +149,7 @@ public class Shaders {
 //            singleblock.setProgramUniform1i("waterNormals", 1);
             Shaders.colored3D.enable();
             Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
+            Shaders.colored3D.setProgramUniform4f("color_uniform", 1.0f, 1.0f, 1.0f, 1.0f);
 
             Shaders.textured3D.enable();
             Shaders.textured3D.setProgramUniform1f("color_brightness", 0.1f);

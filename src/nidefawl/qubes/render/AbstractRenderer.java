@@ -104,9 +104,7 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
         this.rendererHeight = blurSize[1];
         resize(this.rendererWidth, this.rendererHeight);
     }
-    public void resize(int displayWidth, int displayHeight) {
-        
-    }
+    public abstract void resize(int displayWidth, int displayHeight);
     
     @Override
     public void preinit() {

@@ -46,7 +46,7 @@ public class MeshUpdateTask {
         this.ccache.flush();
         if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
             this.mr = mr;
-            this.shadowDrawMode = Game.instance.settings.shadowDrawMode;
+            this.shadowDrawMode = Game.instance.settings.renderSettings.shadowDrawMode;
             return true;
         } else {
 //            System.out.println("cannot render "+mr.rX+"/"+mr.rZ);

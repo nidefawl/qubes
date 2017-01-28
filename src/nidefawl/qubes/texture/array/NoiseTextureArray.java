@@ -38,8 +38,6 @@ public class NoiseTextureArray extends TextureArray {
             AssetTexture tex = entry.getValue().get(0);
             //            System.out.println("put data with dim "+tex.getWidth()+"x"+tex.getHeight()+" in tex slot "+slot+" with size "+this.tileSize+"x"+this.tileSize);
             directBuf = put(directBuf, tex.getData());
-            System.out.println("put in slot " + entry.getKey() + ": " + tex.getWidth() + "," + tex.getHeight() + ", " + tex.getComponents() + " channels, expected: "
-                    + this.tileSize + "px");
             GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0,                     //Mipmap number
                     0, 0, entry.getKey(),                 //xoffset, yoffset, zoffset
                     this.tileSize, this.tileSize, 1,                 //width, height, depth

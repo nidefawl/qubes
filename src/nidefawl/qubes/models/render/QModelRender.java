@@ -29,4 +29,7 @@ public abstract class QModelRender extends AbstractRenderer {
     public void renderGroup(ModelQModel model, QModelObject obj, QModelGroup grp, float fTime) {
         model.render(obj.idx, grp.idx, fTime);
     }
+    @Override
+    public void resize(int displayWidth, int displayHeight) {
+    }
 }

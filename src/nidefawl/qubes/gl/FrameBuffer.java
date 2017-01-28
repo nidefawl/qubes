@@ -10,16 +10,20 @@ import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL30.GL_RGBA16UI;
 import static org.lwjgl.opengl.GL30.GL_RGB16UI;
 import static org.lwjgl.opengl.GL30.glFramebufferTexture2D;
+import static org.lwjgl.system.MemoryStack.stackGet;
+import static org.lwjgl.system.MemoryUtil.memAddress;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryStack;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.util.*;
 
 public class FrameBuffer implements IManagedResource {
+    private static FrameBuffer lastBound = null;
     private static final int MAX_COLOR_ATT    = 8;
     public static int FRAMEBUFFERS = 0;
     private final int        renderWidth;
@@ -81,7 +85,6 @@ public class FrameBuffer implements IManagedResource {
         if (depthBuffer)
             f.setHasDepthAttachment();
         f.setup(resMgr);
-        f.clearFrameBuffer();
         return f;
     }
     public static FrameBuffer make(IResourceManager resMgr, int renderWidth, int renderHeight, int type) {
@@ -144,7 +147,6 @@ public class FrameBuffer implements IManagedResource {
         if (numTextures == 0) {
             throw new IllegalStateException("No textures defined");
         }
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenFramebuffers");
         this.drawBufAtt = Memory.createIntBufferGC(this.numColorTextures);
 
         IntBuffer colorTextures = Memory.createIntBufferGC(numTextures);
@@ -153,14 +155,22 @@ public class FrameBuffer implements IManagedResource {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenTextures");
         colorTextures.rewind();
         this.fb = GL30.glGenFramebuffers();
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glGenFramebuffers");
+        this.bind();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
         GL20.glDrawBuffers(GL_NONE);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDrawBuffers");
         glReadBuffer(GL_NONE);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glReadBuffer");
         colorTextures.rewind();
+        boolean end = false;
+        this.drawBufAtt.clear();
         for (int i = 0; i < colorAttFormats.length; i++) {
+            if (!end) {
+                end = colorAttFormats[i] == 0;
+            } else if (colorAttFormats[i] != 0) {
+                throw new GameError("Attachments must be in adjacent order");
+            }
             if (colorAttFormats[i] != 0) {
                 int att = GL_COLOR_ATTACHMENT0 + i;
                 int tex = colorTextures.get();
@@ -175,7 +185,6 @@ public class FrameBuffer implements IManagedResource {
                 this.drawBufAtt.put(att);
             }
         }
-        drawBufAtt.rewind();
 
         if (hasDepth) {
             this.depthTexture = colorTextures.get();
@@ -185,15 +194,19 @@ public class FrameBuffer implements IManagedResource {
         if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
             throw new GameError("Framebuffer is incomplete (" + status + ")");
         }
-        GL20.glDrawBuffers(this.drawBufAtt);
-
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffer glCheckFramebufferStatus");
+        GL20.glDrawBuffers(drawMask(-1));
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffer glDrawBuffers all");
+        clearFrameBuffer();
+        unbindFramebuffer();
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glBindFramebuffer 0");
     }
     public void bindCubeMapFace(int i) {
         GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, this.colorAttTextures[0], 0);
     }
 
     public static void unbindFramebuffer() {
+        lastBound = null;
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glUnbindCurrentFrameBuffer");
     }
@@ -207,6 +220,7 @@ public class FrameBuffer implements IManagedResource {
         clearFrameBuffer();
     }
     public void bind() {
+        lastBound = this;
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fb);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glBindFramebuffer");
 //        Engine.setViewport(0, 0, getWidth(), getHeight());
@@ -302,53 +316,82 @@ public class FrameBuffer implements IManagedResource {
 
     
     public void clearDepth() {
+        if (lastBound != this) {
+            throw new GameLogicError("trying to clearFrameBuffer on unbound buffer");
+        }
         if (this.hasDepth) {
             glClear(GL_DEPTH_BUFFER_BIT);
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("clearFrameBuffer Depth");
         }
     }
 
     
     public void clearColor() {
-        GL20.glDrawBuffers(GL_COLOR_ATTACHMENT0);
+        if (lastBound != this) {
+            throw new GameLogicError("trying to clear unbound buffer");
+        }
+        GL20.glDrawBuffers(drawMask(1));
         glClear(GL_COLOR_BUFFER_BIT);
-        GL20.glDrawBuffers(this.drawBufAtt);
+        GL20.glDrawBuffers(drawMask(-1));
     }
 
     
     public void clearColorBlack() {
-        GL20.glDrawBuffers(GL_COLOR_ATTACHMENT0);
+        if (lastBound != this) {
+            throw new GameLogicError("trying to clear unbound buffer");
+        }
+        GL20.glDrawBuffers(drawMask(1));
         glClearColor(0,0,0,0);
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(this.clearColor[0][0], this.clearColor[0][1], this.clearColor[0][2], this.clearColor[0][3]);
-        GL20.glDrawBuffers(this.drawBufAtt);
+        GL20.glDrawBuffers(drawMask(-1));
     }
     
 
     public void setDrawAll() {
-        if (this.numColorTextures > 0)
-            GL20.glDrawBuffers(this.drawBufAtt);
+        if (lastBound != this) {
+            throw new GameLogicError("trying to setDrawAll on unbound buffer");
+        }
+        GL20.glDrawBuffers(drawMask(-1));
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffer setDrawAll");
     }
-    public void setDraw(int i) {
-        GL20.glDrawBuffers(GL_COLOR_ATTACHMENT0+i);
+    
+    private IntBuffer drawMask(int mask) {
+        this.drawBufAtt.clear();
+        int n = 0;
+        for (int i = 0; i < this.numColorTextures; i++) {
+            if ((mask & (1<<i)) != 0) {
+                int att = GL_COLOR_ATTACHMENT0 + i;
+                this.drawBufAtt.put(att);
+                n++;
+            }
+        }
+        if (n == 0) {
+            System.err.println("drawbuffers GL_NONE!");
+            this.drawBufAtt.put(GL_NONE);
+            n++;
+        }
+        this.drawBufAtt.position(0).limit(n);
+        return this.drawBufAtt;
+    }
+    public void setDrawMask(int mask) {
+        if (lastBound != this) {
+            throw new GameLogicError("trying to setDrawMask on unbound buffer");
+        }
+        GL20.glDrawBuffers(drawMask(mask));
     }
     
     public void clearFrameBuffer() {
-        this.clearDepth();
-        int cleared = 0;
-        for (int i = 0; i < clearBuffer.length; i++) {
-            if (this.clearBuffer[i]) {
-                if (this.numColorTextures > 1) {
-                    int att = GL_COLOR_ATTACHMENT0 + i;
-                    GL20.glDrawBuffers(att);
-                    cleared++;
-                }
-                glClearColor(this.clearColor[i][0], this.clearColor[i][1], this.clearColor[i][2], this.clearColor[i][3]);
-                glClear(GL_COLOR_BUFFER_BIT);
-            }
+        if (lastBound != this) {
+            throw new GameLogicError("trying to clearFrameBuffer on unbound buffer");
         }
-        if (cleared > 0) {
-            this.setDrawAll();
-        }
+        this.setDrawAll();
+        int flags = GL_COLOR_BUFFER_BIT;
+        if (hasDepth)
+            flags |= GL_DEPTH_BUFFER_BIT;
+        glClearColor(0,0,0,0);
+        glClear(flags);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("clearFrameBuffer");
     }
 
     public void release() {

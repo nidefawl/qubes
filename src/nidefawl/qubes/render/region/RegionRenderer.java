@@ -550,11 +550,11 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         GLVAO vao = GLVAO.vaoBlocks;
         if (pass == PASS_SHADOW_SOLID) {
             vao = GLVAO.vaoBlocksShadow;
-            if (Game.instance.settings.shadowDrawMode == 1) {
+            if (Game.instance.settings.renderSettings.shadowDrawMode == 1) {
                 vao = GLVAO.vaoBlocksShadowTextured;
             }
         }
-        int requiredShadowMode = Game.instance.settings.shadowDrawMode;
+        int requiredShadowMode = Game.instance.settings.renderSettings.shadowDrawMode;
         boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
 
         Engine.bindVAO(vao);
@@ -905,6 +905,10 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         if (!frustum && frustum2)
             return 1;
         return (o1.distance < o2.distance) ? -1 : ((o1.distance == o2.distance) ? 0 : 1);
+    }
+
+    @Override
+    public void resize(int displayWidth, int displayHeight) {
     }
 
 }
