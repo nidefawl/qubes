@@ -7,6 +7,10 @@
 #pragma include "blockinfo.glsl"
 #pragma include "atmosphere.glsl"
 #pragma include "sky_scatter.glsl"
+#pragma define "RENDER_TO_SCENE_FB"
+#ifndef RENDER_TO_SCENE_FB
+#define RENDER_TO_SCENE_FB 0
+#endif
 
 layout(std140) uniform LightInfo {
   vec4 dayLightTime; 
@@ -27,6 +31,11 @@ uniform sampler2D tex0;
 in vec4 pass_texcoord;
 
 out vec4 out_Color;
+#if RENDER_TO_SCENE_FB
+out vec4 out_Normal;
+out uvec4 out_Material;
+out vec4 out_Light;
+#endif
 
 vec4 unprojectPos(in vec2 coord, in float depth) { 
     // vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
@@ -83,5 +92,12 @@ void main() {
 
 
     blendColor(cloudColor, fogColorLit, yt*0.9);
+#if RENDER_TO_SCENE_FB
+    out_Color = vec4(cloudColor.rgb*0.02, 1.0);
+    out_Normal = vec4(0.5);
+    uint renderData = ENCODE_RENDERPASS(8);
+    out_Material = uvec4(0u,0u+renderData,0u,0u);
+#else
     out_Color = vec4(cloudColor.rgb, 1.0);
+#endif
 }

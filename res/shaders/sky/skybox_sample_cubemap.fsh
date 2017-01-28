@@ -42,4 +42,5 @@ void main() {
     out_Normal = vec4(0.5);
     renderData = ENCODE_RENDERPASS(8);
     out_Material = uvec4(0u,0u+renderData,0u,0u);
+    //whats with light?!
 }

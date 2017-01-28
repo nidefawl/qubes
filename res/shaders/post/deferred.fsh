@@ -6,15 +6,11 @@
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma define "RENDER_PASS"
+#pragma define "RENDER_AMBIENT_OCCLUSION"
 #pragma define "SHADOW_MAP_RESOLUTION" "2048"
 
 float isEyeInWater = 0.0;
 
-#if RENDER_PASS ==1
-uniform sampler2D texWaterNoise;
-#define noisetex texWaterNoise
-#pragma include "water.glsl"
-#endif
 
 layout(std140) uniform LightInfo {
   vec4 dayLightTime; 
@@ -55,6 +51,9 @@ uniform sampler2D texBlockLight;
 uniform sampler2D texLight;
 uniform sampler2D texAO;
 uniform sampler2DArray texArrayNoise;
+#if RENDER_PASS == 1
+uniform sampler2D texWaterNoise;
+#endif
 uniform int texSlotNoise;
 
 
@@ -67,6 +66,17 @@ in float lightAngleUp;
 in float moonSunFlip;
 
 out vec4 out_Color;
+// #if RENDER_PASS == 2
+out vec4 out_FinalMaterial;
+// #endif
+
+
+// this needs to be included after sampler definition
+#if RENDER_PASS == 1
+#define noisetex texWaterNoise
+#pragma include "water.glsl"
+#endif
+
 
 
 float expToLinearDepth(in float depth)
@@ -437,7 +447,12 @@ void main() {
     bool isSky = bool(fIsSky==1.0f);
 #if RENDER_PASS < 1
     // vec4 ssao =vec4(edo());
-    vec4 ssao=texture(texAO, pass_texcoord);
+    
+    #if RENDER_AMBIENT_OCCLUSION
+        vec4 ssao=texture(texAO, pass_texcoord);
+    #else
+        vec4 ssao=vec4(1);
+    #endif
 #else
     vec4 ssao = vec4(1);
 #endif
@@ -525,6 +540,7 @@ void main() {
 #endif
     alpha += isEntity;
     alpha = min(alpha, 1.0);
+    float luma = 1.0f;
     if (!isSky) {
         // float minAmb = 0.25;
         // float minAmb2 = 0.1;
@@ -645,7 +661,7 @@ void main() {
         spec*=shadow;
         prop.albedo = mix (terr, spec*vec3(0.02), isWater*theta);
         prop.albedo=terr;
-
+        luma = dot(finalLight, vec3(1.0));
     } else {
 
     }
@@ -679,5 +695,9 @@ void main() {
 
 
 #endif
+#if RENDER_PASS == 2
+#endif
+    float texSlot = BLOCK_TEX_SLOT(prop.blockinfo);
+    out_FinalMaterial = vec4(texSlot/200.0f, 0.0, 0.0, 1.0);
     out_Color = vec4(prop.albedo, alpha);
 }

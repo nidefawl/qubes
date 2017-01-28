@@ -25,6 +25,11 @@ void main() {
 	dayLightIntens = SkyLight.dayLightTime.z;
 	lightAngleUp = SkyLight.dayLightTime.w;
 	moonSunFlip = dayNoon > nightNoon ? 0 : 1;
-	pass_texcoord = in_texcoord.st;
-	gl_Position = in_matrix_2D.mvp * in_position;
+	// pass_texcoord = in_texcoord.st;
+	// gl_Position = in_matrix_2D.mvp * in_position;
+	vec2 pos;
+	pos.x = float(gl_VertexID & 1)*2.0;
+	pos.y = float(gl_VertexID & 2);
+    pass_texcoord.st = pos;
+    gl_Position = vec4(pos * 2.0 - 1.0, 0, 1);
 }

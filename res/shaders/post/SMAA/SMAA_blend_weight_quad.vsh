@@ -1,6 +1,7 @@
 #version 150 core
 
 #pragma include "ubo_scene.glsl"
+#pragma include "vertex_layout.glsl"
 #pragma include "SMAA_common.glsl"
 #define SMAA_INCLUDE_VS 1
 #define SMAA_INCLUDE_PS 0
@@ -15,7 +16,8 @@ out vec4 offset2;
 
 void main(void) {
 
-#pragma include "fullscreen_triangle_vertex.glsl"
+    pass_texcoord = in_texcoord.st;
+    gl_Position = in_matrix_2D.mvp * in_position;
 
     vec4 offsets[3];
     offsets[0] = vec4(0.0, 0.0, 0.0, 0.0);

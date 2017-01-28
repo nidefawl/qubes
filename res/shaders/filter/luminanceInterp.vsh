@@ -15,6 +15,7 @@ void main(void) {
 	float curLum = texelFetch(texNew, ivec2(0,0), 0).r;
 	float newLum = prevLum + (curLum - prevLum) * ( 1.0 - pow( 0.98f, 30.0 * elapsedTime ) );
 	lum = vec4(vec3(newLum), 1);
-    vec4 pos = vec4(in_position.xyz, in_position.w);
-    gl_Position = in_matrix_2D.mvp * pos;
+	
+	vec2 pass_texcoord;
+#pragma include "fullscreen_triangle_vertex.glsl"
 }
