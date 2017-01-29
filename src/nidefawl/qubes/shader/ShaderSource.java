@@ -40,9 +40,10 @@ public class ShaderSource {
         this.shaderSourceBundle = shaderSourceBundle;
     }
     void load(AssetManager assetManager, String path, String name, IShaderDef def) throws IOException {
-        this.processed = readParse(assetManager, path, name, def, false);
+        this.processed = readParse(assetManager, path, name, def, 0);
     }
-    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, boolean resolve) throws IOException {
+    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, int resolveDepth) throws IOException {
+        boolean resolve = resolveDepth > 0;
         AssetInputStream is = null;
         BufferedReader reader = null;
         try {
@@ -101,11 +102,12 @@ public class ShaderSource {
                     } else if (line.startsWith("#pragma")) {
                         Matcher m;
                         if ((m = patternInclude.matcher(line)).matches()) {
-                            if (resolve) {
-                                throw new ShaderCompileError(line, name, "Recursive inlcudes are not supported");
+                            if (resolveDepth > 4) {
+                                throw new ShaderCompileError(line, name, "Recursive resolving failed. Depth > 4");
                             }
                             String filename = m.group(1);
-                            String include = readParse(assetManager, path, filename, def, true);
+                            String include = readParse(assetManager, path, filename, def, resolveDepth+1);
+                            
                             if (include == null) {
                                 throw new ShaderCompileError(line, name, "Preprocessor error: Failed loading include \"" + filename + "\"");
                             }

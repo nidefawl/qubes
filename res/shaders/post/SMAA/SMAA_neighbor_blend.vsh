@@ -12,6 +12,7 @@ out vec4 offset;
 
 void main(void) {
 	
+#define TRI_WINDING 0
 #pragma include "fullscreen_triangle_vertex.glsl"
 
     offset = vec4(0.0, 0.0, 0.0, 0.0);

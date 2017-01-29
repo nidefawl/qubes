@@ -393,7 +393,7 @@ public class SkyRenderer extends AbstractRenderer {
                 GPUProfiler.end();
             }
         }
-        Engine.setDefaultViewport();
+//        Engine.setDefaultViewport();
         Engine.setBlend(false);
         
         UniformBuffer.uboMatrix3D.bind();

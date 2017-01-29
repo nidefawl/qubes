@@ -609,7 +609,7 @@ public class FinalRenderer extends AbstractRenderer {
             smaa = null;
         }
         if (GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.aa > 0) {
-            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, false);
+            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false);
             this.smaa.init(this.rendererWidth, this.rendererHeight);
         }
     }

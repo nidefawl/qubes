@@ -168,7 +168,9 @@ public class WorldRenderer extends AbstractRenderer {
 
     public void renderWorld(World world, float fTime) {
 
-        
+
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("terrain");
         
 
         if (Game.GL_ERROR_CHECKS)
@@ -212,6 +214,10 @@ public class WorldRenderer extends AbstractRenderer {
         
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("renderFirstPass");
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("particles");
 //
 //        
 //        Engine.setBlend(false);
@@ -221,7 +227,13 @@ public class WorldRenderer extends AbstractRenderer {
 //        if (this.qmodel != null)
 //            this.qmodel.animate(fTime);
         Engine.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("entities");
         renderEntities(world, PASS_SOLID, fTime, null, 0);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
         
 
     }

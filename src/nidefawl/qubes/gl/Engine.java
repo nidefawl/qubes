@@ -436,12 +436,11 @@ public class Engine {
         fullscreenquads[n].drawQuads();
     }
     public static void drawFSTri() {
-        active = null;
-        GL30.glBindVertexArray(0);
+        if (active != null) {
+            active = null;
+            GL30.glBindVertexArray(0);
+        }
         glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
-//        if (active != null) {
-//            GL30.glBindVertexArray(isVAOSupportingBindless ? active.vaoIdBindless : active.vaoId);
-//        }
     }
 
     public static void drawQuad() {

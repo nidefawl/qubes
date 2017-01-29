@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL40;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
@@ -127,7 +128,7 @@ public class ShadowRenderer extends AbstractRenderer {
 
 //        Shader.disable();
 
-        Engine.setDefaultViewport();
+//        Engine.setDefaultViewport();
 //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
 //        glEnable(GL_CULL_FACE);
@@ -176,18 +177,22 @@ public class ShadowRenderer extends AbstractRenderer {
 
 //        Shader.disable();
 
-        Engine.setDefaultViewport();
+//        Engine.setDefaultViewport();
 //        glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
 //        glEnable(GL_CULL_FACE);
     }
 
     public void renderShadowPass(World world, float fTime) {
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("ShadowPass");
         if (this.renderMode == MULTI_DRAW_TEXUTED) {
             renderMultiPassTextured(world, fTime);
         } else {
             renderMultiPass(world, fTime);
         }
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
     }
 
     public void resize(int displayWidth, int displayHeight) {

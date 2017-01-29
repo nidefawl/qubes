@@ -43,10 +43,7 @@ public class SMAA {
 
     private boolean usePredicatedThresholding;
 
-    private boolean useQuads;
-    /**
-     * 
-     */
+    
     public final static int SMAA_PRESET_LOW = 0;
     public final static int SMAA_PRESET_MEDIUM = 1;
     public final static int SMAA_PRESET_HIGH = 2;
@@ -54,12 +51,11 @@ public class SMAA {
     final static String[] qualDefines = { "SMAA_PRESET_LOW", "SMAA_PRESET_MEDIUM", "SMAA_PRESET_HIGH", "SMAA_PRESET_ULTRA" };
     public static String[] qualDesc = { "Low", "Medium", "High", "Ultra" };
     public SMAA(final int quality) {
-        this(quality, false, false, false);
+        this(quality, false, false);
     }
-    public SMAA(final int quality, final boolean usePredTex, boolean srgb, boolean useQuads) {
+    public SMAA(final int quality, final boolean usePredTex, boolean srgb) {
         System.out.println("SMAA init");
         this.srgb = srgb;
-        this.useQuads = useQuads;
         this.usePredicatedThresholding = usePredTex;
         AssetManager assetMgr = AssetManager.getInstance();
         AssetBinary areaTexData = assetMgr.loadBin("textures/areatex.bin");
@@ -85,17 +81,10 @@ public class SMAA {
             Shader new_AAEdge;
             Shader new_BlendWeight;
             Shader new_neighbor_blend;
-            if (useQuads) {
-                new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", "screen_scaled_quad", null, null, def);
-                new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", "post/SMAA/SMAA_edgedetection_quad", null, null, def);
-                new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", "post/SMAA/SMAA_blend_weight_quad", null, null, def);
-                new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", "post/SMAA/SMAA_neighbor_blend_quad", null, null, def);
-            } else {
-                new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", def);
-                new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
-                new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
-                new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
-            }
+            new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", def);
+            new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
+            new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
+            new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
             shaderCopyTexture = new_CopyTexture;
             shaderAAEdge = new_AAEdge;
             shaderAABlendWeight = new_BlendWeight;
@@ -212,11 +201,7 @@ public class SMAA {
             GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, material);
         }
         shaderCopyTexture.enable();
-        if (useQuads) {
-            Engine.drawFSQuad(3);
-        } else {
-            Engine.drawFSTri();
-        }
+        Engine.drawFSTri();
         if (debugTexture != 1) {
             renderSMAA(fbFlipInput.getTexture(0), usePredicatedThresholding?fbFlipInput.getTexture(1):0, debugTexture, finalTarget);
         }
@@ -245,11 +230,7 @@ public class SMAA {
                     break;
             }
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, tex);
-//            if (useQuads) {
-                Engine.drawFSQuad(1);
-//            } else {
-//                Engine.drawFSTri();
-//            }
+            Engine.drawFSQuad(1);
         }
     }
     public void renderSMAA(int texture, int material, int debugTexture, FrameBuffer finalTarget) {
@@ -262,11 +243,7 @@ public class SMAA {
         if (this.usePredicatedThresholding) {
             GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, material);
         }
-        if (useQuads) {
-            Engine.drawFSQuad(2);
-        } else {
-            Engine.drawFSTri();
-        }
+        Engine.drawFSTri();
         if (debugTexture == 1) {
             return;
         }
@@ -284,12 +261,7 @@ public class SMAA {
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, this.searchTex);
         
         glDepthFunc(GL_EQUAL); // only draw equal z fragments, +30% speed
-//        Shaders.colored.enable();
-        if (useQuads) {
-            Engine.drawFSQuad(2);
-        } else {
-            Engine.drawFSTri();
-        }
+        Engine.drawFSTri();
         glDepthFunc(GL_LEQUAL);
         if (debugTexture == 2) {
             return;
@@ -302,11 +274,7 @@ public class SMAA {
         shaderAANeighborBlend.enable();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, fbAAWeightBlend.getTexture(0));
-        if (useQuads) {
-            Engine.drawFSQuad(3);
-        } else {
-            Engine.drawFSTri();
-        }
+        Engine.drawFSTri();
     }
 
 

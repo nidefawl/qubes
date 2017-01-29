@@ -464,12 +464,6 @@ public class Game extends GameBase {
             setGUIViewport();
             Engine.checkGLError("setGUIProjection");
             vrGui.renderGUIs(fTime);
-            if (!VR_SUPPORT) {
-                setWindowViewport();
-            }
-        }
-        if (VR_SUPPORT) {
-            setVRViewport();
         }
         glEnable(GL_DEPTH_TEST);
         Engine.setBlend(false);
@@ -477,10 +471,14 @@ public class Game extends GameBase {
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
             Engine.skyRenderer.renderSky(this.world, fTime);
+            Engine.shadowRenderer.renderShadowPass(this.world, fTime);
         } 
-//        else {
-//            Engine.setDefaultViewport();
-//        }
+        
+        if (VR_SUPPORT) {
+            setVRViewport();
+        } else {
+            setWindowViewport();
+        }
 
         for (int eye = 0; eye < (VR_SUPPORT ? 2 : 1); eye++) {
             if (VR_SUPPORT) {
@@ -767,12 +765,6 @@ public class Game extends GameBase {
 
         
 
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("ShadowPass");
-        if (!VR_SUPPORT || eye == 0)
-        Engine.shadowRenderer.renderShadowPass(this.world, fTime);
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
         FrameBuffer.unbindFramebuffer();
         
         
@@ -1128,7 +1120,7 @@ public class Game extends GameBase {
 //          Engine.skyRenderer.initShaders();
 //          Engine.particleRenderer.initShaders();
 //            Engine.skyRenderer.redraw();
-            Engine.outRenderer.initShaders();
+//            Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
 ////            Engine.shadowRenderer.initShaders();

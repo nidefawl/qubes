@@ -28,5 +28,6 @@ void main(void) {
     offsets[0] = offset0;
     offsets[1] = offset1;
     offsets[2] = offset2;
-	out_Color = vec4(SMAAColorEdgeDetectionPS(pass_texcoord, offsets, TEXTURES_PARAM), 0.0, 0.0);
+	out_Color = vec4(SMAALumaEdgeDetectionPS(pass_texcoord, offsets, TEXTURES_PARAM), 0.0, 0.0);
+	// out_Color = vec4(SMAAColorEdgeDetectionPS(pass_texcoord, offsets, TEXTURES_PARAM), 0.0, 0.0);
 }
