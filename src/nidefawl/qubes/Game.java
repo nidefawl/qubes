@@ -473,12 +473,7 @@ public class Game extends GameBase {
             Engine.skyRenderer.renderSky(this.world, fTime);
             Engine.shadowRenderer.renderShadowPass(this.world, fTime);
         } 
-        
-        if (VR_SUPPORT) {
-            setVRViewport();
-        } else {
-            setWindowViewport();
-        }
+        setSceneViewport();
 
         for (int eye = 0; eye < (VR_SUPPORT ? 2 : 1); eye++) {
             if (VR_SUPPORT) {
@@ -1175,18 +1170,10 @@ public class Game extends GameBase {
             updateCameraFromPlayer(player, f);
             Engine.setLightPosition(this.world.getLightPosition());
         } else {
-            if (VR_SUPPORT) {
-                this.cameraController.updateVR();
-            } else {
-                this.cameraController.update(movement);
-            }
-            Vector3f renderPos = this.cameraController.getRenderPos(f);
+            Vector3f renderPos = this.cameraController.orientCamera(Engine.camera, movement, VR_SUPPORT, f);
             Engine.camera.setPosition(renderPos);
             vCam.set(renderPos);
             vPlayer.set(renderPos);
-            if (!VR_SUPPORT) {
-                Engine.camera.setOrientation(this.cameraController.yaw, this.cameraController.pitch, false, 4.0f);   
-            }
             Engine.getSunLightModel().setTime(5850);
             Engine.getSunLightModel().updateFrame(f);
             Engine.setLightPosition(Engine.getSunLightModel().getLightPosition());

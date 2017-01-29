@@ -3,6 +3,8 @@
  */
 package nidefawl.qubes.input;
 
+import nidefawl.qubes.gl.Camera;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vec3D;
 import nidefawl.qubes.vec.Vector3f;
@@ -135,5 +137,18 @@ public class CameraController {
         Vector3f tmp = Vector3f.pool();
         Vector3f.interp(this.lastPos, this.pos, f, tmp);
         return tmp;
+    }
+    public Vector3f orientCamera(Camera camera, KeybindManager movement, boolean vr, float f) {
+        if (vr) {
+            this.updateVR();
+        } else {
+            this.update(movement);
+        }
+        Vector3f cameraPos = getRenderPos(f);
+        Engine.camera.setPosition(cameraPos);
+        if (!vr) {
+            Engine.camera.setOrientation(this.yaw, this.pitch, false, 4.0f);   
+        }
+        return cameraPos;
     }
 }

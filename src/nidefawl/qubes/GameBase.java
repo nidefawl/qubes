@@ -1045,6 +1045,16 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         
     }
 
+    protected void setSceneViewport() {
+        if (VR_SUPPORT) {
+            Game.displayWidth=VR.renderWidth;
+            Game.displayHeight=VR.renderHeight;
+        } else {
+            Game.displayWidth=windowWidth;
+            Game.displayHeight=windowHeight;
+        }
+        updateProjection();
+    }
     protected void setVRViewport() {
         Game.displayWidth=VR.renderWidth;
         Game.displayHeight=VR.renderHeight;
