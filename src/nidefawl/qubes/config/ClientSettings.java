@@ -42,7 +42,7 @@ public class ClientSettings extends AbstractYMLConfig {
         gui3d = getBoolean("gui3d", gui3d);
         this.renderSettings.ssr = getInt("ssr", this.renderSettings.ssr);
         this.renderSettings.ao = getInt("ao", this.renderSettings.ao);
-        this.renderSettings.aa = getInt("aa", this.renderSettings.aa);
+        this.renderSettings.smaaMode = getInt("aa", this.renderSettings.smaaMode);
         this.renderSettings.smaaPredication = getBoolean("smaaPredication", this.renderSettings.smaaPredication);
         this.renderSettings.smaaQuality = getInt("smaaQuality", this.renderSettings.smaaQuality);
     }
@@ -58,7 +58,7 @@ public class ClientSettings extends AbstractYMLConfig {
         setInt("anisotropicFiltering", this.renderSettings.anisotropicFiltering);
         setInt("normalMapping", this.renderSettings.normalMapping);
         setBoolean("gui3d", gui3d);
-        setInt("aa", this.renderSettings.aa);
+        setInt("aa", this.renderSettings.smaaMode);
         setInt("smaaQuality", this.renderSettings.smaaQuality);
         setBoolean("smaaPredication", this.renderSettings.smaaPredication);
     }

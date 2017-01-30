@@ -6,7 +6,7 @@ public class RenderSettings {
     }
     public int shadowDrawMode;
     public int ssr;
-    public int aa;
+    public int smaaMode;
     public int smaaQuality;
     public boolean smaaPredication;
     public int ao;
@@ -16,7 +16,7 @@ public class RenderSettings {
     public void setDefaults() {
         this.shadowDrawMode = 0;
         this.ssr = 2;
-        this.aa = 1;
+        this.smaaMode = 1;
         this.ao = 1;
         this.smaaQuality = 1;
         this.smaaPredication = true;

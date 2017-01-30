@@ -50,7 +50,6 @@ public class Engine {
     private static BufferedMatrix viewprojection;
     private static BufferedMatrix modelviewprojection;
     private static BufferedMatrix modelviewprojectionPrev;
-    private static Matrix4f       modelviewprojectionInv;
     private static BufferedMatrix modelview;
     private static BufferedMatrix modelmatrix;
     private static BufferedMatrix normalMatrix;
@@ -62,6 +61,7 @@ public class Engine {
     private static BufferedMatrix tempMatrix;
     private static BufferedMatrix tempMatrix2;
     private static BufferedMatrix identity;
+    private static BufferedMatrix modelviewprojectionUnjittered;
     private static int TEMPORAL_IDX = 0;
     public static boolean TEMPORAL_OFFSET = false;
     public static Vector3f       pxOffset = new Vector3f();
@@ -220,8 +220,8 @@ public class Engine {
         modelview = new BufferedMatrix();
         modelmatrix = new BufferedMatrix();
         modelviewprojection = new BufferedMatrix();
+        modelviewprojectionUnjittered = new BufferedMatrix();
         modelviewprojectionPrev = new BufferedMatrix();
-        modelviewprojectionInv = new Matrix4f();
         normalMatrix = new BufferedMatrix();
         orthoP = new BufferedMatrix();
         orthoMV = new BufferedMatrix();
@@ -479,6 +479,9 @@ public class Engine {
     public static BufferedMatrix getMatSceneMVP() {
         return modelviewprojection;
     }
+    public static BufferedMatrix getMatSceneMVPUnjittered() {
+        return modelviewprojectionUnjittered;
+    }
     public static BufferedMatrix getMatSceneMVPPrev() {
         return modelviewprojectionPrev;
     }
@@ -592,6 +595,14 @@ public class Engine {
         modelmatrix.setIdentity();
         modelmatrix.translate(-camPos.x, -camPos.y, -camPos.z);
         modelmatrix.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
+        if (TEMPORAL_OFFSET) { // add this frames jitter to previous mvp
+            addJitterToProjection(_projection, projection);
+            Matrix4f.mul(projection, modelview, modelviewprojectionPrev);
+            modelviewprojectionPrev.update();
+        } else {
+            modelviewprojectionPrev.load(modelviewprojection);
+            modelviewprojectionPrev.update();
+        }
         _updateInternalMatrices();
     }
     public static void _updateInternalMatrices() {
@@ -602,38 +613,32 @@ public class Engine {
         viewInvYZ.update();
         Matrix4f.mul(view, modelmatrix, modelview);
         if (TEMPORAL_OFFSET) {
-//            System.out.println(_projection);
             addJitterToProjection(_projection, projection);
-
-//            System.out.println(projection);
-////            System.out.println(Matrix4f.sub(_projection, projection, null));
         }
+        Matrix4f.mul(_projection, modelview, modelviewprojectionUnjittered);
         Matrix4f.mul(projection, modelview, modelviewprojection);
         Matrix4f.mul(projection, view, viewprojection);
         viewprojection.update();
         modelview.update();
         modelviewprojection.update();
+        modelviewprojectionUnjittered.update();
         normalMatrix.setIdentity();
         normalMatrix.invert().transpose();
         normalMatrix.update();
-        Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
         
     }
     public static void addJitterToProjection(Matrix4f matIn, Matrix4f matOut) {
-        float x = 0.25f;
+        float x = -0.25f;
         float y = 0.25f;
-        if (TEMPORAL_IDX%2==0) {
+        if (TEMPORAL_IDX%2==1) {
             x*=-1;
             y*=-1;
         }
-        x=2.0f * x / viewportBuf.get(2);
-        y=2.0f * y / viewportBuf.get(3);
-        Matrix4f tmp = Matrix4f.poolIdentity();
-        tmp.translate(x, y, 0.0f);
-//        System.out.println(x+","+y);
-//        System.out.println(tmp);
-        Matrix4f.mul(matIn, tmp, matOut);
-//        System.out.println(Stats.fpsCounter);
+        float vw=2.0f / viewportBuf.get(2);
+        float vh=2.0f / viewportBuf.get(3);
+        Matrix4f tmpMat = Matrix4f.poolIdentity();
+        tmpMat.translate(vw*x, vh*y, 0);
+        Matrix4f.mul(tmpMat, matIn, matOut);
         
     }
     public static void setViewAndModelMatrix(Matrix4f v, Matrix4f m) {
@@ -752,7 +757,7 @@ public class Engine {
         float screenY = (winY / rH) * 2.0f - 1.0f;
         screenZ = (screenZ) * 2.0f - 1.0f;
         out.set(screenX, screenY, screenZ);
-        Matrix4f.transform(getMatSceneMVP().getInvMat4(), out, out);
+        Matrix4f.transform(getMatSceneMVPUnjittered().getInvMat4(), out, out);
         out.add(Engine.GLOBAL_OFFSET);
     }
     public static void unprojectScreenSpaceOld(float winX, float winY, float screenZ, float rW, float rH, Vector3f out) {
@@ -993,5 +998,15 @@ public class Engine {
             return outRenderer.fbSSAO.getTexture(0);
         }
         return TMgr.getEmptyWhite();
+    }
+    public static boolean getRenderVelocityBuffer() {
+        if (outRenderer != null)
+            return Engine.RENDER_SETTINGS.smaaMode == 2;
+        return false;
+    }
+    public static boolean getRenderMaterialBuffer() {
+        if (outRenderer != null)
+            return Engine.RENDER_SETTINGS.smaaMode > 0 && Engine.RENDER_SETTINGS.smaaPredication;
+        return false;
     }
 }

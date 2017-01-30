@@ -94,7 +94,7 @@ public class AssetManagerClient extends AssetManager {
             final String[] pathNameCSH = splitPath(nameCSH);
             
             shaderSrc.load(this, pathNameFSH, pathNameVSH, pathNameGSH, pathNameCSH, def);
-            Shader shader = shaderSrc.compileShader();
+            Shader shader = shaderSrc.compileShader(def);
             if (mgr != null && shader != null)
                 mgr.addResource(shader);
             if (shader != null) {

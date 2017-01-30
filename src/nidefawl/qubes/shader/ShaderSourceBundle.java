@@ -32,12 +32,12 @@ public class ShaderSourceBundle {
         geomCode.load(assetManager, nameGsh[0], nameGsh[1] + ".gsh", def, GL43.GL_COMPUTE_SHADER);
     }
     
-    public Shader compileShader() {
+    public Shader compileShader(IShaderDef def) {
         if (!computeCode.isEmpty()) {
-            return new ComputeShader(this.name, this.computeCode);
+            return new ComputeShader(this.name, this.computeCode, def);
             
         }
-        return new GraphicShader(this.name, this.vertCode, this.fragCode, this.geomCode);
+        return new GraphicShader(this.name, this.vertCode, this.fragCode, this.geomCode, def);
     }
 
     public String getName() {

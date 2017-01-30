@@ -128,12 +128,12 @@ public class GuiSettings extends Gui {
                 Engine.worldRenderer.initShaders();
             }
         }));
-        final String[] smaa = new String[] { "Disabled", "1x SMAA" };
-        list.add((this.smaaSetting = new Setting(this, "Anti-Aliasing", smaa[renderSettings.aa & 1], smaa) {
+        final String[] smaa = new String[] { "Disabled", "SMAA 1x", "SMAA T2x" };
+        list.add((this.smaaSetting = new Setting(this, "Anti-Aliasing", smaa[renderSettings.smaaMode %smaa.length], smaa) {
             void callback(int id) {
-                renderSettings.aa = id;
+                renderSettings.smaaMode = id;
                 Game.instance.saveSettings();
-                Engine.outRenderer.initAA();
+                Engine.outRenderer.onAASettingChanged();
             }
         }));
 
@@ -142,7 +142,7 @@ public class GuiSettings extends Gui {
             void callback(int id) {
                 renderSettings.smaaQuality = id;
                 Game.instance.saveSettings();
-                Engine.outRenderer.initAA();
+                Engine.outRenderer.onAASettingChanged();
             }
         }));
         final String[] smaaP = new String[] { "Disabled", "Enabled" };
@@ -150,8 +150,7 @@ public class GuiSettings extends Gui {
             void callback(int id) {
                 renderSettings.smaaPredication = id > 0;
                 Game.instance.saveSettings();
-                Engine.outRenderer.initAA();
-                Engine.outRenderer.initShaders();
+                Engine.outRenderer.onAASettingChanged();
             }
         }));
         List<String> alist = Lists.newArrayList();
@@ -207,7 +206,7 @@ public class GuiSettings extends Gui {
         renderBackground(fTime, mX, mY, true, 0.7f);
 //        Shaders.textured.enable();
 //        this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + 5, -1, true, 1.0f, 2);
-        this.smaaQSetting.box.enabled = renderSettings.aa==1;
+        this.smaaQSetting.box.enabled = renderSettings.smaaMode>=1;
         
         // Disable non-runtime options
         if(Game.instance.isConnected()) {

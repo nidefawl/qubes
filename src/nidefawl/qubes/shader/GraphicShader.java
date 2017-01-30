@@ -21,7 +21,7 @@ public class GraphicShader extends Shader {
     private String attr = "";
     HashMap<String, Integer> customOutputLocations = new HashMap<>();
 
-    public GraphicShader(String name, ShaderSource vertCode, ShaderSource fragCode, ShaderSource geomCode) {
+    public GraphicShader(String name, ShaderSource vertCode, ShaderSource fragCode, ShaderSource geomCode, IShaderDef def) {
         super(name);
 
         if (fragCode.isEmpty()) {
@@ -42,12 +42,12 @@ public class GraphicShader extends Shader {
         if (!geomCode.isEmpty()) {
             this.geometryShader = compileShader(ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB, geomCode, name);
         }
-        attach();
+        attach(def);
         linkProgram();
     }
 
     @Override
-    public void attach() {
+    public void attach(IShaderDef def) {
         this.shader = glCreateProgram();
         SHADERS++;
         Engine.checkGLError("glCreateProgramObjectARB");
@@ -99,7 +99,9 @@ public class GraphicShader extends Shader {
                     Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
             }
         }
-        if (customOutputLocations.isEmpty()) {
+        if (def instanceof IGraphicsShaderDef) {
+            ((IGraphicsShaderDef)def).bindFragDataLocations(this.shader);
+        } else if (customOutputLocations.isEmpty()) {
             GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
             GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
             GL30.glBindFragDataLocation(this.shader, 2, "out_Material");

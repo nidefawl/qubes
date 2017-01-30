@@ -65,14 +65,16 @@ public class FinalRenderer extends AbstractRenderer {
 
     public void renderDeferred(float fTime, int pass) {
         this.fbDeferred.bind();
-        if (Engine.RENDER_SETTINGS.smaaPredication) {
-            this.fbDeferred.setDrawMask(1|2);
-        } else {
-            this.fbDeferred.setDrawMask(1);
-        }
         if (pass == 0) {
-            this.fbDeferred.clearFrameBuffer();
+            this.fbDeferred.clearDepth();
         }
+        int drawFlags = 1;
+        if (Engine.getRenderMaterialBuffer())
+            drawFlags |= (1<<getAttPointMaterial());
+        if (Engine.getRenderVelocityBuffer()&&pass<3)
+            drawFlags |= (1<<getAttPointVelocity());
+        this.fbDeferred.setDrawMask(drawFlags);
+        
         texSlotNoise++;
         Shader shaderDeferred = this.shaderDeferred;
         if (pass == 1) {
@@ -106,12 +108,15 @@ public class FinalRenderer extends AbstractRenderer {
             slot = texSlotNoise%NoiseTextureArray.getInstance().getNumTextures();
         }
         shaderDeferred.setProgramUniform1i("texSlotNoise", slot);
+        if (Engine.getRenderVelocityBuffer() ) {
+            shaderDeferred.setProgramUniformMatrix4("mvp_prev", false, Engine.getMatSceneMVPPrev().get(), false);    
+        }
+        
 
         Engine.drawFSTri();
 
-        if (Engine.RENDER_SETTINGS.smaaPredication) {
-            this.fbDeferred.setDrawMask(1);
-        } else {
+        if (drawFlags != 1) {
+            this.fbDeferred.setDrawMask(drawFlags);
         }
         if (GLDebugTextures.isShow()) {
             Shader.disable();
@@ -137,8 +142,10 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(false, name, "blocklight", Engine.getSceneFB().getTexture(3));
             GLDebugTextures.readTexture(false, name, "texDepth", Engine.getSceneFB().getDepthTex(), 2);
             GLDebugTextures.readTexture(true, name, "DeferredOutColor", this.fbDeferred.getTexture(0), 1);
-            if (Engine.RENDER_SETTINGS.smaaPredication)
-            GLDebugTextures.readTexture(true, name, "DeferredOutMaterial", this.fbDeferred.getTexture(1));
+            if (Engine.getRenderMaterialBuffer())
+            GLDebugTextures.readTexture(true, name, "MaterialBuffer", this.fbDeferred.getTexture(getAttPointMaterial()));
+            if (Engine.getRenderVelocityBuffer())
+                GLDebugTextures.readTexture(true, name, "VelocityBuffer", this.fbDeferred.getTexture(getAttPointVelocity()));
             GLDebugTextures.readTexture(false, name, "light", Engine.getLightTexture());
             if (pass == 0) {
                 GLDebugTextures.readTexture(false, name, "texShadow", Engine.getShadowDepthTex(), 2);
@@ -274,10 +281,13 @@ public class FinalRenderer extends AbstractRenderer {
     }
 
 
-    public void renderAA(int inputTexture, int material, FrameBuffer output) {
+    public void renderAA(int inputTexture, FrameBuffer output) {
         if (smaa != null) {
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
-            this.smaa.render(inputTexture, material, 0, 0, output);
+            this.smaa.render(inputTexture, 
+                    Engine.getRenderMaterialBuffer()?fbDeferred.getTexture(getAttPointMaterial()):0, 
+                    Engine.getRenderVelocityBuffer()?fbDeferred.getTexture(getAttPointVelocity()):0, 
+                            0, output);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         } else {
             if (output != null) output.bindAndClear();
@@ -385,9 +395,11 @@ public class FinalRenderer extends AbstractRenderer {
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
     }
 
-    static final class DeferredDefs implements IShaderDef {
+    static final class DeferredDefs implements IGraphicsShaderDef {
         private final int pass;
-        public DeferredDefs(int pass) {
+        private FinalRenderer fr;
+        public DeferredDefs(FinalRenderer fr, int pass) {
+            this.fr = fr;
             this.pass = pass;
         }
         @Override
@@ -401,7 +413,25 @@ public class FinalRenderer extends AbstractRenderer {
             if ("SHADOW_MAP_RESOLUTION".equals(define)) {
                 return "#define SHADOW_MAP_RESOLUTION "+Engine.getShadowMapTextureSize()+".0";
             }
+            if ("RENDER_VELOCITY_BUFFER".equals(define)) {
+                return "#define RENDER_VELOCITY_BUFFER "+(Engine.getRenderVelocityBuffer() ? "1" : "0");
+//                return "#define RENDER_VELOCITY_BUFFER 1"; 
+            }
+            if ("RENDER_MATERIAL_BUFFER".equals(define)) {
+                return "#define RENDER_MATERIAL_BUFFER "+(Engine.getRenderMaterialBuffer() ? "1" : "0"); 
+//                return "#define RENDER_MATERIAL_BUFFER 1"; 
+            }
             return null;
+        }
+        @Override
+        public void bindFragDataLocations(int shader) {
+            GL30.glBindFragDataLocation(shader, 0, "out_Color");
+            if (Engine.getRenderVelocityBuffer()) {
+                GL30.glBindFragDataLocation(shader, this.fr.getAttPointVelocity(), "out_Velocity");
+            }
+            if (Engine.getRenderMaterialBuffer()) {
+                GL30.glBindFragDataLocation(shader, this.fr.getAttPointMaterial(), "out_FinalMaterial");
+            }
         }
     }
 
@@ -421,9 +451,9 @@ public class FinalRenderer extends AbstractRenderer {
                 }
             });
             Shader new_shaderSSRCombine = assetMgr.loadShader(this, "post/SSR/ssr_combine");
-            Shader new_shaderDef = assetMgr.loadShader(this, "post/deferred", new DeferredDefs(0));
-            Shader new_shaderDef2 = assetMgr.loadShader(this, "post/deferred", new DeferredDefs(1));
-            Shader new_shaderDef3 = assetMgr.loadShader(this, "post/deferred", new DeferredDefs(2));
+            Shader new_shaderDef = assetMgr.loadShader(this, "post/deferred", new DeferredDefs(this, 0));
+            Shader new_shaderDef2 = assetMgr.loadShader(this, "post/deferred", new DeferredDefs(this, 1));
+            Shader new_shaderDef3 = assetMgr.loadShader(this, "post/deferred", new DeferredDefs(this, 2));
             Shader new_shaderbloom_combine = assetMgr.loadShader(this, "post/bloom_combine", new IShaderDef() {
                 @Override
                 public String getDefinition(String define) {
@@ -606,10 +636,10 @@ public class FinalRenderer extends AbstractRenderer {
     public void initAA() {
         if (smaa != null) {
             this.smaa.releaseAll(null);
-            smaa = null;
         }
-        if (GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.aa > 0) {
-            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, true);
+        smaa = null;
+        if (GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.smaaMode > 0) {
+            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, Engine.RENDER_SETTINGS.smaaMode==2);
             this.smaa.init(this.rendererWidth, this.rendererHeight);
         }
     }
@@ -644,29 +674,9 @@ public class FinalRenderer extends AbstractRenderer {
         for (int i = 0; i < 2; i++) {
             this.fbLuminanceInterp[i] = FrameBuffer.make(this, 1, 1, GL_RGB16F);
         }
-        FrameBuffer fbScene = new FrameBuffer(displayWidth, displayHeight);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
-        fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
-        fbScene.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
-        fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
-        fbScene.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
-        fbScene.setHasDepthAttachment();
-        fbScene.setup(this);
-        Engine.setSceneFB(fbScene);
+        makeSceneBuffer(displayWidth, displayHeight);
+        makeDeferredBuffer(displayWidth, displayHeight);
 
-        fbDeferred = new FrameBuffer(displayWidth, displayHeight);
-        fbDeferred.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
-        fbDeferred.setColorAtt(GL_COLOR_ATTACHMENT1, GL_R16F);
-        fbDeferred.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
-        fbDeferred.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
-        fbDeferred.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
-        fbDeferred.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
-        fbDeferred.setup(this);
         
         fbBloomOut = new FrameBuffer(displayWidth, displayHeight);
         fbBloomOut.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
@@ -697,6 +707,55 @@ public class FinalRenderer extends AbstractRenderer {
         aoReinit();
     }
     
+    private void makeDeferredBuffer(int displayWidth, int displayHeight) {
+        if (fbDeferred != null) fbDeferred.release();
+        fbDeferred = new FrameBuffer(displayWidth, displayHeight);
+        fbDeferred.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        fbDeferred.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
+        fbDeferred.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
+        getAttPointMaterial();
+        if (Engine.getRenderMaterialBuffer())  {
+            int attPoint = GL_COLOR_ATTACHMENT0+getAttPointMaterial();
+            fbDeferred.setColorAtt(attPoint, GL_R16F);
+            fbDeferred.setFilter(attPoint, GL_NEAREST, GL_NEAREST);
+            fbDeferred.setClearColor(attPoint, 0F, 0F, 0F, 0F);
+            
+        }
+        if (Engine.getRenderVelocityBuffer())  {
+            int attPoint = GL_COLOR_ATTACHMENT0+getAttPointVelocity();
+            fbDeferred.setColorAtt(attPoint, GL_RG16F);
+            fbDeferred.setFilter(attPoint, GL_NEAREST, GL_NEAREST);
+            fbDeferred.setClearColor(attPoint, 0F, 1F, 0F, 0F);
+        }
+        fbDeferred.setup(this);
+    }
+
+    private int getAttPointMaterial() {
+        return 1;
+    }
+    private int getAttPointVelocity() {
+        return Engine.getRenderMaterialBuffer() ? 2 : 1;
+    }
+
+    private void makeSceneBuffer(int displayWidth, int displayHeight) {
+        FrameBuffer prev = Engine.getSceneFB();
+        if (prev != null) prev.release();
+        FrameBuffer fbScene = new FrameBuffer(displayWidth, displayHeight);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RGBA16UI);
+        fbScene.setColorAtt(GL_COLOR_ATTACHMENT3, GL_RGB16F);
+        fbScene.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
+        fbScene.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
+        fbScene.setClearColor(GL_COLOR_ATTACHMENT3, 0F, 0F, 0F, 0F);
+        fbScene.setHasDepthAttachment();
+        fbScene.setup(this);
+        Engine.setSceneFB(fbScene);
+    }
+
     public void aoReinit() {
         if (aoNeedsInit) {
             aoNeedsInit=false;
@@ -723,5 +782,12 @@ public class FinalRenderer extends AbstractRenderer {
     public void setSSR(int ssr) {
         this.ssr = ssr;
         initShaders();
+    }
+
+    public void onAASettingChanged() {
+        Engine.outRenderer.initAA();
+        Engine.outRenderer.initShaders();
+        makeDeferredBuffer(rendererWidth, rendererHeight);
+        makeSceneBuffer(rendererWidth, rendererHeight);
     }
 }

@@ -1,6 +1,7 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
 import java.io.File;
 
@@ -22,6 +23,7 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
@@ -501,7 +503,7 @@ public class Game extends GameBase {
                 glEnable(GL_DEPTH_TEST);
                 Engine.setBlend(false);
                 //TODO: add material info for predicated thresholidng 
-                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), 0, finalTarget);
+                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), finalTarget);
             }
             
 //            if (VR_SUPPORT && (showControllers||gui!=null||true)) {
@@ -815,9 +817,6 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("World");
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-            for (int i = 0; i < 3; i++) {
-                GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-            }
             Engine.worldRenderer.renderTransparent(world, fTime);
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             if (GPUProfiler.PROFILING_ENABLED)
@@ -1039,9 +1038,11 @@ public class Game extends GameBase {
         
         }
 
-        Engine.outRenderer.renderAA(fbOut.getTexture(0), Engine.outRenderer.fbDeferred.getTexture(1), finalTarget);
-        
+        Engine.outRenderer.renderAA(fbOut.getTexture(0), finalTarget);
 
+//        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.outRenderer.fbDeferred.getTexture(2)); //COLOR
+//        Shaders.textured.enable();
+//        Engine.drawFullscreenQuad();
 
     
         if (GL_ERROR_CHECKS) {

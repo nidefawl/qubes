@@ -124,7 +124,7 @@ public class UniformBuffer {
             .addMat4() //normal
             .addMat4() //mv_inv
             .addMat4() //proj_inv
-            .addMat4(); // previous frame mvp
+            .addMat4(); // mvp_inv
     public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false);
     static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
             .addMat4() //mvp
@@ -523,7 +523,7 @@ public class UniformBuffer {
         uboMatrix3D.put(Engine.getMatSceneNormal().get());//5
         uboMatrix3D.put(Engine.getMatSceneMV().getInv());//6
         uboMatrix3D.put(Engine.getMatSceneP().getInv());//7
-        uboMatrix3D.put(Engine.getMatSceneMVPPrev().get());//8
+        uboMatrix3D.put(Engine.getMatSceneMVP().getInv());//8
         uboMatrix3D.update();
     }
     public static void updatePxOffset() {

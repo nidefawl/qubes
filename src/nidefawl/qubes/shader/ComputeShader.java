@@ -10,15 +10,15 @@ import nidefawl.qubes.gl.Engine;
 public class ComputeShader extends Shader {
     int computeShader = -1;
 
-    public ComputeShader(String name, ShaderSource source) {
+    public ComputeShader(String name, ShaderSource source, IShaderDef def) {
         super(name);
         this.computeShader = compileShader(GL43.GL_COMPUTE_SHADER, source, name);
-        attach();
+        attach(def);
         linkProgram();
     }
 
     @Override
-    public void attach() {
+    public void attach(IShaderDef def) {
         this.shader = glCreateProgram();
         SHADERS++;
         Engine.checkGLError("glCreateProgramObjectARB");

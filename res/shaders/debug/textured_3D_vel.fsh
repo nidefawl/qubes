@@ -21,10 +21,14 @@ void main(void) {
     // Calculate velocity in non-homogeneous projection space:
     vec2 velocity = curPos.xy - prevPos.xy;
 
-	vec4 tex = texture(tex0, pass_texcoord.st);
-	vec4 color = tex*pass_Color;
-	srgbToLin(color.rgb);
-    output0 = vec4(color.rgb, tex.a*pass_Color.a);
+	vec4 texColor = texture(tex0, pass_texcoord.st);
+	if (texColor.a<0.5)
+		discard;
+	vec4 inputColor = pass_Color;
+	srgbToLin(texColor.rgb);
+	srgbToLin(inputColor.rgb);
+	vec4 color = texColor*inputColor;
+    output0 = vec4(color.rgb, texColor.a*inputColor.a);
     // output1 = vec4(color.bgr, tex.a*pass_Color.a);
     output1 = vec4(velocity.xy, 0, 0);
 }

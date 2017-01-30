@@ -17,6 +17,7 @@ import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameError;
@@ -152,10 +153,10 @@ public class SMAA {
         this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
         this.fbFlipInput.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
         this.fbFlipInput.setColorAtt(GL_COLOR_ATTACHMENT1, GL_R16F);
-        this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT1, GL_NEAREST, GL_NEAREST);
+        this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT1, GL_LINEAR, GL_LINEAR);
         this.fbFlipInput.setClearColor(GL_COLOR_ATTACHMENT1, 0F, 0F, 0F, 0F);
         this.fbFlipInput.setColorAtt(GL_COLOR_ATTACHMENT2, GL_RG16F);
-        this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT2, GL_NEAREST, GL_NEAREST);
+        this.fbFlipInput.setFilter(GL_COLOR_ATTACHMENT2, GL_LINEAR, GL_LINEAR);
         this.fbFlipInput.setClearColor(GL_COLOR_ATTACHMENT2, 0F, 0F, 0F, 0F);
         this.fbFlipInput.setup(mgr);
         this.fbAAEdge = FrameBuffer.make(mgr, displayWidth, displayHeight, format, true, true);
@@ -233,8 +234,10 @@ public class SMAA {
            
         }
         
-        Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, true);
-        UniformBuffer.updateOrtho();
+//        Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, true);
+//        UniformBuffer.updateOrtho();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("fbFlipInput");
         fbFlipInput.bind();
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, texture);
         if (this.usePredicatedThresholding) {
@@ -245,11 +248,17 @@ public class SMAA {
         }
         shaderCopyTexture.enable();
         Engine.drawFSTri();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("renderSMAA");
         if (debugTexture != 1) {
             renderSMAA(fbFlipInput.getTexture(0), usePredicatedThresholding?fbFlipInput.getTexture(1):0, useReprojection?fbFlipInput.getTexture(2):0, velocity, debugTexture, finalTarget);
         }
-        Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, false);
-        UniformBuffer.updateOrtho();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+//        Engine.updateOrthoMatrix(Game.displayWidth, Game.displayHeight, false);
+//        UniformBuffer.updateOrtho();
         if (debugTexture > 0) {
             if (finalTarget == null) {
                 FrameBuffer.unbindFramebuffer();
@@ -272,6 +281,10 @@ public class SMAA {
 //                    shaderDrawAlphaChannel.enable();
 //                    shaderDrawAlphaChannel.setProgramUniform1i("texColor", 0);
                     tex = fbAAWeightBlend.getTexture(0);
+                    break;
+                case 4:
+                    Shaders.textured.enable();
+                    tex = fbFlipInput.getTexture(2);
                     break;
             }
             glClear(GL11.GL_DEPTH_BUFFER_BIT);
@@ -311,6 +324,9 @@ public class SMAA {
                 shaderAABlendWeight.setProgramUniform4f("jitterOffset", 1, 1, 1, 0);
             else 
                 shaderAABlendWeight.setProgramUniform4f("jitterOffset", 2, 2, 2, 0);
+        } else {
+
+//            shaderAABlendWeight.setProgramUniform4f("jitterOffset", 0, 0, 0, 0);
         }
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbAAEdge.getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.areaTex);

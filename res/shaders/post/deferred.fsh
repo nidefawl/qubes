@@ -6,6 +6,8 @@
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma define "RENDER_PASS"
+#pragma define "RENDER_MATERIAL_BUFFER" "0"
+#pragma define "RENDER_VELOCITY_BUFFER" "0"
 #pragma define "RENDER_AMBIENT_OCCLUSION"
 #pragma define "SHADOW_MAP_RESOLUTION" "2048"
 
@@ -55,6 +57,9 @@ uniform sampler2DArray texArrayNoise;
 uniform sampler2D texWaterNoise;
 #endif
 uniform int texSlotNoise;
+#if RENDER_VELOCITY_BUFFER
+uniform mat4 mvp_prev;
+#endif
 
 
 in vec2 pass_texcoord;
@@ -66,10 +71,12 @@ in float lightAngleUp;
 in float moonSunFlip;
 
 out vec4 out_Color;
-// #if RENDER_PASS == 2
+#if RENDER_MATERIAL_BUFFER
 out vec4 out_FinalMaterial;
-// #endif
-
+#endif
+#if RENDER_VELOCITY_BUFFER
+out vec4 out_Velocity;
+#endif
 
 // this needs to be included after sampler definition
 #if RENDER_PASS == 1
@@ -83,9 +90,11 @@ float expToLinearDepth(in float depth)
 {
     return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
 }
-
-vec4 unprojectPos(in vec2 coord, in float depth) { 
-    vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
+vec4 screencoord(vec2 texcoord, float depth) {
+    return vec4(texcoord.s * 2.0f - 1.0f, texcoord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
+}
+vec4 unprojectPos(in vec4 screcrd) { 
+    vec4 fragposition = in_matrix_3D.proj_inv * screcrd;
     fragposition /= fragposition.w;
     return fragposition;
 }
@@ -476,7 +485,8 @@ void main() {
     prop.reflective = prop.blockLight.w;
     prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
-    prop.position = unprojectPos(pass_texcoord, prop.depth);
+    vec4 curScreenPos = screencoord(pass_texcoord.st, prop.depth);
+    prop.position = unprojectPos(curScreenPos);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
     prop.linearDepth = expToLinearDepth(prop.depth);
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
@@ -493,6 +503,7 @@ void main() {
     // float isFlower = float(blockid>=48u);
     // if (isBackface > 0) 
     //     discard;
+
 #if RENDER_PASS ==1
     if (isWater > 0.9) {
         vec3 refractv = vec3(0.0);
@@ -529,7 +540,7 @@ void main() {
         vec2 newtc = (pass_texcoord.st + refractv.xy*refMult)*mask + pass_texcoord.st*(1-mask);
 
             depthUnderWater = texture(texAO, newtc).r;
-            viewSpacePosUnderWater = unprojectPos(newtc, depthUnderWater);
+            viewSpacePosUnderWater = unprojectPos(screencoord(newtc.st, depthUnderWater));
             worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
             // sceneColor = texture(texColor, newtc);
             // prop.albedo = sceneColor.rgb;
@@ -697,7 +708,22 @@ void main() {
 #endif
 #if RENDER_PASS == 2
 #endif
+#if RENDER_MATERIAL_BUFFER
     float texSlot = BLOCK_TEX_SLOT(prop.blockinfo);
     out_FinalMaterial = vec4(texSlot/200.0f, 0.0, 0.0, 1.0);
+#endif
+#if RENDER_VELOCITY_BUFFER
+
+    vec4 curViewPos = in_matrix_3D.mvp_inv * curScreenPos;
+    vec4 prevScreenPos = mvp_prev * curViewPos;
+    vec2 scale = vec2(0.5, 0.5);
+    curScreenPos.xy *= scale;
+    prevScreenPos.xy *= scale;
+    prevScreenPos /= prevScreenPos.w;
+
+    vec2 velocity = (curScreenPos.xy - prevScreenPos.xy);
+    float velocityIntens = 1.0-fIsSky;
+    out_Velocity = vec4(velocity*velocityIntens, 0, 0);
+#endif
     out_Color = vec4(prop.albedo, alpha);
 }

@@ -11,8 +11,6 @@ public class CubeMapCamera {
 	private BufferedMatrix view;
 	private BufferedMatrix viewprojection;
     private BufferedMatrix modelviewprojection;
-    private BufferedMatrix modelviewprojectionPrev;
-	private Matrix4f modelviewprojectionInv;
 	private BufferedMatrix modelview;
 	private BufferedMatrix normalMatrix;
 	private BufferedMatrix identity;
@@ -23,8 +21,6 @@ public class CubeMapCamera {
 		viewprojection = new BufferedMatrix();
 		modelview = new BufferedMatrix();
         modelviewprojection = new BufferedMatrix();
-        modelviewprojectionPrev = new BufferedMatrix();
-		modelviewprojectionInv = new Matrix4f();
 		normalMatrix = new BufferedMatrix();
 		identity = new BufferedMatrix();
 		identity.setIdentity();
@@ -34,7 +30,6 @@ public class CubeMapCamera {
 	}
 
 	public void setupScene(int side, Vector3f cameraPos) {
-	    modelviewprojectionPrev.load(modelviewprojection);
         final float fieldOfView = 90;
         final float aspectRatio = 1;
         final float znear = 0.1F;
@@ -85,7 +80,6 @@ public class CubeMapCamera {
 		normalMatrix.setIdentity();
 		normalMatrix.invert().transpose();
 		normalMatrix.update();
-		Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
 		UniformBuffer.uboMatrix3D_Temp.reset();
 		UniformBuffer.uboMatrix3D_Temp.put(modelviewprojection.get());// 0
 		UniformBuffer.uboMatrix3D_Temp.put(modelview.get());// 1
@@ -95,7 +89,7 @@ public class CubeMapCamera {
 		UniformBuffer.uboMatrix3D_Temp.put(normalMatrix.get());// 5
 		UniformBuffer.uboMatrix3D_Temp.put(modelview.getInv());// 6
 		UniformBuffer.uboMatrix3D_Temp.put(projection.getInv());// 7
-		UniformBuffer.uboMatrix3D_Temp.put(modelviewprojectionPrev.get());// 8
+		UniformBuffer.uboMatrix3D_Temp.put(modelviewprojection.getInv());// 8
 		UniformBuffer.uboMatrix3D_Temp.update();
 	}
 }

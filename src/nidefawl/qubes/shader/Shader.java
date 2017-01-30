@@ -124,7 +124,7 @@ public abstract class Shader implements IManagedResource {
 
     static HashMap<String, Integer> map = new HashMap<>();
 
-    public abstract void attach();
+    public abstract void attach(IShaderDef def);
 //    public void attach() throws IOException {}
 
 

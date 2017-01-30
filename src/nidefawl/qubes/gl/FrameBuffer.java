@@ -33,12 +33,13 @@ public class FrameBuffer implements IManagedResource {
     private boolean          hasDepth;
     private boolean isShadowDepthBuffer;
     private int              numColorTextures;
+    private int              highestColorAtt;
     private int              depthTexture;
     private final int[]      colorAttTextures   = new int[MAX_COLOR_ATT];
     private final int[]      colorAttFormats    = new int[MAX_COLOR_ATT];
     private final int[]      colorAttMinFilters = new int[MAX_COLOR_ATT];
     private final int[]      colorAttMagFilters = new int[MAX_COLOR_ATT];
-    private final boolean[]      clearBuffer = new boolean[MAX_COLOR_ATT];
+    boolean hasCustomClearColor = false;
     private final float[][]      clearColor = new float[MAX_COLOR_ATT][];
     private int colorTexExtFmt=GL12.GL_BGRA;
     private int colorTexExtType=GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
@@ -119,7 +120,7 @@ public class FrameBuffer implements IManagedResource {
         this.clearColor[att][1] = g;
         this.clearColor[att][2] = b;
         this.clearColor[att][3] = a;
-        this.clearBuffer[att] = true;
+        this.hasCustomClearColor = att > 0;
     }
 
     public void setHasDepthAttachment() {
@@ -166,11 +167,14 @@ public class FrameBuffer implements IManagedResource {
         boolean end = false;
         this.drawBufAtt.clear();
         for (int i = 0; i < colorAttFormats.length; i++) {
-            if (!end) {
-                end = colorAttFormats[i] == 0;
-            } else if (colorAttFormats[i] != 0) {
-                throw new GameError("Attachments must be in adjacent order");
-            }
+            highestColorAtt = Math.max(i, highestColorAtt);
+            if (highestColorAtt < i)
+                highestColorAtt = i;
+//            if (!end) {
+//                end = colorAttFormats[i] == 0;
+//            } else if (colorAttFormats[i] != 0) {
+//                throw new GameError("Attachments must be in adjacent order");
+//            }
             if (colorAttFormats[i] != 0) {
                 int att = GL_COLOR_ATTACHMENT0 + i;
                 int tex = colorTextures.get();
@@ -359,8 +363,8 @@ public class FrameBuffer implements IManagedResource {
     private IntBuffer drawMask(int mask) {
         this.drawBufAtt.clear();
         int n = 0;
-        for (int i = 0; i < this.numColorTextures; i++) {
-            if ((mask & (1<<i)) != 0) {
+        for (int i = 0; i <= this.highestColorAtt; i++) {
+            if (colorAttFormats[i] != 0 && (mask & (1<<i)) != 0) {
                 int att = GL_COLOR_ATTACHMENT0 + i;
                 this.drawBufAtt.put(att);
                 n++;
@@ -385,43 +389,62 @@ public class FrameBuffer implements IManagedResource {
         if (lastBound != this) {
             throw new GameLogicError("trying to clearFrameBuffer on unbound buffer");
         }
-        this.setDrawAll();
-        int flags = GL_COLOR_BUFFER_BIT;
-        if (hasDepth)
-            flags |= GL_DEPTH_BUFFER_BIT;
-        glClearColor(0,0,0,0);
-        glClear(flags);
+        if (!hasCustomClearColor) {
+            this.setDrawAll();
+            int flags = GL_COLOR_BUFFER_BIT;
+            if (hasDepth)
+                flags |= GL_DEPTH_BUFFER_BIT;
+            glClearColor(this.clearColor[0][0], this.clearColor[0][1], this.clearColor[0][2], this.clearColor[0][3]);
+            glClear(flags);
+        } else {
+            glClear(GL_DEPTH_BUFFER_BIT);
+            for (int i = 0; i <= highestColorAtt; i++) {
+                if (colorAttFormats[i] != 0) {
+                    int att = GL_COLOR_ATTACHMENT0 + i;
+                    this.drawBufAtt.clear();
+                    this.drawBufAtt.put(GL_COLOR_ATTACHMENT0 + i).position(0).limit(1);
+                    GL20.glDrawBuffers(this.drawBufAtt);
+
+                    glClearColor(this.clearColor[i][0], this.clearColor[i][1], this.clearColor[i][2], this.clearColor[i][3]);
+                    glDrawBuffer(att);
+                    glClear(GL_COLOR_BUFFER_BIT);
+                }
+            }
+            this.setDrawAll();
+        }
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("clearFrameBuffer");
     }
 
     public void release() {
         if (this.fb != 0) {
             GL30.glDeleteFramebuffers(this.fb);
+            this.fb = 0;
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteFramebuffers");
+            IntBuffer colorTextures = Memory.createIntBufferGC(MAX_COLOR_ATT+1);
+            for (int i = 0; i < colorAttTextures.length; i++) {
+                if (colorAttTextures[i] != 0) {
+                    colorTextures.put(colorAttTextures[i]);
+                }   
+            }
+            if (hasDepth) {
+                colorTextures.put(this.depthTexture);
+            }
+            colorTextures.flip();
+            if (colorTextures.remaining() > 0) {
+                glDeleteTextures(colorTextures);
+                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
+            }
+            FRAMEBUFFERS--;
         }
-        IntBuffer colorTextures = Memory.createIntBufferGC(MAX_COLOR_ATT+1);
-        for (int i = 0; i < colorAttTextures.length; i++) {
-            if (colorAttTextures[i] != 0) {
-                colorTextures.put(colorAttTextures[i]);
-            }   
-        }
-        if (hasDepth) {
-            colorTextures.put(this.depthTexture);
-        }
-        colorTextures.flip();
-        if (colorTextures.remaining() > 0) {
-            glDeleteTextures(colorTextures);
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glDeleteTextures");
-        }
-        FRAMEBUFFERS--;
     }
     public int detachColorTexture(int att) {
         if (colorAttTextures.length <= att || colorAttFormats[att] == 0) {
             throw new IllegalArgumentException("GL_COLOR_ATTACHMENT" + att + " is not set");
         }
-        if (att+1 == this.numColorTextures) {
-            this.numColorTextures--;
+        if (att == this.highestColorAtt) {
+            this.highestColorAtt--;
         }
+        this.numColorTextures--;
         int t = this.colorAttTextures[att];
         this.colorAttTextures[att] = 0;
         return t;
