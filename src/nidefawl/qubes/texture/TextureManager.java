@@ -1,5 +1,6 @@
 package nidefawl.qubes.texture;
 
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
@@ -121,7 +122,7 @@ public class TextureManager {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipmapLevel);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_MAX_LEVEL "+mipmapLevel);
         if (mipmapLevel > 0) {
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_GENERATE_MIPMAP, GL11.GL_TRUE);
+//            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_GENERATE_MIPMAP, GL11.GL_TRUE);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_GENERATE_MIPMAP GL_TRUE");
 //            GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, mipmapLevel, internalFormat, w, h);
             minfilter = filter ?  GL11.GL_LINEAR_MIPMAP_LINEAR : GL11.GL_LINEAR_MIPMAP_NEAREST;
@@ -150,7 +151,7 @@ public class TextureManager {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("GL11.glTexImage2D");
         if (mipmapLevel > 0) {
             GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+            glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
             if (GameBase.GL_ERROR_CHECKS) Engine.checkGLError("GL30.glGenerateMipmap");
         }
     }

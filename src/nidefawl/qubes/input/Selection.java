@@ -108,6 +108,8 @@ public class Selection {
     private void renderMouseOver() {
         if (this.renderBB != null) {
             Shaders.colored3D.enable();
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(-1.375f, 1);
             glDepthFunc(GL_LESS);
             Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1,0.3f);
             Engine.pxStack.push(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
@@ -117,6 +119,7 @@ public class Selection {
             Engine.pxStack.pop();
             Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1, 1);
             glDepthFunc(GL_LEQUAL);
+            glDisable(GL_POLYGON_OFFSET_FILL);
         }
 
     }
