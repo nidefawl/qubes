@@ -9,6 +9,7 @@ layout(std140) uniform uboMatrix3D
     mat4 normal;
     mat4 mv_inv;
     mat4 proj_inv;
+    mat4 mvp_prev;
 } in_matrix_3D;
 
 layout(std140) uniform uboMatrix2D
