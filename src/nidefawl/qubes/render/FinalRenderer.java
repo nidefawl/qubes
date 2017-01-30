@@ -277,7 +277,7 @@ public class FinalRenderer extends AbstractRenderer {
     public void renderAA(int inputTexture, int material, FrameBuffer output) {
         if (smaa != null) {
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
-            this.smaa.render(inputTexture, material, 0, output);
+            this.smaa.render(inputTexture, material, 0, 0, output);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         } else {
             if (output != null) output.bindAndClear();
@@ -609,7 +609,7 @@ public class FinalRenderer extends AbstractRenderer {
             smaa = null;
         }
         if (GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.aa > 0) {
-            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false);
+            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, true);
             this.smaa.init(this.rendererWidth, this.rendererHeight);
         }
     }

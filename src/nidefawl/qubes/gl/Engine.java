@@ -49,6 +49,7 @@ public class Engine {
     private static BufferedMatrix viewInvYZ;
     private static BufferedMatrix viewprojection;
     private static BufferedMatrix modelviewprojection;
+    private static BufferedMatrix modelviewprojectionPrev;
     private static Matrix4f       modelviewprojectionInv;
     private static BufferedMatrix modelview;
     private static BufferedMatrix modelmatrix;
@@ -61,6 +62,8 @@ public class Engine {
     private static BufferedMatrix tempMatrix;
     private static BufferedMatrix tempMatrix2;
     private static BufferedMatrix identity;
+    private static int TEMPORAL_IDX = 0;
+    public static boolean TEMPORAL_OFFSET = false;
     public static Vector3f       pxOffset = new Vector3f();
     public final static TransformStack pxStack = new TransformStack();
     public final static Matrix4f invertYZ = new Matrix4f().scale(1, -1, -1);
@@ -217,6 +220,7 @@ public class Engine {
         modelview = new BufferedMatrix();
         modelmatrix = new BufferedMatrix();
         modelviewprojection = new BufferedMatrix();
+        modelviewprojectionPrev = new BufferedMatrix();
         modelviewprojectionInv = new Matrix4f();
         normalMatrix = new BufferedMatrix();
         orthoP = new BufferedMatrix();
@@ -471,9 +475,12 @@ public class Engine {
     public static BufferedMatrix getMatSceneM() {
         return modelmatrix;
     }
-    
+
     public static BufferedMatrix getMatSceneMVP() {
         return modelviewprojection;
+    }
+    public static BufferedMatrix getMatSceneMVPPrev() {
+        return modelviewprojectionPrev;
     }
 
     public static BufferedMatrix getMatSceneNormal() {
@@ -514,7 +521,11 @@ public class Engine {
     public static void updateCamera(Camera camera) {
         Matrix4f camView = camera.getViewMatrix();
         Vector3f camPos = camera.getPosition();
+        setTemporalIdx(TEMPORAL_IDX+1);
         updateCamera(camView, camPos);
+    }
+    public static int getTemporalJitterIdx() {
+        return TEMPORAL_IDX;
     }
     public static void updateFrustumFromInternal() {
         camFrustum.setPos(camera.getPosition(), view.getInvMat4());
@@ -572,7 +583,11 @@ public class Engine {
         out.load(tempView);
         return out;
     }
+    public static void setTemporalIdx(int i) {
+        TEMPORAL_IDX = i%2;
+    }
     private static void updateCamera(Matrix4f camView, Vector3f camPos) {
+        modelviewprojectionPrev.load(modelviewprojection); // this doesn't cover a lot of 3d rendered stuff
         view.load(camView);
         modelmatrix.setIdentity();
         modelmatrix.translate(-camPos.x, -camPos.y, -camPos.z);
@@ -586,6 +601,13 @@ public class Engine {
         viewInvYZ.mulMat(invertYZ);
         viewInvYZ.update();
         Matrix4f.mul(view, modelmatrix, modelview);
+        if (TEMPORAL_OFFSET) {
+//            System.out.println(_projection);
+            addJitterToProjection(_projection, projection);
+
+//            System.out.println(projection);
+////            System.out.println(Matrix4f.sub(_projection, projection, null));
+        }
         Matrix4f.mul(projection, modelview, modelviewprojection);
         Matrix4f.mul(projection, view, viewprojection);
         viewprojection.update();
@@ -595,6 +617,23 @@ public class Engine {
         normalMatrix.invert().transpose();
         normalMatrix.update();
         Matrix4f.invert(modelviewprojection, modelviewprojectionInv);
+        
+    }
+    public static void addJitterToProjection(Matrix4f matIn, Matrix4f matOut) {
+        float x = 0.25f;
+        float y = 0.25f;
+        if (TEMPORAL_IDX%2==0) {
+            x*=-1;
+            y*=-1;
+        }
+        x=2.0f * x / viewportBuf.get(2);
+        y=2.0f * y / viewportBuf.get(3);
+        Matrix4f tmp = Matrix4f.poolIdentity();
+        tmp.translate(x, y, 0.0f);
+//        System.out.println(x+","+y);
+//        System.out.println(tmp);
+        Matrix4f.mul(matIn, tmp, matOut);
+//        System.out.println(Stats.fpsCounter);
         
     }
     public static void setViewAndModelMatrix(Matrix4f v, Matrix4f m) {
