@@ -3,7 +3,7 @@
 #define MAX_VALS 1024
 uniform vec2 DEBUG_FRAG_POS;
 uniform vec2 VIEWPORT_SIZE;
-#define IS_DEBUG_FRAG(fragcoord) (floor(fragcoord.t*VIEWPORT_SIZE.t)==DEBUG_FRAG_POS.t)
+#define IS_DEBUG_FRAG(fragcoord) (floor(fragcoord.t*VIEWPORT_SIZE.t)==DEBUG_FRAG_POS.t&&floor(fragcoord.s*VIEWPORT_SIZE.s)==DEBUG_FRAG_POS.s)
 
 layout (std430) buffer debugBuffer
 {
