@@ -9,6 +9,7 @@
 uniform sampler2D edgesTex;
 uniform sampler2D areaTex;
 uniform sampler2D searchTex;
+uniform vec4 jitterOffset;
 
 in vec2 pass_texcoord;
 in vec2 pixcoord;
@@ -24,6 +25,6 @@ void main(void) {
     offsets[0] = offset0;
     offsets[1] = offset1;
     offsets[2] = offset2;
-    out_Color = SMAABlendingWeightCalculationPS(pass_texcoord, pixcoord, offsets, edgesTex, areaTex, searchTex, vec4(0.0, 0.0, 0.0, 0.0));;
+    out_Color = SMAABlendingWeightCalculationPS(pass_texcoord, pixcoord, offsets, edgesTex, areaTex, searchTex, jitterOffset);
     // gl_FragDepth = gl_FragCoord.z+1;
 }

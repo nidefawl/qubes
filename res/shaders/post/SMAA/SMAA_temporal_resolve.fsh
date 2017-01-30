@@ -6,9 +6,13 @@
 #define SMAA_INCLUDE_PS 1
 #pragma include "SMAA.hlsl"
 
-uniform sampler2D texColor;
-uniform sampler2D blendTex;
+uniform sampler2D texColorCurrent;
+uniform sampler2D texColorPrev;
+
+
+#if SMAA_REPROJECTION
 uniform sampler2D velocityTex;
+#endif
 
 in vec2 pass_texcoord;
 in vec4 offset;
@@ -18,8 +22,8 @@ out vec4 out_Color;
 
 void main(void) {
 #if SMAA_REPROJECTION
-	out_Color = SMAANeighborhoodBlendingPS(pass_texcoord, offset, texColor, blendTex, velocityTex);
+    out_Color = SMAAResolvePS(pass_texcoord, texColorCurrent, texColorPrev, velocityTex);
 #else
-	out_Color = SMAANeighborhoodBlendingPS(pass_texcoord, offset, texColor, blendTex);
+    out_Color = SMAAResolvePS(pass_texcoord, texColorCurrent, texColorPrev);
 #endif
 }
