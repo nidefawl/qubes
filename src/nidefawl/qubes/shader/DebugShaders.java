@@ -148,7 +148,7 @@ public class DebugShaders {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glGetProgramResourceIndex GL_SHADER_STORAGE_BUFFER");
         if (blockIndex != -1) {
-            System.out.println("bind block "+blockIndex+" to binding point "+Engine.getBindingPoint("debugBuffer"));
+//            System.out.println("bind block "+blockIndex+" to binding point "+Engine.getBindingPoint("debugBuffer"));
             glShaderStorageBlockBinding(shader.shader, blockIndex, Engine.getBindingPoint("debugBuffer"));
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("glShaderStorageBlockBinding GL_SHADER_STORAGE_BUFFER");
@@ -170,6 +170,7 @@ public class DebugShaders {
             mX = (int) Mouse.getX();
             mY = (int) Mouse.getY();
         }
+//        System.out.println(mX+","+mY);
         this.shader.setProgramUniform2f("DEBUG_FRAG_POS", mX, mY);
         this.shader.setProgramUniform2f("VIEWPORT_SIZE", n[2], n[3]);
     }

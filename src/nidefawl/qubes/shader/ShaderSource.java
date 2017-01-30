@@ -1,5 +1,7 @@
 package nidefawl.qubes.shader;
 
+import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,11 +17,13 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.GPUVendor;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameLogicError;
+import nidefawl.qubes.util.StringUtil;
 
 public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
+    static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
@@ -27,6 +31,7 @@ public class ShaderSource {
     HashMap<Integer, String> sources = new HashMap<Integer, String>();
 
     HashMap<Integer, String> sourceNames = new HashMap<Integer, String>();
+    HashMap<String, Integer> customOutputLocations = new HashMap<>();
 
     private String processed;
     int nInclude = 0;
@@ -39,10 +44,10 @@ public class ShaderSource {
     public ShaderSource(ShaderSourceBundle shaderSourceBundle) {
         this.shaderSourceBundle = shaderSourceBundle;
     }
-    void load(AssetManager assetManager, String path, String name, IShaderDef def) throws IOException {
-        this.processed = readParse(assetManager, path, name, def, 0);
+    void load(AssetManager assetManager, String path, String name, IShaderDef def, int shaderType) throws IOException {
+        this.processed = readParse(assetManager, path, name, def, 0, shaderType);
     }
-    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, int resolveDepth) throws IOException {
+    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, int resolveDepth, int shaderType) throws IOException {
         boolean resolve = resolveDepth > 0;
         AssetInputStream is = null;
         BufferedReader reader = null;
@@ -85,11 +90,23 @@ public class ShaderSource {
                 boolean insertLine = true;
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
-                    if (line.startsWith("#print")) {
+                    Matcher m;
+                    if (shaderType == GL_FRAGMENT_SHADER && line.startsWith("layout") && (m = patternOutputCustom.matcher(line)).matches()) {
+//                        System.out.println("matched");
+                        int n = StringUtil.parseInt(m.group(1), -1);
+                        if (n >= 0) {
+                            String out_type = m.group(2);
+                            String out_name = m.group(3);
+                            code += "out "+out_type+" "+out_name+ ";\r\n";
+                            customOutputLocations.put(out_name, n);
+                            nLineOffset++;
+                            continue;
+                        }
+                        throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse layout directive");
+                    } else if (line.startsWith("#print")) {
                         if (this.shaderSourceBundle == null) {
                             throw new GameLogicError("Cannot initialize shader debugging without reference to source bundle");
                         }
-                        Matcher m;
                         if ((m = patternDebug.matcher(line)).matches()) {
                             String defType = m.group(1);
                             String defName = m.group(2);
@@ -100,13 +117,12 @@ public class ShaderSource {
                             throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse print directive");
                         }
                     } else if (line.startsWith("#pragma")) {
-                        Matcher m;
                         if ((m = patternInclude.matcher(line)).matches()) {
                             if (resolveDepth > 4) {
                                 throw new ShaderCompileError(line, name, "Recursive resolving failed. Depth > 4");
                             }
                             String filename = m.group(1);
-                            String include = readParse(assetManager, path, filename, def, resolveDepth+1);
+                            String include = readParse(assetManager, path, filename, def, resolveDepth+1, shaderType);
                             
                             if (include == null) {
                                 throw new ShaderCompileError(line, name, "Preprocessor error: Failed loading include \"" + filename + "\"");

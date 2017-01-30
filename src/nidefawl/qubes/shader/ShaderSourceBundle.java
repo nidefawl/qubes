@@ -1,10 +1,16 @@
 package nidefawl.qubes.shader;
 
+import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
+import static org.lwjgl.opengl.GL20.GL_VERTEX_SHADER;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BLOCK;
 import static org.lwjgl.opengl.GL43.glGetProgramResourceIndex;
 import static org.lwjgl.opengl.GL43.glShaderStorageBlockBinding;
 
 import java.io.IOException;
+
+import org.lwjgl.opengl.ARBGeometryShader4;
+import org.lwjgl.opengl.GL43;
+
 import nidefawl.qubes.assets.AssetManager;
 
 public class ShaderSourceBundle {
@@ -20,10 +26,10 @@ public class ShaderSourceBundle {
     }
 
     public void load(AssetManager assetManager, String[] nameFsh, String[] nameVsh, String[] nameGsh, String[] nameCsh, IShaderDef def) throws IOException {
-        fragCode.load(assetManager, nameFsh[0], nameFsh[1] + ".fsh", def);
-        vertCode.load(assetManager, nameVsh[0], nameVsh[1] + ".vsh", def);
-        computeCode.load(assetManager, nameCsh[0], nameCsh[1] + ".csh", def);
-        geomCode.load(assetManager, nameGsh[0], nameGsh[1] + ".gsh", def);
+        fragCode.load(assetManager, nameFsh[0], nameFsh[1] + ".fsh", def, GL_FRAGMENT_SHADER);
+        vertCode.load(assetManager, nameVsh[0], nameVsh[1] + ".vsh", def, GL_VERTEX_SHADER);
+        computeCode.load(assetManager, nameCsh[0], nameCsh[1] + ".csh", def, ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);
+        geomCode.load(assetManager, nameGsh[0], nameGsh[1] + ".gsh", def, GL43.GL_COMPUTE_SHADER);
     }
     
     public Shader compileShader() {

@@ -47,7 +47,7 @@ public abstract class Shader implements IManagedResource {
     public static void init() {
         ShaderSource vertCode = new ShaderSource(null);
         try {
-            vertCode.load(AssetManager.getInstance(), "shaders", "screen_triangle.vsh", null);
+            vertCode.load(AssetManager.getInstance(), "shaders", "screen_triangle.vsh", null, GL_VERTEX_SHADER);
         } catch (IOException e) {
             throw new GameError("Failed loading fullscreen vertex program");
         }

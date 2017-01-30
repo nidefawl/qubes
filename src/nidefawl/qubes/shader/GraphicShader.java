@@ -2,6 +2,9 @@ package nidefawl.qubes.shader;
 
 import static org.lwjgl.opengl.GL20.*;
 
+import java.util.HashMap;
+import java.util.Map.Entry;
+
 import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 
@@ -16,6 +19,7 @@ public class GraphicShader extends Shader {
     int vertShader = -1;
     int geometryShader = -1;
     private String attr = "";
+    HashMap<String, Integer> customOutputLocations = new HashMap<>();
 
     public GraphicShader(String name, ShaderSource vertCode, ShaderSource fragCode, ShaderSource geomCode) {
         super(name);
@@ -23,6 +27,7 @@ public class GraphicShader extends Shader {
         if (fragCode.isEmpty()) {
             throw new GameError("Failed reading shader source: "+name);
         }
+        this.customOutputLocations.putAll(fragCode.customOutputLocations);
         
         this.fragShader = compileShader(GL_FRAGMENT_SHADER, fragCode, name);
         
@@ -94,11 +99,19 @@ public class GraphicShader extends Shader {
                     Engine.checkGLError("glBindAttribLocationARB "+this.name +" ("+this.shader+"): "+BlockFaceAttr.attributes[i]+" = "+i);
             }
         }
-        GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
-        GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
-        GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
-        GL30.glBindFragDataLocation(this.shader, 3, "out_Light");
-        GL30.glBindFragDataLocation(this.shader, 1, "out_FinalMaterial");
+        if (customOutputLocations.isEmpty()) {
+            GL30.glBindFragDataLocation(this.shader, 0, "out_Color");
+            GL30.glBindFragDataLocation(this.shader, 1, "out_Normal");
+            GL30.glBindFragDataLocation(this.shader, 2, "out_Material");
+            GL30.glBindFragDataLocation(this.shader, 3, "out_Light");
+            GL30.glBindFragDataLocation(this.shader, 1, "out_FinalMaterial");
+            GL30.glBindFragDataLocation(this.shader, 2, "out_Velocity");
+        } else {
+            for (Entry<String, Integer> s : customOutputLocations.entrySet()) {
+//                System.out.println("bind output "+s.getKey()+" to "+s.getValue());
+                GL30.glBindFragDataLocation(this.shader, s.getValue(), s.getKey());
+            }
+        }
     }
     public void release() {
         this.valid = false;
