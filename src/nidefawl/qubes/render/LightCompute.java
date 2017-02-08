@@ -102,16 +102,16 @@ public class LightCompute extends AbstractRenderer {
             DynamicLight light = lights.get(a);
             
             light.updatePreRender(world, fTime);
-            int n = Engine.camFrustum.sphereInFrustum(light.renderPos, light.radius*1.02f);
-            if (n >= Frustum.FRUSTUM_INSIDE) {
+//            int n = Engine.camFrustum.sphereInFrustum(light.renderPos, light.radius*1.02f);
+//            if (n >= Frustum.FRUSTUM_INSIDE) {
                 nLights++;
                 light.store(lightBuf);
                 while (lightBuf.position()%16!=0) {
                     lightBuf.put(0);
                 }   
-            } else {
-//                System.out.println("outside!");
-            }
+//            } else {
+////                System.out.println("outside!");
+//            }
         }
         this.numLights = nLights;
         ssbo_lights.update();

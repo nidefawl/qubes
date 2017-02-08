@@ -125,6 +125,11 @@ public class FrameBuffer implements IManagedResource {
 
     public void setHasDepthAttachment() {
         hasDepth = true;
+        
+        //if clipcontrol is not supported we need this depth buffer format to get glDepthRangedNV working 
+        if (Engine.INVERSE_Z_BUFFER&&GL.isNVDepthBufferFloatSupported()&&!GL.isClipControlSupported()) {
+            depthFmt=NVDepthBufferFloat.GL_DEPTH_COMPONENT32F_NV;
+        }
     }
 
     public void setShadowBuffer() {
@@ -324,15 +329,10 @@ public class FrameBuffer implements IManagedResource {
             throw new GameLogicError("trying to clearFrameBuffer on unbound buffer");
         }
         if (this.hasDepth) {
-//            if (Engine.isInverseZ) {
-//                glClearDepth(0.0f);
-//            } else {
-//
-//                glClearDepth(1.0f);
-//            }
             glClear(GL_DEPTH_BUFFER_BIT);
-            
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("clearFrameBuffer Depth");
+
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("clearFrameBuffer Depth");
         }
     }
 

@@ -163,6 +163,7 @@ public class ShadowProjector implements IRenderComponent {
 //        Matrix4f.transform(matLookAtInv, tmp, tmp);
 //        System.out.println(radius);
         shadowSplitDepth[split] = radius;//tmp.z*2;//splits[split+1];
+        shadowSplitDepth[split] = splits[split+1];
 //    System.out.println(split+"="+radius+"/"+farZ+"/"+tmp.z);
     }
 
@@ -191,17 +192,13 @@ public class ShadowProjector implements IRenderComponent {
             float fov = fieldOfView;
 //            if (i == 0)
 //                fov *= 1.15f;
-            if (!GameBase.VR_SUPPORT) {
-                Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
-            } else {
-                Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
-            }
+            Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);
 //            shadowSplitDepth[i] = splits[i+1] / 0.11F;
 
         }
-    }
+    }   
     public void updateProjection(float znear, float zfar, float aspectRatio, float fov) {
-        float splits[] = new float[] {znear, 14, 64, 420};
+        splits = new float[] {znear, 34, 124, 420};
         if (!GameBase.VR_SUPPORT) {
             for (int i = 0; i < NUM_SPLITS; i++) {
                 Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);

@@ -52,6 +52,9 @@ public class GL {
         if (!caps.GL_ARB_uniform_buffer_object) {
             missingExt.add("GL_ARB_uniform_buffer_object");
         }
+        if (!caps.OpenGL45&&!caps.GL_NV_depth_buffer_float&&!caps.GL_ARB_clip_control) {
+            missingExt.add("GL_NV_depth_buffer_float/GL_ARB_clip_control");
+        }
         
         return missingExt;
     }
@@ -136,6 +139,10 @@ public class GL {
 
     public static boolean isClipControlSupported() {
         return caps.OpenGL45 || caps.GL_ARB_clip_control;
+    }
+
+    public static boolean isNVDepthBufferFloatSupported() {
+        return caps.GL_NV_depth_buffer_float;
     }
 
     public static boolean isGeometryShader4Support() {

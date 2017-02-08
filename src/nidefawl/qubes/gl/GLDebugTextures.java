@@ -98,13 +98,22 @@ public class GLDebugTextures {
         int d = GL11.glGetTexLevelParameteri(target, 0, GL12.GL_TEXTURE_DEPTH);
         int int_format = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
 //
-        if (tex != null && (tex.w != w || tex.h != h || tex.d != d)) {
-            tex.release();
-            tex = null;
+        boolean realloc = false;
+        if (tex != null && (tex.w != w || tex.h != h || tex.d != d || tex.flags != flags)) {
+            tex.w=w;
+            tex.h=h;
+            tex.d=d;
+            tex.flags=flags;
+            alltextures.remove(tex.tex);
+            GL.deleteTexture(tex.tex);
+            realloc = true;
         }
         if (tex == null) {
             tex = new GLDebugTextures(name, string, int_format, w, h, d, flags, isOutput);
             texMap.put(isOutput, string, tex);
+            realloc = true;
+        }
+        if (realloc) {
             tex.tex = GL11.glGenTextures();
             if (int_format == GL11.GL_RGBA) {
                 int_format = GL11.GL_RGBA8;

@@ -147,7 +147,8 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(true, name, "MaterialBuffer", this.fbDeferred.getTexture(getAttPointMaterial()));
             if (Engine.getRenderVelocityBuffer())
                 GLDebugTextures.readTexture(true, name, "VelocityBuffer", this.fbDeferred.getTexture(getAttPointVelocity()));
-            GLDebugTextures.readTexture(false, name, "light", Engine.getLightTexture());
+            if (Engine.lightCompute != null)
+            GLDebugTextures.readTexture(false, name, "light", Engine.lightCompute.getTexture());
             if (pass == 0) {
                 GLDebugTextures.readTexture(false, name, "texShadow", Engine.getShadowDepthTex(), 2);
                 GLDebugTextures.readTexture(false, name, "texShadowDbg", Engine.shadowRenderer.getDebugTexture());

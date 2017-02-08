@@ -249,19 +249,29 @@ public class Engine {
     public static void init() {
         init(EngineInitSettings.INIT_NONE);
     }
+
     public static void setZBufferSetting() {
         if (INVERSE_Z_BUFFER) {
             isInverseZ = true;
             glClearDepth(0.0f);
-            ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_ZERO_TO_ONE );   
+            if (GL.isClipControlSupported()) {
+                ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_ZERO_TO_ONE);
+            } else {
+                NVDepthBufferFloat.glDepthRangedNV(-1.0, 1.0);
+            }
             glDepthFunc(GL_GEQUAL);
         }
     }
+
     public static void restoreZBufferSetting() {
         if (INVERSE_Z_BUFFER) {
             isInverseZ = false;
             glClearDepth(1.0f);
-            ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_NEGATIVE_ONE_TO_ONE );   
+            if (GL.isClipControlSupported()) {
+                ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_NEGATIVE_ONE_TO_ONE);
+            } else {
+                NVDepthBufferFloat.glDepthRangedNV(0.0, 1.0);
+            }
             glDepthFunc(GL_LEQUAL);
         }
     }
@@ -274,15 +284,10 @@ public class Engine {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("GL30.glDisablei(GL_BLEND, "+i+")");
         }
-        
+
+        INVERSE_Z_BUFFER = init.inverseZBuffer;
         isBlend = true;
         GL30.glEnablei(GL_BLEND, 0);
-        if (init.inverseZBuffer) {
-            if (GL.isClipControlSupported()) {
-                INVERSE_Z_BUFFER = true;
-                System.out.println("Using inverse 0,1 z buffer");
-            }
-        }
         
         baseInit();
         if (Game.GL_ERROR_CHECKS)

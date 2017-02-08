@@ -105,32 +105,48 @@ vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
     return v2;
 }
 
+vec4 dbgSplit = vec4(0);
 const float clampmin = 1.0/SHADOW_MAP_RESOLUTION;//1.0/8.0;
 const float clampmax = 1.0-clampmin;
 bool canLookup(in vec4 v, in float zPos, in float mapZ) {
-    return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y && zPos < mapZ;
+    if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y) {
+        // if (zPos < mapZ) {
+        //     return true;
+        // }
+#if Z_INVERSE
+        if (v.z > 0) {
+            return true;
+        }
+#else
+        if (v.z < 1&&v.z > -1) {
+            return true;
+        }
+#endif
+        dbgSplit.rg = vec2(1);
+        dbgSplit.a = 1;
+    }
+    return false;
+    // return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y && zPos > mapZ;
 }
 
 
 
 #define SAMPLE_DISTANCE ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
-#define SOFT_SHADOW_TAP_RANGE 1
+#define SOFT_SHADOW_TAP_RANGE 0
 #define SOFT_SHADOW_TAP_RANGE2 1
 #define SAMPLE_DISTANCE2 ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_WEIGHT ((SOFT_SHADOW_TAP_RANGE*2+1)*(SOFT_SHADOW_TAP_RANGE*2+1))
 #define SOFT_SHADOW_WEIGHT2 ((SOFT_SHADOW_TAP_RANGE2*2+1)*(SOFT_SHADOW_TAP_RANGE2*2+1))
-#define OFFSET0 0.99998
-#define OFFSET1 0.9999
-#define OFFSET2 0.999
 #if Z_INVERSE
-#define SHADOW_FACTOR0 (1.0+(1.0-OFFSET0))
-#define SHADOW_FACTOR1 (1.0+(1.0-OFFSET1))
-#define SHADOW_FACTOR2 (1.0+(1.0-OFFSET2))
+#define SHADOW_FACTOR0 1.00002
+#define SHADOW_FACTOR1 1.00005
+#define SHADOW_FACTOR2 1.00007
 #define SHADOW_COMPARE(a, b) a >= b
 #else
-#define SHADOW_FACTOR0 OFFSET0
-#define SHADOW_FACTOR1 OFFSET1
-#define SHADOW_FACTOR2 OFFSET2
+//absolutly sucks
+#define SHADOW_FACTOR0 0.99999
+#define SHADOW_FACTOR1 0.99998
+#define SHADOW_FACTOR2 0.99996
 #define SHADOW_COMPARE(a, b) a <= b
 #endif
 #if 1
@@ -192,62 +208,55 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
     }
     return 1.0;
 }
-
+float lookupShadowMap(vec3 v, float factor) {
+    v.z*=factor;
+    float s = 0;
+    for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
+        for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
+            vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
+            if (SHADOW_COMPARE(v.z, texture(texShadow, v.xy+offs).r)) {
+                s += 1;
+            }
+        }
+    }
+    s /= SOFT_SHADOW_WEIGHT;
+    return s;
+}
 float getShadow2() {
 
     vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], prop.worldposition);
     vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], prop.worldposition);
     vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], prop.worldposition);
     vec2 cPos = pass_texcoord*2.0-1.0;
-    float dst = sqrt(cPos.x*cPos.x+cPos.y*cPos.y);
-    float weight = max(0.68, 1.3-dst);
+    // float dst = sqrt(cPos.x*cPos.x+cPos.y*cPos.y);
+    // float weight = max(0.68, 1.3-dst);
     vec4 mapZSplits = in_matrix_shadow.shadow_split_depth;
-    vec4 shadow = vec4(1);
-    shadow.xyz = vec3(0.5);
-    if (canLookup(v, prop.linearDepth, mapZSplits.x*weight)) {
-        v.z*=SHADOW_FACTOR0;
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (SHADOW_COMPARE(v.z, texture(texShadow, v.xy*0.5+offs).r)) {
-                    s += 1;
-                }
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
+    float s = 0.0;
+    int steps = 0;
+    if (canLookup(v, prop.linearDepth, mapZSplits.x)) {
+        s += lookupShadowMap(vec3(v.xy*0.5, v.z), SHADOW_FACTOR0);
+        dbgSplit.x=1;
+        dbgSplit.a=1;
+        if (clamp(v.z, 0.15, 0.85) == v.z)
+            steps++;
     }
-    if (canLookup(v2, prop.linearDepth, mapZSplits.y*weight)) {
-        v2.z*=SHADOW_FACTOR1;
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (SHADOW_COMPARE(v2.z, texture(texShadow, v2.xy*0.5+vec2(0.5,0)+offs).r)) {
-                    s += 1;  
-                } 
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
+    if (steps<1&&canLookup(v2, prop.linearDepth, mapZSplits.y)) {
+        s += lookupShadowMap(vec3(v2.xy*0.5+vec2(0.5,0.0), v2.z), SHADOW_FACTOR1);
+        dbgSplit.y=1;
+        dbgSplit.a=1;
+        if (clamp(v2.z, 0.15, 0.85) == v2.z)
+            steps++;
     }
-    if (canLookup(v3, prop.linearDepth, mapZSplits.z)) {
-        v3.z*=SHADOW_FACTOR2;
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (SHADOW_COMPARE(v3.z, texture(texShadow, v3.xy*0.5+vec2(0,0.5)+offs).r)) {
-                    s += 1; 
-                }  
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
+    if (steps<1&&canLookup(v3, prop.linearDepth, mapZSplits.z)) {
+        s += lookupShadowMap(vec3(v3.xy*0.5+vec2(0.0,0.5), v3.z), SHADOW_FACTOR2);
+        dbgSplit.z=1;
+        dbgSplit.a=1;
+        steps++;
     }
-    // return (shadow.x+shadow.y+shadow.z) / shadow.w;
-    return 1.0;
+    if (steps > 0)
+        s/=steps;
+    // return 1.0;
+        return clamp(s, 0, 1);
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
 #define G_SCATTERING 0.87f
@@ -728,5 +737,6 @@ void main() {
     //     rgbd*=0.01;
     // }
     // out_Color = vec4(rgbd, alpha);
+    // out_Color = vec4(prop.albedo+dbgSplit.rgb*dbgSplit.a*0.02, alpha);
     out_Color = vec4(prop.albedo, alpha);
 }

@@ -300,7 +300,6 @@ public abstract class World implements IBlockWorld {
 //        float b = 0.8f;
         DynamicLight light = new DynamicLight(pos,color , 0.1f);
         this.lights.add(light);
-        Thread.dumpStack();
     }
 
     public void spawnLights(BlockPos block) {

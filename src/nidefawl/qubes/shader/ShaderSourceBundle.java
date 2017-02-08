@@ -29,7 +29,7 @@ public class ShaderSourceBundle {
         vertCode.load(assetManager, nameVsh[0], nameVsh[1] + ".vsh", def, GL_VERTEX_SHADER);
         computeCode.load(assetManager, nameCsh[0], nameCsh[1] + ".csh", def, ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);
         geomCode.load(assetManager, nameGsh[0], nameGsh[1] + ".gsh", def, GL43.GL_COMPUTE_SHADER);
-        if (SAVE_PROCESSED_SHADERS) {
+        if (SAVE_PROCESSED_SHADERS&&false) {
             if (!fragCode.isEmpty()) {
                 writeShader(fragCode.getSource(), "processed_shaders/"+nameFsh[0]+"/"+nameFsh[1]+".fsh");
             }

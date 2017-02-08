@@ -375,7 +375,8 @@ public class KeybindManager {
             }
         });
         addKeyBinding(new Keybinding("repeat_last_command", -1) {
-            public void onRepeat() {
+            @Override
+            public void onDown() {
                 int hist=ChatManager.getInstance().getHistorySize();
                 if (hist>0) {
                     String s = ChatManager.getInstance().getHistory(hist-1);
