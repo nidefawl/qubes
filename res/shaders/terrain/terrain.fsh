@@ -25,8 +25,6 @@ flat in vec4 faceAO;
 flat in vec4 faceLight;
 flat in vec4 faceLightSky;
 flat in uvec4 blockinfo;
-flat in float blockid;
-flat in uint faceDir;
 
 in vec2 texPos;
 in float roughness;
@@ -39,31 +37,20 @@ out vec4 out_Light;
 void main(void) {
 #ifdef MODEL_RENDER
 	vec4 tex = vec4(vec3(1), 1);
-	// const float texScale = 1.0/16.0;
-	// vec2 xzPos = mod(position.xz, vec2(1.0));
-	// vec4 tex=texture(blockTextures, vec3((texcoord.st)*texScale + xzPos, BLOCK_TEX_SLOT(blockinfo)));
-	// tex.rgb *= vec3(0.267, 0.451, 0.208)*1.5f;
 #else
-	// vec4 tex=textureLod(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)), 0 );
 	vec4 tex=texture(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)));
-	// tex = vec4(vec3(1),1);
 #ifndef FAR_BLOCKFACE
 #endif
  //!MODEL_RENDER
 #endif
 	if (tex.a<1)
 		discard;
-	 // tex = vec4(vec3(1),1);
 	vec3 color_adj = tex.rgb;
 	vec3 color_adj2 = color.rgb;
-	srgbToLin(color_adj.rgb);
-	srgbToLin(color_adj2.rgb);
+	linearizeInput(color_adj.rgb);
+	linearizeInput(color_adj2.rgb);
 	color_adj *= color_adj2.rgb;
-	// float lum = dot(color_adj, vec3(0.3));
 
-	//MINECRAFTISH BLOCK LIGHTING
-	// color_adj *= 1;
-	// color_adj *= 0.5+abs(dir.z)*0.3+(dir.y)*0.2;
 
 
 	float xPos2 = texPos.x;
@@ -76,10 +63,7 @@ void main(void) {
 	ao += faceAO.y * xPos2 * yPos;
 	ao += faceAO.z * xPos2 * yPos2;
 	ao += faceAO.w * xPos  * yPos2;
-	// ao*=1;
 	float ambientOccl = 1 - clamp(ao, 0,1);
-	ambientOccl*=1;
-	// ambientOccl += 0.3*lum*4;
 #ifndef FAR_BLOCKFACE
 #else //FAR_BLOCKFACE
 	// color_adj=mix(color_adj, vec3(1, 0, 0), 0.4);
@@ -108,17 +92,14 @@ void main(void) {
 	vec3 outNormal = normal;
 #ifndef MODEL_RENDER
 
-		//TODO: figure out something better 
-	// if (IS_LEAVES(blockid)) { //EXPENSIVE LEAVE
-	// 	colorizeLeaves(color_adj, position.xyz);
-	// }
-	float indexNormalMap = BLOCK_NORMAL_SLOT(blockinfo);
 
 	#ifdef NORMAL_MAPPING
 	#define NORMAL_DISTANCE 32.0
 	#define NORMAL_FADEOUT 4.0
-	if (indexNormalMap > 0 && faceDir > 0u) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
+	float indexNormalMap = BLOCK_NORMAL_SLOT(blockinfo);
+	if (indexNormalMap > 0) { //figure out something better, this skips normal mapping for all non (greedy)meshed faces
 
+ 		uint faceDir = BLOCK_FACEDIR(blockinfo);
 		if (camDistance < NORMAL_DISTANCE)
 		{
 	        float scale = clamp((NORMAL_DISTANCE-camDistance) / NORMAL_FADEOUT, 0.0, 1.0);
@@ -150,16 +131,8 @@ void main(void) {
 	#endif
 
 #endif
-	// color_adj*=ambientOccl;
-	float alpha = tex.a*1;
-    out_Color = vec4(color_adj, alpha);
+    out_Color = vec4(color_adj, tex.a);
     out_Normal = vec4((outNormal) * 0.5f + 0.5f, roughness);
     out_Material = blockinfo;
     out_Light = vec4(lightLevelSky, lightLevelBlock, ambientOccl, 1);
-    // float dbgAO = 0;
-    // if (ao != 0 && ao != 1) {
-    // 	dbgAO = 1;
-    // }
-    // out_Light = vec4(vec3(ao), 1);
-    // gl_FragData[0] = vec4(0,1,1,1);
 }

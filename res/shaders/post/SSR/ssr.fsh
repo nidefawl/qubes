@@ -2,6 +2,7 @@
 
 #pragma include "ubo_scene.glsl"
 #pragma include "blockinfo.glsl"
+#pragma include "unproject.glsl"
 
 uniform sampler2D texColor;
 uniform sampler2D texNormals;
@@ -19,127 +20,98 @@ out vec4 out_Color;
 #pragma define "SSR"
 
 #ifdef SSR_1
-const float _Iterations = 16;							// maximum ray iterations 
-const float _PixelStride = 18;							// number of pixels per ray step close to camera
-const float _PixelStrideZCuttoff = 152;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
-const float _PixelZSize = 32.0f;							// Z size in camera space of a pixel in the depth buffer
-const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
-const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
-
+#define MAX_REFINEMENTS 4
+#define STEP_MULT 1.4
+#define REFINE_MULT 0.78
+#define MAX_STEPS 15
+#define STEP_SIZE 1.3
 #endif
+
 #ifdef SSR_2
-const float _Iterations = 32;							// maximum ray iterations 
-const float _PixelStride = 25;							// number of pixels per ray step close to camera
-const float _PixelStrideZCuttoff = 1840;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _BinarySearchIterations = 2;				// maximum binary search refinement iterations
-const float _PixelZSize = 0.8f;							// Z size in camera space of a pixel in the depth buffer
-const float _MaxRayDistance = 1222.0f;						// maximum distance of a ray
-const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
-
+#define MAX_REFINEMENTS 3
+#define STEP_MULT 1.2
+#define REFINE_MULT 0.96
+#define MAX_STEPS 28
+#define STEP_SIZE 1.05
 #endif
 
-
-// aka "CANT PLAY"
 #ifdef SSR_3 
-const float _Iterations = 512;							// maximum ray iterations 
-const float _PixelStride = 4;							// number of pixels per ray step close to camera
-const float _PixelStrideZCuttoff = 1;					// ray origin Z at this distance will have a pixel stride of 1.0
-const float _BinarySearchIterations = 4;				// maximum binary search refinement iterations
-const float _PixelZSize = 32.f;							// Z size in camera space of a pixel in the depth buffer
-const float _MaxRayDistance = 41024.0f;						// maximum distance of a ray
-const float _ScreenEdgeFadeStart = 0.85f;					// distance to screen edge that ray hits will start to fade (0.0 -> 1.0)
-
+#define MAX_REFINEMENTS 6
+#define STEP_MULT 1.1
+#define REFINE_MULT 0.98
+#define MAX_STEPS 35
+#define STEP_SIZE 0.9
 #endif
 
-//don't touch these lines if you don't know what you do!
-//default
-// const int maxf = 4;				//number of refinements
-// const float stp = 1.5;			//size of one step for raytracing algorithm
-// const float ref = 0.7;			//refinement multiplier
-// const float inc = 1.58;			//increasement factor at each step
-// default
-// const int maxf = 4;				//number of refinements
-// const float stp = 1.5;			//size of one step for raytracing algorithm
-// const float ref = 0.7;			//refinement multiplier
-// const float inc = 1.58;			//increasement factor at each step
 
-
-// const int maxf = 6;				//number of refinements
-// const float stp = 0.25;			//size of one step for raytracing algorithm
-// const float ref = 2.3;			//refinement multiplier
-// const float inc = 1.16;			//increasement factor at each step
-const int maxf = 4;				//number of refinements
-const float stp = 1.2;			//size of one step for raytracing algorithm
-const float ref = 0.1;			//refinement multiplier
-const float inc = 2.2;			//increasement factor at each step
-
-vec3 nvec3(vec4 pos) {
-    return pos.xyz/pos.w;
-}
-
-vec4 nvec4(vec3 pos) {
-    return vec4(pos.xyz, 1.0);
-}
 
 float cdist(vec2 coord) {
 	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
 }
 
-vec4 ssr(vec3 fragpos, vec3 normal,vec3 sky) {
+vec3 toScreen(vec3 worldPos) {
+    vec4 tmp1 = vec4(worldPos, 1.0);
+    vec4 tmp2 = in_matrix_3D.p * tmp1;
+    vec3 pos = tmp2.xyz/tmp2.w;
+#if Z_INVERSE
+    return vec3(pos.xy*0.5+0.5, pos.z);
+#else
+    return pos * 0.5 + 0.5;
+#endif
+}
+vec3 toWorld(vec3 screenPos) {
+#if Z_INVERSE
+    vec4 tmp1 = vec4(screenPos.xy*2.0-1.0, screenPos.z, 1.0);
+#else
+    vec4 tmp1 = vec4(screenPos * 2.0 - 1.0, 1.0);
+#endif
+    vec4 tmp2 = in_matrix_3D.proj_inv * tmp1;
+    vec3 pos = tmp2.xyz/tmp2.w;
+    return pos;
+}
+vec4 ssr(vec3 worldPos, vec3 normal,vec3 sky) {
+    int numRefinements = 0;
+    vec3 reflectRay = normalize(reflect(normalize(worldPos), normalize(normal)));
     vec4 color = vec4(sky, 0);
-    float alphaVal = 0.0;
-    vec3 start = fragpos;
-    float depthAt = fragpos.z;
-    vec3 rvector = normalize(reflect(normalize(fragpos), normalize(normal)));
-    vec3 vector = stp * rvector;
-    vec3 oldpos = fragpos;
-    fragpos += vector;
-	vec3 tvector = vector;
-    int sr = 0;
-    int i=0;
-    for(;i<40;i++){
-        vec3 pos = nvec3(in_matrix_3D.p * nvec4(fragpos)) * 0.5 + 0.5;
-        if(pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1 || pos.z < 0 || pos.z > 1.0) {
-			color.rgb = sky;
-			color.a=1;
+    vec3 refineVector = STEP_SIZE * reflectRay;
+	vec3 ray = refineVector;
+    float depthStart = worldPos.z;
+    for(int i=0; i < MAX_STEPS; i++) {
+        vec3 rayPos = worldPos + ray;
+        vec3 pos = toScreen(rayPos);
+        if(pos.x < 0 || pos.x >= 1 || pos.y < 0 || pos.y >= 1/* || pos.z < -1.0*/ || pos.z > 1.0) {
+			// color.rgb = sky;
+			// color.a=1;
             break;
     	}
-    	float de = texture(texDepthPreWater, pos.st).r;
-        vec3 spos = vec3(pos.st, de);
-        spos = nvec3(in_matrix_3D.proj_inv * nvec4(spos * 2.0 - 1.0));
-        // if (spos.z > depthAt) {
-        //     color.rgb = sky;
-        //     color.a=1;
-        //     break;
-        // }
-        float err = abs(length(fragpos.xyz-spos.xyz));
-		if(err < pow(length(vector)*1.85,1.15)&&spos.z < depthAt*1.01){
-
-                sr++;
-                if(sr >= maxf){
-                    float border = clamp(pow(cdist(pos.st), 10.0), 0.0, 1.0);
-				    uvec4 blockinfo = texture(texMaterial, pos.st, 0);
-					uint blockidPixel = BLOCK_ID(blockinfo);
-					float isWater = IS_WATER(blockidPixel);
-					float isSky = IS_SKY(blockidPixel);
-                    color.a = 1.0;
-                    color.rgb=mix(texture(texColor, pos.st).rgb, sky, max(0, min(1, isWater+isSky+border)));
-                    break;
+        vec3 worldPosUnderwater = toWorld(vec3(pos.st, texture(texDepthPreWater, pos.st).r));
+        float err = abs(length(rayPos.xyz-worldPosUnderwater.xyz));
+		if(err < pow(length(refineVector)*1.85,1.15) && worldPosUnderwater.z < depthStart*1.01) {
+            if (numRefinements++ >= MAX_REFINEMENTS) {
+                float border = clamp(pow(cdist(pos.st), 10.0), 0.0, 1.0);
+			    uvec4 blockinfo = texture(texMaterial, pos.st, 0);
+				uint blockidPixel = BLOCK_ID(blockinfo);
+				float isWater = IS_WATER(blockidPixel);
+				float isSky = IS_SKY(blockidPixel);
+                color.a = max(0, min(1, isWater+isSky+border));
+                color.rgb=mix(texture(texColor, pos.st).rgb, sky, color.a);
+                color.a = 1.0-color.a;
+                if (isSky > 0) {
+                    color.r = 1;
+                    color.a = 1;
                 }
-				tvector -= vector;
-                vector *= ref;
+
+                // color.a = 0;
+                break;
+            }
+			ray -= refineVector;
+            refineVector *= REFINE_MULT;
 		}
-        vector *= inc;
-        oldpos = fragpos;
-        tvector += vector;
-		fragpos = start + tvector;
+        refineVector *= STEP_MULT;
+        ray += refineVector;
     }
-    // color.a = alphaVal;
+    // return vec4(0, 1, 0, color.a);
     return color;
-    // if (i==0)
-    // 	return vec4(0,0,1,1);
-    // return vec4(0,1,0,1);
 }
 
 
@@ -147,7 +119,7 @@ void main(void) {
 	vec4 albedo = texture(texColor, pass_texcoord);
 	vec3 normal = texture(texNormals, pass_texcoord).rgb * 2.0f - 1.0f;
     uvec4 blockinfo = texture(texMaterial, pass_texcoord, 0);
-    vec4 rayDirVS = in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 1, 1.0f);
+    vec4 rayDirVS = in_matrix_3D.proj_inv * vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, DEPTH_FAR, 1.0f);
 	rayDirVS /= rayDirVS.w;
 	vec4 normalVS4 = transpose(inverse(in_matrix_3D.mv)) * vec4(normal, 1);
     vec3 normalVS = normalize( normalVS4.xyz);
@@ -162,8 +134,7 @@ void main(void) {
 	if (isWater>0) {
 		vec4 cAlbedo = vec4(0.0);
 
-		vec3 fragpos = vec3(pass_texcoord.st, texture(texDepth, pass_texcoord.st).r);
-		fragpos = nvec3(in_matrix_3D.proj_inv * nvec4(fragpos * 2.0 - 1.0));
+		vec3 fragpos = toWorld(vec3(pass_texcoord.st, texture(texDepth, pass_texcoord.st).r));
 		float normalDotEye = dot(normalVS, normalize(fragpos));
 		vec4 reflection = ssr(fragpos, normalVS, skyboxTex.rgb);
 
@@ -172,12 +143,12 @@ void main(void) {
         // else
 		// out_Color = vec4(reflection.rgb, 1);
 
+        // reflection.a=1;
 		reflection.a = min(reflection.a, 1.0);
 		float angle = max ( min( pow(dot(nrayDirVS, normalVS.xyz) + 1.0, 2.4)*1.1, 1), 0 );
 		reflection.rgb = mix(skyboxTex.rgb, reflection.rgb, reflection.a);
-		
 
-		out_Color = vec4(reflection.rgb*angle*max(reflection.a,0.75), angle*reflection.a);
+		out_Color = vec4(reflection.rgb*angle*max(reflection.a,0.75), angle);
 
 
 

@@ -7,6 +7,7 @@ uniform sampler2D texAO;
 uniform sampler2D texDepth;
 
 uniform mat4 mvp_prev;
+uniform mat4 mat_reproject;
 
 in vec2 pass_texcoord;
  
@@ -19,7 +20,9 @@ void main(void) {
     float depth = texture(texDepth, pass_texcoord).r;
     vec4 curScreenPos = vec4(pass_texcoord.s * 2.0f - 1.0f, pass_texcoord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
     vec4 curViewPos = in_matrix_3D.mvp_inv * curScreenPos;
-    vec4 prevScreenPos = mvp_prev * curViewPos;
+    // vec4 prevScreenPos = mvp_prev * curViewPos;
+    // mat4 mat_reproject2 = mvp_prev * mat_mvp_inv;
+    vec4 prevScreenPos = mat_reproject * curScreenPos;
     float isFragment = float(albedo.a > 0);
 
     vec2 scale = vec2(0.5, 0.5);
@@ -35,5 +38,5 @@ void main(void) {
 	vec4 tex2 = texture(texAO, pass_texcoord.st, 0);
 	vec3 colorOut = albedo.rgb * ao* ao;
 	output0 = vec4(colorOut*0.02, 1);
-    output1 = vec4(velocity*isFragment, 0, 1);
+    output1 = vec4(velocity*isFragment*1000, 0, 1);
 }

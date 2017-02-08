@@ -23,6 +23,6 @@ void main(void) {
     	discard;
 #endif
 	vec4 color = tex*pass_Color;
-	srgbToLin(color.rgb);
+	linearizeInput(color.rgb);
     out_Color = vec4(color.rgb*color_brightness, tex.a*pass_Color.a);
 }

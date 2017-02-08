@@ -21,8 +21,10 @@ void main(void) {
 	// 	discard;
 	 // tex = vec4(vec3(1),1);
 	vec3 color_adj = tex.rgb;
-	color_adj *= color.rgb;
-	srgbToLin(color_adj.rgb);
+	vec3 color_adj2 = color.rgb;
+	linearizeInput(color_adj.rgb);
+	linearizeInput(color_adj2.rgb);
+	color_adj *= color_adj2.rgb;
 
 	float alpha = tex.a*1;
     out_Color = vec4(color_adj*0.1, alpha);

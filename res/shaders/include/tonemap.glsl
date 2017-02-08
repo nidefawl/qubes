@@ -6,7 +6,7 @@ const float E = 0.02;
 const float F = 0.30;
 const float W = 11.2;
 
-
+#pragma define "SRGB_TEXTURES"
 
 void srgb(inout float v)
 {
@@ -17,7 +17,6 @@ void srgb(inout float v)
     float gamma = 2.4;
     v = v <= K0 / phi ? v * phi : (1.0 + a) * pow(v, 1.0 / gamma) - a;
 }
-
 void linear(inout float v)
 {
     v = clamp(v, 0.0, 1.0);
@@ -26,6 +25,14 @@ void linear(inout float v)
     float phi = 12.92;
     float gamma = 2.4;
     v = v <= K0 ? v / phi : pow((v + a) / (1.0 + a), gamma);
+}
+void linearizeInput(inout vec3 srgb)
+{
+    #ifndef SRGB_TEXTURES
+    linear(srgb.x);
+    linear(srgb.y);
+    linear(srgb.z);
+    #endif
 }
 
 void srgbToLin(inout vec3 srgb) {

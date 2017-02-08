@@ -3,6 +3,7 @@
 #pragma include "ubo_scene.glsl"
 
 #pragma include "blockinfo.glsl"
+#pragma include "unproject.glsl"
 
 uniform samplerCube tex0;
 
@@ -13,21 +14,9 @@ out vec4 out_Normal;
 out uvec4 out_Material;
 out vec4 out_Light;
 
-vec4 unprojectPos(in vec2 coord, in float depth) { 
-    // vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    vec4 fragposition = inverse(in_matrix_3D.vp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    fragposition /= fragposition.w;
-    return fragposition;
-}
-vec4 unprojectPosWS(in vec2 coord, in float depth) { 
-    // vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    vec4 fragposition = inverse(in_matrix_3D.mvp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    fragposition /= fragposition.w;
-    return fragposition;
-}
 
 void main() { 
-	vec4 pos = unprojectPos(vec2(pass_texcoord.s, pass_texcoord.t), 1.0);
+	vec4 pos = unprojectPos(pass_texcoord.st, DEPTH_FAR);
 	vec3 rayDir=-normalize(pos.xyz);
 
     uint renderData = 0u;

@@ -5,6 +5,7 @@
 #pragma include "ubo_scene.glsl"
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
+#pragma include "unproject.glsl"
 #pragma define "RENDER_PASS"
 #pragma define "RENDER_MATERIAL_BUFFER" "0"
 #pragma define "RENDER_VELOCITY_BUFFER" "0"
@@ -58,7 +59,7 @@ uniform sampler2D texWaterNoise;
 #endif
 uniform int texSlotNoise;
 #if RENDER_VELOCITY_BUFFER
-uniform mat4 mvp_prev;
+uniform mat4 mat_reproject;
 #endif
 
 
@@ -86,14 +87,8 @@ out vec4 out_Velocity;
 
 
 
-float expToLinearDepth(in float depth)
-{
-    return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
-}
-vec4 screencoord(vec2 texcoord, float depth) {
-    return vec4(texcoord.s * 2.0f - 1.0f, texcoord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-}
-vec4 unprojectPos(in vec4 screcrd) { 
+
+vec4 unprojectScreenCoord(in vec4 screcrd) { 
     vec4 fragposition = in_matrix_3D.proj_inv * screcrd;
     fragposition /= fragposition.w;
     return fragposition;
@@ -101,14 +96,19 @@ vec4 unprojectPos(in vec4 screcrd) {
 
 vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
     vec4 v2 = shadowMVP * worldpos;
+#if Z_INVERSE
+    v2.xy = v2.xy * 0.5 + 0.5;
+#else
     v2 = v2 * 0.5 + 0.5;
+#endif
+
     return v2;
 }
 
-const float clampmin = 0;//1.0/8.0;
-const float clampmax = 1-clampmin;
+const float clampmin = 1.0/SHADOW_MAP_RESOLUTION;//1.0/8.0;
+const float clampmax = 1.0-clampmin;
 bool canLookup(in vec4 v, in float zPos, in float mapZ) {
-    return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.z, clampmin, clampmax) == v.z && zPos < mapZ;
+    return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y && zPos < mapZ;
 }
 
 
@@ -119,6 +119,20 @@ bool canLookup(in vec4 v, in float zPos, in float mapZ) {
 #define SAMPLE_DISTANCE2 ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_WEIGHT ((SOFT_SHADOW_TAP_RANGE*2+1)*(SOFT_SHADOW_TAP_RANGE*2+1))
 #define SOFT_SHADOW_WEIGHT2 ((SOFT_SHADOW_TAP_RANGE2*2+1)*(SOFT_SHADOW_TAP_RANGE2*2+1))
+#define OFFSET0 0.99998
+#define OFFSET1 0.9999
+#define OFFSET2 0.999
+#if Z_INVERSE
+#define SHADOW_FACTOR0 (1.0+(1.0-OFFSET0))
+#define SHADOW_FACTOR1 (1.0+(1.0-OFFSET1))
+#define SHADOW_FACTOR2 (1.0+(1.0-OFFSET2))
+#define SHADOW_COMPARE(a, b) a >= b
+#else
+#define SHADOW_FACTOR0 OFFSET0
+#define SHADOW_FACTOR1 OFFSET1
+#define SHADOW_FACTOR2 OFFSET2
+#define SHADOW_COMPARE(a, b) a <= b
+#endif
 #if 1
 #endif
 
@@ -129,9 +143,9 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
     float weight = 0.9;
     vec4 mapZSplits = in_matrix_shadow.shadow_split_depth;
     if (canLookup(v, linDepth, mapZSplits.x*0.9)) {
-        v.z*=0.9997;
+        v.z*=SHADOW_FACTOR0;
 #if SOFT_SHADOW_TAP_RANGE2 < 1
-        return v.z > texture(texShadow, v.xy*0.5).r ? 0 : 1;
+        return SHADOW_COMPARE(v.z, texture(texShadow, v.xy*0.5).r) ? 1.0 : 0.0;
 #else
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE2; x <= SOFT_SHADOW_TAP_RANGE2; x++) {
@@ -141,13 +155,13 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
             }
         }
         s /= SOFT_SHADOW_WEIGHT2;
-        return v.z > s ? 0 : 1;
+        return SHADOW_COMPARE(v.z, s) ? 1.0 : 0.0;
 #endif
     }
     if (canLookup(v2, linDepth, mapZSplits.y*weight)) {
-        v2.z*=0.9999;
+        v2.z*=SHADOW_FACTOR1;
 #if SOFT_SHADOW_TAP_RANGE2 < 1
-        return v2.z > texture(texShadow, v2.xy*0.5+vec2(0.5,0)).r ? 0 : 1;
+        return SHADOW_COMPARE(v2.z, texture(texShadow, v2.xy*0.5+vec2(0.5,0)).r) ? 1.0 : 0.0;
 #else
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE2; x <= SOFT_SHADOW_TAP_RANGE2; x++) {
@@ -157,13 +171,13 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
             }
         }
         s /= SOFT_SHADOW_WEIGHT2;
-        return v2.z > s ? 0 : 1;
+        return SHADOW_COMPARE(v2.z, s) ? 1.0 : 0.0;
 #endif
     }
     if (canLookup(v3, linDepth, mapZSplits.z)) {
-        v3.z*=0.9997;
+        v3.z*=SHADOW_FACTOR2;
 #if SOFT_SHADOW_TAP_RANGE2 < 1
-        return v3.z > texture(texShadow, v3.xy*0.5+vec2(0,0.5)).r ? 0 : 1;
+        return SHADOW_COMPARE(v3.z, texture(texShadow, v3.xy*0.5+vec2(0,0.5)).r) ? 1.0 : 0.0;
 #else
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE2; x <= SOFT_SHADOW_TAP_RANGE2; x++) {
@@ -173,10 +187,10 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
             }
         }
         s /= SOFT_SHADOW_WEIGHT2;
-        return v3.z > s ? 0 : 1;
+        return SHADOW_COMPARE(v3.z, s) ? 1.0 : 0.0;
 #endif
     }
-    return 1;
+    return 1.0;
 }
 
 float getShadow2() {
@@ -191,69 +205,49 @@ float getShadow2() {
     vec4 shadow = vec4(1);
     shadow.xyz = vec3(0.5);
     if (canLookup(v, prop.linearDepth, mapZSplits.x*weight)) {
-        v.z*=0.9997;
-        // shadow.x = texture(texShadow, v.xy*0.5).r;
-        // shadow.w += 1;
-        // return v.z > shadow.x ? 0 : 1;
+        v.z*=SHADOW_FACTOR0;
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (v.z <= texture(texShadow, v.xy*0.5+offs).r) {
+                if (SHADOW_COMPARE(v.z, texture(texShadow, v.xy*0.5+offs).r)) {
                     s += 1;
                 }
             }
         }
         s /= SOFT_SHADOW_WEIGHT;
-        // shadow.x = v.z > s ? 0 : 1;
-        // shadow.w += 1;
-        // if (v.z>s){
-        //     return 1.0-clamp((v.z-s)*1281, 0.0, 1.0);
-        // }
         return s;
-        //return v.z > s ? 0 : 1;
     }
     if (canLookup(v2, prop.linearDepth, mapZSplits.y*weight)) {
-        v2.z*=0.9999;
-        // shadow.y = texture(texShadow, v2.xy*0.5+vec2(0.5,0)).r;
-        // shadow.w += 1;
-        // return v2.z > shadow.y ? 0 : 1;
+        v2.z*=SHADOW_FACTOR1;
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (v2.z <= texture(texShadow, v2.xy*0.5+vec2(0.5,0)+offs).r) {
+                if (SHADOW_COMPARE(v2.z, texture(texShadow, v2.xy*0.5+vec2(0.5,0)+offs).r)) {
                     s += 1;  
                 } 
             }
         }
         s /= SOFT_SHADOW_WEIGHT;
-        // shadow.y += v2.z > s ? 0 : 1;
-        // shadow.w += 1;
-        //return v2.z > s ? 0 : 1;
         return s;
     }
     if (canLookup(v3, prop.linearDepth, mapZSplits.z)) {
-        v3.z*=0.9997;
+        v3.z*=SHADOW_FACTOR2;
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (v3.z <= texture(texShadow, v3.xy*0.5+vec2(0,0.5)+offs).r) {
+                if (SHADOW_COMPARE(v3.z, texture(texShadow, v3.xy*0.5+vec2(0,0.5)+offs).r)) {
                     s += 1; 
                 }  
             }
         }
         s /= SOFT_SHADOW_WEIGHT;
-        // shadow.z = v3.z > s ? 0 : 1;
-        // shadow.w += 1;
-        // shadow.z = texture(texShadow, v3.xy*0.5+vec2(0,0.5)).r;
-        // shadow.w += 1;
-        //return v3.z > s ? 0 : 1;
         return s;
     }
     // return (shadow.x+shadow.y+shadow.z) / shadow.w;
-    return 1;
+    return 1.0;
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
 #define G_SCATTERING 0.87f
@@ -332,11 +326,8 @@ float VolumetricLight() {
 
 float pw = 1.0/ in_scene.viewport.x;
 float ph = 1.0/ in_scene.viewport.y;
-float ld(float depth) {
-    return (2.0 * in_scene.viewport.z) / (in_scene.viewport.w + in_scene.viewport.z - depth * (in_scene.viewport.w - in_scene.viewport.z));
-}
 float getdist(float rng, vec2 texcoord) {
-    return 1-clamp(ld(texture(texDepth,texcoord.xy).r)/rng*in_scene.viewport.w,0,1);
+    return 1-clamp(linearizeDepth(texture(texDepth,texcoord.xy).r)/rng*Z_NEAR,0,1);
 }
 
 float getnoise(vec2 pos) {
@@ -351,7 +342,7 @@ float edo() {
     //edge detect
     float total = 0;
     float d = edepth(texcoord.xy);
-    float dtresh = 1.0/(in_scene.viewport.w-in_scene.viewport.z)/1.0;
+    float dtresh = 1.0/(Z_FAR-Z_NEAR)/1.0;
     vec4 dc = vec4(d,d,d,d);
     vec4 sa;
     vec4 sb;
@@ -470,7 +461,7 @@ void main() {
     vec4 worldPosUnderWater=vec4(0);
     // if (RENDER_PASS == 1) {
     //     depthUnderWater = texture(texAO, pass_texcoord).r;
-    //     viewSpacePosUnderWater = unprojectPos(pass_texcoord, depthUnderWater);
+    //     viewSpacePosUnderWater = unprojectScreenCoord(pass_texcoord, depthUnderWater);
     //     worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
     // }
 
@@ -486,9 +477,9 @@ void main() {
     prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
     vec4 curScreenPos = screencoord(pass_texcoord.st, prop.depth);
-    prop.position = unprojectPos(curScreenPos);
+    prop.position = unprojectScreenCoord(curScreenPos);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
-    prop.linearDepth = expToLinearDepth(prop.depth);
+    prop.linearDepth = linearizeDepth(prop.depth);
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
     prop.NdotL = max(dot( prop.normal, SkyLight.lightDir.xyz ), 0.0);
     
@@ -540,7 +531,7 @@ void main() {
         vec2 newtc = (pass_texcoord.st + refractv.xy*refMult)*mask + pass_texcoord.st*(1-mask);
 
             depthUnderWater = texture(texAO, newtc).r;
-            viewSpacePosUnderWater = unprojectPos(screencoord(newtc.st, depthUnderWater));
+            viewSpacePosUnderWater = unprojectScreenCoord(screencoord(newtc.st, depthUnderWater));
             worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
             // sceneColor = texture(texColor, newtc);
             // prop.albedo = sceneColor.rgb;
@@ -684,7 +675,7 @@ void main() {
     // float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
     // prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
 
-    fogDepth = min(fogDepth, in_scene.viewport.w/4.0);
+    fogDepth = min(fogDepth, 256.0);
     fogDepth = max((fogDepth-16.0)*0.1f, 0.0);
     float fogeye = clamp(1.0 - clamp(dot(-prop.viewVector, vec3(0,1,0)), 0.0, 1.0) / 0.8, 0, 1)*0.4;
     fogeye += fogeye*clamp(1.0 - clamp((
@@ -714,8 +705,7 @@ void main() {
 #endif
 #if RENDER_VELOCITY_BUFFER
 
-    vec4 curViewPos = in_matrix_3D.mvp_inv * curScreenPos;
-    vec4 prevScreenPos = mvp_prev * curViewPos;
+    vec4 prevScreenPos = mat_reproject * curScreenPos;
     vec2 scale = vec2(0.5, 0.5);
     curScreenPos.xy *= scale;
     prevScreenPos.xy *= scale;
@@ -725,5 +715,18 @@ void main() {
     float velocityIntens = 1.0-fIsSky;
     out_Velocity = vec4(velocity*velocityIntens, 0, 0);
 #endif
+    // if (isSky)
+    //     prop.position.z=0;
+    // vec3 rgbd = vec3(0.02*(prop.position.z/1000.0));
+    // // if (prop.linearDepth>10)
+    // //     rgbd.r=1;
+    // float depth = -prop.position.z;
+    // if (pass_texcoord.x<0.7)
+    // depth = prop.linearDepth;
+    // if (depth>Z_NEAR) {
+    //     rgbd=mix(vec3(0,1, 0), vec3(1, 0,0), clamp((depth-Z_NEAR)/(Z_FAR-Z_NEAR), 0,1));
+    //     rgbd*=0.01;
+    // }
+    // out_Color = vec4(rgbd, alpha);
     out_Color = vec4(prop.albedo, alpha);
 }

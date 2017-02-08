@@ -11,6 +11,6 @@ uniform vec4 color_uniform;
 
 void main(void) {
 	vec4 color = pass_Color;
-	srgbToLin(color.rgb);
+	linearizeInput(color.rgb);
     out_Color = color*color_brightness*color_uniform;
 }

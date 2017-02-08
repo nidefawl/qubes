@@ -40,3 +40,5 @@ layout(std140) uniform uboSceneData
 #define PREV_CAMERA_POS in_scene.prevCameraPosition.xyz
 #define RENDER_OFFSET in_scene.framePos.xyz
 #define PX_OFFSET in_scene.pxoffset
+#define Z_FAR in_scene.viewport.w
+#define Z_NEAR in_scene.viewport.z

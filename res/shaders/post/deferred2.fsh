@@ -53,18 +53,6 @@ in float moonSunFlip;
 
 out vec4 out_Color;
 
-
-float expToLinearDepth(in float depth)
-{
-    return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
-}
-
-vec4 unprojectPos(in vec2 coord, in float depth) { 
-    vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    fragposition /= fragposition.w;
-    return fragposition;
-}
-
 vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
     vec4 v2 = shadowMVP * worldpos;
     v2 = v2 * 0.5 + 0.5;
@@ -224,7 +212,7 @@ void main() {
     prop.light = texture(texLight, pass_texcoord, 0);
 	prop.depth = texture(texDepth, pass_texcoord).r;
     prop.blockinfo = texture(texMaterial, pass_texcoord, 0);
-    prop.linearDepth = expToLinearDepth(prop.depth);
+    prop.linearDepth = linearizeDepth(prop.depth);
     prop.position = unprojectPos(pass_texcoord, prop.depth);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);

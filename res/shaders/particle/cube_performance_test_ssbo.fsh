@@ -38,7 +38,7 @@ void main(void) {
 	vec4 tex = texture(tex0, texcoord.st);
 #endif
 	vec3 color_adj = tex.rgb;
-	srgbToLin(color_adj.rgb);
+	linearizeInput(color_adj.rgb);
 	float alpha = tex.a*1;
 	vec3 outNormal = normal;
 

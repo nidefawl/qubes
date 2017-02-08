@@ -24,8 +24,10 @@ void main(void) {
 	if (tex.a<1.0)
 		discard;
 	vec3 color_adj = tex.rgb;
-	color_adj *= color.rgb;
-	srgbToLin(color_adj.rgb);
+	vec3 color_adj2 = color.rgb;
+	// srgbToLin(color_adj.rgb);
+	srgbToLin(color_adj2.rgb);
+	color_adj *= color_adj2.rgb;
 	color_adj *= Idiff * 1.8;
 	vec3 toneMapped = ToneMap(color_adj, 2.0f);
 	out_Color = vec4(toneMapped, tex.a);

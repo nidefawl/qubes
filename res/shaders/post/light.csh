@@ -1,6 +1,7 @@
 #version 430
 
 #pragma include "ubo_scene.glsl"
+#pragma include "unproject.glsl"
 
 
 #define WORK_GROUP_SIZE 32
@@ -13,15 +14,11 @@
 struct SurfaceProperties {
     vec3    albedo;                                 //Diffuse texture aka "color texture"
     vec3    normal;                                 //Screen-space surface normals
-    float   depth;                                  //Scene depth
-    float   linearDepth;                    //Linear depth
-    float   NdotL;
+    float   depth;                                  //non-linear depth
+    float   linearDepth;                                  //world depth
     vec4    position;  // camera/eye space position
     vec4    worldposition;  // world space position
     vec3    viewVector;                     //Vector representing the viewing direction
-    uvec4    blockinfo;
-    float   sunSpotDens;
-    vec4   light;
 } prop;
 
 struct PointLight
@@ -67,16 +64,7 @@ shared uint maxDepth;
 shared uint pointLightCount;
 shared uint pointLightIndex[MAX_LIGHTS];
 shared uint maxLightIndex;
-float expToLinearDepth(in float depth)
-{
-    return 2.0f * in_scene.viewport.z * in_scene.viewport.w / (in_scene.viewport.w + in_scene.viewport.z - (2.0f * depth - 1.0f) * (in_scene.viewport.w - in_scene.viewport.z));
-}
 
-vec4 unprojectPos(vec2 coord, in float depth) { 
-    vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    fragposition /= fragposition.w;
-    return fragposition;
-}
 
 //----------------------------------------------------------------------------
 vec3 ReconstructViewPosition(float zBuffer, uvec2 fragCoord)
@@ -193,7 +181,7 @@ void main()
     vec4 nl = imageLoad(geometryNormal, pixelPos);
     prop.normal = nl.rgb * 2.0f - 1.0f;
     prop.depth = texelFetch(depthBuffer, pixelPos, 0).r;
-    prop.linearDepth = expToLinearDepth(prop.depth);
+    prop.linearDepth = linearizeDepth(prop.depth);
     prop.position = unprojectPos(texCoord, prop.depth);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
     // prop.worldposition.xyz /= prop.worldposition.w;

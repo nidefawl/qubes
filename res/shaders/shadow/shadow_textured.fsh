@@ -16,5 +16,5 @@ void main() {
 	vec4 tex=texture(blockTextures, vec3(texcoord.st, BLOCK_TEX_SLOT(blockinfo)));
 	if (tex.a<1.0)
 		discard;
-    out_Color = vec4(vec3(0), 1.0);
+    out_Color = vec4(vec3(1.0), 1.0);
 }

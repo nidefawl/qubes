@@ -2,8 +2,8 @@
  
 #pragma include "ubo_scene.glsl"
 #pragma include "dither.glsl"
+#pragma include "unproject.glsl"
 
-#pragma include "vertex_layout.glsl"
 #pragma include "blockinfo.glsl"
 #pragma include "atmosphere.glsl"
 #pragma include "sky_scatter.glsl"
@@ -37,12 +37,6 @@ out uvec4 out_Material;
 out vec4 out_Light;
 #endif
 
-vec4 unprojectPos(in vec2 coord, in float depth) { 
-    // vec4 fragposition = in_matrix_3D.proj_inv * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    vec4 fragposition = inverse(in_matrix_3D.vp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
-    fragposition /= fragposition.w;
-    return fragposition;
-}
 
 
 void blendColor(inout vec4 dest, in vec3 color, in float alpha) {
@@ -51,8 +45,8 @@ void blendColor(inout vec4 dest, in vec3 color, in float alpha) {
 }
 
 void main() { 
-	vec4 pos = unprojectPos(pass_texcoord.st, 1.0);
-	vec3 rayDir=-normalize(pos.xyz);
+	  vec4 pos = unprojectPos(pass_texcoord.st, DEPTH_FAR);
+	  vec3 rayDir=-normalize(pos.xyz);
   	vec3 rayOrigin = vec3(0);
 
     vec3 sunDir = normalize(-SkyLight.lightDir.xyz);
