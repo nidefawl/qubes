@@ -33,6 +33,11 @@ public class AssetManagerServer extends AssetManager {
     public Shader loadShader(IResourceManager mgr, String name, IShaderDef def) {
         return null;
     }
+    
+    @Override
+    public Shader loadShaderBinary(IResourceManager mgr, String nameFSH, String nameVSH, IShaderDef def) {
+        return null;
+    }
 
     @Override
     public ShaderSource getLastFailedShaderSource() {

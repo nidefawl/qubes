@@ -12,15 +12,15 @@ import java.util.List;
 
 import org.lwjgl.opengl.*;
 
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.util.GameError;
 
 
 public class GL {
 
-    private static boolean directStateAccess;
+    private static GLCapabilities caps;
+    
     public static void bindTexture(int texunit, int target, int texture) {
-        if (!directStateAccess) {
+        if (!caps.GL_EXT_direct_state_access) {
             int i = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
             if (i != texunit) {
                 GL13.glActiveTexture(texunit);    
@@ -34,8 +34,8 @@ public class GL {
         }
     }
 
-    public static List<String> validateCaps() {
-        final GLCapabilities caps = getCaps();
+    public static List<String> validateCaps(GLCapabilities _caps) {
+        caps = _caps;
         ArrayList<String> missingExt = new ArrayList<>();
         if (!caps.OpenGL44) {
             missingExt.add("OpenGL >= 4.4");
@@ -52,7 +52,7 @@ public class GL {
         if (!caps.GL_ARB_uniform_buffer_object) {
             missingExt.add("GL_ARB_uniform_buffer_object");
         }
-        directStateAccess = caps.GL_EXT_direct_state_access;
+        
         return missingExt;
     }
 
@@ -74,11 +74,7 @@ public class GL {
         org.lwjgl.opengl.GL11.glLoadMatrixf(matrix);
     }
 
-    public static GLCapabilities getCaps() {
-        return org.lwjgl.opengl.GL.getCapabilities();
-    }
     public static void glTexStorage3D(int target, int levels, int internalformat, int width, int height, int depth) {
-        GLCapabilities caps = getCaps();
         if (caps.OpenGL42) {
             GL42.glTexStorage3D(target, levels, internalformat, width, height, depth);
         } else if (caps.GL_ARB_texture_storage) {
@@ -104,7 +100,6 @@ public class GL {
     }
 
     public static void glTexStorage2D(int target, int levels, int internalformat, int width, int height) {
-        GLCapabilities caps = getCaps();
         if (caps.OpenGL42) {
             GL42.glTexStorage2D(target, levels, internalformat, width, height);
         } else if (caps.GL_ARB_texture_storage) {
@@ -134,7 +129,16 @@ public class GL {
             GL11.glDeleteTextures(tex);
         }
     }
+
     public static boolean isBindlessSuppported() {
-        return false;//GL.getCaps().GL_NV_shader_buffer_load;
+        return caps.GL_NV_shader_buffer_load && caps.GL_NV_bindless_multi_draw_indirect;
+    }
+
+    public static boolean isClipControlSupported() {
+        return caps.OpenGL45 || caps.GL_ARB_clip_control;
+    }
+
+    public static boolean isGeometryShader4Support() {
+        return caps.GL_EXT_geometry_shader4;
     }
 }

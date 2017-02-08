@@ -6,14 +6,16 @@ import static org.lwjgl.opengl.GL43.glGetProgramResourceIndex;
 import static org.lwjgl.opengl.GL43.glShaderStorageBlockBinding;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
 
-import org.lwjgl.opengl.ARBGeometryShader4;
-import org.lwjgl.opengl.GL43;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
@@ -86,6 +88,33 @@ public abstract class Shader implements IManagedResource {
         if (getStatus(iShader, GL_COMPILE_STATUS) != 1) {
             Engine.checkGLError("getStatus");
             throw new ShaderCompileError(src, String.format("%s %s", name, typeToString(type)), log);
+        } else if (!log.isEmpty()) {
+            System.out.println(String.format("%s %s", name, typeToString(type)));
+            System.out.println(log);
+        }
+        return iShader;
+    }
+    static int buildSpirShader(int type, AssetBinary src, String name) {
+        int iShader = glCreateShader(type);
+        Engine.checkGLError("glCreateShader");
+        if (iShader == 0) {
+            throw new GameError(String.format("Failed creating %s shader", typeToString(type)));
+        }
+        byte[] data = src.getData();
+        buf.clear();
+        buf.put(iShader).flip();
+        ByteBuffer buf2 = BufferUtils.createByteBuffer(data.length);
+        buf2.put(data).flip();
+        GL41.glShaderBinary(buf, ARBGLSPIRV.GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, buf2);
+        Engine.checkGLError("glShaderBinary");
+        ARBGLSPIRV.glSpecializeShaderARB(iShader, "main", new int[0], new int[0]);
+        System.out.println(getLog(0, iShader));
+        Engine.checkGLError("glSpecializeShaderARB");
+        String log = getLog(0, iShader);
+        Engine.checkGLError("getLog");
+        if (getStatus(iShader, GL_COMPILE_STATUS) != 1) {
+            Engine.checkGLError("getStatus");
+            throw new ShaderCompileError("spir "+src.getName(), String.format("%s %s", name, typeToString(type)), log);
         } else if (!log.isEmpty()) {
             System.out.println(String.format("%s %s", name, typeToString(type)));
             System.out.println(log);

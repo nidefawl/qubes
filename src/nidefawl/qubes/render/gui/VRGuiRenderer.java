@@ -347,7 +347,7 @@ public class VRGuiRenderer {
                 //disable depth test + draw cursor
                 if (pos == this.hit && pos.hasHit&&!pos.fadeOut) {
                     GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, this.texCursor);
-                    GL11.glDepthFunc(GL11.GL_GREATER);
+                    Engine.setDepthFunc(GL11.GL_GREATER);
                     float fCursorSize = 32.0f;
                     float fMx = (float) pos.mouseX;
                     float fMy = (float) (rH - 1 - pos.mouseY) - fCursorSize;
@@ -359,7 +359,7 @@ public class VRGuiRenderer {
                     tess.add(fMx, fMy, zMouse, 0, 0);
                     tess.add(fMx + fCursorSize, fMy, zMouse, 1, 0);
                     tess.draw(GL_QUADS);
-                    GL11.glDepthFunc(GL11.GL_LEQUAL);
+                    Engine.setDepthFunc(GL11.GL_LEQUAL);
                 }
                 tess.setOffset(0, 0, 0);
                 //        float mX = this.vIntersectionGuiSpace.x;

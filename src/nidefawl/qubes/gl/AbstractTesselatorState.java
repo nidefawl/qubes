@@ -14,6 +14,7 @@ public abstract class AbstractTesselatorState {
     public boolean       useTexturePtr;
     public boolean       useNormalPtr;
     public boolean       useUINTPtr;
+    public int idxCount;
     
     public void copyTo(AbstractTesselatorState out) {
         out.vertexcount = this.vertexcount;
@@ -21,8 +22,10 @@ public abstract class AbstractTesselatorState {
         out.useTexturePtr = this.useTexturePtr;
         out.useNormalPtr = this.useNormalPtr;
         out.useUINTPtr = this.useUINTPtr;
+        out.idxCount = this.idxCount;
     }
     public abstract GLVBO getVBO();
+    public abstract GLVBO getVBOIndices();
 
 
     public int getIdx(int v) {
@@ -42,55 +45,25 @@ public abstract class AbstractTesselatorState {
         return stride;
     }
 
-
-    public void setAttrPtr() {
-        int stride = getVSize();
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 4, GL11.GL_FLOAT, false, stride*4, 0);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+0);
-        
-        int offset = 4;
-        if (useNormalPtr) {
-            GL20.glEnableVertexAttribArray(1);
-            GL20.glVertexAttribPointer(1, 3, GL11.GL_BYTE, false, stride*4, offset*4);
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+1);
-            offset+=1;
-        }
-        if (useTexturePtr) {
-            GL20.glEnableVertexAttribArray(2);
-            GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, stride*4, offset*4);
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+2);
-            offset+=2;
-        }
-        if (useColorPtr) {
-            GL20.glEnableVertexAttribArray(3);
-            GL20.glVertexAttribPointer(3, 4, GL11.GL_UNSIGNED_BYTE, true, stride*4, offset*4);
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+3);
-            offset+=1;
-        }
-        if (useUINTPtr) {
-            //BLOCKINFO
-            GL20.glEnableVertexAttribArray(4);
-            GL30.glVertexAttribIPointer(4, 4, GL11.GL_UNSIGNED_SHORT, stride*4, offset*4);
-            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("AttribPtr "+4);
-            offset+=2;
-        }
-    }
-    public void drawVBO(int mode) {
+    static void drawVBO(int mode, int idxCount) {
         Stats.tessDrawCalls++;
-        GL11.glDrawArrays(mode, 0, vertexcount);
-        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+", texture: "+useTexturePtr+")");
+//        GL11.glDrawArrays(mode, 0, vertexcount);
+        GL11.glDrawElements(mode, idxCount, GL11.GL_UNSIGNED_INT, 0);
+        
+        
     }
 
     public void drawQuads() {
-        bindAndDraw(GL11.GL_QUADS);
+        bindAndDraw(GL11.GL_TRIANGLES);
     }
 
     public void bindAndDraw(int mode) {
         int tessSetting = getSetting();
         Engine.bindVAO(GLVAO.vaoTesselator[tessSetting], false);
         Engine.bindBuffer(getVBO());
-        drawVBO(mode);
+        Engine.bindIndexBuffer(getVBOIndices());
+        drawVBO(mode, idxCount);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+","+idxCount+")");
     }
     public int getSetting() {
         int s = 0;

@@ -20,9 +20,7 @@ import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.IThreadedWork;
-import nidefawl.qubes.util.ThreadedWorker;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
@@ -474,6 +472,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                             }
                         }
                         if (bindless && buffer.getDrawCount() > 0) {
+                            Stats.regionDrawCalls++;
                             buffer.render();
                             buffer.preDraw(GLVAO.vaoBlocksBindless);
                         }
@@ -538,6 +537,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         }
         if (bindless && buffer.getDrawCount() > 0) {
             buffer.render();
+            Stats.regionDrawCalls++;
         }
 //        if (occlTestThisFrame > 0) {
 //            System.out.println(occlTestThisFrame);

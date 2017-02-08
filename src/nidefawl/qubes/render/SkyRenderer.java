@@ -408,7 +408,9 @@ public class SkyRenderer extends AbstractRenderer {
     private void renderSkyBox(float f) {
 //        Engine.setBlend(false);
         cloudsShader.enable();
+        Engine.checkGLError("cloudsShader1");
         Engine.drawFSTri();
+        Engine.checkGLError("cloudsShader2");
 //        Engine.setBlend(true);
         spriteShader.enable();
         GL30.glBindVertexArray(vaoPos);

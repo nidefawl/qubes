@@ -47,8 +47,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static boolean GL_ERROR_CHECKS = true;
     public static boolean VR_SUPPORT = false;
     public static long    windowId        = 0;
-    protected static int            initWidth       = (int) (1920*0.5f);
-    protected static int            initHeight      = (int) (1080*0.5f);
+    protected static int            initWidth       = (int) (1920);
+    protected static int            initHeight      = (int) (1080);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
@@ -138,7 +138,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             initGLContext();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("early initGLContext");
-            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ACCUM_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("early glClear");
             updateDisplay();
@@ -149,7 +149,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             return;
         }
         try {
-            List<String> list = GL.validateCaps();
+            List<String> list = GL.validateCaps(caps);
             if (!list.isEmpty()) {
                 ArrayList<String> desc = new ArrayList<>();
                 desc.add("You graphics card does not support some of the required OpenGL features");
@@ -278,16 +278,17 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             // Configure our window
             glfwDefaultWindowHints();// optional, the current window hints are already the default
             glfwWindowHint(GLFW_SAMPLES, 0);
-            glfwWindowHint(GLFW_VISIBLE, GL_FALSE);// the window will stay hidden after creation
-            glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);// the window will be resizable
+            glfwWindowHint(GLFW_VISIBLE, GLFW.GLFW_FALSE);// the window will stay hidden after creation
+            glfwWindowHint(GLFW_RESIZABLE, GLFW.GLFW_TRUE);// the window will be resizable
             if (!debugContext) {
-//              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-//                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+//              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 //              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             }
 
-            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_ERROR_CHECKS ? GL_TRUE : GL_FALSE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+            glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+            glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW.GLFW_NO_ROBUSTNESS);
             //            glfwWindowHint(GLFW_RED_BITS, 8);
             //            glfwWindowHint(GLFW_GREEN_BITS, 8);
             //            glfwWindowHint(GLFW_BLUE_BITS, 8);
@@ -755,9 +756,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glCullFace(GL_BACK)");
         int fastNice = GL_NICEST;//GL_FASTEST;
-        glHint(GL_PERSPECTIVE_CORRECTION_HINT, fastNice);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glHint(GL_PERSPECTIVE_CORRECTION_HINT, fastNice)");
         glHint(GL_POINT_SMOOTH_HINT, fastNice);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glHint(GL_POINT_SMOOTH_HINT, fastNice)");
@@ -767,16 +765,12 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         glHint(GL_POLYGON_SMOOTH_HINT, fastNice);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glHint(GL_POLYGON_SMOOTH_HINT, fastNice)");
-        glHint(GL_FOG_HINT, fastNice);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glHint(GL_FOG_HINT, fastNice)");
         glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, fastNice);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("glHint(GL13.GL_TEXTURE_COMPRESSION_HINT, fastNice)");
-        glHint(GL14.GL_GENERATE_MIPMAP_HINT, fastNice);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glHint(GL14.GL_GENERATE_MIPMAP_HINT, fastNice)");
         glHint(GL20.GL_FRAGMENT_SHADER_DERIVATIVE_HINT, fastNice);
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("glHint(GL20.GL_FRAGMENT_SHADER_DERIVATIVE_HINT, fastNice)");
         GL11.glGetError();
         setVSync(true);
         if (Game.GL_ERROR_CHECKS)
@@ -819,6 +813,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 NativeInterface.getInstance().gameCrashed(info);
                 return;
             }
+            for (String s : desc) {
+                System.err.println(s);
+            }
+            if (throwable != null)
             throwable.printStackTrace();
 
             if (throwable instanceof ShaderCompileError) {

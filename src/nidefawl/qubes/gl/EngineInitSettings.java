@@ -7,6 +7,7 @@ public class EngineInitSettings {
     public final static EngineInitSettings INIT_ALL = new EngineInitSettings() {
         @Override
         protected void set() {
+            inverseZBuffer = true;
             initShadowRenderer = true;
             initBlurRenderer = true;
             initWorldRenderer = true;
@@ -50,4 +51,5 @@ public class EngineInitSettings {
     public boolean initSkyRenderer;
     public boolean initFinalRenderer;
     public boolean initModelRenderer;
+    public boolean inverseZBuffer;
 }

@@ -25,6 +25,7 @@ import nidefawl.qubes.texture.array.NoiseTextureArray;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.vec.DoubleMatrix4;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
@@ -109,7 +110,7 @@ public class FinalRenderer extends AbstractRenderer {
         }
         shaderDeferred.setProgramUniform1i("texSlotNoise", slot);
         if (Engine.getRenderVelocityBuffer() ) {
-            shaderDeferred.setProgramUniformMatrix4("mvp_prev", false, Engine.getMatSceneMVPPrev().get(), false);    
+            shaderDeferred.setProgramUniformMatrix4("mat_reproject", false, Engine.getMatReproject().get(), false);    
         }
         
 
@@ -149,6 +150,7 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(false, name, "light", Engine.getLightTexture());
             if (pass == 0) {
                 GLDebugTextures.readTexture(false, name, "texShadow", Engine.getShadowDepthTex(), 2);
+                GLDebugTextures.readTexture(false, name, "texShadowDbg", Engine.shadowRenderer.getDebugTexture());
                 GLDebugTextures.readTexture(false, name, "AOOut", Engine.getAOTexture());
             }
             if (pass == 1) {
@@ -174,18 +176,25 @@ public class FinalRenderer extends AbstractRenderer {
         top.clearFrameBuffer();
         Engine.drawFSTri();
         shaderDownsample4x.enable();
+        
         FrameBuffer lastBound = this.fbLuminanceDownsample[0];
         for (int i = 0; i < this.fbLuminanceDownsample.length-1; i++) {
+            
 //            System.out.println("input w/h "+this.fbLuminanceDownsample[i].getWidth()+", "+this.fbLuminanceDownsample[i].getHeight());
+            
             twoPixelX = 2.0f / (float) this.fbLuminanceDownsample[i].getWidth();
             twoPixelY = 2.0f / (float) this.fbLuminanceDownsample[i].getHeight();
             lastBound = this.fbLuminanceDownsample[i+1];
+
             Engine.setViewport(0, 0, lastBound.getWidth(), lastBound.getHeight()); // 16x downsampled render resolutino
+            
             shaderDownsample4x.setProgramUniform2f("twoTexelSize", twoPixelX, twoPixelY);
+
             lastBound.bind();
             lastBound.clearFrameBuffer();
             GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.fbLuminanceDownsample[i].getTexture(0));
             Engine.drawFSTri();
+
         }
         int indexIn = this.frame%2;
         int indexOut = 1-indexIn;
@@ -281,12 +290,12 @@ public class FinalRenderer extends AbstractRenderer {
     }
 
 
-    public void renderAA(int inputTexture, FrameBuffer output) {
+    public void renderAA(int inputTexture, FrameBuffer output, boolean isWorld) {
         if (smaa != null) {
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("SMAA");
             this.smaa.render(inputTexture, 
-                    Engine.getRenderMaterialBuffer()?fbDeferred.getTexture(getAttPointMaterial()):0, 
-                    Engine.getRenderVelocityBuffer()?fbDeferred.getTexture(getAttPointVelocity()):0, 
+                    Engine.getRenderMaterialBuffer()&&isWorld?fbDeferred.getTexture(getAttPointMaterial()):TMgr.getEmpty(), 
+                    Engine.getRenderVelocityBuffer()&&isWorld?fbDeferred.getTexture(getAttPointVelocity()):TMgr.getEmpty(), 
                             0, output);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         } else {
@@ -445,7 +454,7 @@ public class FinalRenderer extends AbstractRenderer {
                 public String getDefinition(String define) {
                     if ("SSR".equals(define)) {
                         int ssr = Engine.RENDER_SETTINGS.ssr;
-                        return "#define SSR_"+(ssr<1?1:ssr>2?2:ssr);
+                        return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
                     }
                     return null;
                 }
@@ -637,6 +646,7 @@ public class FinalRenderer extends AbstractRenderer {
         if (smaa != null) {
             this.smaa.releaseAll(null);
         }
+        Engine.TEMPORAL_OFFSET = false;
         smaa = null;
         if (GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.smaaMode > 0) {
             smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, Engine.RENDER_SETTINGS.smaaMode==2);
@@ -713,7 +723,6 @@ public class FinalRenderer extends AbstractRenderer {
         fbDeferred.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
         fbDeferred.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
         fbDeferred.setClearColor(GL_COLOR_ATTACHMENT0, 1.0F, 1.0F, 1.0F, 1.0F);
-        getAttPointMaterial();
         if (Engine.getRenderMaterialBuffer())  {
             int attPoint = GL_COLOR_ATTACHMENT0+getAttPointMaterial();
             fbDeferred.setColorAtt(attPoint, GL_R16F);

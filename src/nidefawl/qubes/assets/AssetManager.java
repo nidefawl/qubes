@@ -3,6 +3,7 @@ package nidefawl.qubes.assets;
 import java.io.*;
 import java.util.*;
 
+import nidefawl.qubes.assets.AssetTexture.Type;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.*;
 
@@ -35,6 +36,8 @@ public abstract class AssetManager {
 
     public abstract AssetVoxModel loadVoxModel(String name);
 
+    public abstract Shader loadShaderBinary(IResourceManager mgr, String nameFSH, String nameVSH, IShaderDef def);
+    
     public abstract Shader loadShader(IResourceManager mgr, String name);
 
     public abstract Shader loadShader(IResourceManager mgr, String name, IShaderDef def);
@@ -46,29 +49,6 @@ public abstract class AssetManager {
     public InputStream getInputStream(String string) {
         AssetBinary b = loadBin(string);
         return new ByteArrayInputStream(b.getData());
-    }
-    
-    public AssetBinary loadBin(String name) {
-        AssetInputStream is = null;
-        try {
-            is = findResource(name, false);
-            if (is != null && is.inputStream != null) {
-                AssetBinary asset = new AssetBinary(name);
-                asset.load(is);
-                return asset;
-            }
-        } catch (Exception e) {
-            throw new GameError("Cannot load asset '" + name + "': " + e, e);
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    throw new GameError("Error while closing inputstream", e);
-                }
-            }
-        }
-        throw new GameError("Cannot load asset '" + name + "': File does not exist");
     }
 
     public Collection<AssetPath> collectAssets(String path, String extension) {
@@ -85,7 +65,7 @@ public abstract class AssetManager {
             AssetPack pack = assetPacks.get(i);
             try {
                 is = pack.getInputStream(name);
-                if (is != null && is != null && is.inputStream != null) {
+                if (is != null && is.inputStream != null) {
                     return is;
                 }
             } catch (IOException e1) {
@@ -106,44 +86,20 @@ public abstract class AssetManager {
     }
 
 
-    public void reloadPNGAsset(AssetTexture asset) {
-        String name = asset.getName();
-        AssetInputStream is = null;
-        try {
-            is = findResource(name, false);
-            if (is != null && is.inputStream != null) {
-                if (!asset.loadPNGDecoder(is)) {
-                    is = is.source.getInputStream(name);
-                    asset.loadImageIO(is);
-                }
-                return;
-            }
-        } catch (Exception e) {
-            throw new GameError("Cannot load asset '" + name + "': " + e, e);
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    throw new GameError("Error while closing inputstream", e);
-                }
-            }
-        }
-        throw new GameError("Cannot load asset '" + name + "': File does not exist");
-    }
     public AssetTexture loadPNGAsset(String name) {
         return loadPNGAsset(name, false);
     }
     public AssetTexture loadPNGAsset(String name, boolean optional) {
+        return loadTexture(name, Type.PNG, optional);
+    }
+    
+    public AssetTexture loadTexture(String name, AssetTexture.Type type, boolean optional) {
         AssetInputStream is = null;
         try {
             is = findResource(name, optional);
-            if (is != null && is.inputStream != null) {
+            if (is != null) {
                 AssetTexture asset = new AssetTexture(name);
-                if (!asset.loadPNGDecoder(is)) {
-                    is = is.source.getInputStream(name);
-                    asset.loadImageIO(is);
-                }
+                asset.load(type, is);
                 return asset;
             }
         } catch (Exception e) {
@@ -157,8 +113,29 @@ public abstract class AssetManager {
                 }
             }
         }
-        if (optional) 
-            return null;
-        throw new GameError("Cannot load asset '" + name + "': File does not exist");
+        return null;
+    }
+    
+    public AssetBinary loadBin(String name) {
+        AssetInputStream is = null;
+        try {
+            is = findResource(name, false);
+            if (is != null) {
+                AssetBinary asset = new AssetBinary(name);
+                asset.load(is);
+                return asset;
+            }
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + name + "': " + e, e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new GameError("Error while closing inputstream", e);
+                }
+            }
+        }
+        return null;
     }
 }

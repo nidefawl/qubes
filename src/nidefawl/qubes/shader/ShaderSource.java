@@ -14,7 +14,9 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetInputStream;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GPUVendor;
+import nidefawl.qubes.texture.array.BlockTextureArray;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.StringUtil;
@@ -45,9 +47,9 @@ public class ShaderSource {
         this.shaderSourceBundle = shaderSourceBundle;
     }
     void load(AssetManager assetManager, String path, String name, IShaderDef def, int shaderType) throws IOException {
-        this.processed = readParse(assetManager, path, name, def, 0, shaderType);
+        this.processed = readParse(assetManager, path, name, def, 0, shaderType, name);
     }
-    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, int resolveDepth, int shaderType) throws IOException {
+    private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, int resolveDepth, int shaderType, String srcName) throws IOException {
         boolean resolve = resolveDepth > 0;
         AssetInputStream is = null;
         BufferedReader reader = null;
@@ -122,7 +124,7 @@ public class ShaderSource {
                                 throw new ShaderCompileError(line, name, "Recursive resolving failed. Depth > 4");
                             }
                             String filename = m.group(1);
-                            String include = readParse(assetManager, path, filename, def, resolveDepth+1, shaderType);
+                            String include = readParse(assetManager, path, filename, def, resolveDepth+1, shaderType, name);
                             
                             if (include == null) {
                                 throw new ShaderCompileError(line, name, "Preprocessor error: Failed loading include \"" + filename + "\"");
@@ -138,7 +140,7 @@ public class ShaderSource {
                                 s = def.getDefinition(define);
                             }
                             if (s == null)
-                                s = getGlobalDef(define);
+                                s = getGlobalDef(srcName, define);
                             if (s == null && defineDefault != null)
                                 s = "#define "+define+" "+defineDefault;
                             String replace = s == null ? "" : s;
@@ -188,10 +190,11 @@ public class ShaderSource {
     }
 
     /**
-     * @param define
+     * @param name
+     * @param define 
      * @return
      */
-    private String getGlobalDef(String define) {
+    private String getGlobalDef(String name, String define) {
         if ("IS_SKY".equals(define)) {
             return "#define IS_SKY(blockid) float(blockid=="+Block.air.id+"u)";
         }
@@ -200,6 +203,21 @@ public class ShaderSource {
         }
         if ("IS_LIGHT".equals(define)) {
             return "#define IS_LIGHT(blockid) float(blockid==2222u)";
+        }
+        if ("SRGB_TEXTURES".equals(define)) {
+            if (BlockTextureArray.getInstance().isSRGB()) {
+                return "#define SRGB_TEXTURES"; 
+            }
+            return "#define SRGB_TEXTURES";
+            
+        }
+        if ("Z_INVERSE".equals(define)) {
+            System.out.println("has inverse z define "+name);
+            if (Engine.INVERSE_Z_BUFFER) {
+                return "#define Z_INVERSE 1";
+            }
+            return "#define Z_INVERSE 0"; 
+            
         }
 //        if ("IS_LEAVES".equals(define)) {
 //            return "#define IS_LEAVES(blockid) (blockid=="+Block.leaves.id+"u)";
@@ -229,6 +247,9 @@ public class ShaderSource {
     }
     public String getSource() {
         return this.processed;
+    }
+    public void setSource(String processed) {
+        this.processed = processed;
     }
     public String decorateErrors(String log) {
         String errLog = "";

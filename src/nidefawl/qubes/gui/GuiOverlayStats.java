@@ -138,17 +138,20 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("y: %.2f", v.y));
         info.add(String.format("z: %.2f", v.z));
         Vector3f viewDir = Engine.camera.getViewDirection();
-        info.add(String.format("viewdir: %s", viewDir.toString()));
-        info.addAll(Game.instance.glProfileResults);
+        info.add(String.format("viewdir: %.2f %.2f %.2f", viewDir.x, viewDir.y, viewDir.z));
         
         render = true;
     }
 
     public void render(float fTime, double mx, double mY) {
         Shaders.textured.enable();
-
         int y = 20;
         float maxW = 250;
+        if (!Game.instance.glProfileResults.isEmpty()) {
+            maxW*=2;
+            maxW+=40;
+        }
+//        info.addAll(Game.instance.glProfileResults);)
 //        statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             statsFontBig.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
@@ -162,19 +165,44 @@ public class GuiOverlayStats extends Gui {
                 y += statsFontBig.getLineHeight();
             }
             float totalHeight = (statsFontSmall.getLineHeight())*info.size();
+            float totalHeight2 = (statsFontSmall.getLineHeight())*Game.instance.glProfileResults.size();
             y-=statsFontBig.getLineHeight()*1.7f;
+            int topy=y;
             Tess.instance.setColorF(0, 0.8f);
-            Tess.instance.add(0, y+totalHeight+8);
-            Tess.instance.add(maxW, y+totalHeight+8);
-            Tess.instance.add(maxW, y);
-            Tess.instance.add(0, y);
-            Shaders.colored.enable();
+            if (!Game.instance.glProfileResults.isEmpty()) {
+                Tess.instance.add(maxW/2, y+totalHeight+8);
+                Tess.instance.add(maxW, y+totalHeight+8);
+                Tess.instance.add(maxW, y);
+                Tess.instance.add(maxW/2, y);
+                Tess.instance.setColorF(0x221100, 0.98f);
+                Tess.instance.add(0, y+totalHeight2+8);
+                Tess.instance.add(maxW/2, y+totalHeight2+8);
+                Tess.instance.add(maxW/2, y);
+                Tess.instance.add(0, y);
+                Shaders.colored.enable();
+            } else {
+
+                Tess.instance.add(0, y+totalHeight+8);
+                Tess.instance.add(maxW, y+totalHeight+8);
+                Tess.instance.add(maxW, y);
+                Tess.instance.add(0, y);
+            }
             Tess.instance.drawQuads();
+            if (!Game.instance.glProfileResults.isEmpty()) {
+                Engine.pxStack.push(maxW/2, 0, 0);
+            }
             y+=statsFontSmall.getLineHeight()*1.2f;
             Shaders.textured.enable();
             for (String st : info) {
                 statsFontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
                 y += statsFontSmall.getLineHeight();
+            }
+            if (!Game.instance.glProfileResults.isEmpty()) {
+                int y2=topy;
+                for (String st : Game.instance.glProfileResults) {
+                    y2 += statsFontSmall.getLineHeight();
+                    statsFontSmall.drawString(st, 5-maxW/2, y2, 0xFFFFFF, true, 1.0F);
+                }
             }
 
         if (System.currentTimeMillis() - messageTime < 5000) {
@@ -216,7 +244,10 @@ public class GuiOverlayStats extends Gui {
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 
         Shader.disable();
- 
+
+        if (!Game.instance.glProfileResults.isEmpty()) {
+            Engine.pxStack.pop();
+        }
     }
 
     public void setMessage(String message) {

@@ -87,7 +87,7 @@ public class GLVAO {
             GL43.glVertexAttribBinding(attrib.attribindex, 0);
         }
         Engine.checkGLError("init vao");
-        this.useBindless = GL.isBindlessSuppported();
+        this.useBindless = makeBindless()&&GL.isBindlessSuppported();
         if (this.useBindless) {
             this.vaoIdBindless = GL30.glGenVertexArrays();
             GL30.glBindVertexArray(this.vaoIdBindless);
@@ -103,6 +103,10 @@ public class GLVAO {
             Engine.checkGLError("init vao nv bindless");
         }
         GL30.glBindVertexArray(0);
+    }
+
+    protected boolean makeBindless() {
+        return true;
     }
 
     public final static GLVAO vaoBlocksShadow = new GLVAO() {
@@ -122,6 +126,14 @@ public class GLVAO {
             vertexAttribIFormat(2, 2, GL11.GL_UNSIGNED_SHORT, 1);
 
 
+        }
+    };
+    public final static GLVAO vaoEmpty = new GLVAO() {
+        void init() {
+        }
+
+        protected boolean makeBindless() {
+            return false;
         }
     };
     public final static GLVAO vaoModel = new GLVAO() {

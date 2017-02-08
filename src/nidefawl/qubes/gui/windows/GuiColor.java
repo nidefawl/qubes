@@ -27,7 +27,6 @@ public class GuiColor extends GuiWindow {
         this.colorPick = new ColorPicker(this) {
             @Override
             public void onColorChange(int rgb2) {
-                System.out.println("color "+rgb2);
                 if (Game.instance != null) {
                     World w = Game.instance.getWorld();
                     PlayerSelf p = Game.instance.getPlayer();

@@ -37,6 +37,7 @@ public abstract class TextureArray {
     protected boolean report;
     public float loadprogress;
     public float uploadprogress;
+    protected int internalFormat = GL_RGBA8;
 
     public TextureArray(int maxTextures) {
         this.textures = new int[maxTextures];
@@ -113,6 +114,16 @@ public abstract class TextureArray {
         directBuf.position(0).limit(data.length);
         return directBuf;
     }
+    protected ByteBuffer put(ByteBuffer directBuf, ByteBuffer bufdata) {
+        int size = bufdata.remaining();
+        if (directBuf == null || directBuf.capacity() < size) {
+            directBuf = ByteBuffer.allocateDirect(size).order(ByteOrder.nativeOrder());
+        }
+        directBuf.clear();
+        directBuf.put(bufdata);
+        directBuf.position(0).limit(size);
+        return directBuf;
+    }
 
     public int getTextureIdx(int block, int texId) {
         return this.textures[block << subtypeBits | texId];
@@ -167,7 +178,7 @@ public abstract class TextureArray {
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         Engine.checkGLError("pre glTexStorage3D");
         nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, 
-                GL_RGBA8,              //Internal format
+                this.internalFormat,              //Internal format
                 this.tileSize, this.tileSize,   //width,height
                 this.numTextures       //Number of layers
         );

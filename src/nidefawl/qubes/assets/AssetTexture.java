@@ -5,14 +5,20 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferUShort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
+import nidefawl.qubes.assets.AssetTexture.Type;
+import nidefawl.qubes.texture.DDSLoader;
+import nidefawl.qubes.texture.DDSLoader.Format;
 import nidefawl.qubes.texture.PNGDecoder;
 import nidefawl.qubes.util.GameError;
 
 public class AssetTexture extends Asset {
-
+    public static enum Type {
+        PNG, DDS
+    };
     private int width;
     private int height;
     private byte[] data;
@@ -21,6 +27,7 @@ public class AssetTexture extends Asset {
     private int bits;
     private int colorComps;
     private short[] shortData;
+    private DDSLoader dds;
     
     public AssetTexture() {
         this.name = "";
@@ -29,7 +36,7 @@ public class AssetTexture extends Asset {
     public AssetTexture(String name) {
         this.name = name;
     }
-    public boolean loadImageIO(AssetInputStream is) throws Exception {
+    private boolean loadImageIO(AssetInputStream is) throws Exception {
         setPack(is.source);
         BufferedImage bufferedImage = ImageIO.read(is.inputStream);
         this.width = bufferedImage.getWidth();
@@ -60,9 +67,31 @@ public class AssetTexture extends Asset {
         
         return true;
     }
-        
 
-    public boolean loadPNGDecoder(AssetInputStream is) throws Exception {
+
+    private boolean loadDDS(AssetInputStream is) throws Exception {
+        setPack(is.source);
+        DDSLoader dec = null;
+        try {
+            dec = new DDSLoader(is.inputStream);
+            ByteBuffer data = dec.load(true);
+            this.width = dec.getWidth();
+            this.height = dec.getHeight();
+            this.bits = dec.getBitdepth();
+            if (this.bits != 8) { //16 bit broken
+                return false;
+            }
+            Format fmt = dec.getPixelFormat();
+            
+            this.colorComps = fmt.getComponents();
+            this.data = data.array();
+        } finally {
+            this.dds = dec;
+        }
+        return true;
+    }
+
+    private boolean loadPNGDecoder(AssetInputStream is) throws Exception {
         setPack(is.source);
         PNGDecoder dec = new PNGDecoder(is.inputStream);
         this.width = dec.getWidth();
@@ -160,14 +189,22 @@ public class AssetTexture extends Asset {
         return this.name;
     }
 
-    /**
-     * 
-     */
-    public void reload() {
-        AssetManager.getInstance().reloadPNGAsset(this);
-    }
-
     public short[] getUShortData() {
         return this.shortData;
+    }
+
+    public void load(Type type, AssetInputStream is) throws IOException, Exception {
+        if (type == Type.DDS) {
+            loadDDS(is);
+        }
+        if (type == Type.PNG) {
+            if (!loadPNGDecoder(is)) {
+                is = is.source.getInputStream(name);
+                loadImageIO(is);
+            }
+        }
+    }
+    public DDSLoader getDds() {
+        return this.dds;
     }
 }

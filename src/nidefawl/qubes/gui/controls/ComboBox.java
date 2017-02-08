@@ -427,6 +427,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         tessellator.add(this.posX + this.width - inset+2, this.posY + inseth * 2, 0.0f);
         tessellator.draw(GL11.GL_POLYGON);
         inset--;
+        
         tessellator.setColorF(0, 0.7F);
         tessellator.add(this.posX + this.width - height + inset, this.posY + inseth * 2 + 1, 0.0f);
         tessellator.add(this.posX + this.width - height + inset + (height - inset * 2) / 2, this.posY + this.height - inseth * 2 + 2, 0.0f);

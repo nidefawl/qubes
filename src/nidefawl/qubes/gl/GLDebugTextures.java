@@ -134,8 +134,7 @@ public class GLDebugTextures {
 
     public static void drawAll(int displayWidth, int displayHeight) {
         glPushAttrib(-1);
-        glDisable(3008);
-        glDepthFunc(519);
+        glDepthFunc(GL_ALWAYS);
         Engine.enableDepthMask(false);
         glDisable(GL_DEPTH_TEST);
         GL30.glEnablei(GL_BLEND, 0);
@@ -261,7 +260,6 @@ public class GLDebugTextures {
         } else {
             triggered = false;
         }
-        glDepthFunc(GL_LEQUAL);
         Engine.enableDepthMask(true);
         glPopAttrib();
     

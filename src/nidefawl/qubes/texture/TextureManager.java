@@ -4,9 +4,7 @@ import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOT
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL30.GL_R8;
-import static org.lwjgl.opengl.GL30.GL_RG;
-import static org.lwjgl.opengl.GL30.GL_RGBA16F;
+import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -18,6 +16,8 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.texture.DDSLoader.Format;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -31,6 +31,8 @@ public class TextureManager {
     private ByteBuffer          directBuf;
 
     public int texEmptyWhite;
+
+    public int texEmptyRGBA16UI;
     
 
     TextureManager() {
@@ -53,6 +55,22 @@ public class TextureManager {
         Arrays.fill(normalBumpMap, 0xff7f7fff);
         byte[] ndata = TextureUtil.toBytesRGBA(normalBumpMap);
         texEmptyNormal = makeNewTexture(ndata, 16, 16, true, false, 0, GL11.GL_RGBA);
+        texEmptyRGBA16UI = glGenTextures();
+        int ns = 0;
+        glBindTexture(GL_TEXTURE_2D, texEmptyRGBA16UI);
+        GL.glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16UI, 1, 1);
+        Engine.checkGLError("setup empty uint16 rgba "+(ns++));
+        GL11.glTexParameteri(GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, 0);
+        GL11.glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+        GL11.glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+        GL11.glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+        GL11.glTexParameteri(GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+        directBuf.clear();
+        directBuf.put(new byte[4*1*1*2]);
+        directBuf.position(0).limit(4*1*1*2);
+        GL11.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL30.GL_BGRA_INTEGER, GL11.GL_UNSIGNED_BYTE, directBuf);
+        Engine.checkGLError("setup empty uint16 rgba "+(ns++));
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     public void reload() {
@@ -70,6 +88,110 @@ public class TextureManager {
 
     public void load(String path) {
 
+    }
+    public int makeDDS2DTexture(AssetTexture tex, boolean repeat, boolean filter) {
+        DDSLoader dds = tex.getDds();
+        if (dds == null) {
+            throw new GameError("Not yet implemented, please load PNGs manually");
+        }
+        int dataFormat;
+        int internalFormat;
+        int mipmapLevel = dds.getNumMipmaps()-1;
+        Format format = dds.getPixelFormat();
+        boolean compressed = false;
+        System.out.println(format);
+        switch (format) {
+            case RGBA8:
+                dataFormat = GL11.GL_RGBA;
+                internalFormat = GL11.GL_RGBA8;
+                break;
+            case DXT1:
+                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+                dataFormat = GL11.GL_RGB;
+                compressed=true;
+                break;
+            case DXT1A:
+                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+                dataFormat = GL11.GL_RGBA;
+                compressed=true;
+                break;
+            case DXT3:
+                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+                dataFormat = GL11.GL_RGBA;
+                compressed=true;
+                break;
+            case DXT5:
+                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+                dataFormat = GL11.GL_RGBA;
+                compressed=true;
+                break;
+            default:
+                throw new GameError("Format "+format+" not yet implemented");
+        }
+        int magfilter = GL11.GL_NEAREST;
+        int minfilter = GL11.GL_NEAREST;
+        int wrap_s = GL12.GL_CLAMP_TO_EDGE;
+        int wrap_t = GL12.GL_CLAMP_TO_EDGE;
+        
+        if (filter) {
+            magfilter = GL11.GL_LINEAR;
+            minfilter = GL11.GL_LINEAR;
+        }
+        int i = GL11.glGenTextures();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
+        nidefawl.qubes.gl.GL.glTexStorage2D(GL11.GL_TEXTURE_2D, mipmapLevel+1, internalFormat, dds.getWidth(0), dds.getHeight(0));
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipmapLevel);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_MAX_LEVEL "+mipmapLevel);
+        if (mipmapLevel > 0) {
+            minfilter = filter ?  GL11.GL_LINEAR_MIPMAP_LINEAR : GL11.GL_LINEAR_MIPMAP_NEAREST;
+        }
+        
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, magfilter);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri MAG_FILTER");
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, minfilter);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri MIN_FILTER");
+        if (repeat) {
+            wrap_s = GL11.GL_REPEAT;
+            wrap_t = GL11.GL_REPEAT;
+        }
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, wrap_s);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_S ("+(repeat?"REPEAT":"CLAMP")+")");
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, wrap_t);
+        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri WRAP_T ("+(repeat?"REPEAT":"CLAMP")+")");
+
+
+        Engine.checkGLError("glGetTexLevelParameteri");    
+        System.out.println("new internal "+internalFormat);
+
+        int offset = 0;
+        for (int n = 0; n <= mipmapLevel; n++) {
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexImage2D");    
+
+            int size = dds.getSize(n);
+            System.out.println("size "+size);
+            ByteBuffer data = dds.getData().get(0);
+            data.position(offset).limit(offset+size);
+            if (directBuf == null || directBuf.capacity() < size) {
+                directBuf = ByteBuffer.allocateDirect(size).order(ByteOrder.nativeOrder());
+            }
+            directBuf.clear();
+            directBuf.put(data);
+            directBuf.position(0).limit(size);
+
+            if (compressed) {
+                GL13.glCompressedTexSubImage2D(GL11.GL_TEXTURE_2D, n, 0, 0, dds.getWidth(n), dds.getHeight(n), internalFormat, directBuf);
+                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("dds  glCompressedTexSubImage2D level "+n+" format "+internalFormat+", data "+size+", buffer "+directBuf+", dimensions "+dds.getWidth(n)+"x"+dds.getHeight(n));
+            } else {
+                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, n, dds.getWidth(n), dds.getHeight(n), 0, 0, dataFormat, GL11.GL_UNSIGNED_BYTE, directBuf);
+                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("dds glTexSubImage2D");    
+            }
+        }
+        if (filter) {
+            glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
+            if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameterf GL_TEXTURE_MAX_ANISOTROPY_EXT");
+        }
+
+        return i;
     }
 
     public int makeNewTexture(byte[] rgba, int w, int h, boolean repeat, boolean filter, int mipmapLevel, int format) {
@@ -156,9 +278,6 @@ public class TextureManager {
         }
     }
 
-    public int setupTexture(AssetTexture assetTexture, boolean repeat, boolean filter, int mipmapLvls) {
-        return makeNewTexture(assetTexture.getData(), assetTexture.getWidth(), assetTexture.getHeight(), repeat, filter, mipmapLvls, GL11.GL_RGBA);
-    }
     public void destroy() {
         
     }

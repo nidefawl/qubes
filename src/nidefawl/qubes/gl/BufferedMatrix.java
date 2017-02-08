@@ -54,7 +54,7 @@ public class BufferedMatrix extends Matrix4f {
     private void createInv() {
         needInv = false;
         inv.load(this);
-        inv.invert();
+        inv.invertDoublePrecision();
         curInv.rewind();
         inv.store(curInv);
         curInv.rewind();

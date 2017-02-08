@@ -50,6 +50,28 @@ public class AssetManagerClient extends AssetManager {
     public Shader loadShader(IResourceManager mgr, String name) {
         return loadShader(mgr, name, null);
     }
+    public Shader loadShaderBinary(IResourceManager mgr, String nameFSH, String nameVSH, IShaderDef def) {
+
+        final String[] pathNameFSH = splitPath(nameFSH);
+        final String[] pathNameVSH = nameVSH != null ? splitPath(nameVSH) : null;
+
+        try {
+            AssetBinary binFrag = loadBin(pathNameFSH[0]+"/"+pathNameFSH[1]);
+            AssetBinary binVert = nameVSH != null ? loadBin(pathNameVSH[0]+"/"+pathNameVSH[1]) : null;
+            GraphicShader shader = new GraphicShader(pathNameFSH[1], binFrag, binVert, def);
+            if (mgr != null && shader != null)
+                mgr.addResource(shader);
+            return shader;
+        } catch (ShaderCompileError e) {
+            this.lastFailedShader = e.getShaderSource();
+            throw e;
+        } catch (GameError e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + nameVSH + "': " + e, e);
+        }
+        
+    }
 
     public Shader loadShader(IResourceManager mgr, String name, IShaderDef def) {
         return loadShader(mgr, name, null, null, null, def);

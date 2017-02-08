@@ -37,7 +37,7 @@ public class ChatManager implements IStringHistory {
         return instance;
     }
 
-    public void sendMessage(String msg) {
+    public void addMsg(String msg) {
         line.add(0, new ChatLine(msg, System.currentTimeMillis()));
     }
 

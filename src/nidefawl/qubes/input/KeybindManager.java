@@ -13,6 +13,7 @@ import com.google.common.collect.MapMaker;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.WorkingEnv;
@@ -49,6 +50,7 @@ public class KeybindManager {
         
         @Override
         public void save() {
+            setInt("version", KeybindManager.VERSION);
             for (Keybinding keybinding : keybindings) {
                 setString(keybinding.getName(), "kb:"+keybinding.getKey());
             }
@@ -372,6 +374,18 @@ public class KeybindManager {
                 Engine.skyRenderer.decreaseClouds();
             }
         });
+        addKeyBinding(new Keybinding("repeat_last_command", -1) {
+            public void onRepeat() {
+                int hist=ChatManager.getInstance().getHistorySize();
+                if (hist>0) {
+                    String s = ChatManager.getInstance().getHistory(hist-1);
+                    System.out.println(s);
+                    if (s.startsWith("/")) {
+                        Game.instance.processChatInput(s);
+                    }
+                }
+            }
+        });
     }
 
     public static void load() {
@@ -388,6 +402,7 @@ public class KeybindManager {
     public static void saveBindings() {
         if (settings == null) return;
         try {
+            System.out.println("saving bindings");
             settings.save();
             File f = new File(WorkingEnv.getConfigFolder(), "controls.yml");
             settings.write(f);

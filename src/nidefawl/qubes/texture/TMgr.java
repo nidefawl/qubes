@@ -33,6 +33,10 @@ public class TMgr {
         return TextureManager.getInstance().texEmptyWhite;
     }
 
+    public static int getEmptyUInt16RGBA() {
+        return TextureManager.getInstance().texEmptyRGBA16UI;
+    }
+
     public static int getEmptySpecularMap() {
         return TextureManager.getInstance().texEmpty;
     }

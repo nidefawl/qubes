@@ -89,7 +89,8 @@ public class ShadowRenderer extends AbstractRenderer {
 //              glDisable(GL_CULL_FACE);
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(1.1f, 2.f);
+        float mult = Engine.isInverseZ?-1:1;
+        glPolygonOffset(1.1f*mult, 2.f*mult);
 
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
@@ -106,7 +107,7 @@ public class ShadowRenderer extends AbstractRenderer {
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
-        glPolygonOffset(1.2f, 2.f);
+        glPolygonOffset(1.2f*mult, 2.f*mult);
 
         Engine.setViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
@@ -117,7 +118,7 @@ public class ShadowRenderer extends AbstractRenderer {
 //        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
-        glPolygonOffset(1.4f, 2.f);
+        glPolygonOffset(1.4f*mult, 2.f*mult);
 
         Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
@@ -138,7 +139,8 @@ public class ShadowRenderer extends AbstractRenderer {
 //              glDisable(GL_CULL_FACE);
         //      glCullFace(GL_FRONT);
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(1.1f, 2.f);
+        float mult = Engine.isInverseZ?-1:1;
+        glPolygonOffset(1.1f*mult, 2.f*mult);
         this.fbShadow.bind();
         this.fbShadow.clearFrameBuffer();
         Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
@@ -155,7 +157,7 @@ public class ShadowRenderer extends AbstractRenderer {
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 1);
 
-        glPolygonOffset(1.2f, 2.f);
+        glPolygonOffset(1.2f*mult, 2.f*mult);
 
         Engine.setViewport(SHADOW_BUFFER_SIZE / 2, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
 
@@ -166,7 +168,7 @@ public class ShadowRenderer extends AbstractRenderer {
 //        shadowShader.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
         shadowShader.setProgramUniform1i("shadowSplit", 2);
 
-        glPolygonOffset(1.4f, 2.f);
+        glPolygonOffset(1.4f*mult, 2.f*mult);
 
         Engine.setViewport(0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
@@ -200,7 +202,7 @@ public class ShadowRenderer extends AbstractRenderer {
         SHADOW_BUFFER_SIZE = getTextureSize();
         this.fbShadow = new FrameBuffer(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
         this.fbShadow.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA);
-        this.fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        this.fbShadow.setClearColor(GL_COLOR_ATTACHMENT0, 1F, 1F, 0F, 0F);
         this.fbShadow.setShadowBuffer();
         this.fbShadow.setup(this);
     }

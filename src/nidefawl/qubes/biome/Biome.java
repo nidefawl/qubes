@@ -6,6 +6,7 @@ package nidefawl.qubes.biome;
 import java.util.Random;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.util.Color;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.biomes.HexBiome;
@@ -19,46 +20,46 @@ public class Biome {
     public final static Biome[] biomes = new Biome[256];
     public static int maxBiome;
     public final static Biome MEADOW_GREEN = new BiomeMeadow(0)
-            .setColor(BiomeColor.GRASS, 0x4f923b)
-            .setColor(BiomeColor.LEAVES, 0x4A7818)
-            .setColor(BiomeColor.FOLIAGE, 0x408A10)
-            .setColor(BiomeColor.FOLIAGE2, 0x64B051)
+            .setColor(BiomeColor.GRASS, 0x13490b)
+            .setColor(BiomeColor.LEAVES, 0x112f02)
+            .setColor(BiomeColor.FOLIAGE, 0xd4001)
+            .setColor(BiomeColor.FOLIAGE2, 0x206e14)
             .setDebugColor(0x32dd32);
     public final static Biome MEADOW_BLUE = new BiomeMeadow(1)
-            .setColor(BiomeColor.GRASS, 0x48AB73)
-            .setColor(BiomeColor.LEAVES, 0x48AB73)
-            .setColor(BiomeColor.FOLIAGE, 0x48AB73)
-            .setColor(BiomeColor.FOLIAGE2, 0x489363)
+            .setColor(BiomeColor.GRASS, 0x10672b)
+            .setColor(BiomeColor.LEAVES, 0x10672b)
+            .setColor(BiomeColor.FOLIAGE, 0x10672b)
+            .setColor(BiomeColor.FOLIAGE2, 0x104a1f)
             .setDebugColor(0x3232dd);
     public final static Biome MEADOW_RED = new BiomeMeadow(2)
-            .setColor(BiomeColor.GRASS, 0xE68245)
-            .setColor(BiomeColor.LEAVES, 0xB38947)
-            .setColor(BiomeColor.FOLIAGE, 0xC88245)
-            .setColor(BiomeColor.FOLIAGE2, 0xaa0000)
+            .setColor(BiomeColor.GRASS, 0xc9380f)
+            .setColor(BiomeColor.LEAVES, 0x723f10)
+            .setColor(BiomeColor.FOLIAGE, 0x93380f)
+            .setColor(BiomeColor.FOLIAGE2, 0x660000)
             .setDebugColor(0x3232dd);
     public final static Biome DESERT = new BiomeDesert(3)
-            .setColor(BiomeColor.GRASS, 0x91AB48)
-            .setColor(BiomeColor.LEAVES, 0x91AB48)
-            .setColor(BiomeColor.FOLIAGE, 0x91AB48)
-            .setColor(BiomeColor.FOLIAGE2, 0xEDB12F)
+            .setColor(BiomeColor.GRASS, 0x486710)
+            .setColor(BiomeColor.LEAVES, 0x486710)
+            .setColor(BiomeColor.FOLIAGE, 0x486710)
+            .setColor(BiomeColor.FOLIAGE2, 0xd77007)
             .setDebugColor(0xdd3232);
     public final static Biome DESERT_RED = new BiomeDesertRed(4)
-            .setColor(BiomeColor.GRASS, 0xAB9448)
-            .setColor(BiomeColor.LEAVES, 0x702B00)
-            .setColor(BiomeColor.FOLIAGE, 0xAB9448)
-            .setColor(BiomeColor.FOLIAGE2, 0xEDB12F)
+            .setColor(BiomeColor.GRASS, 0x674b10)
+            .setColor(BiomeColor.LEAVES, 0x290600)
+            .setColor(BiomeColor.FOLIAGE, 0x674b10)
+            .setColor(BiomeColor.FOLIAGE2, 0xd77007)
             .setDebugColor(0xdd32dd);
     public final static Biome ICE = new BiomeIce(5)
-            .setColor(BiomeColor.GRASS, 0x408019)
-            .setColor(BiomeColor.LEAVES, 0x4A7818)
-            .setColor(BiomeColor.FOLIAGE, 0x408A10)
-            .setColor(BiomeColor.FOLIAGE2, 0x64B051)
+            .setColor(BiomeColor.GRASS, 0xd3702)
+            .setColor(BiomeColor.LEAVES, 0x112f02)
+            .setColor(BiomeColor.FOLIAGE, 0xd4001)
+            .setColor(BiomeColor.FOLIAGE2, 0x206e14)
             .setDebugColor(0xaaaaaa);
     public final static Biome MEADOW_GREEN2 = new BiomeMeadow(6)
-            .setColor(BiomeColor.GRASS, 0x408019)
-            .setColor(BiomeColor.LEAVES, 0x4A7818)
-            .setColor(BiomeColor.FOLIAGE, 0x408A10)
-            .setColor(BiomeColor.FOLIAGE2, 0x64B051)
+            .setColor(BiomeColor.GRASS, 0xd3702)
+            .setColor(BiomeColor.LEAVES, 0x112f02)
+            .setColor(BiomeColor.FOLIAGE, 0xd4001)
+            .setColor(BiomeColor.FOLIAGE2, 0x206e14)
             .setDebugColor(0x32dd32);
     public int color;
     public int colorFoliage;

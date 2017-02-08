@@ -99,4 +99,40 @@ public class Color {
         int b = (int) (vec.z < 0 ? 0 : vec.z > 1 ? 255 : vec.z*255f);
         return r<<16|g<<8|b;
     }
+    public static int SRGBtoLin(int rgb) {
+        Vector3f tmp = Vector3f.pool();
+        setColorVec(rgb, tmp);
+        tmp.x=linearize(tmp.x);
+        tmp.y=linearize(tmp.y);
+        tmp.z=linearize(tmp.z);
+        return toRGBAInt32(tmp);
+    }
+    public static int LinToSRGB(int rgb) {
+        Vector3f tmp = Vector3f.pool();
+        setColorVec(rgb, tmp);
+        tmp.x=srgb(tmp.x);
+        tmp.y=srgb(tmp.y);
+        tmp.z=srgb(tmp.z);
+        return toRGBAInt32(tmp);
+    }
+
+    private static float srgb(float v)
+    {
+        v = GameMath.clamp(v, 0.0f, 1.0f);
+        float K0 = 0.03928f;
+        float a = 0.055f;
+        float phi = 12.92f;
+        float gamma = 2.4f;
+        v = v <= K0 / phi ? v * phi : (1.0f + a) * GameMath.powf(v, 1.0f / gamma) - a;
+        return v;
+    }
+    private static float linearize(float v) {
+        v = GameMath.clamp(v, 0.0f, 1.0f);
+        float K0 = 0.03928f;
+        float a = 0.055f;
+        float phi = 12.92f;
+        float gamma = 2.4f;
+        v = v <= K0 ? v / phi :GameMath.powf((v + a) / (1.0f + a), gamma);
+        return v;
+    }
 }

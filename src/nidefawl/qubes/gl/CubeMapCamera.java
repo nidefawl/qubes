@@ -34,7 +34,11 @@ public class CubeMapCamera {
         final float aspectRatio = 1;
         final float znear = 0.1F;
         final float zfar = 1024F;
-        Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+        if (!Engine.INVERSE_Z_BUFFER) {
+            Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+        } else {
+            Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, projection);
+        }
         projection.update();
         projection.update();
 		view.setIdentity();

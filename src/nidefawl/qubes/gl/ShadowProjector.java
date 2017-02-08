@@ -135,7 +135,16 @@ public class ShadowProjector implements IRenderComponent {
 //
 //        Matrix4f.invert(matLookAt, matLookAtInv);
 //                Project.lookAt(eye.x-frustumCenter.x, eye.y-frustumCenter.y, eye.z-frustumCenter.z, 0,0,0, 0, 1, 0, shadowSplitMVP[split]);
-        Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
+
+      if (!Engine.INVERSE_Z_BUFFER) {
+          Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
+      } else {
+          Project.orthoMat(-radius, radius, radius, -radius, 512 * 8, 0, matOrtho);
+      }
+        
+//        Project.fovProjMatInfInvZ(90, 1, 512*8, matOrtho);
+//        Project.fovProjMat(90, 1, 0.1f, 512*8f, matOrtho);
+        
 //        System.out.println(matOrtho);
 //        Matrix4f.mul(matOrtho, matLookAt, matLookAt);
 

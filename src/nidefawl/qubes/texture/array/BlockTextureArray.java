@@ -5,13 +5,12 @@ import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_AN
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 
 import com.google.common.collect.Lists;
 
@@ -20,6 +19,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.texture.DXTCompressor;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameError;
 
@@ -37,6 +37,8 @@ public class BlockTextureArray extends TextureArray {
 
     BlockTextureArray() {
         super(Block.NUM_BLOCKS << BLOCK_TEXTURE_BITS);
+        this.internalFormat=EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        this.internalFormat=GL21.GL_SRGB8_ALPHA8;
     }
 
     protected void postUpload() {
@@ -68,6 +70,25 @@ public class BlockTextureArray extends TextureArray {
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
         int slot = 0;
         ByteBuffer directBuf = null;
+        boolean compress = false;
+        switch (this.internalFormat) {
+            case EXTTextureCompressionS3TC.GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+                compress = true;
+                break;
+            case EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+                compress = true;
+                break;
+            case EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+                compress = true;
+                break;
+            case EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+                compress = true;
+                break;
+            default:
+                compress = false;
+                break;
+        }
+        
         while (it.hasNext()) {
             Entry<Integer, ArrayList<AssetTexture>> entry = it.next();
             int blockId = entry.getKey();
@@ -81,15 +102,31 @@ public class BlockTextureArray extends TextureArray {
                     int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
                     TextureUtil.setTransparentPixelsColor(data, this.tileSize, this.tileSize, avg);
                     int mipmapSize = this.tileSize;
+
+                    
                     for (int m = 0; m < numMipmaps; m++) {
-                        directBuf = put(directBuf, data);
-                        //                      System.out.println(m+"/"+mipmapSize+"/"+directBuf.position()+"/"+directBuf.capacity()+"/"+directBuf.remaining());
-                        GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m, //Mipmap number
-                                0, 0, slot, //xoffset, yoffset, zoffset
-                                mipmapSize, mipmapSize, 1, //width, height, depth
-                                GL_RGBA, //format
-                                GL_UNSIGNED_BYTE, //type
-                                directBuf);//pointer to data
+                        if (compress) {
+                            ByteBuffer rgba = ByteBuffer.wrap(data);
+                            if (directBuf == null || directBuf.capacity() < data.length) {
+                                directBuf = ByteBuffer.allocateDirect(data.length).order(ByteOrder.nativeOrder());
+                            }
+                            directBuf.clear();
+                            DXTCompressor.stbgl__compress(directBuf, rgba, mipmapSize, mipmapSize, this.internalFormat, directBuf.capacity());
+                            GL13.glCompressedTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m, //Mipmap number
+                                    0, 0, slot, //xoffset, yoffset, zoffset
+                                    mipmapSize, mipmapSize, 1, //width, height, depth
+                                    this.internalFormat, //format
+                                    directBuf);//pointer to data
+                        } else {
+                            directBuf = put(directBuf, data);
+                            GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, m, //Mipmap number
+                                    0, 0, slot, //xoffset, yoffset, zoffset
+                                    mipmapSize, mipmapSize, 1, //width, height, depth
+                                    GL_RGBA, //format
+                                    GL_UNSIGNED_BYTE, //type
+                                    directBuf);//pointer to data
+                        }
+
                         Engine.checkGLError("GL12.glTexSubImage3D");
                         mipmapSize /= 2;
                         if (mipmapSize > 0)
@@ -138,6 +175,10 @@ public class BlockTextureArray extends TextureArray {
 
     public void setAnisotropicFiltering(int anisotropicFiltering) {
         this.anisotropicFiltering = anisotropicFiltering;
+    }
+
+    public boolean isSRGB() {
+        return this.internalFormat==GL21.GL_SRGB8_ALPHA8;
     }
 
 }

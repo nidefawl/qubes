@@ -52,7 +52,8 @@ public class SMAA {
     int curBuffer=0;
     int prevBuffer=1;
 
-    
+
+    public static boolean LOAD_SPIR = false;
     public final static int SMAA_PRESET_LOW = 0;
     public final static int SMAA_PRESET_MEDIUM = 1;
     public final static int SMAA_PRESET_HIGH = 2;
@@ -96,10 +97,17 @@ public class SMAA {
             Shader new_neighbor_blend;
             Shader new_temporal_resolve = null;
             shaderDrawAlphaChannel = assetMgr.loadShader(mgr, "debug/drawAlphaChannel", "screen_scaled_quad", null, null, def);
-            new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", def);
-            new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
-            new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
-            new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
+            if (LOAD_SPIR) {
+                new_CopyTexture = assetMgr.loadShaderBinary(mgr, "spir/copytexture_frag.spv", "spir/copytexture_vert.spv", def);
+                new_AAEdge = assetMgr.loadShaderBinary(mgr, "spir/SMAA_edge_frag.spv", "spir/SMAA_edge_vert.spv", def);
+                new_BlendWeight = assetMgr.loadShaderBinary(mgr, "spir/SMAA_blend_weight_frag.spv", "spir/SMAA_blend_weight_vert.spv", def);
+                new_neighbor_blend = assetMgr.loadShaderBinary(mgr, "spir/SMAA_neighbour_blend_frag.spv", "spir/SMAA_neighbour_blend_vert.spv", def);
+            } else {
+                new_CopyTexture = assetMgr.loadShader(mgr, "post/SMAA/copytexture", def);
+                new_AAEdge = assetMgr.loadShader(mgr, "post/SMAA/SMAA_edgedetection", def);
+                new_BlendWeight = assetMgr.loadShader(mgr, "post/SMAA/SMAA_blend_weight", def);
+                new_neighbor_blend = assetMgr.loadShader(mgr, "post/SMAA/SMAA_neighbor_blend", def);
+            }
             if (useReprojection) {
                 new_temporal_resolve = assetMgr.loadShader(mgr, "post/SMAA/SMAA_temporal_resolve", def);
             }
@@ -228,8 +236,8 @@ public class SMAA {
                 System.err.println("NEED GL_DEPTH_WRITEMASK for discard!");
             }
             int i = glGetInteger(GL_DEPTH_FUNC);
-            if (i != GL_LEQUAL) {
-                System.err.println("GL_DEPTH_FUNC != GL_LEQUAL, CHECK STATES");
+            if (i != (Engine.isInverseZ?GL_GEQUAL:GL_LEQUAL)) {
+                System.err.println("GL_DEPTH_FUNC != "+(Engine.isInverseZ?"GL_GEQUAL":"GL_LEQUAL")+", CHECK STATES");
             }
            
         }
@@ -331,10 +339,10 @@ public class SMAA {
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbAAEdge.getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.areaTex);
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, this.searchTex);
-        
-        glDepthFunc(GL_EQUAL); // only draw equal z fragments, +30% speed
+
+        Engine.setDepthFunc(GL_EQUAL); // only draw equal z fragments, +30% speed
         Engine.drawFSTri();
-        glDepthFunc(GL_LEQUAL);
+        Engine.setDepthFunc(GL_LEQUAL);
         if (debugTexture == 2) {
             return;
         }

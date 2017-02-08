@@ -2,6 +2,7 @@ package nidefawl.qubes.vec;
 
 import java.nio.FloatBuffer;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.DumbPool;
 import nidefawl.qubes.util.GameMath;
 
@@ -932,6 +933,13 @@ public class Matrix4f {
     public Matrix4f invert() {
         return invert(this, this);
     }
+    public Matrix4f invertDoublePrecision() {
+        DoubleMatrix4 m4d = DoubleMatrix4.pool();
+        m4d.load(this);
+        m4d.invert();
+        this.load(m4d);
+        return this;
+    }
 
     /**
      * Invert the source matrix and put the result in the destination
@@ -1324,5 +1332,28 @@ public class Matrix4f {
         this.m03=0;
         this.m13=0;
         this.m23=0;
+    }
+    
+
+    public Matrix4f load(DoubleMatrix4 src) {
+        
+        this.m00 = (float) src.m00;
+        this.m01 = (float) src.m01;
+        this.m02 = (float) src.m02;
+        this.m03 = (float) src.m03;
+        this.m10 = (float) src.m10;
+        this.m11 = (float) src.m11;
+        this.m12 = (float) src.m12;
+        this.m13 = (float) src.m13;
+        this.m20 = (float) src.m20;
+        this.m21 = (float) src.m21;
+        this.m22 = (float) src.m22;
+        this.m23 = (float) src.m23;
+        this.m30 = (float) src.m30;
+        this.m31 = (float) src.m31;
+        this.m32 = (float) src.m32;
+        this.m33 = (float) src.m33;
+
+        return this;
     }
 }

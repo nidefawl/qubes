@@ -285,7 +285,7 @@ public class FrameBuffer implements IManagedResource {
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+//            glTexParameteri(GL_TEXTURE_2D, GL14.GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);//TODO: not working wiht core profile
         }
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("FrameBuffers.glTexParameteri (depth)");
 
@@ -324,7 +324,14 @@ public class FrameBuffer implements IManagedResource {
             throw new GameLogicError("trying to clearFrameBuffer on unbound buffer");
         }
         if (this.hasDepth) {
+//            if (Engine.isInverseZ) {
+//                glClearDepth(0.0f);
+//            } else {
+//
+//                glClearDepth(1.0f);
+//            }
             glClear(GL_DEPTH_BUFFER_BIT);
+            
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("clearFrameBuffer Depth");
         }
     }

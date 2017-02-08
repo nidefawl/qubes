@@ -40,6 +40,8 @@ public class Tess extends AbstractTesselatorState {
     private int vboIdx;
 
     private GLVBO[] vbo = new GLVBO[1<<4];
+    private GLVBO[] vboIndices = new GLVBO[1<<4];
+
 
     public Tess() {
         this(false);
@@ -50,6 +52,9 @@ public class Tess extends AbstractTesselatorState {
             bufInt = new ReallocIntBuffer();
             for (int i = 0; i < this.vbo.length; i++) {
                 this.vbo[i] = new GLVBO(GL15.GL_DYNAMIC_DRAW);
+            }
+            for (int i = 0; i < this.vboIndices.length; i++) {
+                this.vboIndices[i] = new GLVBO(GL15.GL_DYNAMIC_DRAW);
             }
         }
     }
@@ -191,7 +196,39 @@ public class Tess extends AbstractTesselatorState {
             int len = vIdx * 4;
             bufInt.put(rawBuffer, 0, vIdx);
             GLVBO vbo = out.getVBO();
+            GLVBO vboIdx = out.getVBOIndices();
             vbo.upload(GL15.GL_ARRAY_BUFFER, bufInt.getByteBuf(), len, false);
+            int pos = 0;
+            if (mode == GL11.GL_QUADS) {
+                mode = GL11.GL_TRIANGLES;
+                if (this.vertexcount%4 != 0) {
+                    throw new IllegalStateException("Cannot make tri idx: vertexcount%4 != 0");
+                }
+                int quads = this.vertexcount/4;
+                for (int i = 0; i < quads; i++) {
+                    vIdx = i*4;
+                    rawBuffer[pos++]=(vIdx+0);
+                    rawBuffer[pos++]=(vIdx+1);
+                    rawBuffer[pos++]=(vIdx+2);
+                    rawBuffer[pos++]=(vIdx+2);
+                    rawBuffer[pos++]=(vIdx+3);
+                    rawBuffer[pos++]=(vIdx+0);
+                }
+            } else if (mode == GL11.GL_LINES
+                    ||mode == GL11.GL_LINE_STRIP
+                    ||mode == GL11.GL_TRIANGLES
+                    ||mode == GL11.GL_POLYGON) {
+                for (int i = 0; i < this.vertexcount; i++) {
+                    rawBuffer[i]=i;
+                }
+                pos = vertexcount;
+            } else {
+                System.out.println("Mode not supported "+mode);
+//                Thread.dumpStack();
+            }
+            this.idxCount = pos;
+            bufInt.put(rawBuffer, 0, pos);
+            vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, bufInt.getByteBuf(), pos*4, false);
             if (out == this) {
                 bindAndDraw(mode);
                 this.vboIdx++;
@@ -208,6 +245,10 @@ public class Tess extends AbstractTesselatorState {
     @Override
     public GLVBO getVBO() {
         return this.vbo[this.vboIdx];
+    }
+    @Override
+    public GLVBO getVBOIndices() {
+        return this.vboIndices[this.vboIdx];
     }
     
     public void draw(int mode) {
@@ -233,8 +274,11 @@ public class Tess extends AbstractTesselatorState {
 
     public void destroy() {
         this.bufInt.release();
-        for (int i = 0; i < vbo .length; i++) {
+        for (int i = 0; i < vbo.length; i++) {
             this.vbo[i].release();
+        }
+        for (int i = 0; i < vboIndices.length; i++) {
+            this.vboIndices[i].release();
         }
     }
 

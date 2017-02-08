@@ -41,7 +41,7 @@ public class Shaders {
             AssetManager assetMgr = AssetManager.getInstance();
             Shader new_depthBufShader = assetMgr.loadShader(newshaders, "debug/renderdepth");
             Shader new_normals = null;
-            if (GL.getCaps().GL_ARB_geometry_shader4) {
+            if (GL.isGeometryShader4Support()) {
                 new_normals = assetMgr.loadShader(newshaders, "debug/visnormals");
             }
             Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");

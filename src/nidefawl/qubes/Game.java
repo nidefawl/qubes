@@ -469,14 +469,15 @@ public class Game extends GameBase {
         }
         glEnable(GL_DEPTH_TEST);
         Engine.setBlend(false);
+        Engine.setZBufferSetting();
         glClearColor(0f, 0f, 0f, 1F);
         glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         if (this.world != null) {
             Engine.skyRenderer.renderSky(this.world, fTime);
             Engine.shadowRenderer.renderShadowPass(this.world, fTime);
         } 
+//        FrameBuffer.unbindFramebuffer();
         setSceneViewport();
-
         for (int eye = 0; eye < (VR_SUPPORT ? 2 : 1); eye++) {
             if (VR_SUPPORT) {
                 Engine.getMatSceneP().load(eye == 0 ? VR.cam.projLeft : VR.cam.projRight);
@@ -491,7 +492,8 @@ public class Game extends GameBase {
                 renderWorld(fTime, eye, finalTarget);    
             } else if (canRenderGui3d()) {
                 Engine.getSceneFB().bind();
-                Engine.getSceneFB().clearColor();
+                Engine.getSceneFB().clearColorBlack();
+                Engine.getSceneFB().setDrawMask(1);
                 Engine.setBlend(true);
                 glDisable(GL_DEPTH_TEST);
 //                Shaders.textured.enable();
@@ -503,7 +505,7 @@ public class Game extends GameBase {
                 glEnable(GL_DEPTH_TEST);
                 Engine.setBlend(false);
                 //TODO: add material info for predicated thresholidng 
-                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), finalTarget);
+                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), finalTarget, false);
             }
             
 //            if (VR_SUPPORT && (showControllers||gui!=null||true)) {
@@ -521,6 +523,7 @@ public class Game extends GameBase {
 //                
 //            }
         }
+        Engine.restoreZBufferSetting();
             
         if (VR_SUPPORT) {
 
@@ -737,7 +740,10 @@ public class Game extends GameBase {
 
         Engine.skyRenderer.renderSkybox();
 
+//          Engine.getSceneFB().setDrawMask(1);
         Engine.worldRenderer.renderWorld(this.world, fTime);
+//        Engine.getSceneFB().setDrawAll();
+        
         
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
@@ -754,7 +760,7 @@ public class Game extends GameBase {
 //            HBAOPlus.renderAO();
 //            Shader.disable();
 //        }
-//
+
 //        if (Game.GL_ERROR_CHECKS)
 //            Engine.checkGLError("GLNativeLib.renderAO");
 //        if (GPUProfiler.PROFILING_ENABLED)
@@ -1037,8 +1043,7 @@ public class Game extends GameBase {
             Engine.setBlend(false);
         
         }
-
-        Engine.outRenderer.renderAA(fbOut.getTexture(0), finalTarget);
+        Engine.outRenderer.renderAA(fbOut.getTexture(0), finalTarget, true);
 
 //        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.outRenderer.fbDeferred.getTexture(2)); //COLOR
 //        Shaders.textured.enable();
@@ -1046,8 +1051,8 @@ public class Game extends GameBase {
 
     
         if (GL_ERROR_CHECKS) {
-            if (glGetInteger(GL_DEPTH_FUNC) != GL_LEQUAL) {
-                System.err.println("Expected GL_DEPTH_FUNC == GL_LEQUAL post render: "+glGetInteger(GL_DEPTH_FUNC));
+            if (glGetInteger(GL_DEPTH_FUNC) != (Engine.isInverseZ?GL_GEQUAL:GL_LEQUAL)) {
+                System.err.println("Expected GL_DEPTH_FUNC == "+(Engine.isInverseZ?"GL_GEQUAL":"GL_LEQUAL")+" post render: ");
             }
             if (!glGetBoolean(GL_DEPTH_TEST)) {
                 System.err.println("Expected GL_DEPTH_TEST == true post render");
@@ -1119,7 +1124,7 @@ public class Game extends GameBase {
 //            Engine.outRenderer.initShaders();
 
 //            Engine.regionRenderer.initShaders();
-////            Engine.shadowRenderer.initShaders();
+//            Engine.shadowRenderer.initShaders();
 //            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            ItemModelManager.getInstance().reload();
@@ -1648,6 +1653,17 @@ public class Game extends GameBase {
             if (text.equals("/resize")) {
                 return;
             }
+            if (text.equals("/inversez")) {
+                Engine.INVERSE_Z_BUFFER=!Engine.INVERSE_Z_BUFFER;
+                Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
+                Engine.resizeShadowProjection(Game.displayWidth, Game.displayHeight);
+                Shaders.initShaders();
+                Engine.outRenderer.initShaders();
+                Engine.skyRenderer.initShaders();
+                ChatManager.getInstance().addMsg("Z buffer is now "+(Engine.INVERSE_Z_BUFFER?"inverse":"default"));
+                
+                return;
+            }
             if (text.equals("/gui3d")) {
                 this.settings.gui3d = !settings.gui3d;
                 updateGui3dMode();
@@ -1659,7 +1675,7 @@ public class Game extends GameBase {
 //                Engine.worldRenderer.reloadModel();
 //                Engine.renderBatched.initShaders();
 //                Engine.shadowRenderer.initShaders();
-//                Engine.worldRenderer.initShaders();
+                Engine.worldRenderer.initShaders();
 //                Engine.skyRenderer.initShaders();
                 Engine.outRenderer.initShaders();
 //                Engine.particleRenderer.initShaders();

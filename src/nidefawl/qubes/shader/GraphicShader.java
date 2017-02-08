@@ -9,6 +9,7 @@ import org.lwjgl.opengl.ARBGeometryShader4;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.meshing.BlockFaceAttr;
@@ -21,6 +22,21 @@ public class GraphicShader extends Shader {
     private String attr = "";
     HashMap<String, Integer> customOutputLocations = new HashMap<>();
 
+    public GraphicShader(String name, AssetBinary frag, AssetBinary vert, IShaderDef def) {
+        super(name);
+        if (frag == null) {
+            throw new GameError("Failed reading shader: "+name);
+        }
+        this.fragShader = buildSpirShader(GL_FRAGMENT_SHADER, frag, name);
+        this.attr = "none";
+        if (vert != null)
+            this.vertShader = buildSpirShader(GL_VERTEX_SHADER, vert, name);
+        else {
+            this.vertShader = Shader.shVertexFullscreenTri;
+        }
+        attach(def);
+        linkProgram();
+    }
     public GraphicShader(String name, ShaderSource vertCode, ShaderSource fragCode, ShaderSource geomCode, IShaderDef def) {
         super(name);
 
@@ -65,6 +81,9 @@ public class GraphicShader extends Shader {
         }
         if ("none".equals(attr)) {
             //skip
+        } else if ("testspir".equals(attr)) {
+            glBindAttribLocation(this.shader, 0, "inPos");
+            glBindAttribLocation(this.shader, 1, "inColor");
         } else if ("particle".equals(attr)) {
             glBindAttribLocation(this.shader, 0, "in_texcoord");
             glBindAttribLocation(this.shader, 1, "in_position");

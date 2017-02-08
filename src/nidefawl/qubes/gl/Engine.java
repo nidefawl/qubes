@@ -37,7 +37,8 @@ public class Engine {
     private final static BlockPos LAST_REPOS = new BlockPos();
     private static Map<String, Integer> bufferBindingPoints = Maps.newHashMap();
     private static int NEXT_BUFFER_BINDING_POINT = 0;
-
+    public static boolean INVERSE_Z_BUFFER = false;
+    public static boolean isInverseZ = false;
 
     private static IntBuffer   viewportBuf;
     private static FloatBuffer position;
@@ -49,7 +50,7 @@ public class Engine {
     private static BufferedMatrix viewInvYZ;
     private static BufferedMatrix viewprojection;
     private static BufferedMatrix modelviewprojection;
-    private static BufferedMatrix modelviewprojectionPrev;
+    private static BufferedMatrix matReproject;
     private static BufferedMatrix modelview;
     private static BufferedMatrix modelmatrix;
     private static BufferedMatrix normalMatrix;
@@ -62,6 +63,8 @@ public class Engine {
     private static BufferedMatrix tempMatrix2;
     private static BufferedMatrix identity;
     private static BufferedMatrix modelviewprojectionUnjittered;
+    public final static Matrix4f prevModel = new Matrix4f();
+    public final static Matrix4f prevView = new Matrix4f();
     private static int TEMPORAL_IDX = 0;
     public static boolean TEMPORAL_OFFSET = false;
     public static Vector3f       pxOffset = new Vector3f();
@@ -221,7 +224,7 @@ public class Engine {
         modelmatrix = new BufferedMatrix();
         modelviewprojection = new BufferedMatrix();
         modelviewprojectionUnjittered = new BufferedMatrix();
-        modelviewprojectionPrev = new BufferedMatrix();
+        matReproject = new BufferedMatrix();
         normalMatrix = new BufferedMatrix();
         orthoP = new BufferedMatrix();
         orthoMV = new BufferedMatrix();
@@ -246,6 +249,22 @@ public class Engine {
     public static void init() {
         init(EngineInitSettings.INIT_NONE);
     }
+    public static void setZBufferSetting() {
+        if (INVERSE_Z_BUFFER) {
+            isInverseZ = true;
+            glClearDepth(0.0f);
+            ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_ZERO_TO_ONE );   
+            glDepthFunc(GL_GEQUAL);
+        }
+    }
+    public static void restoreZBufferSetting() {
+        if (INVERSE_Z_BUFFER) {
+            isInverseZ = false;
+            glClearDepth(1.0f);
+            ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_NEGATIVE_ONE_TO_ONE );   
+            glDepthFunc(GL_LEQUAL);
+        }
+    }
     public static void init(EngineInitSettings init) {
         glActiveTexture(GL_TEXTURE0);
         if (Game.GL_ERROR_CHECKS)
@@ -255,8 +274,16 @@ public class Engine {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("GL30.glDisablei(GL_BLEND, "+i+")");
         }
+        
         isBlend = true;
         GL30.glEnablei(GL_BLEND, 0);
+        if (init.inverseZBuffer) {
+            if (GL.isClipControlSupported()) {
+                INVERSE_Z_BUFFER = true;
+                System.out.println("Using inverse 0,1 z buffer");
+            }
+        }
+        
         baseInit();
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("baseInit");
@@ -298,9 +325,15 @@ public class Engine {
 
     public static void resize(int displayWidth, int displayHeight) {
         resizeProjection(displayWidth, displayHeight);
+        resizeShadowProjection(displayWidth, displayHeight);
         resizeRenderers(displayWidth, displayHeight);
     }
 
+    public static void resizeShadowProjection(int displayWidth, int displayHeight) {
+        if (shadowProj != null) {
+            shadowProj.updateProjection(znear, zfar, aspectRatio, fieldOfView);
+        }
+    }
     /**
      * Resizes 3d projection matrix, 2d orthogonal projection for gui, 2D fullscreen quad.
      * Fast - can be called each frame.
@@ -310,8 +343,8 @@ public class Engine {
     public static void resizeProjection(int displayWidth, int displayHeight) {
         fieldOfView = 70;
         aspectRatio = (float) displayWidth / (float) displayHeight;
-//        znear = 0.1F;
-//        zfar = 1024F;
+        znear = 0.01F;
+        zfar = INVERSE_Z_BUFFER?100000F:1024F;
         viewportBuf.position(0);
         viewportBuf.put(0);
         viewportBuf.put(0);
@@ -319,8 +352,12 @@ public class Engine {
         viewportBuf.put(displayHeight);
         viewportBuf.flip();
         
-
-        Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+        if (!INVERSE_Z_BUFFER) {
+            Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+        } else {
+            Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, _projection);
+        }
+        
         camFrustum.setCamInternals(fieldOfView, aspectRatio, znear, zfar);
         _projection.update();
         _projection.update();
@@ -392,9 +429,6 @@ public class Engine {
      * @param displayHeight
      */
     public static void resizeRenderers(int displayWidth, int displayHeight) {
-        if (shadowProj != null) {
-            shadowProj.updateProjection(znear, zfar, aspectRatio, fieldOfView);
-        }
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             if (r instanceof AbstractRenderer) {
@@ -440,10 +474,7 @@ public class Engine {
         fullscreenquads[n].drawQuads();
     }
     public static void drawFSTri() {
-        if (active != null) {
-            active = null;
-            GL30.glBindVertexArray(0);
-        }
+        bindVAO(GLVAO.vaoEmpty);
         glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
     }
 
@@ -482,8 +513,8 @@ public class Engine {
     public static BufferedMatrix getMatSceneMVPUnjittered() {
         return modelviewprojectionUnjittered;
     }
-    public static BufferedMatrix getMatSceneMVPPrev() {
-        return modelviewprojectionPrev;
+    public static BufferedMatrix getMatReproject() {
+        return matReproject;
     }
 
     public static BufferedMatrix getMatSceneNormal() {
@@ -526,6 +557,8 @@ public class Engine {
         Vector3f camPos = camera.getPosition();
         setTemporalIdx(TEMPORAL_IDX+1);
         updateCamera(camView, camPos);
+        prevView.load(view);
+        prevModel.load(modelmatrix);
     }
     public static int getTemporalJitterIdx() {
         return TEMPORAL_IDX;
@@ -590,20 +623,26 @@ public class Engine {
         TEMPORAL_IDX = i%2;
     }
     private static void updateCamera(Matrix4f camView, Vector3f camPos) {
-        modelviewprojectionPrev.load(modelviewprojection); // this doesn't cover a lot of 3d rendered stuff
+        if (TEMPORAL_OFFSET) {
+            addJitterToProjection(_projection, projection);
+        } else {
+            projection.load(_projection);
+        }
+        projection.update();
         view.load(camView);
         modelmatrix.setIdentity();
         modelmatrix.translate(-camPos.x, -camPos.y, -camPos.z);
         modelmatrix.translate(GLOBAL_OFFSET.x, 0, GLOBAL_OFFSET.z);
-        if (TEMPORAL_OFFSET) { // add this frames jitter to previous mvp
-            addJitterToProjection(_projection, projection);
-            Matrix4f.mul(projection, modelview, modelviewprojectionPrev);
-            modelviewprojectionPrev.update();
-        } else {
-            modelviewprojectionPrev.load(modelviewprojection);
-            modelviewprojectionPrev.update();
-        }
         _updateInternalMatrices();
+        if (TEMPORAL_OFFSET) {
+            Matrix4f prevVP = Matrix4f.pool();
+            Matrix4f matTranslation = Matrix4f.pool();
+            Matrix4f.mul(projection, prevView, prevVP);
+            Matrix4f.mul(prevModel, modelmatrix.getInvMat4(), matTranslation);
+            Matrix4f.mul(prevVP, matTranslation, prevVP);
+            Matrix4f.mul(prevVP, viewprojection.getInvMat4(), matReproject);
+            matReproject.update();
+        }
     }
     public static void _updateInternalMatrices() {
         view.update();
@@ -612,14 +651,11 @@ public class Engine {
         viewInvYZ.mulMat(invertYZ);
         viewInvYZ.update();
         Matrix4f.mul(view, modelmatrix, modelview);
-        if (TEMPORAL_OFFSET) {
-            addJitterToProjection(_projection, projection);
-        }
+        modelview.update();
         Matrix4f.mul(_projection, modelview, modelviewprojectionUnjittered);
         Matrix4f.mul(projection, modelview, modelviewprojection);
         Matrix4f.mul(projection, view, viewprojection);
         viewprojection.update();
-        modelview.update();
         modelviewprojection.update();
         modelviewprojectionUnjittered.update();
         normalMatrix.setIdentity();
@@ -1008,5 +1044,25 @@ public class Engine {
         if (outRenderer != null)
             return Engine.RENDER_SETTINGS.smaaMode > 0 && Engine.RENDER_SETTINGS.smaaPredication;
         return false;
+    }
+    public static int setDepthFunc(int glCompareFunc) {
+        if (isInverseZ) {
+        switch (glCompareFunc) {
+            case GL_GREATER:
+                glCompareFunc = GL_LESS;
+                break;
+            case GL_GEQUAL:
+                glCompareFunc = GL_LEQUAL;
+                break;
+            case GL_LEQUAL:
+                glCompareFunc = GL_GEQUAL;
+                break;
+            case GL_LESS:
+                glCompareFunc = GL_GREATER;
+                break;
+        }
+        }
+        GL11.glDepthFunc(glCompareFunc);
+        return glCompareFunc;
     }
 }
