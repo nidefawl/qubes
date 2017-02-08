@@ -934,11 +934,11 @@ public class Game extends GameBase {
             glDisable(GL_CULL_FACE);
             Engine.setBlend(true);
             if (firstPerson && !VR_SUPPORT) {
-                glDepthRange(0, 0.04);
-                glColorMask(false, false, false, false);
-                Engine.worldRenderer.renderFirstPerson(world, fTime);
-                glColorMask(true, true, true, true);
-                glDepthRange(0, 1f);
+//                glDepthRange(0, 0.04);
+//                glColorMask(false, false, false, false);
+//                Engine.worldRenderer.renderFirstPerson(world, fTime);
+//                glColorMask(true, true, true, true);
+//                glDepthRange(0, 1f);
             }
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("ForwardPass");
@@ -1009,7 +1009,8 @@ public class Game extends GameBase {
             if (finalTarget != null) finalTarget.bindAndClear();
             else FrameBuffer.unbindFramebuffer();
             GLDebugTextures.drawFullScreen(selTex);
-            if (selTex.pass.contains("compute_light_0") && selTex.name.equals("output")) {
+//            System.out.println(selTex.pass+","+selTex.name);
+            if (selTex.pass.equalsIgnoreCase("compute_light_0") && selTex.name.equals("output")) {
                 Engine.lightCompute.renderDebug();
             }
             return;
@@ -1114,7 +1115,7 @@ public class Game extends GameBase {
             lastShaderLoadTime = System.currentTimeMillis();
 //            Engine.particleRenderer.spawnParticles(10);
 //          Shaders.initShaders();
-////          Engine.lightCompute.initShaders();
+          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //          Engine.renderBatched.initShaders();
 //          Engine.worldRenderer.initShaders();
