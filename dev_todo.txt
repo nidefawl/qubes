@@ -11,10 +11,16 @@ Model renderer:
 
 
 Launcher things:
-Add multiple applications to launcher
 Use better compression on files
 
 
+OpenGL things:
+Test performance of gl_Layer in vertex shader (https://khronos.org/registry/OpenGL/extensions/ARB/ARB_shader_viewport_layer_array.txt)
 
 
+Add debug statistics (https://khronos.org/registry/OpenGL/extensions/ARB/ARB_pipeline_statistics_query.txt)
+ Could also be used to verify vertices/primites count sent and actually drawn
+
+Try         glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); (https://khronos.org/registry/OpenGL/extensions/ARB/ARB_clip_control.txt)
+ on SMAA to avoid texture flipping
  
