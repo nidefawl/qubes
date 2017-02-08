@@ -1,0 +1,246 @@
+#version 330
+uniform layout(std140) uboSceneData 
+{
+    vec4 cameraPosition;
+    vec4 framePos;
+    vec4 viewport;
+    vec4 pxoffset;
+    vec4 prevCameraPosition;
+    vec4 sceneSettings;
+} in_scene;
+uniform layout(std140) uboMatrixShadow 
+{
+    mat4 shadow_split_mvp;
+    vec4 shadow_split_depth;
+} in_matrix_shadow;
+uniform layout(std140) uboMatrix2D 
+{
+    mat4 mvp;
+    mat4 p3DOrtho;
+    mat4 mv3DOrtho;
+} in_matrix_2D;
+uniform layout(std140) uboMatrix3D 
+{
+    mat4 mvp;
+    mat4 mv;
+    mat4 view;
+    mat4 vp;
+    mat4 p;
+    mat4 normal;
+    mat4 mv_inv;
+    mat4 proj_inv;
+    mat4 mvp_inv;
+} in_matrix_3D;
+uniform sampler2D edgesTex;
+uniform sampler2D areaTex;
+uniform sampler2D searchTex;
+uniform vec4 jitterOffset;
+in vec2 pass_texcoord;
+in vec2 pixcoord;
+in vec4 offset0;
+in vec4 offset1;
+in vec4 offset2;
+out vec4 out_Color;
+void main ()
+{
+  vec4 weights_1;
+  weights_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  vec4 tmpvar_2;
+  tmpvar_2 = texture (edgesTex, pass_texcoord);
+  if ((tmpvar_2.y > 0.0)) {
+    vec3 coords_3;
+    vec2 d_4;
+    vec2 texcoord_5;
+    texcoord_5 = offset0.xy;
+    float end_6;
+    end_6 = offset2.x;
+    vec2 e_7;
+    e_7 = vec2(0.0, 1.0);
+    while (true) {
+      if (!(((
+        (texcoord_5.x > end_6)
+       && 
+        (e_7.y > 0.8281)
+      ) && (e_7.x == 0.0)))) {
+        break;
+      };
+      e_7 = texture (edgesTex, texcoord_5).xy;
+      vec4 tmpvar_8;
+      tmpvar_8.x = (1.0/(in_scene.viewport.x));
+      tmpvar_8.y = (1.0/(in_scene.viewport.y));
+      tmpvar_8.z = in_scene.viewport.x;
+      tmpvar_8.w = in_scene.viewport.y;
+      texcoord_5 = ((vec2(-2.0, -0.0) * tmpvar_8.xy) + texcoord_5);
+    };
+    vec4 tmpvar_9;
+    tmpvar_9.x = (1.0/(in_scene.viewport.x));
+    tmpvar_9.y = (1.0/(in_scene.viewport.y));
+    tmpvar_9.z = in_scene.viewport.x;
+    tmpvar_9.w = in_scene.viewport.y;
+    coords_3.x = ((tmpvar_9.x * (
+      (-2.007874 * texture (searchTex, ((vec2(0.5, -2.0) * e_7) + vec2(0.0078125, 2.03125))).x)
+     + 3.25)) + texcoord_5.x);
+    coords_3.y = offset1.y;
+    d_4.x = coords_3.x;
+    float tmpvar_10;
+    tmpvar_10 = texture (edgesTex, coords_3.xy).x;
+    vec2 texcoord_11;
+    texcoord_11 = offset0.zw;
+    float end_12;
+    end_12 = offset2.y;
+    vec2 e_13;
+    e_13 = vec2(0.0, 1.0);
+    while (true) {
+      if (!(((
+        (texcoord_11.x < end_12)
+       && 
+        (e_13.y > 0.8281)
+      ) && (e_13.x == 0.0)))) {
+        break;
+      };
+      e_13 = texture (edgesTex, texcoord_11).xy;
+      vec4 tmpvar_14;
+      tmpvar_14.x = (1.0/(in_scene.viewport.x));
+      tmpvar_14.y = (1.0/(in_scene.viewport.y));
+      tmpvar_14.z = in_scene.viewport.x;
+      tmpvar_14.w = in_scene.viewport.y;
+      texcoord_11 = ((vec2(2.0, 0.0) * tmpvar_14.xy) + texcoord_11);
+    };
+    vec4 tmpvar_15;
+    tmpvar_15.x = (1.0/(in_scene.viewport.x));
+    tmpvar_15.y = (1.0/(in_scene.viewport.y));
+    tmpvar_15.z = in_scene.viewport.x;
+    tmpvar_15.w = in_scene.viewport.y;
+    coords_3.z = ((-(tmpvar_15.x) * (
+      (-2.007874 * texture (searchTex, ((vec2(0.5, -2.0) * e_13) + vec2(0.5234375, 2.03125))).x)
+     + 3.25)) + texcoord_11.x);
+    d_4.y = coords_3.z;
+    vec4 tmpvar_16;
+    tmpvar_16.x = (1.0/(in_scene.viewport.x));
+    tmpvar_16.y = (1.0/(in_scene.viewport.y));
+    tmpvar_16.z = in_scene.viewport.x;
+    tmpvar_16.w = in_scene.viewport.y;
+    vec2 tmpvar_17;
+    tmpvar_17 = abs(roundEven((
+      (tmpvar_16.zz * d_4)
+     - pixcoord.xx)));
+    d_4 = tmpvar_17;
+    vec4 tmpvar_18;
+    tmpvar_18.x = (1.0/(in_scene.viewport.x));
+    tmpvar_18.y = (1.0/(in_scene.viewport.y));
+    tmpvar_18.z = in_scene.viewport.x;
+    tmpvar_18.w = in_scene.viewport.y;
+    vec2 texcoord_19;
+    vec2 tmpvar_20;
+    tmpvar_20.x = tmpvar_10;
+    tmpvar_20.y = texture (edgesTex, (coords_3.zy + (vec2(1.0, 0.0) * tmpvar_18.xy))).x;
+    texcoord_19 = ((vec2(0.00625, 0.001785714) * (
+      (vec2(16.0, 16.0) * roundEven((4.0 * tmpvar_20)))
+     + 
+      sqrt(tmpvar_17)
+    )) + vec2(0.003125, 0.0008928571));
+    texcoord_19.y = ((0.1428571 * jitterOffset.y) + texcoord_19.y);
+    weights_1.xy = texture (areaTex, texcoord_19).xy;
+    coords_3.y = pass_texcoord.y;
+    weights_1.xy = weights_1.xy;
+  };
+  if ((tmpvar_2.x > 0.0)) {
+    vec3 coords_21;
+    vec2 d_22;
+    vec2 texcoord_23;
+    texcoord_23 = offset1.xy;
+    float end_24;
+    end_24 = offset2.z;
+    vec2 e_25;
+    e_25 = vec2(1.0, 0.0);
+    while (true) {
+      if (!(((
+        (texcoord_23.y > end_24)
+       && 
+        (e_25.x > 0.8281)
+      ) && (e_25.y == 0.0)))) {
+        break;
+      };
+      e_25 = texture (edgesTex, texcoord_23).xy;
+      vec4 tmpvar_26;
+      tmpvar_26.x = (1.0/(in_scene.viewport.x));
+      tmpvar_26.y = (1.0/(in_scene.viewport.y));
+      tmpvar_26.z = in_scene.viewport.x;
+      tmpvar_26.w = in_scene.viewport.y;
+      texcoord_23 = ((vec2(-0.0, -2.0) * tmpvar_26.xy) + texcoord_23);
+    };
+    vec4 tmpvar_27;
+    tmpvar_27.x = (1.0/(in_scene.viewport.x));
+    tmpvar_27.y = (1.0/(in_scene.viewport.y));
+    tmpvar_27.z = in_scene.viewport.x;
+    tmpvar_27.w = in_scene.viewport.y;
+    coords_21.y = ((tmpvar_27.y * (
+      (-2.007874 * texture (searchTex, ((vec2(0.5, -2.0) * e_25.yx) + vec2(0.0078125, 2.03125))).x)
+     + 3.25)) + texcoord_23.y);
+    coords_21.x = offset0.x;
+    d_22.x = coords_21.y;
+    float tmpvar_28;
+    tmpvar_28 = texture (edgesTex, coords_21.xy).y;
+    vec2 texcoord_29;
+    texcoord_29 = offset1.zw;
+    float end_30;
+    end_30 = offset2.w;
+    vec2 e_31;
+    e_31 = vec2(1.0, 0.0);
+    while (true) {
+      if (!(((
+        (texcoord_29.y < end_30)
+       && 
+        (e_31.x > 0.8281)
+      ) && (e_31.y == 0.0)))) {
+        break;
+      };
+      e_31 = texture (edgesTex, texcoord_29).xy;
+      vec4 tmpvar_32;
+      tmpvar_32.x = (1.0/(in_scene.viewport.x));
+      tmpvar_32.y = (1.0/(in_scene.viewport.y));
+      tmpvar_32.z = in_scene.viewport.x;
+      tmpvar_32.w = in_scene.viewport.y;
+      texcoord_29 = ((vec2(0.0, 2.0) * tmpvar_32.xy) + texcoord_29);
+    };
+    vec4 tmpvar_33;
+    tmpvar_33.x = (1.0/(in_scene.viewport.x));
+    tmpvar_33.y = (1.0/(in_scene.viewport.y));
+    tmpvar_33.z = in_scene.viewport.x;
+    tmpvar_33.w = in_scene.viewport.y;
+    coords_21.z = ((-(tmpvar_33.y) * (
+      (-2.007874 * texture (searchTex, ((vec2(0.5, -2.0) * e_31.yx) + vec2(0.5234375, 2.03125))).x)
+     + 3.25)) + texcoord_29.y);
+    d_22.y = coords_21.z;
+    vec4 tmpvar_34;
+    tmpvar_34.x = (1.0/(in_scene.viewport.x));
+    tmpvar_34.y = (1.0/(in_scene.viewport.y));
+    tmpvar_34.z = in_scene.viewport.x;
+    tmpvar_34.w = in_scene.viewport.y;
+    vec2 tmpvar_35;
+    tmpvar_35 = abs(roundEven((
+      (tmpvar_34.ww * d_22)
+     - pixcoord.yy)));
+    d_22 = tmpvar_35;
+    vec4 tmpvar_36;
+    tmpvar_36.x = (1.0/(in_scene.viewport.x));
+    tmpvar_36.y = (1.0/(in_scene.viewport.y));
+    tmpvar_36.z = in_scene.viewport.x;
+    tmpvar_36.w = in_scene.viewport.y;
+    vec2 texcoord_37;
+    vec2 tmpvar_38;
+    tmpvar_38.x = tmpvar_28;
+    tmpvar_38.y = texture (edgesTex, (coords_21.xz + (vec2(0.0, 1.0) * tmpvar_36.xy))).y;
+    texcoord_37 = ((vec2(0.00625, 0.001785714) * (
+      (vec2(16.0, 16.0) * roundEven((4.0 * tmpvar_38)))
+     + 
+      sqrt(tmpvar_35)
+    )) + vec2(0.003125, 0.0008928571));
+    texcoord_37.y = ((0.1428571 * jitterOffset.x) + texcoord_37.y);
+    weights_1.zw = texture (areaTex, texcoord_37).xy;
+    coords_21.x = pass_texcoord.x;
+    weights_1.zw = weights_1.zw;
+  };
+  out_Color = weights_1;
+}
+

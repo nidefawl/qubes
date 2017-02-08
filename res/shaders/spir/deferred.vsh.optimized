@@ -1,0 +1,64 @@
+#version 330
+uniform layout(std140) LightInfo 
+{
+    vec4 dayLightTime;
+    vec4 posSun;
+    vec4 lightDir;
+    vec4 La;
+    vec4 Ld;
+    vec4 Ls;
+} SkyLight;
+out vec2 pass_texcoord;
+out float dayNoon;
+out float nightNoon;
+out float dayLightIntens;
+out float lightAngleUp;
+out float moonSunFlip;
+void main ()
+{
+  float t_1;
+  t_1 = SkyLight.dayLightTime.x;
+  float tmpvar_2;
+  if ((t_1 < 0.5)) {
+    tmpvar_2 = ((4.0 * t_1) * (t_1 * t_1));
+  } else {
+    tmpvar_2 = (((
+      (t_1 - 1.0)
+     * 
+      ((2.0 * t_1) - 2.0)
+    ) * (
+      (2.0 * t_1)
+     - 2.0)) + 1.0);
+  };
+  dayNoon = tmpvar_2;
+  float t_3;
+  t_3 = SkyLight.dayLightTime.y;
+  float tmpvar_4;
+  if ((t_3 < 0.5)) {
+    tmpvar_4 = ((4.0 * t_3) * (t_3 * t_3));
+  } else {
+    tmpvar_4 = (((
+      (t_3 - 1.0)
+     * 
+      ((2.0 * t_3) - 2.0)
+    ) * (
+      (2.0 * t_3)
+     - 2.0)) + 1.0);
+  };
+  nightNoon = tmpvar_4;
+  dayLightIntens = SkyLight.dayLightTime.z;
+  lightAngleUp = SkyLight.dayLightTime.w;
+  int tmpvar_5;
+  if ((tmpvar_2 > tmpvar_4)) {
+    tmpvar_5 = 0;
+  } else {
+    tmpvar_5 = 1;
+  };
+  moonSunFlip = float(tmpvar_5);
+  pass_texcoord = vec4[3](vec4(-1.0, -1.0, 0.0, 0.0), vec4(3.0, -1.0, 2.0, 0.0), vec4(-1.0, 3.0, 0.0, 2.0))[gl_VertexID].zw;
+  vec4 tmpvar_6;
+  tmpvar_6.zw = vec2(0.0, 1.0);
+  tmpvar_6.xy = vec4[3](vec4(-1.0, -1.0, 0.0, 0.0), vec4(3.0, -1.0, 2.0, 0.0), vec4(-1.0, 3.0, 0.0, 2.0))[gl_VertexID].xy;
+  gl_Position = tmpvar_6;
+}
+

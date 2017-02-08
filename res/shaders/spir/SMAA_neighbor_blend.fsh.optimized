@@ -1,0 +1,129 @@
+#version 330
+uniform layout(std140) uboSceneData 
+{
+    vec4 cameraPosition;
+    vec4 framePos;
+    vec4 viewport;
+    vec4 pxoffset;
+    vec4 prevCameraPosition;
+    vec4 sceneSettings;
+} in_scene;
+uniform layout(std140) uboMatrixShadow 
+{
+    mat4 shadow_split_mvp;
+    vec4 shadow_split_depth;
+} in_matrix_shadow;
+uniform layout(std140) uboMatrix2D 
+{
+    mat4 mvp;
+    mat4 p3DOrtho;
+    mat4 mv3DOrtho;
+} in_matrix_2D;
+uniform layout(std140) uboMatrix3D 
+{
+    mat4 mvp;
+    mat4 mv;
+    mat4 view;
+    mat4 vp;
+    mat4 p;
+    mat4 normal;
+    mat4 mv_inv;
+    mat4 proj_inv;
+    mat4 mvp_inv;
+} in_matrix_3D;
+uniform sampler2D texColor;
+uniform sampler2D blendTex;
+in vec2 pass_texcoord;
+in vec4 offset;
+out vec4 out_Color;
+void main ()
+{
+  vec4 tmpvar_1;
+  vec4 a_2;
+  a_2.x = texture (blendTex, offset.xy).w;
+  a_2.y = texture (blendTex, offset.zw).y;
+  a_2.zw = texture (blendTex, pass_texcoord).zx;
+  float tmpvar_3;
+  tmpvar_3 = dot (a_2, vec4(1.0, 1.0, 1.0, 1.0));
+  if ((tmpvar_3 < 1e-05)) {
+    tmpvar_1 = texture (texColor, pass_texcoord);
+  } else {
+    vec2 blendingWeight_4;
+    bool tmpvar_5;
+    tmpvar_5 = (max (a_2.x, a_2.z) > max (a_2.y, a_2.w));
+    vec4 tmpvar_6;
+    tmpvar_6.xz = vec2(0.0, 0.0);
+    tmpvar_6.yw = a_2.yw;
+    vec2 tmpvar_7;
+    tmpvar_7 = a_2.yw;
+    blendingWeight_4 = tmpvar_7;
+    bvec4 tmpvar_8;
+    tmpvar_8.x = tmpvar_5;
+    tmpvar_8.y = tmpvar_5;
+    tmpvar_8.z = tmpvar_5;
+    tmpvar_8.w = tmpvar_5;
+    vec4 tmpvar_9;
+    tmpvar_9.yw = vec2(0.0, 0.0);
+    tmpvar_9.xz = a_2.xz;
+    vec4 variable_10;
+    variable_10 = tmpvar_6;
+    bvec2 cond_11;
+    cond_11 = tmpvar_8.xy;
+    vec2 variable_12;
+    variable_12 = tmpvar_6.xy;
+    vec2 value_13;
+    value_13 = tmpvar_9.xy;
+    if (cond_11.x) {
+      variable_12.x = value_13.x;
+    };
+    if (cond_11.y) {
+      variable_12.y = value_13.y;
+    };
+    variable_10.xy = variable_12;
+    bvec2 cond_14;
+    cond_14 = tmpvar_8.zw;
+    vec2 variable_15;
+    variable_15 = variable_10.zw;
+    vec2 value_16;
+    value_16 = tmpvar_9.zw;
+    if (cond_14.x) {
+      variable_15.x = value_16.x;
+    };
+    if (cond_14.y) {
+      variable_15.y = value_16.y;
+    };
+    variable_10.zw = variable_15;
+    bvec2 tmpvar_17;
+    tmpvar_17.x = tmpvar_5;
+    tmpvar_17.y = tmpvar_5;
+    vec2 variable_18;
+    variable_18 = tmpvar_7;
+    vec2 value_19;
+    value_19 = a_2.xz;
+    if (tmpvar_17.x) {
+      variable_18.x = value_19.x;
+    };
+    if (tmpvar_17.y) {
+      variable_18.y = value_19.y;
+    };
+    blendingWeight_4 = (variable_18 / dot (variable_18, vec2(1.0, 1.0)));
+    vec4 tmpvar_20;
+    tmpvar_20.x = (1.0/(in_scene.viewport.x));
+    tmpvar_20.y = (1.0/(in_scene.viewport.y));
+    tmpvar_20.z = in_scene.viewport.x;
+    tmpvar_20.w = in_scene.viewport.y;
+    vec4 tmpvar_21;
+    tmpvar_21.x = (1.0/(in_scene.viewport.x));
+    tmpvar_21.y = (1.0/(in_scene.viewport.y));
+    tmpvar_21.z = in_scene.viewport.x;
+    tmpvar_21.w = in_scene.viewport.y;
+    vec4 tmpvar_22;
+    tmpvar_22.xy = tmpvar_20.xy;
+    tmpvar_22.zw = -(tmpvar_21.xy);
+    vec4 tmpvar_23;
+    tmpvar_23 = ((variable_10 * tmpvar_22) + pass_texcoord.xyxy);
+    tmpvar_1 = ((blendingWeight_4.x * texture (texColor, tmpvar_23.xy)) + (blendingWeight_4.y * texture (texColor, tmpvar_23.zw)));
+  };
+  out_Color = tmpvar_1;
+}
+
