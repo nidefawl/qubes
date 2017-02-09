@@ -212,7 +212,7 @@ public class ShaderSource {
             
         }
         if ("Z_INVERSE".equals(define)) {
-            System.out.println("has inverse z define "+name);
+//            System.out.println("has inverse z define "+name);
             if (Engine.INVERSE_Z_BUFFER) {
                 return "#define Z_INVERSE 1";
             }

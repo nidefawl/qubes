@@ -881,8 +881,8 @@ public class Game extends GameBase {
                 GPUProfiler.end();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("lightCompute 1");
-//            if (!VR_SUPPORT || eye == 0)
-//            Engine.lightCompute.render(this.world, fTime, 1);
+            if (!VR_SUPPORT || eye == 0)
+            Engine.lightCompute.render(this.world, fTime, 1);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
@@ -1115,7 +1115,7 @@ public class Game extends GameBase {
             lastShaderLoadTime = System.currentTimeMillis();
 //            Engine.particleRenderer.spawnParticles(10);
 //          Shaders.initShaders();
-          Engine.lightCompute.initShaders();
+//          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //          Engine.renderBatched.initShaders();
 //          Engine.worldRenderer.initShaders();
@@ -1661,6 +1661,7 @@ public class Game extends GameBase {
                 Shaders.initShaders();
                 Engine.outRenderer.initShaders();
                 Engine.skyRenderer.initShaders();
+                Engine.lightCompute.initShaders();
                 ChatManager.getInstance().addMsg("Z buffer is now "+(Engine.INVERSE_Z_BUFFER?"inverse":"default"));
                 
                 return;
