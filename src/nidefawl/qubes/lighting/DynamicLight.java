@@ -50,6 +50,7 @@ public class DynamicLight {
         this.intensity = 1.5f+(sin*0.5f+0.5f)*2f;
         this.quadratic = 1F/this.intensity;
         this.radius = GameMath.sqrtf(1.0f / (quadratic * 0.01f));
+//        System.out.println(this.radius);
 //      System.out.println(renderPos);
 //        System.out.println(radius);
     }

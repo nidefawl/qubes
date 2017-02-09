@@ -88,12 +88,6 @@ out vec4 out_Velocity;
 
 
 
-vec4 unprojectScreenCoord(in vec4 screcrd) { 
-    vec4 fragposition = in_matrix_3D.proj_inv * screcrd;
-    fragposition /= fragposition.w;
-    return fragposition;
-}
-
 vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
     vec4 v2 = shadowMVP * worldpos;
 #if Z_INVERSE
@@ -738,5 +732,6 @@ void main() {
     // }
     // out_Color = vec4(rgbd, alpha);
     // out_Color = vec4(prop.albedo+dbgSplit.rgb*dbgSplit.a*0.02, alpha);
+    //out_Color = vec4(prop.position.xyz, alpha);
     out_Color = vec4(prop.albedo, alpha);
 }

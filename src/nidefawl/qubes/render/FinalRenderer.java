@@ -142,7 +142,7 @@ public class FinalRenderer extends AbstractRenderer {
             GLDebugTextures.readTexture(false, name, "texMaterial", Engine.getSceneFB().getTexture(2));
             GLDebugTextures.readTexture(false, name, "blocklight", Engine.getSceneFB().getTexture(3));
             GLDebugTextures.readTexture(false, name, "texDepth", Engine.getSceneFB().getDepthTex(), 2);
-            GLDebugTextures.readTexture(true, name, "DeferredOutColor", this.fbDeferred.getTexture(0), 1);
+            GLDebugTextures.readTexture(true, name, "DeferredOutColor", this.fbDeferred.getTexture(0), 8);
             if (Engine.getRenderMaterialBuffer())
             GLDebugTextures.readTexture(true, name, "MaterialBuffer", this.fbDeferred.getTexture(getAttPointMaterial()));
             if (Engine.getRenderVelocityBuffer())

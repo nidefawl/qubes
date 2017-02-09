@@ -117,6 +117,7 @@ public class LightCompute extends AbstractRenderer {
         ssbo_lights.update();
     }
     public void render(WorldClient world, float fTime, int pass) {
+
         if (this.numLights > 0) {
             shaderComputerLight.enable();
             glBindImageTexture(0, Engine.getSceneFB().getTexture(1), 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
@@ -126,8 +127,8 @@ public class LightCompute extends AbstractRenderer {
             shaderComputerLight.setProgramUniform1i("numActiveLights", this.numLights);
             GL43.glDispatchCompute(this.lightTiles[0], this.lightTiles[1], 1);
             
-//          glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-//          glMemoryBarrier(GL42.GL_ALL_BARRIER_BITS);
+            GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GL42.glMemoryBarrier(GL42.GL_ALL_BARRIER_BITS);
 //          int ret = ARBSync.glClientWaitSync(sync, ARBSync.GL_SYNC_FLUSH_COMMANDS_BIT, 1000000);
 //          if (ret == ARBSync.GL_WAIT_FAILED || ret == ARBSync.GL_TIMEOUT_EXPIRED) {
 //              System.err.println("sync failed with "+ret);
@@ -140,7 +141,7 @@ public class LightCompute extends AbstractRenderer {
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture(false, "compute_light_"+pass, "input", Engine.getSceneFB().getTexture(0));
             if (this.numLights > 0) {
-                GLDebugTextures.readTexture(true, "compute_light_"+pass, "output", this.getTexture(), 4);    
+                GLDebugTextures.readTexture(true, "compute_light_"+pass, "output", this.getTexture(), 0);    
             } else {
                 GLDebugTextures.readTexture(true, "compute_light_"+pass, "unlit", this.getTexture(), 4);
             }

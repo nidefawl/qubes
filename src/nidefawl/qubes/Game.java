@@ -881,8 +881,8 @@ public class Game extends GameBase {
                 GPUProfiler.end();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("lightCompute 1");
-            if (!VR_SUPPORT || eye == 0)
-            Engine.lightCompute.render(this.world, fTime, 1);
+//            if (!VR_SUPPORT || eye == 0)
+//            Engine.lightCompute.render(this.world, fTime, 1);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 

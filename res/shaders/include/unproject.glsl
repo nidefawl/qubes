@@ -26,6 +26,12 @@ vec4 screencoord(vec2 texcoord, float depth) {
 }
 
 
+vec4 unprojectScreenCoord(in vec4 screcrd) { 
+    vec4 fragposition = in_matrix_3D.proj_inv * screcrd;
+    fragposition /= fragposition.w;
+    return fragposition;
+}
+
 
 float linearizeDepth(in float depth)
 {	

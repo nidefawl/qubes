@@ -164,6 +164,10 @@ bool inFrustumDbg(in vec4 pos, vec2 wrkGrp) {
     }
     return inFrustum;
 }
+float Linear01Depth(float depth) {
+    float clipSpaceZ= (depth-Z_NEAR) / (1000-Z_NEAR);
+    return clipSpaceZ;
+}
 void main()
 {
     minDepth = 0xfF7FFFFF;
@@ -171,6 +175,7 @@ void main()
     pointLightCount = 0;
     maxLightIndex = 0;
     barrier();
+    groupMemoryBarrier();
     vec3 camPos = vec3(0, 0, 0);
     vec2 resolution = in_scene.viewport.xy;
     ivec2 iResolution = ivec2(resolution) - ivec2(1);
@@ -182,12 +187,12 @@ void main()
     prop.normal = nl.rgb * 2.0f - 1.0f;
     prop.depth = texelFetch(depthBuffer, pixelPos, 0).r;
     prop.linearDepth = linearizeDepth(prop.depth);
-    prop.position = unprojectPos(texCoord, prop.depth);
+    vec4 curScreenPos = screencoord(texCoord.st, prop.depth);
+    prop.position = unprojectScreenCoord(curScreenPos);
     prop.worldposition = in_matrix_3D.mv_inv * prop.position;
     // prop.worldposition.xyz /= prop.worldposition.w;
     prop.viewVector = normalize(CAMERA_POS - prop.worldposition.xyz);
 
-    float viewSpaceZ = in_matrix_3D.p[3][2] / (prop.depth - in_matrix_3D.p[2][2]);
     uint depth = floatBitsToUint(prop.position.z);
 
     if (prop.depth > 0.0) 
@@ -199,100 +204,107 @@ void main()
 
     if (prop.depth > 0.0) 
     {
-    float minDepthZ = uintBitsToFloat(minDepth);
-    float maxDepthZ = uintBitsToFloat(maxDepth);
-    debugBuf.debugVals[0] = minDepthZ;
-    debugBuf.debugVals[1] = maxDepthZ;
-   
-    vec4 frustumPlanes[6];
-    buildFrustum3(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
+        float minDepthZ = uintBitsToFloat(minDepth);
+        float maxDepthZ = uintBitsToFloat(maxDepth);
+        debugBuf.debugVals[0] = minDepthZ;
+        debugBuf.debugVals[1] = maxDepthZ;
+       
+        vec4 frustumPlanes[6];
+        buildFrustum3(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
 
 
 
 
-    uint lightIndex = gl_LocalInvocationIndex;
-    if (lightIndex < numActiveLights) {
-        PointLight p = pointLights[lightIndex];
-        vec4 pos = in_matrix_3D.mv * vec4(p.position.xyz, 1);
-        pos /= pos.w;
-        // pos.xyz/pos.w;
-        // pos.w = 1;
-        // pos = in_matrix_3D.p * pos;
-        // pos.w = 1;
-        float rad = p.radius*(EXTEND_RADIUS);
+        uint lightIndex = gl_LocalInvocationIndex;
+        if (lightIndex < numActiveLights) {
+            PointLight p = pointLights[lightIndex];
+            vec4 pos = in_matrix_3D.mv * vec4(p.position.xyz, 1);
+           // pos /= pos.w;
+            // pos.xyz/pos.w;
+            // pos.w = 1;
+            // pos = in_matrix_3D.p * pos;
+            // pos.w = 1;
+            float rad = p.radius*(EXTEND_RADIUS);
 
-        // if (pointLightCount < MAX_LIGHTS_PER_TILE)
-        {
-            bool inFrustum = true;
-            for (int i = 0; i < 6; ++i)
+            // if (pointLightCount < MAX_LIGHTS_PER_TILE)
             {
-                float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
-                inFrustum = inFrustum && (d >= -rad);
-            }
+                bool inFrustum = true;
+                for (int i = 0; i < 6; ++i)
+                {
+                    float d = dot(frustumPlanes[i], vec4(pos.xyz, 1.0));
+                    inFrustum = inFrustum && (d >= -rad);
+                }
 
-            if (inFrustum)
-            {
-                uint id = atomicAdd(pointLightCount, 1);
-                pointLightIndex[id] = lightIndex;
+           		if (inFrustum)
+            	{
+                    uint id = atomicAdd(pointLightCount, 1);
+                    pointLightIndex[id] = lightIndex;
+                }
             }
         }
-    }
 
     } 
 
     barrier();
+#define LT_IDX gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)
     vec3 finalLight = vec3(0);
     if (prop.depth > 0.0) 
     {
-    debugBuf.tileLights[gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)] = int(pointLightCount);
-    // debugBuf.tileLights[0] = 4;
-    // debugBuf.tileLights[1] = 5;
-    // debugBuf.tileLights[2] = 6;
-    // debugBuf.tileLights[3] = 7;
-    // barrier();
-    // memoryBarrierShared();
-    // groupMemoryBarrier();
-    // memoryBarrier();
-    float fDist = 0;
-    for(int i = 0; i < pointLightCount; ++i)
-    {
-        uint idx = pointLightIndex[i];
-        if (idx >= numActiveLights) {
-            continue;
-        }
-        PointLight p = pointLights[idx];
-
-        vec3 lightRay = p.position.xyz - prop.worldposition.xyz;
-        fDist = length(lightRay);
-        float occlusion = 1;
-        if (fDist < p.radius*EXTEND_RADIUS)
+       // debugBuf.tileLights[LT_IDX] = int(floor(minDepthZ/100));
+        // debugBuf.tileLights[0] = 4;
+        // debugBuf.tileLights[1] = 5;
+        // debugBuf.tileLights[2] = 6;
+        // debugBuf.tileLights[3] = 7;
+        // barrier();
+        // memoryBarrierShared();
+        // groupMemoryBarrier();
+        // memoryBarrier();
+        float fDist = 0;
+        for(int i = 0; i < pointLightCount; ++i)
         {
-            vec3 normal = prop.normal;
-            // normal = vec3(0,1,0);
-            // Diffuse
-            float lightIntensity = p.intensity;
-            float intensityDiffuse = 1 * lightIntensity;
-            float intensitySpecular = 1 * lightIntensity;
-            vec3 colorLight = clamp(p.color.rgb, vec3(0), vec3(12));
-            vec3 lightDir = normalize(lightRay);
-            vec3 diffuse = intensityDiffuse * max(dot(normal, lightDir), 0.0) * colorLight;
-            // Specular
-            vec3 halfwayDir = normalize(lightDir + prop.viewVector);  
-            float spec = max(pow(max(dot(normal, halfwayDir), 0.0), 1.4), 0.0);
-            vec3 specular = intensitySpecular * spec * colorLight;
-            // Attenuation
-            // float attenuation = 1.0 / (p.constant + p.linear * fDist + p.exponent * fDist * fDist);
-            float at=max(1, (-0.05f+p.quadratic * fDist * fDist));
-            float attenuation = 1.0 / at;
-            attenuation = (attenuation - LIGHT_CUTOFF) / (1 - LIGHT_CUTOFF);
-            attenuation = max(attenuation, 0);
+            uint idx = pointLightIndex[i];
+            if (idx >= numActiveLights) {
+                continue;
+            }
+            PointLight p = pointLights[idx];
 
-            diffuse *= attenuation * occlusion;
-            specular *= attenuation * occlusion;
-            finalLight += diffuse;
-            // finalLight += specular;
+            vec3 lightRay = p.position.xyz - prop.worldposition.xyz;
+            fDist = length(lightRay);
+            float occlusion = 1;
+            if (fDist < p.radius*EXTEND_RADIUS)
+            {
+                vec3 normal = prop.normal;
+                // normal = vec3(0,1,0);
+                // Diffuse
+                float lightIntensity = p.intensity;
+                float intensityDiffuse = 1 * lightIntensity;
+                float intensitySpecular = 1 * lightIntensity;
+                vec3 colorLight = clamp(p.color.rgb, vec3(0), vec3(12));
+                vec3 lightDir = normalize(lightRay);
+                vec3 diffuse = intensityDiffuse * max(dot(normal, lightDir), 0.0) * colorLight;
+                // Specular
+                vec3 halfwayDir = normalize(lightDir + prop.viewVector);  
+                float spec = max(pow(max(dot(normal, halfwayDir), 0.0), 1.4), 0.0);
+                vec3 specular = intensitySpecular * spec * colorLight;
+                // Attenuation
+                // float attenuation = 1.0 / (p.constant + p.linear * fDist + p.exponent * fDist * fDist);
+                float at=max(1, (-0.05f+p.quadratic * fDist * fDist));
+                float attenuation = 1.0 / at;
+                attenuation = (attenuation - LIGHT_CUTOFF) / (1 - LIGHT_CUTOFF);
+                attenuation = max(attenuation, 0);
+
+                diffuse *= attenuation * occlusion;
+                specular *= attenuation * occlusion;
+                finalLight += diffuse;
+                // finalLight += specular;
+            }
         }
     }
+    if (gl_LocalInvocationID.x==0&&gl_LocalInvocationID.y==0) {
+        //atomicExchange(debugBuf.tileLights[LT_IDX], int(dot(finalLight, vec3(1))>0?1:0));
+        atomicExchange(debugBuf.tileLights[LT_IDX], int(pointLightCount));
+        //debugBuf.tileLights[LT_IDX] = ;
+        //debugBuf.tileLights[LT_IDX] = int(pointLightCount);
     }
     barrier();
     // buildFrustum3(frustumPlanes, vec2(8,8), minDepthZ, maxDepthZ);
@@ -313,6 +325,12 @@ void main()
     //     finalLight = vec3(0);
     // }
 
+  float lind = Linear01Depth(prop.linearDepth);
+  float d = pow(1-lind, 16);
+  // float r = clamp(lind, 0, 1);
+  vec3 rgbDbg = vec3(d, lind, prop.linearDepth);
+
+   // imageStore(finalImage, pixelPos, vec4(prop.position.xyz,1));
     imageStore(finalImage, pixelPos, vec4(finalLight,1));
 }
 
