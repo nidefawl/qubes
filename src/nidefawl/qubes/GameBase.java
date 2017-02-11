@@ -1,17 +1,25 @@
 package nidefawl.qubes;
 
+import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.glfw.GLFWVulkan.*;
 
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkInstance;
 
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.font.FontRenderer;
@@ -34,6 +42,9 @@ import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vr.VR;
+import nidefawl.qubes.vulkan.VKContext;
+import nidefawl.qubes.vulkan.VulkanErr;
+import nidefawl.qubes.vulkan.VulkanInit;
 import nidefawl.qubes.worldgen.TerrainGen;
 
 public abstract class GameBase implements Runnable, IErrorHandler {
@@ -46,7 +57,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static int     guiHeight;
     public static boolean GL_ERROR_CHECKS = true;
     public static boolean VR_SUPPORT = false;
+    public static boolean DEBUG_LAYER = false;
     public static long    windowId        = 0;
+    public static long    windowSurface   = 0;
     protected static int            initWidth       = (int) (1920);
     protected static int            initHeight      = (int) (1080);
     public static int TICKS_PER_SEC = 20;
@@ -97,6 +110,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     boolean               reinittexthook  = false;
     boolean               wasGrabbed      = true;
     public GLCapabilities caps;
+    public final boolean isVulkan;
+    public VKContext vkContext;
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -105,6 +120,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public GameBase() {
+        this.isVulkan = Boolean.valueOf(System.getProperty("renderer.vulkan"));
+        if (this.isVulkan) {
+            GL_ERROR_CHECKS = false;
+        }
         baseInstance = this;
         this.timer = new Timer(TICKS_PER_SEC);
         displayWidth = initWidth;
@@ -132,15 +151,17 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     @Override
     public final void run() {
         try {
-            initDisplay(false);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("early initDisplay");
-            initGLContext();
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("early initGLContext");
-            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("early glClear");
+            initDisplay(DEBUG_LAYER);
+            if (isVulkan) {
+                
+            } else {
+                initGLContext();
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("early initGLContext");
+                glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("early glClear");
+            }
             updateDisplay();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("early updateDisplay");
@@ -148,41 +169,45 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             t.printStackTrace();
             return;
         }
-        try {
-            List<String> list = GL.validateCaps(caps);
-            if (!list.isEmpty()) {
-                ArrayList<String> desc = new ArrayList<>();
-                desc.add("You graphics card does not support some of the required OpenGL features");
-                desc.add(GL11.glGetString(GL11.GL_VENDOR)+" "+GL11.glGetString(GL11.GL_RENDERER) +" "+GL11.glGetString(GL11.GL_VERSION));
-                for (String s : list) {
-                    desc.add(s);
+        if (isVulkan) {
+            
+        } else {
+            try {
+                List<String> list = GL.validateCaps(caps);
+                if (!list.isEmpty()) {
+                    ArrayList<String> desc = new ArrayList<>();
+                    desc.add("You graphics card does not support some of the required OpenGL features");
+                    desc.add(GL11.glGetString(GL11.GL_VENDOR)+" "+GL11.glGetString(GL11.GL_RENDERER) +" "+GL11.glGetString(GL11.GL_VERSION));
+                    for (String s : list) {
+                        desc.add(s);
+                    }
+                    showErrorScreen("Incompatible graphics card", desc, null, false);
+                    return;
                 }
-                showErrorScreen("Incompatible graphics card", desc, null, false);
+            } catch (Throwable t) {
+                showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
                 return;
             }
-        } catch (Throwable t) {
-            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
-            return;
-        }
-        try {
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("pre initGLContext");
-            initGLContext();
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("initGLContext");
-            GameContext.lateInit();
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("GameContext.lateInit");
-            TerrainGen.init();
-            if (this.showError == null) {
-                this.showError = GameContext.getInitError();
+            try {
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("pre initGLContext");
+                initGLContext();
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("initGLContext");
+                GameContext.lateInit();
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("GameContext.lateInit");
+                TerrainGen.init();
+                if (this.showError == null) {
+                    this.showError = GameContext.getInitError();
+                }
+            } catch (Throwable t) {
+                showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
+                return;
             }
-        } catch (Throwable t) {
-            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
-            return;
-        }
-        if (this.showError != null) {
-            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), this.showError, true);
+            if (this.showError != null) {
+                showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), this.showError, true);
+            }
         }
         mainLoop();
     }
@@ -271,31 +296,53 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         try {
             initCallbacks();
             glfwSetErrorCallback(errorCallback);
-            // Initialize GLFW. Most GLFW functions will not work before doing this.
             if (glfwInit() != true)
                 throw new IllegalStateException("Unable to initialize GLFW");
+            if (isVulkan) {
 
+
+                // Create the Vulkan instance
+                vkContext = VulkanInit.createContext(debugContext);
+//                final VkDebugReportCallbackEXT debugCallback = new VkDebugReportCallbackEXT() {
+//                    public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
+//                        System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
+//                        return 0;
+//                    }
+//                };
+//                final long debugCallbackHandle = setupDebugging(instance, VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT, debugCallback);
+//                final VkPhysicalDevice physicalDevice = getFirstPhysicalDevice(instance);
+//                final DeviceAndGraphicsQueueFamily deviceAndGraphicsQueueFamily = createDeviceAndGetGraphicsQueueFamily(physicalDevice);
+//                final VkDevice device = deviceAndGraphicsQueueFamily.device;
+//                int queueFamilyIndex = deviceAndGraphicsQueueFamily.queueFamilyIndex;
+//                final VkPhysicalDeviceMemoryProperties memoryProperties = deviceAndGraphicsQueueFamily.memoryProperties;
+
+            }
             // Configure our window
             glfwDefaultWindowHints();// optional, the current window hints are already the default
-            glfwWindowHint(GLFW_SAMPLES, 0);
             glfwWindowHint(GLFW_VISIBLE, GLFW.GLFW_FALSE);// the window will stay hidden after creation
             glfwWindowHint(GLFW_RESIZABLE, GLFW.GLFW_TRUE);// the window will be resizable
-            if (!debugContext) {
-//              glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-//              glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-//              glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-            }
+            if (isVulkan) {
+                glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-            glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-            glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW.GLFW_NO_ROBUSTNESS);
-            //            glfwWindowHint(GLFW_RED_BITS, 8);
-            //            glfwWindowHint(GLFW_GREEN_BITS, 8);
-            //            glfwWindowHint(GLFW_BLUE_BITS, 8);
-            //            glfwWindowHint(GLFW_ALPHA_BITS, 8);
-            glfwWindowHint(GLFW_DEPTH_BITS, 24);
-            glfwWindowHint(GLFW_STENCIL_BITS, 1);
-            //            glfwWindowHint(GLFW_DOUBLE_BUFFER, GL_TRUE);//Check Version
+            } else {
+                glfwWindowHint(GLFW_SAMPLES, 0);
+                if (!debugContext) {
+//                  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+//                  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+//                  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+                }
+
+                glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+                glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+                glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW.GLFW_NO_ROBUSTNESS);
+                //            glfwWindowHint(GLFW_RED_BITS, 8);
+                //            glfwWindowHint(GLFW_GREEN_BITS, 8);
+                //            glfwWindowHint(GLFW_BLUE_BITS, 8);
+                //            glfwWindowHint(GLFW_ALPHA_BITS, 8);
+                glfwWindowHint(GLFW_DEPTH_BITS, 24);
+                glfwWindowHint(GLFW_STENCIL_BITS, 1);
+                //            glfwWindowHint(GLFW_DOUBLE_BUFFER, GL_TRUE);//Check Version
+            }
 
             // Create the window
             windowId = glfwCreateWindow(displayWidth, displayHeight, getAppTitle(), NULL, NULL);
@@ -309,9 +356,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             // Center our window
             glfwSetWindowPos(windowId, (vidmode.width() - displayWidth) / 2, (vidmode.height() - displayHeight) / 2);
 
-            glfwMakeContextCurrent(windowId);
-            caps = org.lwjgl.opengl.GL.createCapabilities();
-            // Make the window visible
             glfwShowWindow(windowId);
             glfwSetWindowSizeCallback(windowId, cbWindowSize);
             glfwSetKeyCallback(windowId, cbKeyboard);
@@ -319,31 +363,48 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             glfwSetScrollCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
             glfwSetCursorPosCallback(windowId, cbCursorPos);
-//            glfwSetFramebufferSizeCallback(windowId, new GLFWFramebufferSizeCallback() {
-//                
-//                @Override
-//                public void invoke(long window, int width, int height) {
-//                    System.out.println("FRAMEBUFFER NOW "+width+"/"+height);
-//                }
-//            });
+            if (isVulkan) {
+                try ( MemoryStack stack = stackPush() ) {
+                    LongBuffer pSurface = stack.longs(0);
+                    int err = glfwCreateWindowSurface(vkContext.vk, windowId, null, pSurface);
+                    if (err != VK_SUCCESS) {
+                        throw new AssertionError("Failed to create surface: " + VulkanErr.toString(err));
+                    }
+                    windowSurface = pSurface.get(0);
+                }
+                VulkanInit.initContext(vkContext, windowSurface, windowWidth, windowHeight, vsync);
+            } else {
+                glfwMakeContextCurrent(windowId);
+                caps = org.lwjgl.opengl.GL.createCapabilities();
+                // Make the window visible
+//                glfwSetFramebufferSizeCallback(windowId, new GLFWFramebufferSizeCallback() {
+//                    
+//                    @Override
+//                    public void invoke(long window, int width, int height) {
+//                        System.out.println("FRAMEBUFFER NOW "+width+"/"+height);
+//                    }
+//                });
 
-            int major, minor, rev;
-            major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
-            minor = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
-            rev = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_REVISION);
-            this.vendor = GPUVendor.parse(GL11.glGetString(GL11.GL_VENDOR));
-            if (GL_ERROR_CHECKS) {
-                System.out.printf("OpenGL version recieved: %d.%d.%d\n", major, minor, rev);
-                System.out.printf("Supported OpenGL is %s\n", GL11.glGetString(GL11.GL_VERSION));
-                System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
-            }
-            // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-            if (GL_ERROR_CHECKS) {
-//                if (KHRDebug. != null) {
-//                    GLDebugLog.setup();
-//                    _checkGLError("GLDebugLog.setup()");
-////                }
-//                _checkGLError("Pre startup");
+                int major, minor, rev;
+                major = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
+                minor = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
+                rev = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_REVISION);
+                this.vendor = GPUVendor.parse(GL11.glGetString(GL11.GL_VENDOR));
+                if (GL_ERROR_CHECKS) {
+                    System.out.printf("OpenGL version recieved: %d.%d.%d\n", major, minor, rev);
+                    System.out.printf("Supported OpenGL is %s\n", GL11.glGetString(GL11.GL_VERSION));
+                    System.out.printf("Supported GLSL is %s\n", GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION));
+                }
+                // Setup a key callback. It will be called every time a key is pressed, repeated or released.
+                if (GL_ERROR_CHECKS) {
+//                    if (KHRDebug. != null) {
+//                        GLDebugLog.setup();
+//                        _checkGLError("GLDebugLog.setup()");
+////                    }
+//                    _checkGLError("Pre startup");
+                }
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("initDisplay");
             }
 
         } catch (Throwable t) {
@@ -385,7 +446,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public void checkResize() {
         if (minimized && newWidth*newHeight>0) {
             minimized = false;
-            if (isRunning())
+            if (isRunning()&&!isVulkan)
                 Engine.setDefaultViewport();
         }
         if (newWidth != windowWidth || newHeight != windowHeight) {
@@ -413,11 +474,16 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             }
             try {
                 onWindowResize(windowWidth, windowHeight);
-                if (isRunning())
+                if (vkContext != null) {
+                    vkContext.updateSwapchain(windowWidth, windowHeight, vsync);
+                }
+                if (isRunning()&&!isVulkan)
                     Engine.setDefaultViewport();
             } catch (Throwable t) {
                 setException(new GameError("GLFWWindowSizeCallback", t));
             }
+        } else if (vkContext != null && vkContext.reinitSwapchain) {
+            vkContext.updateSwapchain(windowWidth, windowHeight, vsync);
         }
     }
 
@@ -474,15 +540,19 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public void updateDisplay() {
-        glfwSwapBuffers(windowId);// swap the color buffers
+        if (!isVulkan) {
+            glfwSwapBuffers(windowId);// swap the color buffers
+        }
     }
 
     public boolean isCloseRequested() {
         return glfwWindowShouldClose(windowId);
     }
 
-    protected void setVSync_impl(boolean b) {
-        if (this.vendor != GPUVendor.INTEL) {
+    void setVSync_impl(boolean b) {
+        if (isVulkan) {
+            vkContext.reinitSwapchain = (vkContext.swapChain.isVsync() != b);
+        } else if (this.vendor != GPUVendor.INTEL) {
             int vsync = 0;
             if (b) {
                 vsync = -1;
@@ -582,6 +652,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             setGrabbed(b);
         }
         preRenderUpdate(renderTime);
+        if (vkContext != null) {
+            vkContext.preRender();
+        }
         //        if (!startRender) {
         //            try {
         //                Thread.sleep(10);
@@ -602,6 +675,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         postRenderUpdate(renderTime);
         if (!this.running) {
             return;
+        }
+        if (vkContext != null) {
+            vkContext.postRender();
         }
         
         //        if (Main.DO_TIMING) TimingHelper.start(14);
@@ -665,7 +741,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame");
             onWindowResize(displayWidth, displayHeight);
-            Engine.setDefaultViewport();
+            if (!isVulkan) {
+                Engine.setDefaultViewport();
+            }
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame onResize");
             timer.calculate();
@@ -1015,7 +1093,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public void toggleVR() {
         boolean hadVR = VR_SUPPORT;
         if (!VR.initCalled) {
-            VR.initApp(this);
+            VR.initApp();
         }
         VR_SUPPORT = VR.isInit() && !VR_SUPPORT;
         if (!VR_SUPPORT && hadVR) {
@@ -1079,5 +1157,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     
     public boolean canRenderGui3d() {
         return this.renderGui3d;
+    }
+
+    public void rebuildRenderCommands() {
     }
 }

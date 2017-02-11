@@ -721,7 +721,7 @@ public class VR {
 //		VR.vrCompositor.PostPresentHandoff.apply();
 	}
 
-	public static void initApp(GameBase instance) {
+	public static void initApp() {
 	    initCalled = true;
 		if (VR.InitVR()) {
     		IntBuffer rtx = IntBuffer.allocate(1);

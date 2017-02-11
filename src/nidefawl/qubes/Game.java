@@ -2,11 +2,11 @@ package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import org.lwjgl.opengl.*;
 
 import java.io.File;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.assets.RenderAssets;
 import nidefawl.qubes.async.AsyncTask;

@@ -13,7 +13,7 @@ public class BootClient {
     
 
     public static void main(String[] args) {
-        boolean debug = false;
+        boolean debug = Boolean.valueOf(System.getProperty("game.debug", "false"));
         Configuration.DEBUG.set(debug);
         Configuration.DEBUG_MEMORY_ALLOCATOR.set(false);
         Configuration.DISABLE_CHECKS.set(true);
