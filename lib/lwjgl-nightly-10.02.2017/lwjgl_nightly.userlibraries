@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
+<eclipse-userlibraries version="2">
+    <library name="lwjgl_nightly" systemlibrary="false">
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-openal/lwjgl-openal-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-openal/lwjgl-openal.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-openal/lwjgl-openal-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opencl/lwjgl-opencl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opencl/lwjgl-opencl.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opencl/lwjgl-opencl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-sse/lwjgl-sse-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-sse/lwjgl-sse.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-sse/lwjgl-sse-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl.jar" source="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-sources.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-openal/lwjgl-openal-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-sse/lwjgl-sse-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-windows.jar"/>
+    </library>
+    <library name="lwjgl3" systemlibrary="false">
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl/src.zip!/" nativelibpaths="Game/lib/lwjgl_dbg" path="/Game/lib/lwjgl_dbg/lwjgl.jar" source="/Game/lib/lwjgl/src.zip"/>
+    </library>
+    <library name="lwjgl3_game_custom" systemlibrary="false">
+        <archive nativelibpaths="Game/lib/lwjgl_dbg" path="/Game/lib/lwjgl_dbg/lwjgl.jar"/>
+    </library>
+    <library name="lwjgl3_nightly_msvc12_build" systemlibrary="false">
+        <archive javadoc="jar:file:/C:/lwjgl3_nightly/lwjgl/bin/RELEASE/doc/javadoc.zip!/" nativelibpaths="C:/lwjgl3_nightly/lwjgl/libs" path="C:/lwjgl3_nightly/lwjgl/bin/RELEASE/jar/lwjgl.jar" source="C:/lwjgl3_nightly/lwjgl/bin/RELEASE/src.zip"/>
+    </library>
+    <library name="lwjgl3.1" systemlibrary="false">
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-glfw-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-glfw.jar" source="/Game/lib/lwjgl3.1/lwjgl-glfw-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-jemalloc-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-jemalloc.jar" source="/Game/lib/lwjgl3.1/lwjgl-jemalloc-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-openal-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-openal.jar" source="/Game/lib/lwjgl3.1/lwjgl-openal-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-opencl-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-opencl.jar" source="/Game/lib/lwjgl3.1/lwjgl-opencl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-opengl-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-opengl.jar" source="/Game/lib/lwjgl3.1/lwjgl-opengl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-sse-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-sse.jar" source="/Game/lib/lwjgl3.1/lwjgl-sse-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl.jar" source="/Game/lib/lwjgl3.1/lwjgl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-stb-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-stb.jar" source="/Game/lib/lwjgl3.1/lwjgl-stb-sources.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-glfw-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-jemalloc-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-openal-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-opengl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-sse-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-stb-natives-windows.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl3.1/lwjgl-nanovg-javadoc.jar!/" path="/Game/lib/lwjgl3.1/lwjgl-nanovg.jar" source="/Game/lib/lwjgl3.1/lwjgl-nanovg-sources.jar"/>
+        <archive path="/Game/lib/lwjgl3.1/lwjgl-nanovg-natives-windows.jar"/>
+    </library>
+</eclipse-userlibraries>
