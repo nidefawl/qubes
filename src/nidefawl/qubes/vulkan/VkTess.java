@@ -1,27 +1,27 @@
 package nidefawl.qubes.vulkan;
 
+import static org.lwjgl.vulkan.VK10.*;
+
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
-import nidefawl.qubes.gl.GLVBO;
 import nidefawl.qubes.gl.ReallocIntBuffer;
+import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
 public class VkTess extends AbstractVkTesselatorState {
-    final public static String[] attributes = new String[] {
-            "in_position",
-            "in_normal",
-            "in_texcoord",
-            "in_color",
-    };
-
+    public static int CREATE_QUAD_IDX_BUFFER = 0;
+    public static int CREATE_TRI_IDX_BUFFER = 1;
+    public static int STREAM_UPLOAD = 0;
+    public static int DEVICE_LOCAL_UPLOAD = 1;
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
     
-    public final static VkTess instance    = new VkTess();
-    public final static VkTess tessFont    = new VkTess();
+    public final static VkTess instance    = new VkTess("global");
+    public final static VkTess tessFont    = new VkTess("font");
 
     public final static int BUF_INCR  = 1024*1024;
 
@@ -40,26 +40,59 @@ public class VkTess extends AbstractVkTesselatorState {
 //    private IntBuffer            intBuffer;
     ReallocIntBuffer bufInt;
 
-    private int vboIdx;
-
-    private GLVBO[] vbo = new GLVBO[1<<4];
-    private GLVBO[] vboIndices = new GLVBO[1<<4];
-
-
-    public VkTess() {
-        this(false);
+    static class FrameLocalBuffers {
+        private int vboIdx;
+        private VkBuffer[] vbo;
+        private VkBuffer[] vboIndices;
+        public FrameLocalBuffers(VkTess tess, VKContext context, int numbuffers) {
+            vbo = new VkBuffer[numbuffers];
+            vboIndices = new VkBuffer[numbuffers];
+            for (int i = 0; i < numbuffers; i++) {
+                this.vbo[i] = new VkBuffer(context).tag("tess_"+tess.tag+"_frame"+i+"_vertex");
+                this.vboIndices[i] = new VkBuffer(context).tag("tess_"+tess.tag+"_frame"+i+"_index");
+            }
+        }
+        public void destroy() {
+            for (int i = 0; i < this.vbo.length; i++) {
+                this.vbo[i].destroy();
+                this.vboIndices[i].destroy();
+            }
+        }
+        public VkBuffer vbo() {
+            return this.vbo[vboIdx];
+        }
+        public VkBuffer vboIndices() {
+            return this.vboIndices[vboIdx];
+        }
     }
-    public VkTess(boolean isSoftTesselator) {
+    FrameLocalBuffers[] buffers = new FrameLocalBuffers[0];
+    private String tag;
+    public static void init(VKContext context, int numImages) {
+        instance.initInstance(context, numImages);
+    }
+
+    private void initInstance(VKContext context, int numImages) {
+        if (!this.isSoftTesselator) {
+            for (int i = 0; i < buffers.length; i++) {
+                if (buffers[i] != null) {
+                    buffers[i].destroy();
+                }
+            }
+            buffers = new FrameLocalBuffers[numImages];
+            for (int i = 0; i < buffers.length; i++) {
+                buffers[i] = new FrameLocalBuffers(this, context, 1<<4);
+            }
+        }
+    }
+    public VkTess(String s) {
+        this(false, s);
+    }
+    public VkTess(boolean isSoftTesselator, String s) {
         this.isSoftTesselator = isSoftTesselator;
         if (!this.isSoftTesselator) {
             bufInt = new ReallocIntBuffer();
-            for (int i = 0; i < this.vbo.length; i++) {
-                this.vbo[i] = new GLVBO(GL15.GL_DYNAMIC_DRAW);
-            }
-            for (int i = 0; i < this.vboIndices.length; i++) {
-                this.vboIndices[i] = new GLVBO(GL15.GL_DYNAMIC_DRAW);
-            }
         }
+        this.tag = s;
     }
     
     public boolean isSoftTesselator() {
@@ -190,20 +223,26 @@ public class VkTess extends AbstractVkTesselatorState {
         setColor(rgb&0xFFFFFF, (int) Math.max(0, Math.min(255, alpha * 255F)));
     }
     
-    public void draw(int mode, AbstractVkTesselatorState out) {
+    public void finish(int idxMode, int bufferMode, AbstractVkTesselatorState out, int bufferOffset) {
         if (isSoftTesselator()) {
             throw new IllegalStateException("Cannot draw soft tesselator");
         }
         if (vertexcount >1) {
+            int currentBuffer = VKContext.currentBuffer;
+            FrameLocalBuffers buffer = buffers[currentBuffer];
+            if (out == this) {
+                buffer.vboIdx++;
+                if (buffer.vboIdx >= buffer.vbo.length) {
+                    buffer.vboIdx = 0;
+                }
+            }
             int vIdx = getIdx(vertexcount);
-            int len = vIdx * 4;
             bufInt.put(rawBuffer, 0, vIdx);
-            GLVBO vbo = out.getVBO();
-            GLVBO vboIdx = out.getVBOIndices();
-            vbo.upload(GL15.GL_ARRAY_BUFFER, bufInt.getByteBuf(), len, false);
+            VkBuffer bufferVertex = out.getVertexBuffer();
+            VkBuffer bufferIdx = out.getIndexBuffer();
+            upload(bufferVertex, bufferMode, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufInt.getByteBuf(), bufferOffset);
             int pos = 0;
-            if (mode == GL11.GL_QUADS) {
-                mode = GL11.GL_TRIANGLES;
+            if (idxMode == CREATE_QUAD_IDX_BUFFER) {
                 if (this.vertexcount%4 != 0) {
                     throw new IllegalStateException("Cannot make tri idx: vertexcount%4 != 0");
                 }
@@ -217,51 +256,49 @@ public class VkTess extends AbstractVkTesselatorState {
                     rawBuffer[pos++]=(vIdx+3);
                     rawBuffer[pos++]=(vIdx+0);
                 }
-            } else if (mode == GL11.GL_LINES
-                    ||mode == GL11.GL_LINE_STRIP
-                    ||mode == GL11.GL_TRIANGLES
-                    ||mode == GL11.GL_POLYGON) {
+            } else if (idxMode == CREATE_TRI_IDX_BUFFER) {
                 for (int i = 0; i < this.vertexcount; i++) {
                     rawBuffer[i]=i;
                 }
                 pos = vertexcount;
             } else {
-                System.out.println("Mode not supported "+mode);
+                System.out.println("Mode not supported "+idxMode);
 //                Thread.dumpStack();
             }
             this.idxCount = pos;
             bufInt.put(rawBuffer, 0, pos);
-            vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, bufInt.getByteBuf(), pos*4, false);
-            if (out == this) {
-                bindAndDraw(mode);
-                this.vboIdx++;
-                if (this.vboIdx >= this.vbo.length) {
-                    this.vboIdx = 0;
-                }
-            } else {
+            upload(bufferIdx, bufferMode, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufInt.getByteBuf(), bufferOffset);
+            if (out != this) {
                 this.copyTo(out);
             }
 
         }
         resetState();
     }
-    @Override
-    public GLVBO getVBO() {
-        return this.vbo[this.vboIdx];
+    private void upload(VkBuffer buffer, int bufferMode, int bufferType, ByteBuffer byteBuf, int bufferoffset) {
+        if (buffer.getSize() < byteBuf.remaining()+1 || (bufferMode == DEVICE_LOCAL_UPLOAD) != buffer.isDeviceLocal()) {
+            buffer.destroy();
+            buffer.create(bufferType, GameMath.nextPowerOf2(byteBuf.remaining()), (bufferMode == DEVICE_LOCAL_UPLOAD));
+        }
+        buffer.upload(byteBuf, bufferoffset);
+        
+    }
+    public FrameLocalBuffers buffer() {
+        return this.buffers[VKContext.currentBuffer];
     }
     @Override
-    public GLVBO getVBOIndices() {
-        return this.vboIndices[this.vboIdx];
+    public VkBuffer getVertexBuffer() {
+        return buffer().vbo();
+    }
+    @Override
+    public VkBuffer getIndexBuffer() {
+        return buffer().vboIndices();
     }
     
-    public void draw(int mode) {
-        this.draw(mode, this);
+    public void finish(int mode) {
+        this.finish(mode, STREAM_UPLOAD, this, 0);
     }
     
-    
-    public void drawQuads() {
-        this.draw(GL11.GL_QUADS);
-    }
     
 
 
@@ -277,11 +314,9 @@ public class VkTess extends AbstractVkTesselatorState {
 
     public void destroy() {
         this.bufInt.release();
-        for (int i = 0; i < vbo.length; i++) {
-            this.vbo[i].release();
-        }
-        for (int i = 0; i < vboIndices.length; i++) {
-            this.vboIndices[i].release();
+        for (int i = 0; i < buffers.length; i++) {
+            this.buffers[i].destroy();
+            this.buffers[i] = null;
         }
     }
 

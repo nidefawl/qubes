@@ -3,9 +3,7 @@ package nidefawl.qubes;
 import org.lwjgl.system.Configuration;
 
 import nidefawl.qubes.logging.ErrorHandler;
-import nidefawl.qubes.util.GameContext;
-import nidefawl.qubes.util.Side;
-import nidefawl.qubes.util.SideOnly;
+import nidefawl.qubes.util.*;
 
 @SideOnly(value = Side.CLIENT)
 public class BootClient {
@@ -14,6 +12,10 @@ public class BootClient {
 
     public static void main(String[] args) {
         boolean debug = Boolean.valueOf(System.getProperty("game.debug", "false"));
+        String strappId = System.getProperty("game.appid", null);
+        if (strappId != null) {
+            appId = StringUtil.parseInt(strappId, appId);
+        }
         Configuration.DEBUG.set(debug);
         Configuration.DEBUG_MEMORY_ALLOCATOR.set(false);
         Configuration.DISABLE_CHECKS.set(true);
@@ -55,6 +57,9 @@ public class BootClient {
                 break;
             case 2:
                 instanceClass = "test.game.vr.VRApp";
+                break;
+            case 3:
+                instanceClass = "test.game.VKTriangle";
                 break;
         }
         if (instanceClass != null) {

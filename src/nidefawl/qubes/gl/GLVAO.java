@@ -4,6 +4,10 @@ import org.lwjgl.opengl.*;
 
 import com.google.common.collect.Lists;
 
+import nidefawl.qubes.Game;
+import nidefawl.qubes.util.GameLogicError;
+import nidefawl.qubes.vulkan.VkVertexDescriptors;
+
 import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
 
 import java.util.ArrayList;
@@ -19,25 +23,53 @@ public class GLVAO {
     ArrayList<VertexAttrib> list = Lists.newArrayList();
     private boolean useBindless;
     protected int vaoIdBindless;
+    public int idx;
+    private VkVertexDescriptors vkVertexDesc;
 
+    public int getVertStride() {
+        return this.vertStride;
+    }
+    public VkVertexDescriptors getVkVertexDesc() {
+        return this.vkVertexDesc;
+    }
     public GLVAO() {
+        this.idx = NEXT_VAO_ID;
         vaoList[NEXT_VAO_ID++] = this;
     }
-    public final static void initVAOs() {
+    public final static void initVAOs(boolean isVulkan) {
         for (int i = 0; i < vaoList.length; i++) {
             if (vaoList[i] != null) {
                 vaoList[i].init();
-                vaoList[i].setup();
+                if (isVulkan) {
+                    vaoList[i].setupVulkan();
+                } else {
+                    vaoList[i].setupGL();
+                }
+                
+            }
+        }
+        if (isVulkan&&Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("init vertex formats");
+    }
+    public static void destroy() {
+        for (int i = 0; i < vaoList.length; i++) {
+            if (vaoList[i] != null) {
+                vaoList[i].destroyVertexFormat();
             }
         }
     }
-    static class VertexAttrib {
-        int     attribindex;
-        int     size;
-        int     type;
-        boolean normalized;
-        int     intLen;
-        private boolean isFloat;
+    private void destroyVertexFormat() {
+        if (Engine.isVulkan) {
+            this.vkVertexDesc.destroy();
+        }
+    }
+    public static class VertexAttrib {
+        public int     attribindex;
+        public int     size;
+        public int     type;
+        public boolean normalized;
+        public int     intLen;
+        public boolean isFloat;
         public long offset;
         public VertexAttrib(boolean isFloat, int attribindex, int size, int type, boolean normalized, int intLen) {
             this.isFloat = isFloat;
@@ -65,7 +97,11 @@ public class GLVAO {
     void init() {
         
     }
-    void setup() {
+    private void setupVulkan() {
+        this.vkVertexDesc = new VkVertexDescriptors(this.idx, this.list);
+        
+    }
+    private void setupGL() {
         int vertStride = 0;
         for (int i = 0; i < this.list.size(); i++) {
             VertexAttrib attrib = list.get(i);
@@ -229,6 +265,14 @@ public class GLVAO {
             vertexAttribIFormat(5, 2, GL11.GL_UNSIGNED_SHORT, 1);
 
 
+        }
+    };
+    public final static GLVAO test = new GLVAO() {
+        void init() {
+            //POS
+            vertexAttribFormat(0, 4, GL11.GL_FLOAT, false, 4);
+            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
+            vertexAttribFormat(2, 2, GL11.GL_FLOAT, false, 2);
         }
     };
 

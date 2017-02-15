@@ -1,5 +1,6 @@
 package nidefawl.qubes.texture;
 
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -18,6 +19,9 @@ import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.texture.DDSLoader.Format;
+import nidefawl.qubes.texture.TextureCreateInfo.FilterType;
+import nidefawl.qubes.texture.TextureCreateInfo.TextureSub;
+import nidefawl.qubes.texture.TextureCreateInfo.UVCoordMode;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -94,52 +98,30 @@ public class TextureManager {
         if (dds == null) {
             throw new GameError("Not yet implemented, please load PNGs manually");
         }
-        int dataFormat;
-        int internalFormat;
-        int mipmapLevel = dds.getNumMipmaps()-1;
-        Format format = dds.getPixelFormat();
-        boolean compressed = false;
-        System.out.println(format);
-        switch (format) {
-            case RGBA8:
-                dataFormat = GL11.GL_RGBA;
-                internalFormat = GL11.GL_RGBA8;
-                break;
-            case DXT1:
-                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-                dataFormat = GL11.GL_RGB;
-                compressed=true;
-                break;
-            case DXT1A:
-                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-                dataFormat = GL11.GL_RGBA;
-                compressed=true;
-                break;
-            case DXT3:
-                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-                dataFormat = GL11.GL_RGBA;
-                compressed=true;
-                break;
-            case DXT5:
-                internalFormat = EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-                dataFormat = GL11.GL_RGBA;
-                compressed=true;
-                break;
-            default:
-                throw new GameError("Format "+format+" not yet implemented");
-        }
+        TextureCreateInfo info = new TextureCreateInfo(dds);
+        info.setFilter(filter?FilterType.LINEAR:FilterType.NEAREST);
+        info.setUVMode(repeat?UVCoordMode.REPEAT:UVCoordMode.CLAMP);
+        return makeCompressedTexture(info);
+    }
+    public int makeCompressedTexture(TextureCreateInfo ti) {
+        int internalFormat = ti.getGLFormat();
+        boolean isCompressedFormat = ti.isCompresedFormat();
+        int mipmapLevel = ti.getNumMips()-1;
+        ByteBuffer data = ti.getData();
         int magfilter = GL11.GL_NEAREST;
         int minfilter = GL11.GL_NEAREST;
         int wrap_s = GL12.GL_CLAMP_TO_EDGE;
         int wrap_t = GL12.GL_CLAMP_TO_EDGE;
-        
+        boolean filter = ti.getFilter() == FilterType.LINEAR;
+        boolean repeat = ti.getUVMode() == UVCoordMode.REPEAT;
         if (filter) {
             magfilter = GL11.GL_LINEAR;
             minfilter = GL11.GL_LINEAR;
         }
+        TextureSub baseLevel = ti.getLevel(0);
         int i = GL11.glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, i);
-        nidefawl.qubes.gl.GL.glTexStorage2D(GL11.GL_TEXTURE_2D, mipmapLevel+1, internalFormat, dds.getWidth(0), dds.getHeight(0));
+        nidefawl.qubes.gl.GL.glTexStorage2D(GL11.GL_TEXTURE_2D, mipmapLevel+1, internalFormat, baseLevel.getWidth(), baseLevel.getHeight());
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipmapLevel);
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameteri GL_TEXTURE_MAX_LEVEL "+mipmapLevel);
         if (mipmapLevel > 0) {
@@ -165,11 +147,11 @@ public class TextureManager {
 
         int offset = 0;
         for (int n = 0; n <= mipmapLevel; n++) {
+            TextureSub mipLevel = ti.getLevel(n);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexImage2D");    
 
-            int size = dds.getSize(n);
+            int size = mipLevel.getSize();
             System.out.println("size "+size);
-            ByteBuffer data = dds.getData().get(0);
             data.position(offset).limit(offset+size);
             if (directBuf == null || directBuf.capacity() < size) {
                 directBuf = ByteBuffer.allocateDirect(size).order(ByteOrder.nativeOrder());
@@ -178,19 +160,31 @@ public class TextureManager {
             directBuf.put(data);
             directBuf.position(0).limit(size);
 
-            if (compressed) {
-                GL13.glCompressedTexSubImage2D(GL11.GL_TEXTURE_2D, n, 0, 0, dds.getWidth(n), dds.getHeight(n), internalFormat, directBuf);
-                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("dds  glCompressedTexSubImage2D level "+n+" format "+internalFormat+", data "+size+", buffer "+directBuf+", dimensions "+dds.getWidth(n)+"x"+dds.getHeight(n));
+            if (isCompressedFormat) {
+                GL13.glCompressedTexSubImage2D(GL11.GL_TEXTURE_2D, n, 0, 0, mipLevel.getWidth(), mipLevel.getHeight(), internalFormat, directBuf);
+                if (Game.GL_ERROR_CHECKS) Engine.checkGLError("dds  glCompressedTexSubImage2D level "+n+" format "+internalFormat+", data "+size+", buffer "+directBuf+", dimensions "+mipLevel.getWidth()+"x"+mipLevel.getHeight());
             } else {
-                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, n, dds.getWidth(n), dds.getHeight(n), 0, 0, dataFormat, GL11.GL_UNSIGNED_BYTE, directBuf);
+                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, n, mipLevel.getWidth(), mipLevel.getHeight(), 0, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, directBuf);
                 if (Game.GL_ERROR_CHECKS) Engine.checkGLError("dds glTexSubImage2D");    
             }
+            offset += size;
         }
         if (filter) {
             glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glTexParameterf GL_TEXTURE_MAX_ANISOTROPY_EXT");
         }
+        float anisotropicFilterLevel = ti.getAnisotropicFilterLevel();
+        if (anisotropicFilterLevel > 0) {
 
+            float f = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+            if (anisotropicFilterLevel < f) {
+                f = anisotropicFilterLevel;
+            }
+            if (f > 0) {
+                System.out.println("GL_TEXTURE_MAX_ANISOTROPY_EXT "+f);
+                glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, f);
+            }
+        }
         return i;
     }
 

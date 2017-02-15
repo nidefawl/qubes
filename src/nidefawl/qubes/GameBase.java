@@ -18,6 +18,7 @@ import java.util.List;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkInstance;
 
@@ -332,8 +333,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 //                  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
                 }
 
-                glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-                glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GL_ERROR_CHECKS ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+                if (!GL_ERROR_CHECKS) {
+                    glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW.GLFW_TRUE);
+                } else {
+                    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW.GLFW_TRUE);
+                }
                 glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW.GLFW_NO_ROBUSTNESS);
                 //            glfwWindowHint(GLFW_RED_BITS, 8);
                 //            glfwWindowHint(GLFW_GREEN_BITS, 8);
@@ -428,6 +432,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         cbText.free();
         glfwTerminate();
         windowId = 0;
+        if (isVulkan) {
+            VulkanInit.destroy();
+        }
     }
 
     protected void onDestroy() {
@@ -441,6 +448,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         Engine.stop();
         AsyncTasks.shutdown();
         if (VR.isInit()) VR.shutdown();
+        if (vkContext != null) {
+            vkContext.shutdown();
+        }
+        FontRenderer.destroy();
+        destroyContext();
     }
 
     public void checkResize() {
@@ -551,7 +563,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 
     void setVSync_impl(boolean b) {
         if (isVulkan) {
-            vkContext.reinitSwapchain = (vkContext.swapChain.isVsync() != b);
+            if (vkContext.swapChain.isVsync() != b)
+                vkContext.reinitSwapchain = true;
         } else if (this.vendor != GPUVendor.INTEL) {
             int vsync = 0;
             if (b) {
@@ -615,6 +628,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         Stats.resetDrawCalls();
         
         if (isCloseRequested()) {
+            if (vkContext != null) {
+                vkContext.syncAllFences();
+            }
             shutdown();
             return;
         }
@@ -651,10 +667,14 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (b != this.movement.grabbed()) {
             setGrabbed(b);
         }
-        preRenderUpdate(renderTime);
         if (vkContext != null) {
             vkContext.preRender();
         }
+        preRenderUpdate(renderTime);
+        if (vkContext != null) {
+            vkContext.finishUpload();
+        }
+        
         //        if (!startRender) {
         //            try {
         //                Thread.sleep(10);
@@ -750,6 +770,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
             lateInitGame();
+            if (isVulkan) {
+                vkContext.lateInit();    
+            }
             isStarting = false;
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame lateInitGame");
@@ -770,7 +793,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 ////                    System.out.println(a);
 //                }
                 if (i == 1000) {
-                    GL_ERROR_CHECKS=false;
+//                    GL_ERROR_CHECKS=false;
                 }
                 DumbPool.reset();
             }
@@ -901,7 +924,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 ShaderCompileError sce = (ShaderCompileError) throwable;
                 System.out.println(sce.getLog());
             }
-            Thread.sleep(1500);
+            Thread.sleep(150000);
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {

@@ -185,5 +185,8 @@ public class UnsafeHelper {
             out[i] = UNSAFE.getDouble(off);
         }
     }
+    public static long getLong(long addr) {
+        return UNSAFE.getLong(addr);
+    }
 
 }

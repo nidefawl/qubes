@@ -1,12 +1,11 @@
 package nidefawl.qubes.vulkan;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
+import static org.lwjgl.vulkan.VK10.*;
 
-import nidefawl.qubes.Game;
-import nidefawl.qubes.gl.GLVBO;
-import nidefawl.qubes.util.Stats;
+import java.nio.LongBuffer;
+
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
 public abstract class AbstractVkTesselatorState {
     public int           vertexcount;
@@ -25,8 +24,8 @@ public abstract class AbstractVkTesselatorState {
         out.useUINTPtr = this.useUINTPtr;
         out.idxCount = this.idxCount;
     }
-    public abstract GLVBO getVBO();
-    public abstract GLVBO getVBOIndices();
+    public abstract VkBuffer getVertexBuffer();
+    public abstract VkBuffer getIndexBuffer();
 
 
     public int getIdx(int v) {
@@ -46,26 +45,6 @@ public abstract class AbstractVkTesselatorState {
         return stride;
     }
 
-    static void drawVBO(int mode, int idxCount) {
-        Stats.tessDrawCalls++;
-//        GL11.glDrawArrays(mode, 0, vertexcount);
-        GL11.glDrawElements(mode, idxCount, GL11.GL_UNSIGNED_INT, 0);
-        
-        
-    }
-
-    public void drawQuads() {
-        bindAndDraw(GL11.GL_TRIANGLES);
-    }
-
-    public void bindAndDraw(int mode) {
-//        int tessSetting = getSetting();
-//        Engine.bindVAO(GLVAO.vaoTesselator[tessSetting], false);
-//        Engine.bindBuffer(getVBO());
-//        Engine.bindIndexBuffer(getVBOIndices());
-//        drawVBO(mode, idxCount);
-//        if (Game.GL_ERROR_CHECKS) Engine.checkGLError("glDrawArrays ("+vertexcount+","+idxCount+")");
-    }
     public int getSetting() {
         int s = 0;
         if (this.useNormalPtr)
@@ -77,5 +56,14 @@ public abstract class AbstractVkTesselatorState {
         if (this.useUINTPtr)
             s|=8;
         return s;
+    }
+    long[] pointer = new long[1];
+    long[] offset = new long[1];
+    public void bindAndDraw(VkCommandBuffer commandBuffer, int bufferoffset) {
+        pointer[0] = getVertexBuffer().getBuffer();
+        offset[0] = bufferoffset;
+        vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
+        vkCmdBindIndexBuffer(commandBuffer, getIndexBuffer().getBuffer(), bufferoffset, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(commandBuffer, this.idxCount, 1, 0, 0, 0);
     }
 }

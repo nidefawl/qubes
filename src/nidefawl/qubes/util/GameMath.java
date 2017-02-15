@@ -299,4 +299,13 @@ public class GameMath {
             angle += 360F;
         return angle;
     }
+    public static long nextPowerOf2(final long a)
+    {
+        long b = 1;
+        while (b < a)
+        {
+            b = b << 1;
+        }
+        return b;
+    }
 }

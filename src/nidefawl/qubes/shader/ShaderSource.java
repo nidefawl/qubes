@@ -30,6 +30,7 @@ public class ShaderSource {
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
 
+    ArrayList<String> extensions = new ArrayList<>();
     HashMap<Integer, String> sources = new HashMap<Integer, String>();
 
     HashMap<Integer, String> sourceNames = new HashMap<Integer, String>();
@@ -39,6 +40,8 @@ public class ShaderSource {
     int nInclude = 0;
     private String attrTypes = "default";
     private ShaderSourceBundle shaderSourceBundle;
+    private String fileName;
+    private String version = null;
 
     /**
      * @param shaderSourceBundle
@@ -46,7 +49,16 @@ public class ShaderSource {
     public ShaderSource(ShaderSourceBundle shaderSourceBundle) {
         this.shaderSourceBundle = shaderSourceBundle;
     }
-    void load(AssetManager assetManager, String path, String name, IShaderDef def, int shaderType) throws IOException {
+    public void addEnabledExtensions(String... exts) {
+        for (String s : exts) {
+            this.extensions.add("#extension "+s+" : enable");
+        }
+    }
+    public void setVersionString(String version) {
+        this.version = version;
+    }
+    public void load(AssetManager assetManager, String path, String name, IShaderDef def, int shaderType) throws IOException {
+        this.fileName = name;
         this.processed = readParse(assetManager, path, name, def, 0, shaderType, name);
     }
     private String readParse(AssetManager assetManager, String path, String name, IShaderDef def, int resolveDepth, int shaderType, String srcName) throws IOException {
@@ -90,6 +102,12 @@ public class ShaderSource {
                 String code = "";
                 int nLineOffset = 0;
                 boolean insertLine = true;
+                if (!resolve) {
+                    if (version != null) {
+                        lines.set(0, version);
+                    }
+                    lines.addAll(1, extensions);
+                }
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
                     Matcher m;
@@ -295,4 +313,8 @@ public class ShaderSource {
     public String getAttrTypes() {
         return this.attrTypes;
     }
+    public String getFileName() {
+        return this.fileName;
+    }
+
 }

@@ -15,6 +15,7 @@ import org.lwjgl.stb.STBTTPackedchar.Buffer;
 
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.texture.TextureManager;
@@ -136,8 +137,9 @@ public class TrueTypeFont {
             data[i*4+2] = (byte) 255;
             data[i*4+3] = b;
         }
-
-        this.font_tex = TextureManager.getInstance().makeNewTexture(data, texW, texW, false, true, 0, GL11.GL_RGBA);
+        if (!Engine.isVulkan) {
+            this.font_tex = TextureManager.getInstance().makeNewTexture(data, texW, texW, false, true, 0, GL11.GL_RGBA);
+        }
 
         this.spaceWidth = getCharWidth(' ');
     }
@@ -273,7 +275,8 @@ public class TrueTypeFont {
 
 
     public void release() {
-        GL.deleteTexture(this.font_tex);
+        if (Engine.isVulkan)
+            GL.deleteTexture(this.font_tex);
         this.info.free();
         this.q.free();
         this.q2.free();

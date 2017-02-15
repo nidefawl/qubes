@@ -43,12 +43,12 @@ public class GL {
         if (!caps.GL_EXT_texture_array) {
             missingExt.add("GL_EXT_texture_array");
         }
-        if (!caps.GL_ARB_fragment_shader) {
-            missingExt.add("GL_ARB_fragment_shader");
-        }
-        if (!caps.GL_ARB_vertex_shader) {
-            missingExt.add("GL_EXT_vertex_shader");
-        }
+//        if (!caps.GL_ARB_fragment_shader) {
+//            missingExt.add("GL_ARB_fragment_shader");
+//        }
+//        if (!caps.GL_ARB_vertex_shader) {
+//            missingExt.add("GL_EXT_vertex_shader");
+//        }
         if (!caps.GL_ARB_uniform_buffer_object) {
             missingExt.add("GL_ARB_uniform_buffer_object");
         }

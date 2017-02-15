@@ -7,7 +7,8 @@ public class EngineInitSettings {
     public final static EngineInitSettings INIT_ALL = new EngineInitSettings() {
         @Override
         protected void set() {
-            inverseZBuffer = false;
+            inverseZBuffer = true;
+            inverseClipspaceYOpengl = false;
             initShadowRenderer = true;
             initBlurRenderer = true;
             initWorldRenderer = true;
@@ -52,4 +53,18 @@ public class EngineInitSettings {
     public boolean initFinalRenderer;
     public boolean initModelRenderer;
     public boolean inverseZBuffer;
+    public boolean isVulkan;
+    public boolean inverseClipspaceYOpengl;
+    public EngineInitSettings setVulkan(boolean isVulkan) {
+        this.isVulkan = isVulkan;
+        return this;
+    }
+    public EngineInitSettings setInverseZ() {
+        this.inverseZBuffer = true;
+        return this;
+    }
+    public EngineInitSettings setInverseYOpengl() {
+        this.inverseClipspaceYOpengl = true;
+        return this;
+    }
 }

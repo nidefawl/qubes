@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
+
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Map;
@@ -14,6 +15,7 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.config.RenderSettings;
+import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
@@ -30,6 +32,7 @@ import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.SunLightModel;
 
 public class Engine {
+    public static boolean isVulkan;
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
     public final static int MAX_LIGHTS       = 1024;
     public final static RenderSettings RENDER_SETTINGS = new RenderSettings();
@@ -38,6 +41,7 @@ public class Engine {
     private static Map<String, Integer> bufferBindingPoints = Maps.newHashMap();
     private static int NEXT_BUFFER_BINDING_POINT = 0;
     public static boolean INVERSE_Z_BUFFER = false;
+    public static boolean OGL_INVERSE_Y = false;
     public static boolean isInverseZ = false;
 
     private static IntBuffer   viewportBuf;
@@ -202,16 +206,18 @@ public class Engine {
     }
 
     public static boolean checkGLError(String s) {
-        int i = GL11.glGetError();
-        if (i != 0) {
-            String s1 = GameBase.getGlErrorString(i);
-            throw new GameError("Error - " + s + ": " + s1);
+        if (!isVulkan) {
+            int i = GL11.glGetError();
+            if (i != 0) {
+                String s1 = GameBase.getGlErrorString(i);
+                throw new GameError("Error - " + s + ": " + s1);
+            }
         }
         return false;
     }
 
     public static void baseInit() {
-        GLVAO.initVAOs();
+        GLVAO.initVAOs(isVulkan);
         viewportBuf = Memory.createIntBufferHeap(16);
         position = Memory.createFloatBufferHeap(3);
         allocBuffer = Memory.createIntBuffer(8);
@@ -255,7 +261,7 @@ public class Engine {
             isInverseZ = true;
             glClearDepth(0.0f);
             if (GL.isClipControlSupported()) {
-                ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_ZERO_TO_ONE);
+                ARBClipControl.glClipControl(OGL_INVERSE_Y?ARBClipControl.GL_UPPER_LEFT:ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_ZERO_TO_ONE);
             } else {
                 NVDepthBufferFloat.glDepthRangedNV(-1.0, 1.0);
             }
@@ -276,29 +282,36 @@ public class Engine {
         }
     }
     public static void init(EngineInitSettings init) {
-        glActiveTexture(GL_TEXTURE0);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glActiveTexture(GL_TEXTURE0)");
-        for (int i = 1; i < 4; i++) {
-            GL30.glDisablei(GL_BLEND, i);
+        isVulkan = init.isVulkan;
+        INVERSE_Z_BUFFER = init.inverseZBuffer;
+        OGL_INVERSE_Y = init.inverseClipspaceYOpengl;
+        if (!INVERSE_Z_BUFFER && OGL_INVERSE_Y) {
+            throw new IllegalArgumentException("cannot reverse y without z");
+        }
+        isBlend = true;
+        if (!isVulkan) {
+            glActiveTexture(GL_TEXTURE0);
             if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("GL30.glDisablei(GL_BLEND, "+i+")");
+                Engine.checkGLError("glActiveTexture(GL_TEXTURE0)");
+            for (int i = 1; i < 4; i++) {
+                GL30.glDisablei(GL_BLEND, i);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("GL30.glDisablei(GL_BLEND, "+i+")");
+            }
+            GL30.glEnablei(GL_BLEND, 0);
         }
 
-        INVERSE_Z_BUFFER = init.inverseZBuffer;
-        isBlend = true;
-        GL30.glEnablei(GL_BLEND, 0);
         
         baseInit();
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("baseInit");
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("GL30.glBindVertexArray");
-        UniformBuffer.init();
-        Shader.init();
+        if (!isVulkan) {
+            UniformBuffer.init();
+            Shader.init();   
+        }
 
         flushRenderTasks();
-        registerRenderers(init);
+        if (!isVulkan) {
+            registerRenderers(init);
+        }
         if (regionRenderer != null) {
             regionRenderThread = new MeshThread(3);
             regionRenderThread.init();
@@ -356,11 +369,22 @@ public class Engine {
         viewportBuf.put(displayWidth);
         viewportBuf.put(displayHeight);
         viewportBuf.flip();
-        
-        if (!INVERSE_Z_BUFFER) {
-            Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+        if (isVulkan) {
+            if (!INVERSE_Z_BUFFER) {
+                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
+            } else {
+                Project.fovProjMatInfInvZVk(fieldOfView, aspectRatio, znear, _projection);
+            }
         } else {
-            Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, _projection);
+
+            if (!INVERSE_Z_BUFFER) {
+                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+            } else {
+                Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, _projection);
+            }
+            if (OGL_INVERSE_Y) {
+                _projection.m11 = -_projection.m11;
+            }
         }
         
         camFrustum.setCamInternals(fieldOfView, aspectRatio, znear, zfar);
@@ -372,59 +396,62 @@ public class Engine {
 
         updateOrthoMatrix(displayWidth, displayHeight);
         
+        if (!isVulkan) {
 
-        if (fullscreenquads == null) {
-            fullscreenquads = new TesselatorState[4];
-            for (int i = 0; i < fullscreenquads.length; i++)
-                fullscreenquads[i] = new TesselatorState(GL15.GL_STATIC_DRAW);
-            
+            if (fullscreenquads == null) {
+                fullscreenquads = new TesselatorState[4];
+                for (int i = 0; i < fullscreenquads.length; i++)
+                    fullscreenquads[i] = new TesselatorState(GL15.GL_STATIC_DRAW);
+                
+            }
+            if (quad == null) {
+                quad = new TesselatorState(GL15.GL_STATIC_DRAW);
+            }
+            Tess tess = Tess.instance;
+            tess.resetState();
+            int tw = Game.displayWidth;
+            int th = Game.displayHeight;
+            float x = 0;
+            float y = 0;
+            tess.resetState();
+            //Draw some quads with fullscreen resultions, 2 different windings, flipped/non-flipped y texcoord
+            tess.setColor(0xFFFFFF, 0xff);
+            tess.add(x + tw,   y,      0, 1, 1);
+            tess.add(x,        y,      0, 0, 1);
+            tess.add(x,        y + th, 0, 0, 0);
+            tess.add(x + tw,   y + th, 0, 1, 0);
+            tess.draw(GL_QUADS, fullscreenquads[0]); // == Engine.drawFullscreenQuad
+            tess.resetState();
+            tess.setColor(0xFFFFFF, 0xff);
+            tess.add(x + tw,   y,      0, 1, 0);
+            tess.add(x,        y,      0, 0, 0);
+            tess.add(x,        y + th, 0, 0, 1);
+            tess.add(x + tw,   y + th, 0, 1, 1);
+            tess.draw(GL_QUADS, fullscreenquads[1]);
+            tess.resetState();
+            tess.setColor(0xFFFFFF, 0xff);
+            tess.add(x + tw,   y + th, 0, 1, 1);
+            tess.add(x,        y + th, 0, 0, 1);
+            tess.add(x,        y,      0, 0, 0);
+            tess.add(x + tw,   y,      0, 1, 0);
+            tess.draw(GL_QUADS, fullscreenquads[2]);
+            tess.resetState();
+            tess.setColor(0xFFFFFF, 0xff);
+            tess.add(x + tw,   y + th, 0, 1, 0);
+            tess.add(x,        y + th, 0, 0, 0);
+            tess.add(x,        y,      0, 0, 1);
+            tess.add(x + tw,   y,      0, 1, 1);
+            tess.draw(GL_QUADS, fullscreenquads[3]);
+            tess.resetState();
+            tess.setColor(0xFFFFFF, 0xff);
+            tess.add(1, 0, 0, 1, 0);
+            tess.add(0, 0, 0, 0, 0);
+            tess.add(0, 1, 0, 0, 1);
+            tess.add(1, 1, 0, 1, 1);
+            tess.draw(GL_QUADS, quad);
+            tess.resetState();
         }
-        if (quad == null) {
-            quad = new TesselatorState(GL15.GL_STATIC_DRAW);
-        }
-        Tess tess = Tess.instance;
-        tess.resetState();
-        int tw = Game.displayWidth;
-        int th = Game.displayHeight;
-        float x = 0;
-        float y = 0;
-        tess.resetState();
-        //Draw some quads with fullscreen resultions, 2 different windings, flipped/non-flipped y texcoord
-        tess.setColor(0xFFFFFF, 0xff);
-        tess.add(x + tw,   y,      0, 1, 1);
-        tess.add(x,        y,      0, 0, 1);
-        tess.add(x,        y + th, 0, 0, 0);
-        tess.add(x + tw,   y + th, 0, 1, 0);
-        tess.draw(GL_QUADS, fullscreenquads[0]); // == Engine.drawFullscreenQuad
-        tess.resetState();
-        tess.setColor(0xFFFFFF, 0xff);
-        tess.add(x + tw,   y,      0, 1, 0);
-        tess.add(x,        y,      0, 0, 0);
-        tess.add(x,        y + th, 0, 0, 1);
-        tess.add(x + tw,   y + th, 0, 1, 1);
-        tess.draw(GL_QUADS, fullscreenquads[1]);
-        tess.resetState();
-        tess.setColor(0xFFFFFF, 0xff);
-        tess.add(x + tw,   y + th, 0, 1, 1);
-        tess.add(x,        y + th, 0, 0, 1);
-        tess.add(x,        y,      0, 0, 0);
-        tess.add(x + tw,   y,      0, 1, 0);
-        tess.draw(GL_QUADS, fullscreenquads[2]);
-        tess.resetState();
-        tess.setColor(0xFFFFFF, 0xff);
-        tess.add(x + tw,   y + th, 0, 1, 0);
-        tess.add(x,        y + th, 0, 0, 0);
-        tess.add(x,        y,      0, 0, 1);
-        tess.add(x + tw,   y,      0, 1, 1);
-        tess.draw(GL_QUADS, fullscreenquads[3]);
-        tess.resetState();
-        tess.setColor(0xFFFFFF, 0xff);
-        tess.add(1, 0, 0, 1, 0);
-        tess.add(0, 0, 0, 0, 0);
-        tess.add(0, 1, 0, 0, 1);
-        tess.add(1, 1, 0, 1, 1);
-        tess.draw(GL_QUADS, quad);
-        tess.resetState();
+
     }
 
     /**
@@ -434,15 +461,17 @@ public class Engine {
      * @param displayHeight
      */
     public static void resizeRenderers(int displayWidth, int displayHeight) {
-        for (int i = 0; i < components.size(); i++) {
-            IRenderComponent r = components.get(i);
-            if (r instanceof AbstractRenderer) {
-                System.out.println("Resize "+r.getClass());
-                ((AbstractRenderer) r).resizeRenderer(displayWidth, displayHeight);    
+        if (!isVulkan) {
+            for (int i = 0; i < components.size(); i++) {
+                IRenderComponent r = components.get(i);
+                if (r instanceof AbstractRenderer) {
+                    System.out.println("Resize "+r.getClass());
+                    ((AbstractRenderer) r).resizeRenderer(displayWidth, displayHeight);    
+                }
             }
+            UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
+            ShaderBuffer.rebindShaders();
         }
-        UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
-        ShaderBuffer.rebindShaders();
     }
     public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
         updateOrthoMatrix(displayWidth, displayHeight, false);
@@ -789,6 +818,7 @@ public class Engine {
             regionRenderThread.cleanup();
         }
         UniformBuffer.destroy();
+        GLVAO.destroy();
     }
 
 

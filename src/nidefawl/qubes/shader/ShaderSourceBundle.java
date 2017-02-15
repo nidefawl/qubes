@@ -25,6 +25,11 @@ public class ShaderSourceBundle {
     }
 
     public void load(AssetManager assetManager, String[] nameFsh, String[] nameVsh, String[] nameGsh, String[] nameCsh, IShaderDef def) throws IOException {
+        String[] extensions = new String[] {"GL_ARB_shading_language_420pack"};
+        fragCode.addEnabledExtensions(extensions);
+        vertCode.addEnabledExtensions(extensions);
+        computeCode.addEnabledExtensions(extensions);
+        geomCode.addEnabledExtensions(extensions);
         fragCode.load(assetManager, nameFsh[0], nameFsh[1] + ".fsh", def, GL_FRAGMENT_SHADER);
         vertCode.load(assetManager, nameVsh[0], nameVsh[1] + ".vsh", def, GL_VERTEX_SHADER);
         computeCode.load(assetManager, nameCsh[0], nameCsh[1] + ".csh", def, ARBGeometryShader4.GL_GEOMETRY_SHADER_ARB);

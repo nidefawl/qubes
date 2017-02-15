@@ -121,6 +121,20 @@ public class Memory {
     /**
      * @param buf
      */
+    public static void free(IntBuffer buf) {
+        mallocd -= buf.capacity()*4;
+        long ptr = UnsafeHelper.memAddress0(buf);
+        if (DEBUG_ALLOC) {
+            if (!ptrs.remove(ptr)) {
+                throw new IllegalArgumentException("Invalid buffer");
+            }
+        }
+        JEmalloc.nje_free(ptr);
+    }
+
+    /**
+     * @param buf
+     */
     public static void free(ByteBuffer buf) {
         mallocd -= buf.capacity();
         long ptr = UnsafeHelper.memAddress0(buf);

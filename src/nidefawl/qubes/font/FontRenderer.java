@@ -12,6 +12,9 @@ import nidefawl.qubes.util.GameMath;
 public class FontRenderer {
     public static HashMap<String, FontRenderer> fonts = new HashMap<String, FontRenderer>();
     public static void destroy() {
+        if (fonts.isEmpty()) {
+            return;
+        }
         for (FontRenderer f : fonts.values()) {
             f.free();
         }

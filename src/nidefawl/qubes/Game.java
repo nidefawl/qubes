@@ -174,7 +174,7 @@ public class Game extends GameBase {
         rightSelection.init();
         dig.init();
         FontRenderer.init();
-        Engine.init(EngineInitSettings.INIT_ALL);
+        Engine.init(EngineInitSettings.INIT_ALL.setVulkan(this.isVulkan));
         loadingScreen.setProgress(0, 0, "Initializing");
         TextureManager.getInstance().init();
         BlockModelManager.getInstance().init();
@@ -799,7 +799,8 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Deferred");
         Engine.outRenderer.render(this.world, fTime, 0);
-        Engine.checkGLError("Engine.outRenderer.render 0");
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("Engine.outRenderer.render 0");
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 

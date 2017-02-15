@@ -145,9 +145,9 @@ public class CameraController {
             this.update(movement);
         }
         Vector3f cameraPos = getRenderPos(f);
-        Engine.camera.setPosition(cameraPos);
+        camera.setPosition(cameraPos);
         if (!vr) {
-            Engine.camera.setOrientation(this.yaw, this.pitch, false, 4.0f);   
+            camera.setOrientation(this.yaw, this.pitch, false, 4.0f);   
         }
         return cameraPos;
     }

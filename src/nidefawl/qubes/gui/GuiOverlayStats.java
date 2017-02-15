@@ -179,7 +179,6 @@ public class GuiOverlayStats extends Gui {
                 Tess.instance.add(maxW/2, y+totalHeight2+8);
                 Tess.instance.add(maxW/2, y);
                 Tess.instance.add(0, y);
-                Shaders.colored.enable();
             } else {
 
                 Tess.instance.add(0, y+totalHeight+8);
@@ -187,6 +186,7 @@ public class GuiOverlayStats extends Gui {
                 Tess.instance.add(maxW, y);
                 Tess.instance.add(0, y);
             }
+            Shaders.colored.enable();
             Tess.instance.drawQuads();
             if (!Game.instance.glProfileResults.isEmpty()) {
                 Engine.pxStack.push(maxW/2, 0, 0);

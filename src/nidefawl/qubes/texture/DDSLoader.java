@@ -380,6 +380,7 @@ public class DDSLoader  {
     private ArrayList<ByteBuffer> data;
     private int[] widths;
     private int[] heights;
+    int totalSize;
 
     public DDSLoader(InputStream is) {
         this.in = new LittleEndien(is);
@@ -1018,6 +1019,7 @@ public class DDSLoader  {
         for (int i = 0; i < sizes.length; i++) {
             totalSize += sizes[i];
         }
+        this.totalSize = totalSize;
 
         ArrayList<ByteBuffer> allMaps = new ArrayList<ByteBuffer>();
         if (depth > 1 && !texture3D) {
@@ -1130,6 +1132,9 @@ public class DDSLoader  {
     }
     public ArrayList<ByteBuffer> getData() {
         return this.data;
+    }
+    public int getTotalSize() {
+        return this.totalSize;
     }
     public int getWidth(int level) {
         return this.widths[level];

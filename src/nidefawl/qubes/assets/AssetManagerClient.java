@@ -7,6 +7,8 @@ import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.IResourceManager;
+import nidefawl.qubes.vulkan.VKContext;
+import nidefawl.qubes.vulkan.VkShader;
 
 public class AssetManagerClient extends AssetManager {
 
@@ -72,9 +74,57 @@ public class AssetManagerClient extends AssetManager {
         }
         
     }
+    public VkShader loadVkShaderBin(VKContext ctxt, String path, int stage) {
+
+        final String[] pathSplit = splitPathBase(path);
+
+        try {
+            AssetBinary binFrag = loadBin(pathSplit[0]+"/"+pathSplit[1]);
+//            System.out.println(new String(binFrag.getData(), "UTF-8"));
+            VkShader shader = new VkShader(ctxt, stage, pathSplit[1], binFrag.getData());
+            return shader;
+        } catch (ShaderCompileError e) {
+            this.lastFailedShader = e.getShaderSource();
+            throw e;
+        } catch (GameError e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + path + "': " + e, e);
+        }
+    }
+    public ShaderSource loadVkShaderSource(String path, int stage) {
+        final String[] pathSplit = splitPathBase(path);
+        try {
+            ShaderSource src = new ShaderSource(null);
+            src.setVersionString("#version 450");
+            src.addEnabledExtensions("GL_ARB_separate_shader_objects", "GL_ARB_shading_language_420pack");
+            src.load(this, pathSplit[0], pathSplit[1], null, stage);
+            return src;
+        } catch (ShaderCompileError e) {
+            this.lastFailedShader = e.getShaderSource();
+            throw e;
+        } catch (GameError e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameError("Cannot load asset '" + path + "': " + e, e);
+        }
+    }
 
     public Shader loadShader(IResourceManager mgr, String name, IShaderDef def) {
         return loadShader(mgr, name, null, null, null, def);
+    }
+    static String[] splitPathBase(String name) {
+        String path;
+        String fname;
+        int idx = name.lastIndexOf("/");
+        if (idx <= 0) {
+            path = "";
+            fname = name;
+        } else {
+            path = name.substring(0, idx);
+            fname = name.substring(idx+1);
+        }
+        return new String[] { path, fname };
     }
     
     static String[] splitPath(String name) {

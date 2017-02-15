@@ -1,21 +1,28 @@
 package nidefawl.qubes.shader;
 
 import static org.lwjgl.opengl.ARBUniformBufferObject.*;
+import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 import java.nio.FloatBuffer;
 import java.util.List;
 
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.vulkan.VkDescriptorBufferInfo.Buffer;
 
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.texture.array.BlockNormalMapArray;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vulkan.VKContext;
+import nidefawl.qubes.vulkan.VkBuffer;
 import nidefawl.qubes.world.SunLightModel;
 import nidefawl.qubes.world.WorldClient;
 
@@ -28,6 +35,9 @@ public class UniformBuffer {
     private FloatBuffer floatBuffer;
     private int bindingPoint;
     private boolean autoBind;
+    boolean isConstant = false;
+    int isConstantUploaded = 0;
+    private VkBuffer[] vkBuffers;
     UniformBuffer(String name) {
         this(name, 0, true);
     }
@@ -48,6 +58,10 @@ public class UniformBuffer {
     }
     UniformBuffer addFloat() {
         this.len+=4;
+        return this;
+    }
+    UniformBuffer setConstant() {
+        this.isConstant = true;
         return this;
     }
     void setPosition(int n) {
@@ -82,28 +96,38 @@ public class UniformBuffer {
         put(-x, -y, -z);
     }
     public void update() {
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer "+this.buffer);
         this.floatBuffer.position(0).limit(this.len);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
-        GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, this.floatBuffer);
-        
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        if (!Engine.isVulkan) {
+            GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("glBindBuffer "+this.buffer);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("glBindBuffer GL_UNIFORM_BUFFER");
+            GL15.glBufferSubData(GL_UNIFORM_BUFFER, 0, this.floatBuffer);
+            
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
+            GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        } else {
+            if (!isConstant || isConstantUploaded++ < this.vkBuffers.length) {
+                this.vkBuffers[VKContext.currentBuffer].upload(this.floatBuffer, 0);    
+            }
+            
+        }
     }
     public void setup() {
-        this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
-        this.buffer = Engine.glGenBuffers(1).get();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("UBO Engine.glGenBuffers");
-        GL15.glBufferData(GL_UNIFORM_BUFFER, this.len*4, GL15.GL_DYNAMIC_DRAW);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("UBO Matrix");
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        if (!Engine.isVulkan) {
+            this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
+            this.buffer = Engine.glGenBuffers(1).get();
+            GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("UBO Engine.glGenBuffers");
+            GL15.glBufferData(GL_UNIFORM_BUFFER, this.len*4, GL15.GL_DYNAMIC_DRAW);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("UBO Matrix");
+            GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        } else {
+        }
     }
     private void release() {
         if (this.floatBuffer != null) {
@@ -113,6 +137,10 @@ public class UniformBuffer {
         if (this.buffer > 0) {
             Engine.deleteBuffers(this.buffer);
             this.buffer = 0;
+        }
+        if (this.vkBuffers != null) {
+            for (int i = 0; i < this.vkBuffers.length; i++) 
+                this.vkBuffers[i].destroy();
         }
         
     }
@@ -151,8 +179,8 @@ public class UniformBuffer {
             .addVec4() // Ambient light intensity
             .addVec4() // Diffuse light intensity
             .addVec4(); // Specular light intensity
-    static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4, true);
-    static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6, true);
+    static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4, true).setConstant();
+    static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6, true).setConstant();
 //    public static UniformBuffer BoneMatUBO = new UniformBuffer("BoneMatUBO", BatchedRiggedModelRenderer.STRUCT_SIZE*7);
     
     
@@ -164,6 +192,29 @@ public class UniformBuffer {
         }
         updateVertDir();
         updateTBNMatrices();
+    }
+
+    public static void init(VKContext vkContext, int numImages) {
+        for (int i = 0; i < buffers.length; i++) {
+            buffers[i].initBuffers(numImages);
+        }
+    }
+
+    private void initBuffers(int numImages) {
+        if (this.floatBuffer == null)
+            this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
+        if (this.vkBuffers != null) {
+            for (int i = 0; i < this.vkBuffers.length; i++) 
+                this.vkBuffers[i].destroy();
+        }
+        this.vkBuffers = new VkBuffer[numImages];
+        for (int i = 0; i < this.vkBuffers.length; i++) {
+            this.vkBuffers[i] = GameBase.baseInstance.vkContext.createBuffer(
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    this.len * 4, 
+                    false, "UBO "+this.name);
+        }
+        isConstantUploaded = 0;
     }
     public static void destroy() {
         for (int i = 0; i < buffers.length; i++) {
@@ -346,7 +397,8 @@ public class UniformBuffer {
         }
         LightInfo.put(1);
         LightInfo.update();
-        GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        if (!Engine.isVulkan)
+            GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     }
 
@@ -540,6 +592,9 @@ public class UniformBuffer {
     }
     public int getBindingPoint() {
         return this.bindingPoint;
+    }
+    public Buffer getDescriptorBuffer(int i) {
+        return this.vkBuffers[i].getDescriptorBuffer();
     }
 
 }
