@@ -484,10 +484,14 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                         GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
                         GL11.glColorMask(false, false, false, false);
                         Engine.enableDepthMask(false);
-                        Engine.bindVAO(GLVAO.vaoBlocksShadow);
+                        if (r.getShadowDrawMode() == 1) {
+                            Engine.bindVAO(GLVAO.vaoBlocksShadowTextured);
+                        } else {
+                            Engine.bindVAO(GLVAO.vaoBlocksShadow);
+                        }
                         r.renderRegion(fTime, PASS_SHADOW_SOLID);
 //                        r.renderRegion(fTime, PASS_TRANSPARENT);
-                        r.renderRegion(fTime, PASS_LOD);
+//                        r.renderRegion(fTime, PASS_LOD);
                         Engine.bindVAO(GLVAO.vaoBlocksBindless);
                         cur.enable();
                         GL11.glColorMask(true, true, true, true);
