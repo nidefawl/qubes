@@ -9,19 +9,24 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
 import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
+import org.lwjgl.vulkan.VkPushConstantRange;
 
 public class VkPipelineLayout {
 
     public long pipelineLayout = VK_NULL_HANDLE;
 
     public void build(VKContext ctxt, long... descriptorSets) {
+        build(ctxt, descriptorSets, null);
+    }
+    public void build(VKContext ctxt, long[] descriptorSets, VkPushConstantRange.Buffer pushconstantRanages) {
         try ( MemoryStack stack = stackPush() ) {
             VkPipelineLayoutCreateInfo pipelineLayoutCI = pipelineLayoutCreateInfo();
             LongBuffer pPipelineLayout = memAllocLong(1);
-            LongBuffer pipelineLayoutCIDescPtr = memAllocLong(2);
+            LongBuffer pipelineLayoutCIDescPtr = memAllocLong(descriptorSets.length);
             pipelineLayoutCIDescPtr.put(descriptorSets);
             pipelineLayoutCIDescPtr.rewind();
             pipelineLayoutCI.pSetLayouts(pipelineLayoutCIDescPtr);
+            pipelineLayoutCI.pPushConstantRanges(pushconstantRanages);
             int err = vkCreatePipelineLayout(ctxt.device, pipelineLayoutCI, null, pPipelineLayout);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkCreatePipelineLayout failed: " + VulkanErr.toString(err));

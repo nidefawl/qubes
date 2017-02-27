@@ -19,6 +19,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.gui.windows.GuiContext;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
@@ -274,7 +275,6 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             this.round = 1;
             this.extendx = 0;
             this.round = 2;
-            Shaders.gui.enable();
             this.shadowSigma = 3f;
             this.round = 3;
             int bw = 3;
@@ -283,27 +283,26 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
             int color = -1;//this.hasFocus() ? -1 : 0x9a9a9a;
             if (this.hasFocus()) {
                 int n = 4;
-                Shaders.gui.enable();
-                Shaders.gui.setProgramUniform1f("zpos", -18);
-                Shaders.gui.setProgramUniform4f("box", posX-n, posY-n, posX+width+n, posY+height+n);
-//              Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
+                BoxGUI.setZPos(-18);
+                BoxGUI.setBox(posX-n, posY-n, posX+width+n, posY+height+n);
+//              BoxGUI.setColor(1-r, 1-g, 1-b, alpha);
 //              float blink = GameMath.sin((((Game.ticksran+fTime)/20f)%20.0f)*GameMath.PI*2f)*0.5f+0.5f;
 //              float c = 0.8f*blink;
-//                Shaders.gui.setProgramUniform1f("sigma", 4+c*5);
-//            Shaders.gui.setProgramUniform4f("color", c,c,c, c);
+//                BoxGUI.setSigma(4+c*5);
+//            BoxGUI.setColor(c,c,c, c);
 //            shadowSigma = c*10;
-                Shaders.gui.setProgramUniform4f("color", c,c,c, ac);
-                Shaders.gui.setProgramUniform1f("sigma", 2);
-                Shaders.gui.setProgramUniform1f("corner", 8);
-                Engine.drawQuad();
+                BoxGUI.setColor(c, c, c, ac);
+                BoxGUI.setSigma(2);
+                BoxGUI.setRound(8);
+                BoxGUI.INST.drawQuad();
             }
             int z = -10;
 
             resetShape();
             alpha = 0.3f;
-            Shaders.gui.setProgramUniform1f("fade", 0.1f);
+            BoxGUI.setFade(0.1f);
             renderBox();
-            Shaders.gui.setProgramUniform1f("fade", 0.3f);
+            BoxGUI.setFade(0.3f);
             out=-30;
             alpha = 1;
             color = this.hasFocus() ? 0xdadada : 0xbababa;

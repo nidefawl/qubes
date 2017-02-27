@@ -33,14 +33,12 @@ class GuiRecipeOutPreviewItemSlot extends AbstractUI {
         float inset = 4;
         float inset2 = 3;
         Engine.pxStack.push(0, 0, 1);
-        Shaders.gui.enable();
         int color = 0xdadada;
         float alpha = 0.8f;
         renderSlotBackground(posX, posY, 0, width, width, color, alpha, true, 4);
 
         if (this.hovered) {
             Engine.pxStack.translate(0, 0, 2);
-            Shaders.gui.enable();
             renderSlotBackground(posX + inset2, posY + inset2, 0, width - inset2 * 2, width - inset2 * 2, -1, 0.6f, true, 1);
         }
 //        Engine.pxStack.translate(0, 0, 2);
@@ -82,7 +80,6 @@ class GuiRecipeOutPreviewItemSlot extends AbstractUI {
         }
         if (this.hovered) {
             Engine.pxStack.translate(0, 0, 10);
-            Shaders.gui.enable();
             renderSlotBackground(posX + inset2, posY + inset2, 32, width - inset2 * 2, width - inset2 * 2, -1, 0.36f, false, 2);
 
         }

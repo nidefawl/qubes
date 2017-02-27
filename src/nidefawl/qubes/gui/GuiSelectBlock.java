@@ -135,7 +135,6 @@ public class GuiSelectBlock extends Gui {
         for (int pass = 0; pass < 2; pass++) {
             int rendered = 0;
             if (pass == 0) {
-                Shaders.gui.enable();
             } else {
                 Shaders.textured.enable();
             }
@@ -210,7 +209,6 @@ public class GuiSelectBlock extends Gui {
             fRot+=animRot;
             blockscale*=2.0f;
             int renderData = block.getInvRenderData(this.sel);
-            Shaders.gui.enable();
             pX1-=offset;
             pX2+=offset;
             pY2+=offset;
@@ -218,7 +216,6 @@ public class GuiSelectBlock extends Gui {
             Engine.pxStack.push(0, 0, 60);
 //            renderRoundedBoxShadow(pX1, pY1, -5, pX2-pX1, pY2-pY1, color, 0.8f, true);
             if (sel != null) {
-                Shaders.gui.enable();
                 String s = sel.getBlock().getName();
                 float w = font.getStringWidth(s)+10;
                 float extraw=pX2-pX1<w?(w-(pX2-pX1))/2:0;
@@ -239,7 +236,6 @@ public class GuiSelectBlock extends Gui {
                 pY2+=4;
                 pY1-=4;
             }
-            Shaders.gui.enable();
             renderRoundedBoxShadow(pX1, pY1, 0, pX2-pX1, pY2-pY1, color, 0.7f, true);
             Engine.blockDraw.setOffset(pX1+bSize, pY1+bSize, 125);
             Engine.blockDraw.setScale(blockscale);

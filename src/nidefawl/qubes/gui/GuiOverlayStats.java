@@ -219,7 +219,6 @@ public class GuiOverlayStats extends Gui {
         int w = 64;
         int x = 5;
         y+=5;
-        Shaders.gui.enable();
         float wBg = w+16;
         shadowSigma = 2;
         extendx = 1;

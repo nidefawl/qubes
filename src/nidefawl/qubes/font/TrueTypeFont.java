@@ -436,16 +436,16 @@ public class TrueTypeFont {
             int idx = getIndex(charCurrent);
             stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
             xPos = xb.get(0);
-            if (Engine.isVulkan || Engine.OGL_INVERSE_Y) {
-                float x1 = q.s1();
-                float x2 = q.s0();
-                float y1 = q.t1();
-                float y2 = q.t0();
-                tess.add(x + q.x1(), y +lineGap - q.y1(), 0F, x1, y1);
-                tess.add(x + q.x1(), y +lineGap - q.y0(), 0F, x1, y2);
-                tess.add(x + q.x0(), y +lineGap - q.y0(), 0F, x2, y2);
-                tess.add(x + q.x0(), y +lineGap - q.y1(), 0F, x2, y1);
-            } else {
+//            if (Engine.isVulkan || Engine.OGL_INVERSE_Y) {
+//                float x1 = q.s1();
+//                float x2 = q.s0();
+//                float y1 = q.t1();
+//                float y2 = q.t0();
+//                tess.add(x + q.x1(), y +lineGap - q.y1(), 0F, x1, y1);
+//                tess.add(x + q.x1(), y +lineGap - q.y0(), 0F, x1, y2);
+//                tess.add(x + q.x0(), y +lineGap - q.y0(), 0F, x2, y2);
+//                tess.add(x + q.x0(), y +lineGap - q.y1(), 0F, x2, y1);
+//            } else {
                 float x1 = q.s1();
                 float x2 = q.s0();
                 float y1 = q.t1();
@@ -454,7 +454,7 @@ public class TrueTypeFont {
                 tess.add(x + q.x1(), y + q.y0(), 0F, x1, y2);
                 tess.add(x + q.x0(), y + q.y0(), 0F, x2, y2);
                 tess.add(x + q.x0(), y + q.y1(), 0F, x2, y1);
-            }
+//            }
 
             if (maxWidth > 0 && xPos >= maxWidth) break;
             i++;
@@ -494,7 +494,7 @@ public class TrueTypeFont {
         return this.spaceWidth;
     }
 
-    public void drawTextBuffer(VkCommandBuffer commandBuffer, ITess tess) {
+    public void drawTextBuffer(ITess tess) {
         if (!Engine.isVulkan) {
             GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, getTexture());
             ((Tess)tess).draw(GL11.GL_QUADS);
@@ -502,8 +502,10 @@ public class TrueTypeFont {
             if (this.vk_tex == null) {
                 return;
             }
+            Engine.setDescriptorSet1(this.descriptorSetTex);
+            Engine.bindPipeline(VkPipelines.fontRender2D);
             ((VkTess)tess).finish(VkTess.CREATE_QUAD_IDX_BUFFER);
-            ((VkTess)tess).bindAndDraw(commandBuffer, 0);
+            ((VkTess)tess).bindAndDraw(Engine.getDrawCmdBuffer(), 0);
         }
     }
 

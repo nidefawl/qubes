@@ -10,6 +10,7 @@ import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.controls.ProgressBar;
 import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 
@@ -33,32 +34,29 @@ public class GuiCraftingProgressEntry extends Gui {
 //        FontRenderer fr = ((ScrollList)parent).font;
         this.hovered = this.mouseOver(mX, mY);
         if (this.hovered) {
-          Shaders.gui.enable();
-          Shaders.gui.setProgramUniform1f("fade", 0.1f);
+          BoxGUI.setFade(0.1f);
           renderBox(false, true, color2, color3);
-          Shaders.gui.setProgramUniform1f("fade", 0.3f);
+          BoxGUI.setFade(0.3f);
         }
         if (this.mgr.isFinished()) {
             int n = -2;
             float c = 0.8f;
             float blink = 0.5f+(float)Math.sin((Game.ticksran/8f)%GameMath.PI)*0.5f;
-            Shaders.gui.enable();
-            Shaders.gui.setProgramUniform1f("zpos", 2);
-            Shaders.gui.setProgramUniform4f("box", posX-n, posY-n, posX+width+n, posY+height+n);
-            Shaders.gui.setProgramUniform4f("color", c,1,1-blink, blink);
-            Shaders.gui.setProgramUniform1f("sigma", 3);
-            Shaders.gui.setProgramUniform1f("corner", 1);
-            Engine.drawQuad();
+            BoxGUI.setZPos(2);
+            BoxGUI.setBox(posX-n, posY-n, posX+width+n, posY+height+n);
+            BoxGUI.setColor(c,1,1-blink, blink);
+            BoxGUI.setSigma(3);
+            BoxGUI.setRound(1);
+            BoxGUI.INST.drawQuad();
         } 
 //        saveBounds();
 //        round=0;
 //        boxSigma=0.55f;
 //        height-=4;
 //        posY+=2;
-//        Shaders.gui.enable();
-//        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+//        BoxGUI.setFade(0.1f);
 //        renderBox(false, true, color2, color3);
-//        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+//        BoxGUI.setFade(0.3f);
 //        resetShape();
 //        restoreBounds();
         Engine.pxStack.push(0, 0, 10);

@@ -240,7 +240,6 @@ public class ComboBox extends AbstractUI implements Renderable {
                     scrollOffset = (this.values.length) - values;
                 }
                 final Tess tessellator = Tess.instance;
-                Shaders.gui.enable();
 //                renderRoundedBoxShadow(this.posX, this.posY, 10, this.width, this.height, 0xababab, 1f, true);
                 renderBox(true, true, color2, color3);
                 Shaders.colored.enable();
@@ -407,7 +406,6 @@ public class ComboBox extends AbstractUI implements Renderable {
         Shaders.colored.enable();
         renderBox();
         final Tess tessellator = Tess.instance;
-        Shaders.gui.enable();
         renderRoundedBoxShadow(this.posX +width - height+1, this.posY+1, 0, this.height-2, this.height-2, 0xeaeaea, hovered ? 1 : 0.7F, false);
 //        tessellator.setColorF(0xeaeaea, hovered ? 1 : 0.7F);
 //        tessellator.add(this.posX + this.width - 1, this.posY + 2, 0.0f);

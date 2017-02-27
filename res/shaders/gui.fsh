@@ -53,6 +53,29 @@ float roundedBoxShadow(vec2 lower, vec2 upper, vec2 point, float sigma, float co
   return value;
 }
 
+#ifdef VULKAN_GLSL
+layout(push_constant) uniform PushConsts {
+  vec4 box;
+  vec4 color;
+  float sigma;
+  float corner;
+  float fade;
+  float zpos;
+  int colorwheel;
+  float valueH;
+  float valueS;
+  float valueL;
+} pushConsts;
+#define G_BOX pushConsts.box
+#define G_COLOR pushConsts.color
+#define G_VALUE_H pushConsts.valueH
+#define G_VALUE_S pushConsts.valueS
+#define G_VALUE_L pushConsts.valueL
+#define G_COLORWHEEL pushConsts.colorwheel
+#define G_SIGMA pushConsts.sigma
+#define G_CORNER pushConsts.corner
+#define G_FADE pushConsts.fade
+#else
 uniform vec4 box;
 uniform vec4 color;
 uniform float valueH;
@@ -62,6 +85,16 @@ uniform int colorwheel;
 uniform float sigma;
 uniform float corner;
 uniform float fade;
+#define G_BOX box
+#define G_COLOR color
+#define G_VALUE_H valueH
+#define G_VALUE_S valueS
+#define G_VALUE_L valueL
+#define G_COLORWHEEL colorwheel
+#define G_SIGMA sigma
+#define G_CORNER corner
+#define G_FADE fade
+#endif
 in vec2 vertex;
 in vec2 texcoord;
 
@@ -82,44 +115,44 @@ void main(void) {
 	// vec4 rect = vec4(vec3(0.5), 1);
 	// vec4 shadow = vec4(0,0,0,1)*f;
  //    out_Color = mix(shadow, rect, inside);
-  if (colorwheel == 1) {
+  if (G_COLORWHEEL == 1) {
         
-    out_Color = color;
+    out_Color = G_COLOR;
     float range = -0.004;
     vec3 g = color_palette(range+(1-texcoord.x)*(1-range*2), a, b, c, d);
-    float l1 = valueL/0.5f;
+    float l1 = G_VALUE_L/0.5f;
     float l2 = max(0, l1-1.0f);
-    g = mix(vec3(valueL), g, valueS);
+    g = mix(vec3(G_VALUE_L), g, G_VALUE_S);
     vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
     out_Color.rgb = h; 
-  } else if (colorwheel == 2) {
+  } else if (G_COLORWHEEL == 2) {
     vec3 e = vec3(0.5, 0.5, 0.5);
-    vec3 f = color_palette(valueH, a, b, c, d);
-    out_Color = color;
+    vec3 f = color_palette(G_VALUE_H, a, b, c, d);
+    out_Color = G_COLOR;
     vec3 g = mix(e, f, texcoord.x);
-    float l1 = valueL/0.5f;
+    float l1 = G_VALUE_L/0.5f;
     float l2 = max(0, l1-1.0f);
     vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
     out_Color.rgb = h; 
-  } else if (colorwheel == 3) {
+  } else if (G_COLORWHEEL == 3) {
     vec3 e = vec3(0);
-    vec3 f = color_palette(valueH, a, b, c, d);
-    f = mix(vec3(0.5f), f, valueS);
+    vec3 f = color_palette(G_VALUE_H, a, b, c, d);
+    f = mix(vec3(0.5f), f, G_VALUE_S);
     vec3 g = vec3(1);
     float l1 = texcoord.x/0.5f;
     float l2 = max(0, l1-1.0f);
-    out_Color = color;
+    out_Color = G_COLOR;
     out_Color.rgb = mix(mix(e, f, l1), g, l2); 
-  } else if (colorwheel == 4) {
-    out_Color = color;
+  } else if (G_COLORWHEEL == 4) {
+    out_Color = G_COLOR;
   } else {
-    out_Color = color;
-    out_Color.rgb *= (1-fade)+texcoord.y*fade;
+    out_Color = G_COLOR;
+    out_Color.rgb *= (1-G_FADE)+texcoord.y*G_FADE;
   }
   out_Color.rgb+=dither8BitSS();
 
     
-  out_Color.a *= roundedBoxShadow(box.xy+PX_OFFSET.xy, box.zw+PX_OFFSET.xy, vertex, sigma, corner);
+  out_Color.a *= roundedBoxShadow(G_BOX.xy+PX_OFFSET.xy, G_BOX.zw+PX_OFFSET.xy, vertex, G_SIGMA, G_CORNER);
   if (out_Color.a<0.01)
     discard;
 }

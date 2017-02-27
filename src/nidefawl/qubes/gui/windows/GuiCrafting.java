@@ -108,7 +108,6 @@
 //        Shaders.colored.enable();
 //        
 //        renderSlots(fTime, mX, mY);
-//        Shaders.gui.enable();
 //        float w = this.width-20-90;
 //        float pr = this.lastProgress+(this.progress-this.lastProgress)*fTime;
 //        float pW = w*(pr/100.0f);

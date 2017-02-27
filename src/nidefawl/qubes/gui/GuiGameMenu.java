@@ -27,7 +27,6 @@ public class GuiGameMenu extends Gui {
             a = 1.0f;
         }
         int c2 = this.hovered || this.focused ? this.color4 : this.color2;
-        Shaders.gui.enable();
         if (this.resume != null&&this.back!=null)  {
             int brd = 0;
             shadowSigma=100;

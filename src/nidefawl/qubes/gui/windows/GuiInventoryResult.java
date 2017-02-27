@@ -10,6 +10,7 @@ import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.network.packet.PacketCInvClick;
 import nidefawl.qubes.network.packet.PacketCInvTransaction;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 
 public abstract class GuiInventoryResult extends Gui {
@@ -93,10 +94,9 @@ public abstract class GuiInventoryResult extends Gui {
     }
 
     public void render(float fTime, double mX, double mY) {
-        Shaders.gui.enable();
-        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+        BoxGUI.setFade(0.1f);
         renderBox(false, true, color2, color3);
-        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+        BoxGUI.setFade(0.3f);
         float posx = this.posX+10;
         float posy  = this.posY+10;
         renderSlots(slots, fTime, mX, mY, posx, posy);

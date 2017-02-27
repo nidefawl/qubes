@@ -1,15 +1,14 @@
 package nidefawl.qubes.gui;
 
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.render.gui.BoxGUI;
 
 public class GuiBG extends AbstractUI {
 
     @Override
     public void render(float fTime, double mX, double mY) {
-        Shaders.gui.enable();
-        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+        BoxGUI.setFade(0.1f);
         renderBox(false, true, color2, color3);
-        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+        BoxGUI.setFade(0.3f);
     }
 
     @Override

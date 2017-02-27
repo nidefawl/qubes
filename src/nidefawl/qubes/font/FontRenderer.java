@@ -23,7 +23,6 @@ public class FontRenderer {
         }
         fonts.clear();
     }
-    static VkCommandBuffer cmdBuffer;
 
 	private void free() {
 	    this.trueTypeFont.release();
@@ -108,17 +107,15 @@ public class FontRenderer {
         if (shadow) {
             final int k2 = (color & 0xf0f0f0) >> 2 | color & 0xff000000;
             tess.setColorF(k2, alpha*0.8f);
-            this.trueTypeFont.drawString(tess, x + this.shadowOffset, y + Engine.Y_SIGN*this.shadowOffset, chatline, alignment, false, alpha, maxWidth, k2, alpha*0.8f);
+            this.trueTypeFont.drawString(tess, x + this.shadowOffset, y + this.shadowOffset, chatline, alignment, false, alpha, maxWidth, k2, alpha*0.8f);
         }
         tess.setColorF(color, alpha);
         float w = this.trueTypeFont.drawString(tess, x, y, chatline, alignment, true, alpha, maxWidth, color, alpha);
-        this.trueTypeFont.drawTextBuffer(cmdBuffer, tess);
+        this.trueTypeFont.drawTextBuffer(tess);
         this.drawedHeight = this.trueTypeFont.getLastDrawHeight();
         return w;
     }
-    public static void setCommandBuffer(VkCommandBuffer _cmdBuffer) {
-        cmdBuffer = _cmdBuffer;
-    }
+    
     public int getTexture() {
         return this.trueTypeFont.getTexture();
     }

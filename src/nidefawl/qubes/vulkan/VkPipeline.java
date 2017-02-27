@@ -60,7 +60,7 @@ public class VkPipeline {
     private VkShader[]                         shaders;
     private long                               renderpass            = VK_NULL_HANDLE;
     private int                                subpass               = 0;
-    long                                       pipeline              = VK_NULL_HANDLE;
+    public long                                       pipeline              = VK_NULL_HANDLE;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;

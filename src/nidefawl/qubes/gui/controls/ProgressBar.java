@@ -24,7 +24,6 @@ public class ProgressBar extends AbstractUI {
 
     @Override
     public void render(float fTime, double mX, double mY) {
-        Shaders.gui.enable();
         float w = this.width;
         float pr = this.lastProgress + (this.progress - this.lastProgress) * fTime;
         float pW = w * (pr);
@@ -38,7 +37,6 @@ public class ProgressBar extends AbstractUI {
         extendy = 1;
         int color1 = 0x44ff44;
         int color2 = 0x33dd33;  
-//        Shaders.gui.
         renderRoundedBoxShadowInverse(xBar - 5, yBar, zBar - 4, w + 10, height, 0xdadada, 0.5f, true);
         this.round = 4;
         yBar+=2;

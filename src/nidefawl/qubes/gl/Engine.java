@@ -4,13 +4,21 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.memAllocInt;
+import static org.lwjgl.system.MemoryUtil.memAllocLong;
+import static org.lwjgl.system.MemoryUtil.memFree;
+import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Map;
 
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.*;
 
 import com.google.common.collect.Maps;
 import nidefawl.qubes.Game;
@@ -30,9 +38,7 @@ import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
-import nidefawl.qubes.vulkan.VKContext;
-import nidefawl.qubes.vulkan.VkPipelines;
-import nidefawl.qubes.vulkan.VkTess;
+import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.SunLightModel;
 
 public class Engine {
@@ -133,6 +139,9 @@ public class Engine {
     static boolean clientStateBindlessAttrib=false;
     public static boolean isDither=true;
     public static float Y_SIGN = 1.0f;
+    private static long descriptorSet1;
+    private static LongBuffer pDescriptorSets;
+    private static IntBuffer pOffsets;
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
     }
@@ -257,6 +266,10 @@ public class Engine {
         sunlightmodel.setDayLen(10000);
         sunlightmodel.setTime(7500);
         System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
+        if (isVulkan) {
+            pDescriptorSets = memAllocLong(3);
+            pOffsets = memAllocInt(32);
+        }
     }
 
     public static void init() {
@@ -322,6 +335,17 @@ public class Engine {
             VkTess.init(vkContext, 32);
             UniformBuffer.init(vkContext, 32);
             VkPipelines.init(vkContext);
+            try ( MemoryStack stack = stackPush() ) {
+//              vkContext.descLayouts.getDescriptorSets);
+                descriptorSet1 = vkContext.descLayouts.allocDescSetUBOScene();
+                VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.callocStack(3, stack);
+                writeDescriptorSet.position(0).limit(3);
+                VkInitializers.writeDescriptorSet(writeDescriptorSet, 0, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 0, UniformBuffer.uboMatrix3D.getDescriptorBuffer());
+                VkInitializers.writeDescriptorSet(writeDescriptorSet, 1, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, UniformBuffer.uboMatrix2D.getDescriptorBuffer());
+                VkInitializers.writeDescriptorSet(writeDescriptorSet, 2, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2, UniformBuffer.uboSceneData.getDescriptorBuffer());
+                vkUpdateDescriptorSets(vkContext.device, writeDescriptorSet, null);
+
+            }
         }
 
         flushRenderTasks();
@@ -353,7 +377,8 @@ public class Engine {
                 pxOffset.set(vec);
                 UniformBuffer.updatePxOffset();
                 if (Engine.isVulkan) {
-                    VkPipelines.rebindSceneDescriptorSet();
+                    pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
+                    Engine.rebindSceneDescriptorSet();
                 }
             }
         });
@@ -413,7 +438,7 @@ public class Engine {
         projection.update();
 
 
-        updateOrthoMatrix(displayWidth, displayHeight);
+        updateOrthoMatrix(displayWidth, displayHeight, OGL_INVERSE_Y || isVulkan);
         
         if (!isVulkan) {
 
@@ -843,6 +868,8 @@ public class Engine {
                 fonts.get(i).destroy(vkContext);
             }
             fonts.clear();
+            memFree(pDescriptorSets);
+            memFree(pOffsets);
         }
     }
 
@@ -1141,5 +1168,63 @@ public class Engine {
     }
     public static void registerTTF(TrueTypeFont trueTypeFont) {
         newfonts.add(trueTypeFont);
+    }
+    
+    public static void setPipeStateGUI() {
+        if (!isVulkan) {
+            Shaders.gui.enable();
+        } else {
+            //
+        }
+        
+    }
+
+    
+    //single threaded!
+    static VkCommandBuffer curCommandBuffer;
+    static VkPipeline curPipeline;
+    private static boolean rebindDescSet;
+    public static void bindPipeline(VkPipeline pipe) {
+        if (curPipeline != pipe) {
+            curPipeline = pipe;
+            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipe.pipeline);
+            rebindDescSet = true;
+        }
+        if (rebindDescSet) {
+            rebindDescSet = false;
+            rebindSceneDescriptorSet();
+        }
+    }
+
+    public static void rebindSceneDescriptorSet() {
+        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
+                pDescriptorSets, pOffsets);
+    }
+    public static void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, int contents) {
+        curPipeline = null;
+        vkCmdBeginRenderPass(commandBuffer, pRenderPassBegin, VK_SUBPASS_CONTENTS_INLINE);
+        curCommandBuffer = commandBuffer;
+        pDescriptorSets.position(0).limit(1);
+        pDescriptorSets.put(0, descriptorSet1);
+        pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
+        pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
+        pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
+        pOffsets.position(0).limit(3);
+    }
+    public static void setDescriptorSet1(long descriptorSet2) {
+        long lPrev = -1;
+        if (pDescriptorSets.limit() > 1) {
+            lPrev = pDescriptorSets.get(1);
+        }
+        pDescriptorSets.position(0).limit(2);
+        pDescriptorSets.put(0, descriptorSet1);
+        pDescriptorSets.put(1, descriptorSet2);
+        rebindDescSet = lPrev != descriptorSet2;
+    }
+    public static void clearDescriptorSet1() {
+        pDescriptorSets.position(0).limit(1);
+    }
+    public static VkCommandBuffer getDrawCmdBuffer() {
+        return curCommandBuffer;
     }
 }

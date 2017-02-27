@@ -18,10 +18,12 @@ import nidefawl.qubes.shader.UniformBuffer;
 
 public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout();
+    public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout();
     public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline screen2d = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline fontRender2D = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline colored2D = new VkPipeline(VkPipelines.pipelineLayoutTextured);
+    public static VkPipeline gui = new VkPipeline(VkPipelines.pipelineLayoutGUI);
     static {
     }
     static class VkShaderDef implements IShaderDef {
@@ -91,6 +93,18 @@ public class VkPipelines {
             colored2D.setVertexDesc(desc);
             colored2D.pipeline = buildPipeLine(ctxt, colored2D);
         }
+
+        {
+            gui.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[2].getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "gui.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "gui.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            gui.setShaders(vert, frag);
+            gui.setBlend(true);
+            gui.setRenderPass(ctxt.getMainRenderPass(), 1);
+            gui.setVertexDesc(desc);
+            gui.pipeline = buildPipeLine(ctxt, gui);
+        }
     }
 
     static long buildPipeLine(VKContext vkContext, VkPipeline pipe) {
@@ -108,35 +122,10 @@ public class VkPipelines {
         screen2d.destroy(vkContext);
         fontRender2D.destroy(vkContext);
         colored2D.destroy(vkContext);
+        gui.destroy(vkContext);
         pipelineLayoutTextured.destroy(vkContext);
+        pipelineLayoutGUI.destroy(vkContext);
     }
 
-    
-    //single threaded!
-    static VkCommandBuffer curCommandBuffer;
-    static VkPipeline curPipeline;
-    private static LongBuffer curDescriptorSets;
-    private static IntBuffer curOffsets;
-    public static void bindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipe) {
-        curCommandBuffer = commandBuffer;
-        curPipeline = pipe;
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipe.pipeline);
-    }
-
-    public static void bindDescriptorSets(LongBuffer pDescriptorSets, IntBuffer pOffsets) {
-        curDescriptorSets = pDescriptorSets;
-        curOffsets = pOffsets;
-        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
-                pDescriptorSets, pOffsets);
-    }
-    public static void updateDescriptorSetOffsets() {
-        
-    }
-
-    public static void rebindSceneDescriptorSet() {
-        curOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
-        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
-                curDescriptorSets, curOffsets);
-    }
 
 }

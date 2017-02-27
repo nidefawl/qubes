@@ -1,13 +1,12 @@
 package nidefawl.qubes.gui;
 
-import org.lwjgl.opengl.GL11;
-
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureUtil;
@@ -118,63 +117,60 @@ public abstract class AbstractUI implements Renderable {
         y-=extendy;
         h+=extendy*2;
         if (drawShadow) {
-            Shaders.gui.setProgramUniform1f("zpos", z-1);
-            Shaders.gui.setProgramUniform4f("box", x, y+1, x+w, y+h);
-//            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
-            Shaders.gui.setProgramUniform4f("color", 0.05f,0.05f,0.05f, alpha);
-            Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
-            Shaders.gui.setProgramUniform1f("corner", round);
-          Engine.enableDepthMask(false);
-            Engine.drawQuad();
-          Engine.enableDepthMask(true);
+            BoxGUI.setZPos(z - 1);
+            BoxGUI.setBox(x, y + 1, x + w, y + h);
+            BoxGUI.setColor(0.05f, 0.05f, 0.05f, alpha);
+            BoxGUI.setSigma(shadowSigma);
+            BoxGUI.setRound(round);
+            Engine.enableDepthMask(false);
+            BoxGUI.INST.drawQuad();
+            Engine.enableDepthMask(true);
         } else {
-            Shaders.gui.setProgramUniform1f("corner", round);
+            BoxGUI.setRound(round);
         }
-        Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
-        Shaders.gui.setProgramUniform1f("zpos", z);
-        Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);
-        Shaders.gui.setProgramUniform1f("sigma", boxSigma);
+        BoxGUI.setBox(x, y, x+w, y+h);
+        BoxGUI.setZPos(z);
+        BoxGUI.setColor(r, g, b, alpha);
+        BoxGUI.setSigma(boxSigma);
 //        Engine.enableDepthMask(false);
-        Engine.drawQuad();
+        BoxGUI.INST.drawQuad();
 //        Engine.enableDepthMask(true);
     }
     public void renderRoundedBoxShadowInverse(float x, float y, float z, float w, float h, int rgba, float alpha, boolean drawShadow) {
         float r = TextureUtil.getR(rgba);
         float g = TextureUtil.getG(rgba);
         float b = TextureUtil.getB(rgba);
-        Shaders.gui.setProgramUniform4f("box", x, y, x+w, y+h);
-        Shaders.gui.setProgramUniform1f("zpos", 0);
-        Shaders.gui.setProgramUniform4f("color", r, g, b, alpha);
-        Shaders.gui.setProgramUniform1f("sigma", 0.6f);
-        Shaders.gui.setProgramUniform1f("corner", round+2);
-        Engine.drawQuad();
+        BoxGUI.setBox(x, y, x+w, y+h);
+        BoxGUI.setZPos(0);
+        BoxGUI.setColor(r, g, b, alpha);
+        BoxGUI.setSigma(0.6f);
+        BoxGUI.setRound(round+2);
+        BoxGUI.INST.drawQuad();
         if (drawShadow) {
             x+=extendx;
             w-=extendx*2;
             y+=extendy;
             h-=extendy*2;
-            Shaders.gui.setProgramUniform1f("zpos", z+1);
-            Shaders.gui.setProgramUniform4f("box", x, y+0, x+w, y+h);
-//            Shaders.gui.setProgramUniform4f("color", 1-r, 1-g, 1-b, alpha);
+            BoxGUI.setZPos(z+1);
+            BoxGUI.setBox(x, y+0, x+w, y+h);
+//            BoxGUI.setColor(1-r, 1-g, 1-b, alpha);
             float br = 0.08f;
-            Shaders.gui.setProgramUniform4f("color", br,br,br, alpha);
-            Shaders.gui.setProgramUniform1f("sigma", shadowSigma);
-            Shaders.gui.setProgramUniform1f("corner", round);
+            BoxGUI.setColor(br,br,br, alpha);
+            BoxGUI.setSigma(shadowSigma);
+            BoxGUI.setRound(round);
 //            GL11.glDepthMask(false);
-            Engine.drawQuad();
+            BoxGUI.INST.drawQuad();
 //            GL11.glDepthMask(true);
         }
     }
     public void renderOutlinedBox() {
         int c1 = this.hovered || this.focused ? this.color3 : this.color;
         int c2 = this.hovered || this.focused ? this.color4 : this.color2;
-        Shaders.gui.enable();
         int extend = 2;
         this.posX -= extend;
         this.width += extend*2;
         this.posY -= extend;
         this.height += extend*2;
-        Shaders.gui.enable();
         renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c2, this.alpha2, true);
         this.width -= extend*2;
         this.posX += extend;
@@ -200,7 +196,6 @@ public abstract class AbstractUI implements Renderable {
         this.width += extend*2;
         this.posY -= extend;
         this.height += extend*2;
-        Shaders.gui.enable();
         if (inverse)
             renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
         else
@@ -222,7 +217,6 @@ public abstract class AbstractUI implements Renderable {
         this.width += extend*2;
         this.posY -= extend;
         this.height += extend*2;
-        Shaders.gui.enable();
         if (inverse)
             renderRoundedBoxShadow(this.posX, this.posY, 0, this.width, this.height, c1, this.alpha, false);
         else
@@ -272,7 +266,6 @@ public abstract class AbstractUI implements Renderable {
     
 
     protected void renderSlots(Slots slots, float fTime, double mX, double mY, float posx, float posy) {
-        Shaders.gui.enable();
         Slot sHover = null;
         float inset = 4;
         float inset2 = 3;
@@ -306,7 +299,6 @@ public abstract class AbstractUI implements Renderable {
             renderSlotOverlay(s, posx, posy);
         }
         Engine.pxStack.translate(0, 0, 5);
-        Shaders.gui.enable();
         if (sHover != null) {
             renderSlotBackground(posx+sHover.x+inset2, posy+sHover.y+inset2, 32, +sHover.w-inset2*2, sHover.w-inset2*2, -1, 0.16f, false, 2);
         }

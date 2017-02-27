@@ -8,6 +8,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.windows.GuiContext;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 
 public class ScrollList extends Gui {
@@ -81,10 +82,9 @@ public class ScrollList extends Gui {
         this.width -= scrollBarG + 4;
         this.height += border;
 
-        Shaders.gui.enable();
-        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+        BoxGUI.setFade(0.1f);
         renderBox(false, true, color2, color3);
-        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+        BoxGUI.setFade(0.3f);
         this.posX += border / 2;
         this.posY += border / 2;
         this.width -= border;
@@ -124,13 +124,12 @@ public class ScrollList extends Gui {
         scX-=1;
         scrollBarW+=2;
         shadowSigma=2f;
-        Shaders.gui.enable();
-        Shaders.gui.setProgramUniform1f("fade", 0.1f);
+        BoxGUI.setFade(0.1f);
         renderRoundedBoxShadow(scX, scY, 1, scrollBarW, scH, color4, this.alpha2, true);
         scX+=1;
         scrollBarW-=2;
         renderRoundedBoxShadow(scX, scY, 1, scrollBarW, scH, color3, this.alpha, false);
-        Shaders.gui.setProgramUniform1f("fade", 0.3f);
+        BoxGUI.setFade(0.3f);
         resetShape();
         int scrollbarOffsetY = (int) (this.scrollOffset*(scH-scrollbarHeight));
         this.scrollbarbutton.setPos(scX-this.parent.posX+this.getWindowPosX(), scY+scrollbarOffsetY-this.parent.posY+this.getWindowPosY());

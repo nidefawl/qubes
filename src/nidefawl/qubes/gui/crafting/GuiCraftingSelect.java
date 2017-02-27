@@ -31,6 +31,7 @@ import nidefawl.qubes.inventory.slots.*;
 import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.network.packet.PacketCCrafting;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
@@ -108,8 +109,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             Engine.pxStack.push(0, 0, -22);
             int nx=1;
             int ny=2;
-            Shaders.gui.enable();
-            Shaders.gui.setProgramUniform1f("fade", 0.1f);
+            BoxGUI.setFade(0.1f);
             round=2;
             if (((GuiCraftingSelect)parent).cat == this) {
                 Engine.pxStack.translate(0, 0, 15);
@@ -121,18 +121,17 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
                     int n = -2;
                     float c = 0.8f;
                     float blink = 0.5f+(float)Math.sin((Game.ticksran/8f)%GameMath.PI)*0.5f;
-                    Shaders.gui.enable();
-                    Shaders.gui.setProgramUniform1f("zpos", 2);
-                    Shaders.gui.setProgramUniform4f("box", posX-n, posY-n, posX+width+n, posY+height+n);
-                    Shaders.gui.setProgramUniform4f("color", c,1,1-blink, blink);
-                    Shaders.gui.setProgramUniform1f("sigma", 3);
-                    Shaders.gui.setProgramUniform1f("corner", 1);
-                    Engine.drawQuad();
+                    BoxGUI.setZPos(2);
+                    BoxGUI.setBox(posX-n, posY-n, posX+width+n, posY+height+n);
+                    BoxGUI.setColor(c,1,1-blink, blink);
+                    BoxGUI.setSigma(3);
+                    BoxGUI.setRound(1);
+                    BoxGUI.INST.drawQuad();
                 } 
                 
             }
             resetShape();
-            Shaders.gui.setProgramUniform1f("fade", 0.3f);
+            BoxGUI.setFade(0.3f);
             Engine.pxStack.translate(0, 0, 3);
 //            ((GuiCraftingSelect) parent).renderSlotBackground(posX+nx, posY+ny, 0, slotW, slotW, color, alpha, true, 4);
 //            ((GuiWindow)this.parent).renderSlotBackground(posX+inset, posY+inset, 0, slotW-inset*2,slotW-inset*2,0, 0.8f, true, 0);
@@ -201,14 +200,12 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             float inset = 4;
             float inset2 = 3;
             Engine.pxStack.push(0, 0, 1);
-            Shaders.gui.enable();
             int color = 0xdadada;
             float alpha = 0.8f;
             renderSlotBackground(posX, posY, 0, slotW, slotW, color, alpha, true, 4);
 
             if (this.hovered) {
                 Engine.pxStack.translate(0, 0, 2);
-                Shaders.gui.enable();
                 renderSlotBackground(posX + inset2, posY + inset2, 0, slotW - inset2 * 2, slotW - inset2 * 2, -1, 0.6f, true, 1);
             }
             Engine.pxStack.translate(0, 0, 2);
@@ -239,7 +236,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             }
             if (this.hovered) {
                 Engine.pxStack.translate(0, 0, 10);
-                Shaders.gui.enable();
                 renderSlotBackground(posX + inset2, posY + inset2, 32, slotW - inset2 * 2, slotW - inset2 * 2, -1, 0.36f, false, 2);
 
             }
@@ -276,7 +272,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             this.posX = inset;
             this.height = 30;
             this.width-=8+inset*2;
-            Shaders.gui.enable();
 //            AbstractUI g = selectedButton;
 //            if (this.hovered)
 //            selectedButton = this;
@@ -533,12 +528,10 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 
         this.cat.getScrollList().render(fTime, mX-this.posX, mY-this.posY);
         this.scr2.render(fTime, mX-this.posX, mY-this.posY);
-        Shaders.gui.enable();
         Engine.pxStack.pop();
         super.renderButtons(fTime, mX, mY);
         Engine.pxStack.push(0,0,32);
         if (selected != null) {
-            Shaders.gui.enable();
             saveBounds();
             Engine.pxStack.push(this.posX, this.posY, 6);
             width = this.bg.width / 3 * 2;

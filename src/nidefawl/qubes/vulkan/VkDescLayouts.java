@@ -6,9 +6,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo;
-import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
-import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo;
+import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding.Buffer;
 
 public class VkDescLayouts {
@@ -23,6 +21,7 @@ public class VkDescLayouts {
     public VkDescriptorSetLayoutBinding.Buffer ubo_scene_bindings = VkDescriptorSetLayoutBinding.calloc(3);
     public VkDescriptorSetLayoutBinding.Buffer ubo_constants_bindings = VkDescriptorSetLayoutBinding.calloc(1);
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_single = VkDescriptorSetLayoutBinding.calloc(1);
+    public VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
     public VkDescLayouts(VKContext ctxt) {
@@ -46,9 +45,14 @@ public class VkDescLayouts {
             .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
             .binding(0)
             .descriptorCount(1);
+        push_constant_ranges_gui.get(0)
+            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
+            .offset(0)
+            .size(8*4+2*16);
         descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
         descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
         VkPipelines.pipelineLayoutTextured.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
+        VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_gui);
     }
             
     private long makeSet(VkDescriptorSetLayoutBinding.Buffer... buffers) {

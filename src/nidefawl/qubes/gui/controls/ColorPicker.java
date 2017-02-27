@@ -4,6 +4,7 @@ package nidefawl.qubes.gui.controls;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Color;
 
@@ -48,24 +49,21 @@ public abstract class ColorPicker extends AbstractUI {
                     break;
             }
         }
-        colorPick[0].posX =(int) ((xRight-extendSize/2)+(1-valH)*(wRight+(extendSize)-bWidth));;
-        colorPick[1].posX =(int) ((xRight-extendSize/2)+(valS)*(wRight+(extendSize)-bWidth));;
-        colorPick[2].posX =(int) ((xRight-extendSize/2)+(valL)*(wRight+(extendSize)-bWidth));;
-        Shaders.gui.enable();
+        colorPick[0].posX =(int) ((xRight-extendSize/2)+(1-valH)*(wRight+(extendSize)-bWidth));
+        colorPick[1].posX =(int) ((xRight-extendSize/2)+(valS)*(wRight+(extendSize)-bWidth));
+        colorPick[2].posX =(int) ((xRight-extendSize/2)+(valL)*(wRight+(extendSize)-bWidth));
         for (int a = 0; a < 3; a++) {
 
-            Shaders.gui.setProgramUniform1i("colorwheel", 1+a);
-            Shaders.gui.setProgramUniform1f("valueH", valH);
-            Shaders.gui.setProgramUniform1f("valueS", valS);
-            Shaders.gui.setProgramUniform1f("valueL", valL);
+            BoxGUI.setColorwheel("colorwheel", 1+a);
+            BoxGUI.setHSL("valueH", valH, valS, valL);
             int m = this.posY+40*a+2;
             renderRoundedBoxShadow(xRight, m, 3, wRight, 28, -1, 1, true);
         }
-        Shaders.gui.setProgramUniform1i("colorwheel", 4);
+        BoxGUI.setColorwheel("colorwheel", 4);
         int rgb = Color.HSBtoRGB(1f-valH, valS*(1-(Math.max(0, (valL-0.5f)*2))), Math.min(1, valL*2));
         
         renderRoundedBoxShadow(this.posX, this.posY+1, 3, boxW, boxW, rgb, 1, true);
-        Shaders.gui.setProgramUniform1i("colorwheel", 0);
+        BoxGUI.setColorwheel("colorwheel", 0);
         if (this.rgb != rgb) {
             this.rgb = rgb;
             onColorChange(rgb);

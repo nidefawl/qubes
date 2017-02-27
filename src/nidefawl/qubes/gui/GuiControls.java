@@ -44,7 +44,6 @@ public class GuiControls extends Gui {
             int r = (parent.width)-rw-15;
             this.posX = r;
             this.width = rw;
-            Shaders.gui.enable();
             AbstractUI g = selectedButton;
             if (this.hovered)
             selectedButton = this;
@@ -225,7 +224,6 @@ public class GuiControls extends Gui {
             this.clear.posY = this.cancel.posY-30;
             x += posX;
             y += posY;
-            Shaders.gui.enable();
             renderRoundedBoxShadow(x, y, 2, w, h2, color2, 0.7f, true);
             Shaders.textured.enable();
             this.font.drawString("Please press a key for", x+w/2, y+h/4, 0xf1f1f1, true, 1.0f, 2);

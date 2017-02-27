@@ -4,6 +4,7 @@ import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.item.*;
+import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 
@@ -39,12 +40,11 @@ public abstract class Tooltip extends Gui {
         }
         @Override
         public void render(float fTime, double mX, double mY) {
-            Shaders.gui.enable();
             resetShape();
             alpha2=1;
-            Shaders.gui.setProgramUniform1f("fade", 0.3f);
+            BoxGUI.setFade(0.3f);
             renderBox();
-            Shaders.gui.setProgramUniform1f("fade", 0.3f);
+            BoxGUI.setFade(0.3f);
             Shaders.textured.enable();
             int y = GameMath.round(this.posY+fr.centerY(this.height));
             fr.drawString(this.title, posX+8, y, -1, false, 1, 0);
