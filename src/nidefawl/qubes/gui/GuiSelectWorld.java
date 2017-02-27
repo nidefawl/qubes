@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL11;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ScrollList;
@@ -31,7 +32,7 @@ public class GuiSelectWorld extends Gui {
             super.render(fTime, mX, mY);
             Shaders.colored.enable();
             Tess tessellator = Tess.instance;
-            GL11.glLineWidth(1.0F);
+            Engine.lineWidth(1.0F);
             int w = this.width;
             int h = this.height;
 

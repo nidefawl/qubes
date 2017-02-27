@@ -144,7 +144,7 @@ public class GuiOverlayStats extends Gui {
     }
 
     public void render(float fTime, double mx, double mY) {
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
         int y = 20;
         float maxW = 250;
         if (!Game.instance.glProfileResults.isEmpty()) {
@@ -192,7 +192,7 @@ public class GuiOverlayStats extends Gui {
                 Engine.pxStack.push(maxW/2, 0, 0);
             }
             y+=statsFontSmall.getLineHeight()*1.2f;
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             for (String st : info) {
                 statsFontSmall.drawString(st, 5, y, 0xFFFFFF, true, 1.0F);
                 y += statsFontSmall.getLineHeight();
@@ -238,7 +238,7 @@ public class GuiOverlayStats extends Gui {
             Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
         }
         Block b = Game.instance.selBlock.getBlock();
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
         if (b != null)
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 

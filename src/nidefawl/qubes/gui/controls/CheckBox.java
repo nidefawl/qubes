@@ -3,6 +3,7 @@ package nidefawl.qubes.gui.controls;
 import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
@@ -38,7 +39,7 @@ public class CheckBox extends AbstractUI implements Renderable {
         if (!draw)
             return;
         renderBox();
-        GL11.glLineWidth(1.0F);
+        Engine.lineWidth(1.0F);
         Shaders.colored.enable();
         Tess tessellator = Tess.instance;
         //          GL11.glBegin(GL11.GL_LINE_STRIP);
@@ -63,7 +64,7 @@ public class CheckBox extends AbstractUI implements Renderable {
             if (this.width < 20) {
                 w = 4.0f;
             }
-            GL11.glLineWidth(w);
+            Engine.lineWidth(w);
             tessellator.setColorF(color6, 0.8f);
             yo=3;
             tessellator.add(this.posX + yo, this.posY + yo);
@@ -71,7 +72,7 @@ public class CheckBox extends AbstractUI implements Renderable {
             tessellator.add(this.posX + yo, this.posY + width-yo);
             tessellator.add(this.posX + height-yo, this.posY +yo);
             tessellator.draw(GL11.GL_LINES);
-            GL11.glLineWidth(w/2.0f);
+            Engine.lineWidth(w/2.0f);
 //            this.posX++;
             tessellator.setOffset(0, 0.3f, 0);
             tessellator.setColorF(color5, 0.5f);
@@ -88,7 +89,7 @@ public class CheckBox extends AbstractUI implements Renderable {
             
         }
         if (this.text!=null&&!this.text.isEmpty()) {
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
 
             this.font.maxWidth = -1;
             if (this.drawTitle) {

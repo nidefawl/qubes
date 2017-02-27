@@ -1,13 +1,20 @@
 package nidefawl.qubes.render.gui;
 
+import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
+import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_VERTEX_BIT;
+import static org.lwjgl.vulkan.VK10.vkCmdPushConstants;
+
 import java.nio.*;
 
 import org.lwjgl.system.MemoryUtil;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.vec.Vector4f;
+import nidefawl.qubes.vulkan.VkPipelines;
+import nidefawl.qubes.vulkan.VkTess;
 
 public class BoxGUI {
 	public final static BoxGUI INST = new BoxGUI();
@@ -25,21 +32,27 @@ public class BoxGUI {
 	private FloatBuffer floatBuffer;
 	private IntBuffer intBuffer;
 	public BoxGUI() {
-		box.set(0, 0, 100, 100);
-		color.set(1.0f, 1.0f, 1.0f, 1.0f);
-		sigma = 0.25f;
-		corner = 4f;
-		fade = 0.3f;
-		zpos = 0;
-		colorwheel = 0;
-		valueH = 0.5f;
-		valueS = 1.0f;
-		valueL = 0.5f;
+	    r();
 		this.buffer = MemoryUtil.memAlignedAlloc(8, 256);
 		this.floatBuffer = this.buffer.asFloatBuffer();
 		this.intBuffer = this.buffer.asIntBuffer();
 	}
-	public ByteBuffer update() {
+    public static void reset() {
+        INST.r();
+    }
+	public void r() {
+        box.set(0, 0, 100, 100);
+        color.set(1.0f, 1.0f, 1.0f, 1.0f);
+        sigma = 0.25f;
+        corner = 4f;
+        fade = 0.3f;
+        zpos = 0;
+        colorwheel = 0;
+        valueH = 0.5f;
+        valueS = 1.0f;
+        valueL = 0.5f;
+    }
+    public ByteBuffer update() {
 		floatBuffer.position(0);
 		box.store(floatBuffer);
 		color.store(floatBuffer);
@@ -92,10 +105,10 @@ public class BoxGUI {
             shader.setProgramUniform1f("valueH", valueH);
             shader.setProgramUniform1f("valueS", valueS);
             shader.setProgramUniform1f("valueL", valueL);
-            Engine.drawQuad();
         } else {
-            
+            vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.gui.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT, 0, update());
         }
+        Engine.drawQuad();
     }
     public static void setColorwheel(String string, int i) {
         INST.colorwheel = i;

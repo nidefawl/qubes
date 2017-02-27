@@ -505,7 +505,7 @@ public class WorldRenderer extends AbstractRenderer {
     public void renderNormals(World world, float fTime) {
         if (Shaders.normals != null) {            
             Shaders.normals.enable();
-            glLineWidth(3.0F);
+            Engine.lineWidth(3.0F);
             Engine.checkGLError("glLineWidth");
             Engine.regionRenderer.renderRegions(world, fTime, PASS_SOLID, 0, Frustum.FRUSTUM_INSIDE);
 //            Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
@@ -563,7 +563,7 @@ public class WorldRenderer extends AbstractRenderer {
                 float fMaxY = (float) bb.maxY;
                 float fMaxZ = (float) bb.maxZ;
                 
-                glLineWidth(4.0F);
+                Engine.lineWidth(4.0F);
                 float ext = 1/32F;
                 float zero = -ext;
                 float one = 1+ext;
@@ -598,7 +598,7 @@ public class WorldRenderer extends AbstractRenderer {
 //            glDepthFunc(GL_LEQUAL);
 //          glDisable(GL_DEPTH_TEST);
             Shaders.colored3D.enable();
-            glLineWidth(4.0F);
+            Engine.lineWidth(4.0F);
             for (Integer i : debugPaths.keySet()) {
                 List<PathPoint> bb = debugPaths.get(i);
                 int iColor = GameMath.randomI(i*19)%33;

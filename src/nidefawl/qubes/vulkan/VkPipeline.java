@@ -40,6 +40,7 @@ public class VkPipeline {
                 true,
                 true,
                 VK_COMPARE_OP_LESS_OR_EQUAL);
+    VkPipelineDynamicStateCreateInfo dynamicState = null;
     VkViewport.Buffer viewport = VkViewport.calloc(1)
             .height(0)
             .width(0)
@@ -101,6 +102,9 @@ public class VkPipeline {
         this.renderpass = renderpass;
         this.subpass = subpass;
     }
+    public void setPrimitiveMode(int mode) {
+        inputAssemblyState.topology(mode);
+    }
     public long buildPipeline(VKContext vkContext) {
         if (shaders == null) {
             throw new GameLogicError("MISSING SHADERS");
@@ -131,7 +135,7 @@ public class VkPipeline {
             mainPipe.pMultisampleState(multisampleState);
             mainPipe.pViewportState(viewportState);
             mainPipe.pDepthStencilState(depthStencilState);
-//          mainPipe.pDynamicState(dynamicState);
+            mainPipe.pDynamicState(dynamicState);
             mainPipe.pStages(shaderStageCreateInfo);
             for (int i = 1; i < nPipelines; i++) {
                 pipelineCreateInfoBuffer.put(i, mainPipe);

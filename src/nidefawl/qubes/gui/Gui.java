@@ -1,10 +1,5 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glEnable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,11 +11,10 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.PopupHolder;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.render.gui.BoxGUI;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.ITess;
 
 public abstract class Gui extends AbstractUI implements PopupHolder {
     public ArrayList<AbstractUI> buttons   = new ArrayList<>();
@@ -254,20 +248,21 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     public void renderFrame(float fTime, double mX, double mY) {
         float c = 0.1f;
         float ac = 0.3f;
-        if (Game.instance != null&&Game.instance.getWorld() == null) {
+        if (!Engine.isVulkan&&Game.instance != null&&Game.instance.getWorld() == null) {
             GL11.glClearColor(c,c,c, ac);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
         }
         if (this.isFullscreen) {
             renderBackgroundElements(fTime, mX, mY);
-            if (Game.instance.getWorld() != null) {
-                Shaders.colored.enable();
-                Tess.instance.setColorRGBAF(c, c, c, ac);
-                Tess.instance.add(posX, posY+height);
-                Tess.instance.add(posX+width, posY+height);
-                Tess.instance.add(posX+width, posY);
-                Tess.instance.add(posX, posY);
-                Tess.instance.drawQuads();
+            if (Game.instance!=null&&Game.instance.getWorld() != null) {
+                Engine.setPipeStateColored2D();
+                ITess tess = Engine.getTess();
+                tess.setColorRGBAF(c, c, c, ac);
+                tess.add(posX, posY+height);
+                tess.add(posX+width, posY+height);
+                tess.add(posX+width, posY);
+                tess.add(posX, posY);
+                tess.drawQuads();
             }
         } else {
             renderBackgroundElements(fTime, mX, mY);
@@ -295,6 +290,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
                 BoxGUI.setSigma(2);
                 BoxGUI.setRound(8);
                 BoxGUI.INST.drawQuad();
+                
             }
             int z = -10;
 
@@ -320,7 +316,7 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
 //            GL11.glDepthFunc(GL11.GL_LEQUAL);
             resetShape();
             if (!this.isFullscreen) {
-                Shaders.textured.enable();
+                Engine.setPipeStateFontrenderer();
                 Engine.pxStack.push(0, 0, 6);
                 titleFont.drawString(getTitle(), posX+width/2, posY + titleFont.centerY(titleBarHeight-16), -1, true, 1f, 2);
                 Engine.pxStack.pop();

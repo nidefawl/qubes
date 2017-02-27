@@ -508,7 +508,7 @@ public class TextInput {
                 tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                 tessellator.setColor(-1, 255);
                 Shaders.colored.enable();
-                GL11.glLineWidth(2.0F);
+                Engine.lineWidth(2.0F);
                 tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY, 0);
                 tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0);
                 tessellator.draw(GL11.GL_LINES);
@@ -540,7 +540,7 @@ public class TextInput {
         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
         tessellator.setColor(-1, 255);
         if (showCursor && mpos == editText.length()) {
-            GL11.glLineWidth(2.0F);
+            Engine.lineWidth(2.0F);
             Shaders.colored.enable();
             tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY, 0);
             tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0);

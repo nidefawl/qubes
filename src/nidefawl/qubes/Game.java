@@ -1092,7 +1092,7 @@ public class Game extends GameBase {
                     vo.addVec(vd);
                     t.setColorRGBAF(.97f, .97f, .97f, 1.0f);
                     t.add(vo);
-                    GL11.glLineWidth(4);
+                    Engine.lineWidth(4);
                     t.draw(GL11.GL_LINES);
                     Shaders.colored3D.setProgramUniform1f("color_brightness", 0.1f);
                 }

@@ -105,7 +105,7 @@ public class ScrollList extends Gui {
         super.renderButtons(fTime, mX, mY+yPos);
         Engine.pxStack.pop();
         Engine.disableScissors();
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
         int scX = this.posX+this.width;
         int scY = this.posY-border;
         int scH = this.height+border*2;

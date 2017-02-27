@@ -1,6 +1,9 @@
 package nidefawl.qubes.vulkan;
 
-public class VkTesselatorState extends AbstractVkTesselatorState {
+import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.ITessState;
+
+public class VkTesselatorState extends AbstractVkTesselatorState implements ITessState {
     VkBuffer bufferV;
     VkBuffer bufferI;
     public VkTesselatorState(VKContext ctxt) {
@@ -24,6 +27,10 @@ public class VkTesselatorState extends AbstractVkTesselatorState {
         this.bufferI.tag(string+"_index");
         this.bufferV.tag(string+"_vertex");
         return this;
+    }
+    @Override
+    public void drawQuads() {
+        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
     }
 
 

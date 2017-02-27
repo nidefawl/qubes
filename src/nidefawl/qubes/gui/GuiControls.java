@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.ScrollList;
@@ -58,7 +59,7 @@ public class GuiControls extends Gui {
             int c1 = this.hovered ? -1 : this.color;
             int c2 = this.hovered ? -1 : this.color2;
 //            final Tess tessellator = Tess.instance;
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             fr.drawString(b.getName(), this.posX, this.posY+fr.centerY(height), -1, true, 0.9f);
 ////            GLfw.g
             String keyname = "";
@@ -76,7 +77,7 @@ public class GuiControls extends Gui {
             Shaders.colored.enable();
             Tess tessellator = Tess.instance;
 //          OpenGlHelper.glColor3f(fa, fa, fa);
-          GL11.glLineWidth(1.0F);
+          Engine.lineWidth(1.0F);
           
 //          GL11.glBegin(GL11.GL_LINE_STRIP);
           tessellator.setColorF(-1, 0.1f);
@@ -192,7 +193,7 @@ public class GuiControls extends Gui {
             mmY = -9999;
         }
         renderBackground(fTime, mmX, mmY, true, 0.7f);
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
 //        this.font.drawString("Controls", this.posX+this.width / 2.0f, this.posY+5, -1, true, 1.0f, 2);
         this.scrolllist.render(fTime, mmX, mmY);
         this.clear.draw = this.selected != null;
@@ -225,7 +226,7 @@ public class GuiControls extends Gui {
             x += posX;
             y += posY;
             renderRoundedBoxShadow(x, y, 2, w, h2, color2, 0.7f, true);
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             this.font.drawString("Please press a key for", x+w/2, y+h/4, 0xf1f1f1, true, 1.0f, 2);
             this.font.drawString(selected.b.getName(), x+w/2, y+h/4*2-6, 0xf1ffff, true, 1.0f, 2);
             if (inUseKey != null) {

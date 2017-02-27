@@ -94,7 +94,7 @@ public class Engine {
     public static float zfar = 1024F;
 
     static TesselatorState[] fullscreenquads;
-    static TesselatorState quad;
+    static ITessState quad;
 
     public static Frustum        camFrustum;
     public static Vector3f       lightPosition;
@@ -492,8 +492,20 @@ public class Engine {
             tess.add(0, 0, 0, 0, 0);
             tess.add(0, 1, 0, 0, 1);
             tess.add(1, 1, 0, 1, 1);
-            tess.draw(GL_QUADS, quad);
+            tess.draw(GL_QUADS, (TesselatorState)quad);
             tess.resetState();
+        } else {
+            if (quad == null) {
+                quad = new VkTesselatorState(vkContext);
+            }
+            VkTess tess = VkTess.instance;
+            tess.add(1, 0, 0, 1, 0);
+            tess.add(0, 0, 0, 0, 0);
+            tess.add(0, 1, 0, 0, 1);
+            tess.add(1, 1, 0, 1, 1);
+            tess.finish(VkTess.CREATE_QUAD_IDX_BUFFER, VkTess.DEVICE_LOCAL_UPLOAD, (AbstractVkTesselatorState) quad, 0);
+            tess.resetState();
+            
         }
 
     }
@@ -1014,7 +1026,8 @@ public class Engine {
 
     public static void enableDepthMask(boolean flag) {
         isDepthMask = flag;
-        GL11.glDepthMask(flag);
+        if (!isVulkan)
+            GL11.glDepthMask(flag);
     }
 
     public static void enableScissors() {
@@ -1158,6 +1171,12 @@ public class Engine {
         }
         return Tess.tessFont;
     }
+    public static ITess getTess() {
+        if (isVulkan) {
+            return VkTess.instance;
+        }
+        return Tess.instance;
+    }
     
     public static void preRenderUpdateVK() {
         for (int i = 0; i < newfonts.size(); i++) {
@@ -1169,14 +1188,47 @@ public class Engine {
     public static void registerTTF(TrueTypeFont trueTypeFont) {
         newfonts.add(trueTypeFont);
     }
-    
+
     public static void setPipeStateGUI() {
         if (!isVulkan) {
             Shaders.gui.enable();
         } else {
-            //
+            Engine.clearDescriptorSet1();
+            Engine.bindPipeline(VkPipelines.gui);
         }
         
+    }
+    public static void setPipeStateFontrenderer() {
+        if (!isVulkan) {
+            Shaders.textured.enable();
+        } else {
+            Engine.bindPipeline(VkPipelines.fontRender2D);
+        }
+    }
+    
+    public static void setPipeStateColored2D() {
+        if (!isVulkan) {
+            Shaders.colored.enable();
+        } else {
+            Engine.clearDescriptorSet1();
+            Engine.bindPipeline(VkPipelines.colored2D);
+        }
+    }
+    public static void setPipeStateColored2DLineStrip() {
+        if (!isVulkan) {
+            Shaders.colored.enable();
+        } else {
+            Engine.clearDescriptorSet1();
+            Engine.bindPipeline(VkPipelines.colored2DLineStrip);
+        }
+    }
+    public static void setPipeStateColored2DLines() {
+        if (!isVulkan) {
+            Shaders.colored.enable();
+        } else {
+            Engine.clearDescriptorSet1();
+            Engine.bindPipeline(VkPipelines.colored2DLines);
+        }
     }
 
     
@@ -1226,5 +1278,12 @@ public class Engine {
     }
     public static VkCommandBuffer getDrawCmdBuffer() {
         return curCommandBuffer;
+    }
+    public static void lineWidth(float width) {
+        if (!isVulkan) {
+            GL11.glLineWidth(width);
+        } else {
+            vkCmdSetLineWidth(curCommandBuffer, width);
+        }
     }
 }

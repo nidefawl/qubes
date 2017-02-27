@@ -87,7 +87,7 @@ public class LoadingScreen {
         Tess.instance.drawQuads();
         FontRenderer font = FontRenderer.get(0, 16, 1);
         if (font != null) {
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             font.drawString(string, x + l + 2, y + barsTop + barsH + 10 + font.getLineHeight(), -1, true, 1.0f);
         }
         //        for (int i = 0; i < loadProgress.length; i++) {

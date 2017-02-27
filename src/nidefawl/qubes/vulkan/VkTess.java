@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 
 import org.lwjgl.vulkan.VkCommandBuffer;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.ReallocIntBuffer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameMath;
@@ -16,7 +17,7 @@ import nidefawl.qubes.vec.Vector4f;
 
 public class VkTess extends AbstractVkTesselatorState implements ITess {
     public static int CREATE_QUAD_IDX_BUFFER = 0;
-    public static int CREATE_TRI_IDX_BUFFER = 1;
+    public static int CREATE_PER_VERTEX_IDX_BUFFER = 1;
     public static int STREAM_UPLOAD = 0;
     public static int DEVICE_LOCAL_UPLOAD = 1;
     private final static boolean littleEndian = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
@@ -260,7 +261,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
                     rawBuffer[pos++]=(vIdx+3);
                     rawBuffer[pos++]=(vIdx+0);
                 }
-            } else if (idxMode == CREATE_TRI_IDX_BUFFER) {
+            } else if (idxMode == CREATE_PER_VERTEX_IDX_BUFFER) {
                 for (int i = 0; i < this.vertexcount; i++) {
                     rawBuffer[i]=i;
                 }
@@ -339,6 +340,24 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     }
     public void add(Vector3f tmp1) {
         add(tmp1.x, tmp1.y, tmp1.z);
+    }
+
+    @Override
+    public void drawQuads() {
+        finish(VkTess.CREATE_QUAD_IDX_BUFFER);
+        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
+    }
+
+    @Override
+    public void drawLineStrip() {
+        finish(VkTess.CREATE_PER_VERTEX_IDX_BUFFER);
+        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
+    }
+
+    @Override
+    public void drawLines() {
+        finish(VkTess.CREATE_PER_VERTEX_IDX_BUFFER);
+        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
     }
 
 }

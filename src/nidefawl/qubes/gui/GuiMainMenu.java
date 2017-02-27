@@ -7,6 +7,7 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.gui.windows.GuiContext;
@@ -116,7 +117,7 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         int w1 = 300;
         int h = 30;
 //        int left = this.posX+this.width/2-w1/2;
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
 //        f.drawString("Name", left, this.posY+this.height/2-35, -1, true, 1);
         int left = this.posX+this.buttons.get(0).posX;
         f.drawString("Name", 

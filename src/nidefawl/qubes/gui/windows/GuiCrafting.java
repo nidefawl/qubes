@@ -127,7 +127,7 @@
 //        renderRoundedBoxShadow(xBar, yBar, zBar, pW, 20, color1, 0.7f, false);
 //        renderRoundedBoxShadow(xBar, yBar+8, zBar+1, pW, 12, -1, 0.3f, false);
 //        renderRoundedBoxShadow(xBar, yBar, zBar+1, pW, 7, color2, 0.2f, false);
-//        Shaders.textured.enable();
+//        Engine.setPipeStateFontrenderer();
 //        String s = String.format("%.0f%%", Math.min(100, Math.max(0, progress)));
 //        Engine.pxStack.push(0, 0, zBar+3);
 //        FontRenderer fr = FontRenderer.get(0, 14, 0);

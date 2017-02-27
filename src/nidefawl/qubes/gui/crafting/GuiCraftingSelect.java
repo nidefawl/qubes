@@ -276,7 +276,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 //            if (this.hovered)
 //            selectedButton = this;
             renderBox();
-            GL11.glLineWidth(1.0F);
+            Engine.lineWidth(1.0F);
             Shaders.colored.enable();
             Tess tessellator = Tess.instance;
             int yo=0;
@@ -550,7 +550,7 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             posX = this.bg.posX + this.bg.width / 2;
             posY = this.bg.posY + 45;
             //          OpenGlHelper.glColor3f(fa, fa, fa);
-            GL11.glLineWidth(1.0F);
+            Engine.lineWidth(1.0F);
             Tess tessellator = Tess.instance;
             //          GL11.glBegin(GL11.GL_LINE_STRIP);
             tessellator.setColorF(-1, 0.1f);

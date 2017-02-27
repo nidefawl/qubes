@@ -204,7 +204,7 @@ public class GuiSettings extends Gui {
     }
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
-//        Shaders.textured.enable();
+//        Engine.setPipeStateFontrenderer();
 //        this.font.drawString("Settings", this.posX + this.width / 2.0f, this.posY + 5, -1, true, 1.0f, 2);
         this.smaaQSetting.box.enabled = renderSettings.smaaMode>=1;
         

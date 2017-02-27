@@ -1012,7 +1012,7 @@ public class VR {
         t.setColorRGBAF(.92f, .92f, .71f, 1.0f);
         t.add(tmp1);
         t.add(tmp2);
-        GL11.glLineWidth(4);
+        Engine.lineWidth(4);
         t.draw(GL11.GL_LINES);
         Engine.checkGLError("t.draw(GL11.GL_LINES)");
     }

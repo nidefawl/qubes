@@ -1,6 +1,7 @@
 package nidefawl.qubes.gui;
 
 import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.inventory.slots.Slot;
 import nidefawl.qubes.item.*;
@@ -45,7 +46,7 @@ public abstract class Tooltip extends Gui {
             BoxGUI.setFade(0.3f);
             renderBox();
             BoxGUI.setFade(0.3f);
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             int y = GameMath.round(this.posY+fr.centerY(this.height));
             fr.drawString(this.title, posX+8, y, -1, false, 1, 0);
             y+=fr.getLineHeight();

@@ -262,7 +262,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                     float entryBoxBottom = this.posY-1+(heightPerEntry) + (c * this.heightPerEntry);
                     entryBoxBottom-=(heightPerEntry-2-box.font.getCharHeight())/2.0f;
                     final int yStringPos = GameMath.round(entryBoxBottom);
-                    Shaders.textured.enable();
+                    Engine.setPipeStateFontrenderer();
                     box.font.drawString(entry, this.posX + this.size, yStringPos, i1, true, 1.0f);
 
                     if (box.canexpandHorizontally) {
@@ -278,7 +278,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                         Shaders.colored.enable();
 
 //                      OpenGlHelper.glColor3f(fa, fa, fa);
-                      GL11.glLineWidth(1.0F);
+                      Engine.lineWidth(1.0F);
                       
 //                      GL11.glBegin(GL11.GL_LINE_STRIP);
                       tessellator.setColorF(-1, 0.3f);
@@ -289,7 +289,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                     }
                 }
 //                OpenGlHelper.glColor4f(1.0F, 1.0F, 1.0F, 0.3F);
-                GL11.glLineWidth(2.0F);
+                Engine.lineWidth(2.0F);
                 Shaders.colored.enable();
                 int yFrame = this.posY;
                 int bottom = yFrame +(values * this.heightPerEntry);
@@ -333,7 +333,7 @@ public class ComboBox extends AbstractUI implements Renderable {
 
                     float fa = 1F;
 //                    OpenGlHelper.glColor3f(fa, fa, fa);
-                    GL11.glLineWidth(1.0F);
+                    Engine.lineWidth(1.0F);
                     
 //                    GL11.glBegin(GL11.GL_LINE_STRIP);
                     tessellator.setColorF(-1, 0.6f);
@@ -345,7 +345,7 @@ public class ComboBox extends AbstractUI implements Renderable {
 //                    GL11.glEnd();
                     fa = 0.2F;
 //                    OpenGlHelper.glColor3f(fa, fa, fa);
-                    GL11.glLineWidth(2.0F);
+                    Engine.lineWidth(2.0F);
 //                    GL11.glBegin(GL11.GL_LINE_STRIP);
                     tessellator.setColorRGBAF(fa, fa, fa, 1.0f);
                     tessellator.add(scrollBarRight, scrollerTop);
@@ -432,7 +432,7 @@ public class ComboBox extends AbstractUI implements Renderable {
         tessellator.add(this.posX + this.width - inset, this.posY + inseth * 2 + 1, 0.0f);
         tessellator.draw(GL11.GL_POLYGON);
 
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
         int colorDisabled = 0xCCCCCC;
         if (inset < 4) inset = 4;
         this.font.maxWidth = this.width - height - inset;

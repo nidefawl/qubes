@@ -1,6 +1,7 @@
 package nidefawl.qubes.gui;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.shader.Shaders;
@@ -40,7 +41,7 @@ public class GuiConnecting extends Gui {
 
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
-        Shaders.textured.enable();
+        Engine.setPipeStateFontrenderer();
         font.drawString(this.stateStr, this.width / 2, this.height / 2 - 20, -1, true, 1, 2);
         //        Shader.disable();
         super.renderButtons(fTime, mX, mY);

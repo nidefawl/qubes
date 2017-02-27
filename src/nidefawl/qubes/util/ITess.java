@@ -35,4 +35,10 @@ public interface ITess {
 
     void add(Vector3f tmp1);
 
+    void drawQuads();
+
+    void drawLineStrip();
+
+    void drawLines();
+
 }

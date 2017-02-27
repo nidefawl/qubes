@@ -52,6 +52,7 @@ public class VkDescLayouts {
         descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
         descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
         VkPipelines.pipelineLayoutTextured.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
+        VkPipelines.pipelineLayoutColored.build(ctxt, descSetLayoutUBOScene);
         VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_gui);
     }
             

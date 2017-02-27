@@ -5,9 +5,10 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.util.ITessState;
 import nidefawl.qubes.util.Stats;
 
-public abstract class AbstractTesselatorState {
+public abstract class AbstractTesselatorState implements ITessState {
     public int           vertexcount;
 
     public boolean       useColorPtr;

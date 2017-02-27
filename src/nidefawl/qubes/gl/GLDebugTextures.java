@@ -250,7 +250,7 @@ public class GLDebugTextures {
                 Tess.instance.add(right, top, 0, 1, 0);
                 Tess.instance.add(left, top, 0, 0, 0);
                 Tess.instance.add(left, bottom, 0, 0, 1);
-                GL11.glLineWidth(2);
+                Engine.lineWidth(2);
                 Tess.instance.draw(GL11.GL_LINE_STRIP);
                 Shaders.textured.enable();
                 FontRenderer.get(0, 16, 0).drawString(tex.name +" ("+tex.tex+")", left, bottom, texColor, true, 1);
