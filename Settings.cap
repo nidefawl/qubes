@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CaptureSettings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Options>
+    <AllowVSync>true</AllowVSync>
+    <AllowFullscreen>false</AllowFullscreen>
+    <APIValidation>false</APIValidation>
+    <CaptureCallstacks>false</CaptureCallstacks>
+    <CaptureCallstacksOnlyDraws>false</CaptureCallstacksOnlyDraws>
+    <DelayForDebugger>0</DelayForDebugger>
+    <VerifyMapWrites>false</VerifyMapWrites>
+    <HookIntoChildren>false</HookIntoChildren>
+    <RefAllResources>false</RefAllResources>
+    <SaveAllInitials>false</SaveAllInitials>
+    <CaptureAllCmdLists>false</CaptureAllCmdLists>
+    <DebugOutputMute>true</DebugOutputMute>
+  </Options>
+  <Inject>false</Inject>
+  <AutoStart>false</AutoStart>
+  <Executable>C:\Program Files\Java\jdk1.8.0_122\bin\javaw.exe</Executable>
+  <WorkingDir>C:\Users\Michael\workspace_projects\Game\</WorkingDir>
+  <CmdLine>-Xms128M -Xmx2G -Dgame.uselogfile=true -Dgame.appid=3 -Djava.library.path=lib/jna/ -cp bin;../GLFW/bin;lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan.jar;lib/lwjgl-nightly-10.02.2017/natives/lwjgl.dll;lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-linux.jar;lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-macos.jar;lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-windows.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-linux.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-macos.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-windows.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-linux.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-macos.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-windows.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-linux.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-macos.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-windows.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-linux.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-macos.jar;lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-windows.jar;lib/guava/guava-18.0.jar;lib/snakeyaml/snakeyaml-1.16.jar;lib/jna/jna-4.2.2.jar;lib/openvr/JOpenVR.jar;lib/jline/jline-2.13.jar nidefawl.qubes.BootClient</CmdLine>
+  <Environment />
+</CaptureSettings>
