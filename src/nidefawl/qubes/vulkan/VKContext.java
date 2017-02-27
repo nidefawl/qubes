@@ -64,6 +64,7 @@ public class VKContext {
     protected LongBuffer                       psemaphoreRenderComplete;
     protected IntBuffer                       pWaitDstStageMask;
     VkCommandBuffer[] copyCommandBuffers = null;
+    boolean[] commandBufferInUse;
 
     public VKContext(VkInstance vk) {
         this.vk = vk;
@@ -252,6 +253,7 @@ public class VKContext {
         freeCopyCommandBufferFrames();
         try ( MemoryStack stack = stackPush() ) {
             this.copyCommandBuffers = new VkCommandBuffer[length];
+            this.commandBufferInUse = new boolean[length];
             for (int i = 0; i < this.copyCommandBuffers.length; i++) {
                 this.copyCommandBuffers[i] = makeCopyCommandBuffer();
             }
@@ -290,6 +292,7 @@ public class VKContext {
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to acquire next swapchain image: " + VulkanErr.toString(err));
         }
+        swapChain.swapChainAquired = true;
         if (USE_FENCE_SYNC) {
             // Use a fence to wait until the command buffer has finished execution before using it again
             err = vkWaitForFences(device, this.fences[currentBuffer], true, UINT64_MAX);
@@ -301,16 +304,26 @@ public class VKContext {
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkResetFences failed: " + VulkanErr.toString(err));
             }
+            if (begin) {
+                throw new GameLogicError("cpyCmdBuf is open, error");
+            }
             freeFence = this.fences[currentBuffer];
+            this.commandBufferInUse[currentBuffer] = false;
         }
     }
     public void postRender() {
-        int err = vkQueuePresentKHR(vkQueue, presentInfo);
-        if (err != VK_SUCCESS) {
-            throw new AssertionError("Failed to present the swapchain image: " + VulkanErr.toString(err));
+        if (begin) {
+            throw new GameLogicError("cpyCmdBuf is open, error");
         }
-        if (!USE_FENCE_SYNC) {
-            vkQueueWaitIdle(vkQueue);
+        if (swapChain.swapChainAquired) {
+
+            int err = vkQueuePresentKHR(vkQueue, presentInfo);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to present the swapchain image: " + VulkanErr.toString(err));
+            }
+            if (!USE_FENCE_SYNC) {
+                vkQueueWaitIdle(vkQueue);
+            }
         }
     }
     public void submitCommandBuffer(VkCommandBuffer commandBuffer) {
@@ -347,7 +360,7 @@ public class VKContext {
             VkPipelines.init(this);
             GameBase.baseInstance.rebuildRenderCommands();    
         }
-        
+        swapChain.swapChainAquired = false;
         reinitSwapchain = false;
     }
 
@@ -453,6 +466,10 @@ public class VKContext {
     public void finishUpload() {
         if (begin) {
             begin = false;
+            if (copyCommandBuffers[currentBuffer] != uploadBuf) {
+                throw new GameLogicError("INVALID UP CMD BUF "+(copyCommandBuffers[currentBuffer])+" != "+uploadBuf+ " - "+curBufPre+","+currentBuffer);
+            }
+            this.commandBufferInUse[currentBuffer] = true;
             int err = vkEndCommandBuffer(copyCommandBuffers[currentBuffer]);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkEndCommandBuffer failed: " + VulkanErr.toString(err));
@@ -468,9 +485,16 @@ public class VKContext {
             }
         }
     }
+    VkCommandBuffer uploadBuf = null;
+    int curBufPre = 0;
     public VkCommandBuffer getCopyCommandBuffer() {
+        if (this.commandBufferInUse[currentBuffer]) {
+            throw new GameLogicError("Cant upload from here");
+        }
         VkCommandBuffer commandBuffer = copyCommandBuffers[currentBuffer];
         if (!begin) {
+            uploadBuf = commandBuffer;
+            curBufPre = currentBuffer;
             begin = true;
             try ( MemoryStack stack = stackPush() ) {
                 VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.callocStack(stack)

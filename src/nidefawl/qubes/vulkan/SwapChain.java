@@ -22,6 +22,7 @@ public final class SwapChain {
     public VkSwapchainCreateInfoKHR swapchainCI;
     private final VKContext         ctxt;
     public int                      numImages;
+    public boolean swapChainAquired;
     public SwapChain(VKContext ctxt) {
         this.ctxt = ctxt;
     }

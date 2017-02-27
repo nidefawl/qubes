@@ -658,7 +658,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             shutdown();
             return;
         }
-        
+
+        if (vkContext != null) {
+            vkContext.preRender();
+        }
         checkResize();
         if (!this.running) {
             return;
@@ -691,12 +694,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (b != this.movement.grabbed()) {
             setGrabbed(b);
         }
-        if (vkContext != null) {
-            Engine.preRenderUpdateVK();
-            vkContext.preRender();
-        }
         preRenderUpdate(renderTime);
         if (vkContext != null) {
+            Engine.preRenderUpdateVK();
             vkContext.finishUpload();
         }
         
@@ -800,6 +800,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             lateInitGame();
             if (isVulkan) {
                 vkContext.lateInit(1);    
+                Engine.preRenderUpdateVK();
+                vkContext.finishUpload();
             }
             isStarting = false;
             if (Game.GL_ERROR_CHECKS)
@@ -1035,7 +1037,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             }
         } else {
             if (wasGrabbed) {
-                Game.instance.setGrabbed(true);
+                baseInstance.setGrabbed(true);
             }
             wasGrabbed = false;
         }
