@@ -415,7 +415,7 @@ public class VKContext {
             throw new GameLogicError("Shader source is empty for "+string);
         }
         String source = shaderSource.getSource();
-        writeShader(source, "preprocessed/"+string);
+//        writeShader(source, "preprocessed/"+string);
         int options = 0;
         options |= SpirvCompiler.OptionLinkProgram;
         options |= SpirvCompiler.OptionSpv;
