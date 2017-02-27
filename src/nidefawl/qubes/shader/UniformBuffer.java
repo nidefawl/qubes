@@ -36,8 +36,13 @@ public class UniformBuffer {
     private int bindingPoint;
     private boolean autoBind;
     boolean isConstant = false;
-    int isConstantUploaded = 0;
-    private VkBuffer[] vkBuffers;
+    
+    boolean isConstantUploaded = false;
+    private VkBuffer vkBuffers;
+    private int frames;
+    private int stride;
+    private int offsetIdx;
+    
     UniformBuffer(String name) {
         this(name, 0, true);
     }
@@ -96,7 +101,18 @@ public class UniformBuffer {
         put(-x, -y, -z);
     }
     public void update() {
+        if (isConstant&& isConstantUploaded) {
+            return;
+        }
         this.floatBuffer.position(0).limit(this.len);
+        if (this == uboSceneData) {
+//            for (int i = 12; i < 14; i++) {
+//                System.out.println(""+i+" = "+this.floatBuffer.get(i));
+//                if (this.floatBuffer.get(i) == 0) {
+//                    Thread.dumpStack();
+//                }
+//            }
+        }
         if (!Engine.isVulkan) {
             GL15.glBindBuffer(GL_UNIFORM_BUFFER, this.buffer);
             if (Game.GL_ERROR_CHECKS)
@@ -109,11 +125,17 @@ public class UniformBuffer {
                 Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
             GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
         } else {
-            if (!isConstant || isConstantUploaded++ < this.vkBuffers.length) {
-                this.vkBuffers[VKContext.currentBuffer].upload(this.floatBuffer, 0);    
+            int offset = 0;
+            if (!isConstant) {
+                this.offsetIdx++;
+                if (this.offsetIdx >= this.frames)
+                    this.offsetIdx = 0;
+                offset = this.stride*this.offsetIdx;
+                
             }
-            
+            this.vkBuffers.upload(this.floatBuffer, offset);
         }
+        isConstantUploaded = true;
     }
     public void setup() {
         if (!Engine.isVulkan) {
@@ -139,8 +161,8 @@ public class UniformBuffer {
             this.buffer = 0;
         }
         if (this.vkBuffers != null) {
-            for (int i = 0; i < this.vkBuffers.length; i++) 
-                this.vkBuffers[i].destroy();
+            this.vkBuffers.destroy();
+            this.vkBuffers = null;
         }
         
     }
@@ -155,32 +177,32 @@ public class UniformBuffer {
             .addMat4() //proj_inv
             .addMat4(); // mvp_inv
     public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false);
-    static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
+    public static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
             .addMat4() //mvp
             .addMat4() //3DOrthoP
             .addMat4(); //3DOrthoMV
-    static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow")
+    public static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow")
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addVec4(); //shadow_split_depth
-    static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData")
+    public static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData")
             .addVec4() //camera (xyzw)
             .addVec4() //globaloffset (xyz) time (w)
             .addVec4() //viewport (xyzw)
             .addVec4() //pxoffset (xyz) 1.0f (w)
             .addVec4() //prev camera (xyz) 1.0f (w)
             .addVec4(); //scene settings (x = dither, yzw = unused)
-    static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
+    public static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
             .addVec4() //dayLightTime
             .addVec4() //posSun
             .addVec4() //lightDir
             .addVec4() // Ambient light intensity
             .addVec4() // Diffuse light intensity
             .addVec4(); // Specular light intensity
-    static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4, true).setConstant();
-    static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6, true).setConstant();
+    public static UniformBuffer VertexDirections = new UniformBuffer("VertexDirections", 64*4, true).setConstant();
+    public static UniformBuffer TBNMat = new UniformBuffer("TBNMatrix", 16*6, true).setConstant();
 //    public static UniformBuffer BoneMatUBO = new UniformBuffer("BoneMatUBO", BatchedRiggedModelRenderer.STRUCT_SIZE*7);
     
     
@@ -204,17 +226,18 @@ public class UniformBuffer {
         if (this.floatBuffer == null)
             this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
         if (this.vkBuffers != null) {
-            for (int i = 0; i < this.vkBuffers.length; i++) 
-                this.vkBuffers[i].destroy();
+//            this.vkBuffers.destroy();
         }
-        this.vkBuffers = new VkBuffer[numImages];
-        for (int i = 0; i < this.vkBuffers.length; i++) {
-            this.vkBuffers[i] = GameBase.baseInstance.vkContext.createBuffer(
+        this.frames = isConstant ? 0 : (numImages*4); // we need more frames when updating multiple times per frame (*4)
+        this.stride = ((this.len*4) + 0xff) & 0xffffff00;
+        int bufferSize = isConstant ? (this.len*4) : (this.stride*this.frames);
+        this.vkBuffers = GameBase.baseInstance.vkContext.createBuffer(
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    this.len * 4, 
+                    bufferSize, 
                     false, "UBO "+this.name);
-        }
-        isConstantUploaded = 0;
+        if (!isConstant)
+            this.vkBuffers.getDescriptorBuffer().range(this.stride);
+        isConstantUploaded = false;
     }
     public static void destroy() {
         for (int i = 0; i < buffers.length; i++) {
@@ -593,8 +616,11 @@ public class UniformBuffer {
     public int getBindingPoint() {
         return this.bindingPoint;
     }
-    public Buffer getDescriptorBuffer(int i) {
-        return this.vkBuffers[i].getDescriptorBuffer();
+    public Buffer getDescriptorBuffer() {
+        return this.vkBuffers.getDescriptorBuffer();
+    }
+    public int getDynamicOffset() {
+        return isConstant?0:(this.offsetIdx*this.stride);
     }
 
 }

@@ -21,6 +21,7 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Memory;
 import nidefawl.qubes.shader.DebugShaders.Var;
+import nidefawl.qubes.shader.ShaderSource.ProcessMode;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
@@ -47,7 +48,7 @@ public abstract class Shader implements IManagedResource {
         return shader == shVertexFullscreenTri;
     }
     public static void init() {
-        ShaderSource vertCode = new ShaderSource(null);
+        ShaderSource vertCode = new ShaderSource(null, ProcessMode.OPENGL);
         try {
             vertCode.load(AssetManager.getInstance(), "shaders", "screen_triangle.vsh", null, GL_VERTEX_SHADER);
         } catch (IOException e) {

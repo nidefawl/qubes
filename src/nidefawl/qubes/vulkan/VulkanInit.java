@@ -19,7 +19,61 @@ import org.lwjgl.vulkan.*;
 public class VulkanInit {
 
     static PointerBuffer enabledVulkanLayers = null;
+    static PointerBuffer enabledInstanceExtension = null;
+    static PointerBuffer enabledDeviceExtension = null;
     private static VkDebugReportCallbackEXT debugCallback;
+    
+
+    public static void initStatic(String[] activeLayers, String[] instanceextension, String[] deviceextensions, boolean installdebugcallback) {
+
+        /* Look for instance extensions */
+        PointerBuffer requiredExtensions = glfwGetRequiredInstanceExtensions();
+        if (requiredExtensions == null) {
+            throw new AssertionError("Failed to find list of required Vulkan extensions");
+        }
+        
+        
+        enabledVulkanLayers = memAllocPointer(activeLayers.length);
+        enabledInstanceExtension = memAllocPointer(requiredExtensions.remaining()+instanceextension.length);
+        enabledDeviceExtension = memAllocPointer(1+deviceextensions.length);
+        for (int i = 0; i < activeLayers.length; i++) {
+            enabledVulkanLayers.put(memUTF8(activeLayers[i]));
+        }
+        while (requiredExtensions.remaining() > 0) {
+            enabledInstanceExtension.put(requiredExtensions.get());
+        }
+        for (int i = 0; i < instanceextension.length; i++) {
+            enabledInstanceExtension.put(memUTF8(instanceextension[i]));
+        }
+        for (int i = 0; i < deviceextensions.length; i++) {
+            enabledDeviceExtension.put(memUTF8(deviceextensions[i]));
+        }
+        enabledVulkanLayers.flip();
+        enabledInstanceExtension.flip();
+        enabledDeviceExtension.flip();
+        if (installdebugcallback) {
+            debugCallback = new VkDebugReportCallbackEXT() {
+                public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
+                    System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
+                    return 0;
+                }
+            };
+        }
+        VKContext.allocStatic();
+    }
+    
+    public static void destroyStatic() {
+        VKContext.destroyStatic();
+        for (int i = 0; i < enabledVulkanLayers.limit(); i++) {
+            long n = enabledVulkanLayers.get(i);
+            nmemFree(n);
+        }
+        memFree(enabledVulkanLayers);
+        enabledVulkanLayers = null;
+        if (debugCallback != null)
+            debugCallback.free();
+    }
+    
     public static final int VK_FLAGS_NONE = 0;
     /**
      * This is just -1L, but it is nicer as a symbolic constant.
@@ -31,22 +85,9 @@ public class VulkanInit {
      * 
      * @return the VkInstance handle
      */
-    public static VKContext createContext(boolean debugContext) {
-        if (!glfwVulkanSupported()) {
-            throw new AssertionError("GLFW failed to find the Vulkan loader");
-        }
-
-        /* Look for instance extensions */
-        PointerBuffer requiredExtensions = glfwGetRequiredInstanceExtensions();
-        if (requiredExtensions == null) {
-            throw new AssertionError("Failed to find list of required Vulkan extensions");
-        }
-        if (debugContext) {
-            enabledVulkanLayers = memAllocPointer(1);
-            enabledVulkanLayers.put(memUTF8("VK_LAYER_LUNARG_standard_validation"));
-        }
+    public static VKContext createContext() {
         
-        VkInstance instance = createInstance(requiredExtensions, debugContext);
+        VkInstance instance = createInstance();
         {
             int apiVersion = instance.getCapabilities().apiVersion;
             int major = VK_VERSION_MAJOR(apiVersion);
@@ -55,13 +96,7 @@ public class VulkanInit {
             System.out.println("API VERSION "+major+"."+minor+"."+patch);
         }
         VKContext context = new VKContext(instance);
-        if (debugContext) {
-            debugCallback = new VkDebugReportCallbackEXT() {
-                public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
-                    System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
-                    return 0;
-                }
-            };
+        if (debugCallback != null) {
             context.debugCallbackHandle = setupDebugging(instance, VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT, debugCallback);
         }
         getFirstPhysicalDevice(context);
@@ -92,7 +127,7 @@ public class VulkanInit {
                     .width(ctxt.swapChain.width)
                     .layers(1)
                     .pNext(NULL)
-                    .renderPass(ctxt.renderPass);
+                    .renderPass(ctxt.getMainRenderPass());
             // Create a framebuffer for each swapchain image
             long[] framebuffers = new long[ctxt.swapChain.images.length];
             LongBuffer pFramebuffer = stack.longs(0);
@@ -123,19 +158,40 @@ public class VulkanInit {
         ctxt.swapChain.width = windowWidth;
         ctxt.swapChain.height = windowHeight;
         getColorFormatAndSpace(ctxt);
+        ctxt.descriptorPool = createDescriptorPool(ctxt);
         ctxt.copyCommandPool = createCommandPool(ctxt, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);;
         ctxt.renderCommandPool = createCommandPool(ctxt, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
         createDeviceQueue(ctxt);
+        ctxt.descLayouts = new VkDescLayouts(ctxt);
         // Find a suitable depth format
         if (!getSupportedDepthFormat(ctxt)) {
             throw new AssertionError("No supported depth format");
         }
         createRenderPass(ctxt);
+        createRenderPassSubpasses(ctxt);
         ctxt.swapChain.setup(windowWidth, windowHeight, vsync);
         createDepthStencilImages(ctxt);
         createFramebuffers(ctxt);
         ctxt.init();
     }
+    private static long createDescriptorPool(VKContext ctxt) {
+        try ( MemoryStack stack = stackPush() ) {
+            VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(3, stack);
+            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 32));
+            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 32));
+            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 32));
+            poolSizes.flip();
+            VkDescriptorPoolCreateInfo descriptorPoolInfo = VkInitializers.descriptorPoolCreateInfo(poolSizes, 32);
+            LongBuffer pDescriptorPool = stack.longs(0);
+            int err = vkCreateDescriptorPool(ctxt.device, descriptorPoolInfo, null, pDescriptorPool);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("vkCreateDescriptorPool failed: " + VulkanErr.toString(err));
+            }
+            return pDescriptorPool.get(0);
+        }
+    
+    }
+
     public static void createDepthStencilImages(VKContext ctxt) {
         if (ctxt.depthStencil.view != VK_NULL_HANDLE)
             vkDestroyImageView(ctxt.device, ctxt.depthStencil.view, null);
@@ -314,6 +370,102 @@ public class VulkanInit {
     }
     
 
+    private static void createRenderPassSubpasses(VKContext ctxt) {
+        try ( MemoryStack stack = stackPush() ) {
+            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
+            attachments.get(0)
+                    .format(ctxt.colorFormat)
+                    .samples(VK_SAMPLE_COUNT_1_BIT)
+                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                    .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+            attachments.get(1)
+                    .format(ctxt.depthFormat)
+                    .samples(VK_SAMPLE_COUNT_1_BIT)
+                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+                    .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                    .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+            VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
+                    .attachment(0)
+                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
+                    .attachment(1)
+                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            VkAttachmentReference.Buffer colorReference2 = VkAttachmentReference.callocStack(1, stack)
+                    .attachment(0)
+                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+            VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(2, stack);
+            VkSubpassDescription subpass0 = subpasses.get(0)
+                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+                    .flags(VK_FLAGS_NONE)
+                    .pInputAttachments(null)
+                    .colorAttachmentCount(colorReference.remaining())
+                    .pColorAttachments(colorReference)
+                    .pDepthStencilAttachment(depthReference)
+                    .pResolveAttachments(null)
+                    .pPreserveAttachments(null);
+            VkSubpassDescription subpass1 = subpasses.get(1)
+                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+                    .flags(VK_FLAGS_NONE)
+                    .pInputAttachments(null)
+                    .colorAttachmentCount(colorReference2.remaining())
+                    .pColorAttachments(colorReference2)
+                    .pDepthStencilAttachment(null)
+                    .pResolveAttachments(null)
+                    .pPreserveAttachments(null);
+            
+
+            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(3, stack);
+            subpassDependencies.get(0)
+                    .srcSubpass(VK_SUBPASS_EXTERNAL)
+                    .dstSubpass(0)
+                    .srcStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+                    .dstStageMask (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .srcAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+                    .dstAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+            subpassDependencies.get(1)
+                    .srcSubpass(0)
+                    .dstSubpass(1)
+                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                    .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                    .dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
+            subpassDependencies.get(2)
+                    .srcSubpass(1)
+                    .dstSubpass(VK_SUBPASS_EXTERNAL)
+                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .dstStageMask (VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+                    .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                    .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+            
+
+            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
+                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+                    .pNext(NULL)
+                    .pAttachments(attachments)
+                    .pSubpasses(subpasses)
+                    .pDependencies(subpassDependencies);
+
+            LongBuffer pRenderPass = stack.longs(0);
+            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
+            ctxt.renderPassSubpasses = pRenderPass.get(0);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
+            }
+        }
+    }
     private static VkCommandBuffer createCommandBuffer(VKContext ctxt, long pool) {
         VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkCommandBufferAllocateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
@@ -453,27 +605,14 @@ public class VulkanInit {
                 .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                 .queueFamilyIndex(graphicsQueueFamilyIndex)
                 .pQueuePriorities(pQueuePriorities);
-        String[] extension = new String[] {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
-            NVGLSLShader.VK_NV_GLSL_SHADER_EXTENSION_NAME
-        };
-        ByteBuffer[] extensionsByteBuffer = new ByteBuffer[extension.length];
-        PointerBuffer extensions = memAllocPointer(extension.length);
-        for (int i = 0; i < extension.length; i++) {
-            extensionsByteBuffer[i] = memUTF8(extension[i]);
-            extensions.put(extensionsByteBuffer[i]);
-        }
-        extensions.flip();
 
         VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .pNext(NULL)
                 .pQueueCreateInfos(queueCreateInfo)
-                .ppEnabledExtensionNames(extensions);
+                .ppEnabledExtensionNames(enabledDeviceExtension)
+                .ppEnabledLayerNames(enabledVulkanLayers.rewind());
 
-        if (enabledVulkanLayers != null) {
-            deviceCreateInfo.ppEnabledLayerNames(enabledVulkanLayers.rewind());
-        }
         PointerBuffer pDevice = memAllocPointer(1);
         int err = vkCreateDevice(ctxt.getPhysicalDevice(), deviceCreateInfo, null, pDevice);
         long device = pDevice.get(0);
@@ -497,10 +636,6 @@ public class VulkanInit {
         ctxt.queueFamilyIndex = graphicsQueueFamilyIndex;
 
         deviceCreateInfo.free();
-        for (int i = 0; i < extensionsByteBuffer.length; i++) {
-            memFree(extensionsByteBuffer[i]);
-        }
-        memFree(extensions);
         memFree(pQueuePriorities);
     }
     private static long setupDebugging(VkInstance instance, int flags, VkDebugReportCallbackEXT callback) {
@@ -520,34 +655,19 @@ public class VulkanInit {
         }
         return callbackHandle;
     }
-    public static VkInstance createInstance(PointerBuffer requiredExtensions, boolean validationLayer) {
+    public static VkInstance createInstance() {
         VkApplicationInfo appInfo = VkApplicationInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_APPLICATION_INFO)
                 .pApplicationName(memUTF8("a"))
                 .pEngineName(memUTF8("a"))
-                .apiVersion(VK_API_VERSION_1_0)
-                ;
-        PointerBuffer ppEnabledExtensionNames = null;
-        ByteBuffer VK_EXT_DEBUG_REPORT_EXTENSION = null;
-        int len = requiredExtensions.remaining();
-        if (validationLayer) {
-            len++;
-        }
-        ppEnabledExtensionNames = memAllocPointer(len);
-        ppEnabledExtensionNames.put(requiredExtensions);
-        if (validationLayer) {
-            VK_EXT_DEBUG_REPORT_EXTENSION = memUTF8(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-            ppEnabledExtensionNames.put(VK_EXT_DEBUG_REPORT_EXTENSION);
-        }
-        ppEnabledExtensionNames.flip();
+                .apiVersion(VK_API_VERSION_1_0);
         VkInstanceCreateInfo pCreateInfo = VkInstanceCreateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                 .pNext(NULL)
                 .pApplicationInfo(appInfo)
-                .ppEnabledExtensionNames(ppEnabledExtensionNames);
-        if (enabledVulkanLayers != null) {
-            pCreateInfo.ppEnabledLayerNames(enabledVulkanLayers.rewind());
-        }
+                .ppEnabledExtensionNames(enabledInstanceExtension)
+                .ppEnabledLayerNames(enabledVulkanLayers);
+        
         PointerBuffer pInstance = memAllocPointer(1);
         int err = vkCreateInstance(pCreateInfo, null, pInstance);
         long instance = pInstance.get(0);
@@ -557,9 +677,6 @@ public class VulkanInit {
         }
         VkInstance ret = new VkInstance(instance, pCreateInfo);
         pCreateInfo.free();
-        if (VK_EXT_DEBUG_REPORT_EXTENSION != null)
-            memFree(VK_EXT_DEBUG_REPORT_EXTENSION);
-        memFree(ppEnabledExtensionNames);
         memFree(appInfo.pApplicationName());
         memFree(appInfo.pEngineName());
         appInfo.free();
@@ -591,19 +708,5 @@ public class VulkanInit {
     public static VkMemoryAllocateInfo memoryAllocateInfo() {
         VkMemoryAllocateInfo vk = VkMemoryAllocateInfo.calloc().sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
         return vk;
-    }
-    
-    public static void destroy() {
-        if (enabledVulkanLayers != null) {
-            for (int i = 0; i < enabledVulkanLayers.limit(); i++) {
-                long n = enabledVulkanLayers.get(i);
-                nmemFree(n);
-            }
-            memFree(enabledVulkanLayers);
-            enabledVulkanLayers = null;
-        }
-        if (debugCallback != null) {
-            debugCallback.free();
-        }
     }
 }

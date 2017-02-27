@@ -9,28 +9,30 @@ import java.nio.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
 
-public class VkBuffer {
+public class VkBuffer implements IVkResource {
+    private final VKContext ctxt;
 
     private LongBuffer pStagingBuffer;
     private LongBuffer pBuffer;
     private VkDescriptorBufferInfo descriptor;
     private VkDescriptorBufferInfo.Buffer descriptorBuffer;
-    private final VKContext ctxt;
     private MemoryChunk memory;
     private long size;
     private long ptr;
     private MemoryChunk memoryStaging;
     private boolean isDeviceLocal;
     private String tag;
-
+    
     public VkBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
     }
 
     public void create(int usageFlags, long size, boolean isDeviceLocal) {
+        this.ctxt.addResource(this);
         this.size = size;
         this.isDeviceLocal = isDeviceLocal;
         if (this.isDeviceLocal)
@@ -56,14 +58,12 @@ public class VkBuffer {
             int memoryPropertyFlags = isDeviceLocal ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
             this.memory = ctxt.memoryManager.allocateBufferMemory(pBuffer.get(0), memoryPropertyFlags, this.tag);
             bufferCreateInfo.free();
-
         }
         this.descriptorBuffer = VkDescriptorBufferInfo.calloc(1);
         this.descriptor = this.descriptorBuffer.get(0);
         this.descriptor.offset(0);
         this.descriptor.buffer(pBuffer.get(0));
         this.descriptor.range(VK_WHOLE_SIZE);
-        this.ctxt.addBuffer(this);
     }
 
     public void mapStaging() {
@@ -123,15 +123,9 @@ public class VkBuffer {
 
 
     }
-
+    
     public void destroy() {
-        _destroy(false);
-    }
-    protected void destroyShutdown() {
-        _destroy(true);
-    }
-
-    private void _destroy(boolean isshutdown) {
+        ctxt.removeResource(this);
         if (pBuffer != null) {
             ctxt.memoryManager.releaseBufferMemory(pBuffer.get(0));
             vkDestroyBuffer(ctxt.device, pBuffer.get(0), null);
@@ -142,9 +136,6 @@ public class VkBuffer {
                 memFree(pStagingBuffer);
             }
             descriptor.free();
-            if (!isshutdown) {
-                ctxt.removeBuffer(this);
-            }
             pStagingBuffer = null;
             pBuffer = null;
         }
@@ -178,4 +169,8 @@ public class VkBuffer {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return super.toString()+(this.tag!= null?" "+this.tag:"");
+    }
 }

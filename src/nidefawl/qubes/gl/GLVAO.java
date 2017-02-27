@@ -20,7 +20,7 @@ public class GLVAO {
 
     protected int vaoId;
     protected int vertStride;
-    ArrayList<VertexAttrib> list = Lists.newArrayList();
+    public ArrayList<VertexAttrib> list = Lists.newArrayList();
     private boolean useBindless;
     protected int vaoIdBindless;
     public int idx;
@@ -71,7 +71,10 @@ public class GLVAO {
         public int     intLen;
         public boolean isFloat;
         public long offset;
-        public VertexAttrib(boolean isFloat, int attribindex, int size, int type, boolean normalized, int intLen) {
+        public String name;
+        
+        public VertexAttrib(String name, boolean isFloat, int attribindex, int size, int type, boolean normalized, int intLen) {
+            this.name = name;
             this.isFloat = isFloat;
             this.attribindex = attribindex;
             this.size = size;
@@ -79,7 +82,8 @@ public class GLVAO {
             this.normalized = normalized;
             this.intLen = intLen;
         }
-        public VertexAttrib(boolean isFloat, int attribindex, int size, int type, int intLen) {
+        public VertexAttrib(String name, boolean isFloat, int attribindex, int size, int type, int intLen) {
+            this.name = name;
             this.isFloat = isFloat;
             this.attribindex = attribindex;
             this.size = size;
@@ -88,11 +92,11 @@ public class GLVAO {
         }
     }
     
-    void vertexAttribFormat(int attribindex, int size, int type, boolean normalized, int intLen) {
-        this.list.add(new VertexAttrib(true, attribindex, size, type, normalized, intLen));
+    void vertexAttribFormat(String string, int attribindex, int size, int type, boolean normalized, int intLen) {
+        this.list.add(new VertexAttrib(string, true, attribindex, size, type, normalized, intLen));
     }
-    void vertexAttribIFormat(int attribindex, int size, int type, int intLen) {
-        this.list.add(new VertexAttrib(false, attribindex, size, type, intLen));
+    void vertexAttribIFormat(String string, int attribindex, int size, int type, int intLen) {
+        this.list.add(new VertexAttrib(string, false, attribindex, size, type, intLen));
     }
     void init() {
         
@@ -148,18 +152,18 @@ public class GLVAO {
     public final static GLVAO vaoBlocksShadow = new GLVAO() {
         void init() {
             //POS
-            vertexAttribFormat(0, 4, GL11.GL_FLOAT, false, 4);
+            vertexAttribFormat("in_position", 0, 4, GL11.GL_FLOAT, false, 4);
         }
     };
     public final static GLVAO vaoBlocksShadowTextured = new GLVAO() {
         void init() {
 
             //POS
-            vertexAttribFormat(0, 4, GL11.GL_FLOAT, false, 4);
+            vertexAttribFormat("in_position", 0, 4, GL11.GL_FLOAT, false, 4);
             //TEXCOORD
-            vertexAttribFormat(1, 2, GL30.GL_HALF_FLOAT, false, 1);
+            vertexAttribFormat("in_texcoord", 1, 2, GL30.GL_HALF_FLOAT, false, 1);
             //BLOCKINFO
-            vertexAttribIFormat(2, 2, GL11.GL_UNSIGNED_SHORT, 1);
+            vertexAttribIFormat("in_blockinfo", 2, 2, GL11.GL_UNSIGNED_SHORT, 1);
 
 
         }
@@ -177,13 +181,13 @@ public class GLVAO {
             
 
             //POS
-            vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
+            vertexAttribFormat("in_position", 0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
+            vertexAttribFormat("in_normal", 1, 3, GL11.GL_BYTE, true, 1);
             //TEXCOORD
-            vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
+            vertexAttribFormat("in_texcoord", 2, 2, GL30.GL_HALF_FLOAT, false, 1);
             //COLOR
-            vertexAttribFormat(3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
+            vertexAttribFormat("in_color", 3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
 
 
         }
@@ -191,21 +195,21 @@ public class GLVAO {
     public final static GLVAO vaoStaticModel = new GLVAO() {
         void init() {
             //POS
-            vertexAttribFormat(0, 3, GL30.GL_HALF_FLOAT, false, 2);
+            vertexAttribFormat("in_position", 0, 3, GL30.GL_HALF_FLOAT, false, 2);
             //NORMAL
-            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
+            vertexAttribFormat("in_normal", 1, 3, GL11.GL_BYTE, true, 1);
             //TEXCOORD
-            vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
+            vertexAttribFormat("in_texcoord", 2, 2, GL30.GL_HALF_FLOAT, false, 1);
         }
     };
     public final static GLVAO openVRModel = new GLVAO() {
         void init() {
             //POS
-            vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
+            vertexAttribFormat("in_position", 0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 3, GL11.GL_FLOAT, true, 3);
+            vertexAttribFormat("in_normal", 1, 3, GL11.GL_FLOAT, true, 3);
             //TEXCOORD
-            vertexAttribFormat(2, 2, GL11.GL_FLOAT, false, 2);
+            vertexAttribFormat("in_texcoord", 2, 2, GL11.GL_FLOAT, false, 2);
 
         }
     };
@@ -213,19 +217,19 @@ public class GLVAO {
         void init() {
 
             //POS
-            vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
+            vertexAttribFormat("in_position", 0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
+            vertexAttribFormat("in_normal", 1, 3, GL11.GL_BYTE, true, 1);
             //TEXCOORD
-            vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
+            vertexAttribFormat("in_texcoord", 2, 2, GL30.GL_HALF_FLOAT, false, 1);
             //BONEIDX 0-3
-            vertexAttribIFormat(3, 4, GL11.GL_UNSIGNED_BYTE, 1);
+            vertexAttribIFormat("in_bones1", 3, 4, GL11.GL_UNSIGNED_BYTE, 1);
             //BONEIDX 4-7
-            vertexAttribIFormat(4, 4, GL11.GL_UNSIGNED_BYTE, 1);
+            vertexAttribIFormat("in_bones2", 4, 4, GL11.GL_UNSIGNED_BYTE, 1);
             //WEIGHTS 0-3
-            vertexAttribFormat(5, 4, GL30.GL_HALF_FLOAT, false, 2);
+            vertexAttribFormat("in_weights1", 5, 4, GL30.GL_HALF_FLOAT, false, 2);
             //WEIGHTS 4-7
-            vertexAttribFormat(6, 4, GL30.GL_HALF_FLOAT, false, 2);
+            vertexAttribFormat("in_weights2", 6, 4, GL30.GL_HALF_FLOAT, false, 2);
 
 
         }
@@ -234,17 +238,17 @@ public class GLVAO {
         void init() {
 
             //POS
-            vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
+            vertexAttribFormat("in_position", 0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 4, GL11.GL_BYTE, false, 1);//1 BYTE UNUSED (normal has 3 bytes)
+            vertexAttribFormat("in_normal", 1, 4, GL11.GL_BYTE, false, 1);//1 BYTE UNUSED (normal has 3 bytes)
             //TEXCOORD
-            vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
+            vertexAttribFormat("in_texcoord", 2, 2, GL30.GL_HALF_FLOAT, false, 1);
             //COLOR
-            vertexAttribFormat(3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
+            vertexAttribFormat("in_color", 3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
             //BLOCKINFO
-            vertexAttribIFormat(4, 4, GL11.GL_UNSIGNED_SHORT, 2);
+            vertexAttribIFormat("in_blockinfo", 4, 4, GL11.GL_UNSIGNED_SHORT, 2);
             //LIGHTINFO
-            vertexAttribIFormat(5, 2, GL11.GL_UNSIGNED_SHORT, 1);
+            vertexAttribIFormat("in_light", 5, 2, GL11.GL_UNSIGNED_SHORT, 1);
         }
     };
     
@@ -252,27 +256,19 @@ public class GLVAO {
         void init() {
 
             //POS
-            vertexAttribFormat(0, 3, GL11.GL_FLOAT, false, 3);
+            vertexAttribFormat("in_position", 0, 3, GL11.GL_FLOAT, false, 3);
             //NORMAL
-            vertexAttribFormat(1, 4, GL11.GL_BYTE, false, 1);//1 BYTE UNUSED (normal has 3 bytes)
+            vertexAttribFormat("in_normal", 1, 4, GL11.GL_BYTE, false, 1);//1 BYTE UNUSED (normal has 3 bytes)
             //TEXCOORD
-            vertexAttribFormat(2, 2, GL30.GL_HALF_FLOAT, false, 1);
+            vertexAttribFormat("in_texcoord", 2, 2, GL30.GL_HALF_FLOAT, false, 1);
             //COLOR
-            vertexAttribFormat(3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
+            vertexAttribFormat("in_color", 3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
             //BLOCKINFO
-            vertexAttribIFormat(4, 4, GL11.GL_UNSIGNED_SHORT, 2);
+            vertexAttribIFormat("in_blockinfo", 4, 4, GL11.GL_UNSIGNED_SHORT, 2);
             //LIGHTINFO
-            vertexAttribIFormat(5, 2, GL11.GL_UNSIGNED_SHORT, 1);
+            vertexAttribIFormat("in_light", 5, 2, GL11.GL_UNSIGNED_SHORT, 1);
 
 
-        }
-    };
-    public final static GLVAO test = new GLVAO() {
-        void init() {
-            //POS
-            vertexAttribFormat(0, 4, GL11.GL_FLOAT, false, 4);
-            vertexAttribFormat(1, 3, GL11.GL_BYTE, true, 1);
-            vertexAttribFormat(2, 2, GL11.GL_FLOAT, false, 2);
         }
     };
 
@@ -286,19 +282,19 @@ public class GLVAO {
             vaoTesselator[i] = new GLVAO() {
                 void init() {
                     //POS
-                    vertexAttribFormat(0, 4, GL11.GL_FLOAT, false, 4);
+                    vertexAttribFormat("in_position", 0, 4, GL11.GL_FLOAT, false, 4);
                     
                     if (useNormalPtr) {
-                        vertexAttribFormat(1, 3, GL11.GL_BYTE, false, 1);
+                        vertexAttribFormat("in_normal", 1, 3, GL11.GL_BYTE, false, 1);
                     }
                     if (useTexturePtr) {
-                        vertexAttribFormat(2, 2, GL11.GL_FLOAT, false, 2);
+                        vertexAttribFormat("in_texcoord", 2, 2, GL11.GL_FLOAT, false, 2);
                     }
                     if (useColorPtr) {
-                        vertexAttribFormat(3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
+                        vertexAttribFormat("in_color", 3, 4, GL11.GL_UNSIGNED_BYTE, true, 1);
                     }
                     if (useUINTPtr) {
-                        vertexAttribIFormat(4, 4, GL11.GL_UNSIGNED_SHORT, 2);
+                        vertexAttribIFormat("in_blockinfo", 4, 4, GL11.GL_UNSIGNED_SHORT, 2);
                     }
                 }
             };

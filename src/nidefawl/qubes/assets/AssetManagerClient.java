@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.shader.*;
+import nidefawl.qubes.shader.ShaderSource.ProcessMode;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.IResourceManager;
 import nidefawl.qubes.vulkan.VKContext;
@@ -92,13 +93,15 @@ public class AssetManagerClient extends AssetManager {
             throw new GameError("Cannot load asset '" + path + "': " + e, e);
         }
     }
-    public ShaderSource loadVkShaderSource(String path, int stage) {
-        final String[] pathSplit = splitPathBase(path);
+    
+    @Override
+    public ShaderSource loadVkShaderSource(String path, int stage, IShaderDef def) {
+        final String[] pathSplit = splitPath(path);
         try {
-            ShaderSource src = new ShaderSource(null);
+            ShaderSource src = new ShaderSource(null, ProcessMode.VULKAN);
             src.setVersionString("#version 450");
             src.addEnabledExtensions("GL_ARB_separate_shader_objects", "GL_ARB_shading_language_420pack");
-            src.load(this, pathSplit[0], pathSplit[1], null, stage);
+            src.load(this, pathSplit[0], pathSplit[1], def, stage);
             return src;
         } catch (ShaderCompileError e) {
             this.lastFailedShader = e.getShaderSource();

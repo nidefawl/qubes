@@ -10,10 +10,11 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 import nidefawl.qubes.gl.ReallocIntBuffer;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
-public class VkTess extends AbstractVkTesselatorState {
+public class VkTess extends AbstractVkTesselatorState implements ITess {
     public static int CREATE_QUAD_IDX_BUFFER = 0;
     public static int CREATE_TRI_IDX_BUFFER = 1;
     public static int STREAM_UPLOAD = 0;
@@ -56,6 +57,7 @@ public class VkTess extends AbstractVkTesselatorState {
             for (int i = 0; i < this.vbo.length; i++) {
                 this.vbo[i].destroy();
                 this.vboIndices[i].destroy();
+                Thread.dumpStack();
             }
         }
         public VkBuffer vbo() {
@@ -69,6 +71,7 @@ public class VkTess extends AbstractVkTesselatorState {
     private String tag;
     public static void init(VKContext context, int numImages) {
         instance.initInstance(context, numImages);
+        tessFont.initInstance(context, numImages);
     }
 
     private void initInstance(VKContext context, int numImages) {
@@ -78,6 +81,7 @@ public class VkTess extends AbstractVkTesselatorState {
                     buffers[i].destroy();
                 }
             }
+            
             buffers = new FrameLocalBuffers[numImages];
             for (int i = 0; i < buffers.length; i++) {
                 buffers[i] = new FrameLocalBuffers(this, context, 1<<4);

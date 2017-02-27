@@ -1,5 +1,7 @@
 package nidefawl.qubes;
 
+import java.io.*;
+
 import org.lwjgl.system.Configuration;
 
 import nidefawl.qubes.logging.ErrorHandler;
@@ -12,6 +14,29 @@ public class BootClient {
 
     public static void main(String[] args) {
         boolean debug = Boolean.valueOf(System.getProperty("game.debug", "false"));
+        boolean logFile = Boolean.valueOf(System.getProperty("game.uselogfile", "false"));
+        FileOutputStream logFileStream=null;
+        LogToFileStream outStream=null;
+        LogToFileStream errStream=null;
+        if (logFile) {
+
+            try {
+                File currentLogFile = new File("game.log");
+                if (!currentLogFile.exists() || currentLogFile.canWrite()) {
+                    logFileStream = new FileOutputStream(currentLogFile);
+                    outStream = new LogToFileStream(System.out, logFileStream);
+                    errStream = new LogToFileStream(System.err, logFileStream);
+                    System.out.println("Logging to "+currentLogFile);
+                    System.out.flush();
+                    System.setOut(outStream);
+                    System.setErr(errStream);
+                } else {
+                    System.out.println("Cannot write to logfile "+currentLogFile);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         String strappId = System.getProperty("game.appid", null);
         if (strappId != null) {
             appId = StringUtil.parseInt(strappId, appId);
@@ -47,9 +72,34 @@ public class BootClient {
             }
         }
         System.out.println("OVER!");
+
+        try {
+            if (logFileStream != null) {
+                System.out.flush();
+                System.err.flush();
+                System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
+                System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+                if (outStream != null) {
+                    outStream.close();
+                }
+                if (errStream != null) {
+                    errStream.close();
+                }
+                logFileStream.write("---- End of craftland.log ----\n".getBytes());
+                logFileStream.flush();
+                logFileStream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private static GameBase getInstance() {
+        try {
+            Thread.sleep(2222);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
         String instanceClass = null;
         switch (appId) {
             case 1:
@@ -59,7 +109,10 @@ public class BootClient {
                 instanceClass = "test.game.vr.VRApp";
                 break;
             case 3:
-                instanceClass = "test.game.VKTriangle";
+                instanceClass = "test.game.streamingtest.TexturedMesh_VK";
+                break;
+            case 4:
+                instanceClass = "test.game.streamingtest.TexturedMesh_GL";
                 break;
         }
         if (instanceClass != null) {

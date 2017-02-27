@@ -8,6 +8,7 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
+import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.GameLogicError;
@@ -23,7 +24,7 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.VK10.*;
 import static nidefawl.qubes.vulkan.VulkanInit.*;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ public class VKContext {
     public int                                 colorSpace;
     public int                                 depthFormat;
     public long                                renderPass = VK_NULL_HANDLE;
+    public long                                renderPassSubpasses = VK_NULL_HANDLE;
     public long                                renderCommandPool = VK_NULL_HANDLE;
     public long                                copyCommandPool = VK_NULL_HANDLE;
 
@@ -81,26 +83,30 @@ public class VKContext {
     
     
     private boolean isInit;
-    private ArrayList<VkBuffer> buffers = new ArrayList<>();
-    private ArrayList<VkShader> shaders = new ArrayList<>();
+    private ArrayList<IVkResource> resources = new ArrayList<>();
     private long[] fences;
     public VkMemoryManager memoryManager;
     private boolean begin;
     private long freeFence;
+    public long descriptorPool;
+    public VkDescLayouts descLayouts;
     public void syncAllFences() {
         if (USE_FENCE_SYNC) {
-            long[] lFences = this.fences;
-         // if we are inside a frame then skip the current fence that isn't submitted
-            if (freeFence > 0) { 
-                lFences = new long[this.fences.length-1];
-                int idx = 0;
-                for (int i = 0; i < this.fences.length; i++) {
-                    if (fences[i] != freeFence) {
-                        lFences[idx++] = fences[i];
-                    }
-                }
+            if (freeFence != -1L) {
+               long[] lFences = this.fences;
+                // if we are inside a frame then skip the current fence that isn't submitted
+               if (freeFence > 0) { 
+                   lFences = new long[this.fences.length-1];
+                   int idx = 0;
+                   for (int i = 0; i < this.fences.length; i++) {
+                       if (fences[i] != freeFence) {
+                           lFences[idx++] = fences[i];
+                       }
+                   }
+               }
+               vkWaitForFences(device, lFences, true, 1000000L*2000L);
+               freeFence = -1L; // signal that we have no fence in any queue submitted
             }
-            vkWaitForFences(device, lFences, true, 1000000L*2000L);    
         } else {
             vkQueueWaitIdle(vkQueue);
         }
@@ -108,7 +114,9 @@ public class VKContext {
     public void shutdown() {
         if (isInit) {
             if (USE_FENCE_SYNC) {
-                vkWaitForFences(device, this.fences, true, 1000000L*2000L);    
+                if (this.fences != null) {
+                    vkWaitForFences(device, this.fences, true, 1000000L*2000L);    
+                }
             } else {
                 vkDeviceWaitIdle(device);
             }
@@ -123,22 +131,12 @@ public class VKContext {
             submitInfo.free();
             presentInfo.free();
         }
-        if (properties != null) {
-            properties.free();
+        freeCopyCommandBufferFrames();
+        ArrayList<IVkResource> list = new ArrayList<>(resources);
+        for (int i = 0; i < list.size(); i++) {
+            list.get(i).destroy();
         }
-        if (features != null) {
-            features.free();
-        }
-        if (memoryProperties != null) {
-            memoryProperties.free();
-        }
-        for (int i = 0; i < buffers.size(); i++) {
-            buffers.get(i).destroyShutdown();
-        }
-        for (int i = 0; i < shaders.size(); i++) {
-            shaders.get(i).destroyShutdown();
-        }
-        buffers.clear();
+        resources.clear();
         if (swapChain.swapchainHandle != VK_NULL_HANDLE)
         {
             for (int i = 0; i < swapChain.images.length; i++)
@@ -159,9 +157,14 @@ public class VKContext {
         if (renderCommandPool != VK_NULL_HANDLE) {
             vkDestroyCommandPool(device, renderCommandPool, null);
         }
-        freeCopyCommandBufferFrames();
+        if (copyCommandPool != VK_NULL_HANDLE) {
+            vkDestroyCommandPool(device, copyCommandPool, null);
+        }
         if (renderPass != VK_NULL_HANDLE) {
             vkDestroyRenderPass(device, renderPass, null);
+        }
+        if (renderPassSubpasses != VK_NULL_HANDLE) {
+            vkDestroyRenderPass(device, renderPassSubpasses, null);
         }
         if (depthStencil.view != VK_NULL_HANDLE) {
             vkDestroyImageView(device, depthStencil.view, null);
@@ -170,26 +173,36 @@ public class VKContext {
             this.memoryManager.releaseImageMemory(depthStencil.image);
             vkDestroyImage(device, depthStencil.image, null);
         }
+        this.descLayouts.destroy();
+        if (descriptorPool != VK_NULL_HANDLE) {
+            vkDestroyDescriptorPool(device, descriptorPool, null);
+        }
         if (this.fences != null) {
             for (int i = 0; i < this.fences.length; i++) {
                 vkDestroyFence(this.device, this.fences[i], null);
             }
         }
         if (device != null) {
+            vkDeviceWaitIdle(device);
             this.memoryManager.shudown();
             vkDestroyDevice(device, null);
         }
         if (debugCallbackHandle != VK_NULL_HANDLE) {
 //            vkDestroyDebugReportCallbackEXT(vk, debugCallbackHandle, null);
         }
-        memFree(ZERO_OFFSET);
-        VkShader.destroyStatic();
         vkDestroyInstance(vk, null);
+        if (properties != null) {
+            properties.free();
+        }
+        if (features != null) {
+            features.free();
+        }
+        if (memoryProperties != null) {
+            memoryProperties.free();
+        }
     }
     public void init() {
         isInit = true;
-        ZERO_OFFSET = memAllocLong(1);
-        ZERO_OFFSET.put(0, 0);
         pCommandBuffers = memAllocPointer(1);
         pImageIndex = memAllocInt(1);
         pSwapchains = memAllocLong(1);
@@ -233,8 +246,6 @@ public class VKContext {
             initFences(numImages);
         }
         initCopyCommandPools(numImages);
-        VkTess.init(this, numImages);
-        UniformBuffer.init(this, numImages);
     }
 
     private void initCopyCommandPools(int length) {
@@ -327,11 +338,13 @@ public class VKContext {
         
         VulkanInit.createDepthStencilImages(this);
         VulkanInit.createFramebuffers(this);
-        if (images != this.swapChain.numImages)
-        reinitPerFrameResources(swapChain.numImages);
+        if (images != this.swapChain.numImages) {
+            throw new GameLogicError("Attempt to change number of swapchain images at runtime. Unsupported behaviour");
+        }
 //        this.swapChain.framebuffers = createFramebuffers(device, swapchain, clearRenderPass, width, height);
         // Create render command buffers
-        if (renderPass != VK_NULL_HANDLE) {
+        if (getMainRenderPass() != VK_NULL_HANDLE) {
+            VkPipelines.init(this);
             GameBase.baseInstance.rebuildRenderCommands();    
         }
         
@@ -346,25 +359,22 @@ public class VKContext {
         buffer.create(usageFlags, size, deviceLocalMemory);
         return buffer;
     }
-    public void removeBuffer(VkBuffer buffer) {
-        this.buffers.remove(buffer);
-    }
-    public void addBuffer(VkBuffer buffer) {
-        this.buffers.add(buffer);
-    }
+    
     public VkPhysicalDevice getPhysicalDevice() {
         return physicalDevice;
     }
-    public void addShader(VkShader vkShader) {
-        this.shaders.add(vkShader);
+    public void addResource(IVkResource vkShader) {
+        this.resources.add(vkShader);
     }
-    public void removeShader(VkShader vkShader) {
-        this.shaders.remove(vkShader);
+    public void removeResource(IVkResource vkShader) {
+        this.resources.remove(vkShader);
     }
 
-    public void lateInit() {
-        if (!reinitSwapchain && renderPass != VK_NULL_HANDLE) {
-            GameBase.baseInstance.rebuildRenderCommands();
+    public void lateInit(int i) {
+        if (!reinitSwapchain && getMainRenderPass() != VK_NULL_HANDLE) {
+            if (i == 1) {
+                GameBase.baseInstance.rebuildRenderCommands();
+            }
         }
     }
     public VkShader loadShader(AssetManager assetManager, String string, int stage) {
@@ -372,9 +382,40 @@ public class VKContext {
         shader.buildShader();
         return shader;
     }
-    public VkShader loadCompileGLSL(AssetManager assetManager, String string, int stage) {
-        ShaderSource shaderSource = assetManager.loadVkShaderSource(string, stage);
+
+    
+    private void writeShader(String source, String string) {
+        System.out.println("write to "+string);
+        File out = new File(string);
+        out.getParentFile().mkdirs();
+//        System.out.println("mkdirs "+out.getParentFile().getAbsolutePath());
+        
+        FileWriter os = null;
+        try {
+            os = new FileWriter(out);
+            BufferedWriter bw = new BufferedWriter(os);
+            bw.write(source);
+            bw.flush();
+            bw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    public VkShader loadCompileGLSL(AssetManager assetManager, String string, int stage, IShaderDef def) {
+        ShaderSource shaderSource = assetManager.loadVkShaderSource(string, stage, def);
+        if (shaderSource.isEmpty()) {
+            throw new GameLogicError("Shader source is empty for "+string);
+        }
         String source = shaderSource.getSource();
+        writeShader(source, "preprocessed/"+string);
         int options = 0;
         options |= SpirvCompiler.OptionLinkProgram;
         options |= SpirvCompiler.OptionSpv;
@@ -442,5 +483,26 @@ public class VKContext {
             }
         }
         return commandBuffer;
+    }
+    public boolean isResource(IVkResource vkResource) {
+        return this.resources.contains(vkResource);
+    }
+    public static void allocStatic() {
+        ZERO_OFFSET = memAllocLong(1);
+        ZERO_OFFSET.put(0, 0);
+        VkMemoryManager.allocStatic();
+        VkDescLayouts.allocStatic();
+        VkTexture.allocStatic();
+        VkShader.allocStatic();
+    }
+    public static void destroyStatic() {
+        VkShader.destroyStatic();
+        VkTexture.destroyStatic();
+        VkDescLayouts.destroyStatic();
+        VkMemoryManager.destroyStatic();
+        memFree(ZERO_OFFSET);
+    }
+    public long getMainRenderPass() {
+        return this.renderPassSubpasses;
     }
 }

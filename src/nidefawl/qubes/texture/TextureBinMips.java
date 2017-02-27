@@ -11,7 +11,15 @@ public class TextureBinMips {
 	public int[] sizes;
 	public int[] w;
 	public int[] h;
-	
+
+    public TextureBinMips(byte[] data, int w, int h) {
+        this.data = data;
+        this.mips = 1;
+        this.totalSize = data.length;
+        this.w = new int[] {w};
+        this.h = new int[] {h};
+        this.sizes = new int[] {data.length};
+    }
 	public TextureBinMips(AssetBinary bin) {
 		ByteArrayInputStream bis = new ByteArrayInputStream(bin.getData());
 		DataInputStream dis = new DataInputStream(bis);

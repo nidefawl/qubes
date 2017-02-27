@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.lwjgl.vulkan.VK10;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetInputStream;
 import nidefawl.qubes.assets.AssetManager;
@@ -22,10 +24,17 @@ import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.StringUtil;
 
 public class ShaderSource {
+    public static enum ProcessMode {
+        OPENGL, VULKAN
+    };
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
+    static Pattern patternRemoveSetBindingUBO = Pattern.compile("layout\\(set = [0-9]{1,2}, binding = [0-9]{1,2}, std140\\) uniform ([^\\s]*)");
     static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
+    static Pattern patternStageOutput = Pattern.compile("out ([^\\s]*) ([^\\s]*);");
+    static Pattern patternStageInput = Pattern.compile("in ([^\\s]*) ([^\\s]*);");
+    static Pattern patternStageSamplerInput = Pattern.compile("uniform sampler([^\\s]*) ([^\\s]*);");
     static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
@@ -36,6 +45,7 @@ public class ShaderSource {
     HashMap<Integer, String> sourceNames = new HashMap<Integer, String>();
     HashMap<String, Integer> customOutputLocations = new HashMap<>();
 
+    private final ProcessMode processMode;
     private String processed;
     int nInclude = 0;
     private String attrTypes = "default";
@@ -45,9 +55,11 @@ public class ShaderSource {
 
     /**
      * @param shaderSourceBundle
+     * @param processmode 
      */
-    public ShaderSource(ShaderSourceBundle shaderSourceBundle) {
+    public ShaderSource(ShaderSourceBundle shaderSourceBundle, ProcessMode processMode) {
         this.shaderSourceBundle = shaderSourceBundle;
+        this.processMode = processMode;
     }
     public void addEnabledExtensions(String... exts) {
         for (String s : exts) {
@@ -67,7 +79,7 @@ public class ShaderSource {
         BufferedReader reader = null;
         try {
             String fpath = path + "/" + name;
-            is = assetManager.findResource(fpath, true);
+            is = assetManager.findResource(fpath, (!resolve&&this.processMode==ProcessMode.VULKAN?false:true));
             ArrayList<String> pathChecked = new ArrayList<>();
             //if we should resolve then check the include path first 
             if (is == null && resolve) {
@@ -108,10 +120,43 @@ public class ShaderSource {
                     }
                     lines.addAll(1, extensions);
                 }
+                if (processMode == ProcessMode.VULKAN) {
+                    lines.add(1, "#define VULKAN_GLSL");
+                }
+                int nFragmentOutputs = 0;
+                int nVertexOutputs = 0;
+                int nInputs = 0;
+                int nSamplers = 0;
+                boolean debugPrint = false;
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
                     Matcher m;
-                    if (shaderType == GL_FRAGMENT_SHADER && line.startsWith("layout") && (m = patternOutputCustom.matcher(line)).matches()) {
+                    if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_VERTEX_BIT&&line.startsWith("out") && (m = patternStageOutput.matcher(line)).matches()) {
+                        if (debugPrint) System.out.println("TRANSFORM VERTEX LINE "+line);
+                        String output = "layout (location = "+(nVertexOutputs++)+") out "+m.group(1)+" "+m.group(2)+";";
+                        code += output;
+                        if (debugPrint) System.out.println("TRANSFORMED VERTEX LINE "+output);
+                    } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("in") && (m = patternStageInput.matcher(line)).matches()) {
+                        if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
+                        String input = "layout (location = "+(nInputs++)+") in "+m.group(1)+" "+m.group(2)+";";
+                        code += input;
+                        if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
+
+                    } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("out") && (m = patternStageOutput.matcher(line)).matches()) {
+                        if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
+                        String input = "layout (location = "+(nFragmentOutputs++)+") out "+m.group(1)+" "+m.group(2)+";";
+                        code += input;
+                        if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
+
+                    } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("uniform") && (m = patternStageSamplerInput.matcher(line)).matches()) {
+                        if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
+                        String input = "layout (set = 1, binding = "+(nSamplers++)+") uniform sampler"+m.group(1)+" "+m.group(2)+";";
+                        code += input;
+                        if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
+                    } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingUBO.matcher(line)).matches()) {
+                        String ubo_binding_name = m.group(1);
+                        code += "layout(std140) uniform "+ubo_binding_name;
+                    } else if (shaderType == GL_FRAGMENT_SHADER && line.startsWith("layout") && (m = patternOutputCustom.matcher(line)).matches()) {
 //                        System.out.println("matched");
                         int n = StringUtil.parseInt(m.group(1), -1);
                         if (n >= 0) {

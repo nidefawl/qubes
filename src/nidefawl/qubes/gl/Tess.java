@@ -4,10 +4,12 @@ import java.nio.ByteOrder;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+
+import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
-public class Tess extends AbstractTesselatorState {
+public class Tess extends AbstractTesselatorState implements ITess {
     final public static String[] attributes = new String[] {
             "in_position",
             "in_normal",
@@ -59,10 +61,12 @@ public class Tess extends AbstractTesselatorState {
         }
     }
     
+    @Override
     public boolean isSoftTesselator() {
         return isSoftTesselator;
     }
 
+    @Override
     public void add(float x, float y, float z, float u, float v) {
         if (!useTexturePtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable texture pointer after a vertex has been added");
@@ -73,6 +77,7 @@ public class Tess extends AbstractTesselatorState {
         add(x, y, z);
     }
 
+    @Override
     public void setUV(float u, float v) {
         if (!useTexturePtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable texture pointer after a vertex has been added");
@@ -82,10 +87,12 @@ public class Tess extends AbstractTesselatorState {
         this.useTexturePtr = true;
     }
 
+    @Override
     public void add(float x, float y) {
         add(x, y, 0);
     }
 
+    @Override
     public void setNormals(float x, float y, float z) {
         if (!useNormalPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable normal pointer after a vertex has been added");
@@ -97,6 +104,7 @@ public class Tess extends AbstractTesselatorState {
         normal = byte0 & 0xff | (byte1 & 0xff) << 8 | (byte2 & 0xff) << 16;
     }
 
+    @Override
     public void add(float x, float y, float z) {
         x+=offsetX;
         y+=offsetY;
@@ -139,6 +147,7 @@ public class Tess extends AbstractTesselatorState {
     }
 
 
+    @Override
     public void setColorRGBAF(float r, float g, float b, float a) {
         if (!useColorPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable color pointer after a vertex has been added");
@@ -157,6 +166,7 @@ public class Tess extends AbstractTesselatorState {
         rgba = rgb|iA<<24;
     }
 
+    @Override
     public void setUIntLSB(int i) {
         if (!useUINTPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable uint potr after a vertex has been added");
@@ -164,6 +174,7 @@ public class Tess extends AbstractTesselatorState {
         this.useUINTPtr = true;
         uintLSB = i;  
     }
+    @Override
     public void setUIntMSB(int i) {
         if (!useUINTPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable uint potr after a vertex has been added");
@@ -171,6 +182,7 @@ public class Tess extends AbstractTesselatorState {
         this.useUINTPtr = true;
         uintMSB = i;  
     }
+    @Override
     public void setColor(int rgb, int i) {
         if (!useColorPtr && vertexcount > 0) {
             throw new IllegalStateException("Cannot enable color pointer after a vertex has been added");
@@ -183,6 +195,7 @@ public class Tess extends AbstractTesselatorState {
         
     }
 
+    @Override
     public void setColorF(int rgb, float alpha) {
         setColor(rgb&0xFFFFFF, (int) Math.max(0, Math.min(255, alpha * 255F)));
     }
@@ -262,6 +275,7 @@ public class Tess extends AbstractTesselatorState {
     
 
 
+    @Override
     public void resetState() {
         this.vertexcount = 0;
         this.useNormalPtr = false;
@@ -282,6 +296,7 @@ public class Tess extends AbstractTesselatorState {
         }
     }
 
+    @Override
     public void setOffset(float f, float j, float g) {
         this.offsetX=f;
         this.offsetY=j;
@@ -292,9 +307,11 @@ public class Tess extends AbstractTesselatorState {
         instance.destroy();
         tessFont.destroy();
     }
+    @Override
     public void add(Vector4f tmp1) {
         add(tmp1.x, tmp1.y, tmp1.z);
     }
+    @Override
     public void add(Vector3f tmp1) {
         add(tmp1.x, tmp1.y, tmp1.z);
     }

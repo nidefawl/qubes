@@ -1,5 +1,5 @@
 
-layout(std140) uniform uboMatrix3D
+layout(set = 0, binding = 0, std140) uniform uboMatrix3D
 {
     mat4 mvp;
     mat4 mv;
@@ -12,20 +12,14 @@ layout(std140) uniform uboMatrix3D
     mat4 mvp_inv;
 } in_matrix_3D;
 
-layout(std140) uniform uboMatrix2D
+layout(set = 0, binding = 1, std140) uniform uboMatrix2D
 {
     mat4 mvp;
     mat4 p3DOrtho;
     mat4 mv3DOrtho;
 } in_matrix_2D;
 
-layout(std140) uniform uboMatrixShadow
-{
-    mat4 shadow_split_mvp[4];
-    vec4 shadow_split_depth;
-} in_matrix_shadow;
-
-layout(std140) uniform uboSceneData
+layout(set = 0, binding = 2, std140) uniform uboSceneData
 {
     vec4 cameraPosition;
     vec4 framePos;
@@ -34,6 +28,12 @@ layout(std140) uniform uboSceneData
     vec4 prevCameraPosition;
     vec4 sceneSettings;
 } in_scene;
+
+layout(set = 0, binding = 3, std140) uniform uboMatrixShadow
+{
+    mat4 shadow_split_mvp[4];
+    vec4 shadow_split_depth;
+} in_matrix_shadow;
 
 #define FRAME_TIME in_scene.framePos.w
 #define CAMERA_POS in_scene.cameraPosition.xyz

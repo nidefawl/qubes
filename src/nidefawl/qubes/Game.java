@@ -283,9 +283,9 @@ public class Game extends GameBase {
     @Override
     public void shutdown() {
         this.server.stop();
-        super.shutdown();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
+        super.shutdown();
     }
     
     protected void onTextInput(long window, int codepoint) {

@@ -143,7 +143,7 @@ public abstract class AssetManager {
     public VkShader loadVkShaderBin(VKContext ctxt, String string, int stage) {
         return null;
     }
-    public ShaderSource loadVkShaderSource(String path, int stage) {
+    public ShaderSource loadVkShaderSource(String path, int stage, IShaderDef def) {
         return null;
     }
 }

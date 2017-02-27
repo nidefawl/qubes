@@ -10,6 +10,7 @@ import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
 import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 
+import nidefawl.qubes.gl.GLVAO;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.util.GameLogicError;
 
@@ -17,6 +18,7 @@ public class VkVertexDescriptors {
     public VkVertexInputAttributeDescription.Buffer attributeDescriptions;
     public int stride;
     private ArrayList<VertexAttrib> list;
+    private String defString = "";
     public VkVertexDescriptors(int binding, ArrayList<VertexAttrib> list) {
         this.list = list;
         build();
@@ -30,11 +32,12 @@ public class VkVertexDescriptors {
         }
         this.stride = vertStride*4;
         this.attributeDescriptions = VkVertexInputAttributeDescription.calloc(list.size());
-
+        int idx = 0;
         for (int i = 0; i < list.size(); i++) {
             
             VertexAttrib attrib = list.get(i);
             int vkAttrFormat = 0;
+            boolean isUnsigned = false;
             switch (attrib.type) {
                 case GL11.GL_BYTE:
                     if (attrib.size == 4) {
@@ -48,6 +51,7 @@ public class VkVertexDescriptors {
                 case GL11.GL_UNSIGNED_BYTE:
                     if (attrib.size == 4) {
                         vkAttrFormat = attrib.normalized ? VK_FORMAT_R8G8B8A8_UNORM : VK_FORMAT_R8G8B8A8_UINT;
+                        isUnsigned = !attrib.normalized;
                         break;
                     }
                     break;
@@ -88,18 +92,29 @@ public class VkVertexDescriptors {
                         vkAttrFormat = VK_FORMAT_R16G16B16A16_UINT;
                         break;
                     }
+                    isUnsigned = true;
                 default:
                     break;
             }
             if (vkAttrFormat == 0) {
                 throw new GameLogicError("Cannot map format "+attrib.type+","+attrib.size);
             }
+            String type ="vec"+attrib.size;
+            if (isUnsigned) {
+                type = "u"+type;
+            }
+            String name = attrib.name;
+            this.defString += "layout (location = "+attrib.attribindex+") in "+type+" "+name+";\n";
             this.attributeDescriptions.get(i)
                 .binding(0)
                 .location(attrib.attribindex)
                 .format(vkAttrFormat)
                 .offset((int) (attrib.offset*4));
         }
+        
+    }
+    public String getVertexDefGLSL() {
+        return this.defString;
     }
     public void destroy() {
         if (attributeDescriptions != null) {

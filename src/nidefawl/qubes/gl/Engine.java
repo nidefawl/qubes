@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.lwjgl.opengl.*;
@@ -15,7 +16,7 @@ import com.google.common.collect.Maps;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.config.RenderSettings;
-import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.font.TrueTypeFont;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
@@ -29,10 +30,14 @@ import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.*;
+import nidefawl.qubes.vulkan.VKContext;
+import nidefawl.qubes.vulkan.VkPipelines;
+import nidefawl.qubes.vulkan.VkTess;
 import nidefawl.qubes.world.SunLightModel;
 
 public class Engine {
     public static boolean isVulkan;
+    public static VKContext vkContext;
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
     public final static int MAX_LIGHTS       = 1024;
     public final static RenderSettings RENDER_SETTINGS = new RenderSettings();
@@ -43,6 +48,8 @@ public class Engine {
     public static boolean INVERSE_Z_BUFFER = false;
     public static boolean OGL_INVERSE_Y = false;
     public static boolean isInverseZ = false;
+    static ArrayList<TrueTypeFont> newfonts = new ArrayList<>();
+    static ArrayList<TrueTypeFont> fonts = new ArrayList<>();
 
     private static IntBuffer   viewportBuf;
     private static FloatBuffer position;
@@ -71,7 +78,7 @@ public class Engine {
     public final static Matrix4f prevView = new Matrix4f();
     private static int TEMPORAL_IDX = 0;
     public static boolean TEMPORAL_OFFSET = false;
-    public static Vector3f       pxOffset = new Vector3f();
+    public static Vector3f       pxOffset = new Vector3f(0,0, 0);
     public final static TransformStack pxStack = new TransformStack();
     public final static Matrix4f invertYZ = new Matrix4f().scale(1, -1, -1);
     
@@ -125,6 +132,7 @@ public class Engine {
     static boolean clientStateBindlessElement=false;
     static boolean clientStateBindlessAttrib=false;
     public static boolean isDither=true;
+    public static float Y_SIGN = 1.0f;
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
     }
@@ -217,7 +225,6 @@ public class Engine {
     }
 
     public static void baseInit() {
-        GLVAO.initVAOs(isVulkan);
         viewportBuf = Memory.createIntBufferHeap(16);
         position = Memory.createFloatBufferHeap(3);
         allocBuffer = Memory.createIntBuffer(8);
@@ -288,6 +295,9 @@ public class Engine {
         if (!INVERSE_Z_BUFFER && OGL_INVERSE_Y) {
             throw new IllegalArgumentException("cannot reverse y without z");
         }
+        if (isVulkan||OGL_INVERSE_Y) {
+            Y_SIGN = -1.0f;
+        }
         isBlend = true;
         if (!isVulkan) {
             glActiveTexture(GL_TEXTURE0);
@@ -299,13 +309,19 @@ public class Engine {
                     Engine.checkGLError("GL30.glDisablei(GL_BLEND, "+i+")");
             }
             GL30.glEnablei(GL_BLEND, 0);
+        } else {
         }
 
         
         baseInit();
+        GLVAO.initVAOs(isVulkan);
         if (!isVulkan) {
             UniformBuffer.init();
             Shader.init();   
+        } else {
+            VkTess.init(vkContext, 32);
+            UniformBuffer.init(vkContext, 32);
+            VkPipelines.init(vkContext);
         }
 
         flushRenderTasks();
@@ -336,6 +352,9 @@ public class Engine {
             public void onChange(Vector3f vec) {
                 pxOffset.set(vec);
                 UniformBuffer.updatePxOffset();
+                if (Engine.isVulkan) {
+                    VkPipelines.rebindSceneDescriptorSet();
+                }
             }
         });
         System.out.println("Engine.init @"+GameContext.getTimeSinceStart()+"ms");
@@ -819,6 +838,12 @@ public class Engine {
         }
         UniformBuffer.destroy();
         GLVAO.destroy();
+        if (isVulkan) {
+            for (int i = 0; i < fonts.size(); i++) {
+                fonts.get(i).destroy(vkContext);
+            }
+            fonts.clear();
+        }
     }
 
 
@@ -1099,5 +1124,22 @@ public class Engine {
         }
         GL11.glDepthFunc(glCompareFunc);
         return glCompareFunc;
+    }
+    public static ITess getFontTess() {
+        if (isVulkan) {
+            return VkTess.tessFont;
+        }
+        return Tess.tessFont;
+    }
+    
+    public static void preRenderUpdateVK() {
+        for (int i = 0; i < newfonts.size(); i++) {
+            newfonts.get(i).setup(vkContext);
+            fonts.add(newfonts.get(i));
+        }
+        newfonts.clear();
+    }
+    public static void registerTTF(TrueTypeFont trueTypeFont) {
+        newfonts.add(trueTypeFont);
     }
 }

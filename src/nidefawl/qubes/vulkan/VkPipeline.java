@@ -1,7 +1,6 @@
 package nidefawl.qubes.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memAllocLong;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.ByteBuffer;
@@ -12,8 +11,9 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.util.GameLogicError;
+
 public class VkPipeline {
-    public VkPipelineLayoutCreateInfo pipelineLayoutCI = pipelineLayoutCreateInfo();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = pipelineInputAssemblyStateCreateInfo(
                 VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -51,53 +51,42 @@ public class VkPipeline {
             .pScissors(scissors);
     VkPipelineVertexInputStateCreateInfo vertexInputState = pipelineVertexInputStateCreateInfo();
 
-    VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfo = VkPipelineShaderStageCreateInfo.calloc(5);
 
     VkVertexInputBindingDescription.Buffer bindingDescriptions = VkVertexInputBindingDescription.calloc(1);
+
+    ByteBuffer                                 mainMethod            = MemoryUtil.memUTF8("main");
     
-    private long                               pipeline               = VK_NULL_HANDLE;
-    private long                               newDescriptorSetLayout = VK_NULL_HANDLE;
-    public long                                pipelineLayout         = VK_NULL_HANDLE;
-    private long                               renderpass             = VK_NULL_HANDLE;
+    public VkPipelineLayout                    layout                = null;
+    private VkShader[]                         shaders;
+    private long                               renderpass            = VK_NULL_HANDLE;
+    private int                                subpass               = 0;
+    long                                       pipeline              = VK_NULL_HANDLE;
 
-    private LongBuffer pipelineLayoutCIDescPtr;
-    ByteBuffer mainMethod = MemoryUtil.memUTF8("main");
-
-
-    public void setDescriptorSetLayout(long descriptorSetLayout) {
-        this.newDescriptorSetLayout = descriptorSetLayout;
+    public void setPipelineLayout(VkPipelineLayout layout) {
+        this.layout = layout;
     }
     
-    public VkPipeline() {
+    public VkPipeline(VkPipelineLayout pipelineLayoutTextured) {
+        this.layout = pipelineLayoutTextured;
         viewportState.pViewports(viewport);
         viewportState.pScissors(scissors);
-        pipelineLayoutCIDescPtr = memAllocLong(1);
-        pipelineLayoutCI.pSetLayouts(pipelineLayoutCIDescPtr);
-        pipelineLayoutCI.pSetLayouts().put(0, VK_NULL_HANDLE);
     }
 
     public void destroyPipeLine(VKContext vkContext) {
-        if (pipeline != VK_NULL_HANDLE)
-            vkDestroyPipeline(vkContext.device, pipeline, null);
-        pipeline = VK_NULL_HANDLE;
-        pipelineLayoutCIDescPtr.clear();
-//        pipelineLayoutCI.pSetLayouts(pipelineLayoutCIDescPtr);
-//        pipelineLayoutCI.pSetLayouts().put(0, VK_NULL_HANDLE);
-    }
-
-
-    public long getPtr() {
-        return this.pipeline;
-    }
-    public void setShaders(VkShader ...shadersArr) {
-        for (int i = 0; i < shadersArr.length; i++) {
-            VkPipelineShaderStageCreateInfo shaderstagecreateinfo = shaderStageCreateInfo.get(i);
-            shaderstagecreateinfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            shaderstagecreateinfo.stage(shadersArr[i].getStage());
-            shaderstagecreateinfo.module(shadersArr[i].getShaderModule());
-            shaderstagecreateinfo.pName(mainMethod);
+        if (this.shaders != null) {
+            for (int i = 0; i < this.shaders.length; i++) {
+                this.shaders[i].destroy();
+            }
+            this.shaders = null;
         }
-        shaderStageCreateInfo.limit(shadersArr.length);
+        if (pipeline != VK_NULL_HANDLE) {
+            vkDestroyPipeline(vkContext.device, pipeline, null);
+            pipeline = VK_NULL_HANDLE;
+        }
+    }
+
+    public void setShaders(VkShader ...shadersArr) {
+        this.shaders = shadersArr;
     }
     public void setVertexDesc(VkVertexDescriptors desc) {
         bindingDescriptions.get(0)
@@ -108,31 +97,32 @@ public class VkPipeline {
                 .pVertexBindingDescriptions(bindingDescriptions)
                 .pVertexAttributeDescriptions(desc.attributeDescriptions);
     }
-    public void setRenderPass(long renderpass) {
+    public void setRenderPass(long renderpass, int subpass) {
         this.renderpass = renderpass;
+        this.subpass = subpass;
     }
-    public void buildPipeline(VKContext vkContext) {
+    public long buildPipeline(VKContext vkContext) {
+        if (shaders == null) {
+            throw new GameLogicError("MISSING SHADERS");
+        }
         try ( MemoryStack stack = stackPush() ) {
-            long prev = this.pipelineLayoutCI.pSetLayouts().get(0);
-            if (prev != newDescriptorSetLayout) {
-                System.out.println("newDescriptorSetLayout "+newDescriptorSetLayout+", prev "+prev);
-                this.pipelineLayoutCI.pSetLayouts().put(0, newDescriptorSetLayout);
-                if (this.pipelineLayout != VK_NULL_HANDLE) {
-                    vkDestroyPipelineLayout(vkContext.device, this.pipelineLayout, null);
+            VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfo = VkPipelineShaderStageCreateInfo.callocStack(this.shaders.length, stack);
+
+            for (int i = 0; i < this.shaders.length; i++) {
+                if (this.shaders[i].getShaderModule() == VK_NULL_HANDLE) {
+                    throw new GameLogicError("NULL SHADER MODULE");
                 }
-                LongBuffer pPipelineLayout = stack.callocLong(1);
-                int err = vkCreatePipelineLayout(vkContext.device, pipelineLayoutCI, null, pPipelineLayout);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkCreatePipelineLayout failed: " + VulkanErr.toString(err));
-                }
-                this.pipelineLayout = pPipelineLayout.get(0);
-                System.out.println("pipeline layout "+pipelineLayout);
+                VkPipelineShaderStageCreateInfo shaderstagecreateinfo = shaderStageCreateInfo.get(i);
+                shaderstagecreateinfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+                shaderstagecreateinfo.stage(this.shaders[i].getStage());
+                shaderstagecreateinfo.module(this.shaders[i].getShaderModule());
+                shaderstagecreateinfo.pName(mainMethod);
             }
-            
             int nPipelines = 1;
-            VkGraphicsPipelineCreateInfo.Buffer pipelineCreateInfoBuffer = pipelineCreateInfo(nPipelines, pipelineLayout, renderpass, VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT);
+            VkGraphicsPipelineCreateInfo.Buffer pipelineCreateInfoBuffer = pipelineCreateInfo(nPipelines, layout.pipelineLayout, renderpass, VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT);
             VkGraphicsPipelineCreateInfo mainPipe = pipelineCreateInfoBuffer.get(0);
-            
+
+            mainPipe.subpass(this.subpass);
             mainPipe.pVertexInputState(vertexInputState);
             
             mainPipe.pInputAssemblyState(inputAssemblyState);
@@ -154,8 +144,8 @@ public class VkPipeline {
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkCreateGraphicsPipelines failed: " + VulkanErr.toString(err));
             }
-            this.pipeline = pPipelines.get(0);
             pipelineCreateInfoBuffer.free();
+            return pPipelines.get(0);
         }
     }
 
@@ -286,17 +276,8 @@ public class VkPipeline {
         return graphicsPipelineCreateInfo;
     }
 
-    public static VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo() {
-        VkPipelineLayoutCreateInfo descriptorSetLayoutCreateInfo = VkPipelineLayoutCreateInfo.calloc();
-        descriptorSetLayoutCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-        return descriptorSetLayoutCreateInfo;
-    }
     public void destroy(VKContext vkContext) {
-        if (pipeline != VK_NULL_HANDLE)
-            vkDestroyPipeline(vkContext.device, pipeline, null);
-        if (this.pipelineLayout != VK_NULL_HANDLE)
-            vkDestroyPipelineLayout(vkContext.device, this.pipelineLayout, null);
-        MemoryUtil.memFree(pipelineLayoutCIDescPtr);
+        destroyPipeLine(vkContext);
         MemoryUtil.memFree(mainMethod);
         bindingDescriptions.free();
         blendAttachmentState.free();
@@ -304,14 +285,31 @@ public class VkPipeline {
         depthStencilState.free();
         inputAssemblyState.free();
         multisampleState.free();
-        pipelineLayoutCI.free();
         rasterizationState.free();
         scissors.free();
-        shaderStageCreateInfo.free();
         vertexInputState.free();
         viewport.free();
         viewportState.free();
         
     }
 
+    public long getLayoutHandle() {
+        return this.layout.pipelineLayout;
+    }
+
+    public void setBlend(boolean b) {
+        this.blendAttachmentState.blendEnable(b);
+        if (b) {
+            this.blendAttachmentState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
+            this.blendAttachmentState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            this.blendAttachmentState.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+            this.blendAttachmentState.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+        } else {
+
+            this.blendAttachmentState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            this.blendAttachmentState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            this.blendAttachmentState.srcColorBlendFactor(VK_BLEND_FACTOR_ZERO);
+            this.blendAttachmentState.dstColorBlendFactor(VK_BLEND_FACTOR_ZERO);
+        }
+    }
 }

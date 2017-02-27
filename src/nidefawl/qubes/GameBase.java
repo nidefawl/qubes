@@ -1,5 +1,6 @@
 package nidefawl.qubes;
 
+import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -20,6 +21,8 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.EXTDebugReport;
+import org.lwjgl.vulkan.NVGLSLShader;
 import org.lwjgl.vulkan.VkInstance;
 
 import nidefawl.qubes.async.AsyncTasks;
@@ -300,10 +303,28 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             if (glfwInit() != true)
                 throw new IllegalStateException("Unable to initialize GLFW");
             if (isVulkan) {
+                if (!glfwVulkanSupported()) {
+                    throw new AssertionError("GLFW failed to find the Vulkan loader");
+                }
 
+                String[] requiredInstanceExtensions = new String[0];
+                String[] requiredDeviceExtensions = new String[] {
+                        VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+//                        NVGLSLShader.VK_NV_GLSL_SHADER_EXTENSION_NAME
+                    };
+                String[] activeLayers = new String[0];
+                if (debugContext) {
+                    activeLayers = new String[] {
+                        "VK_LAYER_LUNARG_standard_validation"
+                    };
+                    requiredInstanceExtensions = new String[] {
+                        "VK_EXT_debug_report"
+                    };
+                }
+                VulkanInit.initStatic(activeLayers, requiredInstanceExtensions, requiredDeviceExtensions, debugContext);
 
                 // Create the Vulkan instance
-                vkContext = VulkanInit.createContext(debugContext);
+                Engine.vkContext = vkContext = VulkanInit.createContext();
 //                final VkDebugReportCallbackEXT debugCallback = new VkDebugReportCallbackEXT() {
 //                    public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
 //                        System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
@@ -421,7 +442,16 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     protected void destroyContext() {
-        //TODO: maybe this crashes?
+        if (isVulkan) {
+            if (vkContext != null) {
+                try {
+                    vkContext.shutdown();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            VulkanInit.destroyStatic();
+        }
         cbKeyboard.free();
         cbMouseButton.free();
         cbScrollCallback.free();
@@ -432,9 +462,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         cbText.free();
         glfwTerminate();
         windowId = 0;
-        if (isVulkan) {
-            VulkanInit.destroy();
-        }
     }
 
     protected void onDestroy() {
@@ -448,9 +475,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         Engine.stop();
         AsyncTasks.shutdown();
         if (VR.isInit()) VR.shutdown();
-        if (vkContext != null) {
-            vkContext.shutdown();
-        }
         FontRenderer.destroy();
         destroyContext();
     }
@@ -668,6 +692,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             setGrabbed(b);
         }
         if (vkContext != null) {
+            Engine.preRenderUpdateVK();
             vkContext.preRender();
         }
         preRenderUpdate(renderTime);
@@ -769,9 +794,12 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             timer.calculate();
             timeLastFrame = System.nanoTime();
             timeLastFPS = timer.absTime;
+            if (isVulkan) {
+                vkContext.lateInit(0);    
+            }
             lateInitGame();
             if (isVulkan) {
-                vkContext.lateInit();    
+                vkContext.lateInit(1);    
             }
             isStarting = false;
             if (Game.GL_ERROR_CHECKS)

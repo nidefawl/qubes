@@ -12,15 +12,29 @@ import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.util.GameMath;
 
-public class VkShader {
+public class VkShader implements IVkResource {
 
-    static VkShaderModuleCreateInfo.Buffer moduleCreateInfo = VkInitializers.shaderModuleCreateInfo();
-    static ByteBuffer directBufShaderCode = MemoryUtil.memCalloc(1024*1024*5);
-    static final LongBuffer pShaderModule = MemoryUtil.memAllocLong(1);
+    private static VkShaderModuleCreateInfo.Buffer moduleCreateInfo;
+    private static ByteBuffer directBufShaderCode;
+    private static LongBuffer pShaderModule;
+
+    public static void allocStatic() {
+        moduleCreateInfo = VkInitializers.shaderModuleCreateInfo();
+        directBufShaderCode = MemoryUtil.memCalloc(1024*1024*5);
+        pShaderModule = MemoryUtil.memAllocLong(1);
+    }
+
+    public static void destroyStatic() {
+        moduleCreateInfo.free();
+        memFree(VkShader.directBufShaderCode);
+        memFree(VkShader.pShaderModule);
+    }
+    
+    private final VKContext ctxt;
+    
     private String name;
     public byte[] bin;
     private long shaderModule = VK_NULL_HANDLE;
-    private VKContext ctxt;
     private int stage;
 
     public VkShader(VKContext ctxt, int stage, String name, byte[] bin) {
@@ -39,6 +53,7 @@ public class VkShader {
     }
 
     public void buildShader() {
+        this.ctxt.addResource(this);
         directBufShaderCode.clear();
         if (directBufShaderCode.capacity() < bin.length) {
             directBufShaderCode = MemoryUtil.memRealloc(directBufShaderCode, (int) GameMath.nextPowerOf2(bin.length));
@@ -51,33 +66,22 @@ public class VkShader {
         if (err != VK_SUCCESS) {
             throw new AssertionError("vkCreateDescriptorSetLayout failed: " + VulkanErr.toString(err));
         }
-        this.ctxt.addShader(this);
-        
     }
 
     public void destroy() {
-        _destroy(false);
-    }
-    protected void destroyShutdown() {
-        _destroy(true);
-    }
-
-    private void _destroy(boolean isshutdown) {
+        ctxt.removeResource(this);
         if (shaderModule != VK_NULL_HANDLE) {
             vkDestroyShaderModule(ctxt.device, this.shaderModule, null);
-            if (!isshutdown) {
-                ctxt.removeShader(this);
-            }
         }
     }
+    
     public int getStage() {
         return this.stage;
     }
 
-    public static void destroyStatic() {
-        moduleCreateInfo.free();
-        memFree(VkShader.directBufShaderCode);
-        memFree(VkShader.pShaderModule);
+    @Override
+    public String toString() {
+        return super.toString()+(this.name!= null?" "+this.name:"");
     }
 
 }

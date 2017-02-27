@@ -4,10 +4,13 @@ import java.util.HashMap;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.ITess;
 
 public class FontRenderer {
     public static HashMap<String, FontRenderer> fonts = new HashMap<String, FontRenderer>();
@@ -20,6 +23,7 @@ public class FontRenderer {
         }
         fonts.clear();
     }
+    static VkCommandBuffer cmdBuffer;
 
 	private void free() {
 	    this.trueTypeFont.release();
@@ -100,19 +104,20 @@ public class FontRenderer {
         if ((color & 0xff000000) == 0) {
             color |= 0xff000000;
         }
-        Tess tess = Tess.tessFont;
+        ITess tess = Engine.getFontTess();
         if (shadow) {
             final int k2 = (color & 0xf0f0f0) >> 2 | color & 0xff000000;
             tess.setColorF(k2, alpha*0.8f);
-            this.trueTypeFont.drawString(tess, x + this.shadowOffset, y + this.shadowOffset, chatline, alignment, false, alpha, maxWidth, k2, alpha*0.8f);
+            this.trueTypeFont.drawString(tess, x + this.shadowOffset, y + Engine.Y_SIGN*this.shadowOffset, chatline, alignment, false, alpha, maxWidth, k2, alpha*0.8f);
         }
         tess.setColorF(color, alpha);
         float w = this.trueTypeFont.drawString(tess, x, y, chatline, alignment, true, alpha, maxWidth, color, alpha);
-        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueTypeFont.getTexture());
-//        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, TMgr.getEmptyWhite());
-        tess.draw(GL11.GL_QUADS);
+        this.trueTypeFont.drawTextBuffer(cmdBuffer, tess);
         this.drawedHeight = this.trueTypeFont.getLastDrawHeight();
         return w;
+    }
+    public static void setCommandBuffer(VkCommandBuffer _cmdBuffer) {
+        cmdBuffer = _cmdBuffer;
     }
     public int getTexture() {
         return this.trueTypeFont.getTexture();
@@ -145,5 +150,8 @@ public class FontRenderer {
     }
     public int centerY(int height) {
         return GameMath.round(height-(height-this.trueTypeFont.getCharHeight())/2-0.2f);
+    }
+    public TrueTypeFont getTTF() {
+        return this.trueTypeFont;
     }
 }

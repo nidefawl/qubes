@@ -15,10 +15,24 @@ import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.GameMath;
 
 public class VkMemoryManager {
-    static VkMemoryAllocateInfo allocInfo;//not doing any funny thread allocation (yet)
-    static VkMemoryRequirements memReqs;//not doing any funny thread allocation (yet)
-    static PointerBuffer ptrBuf;
-    final static boolean DEBUG_MEM_ALLOC = false;
+    private static VkMemoryAllocateInfo allocInfo;//not doing any funny thread allocation (yet)
+    private static VkMemoryRequirements memReqs;//not doing any funny thread allocation (yet)
+    private static PointerBuffer ptrBuf;
+
+    public static void allocStatic() {
+        allocInfo = VkMemoryAllocateInfo.calloc().sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
+        memReqs = VkMemoryRequirements.calloc();
+        ptrBuf = memAllocPointer(1);
+    }
+    public static void destroyStatic() {
+        memoryBindings.clear();
+        allocInfo.free();
+        memReqs.free();
+        MemoryUtil.memFree(ptrBuf);
+    }
+
+    static final boolean DEBUG_MEM_ALLOC = false;
+    static boolean MEM_ALLOC_CRASH = false;
     private static final long MAX_FRAGMENTATION_SIZE = 16*1024;
     static final HashMap<Long, MemoryChunk> memoryBindings = new HashMap<>();
     public class VulkanMemoryType {
@@ -174,9 +188,10 @@ public class VkMemoryManager {
                     list.add(chunk);
                     if (chunk.size-size > MAX_FRAGMENTATION_SIZE) {
                         long newChunkSize = chunk.size-size;
-                        long newChunkOffset = chunk.offset+newChunkSize;
+                        long newChunkOffset = chunk.offset+size;
                         chunk.size = size;
                         MemoryChunk newChunk = new MemoryChunk(this, newChunkOffset, newChunkSize, chunk.align);
+                        newChunk.tag = "free_split";
                         unused.add(newChunk);
                         if (DEBUG_MEM_ALLOC) {
                             System.out.println("using splitted chunk entry, buffer now has "+(chunk.size-size)+" extra bytes claimed!");
@@ -214,6 +229,7 @@ public class VkMemoryManager {
                 this.offset -= chunk.size;
             } else {
                 if (DEBUG_MEM_ALLOC) System.out.println("Adding to unused list (fragmentation)");
+                chunk.tag = "free";
                 unused.add(chunk);
             }
             if (DEBUG_MEM_ALLOC) {
@@ -221,6 +237,7 @@ public class VkMemoryManager {
             }
         }
         public void check() {
+            if (MEM_ALLOC_CRASH) return;
             ArrayList<MemoryChunk> allChunks = new ArrayList<>();
             allChunks.addAll(list);
             allChunks.addAll(unused);
@@ -235,7 +252,9 @@ public class VkMemoryManager {
                         continue;
                     if (c2.offset+c2.size<=c.offset)
                         continue;
-                    throw new GameLogicError("collision");
+                    dump();
+                    MEM_ALLOC_CRASH = true;
+                    throw new GameLogicError("collision between 0x"+Long.toHexString(c.offset)+" and 0x"+Long.toHexString(c2.offset));
                 }
             }
             
@@ -266,7 +285,7 @@ public class VkMemoryManager {
         }
         
     }
-    final static MemoryBlock[] blocks = new MemoryBlock[16];
+    final MemoryBlock[] blocks = new MemoryBlock[16];
     private static final long MB = 1024L*1024L;
     private VKContext ctxt;
     private VulkanMemoryType[] memTypes;
@@ -290,9 +309,6 @@ public class VkMemoryManager {
     
     public VkMemoryManager(VKContext context) {
         this.ctxt = context;
-        allocInfo = VkMemoryAllocateInfo.calloc().sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
-        memReqs = VkMemoryRequirements.calloc();
-        ptrBuf = memAllocPointer(1);
         this.memTypes = new VulkanMemoryType[context.memoryProperties.memoryTypeCount()];
         for (int i = 0; i < this.memTypes.length; i++) {
             this.memTypes[i] = new VulkanMemoryType(context.memoryProperties.memoryTypes(i), i);
@@ -412,10 +428,16 @@ public class VkMemoryManager {
         if (err != VK_SUCCESS) {
             throw new AssertionError("vkBindImageMemory failed: " + VulkanErr.toString(err));
         }
-        memoryBindings.put(image, chunk);
+        MemoryChunk prev = memoryBindings.put(image, chunk);
+        if (prev != null) {
+            throw new GameLogicError("prev binding not null!");
+        }
         return chunk;
     }
 
+    static long getMinAlignment(long max) {
+        return Math.max(4096, max);
+    }
     public void releaseImageMemory(long image) {
         release(image);
     }
@@ -441,12 +463,16 @@ public class VkMemoryManager {
         long size = memReqs.size();
         if (DEBUG_MEM_ALLOC) System.out.println("buffer "+(tag!=null?tag:buffer)+" requires "+(size)+" bytes");
         MemoryChunk chunk = block.allocateChunk(align, size);
+        if (DEBUG_MEM_ALLOC) System.out.println("buffer "+(tag!=null?tag:buffer)+" got chunk "+(chunk));
         chunk.tag(tag);
         int err = vkBindBufferMemory(ctxt.device, buffer, chunk.block.memory, chunk.offset);
         if (err != VK_SUCCESS) {
             throw new AssertionError("vkBindBufferMemoryvkBindBufferMemory failed: " + VulkanErr.toString(err));
         }
-        memoryBindings.put(buffer, chunk);
+        MemoryChunk prev = memoryBindings.put(buffer, chunk);
+        if (prev != null) {
+            throw new GameLogicError("prev binding not null!");
+        }
         return chunk;
     }
 
@@ -458,9 +484,5 @@ public class VkMemoryManager {
                 blocks[i] = null;
             }
         }
-        memoryBindings.clear();
-        allocInfo.free();
-        memReqs.free();
-        MemoryUtil.memFree(ptrBuf);
     }
 }

@@ -21,8 +21,8 @@ public class VkTesselatorState extends AbstractVkTesselatorState {
         this.bufferV.destroy();
     }
     public VkTesselatorState tag(String string) {
-        this.bufferI.tag(string);
-        this.bufferV.tag(string);
+        this.bufferI.tag(string+"_index");
+        this.bufferV.tag(string+"_vertex");
         return this;
     }
 
