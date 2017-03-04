@@ -18,12 +18,15 @@ public class VkDescLayouts {
     }
 
     private final VKContext ctxt;
-    public VkDescriptorSetLayoutBinding.Buffer ubo_scene_bindings = VkDescriptorSetLayoutBinding.calloc(3);
+    public VkDescriptorSetLayoutBinding.Buffer ubo_scene_bindings = VkDescriptorSetLayoutBinding.calloc(4);
     public VkDescriptorSetLayoutBinding.Buffer ubo_constants_bindings = VkDescriptorSetLayoutBinding.calloc(1);
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_single = VkDescriptorSetLayoutBinding.calloc(1);
     public VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
+    public VkPushConstantRange.Buffer push_constant_ranges_shadow_solid = VkPushConstantRange.calloc(1);
+//    public VkDescriptorSetLayoutBinding.Buffer ubo_shadow_bindings = VkDescriptorSetLayoutBinding.calloc(2);
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
+//    public long descSetLayoutUBOShadow = VK_NULL_HANDLE;
     public VkDescLayouts(VKContext ctxt) {
         this.ctxt = ctxt;
         for (int i = 0; i < ubo_scene_bindings.limit(); i++) {
@@ -40,6 +43,17 @@ public class VkDescLayouts {
                 .binding(i)
                 .descriptorCount(1);
         }
+
+//        ubo_shadow_bindings.get(0) //uboMatrix3D
+//            .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+//            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+//            .binding(0)//uboMatrix3D
+//            .descriptorCount(1);
+//        ubo_shadow_bindings.get(1)
+//            .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+//            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+//            .binding(3)//uboMatrixShadow
+//            .descriptorCount(1);
         sampler_image_single.get(0)
             .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
             .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -49,11 +63,18 @@ public class VkDescLayouts {
             .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
             .offset(0)
             .size(8*4+2*16);
+        push_constant_ranges_shadow_solid.get(0)
+            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+            .offset(0)
+            .size(64+4);
         descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
+//        descSetLayoutUBOShadow = makeSet(ubo_shadow_bindings);
         descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
         VkPipelines.pipelineLayoutTextured.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
         VkPipelines.pipelineLayoutColored.build(ctxt, descSetLayoutUBOScene);
         VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_gui);
+//        VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {descSetLayoutUBOShadow}, push_constant_ranges_shadow_solid);
+        VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_shadow_solid);
     }
             
     private long makeSet(VkDescriptorSetLayoutBinding.Buffer... buffers) {
@@ -95,6 +116,10 @@ public class VkDescLayouts {
     public long allocDescSetUBOScene() {
         return allocDescSet(descSetLayoutUBOScene);
     }
+
+//    public long allocDescSetUBOShadow() {
+//        return allocDescSet(descSetLayoutUBOShadow);
+//    }
     public long allocDescSetSampleSingle() {
         return allocDescSet(descSetLayoutSamplerImageSingle);
     }

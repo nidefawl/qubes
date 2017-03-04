@@ -22,7 +22,6 @@ public class VkTexture implements IVkResource {
     int width;
     int height;
     int mipLevels;
-    int textureLayout;
     public long image = VK_NULL_HANDLE;
     public int imageLayout;
     private long view;

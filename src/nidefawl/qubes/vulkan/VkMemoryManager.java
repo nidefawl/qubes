@@ -375,9 +375,10 @@ public class VkMemoryManager {
             memtypeflagsStr="("+Integer.toBinaryString(memtypeflags)+")"+memtypeflagsStr;
             System.out.println("Type "+i+" (Heap "+memType.heapIndex()+") has flags "+memtypeflagsStr);
         }
+        for (int i = 0; i < 3; i++)
+            allocateBlock(context.device, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, false);
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true);
-        allocateBlock(context.device, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, false);
     }
 
     private void allocateBlock(VkDevice device, int properties, boolean optimal) {
@@ -403,13 +404,14 @@ public class VkMemoryManager {
         throw new GameLogicError("No supported memory type present");
     }
     //use a map if used frequently
-    private MemoryBlock getMemBlockByFlags(int supportedTypes, int requiredFlags, boolean isOptimalImageBlock) {
+    private MemoryBlock getMemBlockByFlags(int supportedTypes, int requiredFlags, boolean isOptimalImageBlock, long size) {
         for (int i = 0; i < blocks.length; i++) {
             
             if (blocks[i] != null) {
                 if (((supportedTypes>>blocks[i].memType.idx)&1) != 0) {
                     if ((blocks[i].flags & requiredFlags) == requiredFlags && blocks[i].isOptimalOnly == isOptimalImageBlock) {
-                        return blocks[i];
+                        if (blocks[i].getLeft() >= size)
+                            return blocks[i];
                     }
                 }
             }
@@ -419,9 +421,9 @@ public class VkMemoryManager {
 
     public MemoryChunk allocateImageMemory(long image, int properties, int debug) {
         vkGetImageMemoryRequirements(ctxt.device, image, memReqs);
-        MemoryBlock block = getMemBlockByFlags(memReqs.memoryTypeBits(), properties, true);
         long align = Math.max(memReqs.alignment(), this.ctxt.limits.bufferImageGranularity());
         long size = memReqs.size();
+        MemoryBlock block = getMemBlockByFlags(memReqs.memoryTypeBits(), properties, true, size);
         MemoryChunk chunk = block.allocateChunk(align, size);
         if (DEBUG_MEM_ALLOC) System.out.println("image "+image+","+debug+" requires "+(size)+" bytes");
         int err = vkBindImageMemory(ctxt.device, image, chunk.block.memory, chunk.offset);
@@ -458,9 +460,9 @@ public class VkMemoryManager {
     }
     public MemoryChunk allocateBufferMemory(long buffer, int properties, String tag) {
         vkGetBufferMemoryRequirements(ctxt.device, buffer, memReqs);
-        MemoryBlock block = getMemBlockByFlags(memReqs.memoryTypeBits(), properties, false);
         long align = memReqs.alignment();
         long size = memReqs.size();
+        MemoryBlock block = getMemBlockByFlags(memReqs.memoryTypeBits(), properties, false, size);
         if (DEBUG_MEM_ALLOC) System.out.println("buffer "+(tag!=null?tag:buffer)+" requires "+(size)+" bytes");
         MemoryChunk chunk = block.allocateChunk(align, size);
         if (DEBUG_MEM_ALLOC) System.out.println("buffer "+(tag!=null?tag:buffer)+" got chunk "+(chunk));

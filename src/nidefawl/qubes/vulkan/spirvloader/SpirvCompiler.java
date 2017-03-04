@@ -2,6 +2,8 @@ package nidefawl.qubes.vulkan.spirvloader;
 
 import java.io.File;
 
+import org.lwjgl.system.Platform;
+
 public class SpirvCompiler {
 
     public final static int OptionNone = 0;
@@ -30,10 +32,27 @@ public class SpirvCompiler {
     public final static int OptionKeepUncalled = (1 << 22);
 
     native public static SpirvCompilerOutput compile(String s, int type, int options);
+    native public static SpirvCompilerOutput testshader();
     static {
-        File f = new File("SPIRVLoader.x64.dll");
+        create();
+    }
+
+    public static void create() {
+        String name;
+        boolean bitness = System.getProperty("os.arch").indexOf("64") > -1;
+        switch ( Platform.get() ) {
+            case LINUX:
+                name = bitness?"libspirvloader.x64.so.1":"libspirvloader.x86.so.1";
+                break;
+            case WINDOWS:
+                name = bitness?"SPIRVLoader.x64.dll":"SPIRVLoader.x86.dll";
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+        File f = new File(name);
         if (!f.exists()) {
-            f = new File("../Game/lib/spirvloader/SPIRVLoader.x64.dll");
+            f = new File("../Game/lib/spirvloader/", name);
         }
         System.load(f.getAbsolutePath());
     }

@@ -1,13 +1,11 @@
 package nidefawl.qubes.gui.controls;
 
-import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.render.gui.LineGUI;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Renderable;
 
@@ -39,53 +37,44 @@ public class CheckBox extends AbstractUI implements Renderable {
         if (!draw)
             return;
         renderBox();
-        Engine.lineWidth(1.0F);
-        Shaders.colored.enable();
-        Tess tessellator = Tess.instance;
-        //          GL11.glBegin(GL11.GL_LINE_STRIP);
-        int yo=0;
-        tessellator.setColorF(-1, 0.05f);
-        tessellator.add(this.posX, this.posY + yo, 4);
-        tessellator.setColorF(-1, 0.15f);
-        tessellator.add(this.posX+width/2, this.posY + yo, 4);
-        tessellator.setColorF(-1, 0.05f);
-        tessellator.add(this.posX+width, this.posY + yo, 4);
-        tessellator.draw(GL11.GL_LINE_STRIP);
-        yo=height;
-        tessellator.setColorF(-1, 0.1f);
-        tessellator.add(this.posX, this.posY + yo);
-        tessellator.setColorF(-1, 0.4f);
-        tessellator.add(this.posX+width/2, this.posY + yo);
-        tessellator.setColorF(-1, 0.1f);
-        tessellator.add(this.posX+width, this.posY + yo);
-        tessellator.draw(GL11.GL_LINE_STRIP);
+        Engine.setPipeStateColored2D();
+
+        LineGUI.INST.start(1F);
+        LineGUI.INST.add(this.posX, this.posY, 4, -1, 0.05f);
+        LineGUI.INST.add(this.posX+width/2, this.posY, 4, -1, 0.15f);
+        LineGUI.INST.add(this.posX+width, this.posY, 4, -1, 0.05f);
+        LineGUI.INST.drawLines();
+
+        LineGUI.INST.start(1F);
+        LineGUI.INST.add(this.posX, this.posY+height, 4, -1, 0.1f);
+        LineGUI.INST.add(this.posX+width/2, this.posY+height, 4, -1, 0.4f);
+        LineGUI.INST.add(this.posX+width, this.posY+height, 4, -1, 0.1f);
+        LineGUI.INST.drawLines();
+        
         if (this.checked) {
-            float w = 8.0f;
+            float w = 4.0f;
             if (this.width < 20) {
                 w = 4.0f;
             }
-            Engine.lineWidth(w);
-            tessellator.setColorF(color6, 0.8f);
+            int yo = 3;
+            float a1 = 0.4f;
+            LineGUI.INST.start(w);
+            LineGUI.INST.add(this.posX + yo, this.posY + yo, 0, color5, a1);
+            LineGUI.INST.add(this.posX + height-yo, this.posY + width-yo, 0, color5, a1);
+            LineGUI.INST.drawLines();
+            LineGUI.INST.start(w);
+            LineGUI.INST.add(this.posX + yo, this.posY + width-yo, 0, color5, a1);
+            LineGUI.INST.add(this.posX + height-yo, this.posY +yo, 0, color5, a1);
+            LineGUI.INST.drawLines();
             yo=3;
-            tessellator.add(this.posX + yo, this.posY + yo);
-            tessellator.add(this.posX + height-yo, this.posY + width-yo);
-            tessellator.add(this.posX + yo, this.posY + width-yo);
-            tessellator.add(this.posX + height-yo, this.posY +yo);
-            tessellator.draw(GL11.GL_LINES);
-            Engine.lineWidth(w/2.0f);
-//            this.posX++;
-            tessellator.setOffset(0, 0.3f, 0);
-            tessellator.setColorF(color5, 0.5f);
-            yo=5;
-            tessellator.add(this.posX + yo, this.posY + yo);
-            tessellator.add(this.posX + height-yo, this.posY + width-yo);
-            tessellator.add(this.posX + yo, this.posY + width-yo);
-            tessellator.add(this.posX + height-yo, this.posY +yo);
-            tessellator.draw(GL11.GL_LINES);
-
-            tessellator.setOffset(0, 0, 0);
-
-//            this.posX--;
+            LineGUI.INST.start(w/1.5f);
+            LineGUI.INST.add(this.posX + yo, this.posY + yo + 0.3f, 0, color6, 1f);
+            LineGUI.INST.add(this.posX + height-yo, this.posY + width-yo + 0.3f, 0, color6, 1f);
+            LineGUI.INST.drawLines();
+            LineGUI.INST.start(w/1.5f);
+            LineGUI.INST.add(this.posX + yo, this.posY + width-yo + 0.3f, 0, color6, 1f);
+            LineGUI.INST.add(this.posX + height-yo, this.posY +yo + 0.3f, 0, color6, 1f);
+            LineGUI.INST.drawLines();
             
         }
         if (this.text!=null&&!this.text.isEmpty()) {

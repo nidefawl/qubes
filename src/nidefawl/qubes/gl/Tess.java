@@ -315,13 +315,10 @@ public class Tess extends AbstractTesselatorState implements ITess {
     public void add(Vector3f tmp1) {
         add(tmp1.x, tmp1.y, tmp1.z);
     }
+    
     @Override
-    public void drawLineStrip() {
-        this.draw(GL11.GL_LINE_STRIP);
-    }
-    @Override
-    public void drawLines() {
-        this.draw(GL11.GL_LINES);
+    public void drawTris() {
+        this.draw(GL11.GL_TRIANGLES);
     }
 
 }

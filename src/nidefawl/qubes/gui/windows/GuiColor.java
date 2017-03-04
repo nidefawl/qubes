@@ -69,8 +69,8 @@ public class GuiColor extends GuiWindow {
 //        } else {
             int width = 390;
             int height = titleBarHeight+160;
-            int xPos = (Game.guiWidth-width)/2;
-            int yPos = (Game.guiHeight-height)/2;
+            int xPos = (Engine.getGuiWidth()-width)/2;
+            int yPos = (Engine.getGuiHeight()-height)/2;
             setPos(xPos, yPos);
             setSize(width, height);
 //        }

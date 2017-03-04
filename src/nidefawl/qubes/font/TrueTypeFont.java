@@ -245,11 +245,11 @@ public class TrueTypeFont {
         int idx = getIndex(charCurrent);
         stbtt_GetPackedQuad(chardata, texW, texW, idx, xb, yb, q, false);
     }
-    public void renderQuad(Tess tess, float x, float y) {
-        tess.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
-        tess.add(x + q.x1(), y + q.y0(), 0F, q.s1(), q.t0());
-        tess.add(x + q.x0(), y + q.y0(), 0F, q.s0(), q.t0());
-        tess.add(x + q.x0(), y + q.y1(), 0F, q.s0(), q.t1());
+    public void renderQuad(ITess tessellator, float x, float y) {
+        tessellator.add(x + q.x1(), y + q.y1(), 0F, q.s1(), q.t1());
+        tessellator.add(x + q.x1(), y + q.y0(), 0F, q.s1(), q.t0());
+        tessellator.add(x + q.x0(), y + q.y0(), 0F, q.s0(), q.t0());
+        tessellator.add(x + q.x0(), y + q.y1(), 0F, q.s0(), q.t1());
     }
 
     public int getCharPositionFromXCoord(String editText, double mouseX, float shiftPX) {
@@ -497,15 +497,24 @@ public class TrueTypeFont {
     public void drawTextBuffer(ITess tess) {
         if (!Engine.isVulkan) {
             GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, getTexture());
-            ((Tess)tess).draw(GL11.GL_QUADS);
         } else {
             if (this.vk_tex == null) {
                 return;
             }
             Engine.setDescriptorSet1(this.descriptorSetTex);
             Engine.bindPipeline(VkPipelines.fontRender2D);
-            ((VkTess)tess).finish(VkTess.CREATE_QUAD_IDX_BUFFER);
-            ((VkTess)tess).bindAndDraw(Engine.getDrawCmdBuffer(), 0);
+        }
+        tess.drawQuads();
+    }
+
+    public void bindTexture() {
+        if (!Engine.isVulkan) {
+            GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, getTexture());
+        } else {
+            if (this.vk_tex == null) {
+                return;
+            }
+            Engine.setDescriptorSet1(this.descriptorSetTex);
         }
     }
 

@@ -30,7 +30,7 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
     }
     @Override
     public void drawQuads() {
-        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
+        bindAndDraw(Engine.getDrawCmdBuffer());
     }
 
 

@@ -16,6 +16,7 @@ import nidefawl.qubes.gui.controls.ScrollList;
 import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Keybinding;
 import nidefawl.qubes.input.Keyboard;
+import nidefawl.qubes.render.gui.LineGUI;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiControls extends Gui {
@@ -74,21 +75,13 @@ public class GuiControls extends Gui {
             }
             
             fr.drawString(keyname, r+rw/2, this.posY+fr.centerY(height), c, true, 0.9f, 2);
-            Shaders.colored.enable();
-            Tess tessellator = Tess.instance;
-//          OpenGlHelper.glColor3f(fa, fa, fa);
-          Engine.lineWidth(1.0F);
-          
-//          GL11.glBegin(GL11.GL_LINE_STRIP);
-          tessellator.setColorF(-1, 0.1f);
+            Engine.setPipeStateColored2D();
 
-          tessellator.add(this.posX + w - 12, this.posY + h + 3);
-          tessellator.setColorF(-1, 0.4f);
-          tessellator.add(this.posX + 2 +(w-12)/2, this.posY + h + 3);
-          tessellator.setColorF(-1, 0.1f);
-
-          tessellator.add(this.posX + 2, this.posY + h + 3);
-          tessellator.draw(GL11.GL_LINE_STRIP);
+            LineGUI.INST.start(1.0f);
+            LineGUI.INST.add(this.posX + w - 12, this.posY + h + 3, 0, -1, 0.1f);
+            LineGUI.INST.add(this.posX + 2 +(w-12)/2, this.posY + h + 3, 0, -1, 0.4f);
+            LineGUI.INST.add(this.posX + 2, this.posY + h + 3, 0, -1, 0.1f);
+            LineGUI.INST.drawLines();
         }
 
         @Override
@@ -114,8 +107,8 @@ public class GuiControls extends Gui {
         this.clearElements();
         this.list.clear();
         this.width = 630;
-        this.posX = (Game.guiWidth-this.width)/2;
-        this.posY = Game.guiHeight / 4;
+        this.posX = (Engine.getGuiWidth()-this.width)/2;
+        this.posY = Engine.getGuiHeight() / 4;
         int scrollListHeight = 500;
         int w1 = this.width;
         int idx = 10;
@@ -163,7 +156,7 @@ public class GuiControls extends Gui {
             back.setSize(160, 30);
             back.setPos(this.width / 2 - 160/2, scrollListHeight+titleBarOffset+15);
         }
-        this.posY = Game.guiHeight/2-this.height/2;
+        this.posY = Engine.getGuiHeight()/2-this.height/2;
         this.scrolllist.setPos(posX+25, posY+titleBarOffset);
         this.add(this.scrolllist.scrollbarbutton);
     }

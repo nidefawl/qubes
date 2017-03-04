@@ -23,14 +23,14 @@ public class GuiOverlayChat extends Gui {
     public void render(float fTime, double mx, double mY) {
         Shaders.textured.enable();
         if (Game.instance.canRenderGui3d()) {
-            int x = Game.guiWidth/2-Game.guiWidth/6;
+            int x = Engine.getGuiWidth()/2-Engine.getGuiWidth()/6;
             setPos(x, 0);
-            setSize(Game.guiWidth/3, Game.guiHeight/3);
+            setSize(Engine.getGuiWidth()/3, Engine.getGuiHeight()/3);
             renderAt(posX, posY+height, false);
         } else {
 
-            this.posY = Game.guiHeight-12;
-            renderAt(0, Game.guiHeight-12, false);
+            this.posY = Engine.getGuiHeight()-12;
+            renderAt(0, Engine.getGuiHeight()-12, false);
         }
         if (Game.instance.canRenderGui3d()) {
             

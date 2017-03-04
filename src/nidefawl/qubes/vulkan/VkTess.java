@@ -10,6 +10,7 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.ReallocIntBuffer;
 import nidefawl.qubes.gl.Tess;
+import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.vec.Vector3f;
@@ -28,6 +29,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     public final static int BUF_INCR  = 1024*1024;
 
     public int[]         rawBuffer = new int[BUF_INCR];
+    public int[]         rawBufferIdx = new int[BUF_INCR];
     protected int           rgba;
     protected int           uintLSB;
     protected int           uintMSB;
@@ -40,12 +42,17 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     private final boolean isSoftTesselator;
 //    ByteBuffer                   buffer       = null;
 //    private IntBuffer            intBuffer;
-    ReallocIntBuffer bufInt;
+    ReallocIntBuffer bufIntV;
+    ReallocIntBuffer bufIntI;
 
     static class FrameLocalBuffers {
-        private int vboIdx;
         private VkBuffer[] vbo;
         private VkBuffer[] vboIndices;
+        private int vboIdxV;
+        private int vboIdxI;
+        private int offsetV;
+        private int offsetI;
+        final long BUFFER_SIZE = 32*1024*1024;
         public FrameLocalBuffers(VkTess tess, VKContext context, int numbuffers) {
             vbo = new VkBuffer[numbuffers];
             vboIndices = new VkBuffer[numbuffers];
@@ -58,14 +65,46 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
             for (int i = 0; i < this.vbo.length; i++) {
                 this.vbo[i].destroy();
                 this.vboIndices[i].destroy();
-                Thread.dumpStack();
             }
         }
+        public void upload(VkTess vkTess, ByteBuffer bufV, int sizeV, ByteBuffer bufI, int sizeI) {
+            if (BUFFER_SIZE-offsetV < sizeV) {
+                vboIdxV++;
+                if (vboIdxV >= vbo.length) {
+                    vboIdxV = 0;
+                }
+                offsetV = 0;
+            }
+            if (BUFFER_SIZE-offsetI < sizeI) {
+                vboIdxI++;
+                if (vboIdxI >= vboIndices.length) {
+                    vboIdxI = 0;
+                }
+                offsetI = 0;
+            }
+
+            if (this.vbo[this.vboIdxV].getSize() <= sizeV) {
+                System.out.println("Remake buffer with size "+BUFFER_SIZE+", req "+sizeV);
+                this.vbo[this.vboIdxV].destroy();
+                this.vbo[this.vboIdxV].create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, BUFFER_SIZE, false);
+            }
+            if (this.vboIndices[this.vboIdxI].getSize() <= sizeI) {
+                System.out.println("Remake buffer with size "+BUFFER_SIZE+", req "+sizeI);
+                this.vboIndices[this.vboIdxI].destroy();
+                this.vboIndices[this.vboIdxI].create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, BUFFER_SIZE, false);
+            }
+            vkTess.vertexOffset = offsetV;
+            vkTess.indexOffset = offsetI;
+            this.vbo[this.vboIdxV].upload(bufV, offsetV);
+            this.vboIndices[this.vboIdxI].upload(bufI, offsetI);
+            offsetV += Math.max(2048, GameMath.nextPowerOf2(sizeV));
+            offsetI += Math.max(2048, GameMath.nextPowerOf2(sizeI));
+        }
         public VkBuffer vbo() {
-            return this.vbo[vboIdx];
+            return this.vbo[this.vboIdxV];
         }
         public VkBuffer vboIndices() {
-            return this.vboIndices[vboIdx];
+            return this.vboIndices[this.vboIdxI];
         }
     }
     FrameLocalBuffers[] buffers = new FrameLocalBuffers[0];
@@ -85,7 +124,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
             
             buffers = new FrameLocalBuffers[numImages];
             for (int i = 0; i < buffers.length; i++) {
-                buffers[i] = new FrameLocalBuffers(this, context, 1<<4);
+                buffers[i] = new FrameLocalBuffers(this, context, 1<<0);
             }
         }
     }
@@ -95,7 +134,8 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     public VkTess(boolean isSoftTesselator, String s) {
         this.isSoftTesselator = isSoftTesselator;
         if (!this.isSoftTesselator) {
-            bufInt = new ReallocIntBuffer();
+            bufIntV = new ReallocIntBuffer();
+            bufIntI = new ReallocIntBuffer();
         }
         this.tag = s;
     }
@@ -228,62 +268,86 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
         setColor(rgb&0xFFFFFF, (int) Math.max(0, Math.min(255, alpha * 255F)));
     }
     
-    public void finish(int idxMode, int bufferMode, AbstractVkTesselatorState out, int bufferOffset) {
+    public void finish(int idxMode, int bufferMode, AbstractVkTesselatorState out) {
         if (isSoftTesselator()) {
             throw new IllegalStateException("Cannot draw soft tesselator");
         }
-        if (vertexcount >1) {
-            int currentBuffer = VKContext.currentBuffer;
-            FrameLocalBuffers buffer = buffers[currentBuffer];
-            if (out == this) {
-                buffer.vboIdx++;
-                if (buffer.vboIdx >= buffer.vbo.length) {
-                    buffer.vboIdx = 0;
-                }
-            }
+        this.idxCount = 0;
+        if (vertexcount > 0) {
             int vIdx = getIdx(vertexcount);
-            bufInt.put(rawBuffer, 0, vIdx);
-            VkBuffer bufferVertex = out.getVertexBuffer();
-            VkBuffer bufferIdx = out.getIndexBuffer();
-            upload(bufferVertex, bufferMode, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufInt.getByteBuf(), bufferOffset);
-            int pos = 0;
-            if (idxMode == CREATE_QUAD_IDX_BUFFER) {
-                if (this.vertexcount%4 != 0) {
-                    throw new IllegalStateException("Cannot make tri idx: vertexcount%4 != 0");
+            bufIntV.put(rawBuffer, 0, vIdx);
+            this.idxCount = createIdxBuffer(idxMode);
+            bufIntI.put(rawBufferIdx, 0, this.idxCount);
+            
+            if (out == this) {
+                if (bufferMode != STREAM_UPLOAD) {
+                    throw new GameLogicError("VKTess buffer is not meant for device local uploads");
                 }
-                int quads = this.vertexcount/4;
-                for (int i = 0; i < quads; i++) {
-                    vIdx = i*4;
-                    rawBuffer[pos++]=(vIdx+0);
-                    rawBuffer[pos++]=(vIdx+1);
-                    rawBuffer[pos++]=(vIdx+2);
-                    rawBuffer[pos++]=(vIdx+2);
-                    rawBuffer[pos++]=(vIdx+3);
-                    rawBuffer[pos++]=(vIdx+0);
-                }
-            } else if (idxMode == CREATE_PER_VERTEX_IDX_BUFFER) {
-                for (int i = 0; i < this.vertexcount; i++) {
-                    rawBuffer[i]=i;
-                }
-                pos = vertexcount;
-            } else {
-                System.out.println("Mode not supported "+idxMode);
-//                Thread.dumpStack();
-            }
-            this.idxCount = pos;
-            bufInt.put(rawBuffer, 0, pos);
-            upload(bufferIdx, bufferMode, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufInt.getByteBuf(), bufferOffset);
-            if (out != this) {
-                this.copyTo(out);
-            }
+                int currentBuffer = VKContext.currentBuffer;
+                FrameLocalBuffers buffer = buffers[currentBuffer];
+                buffer.upload(this, bufIntV.getByteBuf(), vIdx*4, bufIntI.getByteBuf(), this.idxCount*4);
+//                System.out.println("vertexOffset "+vertexOffset+", indexOffset "+indexOffset+", "+vIdx+","+idxCount);
 
+//                int currentBuffer = VKContext.currentBuffer;
+//                FrameLocalBuffers buffer = buffers[currentBuffer];
+//                buffer.vboIdxV++;
+//                if (buffer.vboIdxV >= buffer.vbo.length) {
+//                    buffer.vboIdxV = 0;
+//                }
+//                buffer.vboIdxI++;
+//                if (buffer.vboIdxI >= buffer.vboIndices.length) {
+//                    buffer.vboIdxI = 0;
+//                }
+//                
+//                this.vertexOffset = 0;
+//                this.indexOffset = 0;
+//                
+//                upload(out.getVertexBuffer(), bufferMode, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufIntV.getByteBuf(), this.vertexOffset);
+//                upload(out.getIndexBuffer(), bufferMode, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufIntI.getByteBuf(), this.indexOffset);
+
+            } else {
+                this.vertexOffset = 0;
+                this.indexOffset = 0;
+                this.copyTo(out);
+                upload(out.getVertexBuffer(), bufferMode, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufIntV.getByteBuf(), this.vertexOffset);
+                upload(out.getIndexBuffer(), bufferMode, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufIntI.getByteBuf(), this.indexOffset);
+            }
         }
         resetState();
     }
+    private int createIdxBuffer(int idxMode) {
+        int pos = 0;
+        if (idxMode == CREATE_QUAD_IDX_BUFFER) {
+            if (this.vertexcount%4 != 0) {
+                throw new IllegalStateException("Cannot make tri idx: vertexcount%4 != 0 ("+this.vertexcount+")");
+            }
+            int quads = this.vertexcount/4;
+            for (int i = 0; i < quads; i++) {
+                int vIdx = i*4;
+                rawBufferIdx[pos++]=(vIdx+0);
+                rawBufferIdx[pos++]=(vIdx+1);
+                rawBufferIdx[pos++]=(vIdx+2);
+                rawBufferIdx[pos++]=(vIdx+2);
+                rawBufferIdx[pos++]=(vIdx+3);
+                rawBufferIdx[pos++]=(vIdx+0);
+            }
+        } else if (idxMode == CREATE_PER_VERTEX_IDX_BUFFER) {
+            for (int i = 0; i < this.vertexcount; i++) {
+                rawBufferIdx[i]=i;
+            }
+            pos = vertexcount;
+        } else {
+            throw new GameLogicError("Mode not supported "+idxMode);
+        }
+        return pos;
+    }
+
     private void upload(VkBuffer buffer, int bufferMode, int bufferType, ByteBuffer byteBuf, int bufferoffset) {
         if (buffer.getSize() < byteBuf.remaining()+1 || (bufferMode == DEVICE_LOCAL_UPLOAD) != buffer.isDeviceLocal()) {
             buffer.destroy();
-            buffer.create(bufferType, GameMath.nextPowerOf2(byteBuf.remaining()), (bufferMode == DEVICE_LOCAL_UPLOAD));
+            long size = Math.max(2048, GameMath.nextPowerOf2(byteBuf.remaining()));
+            buffer.create(bufferType, size, (bufferMode == DEVICE_LOCAL_UPLOAD));
+            System.out.println("realloc "+((bufferMode == DEVICE_LOCAL_UPLOAD)?"devicelocal":"stream")+" - "+size);
         }
         buffer.upload(byteBuf, bufferoffset);
         
@@ -300,9 +364,6 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
         return buffer().vboIndices();
     }
     
-    public void finish(int mode) {
-        this.finish(mode, STREAM_UPLOAD, this, 0);
-    }
     
     
 
@@ -318,7 +379,8 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     }
 
     public void destroy() {
-        this.bufInt.release();
+        this.bufIntV.release();
+        this.bufIntI.release();
         for (int i = 0; i < buffers.length; i++) {
             this.buffers[i].destroy();
             this.buffers[i] = null;
@@ -344,20 +406,14 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
 
     @Override
     public void drawQuads() {
-        finish(VkTess.CREATE_QUAD_IDX_BUFFER);
-        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
+        finish(VkTess.CREATE_QUAD_IDX_BUFFER, STREAM_UPLOAD, this);
+        bindAndDraw(Engine.getDrawCmdBuffer());
     }
 
     @Override
-    public void drawLineStrip() {
-        finish(VkTess.CREATE_PER_VERTEX_IDX_BUFFER);
-        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
-    }
-
-    @Override
-    public void drawLines() {
-        finish(VkTess.CREATE_PER_VERTEX_IDX_BUFFER);
-        bindAndDraw(Engine.getDrawCmdBuffer(), 0);
+    public void drawTris() {
+        finish(VkTess.CREATE_PER_VERTEX_IDX_BUFFER, STREAM_UPLOAD, this);
+        bindAndDraw(Engine.getDrawCmdBuffer());
     }
 
 }

@@ -262,16 +262,14 @@ public class Game extends GameBase {
         this.vrGui.reset();
         this.renderGui3d = VR_SUPPORT || this.settings.gui3d;
         if (this.renderGui3d) {
-            guiWidth = 1920;
-            guiHeight = 1080;
-            int x = guiWidth/2-guiWidth/6;
-            this.chatOverlay.setPos(x, guiHeight/2-guiHeight/6);
-            this.chatOverlay.setSize(guiWidth/3, guiHeight/3);
+            Engine.updateGuiResolution(1920, 1080);
+            int x = Engine.getGuiWidth()/2-Engine.getGuiWidth()/6;
+            this.chatOverlay.setPos(x, Engine.getGuiHeight()/2-Engine.getGuiHeight()/6);
+            this.chatOverlay.setSize(Engine.getGuiWidth()/3, Engine.getGuiHeight()/3);
         } else {
-            guiWidth = windowWidth;
-            guiHeight = windowHeight;
-            this.chatOverlay.setPos(8, guiHeight-guiHeight/3-8);
-            this.chatOverlay.setSize(guiWidth/2, guiHeight/3);
+            Engine.updateGuiResolution(windowWidth, windowHeight);
+            this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
+            this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
         }
         GuiContext.canDragWindows=!this.renderGui3d;
         GuiContext.canWindowsFocusChange=!this.renderGui3d;
@@ -1109,7 +1107,7 @@ public class Game extends GameBase {
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
             int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
             String s = String.format("%s - Display %dx%d - Window %dx%d - SceneFB %dx%d - Gui %dx%d", 
-                    getAppTitle(), displayWidth, displayHeight, windowWidth, windowHeight, iw, ih, guiWidth, guiHeight);
+                    getAppTitle(), displayWidth, displayHeight, windowWidth, windowHeight, iw, ih, Engine.getGuiWidth(), Engine.getGuiHeight());
             setTitle(s);
 //            System.out.println(lastFPS);
 //          System.out.println("initShaders");
@@ -1400,17 +1398,17 @@ public class Game extends GameBase {
     public void onWindowResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
             if (this.statsCached != null) {
-                this.statsCached.setSize(guiWidth, guiHeight);
+                this.statsCached.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
                 this.statsCached.setPos(0, 0);
             }
             if (this.gui != null) {
                 this.gui.setPos(0, 0);
-                this.gui.setSize(guiWidth, guiHeight);
+                this.gui.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
                 this.gui.initGui(this.gui.firstOpen);
             }
             this.chatOverlay = new GuiOverlayChat();
-            this.chatOverlay.setPos(8, guiHeight-guiHeight/3-8);
-            this.chatOverlay.setSize(guiWidth/2, guiHeight/3);
+            this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
+            this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
         }
         if (!VR_SUPPORT||isStarting) {
             Game.displayWidth=displayWidth;

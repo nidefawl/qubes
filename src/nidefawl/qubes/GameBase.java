@@ -53,12 +53,10 @@ import nidefawl.qubes.worldgen.TerrainGen;
 
 public abstract class GameBase implements Runnable, IErrorHandler {
     public static String  appName         = "";
-    public static int     windowWidth;
-    public static int     windowHeight;
+    public  int     windowWidth;
+    public  int     windowHeight;
     public static int     displayWidth;
     public static int     displayHeight;
-    public static int     guiWidth;
-    public static int     guiHeight;
     public static boolean GL_ERROR_CHECKS = true;
     public static boolean VR_SUPPORT = false;
     public static boolean DEBUG_LAYER = false;
@@ -77,6 +75,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     private GLFWWindowFocusCallback cbWindowFocus;
     private GLFWCursorPosCallback   cbCursorPos;
     private GLFWCharCallback        cbText;
+    private GLFWFramebufferSizeCallback cbFramebufferSize;
     static boolean hasTextHook = false;
 
     public static boolean      toggleTiming;
@@ -132,8 +131,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         this.timer = new Timer(TICKS_PER_SEC);
         displayWidth = initWidth;
         displayHeight = initHeight;
-        guiWidth = displayWidth;
-        guiHeight = displayHeight;
         windowWidth = displayWidth;
         windowHeight = displayHeight;
         outStream = new LogBufferStream(System.out);
@@ -226,6 +223,13 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 newHeight = height;
             }
         };
+        cbFramebufferSize = new GLFWFramebufferSizeCallback() {
+            @Override
+            public void invoke(long window, int width, int height) {
+//                newWidth = width;
+//                newHeight = height;
+            }
+        };
         cbKeyboard = new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
@@ -303,6 +307,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             if (glfwInit() != true)
                 throw new IllegalStateException("Unable to initialize GLFW");
             if (isVulkan) {
+                
+                
                 if (!glfwVulkanSupported()) {
                     throw new AssertionError("GLFW failed to find the Vulkan loader");
                 }
@@ -388,6 +394,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             glfwSetScrollCallback(windowId, cbScrollCallback);
             glfwSetWindowFocusCallback(windowId, cbWindowFocus);
             glfwSetCursorPosCallback(windowId, cbCursorPos);
+            glfwSetFramebufferSizeCallback(windowId, cbFramebufferSize);
             if (isVulkan) {
                 try ( MemoryStack stack = stackPush() ) {
                     LongBuffer pSurface = stack.longs(0);
@@ -452,6 +459,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             }
             VulkanInit.destroyStatic();
         }
+        cbFramebufferSize.free();
         cbKeyboard.free();
         cbMouseButton.free();
         cbScrollCallback.free();
@@ -478,14 +486,20 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         FontRenderer.destroy();
         destroyContext();
     }
-
     public void checkResize() {
         if (minimized && newWidth*newHeight>0) {
             minimized = false;
             if (isRunning()&&!isVulkan)
                 Engine.setDefaultViewport();
         }
-        if (newWidth != windowWidth || newHeight != windowHeight) {
+        boolean resize = newWidth != windowWidth || newHeight != windowHeight;
+        if (vkContext != null && (vkContext.reinitSwapchain || resize)) {
+            int[] size = vkContext.updateSwapchain(this, vsync);
+            newWidth = size[0];
+            newHeight = size[1];
+            resize = newWidth != windowWidth || newHeight != windowHeight;
+        }
+        if (resize) {
             if (newWidth*newHeight <= 0) {
                 minimized = true;
                 return;
@@ -501,25 +515,20 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 windowHeight = 1;
             }
             if (!canRenderGui3d()) {
-                guiWidth = windowWidth;
-                guiHeight = windowHeight;
+                Engine.updateGuiResolution(windowWidth, windowHeight);
             }
             if (useWindowSizeAsRenderResolution) {
+                Engine.updateRenderResolution(windowWidth, windowHeight);
                 displayWidth = windowWidth;
                 displayHeight = windowHeight;
             }
             try {
                 onWindowResize(windowWidth, windowHeight);
-                if (vkContext != null) {
-                    vkContext.updateSwapchain(windowWidth, windowHeight, vsync);
-                }
                 if (isRunning()&&!isVulkan)
                     Engine.setDefaultViewport();
             } catch (Throwable t) {
                 setException(new GameError("GLFWWindowSizeCallback", t));
             }
-        } else if (vkContext != null && vkContext.reinitSwapchain) {
-            vkContext.updateSwapchain(windowWidth, windowHeight, vsync);
         }
     }
 
@@ -658,7 +667,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             shutdown();
             return;
         }
-
         if (vkContext != null) {
             vkContext.preRender();
         }
@@ -1027,7 +1035,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         this.gui = gui;
         if (this.gui != null) {
             this.gui.setPos(0, 0);
-            this.gui.setSize(guiWidth, guiHeight);
+            this.gui.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
             this.gui.initGui(this.gui.firstOpen);
             onGuiOpened(this.gui, prevGui);
             this.gui.firstOpen = false;
@@ -1195,8 +1203,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         updateProjection();
     }
     protected void setGUIViewport() {
-        Game.displayWidth=guiWidth;
-        Game.displayHeight=guiHeight;
+        Engine.updateRenderResolution(Engine.getGuiWidth(), Engine.getGuiHeight());
+//        Game.displayWidth=guiWidth;
+//        Game.displayHeight=guiHeight;
         updateProjection();
     }
     protected void updateProjection() {

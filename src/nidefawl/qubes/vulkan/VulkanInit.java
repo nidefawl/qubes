@@ -112,40 +112,6 @@ public class VulkanInit {
         
         return context;
     }
-    public static void createFramebuffers(VKContext ctxt) {
-        if (ctxt.swapChain.framebuffers != null) {
-            for (int i = 0; i < ctxt.swapChain.framebuffers.length; i++)
-                vkDestroyFramebuffer(ctxt.device, ctxt.swapChain.framebuffers[i], null);
-        }
-        try ( MemoryStack stack = stackPush() ) {
-            LongBuffer attachments = stack.longs(0, 0);
-            VkFramebufferCreateInfo fci = VkFramebufferCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
-                    .pAttachments(attachments)
-                    .flags(VK_FLAGS_NONE)
-                    .height(ctxt.swapChain.height)
-                    .width(ctxt.swapChain.width)
-                    .layers(1)
-                    .pNext(NULL)
-                    .renderPass(ctxt.getMainRenderPass());
-            // Create a framebuffer for each swapchain image
-            long[] framebuffers = new long[ctxt.swapChain.images.length];
-            LongBuffer pFramebuffer = stack.longs(0);
-            
-            // Depth/Stencil attachment is the same for all frame buffers
-            attachments.put(1, ctxt.depthStencil.view);
-            for (int i = 0; i < ctxt.swapChain.images.length; i++) {
-                attachments.put(0, ctxt.swapChain.imageViews[i]);
-                int err = vkCreateFramebuffer(ctxt.device, fci, null, pFramebuffer);
-                long framebuffer = pFramebuffer.get(0);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("Failed to create framebuffer: " + VulkanErr.toString(err));
-                }
-                framebuffers[i] = framebuffer;
-            }
-            ctxt.swapChain.framebuffers = framebuffers;
-        }
-    }
     public static void initContext(VKContext ctxt, long windowSurface, int windowWidth, int windowHeight, boolean vsync) {
         if (windowSurface == 0) {
             throw new AssertionError("Need surface to init vk context");
@@ -154,10 +120,10 @@ public class VulkanInit {
             throw new AssertionError("Need physicalDevice to init vk context");
         }
         ctxt.surface = windowSurface;
-        ctxt.swapChain = new SwapChain(ctxt);
+        ctxt.swapChain = new SwapChain(ctxt, true);
         ctxt.swapChain.width = windowWidth;
         ctxt.swapChain.height = windowHeight;
-        getColorFormatAndSpace(ctxt);
+        getSurfaceColorFormatAndSpace(ctxt);
         ctxt.descriptorPool = createDescriptorPool(ctxt);
         ctxt.copyCommandPool = createCommandPool(ctxt, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);;
         ctxt.renderCommandPool = createCommandPool(ctxt, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -167,11 +133,10 @@ public class VulkanInit {
         if (!getSupportedDepthFormat(ctxt)) {
             throw new AssertionError("No supported depth format");
         }
-        createRenderPass(ctxt);
-        createRenderPassSubpasses(ctxt);
+        VkRenderPasses.init(ctxt);
+//        createRenderPass(ctxt);
+//        createRenderPassSubpasses(ctxt);
         ctxt.swapChain.setup(windowWidth, windowHeight, vsync);
-        createDepthStencilImages(ctxt);
-        createFramebuffers(ctxt);
         ctxt.init();
     }
     private static long createDescriptorPool(VKContext ctxt) {
@@ -192,56 +157,6 @@ public class VulkanInit {
     
     }
 
-    public static void createDepthStencilImages(VKContext ctxt) {
-        if (ctxt.depthStencil.view != VK_NULL_HANDLE)
-            vkDestroyImageView(ctxt.device, ctxt.depthStencil.view, null);
-        if (ctxt.depthStencil.image != VK_NULL_HANDLE)
-            vkDestroyImage(ctxt.device, ctxt.depthStencil.image, null);
-        if (ctxt.depthStencil.image != VK_NULL_HANDLE)
-            ctxt.memoryManager.releaseImageMemory(ctxt.depthStencil.image);
-        try ( MemoryStack stack = stackPush() ) {
-            VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-                    .pNext(0)
-                    .imageType(VK_IMAGE_TYPE_2D)
-                    .format(ctxt.depthFormat)
-                    .mipLevels(1)
-                    .arrayLayers(1)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .tiling(VK_IMAGE_TILING_OPTIMAL)
-                    .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
-                    .flags(0);
-            VkExtent3D extent = imageCreateInfo.extent();
-            extent.width(ctxt.swapChain.width).height(ctxt.swapChain.height).depth(1);
-            VkImageViewCreateInfo depthStencilView = VkImageViewCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                    .pNext(0)
-                    .viewType(VK_IMAGE_VIEW_TYPE_2D)
-                    .format(ctxt.depthFormat)
-                    .flags(0);
-            depthStencilView.subresourceRange()
-                    .aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
-                    .baseMipLevel(0)
-                    .levelCount(1)
-                    .baseArrayLayer(0)
-                    .layerCount(1);
-            LongBuffer pImage = stack.longs(0);
-            int err = vkCreateImage(ctxt.device, imageCreateInfo, null, pImage);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateImage failed: " + VulkanErr.toString(err));
-            }
-            ctxt.depthStencil.image = pImage.get(0);
-            ctxt.memoryManager.allocateImageMemory(ctxt.depthStencil.image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.DEPTH_STENCIL_MEMORY);
-            depthStencilView.image(ctxt.depthStencil.image);
-            LongBuffer pDepthStencilView = stack.longs(0);
-            err = vkCreateImageView(ctxt.device, depthStencilView, null, pDepthStencilView);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
-            }
-            ctxt.depthStencil.view = pDepthStencilView.get(0);
-            
-        }
-    }
     private static boolean getSupportedDepthFormat(VKContext ctxt) {
         // Since all depth formats may be optional, we need to find a suitable depth format to use
         // Start with the highest precision packed format
@@ -293,179 +208,179 @@ public class VulkanInit {
         return commandPool;
     }
 
-    private static void createRenderPass(VKContext ctxt) {
-        try ( MemoryStack stack = stackPush() ) {
-            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
-            attachments.get(0)
-                    .format(ctxt.colorFormat)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
-                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                    .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
-            attachments.get(1)
-                    .format(ctxt.depthFormat)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
-                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                    .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-            VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
-                    .attachment(0)
-                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
-                    .attachment(1)
-                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-            VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack)
-                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
-                    .flags(VK_FLAGS_NONE)
-                    .pInputAttachments(null)
-                    .colorAttachmentCount(colorReference.remaining())
-                    .pColorAttachments(colorReference)
-                    .pDepthStencilAttachment(depthReference)
-                    .pResolveAttachments(null)
-                    .pPreserveAttachments(null);
-            
-
-            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
-            subpassDependencies.get(0)
-                    .srcSubpass(VK_SUBPASS_EXTERNAL)
-                    .dstSubpass(0)
-                    .srcStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
-                    .dstStageMask (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .srcAccessMask (VK_ACCESS_MEMORY_READ_BIT)
-                    .dstAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
-            subpassDependencies.get(1)
-                    .srcSubpass(0)
-                    .dstSubpass(VK_SUBPASS_EXTERNAL)
-                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .dstStageMask (VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
-                    .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
-                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
-            
-
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(attachments)
-                    .pSubpasses(subpass)
-                    .pDependencies(subpassDependencies);
-
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            ctxt.renderPass = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
-            }
-        }
-    }
-    
-
-    private static void createRenderPassSubpasses(VKContext ctxt) {
-        try ( MemoryStack stack = stackPush() ) {
-            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
-            attachments.get(0)
-                    .format(ctxt.colorFormat)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
-                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                    .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
-            attachments.get(1)
-                    .format(ctxt.depthFormat)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-                    .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                    .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-            VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
-                    .attachment(0)
-                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
-                    .attachment(1)
-                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference.Buffer colorReference2 = VkAttachmentReference.callocStack(1, stack)
-                    .attachment(0)
-                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-            VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(2, stack);
-            VkSubpassDescription subpass0 = subpasses.get(0)
-                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
-                    .flags(VK_FLAGS_NONE)
-                    .pInputAttachments(null)
-                    .colorAttachmentCount(colorReference.remaining())
-                    .pColorAttachments(colorReference)
-                    .pDepthStencilAttachment(depthReference)
-                    .pResolveAttachments(null)
-                    .pPreserveAttachments(null);
-            VkSubpassDescription subpass1 = subpasses.get(1)
-                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
-                    .flags(VK_FLAGS_NONE)
-                    .pInputAttachments(null)
-                    .colorAttachmentCount(colorReference2.remaining())
-                    .pColorAttachments(colorReference2)
-                    .pDepthStencilAttachment(null)
-                    .pResolveAttachments(null)
-                    .pPreserveAttachments(null);
-            
-
-            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(3, stack);
-            subpassDependencies.get(0)
-                    .srcSubpass(VK_SUBPASS_EXTERNAL)
-                    .dstSubpass(0)
-                    .srcStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
-                    .dstStageMask (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .srcAccessMask (VK_ACCESS_MEMORY_READ_BIT)
-                    .dstAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
-            subpassDependencies.get(1)
-                    .srcSubpass(0)
-                    .dstSubpass(1)
-                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
-            subpassDependencies.get(2)
-                    .srcSubpass(1)
-                    .dstSubpass(VK_SUBPASS_EXTERNAL)
-                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .dstStageMask (VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
-                    .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
-                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
-            
-
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(attachments)
-                    .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
-
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            ctxt.renderPassSubpasses = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
-            }
-        }
-    }
+//    private static void createRenderPass(VKContext ctxt) {
+//        try ( MemoryStack stack = stackPush() ) {
+//            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
+//            attachments.get(0)
+//                    .format(ctxt.colorFormat)
+//                    .samples(VK_SAMPLE_COUNT_1_BIT)
+//                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+//                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+//                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+//                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+//                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+//                    .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+//
+//            attachments.get(1)
+//                    .format(ctxt.depthFormat)
+//                    .samples(VK_SAMPLE_COUNT_1_BIT)
+//                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+//                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+//                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+//                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+//                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+//                    .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+//
+//            VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
+//                    .attachment(0)
+//                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+//            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
+//                    .attachment(1)
+//                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+//
+//            VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack)
+//                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+//                    .flags(VK_FLAGS_NONE)
+//                    .pInputAttachments(null)
+//                    .colorAttachmentCount(colorReference.remaining())
+//                    .pColorAttachments(colorReference)
+//                    .pDepthStencilAttachment(depthReference)
+//                    .pResolveAttachments(null)
+//                    .pPreserveAttachments(null);
+//            
+//
+//            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
+//            subpassDependencies.get(0)
+//                    .srcSubpass(VK_SUBPASS_EXTERNAL)
+//                    .dstSubpass(0)
+//                    .srcStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+//                    .dstStageMask (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .srcAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+//                    .dstAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+//            subpassDependencies.get(1)
+//                    .srcSubpass(0)
+//                    .dstSubpass(VK_SUBPASS_EXTERNAL)
+//                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .dstStageMask (VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+//                    .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+//                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+//            
+//
+//            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
+//                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+//                    .pNext(NULL)
+//                    .pAttachments(attachments)
+//                    .pSubpasses(subpass)
+//                    .pDependencies(subpassDependencies);
+//
+//            LongBuffer pRenderPass = stack.longs(0);
+//            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
+//            ctxt.renderPass = pRenderPass.get(0);
+//            if (err != VK_SUCCESS) {
+//                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
+//            }
+//        }
+//    }
+//    
+//
+//    private static void createRenderPassSubpasses(VKContext ctxt) {
+//        try ( MemoryStack stack = stackPush() ) {
+//            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
+//            attachments.get(0)
+//                    .format(ctxt.colorFormat)
+//                    .samples(VK_SAMPLE_COUNT_1_BIT)
+//                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+//                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+//                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+//                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+//                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+//                    .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+//
+//            attachments.get(1)
+//                    .format(ctxt.depthFormat)
+//                    .samples(VK_SAMPLE_COUNT_1_BIT)
+//                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+//                    .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+//                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+//                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+//                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+//                    .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+//
+//            VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
+//                    .attachment(0)
+//                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+//            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
+//                    .attachment(1)
+//                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+//            VkAttachmentReference.Buffer colorReference2 = VkAttachmentReference.callocStack(1, stack)
+//                    .attachment(0)
+//                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+//
+//            VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(2, stack);
+//            VkSubpassDescription subpass0 = subpasses.get(0)
+//                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+//                    .flags(VK_FLAGS_NONE)
+//                    .pInputAttachments(null)
+//                    .colorAttachmentCount(colorReference.remaining())
+//                    .pColorAttachments(colorReference)
+//                    .pDepthStencilAttachment(depthReference)
+//                    .pResolveAttachments(null)
+//                    .pPreserveAttachments(null);
+//            VkSubpassDescription subpass1 = subpasses.get(1)
+//                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+//                    .flags(VK_FLAGS_NONE)
+//                    .pInputAttachments(null)
+//                    .colorAttachmentCount(colorReference2.remaining())
+//                    .pColorAttachments(colorReference2)
+//                    .pDepthStencilAttachment(null)
+//                    .pResolveAttachments(null)
+//                    .pPreserveAttachments(null);
+//            
+//
+//            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(3, stack);
+//            subpassDependencies.get(0)
+//                    .srcSubpass(VK_SUBPASS_EXTERNAL)
+//                    .dstSubpass(0)
+//                    .srcStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+//                    .dstStageMask (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .srcAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+//                    .dstAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+//            subpassDependencies.get(1)
+//                    .srcSubpass(0)
+//                    .dstSubpass(1)
+//                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
+//            subpassDependencies.get(2)
+//                    .srcSubpass(1)
+//                    .dstSubpass(VK_SUBPASS_EXTERNAL)
+//                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .dstStageMask (VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+//                    .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+//                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+//            
+//
+//            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
+//                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+//                    .pNext(NULL)
+//                    .pAttachments(attachments)
+//                    .pSubpasses(subpasses)
+//                    .pDependencies(subpassDependencies);
+//
+//            LongBuffer pRenderPass = stack.longs(0);
+//            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
+//            ctxt.renderPassSubpasses = pRenderPass.get(0);
+//            if (err != VK_SUCCESS) {
+//                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
+//            }
+//        }
+//    }
     private static VkCommandBuffer createCommandBuffer(VKContext ctxt, long pool) {
         VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkCommandBufferAllocateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
@@ -482,7 +397,7 @@ public class VulkanInit {
         }
         return new VkCommandBuffer(commandBuffer, ctxt.device);
     }
-    private static void getColorFormatAndSpace(VKContext ctxt) {
+    private static void getSurfaceColorFormatAndSpace(VKContext ctxt) {
         IntBuffer pQueueFamilyPropertyCount = memAllocInt(1);
         vkGetPhysicalDeviceQueueFamilyProperties(ctxt.getPhysicalDevice(), pQueueFamilyPropertyCount, null);
         int queueCount = pQueueFamilyPropertyCount.get(0);

@@ -9,6 +9,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.font.ITextEdit;
 import nidefawl.qubes.font.TextInput;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.TextField;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.shader.Shaders;
@@ -47,13 +48,13 @@ public class GuiChatInput extends Gui implements ITextEdit {
             this.field = new TextField(this, 2, "");
             this.field.getTextInput().setHistory(ChatManager.getInstance());
             if (Game.instance.canRenderGui3d()) {
-                field.setSize(Game.guiWidth/3, h);
-//                field.setPos((Game.guiWidth-field.width)/2,(Game.guiHeight-field.height)/2);
-                field.setPos((Game.guiWidth-field.width)/2, Game.guiHeight/2+Game.guiHeight/6+yP);
+                field.setSize(Engine.getGuiWidth()/3, h);
+//                field.setPos((Engine.getGuiWidth()-field.width)/2,(Engine.getGuiHeight()-field.height)/2);
+                field.setPos((Engine.getGuiWidth()-field.width)/2, Engine.getGuiHeight()/2+Engine.getGuiHeight()/6+yP);
             } else {
 
-                field.setPos(xP, Game.guiHeight-h-yP);
-                field.setSize(Game.guiWidth/2, h);
+                field.setPos(xP, Engine.getGuiHeight()-h-yP);
+                field.setSize(Engine.getGuiWidth()/2, h);
             }
             field.focused = true;
             GuiContext.input=field;

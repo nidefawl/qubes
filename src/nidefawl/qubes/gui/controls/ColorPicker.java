@@ -5,7 +5,6 @@ import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.render.gui.BoxGUI;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Color;
 
 public abstract class ColorPicker extends AbstractUI {
@@ -92,6 +91,9 @@ public abstract class ColorPicker extends AbstractUI {
             colorPick[i].alpha2*=0.5f;
             this.parent.add(colorPick[i]);
         }
+    }
+    public int getPickerHeight() {
+        return Math.max(3*40, this.height);
     }
 
     @Override

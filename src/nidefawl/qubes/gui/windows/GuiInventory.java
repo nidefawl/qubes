@@ -2,6 +2,7 @@ package nidefawl.qubes.gui.windows;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.shader.Shaders;
 
 public class GuiInventory extends GuiWindowInventoryBase {
@@ -27,8 +28,8 @@ public class GuiInventory extends GuiWindowInventoryBase {
             int rows = this.slots.getSlots().size()/10;
             int width = 20 + (slotBDist+slotW)*10;
             int height = titleBarHeight + 15+ (slotBDist+slotW)*rows;
-            int xPos = (Game.guiWidth-width)/2;
-            int yPos = (Game.guiHeight-height)/2;
+            int xPos = (Engine.getGuiWidth()-width)/2;
+            int yPos = (Engine.getGuiHeight()-height)/2;
             setPos(xPos, yPos);
             setSize(width, height);
 //        }

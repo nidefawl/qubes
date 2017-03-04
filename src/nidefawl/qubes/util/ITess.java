@@ -37,8 +37,6 @@ public interface ITess {
 
     void drawQuads();
 
-    void drawLineStrip();
-
-    void drawLines();
+    void drawTris();
 
 }

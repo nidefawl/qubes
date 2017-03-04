@@ -55,6 +55,8 @@ public class EngineInitSettings {
     public boolean inverseZBuffer;
     public boolean isVulkan;
     public boolean inverseClipspaceYOpengl;
+    public boolean initShadowProj;
+    
     public EngineInitSettings setVulkan(boolean isVulkan) {
         this.isVulkan = isVulkan;
         return this;

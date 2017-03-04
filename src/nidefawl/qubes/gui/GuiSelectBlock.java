@@ -188,7 +188,7 @@ public class GuiSelectBlock extends Gui {
             float pX1 = sX+bSize/2.0f;
             float pY1 = sZ+bSize/2.0f;
             boolean topDown = false;
-            if (pY1+bSize+offset+38 > Game.guiHeight) {
+            if (pY1+bSize+offset+38 > Engine.getGuiHeight()) {
                 pY1 = sZ-bSize-bSize/2.0f;
 //                pY1 = (Game.displayHeight) - bSize*2+offset+32;
                 pY1-=16;
@@ -196,7 +196,7 @@ public class GuiSelectBlock extends Gui {
             } else {
                 pY1+=16;
             }
-            if (pX1+bSize+offset > Game.guiWidth) {
+            if (pX1+bSize+offset > Engine.getGuiWidth()) {
                 pX1 = sX-bSize-bSize/2.0f;
                 pX1-=16;
             } else {

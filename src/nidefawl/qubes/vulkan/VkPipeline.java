@@ -25,13 +25,10 @@ public class VkPipeline {
                 VK_FRONT_FACE_COUNTER_CLOCKWISE,
                 0);
     
-    VkPipelineColorBlendAttachmentState.Buffer blendAttachmentState = pipelineColorBlendAttachmentState(
-                0xf,
-                false);
+    VkPipelineColorBlendAttachmentState.Buffer blendAttachmentState = pipelineColorBlendAttachmentState(8);
     
-    VkPipelineColorBlendStateCreateInfo colorBlendState = pipelineColorBlendStateCreateInfo(
-                1, 
-                blendAttachmentState);
+    VkPipelineColorBlendStateCreateInfo colorBlendState = pipelineColorBlendStateCreateInfo(blendAttachmentState);
+    
     VkPipelineMultisampleStateCreateInfo multisampleState = pipelineMultisampleStateCreateInfo(
                 VK_SAMPLE_COUNT_1_BIT,
                 0);
@@ -57,11 +54,12 @@ public class VkPipeline {
 
     ByteBuffer                                 mainMethod            = MemoryUtil.memUTF8("main");
     
-    public VkPipelineLayout                    layout                = null;
+    public VkPipelineLayout                    layout               = null;
     private VkShader[]                         shaders;
-    private long                               renderpass            = VK_NULL_HANDLE;
-    private int                                subpass               = 0;
-    public long                                       pipeline              = VK_NULL_HANDLE;
+    private VkRenderPass                       renderpass           = null;
+    private int                                subpass              = 0;
+    public long                                pipeline             = VK_NULL_HANDLE;
+    public long                                pipelineScissors     = VK_NULL_HANDLE;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;
@@ -84,6 +82,10 @@ public class VkPipeline {
             vkDestroyPipeline(vkContext.device, pipeline, null);
             pipeline = VK_NULL_HANDLE;
         }
+        if (pipelineScissors != VK_NULL_HANDLE) {
+            vkDestroyPipeline(vkContext.device, pipelineScissors, null);
+            pipelineScissors = VK_NULL_HANDLE;
+        }
     }
 
     public void setShaders(VkShader ...shadersArr) {
@@ -98,8 +100,8 @@ public class VkPipeline {
                 .pVertexBindingDescriptions(bindingDescriptions)
                 .pVertexAttributeDescriptions(desc.attributeDescriptions);
     }
-    public void setRenderPass(long renderpass, int subpass) {
-        this.renderpass = renderpass;
+    public void setRenderPass(VkRenderPass passSubpassSwapchain, int subpass) {
+        this.renderpass = passSubpassSwapchain;
         this.subpass = subpass;
     }
     public void setPrimitiveMode(int mode) {
@@ -110,6 +112,8 @@ public class VkPipeline {
             throw new GameLogicError("MISSING SHADERS");
         }
         try ( MemoryStack stack = stackPush() ) {
+            blendAttachmentState.limit(this.renderpass.nColorAttachments);
+            colorBlendState.pAttachments(blendAttachmentState);
             VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfo = VkPipelineShaderStageCreateInfo.callocStack(this.shaders.length, stack);
 
             for (int i = 0; i < this.shaders.length; i++) {
@@ -123,7 +127,7 @@ public class VkPipeline {
                 shaderstagecreateinfo.pName(mainMethod);
             }
             int nPipelines = 1;
-            VkGraphicsPipelineCreateInfo.Buffer pipelineCreateInfoBuffer = pipelineCreateInfo(nPipelines, layout.pipelineLayout, renderpass, VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT);
+            VkGraphicsPipelineCreateInfo.Buffer pipelineCreateInfoBuffer = pipelineCreateInfo(nPipelines, layout.pipelineLayout, renderpass.renderPass, VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT);
             VkGraphicsPipelineCreateInfo mainPipe = pipelineCreateInfoBuffer.get(0);
 
             mainPipe.subpass(this.subpass);
@@ -191,22 +195,32 @@ public class VkPipeline {
         return pipelineRasterizationStateCreateInfo;
     }
 
-    public static VkPipelineColorBlendAttachmentState.Buffer pipelineColorBlendAttachmentState(
-        int colorWriteMask,
-        boolean blendEnable)
+    public static VkPipelineColorBlendAttachmentState.Buffer pipelineColorBlendAttachmentState(int size)
     {
-        VkPipelineColorBlendAttachmentState.Buffer pipelineColorBlendAttachmentState = VkPipelineColorBlendAttachmentState.calloc(1);
-        pipelineColorBlendAttachmentState.colorWriteMask(colorWriteMask);
-        pipelineColorBlendAttachmentState.blendEnable(blendEnable);
+        VkPipelineColorBlendAttachmentState.Buffer pipelineColorBlendAttachmentState = VkPipelineColorBlendAttachmentState.calloc(size);
+        for (int i = 0; i < size; i++) {
+            pipelineColorBlendAttachmentState.get(i)
+                .colorWriteMask(0xf)
+                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .srcColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .dstColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .blendEnable(false)
+                .alphaBlendOp(VK_BLEND_OP_ADD)
+                .colorBlendOp(VK_BLEND_OP_ADD);
+        }
         return pipelineColorBlendAttachmentState;
     }
 
     public static VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo(
-            int attachmentCount,
             VkPipelineColorBlendAttachmentState.Buffer pAttachments)
     {
         VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = VkPipelineColorBlendStateCreateInfo.calloc();
         pipelineColorBlendStateCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
+        pipelineColorBlendStateCreateInfo.pAttachments(pAttachments);
+        pipelineColorBlendStateCreateInfo.pNext(0L);
+        pipelineColorBlendStateCreateInfo.logicOpEnable(false);
+        pipelineColorBlendStateCreateInfo.logicOp(VK_LOGIC_OP_CLEAR);
         pipelineColorBlendStateCreateInfo.pAttachments(pAttachments);
         return pipelineColorBlendStateCreateInfo;
     }
@@ -302,18 +316,19 @@ public class VkPipeline {
     }
 
     public void setBlend(boolean b) {
-        this.blendAttachmentState.blendEnable(b);
+        VkPipelineColorBlendAttachmentState attState = this.blendAttachmentState.get(0);
+        attState.blendEnable(b);
         if (b) {
-            this.blendAttachmentState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-            this.blendAttachmentState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-            this.blendAttachmentState.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-            this.blendAttachmentState.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
+            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+            attState.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
         } else {
 
-            this.blendAttachmentState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-            this.blendAttachmentState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-            this.blendAttachmentState.srcColorBlendFactor(VK_BLEND_FACTOR_ZERO);
-            this.blendAttachmentState.dstColorBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.srcColorBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.dstColorBlendFactor(VK_BLEND_FACTOR_ZERO);
         }
     }
 }

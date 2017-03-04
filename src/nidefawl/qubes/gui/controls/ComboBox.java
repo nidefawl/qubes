@@ -10,8 +10,10 @@ import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
+import nidefawl.qubes.render.gui.LineGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.util.Renderable;
 
 /**
@@ -239,16 +241,15 @@ public class ComboBox extends AbstractUI implements Renderable {
                 if (scrollOffset+values >= this.values.length) {
                     scrollOffset = (this.values.length) - values;
                 }
-                final Tess tessellator = Tess.instance;
 //                renderRoundedBoxShadow(this.posX, this.posY, 10, this.width, this.height, 0xababab, 1f, true);
                 renderBox(true, true, color2, color3);
-                Shaders.colored.enable();
+                Engine.setPipeStateColored2D();
+                ITess tessellator = Engine.getTess();
                 for (int c = 0; c < values ; c++) {
                     int i1 = 0xFFFFFF;
                     if (c+scrollOffset == this.box.sel) {
                         i1 = this.box.textColorHover;
-                        Shaders.colored.enable();
-//                        GL11.glBlendFunc(770, 771);
+                        Engine.setPipeStateColored2D();
                         tessellator.setColorF(0, 0.6f);
                         tessellator.add(this.posX + rowWidth, this.posY + (c * this.heightPerEntry), 0.0f);
                         tessellator.add(this.posX, this.posY + (c * this.heightPerEntry), 0.0f);
@@ -275,22 +276,14 @@ public class ComboBox extends AbstractUI implements Renderable {
                     }
                     box.font.maxWidth = -1;
                     if (c+1<values) {
-                        Shaders.colored.enable();
-
-//                      OpenGlHelper.glColor3f(fa, fa, fa);
-                      Engine.lineWidth(1.0F);
-                      
-//                      GL11.glBegin(GL11.GL_LINE_STRIP);
-                      tessellator.setColorF(-1, 0.3f);
-
-                      tessellator.add(this.posX + rowWidth - 4, this.posY + ((c + 1) * this.heightPerEntry));
-                      tessellator.add(this.posX + 4, this.posY + ((c + 1) * this.heightPerEntry));
-                      tessellator.draw(GL11.GL_LINE_STRIP);
+                        Engine.setPipeStateColored2D();
+                        int y = this.posY + ((c + 1) * this.heightPerEntry);
+                        LineGUI.INST.start(1F);
+                        LineGUI.INST.add(this.posX + 4, y, 4, -1, 0.3f);
+                        LineGUI.INST.add(this.posX + rowWidth - 4, y, 4, -1, 0.3f);
+                        LineGUI.INST.drawLines();
                     }
                 }
-//                OpenGlHelper.glColor4f(1.0F, 1.0F, 1.0F, 0.3F);
-                Engine.lineWidth(2.0F);
-                Shaders.colored.enable();
                 int yFrame = this.posY;
                 int bottom = yFrame +(values * this.heightPerEntry);
                 if (showScrollBar && (bottom - this.posY)>0) {
@@ -300,7 +293,6 @@ public class ComboBox extends AbstractUI implements Renderable {
                     int posY= this.posY+1;
                     float scrolled = ((float) (scrollOffset) / (float) (this.values.length-values));
 
-//                    GL11.glShadeModel(GL11.GL_SMOOTH);
                     int totalContentHeight = heightPerEntry*this.values.length;
                     int scrollerHeight = ((bottom - posY) * (bottom - posY)) / totalContentHeight;
                     if (scrollerHeight < 32) {
@@ -315,47 +307,34 @@ public class ComboBox extends AbstractUI implements Renderable {
                     if (scrollerTop < posY) {
                         scrollerTop = posY;
                     }
+                    Engine.setPipeStateColored2D();
 
-//                  tessellator.startDrawingQuads();
-                  tessellator.setColorF(0xcecece, 255);
-                  tessellator.add(scrollBarX, bottom, 0.0f, 0.0f, 1.0f);
-                  tessellator.add(scrollBarRight, bottom, 0.0f, 1.0f, 1.0f);
-                  tessellator.add(scrollBarRight, posY, 0.0f, 1.0f, 0.0f);
-                  tessellator.add(scrollBarX, posY, 0.0f, 0.0f, 0.0f);
-                  tessellator.drawQuads();
-//                  tessellator.startDrawingQuads();
-                  tessellator.setColorF(0xc0c0c0, 255);
-                  tessellator.add(scrollBarX, scrollerTop + scrollerHeight, 0.0f, 0.0f, 1.0f);
-                  tessellator.add(scrollBarRight, scrollerTop + scrollerHeight, 0.0f, 1.0f, 1.0f);
-                  tessellator.add(scrollBarRight, scrollerTop, 0.0f, 1.0f, 0.0f);
-                  tessellator.add(scrollBarX, scrollerTop, 0.0f, 0.0f, 0.0f);
-                  tessellator.drawQuads();
+                    tessellator.setColorF(0xcecece, 255);
+                    tessellator.add(scrollBarX, bottom, 0.0f);
+                    tessellator.add(scrollBarRight, bottom, 0.0f);
+                    tessellator.add(scrollBarRight, posY, 0.0f);
+                    tessellator.add(scrollBarX, posY, 0.0f);
+                    tessellator.drawQuads();
 
-                    float fa = 1F;
-//                    OpenGlHelper.glColor3f(fa, fa, fa);
-                    Engine.lineWidth(1.0F);
-                    
-//                    GL11.glBegin(GL11.GL_LINE_STRIP);
-                    tessellator.setColorF(-1, 0.6f);
+                    tessellator.setColorF(0xc0c0c0, 255);
+                    tessellator.add(scrollBarX, scrollerTop + scrollerHeight, 0.0f);
+                    tessellator.add(scrollBarRight, scrollerTop + scrollerHeight, 0.0f);
+                    tessellator.add(scrollBarRight, scrollerTop, 0.0f);
+                    tessellator.add(scrollBarX, scrollerTop, 0.0f);
+                    tessellator.drawQuads();
 
-                    tessellator.add(scrollBarRight - 2, scrollerTop + 1);
-                    tessellator.add(scrollBarX + 1, scrollerTop + 1);
-                    tessellator.add(scrollBarX + 1, scrollerTop + scrollerHeight);
-                    tessellator.draw(GL11.GL_LINE_STRIP);
-//                    GL11.glEnd();
-                    fa = 0.2F;
-//                    OpenGlHelper.glColor3f(fa, fa, fa);
-                    Engine.lineWidth(2.0F);
-//                    GL11.glBegin(GL11.GL_LINE_STRIP);
-                    tessellator.setColorRGBAF(fa, fa, fa, 1.0f);
-                    tessellator.add(scrollBarRight, scrollerTop);
-                    tessellator.add(scrollBarRight, scrollerTop + scrollerHeight);
-                    tessellator.add(scrollBarX, scrollerTop + scrollerHeight);
-                    tessellator.draw(GL11.GL_LINE_STRIP);
-//                    GL11.glEnd();
-//                    GL11.glShadeModel(GL11.GL_FLAT);
+                    LineGUI.INST.start(1f);
+                    LineGUI.INST.add(scrollBarRight - 2, scrollerTop + 1, 0, -1, 0.5f);
+                    LineGUI.INST.add(scrollBarX + 1, scrollerTop + 1, 0, -1, 0.5f);
+                    LineGUI.INST.add(scrollBarX + 1, scrollerTop + scrollerHeight, 0, -1, 0.5f);
+                    LineGUI.INST.drawLines();
+
+                    LineGUI.INST.start(2f);
+                    LineGUI.INST.add(scrollBarRight, scrollerTop, 0, 0, 0.5f);
+                    LineGUI.INST.add(scrollBarRight, scrollerTop + scrollerHeight, 0, 0, 0.5f);
+                    LineGUI.INST.add(scrollBarX, scrollerTop + scrollerHeight, 0, 0, 0.5f);
+                    LineGUI.INST.drawLines();
                 }
-                
             } else {
                 this.box.sel = -1;
             }
@@ -365,7 +344,6 @@ public class ComboBox extends AbstractUI implements Renderable {
     public void setWatchPopup(ComboBoxList comboBoxList) {
         this.comboBoxList = comboBoxList;
     }
-
 
     public void setFont(FontRenderer font) {
         this.font = font;
@@ -403,18 +381,12 @@ public class ComboBox extends AbstractUI implements Renderable {
         
         
 
-        Shaders.colored.enable();
+//        Shaders.colored.enable();
         renderBox();
-        final Tess tessellator = Tess.instance;
+        final ITess tessellator = Engine.getTess();
         renderRoundedBoxShadow(this.posX +width - height+1, this.posY+1, 0, this.height-2, this.height-2, 0xeaeaea, hovered ? 1 : 0.7F, false);
-//        tessellator.setColorF(0xeaeaea, hovered ? 1 : 0.7F);
-//        tessellator.add(this.posX + this.width - 1, this.posY + 2, 0.0f);
-//        tessellator.add(this.posX + width - height + 1, this.posY + 2, 0.0f);
-//        tessellator.add(this.posX + width - height + 1, this.posY + this.height - 1, 0.0f);
-//        tessellator.add(this.posX + this.width - 1, this.posY + this.height - 1, 1.0f);
-//        tessellator.drawQuads();
-        Shaders.colored.enable();
 
+        Engine.setPipeStateColored2D();
         int inset = height / 6;
         if (inset < 1)
             inset = 1;
@@ -423,14 +395,14 @@ public class ComboBox extends AbstractUI implements Renderable {
         tessellator.add(this.posX + this.width - height + inset, this.posY + inseth * 2, 0.0f);
         tessellator.add(this.posX + this.width - height + inset + (height - inset * 2) / 2, this.posY + this.height - inseth * 2 + 3, 0.0f);
         tessellator.add(this.posX + this.width - inset+2, this.posY + inseth * 2, 0.0f);
-        tessellator.draw(GL11.GL_POLYGON);
+        tessellator.drawTris();
         inset--;
         
         tessellator.setColorF(0, 0.7F);
         tessellator.add(this.posX + this.width - height + inset, this.posY + inseth * 2 + 1, 0.0f);
-        tessellator.add(this.posX + this.width - height + inset + (height - inset * 2) / 2, this.posY + this.height - inseth * 2 + 2, 0.0f);
+        tessellator.add(this.posX + this.width - height + inset + (height - inset * 2) / 2, this.posY + this.height - inseth * 2 + 1, 0.0f);
         tessellator.add(this.posX + this.width - inset, this.posY + inseth * 2 + 1, 0.0f);
-        tessellator.draw(GL11.GL_POLYGON);
+        tessellator.drawTris();
 
         Engine.setPipeStateFontrenderer();
         int colorDisabled = 0xCCCCCC;
@@ -461,7 +433,6 @@ public class ComboBox extends AbstractUI implements Renderable {
      */
     public boolean onClick(PopupHolder parent) {
         if (this.isOpen) {
-            System.out.println("onClick");
             this.isOpen = false;
             if (parent.getPopup() != null) {
                 parent.setPopup(null);

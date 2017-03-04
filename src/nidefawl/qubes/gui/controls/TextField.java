@@ -1,7 +1,5 @@
 package nidefawl.qubes.gui.controls;
 
-import org.lwjgl.opengl.GL11;
-
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.font.ITextEdit;
@@ -13,8 +11,6 @@ import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
 import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.Renderable;
 
 public class TextField extends AbstractUI implements Renderable {
@@ -48,18 +44,16 @@ public class TextField extends AbstractUI implements Renderable {
             return;
         }
         this.hovered = this.mouseOver(mX, mY);
-        Shaders.colored.enable();
         renderOutlinedBox();
         Engine.setPipeStateFontrenderer();
-        GL11.glDisable(GL11.GL_CULL_FACE);
+//        GL11.glDisable(GL11.GL_CULL_FACE);
         this.inputRenderer.focused = this.focused;
-        Engine.pxStack.setScissors(posX + 2, posY, width - 7, height);
         Engine.enableScissors();
+        Engine.pxStack.setScissors(posX + 2, posY, width - 7, height);
         this.inputRenderer.drawStringWithCursor(mX, mY, Mouse.isButtonDown(0));
         Engine.disableScissors();
-        GL11.glEnable(GL11.GL_CULL_FACE);
+//        GL11.glEnable(GL11.GL_CULL_FACE);
         //        this.font.drawString(this.text, this.posX + 3, this.posY + this.height / 2 + font.getLineHeight() / 2, -1, false, 1.0F, 0);
-        Shader.disable();
     }
 
     public boolean mouseOver(double mX, double mY) {

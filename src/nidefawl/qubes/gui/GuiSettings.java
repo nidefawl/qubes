@@ -109,7 +109,7 @@ public class GuiSettings extends Gui {
                 renderSettings.ssr = id;
                 Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
-                Engine.outRenderer.resize(Game.guiWidth, Game.guiHeight);
+                Engine.outRenderer.resize();
             }
         }));
         final String[] strAOSettings = new String[] { "Disabled", "Enabled" };
@@ -195,8 +195,8 @@ public class GuiSettings extends Gui {
             back.setPos(left, y+5);
         }
         this.height = back.posY+back.height+10;
-        this.posX = (Game.guiWidth-this.width)/2;
-        this.posY = (Game.guiHeight-this.height) / 2;
+        this.posX = (Engine.getGuiWidth()-this.width)/2;
+        this.posY = (Engine.getGuiHeight()-this.height) / 2;
     }
 
     protected String getTitle() {

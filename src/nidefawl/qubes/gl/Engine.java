@@ -5,9 +5,7 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memAllocInt;
-import static org.lwjgl.system.MemoryUtil.memAllocLong;
-import static org.lwjgl.system.MemoryUtil.memFree;
+import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.FloatBuffer;
@@ -142,6 +140,9 @@ public class Engine {
     private static long descriptorSet1;
     private static LongBuffer pDescriptorSets;
     private static IntBuffer pOffsets;
+    private static VkRenderPassBeginInfo renderPassBeginInfo;
+    private static VkExtent2D renderAreaExtent;
+    private static VkOffset2D renderAreaOffset;
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
     }
@@ -269,6 +270,14 @@ public class Engine {
         if (isVulkan) {
             pDescriptorSets = memAllocLong(3);
             pOffsets = memAllocInt(32);
+            renderPassBeginInfo = VkRenderPassBeginInfo.calloc()
+                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                    .pNext(NULL)
+                    .renderPass(0);
+            VkRect2D renderArea = renderPassBeginInfo.renderArea();
+            renderAreaExtent = renderArea.extent();
+            renderAreaOffset = renderArea.offset();
+            renderAreaOffset.x(0).y(0);
         }
     }
 
@@ -332,26 +341,25 @@ public class Engine {
             UniformBuffer.init();
             Shader.init();   
         } else {
+            VkRenderPasses.initClearValues(INVERSE_Z_BUFFER);
             VkTess.init(vkContext, 32);
             UniformBuffer.init(vkContext, 32);
             VkPipelines.init(vkContext);
             try ( MemoryStack stack = stackPush() ) {
-//              vkContext.descLayouts.getDescriptorSets);
                 descriptorSet1 = vkContext.descLayouts.allocDescSetUBOScene();
-                VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.callocStack(3, stack);
-                writeDescriptorSet.position(0).limit(3);
+                VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.callocStack(4, stack);
+                writeDescriptorSet.position(0).limit(4);
                 VkInitializers.writeDescriptorSet(writeDescriptorSet, 0, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 0, UniformBuffer.uboMatrix3D.getDescriptorBuffer());
                 VkInitializers.writeDescriptorSet(writeDescriptorSet, 1, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, UniformBuffer.uboMatrix2D.getDescriptorBuffer());
                 VkInitializers.writeDescriptorSet(writeDescriptorSet, 2, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2, UniformBuffer.uboSceneData.getDescriptorBuffer());
+                VkInitializers.writeDescriptorSet(writeDescriptorSet, 3, descriptorSet1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
                 vkUpdateDescriptorSets(vkContext.device, writeDescriptorSet, null);
 
             }
         }
 
         flushRenderTasks();
-        if (!isVulkan) {
-            registerRenderers(init);
-        }
+        registerRenderers(init);
         if (regionRenderer != null) {
             regionRenderThread = new MeshThread(3);
             regionRenderThread.init();
@@ -438,7 +446,7 @@ public class Engine {
         projection.update();
 
 
-        updateOrthoMatrix(displayWidth, displayHeight, OGL_INVERSE_Y || isVulkan);
+        updateOrthoMatrix(displayWidth, displayHeight);
         
         if (!isVulkan) {
 
@@ -503,7 +511,7 @@ public class Engine {
             tess.add(0, 0, 0, 0, 0);
             tess.add(0, 1, 0, 0, 1);
             tess.add(1, 1, 0, 1, 1);
-            tess.finish(VkTess.CREATE_QUAD_IDX_BUFFER, VkTess.DEVICE_LOCAL_UPLOAD, (AbstractVkTesselatorState) quad, 0);
+            tess.finish(VkTess.CREATE_QUAD_IDX_BUFFER, VkTess.DEVICE_LOCAL_UPLOAD, (AbstractVkTesselatorState) quad);
             tess.resetState();
             
         }
@@ -530,7 +538,7 @@ public class Engine {
         }
     }
     public static void updateOrthoMatrix(float displayWidth, float displayHeight) {
-        updateOrthoMatrix(displayWidth, displayHeight, false);
+        updateOrthoMatrix(displayWidth, displayHeight, OGL_INVERSE_Y || isVulkan);
     }
     public static void updateOrthoMatrix(float displayWidth, float displayHeight, boolean flipY) {
         orthoMV.setIdentity();
@@ -863,7 +871,7 @@ public class Engine {
     }
     public static void updateShadowProjections(float fTime) {
 //        Engine.worldRenderer.debugBBs.clear();
-        shadowProj.calcSplits(modelview, lightDirection, shadowRenderer.getTextureSize() / 2.0f); //divide tex size by 2 as we use only a quarter per cascade
+        shadowProj.calcSplits(modelview, lightDirection, getShadowMapTextureSize() / 2.0f); //divide tex size by 2 as we use only a quarter per cascade
 
         
     }
@@ -882,6 +890,9 @@ public class Engine {
             fonts.clear();
             memFree(pDescriptorSets);
             memFree(pOffsets);
+            renderPassBeginInfo.free();
+            VkPipelines.destroyShutdown(vkContext);
+            VkRenderPasses.destroyShutdown(vkContext);
         }
     }
 
@@ -910,8 +921,10 @@ public class Engine {
             r.release();
         }
         components.clear();
-        if (init.initShadowRenderer) {
+        if (init.initShadowRenderer||init.initShadowProj) {
             shadowProj = addComponent(new ShadowProjector());
+        }
+        if (init.initShadowRenderer) {
             shadowRenderer = addComponent(new ShadowRenderer());
         }
         if (init.initWorldRenderer) {
@@ -939,8 +952,10 @@ public class Engine {
             IRenderComponent r = components.get(i);
             r.preinit();
         }
-        Shaders.init();
-        ShaderBuffer.init();
+        if (!isVulkan) {
+            Shaders.init();
+            ShaderBuffer.init();
+        }
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.init();
@@ -1031,11 +1046,24 @@ public class Engine {
     }
 
     public static void enableScissors() {
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        if (isVulkan) {
+            if (curPipeline.pipelineScissors == VK_NULL_HANDLE) {
+                throw new GameLogicError("Cant enable scissor for current");
+            }
+            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.pipelineScissors);
+        } else {
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        }
         isScissors = true;
     }
+
     public static void disableScissors() {
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        if (isVulkan) {
+//            System.out.println("back to normal pipeline");
+            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.pipeline);
+        } else {
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        }
         isScissors = false;
     }
     public static void setOverrideScissorTest(boolean b) {
@@ -1083,7 +1111,10 @@ public class Engine {
             viewport[1] = y;
             viewport[2] = w;
             viewport[3] = h;
-            GL11.glViewport(x, y, w, h);
+            if (!isVulkan) {
+
+                GL11.glViewport(x, y, w, h);
+            }
 //            System.out.println(Stats.fpsCounter + ", "+w+","+h);
 //            Thread.dumpStack();
         }
@@ -1214,20 +1245,12 @@ public class Engine {
             Engine.bindPipeline(VkPipelines.colored2D);
         }
     }
-    public static void setPipeStateColored2DLineStrip() {
+    
+    public static void setPipeStateTextured2D() {
         if (!isVulkan) {
-            Shaders.colored.enable();
+            Shaders.textured.enable();
         } else {
-            Engine.clearDescriptorSet1();
-            Engine.bindPipeline(VkPipelines.colored2DLineStrip);
-        }
-    }
-    public static void setPipeStateColored2DLines() {
-        if (!isVulkan) {
-            Shaders.colored.enable();
-        } else {
-            Engine.clearDescriptorSet1();
-            Engine.bindPipeline(VkPipelines.colored2DLines);
+            Engine.bindPipeline(VkPipelines.textured2d);
         }
     }
 
@@ -1236,10 +1259,17 @@ public class Engine {
     static VkCommandBuffer curCommandBuffer;
     static VkPipeline curPipeline;
     private static boolean rebindDescSet;
+    private static VkRenderPass curPass;
     public static void bindPipeline(VkPipeline pipe) {
         if (curPipeline != pipe) {
             curPipeline = pipe;
-            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipe.pipeline);
+            if (isScissors && pipe.pipelineScissors==VK_NULL_HANDLE) {
+                System.err.println("MISSING SCISSORS PIPE VERSION");
+            }
+            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+                    isScissors ? (pipe.pipelineScissors) : (pipe.pipeline));
+            if (isScissors)
+                pxStack.vkUpdateLastScissors();
             rebindDescSet = true;
         }
         if (rebindDescSet) {
@@ -1252,16 +1282,26 @@ public class Engine {
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                 pDescriptorSets, pOffsets);
     }
-    public static void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, int contents) {
+    public static void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass pass, long framebuffer, int flags) {
         curPipeline = null;
-        vkCmdBeginRenderPass(commandBuffer, pRenderPassBegin, VK_SUBPASS_CONTENTS_INLINE);
+        curPass = pass;
         curCommandBuffer = commandBuffer;
+        renderAreaExtent.set(viewport[2], viewport[3]);
+        renderPassBeginInfo.renderPass(curPass.get());
+        renderPassBeginInfo.framebuffer(framebuffer);
+        renderPassBeginInfo.pClearValues(pass.clearValues);
+        vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         pDescriptorSets.position(0).limit(1);
         pDescriptorSets.put(0, descriptorSet1);
         pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
         pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
         pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
-        pOffsets.position(0).limit(3);
+        pOffsets.put(3, UniformBuffer.uboMatrixShadow.getDynamicOffset());
+        pOffsets.position(0).limit(4);
+    }
+    public static void setDescriptorSet0(long descriptorSet0) {
+        rebindDescSet = pDescriptorSets.get(0) != descriptorSet0;
+        pDescriptorSets.put(0, descriptorSet0);
     }
     public static void setDescriptorSet1(long descriptorSet2) {
         long lPrev = -1;
@@ -1275,6 +1315,7 @@ public class Engine {
     }
     public static void clearDescriptorSet1() {
         pDescriptorSets.position(0).limit(1);
+        rebindDescSet = true;
     }
     public static VkCommandBuffer getDrawCmdBuffer() {
         return curCommandBuffer;
@@ -1285,5 +1326,26 @@ public class Engine {
         } else {
             vkCmdSetLineWidth(curCommandBuffer, width);
         }
+    }
+    public static int getGuiWidth() {
+        return viewport[2];
+    }
+    public static int getGuiHeight() {
+        return viewport[3];
+    }
+
+    public static int guiWidth;
+    public static int guiHeight;
+    public static int displayWidth;
+    public static int displayHeight;
+    public static void updateGuiResolution(int w, int h) {
+        guiWidth = w;
+        guiHeight = h;
+    }
+    public static void updateRenderResolution(int w, int h) {
+        displayWidth = w;
+        displayHeight = h;
+        GameBase.displayWidth = w;
+        GameBase.displayHeight = h;
     }
 }

@@ -25,7 +25,7 @@ import nidefawl.qubes.util.StringUtil;
 
 public class ShaderSource {
     public static enum ProcessMode {
-        OPENGL, VULKAN
+        OPENGL, VULKAN, VULKAN_PREPROCESSED
     };
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
@@ -79,7 +79,7 @@ public class ShaderSource {
         BufferedReader reader = null;
         try {
             String fpath = path + "/" + name;
-            is = assetManager.findResource(fpath, (!resolve&&this.processMode==ProcessMode.VULKAN?false:true));
+            is = assetManager.findResource(fpath, (!resolve&&(this.processMode!=ProcessMode.OPENGL)?false:true));
             ArrayList<String> pathChecked = new ArrayList<>();
             //if we should resolve then check the include path first 
             if (is == null && resolve) {
@@ -106,11 +106,14 @@ public class ShaderSource {
                 String fullSource = "";
                 while (reader != null && (line = reader.readLine()) != null) {
                     lines.add(line);
-                    fullSource += line + "\r\n";
+                    fullSource += line + "\n";
                 }
                 sources.put(nInclude, fullSource);
                 sourceNames.put(nInclude, fpath);
                 nInclude++;
+                if (this.processMode == ProcessMode.VULKAN_PREPROCESSED) {
+                    return fullSource;
+                }
                 String code = "";
                 int nLineOffset = 0;
                 boolean insertLine = true;
@@ -133,29 +136,29 @@ public class ShaderSource {
                     Matcher m;
                     if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_VERTEX_BIT&&line.startsWith("out") && (m = patternStageOutput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM VERTEX LINE "+line);
-                        String output = "layout (location = "+(nVertexOutputs++)+") out "+m.group(1)+" "+m.group(2)+";";
+                        String output = "layout (location = "+(nVertexOutputs++)+") out "+m.group(1)+" "+m.group(2)+";\r\n";
                         code += output;
                         if (debugPrint) System.out.println("TRANSFORMED VERTEX LINE "+output);
                     } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("in") && (m = patternStageInput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (location = "+(nInputs++)+") in "+m.group(1)+" "+m.group(2)+";";
+                        String input = "layout (location = "+(nInputs++)+") in "+m.group(1)+" "+m.group(2)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
 
                     } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("out") && (m = patternStageOutput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (location = "+(nFragmentOutputs++)+") out "+m.group(1)+" "+m.group(2)+";";
+                        String input = "layout (location = "+(nFragmentOutputs++)+") out "+m.group(1)+" "+m.group(2)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
 
                     } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("uniform") && (m = patternStageSamplerInput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (set = 1, binding = "+(nSamplers++)+") uniform sampler"+m.group(1)+" "+m.group(2)+";";
+                        String input = "layout (set = 1, binding = "+(nSamplers++)+") uniform sampler"+m.group(1)+" "+m.group(2)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
                     } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingUBO.matcher(line)).matches()) {
                         String ubo_binding_name = m.group(1);
-                        code += "layout(std140) uniform "+ubo_binding_name;
+                        code += "layout(std140) uniform "+ubo_binding_name+"\r\n";
                     } else if (shaderType == GL_FRAGMENT_SHADER && line.startsWith("layout") && (m = patternOutputCustom.matcher(line)).matches()) {
 //                        System.out.println("matched");
                         int n = StringUtil.parseInt(m.group(1), -1);
@@ -210,6 +213,12 @@ public class ShaderSource {
                             
                             code += replace + "\r\n";
                         } else if ((m = patternAttr.matcher(line)).matches()) {
+                            if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_VERTEX_BIT) {
+                                if (def != null) {
+                                    String s = def.getDefinition("VK_VERTEX_ATTRIBUTES");
+                                    code += s + "\r\n";
+                                }
+                            }
                             this.attrTypes = m.group(1);
                         } else {
                             throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");

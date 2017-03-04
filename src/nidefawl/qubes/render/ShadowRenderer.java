@@ -36,7 +36,7 @@ public class ShadowRenderer extends AbstractRenderer {
     private int SHADOW_BUFFER_SIZE = 1024*4;
 
     public final String[] shaderNames = new String[] {
-            "shadow/shadow_multi",
+            "shadow/shadow_solid",
             "shadow/shadow_textured",
     };
     private FrameBuffer fbShadow;
@@ -46,16 +46,7 @@ public class ShadowRenderer extends AbstractRenderer {
         try {
             AssetManager assetMgr = AssetManager.getInstance();
             pushCurrentShaders();
-            Shader shadow = assetMgr.loadShader(this, shaderNames[renderMode], new IShaderDef() {
-                
-                @Override
-                public String getDefinition(String define) {
-                    if ("MATRIX".equals(define)) {
-                        return "#define MATRIX in_matrix_shadow.shadow_split_mvp[shadowSplit] * model_matrix";
-                    }
-                    return null;
-                }
-            });
+            Shader shadow = assetMgr.loadShader(this, shaderNames[renderMode]);
             // may never reach this point when shader fails to compile
             // if that happens the catch clause will dealloc any new shaders
             // _only_ if it reaches this point we want to deallocate the old shaders

@@ -10,6 +10,7 @@ import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TextureUtil;
+import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.util.Renderable;
 
 public abstract class AbstractUI implements Renderable {
@@ -330,5 +331,16 @@ public abstract class AbstractUI implements Renderable {
     public void setDisableDraw(boolean b) {
         this.draw=this.enabled=b;
         if (!b)this.focused=false;
+    }
+
+    public void drawLine(float x, float y, float x2, float y2, float z, float xo, float yo, int rgb1, float alpha1, int rgb2, float alpha2) {
+        ITess tessellator = Engine.getTess();
+        tessellator.setColorF(rgb1, alpha1);
+        tessellator.add(x-xo, y - yo, z);
+        tessellator.add(x+xo, y + yo, z);
+        tessellator.setColorF(rgb2, alpha2);
+        tessellator.add(x2+xo, y2 + yo, z);
+        tessellator.add(x2-xo, y2 - yo, z);
+        tessellator.drawQuads();
     }
 }

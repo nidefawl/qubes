@@ -32,6 +32,7 @@ import nidefawl.qubes.item.BaseStack;
 import nidefawl.qubes.item.Item;
 import nidefawl.qubes.network.packet.PacketCCrafting;
 import nidefawl.qubes.render.gui.BoxGUI;
+import nidefawl.qubes.render.gui.LineGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
@@ -276,28 +277,23 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 //            if (this.hovered)
 //            selectedButton = this;
             renderBox();
-            Engine.lineWidth(1.0F);
-            Shaders.colored.enable();
-            Tess tessellator = Tess.instance;
+            Engine.setPipeStateColored2D();
+
             int yo=0;
-            tessellator.setColorF(-1, 0.05f);
-            tessellator.add(this.posX, this.posY + yo, 4);
-            tessellator.setColorF(-1, 0.15f);
-            tessellator.add(this.posX+width/2, this.posY + yo, 4);
-            tessellator.setColorF(-1, 0.05f);
-            tessellator.add(this.posX+width, this.posY + yo, 4);
-            tessellator.draw(GL11.GL_LINE_STRIP);
+            LineGUI.INST.start(1.0f);
+            LineGUI.INST.add(this.posX, this.posY + yo, 4, -1, 0.05f);
+            LineGUI.INST.add(this.posX+width/2, this.posY + yo, 4, -1, 0.15f);
+            LineGUI.INST.add(this.posX+width, this.posY + yo, 4, -1, 0.05f);
+            LineGUI.INST.drawLines();
             yo=height;
-            tessellator.setColorF(-1, 0.1f);
-            tessellator.add(this.posX, this.posY + yo, 4);
-            tessellator.setColorF(-1, 0.4f);
-            tessellator.add(this.posX+width/2, this.posY + yo, 4);
-            tessellator.setColorF(-1, 0.1f);
-            tessellator.add(this.posX+width, this.posY + yo, 4);
-            tessellator.draw(GL11.GL_LINE_STRIP);
+            LineGUI.INST.start(1.0f);
+            LineGUI.INST.add(this.posX, this.posY + yo, 4, -1, 0.1f);
+            LineGUI.INST.add(this.posX+width/2, this.posY + yo, 4, -1, 0.4f);
+            LineGUI.INST.add(this.posX+width, this.posY + yo, 4, -1, 0.1f);
+            LineGUI.INST.drawLines();
 //            selectedButton = g;
             restoreBounds();
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             fr.drawString(string, posX+width/2, posY+fr.centerY(height), -1, true, 1, 2);
         }
 
@@ -350,8 +346,8 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 //      } else {
           int width = 800;
           int height = titleBarHeight + 600;
-          int xPos = (Game.guiWidth-width)/2;
-          int yPos = (Game.guiHeight-height)/2;
+          int xPos = (Engine.getGuiWidth()-width)/2;
+          int yPos = (Engine.getGuiHeight()-height)/2;
           setPos(xPos, yPos);
           setSize(width, height);
 //      }
@@ -539,28 +535,22 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             height = 30;
             posY = this.bg.posY + 5;
             renderBox();
-            Shaders.textured.enable();
+            Engine.setPipeStateFontrenderer();
             FontRenderer font = this.cat.getScrollList().font;
             font.drawString(selected.recipe.getPreview().getName(), posX + width / 2, posY + font.centerY(height), -1, true, 1, 2);
 
             font.drawString("Recipe", bg.posX + bg.width / 4, posY + font.getLineHeight() + 6 + 35, -1, true, 1, 2);
             font.drawString("Inventory", bg.posX + bg.width / 4 * 3, posY + font.getLineHeight() + 6 + 35, -1, true, 1, 2);
-            Shaders.colored.enable();
+            Engine.setPipeStateColored2D();
 
             posX = this.bg.posX + this.bg.width / 2;
             posY = this.bg.posY + 45;
-            //          OpenGlHelper.glColor3f(fa, fa, fa);
-            Engine.lineWidth(1.0F);
-            Tess tessellator = Tess.instance;
-            //          GL11.glBegin(GL11.GL_LINE_STRIP);
-            tessellator.setColorF(-1, 0.1f);
-
-            tessellator.add(this.posX, this.posY + 0);
-            tessellator.setColorF(-1, 0.4f);
-            tessellator.add(this.posX, this.posY + 90);
-            tessellator.setColorF(-1, 0.1f);
-            tessellator.add(this.posX, this.posY + 180);
-            tessellator.draw(GL11.GL_LINE_STRIP);
+            
+            LineGUI.INST.start(1.0f);
+            LineGUI.INST.add(this.posX, this.posY + 0, 0, -1, 0.1f);
+            LineGUI.INST.add(this.posX, this.posY + 90, 0, -1, 0.4f);
+            LineGUI.INST.add(this.posX, this.posY + 180, 0, -1, 0.1f);
+            LineGUI.INST.drawLines();
             restoreBounds();
             //            Shaders.textured.enable();
             //            Engine.itemRender.drawItem(this.selected.recipe.getPreview(), bg.posX+30+inset, bg.posY+30+inset, slotW-inset*2, slotW-inset*2);

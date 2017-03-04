@@ -187,8 +187,11 @@ public class GameMath {
     }
     public final static float PI_OVER_180 = 0.0174532925f;
     public final static float P_180_OVER_PI = (float) (180.0f/Math.PI);
-    
+
     public static float clamp(float e, float f, float g) {
+        return e < f ? f : e > g ? g : e;
+    }
+    public static int clampI(int e, int f, int g) {
         return e < f ? f : e > g ? g : e;
     }
     public static int distSq3Di(int x, int y, int z, int x2, int y2, int z2) {

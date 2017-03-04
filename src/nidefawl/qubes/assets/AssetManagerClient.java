@@ -80,6 +80,7 @@ public class AssetManagerClient extends AssetManager {
         final String[] pathSplit = splitPathBase(path);
 
         try {
+            System.out.println(pathSplit[0]+"/"+pathSplit[1]);
             AssetBinary binFrag = loadBin(pathSplit[0]+"/"+pathSplit[1]);
 //            System.out.println(new String(binFrag.getData(), "UTF-8"));
             VkShader shader = new VkShader(ctxt, stage, pathSplit[1], binFrag.getData());
@@ -95,10 +96,10 @@ public class AssetManagerClient extends AssetManager {
     }
     
     @Override
-    public ShaderSource loadVkShaderSource(String path, int stage, IShaderDef def) {
+    public ShaderSource loadVkShaderSource(String path, int stage, IShaderDef def, ProcessMode processMode) {
         final String[] pathSplit = splitPath(path);
         try {
-            ShaderSource src = new ShaderSource(null, ProcessMode.VULKAN);
+            ShaderSource src = new ShaderSource(null, processMode);
             src.setVersionString("#version 450");
             src.addEnabledExtensions("GL_ARB_separate_shader_objects", "GL_ARB_shading_language_420pack");
             src.load(this, pathSplit[0], pathSplit[1], def, stage);

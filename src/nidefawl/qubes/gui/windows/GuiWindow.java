@@ -2,6 +2,7 @@ package nidefawl.qubes.gui.windows;
 
 import org.lwjgl.glfw.GLFW;
 import nidefawl.qubes.Game;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.Gui;
 
 public abstract class GuiWindow extends Gui {
@@ -16,8 +17,8 @@ public abstract class GuiWindow extends Gui {
     public void initGui(boolean first) {
         int width = 320;
         int height = 240;
-        int xPos = (Game.guiWidth-width)/2;
-        int yPos = (Game.guiHeight-height)/2;
+        int xPos = (Engine.getGuiWidth()-width)/2;
+        int yPos = (Engine.getGuiHeight()-height)/2;
         setPos(xPos, yPos);
         setSize(width, height);
     }
@@ -95,8 +96,8 @@ public abstract class GuiWindow extends Gui {
 
     
     public void onDrag(double mX, double mY) {
-        int displayWidth = Game.guiWidth;
-        int displayHeight = Game.guiHeight;
+        int displayWidth = Engine.getGuiWidth();
+        int displayHeight = Engine.getGuiHeight();
         this.posX += mX;
         this.posY -= mY; //crap
         if (this.posX + this.width / 2 < 0)
@@ -122,8 +123,8 @@ public abstract class GuiWindow extends Gui {
         }
     }
     public void onResize(double mX, double mY) {
-        int displayWidth = Game.guiWidth;
-        int displayHeight = Game.guiHeight;
+        int displayWidth = Engine.getGuiWidth();
+        int displayHeight = Engine.getGuiHeight();
         if (canResize()) {
             // XXX: calculate relative mouse position and resize according to
             // the calculated x/y coords

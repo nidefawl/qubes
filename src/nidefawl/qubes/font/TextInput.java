@@ -1,16 +1,13 @@
 package nidefawl.qubes.font;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.input.Mouse;
-import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.render.gui.LineGUI;
 import nidefawl.qubes.util.ClipboardHelper;
+import nidefawl.qubes.util.ITess;
 
 public class TextInput {
 
@@ -463,11 +460,9 @@ public class TextInput {
         float totalwidth = 0;
         float startY = -2;
 //        GL11.glPushMatrix();
-        Shaders.textured.enable();
-        Tess tessellator = Tess.instance;
-        tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
-        tessellator.setColor(-1, 255);
-        Engine.setBlend(true);
+//        Shaders.textured.enable();
+        ITess tessellator = Engine.getFontTess();
+//        Engine.setBlend(true);
         if (hasSelection() && this.focused) {
             float width = trueType.getWidthAtLine(editText.substring(selEnd > selStart ? selStart : selEnd, selEnd > selStart ? selEnd : selStart));
             float widthPre = trueType.getWidthAtLine(editText.substring(0, selEnd > selStart ? selStart : selEnd));
@@ -479,42 +474,42 @@ public class TextInput {
             if (selRight > getRight()+shiftPX+30) {
                 selRight = getRight()+shiftPX+30;
             }
-//            GL11.glBlendFunc(770, 771);
-            Shaders.colored.enable();
+            Engine.setPipeStateColored2D();
+            tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
             tessellator.setColorRGBAF(1.2F, 0.2F, 1.0F, 0.4F);
             tessellator.add(selLeft, getTop() + startY + trueType.getLineHeight(), 0.0f);
             tessellator.add(selRight, getTop() + startY + trueType.getLineHeight(), 0.0f);
             tessellator.add(selRight, getTop() + startY , 0.0f);
             tessellator.add(selLeft, getTop() + startY , 0.0f);
-            tessellator.draw(GL11.GL_QUADS);
-            tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
-            tessellator.setColor(-1, 255);
-            Shaders.textured.enable();
+            tessellator.drawQuads();
         }
-
-        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.getTexture());
+        tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
+        tessellator.setColor(-1, 255);
+        Engine.setPipeStateFontrenderer();
+        trueType.bindTexture();
+//        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.getTexture());
 //        tessellator.startDrawingQuads();
 //        tessellator.setColorRGBA_F(1, 1, 1, 1);
         int prevColor = -1;
         int i = 0;
         trueType.start(totalwidth, startY);
-        boolean isURL = editText.startsWith("http");
+//        boolean isURL = editText.startsWith("http");
         while (true) {
             if (i >= editText.length()) {
                 break;
             }
             if (showCursor && i == mpos) {
-                tessellator.draw(GL11.GL_QUADS);
+                tessellator.drawQuads();
+                Engine.setPipeStateColored2D();
                 tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                 tessellator.setColor(-1, 255);
-                Shaders.colored.enable();
-                Engine.lineWidth(2.0F);
-                tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY, 0);
-                tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0);
-                tessellator.draw(GL11.GL_LINES);
+                LineGUI.INST.start(2.0f);
+                LineGUI.INST.add(totalwidth + getLeft() + 1F, getTop() + startY, 0, -1, 1.0f);
+                LineGUI.INST.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0, -1, 1.0f);
+                LineGUI.INST.drawLines();
+                Engine.setPipeStateFontrenderer();
                 tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                 tessellator.setColor(-1, 255);
-                Shaders.textured.enable();
             }
             charCurrent = editText.charAt(i);
             if (charCurrent == '\n') {
@@ -536,18 +531,18 @@ public class TextInput {
             }
             i++;
         }
-        tessellator.draw(GL11.GL_QUADS);
+        tessellator.drawQuads();
         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
         tessellator.setColor(-1, 255);
         if (showCursor && mpos == editText.length()) {
-            Engine.lineWidth(2.0F);
-            Shaders.colored.enable();
-            tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY, 0);
-            tessellator.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0);
-            tessellator.draw(GL11.GL_LINES);
+            Engine.setPipeStateColored2D();
+            LineGUI.INST.start(2.0f);
+            LineGUI.INST.add(totalwidth + getLeft() + 1F, getTop() + startY, 0, -1, 1.0f);
+            LineGUI.INST.add(totalwidth + getLeft() + 1F, getTop() + startY + trueType.getLineHeight(), 0, -1, 1.0f);
+            LineGUI.INST.drawLines();
+            Engine.setPipeStateFontrenderer();
             tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
             tessellator.setColor(-1, 255);
-            Shaders.textured.enable();
         }
         trueType.start(totalwidth, startY);
         if (editText.startsWith("/") && shiftPX == 0) {
@@ -568,7 +563,7 @@ public class TextInput {
                         }
                         i++;
                     }
-                    tessellator.draw(GL11.GL_QUADS);
+                    tessellator.drawQuads();
                     tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                     tessellator.setColor(-1, 255);
                     String hint = "Press <TAB> to complete";
@@ -591,15 +586,14 @@ public class TextInput {
                             }
                             i++;
                         }
-                        tessellator.draw(GL11.GL_QUADS);
+                        tessellator.drawQuads();
                         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
                         tessellator.setColor(-1, 255);
                     }
                 }
             }
         }
-        tessellator.setOffset(0, 0, 0);
-        tessellator.setColor(-1, 255);
+        tessellator.resetState();
     }
     
     private void checkCursor() {

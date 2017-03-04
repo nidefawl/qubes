@@ -5,6 +5,7 @@ import java.util.*;
 
 import nidefawl.qubes.assets.AssetTexture.Type;
 import nidefawl.qubes.shader.*;
+import nidefawl.qubes.shader.ShaderSource.ProcessMode;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vulkan.VKContext;
 import nidefawl.qubes.vulkan.VkShader;
@@ -143,7 +144,7 @@ public abstract class AssetManager {
     public VkShader loadVkShaderBin(VKContext ctxt, String string, int stage) {
         return null;
     }
-    public ShaderSource loadVkShaderSource(String path, int stage, IShaderDef def) {
+    public ShaderSource loadVkShaderSource(String path, int stage, IShaderDef def, ProcessMode processMode) {
         return null;
     }
 }

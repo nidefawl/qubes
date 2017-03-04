@@ -14,7 +14,9 @@ public abstract class AbstractVkTesselatorState {
     public boolean       useTexturePtr;
     public boolean       useNormalPtr;
     public boolean       useUINTPtr;
-    public int idxCount;
+    public int     idxCount;
+    public int     vertexOffset = 0;
+    public int     indexOffset  = 0;
     
     public void copyTo(AbstractVkTesselatorState out) {
         out.vertexcount = this.vertexcount;
@@ -23,6 +25,8 @@ public abstract class AbstractVkTesselatorState {
         out.useNormalPtr = this.useNormalPtr;
         out.useUINTPtr = this.useUINTPtr;
         out.idxCount = this.idxCount;
+        out.vertexOffset = this.vertexOffset;
+        out.indexOffset = this.indexOffset;
     }
     public abstract VkBuffer getVertexBuffer();
     public abstract VkBuffer getIndexBuffer();
@@ -59,11 +63,13 @@ public abstract class AbstractVkTesselatorState {
     }
     long[] pointer = new long[1];
     long[] offset = new long[1];
-    public void bindAndDraw(VkCommandBuffer commandBuffer, int bufferoffset) {
-        pointer[0] = getVertexBuffer().getBuffer();
-        offset[0] = bufferoffset;
-        vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
-        vkCmdBindIndexBuffer(commandBuffer, getIndexBuffer().getBuffer(), bufferoffset, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(commandBuffer, this.idxCount, 1, 0, 0, 0);
+    public void bindAndDraw(VkCommandBuffer commandBuffer) {
+        if (idxCount > 0) {
+            pointer[0] = getVertexBuffer().getBuffer();
+            offset[0] = this.vertexOffset;
+            vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
+            vkCmdBindIndexBuffer(commandBuffer, getIndexBuffer().getBuffer(), this.indexOffset, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(commandBuffer, this.idxCount, 1, 0, 0, 0);
+        }
     }
 }

@@ -1,15 +1,11 @@
 package nidefawl.qubes.gui.controls;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-
-import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.render.gui.BoxGUI;
-import nidefawl.qubes.shader.Shaders;
 
 public class ScrollList extends Gui {
     float scrollOffset=0f;
@@ -53,6 +49,7 @@ public class ScrollList extends Gui {
 
     @Override
     public void render(float fTime, double mX, double mY) {
+        this.hovered = this.mouseOver(mX, mY);
         GuiContext.scrolllist = this;
         float minY = 0;
         float maxY = 0;
@@ -70,7 +67,7 @@ public class ScrollList extends Gui {
         }
         yPos = (int)yPos;
         this.scrollY=yPos;
-        Shaders.colored.enable();
+        
 
         int border = 10;
         int scrollBarW = (int) (16);
@@ -99,8 +96,8 @@ public class ScrollList extends Gui {
         this.posY += border / 2;
         this.width -= border;
         this.height -= border;
-        Engine.pxStack.setScissors(this.posX-2, this.posY-2, this.width+2, this.height+2);
         Engine.enableScissors();
+        Engine.pxStack.setScissors(this.posX-2, this.posY-2, this.width+2, this.height+2);
         Engine.pxStack.push(0, -yPos, 0);
         super.renderButtons(fTime, mX, mY+yPos);
         Engine.pxStack.pop();
