@@ -42,12 +42,12 @@ float roundedBoxShadow(vec2 lower, vec2 upper, vec2 point, float sigma, float co
   float end = clamp(3.0 * sigma, low, high);
 
   // Accumulate samples (we can get away with surprisingly few samples)
-  float step = (end - start) / 4.0;
-  float y = start + step * 0.5;
+  float stepScale = (end - start) / 4.0;
+  float y = start + stepScale * 0.5;
   float value = 0.0;
   for (int i = 0; i < 4; i++) {
-    value += roundedBoxShadowX(point.x, point.y - y, sigma, corner, halfSize) * gaussian(y, sigma) * step;
-    y += step;
+    value += roundedBoxShadowX(point.x, point.y - y, sigma, corner, halfSize) * gaussian(y, sigma) * stepScale;
+    y += stepScale;
   }
 
   return value;
@@ -114,26 +114,27 @@ void main(void) {
 	// float f = roundedBoxShadow(rect_min-b, rect_max+b, pass_texcoord, 0.005, 0.04);
 	// vec4 rect = vec4(vec3(0.5), 1);
 	// vec4 shadow = vec4(0,0,0,1)*f;
- //    out_Color = mix(shadow, rect, inside);
+ //    finalColor = mix(shadow, rect, inside);
+ vec4 finalColor = vec4(1.0);
   if (G_COLORWHEEL == 1) {
         
-    out_Color = G_COLOR;
+    finalColor = G_COLOR;
     float range = -0.004;
     vec3 g = color_palette(range+(1-texcoord.x)*(1-range*2), a, b, c, d);
     float l1 = G_VALUE_L/0.5f;
     float l2 = max(0, l1-1.0f);
     g = mix(vec3(G_VALUE_L), g, G_VALUE_S);
     vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
-    out_Color.rgb = h; 
+    finalColor.rgb = h; 
   } else if (G_COLORWHEEL == 2) {
     vec3 e = vec3(0.5, 0.5, 0.5);
     vec3 f = color_palette(G_VALUE_H, a, b, c, d);
-    out_Color = G_COLOR;
+    finalColor = G_COLOR;
     vec3 g = mix(e, f, texcoord.x);
     float l1 = G_VALUE_L/0.5f;
     float l2 = max(0, l1-1.0f);
     vec3 h = mix(mix(vec3(0), g, l1), vec3(1), l2);
-    out_Color.rgb = h; 
+    finalColor.rgb = h; 
   } else if (G_COLORWHEEL == 3) {
     vec3 e = vec3(0);
     vec3 f = color_palette(G_VALUE_H, a, b, c, d);
@@ -141,18 +142,19 @@ void main(void) {
     vec3 g = vec3(1);
     float l1 = texcoord.x/0.5f;
     float l2 = max(0, l1-1.0f);
-    out_Color = G_COLOR;
-    out_Color.rgb = mix(mix(e, f, l1), g, l2); 
+    finalColor = G_COLOR;
+    finalColor.rgb = mix(mix(e, f, l1), g, l2); 
   } else if (G_COLORWHEEL == 4) {
-    out_Color = G_COLOR;
+    finalColor = G_COLOR;
   } else {
-    out_Color = G_COLOR;
-    out_Color.rgb *= (1-G_FADE)+texcoord.y*G_FADE;
+    finalColor = G_COLOR;
+    finalColor.rgb *= (1-G_FADE)+texcoord.y*G_FADE;
   }
-  out_Color.rgb+=dither8BitSS();
+  finalColor.rgb+=dither8BitSS();
 
     
-  out_Color.a *= roundedBoxShadow(G_BOX.xy+PX_OFFSET.xy, G_BOX.zw+PX_OFFSET.xy, vertex, G_SIGMA, G_CORNER);
-  if (out_Color.a<0.01)
+  finalColor.a *= roundedBoxShadow(G_BOX.xy+PX_OFFSET.xy, G_BOX.zw+PX_OFFSET.xy, vertex, G_SIGMA, G_CORNER);
+  if (finalColor.a<0.01)
     discard;
+  out_Color = finalColor;
 }
