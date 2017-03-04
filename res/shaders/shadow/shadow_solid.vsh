@@ -1,8 +1,7 @@
 #version 150 core
-
+ 
 #pragma attributes "shadow"
 #pragma include "ubo_scene.glsl"
-
 
 #ifdef VULKAN_GLSL
 
@@ -12,11 +11,10 @@ layout(push_constant) uniform PushConsts {
 } pushConsts;
 #define MODEL_MATRIX pushConsts.model_matrix
 #define SPLIT_IDX pushConsts.shadowSplit
+
 #else
 //OpenGL 
 in vec4 in_position; 
-in vec4 in_texcoord; 
-in uvec4 in_blockinfo;
 uniform mat4 model_matrix;
 uniform int shadowSplit;
 #define MODEL_MATRIX model_matrix
@@ -24,11 +22,7 @@ uniform int shadowSplit;
 
 #endif
 
-flat out uvec4 blockinfo;
-out vec2 texcoord;
 
 void main() {
-	blockinfo = in_blockinfo;
-	texcoord = in_texcoord.st;
 	gl_Position = in_matrix_shadow.shadow_split_mvp[SPLIT_IDX] * MODEL_MATRIX * in_position;
 }
