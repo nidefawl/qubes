@@ -420,9 +420,6 @@ public class FinalRenderer extends AbstractRenderer {
             if ("RENDER_AMBIENT_OCCLUSION".equals(define)) {
                 return "#define RENDER_AMBIENT_OCCLUSION "+(Engine.RENDER_SETTINGS.ao%2);
             }
-            if ("SHADOW_MAP_RESOLUTION".equals(define)) {
-                return "#define SHADOW_MAP_RESOLUTION "+Engine.getShadowMapTextureSize()+".0";
-            }
             if ("RENDER_VELOCITY_BUFFER".equals(define)) {
                 return "#define RENDER_VELOCITY_BUFFER "+(Engine.getRenderVelocityBuffer() ? "1" : "0");
 //                return "#define RENDER_VELOCITY_BUFFER 1"; 

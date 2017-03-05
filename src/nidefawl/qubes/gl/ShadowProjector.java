@@ -198,7 +198,8 @@ public class ShadowProjector implements IRenderComponent {
         }
     }   
     public void updateProjection(float znear, float zfar, float aspectRatio, float fov) {
-        splits = new float[] {znear, 34, 124, 420};
+//        splits = new float[] {znear, 34, 124, 420};
+        splits = new float[] {znear, 8, 22, 420};
         if (!GameBase.VR_SUPPORT) {
             for (int i = 0; i < NUM_SPLITS; i++) {
                 Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);

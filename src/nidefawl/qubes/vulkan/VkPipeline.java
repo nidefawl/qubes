@@ -21,7 +21,7 @@ public class VkPipeline {
                 false);
     VkPipelineRasterizationStateCreateInfo rasterizationState = pipelineRasterizationStateCreateInfo(
                 VK_POLYGON_MODE_FILL,
-                VK_CULL_MODE_NONE,
+                VK_CULL_MODE_BACK_BIT,
                 VK_FRONT_FACE_COUNTER_CLOCKWISE,
                 0);
     
@@ -141,12 +141,12 @@ public class VkPipeline {
             mainPipe.pDepthStencilState(depthStencilState);
             mainPipe.pDynamicState(dynamicState);
             mainPipe.pStages(shaderStageCreateInfo);
-            for (int i = 1; i < nPipelines; i++) {
-                pipelineCreateInfoBuffer.put(i, mainPipe);
-                VkGraphicsPipelineCreateInfo subPipeline = pipelineCreateInfoBuffer.get(i);
-                subPipeline.flags(VK_PIPELINE_CREATE_DERIVATIVE_BIT);
-                subPipeline.basePipelineIndex(0);
-            }
+//            for (int i = 1; i < nPipelines; i++) {
+//                pipelineCreateInfoBuffer.put(i, mainPipe);
+//                VkGraphicsPipelineCreateInfo subPipeline = pipelineCreateInfoBuffer.get(i);
+//                subPipeline.flags(VK_PIPELINE_CREATE_DERIVATIVE_BIT);
+//                subPipeline.basePipelineIndex(0);
+//            }
             LongBuffer pPipelines = stack.callocLong(nPipelines);
             int err = vkCreateGraphicsPipelines(vkContext.device, VK_NULL_HANDLE, pipelineCreateInfoBuffer, null, pPipelines);
             if (err != VK_SUCCESS) {

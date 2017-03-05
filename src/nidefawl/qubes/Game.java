@@ -174,7 +174,7 @@ public class Game extends GameBase {
         rightSelection.init();
         dig.init();
         FontRenderer.init();
-        Engine.init(EngineInitSettings.INIT_ALL.setVulkan(this.isVulkan));
+        Engine.init(EngineInitSettings.INIT_ALL.setFBSize(windowWidth, windowHeight).setVulkan(this.isVulkan));
         loadingScreen.setProgress(0, 0, "Initializing");
         TextureManager.getInstance().init();
         BlockModelManager.getInstance().init();
@@ -189,7 +189,7 @@ public class Game extends GameBase {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
         this.statsCached = new GuiCached(statsOverlay); 
         this.statsCached.setPos(0, 0);
-        this.statsCached.setSize(displayWidth, displayHeight);
+        this.statsCached.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
         loadingScreen.setProgress(0, 0.5f, "Initializing");
@@ -440,7 +440,7 @@ public class Game extends GameBase {
             this.movement.setGrabbed(b);
             leftSelection.resetSelection();
             rightSelection.resetSelection();
-            Mouse.setCursorPosition(displayWidth / 2, displayHeight / 2);
+            Mouse.setCursorPosition(windowWidth / 2, windowHeight / 2);
             Mouse.setGrabbed(b);
             this.dig.onGrabChange(this.movement.grabbed());
         }
@@ -536,9 +536,7 @@ public class Game extends GameBase {
                 VR.Submit();
             }
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("VR.Submit");
-
-            Game.displayWidth=windowWidth;
-            Game.displayHeight=windowHeight;
+            Engine.updateRenderResolution(windowWidth, windowHeight);
             updateProjection();
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("updateProjection");
             VR.drawFullscreenCompanion(windowWidth, windowHeight);
@@ -585,7 +583,7 @@ public class Game extends GameBase {
         double mx = Mouse.getX();
         double my = Mouse.getY();
         if (this.statsCached != null) {
-            this.statsCached.setSize(displayWidth, displayHeight);
+            this.statsCached.setSize(Engine.displayWidth, Engine.displayHeight);
             this.statsCached.render(fTime, 0, 0);
         }
         if (!canRenderGui3d()) {
@@ -610,7 +608,7 @@ public class Game extends GameBase {
         }
 
         if (GLDebugTextures.show) {
-            GLDebugTextures.drawAll(displayWidth, displayHeight);
+            GLDebugTextures.drawAll(Engine.displayWidth, Engine.displayHeight);
         }
         
 
@@ -621,7 +619,7 @@ public class Game extends GameBase {
     private void renderCrossHair(float fTime) {
         Shaders.colored.enable();
         Tess.instance.setColor(-1, 100);
-        Tess.instance.setOffset(displayWidth / 2, displayHeight / 2, 0);
+        Tess.instance.setOffset(Engine.displayWidth / 2, Engine.displayHeight / 2, 0);
         float height = 1;
         float w = 8;
         Tess.instance.add(-w, height, 0);
@@ -1027,8 +1025,8 @@ public class Game extends GameBase {
                 }
                 FrameBuffer bloomOut = Engine.outRenderer.fbBloomOut;//bloom has our current scene depth information
                 bloomOut.bindRead();
-                int outWidth = finalTarget != null ? finalTarget.getWidth() : displayWidth;
-                int outHeight = finalTarget != null ? finalTarget.getHeight() : displayHeight;
+                int outWidth = finalTarget != null ? finalTarget.getWidth() : Engine.displayWidth;
+                int outHeight = finalTarget != null ? finalTarget.getHeight() : Engine.displayHeight;
                 GL30.glBlitFramebuffer(0, 0, bloomOut.getWidth(), bloomOut.getHeight(), 0, 0, outWidth, outHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
                 FrameBuffer.unbindReadFramebuffer();
             }
@@ -1107,7 +1105,7 @@ public class Game extends GameBase {
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
             int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
             String s = String.format("%s - Display %dx%d - Window %dx%d - SceneFB %dx%d - Gui %dx%d", 
-                    getAppTitle(), displayWidth, displayHeight, windowWidth, windowHeight, iw, ih, Engine.getGuiWidth(), Engine.getGuiHeight());
+                    getAppTitle(), Engine.displayWidth, Engine.displayHeight, windowWidth, windowHeight, iw, ih, Engine.getGuiWidth(), Engine.getGuiHeight());
             setTitle(s);
 //            System.out.println(lastFPS);
 //          System.out.println("initShaders");
@@ -1217,13 +1215,13 @@ public class Game extends GameBase {
         float winX, winY;
 
         if (this.movement.grabbed() || (GuiWindowManager.anyWindowVisible())) {
-            winX = (float) displayWidth/2.0F;
-            winY = (float) displayHeight/2.0F;
+            winX = (float) windowWidth/2.0F;
+            winY = (float) windowHeight/2.0F;
         } else {
             winX = (float) Mouse.getX();
-            winY = (float) (displayHeight-Mouse.getY());
-            if (winX < 0) winX = 0; if (winX > displayWidth) winX = 1;
-            if (winY < 0) winY = 0; if (winY > displayHeight) winY = 1;
+            winY = (float) (windowHeight-Mouse.getY());
+            if (winX < 0) winX = 0; if (winX > windowWidth) winX = 1;
+            if (winY < 0) winY = 0; if (winY > windowHeight) winY = 1;
         }
         if (VR_SUPPORT) {
             for (int i = 0; i < 2; i++) {
@@ -1233,7 +1231,7 @@ public class Game extends GameBase {
                 }
             }
         } else {
-            getMouseOver(0).updateMouseFromScreenPos(winX, winY, displayWidth, displayHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
+            getMouseOver(0).updateMouseFromScreenPos(winX, winY, windowWidth, windowHeight, this.movement.grabbed() ? Engine.camera.getCameraOffset() : null);
 
         }
         if (this.world != null && this.player != null) {
@@ -1411,16 +1409,13 @@ public class Game extends GameBase {
             this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
         }
         if (!VR_SUPPORT||isStarting) {
-            Game.displayWidth=displayWidth;
-            Game.displayHeight=displayHeight;
             setRenderResolution(displayWidth, displayHeight);
         }
     }
     @Override
     public void setRenderResolution(int displayWidth, int displayHeight) {
+        Engine.updateRenderResolution(displayWidth, displayHeight);
         if (isRunning()) {
-            Game.displayWidth=displayWidth;
-            Game.displayHeight=displayHeight;
             Engine.resize(displayWidth, displayHeight);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("onResize");
@@ -1655,8 +1650,8 @@ public class Game extends GameBase {
             }
             if (text.equals("/inversez")) {
                 Engine.INVERSE_Z_BUFFER=!Engine.INVERSE_Z_BUFFER;
-                Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
-                Engine.resizeShadowProjection(Game.displayWidth, Game.displayHeight);
+                Engine.resizeProjection(Engine.displayWidth, Engine.displayHeight);
+                Engine.resizeShadowProjection(Engine.displayWidth, Engine.displayHeight);
                 Shaders.initShaders();
                 Engine.outRenderer.initShaders();
                 Engine.skyRenderer.initShaders();

@@ -210,7 +210,7 @@ public class ComboBox extends AbstractUI implements Renderable {
                 this.width = this.box.width;
                 this.posY = this.box.posY + this.box.height+extendy;
                 this.posX = this.box.posX;
-                if (this.posY + this.height > Game.displayHeight && this.box.posY - this.height > 0) {
+                if (this.posY + this.height > Engine.guiHeight && this.box.posY - this.height > 0) {
                     this.posY = this.box.posY - this.height;
                 }
                 float len = ((float) values / (float) this.values.length);

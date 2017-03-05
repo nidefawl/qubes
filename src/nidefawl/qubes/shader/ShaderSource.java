@@ -291,6 +291,9 @@ public class ShaderSource {
             return "#define Z_INVERSE 0"; 
             
         }
+        if ("SHADOW_MAP_RESOLUTION".equals(define)) {
+            return "#define SHADOW_MAP_RESOLUTION "+Engine.getShadowMapTextureSize()+".0";
+        }
 //        if ("IS_LEAVES".equals(define)) {
 //            return "#define IS_LEAVES(blockid) (blockid=="+Block.leaves.id+"u)";
 //        }

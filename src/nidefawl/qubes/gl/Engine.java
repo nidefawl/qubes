@@ -281,8 +281,8 @@ public class Engine {
         }
     }
 
-    public static void init() {
-        init(EngineInitSettings.INIT_NONE);
+    public static void init(int w, int h) {
+        init(EngineInitSettings.INIT_NONE.setFBSize(w, h));
     }
 
     public static void setZBufferSetting() {
@@ -311,6 +311,8 @@ public class Engine {
         }
     }
     public static void init(EngineInitSettings init) {
+        guiWidth = displayWidth = init.fbWidth;
+        guiHeight = displayHeight = init.fbHeight;
         isVulkan = init.isVulkan;
         INVERSE_Z_BUFFER = init.inverseZBuffer;
         OGL_INVERSE_Y = init.inverseClipspaceYOpengl;
@@ -461,8 +463,8 @@ public class Engine {
             }
             Tess tess = Tess.instance;
             tess.resetState();
-            int tw = Game.displayWidth;
-            int th = Game.displayHeight;
+            int tw = displayWidth;
+            int th = displayHeight;
             float x = 0;
             float y = 0;
             tess.resetState();
@@ -1124,7 +1126,7 @@ public class Engine {
     }
 
     public static void setDefaultViewport() {
-        setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+        setViewport(0, 0, displayWidth, displayHeight);
     }
 
     public static SunLightModel getSunLightModel() {
@@ -1328,10 +1330,10 @@ public class Engine {
         }
     }
     public static int getGuiWidth() {
-        return viewport[2];
+        return guiWidth;
     }
     public static int getGuiHeight() {
-        return viewport[3];
+        return guiHeight;
     }
 
     public static int guiWidth;
@@ -1345,7 +1347,11 @@ public class Engine {
     public static void updateRenderResolution(int w, int h) {
         displayWidth = w;
         displayHeight = h;
-        GameBase.displayWidth = w;
-        GameBase.displayHeight = h;
+    }
+    public static int fbWidth() {
+        return displayWidth;
+    }
+    public static int fbHeight() {
+        return displayHeight;
     }
 }

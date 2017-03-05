@@ -335,7 +335,7 @@ public class VKContext {
         // Create render command buffers
         if (VkRenderPasses.isInit()) {
             VkPipelines.init(this);
-            GameBase.baseInstance.rebuildRenderCommands();    
+            GameBase.baseInstance.rebuildRenderCommands(this.swapChain.width, this.swapChain.height);    
         }
         swapChain.swapChainAquired = false;
         reinitSwapchain = false;
@@ -364,7 +364,7 @@ public class VKContext {
     public void lateInit(int i) {
         if (!reinitSwapchain && VkRenderPasses.isInit()) {
             if (i == 1) {
-                GameBase.baseInstance.rebuildRenderCommands();
+                GameBase.baseInstance.rebuildRenderCommands(this.swapChain.width, this.swapChain.height);
             }
         }
     }
@@ -448,8 +448,9 @@ public class VKContext {
             throw new GameLogicError("Failed compiling spirv. Expected nonnull return value");
         }
         if (result.get(stage) == null) {
+                System.out.println(source);
 
-            System.err.println(result.log+","+result.status+","+result);
+            System.err.println("MISSING BINARY "+string+": "+result.log+","+result.status+","+result);
             throw new GameLogicError("Missing shader binary module");
         }
         result.log = result.log.replaceAll("Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.", "").trim();
@@ -459,7 +460,7 @@ public class VKContext {
             return null;
         }
         if (DUMP_SHADER_SRC) {
-            writeShaderBin(result.get(stage), string);
+//            writeShaderBin(result.get(stage), string);
         }
         
         

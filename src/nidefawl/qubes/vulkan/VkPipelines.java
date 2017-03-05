@@ -18,13 +18,15 @@ import nidefawl.qubes.shader.UniformBuffer;
 
 public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout();
+    public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout();
     public static VkPipelineLayout pipelineLayoutColored = new VkPipelineLayout();
     public static VkPipelineLayout pipelineLayoutShadow = new VkPipelineLayout();
     public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout();
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
-    public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutTextured);
+    public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
     public static VkPipeline mainOffscreen = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline textured2d = new VkPipeline(VkPipelines.pipelineLayoutTextured);
+    public static VkPipeline debugShader = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline fontRender2D = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline colored2D = new VkPipeline(VkPipelines.pipelineLayoutColored);
     public static VkPipeline gui = new VkPipeline(VkPipelines.pipelineLayoutGUI);
@@ -50,39 +52,45 @@ public class VkPipelines {
     }
     public static void init(VKContext ctxt) {
         AssetManager assetManager = AssetManagerClient.getInstance();
-//        {
-//            shadowSolid.destroyPipeLine(ctxt);
-//            VkVertexDescriptors desc = GLVAO.vaoBlocksShadow.getVkVertexDesc();
-//            VkShader vert = ctxt.loadCompileGLSL(assetManager, "shadow/shadow_solid.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-//            VkShader frag = ctxt.loadCompileGLSL(assetManager, "shadow/shadow_solid.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-//            shadowSolid.setShaders(vert, frag);
-//            shadowSolid.setBlend(false);
-//            shadowSolid.setRenderPass(VkRenderPasses.passGBufferSubpass, 0);
-//            shadowSolid.setVertexDesc(desc);
-//            shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
-//        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            shadowSolid.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoBlocksShadow.getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "shadow/shadow_solid.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "shadow/shadow_solid.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            shadowSolid.setShaders(vert, frag);
+            shadowSolid.setBlend(false);
+            shadowSolid.setRenderPass(VkRenderPasses.passShadow, 0);
+            shadowSolid.setVertexDesc(desc);
+            shadowSolid.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+//            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
+            shadowSolid.rasterizationState.depthBiasEnable(true);
+            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_NONE);
+            shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
+        }
         {
             main.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[1|2].getVkVertexDesc();
-            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk_shaded.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk_shaded.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             main.setShaders(vert, frag);
             main.setBlend(false);
             main.setRenderPass(VkRenderPasses.passSubpassSwapchain, 0);
             main.setVertexDesc(desc);
             main.pipeline = buildPipeLine(ctxt, main);
         }
-//        {
-//            mainOffscreen.destroyPipeLine(ctxt);
-//            VkVertexDescriptors desc = GLVAO.vaoTesselator[1|2].getVkVertexDesc();
-//            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-//            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-//            mainOffscreen.setShaders(vert, frag);
-//            mainOffscreen.setBlend(false);
-//            mainOffscreen.setRenderPass(VkRenderPasses.passgbuffer, 0);
-//            mainOffscreen.setVertexDesc(desc);
-//            mainOffscreen.pipeline = buildPipeLine(ctxt, mainOffscreen);
-//        }
+        {
+            mainOffscreen.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[1|2].getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            mainOffscreen.setShaders(vert, frag);
+            mainOffscreen.setBlend(false);
+            mainOffscreen.setRenderPass(VkRenderPasses.passgbuffer, 0);
+            mainOffscreen.setVertexDesc(desc);
+            mainOffscreen.pipeline = buildPipeLine(ctxt, mainOffscreen);
+        }
 
         {
             textured2d.destroyPipeLine(ctxt);
@@ -94,6 +102,18 @@ public class VkPipelines {
             textured2d.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
             textured2d.setVertexDesc(desc);
             textured2d.pipeline = buildPipeLine(ctxt, textured2d);
+        }
+
+        {
+            debugShader.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "shadow/debug.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "shadow/debug.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            debugShader.setShaders(vert, frag);
+            debugShader.setBlend(false);
+            debugShader.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
+            debugShader.setVertexDesc(desc);
+            debugShader.pipeline = buildPipeLine(ctxt, debugShader);
         }
 
         try ( MemoryStack stack = stackPush() ) 
@@ -165,6 +185,7 @@ public class VkPipelines {
         colored2D.destroy(vkContext);
         gui.destroy(vkContext);
         mainOffscreen.destroy(vkContext);
+        debugShader.destroy(vkContext);
         shadowSolid.destroy(vkContext);
         pipelineLayoutTextured.destroy(vkContext);
         pipelineLayoutColored.destroy(vkContext);

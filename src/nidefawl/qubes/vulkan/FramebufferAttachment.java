@@ -38,12 +38,12 @@ public class FramebufferAttachment implements IVkResource {
         }
         else if ((usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0)
         {
-            if (vkFormat == VK_FORMAT_D32_SFLOAT) {
+            if (vkFormat == VK_FORMAT_D32_SFLOAT || vkFormat == VK_FORMAT_D16_UNORM) {
                 aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;               
             } else {
                 aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT; 
             }
-            imageLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            imageLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         } else {
             throw new GameLogicError("Unsuppored usage type");
         }

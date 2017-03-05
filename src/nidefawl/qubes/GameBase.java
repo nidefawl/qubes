@@ -55,8 +55,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static String  appName         = "";
     public  int     windowWidth;
     public  int     windowHeight;
-    public static int     displayWidth;
-    public static int     displayHeight;
     public static boolean GL_ERROR_CHECKS = true;
     public static boolean VR_SUPPORT = false;
     public static boolean DEBUG_LAYER = false;
@@ -129,10 +127,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         }
         baseInstance = this;
         this.timer = new Timer(TICKS_PER_SEC);
-        displayWidth = initWidth;
-        displayHeight = initHeight;
-        windowWidth = displayWidth;
-        windowHeight = displayHeight;
+        windowWidth = initWidth;
+        windowHeight = initHeight;
         outStream = new LogBufferStream(System.out);
         errStream = new LogBufferStream(System.err);
         System.out.flush();
@@ -376,7 +372,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             }
 
             // Create the window
-            windowId = glfwCreateWindow(displayWidth, displayHeight, getAppTitle(), NULL, NULL);
+            windowId = glfwCreateWindow(windowWidth, windowHeight, getAppTitle(), NULL, NULL);
             if (windowId == NULL)
                 throw new RuntimeException("Failed to create the GLFW window");
             // Make the OpenGL context current
@@ -385,7 +381,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             // Get the resolution of the primary monitor
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             // Center our window
-            glfwSetWindowPos(windowId, (vidmode.width() - displayWidth) / 2, (vidmode.height() - displayHeight) / 2);
+            glfwSetWindowPos(windowId, (vidmode.width() - windowWidth) / 2, (vidmode.height() - windowHeight) / 2);
 
             glfwShowWindow(windowId);
             glfwSetWindowSizeCallback(windowId, cbWindowSize);
@@ -519,8 +515,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             }
             if (useWindowSizeAsRenderResolution) {
                 Engine.updateRenderResolution(windowWidth, windowHeight);
-                displayWidth = windowWidth;
-                displayHeight = windowHeight;
             }
             try {
                 onWindowResize(windowWidth, windowHeight);
@@ -793,7 +787,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             initGame();
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame");
-            onWindowResize(displayWidth, displayHeight);
+            onWindowResize(windowWidth, windowHeight);
             if (!isVulkan) {
                 Engine.setDefaultViewport();
             }
@@ -1106,7 +1100,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public void setGrabbed(boolean b) {
         if (b != this.movement.grabbed()) {
             this.movement.setGrabbed(b);
-            Mouse.setCursorPosition(displayWidth / 2, displayHeight / 2);
+            Mouse.setCursorPosition(windowWidth / 2, windowHeight / 2);
             Mouse.setGrabbed(b);
         }
     }
@@ -1159,20 +1153,18 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         VR_SUPPORT = VR.isInit() && !VR_SUPPORT;
         if (!VR_SUPPORT && hadVR) {
             updateGui3dMode();
-            Game.displayWidth=windowWidth;
-            Game.displayHeight=windowHeight;
-            setRenderResolution(displayWidth, displayHeight);
-            Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
-            Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+            Engine.updateRenderResolution(windowWidth, windowHeight);
+            setRenderResolution(windowWidth, windowHeight);
+            Engine.resizeProjection(windowWidth, windowHeight);
+            Engine.setViewport(0, 0, windowWidth, windowHeight);
             if (Engine.outRenderer != null)
                 Engine.outRenderer.initShaders();
         } else if (VR_SUPPORT && !hadVR) {
             updateGui3dMode();
-            Game.displayWidth=VR.renderWidth;
-            Game.displayHeight=VR.renderHeight;
-            setRenderResolution(displayWidth, displayHeight);
-            Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
-            Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+            Engine.updateRenderResolution(VR.renderWidth, VR.renderWidth);
+            setRenderResolution(VR.renderWidth, VR.renderWidth);
+            Engine.resizeProjection(VR.renderWidth, VR.renderWidth);
+            Engine.setViewport(0, 0, VR.renderWidth, VR.renderWidth);
             if (Engine.outRenderer != null)
                 Engine.outRenderer.initShaders();
             setVSync(false);
@@ -1184,22 +1176,18 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 
     protected void setSceneViewport() {
         if (VR_SUPPORT) {
-            Game.displayWidth=VR.renderWidth;
-            Game.displayHeight=VR.renderHeight;
+            Engine.updateRenderResolution(VR.renderWidth, VR.renderWidth);
         } else {
-            Game.displayWidth=windowWidth;
-            Game.displayHeight=windowHeight;
+            Engine.updateRenderResolution(windowWidth, windowHeight);
         }
         updateProjection();
     }
     protected void setVRViewport() {
-        Game.displayWidth=VR.renderWidth;
-        Game.displayHeight=VR.renderHeight;
+        Engine.updateRenderResolution(VR.renderWidth, VR.renderWidth);
         updateProjection();
     }
     protected void setWindowViewport() {
-        Game.displayWidth=windowWidth;
-        Game.displayHeight=windowHeight;
+        Engine.updateRenderResolution(windowWidth, windowHeight);
         updateProjection();
     }
     protected void setGUIViewport() {
@@ -1209,8 +1197,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         updateProjection();
     }
     protected void updateProjection() {
-        Engine.resizeProjection(Game.displayWidth, Game.displayHeight);
-        Engine.setViewport(0, 0, Game.displayWidth, Game.displayHeight);
+        Engine.resizeProjection(Engine.fbWidth(), Engine.fbHeight());
+        Engine.setViewport(0, 0, Engine.fbWidth(), Engine.fbHeight());
         UniformBuffer.updateOrtho();
     }
 
@@ -1221,6 +1209,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         return this.renderGui3d;
     }
 
-    public void rebuildRenderCommands() {
+    public void rebuildRenderCommands(int width, int height) {
     }
 }

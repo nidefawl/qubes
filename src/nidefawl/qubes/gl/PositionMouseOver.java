@@ -13,10 +13,10 @@ public class PositionMouseOver {
     public final Vector3f vTarget = new Vector3f();
      final Vector3f t       = new Vector3f();
 
-    public void updateMouseFromScreenPos(float winX, float winY, float renderWidth, float renderHeight, Vector3f cameraOffset) {
+    public void updateMouseFromScreenPos(float winX, float winY, float windowWidth, float windowHeight, Vector3f cameraOffset) {
         Vector3f rayDirWorldSpace = Vector3f.pool();
-        Engine.unprojectScreenSpace(winX, winY, 1, renderWidth, renderHeight, rayDirWorldSpace);
-        Engine.unprojectScreenSpace(winX, winY, 0, renderWidth, renderHeight, vOrigin);
+        Engine.unprojectScreenSpace(winX, winY, 1, windowWidth, windowHeight, rayDirWorldSpace);
+        Engine.unprojectScreenSpace(winX, winY, 0, windowWidth, windowHeight, vOrigin);
 //        System.out.println(vOrigin);
         rayDirWorldSpace.subtract(vOrigin);
         float length = rayDirWorldSpace.length();

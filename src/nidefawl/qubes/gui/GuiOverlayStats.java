@@ -161,7 +161,7 @@ public class GuiOverlayStats extends Gui {
                 y += statsFontBig.getLineHeight();
             }
             if (stats5 != null) {
-                statsFontBig.drawString(stats5, GameBase.displayWidth / 2, 22, 0xFFFFFF, true, 1.0F, 2);
+                statsFontBig.drawString(stats5, Engine.getGuiWidth() / 2, 22, 0xFFFFFF, true, 1.0F, 2);
                 y += statsFontBig.getLineHeight();
             }
             float totalHeight = (statsFontSmall.getLineHeight())*info.size();
@@ -213,7 +213,7 @@ public class GuiOverlayStats extends Gui {
                 strwidth = Math.max(statsFontBig.getStringWidth(split[i]), strwidth);
             }
             for (int i = 0; i < split.length; i++) {
-                statsFontBig.drawString(split[i], GameBase.displayWidth / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
+                statsFontBig.drawString(split[i], Engine.getGuiWidth() / 2 - strwidth / 2, ((int)70)+2+(i+1)*24, 0xFFFFFF, true, 1.0F);    
             }
         }
         int w = 64;

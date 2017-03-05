@@ -56,6 +56,8 @@ public class EngineInitSettings {
     public boolean isVulkan;
     public boolean inverseClipspaceYOpengl;
     public boolean initShadowProj;
+    public int fbWidth;
+    public int fbHeight;
     
     public EngineInitSettings setVulkan(boolean isVulkan) {
         this.isVulkan = isVulkan;
@@ -67,6 +69,11 @@ public class EngineInitSettings {
     }
     public EngineInitSettings setInverseYOpengl() {
         this.inverseClipspaceYOpengl = true;
+        return this;
+    }
+    public EngineInitSettings setFBSize(int w, int h) {
+        this.fbWidth = w;
+        this.fbHeight = h;
         return this;
     }
 }

@@ -42,6 +42,7 @@ public class GuiTest extends Gui implements ITextEdit {
         for (int i = 0; i < vals.length; i++) {
             vals[i] = "Option "+i;
         }
+        System.out.println(Engine.getGuiWidth()+","+Engine.getGuiHeight());
         this.width = Engine.getGuiWidth()/2;
         this.height = Engine.getGuiHeight()/3*2;
         this.posX = Engine.getGuiWidth()/2-this.width/2;

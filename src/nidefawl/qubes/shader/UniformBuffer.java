@@ -312,6 +312,10 @@ public class UniformBuffer {
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(1));
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));
             uboMatrixShadow.put(Engine.shadowProj.getSMVP(2));
+//            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+//            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+//            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
+//            uboMatrixShadow.put(Engine.getMatSceneMVP().get());
             uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[0]);
             uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[1]);
             uboMatrixShadow.put(Engine.shadowProj.shadowSplitDepth[2]);
@@ -343,8 +347,8 @@ public class UniformBuffer {
         uboSceneData.put(Engine.GLOBAL_OFFSET.z);
         uboSceneData.put(Game.ticksran+f);
 
-        uboSceneData.put(Game.displayWidth);
-        uboSceneData.put(Game.displayHeight);
+        uboSceneData.put(Engine.displayWidth);
+        uboSceneData.put(Engine.displayHeight);
         uboSceneData.put(Engine.znear);
         uboSceneData.put(Engine.zfar);
         uboSceneData.put(Engine.pxOffset.x);

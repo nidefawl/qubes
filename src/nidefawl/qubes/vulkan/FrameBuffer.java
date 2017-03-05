@@ -14,12 +14,15 @@ public class FrameBuffer  implements IVkResource {
     public long framebuffer;
     private FramebufferAttachment[] attachments = new FramebufferAttachment[8];
     int nAttachments = 0;
-
+    int height;
+    int width;
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
         this.ctxt.addResource(this);
     }
     public void build(VkRenderPass passgbuffer, int width, int height) {
+        this.width = width;
+        this.height = height;
         try ( MemoryStack stack = stackPush() ) {
             LongBuffer pAttachments = stack.callocLong(attachments.length);
             for (int i = 0; i < this.attachments.length; i++) {
@@ -99,5 +102,11 @@ public class FrameBuffer  implements IVkResource {
             }
             addAtt(i, n.format(), flags);
         }
+    }
+    public int getHeight() {
+        return this.height;
+    }
+    public int getWidth() {
+        return this.width;
     }
 }
