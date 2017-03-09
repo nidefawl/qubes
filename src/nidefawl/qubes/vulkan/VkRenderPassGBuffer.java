@@ -15,7 +15,10 @@ public class VkRenderPassGBuffer extends VkRenderPass {
     private Buffer subpassDependencies;
     public VkRenderPassGBuffer() {
         addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
-        addDepthAttachment(1, VK_FORMAT_D32_SFLOAT);
+        addColorAttachment(1, VK_FORMAT_R16G16B16A16_SFLOAT);
+        addColorAttachment(2, VK_FORMAT_R16G16B16A16_UINT);
+        addColorAttachment(3, VK_FORMAT_R16G16B16A16_SFLOAT);
+        addDepthAttachment(4, VK_FORMAT_D32_SFLOAT);
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
     }
@@ -29,7 +32,7 @@ public class VkRenderPassGBuffer extends VkRenderPass {
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
             VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
-                    .attachment(1)
+                    .attachment(4)
                     .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)

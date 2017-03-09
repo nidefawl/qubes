@@ -2,7 +2,8 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
 import nidefawl.qubes.meshing.BlockSurface;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
 
@@ -23,15 +24,15 @@ public class BlockGrass extends Block {
 
     public int getTexture(int faceDir, int dataVal, int pass) {
         if (pass == 1) {
-            return BlockTextureArray.getInstance().getTextureIdx(this.id, 2);
+            return TextureArrays.blockTextureArray.getTextureIdx(this.id, 2);
         }
         int idx = 0;
         if (faceDir == Dir.DIR_NEG_Y) {
-            return BlockTextureArray.getInstance().getTextureIdx(Block.dirt.id, 0);
+            return TextureArrays.blockTextureArray.getTextureIdx(Block.dirt.id, 0);
         } else if (faceDir != Dir.DIR_POS_Y) {
             idx = 1;
         }
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, idx);
     }
     public int getMeshedColor(BlockSurface bs) {
         return bs.axis==1&&bs.face==0?bs.faceColor:-1;
@@ -46,9 +47,9 @@ public class BlockGrass extends Block {
     }
     @Override
     public int getNormalMap(int texture) {
-        if (texture == BlockTextureArray.getInstance().getTextureIdx(this.id, 1))
+        if (texture == TextureArrays.blockTextureArray.getTextureIdx(this.id, 1))
             return 1;
-        if (texture == BlockTextureArray.getInstance().getTextureIdx(Block.dirt.id, 0)) {
+        if (texture == TextureArrays.blockTextureArray.getTextureIdx(Block.dirt.id, 0)) {
             return Block.dirt.getNormalMap(texture);
         }
         return 0;

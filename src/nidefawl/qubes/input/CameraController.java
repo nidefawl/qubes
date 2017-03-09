@@ -15,7 +15,7 @@ import nidefawl.qubes.vr.VR;
  * Copyright: Michael Hept
  */
 public class CameraController {
-	final static float SPEED_MODIFIER=0.02f;
+	final static float SPEED_MODIFIER=0.42f;
 	public Vec3D pos = new Vec3D();
 	public Vec3D lastPos = new Vec3D();
 	public Vec3D mot = new Vec3D();

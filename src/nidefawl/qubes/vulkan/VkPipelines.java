@@ -17,19 +17,20 @@ import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.UniformBuffer;
 
 public class VkPipelines {
-    public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout();
-    public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout();
-    public static VkPipelineLayout pipelineLayoutColored = new VkPipelineLayout();
-    public static VkPipelineLayout pipelineLayoutShadow = new VkPipelineLayout();
-    public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout();
+    public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout("pipelineLayoutTextured");
+    public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout("pipelineLayoutMain");
+    public static VkPipelineLayout pipelineLayoutTerrain = new VkPipelineLayout("pipelineLayoutTerrain");
+    public static VkPipelineLayout pipelineLayoutColored = new VkPipelineLayout("pipelineLayoutColored");
+    public static VkPipelineLayout pipelineLayoutShadow = new VkPipelineLayout("pipelineLayoutShadow");
+    public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout("pipelineLayoutGUI");
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
-    public static VkPipeline mainOffscreen = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline textured2d = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline debugShader = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline fontRender2D = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline colored2D = new VkPipeline(VkPipelines.pipelineLayoutColored);
     public static VkPipeline gui = new VkPipeline(VkPipelines.pipelineLayoutGUI);
+    public static VkPipeline terrain = new VkPipeline(VkPipelines.pipelineLayoutTerrain);
     static {
     }
     static class VkShaderDef implements IShaderDef {
@@ -63,11 +64,25 @@ public class VkPipelines {
             shadowSolid.setRenderPass(VkRenderPasses.passShadow, 0);
             shadowSolid.setVertexDesc(desc);
             shadowSolid.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
-            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
-//            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
+            shadowSolid.useSwapChainViewport = false;
+            shadowSolid.viewport.width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+            shadowSolid.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+//            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
             shadowSolid.rasterizationState.depthBiasEnable(true);
-            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_NONE);
+            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_FRONT_BIT);
             shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
+        }
+        {
+            terrain.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoBlocks.getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "terrain/terrain.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "terrain/terrain.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            terrain.setShaders(vert, frag);
+            terrain.setBlend(false);
+            terrain.setRenderPass(VkRenderPasses.passTerrain, 0);
+            terrain.setVertexDesc(desc);
+            terrain.pipeline = buildPipeLine(ctxt, terrain);
         }
         {
             main.destroyPipeLine(ctxt);
@@ -79,17 +94,6 @@ public class VkPipelines {
             main.setRenderPass(VkRenderPasses.passSubpassSwapchain, 0);
             main.setVertexDesc(desc);
             main.pipeline = buildPipeLine(ctxt, main);
-        }
-        {
-            mainOffscreen.destroyPipeLine(ctxt);
-            VkVertexDescriptors desc = GLVAO.vaoTesselator[1|2].getVkVertexDesc();
-            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-            mainOffscreen.setShaders(vert, frag);
-            mainOffscreen.setBlend(false);
-            mainOffscreen.setRenderPass(VkRenderPasses.passgbuffer, 0);
-            mainOffscreen.setVertexDesc(desc);
-            mainOffscreen.pipeline = buildPipeLine(ctxt, mainOffscreen);
         }
 
         {
@@ -171,8 +175,10 @@ public class VkPipelines {
     static long buildPipeLine(VKContext vkContext, VkPipeline pipe) {
         pipe.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
         pipe.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
-        pipe.viewport.width(vkContext.swapChain.width).height(vkContext.swapChain.height);
-        pipe.scissors.extent().width(vkContext.swapChain.width).height(vkContext.swapChain.height);
+        if (pipe.useSwapChainViewport) {
+            pipe.viewport.width(vkContext.swapChain.width).height(vkContext.swapChain.height);
+            pipe.scissors.extent().width(vkContext.swapChain.width).height(vkContext.swapChain.height);
+        }
         pipe.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
         long pipeline = pipe.buildPipeline(vkContext);
         return pipeline;
@@ -184,7 +190,7 @@ public class VkPipelines {
         fontRender2D.destroy(vkContext);
         colored2D.destroy(vkContext);
         gui.destroy(vkContext);
-        mainOffscreen.destroy(vkContext);
+        terrain.destroy(vkContext);
         debugShader.destroy(vkContext);
         shadowSolid.destroy(vkContext);
         pipelineLayoutTextured.destroy(vkContext);

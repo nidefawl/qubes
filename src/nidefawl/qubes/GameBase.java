@@ -166,9 +166,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             t.printStackTrace();
             return;
         }
-        if (isVulkan) {
-            
-        } else {
+        if (!isVulkan) {
             try {
                 List<String> list = GL.validateCaps(caps);
                 if (!list.isEmpty()) {
@@ -185,26 +183,30 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
                 return;
             }
-            try {
+        }
+        try {
+            if (!isVulkan) {
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("pre initGLContext");
                 initGLContext();
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("initGLContext");
-                GameContext.lateInit();
+            }
+            GameContext.lateInit();
+            if (!isVulkan) {
                 if (Game.GL_ERROR_CHECKS)
                     Engine.checkGLError("GameContext.lateInit");
-                TerrainGen.init();
-                if (this.showError == null) {
-                    this.showError = GameContext.getInitError();
-                }
-            } catch (Throwable t) {
-                showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
-                return;
             }
-            if (this.showError != null) {
-                showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), this.showError, true);
+            TerrainGen.init();
+            if (this.showError == null) {
+                this.showError = GameContext.getInitError();
             }
+        } catch (Throwable t) {
+            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
+            return;
+        }
+        if (this.showError != null) {
+            showErrorScreen("Failed starting game", Arrays.asList(new String[] { "An unexpected exception occured" }), this.showError, true);
         }
         mainLoop();
     }

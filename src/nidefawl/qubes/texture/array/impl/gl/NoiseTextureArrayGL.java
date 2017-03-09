@@ -1,4 +1,4 @@
-package nidefawl.qubes.texture.array;
+package nidefawl.qubes.texture.array.impl.gl;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -17,13 +17,9 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 
-public class NoiseTextureArray extends TextureArray {
-    static final NoiseTextureArray instance = new NoiseTextureArray();
-    public static NoiseTextureArray getInstance() {
-        return instance;
-    }
-
-    NoiseTextureArray() {
+public class NoiseTextureArrayGL extends TextureArrayGL {
+    
+    public NoiseTextureArrayGL() {
         super(64);
     }
 
@@ -47,6 +43,7 @@ public class NoiseTextureArray extends TextureArray {
             Engine.checkGLError("GL12.glTexSubImage3D");
             uploadprogress = ++nBlock / (float) totalTex;
         }
+        this.totalSlots = nBlock;
     }
 
     @Override

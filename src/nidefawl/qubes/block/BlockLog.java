@@ -5,7 +5,8 @@ package nidefawl.qubes.block;
 
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.BlockPlacer;
@@ -40,7 +41,7 @@ public class BlockLog extends Block {
       if (pass == 1) {
           dataVal = dataVal>>2;
           int v = dataVal < 0 ? 0 : dataVal > 9 ? 9 : dataVal;
-          return BlockTextureArray.getInstance().getTextureIdx(this.id, 2+v);
+          return TextureArrays.blockTextureArray.getTextureIdx(this.id, 2+v);
       }
       int rot = dataVal & 3;
       int topFace = Dir.DIR_POS_Y;
@@ -63,7 +64,7 @@ public class BlockLog extends Block {
       if (faceDir == topFace || faceDir == bottomFace) {
           idx = 1;
       }
-      return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+      return TextureArrays.blockTextureArray.getTextureIdx(this.id, idx);
     }
     
     @Override

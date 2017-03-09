@@ -8,6 +8,7 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.shader.ShaderSource.ProcessMode;
@@ -102,9 +103,10 @@ public class VKContext {
                        }
                    }
                }
-               vkWaitForFences(device, lFences, true, 1000000L*100L);
+//               vkWaitForFences(device, lFences, true, 1000000L*100L);
                freeFence = -1L; // signal that we have no fence in any queue submitted
             }
+            vkQueueWaitIdle(vkQueue);
         } else {
             vkQueueWaitIdle(vkQueue);
         }
@@ -364,6 +366,7 @@ public class VKContext {
     public void lateInit(int i) {
         if (!reinitSwapchain && VkRenderPasses.isInit()) {
             if (i == 1) {
+                syncAllFences();
                 GameBase.baseInstance.rebuildRenderCommands(this.swapChain.width, this.swapChain.height);
             }
         }

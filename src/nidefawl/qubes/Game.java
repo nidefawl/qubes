@@ -50,6 +50,7 @@ import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
+import nidefawl.qubes.texture.array.impl.gl.ItemTextureArrayGL;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.StringUtil;
@@ -179,7 +180,6 @@ public class Game extends GameBase {
         TextureManager.getInstance().init();
         BlockModelManager.getInstance().init();
         ItemModelManager.getInstance().init();
-        ItemTextureArray.getInstance().init();
         SingleBlockRenderAtlas.getInstance().init();
 
         

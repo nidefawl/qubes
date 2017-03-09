@@ -4,7 +4,8 @@ import java.util.List;
 
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.item.ItemStack;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.world.BlockPlacer;
@@ -35,9 +36,9 @@ public class BlockOre extends Block {
     public int getTexture(int faceDir, int dataVal, int pass) {
         if (pass == 1) {
             int v = dataVal < 0 ? 0 : dataVal > 9 ? 9 : dataVal;
-            return BlockTextureArray.getInstance().getTextureIdx(this.id, 1 + v);
+            return TextureArrays.blockTextureArray.getTextureIdx(this.id, 1 + v);
         }
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, 0);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, 0);
     }
     
     @Override

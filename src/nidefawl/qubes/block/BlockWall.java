@@ -6,7 +6,9 @@ package nidefawl.qubes.block;
 import java.util.List;
 
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.IBlockWorld;
@@ -86,7 +88,7 @@ public class BlockWall extends Block {
     public int getTexture(int faceDir, int dataVal, int pass) {
         int idx = overrideTextureIdx;
         if (idx >= 0) {
-            return BlockTextureArray.getInstance().getTextureIdx(baseBlock.id, idx);
+            return TextureArrays.blockTextureArray.getTextureIdx(baseBlock.id, idx);
         }
         if (this.textures.length == 0)
             return baseBlock.getTexture(faceDir, dataVal, pass);

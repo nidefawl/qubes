@@ -6,14 +6,22 @@ import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.LongBuffer;
 
+import org.lwjgl.opengl.EXTDebugLabel;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
-import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
-import org.lwjgl.vulkan.VkPushConstantRange;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.*;
 
 public class VkPipelineLayout {
 
     public long pipelineLayout = VK_NULL_HANDLE;
+    private String name;
+    public VkPipelineLayout() {
+    }
+
+    public VkPipelineLayout(String name) {
+        this.name = name;
+    }
+    
 
     public void build(VKContext ctxt, long... descriptorSets) {
         build(ctxt, descriptorSets, null);
@@ -32,7 +40,14 @@ public class VkPipelineLayout {
                 throw new AssertionError("vkCreatePipelineLayout failed: " + VulkanErr.toString(err));
             }
             this.pipelineLayout = pPipelineLayout.get(0);
-            System.out.println("pipeline layout "+pipelineLayout);
+            System.out.println("pipeline layout "+this.name+" = "+Long.toHexString(pipelineLayout));
+//            if (this.name != null) {
+//                VkDebugMarkerObjectNameInfoEXT pNameInfo = VkDebugMarkerObjectNameInfoEXT.callocStack()
+//                        .sType(EXTDebugMarker.VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT)
+//                        .pNext(0L).objectType(EXTDebugReport.VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT)
+//                        .object(this.pipelineLayout).pObjectName(stack.UTF8(this.name));
+//                EXTDebugMarker.vkDebugMarkerSetObjectNameEXT(ctxt.device, pNameInfo);
+//            }
         }
     }
     public static VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo() {
@@ -42,6 +57,10 @@ public class VkPipelineLayout {
     }
     public void destroy(VKContext vkContext) {
         vkDestroyPipelineLayout(vkContext.device, this.pipelineLayout, null);
+    }
+
+    public String getName() {
+        return this.name;
     }
 
 }

@@ -18,7 +18,8 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GPUVendor;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.StringUtil;
@@ -277,7 +278,7 @@ public class ShaderSource {
             return "#define IS_LIGHT(blockid) float(blockid==2222u)";
         }
         if ("SRGB_TEXTURES".equals(define)) {
-            if (BlockTextureArray.getInstance().isSRGB()) {
+            if (TextureArrays.blockTextureArray!=null&&TextureArrays.blockTextureArray.isSRGB()) {
                 return "#define SRGB_TEXTURES"; 
             }
             return "#define SRGB_TEXTURES";

@@ -1,22 +1,17 @@
 package nidefawl.qubes.texture.array;
 
 import static org.lwjgl.opengl.GL11.GL_RGBA8;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
-import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL21;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
+
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -26,10 +21,9 @@ public abstract class TextureArray {
     protected HashMap<Integer, ArrayList<AssetTexture>> blockIDToAssetList = new HashMap<>();
     protected HashMap<Integer, AssetTexture> slotTextureMap = new HashMap<>();
 
-    protected boolean firstInit = true;
+    public boolean firstInit = true;
 
-    private final int[]         textures;
-    public int    glid;
+    protected final int[]         textures;
     public int    tileSize = 0;
     protected int numTextures;
     protected int numMipmaps;
@@ -37,29 +31,24 @@ public abstract class TextureArray {
     protected boolean report;
     public float loadprogress;
     public float uploadprogress;
-    protected int internalFormat = GL_RGBA8;
+    public int totalSlots;
+    public float anisotropicFiltering = 0;
+    protected int internalFormat;
 
     public TextureArray(int maxTextures) {
         this.textures = new int[maxTextures];
     }
 
-    protected void unload() {
-        if (!firstInit) {
-            GL.deleteTexture(this.glid);
-            this.texNameToAssetMap.clear();
-            this.blockIDToAssetList.clear();
-            this.slotTextureMap.clear();
-            Arrays.fill(this.textures, 0);
-        }
-    }
-    public void init() {
-        glid = GL11.glGenTextures();
-    }
 
     public void preUpdate() {
         unload();
         init();
     }
+    
+    protected abstract void init();
+
+    protected abstract void unload();
+
     private void _load() {
         AssetManager mgr = AssetManager.getInstance();
         if (!SKIP_LOAD_TEXTURES) {
@@ -86,7 +75,7 @@ public abstract class TextureArray {
 
 
     public void postUpdate() {
-        initGLStorage();
+        initStorage();
         uploadTextures();
         this.uploadprogress = 1;
         postUpload();
@@ -173,18 +162,7 @@ public abstract class TextureArray {
     }
 
 
-    protected void initGLStorage() {
-//        System.err.println(glid+"/"+numMipmaps+"/"+this.tileSize+"/"+this.numTextures);
-        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
-        Engine.checkGLError("pre glTexStorage3D");
-        nidefawl.qubes.gl.GL.glTexStorage3D(GL30.GL_TEXTURE_2D_ARRAY, numMipmaps, 
-                this.internalFormat,              //Internal format
-                this.tileSize, this.tileSize,   //width,height
-                this.numTextures       //Number of layers
-        );
-        glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, numMipmaps-1);
-        Engine.checkGLError("glTexStorage3D");
-    }
+    protected abstract void initStorage();
 
     protected abstract void uploadTextures();
     protected abstract void collectTextures(AssetManager mgr);
@@ -200,6 +178,14 @@ public abstract class TextureArray {
     
     public int getNumTextures() {
         return this.numTextures;
+    }
+
+    public void setAnisotropicFiltering(int anisotropicFiltering) {
+        this.anisotropicFiltering = anisotropicFiltering;
+    }
+
+    public boolean isSRGB() {
+        return this.internalFormat==GL21.GL_SRGB8_ALPHA8;
     }
 
 }

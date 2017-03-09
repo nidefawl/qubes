@@ -8,7 +8,9 @@ import nidefawl.qubes.gui.LoadingScreen;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
+import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.texture.array.*;
+import nidefawl.qubes.texture.array.impl.*;
 
 public class RenderAssets {
 
@@ -20,13 +22,8 @@ public class RenderAssets {
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Entity Models");
         EntityModelManager.getInstance().reload();
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
-        BlockTextureArray.getInstance().setAnisotropicFiltering(renderSettings.anisotropicFiltering);
-        TextureArray[] arrays = {
-                ItemTextureArray.getInstance(),
-                BlockNormalMapArray.getInstance(),
-                BlockTextureArray.getInstance(),
-                NoiseTextureArray.getInstance(),
-        };
+        TextureArray[] arrays = TextureArrays.init();
+        TextureArrays.blockTextureArray.setAnisotropicFiltering(renderSettings.anisotropicFiltering);
         for (int i = 0; i < arrays.length; i++) {
             final TextureArray arr = arrays[i];
             AsyncTasks.submit(new AsyncTask() {
@@ -69,6 +66,14 @@ public class RenderAssets {
             } catch (InterruptedException e) {
             }
         }
+    }
+
+    public static void reload() {
+        TextureArray[] arrays = TextureArrays.allArrays;
+        for (int i = 0; i < arrays.length; i++) {
+            arrays[i].reload();
+        }
+        SingleBlockRenderAtlas.getInstance().reset();
     }
 
 }

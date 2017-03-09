@@ -1,6 +1,7 @@
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 
 public class BlockStoneModelled extends BlockModelled {
 
@@ -21,7 +22,7 @@ public class BlockStoneModelled extends BlockModelled {
     public int getTexture(int faceDir, int dataVal, int pass) {
         int idx = overrideTextureIdx;
         if (idx >= 0) {
-            return BlockTextureArray.getInstance().getTextureIdx(baseBlock.id, idx);
+            return TextureArrays.blockTextureArray.getTextureIdx(baseBlock.id, idx);
         }
         if (this.textures.length == 0)
             return baseBlock.getTexture(faceDir, dataVal, pass);

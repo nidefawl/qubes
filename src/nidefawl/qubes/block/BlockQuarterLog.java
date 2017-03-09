@@ -3,7 +3,8 @@
  */
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.vec.Dir;
 
 /**
@@ -45,6 +46,6 @@ public class BlockQuarterLog extends Block {
                 idx = 4;
                 break;
         }
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, idx);
     }
 }

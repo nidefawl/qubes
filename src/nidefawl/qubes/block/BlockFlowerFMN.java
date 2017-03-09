@@ -4,7 +4,8 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.world.IBlockWorld;
 
 /**
@@ -37,7 +38,7 @@ public class BlockFlowerFMN extends BlockPlantCrossedSquares {
     @Override
     public int getTexture(int faceDir, int dataVal, int pass) {
         if (multipass) {
-            return BlockTextureArray.getInstance().getTextureIdx(this.id, pass);
+            return TextureArrays.blockTextureArray.getTextureIdx(this.id, pass);
         }
         return super.getTexture(faceDir, dataVal, pass);
     }

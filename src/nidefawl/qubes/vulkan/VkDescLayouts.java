@@ -19,7 +19,7 @@ public class VkDescLayouts {
 
     private final VKContext ctxt;
     public VkDescriptorSetLayoutBinding.Buffer ubo_scene_bindings = VkDescriptorSetLayoutBinding.calloc(4);
-    public VkDescriptorSetLayoutBinding.Buffer ubo_constants_bindings = VkDescriptorSetLayoutBinding.calloc(1);
+    public VkDescriptorSetLayoutBinding.Buffer ubo_constants_bindings = VkDescriptorSetLayoutBinding.calloc(2);
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_single = VkDescriptorSetLayoutBinding.calloc(1);
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_double = VkDescriptorSetLayoutBinding.calloc(2);
     public VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
@@ -28,6 +28,7 @@ public class VkDescLayouts {
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDouble = VK_NULL_HANDLE;
+    private long descSetLayoutUBOConstants;
 //    public long descSetLayoutUBOShadow = VK_NULL_HANDLE;
     public VkDescLayouts(VKContext ctxt) {
         this.ctxt = ctxt;
@@ -80,9 +81,11 @@ public class VkDescLayouts {
             .offset(0)
             .size(64+4);
         descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
+        descSetLayoutUBOConstants = makeSet(ubo_constants_bindings);
 //        descSetLayoutUBOShadow = makeSet(ubo_shadow_bindings);
         descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
         descSetLayoutSamplerImageDouble = makeSet(sampler_image_double);
+        VkPipelines.pipelineLayoutTerrain.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants);
         VkPipelines.pipelineLayoutMain.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageDouble);
         VkPipelines.pipelineLayoutTextured.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
         VkPipelines.pipelineLayoutColored.build(ctxt, descSetLayoutUBOScene);
@@ -127,18 +130,18 @@ public class VkDescLayouts {
     public void init(VKContext ctxt) {
     }
 
-    public long allocDescSetUBOScene() {
-        return allocDescSet(descSetLayoutUBOScene);
+    public VkDescriptor allocDescSetUBOScene() {
+        return new VkDescriptor(allocDescSet(descSetLayoutUBOScene));
     }
 
 //    public long allocDescSetUBOShadow() {
 //        return allocDescSet(descSetLayoutUBOShadow);
 //    }
-    public long allocDescSetSampleSingle() {
-        return allocDescSet(descSetLayoutSamplerImageSingle);
+    public VkDescriptor allocDescSetSampleSingle() {
+        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageSingle));
     }
-    public long allocDescSetSamplerDouble() {
-        return allocDescSet(descSetLayoutSamplerImageDouble);
+    public VkDescriptor allocDescSetSamplerDouble() {
+        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageDouble));
     }
     public long allocDescSet(long descSetLayout) {
         try ( MemoryStack stack = stackPush() ) {

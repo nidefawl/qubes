@@ -15,8 +15,9 @@ import nidefawl.qubes.item.ItemStack;
 import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.texture.array.BlockNormalMapArray;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockNormalMapArrayGL;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
@@ -284,16 +285,16 @@ public class Block {
     public int getTexture(int faceDir, int dataVal, int pass) {
         switch (this.textureMode) {
             case SUBTYPED_TEX_PER_TYPE:
-                return BlockTextureArray.getInstance().getTextureIdx(this.id, dataVal % this.textures.length);
+                return TextureArrays.blockTextureArray.getTextureIdx(this.id, dataVal % this.textures.length);
             case TOP:
-                return BlockTextureArray.getInstance().getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : 0);
+                return TextureArrays.blockTextureArray.getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : 0);
             case TOP_BOTTOM:
-                return BlockTextureArray.getInstance().getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : faceDir == Dir.DIR_NEG_Y ? 2 : 0);
+                return TextureArrays.blockTextureArray.getTextureIdx(this.id, faceDir == Dir.DIR_POS_Y ? 1 : faceDir == Dir.DIR_NEG_Y ? 2 : 0);
             case DEFAULT:
             default:
                 break;
         }
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, 0);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, 0);
     }
     public int getLODPass() {
         return WorldRenderer.PASS_SOLID;
@@ -542,7 +543,7 @@ public class Block {
     }
     
     public int getTextureByIdx(int idx) {
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, idx);
     }
     
     public int getLightLoss(LightChunkCache c, int i, int j, int k, int type) {
@@ -605,7 +606,7 @@ public class Block {
     }
     public int getNormalMap(int texture) {
         if (this.normalMaps.length > 0) {
-            return BlockNormalMapArray.getInstance().getTextureIdx(this.id, 0);
+            return TextureArrays.blockNormalMapArray.getTextureIdx(this.id, 0);
         }
         return 0;
     }

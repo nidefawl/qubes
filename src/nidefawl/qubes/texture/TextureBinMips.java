@@ -3,6 +3,7 @@ package nidefawl.qubes.texture;
 import java.io.*;
 
 import nidefawl.qubes.assets.AssetBinary;
+import nidefawl.qubes.assets.AssetTexture;
 
 public class TextureBinMips {
     public byte[] data;
@@ -11,6 +12,8 @@ public class TextureBinMips {
 	public int[] sizes;
 	public int[] w;
 	public int[] h;
+	public TextureBinMips() {
+    }
 
     public TextureBinMips(byte[] data, int w, int h) {
         this.data = data;
@@ -43,4 +46,12 @@ public class TextureBinMips {
 			e.printStackTrace();
 		}
 	}
+    public TextureBinMips(AssetTexture bin) {
+        this.totalSize = bin.getData().length;
+        this.mips = 1;
+        this.w = new int[] {bin.getWidth()};
+        this.h = new int[] {bin.getHeight()};
+        this.sizes = new int[] {this.totalSize};
+        this.data = bin.getData();
+    }
 }

@@ -13,6 +13,7 @@ import com.google.common.collect.MapMaker;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.assets.RenderAssets;
 import nidefawl.qubes.chat.client.ChatManager;
 import nidefawl.qubes.config.AbstractYMLConfig;
 import nidefawl.qubes.config.InvalidConfigException;
@@ -33,9 +34,9 @@ import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.packet.PacketCListRequest;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
-import nidefawl.qubes.texture.array.BlockNormalMapArray;
-import nidefawl.qubes.texture.array.BlockTextureArray;
-import nidefawl.qubes.texture.array.ItemTextureArray;
+import nidefawl.qubes.texture.array.impl.gl.BlockNormalMapArrayGL;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
+import nidefawl.qubes.texture.array.impl.gl.ItemTextureArrayGL;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
@@ -318,10 +319,7 @@ public class KeybindManager {
 //                Engine.flushRenderTasks();
 //                Engine.regionRenderer.resetAll();
 //                Engine.toggleDrawMode();
-                ItemTextureArray.getInstance().reload();
-                BlockTextureArray.getInstance().reload();
-                BlockNormalMapArray.getInstance().reload();
-                SingleBlockRenderAtlas.getInstance().reset();
+                RenderAssets.reload();
             }
         });
         addKeyBinding(new Keybinding("toggle_external_resources", GLFW.GLFW_KEY_F11) {

@@ -1,4 +1,4 @@
-package nidefawl.qubes.texture.array;
+package nidefawl.qubes.texture.array.impl.gl;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
@@ -23,19 +23,13 @@ import nidefawl.qubes.texture.DXTCompressor;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameError;
 
-public class BlockTextureArray extends TextureArray {
+public class BlockTextureArrayGL extends TextureArrayGL {
     public static final int        BLOCK_TEXTURE_BITS = 4;
-    static final BlockTextureArray instance           = new BlockTextureArray();
-    public float anisotropicFiltering = 0;
-
-    public static BlockTextureArray getInstance() {
-        return instance;
-    }
 
 
-    public int totalSlots;
 
-    BlockTextureArray() {
+
+    public BlockTextureArrayGL() {
         super(Block.NUM_BLOCKS << BLOCK_TEXTURE_BITS);
         this.internalFormat=EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
         this.internalFormat=GL21.GL_SRGB8_ALPHA8;
@@ -171,14 +165,6 @@ public class BlockTextureArray extends TextureArray {
             }
             loadprogress = (i / (float) len);
         }
-    }
-
-    public void setAnisotropicFiltering(int anisotropicFiltering) {
-        this.anisotropicFiltering = anisotropicFiltering;
-    }
-
-    public boolean isSRGB() {
-        return this.internalFormat==GL21.GL_SRGB8_ALPHA8;
     }
 
 }

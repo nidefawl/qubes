@@ -6,6 +6,7 @@ package nidefawl.qubes.render.post;
 import java.io.File;
 
 import org.lwjgl.opengl.GLCapabilities;
+import org.lwjgl.system.Platform;
 
 /**
  * @author Michael Hept 2015
@@ -14,6 +15,7 @@ import org.lwjgl.opengl.GLCapabilities;
 public class HBAOPlus {
     public static boolean hasContext;
     public static boolean needsInit;
+    public final static boolean available;
 
     //---------------------------------------------------------------------------------------------------
  // Remarks:
@@ -128,13 +130,32 @@ public class HBAOPlus {
     // ----- DEBUG ONLY ---------
     native public static void debugControl(int code);
     native public static String[] getCallStack();
-    
-	static {
-	    File f = new File("HBAOPlus.x64.dll");
-	    if (!f.exists()) {
-	        f = new File("../Game/lib/hbaoplus/HBAOPlus.x64.dll");
-	    }
-		System.load(f.getAbsolutePath());
-	}
+    static {
+        available = create();
+    }
+
+    public static boolean create() {
+        String name;
+        boolean bitness = System.getProperty("os.arch").indexOf("64") > -1;
+        switch ( Platform.get() ) {
+            case LINUX:
+                name = null;
+                break;
+            case WINDOWS:
+                name = bitness?"HBAOPlus.x64.dll":"HBAOPlus.x86.dll";
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+        if (name != null) {
+            File f = new File(name);
+            if (!f.exists()) {
+                f = new File("../Game/lib/hbaoplus/", name);
+            }
+            System.load(f.getAbsolutePath());
+            return true;
+        }
+        return false;
+    }
 	
 }

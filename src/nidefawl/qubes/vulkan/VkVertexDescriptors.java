@@ -85,14 +85,15 @@ public class VkVertexDescriptors {
                     break;
                 case GL11.GL_UNSIGNED_SHORT:
                     if (attrib.size == 2) {
+                        isUnsigned = true;
                         vkAttrFormat = VK_FORMAT_R16G16_UINT;
                         break;
                     }
                     if (attrib.size == 4) {
+                        isUnsigned = true;
                         vkAttrFormat = VK_FORMAT_R16G16B16A16_UINT;
                         break;
                     }
-                    isUnsigned = true;
                 default:
                     break;
             }

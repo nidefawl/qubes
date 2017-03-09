@@ -13,6 +13,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.texture.TextureBinMips;
+import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
 
 public class VkTexture implements IVkResource {
@@ -25,26 +26,43 @@ public class VkTexture implements IVkResource {
     public long image = VK_NULL_HANDLE;
     public int imageLayout;
     private long view;
+    private int layers;
 
     public VkTexture(VKContext ctxt) {
         this.ctxt = ctxt;
         this.ctxt.addResource(this);
     }
-    public void build(int vkFormat, TextureBinMips texture2dData) {
+    public void build(int vkFormat, TextureBinMips... texture2dData) {
         try ( MemoryStack stack = stackPush() ) {
             
         VkFormatProperties formatProperties = VkFormatProperties.callocStack(stack);
         vkGetPhysicalDeviceFormatProperties(this.ctxt.getPhysicalDevice(), vkFormat, formatProperties);
         boolean useStaging = true;
         boolean forceLinearTiling = false;
-        int totalSize = texture2dData.totalSize;
-        this.width = texture2dData.w[0];
-        this.height = texture2dData.h[0];
-        this.mipLevels = texture2dData.mips;
+        this.width = texture2dData[0].w[0];
+        this.height = texture2dData[0].h[0];
+        this.mipLevels = texture2dData[0].mips;
+        int totalSize = 0;
+        int arrLen = texture2dData.length;
+        int totalLayers = 0;
+        for (int i = 0; i < arrLen; i++) {
+            if (texture2dData[i] != null) {
+                totalLayers++;
+                totalSize += texture2dData[i].totalSize;
+                if (texture2dData[i].w[0] != this.width || texture2dData[i].h[0] != this.height) {
+                    throw new GameLogicError("Invalid texture size, array textures are expected to have equal dimensions on all layers");
+                }
+            }
+        }
+        this.layers = totalLayers;
         
         ByteBuffer dataDirect = ByteBuffer.allocateDirect(totalSize).order(ByteOrder.nativeOrder());
         dataDirect.clear();
-        dataDirect.put(texture2dData.data);
+        for (int i = 0; i < arrLen; i++) {
+            if (texture2dData[i] != null) {
+                dataDirect.put(texture2dData[i].data);
+            }
+        }
         dataDirect.flip();
 //      for (int a = 0; a < texture2dData.data.length; a++) {
 //          System.out.printf("0x%02X, ",texture2dData.data[a]);
@@ -76,26 +94,29 @@ public class VkTexture implements IVkResource {
                 }
 
                 MemoryChunk memChunk = this.ctxt.memoryManager.allocateBufferMemory(stagingBuffer.get(0), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-                long l = memChunk.map();
-                System.out.println("copy from "+memAddress(dataDirect)+" to "+l+", size="+totalSize);
-                memCopy(memAddress(dataDirect), l, totalSize);
+                long ptr = memChunk.map();
+                System.out.println("copy from "+memAddress(dataDirect)+" to "+ptr+", size="+totalSize);
+                memCopy(memAddress(dataDirect), ptr, totalSize);
                 memChunk.unmap();
                 
                 int offset = 0;
-                
-                VkBufferImageCopy.Buffer bufferCopyRegions = VkBufferImageCopy.callocStack(this.mipLevels, stack);
-                for (int i = 0; i < this.mipLevels; i++)
+                System.out.println("ALLOC "+(this.mipLevels*this.layers));
+                VkBufferImageCopy.Buffer bufferCopyRegions = VkBufferImageCopy.calloc(this.mipLevels*this.layers);
+                for (int l = 0; l < this.layers; l++)
                 {
-                    VkBufferImageCopy bufferCopyRegion = bufferCopyRegions.get(i);
-                    VkImageSubresourceLayers bufferCopyRegionSubresource = bufferCopyRegion.imageSubresource();
-                    bufferCopyRegionSubresource.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                    bufferCopyRegionSubresource.mipLevel(i);
-                    bufferCopyRegionSubresource.baseArrayLayer(0);
-                    bufferCopyRegionSubresource.layerCount(1);
-                    VkExtent3D imageExtend = bufferCopyRegion.imageExtent();
-                    imageExtend.width(texture2dData.w[i]).height(texture2dData.h[i]).depth(1);
-                    bufferCopyRegion.bufferOffset(offset);
-                    offset += texture2dData.sizes[i];
+                    for (int i = 0; i < this.mipLevels; i++)
+                    {
+                        VkBufferImageCopy bufferCopyRegion = bufferCopyRegions.get(l*this.mipLevels+i);
+                        VkImageSubresourceLayers bufferCopyRegionSubresource = bufferCopyRegion.imageSubresource();
+                        bufferCopyRegionSubresource.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                        bufferCopyRegionSubresource.mipLevel(i);
+                        bufferCopyRegionSubresource.baseArrayLayer(l);
+                        bufferCopyRegionSubresource.layerCount(1);
+                        VkExtent3D imageExtend = bufferCopyRegion.imageExtent();
+                        imageExtend.width(texture2dData[l].w[i]).height(texture2dData[l].h[i]).depth(1);
+                        bufferCopyRegion.bufferOffset(offset);
+                        offset += texture2dData[l].sizes[i];
+                    }
                 }
     
                 // Create optimal tiled target image
@@ -104,7 +125,7 @@ public class VkTexture implements IVkResource {
                         .imageType(VK_IMAGE_TYPE_2D)
                         .format(vkFormat)
                         .mipLevels(this.mipLevels)
-                        .arrayLayers(1)
+                        .arrayLayers(this.layers)
                         .samples(VK_SAMPLE_COUNT_1_BIT)
                         .tiling(VK_IMAGE_TILING_OPTIMAL)
                         .usage(VK_IMAGE_USAGE_SAMPLED_BIT)
@@ -120,7 +141,7 @@ public class VkTexture implements IVkResource {
                 this.ctxt.memoryManager.allocateImageMemory(pImage.get(0), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.TEXTURE_COLOR_MEMORY);
                 VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkCommandBufferAllocateInfo.callocStack(stack)
                         .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                        .commandPool(this.ctxt.renderCommandPool)
+                        .commandPool(this.ctxt.copyCommandPool)
                         .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
                         .commandBufferCount(1);
                 PointerBuffer pCommandBuffer = stack.pointers(0);
@@ -143,10 +164,10 @@ public class VkTexture implements IVkResource {
                         .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
                         // Start at first mip level
                         .baseMipLevel(0)
+                        .baseArrayLayer(0)
                         // We will transition on all mip levels
                         .levelCount(this.mipLevels)
-                        // The 2D texture only has one layer
-                        .layerCount(1);
+                        .layerCount(this.layers);
                 // Optimal image will be used as destination for the copy, so we must transfer from our
                 // initial undefined image layout to the transfer destination layout
                 setImageLayout(copyCmd, 
@@ -188,63 +209,12 @@ public class VkTexture implements IVkResource {
                 if (err != VK_SUCCESS) {
                     throw new AssertionError("vkQueueWaitIdle failed: " + VulkanErr.toString(err));
                 }
-                vkFreeCommandBuffers(this.ctxt.device, this.ctxt.renderCommandPool, pCommandBuffers);
+                vkFreeCommandBuffers(this.ctxt.device, this.ctxt.copyCommandPool, pCommandBuffers);
                 System.out.println("release staging buffer memory");
                 this.ctxt.memoryManager.releaseBufferMemory(stagingBuffer.get(0));
                 vkDestroyBuffer(this.ctxt.device, stagingBuffer.get(0), null);
+                bufferCopyRegions.free();
             }
-//            
-//            VkSamplerCreateInfo sampler = VkSamplerCreateInfo.callocStack(stack)
-//                    .sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO)
-//                    .magFilter(VK_FILTER_LINEAR)
-//                    .minFilter(VK_FILTER_LINEAR)
-//                    .mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
-//                    .addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-//                    .addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-//                    .addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-//                    .mipLodBias(0.0f)
-//                    .compareOp(VK_COMPARE_OP_NEVER)
-//                    .minLod(0.0f);
-//            // Set max level-of-detail to mip level count of the texture
-//            sampler.maxLod((useStaging) ? (float)this.mipLevels : 0.0f);
-//            // Enable anisotropic filtering
-//            // This feature is optional, so we must check if it's supported on the device
-//            if (this.ctxt.features.samplerAnisotropy())
-//            {
-//                sampler.maxAnisotropy(this.ctxt.limits.maxSamplerAnisotropy());
-//                sampler.anisotropyEnable(true);
-//            } else {
-//                sampler.maxAnisotropy(1.0f);
-//                sampler.anisotropyEnable(false);
-//            }
-//            sampler.borderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
-//            LongBuffer pSampler = stack.longs(0);
-//            int err = vkCreateSampler(this.ctxt.device, sampler, null, pSampler);
-//            if (err != VK_SUCCESS) {
-//                throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
-//            }
-////            this.sampler = pSampler.get(0);
-//            
-//            VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-//                    .viewType(VK_IMAGE_VIEW_TYPE_2D)
-//                    .format(vkFormat)
-//                    .components(VkComponentMapping.callocStack(stack));
-//            VkImageSubresourceRange viewSubResRange = view.subresourceRange();
-//            viewSubResRange.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-//            viewSubResRange.baseMipLevel(0);
-//            viewSubResRange.baseArrayLayer(0);
-//            viewSubResRange.layerCount(1);
-//            // Linear tiling usually won't support mip maps
-//            // Only set mip map count if optimal tiling is used
-//            viewSubResRange.levelCount((useStaging) ? this.mipLevels : 1);
-//            // The view will be based on the texture's image
-//            view.image(this.image);
-//            LongBuffer pView = stack.longs(0);
-//            err = vkCreateImageView(this.ctxt.device, view, null, pView);
-//            if (err != VK_SUCCESS) {
-//                throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
-//            }
-//            this.view = pView.get(0);
         }
     
     }
@@ -340,5 +310,8 @@ public class VkTexture implements IVkResource {
     }
     public int getNumMips() {
         return this.mipLevels;
+    }
+    public int getNumLayers() {
+        return this.layers;
     }
 }

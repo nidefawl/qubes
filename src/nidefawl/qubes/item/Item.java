@@ -13,7 +13,8 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockLog;
 import nidefawl.qubes.entity.PlayerServer;
 import nidefawl.qubes.models.ItemModel;
-import nidefawl.qubes.texture.array.ItemTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.ItemTextureArrayGL;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
@@ -149,7 +150,7 @@ public class Item {
      * @return
      */
     public int getTexture(ItemStack itemStack) {
-        return ItemTextureArray.getInstance().getTextureIdx(this.id, 0);
+        return TextureArrays.itemTextureArray.getTextureIdx(this.id, 0);
     } 
     
     /**

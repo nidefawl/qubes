@@ -3,8 +3,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout (set = 1, binding = 0) uniform sampler2D samplerColor;
-layout (set = 1, binding = 1) uniform sampler2D samplerColorD;
+layout (set = 1, binding = 0) uniform sampler2DArray samplerColor;
 
 layout (location = 0) in vec2 inUV;
 layout (location = 1) in float inLodBias;
@@ -16,7 +15,7 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
-    vec4 color = texture(samplerColor, inUV, inLodBias);
+    vec4 color = texture(samplerColor, vec3(inUV, 0.0));
 
     vec3 N = normalize(inNormal);
     vec3 L = normalize(inLightVec);

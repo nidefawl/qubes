@@ -91,7 +91,7 @@ public class TrueTypeFont {
     public TextureBinMips         binMips;
     public long sampler;
     public long textureView;
-    public long descriptorSetTex;
+    public VkDescriptor descriptorSetTex;
     
     public TrueTypeFont(String fontPath, float fontSize, int style, boolean aa) {
         this.size = GameMath.round(fontSize);
@@ -501,7 +501,7 @@ public class TrueTypeFont {
             if (this.vk_tex == null) {
                 return;
             }
-            Engine.setDescriptorSet1(this.descriptorSetTex);
+            Engine.setDescriptorSet(1, this.descriptorSetTex);
             Engine.bindPipeline(VkPipelines.fontRender2D);
         }
         tess.drawQuads();
@@ -514,7 +514,7 @@ public class TrueTypeFont {
             if (this.vk_tex == null) {
                 return;
             }
-            Engine.setDescriptorSet1(this.descriptorSetTex);
+            Engine.setDescriptorSet(1, this.descriptorSetTex);
         }
     }
 
@@ -580,16 +580,8 @@ public class TrueTypeFont {
 //          vkContext.descLayouts.getDescriptorSets);
             this.descriptorSetTex = vkContext.descLayouts.allocDescSetSampleSingle();
             
-
-            VkDescriptorImageInfo.Buffer textureDescriptor = VkDescriptorImageInfo.callocStack(1, stack);
-            textureDescriptor.imageView(textureView);
-            textureDescriptor.sampler(this.sampler);
-            textureDescriptor.imageLayout(this.vk_tex.imageLayout);
-
-            VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.callocStack(1, stack);
-            VkInitializers.writeDescriptorSet(writeDescriptorSet, 0, this.descriptorSetTex, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, textureDescriptor);
-
-            vkUpdateDescriptorSets(vkContext.device, writeDescriptorSet, null);
+            this.descriptorSetTex.setBindingCombinedImageSampler(0, this.textureView, this.sampler, this.vk_tex.imageLayout);
+            this.descriptorSetTex.update(vkContext);
         }
     }
 

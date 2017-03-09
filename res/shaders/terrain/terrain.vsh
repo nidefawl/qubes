@@ -17,7 +17,7 @@ uniform mat4 model_matrix;
 
 out vec4 color;
 out vec3 normal;
-out vec4 texcoord;
+out vec2 texcoord;
 out vec4 position;
 out vec2 light;
 out float camDistance;
@@ -44,8 +44,8 @@ void main() {
 	blockinfo = in_blockinfo;
 	roughness = (in_normal.w < 0 ? 255+in_normal.w : in_normal.w) / 255.0f;
 
-	vec4 pos = in_position;
-	texcoord = in_texcoord;
+	vec4 pos = vec4(in_position.xyz, 1.0);
+	texcoord = in_texcoord.st;
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 	float distCam = length(in_position.xyz - CAMERA_POS);
 

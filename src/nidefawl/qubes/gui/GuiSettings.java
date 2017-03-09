@@ -17,7 +17,9 @@ import nidefawl.qubes.gui.controls.ComboBox.ComboBoxList;
 import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.ShaderBuffer;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 
 public class GuiSettings extends Gui {
     static int nextID = 3;
@@ -174,8 +176,8 @@ public class GuiSettings extends Gui {
                 }
                 renderSettings.anisotropicFiltering = level;
                 Game.instance.saveSettings();
-                BlockTextureArray.getInstance().setAnisotropicFiltering(level);
-                BlockTextureArray.getInstance().reload();// make sync task?
+                TextureArrays.blockTextureArray.setAnisotropicFiltering(level);
+                TextureArrays.blockTextureArray.reload();// make sync task?
             }
         }));
         int left = this.width / 2+15;

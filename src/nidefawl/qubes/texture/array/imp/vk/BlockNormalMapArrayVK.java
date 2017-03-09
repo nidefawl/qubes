@@ -1,38 +1,23 @@
-package nidefawl.qubes.texture.array;
+package nidefawl.qubes.texture.array.imp.vk;
 
-import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
-
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
-
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
 
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.util.GameError;
 
-public class BlockNormalMapArray extends TextureArray {
-    static final BlockNormalMapArray instance = new BlockNormalMapArray();
-    public static BlockNormalMapArray getInstance() {
-        return instance;
-    }
-
-
-
-
-    public BlockNormalMapArray() {
+public class BlockNormalMapArrayVK extends TextureArrayVK {
+    
+    public BlockNormalMapArrayVK() {
         super(256);
     }
+    
     @Override
     public void load() {
         super.load();
@@ -82,7 +67,7 @@ public class BlockNormalMapArray extends TextureArray {
         int totalBlocks = blockIDToAssetList.size();
         int nBlock = 0;
         float progress = 0;
-        ByteBuffer directBuf = null;
+        TextureBinMips[] binMips = new TextureBinMips[this.numTextures];
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
         int slot = 0;
           byte[] defNormal = new byte[4*this.tileSize*this.tileSize];
@@ -95,13 +80,10 @@ public class BlockNormalMapArray extends TextureArray {
                   defNormal[idx*4+3] = (byte)0xFF;
               }
           }
-        directBuf = put(directBuf, defNormal);
-        GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0,                     //Mipmap number
-              0, 0, slot,                 //xoffset, yoffset, zoffset
-              this.tileSize, this.tileSize, 1,                 //width, height, depth
-              GL_RGBA,                //format
-              GL_UNSIGNED_BYTE,      //type
-              directBuf);                //pointer to data
+          {
+
+              binMips[0] = new TextureBinMips(defNormal, this.tileSize, this.tileSize);
+          }
         slot++;
         while (it.hasNext()) {
             Entry<Integer, ArrayList<AssetTexture>> entry = it.next();
@@ -112,15 +94,7 @@ public class BlockNormalMapArray extends TextureArray {
                 int reuseslot = tex.getSlot();
                 if (reuseslot < 0) {
                     byte[] data = tex.getData();
-//                    System.out.println("put data with dim "+tex.getWidth()+"x"+tex.getHeight()+" in tex slot "+slot+" with size "+this.tileSize+"x"+this.tileSize);
-                    directBuf = put(directBuf, data);
-                    GL12.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0,                     //Mipmap number
-                          0, 0, slot,                 //xoffset, yoffset, zoffset
-                          this.tileSize, this.tileSize, 1,                 //width, height, depth
-                          GL_RGBA,                //format
-                          GL_UNSIGNED_BYTE,      //type
-                          directBuf);                //pointer to data
-                    Engine.checkGLError("GL12.glTexSubImage3D");
+                    binMips[slot] = new TextureBinMips(data, this.tileSize, this.tileSize);
                     
                     tex.setSlot(slot);
                     slotTextureMap.put(slot, tex);
@@ -133,33 +107,9 @@ public class BlockNormalMapArray extends TextureArray {
             uploadprogress = ++nBlock/(float)totalBlocks;
         }
 
+        this.totalSlots = slot;
+        this.texture.build(this.internalFormat, binMips);
     }
-
-
-    @Override
-    protected void postUpload() {
-        boolean useDefault = false;
-        if (useDefault) {
-
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL12.GL_TEXTURE_MAX_LEVEL, 0);
-//            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
-        } else {// does not work with alpha testing
-
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//GL_LINEAR_MIPMAP_NEAREST
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameterf(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
-            GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
-            //        GL30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
-        }
-        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
-    }
-    
 
 
 

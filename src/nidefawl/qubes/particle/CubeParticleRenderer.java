@@ -20,7 +20,8 @@ import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.Color;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.world.World;
@@ -198,7 +199,7 @@ public class CubeParticleRenderer extends AbstractParticleRenderer {
             p.setTextureOffset(toffx/8F, toffz/8F);
             p.setRot(r.nextFloat(), r.nextFloat(), r.nextFloat());
             p.setRotSpeed(r.nextFloat()*rotRange, r.nextFloat()*rotRange, r.nextFloat()*rotRange);
-            p.setTex(r.nextInt(BlockTextureArray.getInstance().totalSlots));
+            p.setTex(r.nextInt(TextureArrays.blockTextureArray.totalSlots));
             particles.add(p);
         }
     }

@@ -106,9 +106,8 @@ public class VR {
 	public static VR_IVROverlay_FnTable vrOverlay;
 	public static VR_IVRRenderModels_FnTable vrRenderModels;
 	public static VR_IVRSettings_FnTable vrSettings;
-	final static Texture_t texType0 = new Texture_t();
-	final static Texture_t texType1 = new Texture_t();
-
+    final static Texture_t texType0;
+    final static Texture_t texType1;
 
 	public static Matrix4f[] poseMatrices;
 	public static Vec3D	[] deviceVelocity;
@@ -152,6 +151,9 @@ public class VR {
     public static float lastRotation;
     
 	static {
+
+	    texType0 = new Texture_t();
+	    texType1 = new Texture_t();
 
         m_rTrackedDeviceToRenderModel = new CGLRenderModelNative[JOpenVRLibrary.k_unMaxTrackedDeviceCount];
         isTrackedDeviceConnected = new boolean[JOpenVRLibrary.k_unMaxTrackedDeviceCount];

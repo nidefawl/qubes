@@ -4,14 +4,14 @@ public class VkRenderPasses {
     static boolean isInit = false;
     public static VkRenderPass passShadow = new VkRenderPassShadow();
     public static VkRenderPass passSubpassSwapchain = new VkRenderPassSubpassedSwapchain();
-    public static VkRenderPass passgbuffer = new VkRenderPassGBuffer();
+    public static VkRenderPass passTerrain = new VkRenderPassGBuffer();
 
     public static void init(VKContext ctxt) {
         isInit = true;
         passShadow.destroyRenderPass(ctxt);
         passShadow.build(ctxt);
-        passgbuffer.destroyRenderPass(ctxt);
-        passgbuffer.build(ctxt);
+        passTerrain.destroyRenderPass(ctxt);
+        passTerrain.build(ctxt);
         passSubpassSwapchain.destroyRenderPass(ctxt);
         passSubpassSwapchain.build(ctxt);
     }
@@ -19,7 +19,7 @@ public class VkRenderPasses {
     public static void destroyShutdown(VKContext vkContext) {
         isInit = false;
         passShadow.destroy(vkContext);
-        passgbuffer.destroy(vkContext);
+        passTerrain.destroy(vkContext);
         passSubpassSwapchain.destroy(vkContext);
     }
 
@@ -29,7 +29,7 @@ public class VkRenderPasses {
 
     public static void initClearValues(boolean inverseZ) {
         passShadow.initClearValues(inverseZ);
-        passgbuffer.initClearValues(inverseZ);
+        passTerrain.initClearValues(inverseZ);
         passSubpassSwapchain.initClearValues(inverseZ);
     }
 }

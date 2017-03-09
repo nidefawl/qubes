@@ -6,7 +6,8 @@ package nidefawl.qubes.block;
 import java.util.List;
 
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
 import nidefawl.qubes.world.IBlockWorld;
@@ -187,11 +188,11 @@ public class BlockSlab extends BlockSliced {
     public int getTexture(int faceDir, int dataVal, int pass) {
         int idx = overrideTextureIdx;
         if (idx >= 0) {
-            return BlockTextureArray.getInstance().getTextureIdx(baseBlock.id, idx);
+            return TextureArrays.blockTextureArray.getTextureIdx(baseBlock.id, idx);
         }
         if (this.textures.length == 0)
             return baseBlock.getTexture(faceDir, 0, pass);
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, Dir.isTopBottom(faceDir) ? 1 : 0);
     }
     public boolean isFullBB() {
         return false;

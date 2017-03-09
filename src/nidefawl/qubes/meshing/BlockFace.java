@@ -3,7 +3,8 @@ package nidefawl.qubes.meshing;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.BlockLeaves;
 import nidefawl.qubes.gl.VertexBuffer;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.vec.Dir;
 
 public class BlockFace {
@@ -321,7 +322,7 @@ public class BlockFace {
         
      // TODO: generalize
         if (block == Block.grass && this.faceDir != Dir.DIR_POS_Y && this.faceDir != Dir.DIR_NEG_Y) {
-            int sideOverlay = BlockTextureArray.getInstance().getTextureIdx(Block.grass.id, 2);
+            int sideOverlay = TextureArrays.blockTextureArray.getTextureIdx(Block.grass.id, 2);
             attr.setTex(sideOverlay);
             attr.setNormalMap(block.getNormalMap(sideOverlay));
             attr.setRoughness(block.getRoughness(sideOverlay));

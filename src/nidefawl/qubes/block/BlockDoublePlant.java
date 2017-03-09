@@ -1,7 +1,8 @@
 package nidefawl.qubes.block;
 
 import nidefawl.qubes.biome.BiomeColor;
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.Flags;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.BlockPlacer;
@@ -83,7 +84,7 @@ public class BlockDoublePlant extends Block {
         if (upper) {
             idx+=1;
         }
-        return BlockTextureArray.getInstance().getTextureIdx(this.id, idx);
+        return TextureArrays.blockTextureArray.getTextureIdx(this.id, idx);
     }
 
     

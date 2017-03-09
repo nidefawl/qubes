@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
+import org.lwjgl.opengl.EXTDebugLabel;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
@@ -60,6 +61,7 @@ public class VkPipeline {
     private int                                subpass              = 0;
     public long                                pipeline             = VK_NULL_HANDLE;
     public long                                pipelineScissors     = VK_NULL_HANDLE;
+    public boolean useSwapChainViewport = true;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;

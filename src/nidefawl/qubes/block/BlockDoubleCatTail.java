@@ -1,6 +1,6 @@
 package nidefawl.qubes.block;
 
-import nidefawl.qubes.texture.array.BlockTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
 
 public class BlockDoubleCatTail extends BlockDoublePlant {
 
@@ -15,7 +15,7 @@ public class BlockDoubleCatTail extends BlockDoublePlant {
     @Override
     public int getTexture(int faceDir, int dataVal, int pass) {
         if (pass == 1 && (dataVal&0x8)!=0) {
-            return BlockTextureArray.getInstance().getTextureIdx(this.id, 2);
+            return TextureArrays.blockTextureArray.getTextureIdx(this.id, 2);
         }
         return super.getTexture(faceDir, dataVal, pass);
     }

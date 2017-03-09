@@ -21,7 +21,8 @@ import nidefawl.qubes.render.post.HBAOPlus;
 import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.texture.array.NoiseTextureArray;
+import nidefawl.qubes.texture.array.TextureArrays;
+import nidefawl.qubes.texture.array.impl.gl.NoiseTextureArrayGL;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
@@ -105,8 +106,8 @@ public class FinalRenderer extends AbstractRenderer {
         GL.bindTexture(GL_TEXTURE9, GL_TEXTURE_2D_ARRAY, TMgr.getNoiseArr());
         
         int slot = 0;
-        if (NoiseTextureArray.getInstance().getNumTextures() > 0) {
-            slot = texSlotNoise%NoiseTextureArray.getInstance().getNumTextures();
+        if (TextureArrays.noiseTextureArray.getNumTextures() > 0) {
+            slot = texSlotNoise%TextureArrays.noiseTextureArray.getNumTextures();
         }
         shaderDeferred.setProgramUniform1i("texSlotNoise", slot);
         if (Engine.getRenderVelocityBuffer() ) {
@@ -589,7 +590,7 @@ public class FinalRenderer extends AbstractRenderer {
     int[] aoSize;
 
     public void initAO() {
-        boolean enableAO = Engine.RENDER_SETTINGS.ao > 0 && GameBase.baseInstance.getVendor() != GPUVendor.INTEL;
+        boolean enableAO = HBAOPlus.available && Engine.RENDER_SETTINGS.ao > 0 && GameBase.baseInstance.getVendor() != GPUVendor.INTEL;
         if (HBAOPlus.hasContext && !enableAO) {
             Engine.checkGLError("pre GLNativeLib.deleteContext");
             HBAOPlus.deleteContext();

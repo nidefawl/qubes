@@ -11,13 +11,12 @@
 #pragma include "blockinfo.glsl"
 
 uniform sampler2DArray blockTextures;
-uniform sampler2D noisetex;
 uniform sampler2DArray normalTextures;
 
 
 in vec4 color;
 in vec3 normal;
-in vec4 texcoord;
+in vec2 texcoord;
 in vec4 position;
 in vec2 light;
 in float camDistance;

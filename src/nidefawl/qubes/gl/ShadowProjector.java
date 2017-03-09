@@ -139,7 +139,7 @@ public class ShadowProjector implements IRenderComponent {
       if (!Engine.INVERSE_Z_BUFFER) {
           Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
       } else {
-          Project.orthoMat(-radius, radius, radius, -radius, 512 * 8, 0, matOrtho);
+          Project.orthoMat(-radius, radius, radius, -radius, 512 * 8, 5, matOrtho);
       }
         
 //        Project.fovProjMatInfInvZ(90, 1, 512*8, matOrtho);
@@ -198,8 +198,9 @@ public class ShadowProjector implements IRenderComponent {
         }
     }   
     public void updateProjection(float znear, float zfar, float aspectRatio, float fov) {
-//        splits = new float[] {znear, 34, 124, 420};
-        splits = new float[] {znear, 8, 22, 420};
+        splits = new float[] {znear, 34, 124, 420};
+//      splits = new float[] {znear, 12, 24, 66};
+      splits = new float[] {znear, 16, 33, 122};
         if (!GameBase.VR_SUPPORT) {
             for (int i = 0; i < NUM_SPLITS; i++) {
                 Project.fovProjMat(fov, aspectRatio, splits[i], splits[i+1], shadowSplitProj[i]);

@@ -9,6 +9,7 @@ import java.nio.FloatBuffer;
 import java.util.List;
 
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.vulkan.VkDescriptorBufferInfo;
 import org.lwjgl.vulkan.VkDescriptorBufferInfo.Buffer;
 
 import com.google.common.collect.Lists;
@@ -17,7 +18,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
-import nidefawl.qubes.texture.array.BlockNormalMapArray;
+import nidefawl.qubes.texture.array.impl.gl.BlockNormalMapArrayGL;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
@@ -620,7 +621,7 @@ public class UniformBuffer {
     public int getBindingPoint() {
         return this.bindingPoint;
     }
-    public Buffer getDescriptorBuffer() {
+    public VkDescriptorBufferInfo.Buffer getDescriptorBuffer() {
         return this.vkBuffers.getDescriptorBuffer();
     }
     public int getDynamicOffset() {
