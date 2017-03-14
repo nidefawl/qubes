@@ -13,6 +13,7 @@ import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
+import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.util.SysInfo;
@@ -33,15 +34,16 @@ public class GuiOverlayStats extends Gui {
     private String     statsRight  = "";
     long               messageTime = System.currentTimeMillis() - 5000L;
     String             message     = "";
-    boolean render = false;
     private String stats5;
     public GuiOverlayStats() {
         this.statsFontBig = FontRenderer.get(0, 18, 0);
         this.statsFontSmall = FontRenderer.get(0, 16, 0);
     }
     SysInfo sysInfo = null;
+    public boolean renderStats;
 
     public void refresh() {
+        this.renderStats = true;
         int smallSize = 12;
         this.statsFontSmall = FontRenderer.get(0, smallSize, 1);
         float memJVMTotal = Runtime.getRuntime().maxMemory() / 1024F / 1024F / 1024F;
@@ -78,18 +80,25 @@ public class GuiOverlayStats extends Gui {
                     break;
                 }
             }
-            info.add( String.format("Shaders %d - FBOs %d", Shader.SHADERS, FrameBuffer.FRAMEBUFFERS));
-            info.add( String.format("VBOs %d (%d terrain)", GLVBO.ALLOC_VBOS, GLVBO.ALLOC_VBOS_TERRAIN));
+            if (Engine.isVulkan) {
+                
+            } else {
+                info.add( String.format("Shaders %d - FBOs %d", Shader.SHADERS, FrameBuffer.FRAMEBUFFERS));
+                info.add( String.format("VBOs %d (%d terrain)", GLVBO.ALLOC_VBOS, GLVBO.ALLOC_VBOS_TERRAIN));
+            }
+            
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
             info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
-            if (GL.isBindlessSuppported()) {
-                info.add( "Bindless  supported" );
-                info.add( String.format("Bindless: %b", Engine.userSettingUseBindless) );
-            } else if (Engine.userSettingUseBindless) {
-                info.add( "Bindless not supported" );
-                
+            if (!Engine.isVulkan) {
+                if (GL.isBindlessSuppported()) {
+                    info.add( "Bindless  supported" );
+                    info.add( String.format("Bindless: %b", Engine.userSettingUseBindless) );
+                } else if (Engine.userSettingUseBindless) {
+                    info.add( "Bindless not supported" );
+                    
+                }
             }
             info.add( "Threaded culling: "+Engine.regionRenderer.threadedCulling );
             info.add( String.format("Lights: %d  Particles: %d", world.lights.size(), Engine.particleRenderer.getNumParticles()) );
@@ -140,7 +149,6 @@ public class GuiOverlayStats extends Gui {
         Vector3f viewDir = Engine.camera.getViewDirection();
         info.add(String.format("viewdir: %.2f %.2f %.2f", viewDir.x, viewDir.y, viewDir.z));
         
-        render = true;
     }
 
     public void render(float fTime, double mx, double mY) {
@@ -153,7 +161,7 @@ public class GuiOverlayStats extends Gui {
         }
 //        info.addAll(Game.instance.glProfileResults);)
 //        statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
-            statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
+        statsFontBig.drawString(stats, 5, y, 0xFFFFFF, true, 1.0F);
             statsFontBig.drawString(statsRight, width - 5, y, 0xFFFFFF, true, 1.0F, 1);
             y += statsFontBig.getLineHeight();
             for (String s : info1) {
@@ -166,28 +174,29 @@ public class GuiOverlayStats extends Gui {
             }
             float totalHeight = (statsFontSmall.getLineHeight())*info.size();
             float totalHeight2 = (statsFontSmall.getLineHeight())*Game.instance.glProfileResults.size();
-            y-=statsFontBig.getLineHeight()*1.7f;
+            y-=statsFontBig.getLineHeight()*0.8f;
             int topy=y;
-            Tess.instance.setColorF(0, 0.8f);
+            Engine.setPipeStateColored2D();
+            ITess tess = Engine.getTess();
+            tess.setColorF(0x330033, 0.8f);
             if (!Game.instance.glProfileResults.isEmpty()) {
-                Tess.instance.add(maxW/2, y+totalHeight+8);
-                Tess.instance.add(maxW, y+totalHeight+8);
-                Tess.instance.add(maxW, y);
-                Tess.instance.add(maxW/2, y);
-                Tess.instance.setColorF(0x221100, 0.98f);
-                Tess.instance.add(0, y+totalHeight2+8);
-                Tess.instance.add(maxW/2, y+totalHeight2+8);
-                Tess.instance.add(maxW/2, y);
-                Tess.instance.add(0, y);
+                tess.add(maxW/2, y+totalHeight+8);
+                tess.add(maxW, y+totalHeight+8);
+                tess.add(maxW, y);
+                tess.add(maxW/2, y);
+                tess.setColorF(0x221100, 0.98f);
+                tess.add(0, y+totalHeight2+8);
+                tess.add(maxW/2, y+totalHeight2+8);
+                tess.add(maxW/2, y);
+                tess.add(0, y);
             } else {
 
-                Tess.instance.add(0, y+totalHeight+8);
-                Tess.instance.add(maxW, y+totalHeight+8);
-                Tess.instance.add(maxW, y);
-                Tess.instance.add(0, y);
+                tess.add(0, y+totalHeight+8);
+                tess.add(maxW, y+totalHeight+8);
+                tess.add(maxW, y);
+                tess.add(0, y);
             }
-            Shaders.colored.enable();
-            Tess.instance.drawQuads();
+            tess.drawQuads();
             if (!Game.instance.glProfileResults.isEmpty()) {
                 Engine.pxStack.push(maxW/2, 0, 0);
             }
@@ -231,10 +240,10 @@ public class GuiOverlayStats extends Gui {
         resetShape();
         x+=8;
         y+=3;
-        Shaders.colored.enable();
-        Tess.instance.drawQuads();
+//        Shaders.colored.enable();
+//        tess.drawQuads();
         
-        if (Game.instance.selBlock.getBlock()!=Block.air) {
+        if (!Engine.isVulkanTodo && Game.instance.selBlock.getBlock()!=Block.air) {
             Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
         }
         Block b = Game.instance.selBlock.getBlock();
@@ -242,7 +251,7 @@ public class GuiOverlayStats extends Gui {
         if (b != null)
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 
-        Shader.disable();
+//        Shader.disable();
 
         if (!Game.instance.glProfileResults.isEmpty()) {
             Engine.pxStack.pop();

@@ -15,17 +15,17 @@ uniform mat4 model_matrix;
 #endif
 
 
+flat out uvec4 blockinfo;
+flat out vec4 faceAO;
+flat out vec4 faceLight;
+flat out vec4 faceLightSky;
+
 out vec4 color;
 out vec3 normal;
 out vec2 texcoord;
 out vec4 position;
 out vec2 light;
 out float camDistance;
-flat out vec4 faceAO;
-flat out vec4 faceLight;
-flat out vec4 faceLightSky;
-flat out uvec4 blockinfo;
-
 out vec2 texPos;
 out float roughness;
 

@@ -60,8 +60,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static boolean DEBUG_LAYER = false;
     public static long    windowId        = 0;
     public static long    windowSurface   = 0;
-    protected static int            initWidth       = (int) (1920);
-    protected static int            initHeight      = (int) (1080);
+    protected static int            initWidth       = (int) (1920*0.66);
+    protected static int            initHeight      = (int) (1080*0.66);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
@@ -1148,6 +1148,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public void toggleVR() {
+        if (Engine.isVulkan) {
+            //will crash, so don't! not yet implemented :(  
+            return;
+        }
         boolean hadVR = VR_SUPPORT;
         if (!VR.initCalled) {
             VR.initApp();
@@ -1160,7 +1164,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             Engine.resizeProjection(windowWidth, windowHeight);
             Engine.setViewport(0, 0, windowWidth, windowHeight);
             if (Engine.outRenderer != null)
-                Engine.outRenderer.initShaders();
+                Engine.outRenderer.onVRModeChanged();
         } else if (VR_SUPPORT && !hadVR) {
             updateGui3dMode();
             Engine.updateRenderResolution(VR.renderWidth, VR.renderWidth);
@@ -1168,7 +1172,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             Engine.resizeProjection(VR.renderWidth, VR.renderWidth);
             Engine.setViewport(0, 0, VR.renderWidth, VR.renderWidth);
             if (Engine.outRenderer != null)
-                Engine.outRenderer.initShaders();
+                Engine.outRenderer.onVRModeChanged();
             setVSync(false);
         }
     }

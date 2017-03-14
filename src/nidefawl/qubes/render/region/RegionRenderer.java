@@ -1,31 +1,23 @@
 package nidefawl.qubes.render.region;
 
-import static org.lwjgl.opengl.GL11.*;
 import static nidefawl.qubes.render.WorldRenderer.*;
 
-import java.nio.IntBuffer;
 import java.util.*;
 
-import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.AbstractRenderer;
-import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
-public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
+public abstract class RegionRenderer extends AbstractRenderer implements IThreadedWork {
     public static final int REGION_SIZE_BITS            = 1;
     public static final int REGION_SIZE                 = 1 << REGION_SIZE_BITS;
     public static final int REGION_SIZE_MASK            = REGION_SIZE - 1;
@@ -41,82 +33,13 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
     public static int LENGTH_OVER     = (RENDER_DISTANCE + OFFS_OVER) * 2 + 1;
     public static int HEIGHT_SLICES   = World.MAX_WORLDHEIGHT >> RegionRenderer.SLICE_HEIGHT_BLOCK_BITS;
 
-    
-
-    final Comparator<MeshedRegion> compareUpdateRenderers = new Comparator<MeshedRegion>() {
-        @Override
-        public int compare(MeshedRegion o1, MeshedRegion o2) {
-            return sortUpdateRenderersCompare(o1, o2);
-        }
-    };
-    final Comparator<MeshedRegion> compareRenderers = new Comparator<MeshedRegion>() {
-        @Override
-        public int compare(MeshedRegion o1, MeshedRegion o2) {
-            return sortRenderersCompare(o1, o2);
-        }
-    };
-
-
-    public int                      rendered;
-    public int                      occlCulled;
-    public int                      renderChunkX;
-    public int                      renderChunkY;
-    public int                      renderChunkZ;
-    private ArrayList<MeshedRegion> renderList      = new ArrayList<>();
-    private ArrayList<MeshedRegion> shadowRenderList      = new ArrayList<>();
-    
-    private ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
-    static class ThreadContext {
-         ArrayList<MeshedRegion> renderList      = new ArrayList<>();
-         ArrayList<MeshedRegion> shadowRenderList      = new ArrayList<>();
-         ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
-         int workedOn=0;
-    }
-    boolean                         needsSortingUpdateRenderers    = false;
-    
-    
-    final static int MAX_OCCL_QUERIES = 8;
-    final static int MIN_DIST_OCCL = 1;
-    final static int MIN_STATE_OCCL = Frustum.FRUSTUM_INSIDE_FULLY;
-    final static boolean ENABLE_OCCL = !GPUProfiler.PROFILING_ENABLED;
-    private int[] occlQueries = new int[MAX_OCCL_QUERIES];
-    private MeshedRegion[] occlQueriesRunning = new MeshedRegion[MAX_OCCL_QUERIES];
-    int queriesRunning = 0;
-    private Shader occlQueryShader;
-    private boolean startup;
-    float camX; float camY; float camZ;
-    MeshedRegion[][] regions;
-    public int numV;
-    private ThreadedWorker worker;
-    private ThreadContext[] threadCtx;
-    int rChunkX, rChunkY, rChunkZ;
-    public boolean threadedCulling = false;
-    
-    
-    /*
-     * typedef struct {
-     *   GLuint   index;
-     *   GLuint   reserved;
-     *   GLuint64 address;
-     *   GLuint64 length;
-     * } BindlessPtrNV;
-     * 
-     * typedef struct {
-     *   uint count;
-     *   uint primCount;
-     *   uint firstIndex;
-     *   uint baseVertex;
-     *   uint baseInstance;
-     *   DrawElementsIndirectCommand cmd;
-     *   GLuint                      reserved;
-     *   BindlessPtrNV               indexBuffer;
-     *   BindlessPtrNV               vertexBuffers[];
-     * } DrawElementsIndirectBindlessCommandNV;
-     */
+    protected final static int MAX_OCCL_QUERIES = 8;
+    protected final static int MIN_DIST_OCCL = 1;
+    protected final static int MIN_STATE_OCCL = Frustum.FRUSTUM_INSIDE_FULLY;
+    protected final static boolean ENABLE_OCCL = !GPUProfiler.PROFILING_ENABLED;
     
     protected static ReallocIntBuffer[] buffers = new ReallocIntBuffer[NUM_PASSES*4];
     protected static ReallocIntBuffer[] idxShortBuffers = new ReallocIntBuffer[NUM_PASSES*4];
-    protected static MultiDrawIndirectBuffer buffer = new MultiDrawIndirectBuffer();
     
     static {
         for (int i = 0; i < idxShortBuffers.length; i++) {
@@ -127,22 +50,52 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         }
     }
     
-//    static void reallocBuffer(int pass, int len) {
-//        if (buffers[pass] == null || buffers[pass].capacity() < len) {
-//            if (buffers[pass] != null) {
-//                buffers[pass] = Memory.reallocByteBufferAligned(buffers[pass], 64, len);
-//            } else {
-//                buffers[pass] = Memory.createByteBufferAligned(64, len);
-//            }
-//            intbuffers[pass] = buffers[pass].asIntBuffer();
-//        }
-//    }
+
+    protected final Comparator<MeshedRegion> compareUpdateRenderers = new Comparator<MeshedRegion>() {
+        @Override
+        public int compare(MeshedRegion o1, MeshedRegion o2) {
+            return sortUpdateRenderersCompare(o1, o2);
+        }
+    };
+    protected final Comparator<MeshedRegion> compareRenderers = new Comparator<MeshedRegion>() {
+        @Override
+        public int compare(MeshedRegion o1, MeshedRegion o2) {
+            return sortRenderersCompare(o1, o2);
+        }
+    };
+
+
+    public int                      rendered;
+    public int                      renderChunkX;
+    public int                      renderChunkY;
+    public int                      renderChunkZ;
+    protected ArrayList<MeshedRegion> renderList      = new ArrayList<>();
+    protected ArrayList<MeshedRegion> shadowRenderList      = new ArrayList<>();
+    
+    protected ArrayList<MeshedRegion> regionsToUpdate = new ArrayList<>();
+
+    protected static class ThreadContext {
+        public ArrayList<MeshedRegion> renderList       = new ArrayList<>();
+        public ArrayList<MeshedRegion> shadowRenderList = new ArrayList<>();
+        public ArrayList<MeshedRegion> regionsToUpdate  = new ArrayList<>();
+        public int                      workedOn         = 0;
+    }
+    protected boolean                         needsSortingUpdateRenderers    = false;
+    
+    protected float camX; protected float camY; protected float camZ;
+    protected MeshedRegion[][] regions;
+    public int numV;
+    protected ThreadedWorker worker;
+    protected ThreadContext[] threadCtx;
+    protected int rChunkX, rChunkY, rChunkZ;
+    public boolean threadedCulling = false;
+
+    protected MeshedRegion[] occlQueriesRunning = new MeshedRegion[MAX_OCCL_QUERIES];
+    protected int queriesRunning = 0;
+    public int occlCulled;
 
     public void init() {
-        initShaders();
         setRenderDistance(Game.instance.settings.chunkLoadDistance>>(REGION_SIZE_BITS));
-        IntBuffer intbuf = Engine.glGenBuffers(this.occlQueries.length);
-        intbuf.get(this.occlQueries);
 
         worker = new ThreadedWorker(4);
         worker.init();
@@ -152,26 +105,6 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         }
     }
     
-    public void initShaders() {
-        try {
-            pushCurrentShaders();
-            AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_occlQueryShader = assetMgr.loadShader(this, "terrain/occlusion_query");
-            popNewShaders();
-            occlQueryShader = new_occlQueryShader;
-            startup = false;
-        } catch (ShaderCompileError e) {
-            releaseNewShaders();
-            System.out.println("shader " + e.getName() + " failed to compile");
-            System.out.println(e.getLog());
-            if (startup) {
-                throw e;
-            } else {
-                Game.instance.addDebugOnScreen("\0uff3333shader " + e.getName() + " failed to compile");
-            }
-        }
-        startup = false;
-    }
     
     private MeshedRegion[][] create() {
         MeshedRegion[][] regions = new MeshedRegion[LENGTH_OVER*LENGTH_OVER][];
@@ -191,7 +124,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         return regions;
     }
 
-    private void reposition(int rChunkX, int rChunkZ) {
+    protected void reposition(int rChunkX, int rChunkZ) {
         int diffX = rChunkX-this.renderChunkX;
         int diffZ = rChunkZ-this.renderChunkZ;
         
@@ -315,8 +248,6 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         shadowRenderList.clear();
     }
     public void flagBlock(int x, int y, int z) {
-//        int toRegionX = x >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
-//        int toRegionZ = z >> (Region.REGION_SIZE_BITS+Chunk.SIZE_BITS);
         int n = 2;
         for (int rx = -n; rx <= n; rx+=n)
             for (int rz = -n; rz <= n; rz+=n) {
@@ -327,12 +258,8 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
                     MeshedRegion r = getByRegionCoord(regionX2, regionY2, regionZ2);
                     if (r != null) {
                         r.needsUpdate = true;
-//                        return;
                     }
                 }
-//                if (regionX2 != toRegionX || regionZ2 != toRegionZ) {
-//                    System.out.println("also flagging neighbour "+regionX2+"/"+regionZ2+ " ("+toRegionX+"/"+toRegionZ+")");
-//                }
             }
     }
 
@@ -352,265 +279,15 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         }
     }
     
-//    ArrayList<MeshedRegion> justrendered = Lists.newArrayList();
-//    public void renderMainPost(World world, float fTime, WorldRenderer worldRenderer) {
-//        for (MeshedRegion r : this.justrendered) {
-//
-//            if (r.hasPass(PASS_SOLID)) {
-//                r.renderRegion(fTime, PASS_SOLID);
-//                this.numV += r.getNumVertices(PASS_SOLID);
-//            }
-//            if (numV < 2000000) {
-//                if (r.hasPass(PASS_LOD)) {
-//                    r.renderRegion(fTime, PASS_LOD);
-//                    this.numV += r.getNumVertices(PASS_LOD);
-//                }
-//            }
-//        }
-//    }
-//    public void renderMainPre(World world, float fTime, WorldRenderer worldRenderer) {
-//        justrendered.clear();
-//        int size = renderList.size();
-//        this.occlCulled=0;
-//        this.numV = 0;
-//        int LOD_DISTANCE = 33; //TODO: move solid/slab blocks out of LOD PASS
-//        Shader cur = worldRenderer.terrainShader;
-//        for (int dist = 0; dist < 1; dist++)  {
-//            for (int i = 0; i < size; i++) {
-//                MeshedRegion r = renderList.get(i);
-//                if (!r.hasAnyPass()) {
-//                    continue;
-//                }
-//                if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
-//                    continue;
-//                }
-////                if ((dist == 0) != (r.distance < LOD_DISTANCE)) continue;
-//                if (ENABLE_OCCL && queriesRunning < occlQueriesRunning.length 
-//                        && r.distance > MIN_DIST_OCCL 
-//                        && r.frustumStates[0] >= MIN_STATE_OCCL) {
-//                    if (r.occlusionQueryState == 0 && r.occlusionResult < 1) {
-//                        int idx = -1;
-//                        int j = 0;
-//                        for (; j < this.occlQueriesRunning.length; j++) {
-//                            if (this.occlQueriesRunning[j] == null) {
-//                                idx = j;
-//                                break;
-//                            }
-//                        }
-//                        r.occlusionQueryState = 1;
-//                        occlQueriesRunning[idx] = r;
-//                        r.queryPos.set(camX, camY, camZ);
-//                        occlQueryShader.enable();
-//                        GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
-//                        GL11.glColorMask(false, false, false, false);
-//                        Engine.enableDepthMask(false);
-//                        r.renderRegion(fTime, PASS_SHADOW_SOLID);
-//                        r.renderRegion(fTime, PASS_LOD);
-//                        cur.enable();
-//                        GL11.glColorMask(true, true, true, true);
-//                        Engine.enableDepthMask(true);
-//                        GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
-//                        queriesRunning++;
-//                    }
-//                }
-//                this.rendered++;  
-//                if (ENABLE_OCCL && r.distance > MIN_DIST_OCCL && r.occlusionResult == 1) {
-//                    this.occlCulled++;
-//                    continue;
-//                }
-//                if (r.hasPass(PASS_SOLID) || r.hasPass(PASS_LOD)) {
-//                    justrendered.add(r);
-//                }
-//                r.renderRegion(fTime, PASS_SOLID);
-//                if (numV < 2000000) {
-//                    if (r.hasPass(PASS_LOD)) {
-//                        r.renderRegion(fTime, PASS_LOD);
-//                        this.numV += r.getNumVertices(PASS_LOD);
-//                    }
-//                }
-//            }
-////            if (dist == 0) {
-////                cur = worldRenderer.terrainShaderFar;
-////                cur.enable();
-////            }
-//        }
-//    }
+    public abstract void renderMain(World world, float fTime);
 
-    public void renderMain(World world, float fTime, WorldRenderer worldRenderer) {
-        int size = renderList.size();
-        this.occlCulled=0;
-        this.numV = 0;
-        int totalv=0;
-        int LOD_DISTANCE = 16; //TODO: move solid/slab blocks out of LOD PASS
-        Shader cur = worldRenderer.terrainShader;
-        int occlTestThisFrame = 0;
-        boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
-        Engine.bindVAO(GLVAO.vaoBlocksBindless);
-        if (bindless) {
-            buffer.preDraw(GLVAO.vaoBlocksBindless);
-        }
-        for (int dist = 0; dist < 2; dist++)  {
-            for (int i = 0; i < size; i++) {
-                MeshedRegion r = renderList.get(i);
-                if (!r.hasAnyPass()) {
-                    continue;
-                }
-                if (r.frustumStates[0] < Frustum.FRUSTUM_INSIDE) {
-                    continue;
-                }
-                if ((dist == 1) && (r.distance > LOD_DISTANCE)) continue;
-                if (ENABLE_OCCL && occlTestThisFrame < 1&& queriesRunning < occlQueriesRunning.length 
-                        && r.distance > MIN_DIST_OCCL 
-                        && r.frustumStates[0] >= MIN_STATE_OCCL) {
-                    if (r.occlusionQueryState == 0 && r.occlusionResult < 1) {
-                        int idx = -1;
-                        int j = 0;
-                        for (; j < this.occlQueriesRunning.length; j++) {
-                            if (this.occlQueriesRunning[j] == null) {
-                                idx = j;
-                                break;
-                            }
-                        }
-                        if (bindless && buffer.getDrawCount() > 0) {
-                            Stats.regionDrawCalls++;
-                            buffer.render();
-                            buffer.preDraw(GLVAO.vaoBlocksBindless);
-                        }
-                        occlTestThisFrame++;
-                        r.occlusionQueryState = 1;
-                        occlQueriesRunning[idx] = r;
-                        r.queryPos.set(camX, camY, camZ);
-                        occlQueryShader.enable();
-                        GL15.glBeginQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED, occlQueries[idx]);
-                        GL11.glColorMask(false, false, false, false);
-                        Engine.enableDepthMask(false);
-                        if (r.getShadowDrawMode() == 1) {
-                            Engine.bindVAO(GLVAO.vaoBlocksShadowTextured);
-                        } else {
-                            Engine.bindVAO(GLVAO.vaoBlocksShadow);
-                        }
-                        r.renderRegion(fTime, PASS_SHADOW_SOLID);
-//                        r.renderRegion(fTime, PASS_TRANSPARENT);
-//                        r.renderRegion(fTime, PASS_LOD);
-                        Engine.bindVAO(GLVAO.vaoBlocksBindless);
-                        cur.enable();
-                        GL11.glColorMask(true, true, true, true);
-                        Engine.enableDepthMask(true);
-                        GL15.glEndQuery(ARBOcclusionQuery2.GL_ANY_SAMPLES_PASSED);
-                        queriesRunning++;
-                    }
-                }
-                this.rendered++;  
-                if (ENABLE_OCCL && r.distance > MIN_DIST_OCCL && r.occlusionResult == 1) {
-                    this.occlCulled++;
-                    continue;
-                }
-                if (dist == 0)
-                if (r.hasPass(PASS_SOLID)) {
-                    //            System.out.println(glGetInteger(GL_DEPTH_FUNC));
-                    if (bindless) {
-                        r.renderRegionIndirect(buffer, PASS_SOLID);
-                    } else {
-                        r.renderRegion(fTime, PASS_SOLID);
-                    }
-                    this.numV += r.getNumVertices(PASS_SOLID);
-                }
-                if (dist == 1) {
-                    if (r.hasPass(PASS_LOD)) {
-                        if (bindless) {
-                            r.renderRegionIndirect(buffer, PASS_LOD);
-                        } else {
-                            r.renderRegion(fTime, PASS_LOD);
-                        }
-                        this.numV += r.getNumVertices(PASS_LOD);
-                    }
-                    if (numV > 1000000) {
-                        break;
-                    }
-                }
-                if (numV > 3000000) {
-                    break;
-                }
-            }
-            totalv+=numV;
-            numV=0;
-//            if (dist == 0) {
-//                cur = worldRenderer.terrainShaderFar;
-//                cur.enable();
-//            }
-        }
-        if (bindless && buffer.getDrawCount() > 0) {
-            buffer.render();
-            Stats.regionDrawCalls++;
-        }
-//        if (occlTestThisFrame > 0) {
-//            System.out.println(occlTestThisFrame);
-//        }
-//        
-        numV=totalv;
-    }
-
-    public void renderRegions(World world, float fTime, int pass, int nFrustum, int frustumState) {
-        GLVAO vao = GLVAO.vaoBlocks;
-        if (pass == PASS_SHADOW_SOLID) {
-            vao = GLVAO.vaoBlocksShadow;
-            if (Game.instance.settings.renderSettings.shadowDrawMode == 1) {
-                vao = GLVAO.vaoBlocksShadowTextured;
-            }
-        }
-        int requiredShadowMode = Game.instance.settings.renderSettings.shadowDrawMode;
-        boolean bindless = GL.isBindlessSuppported() && Engine.userSettingUseBindless;
-
-        Engine.bindVAO(vao);
-        List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
-        int size = list.size();
-        if (bindless) {
-            buffer.preDraw(vao);
-        }
-        int nDraw = 0;
-        for (int i = 0; i < size; i++) {
-            MeshedRegion r = list.get(i);
-            if (!r.hasPass(pass)) {
-                continue;
-            }
-            if (r.frustumStates[nFrustum] < frustumState) {
-                continue;
-            }
-            if (r.getShadowDrawMode() != requiredShadowMode) {
-                continue;
-            }
-            if (bindless) {
-                r.renderRegionIndirect(buffer, pass);
-            } else {
-                r.renderRegion(fTime, pass);
-//                if (pass == PASS_SHADOW_SOLID) {
-//                    System.out.println(r.vertexCount[pass]);
-//                }
-                nDraw++;
-            }
-//            if (vao == GLVAO.vaoBlocksShadow ){
-//                System.out.println("success "+i);
-//            }
-        }
-        
-        if (pass == PASS_SHADOW_SOLID) {
-//            System.out.println(r.vertexCount[pass]);
-//            System.out.println(nDraw);
-        }
-        if (bindless && buffer.getDrawCount() > 0) {
-            buffer.render();
-        }
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("renderRegions");
-    }
-
-     void flushRegions() {
+     protected void flushRegions() {
         this.occlCulled = 0;
         renderList.clear();
         shadowRenderList.clear();
     }
     
-    public void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
+    public final void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         TimingHelper.startSilent(2);
         flushRegions();
         camX=lastCamX;
@@ -676,26 +353,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
 //        System.out.println(timespent/1000L);
 //        long took = TimingHelper.stopSilent(1);
 //        System.out.println("array "+took);
-        for (int i = 0; ENABLE_OCCL && i < occlQueriesRunning.length; i++) {
-            MeshedRegion mr = occlQueriesRunning[i];
-            if (mr == null)
-                continue;
-            if (mr.isValid && mr.occlusionQueryState == 1) {
-                if (mr.queryPos.distanceSq(camX, camY, camZ) < 3) {
-                    int done = GL15.glGetQueryObjecti(occlQueries[i], GL15.GL_QUERY_RESULT_AVAILABLE);
-                    if (done == 0) {
-                        continue;
-                    }
-                    mr.occlusionResult = 1+GL15.glGetQueryObjecti(occlQueries[i], GL15.GL_QUERY_RESULT);
-                    mr.occlFrameSkips = 0;
-//                    System.out.println("got result for "+mr+" = "+mr.occlusionResult+ " - "+mr.getNumVertices(0));
-                    mr.occlusionQueryState = 0;
-                }
-            }
-            occlQueriesRunning[i] = null;
-            queriesRunning--;
-        
-        }
+        updateOcclQueries();
         if (!renderList.isEmpty()) {
             sortRenderers();
         }
@@ -746,7 +404,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
 //                            m.occlusionResult = 0;
 //                            m.occlFrameSkips = 0;
 //                        }
-                        if (queriesRunning < this.occlQueries.length && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
+                        if (queriesRunning < MAX_OCCL_QUERIES && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
                             m.occlusionResult = 0;
                             m.occlFrameSkips = 0;
                         }
@@ -794,7 +452,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
 //                            m.occlusionResult = 0;
 //                            m.occlFrameSkips = 0;
 //                        }
-                        if (queriesRunning < this.occlQueries.length && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
+                        if (queriesRunning < MAX_OCCL_QUERIES && (m.queryPos.distanceSq(camX, camY, camZ) >= 3)) {
                             m.occlusionResult = 0;
                             m.occlFrameSkips = 0;
                         }
@@ -875,7 +533,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
         }
     }
 
-    private void sortUpdateRenderers() {
+    protected void sortUpdateRenderers() {
         if (needsSortingUpdateRenderers) {
             needsSortingUpdateRenderers = false;
             Collections.sort(regionsToUpdate, compareUpdateRenderers);
@@ -883,7 +541,7 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
     }
     
 
-    private void sortRenderers() {
+    protected void sortRenderers() {
         Collections.sort(renderList, compareRenderers);
     }
     
@@ -914,5 +572,12 @@ public class RegionRenderer extends AbstractRenderer implements IThreadedWork {
     @Override
     public void resize(int displayWidth, int displayHeight) {
     }
+
+    public static IRenderComponent cstr(boolean isVulkan) {
+        return null;
+    }
+
+
+    public abstract void updateOcclQueries();
 
 }

@@ -33,8 +33,8 @@ public class ShaderSource {
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
     static Pattern patternRemoveSetBindingUBO = Pattern.compile("layout\\(set = [0-9]{1,2}, binding = [0-9]{1,2}, std140\\) uniform ([^\\s]*)");
     static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
-    static Pattern patternStageOutput = Pattern.compile("out ([^\\s]*) ([^\\s]*);");
-    static Pattern patternStageInput = Pattern.compile("in ([^\\s]*) ([^\\s]*);");
+    static Pattern patternStageOutput = Pattern.compile("(flat )?out ([^\\s]*) ([^\\s]*);");
+    static Pattern patternStageInput = Pattern.compile("(flat )?in ([^\\s]*) ([^\\s]*);");
     static Pattern patternStageSamplerInput = Pattern.compile("uniform sampler([^\\s]*) ([^\\s]*);");
     static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
@@ -135,20 +135,24 @@ public class ShaderSource {
                 for (int i = 0; i < lines.size(); i++) {
                     line = lines.get(i);
                     Matcher m;
-                    if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_VERTEX_BIT&&line.startsWith("out") && (m = patternStageOutput.matcher(line)).matches()) {
+                    if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_VERTEX_BIT
+                            && (line.startsWith("out") || line.startsWith("flat out")) 
+                            && (m = patternStageOutput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM VERTEX LINE "+line);
-                        String output = "layout (location = "+(nVertexOutputs++)+") out "+m.group(1)+" "+m.group(2)+";\r\n";
+                        String output = "layout (location = "+(nVertexOutputs++)+") "+(m.group(1)==null?"":m.group(1))+" out "+m.group(2)+" "+m.group(3)+";\r\n";
                         code += output;
                         if (debugPrint) System.out.println("TRANSFORMED VERTEX LINE "+output);
-                    } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("in") && (m = patternStageInput.matcher(line)).matches()) {
+                    } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT
+                            && (line.startsWith("in") || line.startsWith("flat in")) 
+                            && (m = patternStageInput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (location = "+(nInputs++)+") in "+m.group(1)+" "+m.group(2)+";\r\n";
+                        String input = "layout (location = "+(nInputs++)+") "+(m.group(1)==null?"":m.group(1))+" in "+m.group(2)+" "+m.group(3)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
 
                     } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("out") && (m = patternStageOutput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (location = "+(nFragmentOutputs++)+") out "+m.group(1)+" "+m.group(2)+";\r\n";
+                        String input = "layout (location = "+(nFragmentOutputs++)+") out "+m.group(2)+" "+m.group(3)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
 

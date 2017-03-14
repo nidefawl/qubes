@@ -6,6 +6,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.util.ITess;
+import nidefawl.qubes.util.ITessState;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
@@ -319,6 +320,14 @@ public class Tess extends AbstractTesselatorState implements ITess {
     @Override
     public void drawTris() {
         this.draw(GL11.GL_TRIANGLES);
+    }
+    @Override
+    public boolean isDynamic() {
+        return false;
+    }
+    @Override
+    public void drawQuads(ITessState tesstate) {
+        this.draw(GL11.GL_QUADS, (AbstractTesselatorState) tesstate);
     }
 
 }

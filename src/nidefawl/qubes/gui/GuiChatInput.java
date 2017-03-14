@@ -107,7 +107,7 @@ public class GuiChatInput extends Gui implements ITextEdit {
 //            return;
 //        }
         field.focused = true;
-        Shaders.textured.enable();
+        
         if (this.mouseResize == 1) {
             this.overlay.width = (int) (mX-this.overlay.posX+4);
             this.overlay.height = (int) (this.field.posY-10-mY+4);

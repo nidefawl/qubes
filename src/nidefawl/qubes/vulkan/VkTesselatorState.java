@@ -6,9 +6,14 @@ import nidefawl.qubes.util.ITessState;
 public class VkTesselatorState extends AbstractVkTesselatorState implements ITessState {
     VkBuffer bufferV;
     VkBuffer bufferI;
+    private boolean usageDynamic;
     public VkTesselatorState(VKContext ctxt) {
+        this(ctxt, false);
+    }
+    public VkTesselatorState(VKContext ctxt, boolean usageDynamic) {
         bufferV = new VkBuffer(ctxt);
         bufferI = new VkBuffer(ctxt);
+        this.usageDynamic = usageDynamic;
     }
     @Override
     public VkBuffer getVertexBuffer() {
@@ -31,6 +36,10 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
     @Override
     public void drawQuads() {
         bindAndDraw(Engine.getDrawCmdBuffer());
+    }
+    @Override
+    public boolean isDynamic() {
+        return this.usageDynamic;
     }
 
 

@@ -9,12 +9,12 @@ import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
-class CubeParticle extends Particle {
-    private int tex;
-    private int normalMap;
-    private int type = 1;
-    private int pass;
-    protected Vector3f color = new Vector3f();
+public class CubeParticle extends Particle {
+    public int tex;
+    public int normalMap;
+    public int type = 1;
+    public int pass;
+    public Vector3f color = new Vector3f();
 
     public CubeParticle() {
         super();

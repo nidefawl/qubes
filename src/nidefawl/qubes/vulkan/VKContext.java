@@ -40,6 +40,7 @@ public class VKContext {
     public static LongBuffer ZERO_OFFSET;
     public static int currentBuffer = 0;
     public static boolean DUMP_SHADER_SRC = false;
+    private static Buffer BARRIER_MEM_IMG;
 
     public SwapChain                           swapChain           = null;
     public final VkInstance                    vk;
@@ -463,6 +464,7 @@ public class VKContext {
             return null;
         }
         if (DUMP_SHADER_SRC) {
+            System.out.println(source);
 //            writeShaderBin(result.get(stage), string);
         }
         
@@ -532,9 +534,97 @@ public class VKContext {
     public boolean isResource(IVkResource vkResource) {
         return this.resources.contains(vkResource);
     }
+
+    public void setImageLayout(VkCommandBuffer cmdBuffer, long image, int aspectMask,
+            int oldLayout, int newLayout, int srcStageFlags, int destStageFlags) {
+        this.setImageLayout(cmdBuffer, image, aspectMask, oldLayout, newLayout, srcStageFlags, destStageFlags, 0, 0);
+    }
+    public void setImageLayout(VkCommandBuffer cmdBuffer, long image, int aspectMask,
+            int oldLayout, int newLayout, int srcStageFlags, int destStageFlags, int srcAccessMask, int dstAccessMask) {
+        BARRIER_MEM_IMG.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+        BARRIER_MEM_IMG.pNext(NULL);
+        BARRIER_MEM_IMG.srcAccessMask(srcAccessMask);
+        BARRIER_MEM_IMG.dstAccessMask(dstAccessMask);
+        BARRIER_MEM_IMG.oldLayout(oldLayout);
+        BARRIER_MEM_IMG.newLayout(newLayout);
+        BARRIER_MEM_IMG.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+        BARRIER_MEM_IMG.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+        BARRIER_MEM_IMG.image(image);
+//        BARRIER_MEM_IMG.subresourceRange(subresourceRange);
+        BARRIER_MEM_IMG.subresourceRange()
+            .aspectMask(aspectMask)
+            .baseMipLevel(0)
+            .levelCount(1)
+            .baseArrayLayer(0)
+            .layerCount(1);
+        
+        // Only sets masks for layouts used in this example
+        // For a more complete version that can be used with other layouts see vkTools::setImageLayout
+
+        // Source layouts (old)
+        switch (oldLayout)
+        {
+        case VK_IMAGE_LAYOUT_UNDEFINED:
+            // Only valid as initial layout, memory contents are not preserved
+            // Can be accessed directly, no source dependency required
+            BARRIER_MEM_IMG.srcAccessMask(0);
+            break;
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            BARRIER_MEM_IMG.srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+            break;
+        case VK_IMAGE_LAYOUT_PREINITIALIZED:
+            // Only valid as initial layout for linear images, preserves memory contents
+            // Make sure host writes to the image have been finished
+            BARRIER_MEM_IMG.srcAccessMask(VK_ACCESS_HOST_WRITE_BIT);
+            break;
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            // Old layout is transfer destination
+            // Make sure any writes to the image have been finished
+            BARRIER_MEM_IMG.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+            break;
+        }
+
+        // Target layouts (new)
+        switch (newLayout)
+        {
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            // Transfer source (copy, blit)
+            // Make sure any reads from the image have been finished
+            BARRIER_MEM_IMG.dstAccessMask(VK_ACCESS_TRANSFER_READ_BIT);
+            break;
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            // Transfer destination (copy, blit)
+            // Make sure any writes to the image have been finished
+            BARRIER_MEM_IMG.dstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+            break;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            // Shader read (sampler, input attachment)
+            BARRIER_MEM_IMG.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
+            break;
+
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            BARRIER_MEM_IMG.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+            break;
+
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+            BARRIER_MEM_IMG.dstAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+            break;
+        }
+
+        // Put barrier inside setup command buffer
+        vkCmdPipelineBarrier(
+            cmdBuffer,
+            srcStageFlags, 
+            destStageFlags, 
+            0, 
+            null,
+            null,
+            BARRIER_MEM_IMG);
+    }
     public static void allocStatic() {
         ZERO_OFFSET = memAllocLong(1);
         ZERO_OFFSET.put(0, 0);
+        BARRIER_MEM_IMG = VkImageMemoryBarrier.calloc(1);
         VkMemoryManager.allocStatic();
         VkDescLayouts.allocStatic();
         VkTexture.allocStatic();
@@ -546,5 +636,6 @@ public class VKContext {
         VkDescLayouts.destroyStatic();
         VkMemoryManager.destroyStatic();
         memFree(ZERO_OFFSET);
+        BARRIER_MEM_IMG.free();
     }
 }

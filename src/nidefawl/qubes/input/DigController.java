@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL11.GL_QUADS;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gl.TesselatorState;
 import nidefawl.qubes.network.packet.PacketCDigState;
@@ -160,6 +161,7 @@ public class DigController {
     public void reloadTextures() {
         for (int i = 0; i < stageTex.length; i++) {
             AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/blocks/destroy/destroy_stage_"+i+".png");
+            if (!Engine.isVulkan)
             this.stageTex[i] = TextureManager.getInstance().makeNewTexture(tex, true, false,-1);
         }
     }

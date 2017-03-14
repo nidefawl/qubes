@@ -1,6 +1,12 @@
 package nidefawl.qubes.util;
 
+import static org.lwjgl.vulkan.VK10.VK_VERSION_MAJOR;
+import static org.lwjgl.vulkan.VK10.VK_VERSION_MINOR;
+import static org.lwjgl.vulkan.VK10.VK_VERSION_PATCH;
+
 import org.lwjgl.opengl.GL11;
+
+import nidefawl.qubes.gl.Engine;
 
 public class SysInfo {
     public String  osName;
@@ -27,9 +33,18 @@ public class SysInfo {
         this.javaMachineVersion = System.getProperty("java.vm.name") + " - " + System.getProperty("java.vm.info") + " - " + System.getProperty("java.vm.vendor");
         this.memoryMb = Runtime.getRuntime().maxMemory() / (1024L * 1024L);
         
-//        this.lwjglVersion = Sys.getVersion();
-        this.openGLVersion = GL11.glGetString(GL11.GL_RENDERER) + " " + GL11.glGetString(GL11.GL_VERSION);
-        this.openGLVendor = GL11.glGetString(GL11.GL_VENDOR);
+        if (Engine.isVulkan) {
+            int apiVersion = Engine.vkContext.properties.apiVersion();
+            int major = VK_VERSION_MAJOR(apiVersion);
+            int minor = VK_VERSION_MINOR(apiVersion);
+            int patch = VK_VERSION_PATCH(apiVersion);
+            this.openGLVendor = Engine.vkContext.properties.deviceNameString();
+            this.openGLVersion = "Vulkan "+major+"."+minor+"."+patch;
+        } else {
+//          this.lwjglVersion = Sys.getVersion();
+            this.openGLVersion = GL11.glGetString(GL11.GL_RENDERER) + " " + GL11.glGetString(GL11.GL_VERSION);
+            this.openGLVendor = GL11.glGetString(GL11.GL_VENDOR);
+        }
     }
 
 }

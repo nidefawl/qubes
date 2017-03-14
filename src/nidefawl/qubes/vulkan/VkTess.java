@@ -1,5 +1,6 @@
 package nidefawl.qubes.vulkan;
 
+import static org.lwjgl.opengl.GL11.GL_QUADS;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.ByteBuffer;
@@ -10,9 +11,7 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.ReallocIntBuffer;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.util.GameLogicError;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.ITess;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vec.Vector4f;
 
@@ -414,6 +413,11 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     public void drawTris() {
         finish(VkTess.CREATE_PER_VERTEX_IDX_BUFFER, STREAM_UPLOAD, this);
         bindAndDraw(Engine.getDrawCmdBuffer());
+    }
+
+    @Override
+    public void drawQuads(ITessState tesstate) {
+        finish(VkTess.CREATE_QUAD_IDX_BUFFER, (tesstate.isDynamic() ? STREAM_UPLOAD : DEVICE_LOCAL_UPLOAD), (AbstractVkTesselatorState) tesstate);
     }
 
 }

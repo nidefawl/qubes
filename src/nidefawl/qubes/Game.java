@@ -2,10 +2,19 @@ package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.VK10.*;
+
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
+import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
 
 import java.io.File;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 
 import nidefawl.qubes.assets.RenderAssets;
@@ -23,6 +32,7 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiContext;
@@ -39,6 +49,8 @@ import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.render.RenderFramebufferCached;
+import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.gui.VRGuiRenderer;
 import nidefawl.qubes.render.post.HBAOPlus;
@@ -51,13 +63,12 @@ import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.texture.array.*;
 import nidefawl.qubes.texture.array.impl.gl.ItemTextureArrayGL;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.RayTrace;
-import nidefawl.qubes.util.StringUtil;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.vr.VREvents;
+import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
@@ -74,7 +85,8 @@ public class Game extends GameBase {
     public final ClientSettings          settings  = new ClientSettings();
 
     public GuiOverlayStats statsOverlay;
-    public GuiCached       statsCached;
+    public RenderFramebufferCached statsFB;
+    GuiOverlayStats statsList;
     public GuiOverlayChat  chatOverlay;
 
     private ThreadConnect      connect;
@@ -171,13 +183,15 @@ public class Game extends GameBase {
             this.serverAddr = "nide.ddns.net:21087";
         }
         KeybindManager.initKeybinds();
+        Engine.init(EngineInitSettings.INIT_ALL.setFBSize(windowWidth, windowHeight).setVulkan(this.isVulkan));
         leftSelection.init();
         rightSelection.init();
         dig.init();
         FontRenderer.init();
-        Engine.init(EngineInitSettings.INIT_ALL.setFBSize(windowWidth, windowHeight).setVulkan(this.isVulkan));
         loadingScreen.setProgress(0, 0, "Initializing");
-        TextureManager.getInstance().init();
+        if (!Engine.isVulkan) {
+            TextureManager.getInstance().init();
+        }
         BlockModelManager.getInstance().init();
         ItemModelManager.getInstance().init();
         SingleBlockRenderAtlas.getInstance().init();
@@ -187,13 +201,14 @@ public class Game extends GameBase {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
         this.statsOverlay = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
-        this.statsCached = new GuiCached(statsOverlay); 
-        this.statsCached.setPos(0, 0);
-        this.statsCached.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
+        this.statsFB = new RenderFramebufferCached();
+        statsList = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
         loadingScreen.setProgress(0, 0.5f, "Initializing");
-        this.vrGui.init();
+        if (!Engine.isVulkan) {
+            this.vrGui.init();
+        }
         
         
     }
@@ -210,7 +225,18 @@ public class Game extends GameBase {
         KeybindManager.load();
         isStarting = true;
         updateGui3dMode();
+        this.frameBufferScene = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+        this.frameBufferScene.fromRenderpass(VkRenderPasses.passTerrain, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+
+        this.frameBufferShadow = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+        this.frameBufferShadow.fromRenderpass(VkRenderPasses.passShadow, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
         
+        this.frameBuffer = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+        this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+
+        this.statsFB.init();
+        statsList.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
+        this.statsFB.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
     }
 
     public void toggleGameMode() {
@@ -277,12 +303,19 @@ public class Game extends GameBase {
         GuiContext.mouseOverOverride=null;
         showGUI(null);
     }
+
+    protected void onDestroy() {
+        this.server.stop();
+        super.onDestroy();
+    }
     
     @Override
     public void shutdown() {
         this.server.stop();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
+        if (isVulkan)
+            destroyCommandBuffers();
         super.shutdown();
     }
     
@@ -387,9 +420,9 @@ public class Game extends GameBase {
                 }
                 this.selBlock.id = this.selBlock.id< 0?maxBlock:0;
             }
-            if (statsCached != null) {
-
-                this.statsCached.refresh();
+            if (statsList != null) {
+                
+                this.statsList.refresh();
             }
             
         }
@@ -460,6 +493,149 @@ public class Game extends GameBase {
 
 
     public void render(float fTime) {
+        VkCommandBuffer commandBuffer = null;
+        if (Engine.isVulkan) {
+            int currentBuffer = VKContext.currentBuffer;
+            commandBuffer = renderCommandBuffers[currentBuffer];
+            vkResetCommandBuffer(commandBuffer, 0);
+            int err = vkBeginCommandBuffer(commandBuffer, this.cmdBufInfo);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to begin render command buffer: " + VulkanErr.toString(err));
+            }
+        }
+        if (this.statsList.renderStats) {
+            this.statsList.renderStats = false;
+            System.out.println("updating stats");
+//            setWindowViewport();
+            this.statsFB.setSize(Engine.displayWidth, Engine.displayHeight);
+            this.statsList.setSize(Engine.displayWidth, Engine.displayHeight);
+            this.statsFB.preRender(commandBuffer);
+            this.statsList.render(0, 0, 0);
+            this.statsFB.postRender(commandBuffer);
+//            this.statsFB.clearImage(commandBuffer);
+        }
+        if (Engine.isVulkan) {
+            renderVK(commandBuffer, fTime);
+            int err = vkEndCommandBuffer(commandBuffer);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to end render command buffer: " + VulkanErr.toString(err));
+            }
+            this.vkContext.submitCommandBuffer(commandBuffer);
+        } else {
+            renderGL(fTime);
+        }
+    }
+    private VkCommandBuffer[] renderCommandBuffers;
+
+    private nidefawl.qubes.vulkan.FrameBuffer frameBufferScene;
+    private nidefawl.qubes.vulkan.FrameBuffer frameBufferShadow;
+    private nidefawl.qubes.vulkan.FrameBuffer frameBuffer;
+    
+    VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.calloc()
+            .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+            .pNext(NULL).flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+    @Override
+    public void rebuildRenderCommands(int width, int height) {
+        vkContext.resetRenderCommandPool();
+        {
+            if (this.frameBufferScene != null) {
+                this.frameBufferScene.destroy();
+            }
+            this.frameBufferScene.build(VkRenderPasses.passTerrain, width, height);
+            if (this.frameBuffer != null) {
+                this.frameBuffer.destroy();
+            }
+            this.frameBuffer.build(VkRenderPasses.passFramebuffer, width, height);
+            if (this.frameBufferShadow != null) {
+                this.frameBufferShadow.destroy();
+            }
+            this.frameBufferShadow.build(VkRenderPasses.passShadow, Engine.getShadowMapTextureSize(), Engine.getShadowMapTextureSize());
+
+        }
+        
+        
+        int nFrameBuffers = vkContext.swapChain.numImages;
+        try ( MemoryStack stack = stackPush() ) {
+
+            VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkInitializers.commandBufferAllocInfo(
+                    vkContext.renderCommandPool, nFrameBuffers);
+        
+            PointerBuffer pCommandBuffer = stack.callocPointer(nFrameBuffers);
+            int err = vkAllocateCommandBuffers(vkContext.device, cmdBufAllocateInfo, pCommandBuffer);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to allocate render command buffer: " + VulkanErr.toString(err));
+            }
+            renderCommandBuffers = new VkCommandBuffer[nFrameBuffers];
+            for (int i = 0; i < nFrameBuffers; i++) {
+                renderCommandBuffers[i] = new VkCommandBuffer(pCommandBuffer.get(i), vkContext.device);
+            }
+        }
+    }
+
+    private void destroyCommandBuffers() {
+        if (renderCommandBuffers != null) {
+            for (int i = 0; i < renderCommandBuffers.length; i++) {
+                VkCommandBuffer cmdBuf = renderCommandBuffers[i];
+                vkFreeCommandBuffers(vkContext.device, vkContext.renderCommandPool, cmdBuf);
+            }
+            renderCommandBuffers = null;
+        }
+    }
+
+    public void renderVK(VkCommandBuffer commandBuffer, float fTime) {
+        Engine.updateRenderResolution(windowWidth, windowHeight);
+        Engine.setViewport(0, 0, windowWidth, windowHeight);
+        if (Engine.displayWidth != vkContext.swapChain.width || Engine.displayHeight != vkContext.swapChain.height) {
+            System.err.println("swapchain size != display size");
+            System.err.printf("%dx%d vs %dx%d vs %dx%d\n", windowWidth, windowHeight, Engine.displayWidth, Engine.displayHeight, vkContext.swapChain.width,
+                    vkContext.swapChain.height);
+        } else {
+            Engine.beginRenderPass(commandBuffer, VkRenderPasses.passFramebuffer, this.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
+
+            if (this.world != null) {
+                Engine.skyRenderer.renderSky(this.world, fTime);
+                Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+            } 
+            setSceneViewport();
+            renderWorldVK(fTime, 0);    
+            
+            double mx = Mouse.getX();
+            double my = Mouse.getY();
+            this.statsFB.render();
+            if (!canRenderGui3d()) {
+                renderGui(fTime, mx, my);
+            }
+
+            if (this.gui == null && this.world != null && !canRenderGui3d()) {
+
+                if (showGrid) {
+                    renderChunkGrid(fTime);
+                }
+                
+                if (!VR_SUPPORT) {
+//                    glEnable(GL_DEPTH_TEST);
+                    GuiWindowManager.getInstance().render(fTime, mx, my);
+//                    glDisable(GL_DEPTH_TEST);
+                }
+                if (this.chatOverlay != null) {
+                    this.chatOverlay.render(fTime, 0, 0);
+                }
+            }
+            Engine.endRenderPass(commandBuffer);
+
+            vkContext.swapChain.blitFramebufferAndPreset(commandBuffer, frameBuffer, 1);
+        }
+
+    }
+    private void renderWorldVK(float fTime, int eye) {
+
+        RenderersGL.skyRenderer.renderSkybox();
+
+//          Engine.getSceneFB().setDrawMask(1);
+        RenderersGL.worldRenderer.renderWorld(this.world, fTime);
+//        Engine.getSceneFB().setDrawAll();
+    }
+    public void renderGL(float fTime) {
         if (canRenderGui3d()) {
             setGUIViewport();
             Engine.checkGLError("setGUIProjection");
@@ -487,7 +663,7 @@ public class Game extends GameBase {
             }
             FrameBuffer finalTarget = VR_SUPPORT ? VR.getFB(eye) : null;
             if (this.world != null) {
-                renderWorld(fTime, eye, finalTarget);    
+                renderWorldGL(fTime, eye, finalTarget);    
             } else if (canRenderGui3d()) {
                 Engine.getSceneFB().bind();
                 Engine.getSceneFB().clearColorBlack();
@@ -503,7 +679,7 @@ public class Game extends GameBase {
                 glEnable(GL_DEPTH_TEST);
                 Engine.setBlend(false);
                 //TODO: add material info for predicated thresholidng 
-                Engine.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), finalTarget, false);
+                RenderersGL.outRenderer.renderAA(Engine.getSceneFB().getTexture(0), finalTarget, false);
             }
             
 //            if (VR_SUPPORT && (showControllers||gui!=null||true)) {
@@ -582,10 +758,7 @@ public class Game extends GameBase {
 
         double mx = Mouse.getX();
         double my = Mouse.getY();
-        if (this.statsCached != null) {
-            this.statsCached.setSize(Engine.displayWidth, Engine.displayHeight);
-            this.statsCached.render(fTime, 0, 0);
-        }
+        this.statsFB.render();
         if (!canRenderGui3d()) {
             renderGui(fTime, mx, my);
         }
@@ -647,7 +820,7 @@ public class Game extends GameBase {
         //                int minChunkX = (ipX) - chunkW;
         //                int minChunkZ = (ipZ) - chunkW;
         //                int maxChunkX = (ipX) + chunkW;
-        Tess t = Tess.instance;
+        ITess t = Engine.getTess();
         float chunkWPx = 12.0f;
         float screenX = 140;
         float screenZ = 140;
@@ -691,9 +864,8 @@ public class Game extends GameBase {
                 t.add(border, border);
             }
         }
-        Shaders.colored.enable();
+        Engine.setPipeStateColored2D();
         t.drawQuads();
-        Shader.disable();
     
     }
 
@@ -718,13 +890,13 @@ public class Game extends GameBase {
             if (this.world == null) {
 
             }
-            glEnable(GL_DEPTH_TEST);
+            if (!isVulkan) glEnable(GL_DEPTH_TEST);
             GuiWindowManager.getInstance().render(fTime, mx, my);
-            glDisable(GL_DEPTH_TEST);
+            if (!isVulkan) glDisable(GL_DEPTH_TEST);
         }
     }
 
-    private void renderWorld(float fTime, int eye, FrameBuffer finalTarget) {
+    private void renderWorldGL(float fTime, int eye, FrameBuffer finalTarget) {
         
         Engine.getSceneFB().bind();
         Engine.getSceneFB().clearFrameBuffer();
@@ -734,10 +906,10 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("renderWorld");
 
-        Engine.skyRenderer.renderSkybox();
+        RenderersGL.skyRenderer.renderSkybox();
 
 //          Engine.getSceneFB().setDrawMask(1);
-        Engine.worldRenderer.renderWorld(this.world, fTime);
+        RenderersGL.worldRenderer.renderWorld(this.world, fTime);
 //        Engine.getSceneFB().setDrawAll();
         
         
@@ -773,7 +945,7 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("lightCompute 0");
         if (!VR_SUPPORT || eye == 0)
-        Engine.lightCompute.render(this.world, fTime, 0);
+            RenderersGL.lightCompute.render(this.world, fTime, 0);
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         
@@ -794,7 +966,7 @@ public class Game extends GameBase {
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Deferred");
-        Engine.outRenderer.render(this.world, fTime, 0);
+        RenderersGL.outRenderer.render(this.world, fTime, 0);
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("Engine.outRenderer.render 0");
         if (GPUProfiler.PROFILING_ENABLED)
@@ -810,7 +982,7 @@ public class Game extends GameBase {
         if (secondPass) {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("copyPreWaterDepth");
-            Engine.outRenderer.copyPreWaterDepth();
+            RenderersGL.outRenderer.copyPreWaterDepth();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
             Engine.setBlend(true);
@@ -820,7 +992,7 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("World");
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-            Engine.worldRenderer.renderTransparent(world, fTime);
+            RenderersGL.worldRenderer.renderTransparent(world, fTime);
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
@@ -829,7 +1001,7 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Deferred");
 
-            Engine.outRenderer.render(this.world, fTime, 1);
+            RenderersGL.outRenderer.render(this.world, fTime, 1);
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
@@ -839,16 +1011,16 @@ public class Game extends GameBase {
 
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("copySceneDepthBuffer");
-        Engine.outRenderer.copySceneDepthBuffer();
+        RenderersGL.outRenderer.copySceneDepthBuffer();
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 
 
-        if (Engine.outRenderer.getSsr() > 0) {
+        if (RenderersGL.outRenderer.getSsr() > 0) {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("SSR");
 //            if (!VR_SUPPORT || eye == 0)
-            Engine.outRenderer.raytraceSSR();
+            RenderersGL.outRenderer.raytraceSSR();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
         }
@@ -870,7 +1042,7 @@ public class Game extends GameBase {
                 GL40.glBlendFuncSeparatei(1+i, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
             }
             if (!Game.VR_SUPPORT) {
-                Engine.worldRenderer.renderFirstPerson(world, fTime);
+                RenderersGL.worldRenderer.renderFirstPerson(world, fTime);
             }
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -879,7 +1051,7 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("lightCompute 1");
             if (!VR_SUPPORT || eye == 0)
-            Engine.lightCompute.render(this.world, fTime, 1);
+                RenderersGL.lightCompute.render(this.world, fTime, 1);
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
 
@@ -887,7 +1059,7 @@ public class Game extends GameBase {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("Deferred");
 
-            Engine.outRenderer.render(this.world, fTime, 2);
+            RenderersGL.outRenderer.render(this.world, fTime, 2);
 
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
@@ -899,18 +1071,18 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Lum");
 
-        if (Engine.outRenderer.getSsr() > 0) {
+        if (RenderersGL.outRenderer.getSsr() > 0) {
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.start("SSR2");
 //            if (!VR_SUPPORT || eye == 0)
-            Engine.outRenderer.combineSSR();
+            RenderersGL.outRenderer.combineSSR();
             if (GPUProfiler.PROFILING_ENABLED)
                 GPUProfiler.end();
         }
         Engine.setBlend(false);
         glDisable(GL_DEPTH_TEST);
         Engine.enableDepthMask(false);
-        Engine.outRenderer.renderBlur();
+        RenderersGL.outRenderer.renderBlur();
 
 
         if (GPUProfiler.PROFILING_ENABLED)
@@ -918,7 +1090,7 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Bloom");
         
-        Engine.outRenderer.renderBloom();
+        RenderersGL.outRenderer.renderBloom();
         
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
@@ -946,7 +1118,7 @@ public class Game extends GameBase {
             if (!VR_SUPPORT) {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("BB Debug");
-                Engine.worldRenderer.renderDebugBB(this.world, fTime);
+                RenderersGL.worldRenderer.renderDebugBB(this.world, fTime);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
             }
@@ -958,10 +1130,10 @@ public class Game extends GameBase {
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.start("Wireframe Debug");
                 
-                Engine.worldRenderer.renderNormals(this.world, fTime);
+                RenderersGL.worldRenderer.renderNormals(this.world, fTime);
                 glEnable(GL_POLYGON_OFFSET_FILL);
                 glPolygonOffset(-3.4f, 2.f);
-                Engine.worldRenderer.renderTerrainWireFrame(this.world, fTime);
+                RenderersGL.worldRenderer.renderTerrainWireFrame(this.world, fTime);
                 glDisable(GL_POLYGON_OFFSET_FILL);
                 if (GPUProfiler.PROFILING_ENABLED)
                     GPUProfiler.end();
@@ -995,7 +1167,7 @@ public class Game extends GameBase {
         }
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Tonemap");
-        FrameBuffer fbOut = Engine.outRenderer.renderTonemap();
+        FrameBuffer fbOut = RenderersGL.outRenderer.renderTonemap();
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 
@@ -1008,7 +1180,7 @@ public class Game extends GameBase {
             GLDebugTextures.drawFullScreen(selTex);
 //            System.out.println(selTex.pass+","+selTex.name);
             if (selTex.pass.equalsIgnoreCase("compute_light_0") && selTex.name.equals("output")) {
-                Engine.lightCompute.renderDebug();
+                RenderersGL.lightCompute.renderDebug();
             }
             return;
         }
@@ -1023,7 +1195,7 @@ public class Game extends GameBase {
                 else {
                     finalTarget.bind();
                 }
-                FrameBuffer bloomOut = Engine.outRenderer.fbBloomOut;//bloom has our current scene depth information
+                FrameBuffer bloomOut = RenderersGL.outRenderer.fbBloomOut;//bloom has our current scene depth information
                 bloomOut.bindRead();
                 int outWidth = finalTarget != null ? finalTarget.getWidth() : Engine.displayWidth;
                 int outHeight = finalTarget != null ? finalTarget.getHeight() : Engine.displayHeight;
@@ -1041,7 +1213,7 @@ public class Game extends GameBase {
             Engine.setBlend(false);
         
         }
-        Engine.outRenderer.renderAA(fbOut.getTexture(0), finalTarget, true);
+        RenderersGL.outRenderer.renderAA(fbOut.getTexture(0), finalTarget, true);
 
 //        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.outRenderer.fbDeferred.getTexture(2)); //COLOR
 //        Shaders.textured.enable();
@@ -1098,8 +1270,8 @@ public class Game extends GameBase {
 
     @Override
     public void onStatsUpdated() {
-        if (this.statsCached != null) {
-            this.statsCached.refresh();
+        if (this.statsList != null) {
+            this.statsList.refresh();
         }
         if (System.currentTimeMillis()-lastShaderLoadTime >=2200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
@@ -1395,9 +1567,8 @@ public class Game extends GameBase {
     @Override
     public void onWindowResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
-            if (this.statsCached != null) {
-                this.statsCached.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
-                this.statsCached.setPos(0, 0);
+            if (this.statsFB != null) {
+                this.statsFB.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
             }
             if (this.gui != null) {
                 this.gui.setPos(0, 0);
@@ -1648,14 +1819,14 @@ public class Game extends GameBase {
             if (text.equals("/resize")) {
                 return;
             }
-            if (text.equals("/inversez")) {
+            if (text.equals("/inversez")&&!Engine.isVulkan) {
                 Engine.INVERSE_Z_BUFFER=!Engine.INVERSE_Z_BUFFER;
                 Engine.resizeProjection(Engine.displayWidth, Engine.displayHeight);
                 Engine.resizeShadowProjection(Engine.displayWidth, Engine.displayHeight);
                 Shaders.initShaders();
-                Engine.outRenderer.initShaders();
-                Engine.skyRenderer.initShaders();
-                Engine.lightCompute.initShaders();
+                RenderersGL.outRenderer.initShaders();
+                RenderersGL.skyRenderer.initShaders();
+                RenderersGL.lightCompute.initShaders();
                 ChatManager.getInstance().addMsg("Z buffer is now "+(Engine.INVERSE_Z_BUFFER?"inverse":"default"));
                 
                 return;
@@ -1665,7 +1836,7 @@ public class Game extends GameBase {
                 updateGui3dMode();
                 return;
             }
-            if (text.equals("/reloadshaders")) {
+            if (text.equals("/reloadshaders")&&!Engine.isVulkan) {
                 Shaders.initShaders();
                 //            Engine.lightCompute.initShaders();
 //                Engine.worldRenderer.reloadModel();
@@ -1673,7 +1844,7 @@ public class Game extends GameBase {
 //                Engine.shadowRenderer.initShaders();
                 Engine.worldRenderer.initShaders();
 //                Engine.skyRenderer.initShaders();
-                Engine.outRenderer.initShaders();
+                RenderersGL.outRenderer.initShaders();
 //                Engine.particleRenderer.initShaders();
                 return;
             }

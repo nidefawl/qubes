@@ -99,6 +99,23 @@ public final class VkInitializers {
             .commandBufferCount(commandBufferCount);
         return cmdBufAllocInfo;
     }
+
+    public static VkSamplerCreateInfo samplerCreateStack() {
+        return VkSamplerCreateInfo.callocStack()
+                .sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO)
+                .magFilter(VK_FILTER_LINEAR)
+                .minFilter(VK_FILTER_LINEAR)
+                .mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
+                .addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT)
+                .addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT)
+                .addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT)
+                .mipLodBias(0.0f)
+                .compareOp(VK_COMPARE_OP_NEVER)
+                .minLod(0.0f).maxLod(1.0f)
+                .maxAnisotropy(1.0f)
+                .anisotropyEnable(false)
+                .borderColor(VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK);
+    }
     
     
 }

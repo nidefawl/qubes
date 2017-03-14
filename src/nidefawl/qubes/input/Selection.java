@@ -12,8 +12,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.util.GameMath;
-import nidefawl.qubes.util.RayTrace;
+import nidefawl.qubes.util.*;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
@@ -29,22 +28,22 @@ public class Selection {
         return Game.instance.getMode();
     }
 
-    private TesselatorState highlightSelection;
-    private TesselatorState fullBlock;
-    private TesselatorState customBB;
+    private ITessState highlightSelection;
+    private ITessState fullBlock;
+    private ITessState customBB;
     AABBFloat               lastCustomBB;
     public boolean          quarterMode       = false;
     boolean                 mouseDown         = false;
     int                     buttonDown        = 0;
     boolean                 mouseStateChanged = false;
-    private TesselatorState renderBB;
+    private ITessState renderBB;
     public RayTrace         rayTrace;
 
     public void init() {
 
-        highlightSelection = new TesselatorState(GL15.GL_DYNAMIC_DRAW);
-        fullBlock = new TesselatorState(GL15.GL_STATIC_DRAW);
-        customBB = new TesselatorState(GL15.GL_DYNAMIC_DRAW);
+        highlightSelection = Engine.newTessBuffer(true);
+        fullBlock = Engine.newTessBuffer(false);
+        customBB = Engine.newTessBuffer(true);
         this.rayTrace = new RayTrace();
         renderBlockOver(this.fullBlock, new AABBFloat(0, 0, 0, 1, 1, 1));
     }
@@ -124,7 +123,7 @@ public class Selection {
 
     }
 
-    public void renderBlockOver(TesselatorState out, AABBFloat box) {
+    public void renderBlockOver(ITessState fullBlock, AABBFloat box) {
 
         if (this.lastCustomBB != null && this.lastCustomBB.isEqual(box)) {
             return;
@@ -135,7 +134,7 @@ public class Selection {
         this.lastCustomBB.set(box);
         float ext = 1 / 256f;
         float w = 1 / 32f;
-        Tess tesselator = Tess.instance;
+        ITess tesselator = Engine.getTess();
         float br = 1f;
         float alpha = 1f;
         tesselator.setColorRGBAF(br, br, br, alpha);
@@ -252,8 +251,7 @@ public class Selection {
         tesselator.add(maxX, maxY - w, maxZ - w);
         tesselator.add(maxX, maxY, maxZ - w);
         tesselator.add(maxX, maxY, minZ + w);
-
-        tesselator.draw(GL_QUADS, out);
+        tesselator.drawQuads(fullBlock);
         tesselator.resetState();
     }
 
@@ -306,7 +304,7 @@ public class Selection {
         tesselator.add(maxX, maxY, maxZ);
         tesselator.add(maxX, maxY, minZ);
 
-        tesselator.draw(GL_QUADS, highlightSelection);
+        tesselator.drawQuads(highlightSelection);
         tesselator.resetState();
     }
     public void update(World world) {

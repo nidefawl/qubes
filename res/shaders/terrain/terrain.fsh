@@ -14,17 +14,17 @@ uniform sampler2DArray blockTextures;
 uniform sampler2DArray normalTextures;
 
 
+flat in uvec4 blockinfo;
+flat in vec4 faceAO;
+flat in vec4 faceLight;
+flat in vec4 faceLightSky;
+
 in vec4 color;
 in vec3 normal;
 in vec2 texcoord;
 in vec4 position;
 in vec2 light;
 in float camDistance;
-flat in vec4 faceAO;
-flat in vec4 faceLight;
-flat in vec4 faceLightSky;
-flat in uvec4 blockinfo;
-
 in vec2 texPos;
 in float roughness;
 
@@ -130,6 +130,7 @@ void main(void) {
 	#endif
 
 #endif
+
     out_Color = vec4(color_adj, tex.a);
     out_Normal = vec4((outNormal) * 0.5f + 0.5f, roughness);
     out_Material = blockinfo;

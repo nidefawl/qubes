@@ -7,7 +7,7 @@ import nidefawl.qubes.vec.*;
 import nidefawl.qubes.world.World;
 
 public class Particle {
-    boolean dead = false;
+    public boolean dead = false;
     int maxLive = 50;
     Vec3D mot, lastMot;
     Vec3D pos, lastPos;

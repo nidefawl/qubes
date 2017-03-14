@@ -39,4 +39,6 @@ public interface ITess {
 
     void drawTris();
 
+    void drawQuads(ITessState fullBlock);
+
 }

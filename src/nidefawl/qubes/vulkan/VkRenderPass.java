@@ -24,6 +24,7 @@ public abstract class VkRenderPass {
     
     public VkRenderPass() {
         reset();
+        VkRenderPasses.registerPass(this);
     }
     
     void reset() {
@@ -46,12 +47,12 @@ public abstract class VkRenderPass {
           .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
           .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
           .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-          .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+          .finalLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         clearValues.get(idx).color()
             .float32(0, 0)
-            .float32(1, 0.5f)
-            .float32(2, 0.5f)
-            .float32(3, 0.5f);
+            .float32(1, 0)
+            .float32(2, 0)
+            .float32(3, 0);
         return n;
     }
      VkAttachmentDescription addDepthAttachment(int idx, int depthFormat) {

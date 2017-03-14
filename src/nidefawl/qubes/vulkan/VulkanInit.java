@@ -120,7 +120,7 @@ public class VulkanInit {
             throw new AssertionError("Need physicalDevice to init vk context");
         }
         ctxt.surface = windowSurface;
-        ctxt.swapChain = new SwapChain(ctxt, true);
+        ctxt.swapChain = new SwapChain(ctxt);
         ctxt.swapChain.width = windowWidth;
         ctxt.swapChain.height = windowHeight;
         getSurfaceColorFormatAndSpace(ctxt);

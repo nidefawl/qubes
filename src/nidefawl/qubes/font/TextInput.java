@@ -485,8 +485,8 @@ public class TextInput {
         }
         tessellator.setOffset(-shiftPX, 0.0F, 0.0F);
         tessellator.setColor(-1, 255);
-        Engine.setPipeStateFontrenderer();
         trueType.bindTexture();
+        Engine.setPipeStateFontrenderer();
 //        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.getTexture());
 //        tessellator.startDrawingQuads();
 //        tessellator.setColorRGBA_F(1, 1, 1, 1);

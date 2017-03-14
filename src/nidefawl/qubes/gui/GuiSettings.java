@@ -118,8 +118,7 @@ public class GuiSettings extends Gui {
         list.add((this.aoSetting = new Setting(this, "Ambient Occlusion", strAOSettings[renderSettings.ao & 1], strAOSettings) {
             void callback(int id) {
                 renderSettings.ao = id;
-                Engine.outRenderer.initAO();
-                Engine.outRenderer.initShaders();
+                Engine.outRenderer.onAOSettingUpdated();
                 UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
                 ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
             }
@@ -157,7 +156,7 @@ public class GuiSettings extends Gui {
         }));
         List<String> alist = Lists.newArrayList();
         alist.add("Disabled");
-        final float f = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+        final float f = Engine.getMaxAnsitropic();
         int nf = 2;
         while (nf <= f) {
             alist.add("" + nf+"x");

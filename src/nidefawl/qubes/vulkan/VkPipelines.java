@@ -91,7 +91,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_3Dvk_shaded.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             main.setShaders(vert, frag);
             main.setBlend(false);
-            main.setRenderPass(VkRenderPasses.passSubpassSwapchain, 0);
+            main.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             main.setVertexDesc(desc);
             main.pipeline = buildPipeLine(ctxt, main);
         }
@@ -103,7 +103,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             textured2d.setShaders(vert, frag);
             textured2d.setBlend(false);
-            textured2d.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
+            textured2d.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             textured2d.setVertexDesc(desc);
             textured2d.pipeline = buildPipeLine(ctxt, textured2d);
         }
@@ -115,7 +115,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "shadow/debug.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             debugShader.setShaders(vert, frag);
             debugShader.setBlend(false);
-            debugShader.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
+            debugShader.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             debugShader.setVertexDesc(desc);
             debugShader.pipeline = buildPipeLine(ctxt, debugShader);
         }
@@ -128,7 +128,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             fontRender2D.setShaders(vert, frag);
             fontRender2D.setBlend(true);
-            fontRender2D.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
+            fontRender2D.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             fontRender2D.setVertexDesc(desc);
             fontRender2D.dynamicState = null;
             fontRender2D.pipeline = buildPipeLine(ctxt, fontRender2D);
@@ -141,11 +141,15 @@ public class VkPipelines {
         {
             colored2D.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[4].getVkVertexDesc();
+//            VKContext.DUMP_SHADER_SRC=true;
+
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "colored.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "colored.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+//            VKContext.DUMP_SHADER_SRC=false;
+
             colored2D.setShaders(vert, frag);
             colored2D.setBlend(true);
-            colored2D.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
+            colored2D.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             colored2D.setVertexDesc(desc);
             colored2D.dynamicState = null;
             colored2D.pipeline = buildPipeLine(ctxt, colored2D);
@@ -162,7 +166,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "gui.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             gui.setShaders(vert, frag);
             gui.setBlend(true);
-            gui.setRenderPass(VkRenderPasses.passSubpassSwapchain, 1);
+            gui.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             gui.setVertexDesc(desc);
             gui.dynamicState = null;
             gui.pipeline = buildPipeLine(ctxt, gui);

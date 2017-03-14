@@ -229,13 +229,26 @@ public class VkTexture implements IVkResource {
         }
     }
 
-    private void setImageLayout(VkCommandBuffer cmdBuffer, long l, int aspectMask,
+    private void setImageLayout(VkCommandBuffer cmdBuffer, long image, int aspectMask,
             int oldLayout, int newLayout, VkImageSubresourceRange subresourceRange) {
-        VkImageMemoryBarrier.Buffer imageMemoryBarrier = VkImageMemoryBarrier.callocStack(1).sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER)
-                .oldLayout(oldLayout)
-                .newLayout(newLayout)
-                .image(l).subresourceRange(subresourceRange);
-
+        VkImageMemoryBarrier.Buffer imageMemoryBarrier = VkImageMemoryBarrier.callocStack(1);
+        imageMemoryBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+        imageMemoryBarrier.pNext(NULL);
+        imageMemoryBarrier.srcAccessMask(0);
+        imageMemoryBarrier.dstAccessMask(0);
+        imageMemoryBarrier.oldLayout(oldLayout);
+        imageMemoryBarrier.newLayout(newLayout);
+        imageMemoryBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+        imageMemoryBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+        imageMemoryBarrier.image(image);
+        imageMemoryBarrier.subresourceRange(subresourceRange);
+//        imageMemoryBarrier.subresourceRange()
+//            .aspectMask(aspectMask)
+//            .baseMipLevel(0)
+//            .levelCount(1)
+//            .baseArrayLayer(0)
+//            .layerCount(1);
+        
         // Only sets masks for layouts used in this example
         // For a more complete version that can be used with other layouts see vkTools::setImageLayout
 

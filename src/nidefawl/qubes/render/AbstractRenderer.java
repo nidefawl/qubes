@@ -17,9 +17,9 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     List<IManagedResource> resourcesShaders    = Lists.newArrayList();
     List<IManagedResource> resourcesShadersNew = Lists.newArrayList();
     List<IManagedResource> resourcesFramebuffers      = Lists.newArrayList();
-    int rendererWidth;
-    int rendererHeight;
-    int downsample = 1;
+    protected int rendererWidth;
+    protected int rendererHeight;
+    protected int downsample = 1;
     
 
     @Override

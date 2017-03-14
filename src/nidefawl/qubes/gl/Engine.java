@@ -1,5 +1,6 @@
 package nidefawl.qubes.gl;
 
+import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
@@ -27,10 +28,10 @@ import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.item.ItemRenderer;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.models.render.QModelBatchedRender;
-import nidefawl.qubes.particle.CubeParticleRenderer;
 import nidefawl.qubes.render.*;
 import nidefawl.qubes.render.gui.SingleBlockDraw;
 import nidefawl.qubes.render.gui.SingleBlockRenderer;
+import nidefawl.qubes.render.impl.gl.ShadowRendererGL;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
@@ -41,6 +42,7 @@ import nidefawl.qubes.world.SunLightModel;
 
 public class Engine {
     public static boolean isVulkan;
+    public static boolean isVulkanTodo;
     public static VKContext vkContext;
     public final static int NUM_PROJECTIONS    = 3 + 1;   // 3 sun view shadow pass + player view camera
     public final static int MAX_LIGHTS       = 1024;
@@ -91,7 +93,7 @@ public class Engine {
     public static float znear = 0.1f;
     public static float zfar = 1024F;
 
-    static TesselatorState[] fullscreenquads;
+    static ITessState[] fullscreenquads;
     static ITessState quad;
 
     public static Frustum        camFrustum;
@@ -99,6 +101,12 @@ public class Engine {
     public static Vector3f       lightDirection;
     public static float          sunAngle     = 0F;
     public static Camera         camera;
+    public static Renders renders;
+    public static MeshThread     regionRenderThread;
+    
+    public static RenderersVulkan rendersVK;
+    public static RenderersGL rendersGL;
+
     public static ShadowProjector shadowProj;
     public static WorldRenderer  worldRenderer;
     public static SkyRenderer  skyRenderer;
@@ -108,9 +116,7 @@ public class Engine {
     public static RegionRenderer regionRenderer;
     public static CubeParticleRenderer  particleRenderer;
     public static LightCompute  lightCompute;
-    public static MeshThread     regionRenderThread;
     public static QModelBatchedRender renderBatched;
-    final static FastArrayList<IRenderComponent> components = new FastArrayList<>(16);
     private static float         aspectRatio;
     private static int           fieldOfView;
 
@@ -137,13 +143,15 @@ public class Engine {
     static boolean clientStateBindlessAttrib=false;
     public static boolean isDither=true;
     public static float Y_SIGN = 1.0f;
-    private static VkDescriptor descriptorSet1;
+    public static VkDescriptor descriptorSetUboScene;
+    public static VkDescriptor descriptorSetUboConstants;
     private static LongBuffer pDescriptorSets;
     private static VkDescriptor[] boundDescriptorSets = new VkDescriptor[4];
     private static IntBuffer pOffsets;
     private static VkRenderPassBeginInfo renderPassBeginInfo;
     private static VkExtent2D renderAreaExtent;
     private static VkOffset2D renderAreaOffset;
+    
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
     }
@@ -314,7 +322,7 @@ public class Engine {
     public static void init(EngineInitSettings init) {
         guiWidth = displayWidth = init.fbWidth;
         guiHeight = displayHeight = init.fbHeight;
-        isVulkan = init.isVulkan;
+        isVulkanTodo = isVulkan = init.isVulkan;
         INVERSE_Z_BUFFER = init.inverseZBuffer;
         OGL_INVERSE_Y = init.inverseClipspaceYOpengl;
         if (!INVERSE_Z_BUFFER && OGL_INVERSE_Y) {
@@ -348,16 +356,24 @@ public class Engine {
             VkTess.init(vkContext, 32);
             UniformBuffer.init(vkContext, 32);
             VkPipelines.init(vkContext);
-            descriptorSet1 = vkContext.descLayouts.allocDescSetUBOScene();
-            descriptorSet1.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix3D.getDescriptorBuffer());
-            descriptorSet1.setBindingBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix2D.getDescriptorBuffer());
-            descriptorSet1.setBindingBuffer(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboSceneData.getDescriptorBuffer());
-            descriptorSet1.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
-            descriptorSet1.update(vkContext);
+            descriptorSetUboScene = vkContext.descLayouts.allocDescSetUBOScene();
+            descriptorSetUboScene.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix3D.getDescriptorBuffer());
+            descriptorSetUboScene.setBindingBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix2D.getDescriptorBuffer());
+            descriptorSetUboScene.setBindingBuffer(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboSceneData.getDescriptorBuffer());
+            descriptorSetUboScene.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
+            descriptorSetUboScene.update(vkContext);
+            descriptorSetUboConstants = vkContext.descLayouts.allocDescSetUBOConstants();
+            descriptorSetUboConstants.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, UniformBuffer.VertexDirections.getDescriptorBuffer());
+            descriptorSetUboConstants.setBindingBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, UniformBuffer.TBNMat.getDescriptorBuffer());
+            descriptorSetUboConstants.update(vkContext);
         }
 
         flushRenderTasks();
-        registerRenderers(init);
+        if (isVulkan) {
+            renders = rendersVK = new RenderersVulkan(vkContext, init);
+        } else {
+            renders = rendersGL = new RenderersGL(init);
+        }
         if (regionRenderer != null) {
             regionRenderThread = new MeshThread(3);
             regionRenderThread.init();
@@ -445,74 +461,59 @@ public class Engine {
 
 
         updateOrthoMatrix(displayWidth, displayHeight);
-        
-        if (!isVulkan) {
 
-            if (fullscreenquads == null) {
-                fullscreenquads = new TesselatorState[4];
-                for (int i = 0; i < fullscreenquads.length; i++)
-                    fullscreenquads[i] = new TesselatorState(GL15.GL_STATIC_DRAW);
-                
-            }
-            if (quad == null) {
-                quad = new TesselatorState(GL15.GL_STATIC_DRAW);
-            }
-            Tess tess = Tess.instance;
-            tess.resetState();
-            int tw = displayWidth;
-            int th = displayHeight;
-            float x = 0;
-            float y = 0;
-            tess.resetState();
-            //Draw some quads with fullscreen resultions, 2 different windings, flipped/non-flipped y texcoord
-            tess.setColor(0xFFFFFF, 0xff);
-            tess.add(x + tw,   y,      0, 1, 1);
-            tess.add(x,        y,      0, 0, 1);
-            tess.add(x,        y + th, 0, 0, 0);
-            tess.add(x + tw,   y + th, 0, 1, 0);
-            tess.draw(GL_QUADS, fullscreenquads[0]); // == Engine.drawFullscreenQuad
-            tess.resetState();
-            tess.setColor(0xFFFFFF, 0xff);
-            tess.add(x + tw,   y,      0, 1, 0);
-            tess.add(x,        y,      0, 0, 0);
-            tess.add(x,        y + th, 0, 0, 1);
-            tess.add(x + tw,   y + th, 0, 1, 1);
-            tess.draw(GL_QUADS, fullscreenquads[1]);
-            tess.resetState();
-            tess.setColor(0xFFFFFF, 0xff);
-            tess.add(x + tw,   y + th, 0, 1, 1);
-            tess.add(x,        y + th, 0, 0, 1);
-            tess.add(x,        y,      0, 0, 0);
-            tess.add(x + tw,   y,      0, 1, 0);
-            tess.draw(GL_QUADS, fullscreenquads[2]);
-            tess.resetState();
-            tess.setColor(0xFFFFFF, 0xff);
-            tess.add(x + tw,   y + th, 0, 1, 0);
-            tess.add(x,        y + th, 0, 0, 0);
-            tess.add(x,        y,      0, 0, 1);
-            tess.add(x + tw,   y,      0, 1, 1);
-            tess.draw(GL_QUADS, fullscreenquads[3]);
-            tess.resetState();
-            tess.setColor(0xFFFFFF, 0xff);
-            tess.add(1, 0, 0, 1, 0);
-            tess.add(0, 0, 0, 0, 0);
-            tess.add(0, 1, 0, 0, 1);
-            tess.add(1, 1, 0, 1, 1);
-            tess.draw(GL_QUADS, (TesselatorState)quad);
-            tess.resetState();
-        } else {
-            if (quad == null) {
-                quad = new VkTesselatorState(vkContext);
-            }
-            VkTess tess = VkTess.instance;
-            tess.add(1, 0, 0, 1, 0);
-            tess.add(0, 0, 0, 0, 0);
-            tess.add(0, 1, 0, 0, 1);
-            tess.add(1, 1, 0, 1, 1);
-            tess.finish(VkTess.CREATE_QUAD_IDX_BUFFER, VkTess.DEVICE_LOCAL_UPLOAD, (AbstractVkTesselatorState) quad);
-            tess.resetState();
-            
+        if (fullscreenquads == null) {
+            fullscreenquads = new ITessState[4];
+            for (int i = 0; i < fullscreenquads.length; i++)
+                fullscreenquads[i] = isVulkan ? new VkTesselatorState(vkContext, true) : new TesselatorState(GL15.GL_STATIC_DRAW);
         }
+        if (quad == null) {
+            quad = isVulkan ? new VkTesselatorState(vkContext, true) : new TesselatorState(GL15.GL_STATIC_DRAW);
+        }
+        ITess tess = getTess();
+        tess.resetState();
+        int tw = displayWidth;
+        int th = displayHeight;
+        float x = 0;
+        float y = 0;
+        tess.resetState();
+        //Draw some quads with fullscreen resultions, 2 different windings, flipped/non-flipped y texcoord
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y,      0, 1, 1);
+        tess.add(x,        y,      0, 0, 1);
+        tess.add(x,        y + th, 0, 0, 0);
+        tess.add(x + tw,   y + th, 0, 1, 0);
+        tess.drawQuads(fullscreenquads[0]); // == Engine.drawFullscreenQuad
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y,      0, 1, 0);
+        tess.add(x,        y,      0, 0, 0);
+        tess.add(x,        y + th, 0, 0, 1);
+        tess.add(x + tw,   y + th, 0, 1, 1);
+        tess.drawQuads(fullscreenquads[1]);
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y + th, 0, 1, 1);
+        tess.add(x,        y + th, 0, 0, 1);
+        tess.add(x,        y,      0, 0, 0);
+        tess.add(x + tw,   y,      0, 1, 0);
+        tess.drawQuads(fullscreenquads[2]);
+        tess.resetState();
+        tess.setColor(0xFFFFFF, 0xff);
+        tess.add(x + tw,   y + th, 0, 1, 0);
+        tess.add(x,        y + th, 0, 0, 0);
+        tess.add(x,        y,      0, 0, 1);
+        tess.add(x + tw,   y,      0, 1, 1);
+        tess.drawQuads(fullscreenquads[3]);
+        tess.resetState();
+        if (!isVulkan)
+            tess.setColor(0xFFFFFF, 0xff);
+        tess.add(1, 0, 0, 1, 0);
+        tess.add(0, 0, 0, 0, 0);
+        tess.add(0, 1, 0, 0, 1);
+        tess.add(1, 1, 0, 1, 1);
+        tess.drawQuads(quad);
+        tess.resetState();
 
     }
 
@@ -523,14 +524,8 @@ public class Engine {
      * @param displayHeight
      */
     public static void resizeRenderers(int displayWidth, int displayHeight) {
+        renders.resizeRenderers(displayWidth, displayHeight);
         if (!isVulkan) {
-            for (int i = 0; i < components.size(); i++) {
-                IRenderComponent r = components.get(i);
-                if (r instanceof AbstractRenderer) {
-                    System.out.println("Resize "+r.getClass());
-                    ((AbstractRenderer) r).resizeRenderer(displayWidth, displayHeight);    
-                }
-            }
             UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
             ShaderBuffer.rebindShaders();
         }
@@ -564,7 +559,7 @@ public class Engine {
     }
 
     public static void drawFullscreenQuad() {
-        fullscreenquads[0].drawQuads();
+        fullscreenquads[isVulkan?1:0].drawQuads();
     }
     public static void drawFSQuad(int n) {
         fullscreenquads[n].drawQuads();
@@ -899,7 +894,11 @@ public class Engine {
     public static void unprojectScreenSpace(float winX, float winY, float screenZ, float rW, float rH, Vector3f out) {
         float screenX = (winX / rW) * 2.0f - 1.0f;
         float screenY = (winY / rH) * 2.0f - 1.0f;
-        screenZ = (screenZ) * 2.0f - 1.0f;
+        if (!isVulkan && !isInverseZ)
+            screenZ = (screenZ) * 2.0f - 1.0f;
+        else {
+            screenZ *= 0.99f;
+        }
         out.set(screenX, screenY, screenZ);
         Matrix4f.transform(getMatSceneMVPUnjittered().getInvMat4(), out, out);
         out.add(Engine.GLOBAL_OFFSET);
@@ -912,64 +911,7 @@ public class Engine {
         position.clear();
     }
 
-    /** RELOAD HAS MEM LEAK!! */
-    public static void registerRenderers(EngineInitSettings init) {
-        for (int i = 0; i < components.size(); i++) {
-            IRenderComponent r = components.get(i);
-            r.release();
-        }
-        components.clear();
-        if (init.initShadowRenderer||init.initShadowProj) {
-            shadowProj = addComponent(new ShadowProjector());
-        }
-        if (init.initShadowRenderer) {
-            shadowRenderer = addComponent(new ShadowRenderer());
-        }
-        if (init.initWorldRenderer) {
-            worldRenderer = addComponent(new WorldRenderer());
-            regionRenderer = addComponent(new RegionRenderer());
-            particleRenderer = addComponent(new CubeParticleRenderer());
-        }
-        if (init.initBlurRenderer) {
-            blurRenderer = addComponent(new BlurRenderer());
-        }
-        if (init.initLightCompute) {
-            lightCompute = addComponent(new LightCompute());
-            
-        }
-        if (init.initSkyRenderer) {
-            skyRenderer = addComponent(new SkyRenderer());
-        }
-        if (init.initFinalRenderer) {
-            outRenderer = addComponent(new FinalRenderer());
-        }
-        if (init.initModelRenderer) {
-            renderBatched = addComponent(new QModelBatchedRender());
-        }
-        for (int i = 0; i < components.size(); i++) {
-            IRenderComponent r = components.get(i);
-            r.preinit();
-        }
-        if (!isVulkan) {
-            Shaders.init();
-            ShaderBuffer.init();
-        }
-        for (int i = 0; i < components.size(); i++) {
-            IRenderComponent r = components.get(i);
-            r.init();
-        }
-//        for (int i = 0; i < components.size(); i++) {
-//            IRenderComponent r = components.get(i);
-//            if (r instanceof AbstractRenderer) {
-//                ((AbstractRenderer) r).resize(Game.displayWidth, Game.displayHeight);    
-//            }
-//        }
-    }
 
-    private static <T> T addComponent(IRenderComponent component) {
-        components.add((IRenderComponent) component);
-        return (T) component;
-    }
     public static void setSceneFB(FrameBuffer fb) {
         fbScene = fb;
     }
@@ -1149,18 +1091,18 @@ public class Engine {
         return 1024*2;
     }
     public static int getShadowDepthTex() {
-        if (shadowRenderer != null)
-            return shadowRenderer.getDepthTex();
+        if (shadowRenderer instanceof ShadowRendererGL)
+            return ((ShadowRendererGL) shadowRenderer).getDepthTex();
         return TMgr.getEmptyWhite();
     }
     public static int getLightTexture() {
         if (Engine.lightCompute != null)
-            return Engine.lightCompute.getTexture();
+            return RenderersGL.lightCompute.getTexture();
         return TMgr.getEmpty();
     }
     public static int getAOTexture() {
         if (RENDER_SETTINGS.ao > 0) {
-            return outRenderer.fbSSAO.getTexture(0);
+            return RenderersGL.outRenderer.fbSSAO.getTexture(0);
         }
         return TMgr.getEmptyWhite();
     }
@@ -1277,6 +1219,8 @@ public class Engine {
     }
 
     public static void rebindSceneDescriptorSet() {
+        if (curPipeline == null)
+            return;
         pDescriptorSets.clear();
         for (int i = 0; i < boundDescriptorSets.length; i++) {
             if (boundDescriptorSets[i] != null) {
@@ -1301,8 +1245,14 @@ public class Engine {
         renderPassBeginInfo.framebuffer(framebuffer);
         renderPassBeginInfo.pClearValues(pass.clearValues);
         vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        boundDescriptorSets[0] = descriptorSet1;
+        boundDescriptorSets[0] = descriptorSetUboScene;
         rebindDescSet = true;//TODO: test + remove
+    }
+    public static void endRenderPass(VkCommandBuffer commandBuffer) {
+        vkCmdEndRenderPass(commandBuffer);
+        curPipeline = null;
+        curPass = null;
+        rebindDescSet = true;
     }
     public static void setDescriptorSet(int idx, VkDescriptor descriptorSet) {
         if (boundDescriptorSets[idx] != descriptorSet) {
@@ -1354,5 +1304,21 @@ public class Engine {
     }
     public static int fbHeight() {
         return displayHeight;
+    }
+    public static ITessState newTessBuffer(boolean b) {
+        if (isVulkan) {
+            return new VkTesselatorState(vkContext);
+        }
+        return new TesselatorState(GL15.GL_DYNAMIC_DRAW);
+    }
+    public static float getMaxAnsitropic() {
+        if (isVulkan) {
+            if (vkContext.features.samplerAnisotropy())
+            {
+                return vkContext.limits.maxSamplerAnisotropy();
+            }
+            return 1.0f;
+        }
+        return glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
     }
 }

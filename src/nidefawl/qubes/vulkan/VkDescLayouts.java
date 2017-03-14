@@ -134,6 +134,10 @@ public class VkDescLayouts {
         return new VkDescriptor(allocDescSet(descSetLayoutUBOScene));
     }
 
+    public VkDescriptor allocDescSetUBOConstants() {
+        return new VkDescriptor(allocDescSet(descSetLayoutUBOConstants));
+    }
+
 //    public long allocDescSetUBOShadow() {
 //        return allocDescSet(descSetLayoutUBOShadow);
 //    }

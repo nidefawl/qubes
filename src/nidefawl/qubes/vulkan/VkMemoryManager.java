@@ -85,8 +85,8 @@ public class VkMemoryManager {
         public boolean isMapped;
         public VkDevice device;
         public int flags;
-        public LongBuffer memPointer;
-        public long memory;
+        public LongBuffer memPointer = null;
+        public long memory = VK_NULL_HANDLE;
         public long blockSize;
         public long offset;
         ArrayList<MemoryChunk> unused = new ArrayList<>();
@@ -101,9 +101,18 @@ public class VkMemoryManager {
         long getLeft() {
             return this.blockSize-offset;
         }
+        boolean freed=false;
         public void freeBlock(VkDevice device) {
-            MemoryUtil.memFree(this.memPointer);
-            vkFreeMemory(device, this.memory, null);
+            if (freed) {
+                throw new GameLogicError("Double free!");
+            }
+            if (this.memory != VK_NULL_HANDLE) {
+                freed = true;
+                MemoryUtil.memFree(this.memPointer);
+                vkFreeMemory(device, this.memory, null);
+                this.memory = VK_NULL_HANDLE;
+                this.memPointer = null;
+            }
         }
         public void allocateBlock(VkDevice device, VulkanMemoryType memType, long allocationBlockSize) {
             if (flags != 0) {
@@ -413,11 +422,14 @@ public class VkMemoryManager {
             memtypeflagsStr="("+Integer.toBinaryString(memtypeflags)+")"+memtypeflagsStr;
             System.out.println("Type "+i+" (Heap "+memType.heapIndex()+") has flags "+memtypeflagsStr);
         }
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 5; i++) {
             allocateBlock(context.device, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, false);
         }
-        allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true);
+        allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true);
+        allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
+        allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
+        allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
     }
 
     private void allocateBlock(VkDevice device, int properties, boolean optimal) {
@@ -455,7 +467,7 @@ public class VkMemoryManager {
                 }
             }
         }
-        throw new GameLogicError("No supported memory type present. requested size "+size);
+        throw new GameLogicError("No supported memory type present. requested size "+size+","+supportedTypes+","+requiredFlags+","+imageMemory+","+align);
     }
 
     public void releaseImageMemory(long image) {
@@ -473,6 +485,7 @@ public class VkMemoryManager {
         chunk.block.dealloc(chunk);
         if (!chunk.block.shared) {
             chunk.block.freeBlock(ctxt.device);
+            unshared.remove(chunk.block);
         }
     }
     public MemoryChunk allocChunk(long size, long align, int properties, boolean image, Object tag) {
@@ -539,5 +552,6 @@ public class VkMemoryManager {
         for (int i = 0; i < unshared.size(); i++) {
             unshared.get(i).freeBlock(ctxt.device);
         }
+        unshared.clear();
     }
 }

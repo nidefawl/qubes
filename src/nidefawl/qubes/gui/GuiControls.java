@@ -36,7 +36,6 @@ public class GuiControls extends Gui {
         @Override
         public void render(float fTime, double mX, double mY) {
             FontRenderer fr = ((ScrollList)parent).font;
-            Shaders.colored.enable();
             this.hovered = this.mouseOver(mX, mY);
             int x = this.posX;
             int y = this.posY;
@@ -132,7 +131,8 @@ public class GuiControls extends Gui {
         {
             clear = new Button(3, "None");
             clear.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
-            clear.setSize(160, 30);
+            clear.setSize(160, 30);;
+            clear.zIndex = 2;
             this.add(clear);
             clear.draw = false;
         }
@@ -140,6 +140,7 @@ public class GuiControls extends Gui {
             cancel = new Button(4, "Cancel");
             cancel.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
             cancel.setSize(160, 30);
+            cancel.zIndex = 2;
             this.add(cancel);
             cancel.draw = false;
         }
@@ -147,6 +148,7 @@ public class GuiControls extends Gui {
             defaultSet = new Button(5, "Set default");
             defaultSet.setPos(this.width / 2 - 160/2, this.height / 2 + 220);
             defaultSet.setSize(160, 30);
+            defaultSet.zIndex = 2;
             this.add(defaultSet);
             defaultSet.draw = false;
         }
@@ -218,7 +220,8 @@ public class GuiControls extends Gui {
             this.clear.posY = this.cancel.posY-30;
             x += posX;
             y += posY;
-            renderRoundedBoxShadow(x, y, 2, w, h2, color2, 0.7f, true);
+            Engine.pxStack.push(0, 0, 12);
+            renderRoundedBoxShadow(x, y, 0, w, h2, color2, 0.7f, true);
             Engine.setPipeStateFontrenderer();
             this.font.drawString("Please press a key for", x+w/2, y+h/4, 0xf1f1f1, true, 1.0f, 2);
             this.font.drawString(selected.b.getName(), x+w/2, y+h/4*2-6, 0xf1ffff, true, 1.0f, 2);
@@ -230,6 +233,7 @@ public class GuiControls extends Gui {
 
 //                this.font.drawString("ESC to cancel", x+w/2, y+h/4*3+15, -1, true, 1.0f, 2);
             }
+            Engine.pxStack.pop();
             
         }
         super.renderButtons(fTime, mX, mY);

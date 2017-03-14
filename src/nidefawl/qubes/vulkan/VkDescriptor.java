@@ -52,7 +52,10 @@ public class VkDescriptor {
     }
 
     public void setBindingCombinedImageSampler(int i, long textureView, long sampler, int imageLayout) {
-        this.numBindings = Math.max(this.numBindings, i+1);
+        this.numBindings = Math.max(this.numBindings, i + 1);
+        if (bindings[i].descImgInfo != null) {
+            bindings[i].descImgInfo.free();
+        }
         bindings[i].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         VkDescriptorImageInfo.Buffer textureDescriptor = VkDescriptorImageInfo.calloc(1);
         textureDescriptor.imageView(textureView);

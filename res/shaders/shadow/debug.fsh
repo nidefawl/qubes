@@ -13,10 +13,10 @@ out vec4 out_Color;
  
 void main(void) {
 	vec4 tex = texture(tex0, pass_texcoord.st, 0);
-	if (tex.r > 0)
-		tex = vec4(1.0);
-	else 
-		tex = vec4(0.0);
+	// if (tex.r > 0)
+	// 	tex = vec4(1.0);
+	// else 
+	// 	tex = vec4(0.0);
 #ifdef SAMPLER_LIN_TO_SRGB
 	// vec3 color_adj = tex.rgb;
 	// vec3 color_adj2 = pass_Color.rgb;

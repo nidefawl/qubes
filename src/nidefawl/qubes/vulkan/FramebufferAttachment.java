@@ -1,5 +1,6 @@
 package nidefawl.qubes.vulkan;
 
+import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -25,8 +26,21 @@ public class FramebufferAttachment implements IVkResource {
     private boolean fixedDimensions;
     private int fixedWidth;
     private int fixedHeight;
+    VkImageSubresourceRange range;
+    VkClearColorValue clearColor;
+    private float r;
+    private float g;
+    private float b;
+    private float a;
 
     public FramebufferAttachment(VKContext ctxt, int vkFormat, int usage) {
+        clearColor = VkClearColorValue.calloc();
+        range = VkImageSubresourceRange.calloc();
+        range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+            .baseArrayLayer(0)
+            .baseMipLevel(0)
+            .layerCount(1)
+            .levelCount(1);
         this.ctxt = ctxt;
         this.ctxt.addResource(this);
         this.format = vkFormat;
@@ -134,5 +148,22 @@ public class FramebufferAttachment implements IVkResource {
         this.fixedDimensions = true;
         this.fixedWidth = w;
         this.fixedHeight = h;
+    }
+    public void clearImage(VkCommandBuffer commandBuffer, float r, float g, float b, float a) {
+
+        vkContext.setImageLayout(commandBuffer, this.image,
+                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+        clearColor.float32(0, 1).float32(1, 1).float32(2, 0).float32(3, a);
+        System.out.println(clearColor.float32(0));
+        vkCmdClearColorImage(commandBuffer, this.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, clearColor, range);
+        vkContext.setImageLayout(commandBuffer, this.image,
+                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_IMAGE_LAYOUT_GENERAL,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
+                VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
+//        System.out.println(""+r+","+g+","+b+","+a);
     }
 }

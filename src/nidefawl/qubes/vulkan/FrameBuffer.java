@@ -18,9 +18,9 @@ public class FrameBuffer  implements IVkResource {
     int width;
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
-        this.ctxt.addResource(this);
     }
     public void build(VkRenderPass passgbuffer, int width, int height) {
+        this.ctxt.addResource(this);
         this.width = width;
         this.height = height;
         try ( MemoryStack stack = stackPush() ) {
@@ -108,5 +108,8 @@ public class FrameBuffer  implements IVkResource {
     }
     public int getWidth() {
         return this.width;
+    }
+    public void clearColorAtt(int idx, VkCommandBuffer commandbuffer, float r, float g, float b, float a) {
+        this.attachments[idx].clearImage(commandbuffer, r, g, b, a);
     }
 }

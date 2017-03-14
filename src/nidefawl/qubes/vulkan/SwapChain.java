@@ -1,7 +1,6 @@
 package nidefawl.qubes.vulkan;
 
-import static nidefawl.qubes.vulkan.VulkanInit.VK_FLAGS_NONE;
-import static org.lwjgl.system.MemoryStack.stackPush;
+import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -10,27 +9,46 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkImageBlit.Buffer;
 
 public final class SwapChain {
     
     public long[]                   images          = null;
-    public long[]                   imageViews      = null;
     public long                     swapchainHandle = VK_NULL_HANDLE;
     public int                      width           = 0;
     public int                      height          = 0;
-    public long[]                   framebuffers;
     public VkSwapchainCreateInfoKHR swapchainCI;
+    VkImageSubresourceRange range;
+    VkClearColorValue clearColor;
     private final VKContext         ctxt;
     public int                      numImages;
     public boolean swapChainAquired;
-    private boolean hasDepthAtt;
-    long depthimage = VK_NULL_HANDLE;
-    long depthview = VK_NULL_HANDLE;
-    public SwapChain(VKContext ctxt, boolean hasDepth) {
+    private int imageUseageFlags;
+    private Buffer blit;
+    private VkImageSubresourceLayers srcSubresource;
+    private VkImageSubresourceLayers dstSubresource;
+    private VkOffset3D srcOffset;
+    private VkOffset3D srcExtent;
+    private VkOffset3D dstOffset;
+    private VkOffset3D dstExtent;
+    
+    public SwapChain(VKContext ctxt) {
         this.ctxt = ctxt;
-        this.hasDepthAtt = hasDepth;
+        clearColor = VkClearColorValue.calloc();
+        range = VkImageSubresourceRange.calloc();
+        range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+            .baseArrayLayer(0)
+            .baseMipLevel(0)
+            .layerCount(1)
+            .levelCount(1);
+        blit = VkImageBlit.calloc(1);
+        srcSubresource = blit.srcSubresource();
+        srcOffset = blit.srcOffsets().get(0);
+        srcExtent = blit.srcOffsets().get(1);
+        dstSubresource = blit.dstSubresource();
+        dstOffset = blit.dstOffsets().get(0);
+        dstExtent = blit.dstOffsets().get(1);
     }
     public boolean isVsync() {
         if (swapchainCI!=null&&swapchainCI.presentMode() == VK_PRESENT_MODE_FIFO_KHR) {
@@ -39,11 +57,6 @@ public final class SwapChain {
         return false;
     }
     public void setup(int newWidth, int newHeight, boolean vsync) {
-        if (this.imageViews != null) {
-            for (int i = 0; i < this.imageViews.length; i++) {
-                vkDestroyImageView(ctxt.device, this.imageViews[i], null);
-            }
-        }
         int err;
         // Get physical device surface properties and formats
         VkSurfaceCapabilitiesKHR surfCaps = VkSurfaceCapabilitiesKHR.calloc();
@@ -113,13 +126,13 @@ public final class SwapChain {
         surfCaps.free();
         if (this.swapchainCI != null)
             this.swapchainCI.free();
-        int imageUseageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        this.imageUseageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Set additional usage flag for blitting from the swapchain images if supported
         VkFormatProperties formatProps = VkFormatProperties.calloc();
         vkGetPhysicalDeviceFormatProperties(ctxt.getPhysicalDevice(), ctxt.colorFormat, formatProps);
         if ((formatProps.optimalTilingFeatures() & VK_FORMAT_FEATURE_BLIT_DST_BIT) != 0) {
-            imageUseageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+            this.imageUseageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         }
         formatProps.free();
         this.swapchainCI = VkSwapchainCreateInfoKHR.calloc()
@@ -129,7 +142,7 @@ public final class SwapChain {
                 .minImageCount(desiredNumberOfSwapchainImages)
                 .imageFormat(ctxt.colorFormat)
                 .imageColorSpace(ctxt.colorSpace)
-                .imageUsage(imageUseageFlags)
+                .imageUsage(this.imageUseageFlags)
                 .preTransform(preTransform)
                 .imageArrayLayers(1)
                 .imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
@@ -174,159 +187,58 @@ public final class SwapChain {
         memFree(pImageCount);
         long[] images = new long[this.numImages];
         pSwapchainImages.get(images, 0, this.numImages);
-        long[] imageViews = new long[this.numImages];
-
-        LongBuffer pBufferView = memAllocLong(1);
-        VkImageViewCreateInfo colorAttachmentView = VkImageViewCreateInfo.calloc()
-                .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                .pNext(NULL)
-                .format(ctxt.colorFormat)
-                .viewType(VK_IMAGE_VIEW_TYPE_2D)
-                .flags(VK_FLAGS_NONE);
-        colorAttachmentView.components()
-                .r(VK_COMPONENT_SWIZZLE_R)
-                .g(VK_COMPONENT_SWIZZLE_G)
-                .b(VK_COMPONENT_SWIZZLE_B)
-                .a(VK_COMPONENT_SWIZZLE_A);
-        colorAttachmentView.subresourceRange()
-                .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-                .baseMipLevel(0)
-                .levelCount(1)
-                .baseArrayLayer(0)
-                .layerCount(1);
-        for (int i = 0; i < this.numImages; i++) {
-            colorAttachmentView.image(images[i]);
-            err = vkCreateImageView(ctxt.device, colorAttachmentView, null, pBufferView);
-            imageViews[i] = pBufferView.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create image view: " + VulkanErr.toString(err));
-            }
-        }
-        colorAttachmentView.free();
-        memFree(pBufferView);
         memFree(pSwapchainImages);
 
         this.images = images;
-        this.imageViews = imageViews;
         this.swapchainHandle = swapChain;
-        createSwapchainFramebuffers();
-    }
-    public void createSwapchainFramebuffers() {
-        if (this.framebuffers != null) {
-            for (int i = 0; i < this.framebuffers.length; i++)
-                vkDestroyFramebuffer(ctxt.device, this.framebuffers[i], null);
-        }
-        destroyDepthAtt();
-        if (this.hasDepthAtt) {
-            createDepthStencilImages();
-        }
-        try ( MemoryStack stack = stackPush() ) {
-            LongBuffer attachments = stack.longs(0, 0);
-            if (!hasDepthAtt) {
-                attachments.limit(1);
-            }
-            if (VkRenderPasses.passSubpassSwapchain.get() == 0L) {
-                Thread.dumpStack();
-            }
-            VkFramebufferCreateInfo fci = VkFramebufferCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
-                    .pAttachments(attachments)
-                    .flags(VK_FLAGS_NONE)
-                    .height(this.height)
-                    .width(this.width)
-                    .layers(1)
-                    .pNext(NULL)
-                    .renderPass(VkRenderPasses.passSubpassSwapchain.get());
-            // Create a framebuffer for each swapchain image
-            long[] framebuffers = new long[this.images.length];
-            LongBuffer pFramebuffer = stack.longs(0);
-            
-            if (hasDepthAtt) {
-                
-                // Depth/Stencil attachment is the same for all frame buffers
-                attachments.put(1, this.depthview);
-            }
-            for (int i = 0; i < this.images.length; i++) {
-                attachments.put(0, this.imageViews[i]);
-                int err = vkCreateFramebuffer(ctxt.device, fci, null, pFramebuffer);
-                long framebuffer = pFramebuffer.get(0);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("Failed to create framebuffer: " + VulkanErr.toString(err));
-                }
-                framebuffers[i] = framebuffer;
-            }
-            this.framebuffers = framebuffers;
-        }
-    }
-    private void destroyDepthAtt() {
-        if (this.depthview != VK_NULL_HANDLE)
-            vkDestroyImageView(ctxt.device, this.depthview, null);
-        if (this.depthimage != VK_NULL_HANDLE) {
-            vkDestroyImage(ctxt.device, this.depthimage, null);
-            ctxt.memoryManager.releaseImageMemory(this.depthimage);
-        }
-        this.depthview = VK_NULL_HANDLE;
-        this.depthimage = VK_NULL_HANDLE;
-    }
-    public void createDepthStencilImages() {
-        
-        try ( MemoryStack stack = stackPush() ) {
-            VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-                    .pNext(0)
-                    .imageType(VK_IMAGE_TYPE_2D)
-                    .format(ctxt.depthFormat)
-                    .mipLevels(1)
-                    .arrayLayers(1)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .tiling(VK_IMAGE_TILING_OPTIMAL)
-                    .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
-                    .flags(0);
-            VkExtent3D extent = imageCreateInfo.extent();
-            extent.width(ctxt.swapChain.width).height(ctxt.swapChain.height).depth(1);
-            VkImageViewCreateInfo depthStencilView = VkImageViewCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                    .pNext(0)
-                    .viewType(VK_IMAGE_VIEW_TYPE_2D)
-                    .format(ctxt.depthFormat)
-                    .flags(0);
-            depthStencilView.subresourceRange()
-                    .aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
-                    .baseMipLevel(0)
-                    .levelCount(1)
-                    .baseArrayLayer(0)
-                    .layerCount(1);
-            LongBuffer pImage = stack.longs(0);
-            int err = vkCreateImage(ctxt.device, imageCreateInfo, null, pImage);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateImage failed: " + VulkanErr.toString(err));
-            }
-            this.depthimage = pImage.get(0);
-            ctxt.memoryManager.allocateImageMemory(this.depthimage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.DEPTH_STENCIL_MEMORY);
-            depthStencilView.image(this.depthimage);
-            LongBuffer pDepthStencilView = stack.longs(0);
-            err = vkCreateImageView(ctxt.device, depthStencilView, null, pDepthStencilView);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
-            }
-            this.depthview = pDepthStencilView.get(0);
-            
-        }
     }
     public void destroy() {
         if (this.swapchainHandle != VK_NULL_HANDLE)
         {
-            for (int i = 0; i < this.images.length; i++)
-            {
-                vkDestroyImageView(ctxt.device, this.imageViews[i], null);
-            }
             vkDestroySwapchainKHR(ctxt.device, this.swapchainHandle, null);
         }
-        if (this.framebuffers != null) {
-            for (int i = 0; i < this.framebuffers.length; i++)
-                vkDestroyFramebuffer(ctxt.device, this.framebuffers[i], null);
-        }
-        destroyDepthAtt();
         swapchainCI.free();
+        range.free();
+        clearColor.free();
+    }
+    public boolean canBlitToSwapchain() {
+        return (this.imageUseageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0;
+    }
+    public void imageClear(VkCommandBuffer commandBuffer, int currentLayout, float r, float g, float b, float a) {
+        vkContext.setImageLayout(commandBuffer, vkContext.swapChain.images[VKContext.currentBuffer],
+                VK_IMAGE_ASPECT_COLOR_BIT, currentLayout,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+        clearColor.float32(0, r).float32(1, g).float32(2, b).float32(3, a);
+        vkCmdClearColorImage(commandBuffer, images[VKContext.currentBuffer], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                clearColor, range);
+
+    }
+    
+    public void imageTransitionPresent(VkCommandBuffer commandBuffer, int currentLayout) {
+
+        vkContext.setImageLayout(commandBuffer, this.images[VKContext.currentBuffer], 
+                VK_IMAGE_ASPECT_COLOR_BIT, 
+                currentLayout,                                  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
+                VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
+    }
+
+    public void blitFramebufferAndPreset(VkCommandBuffer commandBuffer, FrameBuffer frameBuffer, int framebufferAttIdx) {
+        srcSubresource.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+        srcSubresource.layerCount(1);
+        dstSubresource.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+        dstSubresource.layerCount(1);
+        srcExtent.set(frameBuffer.getWidth(), frameBuffer.getHeight(), 1);
+        dstExtent.set(this.width, this.height, 1);
+        vkContext.setImageLayout(commandBuffer, this.images[VKContext.currentBuffer], 
+                VK_IMAGE_ASPECT_COLOR_BIT, 
+                VK_IMAGE_LAYOUT_UNDEFINED,             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,     VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,  VK_ACCESS_TRANSFER_WRITE_BIT);
+        vkCmdBlitImage(commandBuffer, frameBuffer.getAtt(framebufferAttIdx).image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, this.images[VKContext.currentBuffer],
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, blit, VK_FILTER_LINEAR);
+        imageTransitionPresent(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     }
 }

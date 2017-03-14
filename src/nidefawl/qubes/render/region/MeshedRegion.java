@@ -1,9 +1,12 @@
 package nidefawl.qubes.render.region;
 
-import static nidefawl.qubes.render.WorldRenderer.NUM_PASSES;
+import static nidefawl.qubes.render.WorldRenderer.*;
+import static org.lwjgl.vulkan.VK10.*;
+
 import java.util.Arrays;
 
 import org.lwjgl.opengl.*;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
@@ -11,6 +14,7 @@ import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vulkan.VkBuffer;
 
 public class MeshedRegion {
 
@@ -36,15 +40,19 @@ public class MeshedRegion {
 
     
     public GLVBO[]     vbo;
-    
     public GLVBO[]     vboIndices;
+    
+
+    private VkBuffer[] vkbuffersI;
+    private VkBuffer[] vkbuffersV;
+    
     private int shadowDrawMode;
     public boolean frustumStateChanged;
-    int occlusionQueryState = 0; //0 init, 1 waiting, 2 waiting + drop result
+    public int occlusionQueryState = 0; //0 init, 1 waiting, 2 waiting + drop result
     public int occlusionResult = 0;//0 no result, 1 visible, 2 occluded
     public int occlFrameSkips = 0;
     public int distance;
-    Vector3f queryPos = new Vector3f();
+    public Vector3f queryPos = new Vector3f();
 
     public MeshedRegion() {
         Arrays.fill(frustumStates, -2);
@@ -56,6 +64,17 @@ public class MeshedRegion {
             Engine.bindIndexBuffer(this.vboIndices[pass]);
             GL11.glDrawElements(GL11.GL_TRIANGLES, this.elementCount[pass], GL11.GL_UNSIGNED_INT, 0);
             Stats.regionDrawCalls++;
+        }
+    }
+    long[] pointer = new long[1];
+    long[] offset = new long[1];
+    public void renderRegionVK(VkCommandBuffer commandBuffer, float fTime, int pass) {
+        if (this.vertexCount[pass] > 0) {
+            pointer[0] = this.vkbuffersV[pass].getBuffer();
+            offset[0] = 0;
+            vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
+            vkCmdBindIndexBuffer(commandBuffer, this.vkbuffersI[pass].getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(commandBuffer, this.elementCount[pass], 1, 0, 0, 0);
         }
     }
 
@@ -77,18 +96,33 @@ public class MeshedRegion {
 
 
     public void preUploadBuffers() {
-        if (this.vbo == null) {
-            this.vbo = new GLVBO[NUM_PASSES];
-            for (int i = 0; i < vbo.length; i++) {
-                vbo[i] = new GLVBO(GL15.GL_STATIC_DRAW);
-                vbo[i].setTerrain(true);
+        if (Engine.isVulkan) {
+            if (this.vkbuffersV == null) {
+                this.vkbuffersV = new VkBuffer[NUM_PASSES];
+                for (int i = 0; i < this.vkbuffersV.length; i++) {
+                    this.vkbuffersV[i] = new VkBuffer(Engine.vkContext).tag("region_"+i+"_vertex");
+                }
             }
-        }
-        if (this.vboIndices == null) {
-            this.vboIndices = new GLVBO[NUM_PASSES];
-            for (int i = 0; i < vboIndices.length; i++) {
-                vboIndices[i] = new GLVBO(GL15.GL_STATIC_DRAW);
-                vboIndices[i].setTerrain(true);
+            if (this.vkbuffersI == null) {
+                this.vkbuffersI = new VkBuffer[NUM_PASSES];
+                for (int i = 0; i < this.vkbuffersI.length; i++) {
+                    this.vkbuffersI[i] = new VkBuffer(Engine.vkContext).tag("region_"+i+"_index");
+                }
+            }
+        } else {
+            if (this.vbo == null) {
+                this.vbo = new GLVBO[NUM_PASSES];
+                for (int i = 0; i < vbo.length; i++) {
+                    vbo[i] = new GLVBO(GL15.GL_STATIC_DRAW);
+                    vbo[i].setTerrain(true);
+                }
+            }
+            if (this.vboIndices == null) {
+                this.vboIndices = new GLVBO[NUM_PASSES];
+                for (int i = 0; i < vboIndices.length; i++) {
+                    vboIndices[i] = new GLVBO(GL15.GL_STATIC_DRAW);
+                    vboIndices[i].setTerrain(true);
+                }
             }
         }
         Arrays.fill(this.hasPass, false);
@@ -118,14 +152,30 @@ public class MeshedRegion {
         int intlen = buffer.storeVertexData(buf);
         int intlenIdx = buffer.storeIndexData(shBuffer);
         this.elementCount[pass] = intlenIdx;
-        vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
-        vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intlenIdx * 4L);
-//        if (GL.isBindlessSuppported()) {
-//            vbo[pass].makeBindless(GL15.GL_ARRAY_BUFFER);
-//            vboIndices[pass].makeBindless(GL15.GL_ELEMENT_ARRAY_BUFFER);
-//        }
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+        if (Engine.isVulkan) {
+
+            if (this.vkbuffersV[pass].getSize() <= intlen * 4L) {
+                System.out.println("Remake vbuffer with size "+(intlen * 4L));
+                this.vkbuffersV[pass].destroy();
+                this.vkbuffersV[pass].create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, intlen * 4L, true);
+            }
+            if (this.vkbuffersI[pass].getSize() <= intlenIdx * 4L) {
+                System.out.println("Remake ibuffer with size "+(intlenIdx * 4L));
+                this.vkbuffersI[pass].destroy();
+                this.vkbuffersI[pass].create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, intlenIdx * 4L, true);
+            }
+            vkbuffersV[pass].upload(buf.getByteBuf(), 0);
+            vkbuffersI[pass].upload(shBuffer.getByteBuf(), 0);
+        } else {
+            vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
+            vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intlenIdx * 4L);
+//            if (GL.isBindlessSuppported()) {
+//                vbo[pass].makeBindless(GL15.GL_ARRAY_BUFFER);
+//                vboIndices[pass].makeBindless(GL15.GL_ELEMENT_ARRAY_BUFFER);
+//            }
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
 
         int byteSize = (intlenIdx * 4) + (intlen * 4);
         
@@ -196,4 +246,5 @@ public class MeshedRegion {
     public int getShadowDrawMode() {
         return this.shadowDrawMode;
     }
+
 }

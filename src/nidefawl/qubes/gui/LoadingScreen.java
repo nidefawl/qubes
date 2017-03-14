@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 
 import org.lwjgl.PointerBuffer;
@@ -32,6 +33,7 @@ public class LoadingScreen {
                 .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
                 .pNext(NULL).flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
         private VkCommandBuffer[] renderCommandBuffers;
+        private FrameBuffer frameBuffer;
         public InitCrap(VKContext vkContext) {
             int nFrameBuffers = vkContext.swapChain.numImages;
             try ( MemoryStack stack = stackPush() ) {
@@ -48,6 +50,9 @@ public class LoadingScreen {
                     renderCommandBuffers[i] = new VkCommandBuffer(pCommandBuffer.get(i), vkContext.device);
                 }
             }
+            this.frameBuffer = new FrameBuffer(vkContext);
+            this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+            this.frameBuffer.build(VkRenderPasses.passFramebuffer, Engine.getGuiWidth(), Engine.getGuiHeight());
         }
         void destroy() {
             cmdBufInfo.free();
@@ -87,7 +92,6 @@ public class LoadingScreen {
             vkContext.finishUpload();
             Engine.preRenderUpdateVK();
             vkContext.preRender();
-            long framebuffer = vkContext.swapChain.framebuffers[VKContext.currentBuffer];
             int width = tw = vkContext.swapChain.width;
             int height = th = vkContext.swapChain.height;
             VkCommandBuffer commandBuffer = initCrap.renderCommandBuffers[VKContext.currentBuffer];
@@ -96,14 +100,16 @@ public class LoadingScreen {
                 throw new AssertionError("Failed to begin render command buffer: " + VulkanErr.toString(err));
             }
             Engine.setViewport(0, 0, width, height);
-            Engine.beginRenderPass(commandBuffer, VkRenderPasses.passSubpassSwapchain, framebuffer, VK_SUBPASS_CONTENTS_INLINE);
-            vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(commandBuffer, VkRenderPasses.passFramebuffer, initCrap.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
             
         }
         boolean b = renderProgress(tw, th, step, f, string);
         if (isVulkan) {
             VkCommandBuffer commandBuffer = initCrap.renderCommandBuffers[VKContext.currentBuffer];
-            vkCmdEndRenderPass(commandBuffer);
+            Engine.endRenderPass(commandBuffer);
+
+//            vkContext.swapChain.imageClear(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, 0.7f, 0.3f, 0, 1);
+            vkContext.swapChain.blitFramebufferAndPreset(commandBuffer, initCrap.frameBuffer, 1);
             
             int err = vkEndCommandBuffer(commandBuffer);
             if (err != VK_SUCCESS) {
@@ -116,6 +122,7 @@ public class LoadingScreen {
         return b;
     }
     public boolean renderProgress(int tw, int th, int step, float f, String string) {
+//        if (isVulkan)return false;
         int nzero = 0;
         for (int i = 0; i < loadProgress.length; i++) {
             if (loadProgress[i] == 0)
