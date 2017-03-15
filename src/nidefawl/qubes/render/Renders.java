@@ -22,7 +22,7 @@ public class Renders {
         components.add((IRenderComponent) component);
         return (T) component;
     }
-    protected void release() {
+    public void release() {
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.release();

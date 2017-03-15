@@ -20,6 +20,7 @@ public class VkPipelineLayout {
 
     public VkPipelineLayout(String name) {
         this.name = name;
+        VkPipelines.registerLayout(this);
     }
     
 
@@ -29,8 +30,8 @@ public class VkPipelineLayout {
     public void build(VKContext ctxt, long[] descriptorSets, VkPushConstantRange.Buffer pushconstantRanages) {
         try ( MemoryStack stack = stackPush() ) {
             VkPipelineLayoutCreateInfo pipelineLayoutCI = pipelineLayoutCreateInfo();
-            LongBuffer pPipelineLayout = memAllocLong(1);
-            LongBuffer pipelineLayoutCIDescPtr = memAllocLong(descriptorSets.length);
+            LongBuffer pPipelineLayout = stack.callocLong(1);
+            LongBuffer pipelineLayoutCIDescPtr = stack.callocLong(descriptorSets.length);
             pipelineLayoutCIDescPtr.put(descriptorSets);
             pipelineLayoutCIDescPtr.rewind();
             pipelineLayoutCI.pSetLayouts(pipelineLayoutCIDescPtr);
@@ -56,7 +57,12 @@ public class VkPipelineLayout {
         return descriptorSetLayoutCreateInfo;
     }
     public void destroy(VKContext vkContext) {
-        vkDestroyPipelineLayout(vkContext.device, this.pipelineLayout, null);
+        if (this.pipelineLayout != VK_NULL_HANDLE) {
+            vkDestroyPipelineLayout(vkContext.device, this.pipelineLayout, null);
+            this.pipelineLayout = VK_NULL_HANDLE;
+        } else {
+            System.err.println("Cannot destroy pipe layout "+name+" == null");
+        }
     }
 
     public String getName() {

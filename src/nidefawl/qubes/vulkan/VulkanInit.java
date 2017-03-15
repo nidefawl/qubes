@@ -69,7 +69,12 @@ public class VulkanInit {
             nmemFree(n);
         }
         memFree(enabledVulkanLayers);
-        enabledVulkanLayers = null;
+        for (int i = 0; i < enabledDeviceExtension.limit(); i++) {
+            long n = enabledDeviceExtension.get(i);
+            nmemFree(n);
+        }
+        memFree(enabledDeviceExtension);
+        enabledDeviceExtension = null;
         if (debugCallback != null)
             debugCallback.free();
     }

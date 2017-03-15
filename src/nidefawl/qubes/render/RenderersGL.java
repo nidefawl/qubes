@@ -17,7 +17,7 @@ public class RenderersGL extends Renders {
     public static BlurRendererGL   blurRenderer;
     public static FinalRendererGL  outRenderer;
     public static RegionRendererGL regionRenderer;
-    public static CubeParticleRenderer  particleRenderer;
+    public static CubeParticleRendererGL  particleRenderer;
     public static LightComputeGL  lightCompute;
     public static QModelBatchedRender renderBatched;
 

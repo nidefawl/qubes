@@ -1,7 +1,5 @@
 package nidefawl.qubes.render;
 
-import nidefawl.qubes.util.IRenderComponent;
-
 public abstract class FinalRenderer extends AbstractRenderer {
 
     public abstract void onAASettingChanged();

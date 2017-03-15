@@ -3,20 +3,19 @@ package nidefawl.qubes.vulkan;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkPipelineDynamicStateCreateInfo;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLVAO;
 import nidefawl.qubes.shader.IShaderDef;
-import nidefawl.qubes.shader.UniformBuffer;
 
 public class VkPipelines {
+    public static VkPipeline[] arrPipe = new VkPipeline[16];
+    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[16];
+    
     public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout("pipelineLayoutTextured");
     public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout("pipelineLayoutMain");
     public static VkPipelineLayout pipelineLayoutTerrain = new VkPipelineLayout("pipelineLayoutTerrain");
@@ -31,8 +30,8 @@ public class VkPipelines {
     public static VkPipeline colored2D = new VkPipeline(VkPipelines.pipelineLayoutColored);
     public static VkPipeline gui = new VkPipeline(VkPipelines.pipelineLayoutGUI);
     public static VkPipeline terrain = new VkPipeline(VkPipelines.pipelineLayoutTerrain);
-    static {
-    }
+
+    
     static class VkShaderDef implements IShaderDef {
         private final VkVertexDescriptors desc;
         private final IShaderDef extended;
@@ -51,6 +50,7 @@ public class VkPipelines {
             return extended != null? extended.getDefinition(define) : null;
         }
     }
+
     public static void init(VKContext ctxt) {
         AssetManager assetManager = AssetManagerClient.getInstance();
         try ( MemoryStack stack = stackPush() ) 
@@ -96,15 +96,20 @@ public class VkPipelines {
             main.pipeline = buildPipeLine(ctxt, main);
         }
 
+        try ( MemoryStack stack = stackPush() ) 
         {
             textured2d.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             textured2d.setShaders(vert, frag);
-            textured2d.setBlend(false);
+            textured2d.setBlend(true);
             textured2d.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             textured2d.setVertexDesc(desc);
+            textured2d.dynamicState=null;
+//            textured2d.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+//            textured2d.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
+
             textured2d.pipeline = buildPipeLine(ctxt, textured2d);
         }
 
@@ -188,19 +193,37 @@ public class VkPipelines {
         return pipeline;
     }
 
-    public static void destroyShutdown(VKContext vkContext) {
-        main.destroy(vkContext);
-        textured2d.destroy(vkContext);
-        fontRender2D.destroy(vkContext);
-        colored2D.destroy(vkContext);
-        gui.destroy(vkContext);
-        terrain.destroy(vkContext);
-        debugShader.destroy(vkContext);
-        shadowSolid.destroy(vkContext);
-        pipelineLayoutTextured.destroy(vkContext);
-        pipelineLayoutColored.destroy(vkContext);
-        pipelineLayoutGUI.destroy(vkContext);
-        pipelineLayoutShadow.destroy(vkContext);
+    public static void destroyShutdown(VKContext ctxt) {
+        for (int i = 0; i < arrPipe.length; i++) {
+            if (arrPipe[i] != null) {
+                arrPipe[i].destroy(ctxt);
+                arrPipe[i] = null;
+            }
+        }
+        for (int i = 0; i < arrLayout.length; i++) {
+            if (arrLayout[i] != null) {
+                arrLayout[i].destroy(ctxt);
+                arrLayout[i] = null;
+            }
+        }
+    }
+
+    public static void registerLayout(VkPipelineLayout vkPipelineLayout) {
+        for (int i = 0; i < arrLayout.length; i++) {
+            if (arrLayout[i] == null) {
+                arrLayout[i] = vkPipelineLayout;
+                break;
+            }
+        }
+    }
+
+    public static void registerPipe(VkPipeline vkPipeline) {
+        for (int i = 0; i < arrPipe.length; i++) {
+            if (arrPipe[i] == null) {
+                arrPipe[i] = vkPipeline;
+                break;
+            }
+        }
     }
 
 

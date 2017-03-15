@@ -447,6 +447,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     protected void destroyContext() {
+        if(DEBUG_LAYER) System.err.println("GameBase.destroyContext");
         if (isVulkan) {
             if (vkContext != null) {
                 try {
@@ -480,6 +481,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         this.running = false;
         Engine.stop();
         AsyncTasks.shutdown();
+//        if (!isVulkan)
         if (VR.isInit()) VR.shutdown();
         FontRenderer.destroy();
         destroyContext();
@@ -657,9 +659,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         Stats.resetDrawCalls();
         
         if (isCloseRequested()) {
-            if (vkContext != null) {
-                vkContext.syncAllFences();
-            }
             shutdown();
             return;
         }
@@ -1182,27 +1181,22 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 
     protected void setSceneViewport() {
         if (VR_SUPPORT) {
-            Engine.updateRenderResolution(VR.renderWidth, VR.renderWidth);
+            updateProjection(VR.renderWidth, VR.renderWidth);
         } else {
-            Engine.updateRenderResolution(windowWidth, windowHeight);
+            updateProjection(windowWidth, windowHeight);
         }
-        updateProjection();
     }
     protected void setVRViewport() {
-        Engine.updateRenderResolution(VR.renderWidth, VR.renderWidth);
-        updateProjection();
+        updateProjection(VR.renderWidth, VR.renderWidth);
     }
     protected void setWindowViewport() {
-        Engine.updateRenderResolution(windowWidth, windowHeight);
-        updateProjection();
+        updateProjection(windowWidth, windowHeight);
     }
     protected void setGUIViewport() {
-        Engine.updateRenderResolution(Engine.getGuiWidth(), Engine.getGuiHeight());
-//        Game.displayWidth=guiWidth;
-//        Game.displayHeight=guiHeight;
-        updateProjection();
+        updateProjection(Engine.getGuiWidth(), Engine.getGuiHeight());
     }
-    protected void updateProjection() {
+    protected void updateProjection(int w, int h) {
+        Engine.updateRenderResolution(w, h);
         Engine.resizeProjection(Engine.fbWidth(), Engine.fbHeight());
         Engine.setViewport(0, 0, Engine.fbWidth(), Engine.fbHeight());
         UniformBuffer.updateOrtho();

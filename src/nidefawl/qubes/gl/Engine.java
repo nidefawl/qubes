@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.NVVertexBufferUnifiedMemory.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -16,10 +15,10 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.lwjgl.opengl.*;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import com.google.common.collect.Maps;
+
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.config.RenderSettings;
@@ -151,6 +150,11 @@ public class Engine {
     private static VkRenderPassBeginInfo renderPassBeginInfo;
     private static VkExtent2D renderAreaExtent;
     private static VkOffset2D renderAreaOffset;
+    private static VkCommandBufferBeginInfo cmdBufInfo;
+    private static VkClearAttachment.Buffer clearAtt;
+    private static VkClearRect.Buffer clearRect;
+    private static VkExtent2D clearRect2DExtent;
+    private static VkClearDepthStencilValue clearValue;
     
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
@@ -277,6 +281,9 @@ public class Engine {
         sunlightmodel.setTime(7500);
         System.out.println("Engine.baseinit: "+GameContext.getTimeSinceStart());
         if (isVulkan) {
+            cmdBufInfo = VkCommandBufferBeginInfo.calloc()
+                .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                .pNext(NULL).flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
             pDescriptorSets = memAllocLong(3);
             pOffsets = memAllocInt(32);
             renderPassBeginInfo = VkRenderPassBeginInfo.calloc()
@@ -287,6 +294,10 @@ public class Engine {
             renderAreaExtent = renderArea.extent();
             renderAreaOffset = renderArea.offset();
             renderAreaOffset.x(0).y(0);
+            clearAtt = VkClearAttachment.calloc(1);
+            clearRect = VkClearRect.calloc(1);
+            clearRect2DExtent = clearRect.rect().extent();
+            clearValue = clearAtt.clearValue().depthStencil();
         }
     }
 
@@ -425,6 +436,9 @@ public class Engine {
      * @param displayHeight
      */
     public static void resizeProjection(int displayWidth, int displayHeight) {
+        boolean resChanged = viewportBuf.get(2)!=displayWidth||viewportBuf.get(3)!=displayHeight;
+        if (!resChanged)
+            return;
         fieldOfView = 70;
         aspectRatio = (float) displayWidth / (float) displayHeight;
         znear = 0.01F;
@@ -461,7 +475,11 @@ public class Engine {
 
 
         updateOrthoMatrix(displayWidth, displayHeight);
-
+        //TODO: figure out something better for VR
+        // Don't change the fullscreen quad buffer and matrix so often
+        // The viewports for VR/window/gui/scene are constant until window resize/HMD change
+        // Allocate several resources for them so we can use device local memory for vulkan
+        // Right now the device local uploads only work in preRenderUpdate, thats why we use host memory for the quads below on vulkan
         if (fullscreenquads == null) {
             fullscreenquads = new ITessState[4];
             for (int i = 0; i < fullscreenquads.length; i++)
@@ -870,6 +888,10 @@ public class Engine {
     }
 
     public static void stop() {
+        if(GameBase.DEBUG_LAYER) System.err.println("Engine.stop");
+        if (renders != null) {
+            renders.release();
+        }
         if (regionRenderThread != null) {
             regionRenderThread.stopThread();
             regionRenderThread.cleanup();
@@ -884,6 +906,7 @@ public class Engine {
             memFree(pDescriptorSets);
             memFree(pOffsets);
             renderPassBeginInfo.free();
+            cmdBufInfo.free();
             VkPipelines.destroyShutdown(vkContext);
             VkRenderPasses.destroyShutdown(vkContext);
         }
@@ -1217,6 +1240,19 @@ public class Engine {
             rebindSceneDescriptorSet();
         }
     }
+    public static void beginCommandBuffer(VkCommandBuffer commandBuffer) {
+        curCommandBuffer = commandBuffer;
+        int err = vkBeginCommandBuffer(commandBuffer, cmdBufInfo);
+        if (err != VK_SUCCESS) {
+            throw new AssertionError("Failed to begin render command buffer: " + VulkanErr.toString(err));
+        }
+    }
+    public static void endCommandBuffer() {
+        int err = vkEndCommandBuffer(curCommandBuffer);
+        if (err != VK_SUCCESS) {
+            throw new AssertionError("Failed to end render command buffer: " + VulkanErr.toString(err));
+        }
+    }
 
     public static void rebindSceneDescriptorSet() {
         if (curPipeline == null)
@@ -1227,6 +1263,7 @@ public class Engine {
                 pDescriptorSets.put(boundDescriptorSets[i].get());
             }            
         }
+        
         pDescriptorSets.flip();
         pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
         pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
@@ -1236,20 +1273,19 @@ public class Engine {
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                 pDescriptorSets, pOffsets);
     }
-    public static void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass pass, long framebuffer, int flags) {
+    public static void beginRenderPass(VkRenderPass pass, long framebuffer, int flags) {
         curPipeline = null;
         curPass = pass;
-        curCommandBuffer = commandBuffer;
         renderAreaExtent.set(viewport[2], viewport[3]);
         renderPassBeginInfo.renderPass(curPass.get());
         renderPassBeginInfo.framebuffer(framebuffer);
         renderPassBeginInfo.pClearValues(pass.clearValues);
-        vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(curCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         boundDescriptorSets[0] = descriptorSetUboScene;
         rebindDescSet = true;//TODO: test + remove
     }
-    public static void endRenderPass(VkCommandBuffer commandBuffer) {
-        vkCmdEndRenderPass(commandBuffer);
+    public static void endRenderPass() {
+        vkCmdEndRenderPass(curCommandBuffer);
         curPipeline = null;
         curPass = null;
         rebindDescSet = true;
@@ -1320,5 +1356,14 @@ public class Engine {
             return 1.0f;
         }
         return glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+    }
+    
+    public static void clearDepth() {
+        clearRect.get(0).layerCount(1).baseArrayLayer(0);
+        clearRect2DExtent.width(displayWidth).height(displayHeight);
+        clearAtt.get(0).aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
+        clearValue.set(0, 0);
+        vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
+    
     }
 }

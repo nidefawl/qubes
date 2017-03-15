@@ -58,4 +58,7 @@ public abstract class WorldRenderer extends AbstractRenderer {
     public void renderEntities(World world, int passShadowSolid, float fTime, int i) {
     }
 
+
+    public abstract void onResourceReload();
+
 }

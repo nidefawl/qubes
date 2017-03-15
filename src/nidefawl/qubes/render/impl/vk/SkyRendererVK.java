@@ -22,4 +22,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     public void resize(int displayWidth, int displayHeight) {
     }
 
+    public void renderSkybox() {
+    }
+
 }

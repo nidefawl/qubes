@@ -200,6 +200,7 @@ public final class SwapChain {
         swapchainCI.free();
         range.free();
         clearColor.free();
+        blit.free();
     }
     public boolean canBlitToSwapchain() {
         return (this.imageUseageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0;

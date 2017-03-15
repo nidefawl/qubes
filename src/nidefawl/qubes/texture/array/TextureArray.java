@@ -1,7 +1,5 @@
 package nidefawl.qubes.texture.array;
 
-import static org.lwjgl.opengl.GL11.GL_RGBA8;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -11,7 +9,6 @@ import org.lwjgl.opengl.GL21;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -187,5 +184,6 @@ public abstract class TextureArray {
     public boolean isSRGB() {
         return this.internalFormat==GL21.GL_SRGB8_ALPHA8;
     }
-
+    public void destroy() {
+    }
 }

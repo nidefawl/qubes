@@ -130,5 +130,17 @@ public abstract class TextureArrayVK extends TextureArray {
     public int getImageLayout() {
         return this.texture.imageLayout;
     }
+    
+    public void destroy() {
+        unload();
+        if (this.sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(Engine.vkContext.device, this.sampler, null);
+            this.sampler = VK_NULL_HANDLE;
+        }
+        if (this.textureView != VK_NULL_HANDLE) {
+            vkDestroyImageView(Engine.vkContext.device, this.textureView, null);
+            this.textureView = VK_NULL_HANDLE;
+        }
+    }
 
 }

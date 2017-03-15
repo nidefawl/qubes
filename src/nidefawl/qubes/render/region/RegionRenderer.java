@@ -279,7 +279,6 @@ public abstract class RegionRenderer extends AbstractRenderer implements IThread
         }
     }
     
-    public abstract void renderMain(World world, float fTime);
 
      protected void flushRegions() {
         this.occlCulled = 0;

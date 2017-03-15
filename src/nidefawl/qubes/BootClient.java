@@ -13,6 +13,7 @@ public class BootClient {
     
 
     public static void main(String[] args) {
+        boolean dev_env = Boolean.valueOf(System.getProperty("game.dev_env", "false"));
         boolean debug = Boolean.valueOf(System.getProperty("game.debug", "false"));
         boolean logFile = Boolean.valueOf(System.getProperty("game.uselogfile", "false"));
         FileOutputStream logFileStream=null;
@@ -41,15 +42,17 @@ public class BootClient {
         if (strappId != null) {
             appId = StringUtil.parseInt(strappId, appId);
         }
-        Configuration.DEBUG.set(debug);
-        Configuration.DEBUG_MEMORY_ALLOCATOR.set(false);
-        Configuration.DISABLE_CHECKS.set(true);
-        Configuration.GLFW_CHECK_THREAD0.set(false);
-        Configuration.MEMORY_ALLOCATOR.set("jemalloc");
-//        Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
-        System.setProperty("jna.debug_load.jna", "true");
-        System.setProperty("jna.nounpack", "true");
-        System.setProperty("jna.boot.library.path", ".");
+        if (!dev_env) {
+            Configuration.DEBUG.set(debug);
+            Configuration.DEBUG_MEMORY_ALLOCATOR.set(false);
+            Configuration.DISABLE_CHECKS.set(true);
+            Configuration.GLFW_CHECK_THREAD0.set(false);
+            Configuration.MEMORY_ALLOCATOR.set("jemalloc");
+//            Configuration.MEMORY_DEFAULT_ALIGNMENT.set("cache-line");
+            System.setProperty("jna.debug_load.jna", "true");
+            System.setProperty("jna.nounpack", "true");
+            System.setProperty("jna.boot.library.path", ".");
+        }
         GameContext.setSideAndPath(Side.CLIENT, ".");
         GameContext.earlyInit();
         GameBase.appName = "-";

@@ -11,6 +11,7 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
@@ -153,16 +154,17 @@ public class MeshedRegion {
         int intlenIdx = buffer.storeIndexData(shBuffer);
         this.elementCount[pass] = intlenIdx;
         if (Engine.isVulkan) {
-
-            if (this.vkbuffersV[pass].getSize() <= intlen * 4L) {
-                System.out.println("Remake vbuffer with size "+(intlen * 4L));
+            long vSize = Math.max(1024*1024*2L, intlen * 4L);
+            long iSize = Math.max(1024*1024*1L, intlenIdx * 4L);
+            if (this.vkbuffersV[pass].getSize() <= vSize) {
+                System.out.println("Remake vbuffer with size "+(vSize));
                 this.vkbuffersV[pass].destroy();
-                this.vkbuffersV[pass].create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, intlen * 4L, true);
+                this.vkbuffersV[pass].create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vSize, true);
             }
-            if (this.vkbuffersI[pass].getSize() <= intlenIdx * 4L) {
-                System.out.println("Remake ibuffer with size "+(intlenIdx * 4L));
+            if (this.vkbuffersI[pass].getSize() <= iSize) {
+                System.out.println("Remake ibuffer with size "+(iSize));
                 this.vkbuffersI[pass].destroy();
-                this.vkbuffersI[pass].create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, intlenIdx * 4L, true);
+                this.vkbuffersI[pass].create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, iSize, true);
             }
             vkbuffersV[pass].upload(buf.getByteBuf(), 0);
             vkbuffersI[pass].upload(shBuffer.getByteBuf(), 0);

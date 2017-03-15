@@ -8,10 +8,12 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkClearAttachment.Buffer;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameLogicError;
 
-public class FramebufferAttachment implements IVkResource {
+public class FramebufferAttachment {
     private final VKContext ctxt;
     private String          tag;
 
@@ -26,23 +28,12 @@ public class FramebufferAttachment implements IVkResource {
     private boolean fixedDimensions;
     private int fixedWidth;
     private int fixedHeight;
-    VkImageSubresourceRange range;
-    VkClearColorValue clearColor;
-    private float r;
-    private float g;
-    private float b;
-    private float a;
 
+    private static VkClearColorValue clearColor = VkClearColorValue.calloc();
+    private static VkImageSubresourceRange range = VkImageSubresourceRange.calloc();
+    
     public FramebufferAttachment(VKContext ctxt, int vkFormat, int usage) {
-        clearColor = VkClearColorValue.calloc();
-        range = VkImageSubresourceRange.calloc();
-        range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .baseArrayLayer(0)
-            .baseMipLevel(0)
-            .layerCount(1)
-            .levelCount(1);
         this.ctxt = ctxt;
-        this.ctxt.addResource(this);
         this.format = vkFormat;
         this.usage = usage;
         if ((usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0)
@@ -110,9 +101,7 @@ public class FramebufferAttachment implements IVkResource {
     
     }
 
-    @Override
     public void destroy() {
-        this.ctxt.removeResource(this);
         if (this.view != VK_NULL_HANDLE) {
             vkDestroyImageView(this.ctxt.device, this.view, null);
             this.view = VK_NULL_HANDLE;
@@ -157,7 +146,11 @@ public class FramebufferAttachment implements IVkResource {
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
         clearColor.float32(0, 1).float32(1, 1).float32(2, 0).float32(3, a);
-        System.out.println(clearColor.float32(0));
+        range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+            .baseArrayLayer(0)
+            .baseMipLevel(0)
+            .layerCount(1)
+            .levelCount(1);
         vkCmdClearColorImage(commandBuffer, this.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, clearColor, range);
         vkContext.setImageLayout(commandBuffer, this.image,
                 VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,

@@ -23,15 +23,15 @@ public class ShadowRendererVK extends ShadowRenderer {
     @Override
     public void renderShadowPass(World world, float fTime) {
         VkCommandBuffer commandBuffer = Engine.getDrawCmdBuffer();
-        Engine.updateRenderResolution(Engine.getShadowMapTextureSize(), Engine.getShadowMapTextureSize());
-        Engine.setViewport(0, 0, Engine.getShadowMapTextureSize(), Engine.getShadowMapTextureSize());
+        Engine.updateRenderResolution(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
+        Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
 
-        if (this.frameBufferShadow.getWidth() == Engine.getShadowMapTextureSize()&&this.frameBufferShadow.getHeight() == Engine.getShadowMapTextureSize())
+        if (this.frameBufferShadow.getWidth() == SHADOW_BUFFER_SIZE&&this.frameBufferShadow.getHeight() == SHADOW_BUFFER_SIZE)
         {
             viewport.minDepth(0.0f);
             viewport.maxDepth(1.0f);
             if (this.renderMode == MULTI_DRAW_TEXUTED) {
-//              renderMultiPassTextured(world, fTime);
+////              renderMultiPassTextured(world, fTime);
               renderMultiPass(commandBuffer, world, fTime);
           } else {
               renderMultiPass(commandBuffer, world, fTime);
@@ -50,7 +50,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         PushConstantBuffer buf = PushConstantBuffer.INST;
         int mapSize = Engine.getShadowMapTextureSize()/2;
         
-        Engine.beginRenderPass(commandBuffer, VkRenderPasses.passShadow, this.frameBufferShadow.get(), VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow.get(), VK_SUBPASS_CONTENTS_INLINE);
 
         Engine.clearDescriptorSet(1);
         Engine.bindPipeline(VkPipelines.shadowSolid);
@@ -76,7 +76,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING
-        Engine.endRenderPass(commandBuffer);
+        Engine.endRenderPass();
     }
 
     private void renderMultiPassTextured(World world, float fTime) {
@@ -85,11 +85,17 @@ public class ShadowRendererVK extends ShadowRenderer {
     @Override
     public void init() {
         super.init();
-        
+        this.frameBufferShadow = new FrameBuffer(Engine.vkContext);
+        this.frameBufferShadow.fromRenderpass(VkRenderPasses.passShadow, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+
     }
 
     @Override
     public void resize(int displayWidth, int displayHeight) {
+        if (this.frameBufferShadow != null) {
+            this.frameBufferShadow.destroy();
+        }
+        this.frameBufferShadow.build(VkRenderPasses.passShadow, SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
     }
 
     @Override

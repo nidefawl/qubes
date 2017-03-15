@@ -186,7 +186,7 @@ public class WorldRendererGL extends WorldRenderer {
 //            Engine.enableDepthMask(true);
 //        } else {
             terrainShader.enable();
-            Engine.regionRenderer.renderMain(world, fTime);
+            RenderersGL.regionRenderer.renderMain(world, fTime);
 //        }
 //        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;
@@ -205,7 +205,7 @@ public class WorldRendererGL extends WorldRenderer {
 //        Shader.disable();
 //        if (this.qmodel != null)
 //            this.qmodel.animate(fTime);
-        Engine.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
+        RenderersGL.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
         if (GPUProfiler.PROFILING_ENABLED)
@@ -591,5 +591,9 @@ public class WorldRendererGL extends WorldRenderer {
     }
 
     public void tickUpdate() {
+    }
+
+    @Override
+    public void onResourceReload() {
     }
 }

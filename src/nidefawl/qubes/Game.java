@@ -51,6 +51,7 @@ import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.RenderFramebufferCached;
 import nidefawl.qubes.render.RenderersGL;
+import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.gui.VRGuiRenderer;
 import nidefawl.qubes.render.post.HBAOPlus;
@@ -169,6 +170,7 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
+        DEBUG_LAYER = true;
     }
 
     @Override
@@ -225,11 +227,6 @@ public class Game extends GameBase {
         KeybindManager.load();
         isStarting = true;
         updateGui3dMode();
-        this.frameBufferScene = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
-        this.frameBufferScene.fromRenderpass(VkRenderPasses.passTerrain, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
-
-        this.frameBufferShadow = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
-        this.frameBufferShadow.fromRenderpass(VkRenderPasses.passShadow, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
         
         this.frameBuffer = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
         this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
@@ -286,7 +283,7 @@ public class Game extends GameBase {
     }
     public void updateGui3dMode() {
         this.vrGui.reset();
-        this.renderGui3d = VR_SUPPORT || this.settings.gui3d;
+        this.renderGui3d = VR_SUPPORT || (this.settings.gui3d && !isVulkan);
         if (this.renderGui3d) {
             Engine.updateGuiResolution(1920, 1080);
             int x = Engine.getGuiWidth()/2-Engine.getGuiWidth()/6;
@@ -311,11 +308,16 @@ public class Game extends GameBase {
     
     @Override
     public void shutdown() {
+        if(DEBUG_LAYER) System.err.println("Game.shutdown");
+        if (isVulkan)
+            vkContext.syncAllFences();
+        this.statsFB.destroy();
+        RenderAssets.destroy();
         this.server.stop();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
-        if (isVulkan)
-            destroyCommandBuffers();
+//        if (isVulkan)
+//            destroyCommandBuffers();
         super.shutdown();
     }
     
@@ -493,15 +495,10 @@ public class Game extends GameBase {
 
 
     public void render(float fTime) {
-        VkCommandBuffer commandBuffer = null;
         if (Engine.isVulkan) {
-            int currentBuffer = VKContext.currentBuffer;
-            commandBuffer = renderCommandBuffers[currentBuffer];
+            VkCommandBuffer commandBuffer = renderCommandBuffers[VKContext.currentBuffer];
             vkResetCommandBuffer(commandBuffer, 0);
-            int err = vkBeginCommandBuffer(commandBuffer, this.cmdBufInfo);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to begin render command buffer: " + VulkanErr.toString(err));
-            }
+            Engine.beginCommandBuffer(commandBuffer);
         }
         if (this.statsList.renderStats) {
             this.statsList.renderStats = false;
@@ -509,47 +506,31 @@ public class Game extends GameBase {
 //            setWindowViewport();
             this.statsFB.setSize(Engine.displayWidth, Engine.displayHeight);
             this.statsList.setSize(Engine.displayWidth, Engine.displayHeight);
-            this.statsFB.preRender(commandBuffer);
+            this.statsFB.preRender();
             this.statsList.render(0, 0, 0);
-            this.statsFB.postRender(commandBuffer);
+            this.statsFB.postRender();
 //            this.statsFB.clearImage(commandBuffer);
         }
         if (Engine.isVulkan) {
-            renderVK(commandBuffer, fTime);
-            int err = vkEndCommandBuffer(commandBuffer);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to end render command buffer: " + VulkanErr.toString(err));
-            }
-            this.vkContext.submitCommandBuffer(commandBuffer);
+            renderVK(fTime);
+            Engine.endCommandBuffer();
+            this.vkContext.submitCommandBuffer(Engine.getDrawCmdBuffer());
         } else {
             renderGL(fTime);
         }
     }
     private VkCommandBuffer[] renderCommandBuffers;
 
-    private nidefawl.qubes.vulkan.FrameBuffer frameBufferScene;
-    private nidefawl.qubes.vulkan.FrameBuffer frameBufferShadow;
     private nidefawl.qubes.vulkan.FrameBuffer frameBuffer;
     
-    VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.calloc()
-            .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-            .pNext(NULL).flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
     @Override
     public void rebuildRenderCommands(int width, int height) {
         vkContext.resetRenderCommandPool();
         {
-            if (this.frameBufferScene != null) {
-                this.frameBufferScene.destroy();
-            }
-            this.frameBufferScene.build(VkRenderPasses.passTerrain, width, height);
             if (this.frameBuffer != null) {
                 this.frameBuffer.destroy();
             }
             this.frameBuffer.build(VkRenderPasses.passFramebuffer, width, height);
-            if (this.frameBufferShadow != null) {
-                this.frameBufferShadow.destroy();
-            }
-            this.frameBufferShadow.build(VkRenderPasses.passShadow, Engine.getShadowMapTextureSize(), Engine.getShadowMapTextureSize());
 
         }
         
@@ -582,26 +563,42 @@ public class Game extends GameBase {
         }
     }
 
-    public void renderVK(VkCommandBuffer commandBuffer, float fTime) {
-        Engine.updateRenderResolution(windowWidth, windowHeight);
-        Engine.setViewport(0, 0, windowWidth, windowHeight);
+    public void renderVK(float fTime) {
         if (Engine.displayWidth != vkContext.swapChain.width || Engine.displayHeight != vkContext.swapChain.height) {
             System.err.println("swapchain size != display size");
             System.err.printf("%dx%d vs %dx%d vs %dx%d\n", windowWidth, windowHeight, Engine.displayWidth, Engine.displayHeight, vkContext.swapChain.width,
                     vkContext.swapChain.height);
         } else {
-            Engine.beginRenderPass(commandBuffer, VkRenderPasses.passFramebuffer, this.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
 
             if (this.world != null) {
                 Engine.skyRenderer.renderSky(this.world, fTime);
                 Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             } 
             setSceneViewport();
-            renderWorldVK(fTime, 0);    
-            
+            if (this.world != null) {
+                renderWorldVK(fTime, 0);
+            }
             double mx = Mouse.getX();
             double my = Mouse.getY();
+            setWindowViewport();
+            
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
+
+            ITess tess = Engine.getTess();
+            Engine.setDescriptorSet(1, RenderersVulkan.outRenderer.descTextureGbufferColor);
+            Engine.bindPipeline(VkPipelines.textured2d);
+            tess.setColor(-1, 255);
+            tess.add(windowWidth, 0, 0, 1, 0);
+            tess.add(0, 0, 0, 0, 0);
+            tess.add(0, windowHeight, 0, 0, 1);
+            tess.add(windowWidth, windowHeight, 0, 1, 1);
+            tess.drawQuads();
+            tess.setOffset(0, 0, 0);
+
+            Engine.clearDepth();
             this.statsFB.render();
+
+
             if (!canRenderGui3d()) {
                 renderGui(fTime, mx, my);
             }
@@ -621,18 +618,17 @@ public class Game extends GameBase {
                     this.chatOverlay.render(fTime, 0, 0);
                 }
             }
-            Engine.endRenderPass(commandBuffer);
+            Engine.endRenderPass();
 
-            vkContext.swapChain.blitFramebufferAndPreset(commandBuffer, frameBuffer, 1);
+            vkContext.swapChain.blitFramebufferAndPreset(Engine.getDrawCmdBuffer(), frameBuffer, 1);
         }
 
     }
     private void renderWorldVK(float fTime, int eye) {
 
-        RenderersGL.skyRenderer.renderSkybox();
-
+        RenderersVulkan.skyRenderer.renderSkybox();
 //          Engine.getSceneFB().setDrawMask(1);
-        RenderersGL.worldRenderer.renderWorld(this.world, fTime);
+        RenderersVulkan.worldRenderer.renderWorld(this.world, fTime);
 //        Engine.getSceneFB().setDrawAll();
     }
     public void renderGL(float fTime) {
@@ -712,8 +708,8 @@ public class Game extends GameBase {
                 VR.Submit();
             }
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("VR.Submit");
-            Engine.updateRenderResolution(windowWidth, windowHeight);
-            updateProjection();
+            
+            setWindowViewport();
             if (Game.GL_ERROR_CHECKS) Engine.checkGLError("updateProjection");
             VR.drawFullscreenCompanion(windowWidth, windowHeight);
             {

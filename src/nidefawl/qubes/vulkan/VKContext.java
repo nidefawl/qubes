@@ -37,6 +37,7 @@ import org.lwjgl.system.MemoryStack;
 public class VKContext {
     static final boolean USE_FENCE_SYNC = true; // FAST
     static final boolean USE_RENDER_COMPLETE_SEMAPHORE = false;
+    private static final boolean VK_DEBUG_CTXT = true;
     public static LongBuffer ZERO_OFFSET;
     public static int currentBuffer = 0;
     public static boolean DUMP_SHADER_SRC = false;
@@ -91,6 +92,10 @@ public class VKContext {
     public long descriptorPool;
     public VkDescLayouts descLayouts;
     public void syncAllFences() {
+        if (VK_DEBUG_CTXT) System.err.println("VKContext.syncAllFences");
+        if (!isInit) {
+            return;
+        }
         if (USE_FENCE_SYNC) {
             if (freeFence != -1L) {
                long[] lFences = this.fences;
@@ -113,14 +118,10 @@ public class VKContext {
         }
     }
     public void shutdown() {
+        if (VK_DEBUG_CTXT) System.err.println("VKContext.shutdown");
         if (isInit) {
-            if (USE_FENCE_SYNC) {
-                if (this.fences != null) {
-                    vkWaitForFences(device, this.fences, true, 1000000L*2000L);    
-                }
-            } else {
-                vkDeviceWaitIdle(device);
-            }
+            syncAllFences();
+            vkDeviceWaitIdle(device);
             vkDestroySemaphore(device, psemaphorePresentComplete.get(0), null);
             vkDestroySemaphore(device, psemaphoreRenderComplete.get(0), null);
             memFree(pCommandBuffers);
@@ -149,14 +150,10 @@ public class VKContext {
         if (copyCommandPool != VK_NULL_HANDLE) {
             vkDestroyCommandPool(device, copyCommandPool, null);
         }
-//        if (renderPass != VK_NULL_HANDLE) {
-//            vkDestroyRenderPass(device, renderPass, null);
-//        }
-//        if (renderPassSubpasses != VK_NULL_HANDLE) {
-//            vkDestroyRenderPass(device, renderPassSubpasses, null);
-//        }
+
         this.descLayouts.destroy();
         if (descriptorPool != VK_NULL_HANDLE) {
+            vkResetDescriptorPool(device, descriptorPool, 0);
             vkDestroyDescriptorPool(device, descriptorPool, null);
         }
         if (this.fences != null) {
@@ -241,6 +238,7 @@ public class VKContext {
         }
     }
     private void freeCopyCommandBufferFrames() {
+        if (VK_DEBUG_CTXT) System.err.println("VKContext.freeCopyCommandBufferFrames");
         if (copyCommandBuffers != null) {
             for (int i = 0; i < copyCommandBuffers.length; i++) {
                 vkFreeCommandBuffers(device, copyCommandPool, copyCommandBuffers[i]);

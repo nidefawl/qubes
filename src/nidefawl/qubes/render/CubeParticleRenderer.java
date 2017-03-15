@@ -157,7 +157,5 @@ public abstract class CubeParticleRenderer extends AbstractParticleRenderer {
     @Override
     public void resize(int displayWidth, int displayHeight) {
     }
-    public void renderParticles(World world, int passSolid, float fTime) {
-    }
 
 }

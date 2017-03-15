@@ -66,9 +66,9 @@ public class RenderFramebufferCached {
         Engine.drawFullscreenQuad();
         Engine.pxStack.pop();
     }
-    public void preRender(VkCommandBuffer commandBuffer) {
+    public void preRender() {
         if (Engine.isVulkan) {
-            Engine.beginRenderPass(commandBuffer, VkRenderPasses.passFramebuffer, this.fbVk.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.fbVk.get(), VK_SUBPASS_CONTENTS_INLINE);
         } else {
             fbDbg.bind();
             fbDbg.clearFrameBuffer();
@@ -77,9 +77,9 @@ public class RenderFramebufferCached {
         }
     }
 
-    public void postRender(VkCommandBuffer commandBuffer) {
+    public void postRender() {
         if (Engine.isVulkan) {
-            Engine.endRenderPass(commandBuffer);
+            Engine.endRenderPass();
         } else {
             GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             FrameBuffer.unbindFramebuffer();
@@ -108,6 +108,18 @@ public class RenderFramebufferCached {
     public void clearImage(VkCommandBuffer commandbuffer) {
         if (Engine.isVulkan) {
             this.fbVk.clearColorAtt(1, commandbuffer, 0, 0, 0, 1);
+        }
+    }
+    public void destroy() {
+        if (this.sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(Engine.vkContext.device, this.sampler, null);
+            this.sampler = VK_NULL_HANDLE;
+        }
+        if (this.fbVk != null) {
+            this.fbVk.destroy();
+        }
+        if (this.fbDbg != null) {
+            this.fbDbg.release();
         }
     }
     

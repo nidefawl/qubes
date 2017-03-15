@@ -4,6 +4,7 @@ import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.async.AsyncTask.TaskType;
 import nidefawl.qubes.config.RenderSettings;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.LoadingScreen;
 import nidefawl.qubes.models.BlockModelManager;
 import nidefawl.qubes.models.EntityModelManager;
@@ -66,6 +67,7 @@ public class RenderAssets {
             } catch (InterruptedException e) {
             }
         }
+        Engine.worldRenderer.onResourceReload();
     }
 
     public static void reload() {
@@ -74,6 +76,15 @@ public class RenderAssets {
             arrays[i].reload();
         }
         SingleBlockRenderAtlas.getInstance().reset();
+        Engine.worldRenderer.onResourceReload();
+    }
+
+    public static void destroy() {
+        TextureArray[] arrays = TextureArrays.allArrays;
+        for (int i = 0; arrays != null && i < arrays.length; i++) {
+            arrays[i].destroy();
+            arrays[i] = null;
+        }
     }
 
 }

@@ -121,10 +121,15 @@ public class VkDescLayouts {
 
     void destroy() {
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOScene, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOConstants, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageSingle, null);
-        ubo_constants_bindings.free();
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageDouble, null);
         ubo_scene_bindings.free();
+        ubo_constants_bindings.free();
         sampler_image_single.free();
+        sampler_image_double.free();
+        push_constant_ranges_gui.free();
+        push_constant_ranges_shadow_solid.free();
     }
 
     public void init(VKContext ctxt) {

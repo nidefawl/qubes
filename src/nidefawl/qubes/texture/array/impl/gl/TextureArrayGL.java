@@ -59,5 +59,9 @@ public abstract class TextureArrayGL extends TextureArray {
       glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, numMipmaps-1);
       Engine.checkGLError("glTexStorage3D");
   }
+    @Override
+    public void destroy() {
+        unload();
+    }
 
 }

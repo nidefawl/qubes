@@ -20,6 +20,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.ITess;
@@ -95,27 +96,21 @@ public class LoadingScreen {
             int width = tw = vkContext.swapChain.width;
             int height = th = vkContext.swapChain.height;
             VkCommandBuffer commandBuffer = initCrap.renderCommandBuffers[VKContext.currentBuffer];
-            int err = vkBeginCommandBuffer(commandBuffer, initCrap.cmdBufInfo);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to begin render command buffer: " + VulkanErr.toString(err));
-            }
+            vkResetCommandBuffer(commandBuffer, 0);
+            Engine.beginCommandBuffer(commandBuffer);
             Engine.setViewport(0, 0, width, height);
-            Engine.beginRenderPass(commandBuffer, VkRenderPasses.passFramebuffer, initCrap.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, initCrap.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
             
         }
         boolean b = renderProgress(tw, th, step, f, string);
         if (isVulkan) {
-            VkCommandBuffer commandBuffer = initCrap.renderCommandBuffers[VKContext.currentBuffer];
-            Engine.endRenderPass(commandBuffer);
-
+            Engine.clearDepth();
+            Engine.endRenderPass();
+            System.out.println(VkRenderPasses.passFramebuffer.clearValues);
 //            vkContext.swapChain.imageClear(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, 0.7f, 0.3f, 0, 1);
-            vkContext.swapChain.blitFramebufferAndPreset(commandBuffer, initCrap.frameBuffer, 1);
-            
-            int err = vkEndCommandBuffer(commandBuffer);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to end render command buffer: " + VulkanErr.toString(err));
-            }
-            vkContext.submitCommandBuffer(commandBuffer);
+            vkContext.swapChain.blitFramebufferAndPreset(Engine.getDrawCmdBuffer(), initCrap.frameBuffer, 1);
+            Engine.endCommandBuffer();
+            vkContext.submitCommandBuffer(Engine.getDrawCmdBuffer());
             vkContext.finishUpload();
             vkContext.postRender();
         }

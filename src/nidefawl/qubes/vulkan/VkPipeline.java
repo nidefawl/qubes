@@ -71,6 +71,7 @@ public class VkPipeline {
         this.layout = pipelineLayoutTextured;
         viewportState.pViewports(viewport);
         viewportState.pScissors(scissors);
+        VkPipelines.registerPipe(this);
     }
 
     public void destroyPipeLine(VKContext vkContext) {
