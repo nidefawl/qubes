@@ -6,20 +6,19 @@
 	<property name="debuglevel" value="source,lines,vars"/>
 	<property name="target" value="1.8"/>
 	<property name="source" value="1.8"/>
-	<property name="cryptfilepath" value="C:\Users\Michael\workspace_projects" />
+	<property name="cryptfilepath" value="${env.GAME_WORKSPACE_PATH}" />
 	<property name="output_path" value="D:/webserver/www/files" />
 	<property name="server_target_jar" value="${output_path}/server.jar" />
 	<property name="compile_dir" value="../compile" />
 	<path id="Game.classpath">
 		<pathelement location="bin"/>
 		<pathelement location="lib/jline/jline-2.13.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan.jar"/>
-		<pathelement location="lib/lwjgl-nightly-10.02.2017/natives/lwjgl.dll"/>
+		<pathelement location="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-glfw.jar"/>
+		<pathelement location="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-jemalloc.jar"/>
+		<pathelement location="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-opengl.jar"/>
+		<pathelement location="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-stb.jar"/>
+		<pathelement location="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-vulkan.jar"/>
+		<pathelement location="lib/lwjgl-nightly-2017-03-15-custom/lwjgl.jar"/>
 		<pathelement location="lib/guava/guava-18.0.jar"/>
 		<pathelement location="lib/snakeyaml/snakeyaml-1.16.jar"/>
 		<pathelement location="lib/jna/jna-4.2.2.jar"/>
@@ -100,7 +99,6 @@
 		</exec>
 	</target>
 	<target name="build_game_no_obf">
-		<echo message="${ant.project.name}: ${ant.file}"/>
 		<antcall target="build_game_init_copy_src" />
 		<antcall target="build_game_compile" />
 		<antcall target="build_game_jar" />
@@ -117,13 +115,12 @@
 			<libraryjar name="${java.home}/lib/rt.jar"/>
 			<libraryjar name="${java.home}/lib/jce.jar"/>
 			<libraryjar name="lib/jline/jline-2.13.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan.jar"/>
-			<libraryjar name="lib/lwjgl-nightly-10.02.2017/natives/lwjgl.dll"/>
+			<libraryjar name="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-glfw.jar"/>
+			<libraryjar name="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-jemalloc.jar"/>
+			<libraryjar name="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-opengl.jar"/>
+			<libraryjar name="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-stb.jar"/>
+			<libraryjar name="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-vulkan.jar"/>
+			<libraryjar name="lib/lwjgl-nightly-2017-03-15-custom/lwjgl.jar"/>
 			<libraryjar name="lib/guava/guava-18.0.jar"/>
 			<libraryjar name="lib/snakeyaml/snakeyaml-1.16.jar"/>
 			<libraryjar name="lib/jna/jna-4.2.2.jar"/>
@@ -162,33 +159,31 @@
 		<mkdir dir="${compile_dir}/deps"/>
 		<copy file="lib/jna/jna-4.2.2.jar" tofile="${compile_dir}/deps/jna-4.2.2.jar"/>
 		<copy file="lib/openvr/JOpenVR.jar" tofile="${compile_dir}/deps/JOpenVR.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl.jar" tofile="${compile_dir}/deps/lwjgl.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw.jar" tofile="${compile_dir}/deps/lwjgl-glfw.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc.jar" tofile="${compile_dir}/deps/lwjgl-jemalloc.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl.jar" tofile="${compile_dir}/deps/lwjgl-opengl.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb.jar" tofile="${compile_dir}/deps/lwjgl-stb.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/lwjgl-vulkan/lwjgl-vulkan.jar" tofile="${compile_dir}/deps/lwjgl-vulkan.jar"/>
-		<copy file="lib/lwjgl-nightly-10.02.2017/natives/lwjgl.dll" tofile="${compile_dir}/deps/lwjgl.dll"/>
+		<copy file="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-glfw.jar" tofile="${compile_dir}/deps/lwjgl-glfw.jar"/>
+		<copy file="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-jemalloc.jar" tofile="${compile_dir}/deps/lwjgl-jemalloc.jar"/>
+		<copy file="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-opengl.jar" tofile="${compile_dir}/deps/lwjgl-opengl.jar"/>
+		<copy file="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-stb.jar" tofile="${compile_dir}/deps/lwjgl-stb.jar"/>
+		<copy file="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-vulkan.jar" tofile="${compile_dir}/deps/lwjgl-vulkan.jar"/>
+		<copy file="lib/lwjgl-nightly-2017-03-15-custom/lwjgl.jar" tofile="${compile_dir}/deps/lwjgl.jar"/>
 		
 		<copy file="lib/guava/guava-18.0.jar" tofile="${compile_dir}/deps/guava.jar"/>
 		<copy file="lib/snakeyaml/snakeyaml-1.16.jar" tofile="${compile_dir}/deps/snakeyaml.jar"/>
 		<mkdir dir="${compile_dir}/deps/natives"/>
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-linux.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-macos.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl/lwjgl-natives-windows.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-linux.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-macos.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-glfw/lwjgl-glfw-natives-windows.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-linux.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-macos.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-jemalloc/lwjgl-jemalloc-natives-windows.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-linux.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-macos.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-opengl/lwjgl-opengl-natives-windows.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-linux.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-macos.jar" dest="${compile_dir}/deps/natives" />
-		<unzip src="lib/lwjgl-nightly-10.02.2017/lwjgl-stb/lwjgl-stb-natives-windows.jar" dest="${compile_dir}/deps/natives" />
-
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-glfw-natives-linux.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-glfw-natives-macos.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-glfw-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-jemalloc-natives-linux.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-jemalloc-natives-macos.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-jemalloc-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-natives-linux.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-natives-macos.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-opengl-natives-linux.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-opengl-natives-macos.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-opengl-natives-windows.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-stb-natives-linux.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-stb-natives-macos.jar" dest="${compile_dir}/deps/natives" />
+		<unzip src="lib/lwjgl-nightly-2017-03-15-custom/lwjgl-stb-natives-windows.jar" dest="${compile_dir}/deps/natives" />
 		<copy includeemptydirs="false" todir="${compile_dir}/deps/natives">
 			<fileset dir="lib/jna">
 				<include name="*.dll"/>
