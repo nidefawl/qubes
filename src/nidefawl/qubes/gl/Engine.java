@@ -1316,12 +1316,12 @@ public class Engine {
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                 pDescriptorSets, pOffsets);
     }
-    public static void beginRenderPass(VkRenderPass pass, long framebuffer, int flags) {
+    public static void beginRenderPass(VkRenderPass pass, nidefawl.qubes.vulkan.FrameBuffer framebuffer, int flags) {
         curPipeline = null;
         curPass = pass;
-        renderAreaExtent.set(viewport[2], viewport[3]);
+        renderAreaExtent.set(framebuffer.getWidth(), framebuffer.getHeight());
         renderPassBeginInfo.renderPass(curPass.get());
-        renderPassBeginInfo.framebuffer(framebuffer);
+        renderPassBeginInfo.framebuffer(framebuffer.get());
         renderPassBeginInfo.pClearValues(pass.clearValues);
         vkCmdBeginRenderPass(curCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         boundDescriptorSets[0] = descriptorSetUboScene;
@@ -1406,11 +1406,14 @@ public class Engine {
             FrameBuffer.current().clearDepth();
         } else {
             clearRect2DOffset.x(viewport[0]).y(viewport[1]);
+            
             clearRect2DExtent.width(viewport[2]).height(viewport[3]);
             clearAtt.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
             clearValueDepth.set(0, 0);
             clearRect.limit(1);
             clearAtt.limit(1);
+            clearAtt.position(0).limit(1);
+            clearRect.position(0).limit(1);
             vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
         }
     }

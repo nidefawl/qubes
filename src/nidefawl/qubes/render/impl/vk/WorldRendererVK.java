@@ -42,7 +42,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
             
-            Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene, VK_SUBPASS_CONTENTS_INLINE);
 //            
             Engine.setDescriptorSet(1, this.descTextureTerrainNormals);
             Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);

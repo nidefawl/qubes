@@ -537,7 +537,7 @@ public class Game extends GameBase {
             double my = Mouse.getY();
             setWindowViewport();
             
-            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
             ITess tess = Engine.getTess();
             Engine.setDescriptorSet(1, RenderersVulkan.outRenderer.descTextureGbufferColor);

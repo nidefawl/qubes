@@ -64,7 +64,7 @@ public class LoadingScreen {
             CommandBuffer commandBuffer = vkContext.getCurrentCmdBuffer();
             Engine.beginCommandBuffer(commandBuffer);
             Engine.setViewport(0, 0, width, height);
-            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
             
         }
         boolean b = renderProgress(tw, th, step, f, string);

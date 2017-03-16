@@ -50,7 +50,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         PushConstantBuffer buf = PushConstantBuffer.INST;
         int mapSize = Engine.getShadowMapTextureSize()/2;
         
-        Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow.get(), VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
         Engine.clearDescriptorSet(1);
         Engine.bindPipeline(VkPipelines.shadowSolid);
