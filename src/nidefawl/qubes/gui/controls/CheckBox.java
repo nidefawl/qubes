@@ -78,7 +78,6 @@ public class CheckBox extends AbstractUI implements Renderable {
             
         }
         if (this.text!=null&&!this.text.isEmpty()) {
-            Engine.setPipeStateFontrenderer();
 
             this.font.maxWidth = -1;
             if (this.drawTitle) {

@@ -263,7 +263,6 @@ public class ComboBox extends AbstractUI implements Renderable {
                     float entryBoxBottom = this.posY-1+(heightPerEntry) + (c * this.heightPerEntry);
                     entryBoxBottom-=(heightPerEntry-2-box.font.getCharHeight())/2.0f;
                     final int yStringPos = GameMath.round(entryBoxBottom);
-                    Engine.setPipeStateFontrenderer();
                     box.font.drawString(entry, this.posX + this.size, yStringPos, i1, true, 1.0f);
 
                     if (box.canexpandHorizontally) {
@@ -404,7 +403,6 @@ public class ComboBox extends AbstractUI implements Renderable {
         tessellator.add(this.posX + this.width - inset, this.posY + inseth * 2 + 1, 0.0f);
         tessellator.drawTris();
 
-        Engine.setPipeStateFontrenderer();
         int colorDisabled = 0xCCCCCC;
         if (inset < 4) inset = 4;
         this.font.maxWidth = this.width - height - inset;

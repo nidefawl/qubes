@@ -1,21 +1,20 @@
 #version 150 core
 
-#pragma include "ubo_scene.glsl"
 #pragma include "util.glsl"
 #pragma include "blockinfo.glsl"
+#pragma include "ubo_constants.glsl"
 #pragma include "tonemap.glsl"
 
 
 uniform sampler2DArray blockTextures;
-uniform sampler2D noisetex;
 
 
 in vec4 color;
 in vec3 normal;
-in vec4 texcoord;
+in vec2 texcoord;
 in vec2 texPos;
-flat in uvec4 blockinfo;
 in float Idiff;
+flat in uvec4 blockinfo;
 
 out vec4 out_Color;
  

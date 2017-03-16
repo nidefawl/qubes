@@ -12,6 +12,8 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.controls.PopupHolder;
+import nidefawl.qubes.gui.controls.ScrollList;
+import nidefawl.qubes.gui.crafting.GuiCraftingSelect;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.util.ITess;
@@ -316,7 +318,6 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
 //            GL11.glDepthFunc(GL11.GL_LEQUAL);
             resetShape();
             if (!this.isFullscreen) {
-                Engine.setPipeStateFontrenderer();
                 Engine.pxStack.push(0, 0, 6);
                 titleFont.drawString(getTitle(), posX+width/2, posY + titleFont.centerY(titleBarHeight-16), -1, true, 1f, 2);
                 Engine.pxStack.pop();

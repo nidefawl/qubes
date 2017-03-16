@@ -304,7 +304,6 @@ public class GuiWindowManager implements Renderable  {
                 float inset = 4;
                 float inset2 = 2;
                 Engine.itemRender.drawItem(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
-                Shaders.textured.enable();
                 Engine.itemRender.drawItemOverlay(stack, (float)mouseX+inset-slotW/2, (float)mouseY+inset-slotW/2, slotW-inset*2, slotW-inset*2);
             } else {
                 renderTooltip(fTime, mouseX, mouseY);

@@ -14,13 +14,17 @@ import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 public class VkRenderPassFrameBuffer extends VkRenderPass {
 
     private Buffer subpassDependencies;
-    public VkRenderPassFrameBuffer() {
+    public VkRenderPassFrameBuffer(boolean clearImage) {
         VkAttachmentDescription n = addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM);
         n.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
         addDepthAttachment(0, VK_FORMAT_D24_UNORM_S8_UINT);
 //        n.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
+        if (!clearImage) {
+            n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            clearValues.limit(1);
+        }
     }
     @Override
     public void build(VKContext ctxt) {

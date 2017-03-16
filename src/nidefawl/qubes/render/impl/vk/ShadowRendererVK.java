@@ -22,7 +22,7 @@ public class ShadowRendererVK extends ShadowRenderer {
     
     @Override
     public void renderShadowPass(World world, float fTime) {
-        VkCommandBuffer commandBuffer = Engine.getDrawCmdBuffer();
+        CommandBuffer commandBuffer = Engine.getDrawCmdBuffer();
         Engine.updateRenderResolution(SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
         Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
 
@@ -46,7 +46,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         }
     }
     
-    private void renderMultiPass(VkCommandBuffer commandBuffer, World world, float fTime) {
+    private void renderMultiPass(CommandBuffer commandBuffer, World world, float fTime) {
         PushConstantBuffer buf = PushConstantBuffer.INST;
         int mapSize = Engine.getShadowMapTextureSize()/2;
         
@@ -57,20 +57,20 @@ public class ShadowRendererVK extends ShadowRenderer {
         float f = -1.0f;
         vkCmdSetDepthBias(commandBuffer, f*1.0f, f*0.2f, f*0.2f);
 //        vkCmdSetDepthBias(commandBuffer, 0,0,0);
-        vkCmdSetViewport(commandBuffer, 0, viewport.x(0).y(0).width(mapSize).height(mapSize));
+        Engine.setViewport(0, 0, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 0);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 0); //TODO: FRUSTUM CULLING
 
-        vkCmdSetViewport(commandBuffer, 0, viewport.x(mapSize).y(0).width(mapSize).height(mapSize));
+        Engine.setViewport(mapSize, 0, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 1);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 1); //TODO: FRUSTUM CULLING
-        vkCmdSetViewport(commandBuffer, 0, viewport.x(0).y(mapSize).width(mapSize).height(mapSize));
+        Engine.setViewport(0, mapSize, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 2);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));

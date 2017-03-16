@@ -24,6 +24,7 @@ public class VkDescLayouts {
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_double = VkDescriptorSetLayoutBinding.calloc(2);
     public VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
     public VkPushConstantRange.Buffer push_constant_ranges_shadow_solid = VkPushConstantRange.calloc(1);
+    public VkPushConstantRange.Buffer push_constant_ranges_single_block = VkPushConstantRange.calloc(1);
 //    public VkDescriptorSetLayoutBinding.Buffer ubo_shadow_bindings = VkDescriptorSetLayoutBinding.calloc(2);
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
@@ -80,6 +81,11 @@ public class VkDescLayouts {
             .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
             .offset(0)
             .size(64+4);
+
+        push_constant_ranges_single_block.get(0)
+            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+            .offset(0)
+            .size((4*4)*4*2);
         descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
         descSetLayoutUBOConstants = makeSet(ubo_constants_bindings);
 //        descSetLayoutUBOShadow = makeSet(ubo_shadow_bindings);
@@ -92,6 +98,8 @@ public class VkDescLayouts {
         VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_gui);
 //        VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {descSetLayoutUBOShadow}, push_constant_ranges_shadow_solid);
         VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_shadow_solid);
+        VkPipelines.pipelineLayoutSingleBlock.build(ctxt, new long[] {descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutUBOConstants}, push_constant_ranges_single_block);
+
     }
             
     private long makeSet(VkDescriptorSetLayoutBinding.Buffer... buffers) {

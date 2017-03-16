@@ -472,6 +472,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     protected void onDestroy() {
+        try {
+            Engine.stop();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
         TextureManager.getInstance().destroy();
         FontRenderer.destroy();
         Tess.destroyAll();
@@ -625,9 +630,13 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             GuiContext.mouseY = Mouse.getY();   
         }
     }
-
+    String lastTitle = "";
     public void setTitle(String title) {
-        glfwSetWindowTitle(windowId, title);
+        if (!lastTitle.equals(title)) {
+            glfwSetWindowTitle(windowId, title);
+            lastTitle = title;
+        }
+        
     }
 
     protected void limitFpsTo(int fpsLimit) {
@@ -957,7 +966,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 ShaderCompileError sce = (ShaderCompileError) throwable;
                 System.out.println(sce.getLog());
             }
-            Thread.sleep(150000);
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
@@ -1207,8 +1215,5 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     
     public boolean canRenderGui3d() {
         return this.renderGui3d;
-    }
-
-    public void rebuildRenderCommands(int width, int height) {
     }
 }

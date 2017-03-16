@@ -62,6 +62,7 @@ public class VkPipeline {
     public long                                pipeline             = VK_NULL_HANDLE;
     public long                                pipelineScissors     = VK_NULL_HANDLE;
     public boolean useSwapChainViewport = true;
+    public boolean isDynamicViewport;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;
@@ -143,6 +144,13 @@ public class VkPipeline {
             mainPipe.pViewportState(viewportState);
             mainPipe.pDepthStencilState(depthStencilState);
             mainPipe.pDynamicState(dynamicState);
+            IntBuffer intBuf = dynamicState == null? null : dynamicState.pDynamicStates();
+            isDynamicViewport = false;
+            for (int i = 0; intBuf != null && i < intBuf.limit(); i++) {
+                if (intBuf.get(i) == VK_DYNAMIC_STATE_VIEWPORT){
+                    isDynamicViewport = true;
+                }
+            }
             mainPipe.pStages(shaderStageCreateInfo);
 //            for (int i = 1; i < nPipelines; i++) {
 //                pipelineCreateInfoBuffer.put(i, mainPipe);

@@ -49,13 +49,10 @@ class GuiRecipeOutPreviewItemSlot extends AbstractUI {
         Engine.pxStack.translate(0, 0, 2);
 
         if (stack != null) {
-            Shaders.textured.enable();
             Engine.itemRender.drawItem(stack, posX+inset, posY+inset, width-inset*2, width-inset*2);
             Engine.pxStack.translate(0, 0, 2);
-            Shaders.textured.enable();
             int nMult = this.ctrl.getMgr().getAmount()*stack.getSize();
             if (nMult > 0) {
-                Shaders.textured.enable();
                 Engine.pxStack.translate(0, 0, 10);
                 FontRenderer font = Engine.itemRender.font;
                 float w2 = font.getStringWidth(""+nMult);

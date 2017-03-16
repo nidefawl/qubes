@@ -92,7 +92,6 @@ public class GuiOverlayChat extends Gui {
             tess.drawTris();
         }
         
-        Engine.setPipeStateFontrenderer();
         Engine.enableScissors();
         Engine.pxStack.setScissors(this.posX+2, this.posY, this.width- insetX , this.height);
         for (int i = 0; i < lines.size() && i < maxLines; i++) {

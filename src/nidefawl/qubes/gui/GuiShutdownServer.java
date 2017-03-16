@@ -18,7 +18,6 @@ public class GuiShutdownServer extends Gui {
 
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
-        Engine.setPipeStateFontrenderer();
         font.drawString("Saving game...", this.width / 2, this.height / 2 - 20, -1, true, 1, 2);
         //        Shader.disable();
         super.renderButtons(fTime, mX, mY);

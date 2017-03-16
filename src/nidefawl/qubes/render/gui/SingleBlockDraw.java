@@ -4,20 +4,24 @@
 package nidefawl.qubes.render.gui;
 
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.vulkan.VK10.*;
 
 import java.util.LinkedList;
 import org.lwjgl.opengl.*;
 
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.item.StackData;
+import nidefawl.qubes.render.RenderFramebufferCached;
+import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas.TextureAtlas;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.*;
+import nidefawl.qubes.vulkan.*;
 
 /**
  * @author Michael Hept 2015
@@ -83,9 +87,9 @@ public class SingleBlockDraw {
             addToQueue(block, data, stackData);
             return;
         }
-        int tex = atlas.getTexture(block, data, stackData);
+        RenderFramebufferCached tex = atlas.getTexture(block, data, stackData);
         int texIdx = atlas.getTextureIdx(block, data, stackData);
-        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, tex);
+        tex.bindTextureDescriptor();
         float texX = SingleBlockRenderAtlas.getX(texIdx);
         float texY = SingleBlockRenderAtlas.getY(texIdx);
         float texW = SingleBlockRenderAtlas.getTexW();
@@ -94,13 +98,14 @@ public class SingleBlockDraw {
         float yPos = y-pxW;
         float zPos = 0;
         pxW*=2;
-        Shaders.textured.enable();
-        Tess.instance.setColorF(-1, 1);
-        Tess.instance.add(xPos, yPos+pxW, zPos, texX, texY);
-        Tess.instance.add(xPos+pxW, yPos+pxW, zPos, texX+texW, texY);
-        Tess.instance.add(xPos+pxW, yPos, zPos, texX+texW, texY+texW);
-        Tess.instance.add(xPos, yPos, zPos, texX, texY+texW);
-        Tess.instance.draw(GL11.GL_QUADS);
+        Engine.setPipeStateTextured2D();
+        ITess tess = Engine.getTess();
+        tess.setColorF(-1, 1);
+        tess.add(xPos, yPos+pxW, zPos, texX, texY);
+        tess.add(xPos+pxW, yPos+pxW, zPos, texX+texW, texY);
+        tess.add(xPos+pxW, yPos, zPos, texX+texW, texY+texW);
+        tess.add(xPos, yPos, zPos, texX, texY+texW);
+        tess.drawQuads();
     }
     private void addToQueue(Block block, int data, StackData stackData) {
         if (!this.queue.isEmpty()) {
@@ -118,8 +123,6 @@ public class SingleBlockDraw {
         if (!this.queue.isEmpty()) {
             SingleBlockRenderAtlas atlasRender = SingleBlockRenderAtlas.getInstance();
             TextureAtlas lastAtlas = null;
-            Engine.setOverrideScissorTest(false);
-            Engine.setOverrideDepthMask(true);
             this.modelMatrix.setIdentity();
             this.projMatrix.setZero();
             Project.orthoMat(-1, 1, -1, 1, -1, 1, projMatrix);
@@ -129,11 +132,13 @@ public class SingleBlockDraw {
             this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
             this.modelMatrix.update();
             this.projMatrix.update();
-            Shaders.singleblock.enable();
-            Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
-            Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, this.projMatrix.get(), false);
-            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
-
+            if (Engine.isVulkan) {
+            } else {
+                Shaders.singleblock.enable();
+                Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
+                Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, this.projMatrix.get(), false);
+                GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+            } 
             while (n < 10 && !this.queue.isEmpty()) {
                 BlockDrawQueueEntry entry = this.queue.removeFirst();
                 Block block = entry.block;
@@ -145,7 +150,22 @@ public class SingleBlockDraw {
                     break;
                 }
                 if (targetAtlas != lastAtlas) {
-                    targetAtlas.frameBuffer.bind();
+                    if (lastAtlas != null) {
+                        lastAtlas.renderBuffer.postRender();
+                    }
+                    if (targetAtlas.needsSetup) {
+                        targetAtlas.needsSetup = false;
+                        atlasRender.setupTextureAtlas(targetAtlas);
+                    }
+                    targetAtlas.renderBuffer.preRender(false);
+                    if (Engine.isVulkan) {
+                        Engine.setDescriptorSet(1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+                        Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);
+                        Engine.bindPipeline(VkPipelines.singleblock);
+                        PushConstantBuffer buf = PushConstantBuffer.INST;
+                        buf.setMat4(0, this.modelMatrix);
+                        buf.setMat4(64, projMatrix);
+                    }
                 }
                 int hash = atlasRender.getHash(block, data, stackData);
                 int idx = targetAtlas.getTextureIdx(hash);
@@ -153,23 +173,28 @@ public class SingleBlockDraw {
                 int x = SingleBlockRenderAtlas.getXPx(idx);
                 int y = SingleBlockRenderAtlas.getYPx(idx);
                 Engine.setViewport(x, y, SingleBlockRenderAtlas.tileSize, SingleBlockRenderAtlas.tileSize);
-                targetAtlas.frameBuffer.clearDepth();
+                Engine.clearDepth();
                 doRender(block, data, stackData);
                 lastAtlas = targetAtlas;
                 n++;
                 if (n > 10)
                     break;
             }
-            Shaders.textured.enable();
-            Engine.restoreScissorTest();
-            Engine.restoreDepthMask();
-            FrameBuffer.unbindFramebuffer();
-            Engine.setDefaultViewport();
+            if (lastAtlas != null) {
+                lastAtlas.renderBuffer.postRender();
+            }
+            if (!Engine.isVulkan) {
+
+                FrameBuffer.unbindFramebuffer();
+                Engine.setDefaultViewport();
+            } else {
+
+                Engine.clearDescriptorSet(2);
+            }
         }
     }
 
     public void drawBlock(Block block, int data, StackData stackData) {
-        Shaders.singleblock.enable();
         this.modelMatrix.setIdentity();
         this.modelMatrix.translate(this.x, this.y, this.z);
         this.modelMatrix.scale(this.scale*32);
@@ -178,25 +203,50 @@ public class SingleBlockDraw {
         this.modelMatrix.rotate(this.rotY*GameMath.PI_OVER_180, 0,1,0);
         this.modelMatrix.rotate(this.rotZ*GameMath.PI_OVER_180, 0,0,1);
         this.modelMatrix.update();
-        Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
-        Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, Engine.getMatOrtho3DP().get(), false);
-        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        if (Engine.isVulkan) {
+
+            Engine.setDescriptorSet(1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+            Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);
+            Engine.bindPipeline(VkPipelines.singleblock);
+            PushConstantBuffer buf = PushConstantBuffer.INST;
+            buf.setMat4(0, this.modelMatrix);
+            buf.setMat4(64, Engine.getMatOrtho3DP());
+            vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.singleblock.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+64));
+            Engine.setViewport(0, 0, Engine.fbWidth(), Engine.fbHeight());
+        } else {
+            Shaders.singleblock.enable();
+            Shaders.singleblock.setProgramUniformMatrix4("in_modelMatrix", false, this.modelMatrix.get(), false);
+            Shaders.singleblock.setProgramUniformMatrix4("in_projectionMatrix", false, Engine.getMatOrtho3DP().get(), false);
+            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        }
         doRender(block, data, stackData);
+        if (Engine.isVulkan) {
+            Engine.clearDescriptorSet(2);
+        }
     }
 
     public void doRender(Block block, int data, StackData stackData) {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
+        if (buffer.vertexCount == 0) {
+            return;
+        }
         int numInts = buffer.storeVertexData(this.vboBuf);
         int numInts2 = buffer.storeIndexData(this.vboIdxBuf);
 //        System.out.println("numInts2 "+numInts2);
-        this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
-        this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);
-        Engine.bindVAO(GLVAO.vaoBlocks);
-        Engine.bindBuffer(vbo);
-        Engine.bindIndexBuffer(vboIdx);
-        GL11.glDrawElements(GL11.GL_TRIANGLES, numInts2, GL11.GL_UNSIGNED_INT, 0);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("SingleBlockDraw.doRender");
+        if (Engine.isVulkan) {
+            BufferPair vkbuffer = Engine.vkContext.getFreeBuffer();
+            vkbuffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);
+            vkbuffer.draw(Engine.getDrawCmdBuffer());
+        } else {
+            this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
+            this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);
+            Engine.bindVAO(GLVAO.vaoBlocks);
+            Engine.bindBuffer(vbo);
+            Engine.bindIndexBuffer(vboIdx);
+            GL11.glDrawElements(GL11.GL_TRIANGLES, numInts2, GL11.GL_UNSIGNED_INT, 0);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("SingleBlockDraw.doRender");
+        }
     }
 
     /**

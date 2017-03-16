@@ -59,7 +59,6 @@ public class GuiControls extends Gui {
             int c1 = this.hovered ? -1 : this.color;
             int c2 = this.hovered ? -1 : this.color2;
 //            final Tess tessellator = Tess.instance;
-            Engine.setPipeStateFontrenderer();
             fr.drawString(b.getName(), this.posX, this.posY+fr.centerY(height), -1, true, 0.9f);
 ////            GLfw.g
             String keyname = "";
@@ -188,7 +187,6 @@ public class GuiControls extends Gui {
             mmY = -9999;
         }
         renderBackground(fTime, mmX, mmY, true, 0.7f);
-        Engine.setPipeStateFontrenderer();
 //        this.font.drawString("Controls", this.posX+this.width / 2.0f, this.posY+5, -1, true, 1.0f, 2);
         this.scrolllist.render(fTime, mmX, mmY);
         this.clear.draw = this.selected != null;

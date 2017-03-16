@@ -161,7 +161,6 @@ public abstract class RegionRenderer extends AbstractRenderer implements IThread
                     m[y].release();
                 }
             }
-            
         }
         
         this.regions = newRegions;

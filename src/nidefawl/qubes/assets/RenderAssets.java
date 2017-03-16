@@ -24,7 +24,12 @@ public class RenderAssets {
         EntityModelManager.getInstance().reload();
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
         TextureArray[] arrays = TextureArrays.init();
-        TextureArrays.blockTextureArray.setAnisotropicFiltering(renderSettings.anisotropicFiltering);
+        if (renderSettings != null)
+            TextureArrays.blockTextureArray.setAnisotropicFiltering(renderSettings.anisotropicFiltering);
+        else {
+
+            TextureArrays.blockTextureArray.setAnisotropicFiltering(16);
+        }
         for (int i = 0; i < arrays.length; i++) {
             final TextureArray arr = arrays[i];
             AsyncTasks.submit(new AsyncTask() {
@@ -67,7 +72,7 @@ public class RenderAssets {
             } catch (InterruptedException e) {
             }
         }
-        Engine.worldRenderer.onResourceReload();
+        postResourceLoad();
     }
 
     public static void reload() {
@@ -76,7 +81,7 @@ public class RenderAssets {
             arrays[i].reload();
         }
         SingleBlockRenderAtlas.getInstance().reset();
-        Engine.worldRenderer.onResourceReload();
+        postResourceLoad();
     }
 
     public static void destroy() {
@@ -85,6 +90,13 @@ public class RenderAssets {
             arrays[i].destroy();
             arrays[i] = null;
         }
+    }
+
+    private static void postResourceLoad() {
+        if (Engine.worldRenderer != null)
+            Engine.worldRenderer.onResourceReload();
+        if (Engine.itemRender != null)
+            Engine.itemRender.onResourceReload();
     }
 
 }

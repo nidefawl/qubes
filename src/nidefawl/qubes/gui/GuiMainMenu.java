@@ -117,7 +117,6 @@ public class GuiMainMenu extends Gui implements ITextEdit {
         int w1 = 300;
         int h = 30;
 //        int left = this.posX+this.width/2-w1/2;
-        Engine.setPipeStateFontrenderer();
 //        f.drawString("Name", left, this.posY+this.height/2-35, -1, true, 1);
         int left = this.posX+this.buttons.get(0).posX;
         f.drawString("Name", 

@@ -1,24 +1,18 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.vulkan.VK10.*;
-
-import org.lwjgl.opengl.*;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
-import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+import static org.lwjgl.vulkan.VK10.VK_SUBPASS_CONTENTS_INLINE;
 
 import java.io.File;
 
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL40;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
 import nidefawl.qubes.assets.RenderAssets;
-import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.block.IDMappingBlocks;
@@ -32,8 +26,6 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.gl.FrameBuffer;
-import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
@@ -41,7 +33,6 @@ import nidefawl.qubes.gui.windows.GuiWindowManager;
 import nidefawl.qubes.input.*;
 import nidefawl.qubes.item.BlockStack;
 import nidefawl.qubes.models.BlockModelManager;
-import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.client.NetworkClient;
@@ -62,14 +53,14 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
-import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.texture.array.impl.gl.ItemTextureArrayGL;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.vr.VREvents;
-import nidefawl.qubes.vulkan.*;
+import nidefawl.qubes.vulkan.CommandBuffer;
+import nidefawl.qubes.vulkan.VkPipelines;
+import nidefawl.qubes.vulkan.VkRenderPasses;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
@@ -198,12 +189,16 @@ public class Game extends GameBase {
         ItemModelManager.getInstance().init();
         SingleBlockRenderAtlas.getInstance().init();
 
-        
+
+        if (Engine.isVulkan) {
+            this.frameBuffer = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+            this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        }
         
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
         this.statsOverlay = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
-        this.statsFB = new RenderFramebufferCached();
+        this.statsFB = new RenderFramebufferCached(true, false, true);
         statsList = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
@@ -228,8 +223,6 @@ public class Game extends GameBase {
         isStarting = true;
         updateGui3dMode();
         
-        this.frameBuffer = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
-        this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
         this.statsFB.init();
         statsList.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
@@ -302,6 +295,12 @@ public class Game extends GameBase {
     }
 
     protected void onDestroy() {
+        if(DEBUG_LAYER) System.err.println("Game.onDestroy");
+        if (isVulkan && this.vkContext != null)
+            vkContext.syncAllFences();
+        if (this.statsFB != null)
+        this.statsFB.destroy();
+        RenderAssets.destroy();
         this.server.stop();
         super.onDestroy();
     }
@@ -316,8 +315,6 @@ public class Game extends GameBase {
         this.server.stop();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
-//        if (isVulkan)
-//            destroyCommandBuffers();
         super.shutdown();
     }
     
@@ -496,73 +493,31 @@ public class Game extends GameBase {
 
     public void render(float fTime) {
         if (Engine.isVulkan) {
-            VkCommandBuffer commandBuffer = renderCommandBuffers[VKContext.currentBuffer];
-            vkResetCommandBuffer(commandBuffer, 0);
+            CommandBuffer commandBuffer = vkContext.getCurrentCmdBuffer();
             Engine.beginCommandBuffer(commandBuffer);
         }
+        Engine.blockDraw.processQueue();
         if (this.statsList.renderStats) {
             this.statsList.renderStats = false;
-            System.out.println("updating stats");
-//            setWindowViewport();
+            setWindowViewport();
             this.statsFB.setSize(Engine.displayWidth, Engine.displayHeight);
             this.statsList.setSize(Engine.displayWidth, Engine.displayHeight);
-            this.statsFB.preRender();
+            this.statsFB.preRender(true);
             this.statsList.render(0, 0, 0);
             this.statsFB.postRender();
-//            this.statsFB.clearImage(commandBuffer);
+//            this.statsFB.clearImage(Engine.getDrawCmdBuffer());
         }
         if (Engine.isVulkan) {
             renderVK(fTime);
             Engine.endCommandBuffer();
-            this.vkContext.submitCommandBuffer(Engine.getDrawCmdBuffer());
+            this.vkContext.submitCommandBuffer();
         } else {
             renderGL(fTime);
         }
     }
-    private VkCommandBuffer[] renderCommandBuffers;
 
     private nidefawl.qubes.vulkan.FrameBuffer frameBuffer;
     
-    @Override
-    public void rebuildRenderCommands(int width, int height) {
-        vkContext.resetRenderCommandPool();
-        {
-            if (this.frameBuffer != null) {
-                this.frameBuffer.destroy();
-            }
-            this.frameBuffer.build(VkRenderPasses.passFramebuffer, width, height);
-
-        }
-        
-        
-        int nFrameBuffers = vkContext.swapChain.numImages;
-        try ( MemoryStack stack = stackPush() ) {
-
-            VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkInitializers.commandBufferAllocInfo(
-                    vkContext.renderCommandPool, nFrameBuffers);
-        
-            PointerBuffer pCommandBuffer = stack.callocPointer(nFrameBuffers);
-            int err = vkAllocateCommandBuffers(vkContext.device, cmdBufAllocateInfo, pCommandBuffer);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to allocate render command buffer: " + VulkanErr.toString(err));
-            }
-            renderCommandBuffers = new VkCommandBuffer[nFrameBuffers];
-            for (int i = 0; i < nFrameBuffers; i++) {
-                renderCommandBuffers[i] = new VkCommandBuffer(pCommandBuffer.get(i), vkContext.device);
-            }
-        }
-    }
-
-    private void destroyCommandBuffers() {
-        if (renderCommandBuffers != null) {
-            for (int i = 0; i < renderCommandBuffers.length; i++) {
-                VkCommandBuffer cmdBuf = renderCommandBuffers[i];
-                vkFreeCommandBuffers(vkContext.device, vkContext.renderCommandPool, cmdBuf);
-            }
-            renderCommandBuffers = null;
-        }
-    }
-
     public void renderVK(float fTime) {
         if (Engine.displayWidth != vkContext.swapChain.width || Engine.displayHeight != vkContext.swapChain.height) {
             System.err.println("swapchain size != display size");
@@ -571,8 +526,8 @@ public class Game extends GameBase {
         } else {
 
             if (this.world != null) {
-                Engine.skyRenderer.renderSky(this.world, fTime);
-                Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+//                Engine.skyRenderer.renderSky(this.world, fTime);
+//                Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             } 
             setSceneViewport();
             if (this.world != null) {
@@ -597,6 +552,7 @@ public class Game extends GameBase {
 
             Engine.clearDepth();
             this.statsFB.render();
+            Engine.clearDepth();
 
 
             if (!canRenderGui3d()) {
@@ -1307,7 +1263,6 @@ public class Game extends GameBase {
     
     @Override
     public void preRenderUpdate(float f) {
-        Engine.blockDraw.processQueue();
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
         if (this.client != null) {
@@ -1583,6 +1538,13 @@ public class Game extends GameBase {
     public void setRenderResolution(int displayWidth, int displayHeight) {
         Engine.updateRenderResolution(displayWidth, displayHeight);
         if (isRunning()) {
+            if (isVulkan)
+            {
+                if (this.frameBuffer != null) {
+                    this.frameBuffer.destroy();
+                }
+                this.frameBuffer.build(VkRenderPasses.passFramebuffer, displayWidth, displayHeight);
+            }
             Engine.resize(displayWidth, displayHeight);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("onResize");
@@ -1825,6 +1787,10 @@ public class Game extends GameBase {
                 RenderersGL.lightCompute.initShaders();
                 ChatManager.getInstance().addMsg("Z buffer is now "+(Engine.INVERSE_Z_BUFFER?"inverse":"default"));
                 
+                return;
+            }
+            if (text.equals("/blockreset")) {
+                SingleBlockRenderAtlas.getInstance().reset();
                 return;
             }
             if (text.equals("/gui3d")) {

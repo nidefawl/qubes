@@ -46,7 +46,6 @@ public abstract class Tooltip extends Gui {
             BoxGUI.setFade(0.3f);
             renderBox();
             BoxGUI.setFade(0.3f);
-            Engine.setPipeStateFontrenderer();
             int y = GameMath.round(this.posY+fr.centerY(this.height));
             fr.drawString(this.title, posX+8, y, -1, false, 1, 0);
             y+=fr.getLineHeight();

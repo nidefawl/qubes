@@ -37,7 +37,6 @@ public class GuiInventory extends GuiWindowInventoryBase {
     }
 
     public void render(float fTime, double mX, double mY) {
-        Shaders.colored.enable();
         renderSlots(fTime, mX, mY);
         super.renderButtons(fTime, mX, mY);
     }

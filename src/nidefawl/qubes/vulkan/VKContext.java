@@ -1,30 +1,15 @@
 package nidefawl.qubes.vulkan;
 
 
-import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkImageMemoryBarrier.Buffer;
-
-import nidefawl.qubes.GameBase;
-import nidefawl.qubes.assets.AssetBinary;
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.assets.AssetManagerClient;
-import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.shader.IShaderDef;
-import nidefawl.qubes.shader.ShaderSource;
-import nidefawl.qubes.shader.ShaderSource.ProcessMode;
-import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.util.GameLogicError;
-import nidefawl.qubes.vulkan.spirvloader.SpirvCompiler;
-import nidefawl.qubes.vulkan.spirvloader.SpirvCompilerOutput;
-
-import static org.lwjgl.system.MemoryStack.stackGet;
+import static nidefawl.qubes.vulkan.VulkanInit.UINT64_MAX;
+import static nidefawl.qubes.vulkan.VulkanInit.VK_FLAGS_NONE;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.EXTDebugReport.*;
-import static org.lwjgl.vulkan.KHRSwapchain.*;
-import static org.lwjgl.vulkan.KHRSurface.*;
+import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
+import static org.lwjgl.vulkan.KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+import static org.lwjgl.vulkan.KHRSwapchain.vkAcquireNextImageKHR;
+import static org.lwjgl.vulkan.KHRSwapchain.vkQueuePresentKHR;
 import static org.lwjgl.vulkan.VK10.*;
-import static nidefawl.qubes.vulkan.VulkanInit.*;
 
 import java.io.*;
 import java.nio.IntBuffer;
@@ -33,6 +18,17 @@ import java.util.ArrayList;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkImageMemoryBarrier.Buffer;
+
+import nidefawl.qubes.GameBase;
+import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.shader.IShaderDef;
+import nidefawl.qubes.shader.ShaderSource;
+import nidefawl.qubes.shader.ShaderSource.ProcessMode;
+import nidefawl.qubes.util.GameLogicError;
+import nidefawl.qubes.vulkan.spirvloader.SpirvCompiler;
+import nidefawl.qubes.vulkan.spirvloader.SpirvCompilerOutput;
 
 public class VKContext {
     static final boolean USE_FENCE_SYNC = true; // FAST
@@ -63,8 +59,6 @@ public class VKContext {
     protected LongBuffer                       psemaphorePresentComplete;
     protected LongBuffer                       psemaphoreRenderComplete;
     protected IntBuffer                       pWaitDstStageMask;
-    VkCommandBuffer[] copyCommandBuffers = null;
-    boolean[] commandBufferInUse;
 
     public VKContext(VkInstance vk) {
         this.vk = vk;
@@ -91,6 +85,11 @@ public class VKContext {
     private long freeFence;
     public long descriptorPool;
     public VkDescLayouts descLayouts;
+    
+    CommandBuffer[] copyCommandBuffers = null;
+    private CommandBuffer[] renderCommandBuffers;
+    private CommandBuffer currentCmdBuffer;
+    
     public void syncAllFences() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.syncAllFences");
         if (!isInit) {
@@ -133,7 +132,7 @@ public class VKContext {
             submitInfo.free();
             presentInfo.free();
         }
-        freeCopyCommandBufferFrames();
+        freeCommandBuffers();
         ArrayList<IVkResource> list = new ArrayList<>(resources);
         for (int i = 0; i < list.size(); i++) {
             list.get(i).destroy();
@@ -224,28 +223,62 @@ public class VKContext {
         if (USE_FENCE_SYNC) {
             initFences(numImages);
         }
-        initCopyCommandPools(numImages);
-    }
+        initCommandBuffers(numImages);
+        vkResetCommandPool(device, renderCommandPool, VK_FLAGS_NONE);
+        int nFrameBuffers = swapChain.numImages;
+        try (MemoryStack stack = stackPush()) {
 
-    private void initCopyCommandPools(int length) {
-        freeCopyCommandBufferFrames();
-        try ( MemoryStack stack = stackPush() ) {
-            this.copyCommandBuffers = new VkCommandBuffer[length];
-            this.commandBufferInUse = new boolean[length];
-            for (int i = 0; i < this.copyCommandBuffers.length; i++) {
-                this.copyCommandBuffers[i] = makeCopyCommandBuffer();
+            VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkInitializers.
+                    commandBufferAllocInfo(this.renderCommandPool, nFrameBuffers);
+
+            PointerBuffer pCommandBuffer = stack.callocPointer(nFrameBuffers);
+            int err = vkAllocateCommandBuffers(this.device, cmdBufAllocateInfo, pCommandBuffer);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to allocate render command buffer: " + VulkanErr.toString(err));
+            }
+            renderCommandBuffers = new CommandBuffer[nFrameBuffers];
+            for (int i = 0; i < nFrameBuffers; i++) {
+                renderCommandBuffers[i] = new CommandBuffer(pCommandBuffer.get(i), this.device, i);
             }
         }
     }
-    private void freeCopyCommandBufferFrames() {
+
+    private void initCommandBuffers(int length) {
+        this.copyCommandBuffers = new CommandBuffer[length];
+        this.renderCommandBuffers = new CommandBuffer[length];
+        try ( MemoryStack stack = stackPush() ) {
+            VkCommandBufferAllocateInfo cmdBufAllocInfo = VkCommandBufferAllocateInfo.callocStack()
+                    .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+                    .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                    .commandBufferCount(length);
+            PointerBuffer pCommandBuffer = stack.callocPointer(length);
+            cmdBufAllocInfo.commandPool(this.copyCommandPool);
+            vkAllocateCommandBuffers(this.device, cmdBufAllocInfo, pCommandBuffer);
+            for (int i = 0; i < length; i++) {
+                this.copyCommandBuffers[i] = new CommandBuffer(pCommandBuffer.get(i), device, i);
+            }
+            cmdBufAllocInfo.commandPool(this.renderCommandPool);
+            vkAllocateCommandBuffers(this.device, cmdBufAllocInfo, pCommandBuffer);
+            for (int i = 0; i < length; i++) {
+                this.renderCommandBuffers[i] = new CommandBuffer(pCommandBuffer.get(i), device, i);
+            }
+        }
+    }
+    void freeCommandBuffers() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.freeCopyCommandBufferFrames");
         if (copyCommandBuffers != null) {
             for (int i = 0; i < copyCommandBuffers.length; i++) {
                 vkFreeCommandBuffers(device, copyCommandPool, copyCommandBuffers[i]);
             }
         }
+        if (renderCommandBuffers != null) {
+            for (int i = 0; i < renderCommandBuffers.length; i++) {
+                vkFreeCommandBuffers(device, renderCommandPool, renderCommandBuffers[i]);
+            }
+        }
         copyCommandBuffers = null;
     }
+    
     private void initFences(int length) {
         try ( MemoryStack stack = stackPush() ) {
             if (this.fences != null) {
@@ -287,8 +320,16 @@ public class VKContext {
                 throw new GameLogicError("cpyCmdBuf is open, error");
             }
             freeFence = this.fences[currentBuffer];
-            this.commandBufferInUse[currentBuffer] = false;
         }
+        if (uploadBuf != null) {
+            uploadBuf.inUse = false;
+        }
+        if (currentCmdBuffer != null) {
+            currentCmdBuffer.inUse = false;
+        }
+        this.currentCmdBuffer = this.renderCommandBuffers[currentBuffer];
+        vkResetCommandBuffer(this.currentCmdBuffer, 0);
+        updateOrphanedList();
     }
     public void postRender() {
         if (begin) {
@@ -305,8 +346,9 @@ public class VKContext {
             }
         }
     }
-    public void submitCommandBuffer(VkCommandBuffer commandBuffer) {
-        pCommandBuffers.put(0, commandBuffer);
+    public void submitCommandBuffer() {
+        currentCmdBuffer.inUse = true;
+        pCommandBuffers.put(0, this.currentCmdBuffer);
         long fence = VK_NULL_HANDLE;
         if (USE_FENCE_SYNC) {
             fence = this.fences[currentBuffer];
@@ -336,16 +378,14 @@ public class VKContext {
         // Create render command buffers
         if (VkRenderPasses.isInit()) {
             VkPipelines.init(this);
-            GameBase.baseInstance.rebuildRenderCommands(this.swapChain.width, this.swapChain.height);    
+//            reallocRenderCommandBuffers();
         }
         swapChain.swapChainAquired = false;
         reinitSwapchain = false;
         return new int[] { this.swapChain.width, this.swapChain.height };
     }
 
-    public void resetRenderCommandPool() {
-        vkResetCommandPool(device, renderCommandPool, VK_FLAGS_NONE);
-    }
+    
     public VkBuffer createBuffer(int usageFlags, long size, boolean deviceLocalMemory, String tag) {
         VkBuffer buffer = new VkBuffer(this).tag(tag);
         buffer.create(usageFlags, size, deviceLocalMemory);
@@ -366,7 +406,7 @@ public class VKContext {
         if (!reinitSwapchain && VkRenderPasses.isInit()) {
             if (i == 1) {
                 syncAllFences();
-                GameBase.baseInstance.rebuildRenderCommands(this.swapChain.width, this.swapChain.height);
+//                reallocRenderCommandBuffers();
             }
         }
     }
@@ -471,26 +511,13 @@ public class VKContext {
         shader.buildShader();
         return shader;
     }
-    public VkCommandBuffer makeCopyCommandBuffer() {
-        try ( MemoryStack stack = stackPush() ) {
-            
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.callocStack();
-            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocInfo.commandPool(copyCommandPool);
-            allocInfo.commandBufferCount(1);
-            PointerBuffer pCommandBuffer = stack.pointers(0);
-            vkAllocateCommandBuffers(this.device, allocInfo, pCommandBuffer);
-            return new VkCommandBuffer(pCommandBuffer.get(0), this.device);
-        }
-    }
     public void finishUpload() {
         if (begin) {
             begin = false;
             if (copyCommandBuffers[currentBuffer] != uploadBuf) {
                 throw new GameLogicError("INVALID UP CMD BUF "+(copyCommandBuffers[currentBuffer])+" != "+uploadBuf+ " - "+curBufPre+","+currentBuffer);
             }
-            this.commandBufferInUse[currentBuffer] = true;
+            copyCommandBuffers[currentBuffer].inUse = true;
             int err = vkEndCommandBuffer(copyCommandBuffers[currentBuffer]);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkEndCommandBuffer failed: " + VulkanErr.toString(err));
@@ -506,13 +533,13 @@ public class VKContext {
             }
         }
     }
-    VkCommandBuffer uploadBuf = null;
+    CommandBuffer uploadBuf = null;
     int curBufPre = 0;
-    public VkCommandBuffer getCopyCommandBuffer() {
-        if (this.commandBufferInUse[currentBuffer]) {
+    public CommandBuffer getCopyCommandBuffer() {
+        CommandBuffer commandBuffer = copyCommandBuffers[currentBuffer];
+        if (commandBuffer.inUse) {
             throw new GameLogicError("Cant upload from here");
         }
-        VkCommandBuffer commandBuffer = copyCommandBuffers[currentBuffer];
         if (!begin) {
             uploadBuf = commandBuffer;
             curBufPre = currentBuffer;
@@ -635,5 +662,33 @@ public class VKContext {
         VkMemoryManager.destroyStatic();
         memFree(ZERO_OFFSET);
         BARRIER_MEM_IMG.free();
+    }
+    public CommandBuffer getCurrentCmdBuffer() {
+        return this.currentCmdBuffer;
+    }
+
+    ArrayList<BufferPair> orphanedInUse = new ArrayList<>();
+    ArrayList<BufferPair> released = new ArrayList<>();
+    public void updateOrphanedList() {
+        int curFrame = VKContext.currentBuffer;
+        for (int i = 0 ; i < orphanedInUse.size(); i++) {
+            orphanedInUse.get(i).inUseBy[curFrame] = false;
+        }
+        for (int i = 0 ; i < orphanedInUse.size(); i++) {
+            if (orphanedInUse.get(i).isFree()) {
+                BufferPair n = orphanedInUse.remove(i--);
+                n.destroy();
+            }
+        }
+    }
+    public BufferPair getFreeBuffer() {
+        if (!released.isEmpty()) {
+            BufferPair n = released.remove(released.size()-1);
+            return n;
+        }
+        return new BufferPair();
+    }
+    public void orphanBuffer(BufferPair prev) {
+        this.orphanedInUse.add(prev);
     }
 }

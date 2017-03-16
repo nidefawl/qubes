@@ -286,7 +286,7 @@ public abstract class AbstractUI implements Renderable {
             renderSlotBackground(posx+sHover.x+inset2, posy+sHover.y+inset2, 4, sHover.w-inset2*2, sHover.w-inset2*2, -1, 0.6f, true, 1);
         }
         Engine.pxStack.translate(0, 0, 5);
-        Shaders.textured.enable();
+        Engine.setPipeStateTextured2D();
         if (slots != null)
         for (Slot s : slots.getSlots()) {
             BaseStack stack = s.getItem();
@@ -316,14 +316,11 @@ public abstract class AbstractUI implements Renderable {
             tip.setPos(x, y);
             GuiWindowManager.setTooltip(tip);
         }
-        Shader.disable();
-
     }
     public void renderSlotOverlay(Slot s, float posx, float posy) {
         BaseStack stack = s.getItem();
         if (stack != null) {
             float inset = 4;
-            Shaders.textured.enable();
             Engine.itemRender.drawItemOverlay(stack, posx+s.x+inset, posy+s.y+inset+0, s.w-inset*2, s.w-inset*2);
         }
     }

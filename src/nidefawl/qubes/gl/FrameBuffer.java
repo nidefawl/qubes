@@ -490,4 +490,7 @@ public class FrameBuffer implements IManagedResource {
     public void setDepthFmt(int depthFmt) {
         this.depthFmt = depthFmt;
     }
+    public static FrameBuffer current() {
+        return lastBound;
+    }
 }

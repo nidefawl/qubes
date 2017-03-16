@@ -12,6 +12,7 @@ import nidefawl.qubes.world.WorldClient;
 
 public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
+    private VkDescriptor descTextureTerrainNormals;
     private VkDescriptor descTextureTerrain;
 
     public WorldRendererVK() {
@@ -19,7 +20,8 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
     @Override
     public void init() {
-        this.descTextureTerrain = Engine.vkContext.descLayouts.allocDescSetSamplerDouble();
+        this.descTextureTerrainNormals = Engine.vkContext.descLayouts.allocDescSetSamplerDouble();
+        this.descTextureTerrain = Engine.vkContext.descLayouts.allocDescSetSampleSingle();
     }
 
     @Override
@@ -42,7 +44,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
             
             Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene.get(), VK_SUBPASS_CONTENTS_INLINE);
 //            
-            Engine.setDescriptorSet(1, this.descTextureTerrain);
+            Engine.setDescriptorSet(1, this.descTextureTerrainNormals);
             Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);
             Engine.bindPipeline(VkPipelines.terrain);
             RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
@@ -65,15 +67,24 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 TextureArrays.blockTextureArrayVK.getView(), 
                 TextureArrays.blockTextureArrayVK.getSampler(), 
                 TextureArrays.blockTextureArrayVK.getImageLayout());
-        this.descTextureTerrain.setBindingCombinedImageSampler(1, 
+        this.descTextureTerrainNormals.setBindingCombinedImageSampler(0, 
+                TextureArrays.blockTextureArrayVK.getView(), 
+                TextureArrays.blockTextureArrayVK.getSampler(), 
+                TextureArrays.blockTextureArrayVK.getImageLayout());
+        this.descTextureTerrainNormals.setBindingCombinedImageSampler(1, 
                 TextureArrays.blockNormalMapArrayVK.getView(), 
                 TextureArrays.blockNormalMapArrayVK.getSampler(), 
                 TextureArrays.blockNormalMapArrayVK.getImageLayout());
+        this.descTextureTerrainNormals.update(Engine.vkContext);
         this.descTextureTerrain.update(Engine.vkContext);
         int n = TextureArrays.blockTextureArrayVK.getNumTextures();
         System.out.println("vk tex array blocks size "+n);
         
         return;
+    }
+    
+    public VkDescriptor getDescTextureTerrain() {
+        return this.descTextureTerrain;
     }
 
 }

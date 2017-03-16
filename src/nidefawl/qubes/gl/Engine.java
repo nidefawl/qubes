@@ -152,9 +152,13 @@ public class Engine {
     private static VkOffset2D renderAreaOffset;
     private static VkCommandBufferBeginInfo cmdBufInfo;
     private static VkClearAttachment.Buffer clearAtt;
+    private static VkClearAttachment[] clearAtts;
     private static VkClearRect.Buffer clearRect;
+    private static VkOffset2D clearRect2DOffset;
     private static VkExtent2D clearRect2DExtent;
-    private static VkClearDepthStencilValue clearValue;
+    private static VkClearDepthStencilValue clearValueDepth;
+    private static VkClearColorValue clearValueColor;
+    private static VkViewport.Buffer vkviewport;
     
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
@@ -294,10 +298,21 @@ public class Engine {
             renderAreaExtent = renderArea.extent();
             renderAreaOffset = renderArea.offset();
             renderAreaOffset.x(0).y(0);
-            clearAtt = VkClearAttachment.calloc(1);
-            clearRect = VkClearRect.calloc(1);
-            clearRect2DExtent = clearRect.rect().extent();
-            clearValue = clearAtt.clearValue().depthStencil();
+            vkviewport = VkViewport.calloc(1);
+            clearAtt = VkClearAttachment.calloc(8);
+            clearRect = VkClearRect.calloc(8);
+            clearAtts = new VkClearAttachment[8];
+
+            for (int i = 0; i < clearRect.limit(); i++) {
+                clearRect.get(i).layerCount(1).baseArrayLayer(0);
+            }
+            for (int i = 0; i < clearAtt.limit(); i++) {
+                clearAtts[i] = clearAtt.get(i);
+            }
+            clearRect2DOffset = clearRect.get(0).rect().offset();
+            clearRect2DExtent = clearRect.get(0).rect().extent();
+            clearValueDepth = clearAtt.get(0).clearValue().depthStencil();
+            clearValueColor = clearAtt.get(1).clearValue().color();
         }
     }
 
@@ -555,7 +570,13 @@ public class Engine {
         orthoMV.setIdentity();
         orthoMV.update();
         orthoP.setZero();
-        Project.orthoMat(0, displayWidth, flipY?displayHeight:0, flipY?0:displayHeight, -4200, 200, orthoP);
+        int minZ = -4200;
+        int maxZ = 200;
+        if (INVERSE_Z_BUFFER) {
+//            minZ = 4200;
+//            maxZ = -200;
+        }
+        Project.orthoMat(0, displayWidth, flipY?displayHeight:0, flipY?0:displayHeight, minZ, maxZ, orthoP);
 //        if (flipY) {
 //            orthoP.m11*=-1.0;
 //            orthoP.m31*=-1.0;
@@ -568,7 +589,13 @@ public class Engine {
         ortho3DMV.update();
         
         ortho3DP.setZero();
-        Project.orthoMat(0, displayWidth, flipY?displayHeight:0, flipY?0:displayHeight, -400, 400, ortho3DP);
+         minZ = -400;
+         maxZ = 200;
+        if (INVERSE_Z_BUFFER) {
+//            minZ = 400;
+//            maxZ = -200;
+        }
+        Project.orthoMat(0, displayWidth, flipY?displayHeight:0, flipY?0:displayHeight, minZ, maxZ, ortho3DP);
 //        if (flipY) {
 //            ortho3DP.m11*=-1.0;
 //            ortho3DP.m31*=-1.0;
@@ -1009,6 +1036,8 @@ public class Engine {
     }
 
     public static void enableScissors() {
+        if (isScissors)
+            System.out.println("nested sciss");
         if (isVulkan) {
             if (curPipeline.pipelineScissors == VK_NULL_HANDLE) {
                 throw new GameLogicError("Cant enable scissor for current");
@@ -1021,6 +1050,9 @@ public class Engine {
     }
 
     public static void disableScissors() {
+        if (!isScissors) {
+            System.out.println("wasn't scissors");
+        }
         if (isVulkan) {
 //            System.out.println("back to normal pipeline");
             vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.pipeline);
@@ -1077,6 +1109,9 @@ public class Engine {
             if (!isVulkan) {
 
                 GL11.glViewport(x, y, w, h);
+            } else if (curPipeline!=null&&curPipeline.isDynamicViewport) {
+                vkviewport.x(x).y(y).width(w).height(h);
+                vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
             }
 //            System.out.println(Stats.fpsCounter + ", "+w+","+h);
 //            Thread.dumpStack();
@@ -1192,6 +1227,13 @@ public class Engine {
         }
         
     }
+    public static void setPipeStateItem() {
+        if (!isVulkan) {
+            Shaders.item.enable();
+        } else {
+            Engine.bindPipeline(VkPipelines.item);
+        }
+    }
     public static void setPipeStateFontrenderer() {
         if (!isVulkan) {
             Shaders.textured.enable();
@@ -1219,7 +1261,7 @@ public class Engine {
 
     
     //single threaded!
-    static VkCommandBuffer curCommandBuffer;
+    static CommandBuffer curCommandBuffer;
     static VkPipeline curPipeline;
     private static boolean rebindDescSet;
     private static VkRenderPass curPass;
@@ -1240,7 +1282,7 @@ public class Engine {
             rebindSceneDescriptorSet();
         }
     }
-    public static void beginCommandBuffer(VkCommandBuffer commandBuffer) {
+    public static void beginCommandBuffer(CommandBuffer commandBuffer) {
         curCommandBuffer = commandBuffer;
         int err = vkBeginCommandBuffer(commandBuffer, cmdBufInfo);
         if (err != VK_SUCCESS) {
@@ -1255,8 +1297,9 @@ public class Engine {
     }
 
     public static void rebindSceneDescriptorSet() {
-        if (curPipeline == null)
+        if (curPipeline == null) {
             return;
+        }
         pDescriptorSets.clear();
         for (int i = 0; i < boundDescriptorSets.length; i++) {
             if (boundDescriptorSets[i] != null) {
@@ -1306,7 +1349,7 @@ public class Engine {
             boundDescriptorSets[i] = null;
         }
     }
-    public static VkCommandBuffer getDrawCmdBuffer() {
+    public static CommandBuffer getDrawCmdBuffer() {
         return curCommandBuffer;
     }
     public static void lineWidth(float width) {
@@ -1359,11 +1402,44 @@ public class Engine {
     }
     
     public static void clearDepth() {
-        clearRect.get(0).layerCount(1).baseArrayLayer(0);
-        clearRect2DExtent.width(displayWidth).height(displayHeight);
-        clearAtt.get(0).aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
-        clearValue.set(0, 0);
-        vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
+        if (!Engine.isVulkan) {
+            FrameBuffer.current().clearDepth();
+        } else {
+            clearRect2DOffset.x(viewport[0]).y(viewport[1]);
+            clearRect2DExtent.width(viewport[2]).height(viewport[3]);
+            clearAtt.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
+            clearValueDepth.set(0, 0);
+            clearRect.limit(1);
+            clearAtt.limit(1);
+            vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
+        }
+    }
     
+    public static void clearAttachements() {
+        if (!Engine.isVulkan) {
+            FrameBuffer.current().clearFrameBuffer();
+        } else {
+            clearRect2DOffset.x(viewport[0]).y(viewport[1]);
+            clearRect2DExtent.width(viewport[2]).height(viewport[3]);
+            clearAtt.get(0).aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
+            clearAtt.get(1).aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+            for (int i = 0; i < curPass.clearValues.limit(); i++) {
+                int flags = curPass.attachmentType[i];
+                if ((flags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) {
+                    VkClearAttachment clearAttObj = clearAtt.get(i);
+                    clearAttObj.colorAttachment(i);
+                    clearAttObj.clearValue(curPass.clearValues.get(i));
+                    clearAttObj.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                }
+                if ((flags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
+                    VkClearAttachment clearAttObj = clearAtt.get(i);
+                    clearAttObj.clearValue(curPass.clearValues.get(i));
+                    clearAttObj.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
+                }
+            }
+            clearRect.limit(curPass.clearValues.limit());
+            clearAtt.limit(curPass.clearValues.limit());
+            vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
+        }
     }
 }

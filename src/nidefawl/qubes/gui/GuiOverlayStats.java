@@ -10,6 +10,8 @@ import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.render.WorldRenderer;
+import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
+import nidefawl.qubes.render.gui.SingleBlockRenderAtlas.TextureAtlas;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
@@ -152,7 +154,6 @@ public class GuiOverlayStats extends Gui {
     }
 
     public void render(float fTime, double mx, double mY) {
-        Engine.setPipeStateFontrenderer();
         int y = 20;
         float maxW = 250;
         if (!Game.instance.glProfileResults.isEmpty()) {
@@ -243,7 +244,7 @@ public class GuiOverlayStats extends Gui {
 //        Shaders.colored.enable();
 //        tess.drawQuads();
         
-        if (!Engine.isVulkanTodo && Game.instance.selBlock.getBlock()!=Block.air) {
+        if (Game.instance.selBlock.getBlock()!=Block.air) {
             Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
         }
         Block b = Game.instance.selBlock.getBlock();
@@ -251,7 +252,23 @@ public class GuiOverlayStats extends Gui {
         if (b != null)
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 
-//        Shader.disable();
+        {
+            int prX = 100;
+            int prY = prX;
+            int pw = 512;
+            int ph = pw;
+            TextureAtlas atlas = SingleBlockRenderAtlas.getInstance().getAtlasAtIdx(0);
+            if (atlas != null) {
+                atlas.renderBuffer.bindTextureDescriptor();
+                Engine.setPipeStateTextured2D();
+                tess.setColorF(-1, 1);
+                tess.add(prX, prY+ph, 0, 0, 1);
+                tess.add(prX+pw, prY+ph, 0, 1, 1);
+                tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
+                tess.add(prX, prY, 0, 0.0f, 0.0f);
+                tess.drawQuads();
+            }
+        }
 
         if (!Game.instance.glProfileResults.isEmpty()) {
             Engine.pxStack.pop();

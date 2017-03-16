@@ -1,28 +1,19 @@
 package nidefawl.qubes.gui;
 
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-
 import java.util.List;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.gui.controls.Button;
 import nidefawl.qubes.item.BlockStack;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.ITess;
 
 public class GuiSelectBlock extends Gui {
 
@@ -98,20 +89,16 @@ public class GuiSelectBlock extends Gui {
 ////        System.out.println(mX+"/"+mY);
 //        mX=630;
 //        mY=670;
-        Shaders.colored.enable();
-        Tess.instance.setColor(2, 128);
-        Tess.instance.add(this.posX, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY + this.height);
-        Tess.instance.add(this.posX + this.width, this.posY);
-        Tess.instance.add(this.posX, this.posY);
-        Tess.instance.draw(GL_QUADS);
+        Engine.setPipeStateColored2D();
+        ITess tess = Engine.getTess();
+        tess.setColor(2, 128);
+        float zBG = -170;
+        tess.add(this.posX, this.posY + this.height, zBG);
+        tess.add(this.posX + this.width, this.posY + this.height, zBG);
+        tess.add(this.posX + this.width, this.posY, zBG);
+        tess.add(this.posX, this.posY, zBG);
+        tess.drawQuads();
         
-//        Shaders.singleblock.setProgramUniform3f("in_offset", 2,0, 0);
-//        GL11.glDisable(GL_CULL_FACE);
-        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
-//        Engine.blockDraw.drawBlock(Block.glowstone, 0);
-//        glEnable(GL_CULL_FACE);
 
         float bSize = 32;
         float bascale = (bSize/32.0f)*0.6f;
@@ -120,10 +107,7 @@ public class GuiSelectBlock extends Gui {
         int rows = 1+(blocks.size()/perRow1);
         float xPos = 0 + (this.width-perRow1*(bSize+g))/2.0f;
         float yPos = Math.max(50, 0 + (this.height-rows*(bSize+g))/2.0f);
-        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
-        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
         
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
          sel = null;
          this.fakeButton.setPos(-1000, -1000);
          this.fakeButton.setSize((int)bSize-10, (int)bSize-10);
@@ -136,7 +120,6 @@ public class GuiSelectBlock extends Gui {
             int rendered = 0;
             if (pass == 0) {
             } else {
-                Shaders.textured.enable();
             }
             for (int i = 0; i < blocks.size(); i++) {
                 BlockStack stack = blocks.get(i);
@@ -158,19 +141,17 @@ public class GuiSelectBlock extends Gui {
                         sX = bX;
                         sZ = bY;
                     }
-                    int zz = -200;
+                    int zz = -120;
                     int z = 0;
                     float x = this.posX + this.width/2.0f;
                     float y = this.posY + this.height/2.0f;
                     if (pass == 0) {
                         renderRoundedBoxShadow(pX1, pY1, zz, pX2-pX1, pY2-pY1, color, 1, true);
                     } else {
-                        float fRot = block.getInvRenderRotation();
                         float blockscale = bascale;
                         int renderData = block.getInvRenderData(stack);
                         Engine.blockDraw.setOffset(bX, bY, zz+100);
                         Engine.blockDraw.setScale(blockscale);
-                        Engine.blockDraw.setRotation(15, 90+45+fRot*GameMath.P_180_OVER_PI, 0);
                         Engine.blockDraw.drawBlockDefault(block, renderData, stack.getStackdata());
                     }  
                     rendered++;  
@@ -179,6 +160,8 @@ public class GuiSelectBlock extends Gui {
             }
         }
         super.renderButtons(fTime, mX, mY);
+        if (!Engine.isVulkan)
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
 //        Engine.pxStack.push(0, 0, 420);
         if (this.sel != null) {
             Block block = this.sel.getBlock();
@@ -226,9 +209,7 @@ public class GuiSelectBlock extends Gui {
                 pY2+=4;
                 pY1-=4;
                 renderRoundedBoxShadow(pX1-extraw, yPosText, -3, pX2-pX1+extraw*2, h, color, 0.8f, true);
-                Shaders.textured.enable();
                 font.drawString(""+sel.getBlock().getName(), pX1+(pY2-pY1)/2.0f, yPosText+h-5, -1, true, 1, 2);
-                Shader.disable();
             } else {
 
                 pX1-=4;
@@ -237,17 +218,16 @@ public class GuiSelectBlock extends Gui {
                 pY1-=4;
             }
             renderRoundedBoxShadow(pX1, pY1, 0, pX2-pX1, pY2-pY1, color, 0.7f, true);
-            Engine.blockDraw.setOffset(pX1+bSize, pY1+bSize, 125);
+            Engine.blockDraw.setOffset(pX1+bSize, pY1+bSize, 0);
             Engine.blockDraw.setScale(blockscale);
             Engine.blockDraw.setRotation(15, 90+45+fRot*GameMath.P_180_OVER_PI, 0);
             Engine.blockDraw.drawBlock(block, renderData, this.sel.getStackdata());
           Engine.pxStack.pop();
         }
-        resetShape();
-
+        if (!Engine.isVulkan)
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        Shader.disable();
 
+        resetShape();
         
 
     }

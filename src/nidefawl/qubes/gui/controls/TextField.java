@@ -45,7 +45,6 @@ public class TextField extends AbstractUI implements Renderable {
         }
         this.hovered = this.mouseOver(mX, mY);
         renderOutlinedBox();
-        Engine.setPipeStateFontrenderer();
 //        GL11.glDisable(GL11.GL_CULL_FACE);
         this.inputRenderer.focused = this.focused;
         Engine.enableScissors();

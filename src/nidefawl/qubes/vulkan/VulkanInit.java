@@ -147,11 +147,11 @@ public class VulkanInit {
     private static long createDescriptorPool(VKContext ctxt) {
         try ( MemoryStack stack = stackPush() ) {
             VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(3, stack);
-            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 32));
-            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 32));
-            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 32));
+            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 64));
+            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 64));
+            poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64));
             poolSizes.flip();
-            VkDescriptorPoolCreateInfo descriptorPoolInfo = VkInitializers.descriptorPoolCreateInfo(poolSizes, 32);
+            VkDescriptorPoolCreateInfo descriptorPoolInfo = VkInitializers.descriptorPoolCreateInfo(poolSizes, 64);
             LongBuffer pDescriptorPool = stack.longs(0);
             int err = vkCreateDescriptorPool(ctxt.device, descriptorPoolInfo, null, pDescriptorPool);
             if (err != VK_SUCCESS) {

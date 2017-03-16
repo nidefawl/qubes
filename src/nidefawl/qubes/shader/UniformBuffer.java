@@ -43,6 +43,7 @@ public class UniformBuffer {
     private int frames;
     private int stride;
     private int offsetIdx;
+    private int maxFrameUpdates = 4;
     
     UniformBuffer(String name) {
         this(name, 0, true);
@@ -167,7 +168,7 @@ public class UniformBuffer {
         }
         
     }
-    public static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D")
+    public static UniformBuffer uboMatrix3D = new UniformBuffer("uboMatrix3D").setMaxFrameUpdates(8)
             .addMat4() //mvp
             .addMat4() //mv
             .addMat4() //view
@@ -177,25 +178,25 @@ public class UniformBuffer {
             .addMat4() //mv_inv
             .addMat4() //proj_inv
             .addMat4(); // mvp_inv
-    public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false);
-    public static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D")
+    public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false).setMaxFrameUpdates(2);
+    public static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D").setMaxFrameUpdates(8)
             .addMat4() //mvp
             .addMat4() //3DOrthoP
             .addMat4(); //3DOrthoMV
-    public static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow")
+    public static UniformBuffer uboMatrixShadow = new UniformBuffer("uboMatrixShadow").setMaxFrameUpdates(2)
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addVec4(); //shadow_split_depth
-    public static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData")
+    public static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData").setMaxFrameUpdates(128)
             .addVec4() //camera (xyzw)
             .addVec4() //globaloffset (xyz) time (w)
             .addVec4() //viewport (xyzw)
             .addVec4() //pxoffset (xyz) 1.0f (w)
             .addVec4() //prev camera (xyz) 1.0f (w)
             .addVec4(); //scene settings (x = dither, yzw = unused)
-    public static UniformBuffer LightInfo = new UniformBuffer("LightInfo")
+    public static UniformBuffer LightInfo = new UniformBuffer("LightInfo").setMaxFrameUpdates(2)
             .addVec4() //dayLightTime
             .addVec4() //posSun
             .addVec4() //lightDir
@@ -217,6 +218,10 @@ public class UniformBuffer {
         updateTBNMatrices();
     }
 
+    private UniformBuffer setMaxFrameUpdates(int i) {
+        this.maxFrameUpdates = i;
+        return this;
+    }
     public static void init(VKContext vkContext, int numImages) {
         for (int i = 0; i < buffers.length; i++) {
             buffers[i].initBuffers(numImages);
@@ -229,7 +234,9 @@ public class UniformBuffer {
         if (this.vkBuffers != null) {
 //            this.vkBuffers.destroy();
         }
-        this.frames = isConstant ? 0 : (numImages*4); // we need more frames when updating multiple times per frame (*4)
+     // we need more frames when updating multiple times per frame (*4)
+        //TODO: move data that gets updated frequently per frame into a seperate small buffer
+        this.frames = isConstant ? 0 : (numImages*this.maxFrameUpdates); 
         this.stride = ((this.len*4) + 0xff) & 0xffffff00;
         int bufferSize = isConstant ? (this.len*4) : (this.stride*this.frames);
         this.vkBuffers = GameBase.baseInstance.vkContext.createBuffer(

@@ -13,13 +13,9 @@ import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.LongBuffer;
 
-import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.shader.Shaders;
-import nidefawl.qubes.util.IRenderComponent;
-import nidefawl.qubes.util.Renderable;
 import nidefawl.qubes.vulkan.*;
 
 public class RenderFramebufferCached {
@@ -27,9 +23,15 @@ public class RenderFramebufferCached {
     private nidefawl.qubes.vulkan.FrameBuffer fbVk;
     private VkDescriptor descTextureGbufferColor;
     private long sampler;
+    private boolean color16Bit;
+    private boolean filterLinear;
+    private boolean blendEnabled;
+    private boolean clearOnUpdate;
 
-    public RenderFramebufferCached() {
-        
+    public RenderFramebufferCached(boolean color16Bit, boolean filterLinear, boolean clearOnUpdate) {
+        this.color16Bit = color16Bit;
+        this.filterLinear = filterLinear;
+        this.clearOnUpdate = clearOnUpdate;
     }
 
     public void setSize(int w, int h) {
@@ -37,8 +39,9 @@ public class RenderFramebufferCached {
             if (fbDbg == null || fbDbg.getWidth() != w || fbDbg.getHeight() != h) {
                 if (fbDbg != null) fbDbg.release();
                 fbDbg = new FrameBuffer(w, h);
-                fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16);
-                fbDbg.setFilter(GL_COLOR_ATTACHMENT0, GL_NEAREST, GL_NEAREST);
+                fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, color16Bit ? GL_RGBA16 : GL_RGBA8);
+                int filter = this.filterLinear ? GL_LINEAR : GL_NEAREST;
+                fbDbg.setFilter(GL_COLOR_ATTACHMENT0, filter, filter);
                 fbDbg.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
                 fbDbg.setHasDepthAttachment();
                 fbDbg.setup(null);
@@ -54,7 +57,13 @@ public class RenderFramebufferCached {
 
         }
     }
-
+    public void bindTextureDescriptor() {
+        if (Engine.isVulkan) {
+            Engine.setDescriptorSet(1, this.descTextureGbufferColor);
+        } else {
+            GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));
+        }
+    }
     public void render() {
         Engine.pxStack.push(0, 0, -20);
         if (Engine.isVulkan) {
@@ -66,14 +75,18 @@ public class RenderFramebufferCached {
         Engine.drawFullscreenQuad();
         Engine.pxStack.pop();
     }
-    public void preRender() {
+    public void preRender(boolean blend) {
         if (Engine.isVulkan) {
-            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.fbVk.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(clearOnUpdate?VkRenderPasses.passFramebuffer:VkRenderPasses.passFramebufferNoClear, this.fbVk.get(), VK_SUBPASS_CONTENTS_INLINE);
         } else {
             fbDbg.bind();
-            fbDbg.clearFrameBuffer();
-            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-            Engine.setBlend(true);
+            if (clearOnUpdate)
+                fbDbg.clearFrameBuffer();
+            if (blend) {
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                Engine.setBlend(true);
+            }
+            this.blendEnabled = blend;
         }
     }
 
@@ -81,7 +94,11 @@ public class RenderFramebufferCached {
         if (Engine.isVulkan) {
             Engine.endRenderPass();
         } else {
-            GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            if (this.blendEnabled) {
+                GL40.glBlendFuncSeparatei(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    
+                this.blendEnabled = false;
+            }
+            
             FrameBuffer.unbindFramebuffer();
         }
     }
@@ -93,6 +110,15 @@ public class RenderFramebufferCached {
             fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
             try ( MemoryStack stack = stackPush() ) {
                 VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
+                if (this.filterLinear) {
+                    sampler.minFilter(VK_FILTER_LINEAR);
+                    sampler.magFilter(VK_FILTER_LINEAR);
+                    sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+                } else {
+                    sampler.minFilter(VK_FILTER_NEAREST);
+                    sampler.magFilter(VK_FILTER_NEAREST);
+                    sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+                }
                 LongBuffer pSampler = stack.longs(0);
                 int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
                 if (err != VK_SUCCESS) {
@@ -105,9 +131,14 @@ public class RenderFramebufferCached {
     
     }
 
-    public void clearImage(VkCommandBuffer commandbuffer) {
+    public void clear() {
+        Thread.dumpStack();
         if (Engine.isVulkan) {
-            this.fbVk.clearColorAtt(1, commandbuffer, 0, 0, 0, 1);
+
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.fbVk.get(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.endRenderPass();
+        } else {
+            this.fbDbg.clearFrameBuffer();
         }
     }
     public void destroy() {
@@ -117,9 +148,11 @@ public class RenderFramebufferCached {
         }
         if (this.fbVk != null) {
             this.fbVk.destroy();
+            this.fbVk = null;
         }
         if (this.fbDbg != null) {
             this.fbDbg.release();
+            this.fbDbg = null;
         }
     }
     

@@ -5,17 +5,17 @@ import static org.lwjgl.vulkan.VK10.*;
 
 import java.util.Arrays;
 
-import org.lwjgl.opengl.*;
-import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.util.GameError;
-import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.vulkan.VkBuffer;
+import nidefawl.qubes.vulkan.BufferPair;
+import nidefawl.qubes.vulkan.CommandBuffer;
 
 public class MeshedRegion {
 
@@ -42,11 +42,47 @@ public class MeshedRegion {
     
     public GLVBO[]     vbo;
     public GLVBO[]     vboIndices;
-    
 
-    private VkBuffer[] vkbuffersI;
-    private VkBuffer[] vkbuffersV;
-    
+    static class RegionVKBuffer {
+        private BufferPair[] buffers = new BufferPair[NUM_PASSES];
+        
+        public RegionVKBuffer() {
+        }
+
+
+        public void destroy() {
+            if (this.buffers != null) {
+                for (int i = 0; i < this.buffers.length; i++) {
+                    this.buffers[i].destroy();
+                }
+                this.buffers = null;
+            }
+        }
+
+
+        public void orphan() {
+            if (this.buffers != null) {
+                for (int i = 0; i < this.buffers.length; i++) {
+                    BufferPair prev = this.buffers[i];
+                    if(prev != null)
+                        Engine.vkContext.orphanBuffer(prev);
+                }
+                this.buffers = null;
+            }
+        }
+
+
+        public BufferPair swapBuffers(int pass) {
+            BufferPair prev = buffers[pass];
+            BufferPair newbuffer = Engine.vkContext.getFreeBuffer();
+            if (prev != null) {
+                Engine.vkContext.orphanBuffer(prev);
+            }
+            this.buffers[pass] = newbuffer;
+            return newbuffer;
+        }
+    }
+    RegionVKBuffer vkBuffer;
     private int shadowDrawMode;
     public boolean frustumStateChanged;
     public int occlusionQueryState = 0; //0 init, 1 waiting, 2 waiting + drop result
@@ -67,15 +103,10 @@ public class MeshedRegion {
             Stats.regionDrawCalls++;
         }
     }
-    long[] pointer = new long[1];
-    long[] offset = new long[1];
-    public void renderRegionVK(VkCommandBuffer commandBuffer, float fTime, int pass) {
+    public void renderRegionVK(CommandBuffer commandBuffer, float fTime, int pass) {
         if (this.vertexCount[pass] > 0) {
-            pointer[0] = this.vkbuffersV[pass].getBuffer();
-            offset[0] = 0;
-            vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
-            vkCmdBindIndexBuffer(commandBuffer, this.vkbuffersI[pass].getBuffer(), 0, VK_INDEX_TYPE_UINT32);
-            vkCmdDrawIndexed(commandBuffer, this.elementCount[pass], 1, 0, 0, 0);
+            BufferPair passBuffer = this.vkBuffer.buffers[pass];
+            passBuffer.draw(commandBuffer);
         }
     }
 
@@ -98,17 +129,8 @@ public class MeshedRegion {
 
     public void preUploadBuffers() {
         if (Engine.isVulkan) {
-            if (this.vkbuffersV == null) {
-                this.vkbuffersV = new VkBuffer[NUM_PASSES];
-                for (int i = 0; i < this.vkbuffersV.length; i++) {
-                    this.vkbuffersV[i] = new VkBuffer(Engine.vkContext).tag("region_"+i+"_vertex");
-                }
-            }
-            if (this.vkbuffersI == null) {
-                this.vkbuffersI = new VkBuffer[NUM_PASSES];
-                for (int i = 0; i < this.vkbuffersI.length; i++) {
-                    this.vkbuffersI[i] = new VkBuffer(Engine.vkContext).tag("region_"+i+"_index");
-                }
+            if (this.vkBuffer == null) {
+                this.vkBuffer = new RegionVKBuffer();
             }
         } else {
             if (this.vbo == null) {
@@ -154,20 +176,8 @@ public class MeshedRegion {
         int intlenIdx = buffer.storeIndexData(shBuffer);
         this.elementCount[pass] = intlenIdx;
         if (Engine.isVulkan) {
-            long vSize = Math.max(1024*1024*2L, intlen * 4L);
-            long iSize = Math.max(1024*1024*1L, intlenIdx * 4L);
-            if (this.vkbuffersV[pass].getSize() <= vSize) {
-                System.out.println("Remake vbuffer with size "+(vSize));
-                this.vkbuffersV[pass].destroy();
-                this.vkbuffersV[pass].create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vSize, true);
-            }
-            if (this.vkbuffersI[pass].getSize() <= iSize) {
-                System.out.println("Remake ibuffer with size "+(iSize));
-                this.vkbuffersI[pass].destroy();
-                this.vkbuffersI[pass].create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, iSize, true);
-            }
-            vkbuffersV[pass].upload(buf.getByteBuf(), 0);
-            vkbuffersI[pass].upload(shBuffer.getByteBuf(), 0);
+            BufferPair bufPair = this.vkBuffer.swapBuffers(pass);
+            bufPair.uploadDeviceLocal(buf.getByteBuf(), intlen, shBuffer.getByteBuf(), intlenIdx);
         } else {
             vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
             vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intlenIdx * 4L);
@@ -203,6 +213,10 @@ public class MeshedRegion {
                 this.vboIndices[i].release();
             }
             this.vboIndices = null;
+        }
+        if (this.vkBuffer != null) {
+            this.vkBuffer.orphan();
+            this.vkBuffer = null;
         }
         this.isValid = false;
         this.isRenderable = false;

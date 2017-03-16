@@ -136,7 +136,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             Engine.pxStack.translate(0, 0, 3);
 //            ((GuiCraftingSelect) parent).renderSlotBackground(posX+nx, posY+ny, 0, slotW, slotW, color, alpha, true, 4);
 //            ((GuiWindow)this.parent).renderSlotBackground(posX+inset, posY+inset, 0, slotW-inset*2,slotW-inset*2,0, 0.8f, true, 0);
-            Shaders.textured.enable();
             BaseStack stack = null;
             if (this.id%100==0) {
                 stack = BaseStack.getTemp(Item.axe);   
@@ -216,11 +215,9 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
 
             Engine.pxStack.translate(0, 0, 2);
 
-            Shaders.textured.enable();
             Engine.itemRender.drawItem(stack, posX+inset, posY+inset, slotW-inset*2, slotW-inset*2);
             if (this.maxAmount > 0) {
                 int nMult = this.maxAmount*stack.getSize();
-                Shaders.textured.enable();
                 Engine.pxStack.translate(0, 0, 10);
                 FontRenderer font = Engine.itemRender.font;
                 int w2 = GameMath.round(font.getStringWidth(""+nMult));
@@ -266,7 +263,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
         @Override
         public void render(float fTime, double mX, double mY) {
             FontRenderer fr = ((ScrollList)parent).font;
-            Shaders.colored.enable();
             this.hovered = this.mouseOver(mX, mY);
             saveBounds();
             int inset = 15;
@@ -293,7 +289,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             LineGUI.INST.drawLines();
 //            selectedButton = g;
             restoreBounds();
-            Engine.setPipeStateFontrenderer();
             fr.drawString(string, posX+width/2, posY+fr.centerY(height), -1, true, 1, 2);
         }
 
@@ -535,7 +530,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
             height = 30;
             posY = this.bg.posY + 5;
             renderBox();
-            Engine.setPipeStateFontrenderer();
             FontRenderer font = this.cat.getScrollList().font;
             font.drawString(selected.recipe.getPreview().getName(), posX + width / 2, posY + font.centerY(height), -1, true, 1, 2);
 
@@ -737,7 +731,6 @@ public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEd
         BaseStack stack = s.getItem();
         if (stack != null) {
             float inset = 4;
-            Shaders.textured.enable();
             Engine.itemRender.drawItemOverlay(stack, posx+s.x+inset, posy+s.y+inset+0, s.w-inset*2, s.w-inset*2);
         }
     }

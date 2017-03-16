@@ -45,7 +45,6 @@ public class ProgressBar extends AbstractUI {
         renderRoundedBoxShadow(xBar, yBar, zBar, pW, height-4, color1, 0.7f, false);
         renderRoundedBoxShadow(xBar, yBar + height/2-3, zBar + 1, pW, height/2, -1, 0.3f, false);
         renderRoundedBoxShadow(xBar, yBar, zBar + 1, pW, (height/3)-1, color2, 0.2f, false);
-        Engine.setPipeStateFontrenderer();
         Engine.pxStack.translate(0, 0, zBar + 2);
         fr.drawString(s, xBar + (w) / 2.0f, yBar + fr.centerY(this.height), -1, true, 1.0f, 2);
         Engine.pxStack.pop();

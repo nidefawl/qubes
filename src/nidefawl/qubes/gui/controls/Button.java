@@ -29,7 +29,6 @@ public class Button extends AbstractUI implements Renderable {
         drawLine(this.posX, this.posY + height, this.posX+width/2, this.posY + height, 4, 0, yo, -1, 0.1f, -1, 0.4f);
         drawLine(this.posX+width/2, this.posY + height, this.posX+width, this.posY + height, 4, 0, yo, -1, 0.4f, -1, 0.1f);
         if (this.text!=null&&!this.text.isEmpty()) {
-            Engine.setPipeStateFontrenderer();
             this.font.drawString(this.text, this.posX + this.width / 2, this.posY + this.height - (this.height-font.getCharHeight())/2, -1, true, 1.0F, 2);
         }
     }

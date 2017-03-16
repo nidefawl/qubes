@@ -12,11 +12,13 @@ import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vec.Frustum;
+import nidefawl.qubes.vulkan.CommandBuffer;
+import nidefawl.qubes.vulkan.VKContext;
 import nidefawl.qubes.world.World;
 
 public class RegionRendererVK extends RegionRenderer implements IRenderComponent {
 
-    public void renderMain(VkCommandBuffer commandBuffer, World world, float fTime) {
+    public void renderMain(CommandBuffer commandBuffer, World world, float fTime) {
         int size = renderList.size();
         this.occlCulled=0;
         this.numV = 0;
@@ -72,7 +74,7 @@ public class RegionRendererVK extends RegionRenderer implements IRenderComponent
     
     }
 
-    public void renderRegions(VkCommandBuffer commandBuffer, World world, float fTime, int pass, int nFrustum, int frustumState) {
+    public void renderRegions(CommandBuffer commandBuffer, World world, float fTime, int pass, int nFrustum, int frustumState) {
         int requiredShadowMode = Game.instance.settings.renderSettings.shadowDrawMode;
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
@@ -98,5 +100,6 @@ public class RegionRendererVK extends RegionRenderer implements IRenderComponent
     @Override
     public void updateOcclQueries() {
     }
+    
 
 }

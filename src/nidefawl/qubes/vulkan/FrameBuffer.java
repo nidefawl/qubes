@@ -92,7 +92,7 @@ public class FrameBuffer  implements IVkResource {
     public FramebufferAttachment getAtt(int idx) {
         return this.attachments[idx];
     }
-    public void fromRenderpass(VkRenderPass pass, int shadowUsageFlags, int colorAttUsageFlags) {
+    public void fromRenderpass(VkRenderPass pass, int depthUsageFlags, int colorAttUsageFlags) {
         for (int i = 0; i < pass.nAttachments; i++) {
             VkAttachmentDescription n = pass.attachments.get(i);
             int flags = pass.attachmentType[i];
@@ -100,7 +100,7 @@ public class FrameBuffer  implements IVkResource {
                 flags |= colorAttUsageFlags;
             }
             if ((flags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
-                flags |= shadowUsageFlags;
+                flags |= depthUsageFlags;
             }
             addAtt(i, n.format(), flags);
         }

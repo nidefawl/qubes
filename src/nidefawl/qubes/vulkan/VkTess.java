@@ -372,6 +372,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
         this.useNormalPtr = false;
         this.useTexturePtr = false;
         this.useColorPtr = false;
+        this.useUINTPtr = false;
         this.u = this.v = 0;
         this.rgba = -1;
         this.offsetX = this.offsetY = this.offsetZ = 0;

@@ -502,8 +502,8 @@ public class TrueTypeFont {
                 return;
             }
             Engine.setDescriptorSet(1, this.descriptorSetTex);
-            Engine.bindPipeline(VkPipelines.fontRender2D);
         }
+        Engine.setPipeStateFontrenderer();
         tess.drawQuads();
     }
 

@@ -22,6 +22,7 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutColored = new VkPipelineLayout("pipelineLayoutColored");
     public static VkPipelineLayout pipelineLayoutShadow = new VkPipelineLayout("pipelineLayoutShadow");
     public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout("pipelineLayoutGUI");
+    public static VkPipelineLayout pipelineLayoutSingleBlock = new VkPipelineLayout("pipelineLayoutSingleBlock");
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
     public static VkPipeline textured2d = new VkPipeline(VkPipelines.pipelineLayoutTextured);
@@ -30,6 +31,8 @@ public class VkPipelines {
     public static VkPipeline colored2D = new VkPipeline(VkPipelines.pipelineLayoutColored);
     public static VkPipeline gui = new VkPipeline(VkPipelines.pipelineLayoutGUI);
     public static VkPipeline terrain = new VkPipeline(VkPipelines.pipelineLayoutTerrain);
+    public static VkPipeline item = new VkPipeline(VkPipelines.pipelineLayoutTextured);
+    public static VkPipeline singleblock = new VkPipeline(VkPipelines.pipelineLayoutSingleBlock);
 
     
     static class VkShaderDef implements IShaderDef {
@@ -113,6 +116,47 @@ public class VkPipelines {
             textured2d.pipeline = buildPipeLine(ctxt, textured2d);
         }
 
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            item.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4|8].getVkVertexDesc();
+//          VKContext.DUMP_SHADER_SRC=true;
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "item.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "item.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+//          VKContext.DUMP_SHADER_SRC=false;
+//          item.depthStencilState.depthTestEnable(false);
+            item.setShaders(vert, frag);
+            item.setBlend(true);
+            item.setRenderPass(VkRenderPasses.passFramebuffer, 0);
+            item.setVertexDesc(desc);
+            item.dynamicState=null;
+            item.pipeline = buildPipeLine(ctxt, item);
+            item.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            item.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
+            item.pipelineScissors = buildPipeLine(ctxt, item);
+
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            singleblock.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoBlocks.getVkVertexDesc();
+//          VKContext.DUMP_SHADER_SRC=true;
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "singleblock.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "singleblock.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+//          VKContext.DUMP_SHADER_SRC=false;
+//          singleblock.depthStencilState.depthTestEnable(false);
+            singleblock.setShaders(vert, frag);
+            singleblock.setBlend(false);
+            singleblock.setRenderPass(VkRenderPasses.passFramebuffer, 0);
+            singleblock.setVertexDesc(desc);
+            singleblock.dynamicState = null;
+            singleblock.pipeline = buildPipeLine(ctxt, singleblock);
+            singleblock.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            singleblock.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_VIEWPORT));
+            singleblock.pipelineScissors = buildPipeLine(ctxt, singleblock);
+
+        }
+
         {
             debugShader.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
@@ -146,11 +190,8 @@ public class VkPipelines {
         {
             colored2D.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[4].getVkVertexDesc();
-//            VKContext.DUMP_SHADER_SRC=true;
-
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "colored.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "colored.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-//            VKContext.DUMP_SHADER_SRC=false;
 
             colored2D.setShaders(vert, frag);
             colored2D.setBlend(true);

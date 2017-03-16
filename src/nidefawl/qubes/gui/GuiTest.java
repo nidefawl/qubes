@@ -24,7 +24,6 @@ public class GuiTest extends Gui implements ITextEdit {
     @Override
     public void render(float fTime, double mX, double mY) {
         renderBackground(fTime, mX, mY, true, 0.7f);
-        Engine.setPipeStateFontrenderer();
         font.drawString("This is text...", this.posX+this.width / 2, this.posY+titleBarOffset+5, -1, true, 1, 2);
         Engine.pxStack.push(posX, posY, 4);
         this.colorPick.render(fTime, mX-posX, mY-posY);
