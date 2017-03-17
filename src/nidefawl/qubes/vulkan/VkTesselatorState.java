@@ -19,7 +19,7 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
         vkContext.orphanResource(this.buffer);
     }
     public VkTesselatorState tag(String string) {
-        this.tag(string);
+        this.buffer.tag(string);
         return this;
     }
     @Override
@@ -35,7 +35,7 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
         return this.buffer;
     }
     @Override
-    public void orphan() {
+    public void swapBuffers() {
         this.vkContext.orphanResource(this.buffer);
         this.buffer = this.vkContext.getFreeBuffer();
     }

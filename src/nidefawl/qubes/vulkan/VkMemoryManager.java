@@ -31,7 +31,7 @@ public class VkMemoryManager {
         MemoryUtil.memFree(ptrBuf);
     }
 
-    static final boolean DEBUG_MEM_ALLOC = true;
+    static final boolean DEBUG_MEM_ALLOC = false;
     static boolean MEM_ALLOC_CRASH = false;
     private static final long MAX_FRAGMENTATION_SIZE = 16*1024;
     static final HashMap<Long, MemoryChunk> memoryBindings = new HashMap<>();

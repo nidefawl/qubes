@@ -93,7 +93,7 @@ public class ShadowRendererVK extends ShadowRenderer {
     @Override
     public void resize(int displayWidth, int displayHeight) {
         if (this.frameBufferShadow != null) {
-            Engine.vkContext.orphanResource(this.frameBufferShadow);
+            this.frameBufferShadow.destroy();
         }
         this.frameBufferShadow.build(VkRenderPasses.passShadow, SHADOW_BUFFER_SIZE, SHADOW_BUFFER_SIZE);
     }

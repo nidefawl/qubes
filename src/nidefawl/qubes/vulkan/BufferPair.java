@@ -43,11 +43,14 @@ public class BufferPair implements RefTrackedResource {
     static long[] pointer = new long[1];
     static long[] offset = new long[1];
     public void draw(CommandBuffer commandBuffer) {
+        this.draw(commandBuffer, 0, 0);
+    }
+    public void draw(CommandBuffer commandBuffer, int offsetIdx, int offsetVert) {
         if (this.elementCount > 0) {
-            offset[0] = 0;
+            offset[0] = offsetVert;
             pointer[0] = vert.getBuffer();
             vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
-            vkCmdBindIndexBuffer(commandBuffer, this.idx.getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, this.idx.getBuffer(), offsetIdx, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(commandBuffer, this.elementCount, 1, 0, 0, 0);
             flagUse(commandBuffer.frameIdx);
         } else {

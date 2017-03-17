@@ -52,10 +52,8 @@ public abstract class AbstractVkTesselatorState {
             s|=8;
         return s;
     }
-    long[] pointer = new long[1];
-    long[] offset = new long[1];
     public void bindAndDraw(CommandBuffer commandBuffer) {
-        getBuffer().draw(commandBuffer);
+        getBuffer().draw(commandBuffer, this.indexOffset, this.vertexOffset);
     }
-    public abstract void orphan();
+    public abstract void swapBuffers();
 }

@@ -80,6 +80,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
             
             buffers = new FrameLocalBuffers[numImages];
             for (int i = 0; i < buffers.length; i++) {
+                System.out.println("ALLOC FRAME TESSBUFFER "+i);
                 buffers[i] = new FrameLocalBuffers(this, context);
             }
         }
@@ -244,16 +245,16 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
                 buffer.upload(this, bufIntV.getByteBuf(), vIdx*4, bufIntI.getByteBuf(), idxCount*4);
 
             } else {
-                if (bufferMode != DEVICE_LOCAL_UPLOAD) {
-                    throw new GameLogicError("VKTessState buffer is not meant for streaming host memory uploads");
-                }
+//                if (bufferMode != DEVICE_LOCAL_UPLOAD) {
+//                    throw new GameLogicError("VKTessState buffer is not meant for streaming host memory uploads");
+//                }
                 this.vertexOffset = 0;
                 this.indexOffset = 0;
                 this.copyTo(out);
                 if (!out.getBuffer().isFree()) {
-                    out.orphan();
+                    out.swapBuffers();
                 }
-                out.getBuffer().create(vIdx*4, idxCount*4, true);
+                out.getBuffer().create(vIdx*4, idxCount*4, bufferMode == DEVICE_LOCAL_UPLOAD);
                 out.getBuffer().upload(this.vertexOffset, bufIntV.getByteBuf(), this.indexOffset, bufIntI.getByteBuf());
             }
         }
@@ -348,7 +349,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     }
 
     @Override
-    public void orphan() {
+    public void swapBuffers() {
     }
 
 }

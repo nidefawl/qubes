@@ -684,6 +684,7 @@ public class VKContext {
         return new BufferPair(this);
     }
     public void orphanResource(RefTrackedResource resource) {
-        this.orphanedInUse.add(resource);
+        if (resource != null)
+            this.orphanedInUse.add(resource);
     }
 }

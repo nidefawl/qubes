@@ -47,8 +47,11 @@ public class RenderFramebufferCached {
                 fbDbg.setup(null);
             }
         } else {
-            if (fbVk != null && (fbVk.getWidth() != w || fbVk.getHeight() != h)) {
-                Engine.vkContext.orphanResource(this.fbVk);
+            if (fbVk == null || (fbVk.getWidth() != w || fbVk.getHeight() != h)) {
+                VKContext vkContext = Engine.vkContext;
+                vkContext.orphanResource(this.fbVk);
+                fbVk = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+                fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
                 fbVk.build(VkRenderPasses.passFramebuffer, w, h);
                 FramebufferAttachment coloratt = fbVk.getAtt(1);
                 this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), sampler, coloratt.imageLayout);
@@ -109,8 +112,6 @@ public class RenderFramebufferCached {
     public void init() {
         if (Engine.isVulkan) {
             VKContext vkContext = Engine.vkContext;
-            fbVk = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
-            fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
             try ( MemoryStack stack = stackPush() ) {
                 VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
                 if (this.filterLinear) {
