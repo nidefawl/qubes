@@ -88,24 +88,28 @@ public class SingleBlockDraw {
             return;
         }
         RenderFramebufferCached tex = atlas.getTexture(block, data, stackData);
-        int texIdx = atlas.getTextureIdx(block, data, stackData);
-        tex.bindTextureDescriptor();
-        float texX = SingleBlockRenderAtlas.getX(texIdx);
-        float texY = SingleBlockRenderAtlas.getY(texIdx);
-        float texW = SingleBlockRenderAtlas.getTexW();
-        float pxW = scale*32;
-        float xPos = x-pxW;
-        float yPos = y-pxW;
-        float zPos = 0;
-        pxW*=2;
-        Engine.setPipeStateTextured2D();
-        ITess tess = Engine.getTess();
-        tess.setColorF(-1, 1);
-        tess.add(xPos, yPos+pxW, zPos, texX, texY);
-        tess.add(xPos+pxW, yPos+pxW, zPos, texX+texW, texY);
-        tess.add(xPos+pxW, yPos, zPos, texX+texW, texY+texW);
-        tess.add(xPos, yPos, zPos, texX, texY+texW);
-        tess.drawQuads();
+        if (tex != null) {
+            int texIdx = atlas.getTextureIdx(block, data, stackData);
+            if (texIdx > -1) {
+                tex.bindTextureDescriptor();
+                float texX = SingleBlockRenderAtlas.getX(texIdx);
+                float texY = SingleBlockRenderAtlas.getY(texIdx);
+                float texW = SingleBlockRenderAtlas.getTexW();
+                float pxW = scale*32;
+                float xPos = x-pxW;
+                float yPos = y-pxW;
+                float zPos = 0;
+                pxW*=2;
+                Engine.setPipeStateTextured2D();
+                ITess tess = Engine.getTess();
+                tess.setColorF(-1, 1);
+                tess.add(xPos, yPos+pxW, zPos, texX, texY);
+                tess.add(xPos+pxW, yPos+pxW, zPos, texX+texW, texY);
+                tess.add(xPos+pxW, yPos, zPos, texX+texW, texY+texW);
+                tess.add(xPos, yPos, zPos, texX, texY+texW);
+                tess.drawQuads();
+            }
+        }
     }
     private void addToQueue(Block block, int data, StackData stackData) {
         if (!this.queue.isEmpty()) {
@@ -236,6 +240,7 @@ public class SingleBlockDraw {
         if (Engine.isVulkan) {
             BufferPair vkbuffer = Engine.vkContext.getFreeBuffer();
             vkbuffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);
+            vkbuffer.setElementCount(numInts2);
             vkbuffer.draw(Engine.getDrawCmdBuffer());
         } else {
             this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);

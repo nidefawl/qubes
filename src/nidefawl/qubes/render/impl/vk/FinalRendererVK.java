@@ -57,7 +57,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     @Override
     public void resize(int displayWidth, int displayHeight) {
         if (this.frameBufferScene != null) {
-            this.frameBufferScene.destroy();
+            Engine.vkContext.orphanResource(this.frameBufferScene);
         }
         this.frameBufferScene.build(VkRenderPasses.passTerrain, displayWidth, displayHeight);
         FramebufferAttachment coloratt = this.frameBufferScene.getAtt(0);

@@ -49,23 +49,12 @@ public class MeshedRegion {
         public RegionVKBuffer() {
         }
 
-
-        public void destroy() {
-            if (this.buffers != null) {
-                for (int i = 0; i < this.buffers.length; i++) {
-                    this.buffers[i].destroy();
-                }
-                this.buffers = null;
-            }
-        }
-
-
         public void orphan() {
             if (this.buffers != null) {
                 for (int i = 0; i < this.buffers.length; i++) {
                     BufferPair prev = this.buffers[i];
                     if(prev != null)
-                        Engine.vkContext.orphanBuffer(prev);
+                        Engine.vkContext.orphanResource(prev);
                 }
                 this.buffers = null;
             }
@@ -76,7 +65,7 @@ public class MeshedRegion {
             BufferPair prev = buffers[pass];
             BufferPair newbuffer = Engine.vkContext.getFreeBuffer();
             if (prev != null) {
-                Engine.vkContext.orphanBuffer(prev);
+                Engine.vkContext.orphanResource(prev);
             }
             this.buffers[pass] = newbuffer;
             return newbuffer;
@@ -178,6 +167,7 @@ public class MeshedRegion {
         if (Engine.isVulkan) {
             BufferPair bufPair = this.vkBuffer.swapBuffers(pass);
             bufPair.uploadDeviceLocal(buf.getByteBuf(), intlen, shBuffer.getByteBuf(), intlenIdx);
+            bufPair.setElementCount(intlenIdx);
         } else {
             vbo[pass].upload(GL15.GL_ARRAY_BUFFER, buf.getByteBuf(), intlen * 4L);
             vboIndices[pass].upload(GL15.GL_ELEMENT_ARRAY_BUFFER, shBuffer.getByteBuf(), intlenIdx * 4L);

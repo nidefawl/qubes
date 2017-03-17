@@ -1319,6 +1319,7 @@ public class Engine {
     public static void beginRenderPass(VkRenderPass pass, nidefawl.qubes.vulkan.FrameBuffer framebuffer, int flags) {
         curPipeline = null;
         curPass = pass;
+        framebuffer.setInUse(curCommandBuffer.frameIdx);
         renderAreaExtent.set(framebuffer.getWidth(), framebuffer.getHeight());
         renderPassBeginInfo.renderPass(curPass.get());
         renderPassBeginInfo.framebuffer(framebuffer.get());

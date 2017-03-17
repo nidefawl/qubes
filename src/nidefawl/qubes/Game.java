@@ -1541,7 +1541,7 @@ public class Game extends GameBase {
             if (isVulkan)
             {
                 if (this.frameBuffer != null) {
-                    this.frameBuffer.destroy();
+                    Engine.vkContext.orphanResource(this.frameBuffer);
                 }
                 this.frameBuffer.build(VkRenderPasses.passFramebuffer, displayWidth, displayHeight);
             }

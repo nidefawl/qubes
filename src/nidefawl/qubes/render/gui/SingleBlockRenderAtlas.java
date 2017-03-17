@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import com.google.common.collect.Maps;
 
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.render.RenderFramebufferCached;
 
@@ -156,6 +157,7 @@ public class SingleBlockRenderAtlas {
     }
 
     public void reset() {
+        Arrays.fill(this.textures, null);
         for (Entry<Integer, TextureAtlas> entry : this.map.entrySet()) {
             TextureAtlas atlas = entry.getValue();
             if (atlas != null) {
@@ -163,14 +165,13 @@ public class SingleBlockRenderAtlas {
             }
         }
         this.map.clear();
-        Arrays.fill(this.textures, null);
     }
 
 
 
     public RenderFramebufferCached getTexture(Block block, int data, StackData stackData) {
         int hash = block.id<<8|data;
-        TextureAtlas atlas = getAtlas(hash, true);
+        TextureAtlas atlas = getAtlas(hash, false);
         if (atlas != null) {
             return atlas.renderBuffer;
         }
@@ -179,11 +180,11 @@ public class SingleBlockRenderAtlas {
 
     public int getTextureIdx(Block block, int data, StackData stackData) {
         int hash = block.id<<8|data;
-        TextureAtlas atlas = getAtlas(hash, true);
+        TextureAtlas atlas = getAtlas(hash, false);
         if (atlas != null) {
             return atlas.getTextureIdx(hash);
         }
-        return 0;
+        return -1;
     }
     public int getHash(Block block, int data, StackData stackData) {
         int hash = block.id<<8|data;

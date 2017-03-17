@@ -4,33 +4,22 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.ITessState;
 
 public class VkTesselatorState extends AbstractVkTesselatorState implements ITessState {
-    VkBuffer bufferV;
-    VkBuffer bufferI;
+    BufferPair buffer;
     private boolean usageDynamic;
+    private VKContext vkContext;
     public VkTesselatorState(VKContext ctxt) {
         this(ctxt, false);
     }
     public VkTesselatorState(VKContext ctxt, boolean usageDynamic) {
-        bufferV = new VkBuffer(ctxt);
-        bufferI = new VkBuffer(ctxt);
+        this.vkContext = ctxt;
+        this.buffer = ctxt.getFreeBuffer();
         this.usageDynamic = usageDynamic;
     }
-    @Override
-    public VkBuffer getVertexBuffer() {
-        return bufferV;
-    }
-
-    @Override
-    public VkBuffer getIndexBuffer() {
-        return bufferI;
-    }
     public void destroy() {
-        this.bufferI.destroy();
-        this.bufferV.destroy();
+        vkContext.orphanResource(this.buffer);
     }
     public VkTesselatorState tag(String string) {
-        this.bufferI.tag(string+"_index");
-        this.bufferV.tag(string+"_vertex");
+        this.tag(string);
         return this;
     }
     @Override
@@ -40,6 +29,15 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
     @Override
     public boolean isDynamic() {
         return this.usageDynamic;
+    }
+    @Override
+    public BufferPair getBuffer() {
+        return this.buffer;
+    }
+    @Override
+    public void orphan() {
+        this.vkContext.orphanResource(this.buffer);
+        this.buffer = this.vkContext.getFreeBuffer();
     }
 
 

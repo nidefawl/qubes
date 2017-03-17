@@ -10,7 +10,7 @@ import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.gl.Engine;
 
-public class FrameBuffer  implements IVkResource {
+public class FrameBuffer implements RefTrackedResource {
     private final VKContext ctxt;
     private String          tag;
     public long framebuffer;
@@ -18,6 +18,7 @@ public class FrameBuffer  implements IVkResource {
     int nAttachments = 0;
     int height;
     int width;
+    public boolean[] inUseBy = new boolean[VulkanInit.MAX_NUM_SWAPCHAIN];
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
     }
@@ -113,5 +114,25 @@ public class FrameBuffer  implements IVkResource {
     }
     public void clearColorAtt(int idx, VkCommandBuffer commandbuffer, float r, float g, float b, float a) {
         this.attachments[idx].clearImage(commandbuffer, r, g, b, a);
+    }
+    public void setInUse(int frameIdx) {
+        inUseBy[frameIdx] = true;
+    }
+    @Override
+    public void flagUse(int idx) {
+        this.inUseBy[idx] = true;
+    }
+    @Override
+    public void unflagUse(int idx) {
+        this.inUseBy[idx] = false;
+    }
+    @Override
+    public boolean isFree() {
+        for (int i = 0 ; i < inUseBy.length; i++) {
+            if (inUseBy[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

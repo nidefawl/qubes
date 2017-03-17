@@ -84,6 +84,7 @@ public class VulkanInit {
      * This is just -1L, but it is nicer as a symbolic constant.
      */
     public static final long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
+    public static final int MAX_NUM_SWAPCHAIN = 5;
     /**
      * Create a Vulkan instance using LWJGL 3.
      * @param debugContext 

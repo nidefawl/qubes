@@ -48,7 +48,7 @@ public class RenderFramebufferCached {
             }
         } else {
             if (fbVk != null && (fbVk.getWidth() != w || fbVk.getHeight() != h)) {
-                fbVk.destroy();
+                Engine.vkContext.orphanResource(this.fbVk);
                 fbVk.build(VkRenderPasses.passFramebuffer, w, h);
                 FramebufferAttachment coloratt = fbVk.getAtt(1);
                 this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), sampler, coloratt.imageLayout);
@@ -149,7 +149,7 @@ public class RenderFramebufferCached {
             this.sampler = VK_NULL_HANDLE;
         }
         if (this.fbVk != null) {
-            this.fbVk.destroy();
+            Engine.vkContext.orphanResource(this.fbVk);
             this.fbVk = null;
         }
         if (this.fbDbg != null) {

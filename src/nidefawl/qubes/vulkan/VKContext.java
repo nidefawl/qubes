@@ -667,28 +667,23 @@ public class VKContext {
         return this.currentCmdBuffer;
     }
 
-    ArrayList<BufferPair> orphanedInUse = new ArrayList<>();
-    ArrayList<BufferPair> released = new ArrayList<>();
+    ArrayList<RefTrackedResource> orphanedInUse = new ArrayList<>();
     public void updateOrphanedList() {
         int curFrame = VKContext.currentBuffer;
         for (int i = 0 ; i < orphanedInUse.size(); i++) {
-            orphanedInUse.get(i).inUseBy[curFrame] = false;
+            orphanedInUse.get(i).unflagUse(curFrame);
         }
         for (int i = 0 ; i < orphanedInUse.size(); i++) {
             if (orphanedInUse.get(i).isFree()) {
-                BufferPair n = orphanedInUse.remove(i--);
+                RefTrackedResource n = orphanedInUse.remove(i--);
                 n.destroy();
             }
         }
     }
     public BufferPair getFreeBuffer() {
-        if (!released.isEmpty()) {
-            BufferPair n = released.remove(released.size()-1);
-            return n;
-        }
-        return new BufferPair();
+        return new BufferPair(this);
     }
-    public void orphanBuffer(BufferPair prev) {
-        this.orphanedInUse.add(prev);
+    public void orphanResource(RefTrackedResource resource) {
+        this.orphanedInUse.add(resource);
     }
 }
