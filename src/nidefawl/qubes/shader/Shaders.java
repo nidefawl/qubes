@@ -131,7 +131,8 @@ public class Shaders {
             Shaders.gui = new_gui;
             Shaders.item = new_item;
             Shaders.colored.enable();
-            Shaders.item.enable();
+            item.enable();
+            item.setProgramUniform1i("itemTextures", 0);
             Shaders.gui.enable();
             Shaders.gui.setProgramUniform1i("colorwheel", 0);
             Shaders.gui.setProgramUniform1f("valueH", 0.5f);
@@ -169,7 +170,7 @@ public class Shaders {
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("setProgramUniform3f");
             textured.enable();
-            textured.setProgramUniform1i("tex0", 0);
+            textured.setProgramUniform1i("blockTextures", 0);
             textured_to_srgb.enable();
             textured_to_srgb.setProgramUniform1i("tex0", 0);
             textured_to_lin.enable();

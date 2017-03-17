@@ -1,9 +1,7 @@
 package nidefawl.qubes.shader;
 
 import static org.lwjgl.opengl.ARBUniformBufferObject.*;
-import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.FloatBuffer;
 import java.util.List;
@@ -15,10 +13,9 @@ import org.lwjgl.vulkan.VkDescriptorBufferInfo.Buffer;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.Memory;
-import nidefawl.qubes.texture.array.impl.gl.BlockNormalMapArrayGL;
+import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
@@ -29,7 +26,7 @@ import nidefawl.qubes.world.WorldClient;
 
 public class UniformBuffer {
     static int nextIdx = 0;
-    static UniformBuffer[] buffers = new UniformBuffer[8];
+    static UniformBuffer[] buffers = new UniformBuffer[9];
     String name;
     private int buffer;
     protected int len;
@@ -44,7 +41,6 @@ public class UniformBuffer {
     private int stride;
     private int offsetIdx;
     private int maxFrameUpdates = 4;
-    
     UniformBuffer(String name) {
         this(name, 0, true);
     }
@@ -137,6 +133,7 @@ public class UniformBuffer {
             }
             this.vkBuffers.upload(this.floatBuffer, offset);
         }
+        statsUpdateCallsFrame++;
         isConstantUploaded = true;
     }
     public void setup() {
@@ -189,13 +186,14 @@ public class UniformBuffer {
             .addMat4() //shadow_split_mvp
             .addMat4() //shadow_split_mvp
             .addVec4(); //shadow_split_depth
-    public static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData").setMaxFrameUpdates(128)
+    public static UniformBuffer uboSceneData = new UniformBuffer("uboSceneData").setMaxFrameUpdates(4)
             .addVec4() //camera (xyzw)
             .addVec4() //globaloffset (xyz) time (w)
             .addVec4() //viewport (xyzw)
-            .addVec4() //pxoffset (xyz) 1.0f (w)
             .addVec4() //prev camera (xyz) 1.0f (w)
             .addVec4(); //scene settings (x = dither, yzw = unused)
+    public static UniformBuffer uboTransformStack = new UniformBuffer("uboTransformStack").setMaxFrameUpdates(2048)
+            .addVec4(); //viewport (xyzw)
     public static UniformBuffer LightInfo = new UniformBuffer("LightInfo").setMaxFrameUpdates(2)
             .addVec4() //dayLightTime
             .addVec4() //posSun
@@ -236,15 +234,24 @@ public class UniformBuffer {
         }
      // we need more frames when updating multiple times per frame (*4)
         //TODO: move data that gets updated frequently per frame into a seperate small buffer
+        VKContext vkContext = Engine.vkContext;//.limits.maxUniformBufferRange();
         this.frames = isConstant ? 0 : (numImages*this.maxFrameUpdates); 
-        this.stride = ((this.len*4) + 0xff) & 0xffffff00;
+        this.stride = Math.max((int) vkContext.limits.minUniformBufferOffsetAlignment(), ((this.len*4) + 0xff) & 0xffffff00);
+        System.out.println("Buffer "+this.name+" stride = "+(this.stride));
         int bufferSize = isConstant ? (this.len*4) : (this.stride*this.frames);
-        this.vkBuffers = GameBase.baseInstance.vkContext.createBuffer(
+        this.vkBuffers = vkContext.createBuffer(
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                     bufferSize, 
-                    false, "UBO "+this.name);
-        if (!isConstant)
-            this.vkBuffers.getDescriptorBuffer().range(this.stride);
+                    isConstant, "UBO "+this.name);
+        VkDescriptorBufferInfo.Buffer desc = this.vkBuffers.getDescriptorBuffer();
+        if (isConstant) {
+            desc.range(VK_WHOLE_SIZE);
+        } else {
+            desc.range(this.len*4);
+        }
+        if (this.len*4 > Engine.vkContext.limits.maxUniformBufferRange()) {
+            throw new GameLogicError("Uniform buffer len exceeds maxUnifromBufferRange: "+(this.len*4)+" > "+(Engine.vkContext.limits.maxUniformBufferRange()));
+        }
         isConstantUploaded = false;
     }
     public static void destroy() {
@@ -277,6 +284,27 @@ public class UniformBuffer {
                 buffers[i].bind();
             }
         }
+    }
+    public static void resetFrameStats() {
+        for (int i = 0; i < buffers.length; i++) {
+            buffers[i].statsUpdateCallsFrame=0;
+        }
+    }
+    public static void printStats() {
+        if (Engine.isVulkan)
+        for (int i = 0; i < buffers.length; i++) {
+//            if (buffers[i].statsUpdateCallsFrame > 0) {
+//                System.out.println(""+buffers[i].name+": "+buffers[i].statsUpdateCallsFrame+" updates");
+//            }
+            if (buffers[i].statsUpdateCallsFrame > buffers[i].maxFrameUpdates) {
+                System.err.println("TOO MANY UPDATES "+buffers[i].name+": "+buffers[i].statsUpdateCallsFrame+" updates");
+            }
+        }
+        resetFrameStats();
+    }
+    int statsUpdateCallsFrame;
+    public int getStatsUpdateCallsFrame() {
+        return this.statsUpdateCallsFrame;
     }
 
     public void bind() {
@@ -359,10 +387,6 @@ public class UniformBuffer {
         uboSceneData.put(Engine.displayHeight);
         uboSceneData.put(Engine.znear);
         uboSceneData.put(Engine.zfar);
-        uboSceneData.put(Engine.pxOffset.x);
-        uboSceneData.put(Engine.pxOffset.y);
-        uboSceneData.put(Engine.pxOffset.z);
-        uboSceneData.put(1F);
         vCam = Engine.camera.getPrevPosition();
         uboSceneData.put(vCam.x-Engine.GLOBAL_OFFSET.x);
         uboSceneData.put(vCam.y-Engine.GLOBAL_OFFSET.y);
@@ -405,12 +429,15 @@ public class UniformBuffer {
 //        float ambIntens = 0.1f;
 //        float diffIntens = 0.1f;
 //        float specIntens = 0.7F;
-//        float ambIntens = 0.12f;
-//        float diffIntens = 0.17F;
-//        float specIntens = 0.16F;
-        float ambIntens = 0.04f;
-        float diffIntens = 0.07F;
-        float specIntens = 0.08F;
+        float ambIntens = 0.08f;
+        float diffIntens = 0.3F;
+        float specIntens = 0.4F;
+//        float ambIntens = 0.04f;
+//        float diffIntens = 0.07F;
+//        float specIntens = 0.08F;
+//        float ambIntens = 0.04f;
+//        float diffIntens = 0.07F;
+//        float specIntens = 0.08F;
         float fNight = GameMath.easeInOutCubic(nightNoon);
         ambIntens*=Math.max(0, 1.0f-fNight*0.98f);
         diffIntens*=1.0f-fNight*0.97f;
@@ -615,12 +642,12 @@ public class UniformBuffer {
         uboMatrix3D.update();
     }
     public static void updatePxOffset() {
-        uboSceneData.setPosition(12);
-        uboSceneData.put(Engine.pxOffset.x);
-        uboSceneData.put(Engine.pxOffset.y);
-        uboSceneData.put(Engine.pxOffset.z);
-        uboSceneData.put(1F);
-        uboSceneData.update();
+        uboTransformStack.setPosition(0);
+        uboTransformStack.put(Engine.pxOffset.x);
+        uboTransformStack.put(Engine.pxOffset.y);
+        uboTransformStack.put(Engine.pxOffset.z);
+        uboTransformStack.put(1F);
+        uboTransformStack.update();
     }
     public static int getMaxBindingPoint() {
         return buffers.length-1;
@@ -629,7 +656,8 @@ public class UniformBuffer {
         return this.bindingPoint;
     }
     public VkDescriptorBufferInfo.Buffer getDescriptorBuffer() {
-        return this.vkBuffers.getDescriptorBuffer();
+        Buffer n = this.vkBuffers.getDescriptorBuffer();
+        return n;
     }
     public int getDynamicOffset() {
         return isConstant?0:(this.offsetIdx*this.stride);

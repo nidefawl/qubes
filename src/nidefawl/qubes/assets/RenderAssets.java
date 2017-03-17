@@ -1,5 +1,8 @@
 package nidefawl.qubes.assets;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL21;
+
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.async.AsyncTask.TaskType;
@@ -17,11 +20,11 @@ public class RenderAssets {
 
     public static void load(RenderSettings renderSettings, LoadingScreen loadingScreen) {
         if (loadingScreen != null) loadingScreen.setProgress(0, 0.8f, "Loading... Item Models");
-        ItemModelManager.getInstance().reload();
+//        ItemModelManager.getInstance().reload();
         if (loadingScreen != null) loadingScreen.setProgress(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Entity Models");
-        EntityModelManager.getInstance().reload();
+//        EntityModelManager.getInstance().reload();
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
         TextureArray[] arrays = TextureArrays.init();
         if (renderSettings != null)
@@ -30,6 +33,7 @@ public class RenderAssets {
 
             TextureArrays.blockTextureArray.setAnisotropicFiltering(16);
         }
+        TextureArrays.blockTextureArrayGL.internalFormat = Engine.useSRGBTextures()?GL21.GL_SRGB8_ALPHA8:GL11.GL_RGBA8;
         for (int i = 0; i < arrays.length; i++) {
             final TextureArray arr = arrays[i];
             AsyncTasks.submit(new AsyncTask() {
@@ -76,6 +80,7 @@ public class RenderAssets {
     }
 
     public static void reload() {
+        TextureArrays.blockTextureArrayGL.internalFormat = Engine.useSRGBTextures()?GL21.GL_SRGB8_ALPHA8:GL11.GL_RGBA8;
         TextureArray[] arrays = TextureArrays.allArrays;
         for (int i = 0; i < arrays.length; i++) {
             arrays[i].reload();

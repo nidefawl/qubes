@@ -684,15 +684,15 @@ public class VKContext {
         for (int i = 0 ; i < orphanedInUse.size(); i++) {
             if (orphanedInUse.get(i).isFree()) {
                 RefTrackedResource resource = orphanedInUse.remove(i--);
-                if (resource instanceof BufferPair) {
-                    System.out.print(resource+" "+((BufferPair)resource).tag()+" ON DESTROY ");
-                    boolean[] b = ((BufferPair)resource).inUseBy;
-                    for (int z = 0; z < b.length; z++) {
-                        System.out.print(b[z]);
-                        System.out.print(",");
-                    }
-                    System.out.println();
-                }
+//                if (resource instanceof BufferPair) {
+//                    System.out.print(resource+" "+((BufferPair)resource).tag()+" ON DESTROY ");
+//                    boolean[] b = ((BufferPair)resource).inUseBy;
+//                    for (int z = 0; z < b.length; z++) {
+//                        System.out.print(b[z]);
+//                        System.out.print(",");
+//                    }
+//                    System.out.println();
+//                }
                 resource.destroy();
             }
         }
@@ -703,15 +703,15 @@ public class VKContext {
     public void orphanResource(RefTrackedResource resource) {
         if (resource != null) {
             this.orphanedInUse.add(resource);
-            if (resource instanceof BufferPair) {
-                System.out.print(resource+" "+((BufferPair)resource).tag()+" ON ORPHAN ");
-                boolean[] b = ((BufferPair)resource).inUseBy;
-                for (int i = 0; i < b.length; i++) {
-                    System.out.print(b[i]);
-                    System.out.print(",");
-                }
-                System.out.println();
-            }
+//            if (resource instanceof BufferPair) {
+//                System.out.print(resource+" "+((BufferPair)resource).tag()+" ON ORPHAN ");
+//                boolean[] b = ((BufferPair)resource).inUseBy;
+//                for (int i = 0; i < b.length; i++) {
+//                    System.out.print(b[i]);
+//                    System.out.print(",");
+//                }
+//                System.out.println();
+//            }
         }
     }
 }

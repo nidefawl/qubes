@@ -32,7 +32,7 @@ public class BlockTextureArrayGL extends TextureArrayGL {
     public BlockTextureArrayGL() {
         super(Block.NUM_BLOCKS << BLOCK_TEXTURE_BITS);
         this.internalFormat=EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-        this.internalFormat=GL21.GL_SRGB8_ALPHA8;
+        this.internalFormat=Engine.useSRGBTextures()?GL21.GL_SRGB8_ALPHA8:GL11.GL_RGBA8;
     }
 
     protected void postUpload() {

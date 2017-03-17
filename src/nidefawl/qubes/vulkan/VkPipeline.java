@@ -62,7 +62,6 @@ public class VkPipeline {
     public long                                pipeline             = VK_NULL_HANDLE;
     public long                                pipelineScissors     = VK_NULL_HANDLE;
     public boolean useSwapChainViewport = true;
-    public boolean isDynamicViewport;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;
@@ -144,13 +143,6 @@ public class VkPipeline {
             mainPipe.pViewportState(viewportState);
             mainPipe.pDepthStencilState(depthStencilState);
             mainPipe.pDynamicState(dynamicState);
-            IntBuffer intBuf = dynamicState == null? null : dynamicState.pDynamicStates();
-            isDynamicViewport = false;
-            for (int i = 0; intBuf != null && i < intBuf.limit(); i++) {
-                if (intBuf.get(i) == VK_DYNAMIC_STATE_VIEWPORT){
-                    isDynamicViewport = true;
-                }
-            }
             mainPipe.pStages(shaderStageCreateInfo);
 //            for (int i = 1; i < nPipelines; i++) {
 //                pipelineCreateInfoBuffer.put(i, mainPipe);
@@ -228,7 +220,6 @@ public class VkPipeline {
     {
         VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = VkPipelineColorBlendStateCreateInfo.calloc();
         pipelineColorBlendStateCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
-        pipelineColorBlendStateCreateInfo.pAttachments(pAttachments);
         pipelineColorBlendStateCreateInfo.pNext(0L);
         pipelineColorBlendStateCreateInfo.logicOpEnable(false);
         pipelineColorBlendStateCreateInfo.logicOp(VK_LOGIC_OP_CLEAR);
@@ -330,8 +321,8 @@ public class VkPipeline {
         VkPipelineColorBlendAttachmentState attState = this.blendAttachmentState.get(0);
         attState.blendEnable(b);
         if (b) {
-            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
             attState.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
             attState.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
         } else {

@@ -97,15 +97,25 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
     }
 
     public void renderBackgroundElements(float fTime, double mX, double mY) {
+        renderBackgroundElements(fTime, mX, mY, 0, 0);
+    }
+    public final void renderBackgroundElements(float fTime, double mX, double mY, float xOffset, float yOffset) {
         if (prebackground.isEmpty())
             return;
         Engine.pxStack.push(this.posX, this.posY, 0);
         for (int i = 0; i < this.prebackground.size(); i++) {
-            this.prebackground.get(i).render(fTime, mX-this.posX, mY-this.posY);
+            AbstractUI btn = this.prebackground.get(i);
+            if ((btn.posY+yOffset) + height < 0 || (btn.posY+yOffset) > this.posY + height) {
+                continue;
+            }
+            btn.render(fTime, mX-this.posX, mY-this.posY);
         }
         Engine.pxStack.pop();
     }
     public void renderButtons(float fTime, double mX, double mY) {
+        renderButtons(fTime, mX, mY, 0, 0);
+    }
+    public final void renderButtons(float fTime, double mX, double mY, float xOffset, float yOffset) {
         Engine.pxStack.push(this.posX, this.posY, 2);
         double mx = mX;
         double my = mY;
@@ -123,6 +133,9 @@ public abstract class Gui extends AbstractUI implements PopupHolder {
         for (int i = 0; i < this.buttons.size(); i++) {
             AbstractUI btn = this.buttons.get(i);
             if (this.prebackground.contains(btn)) {
+                continue;
+            }
+            if ((btn.posY+yOffset) + btn.height < 0 || (btn.posY+yOffset) > this.posY + height) {
                 continue;
             }
             if (btn.zIndex!=lastZ) {

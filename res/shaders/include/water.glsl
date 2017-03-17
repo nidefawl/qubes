@@ -7,7 +7,7 @@
 	// #define Watercolor_Vanila								//Pure texture based water. Only enable one.
 	// #define Watercolor_Clear								//Clear-ish water. Only enable one.
 	// #define Watercolor_Tropical							//Weak green-ish water. Only enable one.
-	// #define Watercolor_Legacy								//Strong blue water. Only enable one.
+	// #define Watercolor_Vanila								//Strong blue water. Only enable one.
 	// #define Watercolor_Classic							//Weak light blue water. Only enable one.
 	#define Watercolor_Original								//Strong dark blue water. Only enable one.
 	

@@ -24,7 +24,6 @@ public class BufferPair implements RefTrackedResource {
         return this;
     }
     public void destroy() {
-        System.out.println(tag+" destroy");
         this.vert.destroy();
         this.idx.destroy();
     }

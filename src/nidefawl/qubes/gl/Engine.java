@@ -52,6 +52,7 @@ public class Engine {
     private static int NEXT_BUFFER_BINDING_POINT = 0;
     public static boolean INVERSE_Z_BUFFER = false;
     public static boolean OGL_INVERSE_Y = false;
+    public static boolean SRGB_TEXTURES;
     public static boolean isInverseZ = false;
     static ArrayList<TrueTypeFont> newfonts = new ArrayList<>();
     static ArrayList<TrueTypeFont> fonts = new ArrayList<>();
@@ -89,8 +90,15 @@ public class Engine {
     
 
     public static FrameBuffer fbScene;
+    private static float         aspectRatio;
+    private static int           fieldOfView;
     public static float znear = 0.1f;
     public static float zfar = 1024F;
+    public static int guiWidth;
+    public static int guiHeight;
+    public static int displayWidth;
+    public static int displayHeight;
+    final static int[] viewport = new int[] {0,0,0,0};
 
     static ITessState[] fullscreenquads;
     static ITessState quad;
@@ -116,21 +124,20 @@ public class Engine {
     public static CubeParticleRenderer  particleRenderer;
     public static LightCompute  lightCompute;
     public static QModelBatchedRender renderBatched;
-    private static float         aspectRatio;
-    private static int           fieldOfView;
 
     public static boolean renderWireFrame = false;
     private static boolean isDepthMask = true;
 
     public static boolean isScissors = false;
     public static boolean isBlend = false;
+    public static boolean isDither=true;
+    public static float Y_SIGN = 1.0f;
 
     public static boolean updateRenderOffset;
     public final static SingleBlockRenderer blockRender = new SingleBlockRenderer();
     public final static SingleBlockDraw blockDraw = new SingleBlockDraw();
     public final static ItemRenderer itemRender = new ItemRenderer();
     static GLVAO active = null;
-    final static int[] viewport = new int[] {0,0,0,0};
     public final static ShaderBuffer        debugOutput         = new ShaderBuffer("DebugOutputBuffer").setSize(4096*4);
     
     public final static SunLightModel sunlightmodel = new SunLightModel();
@@ -140,8 +147,7 @@ public class Engine {
     static boolean isVAOSupportingBindless=false;
     static boolean clientStateBindlessElement=false;
     static boolean clientStateBindlessAttrib=false;
-    public static boolean isDither=true;
-    public static float Y_SIGN = 1.0f;
+    
     public static VkDescriptor descriptorSetUboScene;
     public static VkDescriptor descriptorSetUboConstants;
     private static LongBuffer pDescriptorSets;
@@ -299,6 +305,8 @@ public class Engine {
             renderAreaOffset = renderArea.offset();
             renderAreaOffset.x(0).y(0);
             vkviewport = VkViewport.calloc(1);
+            vkviewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+            vkviewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
             clearAtt = VkClearAttachment.calloc(8);
             clearRect = VkClearRect.calloc(8);
             clearAtts = new VkClearAttachment[8];
@@ -350,6 +358,9 @@ public class Engine {
         guiHeight = displayHeight = init.fbHeight;
         isVulkanTodo = isVulkan = init.isVulkan;
         INVERSE_Z_BUFFER = init.inverseZBuffer;
+        if (isVulkan) {
+            isInverseZ = INVERSE_Z_BUFFER;
+        }
         OGL_INVERSE_Y = init.inverseClipspaceYOpengl;
         if (!INVERSE_Z_BUFFER && OGL_INVERSE_Y) {
             throw new IllegalArgumentException("cannot reverse y without z");
@@ -386,7 +397,8 @@ public class Engine {
             descriptorSetUboScene.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix3D.getDescriptorBuffer());
             descriptorSetUboScene.setBindingBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix2D.getDescriptorBuffer());
             descriptorSetUboScene.setBindingBuffer(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboSceneData.getDescriptorBuffer());
-            descriptorSetUboScene.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
+            descriptorSetUboScene.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboTransformStack.getDescriptorBuffer());
+            descriptorSetUboScene.setBindingBuffer(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
             descriptorSetUboScene.update(vkContext);
             descriptorSetUboConstants = vkContext.descLayouts.allocDescSetUBOConstants();
             descriptorSetUboConstants.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, UniformBuffer.VertexDirections.getDescriptorBuffer());
@@ -425,8 +437,8 @@ public class Engine {
                 pxOffset.set(vec);
                 UniformBuffer.updatePxOffset();
                 if (Engine.isVulkan) {
-                    pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
-                    Engine.rebindSceneDescriptorSet();
+                    pOffsets.put(2, UniformBuffer.uboTransformStack.getDynamicOffset());
+                    rebindPxStackDesc();
                 }
             }
         });
@@ -1109,12 +1121,17 @@ public class Engine {
             if (!isVulkan) {
 
                 GL11.glViewport(x, y, w, h);
-            } else if (curPipeline!=null&&curPipeline.isDynamicViewport) {
+            } else if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
                 vkviewport.x(x).y(y).width(w).height(h);
                 vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
+                return;
             }
 //            System.out.println(Stats.fpsCounter + ", "+w+","+h);
 //            Thread.dumpStack();
+        }
+        if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+            vkviewport.x(x).y(y).width(w).height(h);
+            vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
         }
     }
     public static int[] getViewport() {
@@ -1296,6 +1313,27 @@ public class Engine {
         }
     }
 
+    public static void rebindPxStackDesc() {
+        if (curPipeline == null) {
+            return;
+        }
+        pDescriptorSets.clear();
+        for (int i = 0; i < boundDescriptorSets.length; i++) {
+            if (boundDescriptorSets[i] != null) {
+                pDescriptorSets.put(boundDescriptorSets[i].get());
+            }            
+        }
+        
+        pDescriptorSets.flip();
+        pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
+        pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
+        pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
+        pOffsets.put(3, UniformBuffer.uboTransformStack.getDynamicOffset());
+        pOffsets.put(4, UniformBuffer.uboMatrixShadow.getDynamicOffset());
+        pOffsets.position(0).limit(5);
+        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
+                pDescriptorSets, pOffsets);
+    }
     public static void rebindSceneDescriptorSet() {
         if (curPipeline == null) {
             return;
@@ -1311,8 +1349,9 @@ public class Engine {
         pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
         pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
         pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
-        pOffsets.put(3, UniformBuffer.uboMatrixShadow.getDynamicOffset());
-        pOffsets.position(0).limit(4);
+        pOffsets.put(3, UniformBuffer.uboTransformStack.getDynamicOffset());
+        pOffsets.put(4, UniformBuffer.uboMatrixShadow.getDynamicOffset());
+        pOffsets.position(0).limit(5);
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                 pDescriptorSets, pOffsets);
     }
@@ -1367,10 +1406,6 @@ public class Engine {
         return guiHeight;
     }
 
-    public static int guiWidth;
-    public static int guiHeight;
-    public static int displayWidth;
-    public static int displayHeight;
     public static void updateGuiResolution(int w, int h) {
         guiWidth = w;
         guiHeight = h;
@@ -1445,5 +1480,8 @@ public class Engine {
             clearAtt.limit(curPass.clearValues.limit());
             vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
         }
+    }
+    public static boolean useSRGBTextures() {
+        return SRGB_TEXTURES;
     }
 }

@@ -93,7 +93,6 @@ public class CubeParticleRendererGL extends CubeParticleRenderer {
 
     public void renderParticles(World world, float iPass, float fTime) {
         if (!this.particles.isEmpty()) {
-            System.out.println("render "+this.particles.size());
             storeParticles(world, iPass, fTime);
             Engine.checkGLError("storeparticles");
             particleShaderSeperateBuffer.enable();

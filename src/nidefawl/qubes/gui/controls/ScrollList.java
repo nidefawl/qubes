@@ -99,7 +99,8 @@ public class ScrollList extends Gui {
         Engine.enableScissors();
         Engine.pxStack.setScissors(this.posX-2, this.posY-2, this.width+2, this.height+2);
         Engine.pxStack.push(0, -yPos, 0);
-        super.renderButtons(fTime, mX, mY+yPos);
+        super.renderBackgroundElements(fTime, mX, mY+yPos, 0, -yPos);
+        super.renderButtons(fTime, mX, mY+yPos, 0, -yPos);
         Engine.pxStack.pop();
         Engine.disableScissors();
         int scX = this.posX+this.width;

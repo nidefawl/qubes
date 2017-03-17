@@ -24,8 +24,8 @@ void main(void) {
 		discard;
 	vec3 color_adj = tex.rgb;
 	vec3 color_adj2 = color.rgb;
-	// srgbToLin(color_adj.rgb);
-	srgbToLin(color_adj2.rgb);
+	linearizeInput(color_adj.rgb);
+	linearizeInput2(color_adj2.rgb);
 	color_adj *= color_adj2.rgb;
 	color_adj *= Idiff * 1.8;
 	vec3 toneMapped = ToneMap(color_adj, 2.0f);

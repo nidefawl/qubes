@@ -282,10 +282,9 @@ public class ShaderSource {
             return "#define IS_LIGHT(blockid) float(blockid==2222u)";
         }
         if ("SRGB_TEXTURES".equals(define)) {
-            if (TextureArrays.blockTextureArray!=null&&TextureArrays.blockTextureArray.isSRGB()) {
+            if (Engine.useSRGBTextures()) {
                 return "#define SRGB_TEXTURES"; 
             }
-            return "#define SRGB_TEXTURES";
             
         }
         if ("Z_INVERSE".equals(define)) {

@@ -110,10 +110,11 @@ public class VkPipelines {
             textured2d.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             textured2d.setVertexDesc(desc);
             textured2d.dynamicState=null;
-//            textured2d.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
-//            textured2d.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
-
             textured2d.pipeline = buildPipeLine(ctxt, textured2d);
+            textured2d.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            textured2d.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
+
+            textured2d.pipelineScissors = buildPipeLine(ctxt, textured2d);
         }
 
         try ( MemoryStack stack = stackPush() ) 
@@ -145,13 +146,17 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "singleblock.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
 //          VKContext.DUMP_SHADER_SRC=false;
 //          singleblock.depthStencilState.depthTestEnable(false);
+            singleblock.useSwapChainViewport = false;
+            singleblock.viewport.width(4096).height(4096);
+            singleblock.scissors.extent().width(4096).height(4096);
             singleblock.setShaders(vert, frag);
             singleblock.setBlend(false);
             singleblock.setRenderPass(VkRenderPasses.passFramebuffer, 0);
             singleblock.setVertexDesc(desc);
-            singleblock.dynamicState = null;
-            singleblock.pipeline = buildPipeLine(ctxt, singleblock);
             singleblock.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+
+            singleblock.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+            singleblock.pipeline = buildPipeLine(ctxt, singleblock);
             singleblock.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_VIEWPORT));
             singleblock.pipelineScissors = buildPipeLine(ctxt, singleblock);
 

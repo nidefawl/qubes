@@ -22,11 +22,12 @@ public class RenderFramebufferCached {
     private FrameBuffer fbDbg;
     private nidefawl.qubes.vulkan.FrameBuffer fbVk;
     private VkDescriptor descTextureGbufferColor;
-    private long sampler;
     private boolean color16Bit;
     private boolean filterLinear;
     private boolean blendEnabled;
     private boolean clearOnUpdate;
+    private static long samplerLinear;
+    private static long samplerNearest;
 
     public RenderFramebufferCached(boolean color16Bit, boolean filterLinear, boolean clearOnUpdate) {
         this.color16Bit = color16Bit;
@@ -54,7 +55,7 @@ public class RenderFramebufferCached {
                 fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
                 fbVk.build(VkRenderPasses.passFramebuffer, w, h);
                 FramebufferAttachment coloratt = fbVk.getAtt(1);
-                this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), sampler, coloratt.imageLayout);
+                this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), filterLinear?samplerLinear:samplerNearest, coloratt.imageLayout);
                 this.descTextureGbufferColor.update(Engine.vkContext);
             }        
 
@@ -80,9 +81,6 @@ public class RenderFramebufferCached {
     }
     public void preRender(boolean blend) {
         if (Engine.isVulkan) {
-            if (!blend) {
-                System.out.println(this.fbVk.getWidth()+","+this.fbVk.getHeight());
-            }
             Engine.beginRenderPass(clearOnUpdate?VkRenderPasses.passFramebuffer:VkRenderPasses.passFramebufferNoClear, this.fbVk, VK_SUBPASS_CONTENTS_INLINE);
         } else {
             fbDbg.bind();
@@ -112,23 +110,31 @@ public class RenderFramebufferCached {
     public void init() {
         if (Engine.isVulkan) {
             VKContext vkContext = Engine.vkContext;
-            try ( MemoryStack stack = stackPush() ) {
-                VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
-                if (this.filterLinear) {
-                    sampler.minFilter(VK_FILTER_LINEAR);
-                    sampler.magFilter(VK_FILTER_LINEAR);
-                    sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-                } else {
-                    sampler.minFilter(VK_FILTER_NEAREST);
-                    sampler.magFilter(VK_FILTER_NEAREST);
-                    sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+            if (samplerLinear == VK_NULL_HANDLE) {
+                try ( MemoryStack stack = stackPush() ) {
+                    VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
+                    LongBuffer pSampler = stack.longs(0);
+                    {
+                        sampler.minFilter(VK_FILTER_LINEAR);
+                        sampler.magFilter(VK_FILTER_LINEAR);
+                        sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+                        int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
+                        if (err != VK_SUCCESS) {
+                            throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+                        }
+                        samplerLinear = pSampler.get(0);
+                    }
+                    {
+                        sampler.minFilter(VK_FILTER_NEAREST);
+                        sampler.magFilter(VK_FILTER_NEAREST);
+                        sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+                        int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
+                        if (err != VK_SUCCESS) {
+                            throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+                        }
+                        samplerNearest = pSampler.get(0);
+                    }
                 }
-                LongBuffer pSampler = stack.longs(0);
-                int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
-                }
-                this.sampler = pSampler.get(0);
             }
             this.descTextureGbufferColor = vkContext.descLayouts.allocDescSetSampleSingle();
         }
@@ -141,14 +147,12 @@ public class RenderFramebufferCached {
             Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.fbVk, VK_SUBPASS_CONTENTS_INLINE);
             Engine.endRenderPass();
         } else {
+            fbDbg.bind();
             this.fbDbg.clearFrameBuffer();
+            FrameBuffer.unbindFramebuffer();
         }
     }
     public void destroy() {
-        if (this.sampler != VK_NULL_HANDLE) {
-            vkDestroySampler(Engine.vkContext.device, this.sampler, null);
-            this.sampler = VK_NULL_HANDLE;
-        }
         if (this.fbVk != null) {
             Engine.vkContext.orphanResource(this.fbVk);
             this.fbVk = null;

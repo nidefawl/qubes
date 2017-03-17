@@ -126,11 +126,22 @@ public class SingleBlockDraw {
     public void processQueue() {
         int n = 0;
         if (!this.queue.isEmpty()) {
+            setRotation(15, 90+45, 0);
+
             SingleBlockRenderAtlas atlasRender = SingleBlockRenderAtlas.getInstance();
             TextureAtlas lastAtlas = null;
             this.modelMatrix.setIdentity();
             this.projMatrix.setZero();
-            Project.orthoMat(-1, 1, -1, 1, -1, 1, projMatrix);
+            if (Engine.isInverseZ) {
+                Project.orthoMat(1, -1, -1, 1, 4, -1f, projMatrix);
+//                projMatrix.setIdentity();
+//                this.projMatrix.scale(1, -1, 1);
+            } else
+                Project.orthoMat(-1, 1, -1, 1, -1, 1, projMatrix);
+
+            if (Engine.isInverseZ) {
+                this.modelMatrix.translate(0, 0, -0.5f);
+            }
             this.modelMatrix.scale(1, -1, 1);
             this.modelMatrix.rotate(this.rotX*GameMath.PI_OVER_180, 1,0,0);
             this.modelMatrix.rotate(this.rotY*GameMath.PI_OVER_180, 0,1,0);
@@ -170,6 +181,8 @@ public class SingleBlockDraw {
                         PushConstantBuffer buf = PushConstantBuffer.INST;
                         buf.setMat4(0, this.modelMatrix);
                         buf.setMat4(64, projMatrix);
+                        vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.singleblock.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+64));
+
                     }
                 }
                 int hash = atlasRender.getHash(block, data, stackData);
@@ -179,10 +192,13 @@ public class SingleBlockDraw {
                 int y = SingleBlockRenderAtlas.getYPx(idx);
                 Engine.setViewport(x, y, SingleBlockRenderAtlas.tileSize, SingleBlockRenderAtlas.tileSize);
                 Engine.clearDepth();
+                if (block == Block.grass) {
+                    System.out.println(x+","+y);
+                }
                 doRender(block, data, stackData);
                 lastAtlas = targetAtlas;
                 n++;
-                if (n > 10)
+                if (n > 2210)
                     break;
             }
             if (lastAtlas != null) {
@@ -236,12 +252,14 @@ public class SingleBlockDraw {
 
     public void doRender(Block block, int data, StackData stackData) {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
+
         if (buffer.vertexCount == 0) {
             return;
         }
         int numInts = buffer.storeVertexData(this.vboBuf);
         int numInts2 = buffer.storeIndexData(this.vboIdxBuf);
 //        System.out.println("numInts2 "+numInts2);
+        
         if (Engine.isVulkan) {
             swapBuffers();
             this.buffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);

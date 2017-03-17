@@ -47,7 +47,7 @@ void main(void) {
 	vec3 color_adj = tex.rgb;
 	vec3 color_adj2 = color.rgb;
 	linearizeInput(color_adj.rgb);
-	linearizeInput(color_adj2.rgb);
+	linearizeInput2(color_adj2.rgb);
 	color_adj *= color_adj2.rgb;
 
 

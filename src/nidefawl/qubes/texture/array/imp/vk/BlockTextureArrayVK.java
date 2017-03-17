@@ -123,8 +123,4 @@ public class BlockTextureArrayVK extends TextureArrayVK {
         this.anisotropicFiltering = anisotropicFiltering;
     }
 
-    public boolean isSRGB() {
-        return this.internalFormat==GL21.GL_SRGB8_ALPHA8;
-    }
-
 }

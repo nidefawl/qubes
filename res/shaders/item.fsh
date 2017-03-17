@@ -1,5 +1,7 @@
 #version 150 core
 
+#pragma include "tonemap.glsl"
+
 #pragma define "ALPHA_TEST"
 
 uniform sampler2DArray itemTextures;
@@ -16,5 +18,6 @@ void main(void) {
 	// vec4 tex = texture(itemTextures, vec3(texcoord.st, idx));
     if (tex.a < 0.0)
     	discard;
+	linearizeInput(tex.rgb);
     out_Color = vec4(tex);
 }

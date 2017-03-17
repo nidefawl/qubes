@@ -245,17 +245,30 @@ public class GuiOverlayStats extends Gui {
 //        tess.drawQuads();
         
         if (Game.instance.selBlock.getBlock()!=Block.air) {
-            Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
+            Engine.pxStack.push(0, 0, 10);
+//            Engine.clearDepth();
+            Engine.setPipeStateColored2D();
+            tess.setColorF(0x990000, 0.8f);
+            tess.add(0, y+totalHeight+8);
+            tess.add(maxW, y+totalHeight+8);
+            tess.add(maxW, y);
+            tess.add(0, y);
+            tess.drawQuads();
+            Engine.pxStack.push(0, 0, 10);
+          Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
+          Engine.pxStack.pop();
+          Engine.pxStack.pop();
         }
         Block b = Game.instance.selBlock.getBlock();
         Engine.setPipeStateFontrenderer();
         if (b != null)
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 
+        if (false)
         {
-            int prX = 100;
+            int prX = 20;
             int prY = prX;
-            int pw = 512;
+            int pw = 1024;
             int ph = pw;
             TextureAtlas atlas = SingleBlockRenderAtlas.getInstance().getAtlasAtIdx(0);
             if (atlas != null) {

@@ -30,7 +30,7 @@ public abstract class TextureArray {
     public float uploadprogress;
     public int totalSlots;
     public float anisotropicFiltering = 0;
-    protected int internalFormat;
+    public int internalFormat;
 
     public TextureArray(int maxTextures) {
         this.textures = new int[maxTextures];
@@ -181,9 +181,6 @@ public abstract class TextureArray {
         this.anisotropicFiltering = anisotropicFiltering;
     }
 
-    public boolean isSRGB() {
-        return this.internalFormat==GL21.GL_SRGB8_ALPHA8;
-    }
     public void destroy() {
     }
 }

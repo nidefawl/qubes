@@ -1,6 +1,7 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 import static org.lwjgl.vulkan.VK10.VK_SUBPASS_CONTENTS_INLINE;
 
@@ -52,6 +53,7 @@ import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
@@ -712,6 +714,20 @@ public class Game extends GameBase {
         this.statsFB.render();
         if (!canRenderGui3d()) {
             renderGui(fTime, mx, my);
+//            GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+//            Engine.setPipeStateItem();
+//            ITess tess = Engine.getTess();
+//            tess.setColorF(-1, 1);
+//            int x = 32;
+//            int y = x;
+//            int w = 256;
+//            int h = w;
+//            tess.setUIntLSB(3);
+//            tess.add(x+w, y+0, 0, 1, 1);
+//            tess.add(x+0, y+0, 0, 0, 1);
+//            tess.add(x+0, y+h, 0, 0, 0);
+//            tess.add(x+w, y+h, 0, 1, 0);
+//            tess.drawQuads();
         }
 
         if (this.gui == null && this.world != null && !canRenderGui3d()) {
@@ -1235,6 +1251,7 @@ public class Game extends GameBase {
             lastShaderLoadTime = System.currentTimeMillis();
 //            Engine.particleRenderer.spawnParticles(10);
 //          Shaders.initShaders();
+//            SingleBlockRenderAtlas.getInstance().reset();
 //          Engine.lightCompute.initShaders();
 //          Engine.worldRenderer.reloadModel();
 //          Engine.renderBatched.initShaders();
@@ -1789,7 +1806,19 @@ public class Game extends GameBase {
                 return;
             }
             if (text.equals("/blockreset")) {
+                Shaders.initShaders();
                 SingleBlockRenderAtlas.getInstance().reset();
+                return;
+            }
+            if (text.equals("/srgb")) {
+                Engine.SRGB_TEXTURES=!Engine.SRGB_TEXTURES;
+                Engine.worldRenderer.initShaders();
+                RenderersGL.outRenderer.initShaders();
+                RenderersGL.particleRenderer.initShaders();
+                Shaders.initShaders();
+                RenderAssets.reload();
+                SingleBlockRenderAtlas.getInstance().reset();
+                ChatManager.getInstance().addMsg("SRGB_TEXTURES is now "+(Engine.SRGB_TEXTURES?"ON":"OFF"));
                 return;
             }
             if (text.equals("/gui3d")) {
@@ -1800,12 +1829,14 @@ public class Game extends GameBase {
             if (text.equals("/reloadshaders")&&!Engine.isVulkan) {
                 Shaders.initShaders();
                 //            Engine.lightCompute.initShaders();
-//                Engine.worldRenderer.reloadModel();
+//                Engine.
+//                Engine.worldRenderer.
 //                Engine.renderBatched.initShaders();
 //                Engine.shadowRenderer.initShaders();
                 Engine.worldRenderer.initShaders();
 //                Engine.skyRenderer.initShaders();
                 RenderersGL.outRenderer.initShaders();
+                RenderersGL.blurRenderer.initShaders();
 //                Engine.particleRenderer.initShaders();
                 return;
             }

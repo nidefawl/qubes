@@ -101,7 +101,13 @@ public class GuiTest extends Gui implements ITextEdit {
                 Button btn = new Button(10+i, "Scrolllist button "+i);
                 btn.setSize(this.scrolllist.width-12, h-12);
                 btn.setPos(2, 2+i*(h+10));
-                this.scrolllist.add(btn);
+                if (i%2==0) {
+
+                    this.scrolllist.addBackground(btn);
+                } else {
+
+                    this.scrolllist.add(btn);
+                }
             }
         }
         {

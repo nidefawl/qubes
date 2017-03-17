@@ -35,6 +35,7 @@ import nidefawl.qubes.render.gui.BoxGUI;
 import nidefawl.qubes.render.gui.LineGUI;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.util.StringUtil;
 
 public class GuiCraftingSelect extends GuiWindowInventoryBase implements ITextEdit {

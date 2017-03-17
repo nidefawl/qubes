@@ -545,12 +545,11 @@ void main() {
 #endif
     alpha += isEntity;
     alpha = min(alpha, 1.0);
-    float luma = 1.0f;
     if (!isSky) {
         // float minAmb = 0.25;
         // float minAmb2 = 0.1;
         float minAmb = 0.05;
-        float minAmb2 = 0.03;
+        float minAmb2 = 0.09;
          float diff = 1.5;
         // prop.roughness = 0.3;
         float roughness = pow(2.0, 1.0+(prop.roughness)*24.0)-1.0;
@@ -601,7 +600,7 @@ void main() {
         float shadow = shadowRaw*(1.0-isBackface)*(1.0-isWater*0.8);
         // float shadow = mix(getSoftShadow(), 1, 0.04);
 
-        float sunLight = skyLightLvl * prop.NdotL * shadow * dayLightIntens *(1.0-fNight);
+        float sunLight = skyLightLvl * prop.NdotL * (shadow+prop.blockLight.z*0.05) * dayLightIntens *(1.0-fNight);
         sunLight = max(shadow*(0.05-fNight*0.035), sunLight);
         sunLight = sunLight*occlusion;
         sunLight = max(0.0, sunLight);
@@ -625,7 +624,7 @@ void main() {
         finalLight += lum* (mix(1.0, occlusion, 0.19)) * blockLight*isLight*0.6;
         finalLight+=isIllum*4.0;
         finalLight += vec3(1.0, 0.9, 0.7) * pow(blockLightLvl/8.0,2.0)*((1.0-isLight*0.8)*blockLightConst);
-        float mixSSAO = 0.1+shadow*0.7;
+        float mixSSAO = 0.1;
         finalLight *= max(mixSSAO+ssao.r*(1.0-mixSSAO), isWater+isBackface*0.5);
         finalLight+=prop.light.rgb*(occlusion);
         // finalLight*=2;
@@ -648,9 +647,9 @@ void main() {
             // alpha = 0.5;
             float minShadow = max(shadowRaw, 0.7);
             // alpha = 0.999+0.001*clamp((depth-4.5) / 4.5, 0.0, 1.0);
-            finalLight *= clamp(sky_absorbance, 0.2, 1.0)*minShadow*0.26;
+            finalLight *= clamp(sky_absorbance, 0.2, 1.0)*minShadow*0.08;
             fogDepth = min(depth, 12)*15;
-            fogColor *= vec3(0.05, 0.18, 0.12)*6;
+            fogColor *= vec3(0.05, 0.18, 0.12)*0;
             prop.albedo+=pow(1.0-min(depth/12.0, 1.0), 4.0)*(vec3(0.02, 0.035, 0.035)*2)*minShadow*1.0;
             // finalLight*=4;
 // vec3 watercolor = vec3(0.71,0.6,0.6);
@@ -666,7 +665,6 @@ void main() {
         spec*=shadow;
         prop.albedo = mix (terr, spec*vec3(0.02), isWater*theta);
         prop.albedo=terr;
-        luma = dot(finalLight, vec3(1.0));
     } else {
 
     }

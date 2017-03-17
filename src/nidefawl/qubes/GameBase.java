@@ -772,6 +772,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             //            this.showErrorScreen((String)showError[0], (List)showError[1], (Throwable)showError[2], true);
             throw this.showError;
         }
+        UniformBuffer.printStats();
         if (GPUProfiler.PROFILING_ENABLED) {
             GPUProfiler.endFrame();
             GPUTaskProfile tp;

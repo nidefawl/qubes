@@ -19,23 +19,25 @@ public class TextureArrays {
     public static TextureArrayVK itemTextureArrayVK;
     public static TextureArrayVK noiseTextureArrayVK;
     public static TextureArray[] init() {
-        if (Engine.isVulkan) {
-            blockTextureArray = blockTextureArrayVK = new BlockTextureArrayVK();
-            blockNormalMapArray = blockNormalMapArrayVK = new BlockNormalMapArrayVK();
-            itemTextureArray = itemTextureArrayVK = new ItemTextureArrayVK();
-            noiseTextureArray = noiseTextureArrayVK = new NoiseTextureArrayVK();
-        } else {
-            blockTextureArray = blockTextureArrayGL = new BlockTextureArrayGL();
-            blockNormalMapArray = blockNormalMapArrayGL = new BlockNormalMapArrayGL();
-            itemTextureArray = itemTextureArrayGL = new ItemTextureArrayGL();
-            noiseTextureArray = noiseTextureArrayGL = new NoiseTextureArrayGL();
+        if (allArrays == null) {
+            if (Engine.isVulkan) {
+                blockTextureArray = blockTextureArrayVK = new BlockTextureArrayVK();
+                blockNormalMapArray = blockNormalMapArrayVK = new BlockNormalMapArrayVK();
+                itemTextureArray = itemTextureArrayVK = new ItemTextureArrayVK();
+                noiseTextureArray = noiseTextureArrayVK = new NoiseTextureArrayVK();
+            } else {
+                blockTextureArray = blockTextureArrayGL = new BlockTextureArrayGL();
+                blockNormalMapArray = blockNormalMapArrayGL = new BlockNormalMapArrayGL();
+                itemTextureArray = itemTextureArrayGL = new ItemTextureArrayGL();
+                noiseTextureArray = noiseTextureArrayGL = new NoiseTextureArrayGL();
+            }
+            allArrays = new TextureArray[] {
+                    blockTextureArray,
+                    blockNormalMapArray,
+                    itemTextureArray,
+                    noiseTextureArray
+            };
         }
-        allArrays = new TextureArray[] {
-                blockTextureArray,
-                blockNormalMapArray,
-                itemTextureArray,
-                noiseTextureArray
-        };
         return allArrays;
     }
     
