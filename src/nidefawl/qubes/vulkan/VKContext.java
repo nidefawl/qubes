@@ -89,6 +89,7 @@ public class VKContext {
     CommandBuffer[] copyCommandBuffers = null;
     private CommandBuffer[] renderCommandBuffers;
     private CommandBuffer currentCmdBuffer;
+    private CommandBuffer currentCpyBuffer;
     
     public void syncAllFences() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.syncAllFences");
@@ -321,12 +322,14 @@ public class VKContext {
             }
             freeFence = this.fences[currentBuffer];
         }
-        if (uploadBuf != null) {
-            uploadBuf.inUse = false;
-        }
+        System.out.println("NOW FREE "+currentBuffer);
         if (currentCmdBuffer != null) {
             currentCmdBuffer.inUse = false;
         }
+        if (currentCpyBuffer != null) {
+            currentCmdBuffer.inUse = false;
+        }
+        this.currentCpyBuffer = this.copyCommandBuffers[currentBuffer];
         this.currentCmdBuffer = this.renderCommandBuffers[currentBuffer];
         vkResetCommandBuffer(this.currentCmdBuffer, 0);
         updateOrphanedList();
@@ -514,14 +517,12 @@ public class VKContext {
     public void finishUpload() {
         if (begin) {
             begin = false;
-            if (copyCommandBuffers[currentBuffer] != uploadBuf) {
-                throw new GameLogicError("INVALID UP CMD BUF "+(copyCommandBuffers[currentBuffer])+" != "+uploadBuf+ " - "+curBufPre+","+currentBuffer);
-            }
             copyCommandBuffers[currentBuffer].inUse = true;
             int err = vkEndCommandBuffer(copyCommandBuffers[currentBuffer]);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkEndCommandBuffer failed: " + VulkanErr.toString(err));
             }
+            System.out.println("SUBMIT COPY CMD "+currentBuffer);
             try ( MemoryStack stack = stackPush() ) {
                 VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
                 PointerBuffer pCommandBuffers = stack.pointers(copyCommandBuffers[currentBuffer]);
@@ -533,16 +534,12 @@ public class VKContext {
             }
         }
     }
-    CommandBuffer uploadBuf = null;
-    int curBufPre = 0;
     public CommandBuffer getCopyCommandBuffer() {
         CommandBuffer commandBuffer = copyCommandBuffers[currentBuffer];
         if (commandBuffer.inUse) {
-            throw new GameLogicError("Cant upload from here");
+            throw new GameLogicError("CANNOT START ANOTHER CPY BUFFER FOR THIS FRAME");
         }
         if (!begin) {
-            uploadBuf = commandBuffer;
-            curBufPre = currentBuffer;
             begin = true;
             try ( MemoryStack stack = stackPush() ) {
                 VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.callocStack(stack)
@@ -675,8 +672,17 @@ public class VKContext {
         }
         for (int i = 0 ; i < orphanedInUse.size(); i++) {
             if (orphanedInUse.get(i).isFree()) {
-                RefTrackedResource n = orphanedInUse.remove(i--);
-                n.destroy();
+                RefTrackedResource resource = orphanedInUse.remove(i--);
+                if (resource instanceof BufferPair) {
+                    System.out.print(resource+" "+((BufferPair)resource).tag()+" ON DESTROY ");
+                    boolean[] b = ((BufferPair)resource).inUseBy;
+                    for (int z = 0; z < b.length; z++) {
+                        System.out.print(b[z]);
+                        System.out.print(",");
+                    }
+                    System.out.println();
+                }
+                resource.destroy();
             }
         }
     }
@@ -684,7 +690,17 @@ public class VKContext {
         return new BufferPair(this);
     }
     public void orphanResource(RefTrackedResource resource) {
-        if (resource != null)
+        if (resource != null) {
             this.orphanedInUse.add(resource);
+            if (resource instanceof BufferPair) {
+                System.out.print(resource+" "+((BufferPair)resource).tag()+" ON ORPHAN ");
+                boolean[] b = ((BufferPair)resource).inUseBy;
+                for (int i = 0; i < b.length; i++) {
+                    System.out.print(b[i]);
+                    System.out.print(",");
+                }
+                System.out.println();
+            }
+        }
     }
 }

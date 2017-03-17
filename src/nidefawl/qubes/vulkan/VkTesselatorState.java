@@ -7,6 +7,7 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
     BufferPair buffer;
     private boolean usageDynamic;
     private VKContext vkContext;
+    private String tag;
     public VkTesselatorState(VKContext ctxt) {
         this(ctxt, false);
     }
@@ -18,8 +19,9 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
     public void destroy() {
         vkContext.orphanResource(this.buffer);
     }
-    public VkTesselatorState tag(String string) {
-        this.buffer.tag(string);
+    public VkTesselatorState tag(String tag) {
+        this.tag = tag;
+        this.buffer.tag(tag);
         return this;
     }
     @Override
@@ -37,7 +39,7 @@ public class VkTesselatorState extends AbstractVkTesselatorState implements ITes
     @Override
     public void swapBuffers() {
         this.vkContext.orphanResource(this.buffer);
-        this.buffer = this.vkContext.getFreeBuffer();
+        this.buffer = this.vkContext.getFreeBuffer().tag(this.tag);
     }
 
 

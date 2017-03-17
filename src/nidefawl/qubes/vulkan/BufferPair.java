@@ -12,16 +12,19 @@ public class BufferPair implements RefTrackedResource {
     public VkBuffer idx;
     public boolean[] inUseBy = new boolean[VulkanInit.MAX_NUM_SWAPCHAIN];
     public int elementCount;
+    private String tag;
     public BufferPair(VKContext ctxt) {
         this.vert = new VkBuffer(ctxt);
         this.idx = new VkBuffer(ctxt);
     }
-    public BufferPair tag(String s) {
-        this.vert.tag(s+"_vertex");
-        this.idx.tag(s+"_idx");
+    public BufferPair tag(String tag) {
+        this.tag = tag;
+        this.vert.tag(tag+"_vertex");
+        this.idx.tag(tag+"_idx");
         return this;
     }
     public void destroy() {
+        System.out.println(tag+" destroy");
         this.vert.destroy();
         this.idx.destroy();
     }
@@ -36,6 +39,9 @@ public class BufferPair implements RefTrackedResource {
     public void upload(int offsetvert, ByteBuffer bufVert, int offsetIdx, ByteBuffer bufIdx) {
         this.vert.upload(bufVert, offsetvert);
         this.idx.upload(bufIdx, offsetIdx);
+        if (this.vert.isDeviceLocal()) {
+            flagUse(Engine.vkContext.getCopyCommandBuffer().frameIdx);
+        }
     }
     public void setElementCount(int l) {
         this.elementCount = l;
@@ -77,5 +83,8 @@ public class BufferPair implements RefTrackedResource {
             }
         }
         return true;
+    }
+    public String tag() {
+        return this.tag;
     }
 }

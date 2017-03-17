@@ -63,7 +63,7 @@ public class MeshedRegion {
 
         public BufferPair swapBuffers(int pass) {
             BufferPair prev = buffers[pass];
-            BufferPair newbuffer = Engine.vkContext.getFreeBuffer();
+            BufferPair newbuffer = Engine.vkContext.getFreeBuffer().tag("region_pass_"+pass);
             if (prev != null) {
                 Engine.vkContext.orphanResource(prev);
             }

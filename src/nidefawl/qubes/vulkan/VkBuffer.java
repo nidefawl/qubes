@@ -173,4 +173,7 @@ public class VkBuffer implements IVkResource {
     public String toString() {
         return super.toString()+(this.tag!= null?" "+this.tag:"");
     }
+    public String tag() {
+        return this.tag;
+    }
 }

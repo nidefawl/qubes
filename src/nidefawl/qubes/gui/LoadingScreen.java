@@ -71,7 +71,6 @@ public class LoadingScreen {
         if (isVulkan) {
             Engine.clearDepth();
             Engine.endRenderPass();
-            System.out.println(VkRenderPasses.passFramebuffer.clearValues);
 //            vkContext.swapChain.imageClear(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, 0.7f, 0.3f, 0, 1);
             vkContext.swapChain.blitFramebufferAndPreset(Engine.getDrawCmdBuffer(), this.frameBuffer, 1);
             Engine.endCommandBuffer();

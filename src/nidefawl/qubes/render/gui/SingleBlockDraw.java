@@ -42,7 +42,8 @@ public class SingleBlockDraw {
     private float rotX;
     private float rotY;
     private float rotZ;
-    LinkedList<BlockDrawQueueEntry> queue = new LinkedList<>(); 
+    LinkedList<BlockDrawQueueEntry> queue = new LinkedList<>();
+    private BufferPair buffer; 
     static class BlockDrawQueueEntry {
         Block block;
         int data;
@@ -228,6 +229,10 @@ public class SingleBlockDraw {
             Engine.clearDescriptorSet(2);
         }
     }
+    public void swapBuffers() {
+        Engine.vkContext.orphanResource(this.buffer);
+        this.buffer = Engine.vkContext.getFreeBuffer().tag("singleblock");
+    }
 
     public void doRender(Block block, int data, StackData stackData) {
         VertexBuffer buffer = Engine.blockRender.renderSingleBlock(block, data, stackData);
@@ -238,10 +243,10 @@ public class SingleBlockDraw {
         int numInts2 = buffer.storeIndexData(this.vboIdxBuf);
 //        System.out.println("numInts2 "+numInts2);
         if (Engine.isVulkan) {
-            BufferPair vkbuffer = Engine.vkContext.getFreeBuffer();
-            vkbuffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);
-            vkbuffer.setElementCount(numInts2);
-            vkbuffer.draw(Engine.getDrawCmdBuffer());
+            swapBuffers();
+            this.buffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);
+            this.buffer.setElementCount(numInts2);
+            this.buffer.draw(Engine.getDrawCmdBuffer());
         } else {
             this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
             this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);

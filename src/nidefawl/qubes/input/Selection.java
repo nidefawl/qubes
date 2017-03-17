@@ -17,6 +17,8 @@ import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vulkan.VkTess;
+import nidefawl.qubes.vulkan.VkTesselatorState;
 import nidefawl.qubes.world.World;
 
 public class Selection {
@@ -42,6 +44,9 @@ public class Selection {
     public void init() {
 
         highlightSelection = Engine.newTessBuffer(true);
+        if (highlightSelection instanceof VkTesselatorState) {
+            ((VkTesselatorState)highlightSelection).tag("hover_selection");
+        }
         fullBlock = Engine.newTessBuffer(false);
         customBB = Engine.newTessBuffer(true);
         this.rayTrace = new RayTrace();

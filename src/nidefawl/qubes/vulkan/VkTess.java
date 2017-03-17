@@ -251,9 +251,9 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
                 this.vertexOffset = 0;
                 this.indexOffset = 0;
                 this.copyTo(out);
-                if (!out.getBuffer().isFree()) {
-                    out.swapBuffers();
-                }
+//                if (!out.getBuffer().isFree()) {
+//                }
+                out.swapBuffers();
                 out.getBuffer().create(vIdx*4, idxCount*4, bufferMode == DEVICE_LOCAL_UPLOAD);
                 out.getBuffer().upload(this.vertexOffset, bufIntV.getByteBuf(), this.indexOffset, bufIntI.getByteBuf());
             }

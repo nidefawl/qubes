@@ -498,10 +498,10 @@ public class Engine {
         if (fullscreenquads == null) {
             fullscreenquads = new ITessState[4];
             for (int i = 0; i < fullscreenquads.length; i++)
-                fullscreenquads[i] = isVulkan ? new VkTesselatorState(vkContext, true) : new TesselatorState(GL15.GL_STATIC_DRAW);
+                fullscreenquads[i] = isVulkan ? new VkTesselatorState(vkContext, true).tag("quad_"+i) : new TesselatorState(GL15.GL_STATIC_DRAW);
         }
         if (quad == null) {
-            quad = isVulkan ? new VkTesselatorState(vkContext, true) : new TesselatorState(GL15.GL_STATIC_DRAW);
+            quad = isVulkan ? new VkTesselatorState(vkContext, true).tag("quad") : new TesselatorState(GL15.GL_STATIC_DRAW);
         }
         ITess tess = getTess();
         tess.resetState();
