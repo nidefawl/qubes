@@ -379,8 +379,8 @@ public class Engine {
             Shader.init();   
         } else {
             VkRenderPasses.initClearValues(INVERSE_Z_BUFFER);
-            VkTess.init(vkContext, 32);
-            UniformBuffer.init(vkContext, 32);
+            VkTess.init(vkContext, VulkanInit.MAX_NUM_SWAPCHAIN);
+            UniformBuffer.init(vkContext, VulkanInit.MAX_NUM_SWAPCHAIN);
             VkPipelines.init(vkContext);
             descriptorSetUboScene = vkContext.descLayouts.allocDescSetUBOScene();
             descriptorSetUboScene.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix3D.getDescriptorBuffer());

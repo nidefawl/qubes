@@ -105,6 +105,9 @@ public final class SwapChain {
         if ((surfCaps.maxImageCount() > 0) && (desiredNumberOfSwapchainImages > surfCaps.maxImageCount())) {
             desiredNumberOfSwapchainImages = surfCaps.maxImageCount();
         }
+        if (desiredNumberOfSwapchainImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
+            desiredNumberOfSwapchainImages = VulkanInit.MAX_NUM_SWAPCHAIN;
+        }
 
         VkExtent2D currentExtent = surfCaps.currentExtent();
         int currentWidth = currentExtent.width();
@@ -172,11 +175,13 @@ public final class SwapChain {
         IntBuffer pImageCount = memAllocInt(1);
         err = vkGetSwapchainImagesKHR(ctxt.device, swapChain, pImageCount, null);
         this.numImages = pImageCount.get(0);
-        System.out.println("Create swapchain with "+this.numImages+" images");
-        
         
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to get number of swapchain images: " + VulkanErr.toString(err));
+        }
+        System.out.println("Create swapchain with "+this.numImages+" images");
+        if (this.numImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
+            throw new AssertionError("Unsupported number of swapchain images");
         }
 
         LongBuffer pSwapchainImages = memAllocLong(this.numImages);
