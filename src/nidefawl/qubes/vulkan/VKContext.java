@@ -89,7 +89,7 @@ public class VKContext {
     CommandBuffer[] copyCommandBuffers = null;
     private CommandBuffer[] renderCommandBuffers;
     private CommandBuffer currentCmdBuffer;
-    private CommandBuffer currentCpyBuffer;
+    private long copyFence;
     
     public void syncAllFences() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.syncAllFences");
@@ -161,6 +161,7 @@ public class VKContext {
                 vkDestroyFence(this.device, this.fences[i], null);
             }
         }
+        vkDestroyFence(this.device, this.copyFence, null);
         if (device != null) {
             vkDeviceWaitIdle(device);
             this.memoryManager.shudown();
@@ -296,6 +297,8 @@ public class VKContext {
                 vkCreateFence(this.device, fenceCreate, null, pFence);
                 this.fences[i] = pFence.get(0);
             }
+            vkCreateFence(this.device, fenceCreate, null, pFence);
+            this.copyFence = pFence.get(0);
         }
     }
     public void preRender() {
@@ -313,7 +316,7 @@ public class VKContext {
                 throw new AssertionError("vkWaitForFences failed: " + VulkanErr.toString(err));
             }
 
-            vkResetFences(device, this.fences[currentBuffer]);
+            err = vkResetFences(device, this.fences[currentBuffer]);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkResetFences failed: " + VulkanErr.toString(err));
             }
@@ -322,14 +325,9 @@ public class VKContext {
             }
             freeFence = this.fences[currentBuffer];
         }
-        System.out.println("NOW FREE "+currentBuffer);
         if (currentCmdBuffer != null) {
             currentCmdBuffer.inUse = false;
         }
-        if (currentCpyBuffer != null) {
-            currentCmdBuffer.inUse = false;
-        }
-        this.currentCpyBuffer = this.copyCommandBuffers[currentBuffer];
         this.currentCmdBuffer = this.renderCommandBuffers[currentBuffer];
         vkResetCommandBuffer(this.currentCmdBuffer, 0);
         updateOrphanedList();
@@ -515,6 +513,7 @@ public class VKContext {
         return shader;
     }
     public void finishUpload() {
+        //TODO: create unsychronized upload handle using fences and non-blocking vkWaitForFences calls
         if (begin) {
             begin = false;
             copyCommandBuffers[currentBuffer].inUse = true;
@@ -522,15 +521,27 @@ public class VKContext {
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkEndCommandBuffer failed: " + VulkanErr.toString(err));
             }
-            System.out.println("SUBMIT COPY CMD "+currentBuffer);
+//            System.out.println("SUBMIT COPY CMD "+currentBuffer);
             try ( MemoryStack stack = stackPush() ) {
                 VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
                 PointerBuffer pCommandBuffers = stack.pointers(copyCommandBuffers[currentBuffer]);
                 submitInfo.pCommandBuffers(pCommandBuffers);
-                err = vkQueueSubmit(this.vkQueue, submitInfo, VK_NULL_HANDLE);
+
+                err = vkResetFences(device, this.copyFence);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkResetFences failed: " + VulkanErr.toString(err));
+                }
+                
+                err = vkQueueSubmit(this.vkQueue, submitInfo, copyFence);
                 if (err != VK_SUCCESS) {
                     throw new AssertionError("vkQueueSubmit failed: " + VulkanErr.toString(err));
                 }
+                //Wait for upload to complete!
+                err = vkWaitForFences(device, this.copyFence, true, 1000L*1000L*6000L);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkWaitForFences failed: " + VulkanErr.toString(err));
+                }
+                copyCommandBuffers[currentBuffer].inUse = false;
             }
         }
     }

@@ -199,6 +199,7 @@ public class Game extends GameBase {
         this.statsOverlay = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
         this.statsFB = new RenderFramebufferCached(true, false, true);
+        this.statsFB.init();
         statsList = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");
         Engine.checkGLError("Post startup");
@@ -224,9 +225,7 @@ public class Game extends GameBase {
         updateGui3dMode();
         
 
-        this.statsFB.init();
         statsList.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
-        this.statsFB.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
     }
 
     public void toggleGameMode() {
