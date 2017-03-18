@@ -159,7 +159,7 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
-        DEBUG_LAYER = false;
+        DEBUG_LAYER = true;
     }
 
     @Override
@@ -514,8 +514,12 @@ public class Game extends GameBase {
     }
 
     private nidefawl.qubes.vulkan.FrameBuffer frameBuffer;
-    
+    boolean once = false;
     public void renderVK(float fTime) {
+        if (!once) {
+            once = true;
+            vkContext.memoryManager.dump();
+        }
         if (Engine.displayWidth != vkContext.swapChain.width || Engine.displayHeight != vkContext.swapChain.height) {
             System.err.println("swapchain size != display size");
             System.err.printf("%dx%d vs %dx%d vs %dx%d\n", windowWidth, windowHeight, Engine.displayWidth, Engine.displayHeight, vkContext.swapChain.width,

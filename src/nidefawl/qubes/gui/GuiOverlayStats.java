@@ -22,6 +22,7 @@ import nidefawl.qubes.util.SysInfo;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vulkan.VkMemoryManager;
 import nidefawl.qubes.world.WorldClient;
 
 public class GuiOverlayStats extends Gui {
@@ -52,8 +53,11 @@ public class GuiOverlayStats extends Gui {
         float memJVMUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024F / 1024F;
         stats = String.format("FPS: %d%s (%.2f), %d ticks/s", Game.instance.lastFPS, Game.instance.getVSync() ? (" (VSync)") : "",
                 Stats.avgFrameTime, (int)Math.round(Game.instance.tick/Stats.fpsInteval));
-        statsRight = String.format("JHeap: %.0fMB/%.0fGB\nBuffers: %dMB\nGPU: %dMB", 
+        statsRight = String.format("JHeap: %.0fMB/%.0fGB\nBuffers: %dMB\nGPU: %dMB\n", 
                 memJVMUsed, memJVMTotal, Memory.mallocd/1024/1024, MeshedRegion.totalBytes/1024/1024);
+        if (Engine.isVulkan) {
+            statsRight += String.format("vk_block: %dMB\nvk_chunk: %dMB", VkMemoryManager.SIZE_BLOCK_ALLOCD/1024/1024, VkMemoryManager.SIZE_CHUNK_ALLOCD/1024/1024);
+        }
         for (int i = 0; i < WorldRenderer.NUM_PASSES; i++) {
             statsRight += "\n"+WorldRenderer.getPassName(i)+": "+(MeshedRegion.totalBytesPass[i]/1024/1024)+"MB";
         }
@@ -92,8 +96,6 @@ public class GuiOverlayStats extends Gui {
             info.add( String.format("Chunks %d - R %d/%d - V %.2fM", numChunks, Engine.worldRenderer.rendered,
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
-            info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
-            info.add( String.format("Binds/s: %d descs, %d pipes", Stats.callsBindDescSets, Stats.callsBindPipeline));
             if (!Engine.isVulkan) {
                 if (GL.isBindlessSuppported()) {
                     info.add( "Bindless  supported" );
@@ -138,13 +140,18 @@ public class GuiOverlayStats extends Gui {
             
             }
         }
+        info.add(String.format("GPU-upload: %.2fms", Stats.timeRendering));
+        info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
+        if (Engine.isVulkan) {
+            info.add( String.format("Binds/s: %d descs, %d pipes", Stats.callsBindDescSets, Stats.callsBindPipeline));
+        }
 
         if (world != null) {
             info.add(String.format("M: %.1fs (%.2fk calls %.2fms/call)", (Stats.timeMeshing)/1000.0, Stats.regionUpdates/1000.0, Stats.timeMeshing/(float)(Stats.regionUpdates+1)));
-            info.add(String.format("GPU-upload: %.2fms", Stats.timeRendering));
             info.add(String.format("World: %s", world.getName()));
             info.add(String.format("Mode: %s", Game.instance.getSelection().getMode().toString()));
             info.add(Game.instance.getSelection().quarterMode ? "Quarter" : "Full");
+        } else {
         }
         info.add(String.format("x: %.2f", v.x));
         info.add(String.format("y: %.2f", v.y));

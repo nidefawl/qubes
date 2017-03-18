@@ -34,6 +34,8 @@ public class VkMemoryManager {
     static final boolean DEBUG_MEM_ALLOC = false;
     static boolean MEM_ALLOC_CRASH = false;
     private static final long MAX_FRAGMENTATION_SIZE = 16*1024;
+    public static long SIZE_BLOCK_ALLOCD;
+    public static long SIZE_CHUNK_ALLOCD;
     static final HashMap<Long, MemoryChunk> memoryBindings = new HashMap<>();
     public class VulkanMemoryType {
         public VulkanMemoryType(VkMemoryType memoryTypes, int idx) {
@@ -75,7 +77,7 @@ public class VkMemoryManager {
         
         @Override
         public String toString() {
-            return "memChunk[0x"+Long.toHexString(this.offset)+",size=0x"+Long.toHexString(this.size)+",align="+this.align + (this.tag != null?",tag="+this.tag:"")+"]";
+            return "memChunk[0x"+Long.toHexString(this.offset)+",size=0x"+Long.toHexString(this.size)+" "+String.format("%.2f", (this.size/(float)MB))+",align="+this.align + (this.tag != null?",tag="+this.tag:"")+"]";
         }
         public void tag(String tag) {
             this.tag = tag;
@@ -112,6 +114,7 @@ public class VkMemoryManager {
                 vkFreeMemory(device, this.memory, null);
                 this.memory = VK_NULL_HANDLE;
                 this.memPointer = null;
+                SIZE_BLOCK_ALLOCD-=this.blockSize;
             }
         }
         public void allocateBlock(VkDevice device, VulkanMemoryType memType, long allocationBlockSize) {
@@ -132,6 +135,7 @@ public class VkMemoryManager {
                 throw new AssertionError("vkAllocateMemory failed: " + VulkanErr.toString(err));
             }
             this.memory = memPointer.get(0);
+            SIZE_BLOCK_ALLOCD+=this.blockSize;
         }
 
         public MemoryChunk allocateChunk(long align, long size) {
@@ -280,6 +284,16 @@ public class VkMemoryManager {
             }
             
         }
+        public long getAllocSum() {
+            ArrayList<MemoryChunk> allChunks = new ArrayList<>();
+            allChunks.addAll(list);
+            allChunks.addAll(unused);
+            long size = 0L;
+            for (int i = 0; i < allChunks.size(); i++) {
+                size += allChunks.get(i).size;
+            }
+            return size;
+        }
         public void dump() {
             ArrayList<MemoryChunk> allChunks = new ArrayList<>();
             allChunks.addAll(list);
@@ -300,7 +314,9 @@ public class VkMemoryManager {
                 lastEnd = c.offset+c.size;
                 System.out.println(c);
             }
+            if (this.blockSize-lastEnd > 0)
             System.out.println("Free 0x"+Long.toHexString(lastEnd)+" to 0x"+Long.toHexString(this.blockSize)+" = "+((this.blockSize-lastEnd)/MB)+"MB");
+            if (this.blockSize-this.offset > 0 && this.offset != lastEnd)
             System.out.println("Free 0x"+Long.toHexString(this.offset)+" to 0x"+Long.toHexString(this.blockSize)+" = "+((this.blockSize-this.offset)/MB)+"MB");
             
         }
@@ -332,11 +348,12 @@ public class VkMemoryManager {
         
     }
     final MemoryBlock[] blocks = new MemoryBlock[16];
-    private static final long MB = 1024L*1024L;
+    public static final long MB = 1024L*1024L;
     private VKContext ctxt;
     private VulkanMemoryType[] memTypes;
     private long deviceLocalHeapSize;
     private long allocationBlockSize;
+    private ArrayList<MemoryBlock> allBlocks = new ArrayList<>();
     private ArrayList<MemoryBlock> unshared = new ArrayList<>();
     
     public static int getMemoryType(VKContext vkContext, int typeBits, int properties) {
@@ -388,41 +405,23 @@ public class VkMemoryManager {
         if (deviceLocalHeapSize <= 0) {
             throw new GameLogicError("No supported memory type present");
         }
-        this.allocationBlockSize = Math.max(64*MB, Math.min(1024*MB, deviceLocalHeapSize/32));
+        this.allocationBlockSize = Math.max(128*MB, Math.min(1024*MB, deviceLocalHeapSize/32));
         if ((this.allocationBlockSize&0xFFFF) != 0) {
-            this.allocationBlockSize = Math.max(64*MB, Math.min(1024*MB, GameMath.nextPowerOf2(allocationBlockSize)));
+            this.allocationBlockSize = Math.max(128*MB, Math.min(1024*MB, GameMath.nextPowerOf2(allocationBlockSize)));
         }
         System.out.println("allocationBlockSize is "+(this.allocationBlockSize/MB)+"MB 0x"+Long.toHexString(allocationBlockSize));
 
         int nMemoryTypes = context.memoryProperties.memoryTypeCount();
         System.out.println("Device has "+nMemoryTypes+" memory types");
         for (int i = 0; i < nMemoryTypes; i++) {
-            String memtypeflagsStr = "";
             VkMemoryType memType = context.memoryProperties.memoryTypes(i);
             int memtypeflags = memType.propertyFlags();
-            for (int j = 0; j < 8; j++) {
-                if ((memtypeflags & (1<<j)) != 0) {
-                    if (!memtypeflagsStr.isEmpty()) {
-                        memtypeflagsStr+=",";
-                    }
-                    if (j==0) {
-                        memtypeflagsStr+="VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
-                    } else if (j==1) {
-                        memtypeflagsStr+="VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT";
-                    } else if (j==2) {
-                        memtypeflagsStr+="VK_MEMORY_PROPERTY_HOST_COHERENT_BIT";
-                    } else if (j==3) {
-                        memtypeflagsStr+="VK_MEMORY_PROPERTY_HOST_CACHED_BIT";
-                    } else if (j==4) {
-                        memtypeflagsStr+="VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT";
-                    } else 
-                    memtypeflagsStr+=Integer.toHexString((1<<j));
-                }
-            }
+            
+            String memtypeflagsStr = VulkanErr.memFlagsToStr(memtypeflags);
             memtypeflagsStr="("+Integer.toBinaryString(memtypeflags)+")"+memtypeflagsStr;
             System.out.println("Type "+i+" (Heap "+memType.heapIndex()+") has flags "+memtypeflagsStr);
         }
-        for (int i = 0; i < 5; i++) {
+        /*for (int i = 0; i < 5; i++) {
             allocateBlock(context.device, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, false);
         }
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true);
@@ -430,20 +429,43 @@ public class VkMemoryManager {
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
         allocateBlock(context.device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
+		*/
+    }
+    public void dump() {
+        for (int i = 0; i < allBlocks.size(); i++) {
+            MemoryBlock block = allBlocks.get(i);
+            long l = block.getAllocSum();
+            System.out.println("--- Block["+i+"], device idx "+block.memType.idx+", "+VulkanErr.memFlagsToStr(block.flags)+", Usage "+(l/MB)+"/"+(block.blockSize/MB)+"MB");
+            block.dump();
+        }
     }
 
-    private void allocateBlock(VkDevice device, int properties, boolean optimal) {
-        VulkanMemoryType mem = getMemTypeByFlags(properties);
+    private MemoryBlock allocateBlock(VkDevice device, int supportedTypes, int properties, boolean optimal) {
+        VulkanMemoryType mem = getMemTypeByFlagsAndType(supportedTypes, properties);
         for (int i = 0; i < blocks.length; i++) {
             if (blocks[i] == null) {
                 blocks[i] = new MemoryBlock(true, optimal);
                 blocks[i].allocateBlock(device, mem, this.allocationBlockSize);
-                return;
+                allBlocks.add(blocks[i]);
+                return blocks[i];
             }
         }
+        throw new GameLogicError("No free memory block slot");
     }
 
     //use a map if used frequently
+    private VulkanMemoryType getMemTypeByFlagsAndType(int supportedTypes, int properties) {
+        for (int i = 0; i < memTypes.length; i++)
+        {
+            if (((supportedTypes>>i)&1) != 0) {
+                if ((memTypes[i].flags & properties) == properties)
+                {
+                    return memTypes[i];
+                }
+            }
+        }
+        throw new GameLogicError("No supported memory type present");
+    }
     private VulkanMemoryType getMemTypeByFlags(int properties) {
         for (int i = 0; i < memTypes.length; i++)
         {
@@ -467,7 +489,9 @@ public class VkMemoryManager {
                 }
             }
         }
-        throw new GameLogicError("No supported memory type present. requested size "+size+","+supportedTypes+","+requiredFlags+","+imageMemory+","+align);
+      	return allocateBlock(this.ctxt.device, supportedTypes, requiredFlags, imageMemory);
+        
+        //throw new GameLogicError("No supported memory type present. requested size "+size+","+supportedTypes+","+requiredFlags+","+imageMemory+","+align);
     }
 
     public void releaseImageMemory(long image) {
@@ -482,26 +506,30 @@ public class VkMemoryManager {
         if (chunk == null) {
             throw new GameLogicError("not bound");
         }
+        SIZE_CHUNK_ALLOCD-=chunk.size;
         chunk.block.dealloc(chunk);
         if (!chunk.block.shared) {
             chunk.block.freeBlock(ctxt.device);
             unshared.remove(chunk.block);
+            allBlocks.remove(chunk.block);
         }
     }
-    public MemoryChunk allocChunk(long size, long align, int properties, boolean image, Object tag) {
+    public MemoryChunk allocChunk(int supportedTypes, long size, long align, int properties, boolean image, Object tag) {
         MemoryBlock block;
         if (size > this.allocationBlockSize/2) {
             System.out.println("Allocating full block for request of size "+size);
-            VulkanMemoryType mem = getMemTypeByFlags(properties);
+            VulkanMemoryType mem = getMemTypeByFlagsAndType(supportedTypes, properties);
             block = new MemoryBlock(false, image);
             block.allocateBlock(ctxt.device, mem, size);
             unshared.add(block);
+            allBlocks.add(block);
         } else {
-            block = getMemBlockByFlags(memReqs.memoryTypeBits(), properties, image, size, align);
+            block = getMemBlockByFlags(supportedTypes, properties, image, size, align);
         }
         if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" requires "+(size)+" bytes");
         MemoryChunk chunk = block.allocateChunk(align, size);
         if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" got chunk "+(chunk));
+        SIZE_CHUNK_ALLOCD+=chunk.size;
         return chunk;
     }
     public MemoryChunk allocateBufferMemory(long buffer, int properties) {
@@ -511,7 +539,7 @@ public class VkMemoryManager {
         vkGetBufferMemoryRequirements(ctxt.device, buffer, memReqs);
         long align = memReqs.alignment();
         long size = memReqs.size();
-        MemoryChunk chunk = allocChunk(size, align, properties, false, tag);
+        MemoryChunk chunk = allocChunk(memReqs.memoryTypeBits(), size, align, properties, false, tag);
         chunk.tag(tag);
         int err = vkBindBufferMemory(ctxt.device, buffer, chunk.block.memory, chunk.offset);
         if (err != VK_SUCCESS) {
@@ -529,7 +557,7 @@ public class VkMemoryManager {
         vkGetImageMemoryRequirements(ctxt.device, image, memReqs);
         long align = Math.max(memReqs.alignment(), this.ctxt.limits.bufferImageGranularity());
         long size = memReqs.size();
-        MemoryChunk chunk = allocChunk(size, align, properties, true, null);
+        MemoryChunk chunk = allocChunk(memReqs.memoryTypeBits(), size, align, properties, true, null);
         if (DEBUG_MEM_ALLOC) System.out.println("image "+image+","+debug+" requires "+(size)+" bytes");
         int err = vkBindImageMemory(ctxt.device, image, chunk.block.memory, chunk.offset);
         if (err != VK_SUCCESS) {
@@ -543,15 +571,13 @@ public class VkMemoryManager {
     }
 
     public void shudown() {
-        for (int i = 0; i < blocks.length; i++) {
-            if (blocks[i] != null) {
-                blocks[i].freeBlock(ctxt.device);
-                blocks[i] = null;
-            }
+        for (int i = 0; i < allBlocks.size(); i++) {
+            allBlocks.get(i).freeBlock(ctxt.device);
         }
-        for (int i = 0; i < unshared.size(); i++) {
-            unshared.get(i).freeBlock(ctxt.device);
+        for (int i = 0; i < blocks.length; i++) {
+            blocks[i] = null;
         }
         unshared.clear();
+        allBlocks.clear();
     }
 }

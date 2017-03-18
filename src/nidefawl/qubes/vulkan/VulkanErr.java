@@ -72,4 +72,28 @@ public class VulkanErr {
             return String.format("%s [%d]", "Unknown", Integer.valueOf(result));
         }
     }
+
+    public static String memFlagsToStr(int memtypeflags) {
+        String memtypeflagsStr = "";
+        for (int j = 0; j < 8; j++) {
+            if ((memtypeflags & (1<<j)) != 0) {
+                if (!memtypeflagsStr.isEmpty()) {
+                    memtypeflagsStr+=",";
+                }
+                if (j==0) {
+                    memtypeflagsStr+="VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT";
+                } else if (j==1) {
+                    memtypeflagsStr+="VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT";
+                } else if (j==2) {
+                    memtypeflagsStr+="VK_MEMORY_PROPERTY_HOST_COHERENT_BIT";
+                } else if (j==3) {
+                    memtypeflagsStr+="VK_MEMORY_PROPERTY_HOST_CACHED_BIT";
+                } else if (j==4) {
+                    memtypeflagsStr+="VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT";
+                } else 
+                memtypeflagsStr+=Integer.toHexString((1<<j));
+            }
+        }
+        return memtypeflagsStr;
+    }
 }

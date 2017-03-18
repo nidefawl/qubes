@@ -52,7 +52,7 @@ public class Engine {
     private static int NEXT_BUFFER_BINDING_POINT = 0;
     public static boolean INVERSE_Z_BUFFER = false;
     public static boolean OGL_INVERSE_Y = false;
-    public static boolean SRGB_TEXTURES;
+    public static boolean SRGB_TEXTURES = false;
     public static boolean isInverseZ = false;
     static ArrayList<TrueTypeFont> newfonts = new ArrayList<>();
     static ArrayList<TrueTypeFont> fonts = new ArrayList<>();

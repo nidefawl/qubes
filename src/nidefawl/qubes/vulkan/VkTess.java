@@ -3,6 +3,7 @@ package nidefawl.qubes.vulkan;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.ReallocIntBuffer;
 import nidefawl.qubes.util.*;
@@ -42,32 +43,70 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
         private BufferPair buffer;
         private int offsetV;
         private int offsetI;
-        final static int BUFFER_SIZE = 32*1024*1024;
-        public FrameLocalBuffers(VkTess tess, VKContext context) {
+        private int bytesFrameI = 0;
+        private int bytesFrameV = 0;
+        private final int idx;
+        final static int BUFFER_SIZE = 2*1024*1024;
+        public FrameLocalBuffers(VkTess tess, VKContext context, int i) {
             this.buffer = context.getFreeBuffer().tag("tess_"+tess.tag);
             this.buffer.create(BUFFER_SIZE, BUFFER_SIZE, false);
+            this.idx = i;
         }
         public void destroy() {
         }
         public void upload(VkTess vkTess, ByteBuffer bufV, int sizeV, ByteBuffer bufI, int sizeI) {
             if (BUFFER_SIZE-offsetV < sizeV) {
+                bytesFrameV+=BUFFER_SIZE-offsetV;
                 offsetV = 0;
             }
             if (BUFFER_SIZE-offsetI < sizeI) {
+                bytesFrameI+=BUFFER_SIZE-offsetI;
                 offsetI = 0;
             }
             vkTess.vertexOffset = offsetV;
             vkTess.indexOffset = offsetI;
             this.buffer.upload(offsetV, bufV, offsetI, bufI);
-            offsetV += Math.max(2048, GameMath.nextPowerOf2(sizeV));
-            offsetI += Math.max(2048, GameMath.nextPowerOf2(sizeI));
+            long alignedV = Math.max(2048, GameMath.nextPowerOf2(sizeV));
+            long alignedI = Math.max(2048, GameMath.nextPowerOf2(sizeI));
+            offsetV += alignedV;
+            offsetI += alignedI;
+            bytesFrameV+=alignedV;
+            bytesFrameI+=alignedI;
+
+        }
+        public void beginCurrentFrame() {
+            bytesFrameI = 0;
+            bytesFrameV = 0;
+        }
+        public void endCurrentFrame() {
+            if (bytesFrameV > BUFFER_SIZE) {
+                GameBase.baseInstance.setException(new GameError("BUF_"+idx+" OVERWRITE VERTEX "+bytesFrameV+" > "+BUFFER_SIZE+". This frame total payload "+(String.format("%.4f", ((bytesFrameI+bytesFrameV)/(float)VkMemoryManager.MB)))));
+            }
+            if (bytesFrameI > BUFFER_SIZE) {
+                GameBase.baseInstance.setException(new GameError("BUF_"+idx+" OVERWRITE INDEX "+bytesFrameI+" > "+BUFFER_SIZE+". This frame total payload "+(String.format("%.4f", ((bytesFrameI+bytesFrameV)/(float)VkMemoryManager.MB)))));
+            }
         }
     }
     FrameLocalBuffers[] buffers = new FrameLocalBuffers[0];
+
+    private void beginCurrentFrame() {
+        buffers[VKContext.currentBuffer].beginCurrentFrame();
+    }
+    private void endCurrentFrame() {
+        buffers[VKContext.currentBuffer].endCurrentFrame();
+    }
     private String tag;
     public static void init(VKContext context, int numImages) {
         instance.initInstance(context, numImages);
         tessFont.initInstance(context, numImages);
+    }
+    public static void beginFrame() {
+        instance.beginCurrentFrame();
+        tessFont.beginCurrentFrame();
+    }
+    public static void endFrame() {
+        instance.endCurrentFrame();
+        tessFont.endCurrentFrame();
     }
 
     private void initInstance(VKContext context, int numImages) {
@@ -81,7 +120,7 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
             buffers = new FrameLocalBuffers[numImages];
             for (int i = 0; i < buffers.length; i++) {
                 System.out.println("ALLOC FRAME TESSBUFFER "+i);
-                buffers[i] = new FrameLocalBuffers(this, context);
+                buffers[i] = new FrameLocalBuffers(this, context, i);
             }
         }
     }
@@ -351,5 +390,6 @@ public class VkTess extends AbstractVkTesselatorState implements ITess {
     @Override
     public void swapBuffers() {
     }
+
 
 }

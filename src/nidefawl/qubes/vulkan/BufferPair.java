@@ -59,7 +59,7 @@ public class BufferPair implements RefTrackedResource {
             vkCmdDrawIndexed(commandBuffer, this.elementCount, 1, 0, 0, 0);
             flagUse(commandBuffer.frameIdx);
         } else {
-            System.err.println("attempt to draw empty buffer");
+//            System.err.println("attempt to draw empty buffer");
         }
     }
     public void create(long sizeVert, long sizeIdx, boolean deviceLocal) {

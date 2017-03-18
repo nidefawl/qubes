@@ -329,6 +329,7 @@ public class VKContext {
             currentCmdBuffer.inUse = false;
         }
         this.currentCmdBuffer = this.renderCommandBuffers[currentBuffer];
+        VkTess.beginFrame();
         vkResetCommandBuffer(this.currentCmdBuffer, 0);
         updateOrphanedList();
     }
@@ -348,6 +349,7 @@ public class VKContext {
         }
     }
     public void submitCommandBuffer() {
+        VkTess.endFrame();
         currentCmdBuffer.inUse = true;
         pCommandBuffers.put(0, this.currentCmdBuffer);
         long fence = VK_NULL_HANDLE;
