@@ -3,7 +3,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout (set = 1, binding = 0) uniform sampler2DArray samplerColor;
+layout (set = 2, binding = 0) uniform sampler2DArray samplerColor;
 
 layout (location = 0) in vec2 inUV;
 layout (location = 1) in float inLodBias;

@@ -3,6 +3,7 @@
 
 
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_shadow.glsl"
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma include "unproject.glsl"

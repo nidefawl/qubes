@@ -28,16 +28,12 @@ layout(set = 0, binding = 2, std140) uniform uboSceneData
     vec4 sceneSettings;
 } in_scene;
 
-layout(set = 0, binding = 3, std140) uniform uboTransformStack
+layout(set = 1, binding = 0, std140) uniform uboTransformStack
 {
     vec4 pxoffset;
 } in_transform_stack;
 
-layout(set = 0, binding = 4, std140) uniform uboMatrixShadow
-{
-    mat4 shadow_split_mvp[4];
-    vec4 shadow_split_depth;
-} in_matrix_shadow;
+
 
 #define FRAME_TIME in_scene.framePos.w
 #define CAMERA_POS in_scene.cameraPosition.xyz

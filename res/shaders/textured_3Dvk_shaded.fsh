@@ -3,6 +3,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_shadow.glsl"
 #pragma include "unproject.glsl"
 #pragma define "RENDER_PASS"
 #pragma define "RENDER_MATERIAL_BUFFER" "0"
@@ -10,8 +11,8 @@
 #pragma define "RENDER_AMBIENT_OCCLUSION"
 #pragma define "SHADOW_MAP_RESOLUTION" "2.0"
 #ifdef VULKAN_GLSL
-layout (set = 1, binding = 0) uniform sampler2DArray samplerColor;
-layout (set = 1, binding = 1) uniform sampler2D texShadow;
+layout (set = 2, binding = 0) uniform sampler2DArray samplerColor;
+layout (set = 2, binding = 1) uniform sampler2D texShadow;
 #else
 uniform sampler2DArray samplerColor;
 uniform sampler2D texShadow;

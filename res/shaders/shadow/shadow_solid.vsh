@@ -2,6 +2,7 @@
  
 #pragma attributes "shadow"
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_shadow.glsl"
 
 #ifdef VULKAN_GLSL
 

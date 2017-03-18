@@ -13,6 +13,14 @@
 #define RENDERER_MODELVIEWER 2
 #define RENDERER_SCREEN 3
 
+#if RENDERER == RENDERER_WORLD_SHADOW
+//TODO: conditional includes
+layout(set = 3, binding = 0, std140) uniform uboMatrixShadow
+{
+    mat4 shadow_split_mvp[4];
+    vec4 shadow_split_depth;
+} in_matrix_shadow;
+#endif
 
 in vec4 in_position; 
 in vec4 in_normal; 
