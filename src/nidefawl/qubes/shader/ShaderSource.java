@@ -158,7 +158,7 @@ public class ShaderSource {
 
                     } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("uniform") && (m = patternStageSamplerInput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (set = 1, binding = "+(nSamplers++)+") uniform sampler"+m.group(1)+" "+m.group(2)+";\r\n";
+                        String input = "layout (set = 2, binding = "+(nSamplers++)+") uniform sampler"+m.group(1)+" "+m.group(2)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
                     } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingUBO.matcher(line)).matches()) {

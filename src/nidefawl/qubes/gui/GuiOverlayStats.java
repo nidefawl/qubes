@@ -93,6 +93,7 @@ public class GuiOverlayStats extends Gui {
                     Engine.regionRenderer.occlCulled,
                     Engine.regionRenderer.numV/1000000.0) );
             info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
+            info.add( String.format("Binds/s: %d descs, %d pipes", Stats.callsBindDescSets, Stats.callsBindPipeline));
             if (!Engine.isVulkan) {
                 if (GL.isBindlessSuppported()) {
                     info.add( "Bindless  supported" );

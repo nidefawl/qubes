@@ -501,7 +501,7 @@ public class TrueTypeFont {
             if (this.vk_tex == null) {
                 return;
             }
-            Engine.setDescriptorSet(1, this.descriptorSetTex);
+            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descriptorSetTex);
         }
         Engine.setPipeStateFontrenderer();
         tess.drawQuads();
@@ -514,7 +514,7 @@ public class TrueTypeFont {
             if (this.vk_tex == null) {
                 return;
             }
-            Engine.setDescriptorSet(1, this.descriptorSetTex);
+            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descriptorSetTex);
         }
     }
 

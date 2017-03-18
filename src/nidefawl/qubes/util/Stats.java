@@ -15,12 +15,16 @@ public class Stats {
     public static int regionDrawCalls;
     public static int lastFrameDrawCalls;
     public static int uploadBytes;
+    public static int callsBindDescSets;
+    public static int callsBindPipeline;
     public static void resetDrawCalls() {
         lastFrameDrawCalls = tessDrawCalls+modelDrawCalls+regionDrawCalls;
         tessDrawCalls = 0;
         modelDrawCalls = 0;
         regionDrawCalls = 0;
         uploadBytes = 0;
+        callsBindDescSets = 0;
+        callsBindPipeline = 0;
     }
 
 }

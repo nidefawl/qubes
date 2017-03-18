@@ -52,7 +52,8 @@ public class ShadowRendererVK extends ShadowRenderer {
         
         Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
-        Engine.clearDescriptorSet(1);
+        Engine.clearDescriptorSet(VkDescLayouts.TEX_DESC_IDX);
+        Engine.setDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX, Engine.descriptorSetUboShadow);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         float f = -1.0f;
         vkCmdSetDepthBias(commandBuffer, f*1.0f, f*0.2f, f*0.2f);
@@ -77,6 +78,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING
         Engine.endRenderPass();
+        Engine.clearDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX);
     }
 
     private void renderMultiPassTextured(World world, float fTime) {

@@ -1,7 +1,6 @@
 package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 import static org.lwjgl.vulkan.VK10.VK_SUBPASS_CONTENTS_INLINE;
 
@@ -11,7 +10,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL40;
-import org.lwjgl.vulkan.VkCommandBuffer;
 
 import nidefawl.qubes.assets.RenderAssets;
 import nidefawl.qubes.async.AsyncTasks;
@@ -27,6 +25,7 @@ import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.entity.PlayerSelfBenchmark;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gui.*;
 import nidefawl.qubes.gui.windows.GuiContext;
 import nidefawl.qubes.gui.windows.GuiWindow;
@@ -53,16 +52,13 @@ import nidefawl.qubes.server.LocalGameServer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.vr.VREvents;
-import nidefawl.qubes.vulkan.CommandBuffer;
-import nidefawl.qubes.vulkan.VkPipelines;
-import nidefawl.qubes.vulkan.VkRenderPasses;
+import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 import nidefawl.qubes.world.WorldClientBenchmark;
@@ -163,7 +159,7 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
-        DEBUG_LAYER = true;
+        DEBUG_LAYER = false;
     }
 
     @Override
@@ -541,7 +537,7 @@ public class Game extends GameBase {
             Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
             ITess tess = Engine.getTess();
-            Engine.setDescriptorSet(1, RenderersVulkan.outRenderer.descTextureGbufferColor);
+            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.outRenderer.descTextureGbufferColor);
             Engine.bindPipeline(VkPipelines.textured2d);
             tess.setColor(-1, 255);
             tess.add(windowWidth, 0, 0, 1, 0);

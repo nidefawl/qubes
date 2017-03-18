@@ -11,6 +11,9 @@ import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding.Buffer;
 
 public class VkDescLayouts {
 
+    public static final int TEX_DESC_IDX = 2;
+    public static final int CONSTANTS_DESC_IDX = 3;
+
     public static void allocStatic() {
     }
 
@@ -18,19 +21,22 @@ public class VkDescLayouts {
     }
 
     private final VKContext ctxt;
-    public VkDescriptorSetLayoutBinding.Buffer ubo_scene_bindings = VkDescriptorSetLayoutBinding.calloc(5);
+    public VkDescriptorSetLayoutBinding.Buffer ubo_scene_bindings = VkDescriptorSetLayoutBinding.calloc(3);
+    public VkDescriptorSetLayoutBinding.Buffer ubo_transform_stack_bindings = VkDescriptorSetLayoutBinding.calloc(1);
+    public VkDescriptorSetLayoutBinding.Buffer ubo_shadow_bindings = VkDescriptorSetLayoutBinding.calloc(1);
     public VkDescriptorSetLayoutBinding.Buffer ubo_constants_bindings = VkDescriptorSetLayoutBinding.calloc(2);
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_single = VkDescriptorSetLayoutBinding.calloc(1);
     public VkDescriptorSetLayoutBinding.Buffer sampler_image_double = VkDescriptorSetLayoutBinding.calloc(2);
     public VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
     public VkPushConstantRange.Buffer push_constant_ranges_shadow_solid = VkPushConstantRange.calloc(1);
     public VkPushConstantRange.Buffer push_constant_ranges_single_block = VkPushConstantRange.calloc(1);
-//    public VkDescriptorSetLayoutBinding.Buffer ubo_shadow_bindings = VkDescriptorSetLayoutBinding.calloc(2);
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDouble = VK_NULL_HANDLE;
-    private long descSetLayoutUBOConstants;
-//    public long descSetLayoutUBOShadow = VK_NULL_HANDLE;
+    public long descSetLayoutUBOConstants = VK_NULL_HANDLE;
+    public long descSetLayoutUBOTransform = VK_NULL_HANDLE;
+    public long descSetLayoutUBOShadow = VK_NULL_HANDLE;
+    
     public VkDescLayouts(VKContext ctxt) {
         this.ctxt = ctxt;
         for (int i = 0; i < ubo_scene_bindings.limit(); i++) {
@@ -48,16 +54,17 @@ public class VkDescLayouts {
                 .descriptorCount(1);
         }
 
-//        ubo_shadow_bindings.get(0) //uboMatrix3D
-//            .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
-//            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
-//            .binding(0)//uboMatrix3D
-//            .descriptorCount(1);
-//        ubo_shadow_bindings.get(1)
-//            .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
-//            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
-//            .binding(3)//uboMatrixShadow
-//            .descriptorCount(1);
+        ubo_transform_stack_bindings.get(0) //uboTransformStack
+            .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
+            .binding(0)//uboMatrixShadow
+            .descriptorCount(1);
+        ubo_shadow_bindings.get(0) //uboMatrixShadow
+            .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
+            .binding(0)//uboMatrixShadow
+            .descriptorCount(1);
+        
         sampler_image_single.get(0)
             .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
             .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -87,18 +94,25 @@ public class VkDescLayouts {
             .offset(0)
             .size((4*4)*4*2);
         descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
+        descSetLayoutUBOTransform = makeSet(ubo_transform_stack_bindings);
         descSetLayoutUBOConstants = makeSet(ubo_constants_bindings);
-//        descSetLayoutUBOShadow = makeSet(ubo_shadow_bindings);
+        descSetLayoutUBOShadow = makeSet(ubo_shadow_bindings);
         descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
         descSetLayoutSamplerImageDouble = makeSet(sampler_image_double);
-        VkPipelines.pipelineLayoutTerrain.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants);
-        VkPipelines.pipelineLayoutMain.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageDouble);
-        VkPipelines.pipelineLayoutTextured.build(ctxt, descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
-        VkPipelines.pipelineLayoutColored.build(ctxt, descSetLayoutUBOScene);
-        VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_gui);
-//        VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {descSetLayoutUBOShadow}, push_constant_ranges_shadow_solid);
-        VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {descSetLayoutUBOScene}, push_constant_ranges_shadow_solid);
-        VkPipelines.pipelineLayoutSingleBlock.build(ctxt, new long[] {descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutUBOConstants}, push_constant_ranges_single_block);
+        VkPipelines.pipelineLayoutTerrain.build(ctxt, 
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants);
+        VkPipelines.pipelineLayoutMain.build(ctxt, 
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutUBOShadow);
+        VkPipelines.pipelineLayoutTextured.build(ctxt, 
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle);
+        VkPipelines.pipelineLayoutColored.build(ctxt, 
+                descSetLayoutUBOScene, descSetLayoutUBOTransform);
+        VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {
+                descSetLayoutUBOScene, descSetLayoutUBOTransform}, push_constant_ranges_gui);
+        VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOShadow}, push_constant_ranges_shadow_solid);
+        VkPipelines.pipelineLayoutSingleBlock.build(ctxt, new long[] {
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOConstants}, push_constant_ranges_single_block);
 
     }
             
@@ -130,10 +144,14 @@ public class VkDescLayouts {
     void destroy() {
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOScene, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOConstants, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOTransform, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOShadow, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageSingle, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageDouble, null);
         ubo_scene_bindings.free();
         ubo_constants_bindings.free();
+        ubo_transform_stack_bindings.free();
+        ubo_shadow_bindings.free();
         sampler_image_single.free();
         sampler_image_double.free();
         push_constant_ranges_gui.free();
@@ -144,21 +162,24 @@ public class VkDescLayouts {
     }
 
     public VkDescriptor allocDescSetUBOScene() {
-        return new VkDescriptor(allocDescSet(descSetLayoutUBOScene));
+        return new VkDescriptor(allocDescSet(descSetLayoutUBOScene)).tag("UBOScene");
     }
 
     public VkDescriptor allocDescSetUBOConstants() {
-        return new VkDescriptor(allocDescSet(descSetLayoutUBOConstants));
+        return new VkDescriptor(allocDescSet(descSetLayoutUBOConstants)).tag("UBOConstants");
     }
 
-//    public long allocDescSetUBOShadow() {
-//        return allocDescSet(descSetLayoutUBOShadow);
-//    }
+    public VkDescriptor allocDescSetUBOShadow() {
+        return new VkDescriptor(allocDescSet(descSetLayoutUBOShadow)).tag("UBOShadow");
+    }
+    public VkDescriptor allocDescSetUBOTransform() {
+        return new VkDescriptor(allocDescSet(descSetLayoutUBOTransform)).tag("UBOTransform");
+    }
     public VkDescriptor allocDescSetSampleSingle() {
-        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageSingle));
+        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageSingle)).tag("samplerSingle");
     }
     public VkDescriptor allocDescSetSamplerDouble() {
-        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageDouble));
+        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageDouble)).tag("samplerDouble");
     }
     public long allocDescSet(long descSetLayout) {
         try ( MemoryStack stack = stackPush() ) {

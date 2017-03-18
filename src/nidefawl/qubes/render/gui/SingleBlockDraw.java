@@ -92,7 +92,6 @@ public class SingleBlockDraw {
         if (tex != null) {
             int texIdx = atlas.getTextureIdx(block, data, stackData);
             if (texIdx > -1) {
-                tex.bindTextureDescriptor();
                 float texX = SingleBlockRenderAtlas.getX(texIdx);
                 float texY = SingleBlockRenderAtlas.getY(texIdx);
                 float texW = SingleBlockRenderAtlas.getTexW();
@@ -101,6 +100,7 @@ public class SingleBlockDraw {
                 float yPos = y-pxW;
                 float zPos = 0;
                 pxW*=2;
+                tex.bindTextureDescriptor();
                 Engine.setPipeStateTextured2D();
                 ITess tess = Engine.getTess();
                 tess.setColorF(-1, 1);
@@ -175,8 +175,8 @@ public class SingleBlockDraw {
                     }
                     targetAtlas.renderBuffer.preRender(false);
                     if (Engine.isVulkan) {
-                        Engine.setDescriptorSet(1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-                        Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);
+                        Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+                        Engine.setDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX, Engine.descriptorSetUboConstants);
                         Engine.bindPipeline(VkPipelines.singleblock);
                         PushConstantBuffer buf = PushConstantBuffer.INST;
                         buf.setMat4(0, this.modelMatrix);
@@ -210,7 +210,7 @@ public class SingleBlockDraw {
                 Engine.setDefaultViewport();
             } else {
 
-                Engine.clearDescriptorSet(2);
+                Engine.clearDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX);
             }
         }
     }
@@ -226,8 +226,8 @@ public class SingleBlockDraw {
         this.modelMatrix.update();
         if (Engine.isVulkan) {
 
-            Engine.setDescriptorSet(1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-            Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);
+            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+            Engine.setDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX, Engine.descriptorSetUboConstants);
             Engine.bindPipeline(VkPipelines.singleblock);
             PushConstantBuffer buf = PushConstantBuffer.INST;
             buf.setMat4(0, this.modelMatrix);
@@ -242,7 +242,7 @@ public class SingleBlockDraw {
         }
         doRender(block, data, stackData);
         if (Engine.isVulkan) {
-            Engine.clearDescriptorSet(2);
+            Engine.clearDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX);
         }
     }
     public void swapBuffers() {

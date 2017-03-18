@@ -11,7 +11,7 @@ import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 public class VkDescriptor {
-
+    public String tag;
     static class VkDescriptorBinding {
         int type;
         VkDescriptorBufferInfo.Buffer descBufInfo;
@@ -68,4 +68,8 @@ public class VkDescriptor {
         return this.descriptorSet;
     }
 
+    public VkDescriptor tag(String tag) {
+        this.tag = tag;
+        return this;
+    }
 }

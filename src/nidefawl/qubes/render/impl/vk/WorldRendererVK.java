@@ -44,14 +44,14 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
             
             Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene, VK_SUBPASS_CONTENTS_INLINE);
 //            
-            Engine.setDescriptorSet(1, this.descTextureTerrainNormals);
-            Engine.setDescriptorSet(2, Engine.descriptorSetUboConstants);
+            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainNormals);
+            Engine.setDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX, Engine.descriptorSetUboConstants);
             Engine.bindPipeline(VkPipelines.terrain);
             RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
             rendered = Engine.regionRenderer.rendered;
 //            System.out.println("rendered " +rendered);
             Engine.endRenderPass();
-            Engine.clearDescriptorSet(2);
+            Engine.clearDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX);
         } else {
             System.err.println("SKIPPED, framebuffer is not sized");
             System.err.printf("%dx%d vs %dx%d vs %dx%d vs %dx%d\n", 
