@@ -20,27 +20,16 @@ public class VkRenderPassSubpassedSwapchain extends VkRenderPass {
         try ( MemoryStack stack = stackPush() ) 
         {
             reset();
-            VkAttachmentDescription colorAtt = addColorAttachment(0, ctxt.colorFormat);
-            VkAttachmentDescription depthAtt = addDepthAttachment(1, ctxt.depthFormat);
-            attachments.limit(nAttachments);
-            clearValues.limit(nAttachments);
-            colorAtt.format(ctxt.colorFormat)
-                .samples(VK_SAMPLE_COUNT_1_BIT)
-                .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-                .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
-                .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-            depthAtt.format(ctxt.depthFormat)
-                    .samples(VK_SAMPLE_COUNT_1_BIT)
-                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+            addColorAttachment(0, ctxt.colorFormat).format(ctxt.colorFormat)
+                    .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                    .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+            addDepthAttachment(1, ctxt.depthFormat).format(ctxt.depthFormat)
                     .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
                     .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
                     .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
+            attachments.limit(nAttachments);
+            clearValues.limit(nAttachments);
             VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
                     .attachment(0)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

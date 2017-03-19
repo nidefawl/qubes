@@ -528,7 +528,7 @@ public class Game extends GameBase {
 
             if (this.world != null) {
 //                Engine.skyRenderer.renderSky(this.world, fTime);
-//                Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+                Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             } 
             setSceneViewport();
             if (this.world != null) {
@@ -577,7 +577,7 @@ public class Game extends GameBase {
             }
             Engine.endRenderPass();
 
-            vkContext.swapChain.blitFramebufferAndPreset(Engine.getDrawCmdBuffer(), frameBuffer, 1);
+            vkContext.swapChain.blitFramebufferAndPreset(Engine.getDrawCmdBuffer(), frameBuffer, 0);
         }
 
     }
@@ -587,6 +587,7 @@ public class Game extends GameBase {
 //          Engine.getSceneFB().setDrawMask(1);
         RenderersVulkan.worldRenderer.renderWorld(this.world, fTime);
 //        Engine.getSceneFB().setDrawAll();
+        RenderersVulkan.outRenderer.render(this.world, fTime, 0);
     }
     public void renderGL(float fTime) {
         if (canRenderGui3d()) {

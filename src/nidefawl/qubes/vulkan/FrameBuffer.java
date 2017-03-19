@@ -15,7 +15,6 @@ public class FrameBuffer implements RefTrackedResource {
     private String          tag;
     public long framebuffer;
     private FramebufferAttachment[] attachments = new FramebufferAttachment[8];
-    int nAttachments = 0;
     int height;
     int width;
     public boolean[] inUseBy = new boolean[VulkanInit.MAX_NUM_SWAPCHAIN];
@@ -112,9 +111,7 @@ public class FrameBuffer implements RefTrackedResource {
     public int getWidth() {
         return this.width;
     }
-    public void clearColorAtt(int idx, VkCommandBuffer commandbuffer, float r, float g, float b, float a) {
-        this.attachments[idx].clearImage(commandbuffer, r, g, b, a);
-    }
+    
     public void setInUse(int frameIdx) {
         inUseBy[frameIdx] = true;
     }

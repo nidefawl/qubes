@@ -54,7 +54,7 @@ public class RenderFramebufferCached {
                 fbVk = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
                 fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
                 fbVk.build(VkRenderPasses.passFramebuffer, w, h);
-                FramebufferAttachment coloratt = fbVk.getAtt(1);
+                FramebufferAttachment coloratt = fbVk.getAtt(0);
                 this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), filterLinear?samplerLinear:samplerNearest, coloratt.imageLayout);
                 this.descTextureGbufferColor.update(Engine.vkContext);
             }        

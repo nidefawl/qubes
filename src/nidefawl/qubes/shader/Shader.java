@@ -88,6 +88,7 @@ public abstract class Shader implements IManagedResource {
         Engine.checkGLError("getLog");
         if (getStatus(iShader, GL_COMPILE_STATUS) != 1) {
             Engine.checkGLError("getStatus");
+            System.out.println(src.getSource());
             throw new ShaderCompileError(src, String.format("%s %s", name, typeToString(type)), log);
         } else if (!log.isEmpty()) {
             System.out.println(String.format("%s %s", name, typeToString(type)));

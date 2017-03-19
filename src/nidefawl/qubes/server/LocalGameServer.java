@@ -2,6 +2,7 @@ package nidefawl.qubes.server;
 
 import java.io.IOException;
 
+import nidefawl.qubes.config.ServerConfig;
 import nidefawl.qubes.network.Connection;
 
 public class LocalGameServer {
@@ -23,9 +24,21 @@ public class LocalGameServer {
             serv.stopServer(); 
         }
         serv = this.server = new GameServer(); 
-        serv.config.port=21087;
+        serv.config.port=0;
         serv.config.listenAddr="localhost";
         serv.startServer();
+    }
+    public String getLocalAdress() {
+        GameServer serv = this.server;
+        if (serv != null) {
+            ServerConfig config = serv.config;
+            String addr = "";
+            addr += config.listenAddr;
+            addr +=":";
+            addr += config.port;
+            return addr;
+        }
+        return null;
     }
     public void stop() {
         GameServer serv = this.server;

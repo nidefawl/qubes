@@ -10,20 +10,12 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
-public class VkRenderPassGBuffer extends VkRenderPass {
+public class VkRenderPassDeferred extends VkRenderPass {
 
     private Buffer subpassDependencies;
-    public VkRenderPassGBuffer() {
+    public VkRenderPassDeferred() {
         addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT)
             .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addColorAttachment(1, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addColorAttachment(2, VK_FORMAT_R16G16B16A16_UINT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addColorAttachment(3, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addDepthAttachment(4, VK_FORMAT_D32_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
     }
@@ -36,9 +28,6 @@ public class VkRenderPassGBuffer extends VkRenderPass {
                 colorReference.get(i).attachment(i)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
-            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
-                    .attachment(4)
-                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)
@@ -62,7 +51,7 @@ public class VkRenderPassGBuffer extends VkRenderPass {
                     .pInputAttachments(null)
                     .colorAttachmentCount(colorReference.remaining())
                     .pColorAttachments(colorReference)
-                    .pDepthStencilAttachment(depthReference)
+                    .pDepthStencilAttachment(null)
                     .pResolveAttachments(null)
                     .pPreserveAttachments(null);
 

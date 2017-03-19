@@ -222,6 +222,32 @@ public class Project {
         to.m33 = 0;
     }
 
+    public static void fovProjMatVk(float fieldOfView, float aspectRatio, float znear, float zfar, Matrix4f to) {
+        float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
+        float x_scale = y_scale / aspectRatio;
+        float frustum_length = zfar - znear;
+
+        to.setIdentity();
+        to.m00 = x_scale;
+        to.m11 = -y_scale;
+        to.m22 = -((zfar + znear) / frustum_length);
+        to.m23 = -1;
+        to.m32 = -((2 * znear * zfar) / frustum_length);
+        to.m33 = 0;
+    }
+    public static void fovProjMatInfInvZVk(float fieldOfView, float aspectRatio, float znear, Matrix4f to) {
+        float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
+        float x_scale = y_scale / aspectRatio;
+
+        to.setIdentity();
+        to.m00 = x_scale;
+        to.m11 = -y_scale;
+        to.m22 = -1;
+        to.m23 = -1;
+        to.m32 = -znear;
+        to.m33 = 0;
+    }
+
     public static void orthoMat(float left, float right, float top, float bottom, float znear, float zfar, Matrix4f to) {
         to.setZero();
         to.m00 = 2.0f / (right - left);
@@ -271,31 +297,5 @@ public class Project {
 //        matrix.put(10, -forward[2]);
 //        GL11.glMultMatrix(matrix);
 //        GL11.glTranslatef(-eyex, -eyey, -eyez);
-    }
-
-    public static void fovProjMatVk(float fieldOfView, float aspectRatio, float znear, float zfar, Matrix4f to) {
-        float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
-        float x_scale = y_scale / aspectRatio;
-        float frustum_length = zfar - znear;
-
-        to.setIdentity();
-        to.m00 = x_scale;
-        to.m11 = -y_scale;
-        to.m22 = -((zfar + znear) / frustum_length);
-        to.m23 = -1;
-        to.m32 = -((2 * znear * zfar) / frustum_length);
-        to.m33 = 0;
-    }
-    public static void fovProjMatInfInvZVk(float fieldOfView, float aspectRatio, float znear, Matrix4f to) {
-        float y_scale = GameMath.coTangent(GameMath.degreesToRadians(fieldOfView / 2f));
-        float x_scale = y_scale / aspectRatio;
-
-        to.setIdentity();
-        to.m00 = x_scale;
-        to.m11 = -y_scale;
-        to.m22 = -1;
-        to.m23 = -1;
-        to.m32 = -znear;
-        to.m33 = 0;
     }
 }

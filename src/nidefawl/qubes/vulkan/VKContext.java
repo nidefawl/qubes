@@ -1,6 +1,7 @@
 package nidefawl.qubes.vulkan;
 
 
+import static nidefawl.qubes.gl.Engine.vkContext;
 import static nidefawl.qubes.vulkan.VulkanInit.UINT64_MAX;
 import static nidefawl.qubes.vulkan.VulkanInit.VK_FLAGS_NONE;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -38,6 +39,10 @@ public class VKContext {
     public static int currentBuffer = 0;
     public static boolean DUMP_SHADER_SRC = false;
     private static Buffer BARRIER_MEM_IMG;
+
+    private static VkClearColorValue CLEAR_COLOR;
+    private static VkImageSubresourceRange CLEAR_RANGE;
+    
 
     public SwapChain                           swapChain           = null;
     public final VkInstance                    vk;
@@ -660,6 +665,9 @@ public class VKContext {
         ZERO_OFFSET = memAllocLong(1);
         ZERO_OFFSET.put(0, 0);
         BARRIER_MEM_IMG = VkImageMemoryBarrier.calloc(1);
+        CLEAR_COLOR = VkClearColorValue.calloc();
+        CLEAR_RANGE = VkImageSubresourceRange.calloc();
+
         VkMemoryManager.allocStatic();
         VkDescLayouts.allocStatic();
         VkTexture.allocStatic();
@@ -672,6 +680,8 @@ public class VKContext {
         VkMemoryManager.destroyStatic();
         memFree(ZERO_OFFSET);
         BARRIER_MEM_IMG.free();
+        CLEAR_RANGE.free();
+        CLEAR_COLOR.free();
     }
     public CommandBuffer getCurrentCmdBuffer() {
         return this.currentCmdBuffer;
@@ -715,5 +725,26 @@ public class VKContext {
 //                System.out.println();
 //            }
         }
+    }
+    public void clearImage(VkCommandBuffer commandBuffer, long image, int targetlayout, float r, float g, float b, float a) {
+
+        vkContext.setImageLayout(commandBuffer, image,
+                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+        CLEAR_COLOR.float32(0, r).float32(1, g).float32(2, b).float32(3, a);
+        CLEAR_RANGE.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+            .baseArrayLayer(0)
+            .baseMipLevel(0)
+            .layerCount(1)
+            .levelCount(1);
+        vkCmdClearColorImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CLEAR_COLOR, CLEAR_RANGE);
+        vkContext.setImageLayout(commandBuffer, image,
+                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                targetlayout,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
+                VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
+//        System.out.println(""+r+","+g+","+b+","+a);
     }
 }

@@ -5,6 +5,8 @@ package nidefawl.qubes.noise;
 
 import java.io.File;
 
+import org.lwjgl.system.Platform;
+
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoise;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseJava;
 import nidefawl.qubes.noise.opennoise.OpenSimplexNoiseLib;
@@ -16,26 +18,31 @@ public class NoiseLib {
     final static boolean LIB_PRESENT;
 
     static {
-        boolean hasNoise = false;
-        try {
-            System.load(new File("libnativenoise.so").getAbsolutePath());
-            hasNoise = true;
-        } catch (UnsatisfiedLinkError e) {
-            //SWALLOW
+        LIB_PRESENT = create();
+    }
+
+    public static boolean create() {
+        String name;
+        boolean bitness = System.getProperty("os.arch").indexOf("64") > -1;
+        switch ( Platform.get() ) {
+            case LINUX:
+                name = bitness?"libnativenoise.x64.so.1":"libnativenoise.x86.so.1";
+                break;
+            case WINDOWS:
+                name = bitness?"nativenoise.x64.dll":"nativenoise.x86.dll";
+                break;
+            default:
+                throw new IllegalStateException();
         }
-        try {
-            System.load(new File("../lib/noise/nativenoise.dll").getAbsolutePath());
-            hasNoise = true;
-        } catch (UnsatisfiedLinkError e) {
-            //SWALLOW
+        File f = new File(name);
+        if (!f.exists()) {
+            f = new File("../Game/lib/noise/", name);
         }
-        try {
-            System.load(new File("./lib/noise/nativenoise.dll").getAbsolutePath());
-            hasNoise = true;
-        } catch (UnsatisfiedLinkError e) {
-            //SWALLOW
+        if (f.exists()) {
+            System.load(f.getAbsolutePath());
+            return true;
         }
-        LIB_PRESENT = hasNoise;
+        return false;
     }
 
     public static boolean isLibPresent() {

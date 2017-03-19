@@ -15,9 +15,10 @@ public class VkRenderPassShadow extends VkRenderPass {
 
     private Buffer subpassDependencies;
     public VkRenderPassShadow() {
-        addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM);
-        VkAttachmentDescription n = addDepthAttachment(0, VK_FORMAT_D32_SFLOAT);
-        n.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM)
+            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        addDepthAttachment(0, VK_FORMAT_D32_SFLOAT)
+            .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
     }

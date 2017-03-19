@@ -28,7 +28,10 @@ public class GuiLoadingServer extends Gui {
     public void update() {
         super.update();
         if (Game.instance.server.isReady()) {
-            Game.instance.connectTo("localhost:21087");
+            String s = Game.instance.server.getLocalAdress();
+            if (s != null) {
+                Game.instance.connectTo(s);   
+            }
         }
     }
 

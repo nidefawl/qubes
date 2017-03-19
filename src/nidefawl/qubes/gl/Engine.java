@@ -152,8 +152,9 @@ public class Engine {
     public static VkDescriptor descriptorSetUboConstants;
     public static VkDescriptor descriptorSetUboShadow;
     public static VkDescriptor descriptorSetUboTransform;
+    public static VkDescriptor descriptorSetUboLights;
     private static LongBuffer pDescriptorSets;
-    private static VkDescriptor[] boundDescriptorSets = new VkDescriptor[4];
+    private static VkDescriptor[] boundDescriptorSets = new VkDescriptor[5];
     private static IntBuffer pOffsets;
     private static VkRenderPassBeginInfo renderPassBeginInfo;
     private static VkExtent2D renderAreaExtent;
@@ -396,22 +397,26 @@ public class Engine {
             UniformBuffer.init(vkContext, VulkanInit.MAX_NUM_SWAPCHAIN);
             VkPipelines.init(vkContext);
             descriptorSetUboScene = vkContext.descLayouts.allocDescSetUBOScene();
-            descriptorSetUboScene.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix3D.getDescriptorBuffer());
-            descriptorSetUboScene.setBindingBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrix2D.getDescriptorBuffer());
-            descriptorSetUboScene.setBindingBuffer(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboSceneData.getDescriptorBuffer());
-//            descriptorSetUboScene.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboTransformStack.getDescriptorBuffer());
-//            descriptorSetUboScene.setBindingBuffer(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
+            descriptorSetUboScene.setBindingUniformBuffer(0, UniformBuffer.uboMatrix3D);
+            descriptorSetUboScene.setBindingUniformBuffer(1, UniformBuffer.uboMatrix2D);
+            descriptorSetUboScene.setBindingUniformBuffer(2, UniformBuffer.uboSceneData);
+//            descriptorSetUboScene.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboTransformStack);
+//            descriptorSetUboScene.setBindingBuffer(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow);
             descriptorSetUboScene.update(vkContext);
             descriptorSetUboConstants = vkContext.descLayouts.allocDescSetUBOConstants();
-            descriptorSetUboConstants.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, UniformBuffer.VertexDirections.getDescriptorBuffer());
-            descriptorSetUboConstants.setBindingBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, UniformBuffer.TBNMat.getDescriptorBuffer());
+            descriptorSetUboConstants.setBindingUniformBuffer(0, UniformBuffer.VertexDirections);
+            descriptorSetUboConstants.setBindingUniformBuffer(1, UniformBuffer.TBNMat);
             descriptorSetUboConstants.update(vkContext);
             descriptorSetUboTransform = vkContext.descLayouts.allocDescSetUBOTransform();
-            descriptorSetUboTransform.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboTransformStack.getDescriptorBuffer());
+            descriptorSetUboTransform.setBindingUniformBuffer(0, UniformBuffer.uboTransformStack);
             descriptorSetUboTransform.update(vkContext);
             descriptorSetUboShadow = vkContext.descLayouts.allocDescSetUBOShadow();
-            descriptorSetUboShadow.setBindingBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow.getDescriptorBuffer());
+            descriptorSetUboShadow.setBindingUniformBuffer(0, UniformBuffer.uboMatrixShadow);
             descriptorSetUboShadow.update(vkContext);
+            descriptorSetUboLights = vkContext.descLayouts.allocDescSetUBOLightInfo();
+            descriptorSetUboLights.setBindingUniformBuffer(0, UniformBuffer.LightInfo);
+            descriptorSetUboLights.update(vkContext);
+            
         }
 
         flushRenderTasks();
@@ -629,8 +634,13 @@ public class Engine {
         fullscreenquads[n].drawQuads();
     }
     public static void drawFSTri() {
-        bindVAO(GLVAO.vaoEmpty);
-        glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+        if (isVulkan) {
+            vkCmdDraw(curCommandBuffer, 3, 1, 0, 0);
+        } else {
+
+            bindVAO(GLVAO.vaoEmpty);
+            glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+        }
     }
 
     public static void drawQuad() {
@@ -963,10 +973,10 @@ public class Engine {
     public static void unprojectScreenSpace(float winX, float winY, float screenZ, float rW, float rH, Vector3f out) {
         float screenX = (winX / rW) * 2.0f - 1.0f;
         float screenY = (winY / rH) * 2.0f - 1.0f;
-        if (!isVulkan && !isInverseZ)
-            screenZ = (screenZ) * 2.0f - 1.0f;
-        else {
+        if (isInverseZ) {
             screenZ *= 0.99f;
+        } else if (!isVulkan) {
+            screenZ = (screenZ) * 2.0f - 1.0f;
         }
         out.set(screenX, screenY, screenZ);
         Matrix4f.transform(getMatSceneMVPUnjittered().getInvMat4(), out, out);
@@ -1342,11 +1352,14 @@ public class Engine {
         pDescriptorSets.clear();
         pDescriptorSets.put(descriptorSetUboScene.get());
         pDescriptorSets.flip();
-        pOffsets.position(0).limit(3);
-        pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
-        pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
-        pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
-        pOffsets.position(0).limit(3);
+        pOffsets.clear();
+        descriptorSetUboScene.addDynamicOffsets(pOffsets);
+        pOffsets.flip();
+//        pOffsets.position(0).limit(3);
+//        pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
+//        pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
+//        pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
+//        pOffsets.position(0).limit(3);
         Stats.callsBindDescSets++;
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                 pDescriptorSets, pOffsets);
@@ -1360,9 +1373,12 @@ public class Engine {
         pDescriptorSets.clear();
         pDescriptorSets.put(descriptorSetUboTransform.get());
         pDescriptorSets.flip();
-        pOffsets.position(0).limit(1);
-        pOffsets.put(0, UniformBuffer.uboTransformStack.getDynamicOffset());
-        pOffsets.position(0).limit(1);
+        pOffsets.clear();
+        descriptorSetUboTransform.addDynamicOffsets(pOffsets);
+        pOffsets.flip();
+//        pOffsets.position(0).limit(1);
+//        pOffsets.put(0, UniformBuffer.uboTransformStack.getDynamicOffset());
+//        pOffsets.position(0).limit(1);
         Stats.callsBindDescSets++;
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 1, 
                 pDescriptorSets, pOffsets);
@@ -1374,15 +1390,18 @@ public class Engine {
         }
         rebindDescSet = false;
         pDescriptorSets.clear();
+        pOffsets.clear();
 //        System.err.println(curPipeline.layout.getName()+"");
         for (int i = 2; i < boundDescriptorSets.length; i++) {
             if (boundDescriptorSets[i] != null) {
 //                System.err.println("bind set "+i+": "+boundDescriptorSets[i].tag);
                 pDescriptorSets.put(boundDescriptorSets[i].get());
-            }            
+                boundDescriptorSets[i].addDynamicOffsets(pOffsets);
+            }
         }
         pDescriptorSets.flip();
-        pOffsets.position(0).limit(0);
+        pOffsets.flip();
+//        pOffsets.position(0).limit(0);
         if (pDescriptorSets.remaining() > 0) {
             Stats.callsBindDescSets++;
             vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 2, 

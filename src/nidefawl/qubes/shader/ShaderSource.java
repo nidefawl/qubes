@@ -35,7 +35,7 @@ public class ShaderSource {
     static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageOutput = Pattern.compile("(flat )?out ([^\\s]*) ([^\\s]*);");
     static Pattern patternStageInput = Pattern.compile("(flat )?in ([^\\s]*) ([^\\s]*);");
-    static Pattern patternStageSamplerInput = Pattern.compile("uniform sampler([^\\s]*) ([^\\s]*);");
+    static Pattern patternStageSamplerInput = Pattern.compile("uniform (u)?sampler([^\\s]*) ([^\\s]*);");
     static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
     static Pattern lineErrorNVIDIA = Pattern.compile("([0-9]+)\\(([0-9]+)\\) : (.*)");
@@ -125,7 +125,7 @@ public class ShaderSource {
                     lines.addAll(1, extensions);
                 }
                 if (processMode == ProcessMode.VULKAN) {
-                    lines.add(1, "#define VULKAN_GLSL");
+                    lines.add(resolve?0:1, "#define VULKAN_GLSL");
                 }
                 int nFragmentOutputs = 0;
                 int nVertexOutputs = 0;
@@ -158,7 +158,7 @@ public class ShaderSource {
 
                     } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("uniform") && (m = patternStageSamplerInput.matcher(line)).matches()) {
                         if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (set = 2, binding = "+(nSamplers++)+") uniform sampler"+m.group(1)+" "+m.group(2)+";\r\n";
+                        String input = "layout (set = 2, binding = "+(nSamplers++)+") uniform "+(m.group(1)==null?"":m.group(1))+"sampler"+m.group(2)+" "+m.group(3)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
                     } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingUBO.matcher(line)).matches()) {

@@ -28,9 +28,6 @@ public class FramebufferAttachment {
     private boolean fixedDimensions;
     private int fixedWidth;
     private int fixedHeight;
-
-    private static VkClearColorValue clearColor = VkClearColorValue.calloc();
-    private static VkImageSubresourceRange range = VkImageSubresourceRange.calloc();
     
     public FramebufferAttachment(VKContext ctxt, int vkFormat, int usage) {
         this.ctxt = ctxt;
@@ -137,26 +134,5 @@ public class FramebufferAttachment {
         this.fixedDimensions = true;
         this.fixedWidth = w;
         this.fixedHeight = h;
-    }
-    public void clearImage(VkCommandBuffer commandBuffer, float r, float g, float b, float a) {
-
-        vkContext.setImageLayout(commandBuffer, this.image,
-                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
-        clearColor.float32(0, 1).float32(1, 1).float32(2, 0).float32(3, a);
-        range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .baseArrayLayer(0)
-            .baseMipLevel(0)
-            .layerCount(1)
-            .levelCount(1);
-        vkCmdClearColorImage(commandBuffer, this.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, clearColor, range);
-        vkContext.setImageLayout(commandBuffer, this.image,
-                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_GENERAL,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
-                VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
-//        System.out.println(""+r+","+g+","+b+","+a);
     }
 }

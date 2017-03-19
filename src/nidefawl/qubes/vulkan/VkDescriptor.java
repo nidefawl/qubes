@@ -3,6 +3,7 @@ package nidefawl.qubes.vulkan;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
@@ -10,12 +11,16 @@ import org.lwjgl.vulkan.VkDescriptorBufferInfo;
 import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
+import nidefawl.qubes.shader.IBufferDynamicOffset;
+import nidefawl.qubes.shader.UniformBuffer;
+
 public class VkDescriptor {
     public String tag;
     static class VkDescriptorBinding {
         int type;
         VkDescriptorBufferInfo.Buffer descBufInfo;
         VkDescriptorImageInfo.Buffer descImgInfo;
+        public IBufferDynamicOffset dynamicOffset;
     }
     int numBindings = 0;
     VkDescriptorBinding[] bindings = new VkDescriptorBinding[8];
@@ -27,10 +32,21 @@ public class VkDescriptor {
         }
     }
 
+    public void setBindingUniformBuffer(int i, UniformBuffer buffer) {
+        this.numBindings = Math.max(this.numBindings, i+1);
+        bindings[i].type = buffer.isConstant() ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        bindings[i].descBufInfo = buffer.getDescriptorBuffer();
+        bindings[i].dynamicOffset = null;
+        if (!buffer.isConstant()) {
+            bindings[i].dynamicOffset = buffer;
+        }
+    }
+
     public void setBindingBuffer(int i, int type, VkDescriptorBufferInfo.Buffer descBufInfo) {
         this.numBindings = Math.max(this.numBindings, i+1);
         bindings[i].type = type;
         bindings[i].descBufInfo = descBufInfo;
+        bindings[i].dynamicOffset = null;
     }
     
     public void update(VKContext ctxt) {
@@ -53,6 +69,7 @@ public class VkDescriptor {
 
     public void setBindingCombinedImageSampler(int i, long textureView, long sampler, int imageLayout) {
         this.numBindings = Math.max(this.numBindings, i + 1);
+        bindings[i].dynamicOffset = null;
         if (bindings[i].descImgInfo != null) {
             bindings[i].descImgInfo.free();
         }
@@ -71,5 +88,13 @@ public class VkDescriptor {
     public VkDescriptor tag(String tag) {
         this.tag = tag;
         return this;
+    }
+
+    public void addDynamicOffsets(IntBuffer pOffsets) {
+        for (int i = 0; i < this.numBindings; i++) {
+            if (this.bindings[i].dynamicOffset != null) {
+                pOffsets.put(this.bindings[i].dynamicOffset.getDynamicOffset());
+            }
+        }
     }
 }

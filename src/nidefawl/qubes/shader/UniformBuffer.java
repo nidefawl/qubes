@@ -24,7 +24,7 @@ import nidefawl.qubes.vulkan.VkBuffer;
 import nidefawl.qubes.world.SunLightModel;
 import nidefawl.qubes.world.WorldClient;
 
-public class UniformBuffer {
+public class UniformBuffer implements IBufferDynamicOffset {
     static int nextIdx = 0;
     static UniformBuffer[] buffers = new UniformBuffer[9];
     String name;
@@ -661,6 +661,9 @@ public class UniformBuffer {
     }
     public int getDynamicOffset() {
         return isConstant?0:(this.offsetIdx*this.stride);
+    }
+    public boolean isConstant() {
+        return this.isConstant;
     }
 
 }

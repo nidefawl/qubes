@@ -1,10 +1,13 @@
 package nidefawl.qubes.render.impl.vk;
 
 import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkViewport;
+import java.nio.LongBuffer;
+
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.RenderersGL;
@@ -19,6 +22,7 @@ public class ShadowRendererVK extends ShadowRenderer {
 
     private FrameBuffer frameBufferShadow;
     VkViewport.Buffer viewport = VkViewport.calloc(1);
+    private long sampler;
     
     @Override
     public void renderShadowPass(World world, float fTime) {
@@ -52,8 +56,9 @@ public class ShadowRendererVK extends ShadowRenderer {
         
         Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
-        Engine.clearDescriptorSet(VkDescLayouts.TEX_DESC_IDX);
-        Engine.setDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX, Engine.descriptorSetUboShadow);
+//        Engine.clearDescriptorSet(VkDescLayouts.TEX_DESC_IDX);
+        Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX, Engine.descriptorSetUboShadow);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         float f = -1.0f;
         vkCmdSetDepthBias(commandBuffer, f*1.0f, f*0.2f, f*0.2f);
@@ -78,7 +83,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING
         Engine.endRenderPass();
-        Engine.clearDescriptorSet(VkDescLayouts.CONSTANTS_DESC_IDX);
+        Engine.clearDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX);
     }
 
     private void renderMultiPassTextured(World world, float fTime) {
@@ -90,6 +95,16 @@ public class ShadowRendererVK extends ShadowRenderer {
         this.frameBufferShadow = new FrameBuffer(Engine.vkContext);
         this.frameBufferShadow.fromRenderpass(VkRenderPasses.passShadow, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 
+        try ( MemoryStack stack = stackPush() ) {
+
+            VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
+            LongBuffer pSampler = stack.longs(0);
+            int err = vkCreateSampler(Engine.vkContext.device, sampler, null, pSampler);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+            }
+            this.sampler = pSampler.get(0);
+        }
     }
 
     @Override
@@ -102,6 +117,17 @@ public class ShadowRendererVK extends ShadowRenderer {
 
     @Override
     public void tickUpdate() {
+    }
+
+    public long getView() {
+        return this.frameBufferShadow.getAtt(0).getView();
+    }
+    public int getLayout() {
+        return this.frameBufferShadow.getAtt(0).imageLayout;
+    }
+
+    public long getSampler() {
+        return this.sampler;
     }
 
 }

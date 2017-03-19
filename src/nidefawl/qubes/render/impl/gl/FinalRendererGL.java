@@ -103,7 +103,7 @@ public class FinalRendererGL extends FinalRenderer {
         if (pass == 1) {
             GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, this.preWaterDepthTex);
             GL.bindTexture(GL_TEXTURE8, GL_TEXTURE_2D, TMgr.getNoise());
-        } else {
+        } else if (pass == 0) {
             GL.bindTexture(GL_TEXTURE7, GL_TEXTURE_2D, Engine.getAOTexture());
         }
         GL.bindTexture(GL_TEXTURE9, GL_TEXTURE_2D_ARRAY, TMgr.getNoiseArr());
@@ -432,6 +432,9 @@ public class FinalRendererGL extends FinalRenderer {
                 return "#define RENDER_MATERIAL_BUFFER "+(Engine.getRenderMaterialBuffer() ? "1" : "0"); 
 //                return "#define RENDER_MATERIAL_BUFFER 1"; 
             }
+            if ("BLUE_NOISE".equals(define)) {
+                return "#define BLUE_NOISE"; 
+            }
             return null;
         }
         @Override
@@ -563,7 +566,7 @@ public class FinalRendererGL extends FinalRenderer {
             shaderDeferredWater.setProgramUniform1i("texShadow", 4);
             shaderDeferredWater.setProgramUniform1i("texLight", 5);
             shaderDeferredWater.setProgramUniform1i("texBlockLight", 6);
-            shaderDeferredWater.setProgramUniform1i("texAO", 7);
+            shaderDeferredWater.setProgramUniform1i("texDepthPreWater", 7);
             shaderDeferredWater.setProgramUniform1i("texWaterNoise", 8);
             shaderDeferredWater.setProgramUniform1i("texArrayNoise", 9);
             shaderDeferredFirstPerson.enable();

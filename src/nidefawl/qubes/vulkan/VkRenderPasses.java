@@ -9,8 +9,10 @@ public class VkRenderPasses {
     public static VkRenderPass passShadow = new VkRenderPassShadow();
 //    public static VkRenderPass passSubpassSwapchain = new VkRenderPassSubpassedSwapchain();
     public static VkRenderPass passTerrain = new VkRenderPassGBuffer();
-    public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true);
-    public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false);
+    public static VkRenderPass passDeferred = new VkRenderPassDeferred();
+    public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true, true);
+    public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false, true);
+    public static VkRenderPass passFramebufferNoDepth = new VkRenderPassFrameBuffer(true, false);
 
     public static void init(VKContext ctxt) {
         isInit = true;

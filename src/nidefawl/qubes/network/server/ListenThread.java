@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import nidefawl.qubes.config.ServerConfig;
+
 
 public class ListenThread extends Thread {
     private final ServerSocket serverSocket;
@@ -11,10 +13,29 @@ public class ListenThread extends Thread {
 	private boolean finished;
 	private boolean listening;
 
-    public ListenThread(final NetworkServer server, final int port) throws IOException {
+    public ListenThread(final NetworkServer server, final ServerConfig serverConfig) throws IOException {
         setName("ListenThread");
         setDaemon(true);
-        this.serverSocket = new ServerSocket(port);
+        int port = serverConfig.port;
+        ServerSocket socket = null;
+        if (port == 0) {
+            IOException e2 = null;
+            for (int i = 0; i < 10; i++) {
+                port = 21087+i;
+                try {
+                    socket = new ServerSocket(port);
+                    serverConfig.port = port;
+                } catch (IOException e) {
+                    e2 = e;
+                }
+            }
+            if (socket == null) {
+                throw e2;
+            }
+        } else {
+            socket = new ServerSocket(port);
+        }
+        this.serverSocket = socket;
         this.server = server;
         this.finished = true;
         this.listening = false;

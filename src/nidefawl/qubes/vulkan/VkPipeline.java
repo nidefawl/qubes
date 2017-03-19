@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import org.lwjgl.opengl.EXTDebugLabel;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
@@ -102,6 +101,15 @@ public class VkPipeline {
         vertexInputState.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                 .pVertexBindingDescriptions(bindingDescriptions)
                 .pVertexAttributeDescriptions(desc.attributeDescriptions);
+    }
+    public void setEmptyVertexInput() {
+        bindingDescriptions.position(0).limit(0);
+        vertexInputState.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+        vertexInputState.pVertexBindingDescriptions(bindingDescriptions);
+        try ( MemoryStack stack = stackPush() ) {
+            VkVertexInputAttributeDescription.Buffer buffer = VkVertexInputAttributeDescription.callocStack(0, stack);
+            vertexInputState.pVertexAttributeDescriptions(buffer);
+        }
     }
     public void setRenderPass(VkRenderPass passSubpassSwapchain, int subpass) {
         this.renderpass = passSubpassSwapchain;

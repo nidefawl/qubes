@@ -31,7 +31,7 @@ public class NetworkServer {
 
     public NetworkServer(GameServer server) throws Exception {
         this.server = server;
-        this.listenThread = new ListenThread(this, this.server.getConfig().port);
+        this.listenThread = new ListenThread(this, this.server.getConfig());
         this.isRunning = true;
         this.packetTimeout = this.server.getConfig().packetTimeout;
     }
