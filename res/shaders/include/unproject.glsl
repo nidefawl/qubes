@@ -8,20 +8,25 @@
 #define DEPTH_FAR 1.0
 #define DEPTH_NEAR -1.0
 #endif
+#ifdef VULKAN_GLSL
+#define FRAGDEPTH (1.0-depth)
+#else
+#define FRAGDEPTH (depth)
+#endif
 vec4 unprojectPos(in vec2 coord, in float depth) { 
 #if Z_INVERSE
-    vec4 fragposition = inverse(in_matrix_3D.vp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, depth, 1.0f);
+    vec4 fragposition = inverse(in_matrix_3D.vp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, FRAGDEPTH, 1.0f);
 #else
-    vec4 fragposition = inverse(in_matrix_3D.vp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
+    vec4 fragposition = inverse(in_matrix_3D.vp) * vec4(coord.s * 2.0f - 1.0f, coord.t * 2.0f - 1.0f, 2.0f * FRAGDEPTH - 1.0f, 1.0f);
 #endif
     fragposition /= fragposition.w;
     return fragposition;
 }
 vec4 screencoord(vec2 texcoord, float depth) {
 #if Z_INVERSE
-    return vec4(texcoord.s * 2.0f - 1.0f, texcoord.t * 2.0f - 1.0f, depth, 1.0f);
+    return vec4(texcoord.s * 2.0f - 1.0f, texcoord.t * 2.0f - 1.0f, FRAGDEPTH, 1.0f);
 #else
-    return vec4(texcoord.s * 2.0f - 1.0f, texcoord.t * 2.0f - 1.0f, 2.0f * depth - 1.0f, 1.0f);
+    return vec4(texcoord.s * 2.0f - 1.0f, texcoord.t * 2.0f - 1.0f, 2.0f * FRAGDEPTH - 1.0f, 1.0f);
 #endif
 }
 
@@ -37,8 +42,8 @@ float linearizeDepth(in float depth)
 {	
 #if Z_INVERSE
     // return (Z_NEAR * Z_FAR) / (depth * (Z_FAR - Z_NEAR)); // with far plane
-    return Z_NEAR / depth; // without far plane (far at infinity)
+    return Z_NEAR / FRAGDEPTH; // without far plane (far at infinity)
 #else
-    return 2.0 * Z_NEAR * Z_FAR / (Z_FAR + Z_NEAR - (2.0 * depth - 1.0) * (Z_FAR - Z_NEAR));
+    return 2.0 * Z_NEAR * Z_FAR / (Z_FAR + Z_NEAR - (2.0 * FRAGDEPTH - 1.0) * (Z_FAR - Z_NEAR));
 #endif
 }

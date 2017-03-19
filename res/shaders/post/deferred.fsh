@@ -7,7 +7,9 @@
 #pragma include "blockinfo.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma include "unproject.glsl"
+#pragma include "tonemap.glsl"
 #pragma define "RENDER_PASS"
+#pragma define "BLUE_NOISE"
 #pragma define "RENDER_MATERIAL_BUFFER" "0"
 #pragma define "RENDER_VELOCITY_BUFFER" "0"
 #pragma define "RENDER_AMBIENT_OCCLUSION"
@@ -15,8 +17,8 @@
 
 float isEyeInWater = 0.0;
 
-
-layout(std140) uniform LightInfo {
+layout(set = 4, binding = 0, std140) uniform LightInfo
+{
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
   vec4 lightDir; // Light dir in world space
@@ -49,16 +51,23 @@ struct SurfaceProperties {
 uniform sampler2D texColor;
 uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
+uniform sampler2D texBlockLight;
 uniform sampler2D texDepth;
 uniform sampler2D texShadow;
-uniform sampler2D texBlockLight;
 uniform sampler2D texLight;
+#if RENDER_AMBIENT_OCCLUSION
 uniform sampler2D texAO;
-uniform sampler2DArray texArrayNoise;
+#endif
 #if RENDER_PASS == 1
+uniform sampler2D texDepthPreWater;
 uniform sampler2D texWaterNoise;
 #endif
+#ifdef BLUE_NOISE
 uniform int texSlotNoise;
+uniform sampler2DArray texArrayNoise;
+#endif
+
+
 #if RENDER_VELOCITY_BUFFER
 uniform mat4 mat_reproject;
 #endif
@@ -112,13 +121,15 @@ bool canLookup(in vec4 v, in float zPos, in float mapZ) {
         if (v.z > 0) {
             return true;
         }
+#elif VULKAN_GLSL
+        if (v.z < 1) {
+            return true;
+        }
 #else
         if (v.z < 1&&v.z > -1) {
             return true;
         }
 #endif
-        dbgSplit.rg = vec2(1);
-        dbgSplit.a = 1;
     }
     return false;
     // return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y && zPos > mapZ;
@@ -251,7 +262,7 @@ float getShadow2() {
     if (steps > 0)
         s/=steps;
     // return 1.0;
-        return clamp(s, 0, 1);
+        return clamp(s, 1, 1);
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
 #define G_SCATTERING 0.87f
@@ -267,7 +278,6 @@ float ComputeScattering(float lightDotView)
     return result;
 }
 
-#define BLUE_NOISE 
 float VolumetricLight() {
 #ifdef BLUE_NOISE
     ivec3 texSize = textureSize(texArrayNoise, 0);
@@ -450,7 +460,6 @@ void main() {
     float fIsSky = isCloud;
     bool isSky = bool(fIsSky==1.0f);
 #if RENDER_PASS < 1
-    // vec4 ssao =vec4(edo());
     
     #if RENDER_AMBIENT_OCCLUSION
         vec4 ssao=texture(texAO, pass_texcoord);
@@ -534,7 +543,7 @@ void main() {
         float mask =  isWater*(1-isEyeInWater);
         vec2 newtc = (pass_texcoord.st + refractv.xy*refMult)*mask + pass_texcoord.st*(1-mask);
 
-            depthUnderWater = texture(texAO, newtc).r;
+            depthUnderWater = texture(texDepthPreWater, newtc).r;
             viewSpacePosUnderWater = unprojectScreenCoord(screencoord(newtc.st, depthUnderWater));
             worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
             // sceneColor = texture(texColor, newtc);
@@ -585,7 +594,7 @@ void main() {
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
         float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*22.0;
 
-
+        sceneColor.xyz = vec3(prop.worldposition.rgb*0.002);
 
 
 
@@ -613,7 +622,10 @@ void main() {
         vec3 Iamb = SkyLight.La.rgb * lightColor *  mix(((NdotLAmb1+NdotLAmb2)*(0.45)), 1.2, isEntity*0.0);
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb1 *specAmb1 * 0.25;
          // Iamb += SkyLight.La.rgb * lightColor * NdotLAmb2 *specAmb2 * 0.08;
-
+         // float aa = 2.8f;
+         // Iamb = vec3(aa);
+         // Idiff = vec3(aa);
+         // Ispec = vec3(aa);
 
         vec3 finalLight = vec3(0.0);
         finalLight += Iamb * (minAmb+occlusion*(1.0-minAmb)) * (minAmb2+(skyLightLvl)*(1-minAmb2));
@@ -730,7 +742,12 @@ void main() {
     //     rgbd*=0.01;
     // }
     // out_Color = vec4(rgbd, alpha);
-    // out_Color = vec4(prop.albedo+dbgSplit.rgb*dbgSplit.a*0.02, alpha);
-    //out_Color = vec4(prop.position.xyz, alpha);
     out_Color = vec4(prop.albedo, alpha);
+    // out_Color = vec4(prop.albedo.rgb, alpha);
+    // drawDbgTex(pr)
+    // out_Color = vec4(vec3(sceneColor.xyz*0.01), alpha);
+    // vec4 texsh =texture(texShadow, pass_texcoord);
+    // if (texsh.r > 0) {
+    //     out_Color = vec4(1.0);
+    // }
 }

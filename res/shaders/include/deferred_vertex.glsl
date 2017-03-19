@@ -1,5 +1,6 @@
 
-layout(std140) uniform LightInfo {
+layout(set = 4, binding = 0, std140) uniform LightInfo
+{
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
   vec4 lightDir; // Light dir in world space
