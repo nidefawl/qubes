@@ -127,20 +127,21 @@ public class ShadowProjector implements IRenderComponent {
 
         shadowSplitMVP[split].setIdentity();
         Project.lookAt(eye.x, eye.y, eye.z, frustumCenter.x, frustumCenter.y, frustumCenter.z, 0, 1, 0, shadowSplitMVP[split]);
-//        shadowCamFrustum[split].setCamPos(eye);
-//        shadowCamFrustum[split].setView(shadowSplitMVP[split]);
+        
+//      shadowCamFrustum[split].setCamPos(eye);
+//      shadowCamFrustum[split].setView(shadowSplitMVP[split]);
 
-//        matLookAt.load(shadowSplitMVP[split]);
-//        matLookAt.translate(eye.x, eye.y, eye.z);
+//      matLookAt.load(shadowSplitMVP[split]);
+//      matLookAt.translate(eye.x, eye.y, eye.z);
 //
-//        Matrix4f.invert(matLookAt, matLookAtInv);
-//                Project.lookAt(eye.x-frustumCenter.x, eye.y-frustumCenter.y, eye.z-frustumCenter.z, 0,0,0, 0, 1, 0, shadowSplitMVP[split]);
+//      Matrix4f.invert(matLookAt, matLookAtInv);
+//      Project.lookAt(eye.x-frustumCenter.x, eye.y-frustumCenter.y, eye.z-frustumCenter.z, 0,0,0, 0, 1, 0, shadowSplitMVP[split]);
 
-      if (!Engine.INVERSE_Z_BUFFER) {
-          Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
-      } else {
-          Project.orthoMat(-radius, radius, radius, -radius, 512 * 8, 5, matOrtho);
-      }
+        if (!Engine.INVERSE_Z_BUFFER) {
+            Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
+        } else {
+            Project.orthoMat(-radius, radius, radius, -radius, 512 * 8, 5, matOrtho);
+        }
         
 //        Project.fovProjMatInfInvZ(90, 1, 512*8, matOrtho);
 //        Project.fovProjMat(90, 1, 0.1f, 512*8f, matOrtho);

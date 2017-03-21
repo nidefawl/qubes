@@ -493,6 +493,10 @@ public class Engine {
                 Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
             } else {
                 Project.fovProjMatInfInvZVk(fieldOfView, aspectRatio, znear, _projection);
+//                _projection.scale(1, y, z)
+//                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
+//                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+                System.out.println("proj");
             }
         } else {
 
@@ -1129,6 +1133,19 @@ public class Engine {
         isBlend = b;
     }
 
+    public static void setViewport(int x, int y, int w, int h, float minZ, float maxZ) {
+        viewport[0] = x;
+        viewport[1] = y;
+        viewport[2] = w;
+        viewport[3] = h;
+        if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+            vkviewport.x(x).y(y).width(w).height(h);
+            vkviewport.minDepth(minZ).maxDepth(maxZ);
+            vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
+        }
+    
+        
+    }
     public static void setViewport(int x, int y, int w, int h) {
         if (viewport[0] != x || viewport[1] != y || viewport[2] != w || viewport[3] != h) {
             viewport[0] = x;
@@ -1141,9 +1158,9 @@ public class Engine {
             } else if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
                 vkviewport.x(x).y(y).width(w).height(h);
                 vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
+//                System.out.println(Stats.fpsCounter + ", "+w+","+h+ "  "+vkviewport.minDepth());
                 return;
             }
-//            System.out.println(Stats.fpsCounter + ", "+w+","+h);
 //            Thread.dumpStack();
         }
         if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
@@ -1495,7 +1512,7 @@ public class Engine {
             
             clearRect2DExtent.width(viewport[2]).height(viewport[3]);
             clearAtt.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
-            clearValueDepth.set(0, 0);
+            clearValueDepth.set(curPass.getClearValueDepth());
             clearRect.limit(1);
             clearAtt.limit(1);
             clearAtt.position(0).limit(1);

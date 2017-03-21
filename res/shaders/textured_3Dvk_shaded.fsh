@@ -9,14 +9,11 @@
 #pragma define "RENDER_MATERIAL_BUFFER" "0"
 #pragma define "RENDER_VELOCITY_BUFFER" "0"
 #pragma define "RENDER_AMBIENT_OCCLUSION"
-#pragma define "SHADOW_MAP_RESOLUTION" "2.0"
-#ifdef VULKAN_GLSL
-layout (set = 2, binding = 0) uniform sampler2DArray samplerColor;
-layout (set = 2, binding = 1) uniform sampler2D texShadow;
-#else
+#pragma define "SHADOW_MAP_RESOLUTION" "2048.0"
+
 uniform sampler2DArray samplerColor;
 uniform sampler2D texShadow;
-#endif 
+
 in vec2 pass_texcoord;
 in float pass_LodBias;
 in vec3 pass_normal;
@@ -53,7 +50,7 @@ bool canLookup(in vec4 v) {
         if (v.z > 0) {
             return true;
         }
-#elif VULKAN_GLSL
+#elif defined VULKAN_GLSL
         if (v.z < 1) {
             return true;
         }
@@ -75,10 +72,17 @@ vec4 getShadowTexcoord(in mat4 shadowMVP, in vec3 worldpos) {
 #else
     v2 = v2 * 0.5 + 0.5;
 #endif
-
     return v2;
 }
-
+const float shadowNEAR = 512*8;
+const float shadowFAR = 5;
+float lin01_shadow(float depth) {
+    float clipSpaceZ= (depth-shadowNEAR) / (shadowFAR-shadowNEAR);
+    return clipSpaceZ;
+}
+float linearizeShadowDepth(float depth) {
+    return (shadowNEAR * shadowFAR) / (depth * (shadowFAR - shadowNEAR));
+}
 float lookupShadowMap(vec3 v, float factor) {
     v.z*=factor;
     #if SOFT_SHADOW_TAP_RANGE == 0
@@ -97,8 +101,10 @@ float lookupShadowMap(vec3 v, float factor) {
         return s;
     #endif
 }
-    int steps = 0;
-    int maxCascade = -1;
+int steps = 0;
+int maxCascade = -1;
+vec3 dbgSplit = vec3(0);
+
 float getShadow2() {
     vec3 inPosN = pass_position.xyz / pass_position.w;
     vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], inPosN);
@@ -111,17 +117,20 @@ float getShadow2() {
        if (clamp(v.z, 0.15, 0.85) == v.z)
             steps++;
         maxCascade = max(maxCascade, 0);
+        dbgSplit.r = 2.0;
     }
     if (steps<1&&canLookup(v2)) {
         s += lookupShadowMap(vec3(v2.xy*0.5+vec2(0.5,0.0), v2.z), SHADOW_FACTOR1);
         if (clamp(v2.z, 0.15, 0.85) == v2.z)
             steps++;
         maxCascade = max(maxCascade, 1);
+        dbgSplit.g = 1.0;
     }
     if (steps<1&&canLookup(v3)) {
         s += lookupShadowMap(vec3(v3.xy*0.5+vec2(0.0, 0.5), v3.z), SHADOW_FACTOR2);
         steps++;
         maxCascade = max(maxCascade, 2);
+        dbgSplit.b = 1.0;
     }
     if (steps > 0)
         s/=steps;
@@ -139,7 +148,7 @@ void main()
     vec3 R = reflect(-L, N);
     vec3 diffuse = max(dot(N, L), 0.0) * vec3(1.0);
     float specular = pow(max(dot(R, V), 0.0), 16.0) * color.a;
-    float shadow = mix(getShadow2(), 1.0, 0.1)*2.0;
+    float shadow = mix(getShadow2(), 1.0, 0.1)*4.0;
     vec3 final = diffuse * color.rgb + specular;
     // final.r = shadow.r;
     if (maxCascade > -1) {
@@ -149,5 +158,5 @@ void main()
         // final = vec3(0);
     #endif
 
-    outFragColor = vec4(shadow*final, 1.0);   
+    outFragColor = vec4(final*shadow+dbgSplit.rgb*0.0, 1.0);   
 }

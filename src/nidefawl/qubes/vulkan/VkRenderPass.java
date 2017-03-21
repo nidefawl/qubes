@@ -5,6 +5,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.util.Arrays;
 
 import org.lwjgl.vulkan.VkAttachmentDescription;
+import org.lwjgl.vulkan.VkClearDepthStencilValue;
 import org.lwjgl.vulkan.VkClearValue;
 
 import nidefawl.qubes.gl.Engine;
@@ -21,10 +22,13 @@ public abstract class VkRenderPass {
     
     long                           renderPass;
 
-    
+
+    private String name;
+    private VkClearDepthStencilValue clearValueDepth;
     public VkRenderPass() {
         reset();
         VkRenderPasses.registerPass(this);
+        this.name = getClass().getSimpleName().replaceFirst("VkRender", "");
     }
     
     void reset() {
@@ -65,9 +69,10 @@ public abstract class VkRenderPass {
           .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
           .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
           .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-          .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+          .stencilStoreOp(VK_ATTACHMENT_STORE_OP_STORE)
           .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
           .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        this.clearValueDepth = clearValues.get(idx).depthStencil();
         return n;
     }
     public void destroyRenderPass(VKContext ctxt) {
@@ -88,11 +93,12 @@ public abstract class VkRenderPass {
     }
 
     public void initClearValues(boolean inverseZ) {
-        for (int i = 0; i < attachmentType.length; i++) {
-            if (attachmentType[i] == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-                clearValues.get(i).depthStencil().set(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f, 0);
-            }
+        if (this.hasDepthAttachement) {
+            clearValueDepth.set(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f, 0);
+            System.out.println(""+this.name+" depth clear value "+clearValueDepth.depth());
         }
-        
+    }
+    public VkClearDepthStencilValue getClearValueDepth() {
+        return clearValueDepth;
     }
 }

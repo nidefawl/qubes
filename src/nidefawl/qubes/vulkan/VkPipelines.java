@@ -113,7 +113,9 @@ public class VkPipelines {
 //            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
             shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
             shadowSolid.rasterizationState.depthBiasEnable(true);
-            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_FRONT_BIT);
+            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_BACK_BIT);
+//            shadowSolid.depthStencilState.depthWriteEnable(true);
+//            shadowSolid.depthStencilState.depthTestEnable(true);
             shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
         }
         {
@@ -248,6 +250,8 @@ public class VkPipelines {
             VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "shadow/debug.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "shadow/debug.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            debugShader.depthStencilState.depthTestEnable(false);
+            debugShader.rasterizationState.cullMode(VK_CULL_MODE_NONE);
             debugShader.setShaders(vert, frag);
             debugShader.setBlend(false);
             debugShader.setRenderPass(VkRenderPasses.passFramebuffer, 0);
@@ -316,6 +320,7 @@ public class VkPipelines {
             pipe.scissors.extent().width(vkContext.swapChain.width).height(vkContext.swapChain.height);
         }
         pipe.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+
         long pipeline = pipe.buildPipeline(vkContext);
         return pipeline;
     }

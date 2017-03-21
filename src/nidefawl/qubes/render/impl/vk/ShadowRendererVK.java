@@ -97,7 +97,20 @@ public class ShadowRendererVK extends ShadowRenderer {
 
         try ( MemoryStack stack = stackPush() ) {
 
-            VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
+            VkSamplerCreateInfo sampler = VkSamplerCreateInfo.callocStack(stack)
+                    .sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO)
+                    .magFilter(VK_FILTER_LINEAR)
+                    .minFilter(VK_FILTER_LINEAR)
+                    .mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
+                    .addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+                    .addressModeV(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+                    .addressModeW(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+                    .mipLodBias(0.0f)
+                    .compareOp(VK_COMPARE_OP_NEVER)
+                    .compareEnable(false)
+                    .minLod(0.0f)
+                    .maxLod(1.0f)
+                    .borderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
             LongBuffer pSampler = stack.longs(0);
             int err = vkCreateSampler(Engine.vkContext.device, sampler, null, pSampler);
             if (err != VK_SUCCESS) {

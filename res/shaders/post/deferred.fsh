@@ -121,7 +121,7 @@ bool canLookup(in vec4 v, in float zPos, in float mapZ) {
         if (v.z > 0) {
             return true;
         }
-#elif VULKAN_GLSL
+#elif defined VULKAN_GLSL
         if (v.z < 1) {
             return true;
         }
@@ -216,17 +216,22 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
 }
 float lookupShadowMap(vec3 v, float factor) {
     v.z*=factor;
-    float s = 0;
-    for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-        for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-            vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-            if (SHADOW_COMPARE(v.z, texture(texShadow, v.xy+offs).r)) {
-                s += 1;
+    #if SOFT_SHADOW_TAP_RANGE == 0
+        return step(texture(texShadow, v.xy).r, v.z);
+    #else
+        float s = 0;
+        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
+            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
+                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
+                vec2 shadow_tc = v.xy+offs;
+                if (SHADOW_COMPARE(v.z, texture(texShadow, shadow_tc).r)) {
+                    s += 1;
+                }
             }
         }
-    }
-    s /= SOFT_SHADOW_WEIGHT;
-    return s;
+        s /= SOFT_SHADOW_WEIGHT;
+        return s;
+    #endif
 }
 float getShadow2() {
 
@@ -234,19 +239,19 @@ float getShadow2() {
     vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], prop.worldposition);
     vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], prop.worldposition);
     vec2 cPos = pass_texcoord*2.0-1.0;
-    // float dst = sqrt(cPos.x*cPos.x+cPos.y*cPos.y);
-    // float weight = max(0.68, 1.3-dst);
     vec4 mapZSplits = in_matrix_shadow.shadow_split_depth;
     float s = 0.0;
     int steps = 0;
     if (canLookup(v, prop.linearDepth, mapZSplits.x)) {
+        // v.z = 1.0-v.z;
         s += lookupShadowMap(vec3(v.xy*0.5, v.z), SHADOW_FACTOR0);
-        dbgSplit.x=1;
+        dbgSplit.xyz=v.xyz;
         dbgSplit.a=1;
+        // prop.albedo.r = 1.0;
         if (clamp(v.z, 0.15, 0.85) == v.z)
             steps++;
     }
-    if (steps<1&&canLookup(v2, prop.linearDepth, mapZSplits.y)) {
+    /*if (steps<1&&canLookup(v2, prop.linearDepth, mapZSplits.y)) {
         s += lookupShadowMap(vec3(v2.xy*0.5+vec2(0.5,0.0), v2.z), SHADOW_FACTOR1);
         dbgSplit.y=1;
         dbgSplit.a=1;
@@ -258,11 +263,11 @@ float getShadow2() {
         dbgSplit.z=1;
         dbgSplit.a=1;
         steps++;
-    }
+    }*/
     if (steps > 0)
         s/=steps;
     // return 1.0;
-        return clamp(s, 1, 1);
+        return clamp(s, 0, 1);
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
 #define G_SCATTERING 0.87f
@@ -742,12 +747,14 @@ void main() {
     //     rgbd*=0.01;
     // }
     // out_Color = vec4(rgbd, alpha);
-    out_Color = vec4(prop.albedo, alpha);
+    // prop.albedo.rgb*=0.1;
+    // prop.albedo.rg += dbgSplit.rg*dbgSplit.a*0.3;
+    out_Color = vec4(prop.albedo.rgb, alpha);
     // out_Color = vec4(prop.albedo.rgb, alpha);
     // drawDbgTex(pr)
     // out_Color = vec4(vec3(sceneColor.xyz*0.01), alpha);
-    // vec4 texsh =texture(texShadow, pass_texcoord);
-    // if (texsh.r > 0) {
-    //     out_Color = vec4(1.0);
-    // }
+    vec4 texsh =texture(texShadow, vec2(pass_texcoord.x, 1.0-pass_texcoord.y));
+    if (texsh.r > 0) {
+        // out_Color = vec4(prop.albedo.rgb*4, alpha);
+    }
 }

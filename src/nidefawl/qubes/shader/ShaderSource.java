@@ -293,7 +293,6 @@ public class ShaderSource {
                 return "#define Z_INVERSE 1";
             }
             return "#define Z_INVERSE 0"; 
-            
         }
         if ("SHADOW_MAP_RESOLUTION".equals(define)) {
             return "#define SHADOW_MAP_RESOLUTION "+Engine.getShadowMapTextureSize()+".0";

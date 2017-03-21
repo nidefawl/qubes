@@ -42,6 +42,7 @@ public class VKContext {
 
     private static VkClearColorValue CLEAR_COLOR;
     private static VkImageSubresourceRange CLEAR_RANGE;
+    private static VkClearDepthStencilValue CLEAR_DEPTH;
     
 
     public SwapChain                           swapChain           = null;
@@ -666,6 +667,7 @@ public class VKContext {
         ZERO_OFFSET.put(0, 0);
         BARRIER_MEM_IMG = VkImageMemoryBarrier.calloc(1);
         CLEAR_COLOR = VkClearColorValue.calloc();
+        CLEAR_DEPTH = VkClearDepthStencilValue.calloc();
         CLEAR_RANGE = VkImageSubresourceRange.calloc();
 
         VkMemoryManager.allocStatic();
@@ -681,6 +683,7 @@ public class VKContext {
         memFree(ZERO_OFFSET);
         BARRIER_MEM_IMG.free();
         CLEAR_RANGE.free();
+        CLEAR_DEPTH.free();
         CLEAR_COLOR.free();
     }
     public CommandBuffer getCurrentCmdBuffer() {
@@ -744,6 +747,27 @@ public class VKContext {
                 VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 targetlayout,
                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
+                VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
+//        System.out.println(""+r+","+g+","+b+","+a);
+    }
+    public void clearDepthStencilImage(VkCommandBuffer commandBuffer, long image, int targetlayout, float depth, int stencil) {
+
+        vkContext.setImageLayout(commandBuffer, image,
+                VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+        CLEAR_DEPTH.set(depth, stencil);
+        CLEAR_RANGE.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+            .baseArrayLayer(0)
+            .baseMipLevel(0)
+            .layerCount(1)
+            .levelCount(1);
+        vkCmdClearDepthStencilImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CLEAR_DEPTH, CLEAR_RANGE);
+        vkContext.setImageLayout(commandBuffer, image,
+                VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                targetlayout,
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
                 VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
 //        System.out.println(""+r+","+g+","+b+","+a);
     }

@@ -9,16 +9,16 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
+import org.lwjgl.vulkan.VkSubpassDependency;
 
 public class VkRenderPassShadow extends VkRenderPass {
 
-    private Buffer subpassDependencies;
+    private VkSubpassDependency.Buffer subpassDependencies;
     public VkRenderPassShadow() {
-        addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         addDepthAttachment(0, VK_FORMAT_D32_SFLOAT)
             .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM)
+            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
     }
@@ -26,13 +26,13 @@ public class VkRenderPassShadow extends VkRenderPass {
     public void build(VKContext ctxt) {
         try ( MemoryStack stack = stackPush() ) 
         {
+            VkAttachmentReference depthRefShadowPass = VkAttachmentReference.callocStack(stack)
+                    .attachment(0)
+                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             VkAttachmentReference.Buffer colorRefShadowPass = VkAttachmentReference.callocStack(nColorAttachments, stack);
             colorRefShadowPass.get(0)
                     .attachment(1)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference depthRefShadowPass = VkAttachmentReference.callocStack(stack)
-                    .attachment(0)
-                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             
 
             this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
