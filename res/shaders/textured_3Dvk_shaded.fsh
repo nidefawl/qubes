@@ -4,7 +4,7 @@
 
 #pragma include "ubo_scene.glsl"
 #pragma include "ubo_shadow.glsl"
-#pragma include "unproject.glsl"
+#pragma define "MAP_Z_INVERSE"
 #pragma define "RENDER_PASS"
 #pragma define "RENDER_MATERIAL_BUFFER" "0"
 #pragma define "RENDER_VELOCITY_BUFFER" "0"
@@ -23,140 +23,83 @@ in vec4 pass_position;
 
 out vec4 outFragColor;
 
-#define SAMPLE_DISTANCE ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
-#define SOFT_SHADOW_TAP_RANGE 0
-#define SOFT_SHADOW_TAP_RANGE2 1
-#define SAMPLE_DISTANCE2 ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
-#define SOFT_SHADOW_WEIGHT ((SOFT_SHADOW_TAP_RANGE*2+1)*(SOFT_SHADOW_TAP_RANGE*2+1))
-#define SOFT_SHADOW_WEIGHT2 ((SOFT_SHADOW_TAP_RANGE2*2+1)*(SOFT_SHADOW_TAP_RANGE2*2+1))
-#if Z_INVERSE
 #define SHADOW_FACTOR0 1.00001
 #define SHADOW_FACTOR1 1.00005
 #define SHADOW_FACTOR2 1.00007
-#define SHADOW_COMPARE(a, b) a >= b
-#else
-//absolutly sucks
-#define SHADOW_FACTOR0 0.99999
-#define SHADOW_FACTOR1 0.99998
-#define SHADOW_FACTOR2 0.99996
-#define SHADOW_COMPARE(a, b) a <= b
-#endif
 
-const float clampmin = 1.0/SHADOW_MAP_RESOLUTION;//1.0/8.0;
+const float clampmin = 1.0/SHADOW_MAP_RESOLUTION;
 const float clampmax = 1.0-clampmin;
 bool canLookup(in vec4 v) {
     if (clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y) {
-#if Z_INVERSE
-        if (v.z > 0) {
+        if (v.z >= 0 && v.z <= 1) {
             return true;
         }
-#elif defined VULKAN_GLSL
-        if (v.z < 1) {
-            return true;
-        }
-#else
-
-        if (v.z < 1&&v.z > -1) {
-            return true;
-        }
-#endif
     }
     return false;
-    // return clamp(v.x, clampmin, clampmax) == v.x && clamp(v.y, clampmin, clampmax) == v.y && zPos > mapZ;
 }
 
-vec4 getShadowTexcoord(in mat4 shadowMVP, in vec3 worldpos) {
-    vec4 v2 = shadowMVP * vec4(worldpos, 1.0);
-#if Z_INVERSE
+vec4 getShadowTexcoord(in mat4 shadowMVP, in vec4 worldpos) {
+    vec4 v2 = shadowMVP * vec4(worldpos/worldpos.w);
     v2.xy = v2.xy * 0.5 + 0.5;
-#else
-    v2 = v2 * 0.5 + 0.5;
-#endif
     return v2;
 }
-const float shadowNEAR = 512*8;
-const float shadowFAR = 5;
-float lin01_shadow(float depth) {
-    float clipSpaceZ= (depth-shadowNEAR) / (shadowFAR-shadowNEAR);
-    return clipSpaceZ;
-}
-float linearizeShadowDepth(float depth) {
-    return (shadowNEAR * shadowFAR) / (depth * (shadowFAR - shadowNEAR));
-}
+
 float lookupShadowMap(vec3 v, float factor) {
-    v.z*=factor;
-    #if SOFT_SHADOW_TAP_RANGE == 0
-        return step(texture(texShadow, v.xy).r, v.z);
-    #else
-        float s = 0;
-        for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
-            for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
-                vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
-                if (SHADOW_COMPARE(v.z, texture(texShadow, v.xy+offs).r)) {
-                    s += 1;
-                }
-            }
-        }
-        s /= SOFT_SHADOW_WEIGHT;
-        return s;
-    #endif
+
+#if MAP_Z_INVERSE
+    v.z*=2.0-factor;
+    return step(v.z, 1.0-texture(texShadow, v.xy).r);
+#else
+    v.z*=2.0-factor;
+    return step(v.z, texture(texShadow, v.xy).r);
+#endif
 }
 int steps = 0;
-int maxCascade = -1;
 vec3 dbgSplit = vec3(0);
 
-float getShadow2() {
-    vec3 inPosN = pass_position.xyz / pass_position.w;
-    vec4 v = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[0], inPosN);
-    vec4 v2 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[1], inPosN);
-    vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], inPosN);
-    vec4 mapZSplits = in_matrix_shadow.shadow_split_depth;
-    float s = 0.0;
-    if (canLookup(v)) {
-        s += lookupShadowMap(vec3(v.xy*0.5, v.z), SHADOW_FACTOR0);
-       if (clamp(v.z, 0.15, 0.85) == v.z)
-            steps++;
-        maxCascade = max(maxCascade, 0);
-        dbgSplit.r = 2.0;
-    }
-    if (steps<1&&canLookup(v2)) {
-        s += lookupShadowMap(vec3(v2.xy*0.5+vec2(0.5,0.0), v2.z), SHADOW_FACTOR1);
-        if (clamp(v2.z, 0.15, 0.85) == v2.z)
-            steps++;
-        maxCascade = max(maxCascade, 1);
-        dbgSplit.g = 1.0;
-    }
-    if (steps<1&&canLookup(v3)) {
-        s += lookupShadowMap(vec3(v3.xy*0.5+vec2(0.0, 0.5), v3.z), SHADOW_FACTOR2);
+float getShadow() {
+    vec4 shadowSS = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], pass_position);
+    float s = 0;
+    if (steps<1&&canLookup(shadowSS)) {
+        s += lookupShadowMap(vec3(shadowSS.xy, shadowSS.z), SHADOW_FACTOR2);
         steps++;
-        maxCascade = max(maxCascade, 2);
         dbgSplit.b = 1.0;
     }
     if (steps > 0)
         s/=steps;
-    // return 1.0;
-        return clamp(s, 0, 1);
+    return clamp(s, 0, 1);
 }
 
 void main() 
 {
-    vec4 color = texture(samplerColor, vec3(pass_texcoord, 5.0));
-    // if (color.r > 0) color = vec4(1.0);
+    vec4 color = texture(samplerColor, vec3(pass_texcoord, 292.0));
     vec3 N = normalize(pass_normal);
     vec3 L = normalize(pass_LightVec);
     vec3 V = normalize(pass_ViewVec);
     vec3 R = reflect(-L, N);
     vec3 diffuse = max(dot(N, L), 0.0) * vec3(1.0);
     float specular = pow(max(dot(R, V), 0.0), 16.0) * color.a;
-    float shadow = mix(getShadow2(), 1.0, 0.1)*4.0;
+    float shadow = mix(getShadow(), 1.0, 0.1)*4.0;
     vec3 final = diffuse * color.rgb + specular;
-    // final.r = shadow.r;
-    if (maxCascade > -1) {
-        // final[maxCascade] = 1.0;
-    }
-    #if Z_INVERSE
-        // final = vec3(0);
-    #endif
 
+    vec3 inPosN = pass_position.xyz / pass_position.w;
+    vec4 v3 = getShadowTexcoord(in_matrix_shadow.shadow_split_mvp[2], pass_position);
     outFragColor = vec4(final*shadow+dbgSplit.rgb*0.0, 1.0);   
+    if (gl_FragCoord.x < 300)  {
+        outFragColor = vec4(vec3((gl_FragCoord.z/Z_NEAR)*10), 1.0);
+    }
+    else if (gl_FragCoord.x < 600) {
+        #if MAP_Z_INVERSE
+            outFragColor = vec4(vec3(1.0-texture(texShadow, v3.xy).r), 1.0);
+        #else
+            outFragColor = vec4(vec3(texture(texShadow, v3.xy).r), 1.0);
+        #endif
+    }
+    // vec4 prevp = vec4(0, 480, 0, 320);
+    // if (gl_FragCoord.x > prevp.x && gl_FragCoord.x < prevp.y && gl_FragCoord.y > prevp.z && gl_FragCoord.y < prevp.w) {
+    //     vec2 txc = (gl_FragCoord.xy-prevp.xz) / vec2(prevp.y-prevp.x, prevp.w-prevp.z);
+    //     vec3 shadowmaps=vec3(texture(texShadow, txc).r);
+    //     shadowmaps.xy += txc.xy*0.3;
+    //     outFragColor = vec4(shadowmaps, 1.0);
+    // }
 }

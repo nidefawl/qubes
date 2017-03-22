@@ -235,6 +235,36 @@ public class Project {
         to.m33 = 0;
     }
 
+    public static void orthoMat01(float left, float right, float top, float bottom, float znear, float zfar, Matrix4f to) {
+        to.setIdentity();
+        boolean zZeroToOne=true;
+        // calculate right matrix elements
+        float rm00 = 2.0f / (right - left);
+        float rm11 = 2.0f / (top - bottom);
+        float rm22 = (zZeroToOne ? 1.0f : 2.0f) / (znear - zfar);
+        float rm30 = (left + right) / (left - right);
+        float rm31 = (top + bottom) / (bottom - top);
+        float rm32 = (zZeroToOne ? znear : (zfar + znear)) / (znear - zfar);
+
+        // perform optimized multiplication
+        // compute the last column first, because other columns do not depend on it
+        to.m30= to.m00 * rm30 + to.m10 * rm31 + to.m20 * rm32 + to.m30;
+        to.m31= to.m01 * rm30 + to.m11 * rm31 + to.m21 * rm32 + to.m31;
+        to.m32= to.m02 * rm30 + to.m12 * rm31 + to.m22 * rm32 + to.m32;
+        to.m33= to.m03 * rm30 + to.m13 * rm31 + to.m23 * rm32 + to.m33;
+        to.m00= to.m00 * rm00;
+        to.m01= to.m01 * rm00;
+        to.m02= to.m02 * rm00;
+        to.m03= to.m03 * rm00;
+        to.m10= to.m10 * rm11;
+        to.m11= to.m11 * rm11;
+        to.m12= to.m12 * rm11;
+        to.m13= to.m13 * rm11;
+        to.m20= to.m20 * rm22;
+        to.m21= to.m21 * rm22;
+        to.m22= to.m22 * rm22;
+        to.m23= to.m23 * rm22;
+    }
     public static void orthoMat(float left, float right, float top, float bottom, float znear, float zfar, Matrix4f to) {
         to.setZero();
         to.m00 = 2.0f / (right - left);

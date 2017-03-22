@@ -61,6 +61,7 @@ public class VkPipeline {
     public long                                pipeline             = VK_NULL_HANDLE;
     public long                                pipelineScissors     = VK_NULL_HANDLE;
     public boolean useSwapChainViewport = true;
+    public boolean useDynViewport = false;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;
@@ -152,6 +153,19 @@ public class VkPipeline {
             mainPipe.pDepthStencilState(depthStencilState);
             mainPipe.pDynamicState(dynamicState);
             mainPipe.pStages(shaderStageCreateInfo);
+
+            this.useDynViewport = false;
+            if (dynamicState != null) {
+                IntBuffer dynStates = dynamicState.pDynamicStates();
+                
+                for (int i = 0; i < dynStates.limit(); i++) {
+                    if (dynStates.get(i) == VK_DYNAMIC_STATE_VIEWPORT) {
+                        this.useDynViewport = true;
+                        
+                        
+                    }
+                }
+            }
 //            for (int i = 1; i < nPipelines; i++) {
 //                pipelineCreateInfoBuffer.put(i, mainPipe);
 //                VkGraphicsPipelineCreateInfo subPipeline = pipelineCreateInfoBuffer.get(i);
@@ -245,6 +259,7 @@ public class VkPipeline {
         pipelineDepthStencilStateCreateInfo.depthTestEnable(depthTestEnable);
         pipelineDepthStencilStateCreateInfo.depthWriteEnable(depthWriteEnable);
         pipelineDepthStencilStateCreateInfo.depthCompareOp(depthCompareOp);
+        pipelineDepthStencilStateCreateInfo.depthBoundsTestEnable(false);
         pipelineDepthStencilStateCreateInfo.back()
             .failOp(VK_STENCIL_OP_KEEP)
             .passOp(VK_STENCIL_OP_KEEP)

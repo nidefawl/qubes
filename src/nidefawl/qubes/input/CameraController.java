@@ -15,7 +15,7 @@ import nidefawl.qubes.vr.VR;
  * Copyright: Michael Hept
  */
 public class CameraController {
-	final static float SPEED_MODIFIER=0.42f;
+	final static float SPEED_MODIFIER=4.42f;
 	public Vec3D pos = new Vec3D();
 	public Vec3D lastPos = new Vec3D();
 	public Vec3D mot = new Vec3D();
@@ -68,7 +68,7 @@ public class CameraController {
 	public void tickUpdate() {
         float vel = GameMath.sqrtf(this.forward * this.forward + this.strafe * this.strafe);
 
-        maxSpeed = 0.9F;
+        maxSpeed = 0.9F*(SPEED_MODIFIER/0.42f);
         float var7 = 0.0F;
         this.mot.y -= 0.98D * (this.sneak?1:0)* SPEED_MODIFIER*5f;
         this.mot.y += 0.98D * this.jump * SPEED_MODIFIER*5f;

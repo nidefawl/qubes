@@ -4,6 +4,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_shadow.glsl"
 #pragma include "vertex_layout.glsl"
 
 out vec2 pass_texcoord;
@@ -12,6 +13,12 @@ out vec3 pass_normal;
 out vec3 pass_ViewVec;
 out vec3 pass_LightVec;
 out vec4 pass_position;
+
+const mat4 biasMat = mat4( 
+	0.25, 0.0, 0.0, 0.0,
+	0.0, 0.25, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 );
 
 #ifdef VULKAN_GLSL
 out gl_PerVertex 

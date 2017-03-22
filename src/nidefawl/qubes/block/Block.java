@@ -121,7 +121,8 @@ public class Block {
 
     public final static Block pad = new BlockPlantFlat("pad").setTextures("plants/pad");
     public final static BlockGroup modelled = new BlockGroupModelledStones(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
-    public final static Block torch = new BlockTorch("torch").setTextures("torch/torch_on");
+//    public final static Block torch = new BlockTorch("torch").setTextures("torch/torch_on");
+    public final static Block test = new Block("test").setTextures("ground/test").setCategory(BlockCategory.GROUND);
 
     public static void preInit() {
         

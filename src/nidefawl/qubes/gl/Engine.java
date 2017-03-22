@@ -1138,7 +1138,7 @@ public class Engine {
         viewport[1] = y;
         viewport[2] = w;
         viewport[3] = h;
-        if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+        if (curPipeline!=null&&curPipeline.useDynViewport) {
             vkviewport.x(x).y(y).width(w).height(h);
             vkviewport.minDepth(minZ).maxDepth(maxZ);
             vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
@@ -1156,6 +1156,8 @@ public class Engine {
 
                 GL11.glViewport(x, y, w, h);
             } else if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+                vkviewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+                vkviewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
                 vkviewport.x(x).y(y).width(w).height(h);
                 vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
 //                System.out.println(Stats.fpsCounter + ", "+w+","+h+ "  "+vkviewport.minDepth());
@@ -1164,6 +1166,8 @@ public class Engine {
 //            Thread.dumpStack();
         }
         if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+            vkviewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+            vkviewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
             vkviewport.x(x).y(y).width(w).height(h);
             vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
         }
@@ -1318,6 +1322,7 @@ public class Engine {
     private static boolean rebindDescSet1;
     private static boolean rebindDescSet;
     private static VkRenderPass curPass;
+    public static boolean INVERSE_MAP = true;
     public static void bindPipeline(VkPipeline pipe) {
         if (curPipeline != pipe) {
             curPipeline = pipe;
