@@ -82,8 +82,8 @@ public class FrameBuffer implements RefTrackedResource {
     public static void destroyStatic() {
 
     }
-    public void addAtt(int idx, int vkFormat, int vkUsage) {
-        this.attachments[idx] = new FramebufferAttachment(this.ctxt, vkFormat, vkUsage);
+    public void addAtt(int idx, VkAttachmentDescription n, int vkUsage) {
+        this.attachments[idx] = new FramebufferAttachment(this.ctxt, n, vkUsage);
     }
     public long get() {
         return this.framebuffer;
@@ -101,7 +101,7 @@ public class FrameBuffer implements RefTrackedResource {
             if ((flags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
                 flags |= depthUsageFlags;
             }
-            addAtt(i, n.format(), flags);
+            addAtt(i, n, flags);
         }
     }
     public int getHeight() {
@@ -130,5 +130,25 @@ public class FrameBuffer implements RefTrackedResource {
             }
         }
         return true;
+    }
+    public void onEndRenderPass() {
+        for (int i = 0; i < this.attachments.length; i++) {
+            if (this.attachments[i] != null) {
+                
+//                System.err.println(this.tag+" att["+i+"] goes from "+VulkanErr.imageLayoutToStr(this.attachments[i].currentLayout)+" to "+VulkanErr.imageLayoutToStr(this.attachments[i].finalLayout));
+
+                this.attachments[i].currentLayout = this.attachments[i].finalLayout;
+            }
+        }
+    }
+    public void onBeginRenderPass() {
+        for (int i = 0; i < this.attachments.length; i++) {
+            if (this.attachments[i] != null) {
+                if (this.attachments[i].initialLayout != VK_IMAGE_LAYOUT_UNDEFINED && this.attachments[i].currentLayout != this.attachments[i].initialLayout) {
+                    System.err.println(this.tag+" att["+i+"] isn't in correct layout "+this.attachments[i].currentLayout+", expected "+this.attachments[i].initialLayout);
+                    
+                }
+            }
+        }
     }
 }

@@ -1322,6 +1322,7 @@ public class Engine {
     private static boolean rebindDescSet1;
     private static boolean rebindDescSet;
     private static VkRenderPass curPass;
+    private static nidefawl.qubes.vulkan.FrameBuffer curFB;
     public static boolean INVERSE_MAP = true;
     public static void bindPipeline(VkPipeline pipe) {
         if (curPipeline != pipe) {
@@ -1433,6 +1434,8 @@ public class Engine {
     public static void beginRenderPass(VkRenderPass pass, nidefawl.qubes.vulkan.FrameBuffer framebuffer, int flags) {
         curPipeline = null;
         curPass = pass;
+        curFB = framebuffer;
+        curFB.onBeginRenderPass();
         framebuffer.setInUse(curCommandBuffer.frameIdx);
         renderAreaExtent.set(framebuffer.getWidth(), framebuffer.getHeight());
         renderPassBeginInfo.renderPass(curPass.get());
@@ -1442,6 +1445,7 @@ public class Engine {
     }
     public static void endRenderPass() {
         vkCmdEndRenderPass(curCommandBuffer);
+        curFB.onEndRenderPass();
         curPipeline = null;
         curPass = null;
     }

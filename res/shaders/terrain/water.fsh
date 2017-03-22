@@ -99,7 +99,7 @@ void main() {
 		
 		bump = 	bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 		
-		waterNormal = normalize(bump.xzy * tbnMat);
+		waterNormal = normalize(tbnMat * bump.xzy);
 	}
 	
 	

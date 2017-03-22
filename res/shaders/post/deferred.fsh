@@ -48,6 +48,26 @@ struct SurfaceProperties {
 
 
 
+#ifdef VULKAN_GLSL
+layout (set = 2, binding = 0) uniform sampler2D texColor;
+layout (set = 2, binding = 1) uniform sampler2D texNormals;
+layout (set = 2, binding = 2) uniform usampler2D texMaterial;
+layout (set = 2, binding = 3) uniform sampler2D texBlockLight;
+layout (set = 2, binding = 4) uniform sampler2D texDepth;
+layout (set = 2, binding = 5) uniform sampler2D texShadow;
+layout (set = 2, binding = 6) uniform sampler2D texLight;
+#if RENDER_AMBIENT_OCCLUSION
+layout (set = 2, binding = 7) uniform sampler2D texAO;
+#endif
+#if RENDER_PASS == 1
+layout (set = 2, binding = 7) uniform sampler2D texDepthPreWater;
+layout (set = 2, binding = 8) uniform sampler2D texWaterNoise;
+#endif
+#ifdef BLUE_NOISE
+uniform int texSlotNoise;
+layout (set = 2, binding = 9) uniform sampler2DArray texArrayNoise;
+#endif
+#else
 uniform sampler2D texColor;
 uniform sampler2D texNormals;
 uniform usampler2D texMaterial;
@@ -65,6 +85,7 @@ uniform sampler2D texWaterNoise;
 #ifdef BLUE_NOISE
 uniform int texSlotNoise;
 uniform sampler2DArray texArrayNoise;
+#endif
 #endif
 
 
@@ -560,17 +581,17 @@ void main() {
         // float mask = texture2D(gaux1, newtc.st + refractv.xy*refMult).g;
         float mask =  isWater*(1-isEyeInWater);
         vec2 newtc = (pass_texcoord.st + refractv.xy*refMult)*mask + pass_texcoord.st*(1-mask);
-
             depthUnderWater = texture(texDepthPreWater, newtc).r;
             viewSpacePosUnderWater = unprojectScreenCoord(screencoord(newtc.st, depthUnderWater));
             worldPosUnderWater = in_matrix_3D.mv_inv * viewSpacePosUnderWater;
-            // sceneColor = texture(texColor, newtc);
             // prop.albedo = sceneColor.rgb;
         // float uDepth = texture2D(depthtex1,newtc.xy).x;
         // color.rgb = pow(texture2D(gcolor,newtc.xy).rgb,vec3(2.2));
         // uPos  = nvec3(gbufferProjectionInverse * nvec4(vec3(newtc.xy,uDepth) * 2.0 - 1.0)); 
     }
 #endif
+
+        // sceneColor.rgb = vec3(prop.normal.xyz);
     alpha += isEntity;
     alpha = min(alpha, 1.0);
     if (!isSky) {
@@ -612,7 +633,7 @@ void main() {
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
         float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*22.0;
 
-        sceneColor.xyz = vec3(prop.worldposition.rgb*0.002);
+        // sceneColor.xyz = vec3(prop.worldposition.rgb*0.002);
 
 
 
@@ -671,6 +692,7 @@ void main() {
         vec3 uVec = (prop.worldposition - worldPosUnderWater).xyz;
         float len =length(uVec);
         if (len > 0.001) {
+            // prop.albedo.r=1;
             float UNdotUP = 0.5+abs(dot(normalize(uVec),normalize(prop.normal.xyz)));
             float depth = len*UNdotUP;
             float sky_absorbance = mix(mix(1.0,exp(-depth/16.5),isWater),1.0,isEyeInWater);
@@ -749,25 +771,9 @@ void main() {
 #endif
     // if (isSky)
     //     prop.position.z=0;
-    // vec3 rgbd = vec3(0.02*(prop.position.z/1000.0));
-    // // if (prop.linearDepth>10)
-    // //     rgbd.r=1;
-    // float depth = -prop.position.z;
-    // if (pass_texcoord.x<0.7)
-    // depth = prop.linearDepth;
-    // if (depth>Z_NEAR) {
-    //     rgbd=mix(vec3(0,1, 0), vec3(1, 0,0), clamp((depth-Z_NEAR)/(Z_FAR-Z_NEAR), 0,1));
-    //     rgbd*=0.01;
-    // }
-    // out_Color = vec4(rgbd, alpha);
-    // prop.albedo.rgb*=0.1;
-    // prop.albedo.rg += dbgSplit.rg*dbgSplit.a*0.3;
     out_Color = vec4(prop.albedo.rgb, alpha);
-    // out_Color = vec4(prop.albedo.rgb, alpha);
-    // drawDbgTex(pr)
-    // out_Color = vec4(vec3(sceneColor.xyz*0.01), alpha);
-    vec4 texsh =texture(texShadow, vec2(pass_texcoord.x, 1.0-pass_texcoord.y));
-    if (texsh.r > 0) {
-        // out_Color = vec4(prop.albedo.rgb*4, alpha);
-    }
+    // #if RENDER_PASS == 1
+    // out_Color = vec4(vec3(texture(texDepthPreWater, pass_texcoord).r), alpha);
+    // #endif
+    // out_Color = vec4(sceneColor.rgb, alpha);
 }

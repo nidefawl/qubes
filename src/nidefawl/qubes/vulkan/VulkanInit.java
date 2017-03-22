@@ -508,7 +508,14 @@ public class VulkanInit {
             throw new AssertionError("Failed to get physical devices: " + VulkanErr.toString(err));
         }
         ctxt.physicalDevice = new VkPhysicalDevice(physicalDevice, ctxt.vk);
-
+        // Store Properties features, limits and properties of the physical device for later use
+        // Device properties also contain limits and sparse properties
+        ctxt.features = VkPhysicalDeviceFeatures.calloc();
+        ctxt.properties = VkPhysicalDeviceProperties.calloc();
+        ctxt.memoryProperties = VkPhysicalDeviceMemoryProperties.calloc();
+        vkGetPhysicalDeviceFeatures(ctxt.physicalDevice, ctxt.features);
+        vkGetPhysicalDeviceProperties(ctxt.physicalDevice, ctxt.properties);
+        vkGetPhysicalDeviceMemoryProperties(ctxt.getPhysicalDevice(), ctxt.memoryProperties);
     }
 
     private static void createDeviceAndQueue(VKContext ctxt) {
@@ -530,13 +537,15 @@ public class VulkanInit {
                 .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                 .queueFamilyIndex(graphicsQueueFamilyIndex)
                 .pQueuePriorities(pQueuePriorities);
-
+        VkPhysicalDeviceFeatures features = VkPhysicalDeviceFeatures.calloc();
+        setupReqFeatures(features);
         VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .pNext(NULL)
                 .pQueueCreateInfos(queueCreateInfo)
                 .ppEnabledExtensionNames(enabledDeviceExtension)
-                .ppEnabledLayerNames(enabledVulkanLayers.rewind());
+                .ppEnabledLayerNames(enabledVulkanLayers.rewind())
+                .pEnabledFeatures(features);
 
         PointerBuffer pDevice = memAllocPointer(1);
         int err = vkCreateDevice(ctxt.getPhysicalDevice(), deviceCreateInfo, null, pDevice);
@@ -546,14 +555,6 @@ public class VulkanInit {
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to create device: " + VulkanErr.toString(err));
         }
-        // Store Properties features, limits and properties of the physical device for later use
-        // Device properties also contain limits and sparse properties
-        ctxt.features = VkPhysicalDeviceFeatures.calloc();
-        ctxt.properties = VkPhysicalDeviceProperties.calloc();
-        ctxt.memoryProperties = VkPhysicalDeviceMemoryProperties.calloc();
-        vkGetPhysicalDeviceFeatures(ctxt.physicalDevice, ctxt.features);
-        vkGetPhysicalDeviceProperties(ctxt.physicalDevice, ctxt.properties);
-        vkGetPhysicalDeviceMemoryProperties(ctxt.getPhysicalDevice(), ctxt.memoryProperties);
         ctxt.limits = ctxt.properties.limits();
 
 
@@ -563,6 +564,64 @@ public class VulkanInit {
         deviceCreateInfo.free();
         memFree(pQueuePriorities);
     }
+    private static void setupReqFeatures(VkPhysicalDeviceFeatures features) {
+        features.robustBufferAccess(false);
+        features.fullDrawIndexUint32(false);
+        features.imageCubeArray(false);
+        features.independentBlend(true);
+        features.geometryShader(false);
+        features.tessellationShader(false);
+        features.sampleRateShading(false);
+        features.dualSrcBlend(false);
+        features.logicOp(false);
+        features.multiDrawIndirect(true);
+        features.drawIndirectFirstInstance(true);
+        features.depthClamp(false);
+        features.depthBiasClamp(false);
+        features.fillModeNonSolid(false);
+        features.depthBounds(false);
+        features.wideLines(false);
+        features.largePoints(false);
+        features.alphaToOne(false);
+        features.multiViewport(false);
+        features.samplerAnisotropy(true);
+        features.textureCompressionETC2(false);
+        features.textureCompressionASTC_LDR(false);
+        features.textureCompressionBC(false);
+        features.occlusionQueryPrecise(false);
+        features.pipelineStatisticsQuery(false);
+        features.vertexPipelineStoresAndAtomics(false);
+        features.fragmentStoresAndAtomics(false);
+        features.shaderTessellationAndGeometryPointSize(false);
+        features.shaderImageGatherExtended(false);
+        features.shaderStorageImageExtendedFormats(false);
+        features.shaderStorageImageMultisample(false);
+        features.shaderStorageImageReadWithoutFormat(false);
+        features.shaderStorageImageWriteWithoutFormat(false);
+        features.shaderUniformBufferArrayDynamicIndexing(false);
+        features.shaderSampledImageArrayDynamicIndexing(false);
+        features.shaderStorageBufferArrayDynamicIndexing(false);
+        features.shaderStorageImageArrayDynamicIndexing(false);
+        features.shaderClipDistance(false);
+        features.shaderCullDistance(false);
+        features.shaderFloat64(false);
+        features.shaderInt64(false);
+        features.shaderInt16(false);
+        features.shaderResourceResidency(false);
+        features.shaderResourceMinLod(false);
+        features.sparseBinding(false);
+        features.sparseResidencyBuffer(false);
+        features.sparseResidencyImage2D(false);
+        features.sparseResidencyImage3D(false);
+        features.sparseResidency2Samples(false);
+        features.sparseResidency4Samples(false);
+        features.sparseResidency8Samples(false);
+        features.sparseResidency16Samples(false);
+        features.sparseResidencyAliased(false);
+        features.variableMultisampleRate(false);
+        features.inheritedQueries(false);
+    }
+
     private static long setupDebugging(VkInstance instance, int flags, VkDebugReportCallbackEXT callback) {
         VkDebugReportCallbackCreateInfoEXT dbgCreateInfo = VkDebugReportCallbackCreateInfoEXT.calloc()
                 .sType(VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)

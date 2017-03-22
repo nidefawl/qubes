@@ -544,8 +544,9 @@ public class VKContext {
             return null;
         }
         if (DUMP_SHADER_SRC) {
-            System.out.println(source);
+//            System.out.println(source);
 //            writeShaderBin(result.get(stage), string);
+            writeShader(source, "preprocessed_shader_src/"+string);
         }
         
         
@@ -655,6 +656,11 @@ public class VKContext {
             // Old layout is transfer destination
             // Make sure any writes to the image have been finished
             BARRIER_MEM_IMG.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+            break;
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            // Transfer source (copy, blit)
+            // Make sure any reads from the image have been finished
+            BARRIER_MEM_IMG.srcAccessMask(VK_ACCESS_TRANSFER_READ_BIT);
             break;
         }
 

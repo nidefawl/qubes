@@ -71,6 +71,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         pRegions.extent().width(displayWidth).height(displayHeight).depth(1);
     }
 
+    boolean first = true;
     public void renderTransparent(World world, float fTime) {        
 //        waterShader.enable();
 //        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
@@ -80,6 +81,11 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 //
 //        Shader.disable();
 
+        if (first) {
+            first = false;
+        } else {
+
+        }
         FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
         FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
         
@@ -91,7 +97,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferSceneWater;
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
-            Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbScene, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainWater);
             Engine.bindPipeline(VkPipelines.water);
             RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
@@ -105,29 +111,36 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
     
     }
     private void copyDepthBuffer(FramebufferAttachment imageDepthSrc, FramebufferAttachment imageDepthDst) {
-        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthSrc.image,
-                VK_IMAGE_ASPECT_DEPTH_BIT, 
-                imageDepthSrc.imageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
-                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthDst.image,
-                VK_IMAGE_ASPECT_DEPTH_BIT, 
-                imageDepthDst.imageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
-                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
-        vkCmdCopyImage(Engine.getDrawCmdBuffer(), imageDepthSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, pRegions);
+        if (imageDepthSrc.currentLayout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+            System.err.println("Image src isn't in correct layout "+imageDepthSrc.currentLayout+", expected "+VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+            
+        }
+        if (imageDepthDst.currentLayout != imageDepthDst.initialLayout) {
+            if (imageDepthDst.currentLayout != VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL) {
+                System.err.println("Image dst isn't in correct layout "+imageDepthDst.currentLayout+", expected "+VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+                
+            }
+            vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthDst.image,
+                    VK_IMAGE_ASPECT_DEPTH_BIT, 
+                    imageDepthDst.currentLayout, imageDepthDst.initialLayout,
+                    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                    VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+        } else {
+
+            System.err.println("First loop, dont transition dst image to initialLayout since renderpass didn't occur!");
+        }
+        imageDepthDst.currentLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+        vkCmdCopyImage(Engine.getDrawCmdBuffer(), imageDepthSrc.image, 
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, pRegions);
         
 
         vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthSrc.image,
                 VK_IMAGE_ASPECT_DEPTH_BIT, 
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthSrc.imageLayout,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                 VK_PIPELINE_STAGE_TRANSFER_BIT,    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
                 VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_SHADER_READ_BIT);
-        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthDst.image,
-                VK_IMAGE_ASPECT_DEPTH_BIT, 
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageDepthDst.imageLayout,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
-                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_SHADER_READ_BIT);
+        imageDepthSrc.currentLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
     }
 
     public void renderWorld(WorldClient world, float fTime) {
@@ -136,7 +149,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
             
-            Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
 //            
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainNormals);
             Engine.bindPipeline(VkPipelines.terrain);

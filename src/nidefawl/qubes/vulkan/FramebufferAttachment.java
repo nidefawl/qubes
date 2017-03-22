@@ -17,7 +17,6 @@ public class FramebufferAttachment {
     int                     width;
     int                     height;
     public long             image = VK_NULL_HANDLE;
-    public int              imageLayout;
     private long            view;
     private final int             format;
     final int aspectMask;
@@ -25,24 +24,29 @@ public class FramebufferAttachment {
     private boolean fixedDimensions;
     private int fixedWidth;
     private int fixedHeight;
+    public int              finalLayout;
+    public int initialLayout;
+    public int currentLayout;
     
-    public FramebufferAttachment(VKContext ctxt, int vkFormat, int usage) {
+    public FramebufferAttachment(VKContext ctxt, VkAttachmentDescription n, int usage) {
         this.ctxt = ctxt;
-        this.format = vkFormat;
+        this.format = n.format();
+        this.initialLayout = n.initialLayout();
         this.usage = usage;
+        this.finalLayout = n.finalLayout();
         if ((usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0)
         {
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            imageLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+//            finalLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         }
         else if ((usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0)
         {
-            if (vkFormat == VK_FORMAT_D32_SFLOAT || vkFormat == VK_FORMAT_D16_UNORM) {
+            if (this.format == VK_FORMAT_D32_SFLOAT || this.format == VK_FORMAT_D16_UNORM) {
                 aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;               
             } else {
                 aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT; 
             }
-            imageLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+//            finalLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         } else {
             throw new GameLogicError("Unsuppored usage type");
         }
@@ -64,7 +68,7 @@ public class FramebufferAttachment {
                         .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
                         .tiling(VK_IMAGE_TILING_OPTIMAL)
                         .usage(this.usage)
-                        .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+                        .initialLayout(this.initialLayout);
                 imageCreateInfo.extent().width(this.width).height(this.height).depth(1);
                 int err = vkCreateImage(this.ctxt.device, imageCreateInfo, null, pImage);
                 if (err != VK_SUCCESS) {
@@ -90,6 +94,7 @@ public class FramebufferAttachment {
                   throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
               }
               this.view = pView.get(0);
+              currentLayout = this.initialLayout;
             
         }
     

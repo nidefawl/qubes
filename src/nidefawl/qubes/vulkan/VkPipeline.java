@@ -11,6 +11,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameLogicError;
 
 public class VkPipeline {
@@ -344,16 +345,25 @@ public class VkPipeline {
         VkPipelineColorBlendAttachmentState attState = this.blendAttachmentState.get(0);
         attState.blendEnable(b);
         if (b) {
-            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
             attState.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
             attState.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
         } else {
 
-            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
             attState.srcColorBlendFactor(VK_BLEND_FACTOR_ZERO);
             attState.dstColorBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+            attState.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
         }
+    }
+    public void setBlendFactor(int srcRGB, int dstRGB, int srcAlpha, int dstAlpha) {
+        VkPipelineColorBlendAttachmentState attState = this.blendAttachmentState.get(0);
+        attState.blendEnable(true);
+        attState.srcColorBlendFactor(srcRGB);
+        attState.dstColorBlendFactor(dstRGB);
+        attState.srcAlphaBlendFactor(srcAlpha);
+        attState.dstAlphaBlendFactor(dstAlpha);
+        
     }
 }

@@ -1832,18 +1832,22 @@ public class Game extends GameBase {
                 updateGui3dMode();
                 return;
             }
-            if (text.equals("/reloadshaders")&&!Engine.isVulkan) {
-                Shaders.initShaders();
-                //            Engine.lightCompute.initShaders();
-//                Engine.
-//                Engine.worldRenderer.
-//                Engine.renderBatched.initShaders();
-//                Engine.shadowRenderer.initShaders();
-                Engine.worldRenderer.initShaders();
-//                Engine.skyRenderer.initShaders();
-                RenderersGL.outRenderer.initShaders();
-                RenderersGL.blurRenderer.initShaders();
-//                Engine.particleRenderer.initShaders();
+            if (text.equals("/reloadshaders")) {
+                if (Engine.isVulkan) {
+                    vkContext.reinitSwapchain=true;
+                } else {
+                    Shaders.initShaders();
+                    //            Engine.lightCompute.initShaders();
+//                    Engine.
+//                    Engine.worldRenderer.
+//                    Engine.renderBatched.initShaders();
+//                    Engine.shadowRenderer.initShaders();
+                    Engine.worldRenderer.initShaders();
+//                    Engine.skyRenderer.initShaders();
+                    RenderersGL.outRenderer.initShaders();
+                    RenderersGL.blurRenderer.initShaders();
+//                    Engine.particleRenderer.initShaders();
+                }
                 return;
             }
         }

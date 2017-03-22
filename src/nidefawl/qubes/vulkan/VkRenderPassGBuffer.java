@@ -13,7 +13,7 @@ import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 public class VkRenderPassGBuffer extends VkRenderPass {
 
     private Buffer subpassDependencies;
-    public VkRenderPassGBuffer() {
+    public VkRenderPassGBuffer(int pass) {
         addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT)
             .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         addColorAttachment(1, VK_FORMAT_R16G16B16A16_SFLOAT)
@@ -23,9 +23,11 @@ public class VkRenderPassGBuffer extends VkRenderPass {
         addColorAttachment(3, VK_FORMAT_R16G16B16A16_SFLOAT)
             .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         addDepthAttachment(4, VK_FORMAT_D32_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+            .initialLayout(pass == 0 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+            .finalLayout(pass == 0 ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+            .loadOp(pass == 0 ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD);
         attachments.limit(nAttachments);
-        clearValues.limit(nAttachments);
+        clearValues.limit((pass==0)?nAttachments:(nAttachments-1));
     }
     @Override
     public void build(VKContext ctxt) {

@@ -8,7 +8,8 @@ public class VkRenderPasses {
     public static VkRenderPass passSwapchain = new VkRenderPassSwapchain();
     public static VkRenderPass passShadow = new VkRenderPassShadow();
 //    public static VkRenderPass passSubpassSwapchain = new VkRenderPassSubpassedSwapchain();
-    public static VkRenderPass passTerrain = new VkRenderPassGBuffer();
+    public static VkRenderPass passTerrain_Pass0 = new VkRenderPassGBuffer(0);
+    public static VkRenderPass passTerrain_Pass1 = new VkRenderPassGBuffer(1);
     public static VkRenderPass passDeferred = new VkRenderPassDeferred();
     public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true, true);
     public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false, true);

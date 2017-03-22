@@ -96,4 +96,29 @@ public class VulkanErr {
         }
         return memtypeflagsStr;
     }
+
+    public static String imageLayoutToStr(int layout) {
+        switch (layout) {
+            case VK_IMAGE_LAYOUT_UNDEFINED:
+                return "VK_IMAGE_LAYOUT_UNDEFINED";
+            case VK_IMAGE_LAYOUT_GENERAL:
+                return "VK_IMAGE_LAYOUT_GENERAL";
+            case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+                return "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL";
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+                return "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL";
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+                return "VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL";
+            case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+                return "VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";
+            case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+                return "VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL";
+            case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+                return "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
+            case VK_IMAGE_LAYOUT_PREINITIALIZED:
+                return "VK_IMAGE_LAYOUT_PREINITIALIZED";
+            default:
+                return "UNKNOWN";
+        }
+    }
 }

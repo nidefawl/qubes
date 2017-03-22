@@ -145,7 +145,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         return this.frameBufferShadow.getAtt(0).getView();
     }
     public int getLayout() {
-        return this.frameBufferShadow.getAtt(0).imageLayout;
+        return this.frameBufferShadow.getAtt(0).finalLayout;
     }
 
     public long getSampler() {

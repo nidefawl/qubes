@@ -152,18 +152,21 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "terrain/terrain.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             terrain.setShaders(vert, frag);
             terrain.setBlend(false);
-            terrain.setRenderPass(VkRenderPasses.passTerrain, 0);
+            terrain.setRenderPass(VkRenderPasses.passTerrain_Pass0, 0);
             terrain.setVertexDesc(desc);
             terrain.pipeline = buildPipeLine(ctxt, terrain);
         }
         {
             water.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoBlocks.getVkVertexDesc();
+            VKContext.DUMP_SHADER_SRC=true;
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "terrain/water.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "terrain/water.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+
+            VKContext.DUMP_SHADER_SRC=false;
             water.setShaders(vert, frag);
-            water.setBlend(false);
-            water.setRenderPass(VkRenderPasses.passTerrain, 0);
+            water.setBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO);
+            water.setRenderPass(VkRenderPasses.passTerrain_Pass1, 0);
             water.setVertexDesc(desc);
             water.pipeline = buildPipeLine(ctxt, water);
         }
