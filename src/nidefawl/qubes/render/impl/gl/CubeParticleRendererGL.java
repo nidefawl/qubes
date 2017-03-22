@@ -4,17 +4,11 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.List;
-import java.util.Random;
 
 import org.lwjgl.opengl.*;
 
-import com.google.common.collect.Lists;
-
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.block.Block;
-import nidefawl.qubes.entity.PlayerSelf;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.models.render.ModelConstants;
@@ -22,12 +16,8 @@ import nidefawl.qubes.particle.CubeParticle;
 import nidefawl.qubes.render.CubeParticleRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.texture.array.TextureArrays;
-import nidefawl.qubes.util.Color;
-import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public class CubeParticleRendererGL extends CubeParticleRenderer {
     

@@ -5,8 +5,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.lwjgl.opengl.GL21;
-
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.util.GameError;

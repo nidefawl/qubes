@@ -9,7 +9,6 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 
-import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.util.GameMath;
 
 public class VkShader implements IVkResource {

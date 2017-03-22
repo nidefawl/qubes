@@ -5,7 +5,6 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.nio.ByteBuffer;
 
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.ReallocIntBuffer;
 
 public class BufferPair implements RefTrackedResource {
     public VkBuffer vert;

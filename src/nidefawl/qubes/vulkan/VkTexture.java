@@ -1,8 +1,9 @@
 package nidefawl.qubes.vulkan;
 
-import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.system.MemoryUtil.memAddress;
+import static org.lwjgl.system.MemoryUtil.memCopy;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.ByteBuffer;
@@ -26,7 +27,6 @@ public class VkTexture implements IVkResource {
     int mipLevels;
     public long image = VK_NULL_HANDLE;
     public int imageLayout;
-    private long view;
     private int layers;
 
     public VkTexture(VKContext ctxt) {

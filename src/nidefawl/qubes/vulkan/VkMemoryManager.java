@@ -466,16 +466,7 @@ public class VkMemoryManager {
         }
         throw new GameLogicError("No supported memory type present");
     }
-    private VulkanMemoryType getMemTypeByFlags(int properties) {
-        for (int i = 0; i < memTypes.length; i++)
-        {
-            if ((memTypes[i].flags & properties) == properties)
-            {
-                return memTypes[i];
-            }
-        }
-        throw new GameLogicError("No supported memory type present");
-    }
+
     //use a map if used frequently
     private MemoryBlock getMemBlockByFlags(int supportedTypes, int requiredFlags, boolean imageMemory, long size, long align) {
         for (int i = 0; i < blocks.length; i++) {

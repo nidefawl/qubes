@@ -1,10 +1,10 @@
 package nidefawl.qubes.render.impl.vk;
 
-import static nidefawl.qubes.render.WorldRenderer.*;
+import static nidefawl.qubes.render.WorldRenderer.PASS_LOD;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SOLID;
 
 import java.util.List;
-
-import org.lwjgl.vulkan.VkCommandBuffer;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
@@ -13,7 +13,6 @@ import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.vulkan.CommandBuffer;
-import nidefawl.qubes.vulkan.VKContext;
 import nidefawl.qubes.world.World;
 
 public class RegionRendererVK extends RegionRenderer implements IRenderComponent {

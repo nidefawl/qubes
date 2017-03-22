@@ -1,10 +1,10 @@
 package nidefawl.qubes.render.impl.gl;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE2;
 
-import java.util.HashMap;
 import java.util.List;
 
 import org.lwjgl.opengl.GL11;
@@ -25,14 +25,12 @@ import nidefawl.qubes.models.qmodel.QModelProperties;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.path.PathPoint;
 import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.Color;
-import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.vec.*;
 import nidefawl.qubes.vr.VR;
@@ -43,7 +41,6 @@ public class WorldRendererGL extends WorldRenderer {
     private boolean                          startup    = true;
 
     public int                               texWaterNoise;
-    private int                              texNoise3D;
 
     public Shader                            terrainShader;
     public Shader                            terrainShaderFar;
@@ -140,9 +137,6 @@ public class WorldRendererGL extends WorldRenderer {
         initShaders();
         AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/noise.png");
         texWaterNoise = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
-
-        AssetTexture t = AssetManager.getInstance().loadPNGAsset("textures/tex10.png");
-        this.texNoise3D = TextureManager.getInstance().makeNewTexture(t, true, true, 0);
     }
 
     public void renderWorld(World world, float fTime) {
@@ -258,7 +252,6 @@ public class WorldRendererGL extends WorldRenderer {
         
         modelRender.setPass(pass, shadowVP);
         // Single Model render logic, move into BatchedRenderer class
-        boolean needStateSetup = true;
         boolean mappedBuffer = false;
         if (pass == PASS_SOLID) {
             modelRender.reset();
@@ -394,7 +387,6 @@ public class WorldRendererGL extends WorldRenderer {
                 if (Game.VR_SUPPORT) {
                     mat.setIdentity();
                     mat.load(Engine.getMatSceneV());
-                    float t = -0.5f;
                     Matrix4f.mul(mat, VR.poseMatrices[3], mat);
 //                    mat.translate(t,t,t);
                     mat.scale(modelScale);
@@ -453,7 +445,6 @@ public class WorldRendererGL extends WorldRenderer {
             if (Game.VR_SUPPORT) {
                 mat.setIdentity();
                 mat.load(Engine.getMatSceneV());
-                float t = -0.5f;
                 Matrix4f.mul(mat, VR.poseMatrices[3], mat);
 //                mat.translate(t,t,t);
                 mat.scale(0.4f);
@@ -536,9 +527,6 @@ public class WorldRendererGL extends WorldRenderer {
                 float fMaxZ = (float) bb.maxZ;
                 
                 Engine.lineWidth(4.0F);
-                float ext = 1/32F;
-                float zero = -ext;
-                float one = 1+ext;
                 Tess.instance.setColor(iColor, 255);
                 Tess.instance.add(fMinX, fMinY, fMinZ);
                 Tess.instance.add(fMaxX, fMinY, fMinZ);

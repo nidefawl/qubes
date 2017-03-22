@@ -1,11 +1,8 @@
 package nidefawl.qubes.texture.array.imp.vk;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map.Entry;
-
-import org.lwjgl.opengl.GL21;
 
 import com.google.common.collect.Lists;
 
@@ -13,7 +10,6 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameError;

@@ -9,7 +9,6 @@ import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.LightCompute;
-import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vulkan.*;
 

@@ -1,9 +1,8 @@
 package nidefawl.qubes.render.impl.gl;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL11.GL_LINEAR;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL15.GL_READ_ONLY;
 import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
@@ -25,7 +24,6 @@ import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.lighting.DynamicLight;
-import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.LightCompute;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;

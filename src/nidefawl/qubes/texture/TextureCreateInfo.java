@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import org.lwjgl.opengl.EXTTextureCompressionS3TC;
 import org.lwjgl.opengl.GL11;
 
-import nidefawl.qubes.texture.TextureCreateInfo.FilterType;
 import nidefawl.qubes.util.GameError;
 
 public class TextureCreateInfo {

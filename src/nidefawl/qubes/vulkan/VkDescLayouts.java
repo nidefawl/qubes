@@ -7,7 +7,6 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding.Buffer;
 
 public class VkDescLayouts {
 

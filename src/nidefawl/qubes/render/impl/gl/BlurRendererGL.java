@@ -2,24 +2,19 @@ package nidefawl.qubes.render.impl.gl;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE5;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE6;
-import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL30.GL_RGB16F;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
-
-import org.lwjgl.opengl.GL11;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.FrameBuffer;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.BlurRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.EResourceType;
+import nidefawl.qubes.util.GameMath;
 
 public class BlurRendererGL extends BlurRenderer {
 

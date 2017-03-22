@@ -3,7 +3,6 @@ package nidefawl.qubes.vulkan;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkPipelineDynamicStateCreateInfo;
 
@@ -11,8 +10,6 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLVAO;
-import nidefawl.qubes.render.impl.gl.FinalRendererGL;
-import nidefawl.qubes.shader.IGraphicsShaderDef;
 import nidefawl.qubes.shader.IShaderDef;
 
 public class VkPipelines {

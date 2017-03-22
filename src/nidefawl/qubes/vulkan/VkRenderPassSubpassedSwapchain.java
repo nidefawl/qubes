@@ -41,7 +41,7 @@ public class VkRenderPassSubpassedSwapchain extends VkRenderPass {
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(2, stack);
-            VkSubpassDescription subpass0 = subpasses.get(0)
+            subpasses.get(0)
                     .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
                     .flags(0)
                     .pInputAttachments(null)
@@ -50,7 +50,7 @@ public class VkRenderPassSubpassedSwapchain extends VkRenderPass {
                     .pDepthStencilAttachment(depthReference)
                     .pResolveAttachments(null)
                     .pPreserveAttachments(null);
-            VkSubpassDescription subpass1 = subpasses.get(1)
+            subpasses.get(1)
                     .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
                     .flags(0)
                     .pInputAttachments(null)

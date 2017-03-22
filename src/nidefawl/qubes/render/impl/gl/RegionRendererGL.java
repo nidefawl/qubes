@@ -1,10 +1,10 @@
 package nidefawl.qubes.render.impl.gl;
 
-import static nidefawl.qubes.render.WorldRenderer.*;
+import static nidefawl.qubes.render.WorldRenderer.PASS_LOD;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SHADOW_SOLID;
+import static nidefawl.qubes.render.WorldRenderer.PASS_SOLID;
 
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.lwjgl.opengl.ARBOcclusionQuery2;
@@ -13,21 +13,15 @@ import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.meshing.MeshThread;
-import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.RenderersGL;
-import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.util.*;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public class RegionRendererGL extends RegionRenderer {
     

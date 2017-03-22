@@ -1,6 +1,5 @@
 package nidefawl.qubes.vulkan;
 
-import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -8,9 +7,7 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkClearAttachment.Buffer;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameLogicError;
 
 public class FramebufferAttachment {

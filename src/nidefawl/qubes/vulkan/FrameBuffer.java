@@ -6,9 +6,8 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
-
-import nidefawl.qubes.gl.Engine;
+import org.lwjgl.vulkan.VkAttachmentDescription;
+import org.lwjgl.vulkan.VkFramebufferCreateInfo;
 
 public class FrameBuffer implements RefTrackedResource {
     private final VKContext ctxt;

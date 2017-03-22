@@ -17,7 +17,6 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.post.HBAOPlus;
@@ -25,13 +24,9 @@ import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.texture.array.TextureArrays;
-import nidefawl.qubes.texture.array.impl.gl.NoiseTextureArrayGL;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Stats;
-import nidefawl.qubes.vec.DoubleMatrix4;
-import nidefawl.qubes.vec.Matrix4f;
-import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
 
 public class FinalRendererGL extends FinalRenderer {
@@ -57,7 +52,6 @@ public class FinalRendererGL extends FinalRenderer {
     private FrameBuffer fbLuminanceDownsample[];
     private FrameBuffer fbLuminanceInterp[];
 
-    private int         blurTexture;
     private int preWaterDepthTex;
     private boolean     startup     = true;
     SMAA smaa;

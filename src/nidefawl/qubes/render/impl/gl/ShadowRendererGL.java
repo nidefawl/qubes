@@ -21,7 +21,6 @@ import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public class ShadowRendererGL extends ShadowRenderer {
 
@@ -81,9 +80,6 @@ public class ShadowRendererGL extends ShadowRenderer {
         Engine.setViewport(0, 0, SHADOW_BUFFER_SIZE / 2, SHADOW_BUFFER_SIZE / 2);
         shadowShader.enable();
         shadowShader.setProgramUniform1i("shadowSplit", 0);
-        final int shadowPass = 2;
-//      Engine.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
-//    Engine.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 1, Frustum.FRUSTUM_INSIDE);
 
         RenderersGL.regionRenderer.renderRegions(world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
         RenderersGL.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, shadowShader, 0); //TODO: FRUSTUM CULLING

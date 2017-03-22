@@ -66,7 +66,6 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
     protected void uploadTextures() {
         int totalBlocks = blockIDToAssetList.size();
         int nBlock = 0;
-        float progress = 0;
         TextureBinMips[] binMips = new TextureBinMips[this.numTextures];
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
         int slot = 0;

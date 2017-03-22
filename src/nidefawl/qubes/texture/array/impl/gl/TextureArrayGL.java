@@ -4,11 +4,10 @@ import static org.lwjgl.opengl.GL11.GL_RGBA8;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
-
 import java.util.Arrays;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;

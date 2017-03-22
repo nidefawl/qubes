@@ -3,8 +3,6 @@ package nidefawl.qubes.texture;
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
@@ -18,7 +16,6 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.texture.DDSLoader.Format;
 import nidefawl.qubes.texture.TextureCreateInfo.FilterType;
 import nidefawl.qubes.texture.TextureCreateInfo.TextureSub;
 import nidefawl.qubes.texture.TextureCreateInfo.UVCoordMode;

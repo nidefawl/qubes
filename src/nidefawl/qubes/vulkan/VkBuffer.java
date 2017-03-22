@@ -9,7 +9,6 @@ import java.nio.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
 

@@ -1,15 +1,13 @@
 package nidefawl.qubes.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memAllocLong;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.LongBuffer;
 
-import org.lwjgl.opengl.EXTDebugLabel;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
+import org.lwjgl.vulkan.VkPushConstantRange;
 
 public class VkPipelineLayout {
 

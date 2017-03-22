@@ -2,7 +2,6 @@ package nidefawl.qubes.texture.array.impl.gl;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -75,7 +74,6 @@ public class BlockNormalMapArrayGL extends TextureArrayGL {
     protected void uploadTextures() {
         int totalBlocks = blockIDToAssetList.size();
         int nBlock = 0;
-        float progress = 0;
         ByteBuffer directBuf = null;
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
         int slot = 0;

@@ -6,11 +6,8 @@ import java.util.ArrayList;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
-import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 
-import nidefawl.qubes.gl.GLVAO;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
 import nidefawl.qubes.util.GameLogicError;
 
@@ -32,7 +29,6 @@ public class VkVertexDescriptors {
         }
         this.stride = vertStride*4;
         this.attributeDescriptions = VkVertexInputAttributeDescription.calloc(list.size());
-        int idx = 0;
         for (int i = 0; i < list.size(); i++) {
             
             VertexAttrib attrib = list.get(i);

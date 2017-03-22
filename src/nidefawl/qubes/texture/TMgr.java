@@ -1,7 +1,6 @@
 package nidefawl.qubes.texture;
 
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.texture.array.impl.*;
 
 /** Shortcut class to keep code small */
 public class TMgr {

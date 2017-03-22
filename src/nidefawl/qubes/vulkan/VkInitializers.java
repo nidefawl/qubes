@@ -2,11 +2,9 @@ package nidefawl.qubes.vulkan;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkDescriptorPoolSize.Buffer;
 
 public final class VkInitializers {
 

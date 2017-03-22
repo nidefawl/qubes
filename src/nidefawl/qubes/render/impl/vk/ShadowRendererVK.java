@@ -7,16 +7,15 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkSamplerCreateInfo;
+import org.lwjgl.vulkan.VkViewport;
 
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.ShadowRenderer;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public class ShadowRendererVK extends ShadowRenderer {
 
@@ -86,9 +85,6 @@ public class ShadowRendererVK extends ShadowRenderer {
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING
         Engine.endRenderPass();
         Engine.clearDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX);
-    }
-
-    private void renderMultiPassTextured(World world, float fTime) {
     }
 
     @Override

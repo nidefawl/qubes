@@ -11,7 +11,6 @@ import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.RenderersVulkan;
-import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.WorldClient;
