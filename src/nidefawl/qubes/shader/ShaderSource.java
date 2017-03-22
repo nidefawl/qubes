@@ -33,8 +33,8 @@ public class ShaderSource {
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
     static Pattern patternRemoveSetBindingUBO = Pattern.compile("layout\\(set = [0-9]{1,2}, binding = [0-9]{1,2}, std140\\) uniform ([^\\s]*)");
     static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
-    static Pattern patternStageOutput = Pattern.compile("(flat )?out ([^\\s]*) ([^\\s]*);");
-    static Pattern patternStageInput = Pattern.compile("(flat )?in ([^\\s]*) ([^\\s]*);");
+    static Pattern patternStageOutput = Pattern.compile("(flat )?out ([^\\s]*) ([^\\s]*);.*");
+    static Pattern patternStageInput = Pattern.compile("(flat )?in ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageSamplerInput = Pattern.compile("uniform (u)?sampler([^\\s]*) ([^\\s]*);");
     static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
