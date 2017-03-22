@@ -53,6 +53,7 @@ import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureManager;
+import nidefawl.qubes.texture.array.TextureArrays;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
@@ -308,10 +309,10 @@ public class Game extends GameBase {
         if (isVulkan)
             vkContext.syncAllFences();
         this.statsFB.destroy();
-        RenderAssets.destroy();
         this.server.stop();
         setWorld(null);
         ChatManager.getInstance().saveInputHistory();
+        RenderAssets.destroy();
         super.shutdown();
     }
     

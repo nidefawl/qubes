@@ -27,7 +27,7 @@ public class ComputeShader extends Shader {
             Engine.checkGLError("glAttachObjectARB");
         }
     }
-    public void release() {
+    public void destroy() {
         this.valid = false;
         if (this.shader > 0) {
             if (this.computeShader > 0)

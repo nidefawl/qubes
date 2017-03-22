@@ -26,13 +26,8 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
 
     @Override
     public void resize(int displayWidth, int displayHeight) {
+        release();
         VKContext ctxt = Engine.vkContext;
-        if (this.image != VK_NULL_HANDLE) {
-            vkDestroyImageView(ctxt.device, this.view, null);
-            vkDestroyImage(ctxt.device, this.image, null);
-            this.view = VK_NULL_HANDLE;
-            this.image = VK_NULL_HANDLE;
-        }
         try ( MemoryStack stack = stackPush() ) {
             LongBuffer pImage = stack.longs(0);
     
@@ -84,6 +79,18 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
         }
         ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, getLayout(), 0, 0, 0, 1);
 
+    }
+    @Override
+    public void release() {
+        if (this.image != VK_NULL_HANDLE) {
+            VKContext ctxt = Engine.vkContext;
+            vkDestroyImageView(ctxt.device, this.view, null);
+            vkDestroyImage(ctxt.device, this.image, null);
+            vkDestroySampler(ctxt.device, this.sampler, null);
+            this.view = VK_NULL_HANDLE;
+            this.image = VK_NULL_HANDLE;
+            this.sampler = VK_NULL_HANDLE;
+        }
     }
 
     public long getView() {

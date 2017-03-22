@@ -23,7 +23,7 @@ public class SimpleResourceManager implements IResourceManager {
     @Override
     public void release() {
         for (IManagedResource r : resources)
-            r.release();
+            r.destroy();
         resources.clear();
     }
 
@@ -31,7 +31,7 @@ public class SimpleResourceManager implements IResourceManager {
     public void releaseAll(EResourceType type) {
         for (int i = 0; i < this.resources.size(); i++) {
             if (this.resources.get(i).getType() == type) {
-                this.resources.get(i).release();
+                this.resources.get(i).destroy();
                 this.resources.remove(i--);
             }
         }

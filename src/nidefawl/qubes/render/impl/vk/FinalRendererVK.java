@@ -11,6 +11,7 @@ import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.RenderersVulkan;
+import nidefawl.qubes.util.EResourceType;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.WorldClient;
@@ -101,7 +102,15 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     
     @Override
     public void release() {
-        super.release();
+        if (this.frameBufferScene != null) {
+            this.frameBufferScene.destroy();
+        }
+        if (this.frameBufferDeferred != null) {
+            this.frameBufferDeferred.destroy();
+        }
+        if (this.frameBufferTonemapped != null) {
+            this.frameBufferTonemapped.destroy();
+        }
         if (this.sampler != VK_NULL_HANDLE) {
             vkDestroySampler(Engine.vkContext.device, this.sampler, null);
             this.sampler = VK_NULL_HANDLE;

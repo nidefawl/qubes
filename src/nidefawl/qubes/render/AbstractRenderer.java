@@ -41,10 +41,10 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     @Override
     public void release() {
         for (IManagedResource r : resourcesShaders)
-            r.release();
+            r.destroy();
         resourcesShaders.clear();
         for (IManagedResource r : resourcesFramebuffers)
-            r.release();
+            r.destroy();
         resourcesFramebuffers.clear();
     }
 
@@ -61,7 +61,7 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     public void popNewShaders() {
         recompileShaders = false;
         for (IManagedResource r : resourcesShaders)
-            r.release();
+            r.destroy();
         resourcesShaders.clear();
         resourcesShaders.addAll(resourcesShadersNew);
         resourcesShadersNew.clear();
@@ -73,7 +73,7 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     public void releaseNewShaders() {
         recompileShaders = false;
         for (IManagedResource r : resourcesShadersNew)
-            r.release();
+            r.destroy();
         resourcesShadersNew.clear();
     }
 
@@ -84,14 +84,14 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
             case FRAMEBUFFER: {
 
                 for (IManagedResource r : resourcesFramebuffers)
-                    r.release();
+                    r.destroy();
                 resourcesFramebuffers.clear();
             }
                 return;
             case SHADER: {
 
                 for (IManagedResource r : resourcesShaders)
-                    r.release();
+                    r.destroy();
                 resourcesShaders.clear();
             }
                 return;

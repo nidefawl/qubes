@@ -770,8 +770,8 @@ public class VR {
 
 	static FrameBuffer fbLeft, fbRight;
 	private static void initVRFB(int w, int h) {
-		if (fbLeft != null) fbLeft.release();
-		if (fbRight != null) fbRight.release();
+		if (fbLeft != null) fbLeft.destroy();
+		if (fbRight != null) fbRight.destroy();
         fbLeft = new FrameBuffer(w, h);
         fbLeft.setColorAtt(GL_COLOR_ATTACHMENT0, GL11.GL_RGBA8);
         fbLeft.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 1F, 1F);

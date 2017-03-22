@@ -43,60 +43,59 @@ public class VKContext {
     private static VkClearColorValue CLEAR_COLOR;
     private static VkImageSubresourceRange CLEAR_RANGE;
     private static VkClearDepthStencilValue CLEAR_DEPTH;
-    
 
-    public SwapChain                           swapChain           = null;
+    public boolean reinitSwapchain = false;
+    private boolean isInit;
+    private boolean begin;
+
     public final VkInstance                    vk;
     public VkDevice                            device;
     public VkQueue                             vkQueue;
+    public SwapChain                           swapChain           = null;
+    private VkPresentInfoKHR                   presentInfo;
+    public VkSubmitInfo                        submitInfo;
+    public VkDescLayouts                       descLayouts;
+    public VkMemoryManager                     memoryManager;
+    protected VkPhysicalDeviceMemoryProperties memoryProperties;
+    protected VkPhysicalDevice                 physicalDevice;
+    public VkPhysicalDeviceProperties          properties;
+    public VkPhysicalDeviceFeatures            features;
+    public VkPhysicalDeviceLimits              limits;
+    
     public int                                 colorFormat;
     public int                                 colorSpace;
     public int                                 depthFormat;
-//    public long                                renderPass = VK_NULL_HANDLE;
-//    public long                                renderPassSubpasses = VK_NULL_HANDLE;
-    public long                                renderCommandPool = VK_NULL_HANDLE;
-    public long                                copyCommandPool = VK_NULL_HANDLE;
-
-    protected long                             surface;
-    protected long                             debugCallbackHandle = VK_NULL_HANDLE;
-    protected VkPhysicalDevice                 physicalDevice;
-    protected VkPhysicalDeviceMemoryProperties memoryProperties;
+    protected long                             surface                       = VK_NULL_HANDLE;
+    private long[]                             fences;
+    private long                               freeFence                     = VK_NULL_HANDLE;
+    private long                               copyFence                     = VK_NULL_HANDLE;
+    public long                                renderCommandPool             = VK_NULL_HANDLE;
+    public long                                copyCommandPool               = VK_NULL_HANDLE;
+    public long                                descriptorPool                = VK_NULL_HANDLE;
+    public long                               samplerLinear                 = VK_NULL_HANDLE;
+    public long                               samplerNearest                = VK_NULL_HANDLE;
+    
+    protected long                             debugCallbackHandle           = VK_NULL_HANDLE;
     protected int                              queueFamilyIndex;
     protected LongBuffer                       psemaphorePresentComplete;
     protected LongBuffer                       psemaphoreRenderComplete;
-    protected IntBuffer                       pWaitDstStageMask;
+    protected IntBuffer                        pWaitDstStageMask;
+    public PointerBuffer                       pCommandBuffers;
+    private IntBuffer                          pImageIndex;
+    private LongBuffer                         pSwapchains;
+
+    CommandBuffer[]                            copyCommandBuffers            = null;
+    private CommandBuffer[]                    renderCommandBuffers;
+    private CommandBuffer                      currentCmdBuffer;
+    
+    
+    private ArrayList<IVkResource> resources = new ArrayList<>();
+    ArrayList<RefTrackedResource> orphanedInUse = new ArrayList<>();
 
     public VKContext(VkInstance vk) {
         this.vk = vk;
     }
 
-    public VkSubmitInfo submitInfo;
-    private VkPresentInfoKHR presentInfo;
-    
-    public boolean reinitSwapchain = false;
-    public VkPhysicalDeviceProperties properties;
-    public VkPhysicalDeviceFeatures features;
-    public VkPhysicalDeviceLimits limits;
-
-    public PointerBuffer pCommandBuffers;
-    private IntBuffer pImageIndex;
-    private LongBuffer pSwapchains;
-    
-    
-    private boolean isInit;
-    private ArrayList<IVkResource> resources = new ArrayList<>();
-    private long[] fences;
-    public VkMemoryManager memoryManager;
-    private boolean begin;
-    private long freeFence;
-    public long descriptorPool;
-    public VkDescLayouts descLayouts;
-    
-    CommandBuffer[] copyCommandBuffers = null;
-    private CommandBuffer[] renderCommandBuffers;
-    private CommandBuffer currentCmdBuffer;
-    private long copyFence;
-    
     public void syncAllFences() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.syncAllFences");
         if (!isInit) {
@@ -140,6 +139,10 @@ public class VKContext {
             presentInfo.free();
         }
         freeCommandBuffers();
+        for (int i = 0 ; i < orphanedInUse.size(); i++) {
+            RefTrackedResource resource = orphanedInUse.remove(i--);
+            resource.destroy();
+        }
         ArrayList<IVkResource> list = new ArrayList<>(resources);
         for (int i = 0; i < list.size(); i++) {
             list.get(i).destroy();
@@ -155,6 +158,12 @@ public class VKContext {
         }
         if (copyCommandPool != VK_NULL_HANDLE) {
             vkDestroyCommandPool(device, copyCommandPool, null);
+        }
+        if (samplerLinear != VK_NULL_HANDLE) {
+            vkDestroySampler(device, samplerLinear, null);
+        }
+        if (samplerNearest != VK_NULL_HANDLE) {
+            vkDestroySampler(device, samplerNearest, null);
         }
 
         this.descLayouts.destroy();
@@ -223,6 +232,30 @@ public class VKContext {
             if (USE_RENDER_COMPLETE_SEMAPHORE) {
                 presentInfo.pWaitSemaphores(psemaphoreRenderComplete);
             }
+
+            VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
+            LongBuffer pSampler = stack.longs(0);
+            {
+                sampler.minFilter(VK_FILTER_LINEAR);
+                sampler.magFilter(VK_FILTER_LINEAR);
+                sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+                int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+                }
+                samplerLinear = pSampler.get(0);
+            }
+            {
+                sampler.minFilter(VK_FILTER_NEAREST);
+                sampler.magFilter(VK_FILTER_NEAREST);
+                sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+                int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+                }
+                samplerNearest = pSampler.get(0);
+            }
+        
         }
         pSwapchains.put(0, swapChain.swapchainHandle);
         reinitPerFrameResources(swapChain.numImages);
@@ -690,7 +723,6 @@ public class VKContext {
         return this.currentCmdBuffer;
     }
 
-    ArrayList<RefTrackedResource> orphanedInUse = new ArrayList<>();
     public void updateOrphanedList() {
         int curFrame = VKContext.currentBuffer;
         for (int i = 0 ; i < orphanedInUse.size(); i++) {

@@ -26,8 +26,6 @@ public class RenderFramebufferCached {
     private boolean filterLinear;
     private boolean blendEnabled;
     private boolean clearOnUpdate;
-    private static long samplerLinear;
-    private static long samplerNearest;
 
     public RenderFramebufferCached(boolean color16Bit, boolean filterLinear, boolean clearOnUpdate) {
         this.color16Bit = color16Bit;
@@ -38,7 +36,7 @@ public class RenderFramebufferCached {
     public void setSize(int w, int h) {
         if (!Engine.isVulkan) {
             if (fbDbg == null || fbDbg.getWidth() != w || fbDbg.getHeight() != h) {
-                if (fbDbg != null) fbDbg.release();
+                if (fbDbg != null) fbDbg.destroy();
                 fbDbg = new FrameBuffer(w, h);
                 fbDbg.setColorAtt(GL_COLOR_ATTACHMENT0, color16Bit ? GL_RGBA16 : GL_RGBA8);
                 int filter = this.filterLinear ? GL_LINEAR : GL_NEAREST;
@@ -55,7 +53,7 @@ public class RenderFramebufferCached {
                 fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
                 fbVk.build(VkRenderPasses.passFramebuffer, w, h);
                 FramebufferAttachment coloratt = fbVk.getAtt(0);
-                this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), filterLinear?samplerLinear:samplerNearest, coloratt.imageLayout);
+                this.descTextureGbufferColor.setBindingCombinedImageSampler(0, coloratt.getView(), filterLinear?vkContext.samplerLinear:vkContext.samplerNearest, coloratt.imageLayout);
                 this.descTextureGbufferColor.update(Engine.vkContext);
             }        
 
@@ -110,32 +108,6 @@ public class RenderFramebufferCached {
     public void init() {
         if (Engine.isVulkan) {
             VKContext vkContext = Engine.vkContext;
-            if (samplerLinear == VK_NULL_HANDLE) {
-                try ( MemoryStack stack = stackPush() ) {
-                    VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
-                    LongBuffer pSampler = stack.longs(0);
-                    {
-                        sampler.minFilter(VK_FILTER_LINEAR);
-                        sampler.magFilter(VK_FILTER_LINEAR);
-                        sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-                        int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
-                        if (err != VK_SUCCESS) {
-                            throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
-                        }
-                        samplerLinear = pSampler.get(0);
-                    }
-                    {
-                        sampler.minFilter(VK_FILTER_NEAREST);
-                        sampler.magFilter(VK_FILTER_NEAREST);
-                        sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-                        int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
-                        if (err != VK_SUCCESS) {
-                            throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
-                        }
-                        samplerNearest = pSampler.get(0);
-                    }
-                }
-            }
             this.descTextureGbufferColor = vkContext.descLayouts.allocDescSetSampleSingle();
         }
     
@@ -158,7 +130,7 @@ public class RenderFramebufferCached {
             this.fbVk = null;
         }
         if (this.fbDbg != null) {
-            this.fbDbg.release();
+            this.fbDbg.destroy();
             this.fbDbg = null;
         }
     }

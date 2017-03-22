@@ -422,7 +422,7 @@ public class FrameBuffer implements IManagedResource {
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("clearFrameBuffer");
     }
 
-    public void release() {
+    public void destroy() {
         if (this.fb != 0) {
             GL30.glDeleteFramebuffers(this.fb);
             this.fb = 0;

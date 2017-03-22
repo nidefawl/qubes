@@ -121,6 +121,17 @@ public class ShadowRendererVK extends ShadowRenderer {
             this.sampler = pSampler.get(0);
         }
     }
+    @Override
+    public void release() {
+        super.release();
+        if (this.frameBufferShadow != null) {
+            this.frameBufferShadow.destroy();
+        }
+        if (this.sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(Engine.vkContext.device, sampler, null);
+            this.sampler = VK_NULL_HANDLE;
+        }
+    }
 
     @Override
     public void resize(int displayWidth, int displayHeight) {

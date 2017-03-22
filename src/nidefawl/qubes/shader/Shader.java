@@ -228,7 +228,7 @@ public abstract class Shader implements IManagedResource {
             glUseProgram(0);
         lastBoundShader = 0;
     }
-    public abstract void release();
+    public abstract void destroy();
 
     public void setProgramUniform1i(String name, int x) {
         Uniform1i uni = getUniform(name, Uniform1i.class);

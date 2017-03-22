@@ -94,8 +94,10 @@ public class RenderAssets {
     public static void destroy() {
         TextureArray[] arrays = TextureArrays.allArrays;
         for (int i = 0; arrays != null && i < arrays.length; i++) {
-            arrays[i].destroy();
-            arrays[i] = null;
+            if (arrays[i] != null) {
+                arrays[i].destroy();
+                arrays[i] = null;
+            }
         }
     }
 

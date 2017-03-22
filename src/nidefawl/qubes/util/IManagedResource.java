@@ -9,6 +9,6 @@ package nidefawl.qubes.util;
  */
 public interface IManagedResource {
     
-    public void release();
+    public void destroy();
     public EResourceType getType();
 }

@@ -134,7 +134,7 @@ public class GraphicShader extends Shader {
             }
         }
     }
-    public void release() {
+    public void destroy() {
         this.valid = false;
         if (this.shader > 0) {
             if (this.vertShader > 0)

@@ -723,7 +723,7 @@ public class FinalRendererGL extends FinalRenderer {
     }
     
     private void makeDeferredBuffer(int displayWidth, int displayHeight) {
-        if (fbDeferred != null) fbDeferred.release();
+        if (fbDeferred != null) fbDeferred.destroy();
         fbDeferred = new FrameBuffer(displayWidth, displayHeight);
         fbDeferred.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
         fbDeferred.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
@@ -753,7 +753,7 @@ public class FinalRendererGL extends FinalRenderer {
 
     private void makeSceneBuffer(int displayWidth, int displayHeight) {
         FrameBuffer prev = Engine.getSceneFB();
-        if (prev != null) prev.release();
+        if (prev != null) prev.destroy();
         FrameBuffer fbScene = new FrameBuffer(displayWidth, displayHeight);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGBA16F);
         fbScene.setColorAtt(GL_COLOR_ATTACHMENT1, GL_RGBA16F);
