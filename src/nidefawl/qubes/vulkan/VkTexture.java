@@ -25,15 +25,18 @@ public class VkTexture implements IVkResource {
     int width;
     int height;
     int mipLevels;
-    public long image = VK_NULL_HANDLE;
-    public int imageLayout;
+    private long image = VK_NULL_HANDLE;
+    private int imageLayout;
     private int layers;
+    private int format;
+    private long view;
 
     public VkTexture(VKContext ctxt) {
         this.ctxt = ctxt;
         this.ctxt.addResource(this);
     }
     public void build(int vkFormat, TextureBinMips... texture2dData) {
+        this.format = vkFormat;
         try ( MemoryStack stack = stackPush() ) {
             
         VkFormatProperties formatProperties = VkFormatProperties.callocStack(stack);
@@ -223,6 +226,10 @@ public class VkTexture implements IVkResource {
     @Override
     public void destroy() {
         this.ctxt.removeResource(this);
+        if (this.view != VK_NULL_HANDLE) {
+            vkDestroyImageView(this.ctxt.device, this.view, null);
+            this.view = VK_NULL_HANDLE;
+        }
         if (this.image != VK_NULL_HANDLE) {
             vkDestroyImage(this.ctxt.device, this.image, null);
             this.ctxt.memoryManager.releaseImageMemory(this.image);
@@ -328,4 +335,40 @@ public class VkTexture implements IVkResource {
     public int getNumLayers() {
         return this.layers;
     }
+    public int getFormat() {
+        return this.format;
+    }
+    public void genView() {
+        try ( MemoryStack stack = stackPush() ) {
+            
+            VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
+                    .viewType(VK_IMAGE_VIEW_TYPE_2D)
+                    .format(this.format)
+                    .components(VkComponentMapping.callocStack(stack));
+            VkImageSubresourceRange viewSubResRange = view.subresourceRange();
+            viewSubResRange.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+            viewSubResRange.baseMipLevel(0);
+            viewSubResRange.baseArrayLayer(0);
+            viewSubResRange.layerCount(1);
+            viewSubResRange.levelCount(this.mipLevels);
+            view.image(this.image);
+            LongBuffer pView = stack.longs(0);
+            int err = vkCreateImageView(this.ctxt.device, view, null, pView);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
+            }
+            this.view = pView.get(0);
+        }
+
+    }
+    public long getView() {
+        return this.view;
+    }
+    public int getImageLayout() {
+        return this.imageLayout;
+    }
+    public long getImage() {
+        return this.image;
+    }
+    
 }

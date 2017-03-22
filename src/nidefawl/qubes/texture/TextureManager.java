@@ -78,7 +78,7 @@ public class TextureManager {
         int size=256;
         byte[] data = TextureUtil.genNoise2(size);
         glBindTexture(GL_TEXTURE_2D, texNoise);
-        TextureManager.getInstance().uploadTexture(data, size, size, 3, GL_RGB, GL_RGB, true, true, 0);
+        TextureManager.getInstance().uploadTexture(data, size, size, 3, GL_RGB8, GL_RGB, true, true, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
 //        byte[] data2 = TextureUtil.genNoise2(size,size);
 //        glBindTexture(GL_TEXTURE_2D, texNoise2);

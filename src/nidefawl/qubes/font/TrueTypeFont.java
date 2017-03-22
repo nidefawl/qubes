@@ -86,8 +86,6 @@ public class TrueTypeFont {
     private float                  lineOffset;
     private float                  size;
     public TextureBinMips         binMips;
-    public long sampler;
-    public long textureView;
     public VkDescriptor descriptorSetTex;
     
     public TrueTypeFont(String fontPath, float fontSize, int style, boolean aa) {
@@ -521,71 +519,18 @@ public class TrueTypeFont {
 
             this.vk_tex = new VkTexture(vkContext);
             this.vk_tex.build(vkFormat, this.binMips);
-            
-            VkSamplerCreateInfo samplerCI = VkSamplerCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO)
-                    .magFilter(VK_FILTER_LINEAR)
-                    .minFilter(VK_FILTER_LINEAR)
-                    .mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
-                    .addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-                    .addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-                    .addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-                    .mipLodBias(0.0f)
-                    .compareOp(VK_COMPARE_OP_NEVER)
-                    .minLod(0.0f);
-            // Set max level-of-detail to mip level count of the texture
-            samplerCI.maxLod(0);
-            // Enable anisotropic filtering
-            // This feature is optional, so we must check if it's supported on the device
-            if (vkContext.features.samplerAnisotropy())
-            {
-                samplerCI.maxAnisotropy(vkContext.limits.maxSamplerAnisotropy());
-                samplerCI.anisotropyEnable(true);
-            } else {
-                samplerCI.maxAnisotropy(1.0f);
-                samplerCI.anisotropyEnable(false);
-            }
-            samplerCI.borderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
-            LongBuffer pSampler = stack.longs(0);
-            int err = vkCreateSampler(vkContext.device, samplerCI, null, pSampler);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
-            }
-            this.sampler = pSampler.get(0);
-            
-            VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                    .viewType(VK_IMAGE_VIEW_TYPE_2D)
-                    .format(vkFormat)
-                    .components(VkComponentMapping.callocStack(stack));
-            VkImageSubresourceRange viewSubResRange = view.subresourceRange();
-            viewSubResRange.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-            viewSubResRange.baseMipLevel(0);
-            viewSubResRange.baseArrayLayer(0);
-            viewSubResRange.layerCount(1);
-            // Linear tiling usually won't support mip maps
-            // Only set mip map count if optimal tiling is used
-            viewSubResRange.levelCount(this.vk_tex.getNumMips());
-            // The view will be based on the texture's image
-            view.image(this.vk_tex.image);
-            LongBuffer pView = stack.longs(0);
-            err = vkCreateImageView(vkContext.device, view, null, pView);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
-            }
-            this.textureView = pView.get(0);
+            this.vk_tex.genView();
         
 //          vkContext.descLayouts.getDescriptorSets);
             this.descriptorSetTex = vkContext.descLayouts.allocDescSetSampleSingle();
             
-            this.descriptorSetTex.setBindingCombinedImageSampler(0, this.textureView, this.sampler, this.vk_tex.imageLayout);
+            this.descriptorSetTex.setBindingCombinedImageSampler(0, this.vk_tex.getView(), vkContext.samplerLinear, this.vk_tex.getImageLayout());
             this.descriptorSetTex.update(vkContext);
         }
     }
 
     public void destroy(VKContext vkContext) {
         if (this.vk_tex != null) {
-            vkDestroySampler(vkContext.device, this.sampler, null);
-            vkDestroyImageView(vkContext.device, this.textureView, null);
             this.vk_tex.destroy();
             this.vk_tex = null;
         }
