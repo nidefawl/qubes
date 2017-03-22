@@ -109,25 +109,12 @@ public class VkPipelines {
             shadowSolid.setVertexDesc(desc);
             shadowSolid.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
             shadowSolid.useSwapChainViewport = false;
-            shadowSolid.viewport.minDepth(Engine.INVERSE_MAP?1:0);
-            shadowSolid.viewport.maxDepth(Engine.INVERSE_MAP?1:0);
             shadowSolid.depthStencilState.depthCompareOp(Engine.INVERSE_MAP ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
-            shadowSolid.viewport.width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
             shadowSolid.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
-//            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
             shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
-            shadowSolid.rasterizationState.depthBiasEnable(false);
-//            shadowSolid.rasterizationState.depthClampEnable(false);
-            shadowSolid.rasterizationState.frontFace(!Engine.INVERSE_MAP?VK_FRONT_FACE_CLOCKWISE:VK_FRONT_FACE_COUNTER_CLOCKWISE);
-            shadowSolid.rasterizationState.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
-            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_NONE);
-//            shadowSolid.rasterizationState.cullMode()
-//            shadowSolid.depthStencilState.depthWriteEnable(true);
-//            shadowSolid.depthStencilState.depthTestEnable(true);
-//            shadowSolid.depthStencilState.depthBoundsTestEnable(false);
-//            shadowSolid.depthStencilState.minDepthBounds(0);
-//            shadowSolid.depthStencilState.maxDepthBounds(1);
+            shadowSolid.rasterizationState.depthBiasEnable(true);
+            shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_BACK_BIT);
             shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
         }
         try ( MemoryStack stack = stackPush() ) 

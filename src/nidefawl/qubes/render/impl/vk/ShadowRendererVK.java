@@ -61,7 +61,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         Engine.setDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX, Engine.descriptorSetUboShadow);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         float f = -1.0f;
-        vkCmdSetDepthBias(commandBuffer, f*1.0f, f*0.2f, f*0.2f);
+        vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*0.15f);
 //        vkCmdSetDepthBias(commandBuffer, 0,0,0);
         Engine.setViewport(0, 0, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
@@ -73,12 +73,14 @@ public class ShadowRendererVK extends ShadowRenderer {
         Engine.setViewport(mapSize, 0, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 1);
+        vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.f, f*1.45f);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 1); //TODO: FRUSTUM CULLING
         Engine.setViewport(0, mapSize, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 2);
+        vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*1.15f);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING

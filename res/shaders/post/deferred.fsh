@@ -143,7 +143,12 @@ bool canLookup(in vec4 v, in float zPos, in float mapZ) {
 #define SAMPLE_DISTANCE2 ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_WEIGHT ((SOFT_SHADOW_TAP_RANGE*2+1)*(SOFT_SHADOW_TAP_RANGE*2+1))
 #define SOFT_SHADOW_WEIGHT2 ((SOFT_SHADOW_TAP_RANGE2*2+1)*(SOFT_SHADOW_TAP_RANGE2*2+1))
-#if Z_INVERSE
+#if defined VULKAN_GLSL
+#define SHADOW_FACTOR0 0.99999
+#define SHADOW_FACTOR1 0.99996
+#define SHADOW_FACTOR2 0.99992
+#define SHADOW_COMPARE(a, b) a >= b
+#elif Z_INVERSE
 #define SHADOW_FACTOR0 1.00002
 #define SHADOW_FACTOR1 1.00005
 #define SHADOW_FACTOR2 1.00007
@@ -217,14 +222,22 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
 float lookupShadowMap(vec3 v, float factor) {
     v.z*=factor;
     #if SOFT_SHADOW_TAP_RANGE == 0
-        return step(texture(texShadow, v.xy).r, v.z);
+        float shadowSample = texture(texShadow, v.xy).r;
+        #ifdef VULKAN_GLSL
+            return step(v.z, 1.0-shadowSample);
+        #endif
+        return step(shadowSample, v.z);
     #else
         float s = 0;
         for (int x = -SOFT_SHADOW_TAP_RANGE; x <= SOFT_SHADOW_TAP_RANGE; x++) {
             for (int y = -SOFT_SHADOW_TAP_RANGE; y <= SOFT_SHADOW_TAP_RANGE; y++) {
                 vec2 offs = vec2(x, y) * SAMPLE_DISTANCE;
                 vec2 shadow_tc = v.xy+offs;
-                if (SHADOW_COMPARE(v.z, texture(texShadow, shadow_tc).r)) {
+                float shadowSample = texture(texShadow, shadow_tc).r;
+                #ifdef VULKAN_GLSL
+                    shadowSample = 1.0 -shadowSample;
+                #endif
+                if (SHADOW_COMPARE(v.z, shadowSample)) {
                     s += 1;
                 }
             }
@@ -251,7 +264,7 @@ float getShadow2() {
         if (clamp(v.z, 0.15, 0.85) == v.z)
             steps++;
     }
-    /*if (steps<1&&canLookup(v2, prop.linearDepth, mapZSplits.y)) {
+    if (steps<1&&canLookup(v2, prop.linearDepth, mapZSplits.y)) {
         s += lookupShadowMap(vec3(v2.xy*0.5+vec2(0.5,0.0), v2.z), SHADOW_FACTOR1);
         dbgSplit.y=1;
         dbgSplit.a=1;
@@ -263,7 +276,7 @@ float getShadow2() {
         dbgSplit.z=1;
         dbgSplit.a=1;
         steps++;
-    }*/
+    }
     if (steps > 0)
         s/=steps;
     // return 1.0;
