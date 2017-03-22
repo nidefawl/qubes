@@ -55,6 +55,7 @@ public class VulkanInit {
         if (installdebugcallback) {
             debugCallback = new VkDebugReportCallbackEXT() {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
+                    Thread.dumpStack();
                     System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
                     GameBase.baseInstance.setException(new GameError("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage)));
                     return 0;
@@ -149,7 +150,7 @@ public class VulkanInit {
     }
     private static long createDescriptorPool(VKContext ctxt) {
         try ( MemoryStack stack = stackPush() ) {
-            int max = 16*1024;
+            int max = 1*1024;
             VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(3, stack);
             poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, max));
             poolSizes.put(VkInitializers.descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, max));

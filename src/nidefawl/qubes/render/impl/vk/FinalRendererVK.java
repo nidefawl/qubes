@@ -1,11 +1,13 @@
 package nidefawl.qubes.render.impl.vk;
 
+import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkImageCopy;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
 import nidefawl.qubes.gl.Engine;
@@ -26,6 +28,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public long sampler;
     private FrameBuffer frameBufferTonemapped;
     private VkDescriptor descTextureTonemap;
+    private VkImageCopy.Buffer pRegions = VkImageCopy.calloc(1);
     @Override
     public void init() {
         VKContext ctxt = Engine.vkContext;
@@ -157,9 +160,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDescriptorSet(VkDescLayouts.UBO_LIGHTS_DESC_IDX, Engine.descriptorSetUboLights);
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureDeferred0);
             Engine.bindPipeline(VkPipelines.deferred_pass0);
-            Engine.drawFSTri();
-            Engine.bindPipeline(VkPipelines.deferred_pass1);
+            Engine.drawFSTri();            
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureDeferred1);
+            Engine.bindPipeline(VkPipelines.deferred_pass1);
             Engine.drawFSTri();
             Engine.endRenderPass();
             Engine.clearDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX);

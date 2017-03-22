@@ -15,19 +15,18 @@ uniform sampler2D waterNoiseTexture;
 #pragma include "water.glsl"
 const float rainStrength = 0;
 
+
 in vec4 color;
-in vec4 texcoord;
+in vec2 texcoord;
 in vec3 normal;
 flat in uvec4 blockinfo;
-
 flat in uint faceDir; // duplicate data, see comment int terrain.fsh
 flat in vec4 faceLight;
 flat in vec4 faceLightSky;
 in vec2 texPos;
 in vec4 vpos;
-in vec4 vwpos;
+in vec3 vwpos;
 in float isWater;
-
 in float roughness;
 
 

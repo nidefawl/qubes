@@ -22,7 +22,7 @@ public class VkDescriptor {
         public IBufferDynamicOffset dynamicOffset;
     }
     int numBindings = 0;
-    VkDescriptorBinding[] bindings = new VkDescriptorBinding[8];
+    VkDescriptorBinding[] bindings = new VkDescriptorBinding[9];
     private final long descriptorSet;
     public VkDescriptor(long descriptorSet) {
         this.descriptorSet = descriptorSet;

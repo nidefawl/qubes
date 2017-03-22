@@ -50,7 +50,7 @@ float noiseneg = 1;
 
 float noisea = 1;
 for (int i = 0; i < 2; i++) {
-noisea += texture2D(noisetex,vec2(posxz.x,posxz.z)/noisesize*0.1+vec2(frametime/1000*speed,0)).r*i*noiseneg;
+noisea += texture(noisetex,vec2(posxz.x,posxz.z)/noisesize*0.1+vec2(frametime/1000*speed,0)).r*i*noiseneg;
 noiseweight += i;
 noiseneg *= -1;
 noisesize /= 2;
@@ -62,7 +62,7 @@ noiseweight = 0;
 
 float noiseb = 1;
 for (int i = 0; i < 2; i++) {
-noiseb += texture2D(noisetex,vec2(-posxz.x,posxz.z)/noisesize*0.1+vec2(0,frametime/1000*speed)).r*i*noiseneg;
+noiseb += texture(noisetex,vec2(-posxz.x,posxz.z)/noisesize*0.1+vec2(0,frametime/1000*speed)).r*i*noiseneg;
 noiseweight += i;
 noiseneg *= -1;
 noisesize /= 2;
@@ -74,7 +74,7 @@ noiseweight = 0;
 
 float noisec = 1;
 for (int i = 0; i < 2; i++) {
-noisec += texture2D(noisetex,vec2(posxz.x,-posxz.z)/noisesize*0.1+vec2(-frametime/1000*speed,0)).r*i*noiseneg;
+noisec += texture(noisetex,vec2(posxz.x,-posxz.z)/noisesize*0.1+vec2(-frametime/1000*speed,0)).r*i*noiseneg;
 noiseweight += i;
 noiseneg *= -1;
 noisesize /= 2;
@@ -86,7 +86,7 @@ noiseweight = 0;
 
 float noised = 1;
 for (int i = 0; i < 2; i++) {
-noised += texture2D(noisetex,vec2(-posxz.x,-posxz.z)/noisesize*0.1+vec2(0,-frametime/1000*speed)).r*i*noiseneg;
+noised += texture(noisetex,vec2(-posxz.x,-posxz.z)/noisesize*0.1+vec2(0,-frametime/1000*speed)).r*i*noiseneg;
 noiseweight += i;
 noiseneg *= -1;
 noisesize /= 2;

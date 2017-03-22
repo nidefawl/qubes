@@ -1,6 +1,9 @@
 package nidefawl.qubes.render.impl.vk;
 
+import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.vulkan.VK10.*;
+
+import org.lwjgl.vulkan.VkImageCopy;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
@@ -23,6 +26,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
     private VkDescriptor descTextureTerrain;
     private VkDescriptor descTextureTerrainWater;
     private VkTexture waterNoiseTex;
+    private VkImageCopy.Buffer pRegions = VkImageCopy.calloc(1);
 
     public WorldRendererVK() {
     }
@@ -37,6 +41,21 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         TextureBinMips mips = new TextureBinMips(data, 256, 256);
         this.waterNoiseTex.build(VK_FORMAT_R8G8B8A8_UNORM, mips);
         this.waterNoiseTex.genView();
+
+
+        pRegions.srcOffset().x(0).y(0).z(0);
+        pRegions.dstOffset().x(0).y(0).z(0);
+        pRegions.extent().width(1).height(1).depth(1);
+        pRegions.srcSubresource()
+            .baseArrayLayer(0)
+            .mipLevel(0)
+            .layerCount(1)
+            .aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT);
+        pRegions.dstSubresource()
+            .baseArrayLayer(0)
+            .mipLevel(0)
+            .layerCount(1)
+            .aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT);
     }
 
     @Override
@@ -49,6 +68,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
     @Override
     public void resize(int displayWidth, int displayHeight) {
+        pRegions.extent().width(displayWidth).height(displayHeight).depth(1);
     }
 
     public void renderTransparent(World world, float fTime) {        
@@ -59,13 +79,22 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 //            Engine.checkGLError("renderSecondPass");
 //
 //        Shader.disable();
+
+        FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
+        FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
+        
+
+        copyDepthBuffer(imageDepthSrc, imageDepthDst);
+        
+        
+        
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferSceneWater;
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
             Engine.beginRenderPass(VkRenderPasses.passTerrain, fbScene, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainWater);
             Engine.bindPipeline(VkPipelines.water);
-            RenderersGL.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
+            RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
             Engine.endRenderPass();
         } else {
             System.err.println("SKIPPED, framebuffer is not sized");
@@ -75,6 +104,32 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         }
     
     }
+    private void copyDepthBuffer(FramebufferAttachment imageDepthSrc, FramebufferAttachment imageDepthDst) {
+        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthSrc.image,
+                VK_IMAGE_ASPECT_DEPTH_BIT, 
+                imageDepthSrc.imageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthDst.image,
+                VK_IMAGE_ASPECT_DEPTH_BIT, 
+                imageDepthDst.imageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+        vkCmdCopyImage(Engine.getDrawCmdBuffer(), imageDepthSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, pRegions);
+        
+
+        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthSrc.image,
+                VK_IMAGE_ASPECT_DEPTH_BIT, 
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthSrc.imageLayout,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
+                VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_SHADER_READ_BIT);
+        vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthDst.image,
+                VK_IMAGE_ASPECT_DEPTH_BIT, 
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageDepthDst.imageLayout,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
+                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_SHADER_READ_BIT);
+    }
+
     public void renderWorld(WorldClient world, float fTime) {
 
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferScene;
@@ -120,6 +175,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 this.waterNoiseTex.getView(), 
                 Engine.vkContext.samplerLinear, 
                 this.waterNoiseTex.getImageLayout());
+        this.descTextureTerrainWater.update(Engine.vkContext);
         this.descTextureTerrainNormals.update(Engine.vkContext);
         this.descTextureTerrain.update(Engine.vkContext);
         int n = TextureArrays.blockTextureArrayVK.getNumTextures();

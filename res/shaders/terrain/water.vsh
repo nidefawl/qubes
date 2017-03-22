@@ -5,16 +5,15 @@
 #pragma include "vertex_layout.glsl"
 
 out vec4 color;
-out vec4 texcoord;
+out vec2 texcoord;
 out vec3 normal;
 flat out uvec4 blockinfo;
-
 flat out uint faceDir; // duplicate data, see comment int terrain.fsh
 flat out vec4 faceLight;
 flat out vec4 faceLightSky;
 out vec2 texPos;
 out vec4 vpos;
-out vec4 vwpos;
+out vec3 vwpos;
 out float isWater;
 out float roughness;
 
@@ -30,7 +29,7 @@ void main() {
 	camNormal.xyz/=camNormal.w;// not required? (3x3 does not w)
 	
 	normal = normalize(camNormal.xyz);
-	texcoord = in_texcoord;
+	texcoord = in_texcoord.st;
     isWater = IS_WATER(blockid);
 	color = in_color;
 	roughness = (in_normal.w < 0 ? 255+in_normal.w : in_normal.w) / 255.0f;
@@ -51,8 +50,8 @@ void main() {
 	texPos = clamp(in_texcoord.xy, vec2(0), vec2(1));
 	
 
-	vpos = in_matrix_3D.mv * in_position;
-	vwpos = in_position;
+	vpos = in_matrix_3D.mv * vec4(in_position.xyz, 1.0);
+	vwpos = in_position.xyz;
 	// gl_Position = in_matrix_3D.mvp * (in_position+terroffset);
-	gl_Position = in_matrix_3D.mvp * in_position;
+	gl_Position = in_matrix_3D.mvp * vec4(in_position.xyz, 1.0);
 }

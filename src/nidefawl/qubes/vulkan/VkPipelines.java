@@ -232,7 +232,10 @@ public class VkPipelines {
             deferred_pass1.destroyPipeLine(ctxt);
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "post/deferred.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
 
+//            VKContext.DUMP_SHADER_SRC=true;
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/deferred.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new DeferredDefs(1));
+
+//            VKContext.DUMP_SHADER_SRC=false;
             deferred_pass1.depthStencilState.depthTestEnable(false);
             deferred_pass1.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
             deferred_pass1.setShaders(vert, frag);
