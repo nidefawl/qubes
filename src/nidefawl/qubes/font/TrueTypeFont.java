@@ -16,13 +16,10 @@ import org.lwjgl.stb.STBTTPackedchar.Buffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetBinary;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameError;

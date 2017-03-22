@@ -5,7 +5,6 @@ import org.lwjgl.opengl.GL21;
 
 import nidefawl.qubes.async.AsyncTask;
 import nidefawl.qubes.async.AsyncTasks;
-import nidefawl.qubes.async.AsyncTask.TaskType;
 import nidefawl.qubes.config.RenderSettings;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.LoadingScreen;
@@ -14,7 +13,6 @@ import nidefawl.qubes.models.EntityModelManager;
 import nidefawl.qubes.models.ItemModelManager;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.texture.array.*;
-import nidefawl.qubes.texture.array.impl.*;
 
 public class RenderAssets {
 

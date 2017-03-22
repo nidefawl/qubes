@@ -404,8 +404,6 @@ public class TextInput {
 
     public void drawStringWithCursor(double mouseX, double mouseY, boolean mouseDownLeft) {
         this.tick = Game.ticksran;
-        int boxWidth = getWidth();
-//        boolean overTextBox = boxHeight < mouseY && mouseY < ;
         boolean overTextBoxY = mouseY >= getTop() && mouseY <= getBottom();
         if (mouseDownLeft) {
             if (!did) {
@@ -487,13 +485,8 @@ public class TextInput {
         tessellator.setColor(-1, 255);
         trueType.bindTexture();
         Engine.setPipeStateFontrenderer();
-//        GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, trueType.getTexture());
-//        tessellator.startDrawingQuads();
-//        tessellator.setColorRGBA_F(1, 1, 1, 1);
-        int prevColor = -1;
         int i = 0;
         trueType.start(totalwidth, startY);
-//        boolean isURL = editText.startsWith("http");
         while (true) {
             if (i >= editText.length()) {
                 break;

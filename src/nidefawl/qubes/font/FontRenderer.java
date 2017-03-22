@@ -2,13 +2,7 @@ package nidefawl.qubes.font;
 
 import java.util.HashMap;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.vulkan.VkCommandBuffer;
-
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.gl.GL;
-import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.ITess;
 
