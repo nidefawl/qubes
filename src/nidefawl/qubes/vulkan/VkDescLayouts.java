@@ -154,9 +154,7 @@ public class VkDescLayouts {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDeferredPass1, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
         VkPipelines.pipelineLayoutTonemapDynamic.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble});
-        VkPipelines.pipelineLayoutSkyboxBackground.build(ctxt, new long[] {
-                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutUBOLightInfo});
-        VkPipelines.pipelineLayoutSkyboxSample.build(ctxt, new long[] {
+        VkPipelines.pipelineLayoutSkybox.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo});
         VkPipelines.pipelineLayoutSkyboxSprites.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo}, push_constant_ranges_sprites);

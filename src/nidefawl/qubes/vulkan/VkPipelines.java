@@ -4,8 +4,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
-import org.lwjgl.vulkan.VkPipelineDynamicStateCreateInfo;
+import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
@@ -29,9 +28,8 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutDeferredPass0 = new VkPipelineLayout("pipelineLayoutDeferredPass0");
     public static VkPipelineLayout pipelineLayoutDeferredPass1 = new VkPipelineLayout("pipelineLayoutDeferredPass1");
     public static VkPipelineLayout pipelineLayoutTonemapDynamic = new VkPipelineLayout("pipelineLayoutTonemapDynamic");
-    public static VkPipelineLayout pipelineLayoutSkyboxBackground = new VkPipelineLayout("pipelineLayoutSkyboxBackground");
+    public static VkPipelineLayout pipelineLayoutSkybox = new VkPipelineLayout("pipelineLayoutSkyboxBackground");
     public static VkPipelineLayout pipelineLayoutSkyboxSprites = new VkPipelineLayout("pipelineLayoutSkyboxSprites");
-    public static VkPipelineLayout pipelineLayoutSkyboxSample = new VkPipelineLayout("pipelineLayoutSkyboxSample");
     
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
@@ -48,11 +46,11 @@ public class VkPipelines {
     public static VkPipeline deferred_pass0 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
     public static VkPipeline deferred_pass1 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass1);
     public static VkPipeline tonemapDynamic = new VkPipeline(VkPipelines.pipelineLayoutTonemapDynamic);
-    public static VkPipeline skybox_update_background = new VkPipeline(VkPipelines.pipelineLayoutSkyboxBackground);
-    public static VkPipeline skybox_update_background_cubemap = new VkPipeline(VkPipelines.pipelineLayoutSkyboxBackground);
+    public static VkPipeline skybox_update_background = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
+    public static VkPipeline skybox_update_background_cubemap = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
     public static VkPipeline skybox_update_sprites = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSprites);
-    public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSample);
-    public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSample);
+    public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
+    public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
 
     
     static class VkShaderDef implements IShaderDef {
@@ -253,6 +251,55 @@ public class VkPipelines {
             skybox_update_background.setEmptyVertexInput();
             skybox_update_background.dynamicState=null;
             skybox_update_background.pipeline = buildPipeLine(ctxt, skybox_update_background);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            skybox_update_sprites.destroyPipeLine(ctxt);
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "particle/clouds.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "particle/clouds.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_update_sprites.useSwapChainViewport = false;
+            skybox_update_sprites.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+            skybox_update_sprites.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
+            skybox_update_sprites.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+            skybox_update_sprites.scissors.extent().width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
+
+            skybox_update_sprites.depthStencilState.depthTestEnable(false);
+            skybox_update_sprites.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            skybox_update_sprites.setShaders(vert, frag);
+            skybox_update_sprites.setBlend(false);
+            skybox_update_sprites.setRenderPass(VkRenderPasses.passSkyGenerateCubemap, 0);
+            skybox_update_sprites.derivedPipeDef = new IDerivedPipeDef() {
+
+                @Override
+                public int getNumDerived() {
+                    return 5;
+                }
+
+                @Override
+                public void setPipeDef(int i, VkGraphicsPipelineCreateInfo subPipeline) {
+                    subPipeline.subpass(i);
+                }
+                
+            };
+
+            VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(2);
+            attributeDescriptions.get(0).binding(0).location(0).format(VK_FORMAT_R16G16_SFLOAT).offset(0);
+            attributeDescriptions.get(1).binding(1).location(1).format(VK_FORMAT_R32G32B32A32_SFLOAT).offset(0);
+            attributeDescriptions.get(1).binding(1).location(2).format(VK_FORMAT_R32G32B32A32_SFLOAT).offset(16);
+            skybox_update_sprites.bindingDescriptions = VkVertexInputBindingDescription.callocStack(2);
+            skybox_update_sprites.bindingDescriptions.get(0)
+                .binding(0)
+                .stride(4)
+                .inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
+            skybox_update_sprites.bindingDescriptions.get(1)
+                .binding(1)
+                .stride(32)
+                .inputRate(VK_VERTEX_INPUT_RATE_INSTANCE);
+            skybox_update_sprites.vertexInputState.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
+                .pVertexBindingDescriptions(skybox_update_sprites.bindingDescriptions)
+                .pVertexAttributeDescriptions(attributeDescriptions);
+            skybox_update_sprites.dynamicState=null;
+            skybox_update_sprites.pipeline = buildPipeLine(ctxt, skybox_update_sprites);
         }
         try ( MemoryStack stack = stackPush() ) 
         {

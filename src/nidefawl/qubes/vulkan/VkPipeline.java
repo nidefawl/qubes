@@ -47,10 +47,10 @@ public class VkPipeline {
     VkPipelineViewportStateCreateInfo viewportState = pipelineViewportStateCreateInfo(1, 1, 0)
             .pViewports(viewport)
             .pScissors(scissors);
-    VkPipelineVertexInputStateCreateInfo vertexInputState = pipelineVertexInputStateCreateInfo();
+    protected VkPipelineVertexInputStateCreateInfo vertexInputState = pipelineVertexInputStateCreateInfo();
 
 
-    VkVertexInputBindingDescription.Buffer bindingDescriptions = VkVertexInputBindingDescription.calloc(1);
+    protected VkVertexInputBindingDescription.Buffer bindingDescriptions = VkVertexInputBindingDescription.calloc(1);
 
     ByteBuffer                                 mainMethod            = MemoryUtil.memUTF8("main");
     
