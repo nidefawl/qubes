@@ -45,6 +45,7 @@ public class CubeMapCamera {
 //                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
 //                System.out.println("proj");
             }
+            projection.m11 = -projection.m11;
         } else {
 
             if (!Engine.INVERSE_Z_BUFFER) {

@@ -260,13 +260,15 @@ public class VkPipelines {
             skybox_update_sprites.useSwapChainViewport = false;
             skybox_update_sprites.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
             skybox_update_sprites.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
-            skybox_update_sprites.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+            skybox_update_sprites.viewport.width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
             skybox_update_sprites.scissors.extent().width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
+            skybox_update_sprites.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
             skybox_update_sprites.depthStencilState.depthTestEnable(false);
-            skybox_update_sprites.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            skybox_update_sprites.rasterizationState.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
+            skybox_update_sprites.rasterizationState.cullMode(VK_CULL_MODE_NONE);
             skybox_update_sprites.setShaders(vert, frag);
-            skybox_update_sprites.setBlend(false);
+            skybox_update_sprites.setBlend(true);
             skybox_update_sprites.setRenderPass(VkRenderPasses.passSkyGenerateCubemap, 0);
             skybox_update_sprites.derivedPipeDef = new IDerivedPipeDef() {
 
@@ -309,8 +311,9 @@ public class VkPipelines {
             skybox_update_background_cubemap.useSwapChainViewport = false;
             skybox_update_background_cubemap.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
             skybox_update_background_cubemap.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
-            skybox_update_background_cubemap.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+            skybox_update_background_cubemap.viewport.width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
             skybox_update_background_cubemap.scissors.extent().width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
+            skybox_update_background_cubemap.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
             skybox_update_background_cubemap.depthStencilState.depthTestEnable(false);
             skybox_update_background_cubemap.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
