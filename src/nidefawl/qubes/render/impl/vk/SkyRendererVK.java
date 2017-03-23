@@ -23,7 +23,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     private FrameBuffer frameBufferCubemap;
     private FrameBuffer frameBufferSingle;
     public VkDescriptor descTextureSkyboxSingle;
-    private long[] viewsFrameBuffer;
+    private long[] viewsFrameBuffer = new long[6];
 
     @Override
     public void init() {
@@ -46,7 +46,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
                         .samples(VK_SAMPLE_COUNT_1_BIT)
                         .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
                         .tiling(VK_IMAGE_TILING_OPTIMAL)
-                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
                         .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
                         .flags(VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
                 imageCreateInfo.extent().width(SKYBOX_RES).height(SKYBOX_RES).depth(1);
@@ -116,7 +116,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
               this.sampler = pSampler.get(0);
               
         }
-        ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0, 0, 1);
+        ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, 6, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0, 0, 1);
 
     }
     @Override
@@ -159,18 +159,18 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
             
             
             
-            Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
-            Engine.clearDescriptorSet(3);
-            Engine.clearDescriptorSet(4);
-            for (int i = 0; i < 6; i++) {
-                if (i != 0)
-                    vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
-                Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap);
-                Engine.drawFSTri();
-            }
-            Engine.endRenderPass();
-            Engine.clearDescriptorSet(2);
+//            Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
+//            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
+//            Engine.clearDescriptorSet(3);
+//            Engine.clearDescriptorSet(4);
+//            for (int i = 0; i < 6; i++) {
+//                if (i != 0)
+//                    vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
+//                Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap);
+//                Engine.drawFSTri();
+//            }
+//            Engine.endRenderPass();
+//            Engine.clearDescriptorSet(2);
         }
     }
 

@@ -76,7 +76,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
               }
               this.sampler = pSampler.get(0);
         }
-        ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, getLayout(), 0, 0, 0, 1);
+        ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, 1, getLayout(), 0, 0, 0, 1);
 
     }
     @Override

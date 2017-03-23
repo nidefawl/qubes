@@ -767,7 +767,7 @@ public class VKContext {
 //            }
         }
     }
-    public void clearImage(VkCommandBuffer commandBuffer, long image, int targetlayout, float r, float g, float b, float a) {
+    public void clearImage(VkCommandBuffer commandBuffer, long image, int nLayers, int targetlayout, float r, float g, float b, float a) {
 
         vkContext.setImageLayout(commandBuffer, image,
                 VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
