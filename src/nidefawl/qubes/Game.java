@@ -528,7 +528,7 @@ public class Game extends GameBase {
         } else {
 
             if (this.world != null) {
-//                Engine.skyRenderer.renderSky(this.world, fTime);
+                Engine.skyRenderer.renderSky(this.world, fTime);
                 Engine.shadowRenderer.renderShadowPass(this.world, fTime);
             } 
             setSceneViewport();

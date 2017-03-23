@@ -10,16 +10,16 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLVAO;
+import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.shader.IShaderDef;
 
 public class VkPipelines {
-    public static VkPipeline[] arrPipe = new VkPipeline[16];
-    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[16];
+    public static VkPipeline[] arrPipe = new VkPipeline[24];
+    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[24];
     
     public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout("pipelineLayoutTextured");
     public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout("pipelineLayoutMain");
     public static VkPipelineLayout pipelineLayoutTerrain = new VkPipelineLayout("pipelineLayoutTerrain");
-    public static VkPipelineLayout pipelineLayoutWater = new VkPipelineLayout("pipelineLayoutTerrain");
     public static VkPipelineLayout pipelineLayoutColored = new VkPipelineLayout("pipelineLayoutColored");
     public static VkPipelineLayout pipelineLayoutShadow = new VkPipelineLayout("pipelineLayoutShadow");
     public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout("pipelineLayoutGUI");
@@ -27,6 +27,8 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutDeferredPass0 = new VkPipelineLayout("pipelineLayoutDeferredPass0");
     public static VkPipelineLayout pipelineLayoutDeferredPass1 = new VkPipelineLayout("pipelineLayoutDeferredPass1");
     public static VkPipelineLayout pipelineLayoutTonemapDynamic = new VkPipelineLayout("pipelineLayoutTonemapDynamic");
+    public static VkPipelineLayout pipelineLayoutSkyboxBackground = new VkPipelineLayout("pipelineLayoutSkyboxBackground");
+    public static VkPipelineLayout pipelineLayoutSkyboxSprites = new VkPipelineLayout("pipelineLayoutSkyboxSprites");
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
@@ -42,6 +44,10 @@ public class VkPipelines {
     public static VkPipeline deferred_pass0 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
     public static VkPipeline deferred_pass1 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass1);
     public static VkPipeline tonemapDynamic = new VkPipeline(VkPipelines.pipelineLayoutTonemapDynamic);
+    public static VkPipeline skybox_update_background = new VkPipeline(VkPipelines.pipelineLayoutSkyboxBackground);
+    public static VkPipeline skybox_update_sprites = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSprites);
+    public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutTextured);
+    public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutTextured);
 
     
     static class VkShaderDef implements IShaderDef {
@@ -214,7 +220,50 @@ public class VkPipelines {
 
             textured2d.pipelineScissors = buildPipeLine(ctxt, textured2d);
         }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            skybox_sample_single.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_sample_single.setShaders(vert, frag);
+            skybox_sample_single.setBlend(false);
+            skybox_sample_single.setRenderPass(VkRenderPasses.passSky, 0);
+            skybox_sample_single.setVertexDesc(desc);
+            skybox_sample_single.dynamicState=null;
+            skybox_sample_single.pipeline = buildPipeLine(ctxt, skybox_sample_single);
+        }
 
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            skybox_update_background.destroyPipeLine(ctxt);
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_update_background.depthStencilState.depthTestEnable(false);
+            skybox_update_background.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            skybox_update_background.setShaders(vert, frag);
+            skybox_update_background.setBlend(false);
+            skybox_update_background.setRenderPass(VkRenderPasses.passFramebufferNoDepth, 0);
+            skybox_update_background.setEmptyVertexInput();
+            skybox_update_background.dynamicState=null;
+            skybox_update_background.pipeline = buildPipeLine(ctxt, skybox_update_background);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            skybox_sample.destroyPipeLine(ctxt);
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "screen_triangle.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_sample_cubemap.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_sample.depthStencilState.depthTestEnable(false);
+            skybox_sample.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            skybox_sample.setShaders(vert, frag);
+            skybox_sample.setBlend(false);
+            skybox_sample.setRenderPass(VkRenderPasses.passTerrain_Pass0, 0);
+            skybox_sample.setEmptyVertexInput();
+            skybox_sample.dynamicState=null;
+            skybox_sample.pipeline = buildPipeLine(ctxt, skybox_sample);
+        }
         try ( MemoryStack stack = stackPush() ) 
         {
             deferred_pass0.destroyPipeLine(ctxt);
@@ -227,33 +276,25 @@ public class VkPipelines {
             deferred_pass0.setBlend(false);
             deferred_pass0.setRenderPass(VkRenderPasses.passDeferred, 0);
             deferred_pass0.setEmptyVertexInput();
-            deferred_pass0.dynamicState=null;
             deferred_pass0.pipeline = buildPipeLine(ctxt, deferred_pass0);
         }
         try ( MemoryStack stack = stackPush() ) 
         {
             deferred_pass1.destroyPipeLine(ctxt);
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "post/deferred.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
-
-//            VKContext.DUMP_SHADER_SRC=true;
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/deferred.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new DeferredDefs(1));
-
-//            VKContext.DUMP_SHADER_SRC=false;
             deferred_pass1.depthStencilState.depthTestEnable(false);
             deferred_pass1.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
             deferred_pass1.setShaders(vert, frag);
             deferred_pass1.setBlend(true);
             deferred_pass1.setRenderPass(VkRenderPasses.passDeferred, 0);
             deferred_pass1.setEmptyVertexInput();
-            deferred_pass1.dynamicState=null;
             deferred_pass1.pipeline = buildPipeLine(ctxt, deferred_pass1);
         }
         try ( MemoryStack stack = stackPush() ) 
         {
             tonemapDynamic.destroyPipeLine(ctxt);
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "screen_triangle.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
-
-//            VKContext.DUMP_SHADER_SRC=true;
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/finalstage.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new IShaderDef() {
                 
                 @Override
@@ -263,14 +304,12 @@ public class VkPipelines {
                     return null;
                 }
             });
-//          VKContext.DUMP_SHADER_SRC=false;
             tonemapDynamic.depthStencilState.depthTestEnable(false);
             tonemapDynamic.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
             tonemapDynamic.setShaders(vert, frag);
             tonemapDynamic.setBlend(false);
             tonemapDynamic.setRenderPass(VkRenderPasses.passFramebufferNoDepth, 0);
             tonemapDynamic.setEmptyVertexInput();
-            tonemapDynamic.dynamicState=null;
             tonemapDynamic.pipeline = buildPipeLine(ctxt, tonemapDynamic);
         }
 
@@ -278,11 +317,8 @@ public class VkPipelines {
         {
             item.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4|8].getVkVertexDesc();
-//          VKContext.DUMP_SHADER_SRC=true;
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "item.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "item.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-//          VKContext.DUMP_SHADER_SRC=false;
-//          item.depthStencilState.depthTestEnable(false);
             item.setShaders(vert, frag);
             item.setBlend(true);
             item.setRenderPass(VkRenderPasses.passFramebuffer, 0);
@@ -292,20 +328,16 @@ public class VkPipelines {
             item.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
             item.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
             item.pipelineScissors = buildPipeLine(ctxt, item);
-
         }
+        
         try ( MemoryStack stack = stackPush() ) 
         {
             singleblock.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoBlocks.getVkVertexDesc();
-//          VKContext.DUMP_SHADER_SRC=true;
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "singleblock.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "singleblock.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-//          VKContext.DUMP_SHADER_SRC=false;
-//          singleblock.depthStencilState.depthTestEnable(false);
             singleblock.useSwapChainViewport = false;
-            singleblock.viewport.width(4096).height(4096);
-            singleblock.scissors.extent().width(4096).height(4096);
+            singleblock.scissors.extent().width(SingleBlockRenderAtlas.getTexSize()).height(SingleBlockRenderAtlas.getTexSize());
             singleblock.setShaders(vert, frag);
             singleblock.setBlend(false);
             singleblock.setRenderPass(VkRenderPasses.passFramebuffer, 0);
@@ -395,10 +427,6 @@ public class VkPipelines {
             pipe.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
         }
-//        if (pipe == shadowSolid)
-//            pipe.depthStencilState.depthCompareOp(!Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
-//        else 
-
         long pipeline = pipe.buildPipeline(vkContext);
         return pipeline;
     }

@@ -62,6 +62,9 @@ public class SingleBlockRenderAtlas {
     public static float getTexW() {
         return tileSize/(float)texSize;
     }
+    public static int getTexSize() {
+        return texSize;
+    }
     public static float getX(int idx) {
         return (idx%cols)/(float)cols;
     }

@@ -54,6 +54,7 @@ public class VkPipelineLayout {
         descriptorSetLayoutCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
         return descriptorSetLayoutCreateInfo;
     }
+    
     public void destroy(VKContext vkContext) {
         if (this.pipelineLayout != VK_NULL_HANDLE) {
             vkDestroyPipelineLayout(vkContext.device, this.pipelineLayout, null);

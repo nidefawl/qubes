@@ -1,6 +1,5 @@
 package nidefawl.qubes.render;
 
-import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.world.WorldClient;
 
 public abstract class LightCompute extends AbstractRenderer {

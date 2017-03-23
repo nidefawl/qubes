@@ -33,7 +33,7 @@ public class VkDescLayouts {
     public VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
     public VkPushConstantRange.Buffer push_constant_ranges_shadow_solid = VkPushConstantRange.calloc(1);
     public VkPushConstantRange.Buffer push_constant_ranges_single_block = VkPushConstantRange.calloc(1);
-    public VkPushConstantRange.Buffer push_constant_ranges_deferred = VkPushConstantRange.calloc(1);
+    public VkPushConstantRange.Buffer push_constant_ranges_sprites = VkPushConstantRange.calloc(1);
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDouble = VK_NULL_HANDLE;
@@ -117,11 +117,10 @@ public class VkDescLayouts {
             .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
             .offset(0)
             .size(64+4);
-        push_constant_ranges_deferred.get(0)
-            .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+        push_constant_ranges_sprites.get(0)
+            .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
             .offset(0)
-            .size(64+4);
-
+            .size(4+4);
         push_constant_ranges_single_block.get(0)
             .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
             .offset(0)
@@ -155,6 +154,11 @@ public class VkDescLayouts {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDeferredPass1, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
         VkPipelines.pipelineLayoutTonemapDynamic.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble});
+        VkPipelines.pipelineLayoutSkyboxBackground.build(ctxt, new long[] {
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutUBOLightInfo});
+        VkPipelines.pipelineLayoutSkyboxSprites.build(ctxt, new long[] {
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo}, push_constant_ranges_sprites);
+        
 
     }
             
@@ -203,6 +207,8 @@ public class VkDescLayouts {
         sampler_image_deferred_pass1.free();
         push_constant_ranges_gui.free();
         push_constant_ranges_shadow_solid.free();
+        push_constant_ranges_sprites.free();
+        push_constant_ranges_single_block.free();
     }
 
     public void init(VKContext ctxt) {

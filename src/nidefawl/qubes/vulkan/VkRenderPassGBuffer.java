@@ -15,7 +15,8 @@ public class VkRenderPassGBuffer extends VkRenderPass {
     private Buffer subpassDependencies;
     public VkRenderPassGBuffer(int pass) {
         addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            .loadOp(pass == 0 ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR); // dont clear sky background on pass 0
         addColorAttachment(1, VK_FORMAT_R16G16B16A16_SFLOAT)
             .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         addColorAttachment(2, VK_FORMAT_R16G16B16A16_UINT)

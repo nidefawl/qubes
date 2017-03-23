@@ -148,9 +148,14 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferScene;
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
+            Engine.beginRenderPass(VkRenderPasses.passSky, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
+            Engine.bindPipeline(VkPipelines.skybox_sample_single);
+            Engine.drawFullscreenQuad();
+            Engine.endRenderPass();
             
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-//            
+            
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainNormals);
             Engine.bindPipeline(VkPipelines.terrain);
             RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
