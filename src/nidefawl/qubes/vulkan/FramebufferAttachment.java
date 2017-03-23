@@ -20,13 +20,17 @@ public class FramebufferAttachment {
     private long            view;
     private final int             format;
     final int aspectMask;
-    final int usage;
-    private boolean fixedDimensions;
-    private int fixedWidth;
-    private int fixedHeight;
+    int usage;
     public int              finalLayout;
     public int initialLayout;
     public int currentLayout;
+    public FramebufferAttachment(VKContext ctxt, int format, int aspectMask, int initialLayout, int finalLayout) {
+        this.ctxt = ctxt;
+        this.initialLayout = initialLayout;
+        this.finalLayout = finalLayout;
+        this.format = format;
+        this.aspectMask = aspectMask;
+    }
     
     public FramebufferAttachment(VKContext ctxt, VkAttachmentDescription n, int usage) {
         this.ctxt = ctxt;
@@ -51,9 +55,15 @@ public class FramebufferAttachment {
             throw new GameLogicError("Unsuppored usage type");
         }
     }
+    public void setFromImage(long image, long view, int w, int h) {
+        this.width = w;
+        this.height = h;
+        this.view  = view;
+        this.image = image;
+    }
     public void build(int w, int h) {
-        this.width = this.fixedDimensions ? this.fixedWidth : w;
-        this.height = this.fixedDimensions ? this.fixedHeight : h;
+        this.width = w;
+        this.height = h;
 
         try ( MemoryStack stack = stackPush() ) {
             LongBuffer pImage = stack.longs(0);
@@ -95,9 +105,7 @@ public class FramebufferAttachment {
               }
               this.view = pView.get(0);
               currentLayout = this.initialLayout;
-            
         }
-    
     }
 
     public void destroy() {
@@ -131,10 +139,5 @@ public class FramebufferAttachment {
     }
     public long getView() {
         return this.view;
-    }
-    public void setFixedDimension(int w, int h) {
-        this.fixedDimensions = true;
-        this.fixedWidth = w;
-        this.fixedHeight = h;
     }
 }

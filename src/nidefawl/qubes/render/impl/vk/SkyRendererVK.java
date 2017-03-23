@@ -20,14 +20,17 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     private long image;
     private long view;
     private long sampler;
+    private FrameBuffer frameBufferCubemap;
     private FrameBuffer frameBufferSingle;
     public VkDescriptor descTextureSkyboxSingle;
+    private long[] viewsFrameBuffer;
 
     @Override
     public void init() {
         super.init();
         VKContext ctxt = Engine.vkContext;
         this.descTextureSkyboxSingle = ctxt.descLayouts.allocDescSetSampleSingle();
+        this.frameBufferCubemap = new FrameBuffer(ctxt).tag("sky_cubemap");
         this.frameBufferSingle = new FrameBuffer(ctxt).tag("sky_single");
         this.frameBufferSingle.fromRenderpass(VkRenderPasses.passSkyGenerate, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
 
@@ -54,6 +57,33 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
                 this.image = pImage.get(0);
                 ctxt.memoryManager.allocateImageMemory(pImage.get(0), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.TEXTURE_COLOR_MEMORY);
 
+                LongBuffer pView = stack.longs(0);
+
+                for (int i = 0; i < 6; i++) {
+
+                    VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
+                            .viewType(VK_IMAGE_VIEW_TYPE_2D)
+                            .format(VK_FORMAT_R16G16B16A16_SFLOAT)
+                            .components(VkComponentMapping.callocStack(stack));
+                    VkImageSubresourceRange viewSubResRange = view.subresourceRange();
+                    viewSubResRange.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                    viewSubResRange.baseMipLevel(0);
+                    viewSubResRange.levelCount(1);
+                    viewSubResRange.baseArrayLayer(i);
+                    viewSubResRange.layerCount(1);
+                    view.image(this.image);
+                    err = vkCreateImageView(ctxt.device, view, null, pView);
+                    if (err != VK_SUCCESS) {
+                        throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
+                    }
+                    this.viewsFrameBuffer[i] = pView.get(0);
+                    this.frameBufferCubemap.attachments[i] = new FramebufferAttachment(ctxt, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    this.frameBufferCubemap.attachments[i].setFromImage(this.image, this.viewsFrameBuffer[i], SKYBOX_RES, SKYBOX_RES);
+                    this.frameBufferCubemap.isReferencedAtt[i] = true;
+                }
+                this.frameBufferCubemap.build(VkRenderPasses.passSkyGenerateCubemap, SKYBOX_RES, SKYBOX_RES);
+                
+                
               VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                       .viewType(VK_IMAGE_VIEW_TYPE_CUBE)
                       .format(VK_FORMAT_R16G16B16A16_SFLOAT)
@@ -65,7 +95,6 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
               viewSubResRange.baseArrayLayer(0);
               viewSubResRange.layerCount(6);
               view.image(this.image);
-              LongBuffer pView = stack.longs(0);
               err = vkCreateImageView(ctxt.device, view, null, pView);
               if (err != VK_SUCCESS) {
                   throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
@@ -85,6 +114,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
                   throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
               }
               this.sampler = pSampler.get(0);
+              
         }
         ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0, 0, 1);
 
@@ -99,6 +129,9 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
             this.view = VK_NULL_HANDLE;
             this.image = VK_NULL_HANDLE;
             this.sampler = VK_NULL_HANDLE;
+            for (int i = 0; i < 6; i++) {
+                vkDestroyImageView(ctxt.device, this.viewsFrameBuffer[i], null);
+            }
         }
     }
     @Override
@@ -123,6 +156,21 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
             Engine.drawFSTri();
             Engine.endRenderPass();
             Engine.clearDescriptorSet(2);
+            
+            
+            
+            Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
+            Engine.clearDescriptorSet(3);
+            Engine.clearDescriptorSet(4);
+            for (int i = 0; i < 6; i++) {
+                if (i != 0)
+                    vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
+                Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap);
+                Engine.drawFSTri();
+            }
+            Engine.endRenderPass();
+            Engine.clearDescriptorSet(2);
         }
     }
 
@@ -130,6 +178,9 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     public void resize(int displayWidth, int displayHeight) {
         if (this.frameBufferSingle != null) {
             this.frameBufferSingle.destroy();
+        }
+        if (this.frameBufferCubemap != null) {
+            this.frameBufferCubemap.destroy();
         }
         this.frameBufferSingle.build(VkRenderPasses.passSkyGenerate, displayWidth, displayHeight);
 

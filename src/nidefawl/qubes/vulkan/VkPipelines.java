@@ -47,6 +47,7 @@ public class VkPipelines {
     public static VkPipeline deferred_pass1 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass1);
     public static VkPipeline tonemapDynamic = new VkPipeline(VkPipelines.pipelineLayoutTonemapDynamic);
     public static VkPipeline skybox_update_background = new VkPipeline(VkPipelines.pipelineLayoutSkyboxBackground);
+    public static VkPipeline skybox_update_background_cubemap = new VkPipeline(VkPipelines.pipelineLayoutSkyboxBackground);
     public static VkPipeline skybox_update_sprites = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSprites);
     public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSample);
     public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSample);
@@ -241,7 +242,6 @@ public class VkPipelines {
         {
             skybox_update_background.destroyPipeLine(ctxt);
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
-
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             skybox_update_background.depthStencilState.depthTestEnable(false);
             skybox_update_background.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
@@ -251,6 +251,20 @@ public class VkPipelines {
             skybox_update_background.setEmptyVertexInput();
             skybox_update_background.dynamicState=null;
             skybox_update_background.pipeline = buildPipeLine(ctxt, skybox_update_background);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            skybox_update_background_cubemap.destroyPipeLine(ctxt);
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_update_background_cubemap.depthStencilState.depthTestEnable(false);
+            skybox_update_background_cubemap.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            skybox_update_background_cubemap.setShaders(vert, frag);
+            skybox_update_background_cubemap.setBlend(false);
+            skybox_update_background_cubemap.setRenderPass(VkRenderPasses.passSkyGenerateCubemap, 0);
+            skybox_update_background_cubemap.setEmptyVertexInput();
+            skybox_update_background_cubemap.dynamicState=null;
+            skybox_update_background_cubemap.pipeline = buildPipeLine(ctxt, skybox_update_background_cubemap);
         }
         try ( MemoryStack stack = stackPush() ) 
         {

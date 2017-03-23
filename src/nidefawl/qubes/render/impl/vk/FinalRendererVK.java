@@ -1,13 +1,11 @@
 package nidefawl.qubes.render.impl.vk;
 
-import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkImageCopy;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
 import nidefawl.qubes.gl.Engine;
@@ -28,14 +26,14 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public long sampler;
     public FrameBuffer frameBufferTonemapped;
     public VkDescriptor descTextureTonemap;
-    public FrameBuffer frameBufferSceneColorOnly;
+//    public FrameBuffer frameBufferSceneColorOnly;
     @Override
     public void init() {
         VKContext ctxt = Engine.vkContext;
         this.frameBufferScene = new FrameBuffer(ctxt).tag("scene_pass0");
         this.frameBufferScene.fromRenderpass(VkRenderPasses.passTerrain_Pass0, VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
-        this.frameBufferSceneColorOnly = new FrameBuffer(ctxt).tag("scene_pass0_att0");
-        this.frameBufferSceneColorOnly.copyAtt(frameBufferScene, 0);
+//        this.frameBufferSceneColorOnly = new FrameBuffer(ctxt).tag("scene_pass0_att0");
+//        this.frameBufferSceneColorOnly.copyAtt(frameBufferScene, 0);
 
         this.frameBufferSceneWater = new FrameBuffer(ctxt).tag("scene_pass1");
         this.frameBufferSceneWater.fromRenderpass(VkRenderPasses.passTerrain_Pass1, VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -83,9 +81,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (this.frameBufferScene != null) {
             this.frameBufferScene.destroy();
         }
-        if (this.frameBufferSceneColorOnly != null) {
-            this.frameBufferSceneColorOnly.destroy();
-        }
+//        if (this.frameBufferSceneColorOnly != null) {
+//            this.frameBufferSceneColorOnly.destroy();
+//        }
         if (this.frameBufferSceneWater != null) {
             this.frameBufferSceneWater.destroy();
         }
@@ -96,7 +94,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             this.frameBufferTonemapped.destroy();
         }
         this.frameBufferScene.build(VkRenderPasses.passTerrain_Pass0, displayWidth, displayHeight);
-        this.frameBufferSceneColorOnly.build(VkRenderPasses.passSkySample, displayWidth, displayHeight);
+//        this.frameBufferSceneColorOnly.build(VkRenderPasses.passSkySample, displayWidth, displayHeight);
         this.frameBufferSceneWater.build(VkRenderPasses.passTerrain_Pass1, displayWidth, displayHeight);
         this.frameBufferDeferred.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
         this.frameBufferTonemapped.build(VkRenderPasses.passFramebufferNoDepth, displayWidth, displayHeight);

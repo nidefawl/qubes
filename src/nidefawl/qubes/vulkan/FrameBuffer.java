@@ -13,7 +13,7 @@ public class FrameBuffer implements RefTrackedResource {
     private final VKContext ctxt;
     private String          tag;
     public long framebuffer;
-    private FramebufferAttachment[] attachments = new FramebufferAttachment[8];
+    public FramebufferAttachment[] attachments = new FramebufferAttachment[8];
     public boolean[] isReferencedAtt = new boolean[8];
     int height;
     int width;

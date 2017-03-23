@@ -106,7 +106,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
     public void renderWorld(WorldClient world, float fTime) {
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferScene;
-        FrameBuffer fbSceneColor = RenderersVulkan.outRenderer.frameBufferSceneColorOnly;
         FrameBuffer fbSceneWater = RenderersVulkan.outRenderer.frameBufferSceneWater;
 
         
