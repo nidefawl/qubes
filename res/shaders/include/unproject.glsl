@@ -2,7 +2,7 @@
 
 
 #if Z_INVERSE
-#define DEPTH_FAR 0.00000001
+#define DEPTH_FAR (Z_NEAR/12000.0)
 #define DEPTH_NEAR 1.0
 #else
 #define DEPTH_FAR 1.0

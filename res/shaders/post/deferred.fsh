@@ -719,7 +719,7 @@ void main() {
         prop.albedo = mix (terr, spec*vec3(0.02), isWater*theta);
         prop.albedo=terr;
     } else {
-
+        // prop.albedo.rgb = vec3(1,0,1);
     }
 
 #if RENDER_PASS < 2
@@ -775,5 +775,5 @@ void main() {
     // #if RENDER_PASS == 1
     // out_Color = vec4(vec3(texture(texDepthPreWater, pass_texcoord).r), alpha);
     // #endif
-    // out_Color = vec4(sceneColor.rgb, alpha);
+    // out_Color = vec4(sceneColor.rgb*0.02, alpha);
 }
