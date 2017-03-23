@@ -282,10 +282,10 @@ public class VkPipelines {
                 
             };
 
-            VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(2);
+            VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(3);
             attributeDescriptions.get(0).binding(0).location(0).format(VK_FORMAT_R16G16_SFLOAT).offset(0);
             attributeDescriptions.get(1).binding(1).location(1).format(VK_FORMAT_R32G32B32A32_SFLOAT).offset(0);
-            attributeDescriptions.get(1).binding(1).location(2).format(VK_FORMAT_R32G32B32A32_SFLOAT).offset(16);
+            attributeDescriptions.get(2).binding(1).location(2).format(VK_FORMAT_R32G32B32A32_SFLOAT).offset(16);
             skybox_update_sprites.bindingDescriptions = VkVertexInputBindingDescription.callocStack(2);
             skybox_update_sprites.bindingDescriptions.get(0)
                 .binding(0)

@@ -221,7 +221,8 @@ public class ShaderSource {
                             if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_VERTEX_BIT) {
                                 if (def != null) {
                                     String s = def.getDefinition("VK_VERTEX_ATTRIBUTES");
-                                    code += s + "\r\n";
+                                    if (s != null)
+                                        code += s + "\r\n";
                                 }
                             }
                             this.attrTypes = m.group(1);

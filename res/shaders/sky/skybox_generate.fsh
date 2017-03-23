@@ -11,7 +11,7 @@
 #define RENDER_TO_SCENE_FB 0
 #endif
 
-layout(set = 2, binding = 0, std140) uniform LightInfo
+layout(set = 3, binding = 0, std140) uniform LightInfo
 {
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
@@ -20,6 +20,8 @@ layout(set = 2, binding = 0, std140) uniform LightInfo
   vec4 Ld; // Diffuse light intensity
   vec4 Ls; // Specular light intensity
 } SkyLight;
+
+uniform sampler2D tex0;
 
 in vec2 pass_texcoord;
 in float dayNoon;
@@ -93,4 +95,5 @@ void main() {
 #else
     out_Color = vec4(cloudColor.rgb, 1.0);
 #endif
+    out_Color = vec4(1,1,0,1);
 }

@@ -14,13 +14,19 @@ layout(set = 3, binding = 0, std140) uniform LightInfo
   vec4 Ls; // Specular light intensity
 } SkyLight;
 
+#ifdef VULKAN_GLSL
+layout (location = 0) in vec2 in_texcoord; 
+layout (location = 1) in vec4 in_position; 
+layout (location = 2) in vec4 in_color; 
+#else
 in vec4 in_texcoord; 
 in vec4 in_position; 
 in vec4 in_color; 
+#endif
 
 
 out vec4 color;
-out vec4 texcoord;
+out vec2 texcoord;
 out vec4 position;
 out float dayNoon;
 out float nightNoon;
@@ -79,9 +85,9 @@ void main(void) {
   	vec3 oPos = vec3(d5 + d26, d6 + d27, d7 + d28);
 	vec4 pos = in_matrix_3D.view * vec4(oPos, 1.0);
 	position = vec4(oPos, 1.0);//&vec4(pos, 1.0);
-    gl_Position = in_matrix_3D.p * pos;
+	gl_Position = in_matrix_3D.p * pos;
 	// vec4 camNormal = in_matrix_3D.normal * vec4(0, 0, -1, 1);
 	// normal = normalize(camNormal.xyz);
-	texcoord = in_texcoord;
+	texcoord = in_texcoord.st;
 	color = vec4(in_color.rgb, 1.0*upness);
 }

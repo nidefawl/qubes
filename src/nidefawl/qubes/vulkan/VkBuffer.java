@@ -129,7 +129,7 @@ public class VkBuffer implements IVkResource {
             ctxt.memoryManager.releaseBufferMemory(pBuffer.get(0));
             vkDestroyBuffer(ctxt.device, pBuffer.get(0), null);
             memFree(pBuffer);
-            if (isDeviceLocal) {
+            if (isDeviceLocal && pStagingBuffer != null) {
                 ctxt.memoryManager.releaseBufferMemory(pStagingBuffer.get(0));
                 vkDestroyBuffer(ctxt.device, pStagingBuffer.get(0), null);
                 memFree(pStagingBuffer);

@@ -32,7 +32,7 @@ uniform float spritebrightness;
 
 
 in vec4 color;
-in vec4 texcoord;
+in vec2 texcoord;
 in vec4 position;
 in float dayNoon;
 in float nightNoon;
@@ -50,6 +50,6 @@ void main(void) {
   float sunLight = dayLightIntens *(0.008+0.67*(1.0-fNight)+0.3*sun);
 	vec4 tex = texture(tex0, texcoord.st);
   float dist = length(position);
-  vec3 rgb = tex.rgb*color.rgb*spritebrightness*sunLight;
-  out_Color = vec4(rgb, tex.a*transparency*color.a); //vec4(skycolor*0.41, clamp(tex.a*(1-fogAmount)*color.a*0.2, 0, 1));
+  vec3 rgb = tex.rgb*color.rgb*SPRITE_BRIGHTNESS*sunLight;
+  out_Color = vec4(rgb, tex.a*SPRITE_TRANSPARENCY*color.a); //vec4(skycolor*0.41, clamp(tex.a*(1-fogAmount)*color.a*0.2, 0, 1));
 }
