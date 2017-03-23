@@ -228,7 +228,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             skybox_sample_single.setShaders(vert, frag);
             skybox_sample_single.setBlend(false);
-            skybox_sample_single.setRenderPass(VkRenderPasses.passSky, 0);
+            skybox_sample_single.setRenderPass(VkRenderPasses.passSkySample, 0);
             skybox_sample_single.setVertexDesc(desc);
             skybox_sample_single.dynamicState=null;
             skybox_sample_single.pipeline = buildPipeLine(ctxt, skybox_sample_single);
@@ -244,7 +244,7 @@ public class VkPipelines {
             skybox_update_background.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
             skybox_update_background.setShaders(vert, frag);
             skybox_update_background.setBlend(false);
-            skybox_update_background.setRenderPass(VkRenderPasses.passFramebufferNoDepth, 0);
+            skybox_update_background.setRenderPass(VkRenderPasses.passSkyGenerate, 0);
             skybox_update_background.setEmptyVertexInput();
             skybox_update_background.dynamicState=null;
             skybox_update_background.pipeline = buildPipeLine(ctxt, skybox_update_background);

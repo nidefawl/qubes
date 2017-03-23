@@ -21,18 +21,22 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
     public FrameBuffer frameBufferScene;
     public FrameBuffer frameBufferSceneWater;
-    private FrameBuffer frameBufferDeferred;
+    public FrameBuffer frameBufferDeferred;
     public VkDescriptor descTextureFinalOut;
     public VkDescriptor descTextureDeferred0;
     public VkDescriptor descTextureDeferred1;
     public long sampler;
-    private FrameBuffer frameBufferTonemapped;
-    private VkDescriptor descTextureTonemap;
+    public FrameBuffer frameBufferTonemapped;
+    public VkDescriptor descTextureTonemap;
+    public FrameBuffer frameBufferSceneColorOnly;
     @Override
     public void init() {
         VKContext ctxt = Engine.vkContext;
         this.frameBufferScene = new FrameBuffer(ctxt).tag("scene_pass0");
         this.frameBufferScene.fromRenderpass(VkRenderPasses.passTerrain_Pass0, VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferSceneColorOnly = new FrameBuffer(ctxt).tag("scene_pass0_att0");
+        this.frameBufferSceneColorOnly.copyAtt(frameBufferScene, 0);
+
         this.frameBufferSceneWater = new FrameBuffer(ctxt).tag("scene_pass1");
         this.frameBufferSceneWater.fromRenderpass(VkRenderPasses.passTerrain_Pass1, VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.frameBufferDeferred = new FrameBuffer(ctxt).tag("deferred");
@@ -79,6 +83,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (this.frameBufferScene != null) {
             this.frameBufferScene.destroy();
         }
+        if (this.frameBufferSceneColorOnly != null) {
+            this.frameBufferSceneColorOnly.destroy();
+        }
         if (this.frameBufferSceneWater != null) {
             this.frameBufferSceneWater.destroy();
         }
@@ -89,6 +96,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             this.frameBufferTonemapped.destroy();
         }
         this.frameBufferScene.build(VkRenderPasses.passTerrain_Pass0, displayWidth, displayHeight);
+        this.frameBufferSceneColorOnly.build(VkRenderPasses.passSkySample, displayWidth, displayHeight);
         this.frameBufferSceneWater.build(VkRenderPasses.passTerrain_Pass1, displayWidth, displayHeight);
         this.frameBufferDeferred.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
         this.frameBufferTonemapped.build(VkRenderPasses.passFramebufferNoDepth, displayWidth, displayHeight);

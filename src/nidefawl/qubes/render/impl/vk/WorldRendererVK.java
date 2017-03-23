@@ -145,10 +145,11 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
     public void renderWorld(WorldClient world, float fTime) {
 
+        FrameBuffer fbSceneColor = RenderersVulkan.outRenderer.frameBufferSceneColorOnly;
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferScene;
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
-            Engine.beginRenderPass(VkRenderPasses.passSky, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passSkySample, fbSceneColor, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
             Engine.bindPipeline(VkPipelines.skybox_sample_single);
             Engine.drawFullscreenQuad();

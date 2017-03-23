@@ -1,7 +1,7 @@
 package nidefawl.qubes.vulkan;
 
 public class VkRenderPasses {
-    public static VkRenderPass[] passes = new VkRenderPass[8];
+    public static VkRenderPass[] passes = new VkRenderPass[16];
     static boolean isInit = false;
     
 
@@ -10,7 +10,8 @@ public class VkRenderPasses {
     public static VkRenderPass passShadow = new VkRenderPassShadow();
     public static VkRenderPass passTerrain_Pass0 = new VkRenderPassGBuffer(0);
     public static VkRenderPass passTerrain_Pass1 = new VkRenderPassGBuffer(1);
-    public static VkRenderPass passSky = new VkRenderPassGBufferColorOnly();
+    public static VkRenderPass passSkyGenerate = new VkRenderPassSkyUpdate();
+    public static VkRenderPass passSkySample = new VkRenderPassSkySample();
     public static VkRenderPass passDeferred = new VkRenderPassDeferred();
     public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true, true);
     public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false, true);

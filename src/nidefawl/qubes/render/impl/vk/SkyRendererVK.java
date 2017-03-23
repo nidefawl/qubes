@@ -29,7 +29,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         VKContext ctxt = Engine.vkContext;
         this.descTextureSkyboxSingle = ctxt.descLayouts.allocDescSetSampleSingle();
         this.frameBufferSingle = new FrameBuffer(ctxt).tag("sky_single");
-        this.frameBufferSingle.fromRenderpass(VkRenderPasses.passFramebufferNoDepth, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferSingle.fromRenderpass(VkRenderPasses.passSkyGenerate, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
 
         try ( MemoryStack stack = stackPush() ) {
             LongBuffer pImage = stack.longs(0);
@@ -115,12 +115,14 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
-            Engine.beginRenderPass(VkRenderPasses.passSky, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
-            Engine.bindPipeline(VkPipelines.skybox_update_background);
-            Engine.drawFSTri();
-            Engine.endRenderPass();
-            Engine.clearDescriptorSet(2);
+//            Engine.beginRenderPass(VkRenderPasses.passSkyGenerate, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+//            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
+//            Engine.clearDescriptorSet(3);
+//            Engine.clearDescriptorSet(4);
+//            Engine.bindPipeline(VkPipelines.skybox_update_background);
+//            Engine.drawFSTri();
+//            Engine.endRenderPass();
+//            Engine.clearDescriptorSet(2);
         }
     }
 
@@ -129,7 +131,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         if (this.frameBufferSingle != null) {
             this.frameBufferSingle.destroy();
         }
-        this.frameBufferSingle.build(VkRenderPasses.passTerrain_Pass0, displayWidth, displayHeight);
+        this.frameBufferSingle.build(VkRenderPasses.passSkyGenerate, displayWidth, displayHeight);
 
         FramebufferAttachment coloratt = this.frameBufferSingle.getAtt(0);
         this.descTextureSkyboxSingle.setBindingCombinedImageSampler(0, coloratt.getView(), sampler, coloratt.finalLayout);

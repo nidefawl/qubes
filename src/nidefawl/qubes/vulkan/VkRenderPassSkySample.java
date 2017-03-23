@@ -10,10 +10,10 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
-public class VkRenderPassGBufferColorOnly extends VkRenderPass {
+public class VkRenderPassSkySample extends VkRenderPass {
 
     private Buffer subpassDependencies;
-    public VkRenderPassGBufferColorOnly() {
+    public VkRenderPassSkySample() {
         addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
@@ -27,9 +27,7 @@ public class VkRenderPassGBufferColorOnly extends VkRenderPass {
                 colorReference.get(i).attachment(i)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
-            VkAttachmentReference depthReference = VkAttachmentReference.callocStack(stack)
-                    .attachment(4)
-                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            VkAttachmentReference depthReference = null;
             this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)

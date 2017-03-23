@@ -14,11 +14,16 @@ public class FrameBuffer implements RefTrackedResource {
     private String          tag;
     public long framebuffer;
     private FramebufferAttachment[] attachments = new FramebufferAttachment[8];
+    public boolean[] isReferencedAtt = new boolean[8];
     int height;
     int width;
     public boolean[] inUseBy = new boolean[VulkanInit.MAX_NUM_SWAPCHAIN];
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
+    }
+    public void copyAtt(FrameBuffer frameBufferScene, int i) {
+        this.attachments[i] = frameBufferScene.attachments[i];
+        this.isReferencedAtt[i] = true;
     }
     public void build(VkRenderPass passgbuffer, int width, int height) {
         this.ctxt.addResource(this);
@@ -28,7 +33,8 @@ public class FrameBuffer implements RefTrackedResource {
             LongBuffer pAttachments = stack.callocLong(attachments.length);
             for (int i = 0; i < this.attachments.length; i++) {
                 if (this.attachments[i] != null) {
-                    this.attachments[i].build(width, height);
+                    if (!this.isReferencedAtt[i])
+                        this.attachments[i].build(width, height);
                     pAttachments.put(this.attachments[i].getView());
                 }
             }
@@ -55,7 +61,7 @@ public class FrameBuffer implements RefTrackedResource {
     public void destroy() {
         this.ctxt.removeResource(this);
         for (int i = 0; i < this.attachments.length; i++) {
-            if (this.attachments[i] != null) {
+            if (this.attachments[i] != null && !this.isReferencedAtt[i]) {
                 this.attachments[i].destroy();
             }
         }
