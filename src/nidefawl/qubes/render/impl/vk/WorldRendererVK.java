@@ -71,45 +71,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         pRegions.extent().width(displayWidth).height(displayHeight).depth(1);
     }
 
-    boolean first = true;
-    public void renderTransparent(World world, float fTime) {        
-//        waterShader.enable();
-//        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
-//        RenderersGL.regionRenderer.renderRegions(world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-//        if (Game.GL_ERROR_CHECKS)
-//            Engine.checkGLError("renderSecondPass");
-//
-//        Shader.disable();
-
-        if (first) {
-            first = false;
-        } else {
-
-        }
-        FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
-        FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
-        
-
-        copyDepthBuffer(imageDepthSrc, imageDepthDst);
-        
-        
-        
-        FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferSceneWater;
-        if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
-        {
-            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainWater);
-            Engine.bindPipeline(VkPipelines.water);
-            RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
-            Engine.endRenderPass();
-        } else {
-            System.err.println("SKIPPED, framebuffer is not sized");
-            System.err.printf("%dx%d vs %dx%d vs %dx%d vs %dx%d\n", 
-                    fbScene.getWidth(), fbScene.getHeight(),
-                    Engine.displayWidth, Engine.displayHeight);
-        }
-    
-    }
     private void copyDepthBuffer(FramebufferAttachment imageDepthSrc, FramebufferAttachment imageDepthDst) {
         if (imageDepthSrc.currentLayout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
             System.err.println("Image src isn't in correct layout "+imageDepthSrc.currentLayout+", expected "+VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
@@ -144,32 +105,43 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
     }
 
     public void renderWorld(WorldClient world, float fTime) {
-
-        FrameBuffer fbSceneColor = RenderersVulkan.outRenderer.frameBufferSceneColorOnly;
         FrameBuffer fbScene = RenderersVulkan.outRenderer.frameBufferScene;
-        if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
-        {
-            Engine.beginRenderPass(VkRenderPasses.passSkySample, fbSceneColor, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
-            Engine.bindPipeline(VkPipelines.skybox_sample_single);
-            Engine.drawFullscreenQuad();
-            Engine.endRenderPass();
-            
-            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-            
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTerrainNormals);
-            Engine.bindPipeline(VkPipelines.terrain);
-            RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
-            rendered = Engine.regionRenderer.rendered;
-//            System.out.println("rendered " +rendered);
-            Engine.endRenderPass();
-        } else {
-            System.err.println("SKIPPED, framebuffer is not sized");
-            System.err.printf("%dx%d vs %dx%d vs %dx%d vs %dx%d\n", 
-                    fbScene.getWidth(), fbScene.getHeight(),
-                    Engine.displayWidth, Engine.displayHeight);
+        FrameBuffer fbSceneColor = RenderersVulkan.outRenderer.frameBufferSceneColorOnly;
+        FrameBuffer fbSceneWater = RenderersVulkan.outRenderer.frameBufferSceneWater;
 
-        }
+        
+
+        
+
+            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboLights);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
+                Engine.bindPipeline(VkPipelines.skybox_sample_single);
+                Engine.drawFSTri();
+
+                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureTerrainNormals);
+                Engine.bindPipeline(VkPipelines.terrain);
+                RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
+                rendered = Engine.regionRenderer.rendered;
+        //        System.out.println("rendered " +rendered);
+            Engine.endRenderPass();
+        
+            FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
+            FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
+            
+    
+            copyDepthBuffer(imageDepthSrc, imageDepthDst);
+    
+            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureTerrainWater);
+                Engine.bindPipeline(VkPipelines.water);
+                RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
+            Engine.endRenderPass();
+        
+        
+        
+        Engine.clearDescriptorSet(VkDescLayouts.DESC3);
     }
 
     @Override

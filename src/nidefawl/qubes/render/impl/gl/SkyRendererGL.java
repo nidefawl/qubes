@@ -196,16 +196,16 @@ public class SkyRendererGL extends SkyRenderer {
         Engine.drawFSTri();
         Engine.checkGLError("cloudsShader2");
 //        Engine.setBlend(true);
-        spriteShader.enable();
-        GL30.glBindVertexArray(vaoPos);
-        for (int i = 0; i < this.texClouds.length; i++) {
-            if (texClouds.length != 1) // uploaded outside
-                storeSprites(f, i);
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdx.getVboId());
-            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texClouds[i]);
-            GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, 6, GL11.GL_UNSIGNED_INT, 0, this.storedSprites);
-        }
-        GL30.glBindVertexArray(0);
+//        spriteShader.enable();
+//        GL30.glBindVertexArray(vaoPos);
+//        for (int i = 0; i < this.texClouds.length; i++) {
+//            if (texClouds.length != 1) // uploaded outside
+//                storeSprites(f, i);
+//            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdx.getVboId());
+//            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, this.texClouds[i]);
+//            GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, 6, GL11.GL_UNSIGNED_INT, 0, this.storedSprites);
+//        }
+//        GL30.glBindVertexArray(0);
         Engine.bindVAO(null);
     }
     public void tickUpdate() {

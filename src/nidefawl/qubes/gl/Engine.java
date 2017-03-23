@@ -1456,7 +1456,7 @@ public class Engine {
         }
     }
     public static void clearDescriptorSet(int idx) {
-        rebindDescSet = boundDescriptorSets[idx] != null;
+        rebindDescSet |= boundDescriptorSets[idx] != null;
         boundDescriptorSets[idx] = null;
     }
     private static void clearDescriptorSets() {

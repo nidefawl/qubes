@@ -29,6 +29,8 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutTonemapDynamic = new VkPipelineLayout("pipelineLayoutTonemapDynamic");
     public static VkPipelineLayout pipelineLayoutSkyboxBackground = new VkPipelineLayout("pipelineLayoutSkyboxBackground");
     public static VkPipelineLayout pipelineLayoutSkyboxSprites = new VkPipelineLayout("pipelineLayoutSkyboxSprites");
+    public static VkPipelineLayout pipelineLayoutSkyboxSample = new VkPipelineLayout("pipelineLayoutSkyboxSample");
+    
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
@@ -46,8 +48,8 @@ public class VkPipelines {
     public static VkPipeline tonemapDynamic = new VkPipeline(VkPipelines.pipelineLayoutTonemapDynamic);
     public static VkPipeline skybox_update_background = new VkPipeline(VkPipelines.pipelineLayoutSkyboxBackground);
     public static VkPipeline skybox_update_sprites = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSprites);
-    public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutTextured);
-    public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutTextured);
+    public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSample);
+    public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSample);
 
     
     static class VkShaderDef implements IShaderDef {
@@ -223,13 +225,14 @@ public class VkPipelines {
         try ( MemoryStack stack = stackPush() ) 
         {
             skybox_sample_single.destroyPipeLine(ctxt);
-            VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
-            VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "sky/skybox_sample_2d.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_sample_2d.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_sample_single.depthStencilState.depthTestEnable(false);
+            skybox_sample_single.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
             skybox_sample_single.setShaders(vert, frag);
             skybox_sample_single.setBlend(false);
-            skybox_sample_single.setRenderPass(VkRenderPasses.passSkySample, 0);
-            skybox_sample_single.setVertexDesc(desc);
+            skybox_sample_single.setRenderPass(VkRenderPasses.passTerrain_Pass0, 0);
+            skybox_sample_single.setEmptyVertexInput();
             skybox_sample_single.dynamicState=null;
             skybox_sample_single.pipeline = buildPipeLine(ctxt, skybox_sample_single);
         }
@@ -252,7 +255,7 @@ public class VkPipelines {
         try ( MemoryStack stack = stackPush() ) 
         {
             skybox_sample.destroyPipeLine(ctxt);
-            VkShader vert = ctxt.loadCompileGLSL(assetManager, "screen_triangle.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "sky/skybox_sample_cubemap.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
 
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_sample_cubemap.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             skybox_sample.depthStencilState.depthTestEnable(false);

@@ -542,7 +542,8 @@ public class Game extends GameBase {
             Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
             ITess tess = Engine.getTess();
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.outRenderer.descTextureFinalOut);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descTextureFinalOut);
+//            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
             Engine.bindPipeline(VkPipelines.textured2d);
             tess.setColor(-1, 255);
             tess.add(windowWidth, 0, 0, 1, 0);
@@ -584,14 +585,7 @@ public class Game extends GameBase {
     }
     private void renderWorldVK(float fTime, int eye) {
 
-        RenderersVulkan.skyRenderer.renderSkybox();
-//          Engine.getSceneFB().setDrawMask(1);
-        Engine.setDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX, Engine.descriptorSetUboConstants);
-        Engine.setDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX, Engine.descriptorSetUboConstants);
         RenderersVulkan.worldRenderer.renderWorld(this.world, fTime);
-        RenderersVulkan.worldRenderer.renderTransparent(this.world, fTime);
-        Engine.clearDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX);
-//        Engine.getSceneFB().setDrawAll();
         RenderersVulkan.outRenderer.render(this.world, fTime);
     }
     public void renderGL(float fTime) {

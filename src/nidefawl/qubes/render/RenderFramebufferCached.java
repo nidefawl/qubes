@@ -61,7 +61,7 @@ public class RenderFramebufferCached {
     }
     public void bindTextureDescriptor() {
         if (Engine.isVulkan) {
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureGbufferColor);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureGbufferColor);
         } else {
             GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));
         }
@@ -69,7 +69,7 @@ public class RenderFramebufferCached {
     public void render() {
         Engine.pxStack.push(0, 0, -20);
         if (Engine.isVulkan) {
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureGbufferColor);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureGbufferColor);
         } else {
             GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, fbDbg.getTexture(0));
         }

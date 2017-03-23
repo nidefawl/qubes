@@ -56,8 +56,8 @@ public class ShadowRendererVK extends ShadowRenderer {
         Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
 //        Engine.clearDescriptorSet(VkDescLayouts.TEX_DESC_IDX);
-        Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-        Engine.setDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX, Engine.descriptorSetUboShadow);
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         float f = -1.0f;
         vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*0.15f);
@@ -84,7 +84,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING
         Engine.endRenderPass();
-        Engine.clearDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX);
+        Engine.clearDescriptorSet(VkDescLayouts.DESC3);
     }
 
     @Override

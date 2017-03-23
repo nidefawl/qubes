@@ -10,9 +10,9 @@ import org.lwjgl.vulkan.*;
 
 public class VkDescLayouts {
 
-    public static final int TEX_DESC_IDX = 2;
-    public static final int UBO_CONSTANTS_DESC_IDX = 3;
-    public static final int UBO_LIGHTS_DESC_IDX = 4;
+    public static final int DESC2 = 2;
+    public static final int DESC3 = 3;
+    public static final int DESC4 = 4;
 
     public static void allocStatic() {
     }
@@ -156,6 +156,8 @@ public class VkDescLayouts {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble});
         VkPipelines.pipelineLayoutSkyboxBackground.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutUBOLightInfo});
+        VkPipelines.pipelineLayoutSkyboxSample.build(ctxt, new long[] {
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo});
         VkPipelines.pipelineLayoutSkyboxSprites.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo}, push_constant_ranges_sprites);
         

@@ -115,14 +115,14 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
-//            Engine.beginRenderPass(VkRenderPasses.passSkyGenerate, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-//            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
-//            Engine.clearDescriptorSet(3);
-//            Engine.clearDescriptorSet(4);
-//            Engine.bindPipeline(VkPipelines.skybox_update_background);
-//            Engine.drawFSTri();
-//            Engine.endRenderPass();
-//            Engine.clearDescriptorSet(2);
+            Engine.beginRenderPass(VkRenderPasses.passSkyGenerate, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
+            Engine.clearDescriptorSet(3);
+            Engine.clearDescriptorSet(4);
+            Engine.bindPipeline(VkPipelines.skybox_update_background);
+            Engine.drawFSTri();
+            Engine.endRenderPass();
+            Engine.clearDescriptorSet(2);
         }
     }
 

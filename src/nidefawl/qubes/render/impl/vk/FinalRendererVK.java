@@ -163,19 +163,19 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             
             Engine.beginRenderPass(VkRenderPasses.passDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
 //            
-            Engine.setDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX, Engine.descriptorSetUboShadow);
-            Engine.setDescriptorSet(VkDescLayouts.UBO_LIGHTS_DESC_IDX, Engine.descriptorSetUboLights);
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureDeferred0);
+            Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+            Engine.setDescriptorSet(VkDescLayouts.DESC4, Engine.descriptorSetUboLights);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureDeferred0);
             Engine.bindPipeline(VkPipelines.deferred_pass0);
             Engine.drawFSTri();            
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureDeferred1);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureDeferred1);
             Engine.bindPipeline(VkPipelines.deferred_pass1);
             Engine.drawFSTri();
             Engine.endRenderPass();
-            Engine.clearDescriptorSet(VkDescLayouts.UBO_CONSTANTS_DESC_IDX);
-            Engine.clearDescriptorSet(VkDescLayouts.UBO_LIGHTS_DESC_IDX);
+            Engine.clearDescriptorSet(VkDescLayouts.DESC3);
+            Engine.clearDescriptorSet(VkDescLayouts.DESC4);
             Engine.beginRenderPass(VkRenderPasses.passFramebufferNoDepth, this.frameBufferTonemapped, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureTonemap);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureTonemap);
             Engine.bindPipeline(VkPipelines.tonemapDynamic);
             Engine.drawFSTri();
             Engine.endRenderPass();

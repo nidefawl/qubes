@@ -46,7 +46,7 @@ public class ItemRenderer {
             ItemStack itemStack = (ItemStack) stack;
             int tex = itemStack.getItemTexture();
             if (Engine.isVulkan) {
-                Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, this.descTextureItem);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureItem);
             } else {
                 GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getItems());
             }
