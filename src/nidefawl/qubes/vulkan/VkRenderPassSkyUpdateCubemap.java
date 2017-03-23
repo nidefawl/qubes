@@ -4,6 +4,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.VK10.*;
 
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
@@ -17,6 +18,8 @@ public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
         for (int i = 0; i < 6; i++)
             addColorAttachment(i, VK_FORMAT_R16G16B16A16_SFLOAT)
                 .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        this.nAttachments = 6;
+        this.nColorAttachments = 1;
         attachments.limit(nAttachments);
         clearValues.limit(nAttachments);
     }
@@ -26,6 +29,7 @@ public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
         {
             VkAttachmentReference.Buffer[] colorReferences = new VkAttachmentReference.Buffer[6];
 
+            IntBuffer[] preserve = new IntBuffer[6];
             for (int i = 0; i < 6; i++)
             {
 
@@ -33,6 +37,13 @@ public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
                 colorReferences[i]
                     .attachment(i)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                if (i > 0) {
+                    preserve[i] = stack.callocInt(i);
+                    for (int j = 0; j < i; j++) {
+                        preserve[i].put(j, j);
+                    }
+                    preserve[i].flip();
+                }
             }
 
             this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
@@ -54,7 +65,7 @@ public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
                     .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
             VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(6, stack);
             for (int i = 0; i < 6; i++) {
-                subpasses
+                subpasses.get(i)
                     .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
                     .flags(0)
                     .pInputAttachments(null)
@@ -62,7 +73,7 @@ public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
                     .pColorAttachments(colorReferences[i])
                     .pDepthStencilAttachment(null)
                     .pResolveAttachments(null)
-                    .pPreserveAttachments(null);
+                    .pPreserveAttachments(preserve[i]);
             }
 
             VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)

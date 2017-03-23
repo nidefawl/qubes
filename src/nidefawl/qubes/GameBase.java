@@ -491,6 +491,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         FontRenderer.destroy();
         destroyContext();
     }
+    
+    /** 
+     * This method is horribly hacky!! 
+     */
     public void checkResize() {
         if (minimized && newWidth*newHeight>0) {
             minimized = false;
@@ -499,12 +503,22 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         }
         boolean resize = newWidth != windowWidth || newHeight != windowHeight;
         if (vkContext != null && (vkContext.reinitSwapchain || resize)) {
+            if (vkContext != null) {
+                if (vkContext.swapChain.isMinized()) {
+                    return;
+                }
+            }
             int[] size = vkContext.updateSwapchain(this, vsync);
             newWidth = size[0];
             newHeight = size[1];
             resize = newWidth != windowWidth || newHeight != windowHeight;
         }
         if (resize) {
+            if (vkContext != null) {
+                if (vkContext.swapChain.isMinized()) {
+                    return;
+                }
+            }
             if (newWidth*newHeight <= 0) {
                 minimized = true;
                 return;

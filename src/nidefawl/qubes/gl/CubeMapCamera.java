@@ -34,11 +34,33 @@ public class CubeMapCamera {
         final float aspectRatio = 1;
         final float znear = 0.1F;
         final float zfar = 1024F;
-        if (!Engine.INVERSE_Z_BUFFER) {
-            Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+
+        if (Engine.isVulkan) {
+            if (!Engine.INVERSE_Z_BUFFER) {
+                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, projection);
+            } else {
+                Project.fovProjMatInfInvZVk(fieldOfView, aspectRatio, znear, projection);
+//                _projection.scale(1, y, z)
+//                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
+//                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+//                System.out.println("proj");
+            }
         } else {
-            Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, projection);
+
+            if (!Engine.INVERSE_Z_BUFFER) {
+                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+            } else {
+                Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, projection);
+            }
+            if (Engine.OGL_INVERSE_Y) {
+                projection.m11 = -projection.m11;
+            }
         }
+//        if (!Engine.INVERSE_Z_BUFFER) {
+//            Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, projection);
+//        } else {
+//            Project.fovProjMatInfInvZ(fieldOfView, aspectRatio, znear, projection);
+//        }
         projection.update();
         projection.update();
 		view.setIdentity();

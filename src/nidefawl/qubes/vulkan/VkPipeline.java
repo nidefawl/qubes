@@ -11,7 +11,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
-import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.GameLogicError;
 
 public class VkPipeline {
@@ -63,6 +62,8 @@ public class VkPipeline {
     public long                                pipelineScissors     = VK_NULL_HANDLE;
     public boolean useSwapChainViewport = true;
     public boolean useDynViewport = false;
+    public IDerivedPipeDef derivedPipeDef;
+    private long[] allPipes;
 
     public void setPipelineLayout(VkPipelineLayout layout) {
         this.layout = layout;
@@ -82,8 +83,11 @@ public class VkPipeline {
             }
             this.shaders = null;
         }
-        if (pipeline != VK_NULL_HANDLE) {
-            vkDestroyPipeline(vkContext.device, pipeline, null);
+        if (this.allPipes != null) {
+            for (int i = 0; i < this.allPipes.length; i++) {
+                vkDestroyPipeline(vkContext.device, this.allPipes[i], null);
+            }
+            this.allPipes = null;
             pipeline = VK_NULL_HANDLE;
         }
         if (pipelineScissors != VK_NULL_HANDLE) {
@@ -140,6 +144,9 @@ public class VkPipeline {
                 shaderstagecreateinfo.pName(mainMethod);
             }
             int nPipelines = 1;
+            if (this.allPipes == null&&this.derivedPipeDef != null) {
+                nPipelines += this.derivedPipeDef.getNumDerived();
+            }
             VkGraphicsPipelineCreateInfo.Buffer pipelineCreateInfoBuffer = pipelineCreateInfo(nPipelines, layout.pipelineLayout, renderpass.renderPass, VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT);
             VkGraphicsPipelineCreateInfo mainPipe = pipelineCreateInfoBuffer.get(0);
 
@@ -167,18 +174,27 @@ public class VkPipeline {
                     }
                 }
             }
-//            for (int i = 1; i < nPipelines; i++) {
-//                pipelineCreateInfoBuffer.put(i, mainPipe);
-//                VkGraphicsPipelineCreateInfo subPipeline = pipelineCreateInfoBuffer.get(i);
-//                subPipeline.flags(VK_PIPELINE_CREATE_DERIVATIVE_BIT);
-//                subPipeline.basePipelineIndex(0);
-//            }
+            if (this.allPipes == null&&this.derivedPipeDef != null) {
+                for (int i = 1; i < nPipelines; i++) {
+                    System.out.println(pipelineCreateInfoBuffer+"/"+nPipelines+"/"+i);
+                    pipelineCreateInfoBuffer.put(i, mainPipe);
+                    VkGraphicsPipelineCreateInfo subPipeline = pipelineCreateInfoBuffer.get(i);
+                    subPipeline.flags(VK_PIPELINE_CREATE_DERIVATIVE_BIT);
+                    subPipeline.basePipelineIndex(0);
+                    this.derivedPipeDef.setPipeDef(i, subPipeline);
+                }
+            }
             LongBuffer pPipelines = stack.callocLong(nPipelines);
             int err = vkCreateGraphicsPipelines(vkContext.device, VK_NULL_HANDLE, pipelineCreateInfoBuffer, null, pPipelines);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkCreateGraphicsPipelines failed: " + VulkanErr.toString(err));
             }
             pipelineCreateInfoBuffer.free();
+            if (this.allPipes == null) {
+                this.allPipes = new long[pPipelines.remaining()];
+                pPipelines.get(this.allPipes);
+                return this.allPipes[0];
+            }
             return pPipelines.get(0);
         }
     }
@@ -365,5 +381,9 @@ public class VkPipeline {
         attState.srcAlphaBlendFactor(srcAlpha);
         attState.dstAlphaBlendFactor(dstAlpha);
         
+    }
+
+    public long getDerived(int subpipe) {
+        return this.allPipes[subpipe];
     }
 }

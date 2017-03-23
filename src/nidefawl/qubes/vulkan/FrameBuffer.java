@@ -50,7 +50,7 @@ public class FrameBuffer implements RefTrackedResource {
                     .pAttachments(pAttachments);
             int err = vkCreateFramebuffer(this.ctxt.device, frameBufferCreateInfo, null, pImage);
             if (err != VK_SUCCESS) {
-                throw new AssertionError("vkCreateImage failed: " + VulkanErr.toString(err));
+                throw new AssertionError("vkCreateFramebuffer failed: " + VulkanErr.toString(err));
             }
             this.framebuffer = pImage.get(0);
         }

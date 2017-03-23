@@ -400,8 +400,6 @@ public class Engine {
             descriptorSetUboScene.setBindingUniformBuffer(0, UniformBuffer.uboMatrix3D);
             descriptorSetUboScene.setBindingUniformBuffer(1, UniformBuffer.uboMatrix2D);
             descriptorSetUboScene.setBindingUniformBuffer(2, UniformBuffer.uboSceneData);
-//            descriptorSetUboScene.setBindingBuffer(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboTransformStack);
-//            descriptorSetUboScene.setBindingBuffer(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, UniformBuffer.uboMatrixShadow);
             descriptorSetUboScene.update(vkContext);
             descriptorSetUboConstants = vkContext.descLayouts.allocDescSetUBOConstants();
             descriptorSetUboConstants.setBindingUniformBuffer(0, UniformBuffer.VertexDirections);
@@ -1325,14 +1323,22 @@ public class Engine {
     private static nidefawl.qubes.vulkan.FrameBuffer curFB;
     public static boolean INVERSE_MAP = true;
     public static void bindPipeline(VkPipeline pipe) {
-        if (curPipeline != pipe) {
+        bindPipeline(pipe, 0);
+    }
+    public static void bindPipeline(VkPipeline pipe, int subpipe) {
+        if (curPipeline != pipe || subpipe > 0) {
             curPipeline = pipe;
             if (isScissors && pipe.pipelineScissors==VK_NULL_HANDLE) {
                 System.err.println("MISSING SCISSORS PIPE VERSION");
             }
             Stats.callsBindPipeline++;
-            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                    isScissors ? (pipe.pipelineScissors) : (pipe.pipeline));
+            if (subpipe > 0) {
+//                System.out.println("Bind derived "+subpipe+", "+pipe.getDerived(subpipe));
+                vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipe.getDerived(subpipe));
+            } else {
+                vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+                        isScissors ? (pipe.pipelineScissors) : (pipe.pipeline));
+            }
             if (isScissors)
                 pxStack.vkUpdateLastScissors();
 //            rebindDescSet = true;
@@ -1373,19 +1379,22 @@ public class Engine {
         }
         rebindDescSet0 = false;
         pDescriptorSets.clear();
-        pDescriptorSets.put(descriptorSetUboScene.get());
+        pDescriptorSets.put(boundDescriptorSets[0].get());
         pDescriptorSets.flip();
         pOffsets.clear();
-        descriptorSetUboScene.addDynamicOffsets(pOffsets);
+        boundDescriptorSets[0].addDynamicOffsets(pOffsets);
         pOffsets.flip();
-//        pOffsets.position(0).limit(3);
-//        pOffsets.put(0, UniformBuffer.uboMatrix3D.getDynamicOffset());
-//        pOffsets.put(1, UniformBuffer.uboMatrix2D.getDynamicOffset());
-//        pOffsets.put(2, UniformBuffer.uboSceneData.getDynamicOffset());
-//        pOffsets.position(0).limit(3);
         Stats.callsBindDescSets++;
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                 pDescriptorSets, pOffsets);
+    }
+    public static void bindOverrideSceneDescriptor(VkDescriptor override) {
+        rebindDescSet0 = true;
+        if (override == null) {
+            boundDescriptorSets[0] = descriptorSetUboScene;
+            return;
+        }
+        boundDescriptorSets[0] = override;
     }
     public static void rebindTransformDescriptorSet() {
         if (curPipeline == null) {

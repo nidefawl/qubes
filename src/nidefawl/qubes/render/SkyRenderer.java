@@ -21,7 +21,7 @@ import nidefawl.qubes.world.WorldClient;
 
 public abstract class SkyRenderer extends AbstractRenderer {
     protected final static int      MAX_SPRITES          = 1024 * 64;
-    protected final static int      SKYBOX_RES           = 256; //crappy, but works
+    public final static int      SKYBOX_RES           = 256; //crappy, but works
 
     List<Cloud>           clouds               = Lists.newArrayList();
     final protected CubeMapCamera   cubeMatrix           = new CubeMapCamera();

@@ -4,12 +4,14 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkPipelineDynamicStateCreateInfo;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLVAO;
+import nidefawl.qubes.render.SkyRenderer;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.shader.IShaderDef;
 
@@ -257,11 +259,30 @@ public class VkPipelines {
             skybox_update_background_cubemap.destroyPipeLine(ctxt);
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "sky/skybox_generate.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            skybox_update_background_cubemap.useSwapChainViewport = false;
+            skybox_update_background_cubemap.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+            skybox_update_background_cubemap.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
+            skybox_update_background_cubemap.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+            skybox_update_background_cubemap.scissors.extent().width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
+
             skybox_update_background_cubemap.depthStencilState.depthTestEnable(false);
             skybox_update_background_cubemap.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
             skybox_update_background_cubemap.setShaders(vert, frag);
             skybox_update_background_cubemap.setBlend(false);
             skybox_update_background_cubemap.setRenderPass(VkRenderPasses.passSkyGenerateCubemap, 0);
+            skybox_update_background_cubemap.derivedPipeDef = new IDerivedPipeDef() {
+
+                @Override
+                public int getNumDerived() {
+                    return 5;
+                }
+
+                @Override
+                public void setPipeDef(int i, VkGraphicsPipelineCreateInfo subPipeline) {
+                    subPipeline.subpass(i);
+                }
+                
+            };
             skybox_update_background_cubemap.setEmptyVertexInput();
             skybox_update_background_cubemap.dynamicState=null;
             skybox_update_background_cubemap.pipeline = buildPipeLine(ctxt, skybox_update_background_cubemap);
@@ -354,6 +375,10 @@ public class VkPipelines {
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "singleblock.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "singleblock.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             singleblock.useSwapChainViewport = false;
+            singleblock.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+            singleblock.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
+            singleblock.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+
             singleblock.scissors.extent().width(SingleBlockRenderAtlas.getTexSize()).height(SingleBlockRenderAtlas.getTexSize());
             singleblock.setShaders(vert, frag);
             singleblock.setBlend(false);

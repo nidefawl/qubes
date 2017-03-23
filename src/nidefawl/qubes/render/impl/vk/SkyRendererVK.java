@@ -11,6 +11,7 @@ import org.lwjgl.vulkan.*;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.SkyRenderer;
+import nidefawl.qubes.shader.UniformBuffer;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.World;
@@ -23,13 +24,22 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     private FrameBuffer frameBufferCubemap;
     private FrameBuffer frameBufferSingle;
     public VkDescriptor descTextureSkyboxSingle;
+    public VkDescriptor descTextureSkyboxCubemap;
     private long[] viewsFrameBuffer = new long[6];
 
+    public VkDescriptor descriptorSetUboScene;
     @Override
     public void init() {
         super.init();
         VKContext ctxt = Engine.vkContext;
+
+        descriptorSetUboScene = ctxt.descLayouts.allocDescSetUBOScene();
+        descriptorSetUboScene.setBindingUniformBuffer(0, UniformBuffer.uboMatrix3D_Temp);
+        descriptorSetUboScene.setBindingUniformBuffer(1, UniformBuffer.uboMatrix2D);
+        descriptorSetUboScene.setBindingUniformBuffer(2, UniformBuffer.uboSceneData);
+        descriptorSetUboScene.update(ctxt);
         this.descTextureSkyboxSingle = ctxt.descLayouts.allocDescSetSampleSingle();
+        this.descTextureSkyboxCubemap = ctxt.descLayouts.allocDescSetSampleSingle();
         this.frameBufferCubemap = new FrameBuffer(ctxt).tag("sky_cubemap");
         this.frameBufferSingle = new FrameBuffer(ctxt).tag("sky_single");
         this.frameBufferSingle.fromRenderpass(VkRenderPasses.passSkyGenerate, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -114,6 +124,8 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
                   throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
               }
               this.sampler = pSampler.get(0);
+              this.descTextureSkyboxCubemap.setBindingCombinedImageSampler(0, this.view, this.sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+              this.descTextureSkyboxCubemap.update(Engine.vkContext);
               
         }
         ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, 6, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0, 0, 1);
@@ -148,29 +160,32 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
-            Engine.beginRenderPass(VkRenderPasses.passSkyGenerate, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
-            Engine.clearDescriptorSet(3);
-            Engine.clearDescriptorSet(4);
-            Engine.bindPipeline(VkPipelines.skybox_update_background);
-            Engine.drawFSTri();
-            Engine.endRenderPass();
-            Engine.clearDescriptorSet(2);
-            
-            
-            
-//            Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
+//            Engine.beginRenderPass(VkRenderPasses.passSkyGenerate, fbScene, VK_SUBPASS_CONTENTS_INLINE);
 //            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
 //            Engine.clearDescriptorSet(3);
 //            Engine.clearDescriptorSet(4);
-//            for (int i = 0; i < 6; i++) {
-//                if (i != 0)
-//                    vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
-//                Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap);
-//                Engine.drawFSTri();
-//            }
+//            Engine.bindPipeline(VkPipelines.skybox_update_background);
+//            Engine.drawFSTri();
 //            Engine.endRenderPass();
 //            Engine.clearDescriptorSet(2);
+            
+            
+
+            Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
+            Engine.clearDescriptorSet(3);
+            Engine.clearDescriptorSet(4);
+            for (int i = 0; i < 6; i++) {
+                cubeMatrix.setupScene(i, Engine.camera.getPosition());
+                Engine.bindOverrideSceneDescriptor(descriptorSetUboScene);
+                if (i != 0)
+                    vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
+                Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap, i);
+                Engine.drawFSTri();
+            }
+            Engine.endRenderPass();
+            Engine.clearDescriptorSet(2);
+            Engine.bindOverrideSceneDescriptor(null);
         }
     }
 
@@ -178,9 +193,6 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     public void resize(int displayWidth, int displayHeight) {
         if (this.frameBufferSingle != null) {
             this.frameBufferSingle.destroy();
-        }
-        if (this.frameBufferCubemap != null) {
-            this.frameBufferCubemap.destroy();
         }
         this.frameBufferSingle.build(VkRenderPasses.passSkyGenerate, displayWidth, displayHeight);
 

@@ -1,6 +1,7 @@
 package nidefawl.qubes.vulkan;
 
 import static nidefawl.qubes.gl.Engine.vkContext;
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -9,6 +10,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.VkImageBlit.Buffer;
 
@@ -19,6 +21,8 @@ public final class SwapChain {
     public int                      width           = 0;
     public int                      height          = 0;
     public VkSwapchainCreateInfoKHR swapchainCI;
+    VkSurfaceCapabilitiesKHR surfCaps;
+    VkExtent2D surfCapsCurrentExtent;
     VkImageSubresourceRange range;
     VkClearColorValue clearColor;
     private final VKContext         ctxt;
@@ -37,6 +41,8 @@ public final class SwapChain {
         this.ctxt = ctxt;
         clearColor = VkClearColorValue.calloc();
         range = VkImageSubresourceRange.calloc();
+        surfCaps = VkSurfaceCapabilitiesKHR.calloc();
+        surfCapsCurrentExtent = this.surfCaps.currentExtent();
         range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
             .baseArrayLayer(0)
             .baseMipLevel(0)
@@ -56,146 +62,162 @@ public final class SwapChain {
         }
         return false;
     }
-    public void setup(int newWidth, int newHeight, boolean vsync) {
+    public boolean isMinized() {
         int err;
         // Get physical device surface properties and formats
-        VkSurfaceCapabilitiesKHR surfCaps = VkSurfaceCapabilitiesKHR.calloc();
         err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctxt.getPhysicalDevice(), ctxt.surface, surfCaps);
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to get physical device surface capabilities: " + VulkanErr.toString(err));
         }
+        int currentWidth = surfCapsCurrentExtent.width();
+        int currentHeight = surfCapsCurrentExtent.height();
+        return currentWidth*currentHeight<=0;
+    }
+    public void setup(int newWidth, int newHeight, boolean vsync) {
+        try ( MemoryStack stack = stackPush() ) {
 
-        IntBuffer pPresentModeCount = memAllocInt(1);
-        err = vkGetPhysicalDeviceSurfacePresentModesKHR(ctxt.getPhysicalDevice(), ctxt.surface, pPresentModeCount, null);
-        int presentModeCount = pPresentModeCount.get(0);
-        if (err != VK_SUCCESS) {
-            throw new AssertionError("Failed to get number of physical device surface presentation modes: " + VulkanErr.toString(err));
-        }
-
-        IntBuffer pPresentModes = memAllocInt(presentModeCount);
-        err = vkGetPhysicalDeviceSurfacePresentModesKHR(ctxt.getPhysicalDevice(), ctxt.surface, pPresentModeCount, pPresentModes);
-        memFree(pPresentModeCount);
-        if (err != VK_SUCCESS) {
-            throw new AssertionError("Failed to get physical device surface presentation modes: " + VulkanErr.toString(err));
-        }
-
-        // Try to use mailbox mode. Low latency and non-tearing
-        int swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-        boolean hasFIFO = false;
-        for (int i = 0; i < presentModeCount; i++) {
-            if (pPresentModes.get(i) == VK_PRESENT_MODE_FIFO_KHR) {
-                hasFIFO = true;
-                break;
+            int err;
+            // Get physical device surface properties and formats
+            err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctxt.getPhysicalDevice(), ctxt.surface, surfCaps);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to get physical device surface capabilities: " + VulkanErr.toString(err));
             }
-        }
-        if (!hasFIFO||!vsync)
-        for (int i = 0; i < presentModeCount; i++) {
-            if (pPresentModes.get(i) == VK_PRESENT_MODE_MAILBOX_KHR) {
-                swapchainPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-                break;
+            int currentWidth = surfCapsCurrentExtent.width();
+            int currentHeight = surfCapsCurrentExtent.height();
+            int newSwapChainW = 0;
+            int newSwapChainH = 0;
+            if (currentWidth != -1 && currentHeight != -1) {
+                newSwapChainW = currentWidth;
+                newSwapChainH = currentHeight;
+            } else {
+                newSwapChainW = newWidth;
+                newSwapChainH = newHeight;
             }
-            if ((swapchainPresentMode != VK_PRESENT_MODE_MAILBOX_KHR) && (pPresentModes.get(i) == VK_PRESENT_MODE_IMMEDIATE_KHR)) {
-                swapchainPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            System.out.println("Actual dimensions "+newSwapChainW+","+newSwapChainH);
+
+            if (newSwapChainW * newSwapChainH <= 0) {
+                System.out.println("Keep old swapchain, not going < 0");
+                return;
             }
-        }
-        memFree(pPresentModes);
+            this.width = newSwapChainW;
+            this.height = newSwapChainH;
 
-        // Determine the number of images
-        int desiredNumberOfSwapchainImages = surfCaps.minImageCount() + 1;
-        if ((surfCaps.maxImageCount() > 0) && (desiredNumberOfSwapchainImages > surfCaps.maxImageCount())) {
-            desiredNumberOfSwapchainImages = surfCaps.maxImageCount();
-        }
-        if (desiredNumberOfSwapchainImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
-            desiredNumberOfSwapchainImages = VulkanInit.MAX_NUM_SWAPCHAIN;
-        }
+            IntBuffer pPresentModeCount = stack.callocInt(1);
+            err = vkGetPhysicalDeviceSurfacePresentModesKHR(ctxt.getPhysicalDevice(), ctxt.surface, pPresentModeCount, null);
+            int presentModeCount = pPresentModeCount.get(0);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to get number of physical device surface presentation modes: " + VulkanErr.toString(err));
+            }
 
-        VkExtent2D currentExtent = surfCaps.currentExtent();
-        int currentWidth = currentExtent.width();
-        int currentHeight = currentExtent.height();
-        if (currentWidth != -1 && currentHeight != -1) {
-            this.width = currentWidth;
-            this.height = currentHeight;
-        } else {
-            this.width = newWidth;
-            this.height = newHeight;
-        }
+            IntBuffer pPresentModes = stack.callocInt(presentModeCount);
+            err = vkGetPhysicalDeviceSurfacePresentModesKHR(ctxt.getPhysicalDevice(), ctxt.surface, pPresentModeCount, pPresentModes);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to get physical device surface presentation modes: " + VulkanErr.toString(err));
+            }
 
-        int preTransform;
-        if ((surfCaps.supportedTransforms() & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) != 0) {
-            preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-        } else {
-            preTransform = surfCaps.currentTransform();
-        }
-        surfCaps.free();
-        if (this.swapchainCI != null)
-            this.swapchainCI.free();
-        this.imageUseageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            // Try to use mailbox mode. Low latency and non-tearing
+            int swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+            boolean hasFIFO = false;
+            for (int i = 0; i < presentModeCount; i++) {
+                if (pPresentModes.get(i) == VK_PRESENT_MODE_FIFO_KHR) {
+                    hasFIFO = true;
+                    break;
+                }
+            }
+            if (!hasFIFO||!vsync)
+            for (int i = 0; i < presentModeCount; i++) {
+                if (pPresentModes.get(i) == VK_PRESENT_MODE_MAILBOX_KHR) {
+                    swapchainPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+                    break;
+                }
+                if ((swapchainPresentMode != VK_PRESENT_MODE_MAILBOX_KHR) && (pPresentModes.get(i) == VK_PRESENT_MODE_IMMEDIATE_KHR)) {
+                    swapchainPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+                }
+            }
 
-        // Set additional usage flag for blitting from the swapchain images if supported
-        VkFormatProperties formatProps = VkFormatProperties.calloc();
-        vkGetPhysicalDeviceFormatProperties(ctxt.getPhysicalDevice(), ctxt.colorFormat, formatProps);
-        if ((formatProps.optimalTilingFeatures() & VK_FORMAT_FEATURE_BLIT_DST_BIT) != 0) {
-            this.imageUseageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        }
-        formatProps.free();
-        this.swapchainCI = VkSwapchainCreateInfoKHR.calloc()
-                .sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
-                .pNext(NULL)
-                .surface(ctxt.surface)
-                .minImageCount(desiredNumberOfSwapchainImages)
-                .imageFormat(ctxt.colorFormat)
-                .imageColorSpace(ctxt.colorSpace)
-                .imageUsage(this.imageUseageFlags)
-                .preTransform(preTransform)
-                .imageArrayLayers(1)
-                .imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
-                .pQueueFamilyIndices(null)
-                .presentMode(swapchainPresentMode)
-                .oldSwapchain(this.swapchainHandle)
-                .clipped(true)
-                .compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-        this.swapchainCI.imageExtent()
-                .width(this.width)
-                .height(this.height);
-        LongBuffer pSwapChain = memAllocLong(1);
-        err = vkCreateSwapchainKHR(ctxt.device, this.swapchainCI, null, pSwapChain);
-        long swapChain = pSwapChain.get(0);
-        memFree(pSwapChain);
-        if (err != VK_SUCCESS) {
-            throw new AssertionError("Failed to create swap chain: " + VulkanErr.toString(err));
-        }
+            // Determine the number of images
+            int desiredNumberOfSwapchainImages = surfCaps.minImageCount() + 1;
+            if ((surfCaps.maxImageCount() > 0) && (desiredNumberOfSwapchainImages > surfCaps.maxImageCount())) {
+                desiredNumberOfSwapchainImages = surfCaps.maxImageCount();
+            }
+            if (desiredNumberOfSwapchainImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
+                desiredNumberOfSwapchainImages = VulkanInit.MAX_NUM_SWAPCHAIN;
+            }
 
-        // If we just re-created an existing swapchain, we should destroy the old swapchain at this point.
-        // Note: destroying the swapchain also cleans up all its associated presentable images once the platform is done with them.
-        if (this.swapchainHandle != VK_NULL_HANDLE) {
-            vkDestroySwapchainKHR(ctxt.device, this.swapchainHandle, null);
-            this.swapchainHandle = VK_NULL_HANDLE;
-        }
 
-        IntBuffer pImageCount = memAllocInt(1);
-        err = vkGetSwapchainImagesKHR(ctxt.device, swapChain, pImageCount, null);
-        this.numImages = pImageCount.get(0);
+            int preTransform;
+            if ((surfCaps.supportedTransforms() & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) != 0) {
+                preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+            } else {
+                preTransform = surfCaps.currentTransform();
+            }
+            if (this.swapchainCI != null)
+                this.swapchainCI.free();
+            this.imageUseageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+            // Set additional usage flag for blitting from the swapchain images if supported
+            VkFormatProperties formatProps = VkFormatProperties.callocStack(stack);
+            vkGetPhysicalDeviceFormatProperties(ctxt.getPhysicalDevice(), ctxt.colorFormat, formatProps);
+            if ((formatProps.optimalTilingFeatures() & VK_FORMAT_FEATURE_BLIT_DST_BIT) != 0) {
+                this.imageUseageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            }
+            this.swapchainCI = VkSwapchainCreateInfoKHR.calloc()
+                    .sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
+                    .pNext(NULL)
+                    .surface(ctxt.surface)
+                    .minImageCount(desiredNumberOfSwapchainImages)
+                    .imageFormat(ctxt.colorFormat)
+                    .imageColorSpace(ctxt.colorSpace)
+                    .imageUsage(this.imageUseageFlags)
+                    .preTransform(preTransform)
+                    .imageArrayLayers(1)
+                    .imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
+                    .pQueueFamilyIndices(null)
+                    .presentMode(swapchainPresentMode)
+                    .oldSwapchain(this.swapchainHandle)
+                    .clipped(true)
+                    .compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+            this.swapchainCI.imageExtent()
+                    .width(this.width)
+                    .height(this.height);
+            LongBuffer pSwapChain = stack.callocLong(1);
+            err = vkCreateSwapchainKHR(ctxt.device, this.swapchainCI, null, pSwapChain);
+            long swapChain = pSwapChain.get(0);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to create swap chain: " + VulkanErr.toString(err));
+            }
+
+            // If we just re-created an existing swapchain, we should destroy the old swapchain at this point.
+            // Note: destroying the swapchain also cleans up all its associated presentable images once the platform is done with them.
+            if (this.swapchainHandle != VK_NULL_HANDLE) {
+                vkDestroySwapchainKHR(ctxt.device, this.swapchainHandle, null);
+                this.swapchainHandle = VK_NULL_HANDLE;
+            }
+
+            IntBuffer pImageCount = stack.callocInt(1);
+            err = vkGetSwapchainImagesKHR(ctxt.device, swapChain, pImageCount, null);
+            this.numImages = pImageCount.get(0);
+            
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to get number of swapchain images: " + VulkanErr.toString(err));
+            }
+            System.out.println("Create swapchain with "+this.numImages+" images");
+            if (this.numImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
+                throw new AssertionError("Unsupported number of swapchain images");
+            }
+
+            LongBuffer pSwapchainImages = stack.callocLong(this.numImages);
+            err = vkGetSwapchainImagesKHR(ctxt.device, swapChain, pImageCount, pSwapchainImages);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to get swapchain images: " + VulkanErr.toString(err));
+            }
+            long[] images = new long[this.numImages];
+            pSwapchainImages.get(images, 0, this.numImages);
+
+            this.images = images;
+            this.swapchainHandle = swapChain;
         
-        if (err != VK_SUCCESS) {
-            throw new AssertionError("Failed to get number of swapchain images: " + VulkanErr.toString(err));
         }
-        System.out.println("Create swapchain with "+this.numImages+" images");
-        if (this.numImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
-            throw new AssertionError("Unsupported number of swapchain images");
-        }
-
-        LongBuffer pSwapchainImages = memAllocLong(this.numImages);
-        err = vkGetSwapchainImagesKHR(ctxt.device, swapChain, pImageCount, pSwapchainImages);
-        if (err != VK_SUCCESS) {
-            throw new AssertionError("Failed to get swapchain images: " + VulkanErr.toString(err));
-        }
-        memFree(pImageCount);
-        long[] images = new long[this.numImages];
-        pSwapchainImages.get(images, 0, this.numImages);
-        memFree(pSwapchainImages);
-
-        this.images = images;
-        this.swapchainHandle = swapChain;
     }
     public void destroy() {
         if (this.swapchainHandle != VK_NULL_HANDLE)

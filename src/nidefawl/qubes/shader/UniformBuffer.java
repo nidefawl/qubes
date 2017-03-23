@@ -175,7 +175,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
             .addMat4() //mv_inv
             .addMat4() //proj_inv
             .addMat4(); // mvp_inv
-    public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false).setMaxFrameUpdates(2);
+    public static UniformBuffer uboMatrix3D_Temp = new UniformBuffer("uboMatrix3D", uboMatrix3D.len, false).setMaxFrameUpdates(16);
     public static UniformBuffer uboMatrix2D = new UniformBuffer("uboMatrix2D").setMaxFrameUpdates(8)
             .addMat4() //mvp
             .addMat4() //3DOrthoP
