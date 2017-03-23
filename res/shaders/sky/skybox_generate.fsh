@@ -5,14 +5,14 @@
 #pragma include "unproject.glsl"
 
 #pragma include "blockinfo.glsl"
-#pragma include "atmosphere.glsl"
 #pragma include "sky_scatter.glsl"
 #pragma define "RENDER_TO_SCENE_FB"
 #ifndef RENDER_TO_SCENE_FB
 #define RENDER_TO_SCENE_FB 0
 #endif
 
-layout(std140) uniform LightInfo {
+layout(set = 2, binding = 0, std140) uniform LightInfo
+{
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
   vec4 lightDir; // Light dir in world space
@@ -21,14 +21,13 @@ layout(std140) uniform LightInfo {
   vec4 Ls; // Specular light intensity
 } SkyLight;
 
+in vec2 pass_texcoord;
 in float dayNoon;
 in float nightNoon;
 in float dayLightIntens;
 in float lightAngleUp;
 in float moonSunFlip;
 
-uniform sampler2D tex0;
-in vec4 pass_texcoord;
 
 out vec4 out_Color;
 #if RENDER_TO_SCENE_FB

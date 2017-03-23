@@ -3,7 +3,8 @@
 #pragma include "tonemap.glsl"
 #pragma include "blockinfo.glsl"
 
-layout(std140) uniform LightInfo {
+layout(set = 3, binding = 0, std140) uniform LightInfo
+{
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
   vec4 lightDir; // Light dir in world space
@@ -13,10 +14,23 @@ layout(std140) uniform LightInfo {
 } SkyLight;
 
 uniform sampler2D tex0;
+
+#ifdef VULKAN_GLSL
+layout(push_constant) uniform PushConstsClouds {
+  float transparency;
+  float spritebrightness;
+} pushConstsClouds;
+#define SPRITE_TRANSPARENCY pushConstsClouds.transparency
+#define SPRITE_BRIGHTNESS pushConstsClouds.spritebrightness
+#else
 uniform float transparency;
 uniform float spritebrightness;
+#define SPRITE_TRANSPARENCY transparency
+#define SPRITE_BRIGHTNESS spritebrightness
+#endif
 
-// in vec3 normal;
+
+
 in vec4 color;
 in vec4 texcoord;
 in vec4 position;
@@ -26,11 +40,7 @@ in float dayLightIntens;
 in float lightAngleUp;
 in float moonSunFlip;
 
-
 out vec4 out_Color;
-// out vec4 out_Normal;
-// out uvec4 out_Material;
-
 
 void main(void) {
 

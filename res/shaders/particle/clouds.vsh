@@ -4,7 +4,8 @@
 #pragma include "tonemap.glsl"
 #pragma attributes "particle"
 
-layout(std140) uniform LightInfo {
+layout(set = 3, binding = 0, std140) uniform LightInfo
+{
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
   vec4 lightDir; // Light dir in world space
@@ -19,10 +20,8 @@ in vec4 in_color;
 
 
 out vec4 color;
-// out vec3 normal;
 out vec4 texcoord;
 out vec4 position;
-
 out float dayNoon;
 out float nightNoon;
 out float dayLightIntens;

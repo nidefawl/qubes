@@ -7,7 +7,7 @@
 
 uniform samplerCube tex0;
 
-in vec4 pass_texcoord;
+in vec2 pass_texcoord;
 
 out vec4 out_Color;
 out vec4 out_Normal;
@@ -31,5 +31,7 @@ void main() {
     out_Normal = vec4(0.5);
     renderData = ENCODE_RENDERPASS(8);
     out_Material = uvec4(0u,0u+renderData,0u,0u);
+    out_Light = vec4(0);
+
     //whats with light?!
 }
