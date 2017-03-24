@@ -3,25 +3,25 @@
 #pragma include "tonemap.glsl"
 #pragma include "blockinfo.glsl"
 #pragma include "ubo_constants.glsl"
-#pragma define "PARTICLE_TYPE"
 
 uniform sampler2DArray blockTextures;
-uniform sampler2D noisetex;
 uniform sampler2DArray normalTextures; 
 
-in vec3 normal;
 in vec4 color;
-in vec4 texcoord;
+in vec3 normal;
+in vec2 texcoord;
 in vec4 position;
 flat in uint blockinfo32;
 in float lightLevelSky;
 in float lightLevelBlock;
-
+in float debgufloat1;
+in vec4 debug1;
 
 out vec4 out_Color;
 out vec4 out_Normal;
 out uvec4 out_Material;
 out vec4 out_Light;
+
 
 
 void main(void) {
@@ -49,6 +49,6 @@ void main(void) {
 	// }	
 
 	out_Material = uvec4(blockinfo32 & 0xFFFFu, ( blockinfo32 >> 16u) & 0xFFFFu,0u,0u);
-	out_Normal = vec4((outNormal) * 0.5f + 0.5f, 1f);
-	out_Light = vec4(lightLevelSky, lightLevelBlock, 0.8, 1);
+	out_Normal = vec4((outNormal) * 0.5f + 0.5f, debgufloat1*debug1.x*debug1.w);
+	out_Light = vec4(lightLevelSky, lightLevelBlock, 0.8f, 1.0f);
 }

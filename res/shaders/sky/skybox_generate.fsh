@@ -95,5 +95,4 @@ void main() {
 #else
     out_Color = vec4(cloudColor.rgb, 1.0);
 #endif
-    out_Color = vec4(1,1,0,1);
 }
