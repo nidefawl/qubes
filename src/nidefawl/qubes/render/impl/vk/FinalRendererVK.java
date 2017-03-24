@@ -8,6 +8,7 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.RenderersVulkan;
@@ -192,9 +193,12 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureDeferred1);
             Engine.bindPipeline(VkPipelines.deferred_pass1);
             Engine.drawFSTri();  
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureDeferred2);
-            Engine.bindPipeline(VkPipelines.deferred_pass2);
-            Engine.drawFSTri();
+            boolean firstPerson = !Game.instance.thirdPerson;
+            if (firstPerson) {
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureDeferred2);
+                Engine.bindPipeline(VkPipelines.deferred_pass2);
+                Engine.drawFSTri();
+            }
             Engine.endRenderPass();
             Engine.clearDescriptorSet(VkDescLayouts.DESC3);
             Engine.clearDescriptorSet(VkDescLayouts.DESC4);

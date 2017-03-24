@@ -181,11 +181,11 @@ public class QModelBatchedRenderGL extends QModelBatchedRender {
     public FloatBuffer getBufBoneMat() {
         return this.bufBoneMat;
     }
-
     
     public void init() {
         initShaders();
     }
+    
     public void setForwardRenderMVP(BufferedMatrix mvp) {
         this.mvp=mvp;
         shader[RENDERER_SCREEN_MODELVIEWER].enable();

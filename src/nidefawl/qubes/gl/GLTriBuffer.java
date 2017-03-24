@@ -8,6 +8,7 @@ import org.lwjgl.opengl.*;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.vulkan.BufferPair;
 
 /**
  * @author Michael Hept 2015
@@ -15,27 +16,36 @@ import nidefawl.qubes.util.Stats;
  */
 public class GLTriBuffer {
 
-    private final GLVBO vbo;
-    private final GLVBO vboIndices;
+    private GLVBO vbo;
+    private GLVBO vboIndices;
     private int      triCount;
     private int      vertexCount;
     private int idxCount;
+    private BufferPair bufferPair;
     public GLTriBuffer(int usage) {
-        this.vbo = new GLVBO(usage);
-        this.vboIndices = new GLVBO(usage);
+        if (Engine.isVulkan) {
+            this.bufferPair = Engine.vkContext.getFreeBuffer();
+        } else {
+            this.vbo = new GLVBO(usage);
+            this.vboIndices = new GLVBO(usage);
+        }
     }
 
 
     public int upload(VertexBuffer buf) {
-        Engine.checkGLError("upload");
         ReallocIntBuffer buffer1 = Engine.getIntBuffer();
         ReallocIntBuffer buffer2 = Engine.getIntBuffer();
         int numInts = buf.storeVertexData(buffer1);
         int numInts2 = buf.storeIndexData(buffer2);
-        this.vbo.upload(GL15.GL_ARRAY_BUFFER, buffer1.getByteBuf(), numInts * 4L);
-        this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer2.getByteBuf(), numInts2 * 4L);
-        if (Game.GL_ERROR_CHECKS)
-            Engine.checkGLError("glBufferData");
+        if (Engine.isVulkan) {
+            this.bufferPair.uploadDeviceLocal(buffer1.getByteBuf(), numInts, buffer2.getByteBuf(), numInts2);
+            this.bufferPair.setElementCount(numInts2);
+        } else {
+            this.vbo.upload(GL15.GL_ARRAY_BUFFER, buffer1.getByteBuf(), numInts * 4L);
+            this.vboIndices.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer2.getByteBuf(), numInts2 * 4L);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("upload");
+        }
         this.vertexCount = buf.vertexCount;
         this.idxCount = buf.getTriIdxPos();
         this.triCount = this.idxCount/3;
@@ -58,15 +68,25 @@ public class GLTriBuffer {
             throw new GameError("this.triCount <= 0");
         }
         Stats.modelDrawCalls++;
-        Engine.bindBuffer(this.vbo);
-        Engine.bindIndexBuffer(this.vboIndices);
-        GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount, GL11.GL_UNSIGNED_INT, 0);
+
+        if (Engine.isVulkan) {
+            this.bufferPair.draw(Engine.getDrawCmdBuffer());
+        } else {
+            Engine.bindBuffer(this.vbo);
+            Engine.bindIndexBuffer(this.vboIndices);
+            GL11.glDrawElements(GL11.GL_TRIANGLES, this.idxCount, GL11.GL_UNSIGNED_INT, 0);
+        }
     }
 
     /**
      * 
      */
     public void release() {
+        if (this.bufferPair != null) {
+            Engine.vkContext.orphanResource(this.bufferPair);
+            this.bufferPair = null;
+        }
+        
         if (this.vbo != null) {
             this.vbo.release();
         }
@@ -96,5 +116,10 @@ public class GLTriBuffer {
     }
     public int getIdxCount() {
         return this.idxCount;
+    }
+
+
+    public BufferPair getVkBuffer() {
+        return this.bufferPair;
     }
 }

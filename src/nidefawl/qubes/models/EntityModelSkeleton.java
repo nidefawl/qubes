@@ -86,7 +86,7 @@ public class EntityModelSkeleton extends EntityModel {
         }
     }
 
-    public void setPose(QModelRender rend, QModelProperties properties, float fabs, float fTime) {
+    public void setPoseAndSubmit(QModelRender rend, QModelProperties properties, float fabs, float fTime) {
 
         Vector3f rot = properties.rot;
         Vector3f pos = properties.pos;

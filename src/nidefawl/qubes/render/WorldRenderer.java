@@ -4,9 +4,19 @@ import java.util.HashMap;
 import java.util.List;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
+import nidefawl.qubes.entity.Entity;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.item.Item;
+import nidefawl.qubes.item.ItemStack;
+import nidefawl.qubes.models.EntityModel;
+import nidefawl.qubes.models.ItemModel;
+import nidefawl.qubes.models.qmodel.QModelProperties;
+import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.path.PathPoint;
 import nidefawl.qubes.render.impl.gl.WorldRendererGL;
+import nidefawl.qubes.shader.Shader;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vec.AABB;
 import nidefawl.qubes.vec.Vector3f;
@@ -60,5 +70,57 @@ public abstract class WorldRenderer extends AbstractRenderer {
 
 
     public abstract void onResourceReload();
+    QModelProperties modelProperties = new QModelProperties();
+    public void renderEntitiesBatched(World world, int pass, float fTime, int shadowVP) {
+        List<Entity> ents = world.getEntityList();
+        int size = ents.size();
+        if (size == 0) {
+            return;
+        }
+        QModelBatchedRender modelRender = Engine.renderBatched;
 
+        
+        modelRender.setPass(pass, shadowVP);
+        if (pass == PASS_SOLID) {
+            modelRender.reset();
+            for (int i = 0; i < size*EXTRA_RENDER; i++) {
+
+                Entity e = ents.get(i/EXTRA_RENDER);
+                if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
+                    continue;
+
+
+                BaseStack stack = e.getActiveItem(0);
+                ItemModel itemmodel = null;
+                if (stack != null && stack.isItem()) {
+                    ItemStack itemstack = (ItemStack) stack;
+                    Item item = itemstack.getItem();
+                    itemmodel = item.getItemModel();
+                }
+                QModelProperties renderProps = this.modelProperties;
+                this.modelProperties.clear();
+                if (itemmodel != null) {
+                    renderProps.setModelAtt(itemmodel.loadedModels[0]);
+                } else {
+
+                    renderProps.setModelAtt(null);
+                }
+                Vector3f pos = e.getRenderPos(fTime);
+                Vector3f rot = e.getRenderRot(fTime);
+                EntityModel model = e.getEntityModel();
+                renderProps.setPos(pos);
+                renderProps.setRot(rot);
+                renderProps.setEntity(e);
+                e.adjustRenderProps(renderProps, fTime);
+                
+                modelRender.setModel(model.model);
+                model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
+                model.setPoseAndSubmit(modelRender, renderProps, GameBase.absTime, fTime);
+                if (Game.GL_ERROR_CHECKS)
+                    Engine.checkGLError("setPose");
+            }
+        }
+
+        modelRender.render(fTime);
+    }
 }

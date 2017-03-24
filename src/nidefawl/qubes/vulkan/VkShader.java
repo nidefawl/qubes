@@ -71,6 +71,7 @@ public class VkShader implements IVkResource {
         ctxt.removeResource(this);
         if (shaderModule != VK_NULL_HANDLE) {
             vkDestroyShaderModule(ctxt.device, this.shaderModule, null);
+            this.shaderModule = VK_NULL_HANDLE;
         }
     }
     

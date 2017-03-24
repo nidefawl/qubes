@@ -10,13 +10,14 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLVAO;
+import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.render.SkyRenderer;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.shader.IShaderDef;
 
 public class VkPipelines {
-    public static VkPipeline[] arrPipe = new VkPipeline[24];
-    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[24];
+    public static VkPipeline[] arrPipe = new VkPipeline[32];
+    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[32];
     
     public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout("pipelineLayoutTextured");
     public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout("pipelineLayoutMain");
@@ -32,6 +33,10 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutSkybox = new VkPipelineLayout("pipelineLayoutSkyboxBackground");
     public static VkPipelineLayout pipelineLayoutSkyboxSprites = new VkPipelineLayout("pipelineLayoutSkyboxSprites");
     public static VkPipelineLayout pipelineLayoutParticleCube = new VkPipelineLayout("pipelineLayoutParticleCube");
+    public static VkPipelineLayout pipelineLayoutModelStaticShadow = new VkPipelineLayout("pipelineLayoutModelStaticShadow");
+    public static VkPipelineLayout pipelineLayoutModelStaticGbuffer = new VkPipelineLayout("pipelineLayoutModelStaticGbuffer");
+    public static VkPipelineLayout pipelineLayoutModelBatchedShadow = new VkPipelineLayout("pipelineLayoutModelBatchedShadow");
+    public static VkPipelineLayout pipelineLayoutModelBatchedGbuffer = new VkPipelineLayout("pipelineLayoutModelBatchedGbuffer");
     
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
@@ -46,6 +51,7 @@ public class VkPipelines {
     public static VkPipeline item = new VkPipeline(VkPipelines.pipelineLayoutTextured);
     public static VkPipeline singleblock = new VkPipeline(VkPipelines.pipelineLayoutSingleBlock);
     public static VkPipeline singleblock_3D = new VkPipeline(VkPipelines.pipelineLayoutSingleBlock3D);
+    public static VkPipeline model_firstperson = new VkPipeline(VkPipelines.pipelineLayoutSingleBlock3D);
     public static VkPipeline deferred_pass0 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
     public static VkPipeline deferred_pass1 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass1);
     public static VkPipeline deferred_pass2 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
@@ -56,6 +62,14 @@ public class VkPipelines {
     public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
     public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
     public static VkPipeline cube_particle = new VkPipeline(VkPipelines.pipelineLayoutParticleCube);
+    public static final VkPipeline model_static[] = new VkPipeline[] { 
+            new VkPipeline(VkPipelines.pipelineLayoutModelStaticGbuffer), 
+            new VkPipeline(VkPipelines.pipelineLayoutModelStaticShadow)
+    };
+    public static final VkPipeline model_skinned[] = new VkPipeline[] { 
+            new VkPipeline(VkPipelines.pipelineLayoutModelBatchedGbuffer), 
+            new VkPipeline(VkPipelines.pipelineLayoutModelBatchedShadow)
+    };
 
     
     static class VkShaderDef implements IShaderDef {
@@ -305,8 +319,9 @@ public class VkPipelines {
             skybox_update_sprites.vertexInputState.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                 .pVertexBindingDescriptions(skybox_update_sprites.bindingDescriptions)
                 .pVertexAttributeDescriptions(attributeDescriptions);
-            skybox_update_sprites.dynamicState=null;
+            skybox_update_sprites.dynamicState = null;
             skybox_update_sprites.pipeline = buildPipeLine(ctxt, skybox_update_sprites);
+            skybox_update_sprites.bindingDescriptions = null;
         }
         try ( MemoryStack stack = stackPush() ) 
         {
@@ -436,7 +451,49 @@ public class VkPipelines {
             item.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
             item.pipelineScissors = buildPipeLine(ctxt, item);
         }
-
+        for (int i = 0; i < model_static.length; i++) {
+            model_static[i].destroyPipeLine(ctxt);
+            model_skinned[i].destroyPipeLine(ctxt);
+            final int iRENDER = i;
+            IShaderDef modelDef = new IShaderDef() {
+                @Override
+                public String getDefinition(String define) {
+                    if ("RENDERER".equals(define))
+                        return "#define RENDERER "+iRENDER;
+                    if ("MAX_MODEL_MATS".equals(define))
+                        return "#define MAX_MODEL_MATS "+ModelConstants.MAX_INSTANCES;
+                    if ("MAX_NORMAL_MATS".equals(define))
+                        return "#define MAX_NORMAL_MATS "+ModelConstants.MAX_INSTANCES;
+                    if ("MAX_BONES".equals(define))
+                        return "#define MAX_BONES "+(ModelConstants.MAX_INSTANCES*ModelConstants.NUM_BONE_MATRICES);
+                    return null;
+                }
+            };
+            VkVertexDescriptors desc = GLVAO.vaoModelGPUSkinned.getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "model/model_batched.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc, modelDef));
+            VkShader vertSkinned = ctxt.loadCompileGLSL(assetManager, "model/model_batched_skinned.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc, modelDef));
+            VKContext.DUMP_SHADER_SRC=i==1;
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "model/model_fragment.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, modelDef);
+            VKContext.DUMP_SHADER_SRC=false;
+            VkRenderPass pass = i == 0 ? VkRenderPasses.passTerrain_Pass0 : VkRenderPasses.passShadow;
+            try ( MemoryStack stack = stackPush() ) 
+            {
+                model_static[i].setShaders(vert, frag);
+                model_static[i].setBlend(false);
+                model_static[i].setRenderPass(pass, 0);
+                model_static[i].setVertexDesc(desc);
+                model_static[i].pipeline = buildPipeLine(ctxt, model_static[i]);
+            }
+            try ( MemoryStack stack = stackPush() ) 
+            {
+                model_skinned[i].setShaders(vertSkinned, frag);
+                model_skinned[i].setBlend(false);
+                model_skinned[i].setRenderPass(pass, 0);
+                model_skinned[i].setVertexDesc(desc);
+                model_skinned[i].pipeline = buildPipeLine(ctxt, model_skinned[i]);
+            }
+        }
+        
         try ( MemoryStack stack = stackPush() ) 
         {
             cube_particle.destroyPipeLine(ctxt);
@@ -449,6 +506,18 @@ public class VkPipelines {
             cube_particle.setVertexDesc(desc);
             cube_particle.pipeline = buildPipeLine(ctxt, cube_particle);
 
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            model_firstperson.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoBlocks.getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "model/firstperson.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "model/firstperson.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            model_firstperson.setShaders(vert, frag);
+            model_firstperson.setBlend(false);
+            model_firstperson.setRenderPass(VkRenderPasses.passTerrain_Pass2, 0);
+            model_firstperson.setVertexDesc(desc);
+            model_firstperson.pipeline = buildPipeLine(ctxt, model_firstperson);
         }
         try ( MemoryStack stack = stackPush() ) 
         {

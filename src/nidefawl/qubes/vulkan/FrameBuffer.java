@@ -150,7 +150,10 @@ public class FrameBuffer implements RefTrackedResource {
     public void onBeginRenderPass() {
         for (int i = 0; i < this.attachments.length; i++) {
             if (this.attachments[i] != null) {
-                if (this.attachments[i].initialLayout != VK_IMAGE_LAYOUT_UNDEFINED && this.attachments[i].currentLayout != this.attachments[i].initialLayout) {
+                if (this.attachments[i].initialLayout != VK_IMAGE_LAYOUT_UNDEFINED 
+                        && this.attachments[i].currentLayout != VK_IMAGE_LAYOUT_PREINITIALIZED 
+                        && this.attachments[i].currentLayout != VK_IMAGE_LAYOUT_UNDEFINED 
+                        && this.attachments[i].currentLayout != this.attachments[i].initialLayout) {
                     System.err.println(this.tag+" att["+i+"] isn't in correct layout "+this.attachments[i].currentLayout+", expected "+this.attachments[i].initialLayout);
                     
                 }

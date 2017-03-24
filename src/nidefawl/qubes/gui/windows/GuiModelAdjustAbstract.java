@@ -381,7 +381,7 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
                 p.adjustRenderProps(properties, fTime);
             }
         }
-        this.entityModel.setPose(renderBatched, this.properties, absTimeInSeconds, fTime);
+        this.entityModel.setPoseAndSubmit(renderBatched, this.properties, absTimeInSeconds, fTime);
 
         renderBatched.render(fTime);
         renderBatched.reset();

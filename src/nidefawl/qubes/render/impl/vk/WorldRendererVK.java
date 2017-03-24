@@ -11,6 +11,7 @@ import nidefawl.qubes.gl.*;
 import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.models.ItemModel;
+import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.WorldRenderer;
@@ -139,6 +140,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 rendered = Engine.regionRenderer.rendered;
         //        System.out.println("rendered " +rendered);
                 RenderersVulkan.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
+                renderEntitiesBatched(world, PASS_SOLID, fTime, 0);
             Engine.endRenderPass();
         
             FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
@@ -152,10 +154,13 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 Engine.bindPipeline(VkPipelines.water);
                 RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
             Engine.endRenderPass();
-    
-            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass2, fbSceneFirstPerson, VK_SUBPASS_CONTENTS_INLINE);
-                renderFirstPerson(world, fTime);
-            Engine.endRenderPass();
+
+            boolean firstPerson = !Game.instance.thirdPerson;
+            if (firstPerson) {
+                Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass2, fbSceneFirstPerson, VK_SUBPASS_CONTENTS_INLINE);
+                    renderFirstPerson(world, fTime);
+                Engine.endRenderPass();
+            }
         
 
         } else {
@@ -169,7 +174,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         Engine.clearDescriptorSet(VkDescLayouts.DESC3);
     }
 
-    //MOve somewhere else?!
     public void renderFirstPerson(World world, float fTime) {
         Player p = Game.instance.getPlayer();
         if (p == null) {
@@ -243,12 +247,18 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                     mat2.update();
                     UniformBuffer.setNormalMat(mat2.get());
                 }
-                
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrainNormals());
+                Engine.clearDescriptorSet(VkDescLayouts.DESC3);
+                Engine.bindPipeline(VkPipelines.model_firstperson);
+                PushConstantBuffer buf = PushConstantBuffer.INST;
+                buf.setMat4(0, mat);//TODO: push normal mat
+                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.singleblock_3D.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64));
+
 //                shaderModelfirstPerson.enable();
 //                shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
 //                model.loadedModels[0].bindTextures(0);
 //                Engine.bindVAO(GLVAO.vaoModel);
-//                model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
+                model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
             }
             return;
         } else if (bstack!=null&&bstack.id>0) {

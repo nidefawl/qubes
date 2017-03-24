@@ -59,11 +59,7 @@ public abstract class QModelBatchedRender extends QModelRender {
 
     public abstract void render(float fTime);
 
-    public abstract void begin();
-    public abstract void end();
-    public abstract void sync();
-
-
+    public abstract void init();
     
     static class ReallocFloatBuf {
         public int pos;
@@ -216,8 +212,5 @@ public abstract class QModelBatchedRender extends QModelRender {
         return false;
     }
 
-    public void init() {
-        initShaders();
-    }
     public abstract void setForwardRenderMVP(BufferedMatrix temp);
 }

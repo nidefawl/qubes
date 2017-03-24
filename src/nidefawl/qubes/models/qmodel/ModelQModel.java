@@ -5,6 +5,7 @@ package nidefawl.qubes.models.qmodel;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.vulkan.VK10.*;
 
 import java.util.List;
 
@@ -21,6 +22,8 @@ import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vulkan.BufferPair;
+import nidefawl.qubes.vulkan.CommandBuffer;
 
 /**
  * @author Michael Hept 2015
@@ -169,23 +172,34 @@ public abstract class ModelQModel {
             rGroup.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
 
             int bytes = rGroup.gpuBufRest.upload(vbuf);
-//            System.out.println("byte size upload "+bytes+", "+rGroup.gpuBufRest.getVertexCount());
-//            System.out.println(""+rGroup.gpuBufRest.getVertexCount()+" vertices, "+rGroup.gpuBufRest.getTriCount()+" tris, "+rGroup.gpuBufRest.getIdxCount()+" indexes");
 
         }
-//        this.gpuBufRest.draw();
+        
         Stats.modelDrawCalls++;
 
-//        if (GPUProfiler.PROFILING_ENABLED)
-//            GPUProfiler.start("render_"+this.loader.getModelName()+"_"+obj.name+"_"+grp.name);
-        Engine.bindBuffer(rGroup.gpuBufRest.getVbo());
-        Engine.bindIndexBuffer(rGroup.gpuBufRest.getVboIndices());
-//        System.out.println(instances);
-        GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, rGroup.gpuBufRest.getTriCount()*3, GL11.GL_UNSIGNED_INT, 0, instances);
+        if (Engine.isVulkan) {
+            if (rGroup.gpuBufRest.getTriCount()*3 > 0) {
+                CommandBuffer commandBuffer = Engine.getDrawCmdBuffer();
+                BufferPair bufferPair = rGroup.gpuBufRest.getVkBuffer();
+                offset[0] = 0;
+                pointer[0] = bufferPair.vert.getBuffer();
+                vkCmdBindVertexBuffers(commandBuffer, 0, pointer, offset);
+                vkCmdBindIndexBuffer(commandBuffer, bufferPair.idx.getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                vkCmdDrawIndexed(commandBuffer, rGroup.gpuBufRest.getTriCount()*3, instances, 0, 0, 0);
+                bufferPair.flagUse(commandBuffer.frameIdx);
+            } else {
+//                System.err.println("attempt to draw empty buffer");
+            }
+        } else {
+            Engine.bindBuffer(rGroup.gpuBufRest.getVbo());
+            Engine.bindIndexBuffer(rGroup.gpuBufRest.getVboIndices());
+            GL31.glDrawElementsInstanced(GL11.GL_TRIANGLES, rGroup.gpuBufRest.getTriCount()*3, GL11.GL_UNSIGNED_INT, 0, instances);
 
-//        if (GPUProfiler.PROFILING_ENABLED)
-//            GPUProfiler.end();
+        }
     }
+
+    static long[] pointer = new long[1];
+    static long[] offset = new long[1];
 
     public void bindTextures(int texIdx) {
         if (this.loader.listTextures.isEmpty()) {

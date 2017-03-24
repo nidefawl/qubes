@@ -78,7 +78,7 @@ public class FramebufferAttachment {
                         .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
                         .tiling(VK_IMAGE_TILING_OPTIMAL)
                         .usage(this.usage)
-                        .initialLayout(this.initialLayout);
+                        .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
                 imageCreateInfo.extent().width(this.width).height(this.height).depth(1);
                 int err = vkCreateImage(this.ctxt.device, imageCreateInfo, null, pImage);
                 if (err != VK_SUCCESS) {
@@ -87,6 +87,7 @@ public class FramebufferAttachment {
                 this.image = pImage.get(0);
                 this.ctxt.memoryManager.allocateImageMemory(pImage.get(0), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.TEXTURE_COLOR_MEMORY);
 
+                
               VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                       .viewType(VK_IMAGE_VIEW_TYPE_2D)
                       .format(this.format)
@@ -104,7 +105,15 @@ public class FramebufferAttachment {
                   throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
               }
               this.view = pView.get(0);
+//              currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
               currentLayout = this.initialLayout;
+              if (this.initialLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+                  this.ctxt.setImageLayout(
+                          this.ctxt.getCopyCommandBuffer(),
+                          this.image,
+                          this.aspectMask,
+                          VK_IMAGE_LAYOUT_UNDEFINED,
+                          this.initialLayout, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
         }
     }
 

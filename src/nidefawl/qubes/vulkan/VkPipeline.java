@@ -339,7 +339,8 @@ public class VkPipeline {
     public void destroy(VKContext vkContext) {
         destroyPipeLine(vkContext);
         MemoryUtil.memFree(mainMethod);
-        bindingDescriptions.free();
+        if (bindingDescriptions != null)
+            bindingDescriptions.free();
         blendAttachmentState.free();
         colorBlendState.free();
         depthStencilState.free();
@@ -350,7 +351,6 @@ public class VkPipeline {
         vertexInputState.free();
         viewport.free();
         viewportState.free();
-        
     }
 
     public long getLayoutHandle() {

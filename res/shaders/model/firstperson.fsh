@@ -5,10 +5,9 @@
 
 uniform sampler2D tex0;
 
-in vec4 color;
 in vec3 normal;
-in vec4 texcoord;
-in vec4 position;
+in vec4 color;
+in vec2 texcoord;
 
 out vec4 out_Color;
 out vec4 out_Normal;
@@ -23,7 +22,7 @@ void main(void) {
 	vec3 color_adj = tex.rgb;
 	vec3 color_adj2 = color.rgb;
 	linearizeInput(color_adj.rgb);
-	linearizeInput(color_adj2.rgb);
+	linearizeInput2(color_adj2.rgb);
 	color_adj *= color_adj2.rgb;
 
 	float alpha = tex.a*1;

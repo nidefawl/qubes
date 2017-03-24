@@ -19,6 +19,7 @@ public class VkSSBO implements IBufferDynamicOffset {
     private int           bufferPos;
     private int           bufferSize;
     private int           bufferOffset = 0;
+    private String tag;
     
     public int getBufferPos() {
         return this.bufferPos;
@@ -45,6 +46,7 @@ public class VkSSBO implements IBufferDynamicOffset {
     }
     public VkSSBO tag(String tag) {
         this.buffer.tag(tag);
+        this.tag = tag;
         return this;
     }
 
@@ -58,7 +60,7 @@ public class VkSSBO implements IBufferDynamicOffset {
         this.bufferPos = this.bufferOffset;
         this.buffer.upload(buf, this.bufferPos);
         this.bufferOffset += alignedV;
-//        System.out.println("Uploaded " + this.bufferSize + " bytes at pos " + this.bufferPos + ", next " + this.bufferOffset);
+        System.out.println(this.tag+ " Uploaded " + this.bufferSize + " bytes at pos " + this.bufferPos + ", next " + this.bufferOffset);
     }
 
     public boolean isConstant() {

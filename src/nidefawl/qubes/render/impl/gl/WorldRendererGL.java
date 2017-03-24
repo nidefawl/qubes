@@ -229,7 +229,7 @@ public class WorldRendererGL extends WorldRenderer {
                     GPUProfiler.end();
                 return;
             }
-            renderEntitiesBatched(world, pass, fTime, shader, shadowVP);
+            renderEntitiesBatched(world, pass, fTime, shadowVP);
 //        } else {
 //            renderEntitiesSingle(world, pass, fTime, shader);    
 //        }
@@ -240,68 +240,7 @@ public class WorldRendererGL extends WorldRenderer {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
     }
-    QModelProperties modelProperties = new QModelProperties();
-    public void renderEntitiesBatched(World world, int pass, float fTime, Shader sg, int shadowVP) {
-        List<Entity> ents = world.getEntityList();
-        int size = ents.size();
-        if (size == 0) {
-            return;
-        }
-        QModelBatchedRender modelRender = Engine.renderBatched;
 
-        
-        modelRender.setPass(pass, shadowVP);
-        // Single Model render logic, move into BatchedRenderer class
-        boolean mappedBuffer = false;
-        if (pass == PASS_SOLID) {
-            modelRender.reset();
-            for (int i = 0; i < size*EXTRA_RENDER; i++) {
-
-                Entity e = ents.get(i/EXTRA_RENDER);
-                if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
-                    continue;
-
-
-                BaseStack stack = e.getActiveItem(0);
-                ItemModel itemmodel = null;
-                if (stack != null && stack.isItem()) {
-                    ItemStack itemstack = (ItemStack) stack;
-                    Item item = itemstack.getItem();
-                    itemmodel = item.getItemModel();
-                }
-                if (!mappedBuffer) {
-                    mappedBuffer = true;
-                    modelRender.begin();
-                }
-                QModelProperties renderProps = this.modelProperties;
-                this.modelProperties.clear();
-                if (itemmodel != null) {
-                    renderProps.setModelAtt(itemmodel.loadedModels[0]);
-                } else {
-
-                    renderProps.setModelAtt(null);
-                }
-                Vector3f pos = e.getRenderPos(fTime);
-                Vector3f rot = e.getRenderRot(fTime);
-                EntityModel model = e.getEntityModel();
-                renderProps.setPos(pos);
-                renderProps.setRot(rot);
-                renderProps.setEntity(e);
-                e.adjustRenderProps(renderProps, fTime);
-                
-                modelRender.setModel(model.model);
-                model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
-                model.setPose(modelRender, renderProps, GameBase.absTime, fTime);
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("setPose");
-            }
-            if (mappedBuffer) {
-                modelRender.end();
-            }
-        }
-
-        modelRender.render(fTime);
-    }
 //    void _renderBatch(EntityModel model, Shader shader, int pass, int shadowVP, boolean needStateSetup) {
 //        if (Game.GL_ERROR_CHECKS)
 //            Engine.checkGLError("_renderBatch pre");

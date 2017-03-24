@@ -112,7 +112,7 @@ public abstract class EntityModel {
     }
 
 
-    public abstract void setPose(QModelRender rend, QModelProperties properties, float fabs, float fTime);
+    public abstract void setPoseAndSubmit(QModelRender rend, QModelProperties properties, float fabs, float fTime);
     public void setModel(ModelLoaderQModel modelLoaderQModel) {
         this.loader = modelLoaderQModel;
         this.model = modelLoaderQModel.buildModel();
