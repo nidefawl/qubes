@@ -195,6 +195,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     public void release() {
         if (this.image != VK_NULL_HANDLE) {
             VKContext ctxt = Engine.vkContext;
+            ctxt.memoryManager.releaseImageMemory(this.image);
             vkDestroyImageView(ctxt.device, this.view, null);
             vkDestroyImage(ctxt.device, this.image, null);
             vkDestroySampler(ctxt.device, this.sampler, null);
@@ -212,13 +213,13 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     @Override
     protected void uploadData() {
         this.bufferSize = this.bufMatFloat.remaining()*4;
+        long alignedV = Math.max(2048, GameMath.nextPowerOf2(this.bufferSize));
 //        System.out.println(BUFFER_SIZE+","+this.bufferOffset+","+this.bufferSize+"  - "+(BUFFER_SIZE-this.bufferOffset)+" < "+this.bufferSize+" = "+(BUFFER_SIZE-this.bufferPos < this.bufferSize));
-        if (BUFFER_SIZE-this.bufferOffset < this.bufferSize) {
+        if (BUFFER_SIZE-this.bufferOffset < alignedV) {
             this.bufferOffset = 0;
         }
         this.bufferPos = this.bufferOffset;
         this.bufferInstanceData.upload(this.bufMatFloat, this.bufferPos);
-        long alignedV = Math.max(2048, GameMath.nextPowerOf2(this.bufferSize));
         this.bufferOffset+=alignedV;
 //        System.out.println("Uploaded "+this.bufferSize+" bytes at pos "+this.bufferPos+", next "+this.bufferOffset);
     }

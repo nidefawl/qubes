@@ -160,7 +160,7 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
-        DEBUG_LAYER = true;
+        DEBUG_LAYER = false;
     }
 
     @Override

@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.util.UnsafeHelper;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
 
 public class VkBuffer implements IVkResource {
@@ -106,6 +107,7 @@ public class VkBuffer implements IVkResource {
             copy();
         } else {
             unmap();
+//            Thread.dumpStack();
         }
     }
     

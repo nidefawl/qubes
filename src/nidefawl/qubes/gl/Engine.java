@@ -1426,7 +1426,6 @@ public class Engine {
 //        System.err.println(curPipeline.layout.getName()+"");
         for (int i = 2; i < boundDescriptorSets.length; i++) {
             if (boundDescriptorSets[i] != null) {
-//                System.err.println("bind set "+i+": "+boundDescriptorSets[i].tag);
                 pDescriptorSets.put(boundDescriptorSets[i].get());
                 boundDescriptorSets[i].addDynamicOffsets(pOffsets);
             }

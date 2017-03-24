@@ -514,11 +514,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             resize = newWidth != windowWidth || newHeight != windowHeight;
         }
         if (resize) {
-            if (vkContext != null) {
-                if (vkContext.swapChain.isMinized()) {
-                    return;
-                }
-            }
             if (newWidth*newHeight <= 0) {
                 minimized = true;
                 return;

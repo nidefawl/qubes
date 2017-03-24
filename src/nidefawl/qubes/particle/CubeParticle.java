@@ -37,6 +37,7 @@ public class CubeParticle extends Particle {
         mat.rotate(this.renderRot.x*GameMath.PI*2.0f, 1.0f, 0.0f, 0.0f);
         mat.rotate(this.renderRot.z*GameMath.PI*2.0f, 0.0f, 0.0f, 1.0f);
         mat.scale(this.renderSize);
+//        System.out.println(this.renderSize);
         mat.store(bufMatFloat);
         int attr = this.tex | this.normalMap << 12 | this.type << 16 | this.pass << (16+12);
         bufBlockInfo.put(Float.floatToIntBits(this.color.x));

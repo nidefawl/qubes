@@ -17,6 +17,7 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
+import nidefawl.qubes.meshing.BlockFaceAttr;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.SkyRenderer;
 import nidefawl.qubes.shader.Shader;
@@ -39,6 +40,8 @@ public class SkyRendererGL extends SkyRenderer {
     GLVBO                 vboIdx;
     private int           vaoPos;
     private int[]         texClouds;
+    protected VertexBuffer  vertexBuf;
+    protected ReallocIntBuffer      vertexUploadDirectBuf;
 
     public void initShaders() {
         try {
@@ -75,6 +78,8 @@ public class SkyRendererGL extends SkyRenderer {
     }
     public void init() {
         super.init();
+        this.vertexUploadDirectBuf = new ReallocIntBuffer();
+        this.vertexBuf = new VertexBuffer(1024*1024);
         initShaders();
 //        skyColor = new Vector3f(0.43F, .69F, 1.F);
         this.vaoPos = GL30.glGenVertexArrays();

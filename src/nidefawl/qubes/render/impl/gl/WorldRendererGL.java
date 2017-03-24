@@ -407,11 +407,8 @@ public class WorldRendererGL extends WorldRenderer {
                 shaderModelfirstPerson.enable();
                 shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
                 model.loadedModels[0].bindTextures(0);
-                //first person needs clear depth buffer, move somewhere else
-//                    glDisable(GL_DEPTH_TEST);
                 Engine.bindVAO(GLVAO.vaoModel);
                 model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
-//                    glEnable(GL_DEPTH_TEST);
             }
             return;
         } else if (bstack!=null&&bstack.id>0) {
@@ -457,11 +454,9 @@ public class WorldRendererGL extends WorldRenderer {
                 mat2.update();
                 UniformBuffer.setNormalMat(mat2.get());
             }
-//            glDisable(GL11.GL_CULL_FACE); //face culling is off already
             Shaders.singleblock3D.setProgramUniformMatrix4("in_modelMatrix", false, mat.get(), false);
             GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
             Engine.blockDraw.doRender(bstack.getBlock(), 0, null);
-//            glEnable(GL11.GL_CULL_FACE);
         }
         UniformBuffer.setNormalMat(Engine.getMatSceneNormal().get());
         

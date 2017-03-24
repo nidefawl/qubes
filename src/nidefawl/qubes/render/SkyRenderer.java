@@ -1,8 +1,5 @@
 package nidefawl.qubes.render;
 
-import static nidefawl.qubes.render.SkyRenderer.MAX_SPRITES;
-import static nidefawl.qubes.render.SkyRenderer.tmp;
-
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
@@ -10,14 +7,13 @@ import java.util.Random;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.gl.*;
-import nidefawl.qubes.meshing.BlockFaceAttr;
+import nidefawl.qubes.gl.CubeMapCamera;
+import nidefawl.qubes.gl.Memory;
+import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Half;
-import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public abstract class SkyRenderer extends AbstractRenderer {
     protected final static int      MAX_SPRITES          = 1024 * 64;
@@ -25,12 +21,9 @@ public abstract class SkyRenderer extends AbstractRenderer {
 
     List<Cloud>           clouds               = Lists.newArrayList();
     final protected CubeMapCamera   cubeMatrix           = new CubeMapCamera();
-    protected BlockFaceAttr         attr                 = new BlockFaceAttr();
-    protected ReallocIntBuffer      vertexUploadDirectBuf;
     final static Vector3f tmp                  = new Vector3f();
     protected int                   storedSprites        = 0;
     protected int                   totalSpritesRendered = 0;
-    protected VertexBuffer  vertexBuf;
     protected ByteBuffer    bufMat;
     protected FloatBuffer   bufMatFloat;
     protected int numTexturesCloud;
@@ -235,8 +228,6 @@ public abstract class SkyRenderer extends AbstractRenderer {
         cubeMatrix.init();
         this.bufMat = Memory.createByteBufferAligned(64, 16*4*MAX_SPRITES);
         this.bufMatFloat = this.bufMat.asFloatBuffer();
-        this.vertexUploadDirectBuf = new ReallocIntBuffer();
-        this.vertexBuf = new VertexBuffer(1024*1024);
     }
     protected abstract void uploadData();
     public abstract void tickUpdate();

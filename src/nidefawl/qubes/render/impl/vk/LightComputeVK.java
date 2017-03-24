@@ -83,6 +83,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
     public void release() {
         if (this.image != VK_NULL_HANDLE) {
             VKContext ctxt = Engine.vkContext;
+            ctxt.memoryManager.releaseImageMemory(this.image);
             vkDestroyImageView(ctxt.device, this.view, null);
             vkDestroyImage(ctxt.device, this.image, null);
             vkDestroySampler(ctxt.device, this.sampler, null);

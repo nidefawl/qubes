@@ -85,4 +85,11 @@ public class ReallocIntBuffer {
     public ByteBuffer getByteBuf() {
         return this.buffers;
     }
+    public void destroy() {
+        if (this.buffers != null) {
+            Memory.free(this.buffers);
+            this.buffers = null;
+            this.intbuffers = null;
+        }
+    }
 }

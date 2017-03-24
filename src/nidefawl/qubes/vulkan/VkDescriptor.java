@@ -40,6 +40,15 @@ public class VkDescriptor {
             bindings[i].dynamicOffset = buffer;
         }
     }
+    public void setBindingSSBO(int i, VkSSBO vkBlockInfo) {
+        this.numBindings = Math.max(this.numBindings, i+1);
+        bindings[i].type = vkBlockInfo.isConstant() ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        bindings[i].descBufInfo = vkBlockInfo.getDescriptorBuffer();
+        bindings[i].dynamicOffset = null;
+        if (!vkBlockInfo.isConstant()) {
+            bindings[i].dynamicOffset = vkBlockInfo;
+        }
+    }
 
     public void setBindingBuffer(int i, int type, VkDescriptorBufferInfo.Buffer descBufInfo) {
         this.numBindings = Math.max(this.numBindings, i+1);
@@ -92,6 +101,7 @@ public class VkDescriptor {
     public void addDynamicOffsets(IntBuffer pOffsets) {
         for (int i = 0; i < this.numBindings; i++) {
             if (this.bindings[i].dynamicOffset != null) {
+//                System.err.println("bind set "+i+": "+tag);
                 pOffsets.put(this.bindings[i].dynamicOffset.getDynamicOffset());
             }
         }

@@ -18,8 +18,6 @@ import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GPUVendor;
-import nidefawl.qubes.texture.array.TextureArrays;
-import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.StringUtil;
@@ -31,7 +29,7 @@ public class ShaderSource {
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
-    static Pattern patternRemoveSetBindingUBO = Pattern.compile("layout\\(set = [0-9]{1,2}, binding = [0-9]{1,2}, std140\\) uniform ([^\\s]*)");
+    static Pattern patternRemoveSetBindingBuffer = Pattern.compile("layout\\s*\\(\\s*set = [0-9]{1,2},\\s*binding = [0-9]{1,2},\\s*std(140|430)\\s*\\) (uniform|buffer) ([^\\s]*).*");
     static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageOutput = Pattern.compile("(flat )?out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageInput = Pattern.compile("(flat )?in ([^\\s]*) ([^\\s]*);.*");
@@ -161,9 +159,11 @@ public class ShaderSource {
                         String input = "layout (set = 2, binding = "+(nSamplers++)+") uniform "+(m.group(1)==null?"":m.group(1))+"sampler"+m.group(2)+" "+m.group(3)+";\r\n";
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
-                    } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingUBO.matcher(line)).matches()) {
-                        String ubo_binding_name = m.group(1);
-                        code += "layout(std140) uniform "+ubo_binding_name+"\r\n";
+                    } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingBuffer.matcher(line)).matches()) {
+                        String buffer_layout = m.group(1);
+                        String buffer_type = m.group(2);
+                        String buffer_binding_name = m.group(3);
+                        code += ("layout(std"+buffer_layout+") "+buffer_type+" "+buffer_binding_name+"\r\n");
                     } else if (shaderType == GL_FRAGMENT_SHADER && line.startsWith("layout") && (m = patternOutputCustom.matcher(line)).matches()) {
 //                        System.out.println("matched");
                         int n = StringUtil.parseInt(m.group(1), -1);

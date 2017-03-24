@@ -10,6 +10,7 @@ public class VkRenderPasses {
     public static VkRenderPass passShadow = new VkRenderPassShadow();
     public static VkRenderPass passTerrain_Pass0 = new VkRenderPassGBuffer(0);
     public static VkRenderPass passTerrain_Pass1 = new VkRenderPassGBuffer(1);
+    public static VkRenderPass passTerrain_Pass2 = new VkRenderPassGBuffer(2);
     public static VkRenderPass passSkyGenerate = new VkRenderPassSkyUpdate();
     public static VkRenderPass passSkyGenerateCubemap = new VkRenderPassSkyUpdateCubemap();
     public static VkRenderPass passSkySample = new VkRenderPassSkySample();
