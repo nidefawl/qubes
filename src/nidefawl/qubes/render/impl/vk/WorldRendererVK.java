@@ -252,8 +252,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
             }
             return;
         } else if (bstack!=null&&bstack.id>0) {
-            
-            Shaders.singleblock3D.enable();
             BufferedMatrix mat = Engine.getTempMatrix();
             mat.setIdentity();
             Engine.camera.addCameraShake(mat);

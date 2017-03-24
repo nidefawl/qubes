@@ -28,7 +28,7 @@ public class VkRenderPassGBuffer extends VkRenderPass {
             .finalLayout(pass == 0 ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
             .loadOp(pass != 1 ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD);
         attachments.limit(nAttachments);
-        clearValues.limit((pass==0)?nAttachments:(nAttachments-1));
+        clearValues.limit((pass!=1)?nAttachments:(nAttachments-1));
     }
     @Override
     public void build(VKContext ctxt) {

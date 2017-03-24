@@ -458,7 +458,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "singleblock_3D.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             singleblock_3D.setShaders(vert, frag);
             singleblock_3D.setBlend(false);
-            singleblock_3D.setRenderPass(VkRenderPasses.passFramebuffer, 0);
+            singleblock_3D.setRenderPass(VkRenderPasses.passTerrain_Pass2, 0);
             singleblock_3D.setVertexDesc(desc);
             singleblock_3D.pipeline = buildPipeLine(ctxt, singleblock_3D);
         }
