@@ -26,6 +26,7 @@ import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.path.PathPoint;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.RenderersGL;
+import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
@@ -229,7 +230,9 @@ public class WorldRendererGL extends WorldRenderer {
                     GPUProfiler.end();
                 return;
             }
-            renderEntitiesBatched(world, pass, fTime, shadowVP);
+            QModelBatchedRender modelRender = Engine.renderBatched;
+            modelRender.setPass(pass, shadowVP);
+            modelRender.render(fTime);
 //        } else {
 //            renderEntitiesSingle(world, pass, fTime, shader);    
 //        }

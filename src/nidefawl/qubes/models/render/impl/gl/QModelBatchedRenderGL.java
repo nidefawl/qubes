@@ -83,6 +83,9 @@ public class QModelBatchedRenderGL extends QModelBatchedRender {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
     }
+    @Override
+    public void upload(float fTime) {
+    }
     public void initShaders() {
 
         try {

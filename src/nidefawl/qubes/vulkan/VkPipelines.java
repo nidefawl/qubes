@@ -478,19 +478,43 @@ public class VkPipelines {
             VkRenderPass pass = i == 0 ? VkRenderPasses.passTerrain_Pass0 : VkRenderPasses.passShadow;
             try ( MemoryStack stack = stackPush() ) 
             {
-                model_static[i].setShaders(vert, frag);
-                model_static[i].setBlend(false);
-                model_static[i].setRenderPass(pass, 0);
-                model_static[i].setVertexDesc(desc);
-                model_static[i].pipeline = buildPipeLine(ctxt, model_static[i]);
+                VkPipeline pipe_model_static = model_static[i];
+                pipe_model_static.setShaders(vert, frag);
+                pipe_model_static.setBlend(false);
+                pipe_model_static.setRenderPass(pass, 0);
+                pipe_model_static.setVertexDesc(desc);
+                if (i == 1) {
+                    pipe_model_static.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+                    pipe_model_static.useSwapChainViewport = false;
+                    pipe_model_static.viewport.minDepth(Engine.INVERSE_MAP?1:0);
+                    pipe_model_static.viewport.maxDepth(Engine.INVERSE_MAP?1:0);
+                    pipe_model_static.depthStencilState.depthCompareOp(Engine.INVERSE_MAP ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+                    pipe_model_static.viewport.width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+                    pipe_model_static.rasterizationState.frontFace(!Engine.INVERSE_MAP?VK_FRONT_FACE_CLOCKWISE:VK_FRONT_FACE_COUNTER_CLOCKWISE);
+                    pipe_model_static.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+                    pipe_model_static.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+                }
+                pipe_model_static.pipeline = buildPipeLine(ctxt, pipe_model_static);
             }
             try ( MemoryStack stack = stackPush() ) 
             {
-                model_skinned[i].setShaders(vertSkinned, frag);
-                model_skinned[i].setBlend(false);
-                model_skinned[i].setRenderPass(pass, 0);
-                model_skinned[i].setVertexDesc(desc);
-                model_skinned[i].pipeline = buildPipeLine(ctxt, model_skinned[i]);
+                VkPipeline pipe_model_skinned = model_skinned[i];
+                pipe_model_skinned.setShaders(vertSkinned, frag);
+                pipe_model_skinned.setBlend(false);
+                pipe_model_skinned.setRenderPass(pass, 0);
+                pipe_model_skinned.setVertexDesc(desc);
+                if (i == 1) {
+                    pipe_model_skinned.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+                    pipe_model_skinned.useSwapChainViewport = false;
+                    pipe_model_skinned.viewport.minDepth(Engine.INVERSE_MAP?1:0);
+                    pipe_model_skinned.viewport.maxDepth(Engine.INVERSE_MAP?1:0);
+                    pipe_model_skinned.depthStencilState.depthCompareOp(Engine.INVERSE_MAP ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
+                    pipe_model_skinned.viewport.width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+                    pipe_model_skinned.rasterizationState.frontFace(!Engine.INVERSE_MAP?VK_FRONT_FACE_CLOCKWISE:VK_FRONT_FACE_COUNTER_CLOCKWISE);
+                    pipe_model_skinned.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+                    pipe_model_skinned.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+                }
+                pipe_model_skinned.pipeline = buildPipeLine(ctxt, pipe_model_skinned);
             }
         }
         

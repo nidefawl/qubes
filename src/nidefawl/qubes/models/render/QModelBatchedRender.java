@@ -87,7 +87,8 @@ public abstract class QModelBatchedRender extends QModelRender {
         public ReallocFloatBuf buf1 = new ReallocFloatBuf();
         public ReallocFloatBuf buf2 = new ReallocFloatBuf();
         public ReallocFloatBuf buf3 = new ReallocFloatBuf();
-        
+        public int[] ssboOffsets = new int[3];
+        public int[] ssboOffsetsStatic = new int[2];
         public int instances;
         public boolean matches(ModelQModel model, QModelObject object, QModelGroup grp) {
             return this.model == model &&  
@@ -201,4 +202,5 @@ public abstract class QModelBatchedRender extends QModelRender {
     }
 
     public abstract void setForwardRenderMVP(BufferedMatrix temp);
+    public abstract void upload(float fTime);
 }

@@ -30,15 +30,49 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
     private ByteBuffer[] buffers;
     private FloatBuffer[] floatbuffers;
     private VkDescriptor descriptorSetSSBOStatic;
-
+    
     @Override
     public void render(float fTime) {
-
         if (this.renderer == 1) {
             Engine.setDescriptorSet(VkDescLayouts.DESC4, Engine.descriptorSetUboShadow);
         } else {
             Engine.clearDescriptorSet(VkDescLayouts.DESC4);
         }
+
+        for (int i = 0; i < this.subLists.size(); i++) {
+            if (i >= MAX_DRAWS_FRAME) {
+                System.err.println("MAX_DRAWS_FRAME REACHED!");
+                break;
+            }
+            QModelRenderSubList n = this.subLists.get(i);
+            VkPipeline pipe;
+            VkDescriptor descriptorSetSSBO;
+            if (!n.isSkinned) {
+                pipe = VkPipelines.model_static[this.renderer];
+                descriptorSetSSBO = this.descriptorSetSSBOStatic;
+                descriptorSetSSBO.setOverrideOffset(n.ssboOffsetsStatic);
+            } else {
+                pipe = VkPipelines.model_skinned[this.renderer];
+                descriptorSetSSBO = this.descriptorSetSSBOBatched;
+                descriptorSetSSBO.setOverrideOffset(n.ssboOffsets);
+            }
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, n.tex.descriptorSetTex);
+            Engine.setDescriptorSetF(VkDescLayouts.DESC3, descriptorSetSSBO);
+            Engine.bindPipeline(pipe);
+            if (this.renderer == 1) {
+                PushConstantBuffer buf = PushConstantBuffer.INST;
+                buf.setInt(0, this.shadowVP);
+                vkCmdPushConstants(Engine.getDrawCmdBuffer(), pipe.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(4));
+//                System.out.println("shadow");
+//                Thread.dumpStack();
+            }
+            n.model.renderRestModel(n.object, n.group, n.instances);
+        }
+        Engine.clearDescriptorSet(VkDescLayouts.DESC4);
+    }
+    @Override
+    public void upload(float fTime) {
+
         this.vkBones.markPos();
         this.vkModelMat.markPos();
         this.vkNormalMat.markPos();
@@ -49,38 +83,19 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
                 break;
             }
             QModelRenderSubList n = this.subLists.get(i);
-            VkPipeline pipe;
-            VkDescriptor descriptorSetSSBO;
-//          System.out.println(Stats.fpsCounter+","+n.isSkinned+","+n.group.idx);
-//            if (n.group.idx == 1)
-//                continue;
-
-//            Engine.debugflag = i == 1;
             if (!n.isSkinned) {
-                pipe = VkPipelines.model_static[this.renderer];
-                descriptorSetSSBO = this.descriptorSetSSBOStatic;
                 this.begin();
                 n.put(floatbuffers[0], floatbuffers[1]); 
                 this.end();
             } else {
-                pipe = VkPipelines.model_skinned[this.renderer];
-                descriptorSetSSBO = this.descriptorSetSSBOBatched;
                 this.begin();
                 n.putSkinned(floatbuffers[0], floatbuffers[1], floatbuffers[2]);    
                 this.end();
             }
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, n.tex.descriptorSetTex);
-            Engine.setDescriptorSetF(VkDescLayouts.DESC3, descriptorSetSSBO);
-            Engine.bindPipeline(pipe);
-            if (this.renderer == 1) {
-                PushConstantBuffer buf = PushConstantBuffer.INST;
-                buf.setInt(0, this.shadowVP);
-                vkCmdPushConstants(Engine.getDrawCmdBuffer(), pipe.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4));
-            }
-            Engine.debugflag = false;
-            n.model.renderRestModel(n.object, n.group, n.instances);
+            n.ssboOffsets[0] = n.ssboOffsetsStatic[0] = this.vkModelMat.getDynamicOffset();
+            n.ssboOffsets[1] = n.ssboOffsetsStatic[1] = this.vkNormalMat.getDynamicOffset();
+            n.ssboOffsets[2] = this.vkBones.getDynamicOffset();
         }
-        Engine.clearDescriptorSet(VkDescLayouts.DESC4);
         this.vkBones.seekPos(SSBO_FRAME_SIZE_BONES);
         this.vkModelMat.seekPos(SSBO_FRAME_SIZE_MODEL);
         this.vkNormalMat.seekPos(SSBO_FRAME_SIZE_NORMAL);

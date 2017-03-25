@@ -1153,7 +1153,7 @@ public class Engine {
             if (!isVulkan) {
 
                 GL11.glViewport(x, y, w, h);
-            } else if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+            } else if (curPipeline!=null&&curPipeline.useDynViewport) {
                 vkviewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
                 vkviewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
                 vkviewport.x(x).y(y).width(w).height(h);
@@ -1163,7 +1163,7 @@ public class Engine {
             }
 //            Thread.dumpStack();
         }
-        if (curPipeline!=null&&!curPipeline.useSwapChainViewport) {
+        if (curPipeline!=null&&curPipeline.useDynViewport) {
             vkviewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
             vkviewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
             vkviewport.x(x).y(y).width(w).height(h);
@@ -1341,6 +1341,12 @@ public class Engine {
             }
             if (isScissors)
                 pxStack.vkUpdateLastScissors();
+            if (curPipeline.useDynViewport) {
+                vkviewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
+                vkviewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
+                vkviewport.x(viewport[0]).y(viewport[1]).width(viewport[2]).height(viewport[3]);
+                vkCmdSetViewport(curCommandBuffer, 0, vkviewport);
+            }
             rebindDescSet = true;
         }
         if (rebindDescSet0) {

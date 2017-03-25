@@ -11,6 +11,7 @@ import nidefawl.qubes.gl.*;
 import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.models.ItemModel;
+import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.RenderersVulkan;
@@ -141,7 +142,9 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         //        System.out.println("rendered " +rendered);
                 RenderersVulkan.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
 
-                renderEntitiesBatched(world, PASS_SOLID, fTime, 0);
+                QModelBatchedRender modelRender = RenderersVulkan.renderBatched;
+                modelRender.setPass(PASS_SOLID, 0);
+                modelRender.render(fTime);
             Engine.endRenderPass();
         
             FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);

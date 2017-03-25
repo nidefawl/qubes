@@ -14,6 +14,7 @@ import nidefawl.qubes.models.EntityModel;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.QModelProperties;
 import nidefawl.qubes.models.render.QModelBatchedRender;
+import nidefawl.qubes.models.render.impl.vk.QModelBatchedRenderVK;
 import nidefawl.qubes.path.PathPoint;
 import nidefawl.qubes.render.impl.gl.WorldRendererGL;
 import nidefawl.qubes.shader.Shader;
@@ -65,62 +66,56 @@ public abstract class WorldRenderer extends AbstractRenderer {
     public abstract void tickUpdate();
 
 
-    public void renderEntities(World world, int passShadowSolid, float fTime, int i) {
-    }
 
 
     public abstract void onResourceReload();
     QModelProperties modelProperties = new QModelProperties();
-    public void renderEntitiesBatched(World world, int pass, float fTime, int shadowVP) {
+    public void prepareEntitiesBatched(World world, float fTime) {
+        QModelBatchedRender modelRender = Engine.renderBatched;
+        modelRender.reset();
         List<Entity> ents = world.getEntityList();
         int size = ents.size();
         if (size == 0) {
             return;
         }
-        QModelBatchedRender modelRender = Engine.renderBatched;
+        for (int i = 0; i < size*EXTRA_RENDER; i++) {
 
-        
-        modelRender.setPass(pass, shadowVP);
-        if (pass == PASS_SOLID) {
-            modelRender.reset();
-            for (int i = 0; i < size*EXTRA_RENDER; i++) {
-
-                Entity e = ents.get(i/EXTRA_RENDER);
-                if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
-                    continue;
+            Entity e = ents.get(i/EXTRA_RENDER);
+            if (e == Game.instance.getPlayer() && !Game.instance.thirdPerson)
+                continue;
 
 
-                BaseStack stack = e.getActiveItem(0);
-                ItemModel itemmodel = null;
-                if (stack != null && stack.isItem()) {
-                    ItemStack itemstack = (ItemStack) stack;
-                    Item item = itemstack.getItem();
-                    itemmodel = item.getItemModel();
-                }
-                QModelProperties renderProps = this.modelProperties;
-                this.modelProperties.clear();
-                if (itemmodel != null) {
-                    renderProps.setModelAtt(itemmodel.loadedModels[0]);
-                } else {
-
-                    renderProps.setModelAtt(null);
-                }
-                Vector3f pos = e.getRenderPos(fTime);
-                Vector3f rot = e.getRenderRot(fTime);
-                EntityModel model = e.getEntityModel();
-                renderProps.setPos(pos);
-                renderProps.setRot(rot);
-                renderProps.setEntity(e);
-                e.adjustRenderProps(renderProps, fTime);
-                
-                modelRender.setModel(model.model);
-                model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
-                model.setPoseAndSubmit(modelRender, renderProps, GameBase.absTime, fTime);
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("setPose");
+            BaseStack stack = e.getActiveItem(0);
+            ItemModel itemmodel = null;
+            if (stack != null && stack.isItem()) {
+                ItemStack itemstack = (ItemStack) stack;
+                Item item = itemstack.getItem();
+                itemmodel = item.getItemModel();
             }
-        }
+            QModelProperties renderProps = this.modelProperties;
+            this.modelProperties.clear();
+            if (itemmodel != null) {
+                renderProps.setModelAtt(itemmodel.loadedModels[0]);
+            } else {
 
-        modelRender.render(fTime);
+                renderProps.setModelAtt(null);
+            }
+            Vector3f pos = e.getRenderPos(fTime);
+            Vector3f rot = e.getRenderRot(fTime);
+            EntityModel model = e.getEntityModel();
+            renderProps.setPos(pos);
+            renderProps.setRot(rot);
+            renderProps.setEntity(e);
+            e.adjustRenderProps(renderProps, fTime);
+            
+            modelRender.setModel(model.model);
+            model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
+            model.setPoseAndSubmit(modelRender, renderProps, GameBase.absTime, fTime);
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("setPose");
+        }
+    
+
+        modelRender.upload(fTime);
     }
 }

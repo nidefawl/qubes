@@ -1412,6 +1412,7 @@ public class Game extends GameBase {
               }
               Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
               Engine.lightCompute.updateLights(this.world, f);
+              Engine.worldRenderer.prepareEntitiesBatched(this.world, f);
             }
         }
         Matrix4f pose = VR.pose;

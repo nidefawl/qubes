@@ -11,6 +11,7 @@ import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import org.lwjgl.vulkan.VkViewport;
 
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.ShadowRenderer;
 import nidefawl.qubes.vec.Frustum;
@@ -67,24 +68,36 @@ public class ShadowRendererVK extends ShadowRenderer {
         buf.setInt(16, 0);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
-        RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 0); //TODO: FRUSTUM CULLING
+
+        QModelBatchedRender modelRender = RenderersVulkan.renderBatched;
+        modelRender.setPass(PASS_SHADOW_SOLID, 0);
+        modelRender.render(fTime);
 
         Engine.setViewport(mapSize, 0, mapSize, mapSize);
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+        Engine.bindPipeline(VkPipelines.shadowSolid);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 1);
         vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.f, f*1.45f);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
-        RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 1); //TODO: FRUSTUM CULLING
+        modelRender.setPass(PASS_SHADOW_SOLID, 1);
+        modelRender.render(fTime);
         Engine.setViewport(0, mapSize, mapSize, mapSize);
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+        Engine.bindPipeline(VkPipelines.shadowSolid);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 2);
         vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*1.15f);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
-        RenderersVulkan.worldRenderer.renderEntities(world, PASS_SHADOW_SOLID, fTime, 2); //TODO: FRUSTUM CULLING
+        modelRender.setPass(PASS_SHADOW_SOLID, 2);
+        modelRender.render(fTime);
         Engine.endRenderPass();
         Engine.clearDescriptorSet(VkDescLayouts.DESC3);
+        Engine.clearDescriptorSet(VkDescLayouts.DESC4);
     }
 
     @Override

@@ -25,6 +25,7 @@ public class VkDescriptor {
     int numBindings = 0;
     VkDescriptorBinding[] bindings = new VkDescriptorBinding[9];
     private final long descriptorSet;
+    int[] overrideOffsets = null;
     public VkDescriptor(long descriptorSet) {
         this.descriptorSet = descriptorSet;
         for (int i = 0; i < bindings.length; i++) {
@@ -98,14 +99,21 @@ public class VkDescriptor {
         this.tag = tag;
         return this;
     }
-
     public void addDynamicOffsets(IntBuffer pOffsets) {
-        for (int i = 0; i < this.numBindings; i++) {
-            if (this.bindings[i].dynamicOffset != null) {
-                if (Engine.debugflag)
-                System.out.println("bind set "+i+": "+tag +" at offset "+this.bindings[i].dynamicOffset.getDynamicOffset());
-                pOffsets.put(this.bindings[i].dynamicOffset.getDynamicOffset());
+        if (this.overrideOffsets != null) {
+            pOffsets.put(this.overrideOffsets);
+        } else {
+            for (int i = 0; i < this.numBindings; i++) {
+                if (this.bindings[i].dynamicOffset != null) {
+                    if (Engine.debugflag)
+                    System.out.println("bind set "+i+": "+tag +" at offset "+this.bindings[i].dynamicOffset.getDynamicOffset());
+                    pOffsets.put(this.bindings[i].dynamicOffset.getDynamicOffset());
+                }
             }
         }
+    }
+
+    public void setOverrideOffset(int[] ssboOffsets) {
+        this.overrideOffsets = ssboOffsets;
     }
 }
