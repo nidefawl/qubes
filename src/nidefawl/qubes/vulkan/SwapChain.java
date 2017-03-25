@@ -140,8 +140,8 @@ public final class SwapChain {
             if ((surfCaps.maxImageCount() > 0) && (desiredNumberOfSwapchainImages > surfCaps.maxImageCount())) {
                 desiredNumberOfSwapchainImages = surfCaps.maxImageCount();
             }
-            if (desiredNumberOfSwapchainImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
-                desiredNumberOfSwapchainImages = VulkanInit.MAX_NUM_SWAPCHAIN;
+            if (desiredNumberOfSwapchainImages > VkConstants.MAX_NUM_SWAPCHAIN) {
+                desiredNumberOfSwapchainImages = VkConstants.MAX_NUM_SWAPCHAIN;
             }
 
 
@@ -202,7 +202,7 @@ public final class SwapChain {
                 throw new AssertionError("Failed to get number of swapchain images: " + VulkanErr.toString(err));
             }
             System.out.println("Create swapchain with "+this.numImages+" images");
-            if (this.numImages > VulkanInit.MAX_NUM_SWAPCHAIN) {
+            if (this.numImages > VkConstants.MAX_NUM_SWAPCHAIN) {
                 throw new AssertionError("Unsupported number of swapchain images");
             }
 

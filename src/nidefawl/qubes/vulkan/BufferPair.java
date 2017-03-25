@@ -9,7 +9,7 @@ import nidefawl.qubes.gl.Engine;
 public class BufferPair implements RefTrackedResource {
     public VkBuffer vert;
     public VkBuffer idx;
-    public boolean[] inUseBy = new boolean[VulkanInit.MAX_NUM_SWAPCHAIN];
+    public boolean[] inUseBy = new boolean[VkConstants.MAX_NUM_SWAPCHAIN];
     public int elementCount;
     private String tag;
     public BufferPair(VKContext ctxt) {

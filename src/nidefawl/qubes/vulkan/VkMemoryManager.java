@@ -60,11 +60,14 @@ public class VkMemoryManager {
             this.align = align;
         }
         public long map() {
+            return mapRange(0, this.size);
+        }
+        public long mapRange(long mapOffset, long mapSize) {
             if (block.isMapped) {
                 throw new GameLogicError("cannot map twice");
             }
             block.isMapped = true;
-            int err = vkMapMemory(block.device, block.memory, this.offset, this.size, 0, ptrBuf);
+            int err = vkMapMemory(block.device, block.memory, this.offset+mapOffset, mapSize, 0, ptrBuf);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkAllocateMemory failed: " + VulkanErr.toString(err));
             }

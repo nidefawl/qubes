@@ -219,13 +219,13 @@ public class VkDescLayouts {
         VkPipelines.pipelineLayoutSingleBlock3D.build(ctxt, new long[] {
                 descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble}, push_constant_ranges_single_block_3d);
         VkPipelines.pipelineLayoutModelStaticGbuffer.build(ctxt, new long[] {
-                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutSSBOModelStatic});
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelStatic});
         VkPipelines.pipelineLayoutModelStaticShadow.build(ctxt, new long[] {
-                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutSSBOModelStatic, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelStatic, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
         VkPipelines.pipelineLayoutModelBatchedGbuffer.build(ctxt, new long[] {
-                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutSSBOModelBatched});
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched});
         VkPipelines.pipelineLayoutModelBatchedShadow.build(ctxt, new long[] {
-                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutSSBOModelBatched, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
+                descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
 
 
     }
@@ -304,6 +304,10 @@ public class VkDescLayouts {
 
     public VkDescriptor allocDescSetSSBOModelBatched() {
         return new VkDescriptor(allocDescSet(descSetLayoutSSBOModelBatched)).tag("SSBOModelBatched");
+    }
+    
+    public VkDescriptor allocDescSetSSBOModelStatic() {
+        return new VkDescriptor(allocDescSet(descSetLayoutSSBOModelStatic)).tag("SSBOModelStatic");
     }
 
     public VkDescriptor allocDescSetUBOShadow() {

@@ -72,5 +72,16 @@ public class ItemModelManager {
             model.loadedModels = models;
         }
     }
+    public void redraw() {
+        for (int i = 0; i < ItemModel.HIGHEST_MODEL_ID+1; i++) {
+            ItemModel model = ItemModel.model[i];
+            if (model == null) {
+                continue;
+            }
+            for (int j = 0;j < model.loadedModels.length; j++) {
+                model.loadedModels[j].draw();    
+            }
+        }
+    }
 
 }

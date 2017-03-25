@@ -9,6 +9,7 @@ import java.nio.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.util.UnsafeHelper;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
@@ -70,9 +71,6 @@ public class VkBuffer implements IVkResource {
         this.ptr = memoryStaging.map();
     }
     
-    public void map() {
-        this.ptr = memory.map();
-    }
 
     public void unmapStaging() {
         memoryStaging.unmap();
@@ -95,13 +93,20 @@ public class VkBuffer implements IVkResource {
         _upload(memAddress(byteBuffer), byteBuffer.remaining(), offset);
     }
 
+    public void mapRange(long offset, long size) {
+        this.ptr = memory.mapRange(offset, size);
+        if (Engine.debugflag&&this.tag != null && this.tag.contains("ssbo")) {
+            System.out.println("mapped "+tag+" to "+this.ptr);
+        }
+    }
     private void _upload(long addr, int size, int offset) {
         if (isDeviceLocal) {
             mapStaging();
+            memCopy(addr, ptr+offset, size);
         } else {
-            map();
+            mapRange(offset, size);
+            memCopy(addr, ptr, size);
         }
-        memCopy(addr, ptr+offset, size);
         if (isDeviceLocal) {
             unmapStaging();
             copy();

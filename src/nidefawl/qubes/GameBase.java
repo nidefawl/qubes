@@ -985,7 +985,9 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public void setException(GameError error) {
-        this.showError = error;
+        if (this.showError == null) {
+            this.showError = error;    
+        }
     }
 
     public long getTime() {

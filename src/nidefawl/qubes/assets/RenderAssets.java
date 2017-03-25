@@ -19,10 +19,12 @@ public class RenderAssets {
     public static void load(RenderSettings renderSettings, LoadingScreen loadingScreen) {
         if (loadingScreen != null) loadingScreen.setProgress(0, 0.8f, "Loading... Item Models");
         ItemModelManager.getInstance().reload();
+        ItemModelManager.getInstance().redraw();
         if (loadingScreen != null) loadingScreen.setProgress(0, 0.9f, "Loading... Block Models");
         BlockModelManager.getInstance().reload();
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Entity Models");
         EntityModelManager.getInstance().reload();
+        EntityModelManager.getInstance().redraw();
         if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
         TextureArray[] arrays = TextureArrays.init();
         if (renderSettings != null)

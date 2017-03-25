@@ -12,6 +12,7 @@ import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.texture.TextureManager;
 import nidefawl.qubes.util.GameMath;
+import nidefawl.qubes.vulkan.VkDescriptor;
 import nidefawl.qubes.vulkan.VkTexture;
 
 public class QModelTexture {
@@ -21,12 +22,28 @@ public class QModelTexture {
     private int glid;
     boolean loaded = false;
     private VkTexture vkTexture;
+    public VkDescriptor descriptorSetTex;
 
     public QModelTexture(int i, ModelLoaderQModel loader) throws EOFException {
         this.idx = i;
         this.name = loader.readString(32);
         this.path = loader.readString(128);
 //        System.out.println(loader.getModelName()+" - texture "+idx+": name "+this.name+", path "+this.path);
+        if (Engine.isVulkan) {
+            AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
+            this.loaded = true;
+            this.vkTexture = new VkTexture(Engine.vkContext);
+            TextureBinMips binMips = new TextureBinMips(t);
+            this.vkTexture.build(VK_FORMAT_R8G8B8A8_UNORM, binMips);
+            this.vkTexture.genView();
+            
+//          vkContext.descLayouts.getDescriptorSets);
+            this.descriptorSetTex = Engine.vkContext.descLayouts.allocDescSetSampleSingle();
+            
+            this.descriptorSetTex.setBindingCombinedImageSampler(0, this.vkTexture.getView(), Engine.vkContext.samplerLinear, this.vkTexture.getImageLayout());
+            this.descriptorSetTex.update(Engine.vkContext);
+
+        }
     }
     
     public int get() {
@@ -34,16 +51,9 @@ public class QModelTexture {
         if (!this.loaded) {
             this.loaded = true;
             AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
-            if (Engine.isVulkan) {
-                this.vkTexture = new VkTexture(Engine.vkContext);
-                TextureBinMips binMips = new TextureBinMips(t);
-                this.vkTexture.build(VK_FORMAT_R8G8B8A8_UNORM, binMips);
-            }
-            if (this.glid <= 0) {
-                int maxDim = Math.max(t.getWidth(), t.getHeight());
-                int mipmapLevel = 1+GameMath.log2(maxDim);
-                this.glid = TextureManager.getInstance().makeNewTexture(t, false, true, mipmapLevel);
-            }
+            int maxDim = Math.max(t.getWidth(), t.getHeight());
+            int mipmapLevel = 1+GameMath.log2(maxDim);
+            this.glid = TextureManager.getInstance().makeNewTexture(t, false, true, mipmapLevel);
         }
         return this.glid;
     }

@@ -94,7 +94,64 @@ public abstract class ModelQModel {
 
     public abstract QModelType getType();
 
+    public void draw() {
+        for (QModelObject obj : this.loader.listObjects) {
+            ModelRenderObject rObj = this.getGroup(obj.idx);
+            for (QModelGroup grp : obj.listGroups) {
+                ModelRenderGroup rGroup = rObj.getGroup(grp.idx);
+                if (rGroup.gpuBufRest == null /*|| (System.currentTimeMillis()-rGroup.reRender>1000)*/) {
+                    if (rGroup.gpuBufRest != null) {
+                        rGroup.gpuBufRest.release();
+                    }
+                    rGroup.reRender = System.currentTimeMillis();
+                    if (this.vbuf == null)
+                        this.vbuf = new VertexBuffer(1024*64);
+                    this.vbuf.reset();
+                    int vPosI = 0;
+//                    int[] vPos = new int[this.loader.listTri.size()*3];
+//                    Arrays.fill(vPos, -1);
+                    for (QModelTriangle triangle : grp.listTri) {
+                        for (int i = 0; i < 3; i++) {
+                            int idx = triangle.vertIdx[i];
+//                            if (vPos[idx] < 0) { // shared vertices require per vertex UVs -> requires exporter to be adjusted
+                            // but also gives worse performance
+//                                vPos[idx] =
+//                                        vPosI++;
+                                QModelVertex v = obj.listVertex.get(idx);
+                                vbuf.put(Float.floatToRawIntBits(v.x));
+                                vbuf.put(Float.floatToRawIntBits(v.y));
+                                vbuf.put(Float.floatToRawIntBits(v.z));
+                                tmpVec.set(triangle.normal[i]);
+                                vbuf.put(RenderUtil.packNormal(tmpVec));
+                                vbuf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
+                                int bones03 = 0;
+                                int bones47 = 0;
+                                for (int w = 0; w < 4; w++) {
+                                    int boneIdx = (0 + w) >= v.numBones ? 0xFF : v.bones[0 + w];
+                                    int boneIdx2 = (4 + w) >= v.numBones ? 0xFF : v.bones[4 + w];
+                                    bones03 |= (boneIdx) << (w * 8);
+                                    bones47 |= (boneIdx2) << (w * 8);
+                                }
+                                vbuf.put(bones03);
+                                vbuf.put(bones47);
+                                for (int w = 0; w < 4; w++) {
+                                    vbuf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
+                                }
+                                vbuf.increaseVert();
+//                            } else {
+//                                System.out.println("reuse vert");
+//                            }
+                            vbuf.putIdx(vPosI++);
+                        }
+                    }
+                    rGroup.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
 
+                    int bytes = rGroup.gpuBufRest.upload(vbuf);
+
+                }
+            }
+        }
+    }
     /**
      * @param i
      * @param f
@@ -124,56 +181,7 @@ public abstract class ModelQModel {
     public void renderRestModel(QModelObject obj, QModelGroup grp, int instances) {
         ModelRenderObject rObj = this.getGroup(obj.idx);
         ModelRenderGroup rGroup = rObj.getGroup(grp.idx);
-        if (rGroup.gpuBufRest == null /*|| (System.currentTimeMillis()-rGroup.reRender>1000)*/) {
-            if (rGroup.gpuBufRest != null) {
-                rGroup.gpuBufRest.release();
-            }
-            rGroup.reRender = System.currentTimeMillis();
-            if (this.vbuf == null)
-                this.vbuf = new VertexBuffer(1024*64);
-            this.vbuf.reset();
-            int vPosI = 0;
-//            int[] vPos = new int[this.loader.listTri.size()*3];
-//            Arrays.fill(vPos, -1);
-            for (QModelTriangle triangle : grp.listTri) {
-                for (int i = 0; i < 3; i++) {
-                    int idx = triangle.vertIdx[i];
-//                    if (vPos[idx] < 0) { // shared vertices require per vertex UVs -> requires exporter to be adjusted
-                    // but also gives worse performance
-//                        vPos[idx] =
-//                                vPosI++;
-                        QModelVertex v = obj.listVertex.get(idx);
-                        vbuf.put(Float.floatToRawIntBits(v.x));
-                        vbuf.put(Float.floatToRawIntBits(v.y));
-                        vbuf.put(Float.floatToRawIntBits(v.z));
-                        tmpVec.set(triangle.normal[i]);
-                        vbuf.put(RenderUtil.packNormal(tmpVec));
-                        vbuf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
-                        int bones03 = 0;
-                        int bones47 = 0;
-                        for (int w = 0; w < 4; w++) {
-                            int boneIdx = (0 + w) >= v.numBones ? 0xFF : v.bones[0 + w];
-                            int boneIdx2 = (4 + w) >= v.numBones ? 0xFF : v.bones[4 + w];
-                            bones03 |= (boneIdx) << (w * 8);
-                            bones47 |= (boneIdx2) << (w * 8);
-                        }
-                        vbuf.put(bones03);
-                        vbuf.put(bones47);
-                        for (int w = 0; w < 4; w++) {
-                            vbuf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
-                        }
-                        vbuf.increaseVert();
-//                    } else {
-//                        System.out.println("reuse vert");
-//                    }
-                    vbuf.putIdx(vPosI++);
-                }
-            }
-            rGroup.gpuBufRest = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
 
-            int bytes = rGroup.gpuBufRest.upload(vbuf);
-
-        }
         
         Stats.modelDrawCalls++;
 

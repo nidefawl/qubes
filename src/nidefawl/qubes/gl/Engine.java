@@ -393,8 +393,8 @@ public class Engine {
             Shader.init();   
         } else {
             VkRenderPasses.initClearValues(INVERSE_Z_BUFFER);
-            VkTess.init(vkContext, VulkanInit.MAX_NUM_SWAPCHAIN);
-            UniformBuffer.init(vkContext, VulkanInit.MAX_NUM_SWAPCHAIN);
+            VkTess.init(vkContext, VkConstants.MAX_NUM_SWAPCHAIN);
+            UniformBuffer.init(vkContext, VkConstants.MAX_NUM_SWAPCHAIN);
             VkPipelines.init(vkContext);
             descriptorSetUboScene = vkContext.descLayouts.allocDescSetUBOScene();
             descriptorSetUboScene.setBindingUniformBuffer(0, UniformBuffer.uboMatrix3D);
@@ -1341,7 +1341,7 @@ public class Engine {
             }
             if (isScissors)
                 pxStack.vkUpdateLastScissors();
-//            rebindDescSet = true;
+            rebindDescSet = true;
         }
         if (rebindDescSet0) {
             rebindSceneDescriptorSet();
@@ -1371,6 +1371,19 @@ public class Engine {
             throw new AssertionError("Failed to end render command buffer: " + VulkanErr.toString(err));
         }
     }
+    public static boolean debugflag = false;
+    public static void directBindDescSet(int idx, VkDescriptor descSet) {
+        boundDescriptorSets[idx] = descSet;
+        pDescriptorSets.clear();
+        pDescriptorSets.put(descSet.get());
+        pDescriptorSets.flip();
+        pOffsets.clear();
+        descSet.addDynamicOffsets(pOffsets);
+        pOffsets.flip();
+        Stats.callsBindDescSets++;
+        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), idx, 
+                pDescriptorSets, pOffsets);
+    }
 
     public static void rebindSceneDescriptorSet() {
         if (curPipeline == null) {
@@ -1378,15 +1391,7 @@ public class Engine {
             return;
         }
         rebindDescSet0 = false;
-        pDescriptorSets.clear();
-        pDescriptorSets.put(boundDescriptorSets[0].get());
-        pDescriptorSets.flip();
-        pOffsets.clear();
-        boundDescriptorSets[0].addDynamicOffsets(pOffsets);
-        pOffsets.flip();
-        Stats.callsBindDescSets++;
-        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
-                pDescriptorSets, pOffsets);
+        directBindDescSet(0, boundDescriptorSets[0]);
     }
     public static void bindOverrideSceneDescriptor(VkDescriptor override) {
         rebindDescSet0 = true;
@@ -1456,6 +1461,10 @@ public class Engine {
         curFB.onEndRenderPass();
         curPipeline = null;
         curPass = null;
+    }
+    public static void setDescriptorSetF(int idx, VkDescriptor descriptorSet) {
+        boundDescriptorSets[idx] = descriptorSet;
+        rebindDescSet = true;
     }
     public static void setDescriptorSet(int idx, VkDescriptor descriptorSet) {
         if (boundDescriptorSets[idx] != descriptorSet) {

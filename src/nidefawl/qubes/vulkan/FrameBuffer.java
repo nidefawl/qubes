@@ -17,7 +17,7 @@ public class FrameBuffer implements RefTrackedResource {
     public boolean[] isReferencedAtt = new boolean[8];
     int height;
     int width;
-    public boolean[] inUseBy = new boolean[VulkanInit.MAX_NUM_SWAPCHAIN];
+    public boolean[] inUseBy = new boolean[VkConstants.MAX_NUM_SWAPCHAIN];
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
     }

@@ -66,5 +66,14 @@ public class EntityModelManager {
             
         }
     }
+    public void redraw() {
+        for (int i = 0; i < EntityModel.HIGHEST_MODEL_ID+1; i++) {
+            EntityModel model = EntityModel.models[i];
+            if (model == null) {
+                continue;
+            }
+            model.getModel().draw();
+        }
+    }
 
 }

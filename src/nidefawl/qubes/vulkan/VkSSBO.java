@@ -20,6 +20,7 @@ public class VkSSBO implements IBufferDynamicOffset {
     private int           bufferSize;
     private int           bufferOffset = 0;
     private String tag;
+    private int marker;
     
     public int getBufferPos() {
         return this.bufferPos;
@@ -52,14 +53,20 @@ public class VkSSBO implements IBufferDynamicOffset {
 
     public void uploadData(ByteBuffer buf) {
         this.bufferSize = buf.remaining();
+        if (this.bufferSize == 0) {
+            return;
+        }
         long alignedV = Math.max(2048, GameMath.nextPowerOf2(this.dynSize));
         //            System.out.println(BUFFER_SIZE+","+this.bufferOffset+","+this.bufferSize+"  - "+(BUFFER_SIZE-this.bufferOffset)+" < "+this.bufferSize+" = "+(BUFFER_SIZE-this.bufferPos < this.bufferSize));
         if (this.size - this.bufferOffset < alignedV) {
             this.bufferOffset = 0;
+//            System.out.println(this.tag+ " wrap around "+this.size+","+alignedV);
+
         }
         this.bufferPos = this.bufferOffset;
         this.buffer.upload(buf, this.bufferPos);
         this.bufferOffset += alignedV;
+        if (Engine.debugflag)
         System.out.println(this.tag+ " Uploaded " + this.bufferSize + " bytes at pos " + this.bufferPos + ", next " + this.bufferOffset);
     }
 
@@ -73,6 +80,24 @@ public class VkSSBO implements IBufferDynamicOffset {
 
     @Override
     public int getDynamicOffset() {
+//        System.out.println(this.tag+ " getoffset "+this.bufferPos);
         return this.bufferPos;
     }
+
+    public void markPos() {
+        this.marker = this.bufferOffset;
+    }
+    /**
+     * <b>Caller makes sure buffer size is multiple of framesize!</b>
+     * 
+     * @param frameSize
+     */
+    public void seekPos(int frameSize) {
+        int nextPos = this.marker+frameSize;
+        this.bufferOffset = nextPos;
+        if (this.bufferOffset >= this.size) {
+            this.bufferOffset = 0;
+        }
+    }
+
 }

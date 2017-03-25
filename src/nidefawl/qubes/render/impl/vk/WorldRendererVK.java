@@ -140,6 +140,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 rendered = Engine.regionRenderer.rendered;
         //        System.out.println("rendered " +rendered);
                 RenderersVulkan.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
+
                 renderEntitiesBatched(world, PASS_SOLID, fTime, 0);
             Engine.endRenderPass();
         
@@ -151,6 +152,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
     
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureTerrainWater);
+                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
                 Engine.bindPipeline(VkPipelines.water);
                 RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
             Engine.endRenderPass();

@@ -10,6 +10,7 @@ import org.lwjgl.vulkan.VkDescriptorBufferInfo;
 import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.shader.IBufferDynamicOffset;
 import nidefawl.qubes.shader.UniformBuffer;
 
@@ -101,7 +102,8 @@ public class VkDescriptor {
     public void addDynamicOffsets(IntBuffer pOffsets) {
         for (int i = 0; i < this.numBindings; i++) {
             if (this.bindings[i].dynamicOffset != null) {
-//                System.err.println("bind set "+i+": "+tag);
+                if (Engine.debugflag)
+                System.out.println("bind set "+i+": "+tag +" at offset "+this.bindings[i].dynamicOffset.getDynamicOffset());
                 pOffsets.put(this.bindings[i].dynamicOffset.getDynamicOffset());
             }
         }

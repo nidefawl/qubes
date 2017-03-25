@@ -1,28 +1,16 @@
 package nidefawl.qubes.models.render;
 
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-
 import java.nio.FloatBuffer;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import nidefawl.qubes.Game;
-import nidefawl.qubes.assets.AssetManager;
-import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.BufferedMatrix;
 import nidefawl.qubes.models.qmodel.*;
-import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.shader.*;
-import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vec.Matrix4f;
 
 public abstract class QModelBatchedRender extends QModelRender {
-    public final static int NUM_FRAMES = 1000;
-    public static final int MAX_INSTANCES = 16*1024;
-    public static final int SIZE_OF_MAT4 = 16*4;
-    public static final int NUM_BONE_MATRICES = 64;
     public static final int RENDERER_WORLD_MAIN = 0;
     public static final int RENDERER_WORLD_SHADOW = 1;
     public static final int RENDERER_WORLD_MODELVIEWER = 2;
