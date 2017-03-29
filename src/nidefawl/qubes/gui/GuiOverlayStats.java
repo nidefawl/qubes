@@ -9,6 +9,7 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas.TextureAtlas;
@@ -22,7 +23,9 @@ import nidefawl.qubes.util.SysInfo;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
+import nidefawl.qubes.vulkan.VkDescLayouts;
 import nidefawl.qubes.vulkan.VkMemoryManager;
+import nidefawl.qubes.vulkan.VkPipelines;
 import nidefawl.qubes.world.WorldClient;
 
 public class GuiOverlayStats extends Gui {
@@ -272,15 +275,18 @@ public class GuiOverlayStats extends Gui {
         if (b != null)
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
 
-        if (false)
+        if (Engine.isVulkan)
         {
             int prX = 20;
             int prY = prX;
-            int pw = 1024;
-            int ph = pw;
+            int pw = 320;
+            float aspect = Engine.fbHeight()/(float)Engine.fbWidth();
+            int ph = (int) (pw*aspect);
             TextureAtlas atlas = SingleBlockRenderAtlas.getInstance().getAtlasAtIdx(0);
             if (atlas != null) {
+                Engine.clearDepth();
                 atlas.renderBuffer.bindTextureDescriptor();
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descLumInterpOutputsCalcd[1]);
                 Engine.setPipeStateTextured2D();
                 tess.setColorF(-1, 1);
                 tess.add(prX, prY+ph, 0, 0, 1);
@@ -288,6 +294,21 @@ public class GuiOverlayStats extends Gui {
                 tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
                 tess.add(prX, prY, 0, 0.0f, 0.0f);
                 tess.drawQuads();
+                prX+=pw+10;
+                pw = 200;
+                ph = (int) (pw*aspect);
+                for (int i = 0; i < RenderersVulkan.outRenderer.fbLuminanceDownsample.length; i++) {
+//                    RenderersVulkan.outRenderer.descTextureDownsampleOutputs
+                    Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descTextureDownsampleOutputs[i]);
+                    Engine.setPipeStateTextured2D();
+                    tess.setColorF(-1, 1);
+                    tess.add(prX, prY+ph, 0, 0, 1);
+                    tess.add(prX+pw, prY+ph, 0, 1, 1);
+                    tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
+                    tess.add(prX, prY, 0, 0.0f, 0.0f);
+                    tess.drawQuads();
+                    prY += ph+10;
+                }
             }
         }
 

@@ -231,7 +231,8 @@ public class Tess extends AbstractTesselatorState implements ITess {
             } else if (mode == GL11.GL_LINES
                     ||mode == GL11.GL_LINE_STRIP
                     ||mode == GL11.GL_TRIANGLES
-                    ||mode == GL11.GL_POLYGON) {
+                    ||mode == GL11.GL_POLYGON
+                    ||mode == GL11.GL_POINTS) {
                 for (int i = 0; i < this.vertexcount; i++) {
                     rawBuffer[i]=i;
                 }

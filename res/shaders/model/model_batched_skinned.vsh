@@ -40,7 +40,7 @@ in vec4 in_weights2;
 
 #if RENDERER == RENDERER_WORLD_SHADOW
 	#ifdef VULKAN_GLSL
-		layout(push_constant) uniform PushCModelShadowSplit {
+		layout(push_constant) uniform PushConstantsModelShadowSplit {
 		  int shadowSplit;
 		} pushCModelShadowSplit;
 		#define SHADOW_SPLIT pushCModelShadowSplit.shadowSplit

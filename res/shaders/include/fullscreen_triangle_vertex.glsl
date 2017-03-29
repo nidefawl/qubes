@@ -13,12 +13,11 @@
                                     vec4( -1,  -1, 0.0, 0.0),
                                     vec4(  3,  -1, 2.0, 0.0),
                                     vec4( -1,  3, 0.0,  2.0));
-    pass_texcoord.st = vertices[VERTEX_IDX].zw;
-    gl_Position = vec4(vertices[VERTEX_IDX].xy, 0, 1);
 #else
    const vec4 vertices[3] = vec4[3](vec4( -1, -3, 0.0, 2.0),
                                     vec4(  3,  1, 2.0, 0.0),
                                     vec4( -1,  1, 0.0, 0.0));
-    pass_texcoord.st = vertices[VERTEX_IDX].zw;
-    gl_Position = vec4(vertices[VERTEX_IDX].xy, 0, 1);
 #endif
+    vec4 verticeIdx = vertices[VERTEX_IDX];
+    pass_texcoord.st = verticeIdx.zw;
+    gl_Position = vec4(verticeIdx.xy, 0, 1);

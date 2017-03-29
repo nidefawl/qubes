@@ -3,8 +3,17 @@
 
 precision highp float;
 
-uniform sampler2D texColor;
-uniform vec3 blurPassProp;
+layout (set = 0, binding = 0) uniform sampler2D texColor;
+
+#ifdef VULKAN_GLSL
+    layout(push_constant) uniform PushConstantsBlurKaw {
+      vec3 blurPassProp;
+    } pushCBlurKaw;
+    #define PASS_PROP pushCBlurKaw.blurPassProp
+#else
+    uniform vec3 blurPassProp;
+    #define PASS_PROP blurPassProp
+#endif
 
 in vec2 pass_texcoord;
 
@@ -56,7 +65,7 @@ void main()
 {
     // out_Color = texture(texColor, pass_texcoord);
 
-    out_Color = vec4(KawaseBlurFilter( texColor, pass_texcoord.xy, blurPassProp.xy, blurPassProp.z ), 1);
+    out_Color = vec4(KawaseBlurFilter( texColor, pass_texcoord.xy, PASS_PROP.xy, PASS_PROP.z ), 1);
 
     // // double-Kawase is also an option, but loses some quality
     // FragColor.xyz += KawaseBlurFilter( texColor, pass_texcoord.xy, blurPassProp.xy, blurPassProp.z*2.0 + 1.0 );

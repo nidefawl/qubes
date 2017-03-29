@@ -22,12 +22,14 @@ public class GLTriBuffer {
     private int      vertexCount;
     private int idxCount;
     private BufferPair bufferPair;
-    public GLTriBuffer(int usage) {
+    private boolean isDynamic;
+    public GLTriBuffer(boolean isDynamic) {
+        this.isDynamic = isDynamic;
         if (Engine.isVulkan) {
             this.bufferPair = Engine.vkContext.getFreeBuffer();
         } else {
-            this.vbo = new GLVBO(usage);
-            this.vboIndices = new GLVBO(usage);
+            this.vbo = new GLVBO(isDynamic ? GL15.GL_DYNAMIC_DRAW : GL15.GL_STATIC_DRAW);
+            this.vboIndices = new GLVBO(isDynamic ? GL15.GL_DYNAMIC_DRAW : GL15.GL_STATIC_DRAW);
         }
     }
 
@@ -38,7 +40,8 @@ public class GLTriBuffer {
         int numInts = buf.storeVertexData(buffer1);
         int numInts2 = buf.storeIndexData(buffer2);
         if (Engine.isVulkan) {
-            this.bufferPair.uploadDeviceLocal(buffer1.getByteBuf(), numInts, buffer2.getByteBuf(), numInts2);
+            this.bufferPair.create(numInts*4L, numInts2*4L, !isDynamic);
+            this.bufferPair.upload(0, buffer1.getByteBuf(), 0, buffer2.getByteBuf());
             this.bufferPair.setElementCount(numInts2);
         } else {
             this.vbo.upload(GL15.GL_ARRAY_BUFFER, buffer1.getByteBuf(), numInts * 4L);

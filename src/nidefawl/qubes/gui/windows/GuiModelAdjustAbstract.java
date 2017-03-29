@@ -371,7 +371,6 @@ public abstract class GuiModelAdjustAbstract extends GuiWindow {
         Matrix4f.mul(temp, temp2, temp);
         temp.update();
         renderBatched.setForwardRenderMVP(temp);
-        renderBatched.setModel(entityModel.model);
         this.properties.rot.x = 0;
         this.properties.rot.y = -90;
         this.properties.pos.set(Engine.GLOBAL_OFFSET.x, Engine.GLOBAL_OFFSET.y, Engine.GLOBAL_OFFSET.z);

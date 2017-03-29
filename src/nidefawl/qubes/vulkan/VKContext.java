@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkImageMemoryBarrier.Buffer;
 
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
@@ -38,7 +37,8 @@ public class VKContext {
     public static LongBuffer ZERO_OFFSET;
     public static int currentBuffer = 0;
     public static boolean DUMP_SHADER_SRC = false;
-    private static Buffer BARRIER_MEM_IMG;
+    private static VkImageMemoryBarrier.Buffer BARRIER_MEM_IMG;
+    public static VkMemoryBarrier.Buffer BARRIER_MEM_ATT_WRITE_SHADER_READ;
 
     private static VkClearColorValue CLEAR_COLOR;
     private static VkImageSubresourceRange CLEAR_RANGE;
@@ -350,7 +350,7 @@ public class VKContext {
         swapChain.swapChainAquired = true;
         if (USE_FENCE_SYNC) {
             // Use a fence to wait until the command buffer has finished execution before using it again
-            err = vkWaitForFences(device, this.fences[currentBuffer], true, 1000L*1000L*100L);
+            err = vkWaitForFences(device, this.fences[currentBuffer], true, 1000L*1000L*1000L);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkWaitForFences failed: " + VulkanErr.toString(err));
             }
@@ -708,6 +708,9 @@ public class VKContext {
         ZERO_OFFSET = memAllocLong(1);
         ZERO_OFFSET.put(0, 0);
         BARRIER_MEM_IMG = VkImageMemoryBarrier.calloc(1);
+        BARRIER_MEM_ATT_WRITE_SHADER_READ = VkMemoryBarrier.calloc(1);
+        BARRIER_MEM_ATT_WRITE_SHADER_READ.sType(VK_STRUCTURE_TYPE_MEMORY_BARRIER).pNext(0L);
+        BARRIER_MEM_ATT_WRITE_SHADER_READ.srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT).dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
         CLEAR_COLOR = VkClearColorValue.calloc();
         CLEAR_DEPTH = VkClearDepthStencilValue.calloc();
         CLEAR_RANGE = VkImageSubresourceRange.calloc();
@@ -724,6 +727,7 @@ public class VKContext {
         VkMemoryManager.destroyStatic();
         memFree(ZERO_OFFSET);
         BARRIER_MEM_IMG.free();
+        BARRIER_MEM_ATT_WRITE_SHADER_READ.free();
         CLEAR_RANGE.free();
         CLEAR_DEPTH.free();
         CLEAR_COLOR.free();

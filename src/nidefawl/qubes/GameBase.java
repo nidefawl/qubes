@@ -850,6 +850,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 DumbPool.reset();
             }
         } catch (Throwable t) {
+            if (DEBUG_LAYER)
+                t.printStackTrace();
             showErrorScreen("The game crashed", Arrays.asList(new String[] { "An unexpected exception occured" }), t, true);
         } finally {
             if (this.wasrunning) {

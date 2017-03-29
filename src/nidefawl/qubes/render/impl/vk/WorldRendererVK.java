@@ -11,6 +11,7 @@ import nidefawl.qubes.gl.*;
 import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.models.ItemModel;
+import nidefawl.qubes.models.qmodel.QModelTexture;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.RenderersGL;
@@ -52,7 +53,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         TextureBinMips mips = new TextureBinMips(data, 256, 256);
         this.waterNoiseTex.build(VK_FORMAT_R8G8B8A8_UNORM, mips);
         this.waterNoiseTex.genView();
-
 
         pRegions.srcOffset().x(0).y(0).z(0);
         pRegions.dstOffset().x(0).y(0).z(0);
@@ -170,7 +170,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
         } else {
             System.err.println("SKIPPED, framebuffer is not sized");
-            System.err.printf("%dx%d vs %dx%d vs %dx%d vs %dx%d\n", 
+            System.err.printf("%dx%d vs %dx%d\n", 
                     fbScene.getWidth(), fbScene.getHeight(),
                     Engine.displayWidth, Engine.displayHeight);
 
@@ -252,16 +252,18 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                     mat2.update();
                     UniformBuffer.setNormalMat(mat2.get());
                 }
-                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrainNormals());
+                QModelTexture tex = model.loadedModels[0].getQModelTexture(0);
+                
+
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, tex.descriptorSetTex);
                 Engine.clearDescriptorSet(VkDescLayouts.DESC3);
                 Engine.bindPipeline(VkPipelines.model_firstperson);
                 PushConstantBuffer buf = PushConstantBuffer.INST;
                 buf.setMat4(0, mat);//TODO: push normal mat
-                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.singleblock_3D.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64));
-
-//                shaderModelfirstPerson.enable();
-//                shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
-//                model.loadedModels[0].bindTextures(0);
+                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.model_firstperson.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64));
+//              shaderModelfirstPerson.enable();
+//              shaderModelfirstPerson.setProgramUniformMatrix4("model_matrix", false, mat.get(), false);
+//              model.loadedModels[0].bindTextures(0);
 //                Engine.bindVAO(GLVAO.vaoModel);
                 model.loadedModels[0].render(0, 0, Game.ticksran+fTime);
             }

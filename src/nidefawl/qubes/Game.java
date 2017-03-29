@@ -1237,9 +1237,6 @@ public class Game extends GameBase {
 
     @Override
     public void onStatsUpdated() {
-        if (this.statsList != null) {
-            this.statsList.refresh();
-        }
         if (System.currentTimeMillis()-lastShaderLoadTime >=2200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
             int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
@@ -1279,6 +1276,9 @@ public class Game extends GameBase {
     
     @Override
     public void preRenderUpdate(float f) {
+        if (this.statsList != null) {
+            this.statsList.refresh();
+        }
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
         if (this.client != null) {

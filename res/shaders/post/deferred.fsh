@@ -47,8 +47,6 @@ struct SurfaceProperties {
 } prop;
 
 
-
-#ifdef VULKAN_GLSL
 layout (set = 2, binding = 0) uniform sampler2D texColor;
 layout (set = 2, binding = 1) uniform sampler2D texNormals;
 layout (set = 2, binding = 2) uniform usampler2D texMaterial;
@@ -66,26 +64,6 @@ layout (set = 2, binding = 8) uniform sampler2D texWaterNoise;
 #ifdef BLUE_NOISE
 uniform int texSlotNoise;
 layout (set = 2, binding = 9) uniform sampler2DArray texArrayNoise;
-#endif
-#else
-uniform sampler2D texColor;
-uniform sampler2D texNormals;
-uniform usampler2D texMaterial;
-uniform sampler2D texBlockLight;
-uniform sampler2D texDepth;
-uniform sampler2D texShadow;
-uniform sampler2D texLight;
-#if RENDER_AMBIENT_OCCLUSION
-uniform sampler2D texAO;
-#endif
-#if RENDER_PASS == 1
-uniform sampler2D texDepthPreWater;
-uniform sampler2D texWaterNoise;
-#endif
-#ifdef BLUE_NOISE
-uniform int texSlotNoise;
-uniform sampler2DArray texArrayNoise;
-#endif
 #endif
 
 

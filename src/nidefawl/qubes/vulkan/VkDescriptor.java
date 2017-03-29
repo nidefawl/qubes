@@ -116,4 +116,8 @@ public class VkDescriptor {
     public void setOverrideOffset(int[] ssboOffsets) {
         this.overrideOffsets = ssboOffsets;
     }
+    @Override
+    public String toString() {
+        return "VkDescriptor["+Long.toHexString(this.descriptorSet)+","+this.tag+"]";
+    }
 }

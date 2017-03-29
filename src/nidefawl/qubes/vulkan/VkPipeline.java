@@ -44,7 +44,7 @@ public class VkPipeline {
             .minDepth(0)
             .maxDepth(1);
     VkRect2D.Buffer scissors = VkRect2D.calloc(1);
-    VkPipelineViewportStateCreateInfo viewportState = pipelineViewportStateCreateInfo(1, 1, 0)
+    VkPipelineViewportStateCreateInfo viewportState = pipelineViewportStateCreateInfo(1, 0)
             .pViewports(viewport)
             .pScissors(scissors);
     protected VkPipelineVertexInputStateCreateInfo vertexInputState = pipelineVertexInputStateCreateInfo();
@@ -74,6 +74,7 @@ public class VkPipeline {
         viewportState.pViewports(viewport);
         viewportState.pScissors(scissors);
         VkPipelines.registerPipe(this);
+        setBlend(false);
     }
 
     public void destroyPipeLine(VKContext vkContext) {
@@ -108,7 +109,7 @@ public class VkPipeline {
                 .pVertexBindingDescriptions(bindingDescriptions)
                 .pVertexAttributeDescriptions(desc.attributeDescriptions);
     }
-    public void setEmptyVertexInput() {
+    public void setScreenSpaceTriangle() {
         bindingDescriptions.position(0).limit(0);
         vertexInputState.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
         vertexInputState.pVertexBindingDescriptions(bindingDescriptions);
@@ -116,6 +117,8 @@ public class VkPipeline {
             VkVertexInputAttributeDescription.Buffer buffer = VkVertexInputAttributeDescription.callocStack(0, stack);
             vertexInputState.pVertexAttributeDescriptions(buffer);
         }
+        depthStencilState.depthTestEnable(false);
+        rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
     }
     public void setRenderPass(VkRenderPass passSubpassSwapchain, int subpass) {
         this.renderpass = passSubpassSwapchain;
@@ -287,13 +290,12 @@ public class VkPipeline {
 
     public static VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(
             int viewportCount,
-            int scissorCount,
             int flags)
     {
         VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = VkPipelineViewportStateCreateInfo.calloc();
         pipelineViewportStateCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
         pipelineViewportStateCreateInfo.viewportCount(viewportCount);
-        pipelineViewportStateCreateInfo.scissorCount(scissorCount);
+        pipelineViewportStateCreateInfo.scissorCount(viewportCount);
         pipelineViewportStateCreateInfo.flags(flags);
         return pipelineViewportStateCreateInfo;
     }

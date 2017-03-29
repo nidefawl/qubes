@@ -40,8 +40,8 @@ public class CubeParticleRendererGL extends CubeParticleRenderer {
 
     public void init() {
         initShaders();
-        cubeFormat1 = new GLTriBuffer(GL15.GL_STREAM_DRAW);
-        cubeFormat2 = new GLTriBuffer(GL15.GL_STREAM_DRAW);
+        cubeFormat1 = new GLTriBuffer(false);
+        cubeFormat2 = new GLTriBuffer(false);
         VertexBuffer buf = new VertexBuffer(1024*1024);
         RenderUtil.makeCube(buf, 1.0f, GLVAO.vaoStaticModel);
         cubeFormat1.upload(buf);

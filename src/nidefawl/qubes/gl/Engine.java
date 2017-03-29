@@ -12,6 +12,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.lwjgl.opengl.*;
@@ -1321,7 +1322,6 @@ public class Engine {
     private static boolean rebindDescSet;
     private static VkRenderPass curPass;
     private static nidefawl.qubes.vulkan.FrameBuffer curFB;
-    public static boolean INVERSE_MAP = true;
     public static void bindPipeline(VkPipeline pipe) {
         bindPipeline(pipe, 0);
     }
@@ -1349,11 +1349,13 @@ public class Engine {
             }
             rebindDescSet = true;
         }
-        if (rebindDescSet0) {
-            rebindSceneDescriptorSet();
-        }
-        if (rebindDescSet1) {
-            rebindTransformDescriptorSet();
+        if (lockSceneDescriptors) {
+            if (rebindDescSet0) {
+                rebindSceneDescriptorSet();
+            }
+            if (rebindDescSet1) {
+                rebindTransformDescriptorSet();
+            }
         }
         if (rebindDescSet) {
             rebindDescriptorSets();
@@ -1387,6 +1389,9 @@ public class Engine {
         descSet.addDynamicOffsets(pOffsets);
         pOffsets.flip();
         Stats.callsBindDescSets++;
+//        for (int i = pDescriptorSets.position(); i < pDescriptorSets.limit(); i++) {
+//            System.out.println("bind "+i+" = "+pDescriptorSets.get(i)+ " = ("+boundDescriptorSets[i]+")");
+//        }
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), idx, 
                 pDescriptorSets, pOffsets);
     }
@@ -1423,8 +1428,23 @@ public class Engine {
 //        pOffsets.put(0, UniformBuffer.uboTransformStack.getDynamicOffset());
 //        pOffsets.position(0).limit(1);
         Stats.callsBindDescSets++;
+//        for (int i = pDescriptorSets.position(); i < pDescriptorSets.limit(); i++) {
+//            System.out.println("bind "+i+" = "+pDescriptorSets.get(i)+ " = ("+boundDescriptorSets[i]+")");
+//        }
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 1, 
                 pDescriptorSets, pOffsets);
+    }
+    public static boolean lockSceneDescriptors = true;
+
+    public static void unbindSceneDescriptorSets() {
+        lockSceneDescriptors = false;
+    }
+    public static void rebindSceneDescriptorSets() {
+        lockSceneDescriptors = true;
+        boundDescriptorSets[0] = descriptorSetUboScene;
+        boundDescriptorSets[1] = descriptorSetUboTransform;
+        rebindDescSet0 = true;
+        rebindDescSet1 = true;
     }
     public static void rebindDescriptorSets() {
         if (curPipeline == null) {
@@ -1435,7 +1455,7 @@ public class Engine {
         pDescriptorSets.clear();
         pOffsets.clear();
 //        System.err.println(curPipeline.layout.getName()+"");
-        for (int i = 2; i < boundDescriptorSets.length; i++) {
+        for (int i = lockSceneDescriptors?2:0; i < boundDescriptorSets.length; i++) {
             if (boundDescriptorSets[i] != null) {
                 pDescriptorSets.put(boundDescriptorSets[i].get());
                 boundDescriptorSets[i].addDynamicOffsets(pOffsets);
@@ -1446,7 +1466,10 @@ public class Engine {
 //        pOffsets.position(0).limit(0);
         if (pDescriptorSets.remaining() > 0) {
             Stats.callsBindDescSets++;
-            vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 2, 
+//            for (int i = pDescriptorSets.position(); i < pDescriptorSets.limit(); i++) {
+//                System.out.println("bind "+i+" = "+pDescriptorSets.get(i)+ " = ("+boundDescriptorSets[i]+")");
+//            }
+            vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), lockSceneDescriptors?2:0, 
                     pDescriptorSets, pOffsets);
         }
     }
@@ -1477,6 +1500,10 @@ public class Engine {
             boundDescriptorSets[idx] = descriptorSet;
             rebindDescSet = true;
         }
+    }
+    public static void clearAllDescriptorSets() {
+        Arrays.fill(boundDescriptorSets, null);
+        rebindDescSet = true;
     }
     public static void clearDescriptorSet(int idx) {
         rebindDescSet |= boundDescriptorSets[idx] != null;

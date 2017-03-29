@@ -3,7 +3,7 @@
 #pragma define "LUMINANCE"
 #pragma include "tonemap.glsl"
 
-uniform sampler2D texColor;
+layout (set = 0, binding = 0) uniform sampler2D texColor;
 
 in vec2 TexCoord1;
 in vec2 TexCoord2;
@@ -19,12 +19,12 @@ void main(void) {
 	vec4 sample3 = texture(texColor, TexCoord4, 0);
 #ifdef LUMINANCE
 	vec3 LUMINANCE_VECTOR  = vec3(0.2125, 0.7154, 0.0721);
-	vec3 sample = (sample0.rgb+sample1.rgb+sample2.rgb+sample3.rgb)*0.25;
-	sample = ToneMap(sample, 16);
-	vec3 lum = vec3(max(dot(sample, LUMINANCE_VECTOR), 0));
+	vec3 texSample = (sample0.rgb+sample1.rgb+sample2.rgb+sample3.rgb)*0.25;
+	texSample = ToneMap(texSample, 32);
+	vec3 lum = vec3(max(dot(texSample, LUMINANCE_VECTOR), 0));
     out_Color = vec4(lum, 1);
-#else
 
+#else
     out_Color = (sample0+sample1+sample2+sample3)*0.25;
 #endif
 }

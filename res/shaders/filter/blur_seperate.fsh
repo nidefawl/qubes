@@ -1,8 +1,17 @@
 #version 150 core
 
-uniform sampler2D texSSR;
+layout (set = 0, binding = 0) uniform sampler2D texSSR;
 
-uniform vec2 _TexelOffsetScale;
+#ifdef VULKAN_GLSL
+	layout(push_constant) uniform PushConstantsBlurSep {
+	  vec2 _TexelOffsetScale;
+	} pushCBlurSep;
+	#define TWO_TEXEL pushCBlurSep._TexelOffsetScale
+#else
+	uniform vec2 _TexelOffsetScale;
+	#define TWO_TEXEL _TexelOffsetScale
+#endif
+
 const float _DepthBias = 0.305;
 const float _NormalBias = 0.29;
 const float _BlurQuality = 7.0; //2.0 - 4.0
@@ -30,7 +39,7 @@ void main(void)
 {
     vec4 srcalbedo = texture(texSSR, pass_texcoord, 0);
 
-    vec2 stepSize = _TexelOffsetScale.xy * 0.04;
+    vec2 stepSize = TWO_TEXEL.xy * 0.04;
     vec4 accumulator = srcalbedo * 0.214607;
     float denominator = 0.214607;
 	processSample( pass_texcoord, 1, _BlurQuality, stepSize, accumulator, denominator);

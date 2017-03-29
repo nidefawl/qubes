@@ -56,7 +56,6 @@ public class VulkanInit {
             debugCallback = new VkDebugReportCallbackEXT() {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
                     System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
-
                     GameBase.baseInstance.setException(new GameError("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage)));
                     return 0;
                 }

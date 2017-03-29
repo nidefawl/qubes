@@ -28,11 +28,14 @@ public class ShaderSource {
     };
     static Pattern patternInclude = Pattern.compile("#pragma include \"([^\"]*)\"");
     static Pattern patternDefine = Pattern.compile("#pragma define \"([^\"]*)\"( \"([^\"]*)\")?.*");
+    static Pattern patternSet = Pattern.compile("#pragma set \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
     static Pattern patternRemoveSetBindingBuffer = Pattern.compile("layout\\s*\\(\\s*set = [0-9]{1,2},\\s*binding = [0-9]{1,2},\\s*std(140|430)\\s*\\) (uniform|buffer) ([^\\s]*).*");
     static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageOutput = Pattern.compile("(flat )?out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageInput = Pattern.compile("(flat )?in ([^\\s]*) ([^\\s]*);.*");
+    static Pattern patternStageSamplerInputRemoveSet = Pattern.compile("^\\s*layout\\s*\\(\\s*set = [0-9]{1,2},\\s*binding = [0-9]{1,2}\\s*\\)\\s+uniform\\s+(u)?sampler([^\\s]*)\\s+([^\\s]*)\\s*;.*");
+
     static Pattern patternStageSamplerInput = Pattern.compile("uniform (u)?sampler([^\\s]*) ([^\\s]*);");
     static Pattern patternDebug = Pattern.compile("#print ([^\\s]*) ([^\\s]*) ([^\\s]*)");
     static Pattern lineErrorAMD = Pattern.compile("ERROR: ([0-9]+):([0-9]+): (.*)");
@@ -125,6 +128,7 @@ public class ShaderSource {
                 if (processMode == ProcessMode.VULKAN) {
                     lines.add(resolve?0:1, "#define VULKAN_GLSL");
                 }
+                int texure_descset_index = 2;
                 int nFragmentOutputs = 0;
                 int nVertexOutputs = 0;
                 int nInputs = 0;
@@ -154,11 +158,16 @@ public class ShaderSource {
                         code += input;
                         if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
 
-                    } else if (processMode == ProcessMode.VULKAN&&shaderType==VK10.VK_SHADER_STAGE_FRAGMENT_BIT&&line.startsWith("uniform") && (m = patternStageSamplerInput.matcher(line)).matches()) {
-                        if (debugPrint) System.out.println("TRANSFORM FRAGMENT LINE "+line);
-                        String input = "layout (set = 2, binding = "+(nSamplers++)+") uniform "+(m.group(1)==null?"":m.group(1))+"sampler"+m.group(2)+" "+m.group(3)+";\r\n";
+                    } else if (processMode == ProcessMode.VULKAN&&line.startsWith("uniform") && (m = patternStageSamplerInput.matcher(line)).matches()) {
+                        if (debugPrint) System.out.println("TRANSFORM LINE "+line);
+                        String input = "layout (set = "+texure_descset_index+", binding = "+(nSamplers++)+") uniform "+(m.group(1)==null?"":m.group(1))+"sampler"+m.group(2)+" "+m.group(3)+";\r\n";
                         code += input;
-                        if (debugPrint) System.out.println("TRANSFORMED FRAGMENT LINE "+input);
+                        if (debugPrint) System.out.println("TRANSFORMED LINE "+input);
+                    } else if (processMode == ProcessMode.OPENGL&& line.startsWith("layout") && (m = patternStageSamplerInputRemoveSet.matcher(line)).matches()) {
+                        if (debugPrint) System.out.println("TRANSFORM LINE "+line);
+                        String input = "uniform "+(m.group(1)==null?"":m.group(1))+"sampler"+m.group(2)+" "+m.group(3)+";\r\n";
+                        code += input;
+                        if (debugPrint) System.out.println("TRANSFORMED LINE "+input);
                     } else if (processMode == ProcessMode.OPENGL&&line.startsWith("layout") && (m = patternRemoveSetBindingBuffer.matcher(line)).matches()) {
                         String buffer_layout = m.group(1);
                         String buffer_type = m.group(2);
@@ -226,6 +235,12 @@ public class ShaderSource {
                                 }
                             }
                             this.attrTypes = m.group(1);
+                        } else if ((m = patternSet.matcher(line)).matches()) {
+                            String define = m.group(1);
+                            String defineDefault = m.groupCount() > 2 ? m.group(3) : null;
+                            if ("TEX_DESCRIPTOR_SET".equals(define)) {
+                                texure_descset_index = StringUtil.parseInt(defineDefault, 0);
+                            }
                         } else {
                             throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
                         }

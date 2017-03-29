@@ -10,14 +10,14 @@ import org.lwjgl.vulkan.VkAttachmentDescription;
 import org.lwjgl.vulkan.VkFramebufferCreateInfo;
 
 public class FrameBuffer implements RefTrackedResource {
-    private final VKContext ctxt;
-    private String          tag;
-    public long framebuffer;
-    public FramebufferAttachment[] attachments = new FramebufferAttachment[8];
-    public boolean[] isReferencedAtt = new boolean[8];
-    int height;
-    int width;
-    public boolean[] inUseBy = new boolean[VkConstants.MAX_NUM_SWAPCHAIN];
+    private final VKContext        ctxt;
+    public long                    framebuffer;
+    int                            height;
+    int                            width;
+    public FramebufferAttachment[] attachments     = new FramebufferAttachment[8];
+    public boolean[]               isReferencedAtt = new boolean[8];
+    public boolean[]               inUseBy         = new boolean[VkConstants.MAX_NUM_SWAPCHAIN];
+    private String                 tag;
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
     }

@@ -108,7 +108,6 @@ public abstract class WorldRenderer extends AbstractRenderer {
             renderProps.setEntity(e);
             e.adjustRenderProps(renderProps, fTime);
             
-            modelRender.setModel(model.model);
             model.setActions(modelRender, renderProps, GameBase.absTime, fTime);
             model.setPoseAndSubmit(modelRender, renderProps, GameBase.absTime, fTime);
             if (Game.GL_ERROR_CHECKS)
