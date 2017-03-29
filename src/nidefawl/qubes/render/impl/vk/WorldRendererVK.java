@@ -49,7 +49,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         this.descTextureTerrainWater = Engine.vkContext.descLayouts.allocDescSetSamplerDouble();
         this.descTextureTerrain = Engine.vkContext.descLayouts.allocDescSetSampleSingle();
         this.waterNoiseTex = new VkTexture(Engine.vkContext);
-        byte[] data = TextureUtil.genNoise2(256);
+        byte[] data = TextureUtil.genNoise2(256, true);
         TextureBinMips mips = new TextureBinMips(data, 256, 256);
         this.waterNoiseTex.build(VK_FORMAT_R8G8B8A8_UNORM, mips);
         this.waterNoiseTex.genView();
