@@ -160,12 +160,12 @@ public class EntityModelArcher extends EntityModel {
         this.model.animateNodes(properties, fabs, fTime);
         int skinSel = properties.getOption(this.texSkin.getId());
         main_0.bindTextureIdx(0, skinSel);
-        rend.addObject(main_0);
+        rend.addObject(this.model, main_0);
         int modelWeaponSel = properties.getOption(this.modelWeapon.getId());
         boolean hasBow = modelWeaponSel == 2;
         QModelObject n = listWeapon.get(modelWeaponSel);
         if (n != null)
-            rend.addObject(n);
+            rend.addObject(this.model, n);
         attach(rend, properties, this.listHelmets, this.modelHelmet, this.texHelmet);
         if (!hasBow)
             attach(rend, properties, this.listShields, this.modelShield, this.texShield);
@@ -178,7 +178,7 @@ public class EntityModelArcher extends EntityModel {
         QModelObject model = list.get(modelSel);
         if (model != null) {
             model.bindTextureIdx(0, texSel);
-            rend.addObject(model);
+            rend.addObject(this.model, model);
         }
     }
     private void attach2(QModelRender rend, QModelProperties config, List<QModelObject[]> list, ModelOption modelOption, ModelOption texOption) {
@@ -188,8 +188,8 @@ public class EntityModelArcher extends EntityModel {
         if (model != null) {
             model[0].bindTextureIdx(0, texSel);
             model[1].bindTextureIdx(0, texSel);
-            rend.addObject(model[0]);
-            rend.addObject(model[1]);
+            rend.addObject(this.model, model[0]);
+            rend.addObject(this.model, model[1]);
         }
     }
 }

@@ -171,17 +171,17 @@ public abstract class QModelBatchedRender extends QModelRender {
     }
 
     @Override
-    public void addObject(QModelObject model) {
-        for (QModelGroup grp : model.listGroups) {
-            QModelRenderSubList s = getSubList(model, grp);
-            s.add(this, model, grp);
+    public void addObject(ModelQModel model, QModelObject modelObject) {
+        for (QModelGroup grp : modelObject.listGroups) {
+            QModelRenderSubList s = getSubList(model, modelObject, grp);
+            s.add(this, modelObject, grp);
         }
     }
 
-    private QModelRenderSubList getSubList(QModelObject model, QModelGroup grp) {
+    private QModelRenderSubList getSubList(ModelQModel model, QModelObject modelObject, QModelGroup grp) {
         for (int i = 0; i < this.subLists.size(); i++) {
             QModelRenderSubList s = this.subLists.get(i);
-            if (s.matches(this.model, model, grp)) {
+            if (s.matches(model, modelObject, grp)) {
                 return s;
             }
         }
@@ -191,7 +191,7 @@ public abstract class QModelBatchedRender extends QModelRender {
             s = new QModelRenderSubList();
             tmpLists[idx] = s;
         }
-        s.set(this.model, model, grp);
+        s.set(model, modelObject, grp);
         this.subLists.add(s);
         return s;
     }

@@ -115,6 +115,6 @@ public class EntityModelSkeleton extends EntityModel {
         int skinSel = properties.getOption(this.texSkin.getId());
         QModelObject n = modelList.get(properties.getOption(this.modelSel.getId()));
         n.bindTextureIdx(0, skinSel);
-        rend.addObject(n);
+        rend.addObject(this.model, n);
     }
 }

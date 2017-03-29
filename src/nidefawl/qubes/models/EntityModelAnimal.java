@@ -61,7 +61,7 @@ public class EntityModelAnimal extends EntityModel {
         this.model.setHeadOrientation(270 + headYaw, pitch);
         this.model.animateNodes(properties, fabs, fTime);
         main.bindTextureIdx(0, properties.getOption(this.texSkin.getId()));
-        rend.addObject(main);
+        rend.addObject(this.model, main);
     }
     @Override
     public void onLoad(ModelQModel model) {

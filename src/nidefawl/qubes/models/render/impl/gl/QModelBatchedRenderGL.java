@@ -6,6 +6,8 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import java.nio.FloatBuffer;
 import java.util.List;
 
+import org.lwjgl.opengl.GL11;
+
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
@@ -18,6 +20,7 @@ import nidefawl.qubes.models.render.QModelRender;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.shader.*;
+import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vec.Matrix4f;
 
@@ -62,7 +65,9 @@ public class QModelBatchedRenderGL extends QModelBatchedRender {
                 shader.setProgramUniform1i("shadowSplit", this.shadowVP);
                 Engine.bindVAO(GLVAO.vaoModelGPUSkinned);
                 GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, n.tex.get());
+                GL11.glDisable(GL11.GL_CULL_FACE);
                 n.model.renderRestModel(n.object, n.group, n.instances);
+                GL11.glEnable(GL11.GL_CULL_FACE);
                 this.sync();
             } else {
                 this.begin();

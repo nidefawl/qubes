@@ -196,12 +196,12 @@ public class ModelVox {
                 }
             }
             if (this.gpuShadowBuf == null) {
-                this.gpuShadowBuf = new GLTriBuffer(GL15.GL_STATIC_DRAW);
+                this.gpuShadowBuf = new GLTriBuffer(true);
             }
             this.shadowBuf.makeTriIdx();
             this.gpuShadowBuf.upload(shadowBuf);
             if (this.gpuBuf == null) {
-                this.gpuBuf = new GLTriBuffer(GL15.GL_STATIC_DRAW);
+                this.gpuBuf = new GLTriBuffer(true);
             }
             this.buf.makeTriIdx();
             this.gpuBuf.upload(buf);

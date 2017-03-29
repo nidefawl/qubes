@@ -127,10 +127,10 @@ public class EntityModelDemon extends EntityModel {
         this.model.animateNodes(properties, fabs, fTime);
         int skinSel = properties.getOption(this.texSkin.getId());
         main.bindTextureIdx(0, skinSel);
-        rend.addObject(main);
+        rend.addObject(this.model, main);
         int modelWeaponSel = properties.getOption(modelArmor.getId());
         QModelObject n = armors.get(modelWeaponSel);
         if (n != null)
-            rend.addObject(n);
+            rend.addObject(this.model, n);
     }
 }

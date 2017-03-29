@@ -76,9 +76,9 @@ public class EntityModelTest extends EntityModel {
         this.model.setHeadOrientation(270 + headYaw, pitch);
         this.model.animateNodes(properties, fabs, fTime);
         QModelObject body = this.main_0;
-        rend.addObject(body);
+        rend.addObject(this.model, body);
         if (this.test1 != null) {
-            rend.addObject(this.test1);
+            rend.addObject(this.model, this.test1);
         }
         attach(rend, properties, headThings, this.modelHeadThing, null);
 
@@ -91,7 +91,7 @@ public class EntityModelTest extends EntityModel {
         if (model != null) {
             if (texSel > -1)
                 model.bindTextureIdx(0, texSel);
-            rend.addObject(model);
+            rend.addObject(this.model, model);
         }
     }
     

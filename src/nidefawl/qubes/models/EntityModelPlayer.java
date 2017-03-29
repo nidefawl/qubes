@@ -237,7 +237,7 @@ public class EntityModelPlayer extends EntityModel {
         QModelObject body = this.body[n];
         body.bindTextureIdx(0, skinSel);
         body.bindTextureIdx(1, faceSel);
-        rend.addObject(body);
+        rend.addObject(this.model, body);
         attach(rend, properties, hairs, this.modelHair, this.texHair);
         attach(rend, properties, hats, this.modelHat, this.texHat);
         attach(rend, properties, beards, this.modelBeard, this.texBeard);
@@ -262,8 +262,7 @@ public class EntityModelPlayer extends EntityModel {
             QModelObject qobj = properties.getModelAtt().getObjects().get(0);
             qobj.bindTextureIdx(0, 0);
             qobj.setAttachmentEmpty(null);
-            rend.model = properties.getModelAtt(); 
-            rend.addObject(qobj);
+            rend.addObject(properties.getModelAtt(), qobj);
         }
     }
     
@@ -275,7 +274,7 @@ public class EntityModelPlayer extends EntityModel {
         QModelObject model = modelSel >= list.size() || modelSel < 0 ? null : list.get(modelSel);
         if (model != null) {
             model.bindTextureIdx(0, texSel);
-            rend.addObject(model);
+            rend.addObject(this.model, model);
         }
     }
     

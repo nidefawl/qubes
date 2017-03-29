@@ -12,6 +12,8 @@ import com.google.common.collect.Lists;
 
 import nidefawl.qubes.gl.GLTriBuffer;
 import nidefawl.qubes.gl.VertexBuffer;
+import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderGroup;
+import nidefawl.qubes.models.qmodel.ModelQModel.ModelRenderObject;
 import nidefawl.qubes.models.qmodel.animation.QAnimationChannel;
 import nidefawl.qubes.models.qmodel.loader.ModelLoaderQModel;
 import nidefawl.qubes.util.*;
@@ -29,6 +31,7 @@ public class ModelRigged extends ModelQModel {
     private QModelPoseBone head;
     private QModelPoseBone neck;
     public QModelNode weaponSlot;
+    VertexBuffer vbuf = new VertexBuffer(1024*64);
 
 	public ModelRigged(ModelLoaderQModel loader) {
 	    super(loader);
@@ -144,94 +147,144 @@ public class ModelRigged extends ModelQModel {
 ////        return null;
 ////    }
 
+    @Override
+    public void draw() {
+        VertexBuffer vbuf = new VertexBuffer(1024*64);
+        for (QModelObject obj : this.loader.listObjects) {
+            ModelRenderObject rObj = this.getGroup(obj.idx);
+            for (QModelGroup grp : obj.listGroups) {
+                ModelRenderGroup rGroup = rObj.getGroup(grp.idx);
+                if (rGroup.gpuBufRest == null /*|| (System.currentTimeMillis()-rGroup.reRender>1000)*/) {
+                    if (rGroup.gpuBufRest != null) {
+                        rGroup.gpuBufRest.release();
+                    }
+                    vbuf.reset();
+                    int vPosI = 0;
+//                    int[] vPos = new int[this.loader.listTri.size()*3];
+//                    Arrays.fill(vPos, -1);
+                    for (QModelTriangle triangle : grp.listTri) {
+                        for (int i = 0; i < 3; i++) {
+                            int idx = triangle.vertIdx[i];
+//                            if (vPos[idx] < 0) { // shared vertices require per vertex UVs -> requires exporter to be adjusted
+                            // but also gives worse performance
+//                                vPos[idx] =
+//                                        vPosI++;
+                                QModelVertex v = obj.listVertex.get(idx);
+                                vbuf.put(Float.floatToRawIntBits(v.x));
+                                vbuf.put(Float.floatToRawIntBits(v.y));
+                                vbuf.put(Float.floatToRawIntBits(v.z));
+                                tmpVec.set(triangle.normal[i]);
+                                vbuf.put(RenderUtil.packNormal(tmpVec));
+                                vbuf.put(Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i])));
+                                int bones03 = 0;
+                                int bones47 = 0;
+                                for (int w = 0; w < 4; w++) {
+                                    int boneIdx = (0 + w) >= v.numBones ? 0xFF : v.bones[0 + w];
+                                    int boneIdx2 = (4 + w) >= v.numBones ? 0xFF : v.bones[4 + w];
+                                    bones03 |= (boneIdx) << (w * 8);
+                                    bones47 |= (boneIdx2) << (w * 8);
+                                }
+                                vbuf.put(bones03);
+                                vbuf.put(bones47);
+                                for (int w = 0; w < 4; w++) {
+                                    vbuf.put(Half.fromFloat(v.weights[w * 2 + 1]) << 16 | (Half.fromFloat(v.weights[w * 2 + 0])));
+                                }
+                                vbuf.increaseVert();
+//                            } else {
+//                                System.out.println("reuse vert");
+//                            }
+                            vbuf.putIdx(vPosI++);
+                        }
+                    }
+                    rGroup.gpuBufRest = new GLTriBuffer(false);
+
+                    int bytes = rGroup.gpuBufRest.upload(vbuf);
+
+                }
+            }
+        }
+    }
 
     public void render(int object, int group, float f) {
         QModelObject obj = this.loader.listObjects.get(object);
         QModelGroup grp = obj.listGroups.get(group);
         ModelRenderObject rObj = this.getGroup(object);
         ModelRenderGroup rGroup = rObj.getGroup(group);
-        this.needsDraw = true;
-        if (this.needsDraw || System.currentTimeMillis()-rGroup.reRender>42200) {
-            rGroup.reRender = System.currentTimeMillis();
-            this.needsDraw = false;
-            if (this.vbuf == null)
-                this.vbuf = new VertexBuffer(1024*64);
-            this.vbuf.reset();
-            int vPosI = 0;
-            int pos = 0;
-            int[] vPos = new int[obj.listTri.size()*3];
-            for (QModelTriangle triangle : grp.listTri) {
-                for (int i = 0; i < 3; i++) {
-                    int idx = triangle.vertIdx[i];
+        this.vbuf.reset();
+        int vPosI = 0;
+        int pos = 0;
+        int[] vPos = new int[obj.listTri.size()*3];
+        for (QModelTriangle triangle : grp.listTri) {
+            for (int i = 0; i < 3; i++) {
+                int idx = triangle.vertIdx[i];
 //                      if (vPos[idx]<0) {
-                        vPos[idx] = vPosI++;
-                        QModelVertex v = obj.listVertex.get(idx);
-                        Matrix4f pose = buildFinalPose(obj, v);
-                        if (pose != null) {
-                            Matrix4f.transform(pose, v, tmpVec);
-                        } else {
-                            tmpVec.set(v);
-                        }
-                        
-                        QModelBone bone = obj.getAttachmentBone();
-                        if(bone != null) {
-                            tmpVec.addVec(bone.posebone.getTailLocal());
-                            Matrix4f.transform(bone.posebone.matDeform, tmpVec, tmpVec);
-                        }
-                        
-                        QModelAbstractNode node = obj.getAttachementNode();
-                        if(node != null) {
-                            Matrix4f.transform(node.getMatDeform(), tmpVec, tmpVec);
-                        }
-                        
-                        this.vbuf.put(Float.floatToRawIntBits(tmpVec.x));
-                        this.vbuf.put(Float.floatToRawIntBits(tmpVec.y));
-                        this.vbuf.put(Float.floatToRawIntBits(tmpVec.z));
-                        
-                        if (pose != null) {
-                            pose.m30=0;
-                            pose.m31=0;
-                            pose.m32=0;
-                            pose.m33=1;
-                            pose.m03=0;
-                            pose.m13=0;
-                            pose.m23=0;
-                            Matrix4f.transform(pose, triangle.normal[i], tmpVec);
-                            tmpVec.normalise();
-                        } else {
-                            tmpVec.set(triangle.normal[i]);
-                        }
-                        
-                        if(bone != null) {
-                            Matrix4f.transform(bone.posebone.matDeformNormal, tmpVec, tmpVec);
-                            tmpVec.normalise();
-                        }
-                        
-                        if(node != null) {
-                            Matrix4f.transform(node.getMatDeformNormal(), tmpVec, tmpVec);
-                            tmpVec.normalise();
-                        }
-                        
-                        int normal = RenderUtil.packNormal(tmpVec);
-                        this.vbuf.put(normal);
-                        int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
-                        this.vbuf.put(textureHalf2);
-                        this.vbuf.put(0xff999999);
-                        this.vbuf.increaseVert();
+                    vPos[idx] = vPosI++;
+                    QModelVertex v = obj.listVertex.get(idx);
+                    Matrix4f pose = buildFinalPose(obj, v);
+                    if (pose != null) {
+                        Matrix4f.transform(pose, v, tmpVec);
+                    } else {
+                        tmpVec.set(v);
+                    }
+                    
+                    QModelBone bone = obj.getAttachmentBone();
+                    if(bone != null) {
+                        tmpVec.addVec(bone.posebone.getTailLocal());
+                        Matrix4f.transform(bone.posebone.matDeform, tmpVec, tmpVec);
+                    }
+                    
+                    QModelAbstractNode node = obj.getAttachementNode();
+                    if(node != null) {
+                        Matrix4f.transform(node.getMatDeform(), tmpVec, tmpVec);
+                    }
+                    
+                    this.vbuf.put(Float.floatToRawIntBits(tmpVec.x));
+                    this.vbuf.put(Float.floatToRawIntBits(tmpVec.y));
+                    this.vbuf.put(Float.floatToRawIntBits(tmpVec.z));
+                    
+                    if (pose != null) {
+                        pose.m30=0;
+                        pose.m31=0;
+                        pose.m32=0;
+                        pose.m33=1;
+                        pose.m03=0;
+                        pose.m13=0;
+                        pose.m23=0;
+                        Matrix4f.transform(pose, triangle.normal[i], tmpVec);
+                        tmpVec.normalise();
+                    } else {
+                        tmpVec.set(triangle.normal[i]);
+                    }
+                    
+                    if(bone != null) {
+                        Matrix4f.transform(bone.posebone.matDeformNormal, tmpVec, tmpVec);
+                        tmpVec.normalise();
+                    }
+                    
+                    if(node != null) {
+                        Matrix4f.transform(node.getMatDeformNormal(), tmpVec, tmpVec);
+                        tmpVec.normalise();
+                    }
+                    
+                    int normal = RenderUtil.packNormal(tmpVec);
+                    this.vbuf.put(normal);
+                    int textureHalf2 = Half.fromFloat(triangle.texCoord[0][i]) << 16 | (Half.fromFloat(triangle.texCoord[1][i]));
+                    this.vbuf.put(textureHalf2);
+                    this.vbuf.put(0xff999999);
+                    this.vbuf.increaseVert();
 //                      }
-                        this.vbuf.putIdx(vPos[idx]);
-                }
+                    this.vbuf.putIdx(vPos[idx]);
             }
-            
-            
-            if (rGroup.gpuBuf == null) {
-                rGroup.gpuBuf = new GLTriBuffer(GL15.GL_DYNAMIC_DRAW);
-            }
-            int bytes = rGroup.gpuBuf.upload(this.vbuf);
+        }
+        
+        
+        if (rGroup.gpuBuf == null) {
+            rGroup.gpuBuf = new GLTriBuffer(true);
+        }
+        int bytes = rGroup.gpuBuf.upload(this.vbuf);
 //                System.out.println("byte size upload "+bytes+", "+this.gpuBuf.getVertexCount());
 //                System.out.println(""+this.gpuBuf.getVertexCount()+" vertices, "+this.gpuBuf.getTriCount()+" tris, "+this.gpuBuf.getIdxCount()+" indexes");
 
-        }
         
 
         rGroup.gpuBuf.draw();
