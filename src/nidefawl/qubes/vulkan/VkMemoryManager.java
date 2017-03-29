@@ -206,6 +206,15 @@ public class VkMemoryManager {
                     if (chunk.size-size > MAX_FRAGMENTATION_SIZE) {
                         long newChunkSize = chunk.size-size;
                         long newChunkOffset = chunk.offset+size;
+                        if (newChunkSize > chunk.align) {
+                            long shiftAlign = newChunkOffset%chunk.align;
+                            if (shiftAlign != 0) {
+                                newChunkOffset += shiftAlign;
+                                newChunkSize -= shiftAlign;
+                            }
+                        } else {
+                            chunk.align = 0;
+                        }
                         chunk.size = size;
                         MemoryChunk newChunk = new MemoryChunk(this, newChunkOffset, newChunkSize, chunk.align);
                         newChunk.tag = "free_split";
@@ -555,6 +564,7 @@ public class VkMemoryManager {
         if (DEBUG_MEM_ALLOC) System.out.println("image "+image+","+debug+" requires "+(size)+" bytes");
         int err = vkBindImageMemory(ctxt.device, image, chunk.block.memory, chunk.offset);
         if (err != VK_SUCCESS) {
+            System.err.println("Align "+Long.toHexString(align));
             throw new AssertionError("vkBindImageMemory failed: " + VulkanErr.toString(err));
         }
         MemoryChunk prev = memoryBindings.put(image, chunk);
