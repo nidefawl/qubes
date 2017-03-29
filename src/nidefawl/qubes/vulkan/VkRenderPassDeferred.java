@@ -13,11 +13,16 @@ import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 public class VkRenderPassDeferred extends VkRenderPass {
 
     private Buffer subpassDependencies;
-    public VkRenderPassDeferred() {
-        addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    public VkRenderPassDeferred(boolean clear) {
+        VkAttachmentDescription n = addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
+            n.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        if (!clear) {
+            n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            clearValues.limit(0);
+        } else {
+            clearValues.limit(nAttachments);
+        }
         attachments.limit(nAttachments);
-        clearValues.limit(nAttachments);
     }
     @Override
     public void build(VKContext ctxt) {

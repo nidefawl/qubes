@@ -14,7 +14,8 @@ public class VkRenderPasses {
     public static VkRenderPass passSkyGenerate = new VkRenderPassSkyUpdate();
     public static VkRenderPass passSkyGenerateCubemap = new VkRenderPassSkyUpdateCubemap();
     public static VkRenderPass passSkySample = new VkRenderPassSkySample();
-    public static VkRenderPass passDeferred = new VkRenderPassDeferred();
+    public static VkRenderPass passDeferred = new VkRenderPassDeferred(true);
+    public static VkRenderPass passDeferredNoClear = new VkRenderPassDeferred(false);
     public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true, true);
     public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false, true);
     public static VkRenderPass passFramebufferNoDepth = new VkRenderPassFrameBuffer(true, false);

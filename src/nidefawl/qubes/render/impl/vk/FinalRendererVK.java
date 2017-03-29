@@ -360,13 +360,18 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.drawFSTri();  
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
+                Engine.endRenderPass();
+            }
+            calcLum();
+            if (firstPerson) {
+                Engine.beginRenderPass(VkRenderPasses.passDeferredNoClear, fb, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+                Engine.setDescriptorSet(VkDescLayouts.DESC4, Engine.descriptorSetUboLights);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureDeferred2);
                 Engine.bindPipeline(VkPipelines.deferred_pass2);
                 Engine.drawFSTri();
+                Engine.endRenderPass();
             }
-            Engine.endRenderPass();
-            
-            calcLum();
             
             Engine.clearDescriptorSet(VkDescLayouts.DESC3);
             Engine.clearDescriptorSet(VkDescLayouts.DESC4);
