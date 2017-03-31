@@ -27,6 +27,7 @@ public class VkDescLayouts {
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDouble = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageTriple = VK_NULL_HANDLE;
+    public long descSetLayoutSamplerImageSSR = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingleVertexStage = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDeferredPass0 = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDeferredPass1 = VK_NULL_HANDLE;
@@ -57,6 +58,7 @@ public class VkDescLayouts {
             VkDescriptorSetLayoutBinding.Buffer sampler_image_single_vertex_stage = VkDescriptorSetLayoutBinding.calloc(1);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass0 = VkDescriptorSetLayoutBinding.calloc(7);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass1 = VkDescriptorSetLayoutBinding.calloc(9);
+            VkDescriptorSetLayoutBinding.Buffer sampler_image_ssr = VkDescriptorSetLayoutBinding.calloc(6);
 
 
             
@@ -116,6 +118,13 @@ public class VkDescLayouts {
                 .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
                 .binding(0)
                 .descriptorCount(1);
+
+            for (int i = 0; i < 6; i++)
+                sampler_image_ssr.get(i)
+                    .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                    .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .binding(i)
+                    .descriptorCount(1);
             
             ssbo_cubes_bindings.get(0)
                 .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
@@ -179,6 +188,7 @@ public class VkDescLayouts {
             descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
             descSetLayoutSamplerImageDouble = makeSet(sampler_image_double);
             descSetLayoutSamplerImageTriple = makeSet(sampler_image_triple);
+            descSetLayoutSamplerImageSSR = makeSet(sampler_image_ssr);
             descSetLayoutSamplerImageSingleVertexStage = makeSet(sampler_image_single_vertex_stage);
             descSetLayoutSamplerImageDeferredPass0 = makeSet(sampler_image_deferred_pass0);
             descSetLayoutSamplerImageDeferredPass1 = makeSet(sampler_image_deferred_pass1);
@@ -304,6 +314,10 @@ public class VkDescLayouts {
             VkPipelines.pipelineLayoutModelBatchedShadow.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
 
+            VkPipelines.pipelineLayoutSSR.build(ctxt, new long[] {
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSSR});
+            VkPipelines.pipelineLayoutSSRCombine.build(ctxt, new long[] {
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageTriple});
         }
 
 
@@ -340,6 +354,8 @@ public class VkDescLayouts {
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOTransform, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOShadow, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutUBOLightInfo, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageTriple, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageSSR, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageSingle, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageDouble, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSamplerImageSingleVertexStage, null);
@@ -381,6 +397,9 @@ public class VkDescLayouts {
     }
     public VkDescriptor allocDescSetUBOLightInfo() {
         return new VkDescriptor(allocDescSet(descSetLayoutUBOLightInfo)).tag("UBOLightInfo");
+    }
+    public VkDescriptor allocDescSetSampleSSR() {
+        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageSSR)).tag("samplerSSR");
     }
     public VkDescriptor allocDescSetSampleSingle() {
         return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageSingle)).tag("samplerSingle");

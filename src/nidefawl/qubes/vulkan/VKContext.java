@@ -532,14 +532,14 @@ public class VKContext {
             throw new GameLogicError("Failed compiling spirv. Expected nonnull return value");
         }
         if (result.get(stage) == null) {
-                System.out.println(source);
+//                System.err.println(source);
 
             System.err.println("MISSING BINARY "+string+": "+result.log+","+result.status+","+result);
             throw new GameLogicError("Missing shader binary module");
         }
         result.log = result.log.replaceAll("Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.", "").trim();
         if (!result.log.isEmpty())
-            System.out.println(result.log.trim());
+            System.err.println(result.log.trim());
         if (result.status != 0) {
             return null;
         }

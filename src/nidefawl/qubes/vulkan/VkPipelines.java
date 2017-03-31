@@ -48,6 +48,9 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutModelBatchedShadow = new VkPipelineLayout("pipelineLayoutModelBatchedShadow");
     public static VkPipelineLayout pipelineLayoutModelBatchedGbuffer = new VkPipelineLayout("pipelineLayoutModelBatchedGbuffer");
     public static VkPipelineLayout pipelineLayoutModelFirstPerson = new VkPipelineLayout("pipelineLayoutModelFirstPerson");
+    public static VkPipelineLayout pipelineLayoutSSR = new VkPipelineLayout("pipelineLayoutSSR");
+    public static VkPipelineLayout pipelineLayoutSSRCombine = new VkPipelineLayout("pipelineLayoutSSRCombine");
+
 
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
@@ -83,6 +86,8 @@ public class VkPipelines {
     public static VkPipeline texturedFullscreen = new VkPipeline(VkPipelines.pipelineLayoutTexturedFullscreen);
     public static VkPipeline colored3DHighlight = new VkPipeline(VkPipelines.pipelineLayoutColored3D);
     public static VkPipeline wireframe = new VkPipeline(VkPipelines.pipelineLayoutWireframe);
+    public static VkPipeline ssr = new VkPipeline(VkPipelines.pipelineLayoutSSR);
+    public static VkPipeline ssrCombine = new VkPipeline(VkPipelines.pipelineLayoutSSRCombine);
     public static final VkPipeline model_static[] = new VkPipeline[] { 
             new VkPipeline(VkPipelines.pipelineLayoutModelStaticGbuffer), 
             new VkPipeline(VkPipelines.pipelineLayoutModelStaticShadow)
@@ -512,6 +517,34 @@ public class VkPipelines {
             deferred_pass2.setRenderPass(VkRenderPasses.passDeferred, 0);
             deferred_pass2.setScreenSpaceTriangle();
             deferred_pass2.pipeline = buildPipeLine(ctxt, deferred_pass2);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            ssr.destroyPipeLine(ctxt);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/SSR/ssr.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("SSR".equals(define)) {
+                        int ssr = Engine.RENDER_SETTINGS.ssr;
+                        return "#define SSR_"+(ssr<1?1:ssr>3?3:ssr);
+                    }
+                    return null;
+                }
+            });
+            ssr.setShaders(shaderScreenTriangle, frag);
+            ssr.setRenderPass(VkRenderPasses.passDeferred, 0);
+            ssr.setScreenSpaceTriangle();
+            ssr.pipeline = buildPipeLine(ctxt, ssr);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            ssrCombine.destroyPipeLine(ctxt);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/SSR/ssr_combine.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            ssrCombine.setShaders(shaderScreenTriangle, frag);
+            ssrCombine.setRenderPass(VkRenderPasses.passDeferred, 0);
+            ssrCombine.setScreenSpaceTriangle();
+            ssrCombine.pipeline = buildPipeLine(ctxt, ssrCombine);
         }
         try ( MemoryStack stack = stackPush() ) 
         {
