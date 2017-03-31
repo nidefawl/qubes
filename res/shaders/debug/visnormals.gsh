@@ -3,6 +3,7 @@ layout(triangles) in;
 layout(line_strip, max_vertices = 2) out;
 
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_transform.glsl"
 
 uniform mat4 model_matrix;
 
