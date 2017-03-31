@@ -533,6 +533,10 @@ public class VkPipelines {
             ssr.setShaders(shaderScreenTriangle, frag);
             ssr.setRenderPass(VkRenderPasses.passDeferred, 0);
             ssr.setScreenSpaceTriangle();
+            ssr.useSwapChainViewport = false;
+            ssr.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            ssr.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+
             ssr.pipeline = buildPipeLine(ctxt, ssr);
         }
         try ( MemoryStack stack = stackPush() ) 

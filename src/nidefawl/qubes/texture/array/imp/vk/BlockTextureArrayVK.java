@@ -16,7 +16,6 @@ import nidefawl.qubes.util.GameError;
 
 public class BlockTextureArrayVK extends TextureArrayVK {
     public static final int        BLOCK_TEXTURE_BITS = 4;
-    public float anisotropicFiltering = 0;
 
 
 
@@ -118,5 +117,7 @@ public class BlockTextureArrayVK extends TextureArrayVK {
     public void setAnisotropicFiltering(int anisotropicFiltering) {
         this.anisotropicFiltering = anisotropicFiltering;
     }
-
+    protected boolean isFilterNearest() {
+        return true;
+    }
 }

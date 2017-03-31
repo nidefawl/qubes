@@ -64,6 +64,11 @@ public abstract class TextureArrayVK extends TextureArray {
                         .mipLodBias(0.0f)
                         .compareOp(VK_COMPARE_OP_NEVER)
                         .minLod(0.0f);
+                if (isFilterNearest()) {
+                    sampler.magFilter(VK_FILTER_NEAREST);
+                    sampler.minFilter(VK_FILTER_NEAREST);
+                    sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+                }
                 // Set max level-of-detail to mip level count of the texture
                 sampler.maxLod((float)this.texture.getNumMips());
                 // Enable anisotropic filtering
@@ -108,6 +113,9 @@ public abstract class TextureArrayVK extends TextureArray {
             }
         }
     } 
+    protected boolean isFilterNearest() {
+        return false;
+    }
     @Override
     protected void initStorage() {
 ////      System.err.println(glid+"/"+numMipmaps+"/"+this.tileSize+"/"+this.numTextures);

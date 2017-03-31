@@ -11,6 +11,6 @@ public abstract class FinalRenderer extends AbstractRenderer {
     public abstract void aoReinit();
     
     public abstract void onVRModeChanged();
-
+    public abstract void onSSRSettingChanged();
 
 }

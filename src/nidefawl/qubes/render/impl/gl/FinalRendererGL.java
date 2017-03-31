@@ -817,4 +817,9 @@ public class FinalRendererGL extends FinalRenderer {
     public void onVRModeChanged() {
         initShaders();
     }
+
+    @Override
+    public void onSSRSettingChanged() {
+        Engine.outRenderer.resize();
+    }
 }

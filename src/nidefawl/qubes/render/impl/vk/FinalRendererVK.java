@@ -44,6 +44,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public VkDescriptor descTextureBloomOut;
 
     private VkDescriptor descTextureSSRInput;
+    private VkDescriptor descTextureSSROutput;
     private VkDescriptor descTextureSSRCombineInput;
     
     public VkDescriptor[] descTextureDownsampleOutputs = new VkDescriptor[10];
@@ -56,6 +57,8 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public long samplerClamp;
     
     public int frame;
+    private int[] ssrSize;
+    private long samplerNearest;
     
     @Override
     public void init() {
@@ -110,8 +113,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.descTextureDeferredInput1 = ctxt.descLayouts.allocDescSetSamplerDeferredPass1();
         this.descTextureDeferredInput2 = ctxt.descLayouts.allocDescSetSamplerDeferredPass0();
         this.descTextureSSRInput = ctxt.descLayouts.allocDescSetSampleSSR();
-        this.descTextureSSRCombineInput = ctxt.descLayouts.allocDescSetSampleTriple();
-        
+        this.descTextureSSROutput = ctxt.descLayouts.allocDescSetSampleSingle();
+        this.descTextureSSRCombineInput = ctxt.descLayouts.allocDescSetSamplerDouble();
+
         try ( MemoryStack stack = stackPush() ) {
             VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
             sampler.addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -123,6 +127,14 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
             }
             this.samplerClamp = pSampler.get(0);
+            sampler.magFilter(VK_FILTER_NEAREST);
+            sampler.minFilter(VK_FILTER_NEAREST);
+            sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+            err = vkCreateSampler(ctxt.device, sampler, null, pSampler);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+            }
+            this.samplerNearest = pSampler.get(0);
         }
     }
 
@@ -148,6 +160,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
     @Override
     public void resize(int displayWidth, int displayHeight) {
+        this.ssrSize = GameMath.downsample(displayWidth, displayHeight, Engine.RENDER_SETTINGS.ssr>2?1:2);
         VKContext ctxt = Engine.vkContext;
         releaseFramebuffers();
 
@@ -195,7 +208,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.frameBufferSceneFirstPerson.build(VkRenderPasses.passTerrain_Pass2, displayWidth, displayHeight);
         this.frameBufferDeferred.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
         this.frameBufferDeferredPass01.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
-        this.frameBufferSSR.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
+        this.frameBufferSSR.build(VkRenderPasses.passDeferred, ssrSize[0], ssrSize[1]);
         this.frameBufferTonemapped.build(VkRenderPasses.passTonemap, displayWidth, displayHeight);
         this.frameBufferBloom.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
         FramebufferAttachment coloratt;
@@ -203,7 +216,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         for (int i = 0; i < 5; i++)
         {
             FramebufferAttachment att = this.frameBufferScene.getAtt(i);
-            this.descTextureDeferred0.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+            this.descTextureDeferred0.setBindingCombinedImageSampler(i, att.getView(), i>0&&i!=4?samplerNearest:samplerClamp, att.finalLayout);
         }
         this.descTextureDeferred0.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
         this.descTextureDeferred0.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
@@ -211,7 +224,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         for (int i = 0; i < 5; i++)
         {
             FramebufferAttachment att = this.frameBufferSceneWater.getAtt(i);
-            this.descTextureDeferredInput1.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+            this.descTextureDeferredInput1.setBindingCombinedImageSampler(i, att.getView(), i>0&&i!=4?samplerNearest:samplerClamp, att.finalLayout);
 
         }
         this.descTextureDeferredInput1.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
@@ -231,28 +244,33 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             int attIdx = i;
             if (i == 3) attIdx = 4;
             FramebufferAttachment att = this.frameBufferSceneWater.getAtt(attIdx);
-            this.descTextureSSRInput.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+            this.descTextureSSRInput.setBindingCombinedImageSampler(i, att.getView(), samplerNearest, att.finalLayout);
         }
         coloratt = this.frameBufferScene.getAtt(4);
         this.descTextureSSRInput.setBindingCombinedImageSampler(4, coloratt.getView(), samplerClamp, coloratt.finalLayout);
 
         this.descTextureSSRInput.update(ctxt);
+
+        coloratt = this.frameBufferSSR.getAtt(0);
+        this.descTextureSSROutput.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+        this.descTextureSSROutput.update(ctxt);
+        
         
         coloratt = this.frameBufferDeferredPass01.getAtt(0);
         this.descTextureSSRCombineInput.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
-
-        coloratt = this.frameBufferSSR.getAtt(0);
-        this.descTextureSSRCombineInput.setBindingCombinedImageSampler(1, coloratt.getView(), samplerClamp, coloratt.finalLayout);
         
         coloratt = this.frameBufferSceneWater.getAtt(2);
-        this.descTextureSSRCombineInput.setBindingCombinedImageSampler(2, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+        this.descTextureSSRCombineInput.setBindingCombinedImageSampler(1, coloratt.getView(), samplerNearest, coloratt.finalLayout);
 
         this.descTextureSSRCombineInput.update(ctxt);
+        
+        
+        
         
         for (int i = 0; i < 5; i++)
         {
             FramebufferAttachment att = this.frameBufferSceneFirstPerson.getAtt(i);
-            this.descTextureDeferredInput2.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+            this.descTextureDeferredInput2.setBindingCombinedImageSampler(i, att.getView(), i>0?samplerNearest:samplerClamp, att.finalLayout);
         }
         this.descTextureDeferredInput2.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
         this.descTextureDeferredInput2.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
@@ -418,36 +436,40 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     }
     private void renderSSR() {
         Engine.clearAllDescriptorSets();
-        FrameBuffer fb = frameBufferSSR;
-        if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
-        {
+        Engine.setViewport(0, 0, this.ssrSize[0], this.ssrSize[1]);
+        Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferSSR, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+        Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
+        Engine.bindPipeline(VkPipelines.ssr);
+        Engine.drawFSTri();  
+        Engine.endRenderPass();
+        
+        
+        Engine.setDefaultViewport();
+        
 
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferSSR, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
-            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
-            Engine.bindPipeline(VkPipelines.ssr);
-            Engine.drawFSTri();  
-            Engine.endRenderPass();
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
-            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
-            Engine.clearDescriptorSet(VkDescLayouts.DESC2);
-            Engine.bindPipeline(VkPipelines.ssrCombine);
-            Engine.drawFSTri();  
-            Engine.endRenderPass();
-        }
+        VkDescriptor blurred = RenderersVulkan.blurRenderer.renderBlurSeperate(descTextureSSROutput, 8);
+        
+        Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+        Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, descTextureSSROutput);
+        Engine.bindPipeline(VkPipelines.ssrCombine);
+        Engine.drawFSTri();  
+        Engine.endRenderPass();
             
     }
     public void render(WorldClient world, float fTime) {
         renderDeferred(fTime);
     }
     public void renderDeferred(float fTime) {
-        FrameBuffer fb = frameBufferDeferred;
+        boolean ssr = Engine.RENDER_SETTINGS.ssr>0;
+        FrameBuffer fb = ssr ? frameBufferDeferredPass01 : frameBufferDeferred;
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
             
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, frameBufferDeferredPass01, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred0);
@@ -459,7 +481,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.bindPipeline(VkPipelines.deferred_pass1);
             Engine.drawFSTri();  
             Engine.endRenderPass();
-            renderSSR();
+            if (ssr){
+                renderSSR();   
+            }
             
             calcLum();
             Engine.setDefaultViewport();
@@ -503,6 +527,11 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
         }
         
+    }
+    
+    @Override
+    public void onSSRSettingChanged() {
+        Engine.vkContext.reinitSwapchain=true;
     }
 
 

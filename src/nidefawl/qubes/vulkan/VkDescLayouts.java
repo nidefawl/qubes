@@ -317,7 +317,7 @@ public class VkDescLayouts {
             VkPipelines.pipelineLayoutSSR.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSSR, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutSSRCombine.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutSamplerImageTriple});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutSamplerImageSingle});
         }
 
 

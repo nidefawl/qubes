@@ -111,7 +111,7 @@ public class GuiSettings extends Gui {
                 renderSettings.ssr = id;
                 Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
-                Engine.outRenderer.resize();
+                Engine.outRenderer.onSSRSettingChanged();
             }
         }));
         final String[] strAOSettings = new String[] { "Disabled", "Enabled" };
