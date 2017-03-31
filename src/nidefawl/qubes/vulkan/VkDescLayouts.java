@@ -193,6 +193,8 @@ public class VkDescLayouts {
             VkPushConstantRange.Buffer push_constant_ranges_float = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_blur_seperate = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_blur_kawase = VkPushConstantRange.calloc(1);
+            VkPushConstantRange.Buffer push_constant_ranges_colored_3d = VkPushConstantRange.calloc(1);
+            VkPushConstantRange.Buffer push_constant_ranges_wireframe = VkPushConstantRange.calloc(2);
 
             push_constant_ranges_gui.get(0)
                 .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -234,11 +236,31 @@ public class VkDescLayouts {
                 .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .offset(0)
                 .size(4+4+4);
+            push_constant_ranges_colored_3d.get(0)
+                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                .offset(0)
+                .size(4+4*4);
 
+            push_constant_ranges_wireframe.get(0)
+                .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+                .offset(0)
+                .size(84);
+
+            push_constant_ranges_wireframe.get(1)
+                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                .offset(84)
+                .size(8);
+            
+            VkPipelines.pipelineLayoutTexturedFullscreen.build(ctxt, 
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
             VkPipelines.pipelineLayoutTextured.build(ctxt, 
                     descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle);
             VkPipelines.pipelineLayoutColored.build(ctxt, 
                     descSetLayoutUBOScene, descSetLayoutUBOTransform);
+            VkPipelines.pipelineLayoutColored3D.build(ctxt, new long[] { 
+                    descSetLayoutUBOScene, descSetLayoutUBOTransform}, push_constant_ranges_colored_3d);
+            VkPipelines.pipelineLayoutWireframe.build(ctxt, new long[] { 
+                    descSetLayoutUBOScene, descSetLayoutUBOTransform}, push_constant_ranges_wireframe);
             VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutUBOTransform}, push_constant_ranges_gui);
             VkPipelines.pipelineLayoutSingleBlock.build(ctxt, new long[] {

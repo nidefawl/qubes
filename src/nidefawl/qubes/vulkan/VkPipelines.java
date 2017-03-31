@@ -16,13 +16,17 @@ import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.shader.IShaderDef;
 
 public class VkPipelines {
-    public static VkPipeline[] arrPipe = new VkPipeline[38];
-    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[38];
-    
+    public static VkPipeline[] arrPipe = new VkPipeline[64];
+    public static VkPipelineLayout[] arrLayout = new VkPipelineLayout[64];
+
     public static VkPipelineLayout pipelineLayoutTextured = new VkPipelineLayout("pipelineLayoutTextured");
+    public static VkPipelineLayout pipelineLayoutTexturedFullscreen = new VkPipelineLayout("pipelineLayoutTexturedFullscreen");
+
     public static VkPipelineLayout pipelineLayoutMain = new VkPipelineLayout("pipelineLayoutMain");
     public static VkPipelineLayout pipelineLayoutTerrain = new VkPipelineLayout("pipelineLayoutTerrain");
     public static VkPipelineLayout pipelineLayoutColored = new VkPipelineLayout("pipelineLayoutColored");
+    public static VkPipelineLayout pipelineLayoutColored3D = new VkPipelineLayout("pipelineLayoutColored3D");
+    public static VkPipelineLayout pipelineLayoutWireframe = new VkPipelineLayout("pipelineLayoutWireframe");
     public static VkPipelineLayout pipelineLayoutShadow = new VkPipelineLayout("pipelineLayoutShadow");
     public static VkPipelineLayout pipelineLayoutGUI = new VkPipelineLayout("pipelineLayoutGUI");
     public static VkPipelineLayout pipelineLayoutSingleBlock = new VkPipelineLayout("pipelineLayoutSingleBlock");
@@ -76,6 +80,9 @@ public class VkPipelines {
     public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
     public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
     public static VkPipeline cube_particle = new VkPipeline(VkPipelines.pipelineLayoutParticleCube);
+    public static VkPipeline texturedFullscreen = new VkPipeline(VkPipelines.pipelineLayoutTexturedFullscreen);
+    public static VkPipeline colored3DHighlight = new VkPipeline(VkPipelines.pipelineLayoutColored3D);
+    public static VkPipeline wireframe = new VkPipeline(VkPipelines.pipelineLayoutWireframe);
     public static final VkPipeline model_static[] = new VkPipeline[] { 
             new VkPipeline(VkPipelines.pipelineLayoutModelStaticGbuffer), 
             new VkPipeline(VkPipelines.pipelineLayoutModelStaticShadow)
@@ -260,6 +267,20 @@ public class VkPipelines {
 
 
             textured2d.pipelineScissors = buildPipeLine(ctxt, textured2d);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            texturedFullscreen.destroyPipeLine(ctxt);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured_fullscreen.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            texturedFullscreen.setShaders(shaderScreenTriangle, frag);
+            texturedFullscreen.setScreenSpaceTriangle();
+            for (int i = 0; i < texturedFullscreen.blendAttachmentState.limit(); i++)
+                texturedFullscreen.blendAttachmentState.get(i).colorWriteMask(0);
+            texturedFullscreen.depthStencilState.depthTestEnable(true);
+            texturedFullscreen.rasterizationState.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            texturedFullscreen.setBlend(false);
+            texturedFullscreen.setRenderPass(VkRenderPasses.passTonemap, 0);
+            texturedFullscreen.pipeline = buildPipeLine(ctxt, texturedFullscreen);
         }
         try ( MemoryStack stack = stackPush() ) 
         {
@@ -532,7 +553,7 @@ public class VkPipelines {
                 }
             });
             tonemapDynamic.setShaders(shaderScreenTriangle, frag);
-            tonemapDynamic.setRenderPass(VkRenderPasses.passFramebufferNoDepth, 0);
+            tonemapDynamic.setRenderPass(VkRenderPasses.passTonemap, 0);
             tonemapDynamic.setScreenSpaceTriangle();
             tonemapDynamic.pipeline = buildPipeLine(ctxt, tonemapDynamic);
         }
@@ -696,6 +717,35 @@ public class VkPipelines {
             fontRender2D.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
             fontRender2D.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
             fontRender2D.pipelineScissors = buildPipeLine(ctxt, fontRender2D);
+        }
+        
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            colored3DHighlight.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[1|4].getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "colored_3D.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "colored_3D.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            colored3DHighlight.setShaders(vert, frag);
+            colored3DHighlight.setBlend(true);
+            colored3DHighlight.setRenderPass(VkRenderPasses.passTonemap, 0);
+            colored3DHighlight.setVertexDesc(desc);
+            colored3DHighlight.rasterizationState.cullMode(VK_CULL_MODE_NONE);
+            colored3DHighlight.dynamicState = null;
+            colored3DHighlight.pipeline = buildPipeLine(ctxt, colored3DHighlight);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            wireframe.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoTesselator[1|4].getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "debug/wireframe.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "debug/wireframe.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            wireframe.setShaders(vert, frag);
+            wireframe.setBlend(true);
+            wireframe.setRenderPass(VkRenderPasses.passTonemap, 0);
+            wireframe.setVertexDesc(desc);
+            wireframe.rasterizationState.cullMode(VK_CULL_MODE_NONE);
+            wireframe.dynamicState = null;
+            wireframe.pipeline = buildPipeLine(ctxt, wireframe);
         }
 
         try ( MemoryStack stack = stackPush() ) 

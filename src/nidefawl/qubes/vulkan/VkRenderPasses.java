@@ -19,6 +19,8 @@ public class VkRenderPasses {
     public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true, true);
     public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false, true);
     public static VkRenderPass passFramebufferNoDepth = new VkRenderPassFrameBuffer(true, false);
+    public static VkRenderPass passTonemap = new VkRenderPassTonemap(false);
+    public static VkRenderPass passPostTonemapOverlays = new VkRenderPassTonemap(true);
 
     public static void init(VKContext ctxt) {
         isInit = true;

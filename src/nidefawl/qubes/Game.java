@@ -589,6 +589,7 @@ public class Game extends GameBase {
 
         RenderersVulkan.worldRenderer.renderWorld(this.world, fTime);
         RenderersVulkan.outRenderer.render(this.world, fTime);
+        RenderersVulkan.worldRenderer.renderOverlays(this.world, this.leftSelection, this.rightSelection, this.dig, fTime);
     }
     public void renderGL(float fTime) {
         if (canRenderGui3d()) {
@@ -1064,81 +1065,86 @@ public class Game extends GameBase {
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
 
-        glEnable(GL_DEPTH_TEST);
-        Engine.enableDepthMask(true);
-        
-        boolean pass = true;//Engine.renderWireFrame || !Engine.worldRenderer.debugBBs.isEmpty();
-        if (pass) {
-            glDisable(GL_CULL_FACE);
-            Engine.setBlend(true);
-            if (firstPerson && !VR_SUPPORT) {
-//                glDepthRange(0, 0.04);
-//                glColorMask(false, false, false, false);
-//                Engine.worldRenderer.renderFirstPerson(world, fTime);
-//                glColorMask(true, true, true, true);
-//                glDepthRange(0, 1f);
-            }
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("ForwardPass");
-            
-            
-
-
-            if (!VR_SUPPORT) {
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("BB Debug");
-                RenderersGL.worldRenderer.renderDebugBB(this.world, fTime);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-            }
-
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("renderDebugBB");
-            if (Engine.renderWireFrame) {
-
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.start("Wireframe Debug");
-                
-                RenderersGL.worldRenderer.renderNormals(this.world, fTime);
-                glEnable(GL_POLYGON_OFFSET_FILL);
-                glPolygonOffset(-3.4f, 2.f);
-                RenderersGL.worldRenderer.renderTerrainWireFrame(this.world, fTime);
-                glDisable(GL_POLYGON_OFFSET_FILL);
-                if (GPUProfiler.PROFILING_ENABLED)
-                    GPUProfiler.end();
-                if (Game.GL_ERROR_CHECKS)
-                    Engine.checkGLError("renderNormals");
-                
-            }
-            
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.start("BlockHighlight");
-//            System.out.println(VR.controllerDeviceIndex[1]);
-//            if (VR.controllerDeviceIndex[0]>0)
-            leftSelection.renderBlockHighlight(this.world, fTime);
-            if (VR.controllerDeviceIndex[1]>0)
-            rightSelection.renderBlockHighlight(this.world, fTime);
-
-            dig.renderDigging(world, fTime);
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-            if (Game.GL_ERROR_CHECKS)
-                Engine.checkGLError("BlockHighlight");
-            
-            if (GPUProfiler.PROFILING_ENABLED)
-                GPUProfiler.end();
-
-
-            
-            glEnable(GL_CULL_FACE);
-            Engine.setBlend(false);
-        }
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.start("Tonemap");
         FrameBuffer fbOut = RenderersGL.outRenderer.renderTonemap();
         if (GPUProfiler.PROFILING_ENABLED)
             GPUProfiler.end();
+        
+        glEnable(GL_DEPTH_TEST);
+        Engine.enableDepthMask(true);
+
+
+        glDisable(GL_CULL_FACE);
+        Engine.setBlend(true);
+        if (firstPerson && !VR_SUPPORT) {
+            if (Engine.INVERSE_Z_BUFFER) {
+
+                glDepthRange(0.9, 1);
+            } else {
+
+                glDepthRange(0.0, 0.1);
+            }
+          glColorMask(false, false, false, false);
+          RenderersGL.worldRenderer.renderFirstPerson(world, fTime);
+          glColorMask(true, true, true, true);
+          glDepthRange(0, 1f);
+        }
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("ForwardPass");
+        
+        
+
+
+        if (!VR_SUPPORT) {
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("BB Debug");
+            RenderersGL.worldRenderer.renderDebugBB(this.world, fTime);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+        }
+
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("renderDebugBB");
+        if (Engine.renderWireFrame) {
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("Wireframe Debug");
+            
+            RenderersGL.worldRenderer.renderNormals(this.world, fTime);
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(-3.4f, 2.f);
+            RenderersGL.worldRenderer.renderTerrainWireFrame(this.world, fTime);
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
+            if (Game.GL_ERROR_CHECKS)
+                Engine.checkGLError("renderNormals");
+            
+        }
+        
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("BlockHighlight");
+//            System.out.println(VR.controllerDeviceIndex[1]);
+//            if (VR.controllerDeviceIndex[0]>0)
+        leftSelection.renderBlockHighlight(this.world, fTime);
+        if (VR.controllerDeviceIndex[1]>0)
+        rightSelection.renderBlockHighlight(this.world, fTime);
+
+        dig.renderDigging(world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+        if (Game.GL_ERROR_CHECKS)
+            Engine.checkGLError("BlockHighlight");
+        
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+
+
+        
+        glEnable(GL_CULL_FACE);
+        Engine.setBlend(false);
 
         //fbOut is still bound (is defferred buffer (16 bit RGBA + depth)
         
@@ -1164,7 +1170,7 @@ public class Game extends GameBase {
                 else {
                     finalTarget.bind();
                 }
-                FrameBuffer bloomOut = RenderersGL.outRenderer.fbBloomOut;//bloom has our current scene depth information
+                FrameBuffer bloomOut = RenderersGL.outRenderer.fbTonemappedDepth;// has our current scene depth information
                 bloomOut.bindRead();
                 int outWidth = finalTarget != null ? finalTarget.getWidth() : Engine.displayWidth;
                 int outHeight = finalTarget != null ? finalTarget.getHeight() : Engine.displayHeight;
@@ -1239,6 +1245,9 @@ public class Game extends GameBase {
 
     @Override
     public void onStatsUpdated() {
+        if (this.statsList != null) {
+            this.statsList.refresh();
+        }
         if (System.currentTimeMillis()-lastShaderLoadTime >=2200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
             int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
@@ -1278,9 +1287,6 @@ public class Game extends GameBase {
     
     @Override
     public void preRenderUpdate(float f) {
-        if (this.statsList != null) {
-            this.statsList.refresh();
-        }
         Engine.outRenderer.aoReinit();
         Engine.regionRenderer.rendered = 0;
         if (this.client != null) {

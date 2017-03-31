@@ -146,7 +146,7 @@ public class GuiOverlayStats extends Gui {
         info.add(String.format("GPU-upload: %.2fms", Stats.timeRendering));
         info.add( String.format("Drawcalls %d, Upload %db/f", Stats.lastFrameDrawCalls, Stats.uploadBytes));
         if (Engine.isVulkan) {
-            info.add( String.format("Binds/s: %d descs, %d pipes", Stats.callsBindDescSets, Stats.callsBindPipeline));
+            info.add( String.format("Binds/f: %d descs, %d pipes", Stats.callsBindDescSets, Stats.callsBindPipeline));
         }
 
         if (world != null) {

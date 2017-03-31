@@ -10,19 +10,19 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
-public class VkRenderPassFrameBuffer extends VkRenderPass {
+public class VkRenderPassTonemap extends VkRenderPass {
 
     private Buffer subpassDependencies;
-    public VkRenderPassFrameBuffer(boolean clearImage, boolean hasDepth) {
-        //TODO: try VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL here and remove imagebarrier in swapchains blit function
-        VkAttachmentDescription n = addColorAttachment(0, VK_FORMAT_R8G8B8A8_UNORM).finalLayout(VK_IMAGE_LAYOUT_GENERAL); 
-
-        if (hasDepth) {
-            VkAttachmentDescription d = addDepthAttachment(1, VK_FORMAT_D24_UNORM_S8_UINT);
-        }
-//        n.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
-        if (!clearImage) {
-            n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+    public VkRenderPassTonemap(boolean isPost) {
+        VkAttachmentDescription c = addColorAttachment(0, VK_FORMAT_R8G8B8A8_UNORM);
+        VkAttachmentDescription d = addDepthAttachment(1, VK_FORMAT_D32_SFLOAT);
+        d.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+        if (isPost) {
+            c.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            c.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+            d.finalLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        } else {
+            d.initialLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         }
     }
     @Override

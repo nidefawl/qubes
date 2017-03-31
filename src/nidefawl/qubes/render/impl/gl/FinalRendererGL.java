@@ -51,6 +51,7 @@ public class FinalRendererGL extends FinalRenderer {
     public FrameBuffer  fbBloomOut;
     private FrameBuffer fbLuminanceDownsample[];
     private FrameBuffer fbLuminanceInterp[];
+    public FrameBuffer  fbTonemappedDepth;
 
     private int preWaterDepthTex;
     private boolean     startup     = true;
@@ -311,8 +312,8 @@ public class FinalRendererGL extends FinalRenderer {
         int indexOut = 1-indexIn;
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbBloomOut.getTexture(0));
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, this.fbLuminanceInterp[indexOut].getTexture(0));
-        fbDeferred.bind();
-        fbDeferred.setDrawMask(1);
+        fbTonemappedDepth.bind();
+//        fbTonemappedDepth.setDrawMask(1);
         shaderFinal.enable();
         Engine.drawFSTri();
         if (GLDebugTextures.isShow()) {
@@ -320,7 +321,7 @@ public class FinalRendererGL extends FinalRenderer {
             GLDebugTextures.readTexture(false, "Tonemap", "LuminanceInterp", this.fbLuminanceInterp[indexOut].getTexture(0), 1);
             GLDebugTextures.readTexture(true, "Tonemap", "Output", fbDeferred.getTexture(0));
         }
-        return fbDeferred;
+        return fbTonemappedDepth;
     }
     
     public int renderNormals() {
@@ -345,11 +346,11 @@ public class FinalRendererGL extends FinalRenderer {
      * We need it later  
      */
     public void copySceneDepthBuffer() {
-        fbBloomOut.bind();
+        fbTonemappedDepth.bind();
 
         Engine.getSceneFB().bindRead();
         //             
-        GL30.glBlitFramebuffer(0, 0, Engine.getSceneFB().getWidth(), Engine.getSceneFB().getHeight(), 0, 0, fbBloomOut.getWidth(), fbBloomOut.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        GL30.glBlitFramebuffer(0, 0, Engine.getSceneFB().getWidth(), Engine.getSceneFB().getHeight(), 0, 0, fbTonemappedDepth.getWidth(), fbTonemappedDepth.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         FrameBuffer.unbindReadFramebuffer();
     }
     public void renderBloom() {
@@ -686,6 +687,13 @@ public class FinalRendererGL extends FinalRenderer {
         makeSceneBuffer(displayWidth, displayHeight);
         makeDeferredBuffer(displayWidth, displayHeight);
 
+        
+        fbTonemappedDepth = new FrameBuffer(displayWidth, displayHeight);
+        fbTonemappedDepth.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);
+        fbTonemappedDepth.setFilter(GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_LINEAR);
+        fbTonemappedDepth.setClearColor(GL_COLOR_ATTACHMENT0, 0F, 0F, 0F, 0F);
+        fbTonemappedDepth.setHasDepthAttachment();
+        fbTonemappedDepth.setup(this);
         
         fbBloomOut = new FrameBuffer(displayWidth, displayHeight);
         fbBloomOut.setColorAtt(GL_COLOR_ATTACHMENT0, GL_RGB16F);

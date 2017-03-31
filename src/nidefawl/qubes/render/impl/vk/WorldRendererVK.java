@@ -9,6 +9,7 @@ import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.input.DigController;
+import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.QModelTexture;
@@ -24,6 +25,7 @@ import nidefawl.qubes.texture.*;
 import nidefawl.qubes.texture.array.TextureArrays;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.IRenderComponent;
+import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vr.VR;
@@ -82,7 +84,14 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         pRegions.extent().width(displayWidth).height(displayHeight).depth(1);
     }
 
-    private void copyDepthBuffer(FramebufferAttachment imageDepthSrc, FramebufferAttachment imageDepthDst) {
+    private void copyDepthBuffers() {
+
+
+        FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
+        FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
+        FramebufferAttachment imageDepthDst2 = RenderersVulkan.outRenderer.frameBufferTonemapped.getAtt(1);
+
+        
         if (imageDepthSrc.currentLayout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
             System.err.println("Image src isn't in correct layout "+imageDepthSrc.currentLayout+", expected "+VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
             
@@ -105,7 +114,9 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
         vkCmdCopyImage(Engine.getDrawCmdBuffer(), imageDepthSrc.image, 
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, pRegions);
-        
+        vkCmdCopyImage(Engine.getDrawCmdBuffer(), imageDepthSrc.image, 
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthDst2.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, pRegions);
+
 
         vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthSrc.image,
                 VK_IMAGE_ASPECT_DEPTH_BIT, 
@@ -125,7 +136,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         {
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
-        
 
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
@@ -145,13 +155,14 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 modelRender.setPass(PASS_SOLID, 0);
                 modelRender.render(fTime);
             Engine.endRenderPass();
-        
-            FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
-            FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
+
             
-    
-            copyDepthBuffer(imageDepthSrc, imageDepthDst);
-    
+
+            copyDepthBuffers();
+
+            
+            
+            
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureTerrainWater);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
@@ -165,6 +176,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                     renderFirstPerson(world, fTime);
                 Engine.endRenderPass();
             }
+            
         
 
         } else {
@@ -361,6 +373,24 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
     }
     public VkDescriptor getDescTextureTerrainNormals() {
         return this.descTextureTerrainNormals;
+    }
+
+    public void renderOverlays(WorldClient world, Selection leftSelection, Selection rightSelection, DigController dig, float fTime) {
+
+        FrameBuffer fb = RenderersVulkan.outRenderer.frameBufferTonemapped;
+        
+        Engine.beginRenderPass(VkRenderPasses.passPostTonemapOverlays, fb, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.clearAllDescriptorSets();
+        Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+        Engine.setDescriptorSet(VkDescLayouts.DESC1, Engine.descriptorSetUboTransform);
+        leftSelection.renderBlockHighlight(world, fTime);
+        if (VR.controllerDeviceIndex[1]>0)
+            rightSelection.renderBlockHighlight(world, fTime);
+        dig.renderDigging(world, fTime);
+        Engine.endRenderPass();
+        
+        
+        
     }
 
 }

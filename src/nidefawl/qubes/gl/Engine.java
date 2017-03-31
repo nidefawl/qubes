@@ -1519,7 +1519,7 @@ public class Engine {
     }
     public static ITessState newTessBuffer(boolean b) {
         if (isVulkan) {
-            return new VkTesselatorState(vkContext);
+            return new VkTesselatorState(vkContext, b);
         }
         return new TesselatorState(GL15.GL_DYNAMIC_DRAW);
     }

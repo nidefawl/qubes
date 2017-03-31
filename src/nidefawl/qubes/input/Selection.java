@@ -1,10 +1,10 @@
 package nidefawl.qubes.input;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.vulkan.VK10.*;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
@@ -17,8 +17,7 @@ import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
 import nidefawl.qubes.vec.AABBFloat;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Vector3f;
-import nidefawl.qubes.vulkan.VkTess;
-import nidefawl.qubes.vulkan.VkTesselatorState;
+import nidefawl.qubes.vulkan.*;
 import nidefawl.qubes.world.World;
 
 public class Selection {
@@ -91,17 +90,61 @@ public class Selection {
                     renderBB();
                     updateBB = false;
                 }
-                Shaders.colored3D.enable();
+                if (Engine.isVulkan) {
+
+                    Engine.clearAllDescriptorSets();
+                    Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+                    Engine.setDescriptorSet(VkDescLayouts.DESC1, Engine.descriptorSetUboTransform);
+                    Engine.bindPipeline(VkPipelines.colored3DHighlight);
+                    
+                    PushConstantBuffer buf = PushConstantBuffer.INST;
+                    buf.setFloat(0, 1f);
+                    buf.setFloat(1, 1f);
+                    buf.setFloat(2, 1f);
+                    buf.setFloat(3, 0.8f);
+                    buf.setFloat(4, 1f);
+                    vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.colored3DHighlight.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*5));
+
+                } else {
+
+                    Shaders.colored3D.enable();
+                    Shaders.colored3D.setProgramUniform1f("color_brightness", 1);
+                    Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1,0.3f);
+                }
                 highlightSelection.drawQuads();
-                Shaders.wireframe.enable();
-                Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
-                Shaders.wireframe.setProgramUniform1f("thickness", 0.7f);
-                Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0f, 1f, 1);
-                Shaders.wireframe.setProgramUniform1f("maxDistance", 220);
-                glDisable(GL11.GL_DEPTH_TEST);
+                if (Engine.isVulkan) {
+                    Engine.clearAllDescriptorSets();
+                    Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+                    Engine.setDescriptorSet(VkDescLayouts.DESC1, Engine.descriptorSetUboTransform);
+                    Engine.bindPipeline(VkPipelines.wireframe);
+                    
+                    PushConstantBuffer buf = PushConstantBuffer.INST;
+                    buf.setMat4(0, Engine.getIdentityMatrix());
+                    buf.setFloat(16+0, 1);
+                    buf.setFloat(16+1, 0);
+                    buf.setFloat(16+2, 1);
+                    buf.setFloat(16+3, 1);
+                    buf.setInt(16+4, 4);
+                    vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.wireframe.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf((16+4+1)*4));
+                    buf.setFloat(0, 0.7f);
+                    buf.setFloat(1, 220);
+                    vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.wireframe.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 84, buf.getBuf(4+4));
+
+                } else {
+                    Shaders.wireframe.enable();
+                    Shaders.wireframe.setProgramUniform1i("num_vertex", 4);
+                    Shaders.wireframe.setProgramUniform1f("thickness", 0.7f);
+                    Shaders.wireframe.setProgramUniform4f("linecolor", 1, 0f, 1f, 1);
+                    Shaders.wireframe.setProgramUniform1f("maxDistance", 220);
+                    glDisable(GL11.GL_DEPTH_TEST);
+                }
                 highlightSelection.drawQuads();
-                glEnable(GL11.GL_DEPTH_TEST);
-                Shader.disable();
+
+                if (Engine.isVulkan) {
+                } else {
+                    glEnable(GL11.GL_DEPTH_TEST);
+                    Shader.disable();
+                }
             }
         }
     }
@@ -111,19 +154,43 @@ public class Selection {
      */
     private void renderMouseOver() {
         if (this.renderBB != null) {
-            Shaders.colored3D.enable();
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(-1.375f*(Engine.isInverseZ?-1:1), 1);
-            Engine.setDepthFunc(GL_LESS);
-            Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1,0.3f);
+            if (Engine.isVulkan) {
+                Engine.clearAllDescriptorSets();
+                Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+                Engine.setDescriptorSet(VkDescLayouts.DESC1, Engine.descriptorSetUboTransform);
+                Engine.bindPipeline(VkPipelines.colored3DHighlight);
+                
+                PushConstantBuffer buf = PushConstantBuffer.INST;
+                buf.setFloat(0, 1f);
+                buf.setFloat(1, 1f);
+                buf.setFloat(2, 1f);
+                buf.setFloat(3, 0.8f);
+                buf.setFloat(4, 1f);
+                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.colored3DHighlight.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*5));
+                
+            } else {
+
+                Shaders.colored3D.enable();
+                Shaders.colored3D.setProgramUniform1f("color_brightness", 1);
+                Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1,0.5f);
+//              Engine.setBlend(false);;
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                glPolygonOffset(-1.375f*(Engine.isInverseZ?-1:1), 1);
+                Engine.setDepthFunc(GL_LESS);
+//              glDisable(GL_CULL_FACE);
+            }
             Engine.pxStack.push(this.mouseOver.x, this.mouseOver.y, this.mouseOver.z);
-//            glDisable(GL_CULL_FACE);
             this.renderBB.drawQuads();
-//            glEnable(GL_CULL_FACE);
             Engine.pxStack.pop();
-            Shaders.colored3D.setProgramUniform4f("color_uniform", 1,1,1, 1);
-            Engine.setDepthFunc(GL_LEQUAL);
-            glDisable(GL_POLYGON_OFFSET_FILL);
+
+            if (Engine.isVulkan) {
+                
+            } else {
+//              glEnable(GL_CULL_FACE);
+                Engine.setDepthFunc(GL_LEQUAL);
+                glDisable(GL_POLYGON_OFFSET_FILL);
+//                Engine.setBlend(true);;
+            }
         }
 
     }
@@ -263,8 +330,8 @@ public class Selection {
     public void renderBB() {
 
         float ext = 1 / 32.0f;
-        Tess tesselator = Tess.instance;
-        tesselator.setColorRGBAF(0.4f, 0.4f, 0.4f, 1F);
+        ITess tesselator = Engine.getTess();
+        tesselator.setColorRGBAF(1,1,1,1);
         BlockPos sel1 = pos[0];
         BlockPos sel2 = pos[1];
         float minX = Math.min(sel1.x, sel2.x) - ext;
