@@ -17,7 +17,7 @@
 
 float isEyeInWater = 0.0;
 
-layout(set = 4, binding = 0, std140) uniform LightInfo
+layout(set = 3, binding = 0, std140) uniform LightInfo
 {
   vec4 dayLightTime; 
   vec4 posSun; // Light position in world space
@@ -47,23 +47,23 @@ struct SurfaceProperties {
 } prop;
 
 
-layout (set = 2, binding = 0) uniform sampler2D texColor;
-layout (set = 2, binding = 1) uniform sampler2D texNormals;
-layout (set = 2, binding = 2) uniform usampler2D texMaterial;
-layout (set = 2, binding = 3) uniform sampler2D texBlockLight;
-layout (set = 2, binding = 4) uniform sampler2D texDepth;
-layout (set = 2, binding = 5) uniform sampler2D texShadow;
-layout (set = 2, binding = 6) uniform sampler2D texLight;
+layout (set = 1, binding = 0) uniform sampler2D texColor;
+layout (set = 1, binding = 1) uniform sampler2D texNormals;
+layout (set = 1, binding = 2) uniform usampler2D texMaterial;
+layout (set = 1, binding = 3) uniform sampler2D texBlockLight;
+layout (set = 1, binding = 4) uniform sampler2D texDepth;
+layout (set = 1, binding = 5) uniform sampler2D texShadow;
+layout (set = 1, binding = 6) uniform sampler2D texLight;
 #if RENDER_AMBIENT_OCCLUSION
-layout (set = 2, binding = 7) uniform sampler2D texAO;
+layout (set = 1, binding = 7) uniform sampler2D texAO;
 #endif
 #if RENDER_PASS == 1
-layout (set = 2, binding = 7) uniform sampler2D texDepthPreWater;
-layout (set = 2, binding = 8) uniform sampler2D texWaterNoise;
+layout (set = 1, binding = 7) uniform sampler2D texDepthPreWater;
+layout (set = 1, binding = 8) uniform sampler2D texWaterNoise;
 #endif
 #ifdef BLUE_NOISE
 uniform int texSlotNoise;
-layout (set = 2, binding = 9) uniform sampler2DArray texArrayNoise;
+layout (set = 1, binding = 9) uniform sampler2DArray texArrayNoise;
 #endif
 
 
@@ -444,7 +444,19 @@ const vec3 u_L21 = vec3(0.56, 0.21, 0.14);
 const vec3 u_L22 = vec3(0.21, -0.05, -0.30);
 
 ///////////////////////////////////////////
+void main2() {
+    vec4 nl = texture(texNormals, pass_texcoord);
+    prop.roughness = nl.w;
+    prop.normal = normalize(nl.rgb * 2.0f - 1.0f);
 
+    #if RENDER_PASS != 1
+        discard;
+    #endif
+    out_Color = vec4((prop.normal.xyz)*0.02f, 1.0);
+    if (prop.normal.y < 0) {
+        out_Color = vec4(1,0,1,1);
+    }
+}
 
 #define SHADE
 void main() {

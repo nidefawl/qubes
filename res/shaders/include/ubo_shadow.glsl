@@ -1,4 +1,4 @@
-layout(set = 3, binding = 0, std140) uniform uboMatrixShadow
+layout(set = 2, binding = 0, std140) uniform uboMatrixShadow
 {
     mat4 shadow_split_mvp[4];
     vec4 shadow_split_depth;

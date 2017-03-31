@@ -99,7 +99,7 @@ public class FrameBuffer implements RefTrackedResource {
     }
     public void fromRenderpass(VkRenderPass pass, int depthUsageFlags, int colorAttUsageFlags) {
         for (int i = 0; i < pass.nAttachments; i++) {
-            VkAttachmentDescription n = pass.attachments.get(i);
+            VkAttachmentDescription n = pass.getAttachmentDesc(i);
             int flags = pass.attachmentType[i];
             if ((flags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) {
                 flags |= colorAttUsageFlags;

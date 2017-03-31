@@ -4,7 +4,7 @@
 #pragma define "SAMPLER_CONVERT_GAMMA"
 #pragma include "tonemap.glsl"
 
-uniform sampler2D tex0;
+layout (set = 2, binding = 0) uniform sampler2D tex0;
 
 in vec4 pass_Color;
 in vec2 pass_texcoord;

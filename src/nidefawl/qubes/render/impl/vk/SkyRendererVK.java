@@ -29,8 +29,6 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     private long view;
     private long sampler;
     private FrameBuffer frameBufferCubemap;
-    private FrameBuffer frameBufferSingle;
-    public VkDescriptor descTextureSkyboxSingle;
     public VkDescriptor descTextureSkyboxCubemap;
     private long[] viewsFrameBuffer = new long[6];
 
@@ -93,7 +91,6 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         descriptorSetUboScene.setBindingUniformBuffer(2, UniformBuffer.uboSceneData);
         descriptorSetUboScene.update(ctxt);
         this.descTextureCloudSingle = ctxt.descLayouts.allocDescSetSampleSingle();
-        this.descTextureSkyboxSingle = ctxt.descLayouts.allocDescSetSampleSingle();
         this.descTextureSkyboxCubemap = ctxt.descLayouts.allocDescSetSampleSingle();
         
 
@@ -101,8 +98,6 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         this.descTextureCloudSingle.update(Engine.vkContext);
         
         this.frameBufferCubemap = new FrameBuffer(ctxt).tag("sky_cubemap");
-        this.frameBufferSingle = new FrameBuffer(ctxt).tag("sky_single");
-        this.frameBufferSingle.fromRenderpass(VkRenderPasses.passSkyGenerate, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
 
         try ( MemoryStack stack = stackPush() ) {
             LongBuffer pImage = stack.longs(0);
@@ -232,48 +227,31 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     @Override
     public void renderSky(World world, float fTime) {
         this.updateSprites(fTime);
-        FrameBuffer fbScene = this.frameBufferSingle;
+        Engine.clearAllDescriptorSets();
         
-        if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
-        {
-            Engine.beginRenderPass(VkRenderPasses.passSkyGenerate, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(2, this.descTextureCloudSingle);
-            Engine.setDescriptorSet(3, Engine.descriptorSetUboLights);
-            Engine.clearDescriptorSet(4);
-            Engine.bindPipeline(VkPipelines.skybox_update_background);
+        PushConstantBuffer buf = PushConstantBuffer.INST;
+        float weatherStr = GameMath.powf(WEATHER*0.9f, 1.6f);
+        buf.setFloat(0, weatherStr);
+        buf.setFloat(1, 5);
+        storeSprites(fTime, 0);
+
+        Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.setDescriptorSet(1, this.descTextureCloudSingle);
+        Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
+        Engine.clearDescriptorSet(4);
+        for (int i = 0; i < 6; i++) {
+            cubeMatrix.setupScene(i, Engine.camera.getPosition());
+            Engine.setDescriptorSetF(0, descriptorSetUboScene);
+            if (i != 0)
+                vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
+            Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap, i);
             Engine.drawFSTri();
-            Engine.endRenderPass();
-            Engine.clearDescriptorSet(3);
-            Engine.clearDescriptorSet(2);
-            
-
-            PushConstantBuffer buf = PushConstantBuffer.INST;
-            float weatherStr = GameMath.powf(WEATHER*0.9f, 1.6f);
-            buf.setFloat(0, weatherStr);
-            buf.setFloat(1, 5);
-            storeSprites(fTime, 0);
-
-            VkRenderPasses.passSkyGenerateCubemap.clearValues.get(0).color().float32(0, 0);
-            Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
-            Engine.setDescriptorSet(2, this.descTextureCloudSingle);
-            Engine.setDescriptorSet(3, Engine.descriptorSetUboLights);
-            Engine.clearDescriptorSet(4);
-            for (int i = 0; i < 6; i++) {
-                cubeMatrix.setupScene(i, Engine.camera.getPosition());
-                Engine.bindOverrideSceneDescriptor(descriptorSetUboScene);
-                if (i != 0)
-                    vkCmdNextSubpass(Engine.getDrawCmdBuffer(), VK_SUBPASS_CONTENTS_INLINE);
-                Engine.bindPipeline(VkPipelines.skybox_update_background_cubemap, i);
-                Engine.drawFSTri();
-                Engine.bindPipeline(VkPipelines.skybox_update_sprites, i);
-                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.skybox_update_sprites.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4+4));
+            Engine.bindPipeline(VkPipelines.skybox_update_sprites, i);
+            vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.skybox_update_sprites.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4+4));
 //
-                drawSprites(Engine.getDrawCmdBuffer());
-            }
-            Engine.endRenderPass();
-            Engine.clearDescriptorSet(2);
-            Engine.bindOverrideSceneDescriptor(null);
+            drawSprites(Engine.getDrawCmdBuffer());
         }
+        Engine.endRenderPass();
     }
 
     static long[] pointer = new long[2];
@@ -289,14 +267,6 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
     }
     @Override
     public void resize(int displayWidth, int displayHeight) {
-        if (this.frameBufferSingle != null) {
-            this.frameBufferSingle.destroy();
-        }
-        this.frameBufferSingle.build(VkRenderPasses.passSkyGenerate, displayWidth, displayHeight);
-
-        FramebufferAttachment coloratt = this.frameBufferSingle.getAtt(0);
-        this.descTextureSkyboxSingle.setBindingCombinedImageSampler(0, coloratt.getView(), sampler, coloratt.finalLayout);
-        this.descTextureSkyboxSingle.update(Engine.vkContext);
     }
 
     public void renderSkybox() {

@@ -31,6 +31,8 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutPostLumInterp = new VkPipelineLayout("pipelineLayoutPostLumInterp");
     public static VkPipelineLayout pipelineLayoutBlurKawase = new VkPipelineLayout("pipelineLayoutBlurKawase");
     public static VkPipelineLayout pipelineLayoutBlurSeperate = new VkPipelineLayout("pipelineLayoutBlurSeperate");
+    public static VkPipelineLayout pipelineLayoutBloom = new VkPipelineLayout("pipelineLayoutBloom");
+    public static VkPipelineLayout pipelineLayoutBloomCombine = new VkPipelineLayout("pipelineLayoutBloomCombine");
     public static VkPipelineLayout pipelineLayoutDeferredPass0 = new VkPipelineLayout("pipelineLayoutDeferredPass0");
     public static VkPipelineLayout pipelineLayoutDeferredPass1 = new VkPipelineLayout("pipelineLayoutDeferredPass1");
     public static VkPipelineLayout pipelineLayoutTonemapDynamic = new VkPipelineLayout("pipelineLayoutTonemapDynamic");
@@ -60,6 +62,8 @@ public class VkPipelines {
     public static VkPipeline deferred_pass0 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
     public static VkPipeline deferred_pass1 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass1);
     public static VkPipeline deferred_pass2 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
+    public static VkPipeline post_bloom = new VkPipeline(VkPipelines.pipelineLayoutBloom);
+    public static VkPipeline post_bloom_combine = new VkPipeline(VkPipelines.pipelineLayoutBloomCombine);
     public static VkPipeline post_downsample_pass0 = new VkPipeline(VkPipelines.pipelineLayoutPostDownsample);
     public static VkPipeline post_downsample_pass1 = new VkPipeline(VkPipelines.pipelineLayoutPostDownsample);
     public static VkPipeline post_lum_interp = new VkPipeline(VkPipelines.pipelineLayoutPostLumInterp);
@@ -441,6 +445,9 @@ public class VkPipelines {
             filter_blur_kawase.setShaders(shaderScreenTriangle, frag);
             filter_blur_kawase.setRenderPass(VkRenderPasses.passDeferred, 0);
             filter_blur_kawase.setScreenSpaceTriangle();
+            filter_blur_kawase.useSwapChainViewport = false;
+            filter_blur_kawase.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            filter_blur_kawase.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
             filter_blur_kawase.pipeline = buildPipeLine(ctxt, filter_blur_kawase);
         }
         try ( MemoryStack stack = stackPush() ) 
@@ -484,6 +491,33 @@ public class VkPipelines {
             deferred_pass2.setRenderPass(VkRenderPasses.passDeferred, 0);
             deferred_pass2.setScreenSpaceTriangle();
             deferred_pass2.pipeline = buildPipeLine(ctxt, deferred_pass2);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            post_bloom.destroyPipeLine(ctxt);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/thresholdfilter.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            post_bloom.setShaders(shaderScreenTriangle, frag);
+            post_bloom.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_bloom.setScreenSpaceTriangle();
+            post_bloom.pipeline = buildPipeLine(ctxt, post_bloom);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            post_bloom_combine.destroyPipeLine(ctxt);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/bloom_combine.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("DO_BLOOM".equals(define)) {
+                        return "#define DO_BLOOM";
+                    }
+                    return null;
+                }
+            });
+            post_bloom_combine.setShaders(shaderScreenTriangle, frag);
+            post_bloom_combine.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_bloom_combine.setScreenSpaceTriangle();
+            post_bloom_combine.pipeline = buildPipeLine(ctxt, post_bloom_combine);
         }
         try ( MemoryStack stack = stackPush() ) 
         {

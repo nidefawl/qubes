@@ -33,10 +33,11 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
     
     @Override
     public void render(float fTime) {
+        Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         if (this.renderer == 1) {
-            Engine.setDescriptorSet(VkDescLayouts.DESC4, Engine.descriptorSetUboShadow);
+            Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
         } else {
-            Engine.clearDescriptorSet(VkDescLayouts.DESC4);
+            Engine.clearDescriptorSet(VkDescLayouts.DESC3);
         }
 
         for (int i = 0; i < this.subLists.size(); i++) {
@@ -56,8 +57,8 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
                 descriptorSetSSBO = this.descriptorSetSSBOBatched;
                 descriptorSetSSBO.setOverrideOffset(n.ssboOffsets);
             }
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, n.tex.descriptorSetTex);
-            Engine.setDescriptorSetF(VkDescLayouts.DESC3, descriptorSetSSBO);
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, n.tex.descriptorSetTex);
+            Engine.setDescriptorSetF(VkDescLayouts.DESC2, descriptorSetSSBO);
             Engine.bindPipeline(pipe);
             if (this.renderer == 1) {
                 PushConstantBuffer buf = PushConstantBuffer.INST;
@@ -68,7 +69,6 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
             }
             n.model.renderRestModel(n.object, n.group, n.instances);
         }
-        Engine.clearDescriptorSet(VkDescLayouts.DESC4);
     }
     @Override
     public void upload(float fTime) {

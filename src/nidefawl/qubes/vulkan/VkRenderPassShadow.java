@@ -17,8 +17,6 @@ public class VkRenderPassShadow extends VkRenderPass {
             .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM)
             .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        attachments.limit(nAttachments);
-        clearValues.limit(nAttachments);
     }
     @Override
     public void build(VKContext ctxt) {
@@ -66,18 +64,7 @@ public class VkRenderPassShadow extends VkRenderPass {
                     .pDepthStencilAttachment(depthRefShadowPass)
                     .pResolveAttachments(null)
                     .pPreserveAttachments(null);
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(this.attachments)
-                    .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            this.renderPass = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
-            }
+            buildRenderPass(ctxt, subpasses, subpassDependencies);
         }
     }
 }

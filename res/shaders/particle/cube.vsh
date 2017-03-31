@@ -42,12 +42,12 @@ struct ParticleData {
     float ty;
 };
 	#endif
-layout (set = 4, binding = 0, std430) buffer ParticleCube_blockinfo
+layout (set = 3, binding = 0, std430) buffer ParticleCube_blockinfo
 {
     ParticleData data[1024];
 } particlecube_buffer_blockinfo;
 
-layout (set = 4, binding = 1, std430) buffer ParticleCube_mat_model
+layout (set = 3, binding = 1, std430) buffer ParticleCube_mat_model
 {
     mat4 modelMatrix[1024];
 } particlecube_buffer_mat;
@@ -85,5 +85,5 @@ void main(void) {
 	normal = (normalMatrix1 * vec4(normal, 1)).xyz;
 	normal = normalize(normal.xyz);
 	position = modelMatrix*vec4(in_position.xyz, 1.0);
-    gl_Position = in_matrix_3D.mvp * vec4(position.xyz - RENDER_OFFSET + PX_OFFSET.xyz, position.w);
+    gl_Position = in_matrix_3D.mvp * vec4(position.xyz - RENDER_OFFSET, position.w);
 }

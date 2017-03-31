@@ -4,7 +4,7 @@
 
 #pragma define "ALPHA_TEST"
 
-uniform sampler2DArray itemTextures;
+layout (set = 2, binding = 0) uniform sampler2DArray itemTextures;
 
 
 in vec4 color;

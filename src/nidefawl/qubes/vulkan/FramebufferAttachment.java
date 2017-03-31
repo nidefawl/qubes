@@ -8,6 +8,7 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.util.GameLogicError;
 
 public class FramebufferAttachment {
@@ -86,7 +87,9 @@ public class FramebufferAttachment {
                 }
                 this.image = pImage.get(0);
                 this.ctxt.memoryManager.allocateImageMemory(pImage.get(0), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.TEXTURE_COLOR_MEMORY);
-
+                if (GameBase.DEBUG_LAYER) {
+                    VkDebug.registerImage(this.image);
+                }
                 
               VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                       .viewType(VK_IMAGE_VIEW_TYPE_2D)

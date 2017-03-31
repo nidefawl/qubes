@@ -26,6 +26,7 @@ public class VkDescLayouts {
     public long descSetLayoutUBOScene = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingle = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDouble = VK_NULL_HANDLE;
+    public long descSetLayoutSamplerImageTriple = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageSingleVertexStage = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDeferredPass0 = VK_NULL_HANDLE;
     public long descSetLayoutSamplerImageDeferredPass1 = VK_NULL_HANDLE;
@@ -52,6 +53,7 @@ public class VkDescLayouts {
             VkDescriptorSetLayoutBinding.Buffer ssbo_model_static_bindings = VkDescriptorSetLayoutBinding.calloc(2);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_single = VkDescriptorSetLayoutBinding.calloc(1);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_double = VkDescriptorSetLayoutBinding.calloc(2);
+            VkDescriptorSetLayoutBinding.Buffer sampler_image_triple = VkDescriptorSetLayoutBinding.calloc(3);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_single_vertex_stage = VkDescriptorSetLayoutBinding.calloc(1);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass0 = VkDescriptorSetLayoutBinding.calloc(7);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass1 = VkDescriptorSetLayoutBinding.calloc(9);
@@ -95,16 +97,19 @@ public class VkDescLayouts {
                 .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .binding(0)
                 .descriptorCount(1);
-            sampler_image_double.get(0)
-                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
-                .binding(0)
-                .descriptorCount(1);
-            sampler_image_double.get(1)
-                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
-                .binding(1)
-                .descriptorCount(1);
+            for (int i = 0; i < 3; i++)
+                sampler_image_double.get(i)
+                    .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                    .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .binding(i)
+                    .descriptorCount(1);
+
+            for (int i = 0; i < 3; i++)
+                sampler_image_triple.get(i)
+                    .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                    .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .binding(i)
+                    .descriptorCount(1);
             
             sampler_image_single_vertex_stage.get(0)
                 .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
@@ -173,6 +178,7 @@ public class VkDescLayouts {
             descSetLayoutSSBOModelStatic = makeSet(ssbo_model_static_bindings);
             descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
             descSetLayoutSamplerImageDouble = makeSet(sampler_image_double);
+            descSetLayoutSamplerImageTriple = makeSet(sampler_image_triple);
             descSetLayoutSamplerImageSingleVertexStage = makeSet(sampler_image_single_vertex_stage);
             descSetLayoutSamplerImageDeferredPass0 = makeSet(sampler_image_deferred_pass0);
             descSetLayoutSamplerImageDeferredPass1 = makeSet(sampler_image_deferred_pass1);
@@ -228,49 +234,53 @@ public class VkDescLayouts {
                 .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .offset(0)
                 .size(4+4+4);
-             
-            VkPipelines.pipelineLayoutTerrain.build(ctxt, 
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants);
-            VkPipelines.pipelineLayoutMain.build(ctxt, 
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutUBOShadow);
+
             VkPipelines.pipelineLayoutTextured.build(ctxt, 
                     descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle);
             VkPipelines.pipelineLayoutColored.build(ctxt, 
                     descSetLayoutUBOScene, descSetLayoutUBOTransform);
             VkPipelines.pipelineLayoutGUI.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutUBOTransform}, push_constant_ranges_gui);
-            VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOShadow}, push_constant_ranges_shadow_solid);
             VkPipelines.pipelineLayoutSingleBlock.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOConstants}, push_constant_ranges_single_block);
+                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutUBOConstants, descSetLayoutSamplerImageSingle}, push_constant_ranges_single_block);
+
+            
+            VkPipelines.pipelineLayoutTerrain.build(ctxt, 
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants);
+            VkPipelines.pipelineLayoutMain.build(ctxt, 
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutUBOShadow);
+            VkPipelines.pipelineLayoutShadow.build(ctxt, new long[] {
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutUBOShadow}, push_constant_ranges_shadow_solid);
             VkPipelines.pipelineLayoutPostDownsample.build(ctxt, new long[] {descSetLayoutSamplerImageSingle}, push_constant_ranges_vec2);
             VkPipelines.pipelineLayoutPostLumInterp.build(ctxt, new long[] {descSetLayoutSamplerImageSingleVertexStage, descSetLayoutSamplerImageSingleVertexStage}, push_constant_ranges_float);
             VkPipelines.pipelineLayoutBlurKawase.build(ctxt, new long[] {descSetLayoutSamplerImageSingle}, push_constant_ranges_blur_kawase);
             VkPipelines.pipelineLayoutBlurSeperate.build(ctxt, new long[] {descSetLayoutSamplerImageSingle}, push_constant_ranges_blur_seperate);
+            VkPipelines.pipelineLayoutBloom.build(ctxt, new long[] {descSetLayoutSamplerImageTriple});
+            VkPipelines.pipelineLayoutBloomCombine.build(ctxt, new long[] {descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutDeferredPass0.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDeferredPass0, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDeferredPass0, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
             VkPipelines.pipelineLayoutDeferredPass1.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDeferredPass1, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDeferredPass1, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
             VkPipelines.pipelineLayoutTonemapDynamic.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutSkybox.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo});
             VkPipelines.pipelineLayoutSkyboxSprites.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo}, push_constant_ranges_sprites);
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutUBOLightInfo}, push_constant_ranges_sprites);
             VkPipelines.pipelineLayoutParticleCube.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants, descSetLayoutSSBOCubes});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutUBOConstants, descSetLayoutSSBOCubes});
             VkPipelines.pipelineLayoutSingleBlock3D.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageDouble}, push_constant_ranges_single_block_3d);
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDouble}, push_constant_ranges_single_block_3d);
             VkPipelines.pipelineLayoutModelFirstPerson.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle}, push_constant_ranges_single_block_3d);
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle}, push_constant_ranges_single_block_3d);
             VkPipelines.pipelineLayoutModelStaticGbuffer.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelStatic});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelStatic});
             VkPipelines.pipelineLayoutModelStaticShadow.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelStatic, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelStatic, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
             VkPipelines.pipelineLayoutModelBatchedGbuffer.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched});
             VkPipelines.pipelineLayoutModelBatchedShadow.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutUBOTransform, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
 
         }
 
@@ -352,6 +362,9 @@ public class VkDescLayouts {
     }
     public VkDescriptor allocDescSetSampleSingle() {
         return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageSingle)).tag("samplerSingle");
+    }
+    public VkDescriptor allocDescSetSampleTriple() {
+        return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageTriple)).tag("samplerTriple");
     }
     public VkDescriptor allocDescSetSamplerDouble() {
         return new VkDescriptor(allocDescSet(descSetLayoutSamplerImageDouble)).tag("samplerDouble");

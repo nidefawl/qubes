@@ -8,6 +8,8 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 import java.nio.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -53,10 +55,18 @@ public class VulkanInit {
         enabledInstanceExtension.flip();
         enabledDeviceExtension.flip();
         if (installdebugcallback) {
+            final Pattern p = Pattern.compile(".*image object 0x([0-9a-f]+).*");
             debugCallback = new VkDebugReportCallbackEXT() {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
-                    System.err.println("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage));
-                    GameBase.baseInstance.setException(new GameError("ERROR OCCURED: " + VkDebugReportCallbackEXT.getString(pMessage)));
+                    String msg = VkDebugReportCallbackEXT.getString(pMessage);
+                    System.err.println("ERROR OCCURED: " + msg);
+                    Thread.dumpStack();
+                    Matcher m = p.matcher(msg);
+                    if (m.matches()) {
+                        long l = Long.parseLong(m.group(1), 16);
+                        VkDebug.printStack(l);
+                    }
+                    GameBase.baseInstance.setException(new GameError("ERROR OCCURED: " + msg));
                     return 0;
                 }
             };

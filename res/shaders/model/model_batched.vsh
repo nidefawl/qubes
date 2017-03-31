@@ -19,7 +19,7 @@
 
 #if RENDERER == RENDERER_WORLD_SHADOW
 //TODO: conditional includes
-layout(set = 4, binding = 0, std140) uniform uboMatrixShadow
+layout(set = 3, binding = 0, std140) uniform uboMatrixShadow
 {
     mat4 shadow_split_mvp[4];
     vec4 shadow_split_depth;
@@ -56,12 +56,12 @@ uniform mat4 mvp;
 #endif
 
 
-layout (set = 3, binding = 0, std430) buffer QModel_mat_model
+layout (set = 2, binding = 0, std430) buffer QModel_mat_model
 {
     mat4 modelMatrix[];
 } qmodelmatbuffer_model;
 
-layout (set = 3, binding = 1, std430) buffer QModel_mat_normal
+layout (set = 2, binding = 1, std430) buffer QModel_mat_normal
 {
     mat4 normalMatrix[];
 } qmodelmatbuffer_normal;

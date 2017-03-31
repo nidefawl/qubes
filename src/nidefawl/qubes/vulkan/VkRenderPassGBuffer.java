@@ -14,21 +14,27 @@ public class VkRenderPassGBuffer extends VkRenderPass {
 
     private Buffer subpassDependencies;
     public VkRenderPassGBuffer(int pass) {
-        addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-            .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-        addColorAttachment(1, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addColorAttachment(2, VK_FORMAT_R16G16B16A16_UINT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addColorAttachment(3, VK_FORMAT_R16G16B16A16_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        addDepthAttachment(4, VK_FORMAT_D32_SFLOAT)
-            .initialLayout(pass != 1 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-            .finalLayout(pass == 0 ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
-            .loadOp(pass != 1 ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD);
-        attachments.limit(nAttachments);
-        clearValues.limit((pass!=1)?nAttachments:(nAttachments-1));
+        VkAttachmentDescription color = addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT).finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkAttachmentDescription normal = addColorAttachment(1, VK_FORMAT_R16G16B16A16_SFLOAT).finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkAttachmentDescription material = addColorAttachment(2, VK_FORMAT_R16G16B16A16_UINT).finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkAttachmentDescription light = addColorAttachment(3, VK_FORMAT_R16G16B16A16_SFLOAT).finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkAttachmentDescription depth = addDepthAttachment(4, VK_FORMAT_D32_SFLOAT);
+        depth.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+        depth.initialLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        depth.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        if (pass == 0) {
+            depth.finalLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        }
+        if (pass == 1) {
+            normal.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            normal.initialLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            material.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            material.initialLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            light.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            light.initialLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            depth.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            depth.initialLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        }
     }
     @Override
     public void build(VKContext ctxt) {
@@ -68,19 +74,7 @@ public class VkRenderPassGBuffer extends VkRenderPass {
                     .pDepthStencilAttachment(depthReference)
                     .pResolveAttachments(null)
                     .pPreserveAttachments(null);
-
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(this.attachments)
-                    .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            this.renderPass = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
-            }
+            buildRenderPass(ctxt, subpasses, subpassDependencies);
         }
     }
 }

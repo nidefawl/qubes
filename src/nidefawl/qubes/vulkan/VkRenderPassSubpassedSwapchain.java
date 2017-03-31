@@ -28,8 +28,6 @@ public class VkRenderPassSubpassedSwapchain extends VkRenderPass {
                     .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
                     .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
                     .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            attachments.limit(nAttachments);
-            clearValues.limit(nAttachments);
             VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(1, stack)
                     .attachment(0)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -86,21 +84,8 @@ public class VkRenderPassSubpassedSwapchain extends VkRenderPass {
                     .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
                     .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
                     .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
-            
 
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(attachments)
-                    .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
-
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            this.renderPass = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create render pass: " + VulkanErr.toString(err));
-            }
+            buildRenderPass(ctxt, subpasses, subpassDependencies);
         }
     }
 }

@@ -6,7 +6,7 @@
 #pragma include "tonemap.glsl"
 
 
-uniform sampler2DArray blockTextures;
+layout (set = 3, binding = 0) uniform sampler2DArray blockTextures;
 
 
 in vec4 color;

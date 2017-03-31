@@ -1,4 +1,4 @@
-package nidefawl.qubes.render.impl.vk;
+ package nidefawl.qubes.render.impl.vk;
 
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -58,12 +58,11 @@ public class CubeParticleRendererVK extends CubeParticleRenderer implements IRen
     public void renderParticles(World world, float iPass, float fTime) {
         if (!this.particles.isEmpty()) {
             storeParticles(world, iPass, fTime);
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrainNormals());
-            Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
-            Engine.setDescriptorSet(VkDescLayouts.DESC4, this.descriptorSetSSBO);
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrainNormals());
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
+            Engine.setDescriptorSet(VkDescLayouts.DESC3, this.descriptorSetSSBO);
             Engine.bindPipeline(VkPipelines.cube_particle);
             drawCubes(Engine.getDrawCmdBuffer());
-            Engine.clearDescriptorSet(VkDescLayouts.DESC4);
         }
     }
     static long[] pointer = new long[1];

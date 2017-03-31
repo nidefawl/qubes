@@ -128,7 +128,7 @@ public class ShaderSource {
                 if (processMode == ProcessMode.VULKAN) {
                     lines.add(resolve?0:1, "#define VULKAN_GLSL");
                 }
-                int texure_descset_index = 2;
+                int texure_descset_index = 1;
                 int nFragmentOutputs = 0;
                 int nVertexOutputs = 0;
                 int nInputs = 0;

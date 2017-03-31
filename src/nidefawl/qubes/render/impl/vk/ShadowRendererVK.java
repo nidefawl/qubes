@@ -56,9 +56,10 @@ public class ShadowRendererVK extends ShadowRenderer {
         
         Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
-//        Engine.clearDescriptorSet(VkDescLayouts.TEX_DESC_IDX);
-        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+        Engine.clearAllDescriptorSets();
+        Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+        Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         float f = -1.0f;
         vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*0.15f);
@@ -74,8 +75,9 @@ public class ShadowRendererVK extends ShadowRenderer {
         modelRender.render(fTime);
 
         Engine.setViewport(mapSize, 0, mapSize, mapSize);
-        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+        Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
+        Engine.clearDescriptorSet(VkDescLayouts.DESC3);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 1);
@@ -85,8 +87,9 @@ public class ShadowRendererVK extends ShadowRenderer {
         modelRender.setPass(PASS_SHADOW_SOLID, 1);
         modelRender.render(fTime);
         Engine.setViewport(0, mapSize, mapSize, mapSize);
-        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboShadow);
+        Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
+        Engine.clearDescriptorSet(VkDescLayouts.DESC3);
         Engine.bindPipeline(VkPipelines.shadowSolid);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 2);
@@ -96,8 +99,6 @@ public class ShadowRendererVK extends ShadowRenderer {
         modelRender.setPass(PASS_SHADOW_SOLID, 2);
         modelRender.render(fTime);
         Engine.endRenderPass();
-        Engine.clearDescriptorSet(VkDescLayouts.DESC3);
-        Engine.clearDescriptorSet(VkDescLayouts.DESC4);
     }
 
     @Override

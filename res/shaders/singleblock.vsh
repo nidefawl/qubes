@@ -2,6 +2,7 @@
 
 
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_transform.glsl"
 #pragma include "ubo_constants.glsl"
 #pragma include "vertex_layout.glsl"
 #pragma include "blockinfo.glsl"

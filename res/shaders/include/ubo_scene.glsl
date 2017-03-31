@@ -28,11 +28,6 @@ layout(set = 0, binding = 2, std140) uniform uboSceneData
     vec4 sceneSettings;
 } in_scene;
 
-layout(set = 1, binding = 0, std140) uniform uboTransformStack
-{
-    vec4 pxoffset;
-} in_transform_stack;
-
 
 
 #define FRAME_TIME in_scene.framePos.w

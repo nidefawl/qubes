@@ -527,14 +527,16 @@ public class Game extends GameBase {
                     vkContext.swapChain.height);
         } else {
 
+            Engine.disableAutoBindDesc();
             if (this.world != null) {
                 Engine.skyRenderer.renderSky(this.world, fTime);
                 Engine.shadowRenderer.renderShadowPass(this.world, fTime);
-            } 
+            }
             setSceneViewport();
             if (this.world != null) {
                 renderWorldVK(fTime, 0);
             }
+            Engine.enableAutoBindDesc();
             double mx = Mouse.getX();
             double my = Mouse.getY();
             setWindowViewport();

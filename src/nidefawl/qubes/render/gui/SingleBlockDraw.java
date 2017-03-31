@@ -175,8 +175,8 @@ public class SingleBlockDraw {
                     }
                     targetAtlas.renderBuffer.preRender(false);
                     if (Engine.isVulkan) {
-                        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-                        Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
+                        Engine.setDescriptorSet(VkDescLayouts.DESC3, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+                        Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
                         Engine.bindPipeline(VkPipelines.singleblock);
                         PushConstantBuffer buf = PushConstantBuffer.INST;
                         buf.setMat4(0, this.modelMatrix);
@@ -226,8 +226,8 @@ public class SingleBlockDraw {
         this.modelMatrix.update();
         if (Engine.isVulkan) {
 
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrain());
-            Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
+            Engine.setDescriptorSet(VkDescLayouts.DESC3, RenderersVulkan.worldRenderer.getDescTextureTerrain());
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
             Engine.bindPipeline(VkPipelines.singleblock);
             PushConstantBuffer buf = PushConstantBuffer.INST;
             buf.setMat4(0, this.modelMatrix);

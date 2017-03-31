@@ -6,7 +6,7 @@
 #pragma include "tonemap.glsl"
 #pragma include "unproject.glsl"
 
-uniform sampler2D texShadow;
+layout (set = 2, binding = 0) uniform sampler2D texShadow;
 
 in vec4 pass_Color;
 in vec2 pass_texcoord;

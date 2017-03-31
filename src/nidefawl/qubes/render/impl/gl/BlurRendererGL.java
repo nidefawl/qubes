@@ -25,15 +25,6 @@ public class BlurRendererGL extends BlurRenderer {
     public Shader       shaderBlurSeperate;
     public Shader       shaderBlurKawase;
     private boolean startup = true;
-    final int[][] kawaseKernelSizePasses = new int[] [] {
-        {0,0},
-        {0, 1, 1},
-        {0, 1, 2, 2, 3},
-        {0, 1, 2, 3, 4, 4, 5},
-        {0, 1, 2, 3, 4, 5, 7, 8, 9, 10},
-    };
-    private float w1;
-    private float h1;
 
     public void initShaders() {
         try {

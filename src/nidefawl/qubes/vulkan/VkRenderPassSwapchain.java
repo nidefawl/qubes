@@ -9,6 +9,7 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkSubpassDescription.Buffer;
 
 public class VkRenderPassSwapchain extends VkRenderPass {
 
@@ -22,8 +23,6 @@ public class VkRenderPassSwapchain extends VkRenderPass {
             reset();
             VkAttachmentDescription colorAtt = addColorAttachment(0, ctxt.colorFormat);
             VkAttachmentDescription depthAtt = addDepthAttachment(1, ctxt.depthFormat);
-            attachments.limit(nAttachments);
-            clearValues.limit(nAttachments);
             colorAtt.format(ctxt.colorFormat)
                 .samples(VK_SAMPLE_COUNT_1_BIT)
                 .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
@@ -77,21 +76,7 @@ public class VkRenderPassSwapchain extends VkRenderPass {
                     .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
                     .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
                     .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
-            
-
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(attachments)
-                    .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
-
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            this.renderPass = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create render pass: " + VulkanErr.toString(err));
-            }
+            buildRenderPass(ctxt, subpasses, subpassDependencies);
         }
     }
 }

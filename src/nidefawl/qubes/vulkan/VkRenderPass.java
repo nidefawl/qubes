@@ -1,21 +1,26 @@
 package nidefawl.qubes.vulkan;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.VK10.*;
 
+import java.nio.LongBuffer;
 import java.util.Arrays;
 
-import org.lwjgl.vulkan.VkAttachmentDescription;
-import org.lwjgl.vulkan.VkClearDepthStencilValue;
-import org.lwjgl.vulkan.VkClearValue;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkSubpassDescription.Buffer;
 
 import nidefawl.qubes.gl.Engine;
 
 public abstract class VkRenderPass {
 
-    public final VkClearValue.Buffer clearValues = VkClearValue.calloc(8);
-    public final VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(8);
+    public final VkClearValue.Buffer renderPassClearValues = VkClearValue.calloc(8);
+    public final VkClearValue.Buffer definedClearValues = VkClearValue.calloc(8);
+    private VkClearDepthStencilValue definedClearValueDepth;
+    private final VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(8);
 
-    int                            nAttachments;
+    public int                            nAttachments;
     int                            nColorAttachments;
     public boolean                 hasDepthAttachement;
     public final int[]             attachmentType = new int[8];
@@ -24,7 +29,6 @@ public abstract class VkRenderPass {
 
 
     private String name;
-    private VkClearDepthStencilValue clearValueDepth;
     public VkRenderPass() {
         reset();
         VkRenderPasses.registerPass(this);
@@ -36,6 +40,13 @@ public abstract class VkRenderPass {
         nAttachments = 0;
         nColorAttachments = 0;
         Arrays.fill(attachmentType, 0);
+    }
+    public void setClearValueColor(int idx, float r, float g, float b, float a) {
+        definedClearValues.get(idx).color()
+            .float32(0, r)
+            .float32(1, g)
+            .float32(2, b)
+            .float32(3, a);
     }
 
      VkAttachmentDescription addColorAttachment(int idx, int colorFormat) {
@@ -52,11 +63,6 @@ public abstract class VkRenderPass {
           .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
           .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
           .finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        clearValues.get(idx).color()
-            .float32(0, 0)
-            .float32(1, 0)
-            .float32(2, 0)
-            .float32(3, 0);
         return n;
     }
      VkAttachmentDescription addDepthAttachment(int idx, int depthFormat) {
@@ -72,7 +78,7 @@ public abstract class VkRenderPass {
           .stencilStoreOp(VK_ATTACHMENT_STORE_OP_STORE)
           .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
           .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-        this.clearValueDepth = clearValues.get(idx).depthStencil();
+        this.definedClearValueDepth = definedClearValues.get(idx).depthStencil();
         return n;
     }
     public void destroyRenderPass(VKContext ctxt) {
@@ -94,11 +100,53 @@ public abstract class VkRenderPass {
 
     public void initClearValues(boolean inverseZ) {
         if (this.hasDepthAttachement) {
-            clearValueDepth.set(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f, 0);
-            System.out.println(""+this.name+" depth clear value "+clearValueDepth.depth());
+            definedClearValueDepth.set(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f, 0);
+            System.out.println(""+this.name+" depth clear value "+definedClearValueDepth.depth());
         }
+        int maxAttWithClear = 0;
+        for (int i = 0; i < this.nAttachments; i++) {
+            VkAttachmentDescription n = this.attachments.get(i);
+            if (n.loadOp() == VK_ATTACHMENT_LOAD_OP_CLEAR) {
+                maxAttWithClear = i+1;
+            }
+        }
+        renderPassClearValues.clear();
+        for (int i = 0; i < maxAttWithClear; i++) {
+            renderPassClearValues.put(this.definedClearValues.get(i));
+        }
+        renderPassClearValues.flip();
+        System.out.println(""+this.name+" has clear values "+renderPassClearValues);
     }
     public VkClearDepthStencilValue getClearValueDepth() {
-        return clearValueDepth;
+        return definedClearValueDepth;
+    }
+
+    void buildRenderPass(VKContext ctxt, Buffer subpasses, org.lwjgl.vulkan.VkSubpassDependency.Buffer subpassDependencies) {
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            attachments.limit(nAttachments);
+            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
+                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+                    .pNext(NULL)
+                    .pAttachments(attachments)
+                    .pSubpasses(subpasses)
+                    .pDependencies(subpassDependencies);
+    
+            LongBuffer pRenderPass = stack.longs(0);
+            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
+            this.renderPass = pRenderPass.get(0);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("Failed to create render pass: " + VulkanErr.toString(err));
+            }
+        }
+    }
+
+    public VkAttachmentDescription getAttachmentDesc(int i) {
+        return this.attachments.get(i);
+    }
+    
+    @Override
+    public String toString() {
+        return this.name+"["+nAttachments+" attachments, hasdepth="+hasDepthAttachement+", clearValueCount="+renderPassClearValues.remaining()+"]";
     }
 }

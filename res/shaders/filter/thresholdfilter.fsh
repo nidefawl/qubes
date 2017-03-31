@@ -3,9 +3,9 @@
 
 #pragma include "tonemap.glsl"
 
-uniform sampler2D texColor;
-uniform sampler2D texBlockLight;
-uniform sampler2D texLight;
+layout (set = 0, binding = 0) uniform sampler2D texColor;
+layout (set = 0, binding = 1) uniform sampler2D texBlockLight;
+layout (set = 0, binding = 2) uniform sampler2D texLight;
 
 in vec2 pass_texcoord;
 

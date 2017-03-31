@@ -18,11 +18,7 @@ public class VkRenderPassDeferred extends VkRenderPass {
             n.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         if (!clear) {
             n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            clearValues.limit(0);
-        } else {
-            clearValues.limit(nAttachments);
         }
-        attachments.limit(nAttachments);
     }
     @Override
     public void build(VKContext ctxt) {
@@ -59,19 +55,7 @@ public class VkRenderPassDeferred extends VkRenderPass {
                     .pDepthStencilAttachment(null)
                     .pResolveAttachments(null)
                     .pPreserveAttachments(null);
-
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.callocStack(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
-                    .pNext(NULL)
-                    .pAttachments(this.attachments)
-                    .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
-            LongBuffer pRenderPass = stack.longs(0);
-            int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);
-            this.renderPass = pRenderPass.get(0);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to create clear render pass: " + VulkanErr.toString(err));
-            }
+            buildRenderPass(ctxt, subpasses, subpassDependencies);
         }
     }
 }

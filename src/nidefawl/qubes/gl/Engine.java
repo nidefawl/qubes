@@ -298,7 +298,7 @@ public class Engine {
             cmdBufInfo = VkCommandBufferBeginInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
                 .pNext(NULL).flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
-            pDescriptorSets = memAllocLong(3);
+            pDescriptorSets = memAllocLong(5);
             pOffsets = memAllocInt(32);
             renderPassBeginInfo = VkRenderPassBeginInfo.calloc()
                     .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
@@ -1349,7 +1349,7 @@ public class Engine {
             }
             rebindDescSet = true;
         }
-        if (lockSceneDescriptors) {
+        if (autoBindDescSet) {
             if (rebindDescSet0) {
                 rebindSceneDescriptorSet();
             }
@@ -1363,8 +1363,6 @@ public class Engine {
     }
     public static void beginCommandBuffer(CommandBuffer commandBuffer) {
         curCommandBuffer = commandBuffer;
-        boundDescriptorSets[0] = descriptorSetUboScene;
-        boundDescriptorSets[1] = descriptorSetUboTransform;
         int err = vkBeginCommandBuffer(commandBuffer, cmdBufInfo);
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to begin render command buffer: " + VulkanErr.toString(err));
@@ -1389,62 +1387,40 @@ public class Engine {
         descSet.addDynamicOffsets(pOffsets);
         pOffsets.flip();
         Stats.callsBindDescSets++;
-//        for (int i = pDescriptorSets.position(); i < pDescriptorSets.limit(); i++) {
-//            System.out.println("bind "+i+" = "+pDescriptorSets.get(i)+ " = ("+boundDescriptorSets[i]+")");
-//        }
         vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), idx, 
                 pDescriptorSets, pOffsets);
     }
 
+    public static boolean autoBindDescSet = true;
+
+    public static void disableAutoBindDesc() {
+        autoBindDescSet = false;
+        clearAllDescriptorSets();
+    }
+    public static void enableAutoBindDesc() {
+        autoBindDescSet = true;
+        boundDescriptorSets[0] = descriptorSetUboScene;
+        boundDescriptorSets[1] = descriptorSetUboTransform;
+        rebindDescSet0 = true;
+        rebindDescSet1 = true;
+    }
+    
     public static void rebindSceneDescriptorSet() {
         if (curPipeline == null) {
             System.err.println("No pipeline bound, cannot rebind");
             return;
         }
         rebindDescSet0 = false;
-        directBindDescSet(0, boundDescriptorSets[0]);
+        directBindDescSet(0, descriptorSetUboScene);
     }
-    public static void bindOverrideSceneDescriptor(VkDescriptor override) {
-        rebindDescSet0 = true;
-        if (override == null) {
-            boundDescriptorSets[0] = descriptorSetUboScene;
-            return;
-        }
-        boundDescriptorSets[0] = override;
-    }
+
     public static void rebindTransformDescriptorSet() {
         if (curPipeline == null) {
             System.err.println("No pipeline bound, cannot rebind");
             return;
         }
         rebindDescSet1 = false;
-        pDescriptorSets.clear();
-        pDescriptorSets.put(descriptorSetUboTransform.get());
-        pDescriptorSets.flip();
-        pOffsets.clear();
-        descriptorSetUboTransform.addDynamicOffsets(pOffsets);
-        pOffsets.flip();
-//        pOffsets.position(0).limit(1);
-//        pOffsets.put(0, UniformBuffer.uboTransformStack.getDynamicOffset());
-//        pOffsets.position(0).limit(1);
-        Stats.callsBindDescSets++;
-//        for (int i = pDescriptorSets.position(); i < pDescriptorSets.limit(); i++) {
-//            System.out.println("bind "+i+" = "+pDescriptorSets.get(i)+ " = ("+boundDescriptorSets[i]+")");
-//        }
-        vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 1, 
-                pDescriptorSets, pOffsets);
-    }
-    public static boolean lockSceneDescriptors = true;
-
-    public static void unbindSceneDescriptorSets() {
-        lockSceneDescriptors = false;
-    }
-    public static void rebindSceneDescriptorSets() {
-        lockSceneDescriptors = true;
-        boundDescriptorSets[0] = descriptorSetUboScene;
-        boundDescriptorSets[1] = descriptorSetUboTransform;
-        rebindDescSet0 = true;
-        rebindDescSet1 = true;
+        directBindDescSet(1, descriptorSetUboTransform);
     }
     public static void rebindDescriptorSets() {
         if (curPipeline == null) {
@@ -1454,8 +1430,7 @@ public class Engine {
         rebindDescSet = false;
         pDescriptorSets.clear();
         pOffsets.clear();
-//        System.err.println(curPipeline.layout.getName()+"");
-        for (int i = lockSceneDescriptors?2:0; i < boundDescriptorSets.length; i++) {
+        for (int i = 0; i < boundDescriptorSets.length; i++) {
             if (boundDescriptorSets[i] != null) {
                 pDescriptorSets.put(boundDescriptorSets[i].get());
                 boundDescriptorSets[i].addDynamicOffsets(pOffsets);
@@ -1463,13 +1438,9 @@ public class Engine {
         }
         pDescriptorSets.flip();
         pOffsets.flip();
-//        pOffsets.position(0).limit(0);
         if (pDescriptorSets.remaining() > 0) {
             Stats.callsBindDescSets++;
-//            for (int i = pDescriptorSets.position(); i < pDescriptorSets.limit(); i++) {
-//                System.out.println("bind "+i+" = "+pDescriptorSets.get(i)+ " = ("+boundDescriptorSets[i]+")");
-//            }
-            vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), lockSceneDescriptors?2:0, 
+            vkCmdBindDescriptorSets(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, curPipeline.getLayoutHandle(), 0, 
                     pDescriptorSets, pOffsets);
         }
     }
@@ -1482,7 +1453,7 @@ public class Engine {
         renderAreaExtent.set(framebuffer.getWidth(), framebuffer.getHeight());
         renderPassBeginInfo.renderPass(curPass.get());
         renderPassBeginInfo.framebuffer(framebuffer.get());
-        renderPassBeginInfo.pClearValues(pass.clearValues);
+        renderPassBeginInfo.pClearValues(pass.renderPassClearValues);
         vkCmdBeginRenderPass(curCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
     public static void endRenderPass() {
@@ -1584,26 +1555,27 @@ public class Engine {
         if (!Engine.isVulkan) {
             FrameBuffer.current().clearFrameBuffer();
         } else {
+            if (curPass == null) {
+                throw new GameLogicError("Must be called inside renderpass");
+            }
             clearRect2DOffset.x(viewport[0]).y(viewport[1]);
             clearRect2DExtent.width(viewport[2]).height(viewport[3]);
-            clearAtt.get(0).aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
-            clearAtt.get(1).aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-            for (int i = 0; i < curPass.clearValues.limit(); i++) {
+            for (int i = 0; i < curPass.nAttachments; i++) {
                 int flags = curPass.attachmentType[i];
                 if ((flags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) {
-                    VkClearAttachment clearAttObj = clearAtt.get(i);
+                    VkClearAttachment clearAttObj = clearAtts[i];
                     clearAttObj.colorAttachment(i);
-                    clearAttObj.clearValue(curPass.clearValues.get(i));
+                    clearAttObj.clearValue(curPass.definedClearValues.get(i));
                     clearAttObj.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
                 }
                 if ((flags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
                     VkClearAttachment clearAttObj = clearAtt.get(i);
-                    clearAttObj.clearValue(curPass.clearValues.get(i));
+                    clearAttObj.clearValue(curPass.definedClearValues.get(i));
                     clearAttObj.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
                 }
             }
-            clearRect.limit(curPass.clearValues.limit());
-            clearAtt.limit(curPass.clearValues.limit());
+            clearRect.limit(curPass.nAttachments);
+            clearAtt.limit(curPass.nAttachments);
             vkCmdClearAttachments(Engine.getDrawCmdBuffer(), clearAtt, clearRect);
         }
     }

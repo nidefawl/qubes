@@ -1,11 +1,10 @@
 #version 150 core
 
 #pragma define "DO_BLOOM"
-#pragma include "ubo_scene.glsl"
 
-uniform sampler2D texColor;
+layout (set = 0, binding = 0) uniform sampler2D texColor;
 #ifdef DO_BLOOM
-uniform sampler2D texBlur;
+layout (set = 1, binding = 0) uniform sampler2D texBlur;
 #endif
 
 

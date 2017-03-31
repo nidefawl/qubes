@@ -5,9 +5,9 @@
 #pragma include "tonemap.glsl"
 #pragma include "dither.glsl"
 
-layout (set = 2, binding = 0) uniform sampler2D texColor;
+layout (set = 1, binding = 0) uniform sampler2D texColor;
 #ifdef DO_AUTOEXPOSURE
-layout (set = 3, binding = 0) uniform sampler2D texLum;
+layout (set = 2, binding = 0) uniform sampler2D texLum;
 const float constexposure = 130;
 #else
 uniform float constexposure;

@@ -123,19 +123,18 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
         if (fbScene.getWidth() == Engine.fbWidth() && fbScene.getHeight() == Engine.fbHeight())
         {
-
+            Engine.clearAllDescriptorSets();
+            Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         
 
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
-                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboLights);
-//                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
-//                Engine.bindPipeline(VkPipelines.skybox_sample_single);
-                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
+                Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboLights);
                 Engine.bindPipeline(VkPipelines.skybox_sample);
                 Engine.drawFSTri();
 
-                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
-                Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureTerrainNormals);
+                Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureTerrainNormals);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
                 Engine.bindPipeline(VkPipelines.terrain);
                 RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
                 rendered = Engine.regionRenderer.rendered;
@@ -154,8 +153,8 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
             copyDepthBuffer(imageDepthSrc, imageDepthDst);
     
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater, VK_SUBPASS_CONTENTS_INLINE);
-                Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descTextureTerrainWater);
-                Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboConstants);
+                Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureTerrainWater);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
                 Engine.bindPipeline(VkPipelines.water);
                 RenderersVulkan.regionRenderer.renderRegions(Engine.getDrawCmdBuffer(), world, fTime, PASS_TRANSPARENT, 0, Frustum.FRUSTUM_INSIDE);
             Engine.endRenderPass();
@@ -176,7 +175,6 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
         }
         
-        Engine.clearDescriptorSet(VkDescLayouts.DESC3);
     }
 
     public void renderFirstPerson(World world, float fTime) {
@@ -255,7 +253,8 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 QModelTexture tex = model.loadedModels[0].getQModelTexture(0);
                 
 
-                Engine.setDescriptorSet(VkDescLayouts.DESC2, tex.descriptorSetTex);
+                Engine.setDescriptorSet(VkDescLayouts.DESC1, tex.descriptorSetTex);
+                Engine.clearDescriptorSet(VkDescLayouts.DESC2);
                 Engine.clearDescriptorSet(VkDescLayouts.DESC3);
                 Engine.bindPipeline(VkPipelines.model_firstperson);
                 PushConstantBuffer buf = PushConstantBuffer.INST;
@@ -310,7 +309,8 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
                 UniformBuffer.setNormalMat(mat2.get());
             }
 
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.worldRenderer.getDescTextureTerrainNormals());
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrainNormals());
+            Engine.clearDescriptorSet(VkDescLayouts.DESC2);
             Engine.clearDescriptorSet(VkDescLayouts.DESC3);
             Engine.bindPipeline(VkPipelines.singleblock_3D);
             PushConstantBuffer buf = PushConstantBuffer.INST;
