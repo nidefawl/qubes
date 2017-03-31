@@ -25,21 +25,26 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public FrameBuffer frameBufferSceneWater;
     public FrameBuffer frameBufferSceneFirstPerson;
     public FrameBuffer frameBufferDeferred;
+    public FrameBuffer frameBufferDeferredPass01;
     public FrameBuffer frameBufferBloom;
     public FrameBuffer frameBufferTonemapped;
+    public FrameBuffer frameBufferSSR;
     
     
     public FrameBuffer[] fbLuminanceDownsample;
     public FrameBuffer[] fbLuminanceInterp;
 
     public VkDescriptor descTextureDeferred0;
-    public VkDescriptor descTextureDeferred1;
-    public VkDescriptor descTextureDeferred2;
+    public VkDescriptor descTextureDeferredInput1;
+    public VkDescriptor descTextureDeferredInput2;
     public VkDescriptor descTextureDeferredOut;
     public VkDescriptor descTextureFirstPersonOut;
     
     public VkDescriptor descTextureBloomInput;
     public VkDescriptor descTextureBloomOut;
+
+    private VkDescriptor descTextureSSRInput;
+    private VkDescriptor descTextureSSRCombineInput;
     
     public VkDescriptor[] descTextureDownsampleOutputs = new VkDescriptor[10];
     public VkDescriptor descTextureDownsampleEnd;
@@ -70,6 +75,10 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         
         this.frameBufferDeferred = new FrameBuffer(ctxt).tag("deferred");
         this.frameBufferDeferred.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferDeferredPass01 = new FrameBuffer(ctxt).tag("deferredPass01");
+        this.frameBufferDeferredPass01.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferSSR = new FrameBuffer(ctxt).tag("ssr");
+        this.frameBufferSSR.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.frameBufferTonemapped = new FrameBuffer(ctxt).tag("tonemap");
         this.frameBufferTonemapped.fromRenderpass(VkRenderPasses.passTonemap, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 
@@ -98,8 +107,11 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.descTextureBloomInput = ctxt.descLayouts.allocDescSetSampleTriple();
         this.descTextureFinalOut = ctxt.descLayouts.allocDescSetSampleSingle();
         this.descTextureDeferred0 = ctxt.descLayouts.allocDescSetSamplerDeferredPass0();
-        this.descTextureDeferred1 = ctxt.descLayouts.allocDescSetSamplerDeferredPass1();
-        this.descTextureDeferred2 = ctxt.descLayouts.allocDescSetSamplerDeferredPass0();
+        this.descTextureDeferredInput1 = ctxt.descLayouts.allocDescSetSamplerDeferredPass1();
+        this.descTextureDeferredInput2 = ctxt.descLayouts.allocDescSetSamplerDeferredPass0();
+        this.descTextureSSRInput = ctxt.descLayouts.allocDescSetSampleSSR();
+        this.descTextureSSRCombineInput = ctxt.descLayouts.allocDescSetSampleTriple();
+        
         try ( MemoryStack stack = stackPush() ) {
             VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
             sampler.addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -137,39 +149,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     @Override
     public void resize(int displayWidth, int displayHeight) {
         VKContext ctxt = Engine.vkContext;
-        if (this.frameBufferScene != null) {
-            this.frameBufferScene.destroy();
-        }
-//        if (this.frameBufferSceneColorOnly != null) {
-//            this.frameBufferSceneColorOnly.destroy();
-//        }
-        if (this.frameBufferSceneWater != null) {
-            this.frameBufferSceneWater.destroy();
-        }
-        if (this.frameBufferSceneFirstPerson != null) {
-            this.frameBufferSceneFirstPerson.destroy();
-        }
-        if (this.frameBufferDeferred != null) {
-            this.frameBufferDeferred.destroy();
-        }
-        if (this.frameBufferTonemapped != null) {
-            this.frameBufferTonemapped.destroy();
-        }
-        if (this.frameBufferBloom != null) {
-            this.frameBufferBloom.destroy();
-        }
-
-        if (this.fbLuminanceDownsample != null) {
-            for (int i = 0; i < fbLuminanceDownsample.length; i++) {
-                this.fbLuminanceDownsample[i].destroy();
-            }
-            this.fbLuminanceDownsample = null;
-        }
-        if (this.fbLuminanceInterp != null) {
-            for (int i = 0; i < fbLuminanceInterp.length; i++) {
-                this.fbLuminanceInterp[i].destroy();
-            }
-        }
+        releaseFramebuffers();
 
         int[] lumSize = GameMath.downsample(displayWidth, displayHeight, 2);
 
@@ -209,13 +189,17 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         }
         
         
-        
+
         this.frameBufferScene.build(VkRenderPasses.passTerrain_Pass0, displayWidth, displayHeight);
         this.frameBufferSceneWater.build(VkRenderPasses.passTerrain_Pass1, displayWidth, displayHeight);
         this.frameBufferSceneFirstPerson.build(VkRenderPasses.passTerrain_Pass2, displayWidth, displayHeight);
         this.frameBufferDeferred.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
+        this.frameBufferDeferredPass01.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
+        this.frameBufferSSR.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
         this.frameBufferTonemapped.build(VkRenderPasses.passTonemap, displayWidth, displayHeight);
         this.frameBufferBloom.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
+        FramebufferAttachment coloratt;
+        
         for (int i = 0; i < 5; i++)
         {
             FramebufferAttachment att = this.frameBufferScene.getAtt(i);
@@ -227,29 +211,52 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         for (int i = 0; i < 5; i++)
         {
             FramebufferAttachment att = this.frameBufferSceneWater.getAtt(i);
-            this.descTextureDeferred1.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+            this.descTextureDeferredInput1.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
 
         }
-        this.descTextureDeferred1.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
-        this.descTextureDeferred1.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
+        this.descTextureDeferredInput1.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
+        this.descTextureDeferredInput1.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
 
         FramebufferAttachment depth_att_pass_0 = this.frameBufferScene.getAtt(4);
-        this.descTextureDeferred1.setBindingCombinedImageSampler(7, 
-                depth_att_pass_0.getView(), samplerClamp, depth_att_pass_0.finalLayout);
+        this.descTextureDeferredInput1.setBindingCombinedImageSampler(7, depth_att_pass_0.getView(), samplerClamp, depth_att_pass_0.finalLayout);
         VkTexture tex = RenderersVulkan.worldRenderer.getWaterNoiseTex();
-        this.descTextureDeferred1.setBindingCombinedImageSampler(8, 
-                tex.getView(), ctxt.samplerLinear, tex.getImageLayout());
-        this.descTextureDeferred1.update(ctxt);
+        this.descTextureDeferredInput1.setBindingCombinedImageSampler(8, tex.getView(), ctxt.samplerLinear, tex.getImageLayout());
+        this.descTextureDeferredInput1.update(ctxt);
+        
+        coloratt = this.frameBufferDeferredPass01.getAtt(0);
+        this.descTextureSSRInput.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+
+        for (int i = 1; i < 4; i++)
+        {
+            int attIdx = i;
+            if (i == 3) attIdx = 4;
+            FramebufferAttachment att = this.frameBufferSceneWater.getAtt(attIdx);
+            this.descTextureSSRInput.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+        }
+        coloratt = this.frameBufferScene.getAtt(4);
+        this.descTextureSSRInput.setBindingCombinedImageSampler(4, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+
+        this.descTextureSSRInput.update(ctxt);
+        
+        coloratt = this.frameBufferDeferredPass01.getAtt(0);
+        this.descTextureSSRCombineInput.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+
+        coloratt = this.frameBufferSSR.getAtt(0);
+        this.descTextureSSRCombineInput.setBindingCombinedImageSampler(1, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+        
+        coloratt = this.frameBufferSceneWater.getAtt(2);
+        this.descTextureSSRCombineInput.setBindingCombinedImageSampler(2, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+
+        this.descTextureSSRCombineInput.update(ctxt);
         
         for (int i = 0; i < 5; i++)
         {
             FramebufferAttachment att = this.frameBufferSceneFirstPerson.getAtt(i);
-            this.descTextureDeferred2.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
+            this.descTextureDeferredInput2.setBindingCombinedImageSampler(i, att.getView(), samplerClamp, att.finalLayout);
         }
-        this.descTextureDeferred2.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
-        this.descTextureDeferred2.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
-        this.descTextureDeferred2.update(ctxt);
-        FramebufferAttachment coloratt;
+        this.descTextureDeferredInput2.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
+        this.descTextureDeferredInput2.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
+        this.descTextureDeferredInput2.update(ctxt);
 
         coloratt = this.frameBufferDeferred.getAtt(0);
         this.descTextureDeferredOut.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
@@ -276,8 +283,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.descTextureFinalOut.update(ctxt);
     }
     
-    @Override
-    public void release() {
+    private void releaseFramebuffers() {
         if (this.frameBufferScene != null) {
             this.frameBufferScene.destroy();
         }
@@ -290,9 +296,36 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (this.frameBufferDeferred != null) {
             this.frameBufferDeferred.destroy();
         }
+        if (this.frameBufferDeferredPass01 != null) {
+            this.frameBufferDeferredPass01.destroy();
+        }
         if (this.frameBufferTonemapped != null) {
             this.frameBufferTonemapped.destroy();
         }
+        if (this.frameBufferBloom != null) {
+            this.frameBufferBloom.destroy();
+        }
+
+        if (this.frameBufferSSR != null) {
+            this.frameBufferSSR.destroy();
+        }
+
+        if (this.fbLuminanceDownsample != null) {
+            for (int i = 0; i < fbLuminanceDownsample.length; i++) {
+                this.fbLuminanceDownsample[i].destroy();
+            }
+            this.fbLuminanceDownsample = null;
+        }
+        if (this.fbLuminanceInterp != null) {
+            for (int i = 0; i < fbLuminanceInterp.length; i++) {
+                this.fbLuminanceInterp[i].destroy();
+            }
+        }
+    }
+
+    @Override
+    public void release() {
+        releaseFramebuffers();
         if (this.samplerClamp != VK_NULL_HANDLE) {
             vkDestroySampler(Engine.vkContext.device, this.samplerClamp, null);
             this.samplerClamp = VK_NULL_HANDLE;
@@ -383,6 +416,29 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
         
     }
+    private void renderSSR() {
+        Engine.clearAllDescriptorSets();
+        FrameBuffer fb = frameBufferSSR;
+        if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
+        {
+
+            Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferSSR, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
+            Engine.bindPipeline(VkPipelines.ssr);
+            Engine.drawFSTri();  
+            Engine.endRenderPass();
+            Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
+            Engine.clearDescriptorSet(VkDescLayouts.DESC2);
+            Engine.bindPipeline(VkPipelines.ssrCombine);
+            Engine.drawFSTri();  
+            Engine.endRenderPass();
+        }
+            
+    }
     public void render(WorldClient world, float fTime) {
         renderDeferred(fTime);
     }
@@ -391,7 +447,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
             
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passDeferred, frameBufferDeferredPass01, VK_SUBPASS_CONTENTS_INLINE);
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred0);
@@ -399,17 +455,19 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboLights);
             Engine.bindPipeline(VkPipelines.deferred_pass0);
             Engine.drawFSTri();            
-            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred1);
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput1);
             Engine.bindPipeline(VkPipelines.deferred_pass1);
             Engine.drawFSTri();  
             Engine.endRenderPass();
+            renderSSR();
+            
             calcLum();
             Engine.setDefaultViewport();
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
                 Engine.beginRenderPass(VkRenderPasses.passDeferredNoClear, fb, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
-                Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred2);
+                Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput2);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
                 Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboLights);
                 Engine.bindPipeline(VkPipelines.deferred_pass2);
@@ -446,5 +504,6 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         }
         
     }
+
 
 }

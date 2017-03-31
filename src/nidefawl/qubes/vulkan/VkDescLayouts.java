@@ -58,7 +58,7 @@ public class VkDescLayouts {
             VkDescriptorSetLayoutBinding.Buffer sampler_image_single_vertex_stage = VkDescriptorSetLayoutBinding.calloc(1);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass0 = VkDescriptorSetLayoutBinding.calloc(7);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass1 = VkDescriptorSetLayoutBinding.calloc(9);
-            VkDescriptorSetLayoutBinding.Buffer sampler_image_ssr = VkDescriptorSetLayoutBinding.calloc(6);
+            VkDescriptorSetLayoutBinding.Buffer sampler_image_ssr = VkDescriptorSetLayoutBinding.calloc(5);
 
 
             
@@ -119,7 +119,7 @@ public class VkDescLayouts {
                 .binding(0)
                 .descriptorCount(1);
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 5; i++)
                 sampler_image_ssr.get(i)
                     .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
                     .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -315,7 +315,7 @@ public class VkDescLayouts {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSSBOModelBatched, descSetLayoutUBOShadow}, push_constant_ranges_shadow_split);
 
             VkPipelines.pipelineLayoutSSR.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutSamplerImageSSR});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageSSR, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutSSRCombine.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageTriple});
         }

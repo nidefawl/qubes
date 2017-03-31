@@ -243,7 +243,7 @@ public class FinalRendererGL extends FinalRenderer {
         GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, fbDeferred.getTexture(0)); //COLOR
         GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1)); //NORMAL
         GL.bindTexture(GL_TEXTURE2, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(2)); //MATERIAL
-        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, this.fbBloomOut.getDepthTex()); //DEPTH
+        GL.bindTexture(GL_TEXTURE3, GL_TEXTURE_2D, this.fbTonemappedDepth.getDepthTex()); //DEPTH
         GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_CUBE_MAP, RenderersGL.skyRenderer.fbSkybox.getTexture(0));//SKYBOX CUBEMAP
         GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, this.preWaterDepthTex); //DEPTH PreWater
         Engine.drawFSTri();

@@ -451,10 +451,8 @@ public class VkPipelines {
         try ( MemoryStack stack = stackPush() ) 
         {
             post_lum_interp.destroyPipeLine(ctxt);
-            VKContext.DUMP_SHADER_SRC=true;
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "filter/luminanceInterp.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/luminanceInterp.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
-            VKContext.DUMP_SHADER_SRC=false;
             post_lum_interp.setShaders(vert, frag);
             post_lum_interp.setRenderPass(VkRenderPasses.passDeferred, 0);
             post_lum_interp.setScreenSpaceTriangle();
@@ -628,9 +626,7 @@ public class VkPipelines {
             VkVertexDescriptors desc = GLVAO.vaoModelGPUSkinned.getVkVertexDesc();
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "model/model_batched.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc, modelDef));
             VkShader vertSkinned = ctxt.loadCompileGLSL(assetManager, "model/model_batched_skinned.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc, modelDef));
-            VKContext.DUMP_SHADER_SRC=i==1;
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "model/model_fragment.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, modelDef);
-            VKContext.DUMP_SHADER_SRC=false;
             VkRenderPass pass = i == 0 ? VkRenderPasses.passTerrain_Pass0 : VkRenderPasses.passShadow;
             try ( MemoryStack stack = stackPush() ) 
             {

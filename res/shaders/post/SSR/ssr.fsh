@@ -4,12 +4,12 @@
 #pragma include "blockinfo.glsl"
 #pragma include "unproject.glsl"
 
-uniform sampler2D texColor;
-uniform sampler2D texNormals;
-uniform usampler2D texMaterial;
-uniform sampler2D texDepth;
-uniform samplerCube texSkybox;
-uniform sampler2D texDepthPreWater;
+layout (set = 1, binding = 0) uniform sampler2D texColor;
+layout (set = 1, binding = 1) uniform sampler2D texNormals;
+layout (set = 1, binding = 2) uniform usampler2D texMaterial;
+layout (set = 1, binding = 3) uniform sampler2D texDepth;
+layout (set = 2, binding = 0) uniform samplerCube texSkybox;
+layout (set = 1, binding = 4) uniform sampler2D texDepthPreWater;
 
 
 in vec2 pass_texcoord;
@@ -53,14 +53,18 @@ vec3 toScreen(vec3 worldPos) {
     vec4 tmp1 = vec4(worldPos, 1.0);
     vec4 tmp2 = in_matrix_3D.p * tmp1;
     vec3 pos = tmp2.xyz/tmp2.w;
-#if Z_INVERSE
+#ifdef VULKAN_GLSL
+    return vec3(pos.xy*0.5+0.5, 1.0-pos.z);
+#elif Z_INVERSE
     return vec3(pos.xy*0.5+0.5, pos.z);
 #else
     return pos * 0.5 + 0.5;
 #endif
 }
 vec3 toWorld(vec3 screenPos) {
-#if Z_INVERSE
+#ifdef VULKAN_GLSL
+    vec4 tmp1 = vec4(screenPos.xy*2.0-1.0, 1.0-screenPos.z, 1.0);
+#elif Z_INVERSE
     vec4 tmp1 = vec4(screenPos.xy*2.0-1.0, screenPos.z, 1.0);
 #else
     vec4 tmp1 = vec4(screenPos * 2.0 - 1.0, 1.0);
