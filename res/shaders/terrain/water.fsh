@@ -87,10 +87,10 @@ void main() {
 	newnormal = newnormal + (xDelta*yDelta) / (sin(xDelta) + cos(yDelta)+frametime);
 	vec2 texCoordWater = texcoord.st;
 	vec3 waterNormal = normal;
-	texCoordWater.s+=h0*0.08f;
-	texCoordWater.t+=h1*0.08f;
-	texCoordWater.s+=h3*0.08f;
-	texCoordWater.t+=h4*0.08f;
+	// texCoordWater.s+=h0*0.08f;
+	// texCoordWater.t+=h1*0.08f;
+	// texCoordWater.s+=h3*0.08f;
+	// texCoordWater.t+=h4*0.08f;
     if (isWater > 0 && faceDir != 0u) {
 		mat3 tbnMat = mat3(matrix_tbn.mat[faceDir-1u]);
 		vec3 bump = newnormal;
@@ -99,7 +99,7 @@ void main() {
 		
 		bump = 	bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 		
-		waterNormal = normalize(tbnMat * bump.xzy);
+		// waterNormal = normalize(tbnMat * bump.xzy);
 	}
 	
 	

@@ -184,7 +184,6 @@ public class VkPipelines {
             shadowDebug.useSwapChainViewport = false;
 
             shadowDebug.viewport.width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
-            shadowDebug.rasterizationState.frontFace(!Engine.INVERSE_Z_BUFFER?VK_FRONT_FACE_CLOCKWISE:VK_FRONT_FACE_COUNTER_CLOCKWISE);
             shadowDebug.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
             shadowDebug.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
 //            shadowDebug.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
@@ -320,7 +319,6 @@ public class VkPipelines {
             skybox_update_sprites.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
             skybox_update_sprites.viewport.width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
             skybox_update_sprites.scissors.extent().width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
-            skybox_update_sprites.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
             skybox_update_sprites.depthStencilState.depthTestEnable(false);
             skybox_update_sprites.rasterizationState.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
@@ -372,7 +370,6 @@ public class VkPipelines {
             skybox_update_background_cubemap.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
             skybox_update_background_cubemap.viewport.width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
             skybox_update_background_cubemap.scissors.extent().width(SkyRenderer.SKYBOX_RES).height(SkyRenderer.SKYBOX_RES);
-            skybox_update_background_cubemap.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
             skybox_update_background_cubemap.setShaders(vert, frag);
             skybox_update_background_cubemap.setRenderPass(VkRenderPasses.passSkyGenerateCubemap, 0);
@@ -707,7 +704,6 @@ public class VkPipelines {
             singleblock.useSwapChainViewport = false;
             singleblock.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
             singleblock.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
-            singleblock.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
 
             singleblock.scissors.extent().width(SingleBlockRenderAtlas.getTexSize()).height(SingleBlockRenderAtlas.getTexSize());
             singleblock.setShaders(vert, frag);
@@ -820,6 +816,16 @@ public class VkPipelines {
     static long buildPipeLine(VKContext vkContext, VkPipeline pipe) {
         pipe.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
         pipe.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
+//        if (!Engine.INVERSE_Z_BUFFER) {
+//
+//            int n = pipe.rasterizationState.frontFace();
+//            if (n == VK_FRONT_FACE_COUNTER_CLOCKWISE) {
+//                n = VK_FRONT_FACE_CLOCKWISE;
+//            } else {
+//                n = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+//            }
+//            pipe.rasterizationState.frontFace(n);
+//        }
         pipe.depthStencilState.depthCompareOp(Engine.INVERSE_Z_BUFFER ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL);
         if (pipe.useSwapChainViewport) {
             pipe.viewport.width(vkContext.swapChain.width).height(vkContext.swapChain.height);

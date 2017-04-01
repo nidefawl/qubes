@@ -2,9 +2,9 @@
 
 #pragma include "blockinfo.glsl"
 
-uniform sampler2D texColor;
-uniform sampler2D texSSRBlurred;
-uniform usampler2D texMaterial;
+layout (set = 1, binding = 0) uniform sampler2D texColor;
+layout (set = 1, binding = 1) uniform usampler2D texMaterial;
+layout (set = 2, binding = 0) uniform sampler2D texSSRBlurred;
 
 in vec2 pass_texcoord;
 

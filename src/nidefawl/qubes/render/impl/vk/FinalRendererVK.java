@@ -163,7 +163,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.ssrSize = GameMath.downsample(displayWidth, displayHeight, Engine.RENDER_SETTINGS.ssr>2?1:2);
         VKContext ctxt = Engine.vkContext;
         releaseFramebuffers();
-
+        long shadowSampler = samplerNearest;//RenderersVulkan.shadowRenderer.getSampler();
         int[] lumSize = GameMath.downsample(displayWidth, displayHeight, 2);
 
         int lumW = lumSize[0];
@@ -218,7 +218,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             FramebufferAttachment att = this.frameBufferScene.getAtt(i);
             this.descTextureDeferred0.setBindingCombinedImageSampler(i, att.getView(), i>0&&i!=4?samplerNearest:samplerClamp, att.finalLayout);
         }
-        this.descTextureDeferred0.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
+        this.descTextureDeferred0.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), shadowSampler, RenderersVulkan.shadowRenderer.getLayout());
         this.descTextureDeferred0.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
         this.descTextureDeferred0.update(ctxt);
         for (int i = 0; i < 5; i++)
@@ -227,7 +227,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             this.descTextureDeferredInput1.setBindingCombinedImageSampler(i, att.getView(), i>0&&i!=4?samplerNearest:samplerClamp, att.finalLayout);
 
         }
-        this.descTextureDeferredInput1.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
+        this.descTextureDeferredInput1.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), shadowSampler, RenderersVulkan.shadowRenderer.getLayout());
         this.descTextureDeferredInput1.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
 
         FramebufferAttachment depth_att_pass_0 = this.frameBufferScene.getAtt(4);
@@ -272,7 +272,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             FramebufferAttachment att = this.frameBufferSceneFirstPerson.getAtt(i);
             this.descTextureDeferredInput2.setBindingCombinedImageSampler(i, att.getView(), i>0?samplerNearest:samplerClamp, att.finalLayout);
         }
-        this.descTextureDeferredInput2.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), RenderersVulkan.shadowRenderer.getSampler(), RenderersVulkan.shadowRenderer.getLayout());
+        this.descTextureDeferredInput2.setBindingCombinedImageSampler(5, RenderersVulkan.shadowRenderer.getView(), shadowSampler, RenderersVulkan.shadowRenderer.getLayout());
         this.descTextureDeferredInput2.setBindingCombinedImageSampler(6, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getSampler(), RenderersVulkan.lightCompute.getLayout());
         this.descTextureDeferredInput2.update(ctxt);
 
@@ -489,7 +489,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDefaultViewport();
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
-                Engine.beginRenderPass(VkRenderPasses.passDeferredNoClear, fb, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.beginRenderPass(VkRenderPasses.passDeferredNoClear, frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput2);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);

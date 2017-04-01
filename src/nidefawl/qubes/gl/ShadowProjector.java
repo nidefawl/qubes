@@ -137,7 +137,7 @@ public class ShadowProjector implements IRenderComponent {
 //      Matrix4f.invert(matLookAt, matLookAtInv);
 //      Project.lookAt(eye.x-frustumCenter.x, eye.y-frustumCenter.y, eye.z-frustumCenter.z, 0,0,0, 0, 1, 0, shadowSplitMVP[split]);
         if (Engine.isVulkan) {
-            Project.orthoMat01(-radius, radius, -radius, radius, 0, 512*8, matOrtho);
+            Project.orthoMat01(-radius, radius, -radius, radius, 1, 512*16, matOrtho);
         } else {
             if (!Engine.INVERSE_Z_BUFFER) {
                 Project.orthoMat(-radius, radius, radius, -radius, 0, 512 * 8, matOrtho);
@@ -206,7 +206,7 @@ public class ShadowProjector implements IRenderComponent {
     public void updateProjection(float znear, float zfar, float aspectRatio, float fov) {
         splits = new float[] {znear, 34, 124, 420};
 //      splits = new float[] {znear, 12, 24, 66};
-        splits = new float[] {znear, 32, 55, 166};
+        splits = new float[] {znear, 16, 32, 420};
 //        splits = new float[] {znear, 16, 22, 277};
         if (!GameBase.VR_SUPPORT) {
             for (int i = 0; i < NUM_SPLITS; i++) {

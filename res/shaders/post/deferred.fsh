@@ -137,16 +137,16 @@ bool canLookup(in vec4 v, in float zPos, in float mapZ) {
 
 
 #define SAMPLE_DISTANCE ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
-#define SOFT_SHADOW_TAP_RANGE 0
+#define SOFT_SHADOW_TAP_RANGE 1
 #define SOFT_SHADOW_TAP_RANGE2 1
 #define SAMPLE_DISTANCE2 ((1.0/SHADOW_MAP_RESOLUTION) / 4.0)
 #define SOFT_SHADOW_WEIGHT ((SOFT_SHADOW_TAP_RANGE*2+1)*(SOFT_SHADOW_TAP_RANGE*2+1))
 #define SOFT_SHADOW_WEIGHT2 ((SOFT_SHADOW_TAP_RANGE2*2+1)*(SOFT_SHADOW_TAP_RANGE2*2+1))
 #if defined VULKAN_GLSL
-#define SHADOW_FACTOR0 0.99999
-#define SHADOW_FACTOR1 0.99996
-#define SHADOW_FACTOR2 0.99992
-#define SHADOW_COMPARE(a, b) a >= b
+#define SHADOW_FACTOR0 0.9999
+#define SHADOW_FACTOR1 0.9999
+#define SHADOW_FACTOR2 0.9999
+#define SHADOW_COMPARE(a, b) a <= b
 #elif Z_INVERSE
 #define SHADOW_FACTOR0 1.00002
 #define SHADOW_FACTOR1 1.00005
@@ -219,7 +219,11 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
     return 1.0;
 }
 float lookupShadowMap(vec3 v, float factor) {
+    #ifdef VULKAN_GLSL
+        // factor-=(1.0-prop.depth)*0.0008;
+    #endif
     v.z*=factor;
+
     #if SOFT_SHADOW_TAP_RANGE == 0
         float shadowSample = texture(texShadow, v.xy).r;
         #ifdef VULKAN_GLSL

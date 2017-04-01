@@ -40,12 +40,12 @@ public abstract class ShadowRenderer extends AbstractRenderer {
 
     public void init() {
         this.renderMode = Engine.RENDER_SETTINGS.shadowDrawMode>MULTI_DRAW_TEXUTED||Engine.RENDER_SETTINGS.shadowDrawMode<0?MULTI_DRAW:Engine.RENDER_SETTINGS.shadowDrawMode;
-        SHADOW_BUFFER_SIZE = getTextureSize();
+        SHADOW_BUFFER_SIZE = 1024*4;
     }
 
     public int getTextureSize() {
 //        return GameBase.VR_SUPPORT?1024*1:1024*4;
-        return 1024*2;
+        return SHADOW_BUFFER_SIZE;
     }
 
     public abstract void renderShadowPass(World world, float fTime);

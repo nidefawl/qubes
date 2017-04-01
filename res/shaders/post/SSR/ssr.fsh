@@ -101,8 +101,8 @@ vec4 ssr(vec3 worldPos, vec3 normal,vec3 sky) {
                 color.rgb=mix(texture(texColor, pos.st).rgb, sky, color.a);
                 color.a = 1.0-color.a;
                 if (isSky > 0) {
-                    color.r = 1;
-                    color.a = 1;
+                    // color.r = 1;
+                    // color.a = 1;
                 }
 
                 // color.a = 0;
