@@ -5,7 +5,7 @@
 uniform sampler2DArray blockTextures;
 
 in vec2 texcoord;
-flat in uvec4 blockinfo;
+flat in uvec2 blockinfo;
 
 out vec4 out_Color;
 

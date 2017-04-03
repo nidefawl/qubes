@@ -22,11 +22,6 @@ public class RenderersGL extends Renders {
     public static QModelBatchedRender renderBatched;
 
     public RenderersGL(EngineInitSettings init) {
-        for (int i = 0; i < components.size(); i++) {
-            IRenderComponent r = components.get(i);
-            r.release();
-        }
-        components.clear();
         if (init.initShadowRenderer || init.initShadowProj) {
             Engine.shadowProj = shadowProj = addComponent(new ShadowProjector());
         }
@@ -54,10 +49,16 @@ public class RenderersGL extends Renders {
         if (init.initModelRenderer) {
             Engine.renderBatched = renderBatched = addComponent(new QModelBatchedRenderGL());
         }
+    }
+    public void preinit() {
+
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.preinit();
         }
+    }
+    public void init() {
+
         Shaders.init();
         ShaderBuffer.init();
         for (int i = 0; i < components.size(); i++) {

@@ -100,8 +100,8 @@ public class GuiSettings extends Gui {
         list.add((this.shadowSetting = new Setting(this, "Shadows", shadowSettings[renderSettings.shadowDrawMode & 1], shadowSettings) {
             void callback(int id) {
                 renderSettings.shadowDrawMode = id;
-                Engine.shadowRenderer.init();
                 Game.instance.saveSettings();
+                Engine.shadowRenderer.onShadowSettingChanged();
                 Engine.regionRenderer.reRender();
             }
         }));
@@ -109,8 +109,8 @@ public class GuiSettings extends Gui {
         list.add((this.reflectionSetting = new Setting(this, "Reflections", reflections[renderSettings.ssr & 3], reflections) {
             void callback(int id) {
                 renderSettings.ssr = id;
-                Engine.outRenderer.setSSR(id);
                 Game.instance.saveSettings();
+                Engine.outRenderer.setSSR(id);
                 Engine.outRenderer.onSSRSettingChanged();
             }
         }));

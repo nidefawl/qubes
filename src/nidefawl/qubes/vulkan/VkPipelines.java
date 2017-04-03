@@ -53,6 +53,7 @@ public class VkPipelines {
 
 
     public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
+    public static VkPipeline shadowTextured = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
     public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
     public static VkPipeline textured2d = new VkPipeline(VkPipelines.pipelineLayoutTextured);
@@ -170,6 +171,23 @@ public class VkPipelines {
             shadowSolid.rasterizationState.depthBiasEnable(true);
             shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_BACK_BIT);
             shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
+            shadowTextured.destroyPipeLine(ctxt);
+            VkVertexDescriptors desc = GLVAO.vaoBlocksShadowTextured.getVkVertexDesc();
+            VkShader vert = ctxt.loadCompileGLSL(assetManager, "shadow/shadow_textured.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "shadow/shadow_textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            shadowTextured.useSwapChainViewport = false;
+            shadowTextured.setShaders(vert, frag);
+            shadowTextured.setRenderPass(VkRenderPasses.passShadow, 0);
+            shadowTextured.setVertexDesc(desc);
+            shadowTextured.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+            shadowTextured.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
+            shadowTextured.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
+            shadowTextured.rasterizationState.depthBiasEnable(true);
+            shadowTextured.rasterizationState.cullMode(VK_CULL_MODE_BACK_BIT);
+            shadowTextured.pipeline = buildPipeLine(ctxt, shadowTextured);
         }
         try ( MemoryStack stack = stackPush() ) 
         {

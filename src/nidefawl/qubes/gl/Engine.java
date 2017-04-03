@@ -389,13 +389,26 @@ public class Engine {
         
         baseInit();
         GLVAO.initVAOs(isVulkan);
+
         if (!isVulkan) {
             UniformBuffer.init();
             Shader.init();   
-        } else {
+        } 
+        if (isVulkan) {
             VkRenderPasses.initClearValues(INVERSE_Z_BUFFER);
             VkTess.init(vkContext, VkConstants.MAX_NUM_SWAPCHAIN);
             UniformBuffer.init(vkContext, VkConstants.MAX_NUM_SWAPCHAIN);
+        }
+        flushRenderTasks();
+        if (isVulkan) {
+            renders = rendersVK = new RenderersVulkan(vkContext, init);
+        } else {
+            renders = rendersGL = new RenderersGL(init);
+        }
+        
+        renders.preinit();
+        
+        if (isVulkan) {
             VkPipelines.init(vkContext);
             descriptorSetUboScene = vkContext.descLayouts.allocDescSetUBOScene();
             descriptorSetUboScene.setBindingUniformBuffer(0, UniformBuffer.uboMatrix3D);
@@ -415,15 +428,10 @@ public class Engine {
             descriptorSetUboLights = vkContext.descLayouts.allocDescSetUBOLightInfo();
             descriptorSetUboLights.setBindingUniformBuffer(0, UniformBuffer.LightInfo);
             descriptorSetUboLights.update(vkContext);
-            
         }
+        
+        renders.init();
 
-        flushRenderTasks();
-        if (isVulkan) {
-            renders = rendersVK = new RenderersVulkan(vkContext, init);
-        } else {
-            renders = rendersGL = new RenderersGL(init);
-        }
         if (regionRenderer != null) {
             regionRenderThread = new MeshThread(3);
             regionRenderThread.init();
@@ -479,7 +487,7 @@ public class Engine {
             return;
         fieldOfView = 70;
         aspectRatio = (float) displayWidth / (float) displayHeight;
-        znear = 0.01F;
+        znear = 0.1F;
         zfar = INVERSE_Z_BUFFER?3000F:1024F;
         viewportBuf.position(0);
         viewportBuf.put(0);
@@ -488,15 +496,16 @@ public class Engine {
         viewportBuf.put(displayHeight);
         viewportBuf.flip();
         if (isVulkan) {
-            if (!INVERSE_Z_BUFFER) {
-                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
-            } else {
-                Project.fovProjMatInfInvZVk(fieldOfView, aspectRatio, znear, _projection);
-//                _projection.scale(1, y, z)
+            Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
+//            if (!INVERSE_Z_BUFFER) {
 //                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
-//                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
-                System.out.println("proj");
-            }
+//            } else {
+//                Project.fovProjMatInfInvZVk(fieldOfView, aspectRatio, znear, _projection);
+////                _projection.scale(1, y, z)
+////                Project.fovProjMatVk(fieldOfView, aspectRatio, znear, zfar, _projection);
+////                Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
+//                System.out.println("proj");
+//            }
         } else {
 
             if (!INVERSE_Z_BUFFER) {
@@ -1200,6 +1209,7 @@ public class Engine {
     public static int getShadowMapTextureSize() {
         if (shadowRenderer != null)
             return shadowRenderer.getTextureSize();
+//        throw new GameLogicError("shadowrenderer == null!");
         return 1024*2;
     }
     public static int getShadowDepthTex() {

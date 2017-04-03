@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import org.lwjgl.vulkan.VkViewport;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.render.RenderersVulkan;
@@ -53,23 +54,23 @@ public class ShadowRendererVK extends ShadowRenderer {
     private void renderMultiPass(CommandBuffer commandBuffer, World world, float fTime) {
         PushConstantBuffer buf = PushConstantBuffer.INST;
         int mapSize = Engine.getShadowMapTextureSize()/2;
-        
+        int requiredShadowMode = Game.instance.settings.renderSettings.shadowDrawMode;
+        VkPipeline pipe = requiredShadowMode > 0 ? VkPipelines.shadowTextured : VkPipelines.shadowSolid;
         Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
         Engine.clearAllDescriptorSets();
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
         Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
-        Engine.bindPipeline(VkPipelines.shadowSolid);
+        Engine.bindPipeline(pipe);
         float f = -1.0f;
-        vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*0.15f);
+        vkCmdSetDepthBias(commandBuffer, f*1.15f, 0.0f, f*1.f);
 //        vkCmdSetDepthBias(commandBuffer, 0,0,0);
         Engine.setViewport(0, 0, mapSize, mapSize);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 0);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 1, Frustum.FRUSTUM_INSIDE);
-
         QModelBatchedRender modelRender = RenderersVulkan.renderBatched;
         modelRender.setPass(PASS_SHADOW_SOLID, 0);
         modelRender.render(fTime);
@@ -78,10 +79,10 @@ public class ShadowRendererVK extends ShadowRenderer {
         Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
         Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
         Engine.clearDescriptorSet(VkDescLayouts.DESC3);
-        Engine.bindPipeline(VkPipelines.shadowSolid);
+        Engine.bindPipeline(pipe);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 1);
-        vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.f, f*1.45f);
+//        vkCmdSetDepthBias(commandBuffer, f*8.15f, 0.f, f*1.45f);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 2, Frustum.FRUSTUM_INSIDE);
         modelRender.setPass(PASS_SHADOW_SOLID, 1);
@@ -90,20 +91,20 @@ public class ShadowRendererVK extends ShadowRenderer {
         Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.worldRenderer.getDescTextureTerrain());
         Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
         Engine.clearDescriptorSet(VkDescLayouts.DESC3);
-        Engine.bindPipeline(VkPipelines.shadowSolid);
+        Engine.bindPipeline(pipe);
         buf.setMat4(0, Engine.getIdentityMatrix());
         buf.setInt(16, 2);
-        vkCmdSetDepthBias(commandBuffer, f*122.15f, 0.0f, f*1.15f);
+//        vkCmdSetDepthBias(commandBuffer, f*12.15f, 0.0f, f*1.15f);
         vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.shadowSolid.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(64+4));
         RenderersVulkan.regionRenderer.renderRegions(commandBuffer, world, fTime, PASS_SHADOW_SOLID, 3, Frustum.FRUSTUM_INSIDE);
         modelRender.setPass(PASS_SHADOW_SOLID, 2);
         modelRender.render(fTime);
+        vkCmdSetDepthBias(commandBuffer, 0, 0, 0);
         Engine.endRenderPass();
     }
 
     @Override
     public void init() {
-        super.init();
         this.frameBufferShadow = new FrameBuffer(Engine.vkContext);
         this.frameBufferShadow.fromRenderpass(VkRenderPasses.passShadow, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 
@@ -166,4 +167,6 @@ public class ShadowRendererVK extends ShadowRenderer {
         return this.sampler;
     }
 
+    public void onShadowSettingChanged() {
+    }
 }

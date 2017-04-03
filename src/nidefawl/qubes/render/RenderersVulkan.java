@@ -25,7 +25,6 @@ public class RenderersVulkan extends Renders {
     public static QModelBatchedRenderVK renderBatched;
 
     public RenderersVulkan(VKContext vkContext, EngineInitSettings init) {
-        components.clear();
         if (init.initShadowRenderer || init.initShadowProj) {
             Engine.shadowProj = shadowProj = addComponent(new ShadowProjector());
         }
@@ -53,10 +52,14 @@ public class RenderersVulkan extends Renders {
         if (init.initModelRenderer) {
             Engine.renderBatched = renderBatched = addComponent(new QModelBatchedRenderVK());
         }
+    }
+    public void preinit() {
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.preinit();
         }
+    }
+    public void init() {
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             r.init();

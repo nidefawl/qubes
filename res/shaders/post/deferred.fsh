@@ -116,6 +116,11 @@ bool canLookup(in vec4 v, in float zPos, in float mapZ) {
         // if (zPos < mapZ) {
         //     return true;
         // }
+#ifdef VULKAN_GLSL
+        if (v.z >= 0 && v.z <= 1) {
+            return true;
+        }
+#endif
 #if Z_INVERSE
         if (v.z > 0) {
             return true;
@@ -220,7 +225,7 @@ float getShadowAt(vec4 worldPos, float linDepth, float zOffset) {
 }
 float lookupShadowMap(vec3 v, float factor) {
     #ifdef VULKAN_GLSL
-        // factor-=(1.0-prop.depth)*0.0008;
+        factor-=(1.0-prop.depth)*0.0002;
     #endif
     v.z*=factor;
 
@@ -264,14 +269,14 @@ float getShadow2() {
         dbgSplit.xyz=v.xyz;
         dbgSplit.a=1;
         // prop.albedo.r = 1.0;
-        if (clamp(v.z, 0.15, 0.85) == v.z)
+        // if (clamp(v.z, 0.15, 0.85) == v.z)
             steps++;
     }
     if (steps<1&&canLookup(v2, prop.linearDepth, mapZSplits.y)) {
         s += lookupShadowMap(vec3(v2.xy*0.5+vec2(0.5,0.0), v2.z), SHADOW_FACTOR1);
         dbgSplit.y=1;
         dbgSplit.a=1;
-        if (clamp(v2.z, 0.15, 0.85) == v2.z)
+        // if (clamp(v2.z, 0.15, 0.85) == v2.z)
             steps++;
     }
     if (steps<1&&canLookup(v3, prop.linearDepth, mapZSplits.z)) {

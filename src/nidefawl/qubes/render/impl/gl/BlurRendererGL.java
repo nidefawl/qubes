@@ -108,7 +108,4 @@ public class BlurRendererGL extends BlurRenderer {
     public void init() {
         initShaders();
     }
-    @Override
-    public void preinit() {
-    }
 }

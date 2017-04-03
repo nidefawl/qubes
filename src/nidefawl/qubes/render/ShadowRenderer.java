@@ -1,27 +1,7 @@
 package nidefawl.qubes.render;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
-
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL40;
-
-import nidefawl.qubes.Game;
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.*;
-import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.render.impl.gl.ShadowRendererGL;
-import nidefawl.qubes.render.impl.vk.ShadowRendererVK;
-import nidefawl.qubes.shader.IShaderDef;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.ShaderCompileError;
-import nidefawl.qubes.texture.TMgr;
-import nidefawl.qubes.util.EResourceType;
-import nidefawl.qubes.util.IRenderComponent;
-import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public abstract class ShadowRenderer extends AbstractRenderer {
 
@@ -38,7 +18,7 @@ public abstract class ShadowRenderer extends AbstractRenderer {
 
 
 
-    public void init() {
+    public void preinit() {
         this.renderMode = Engine.RENDER_SETTINGS.shadowDrawMode>MULTI_DRAW_TEXUTED||Engine.RENDER_SETTINGS.shadowDrawMode<0?MULTI_DRAW:Engine.RENDER_SETTINGS.shadowDrawMode;
         SHADOW_BUFFER_SIZE = 1024*4;
     }
@@ -51,5 +31,8 @@ public abstract class ShadowRenderer extends AbstractRenderer {
     public abstract void renderShadowPass(World world, float fTime);
 
     public abstract void tickUpdate();
+
+    public void onShadowSettingChanged() {
+    }
 
 }

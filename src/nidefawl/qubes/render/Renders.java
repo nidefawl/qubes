@@ -28,4 +28,8 @@ public class Renders {
             r.release();
         }
     }
+    public void init() {
+    }
+    public void preinit() {
+    }
 }

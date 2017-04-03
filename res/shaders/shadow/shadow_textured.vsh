@@ -16,8 +16,8 @@ layout(push_constant) uniform PushConsts {
 #else
 //OpenGL 
 in vec4 in_position; 
-in vec4 in_texcoord; 
-in uvec4 in_blockinfo;
+in vec2 in_texcoord; 
+in uvec2 in_blockinfo;
 uniform mat4 model_matrix;
 uniform int shadowSplit;
 #define MODEL_MATRIX model_matrix
@@ -25,11 +25,11 @@ uniform int shadowSplit;
 
 #endif
 
-flat out uvec4 blockinfo;
 out vec2 texcoord;
+flat out uvec2 blockinfo;
 
 void main() {
-	blockinfo = in_blockinfo;
+	blockinfo = in_blockinfo.xy;
 	texcoord = in_texcoord.st;
-	gl_Position = in_matrix_shadow.shadow_split_mvp[SPLIT_IDX] * MODEL_MATRIX * in_position;
+	gl_Position = in_matrix_shadow.shadow_split_mvp[SPLIT_IDX] * MODEL_MATRIX * vec4(in_position.xyz, 1.0);
 }

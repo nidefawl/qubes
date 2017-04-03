@@ -64,7 +64,6 @@ public class ShadowRendererGL extends ShadowRenderer {
     }
     @Override
     public void init() {
-        super.init();
         initShaders();
     }
     
@@ -197,5 +196,8 @@ public class ShadowRendererGL extends ShadowRenderer {
     }
     @Override
     public void tickUpdate() {
+    }
+    public void onShadowSettingChanged() {
+        init();
     }
 }
