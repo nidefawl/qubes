@@ -7,14 +7,17 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GLVAO;
+import nidefawl.qubes.gl.GPUVendor;
 import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.render.SkyRenderer;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
 import nidefawl.qubes.render.impl.vk.LightComputeVK;
+import nidefawl.qubes.render.post.SMAA;
 import nidefawl.qubes.shader.IShaderDef;
 
 public class VkPipelines {
@@ -158,7 +161,15 @@ public class VkPipelines {
     public static void init(VKContext ctxt) {
         AssetManager assetManager = AssetManagerClient.getInstance();
         VkShader shaderScreenTriangle = ctxt.loadCompileGLSL(assetManager, "screen_triangle.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
-
+        if (Engine.vkSMAAContext != null) {
+            Engine.vkSMAAContext.destroy(ctxt);
+        }
+        Engine.vkSMAAContext = null;
+        if (GameBase.baseInstance != null && GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.smaaMode > 0) {
+//            Engine.vkSMAAContext = new VkSMAA(ctxt, Engine.RENDER_SETTINGS.smaaQuality, /*Engine.RENDER_SETTINGS.smaaPredication*/false, false, /*Engine.RENDER_SETTINGS.smaaMode==2*/false);
+            Engine.vkSMAAContext = new VkSMAA(ctxt, SMAA.SMAA_PRESET_MEDIUM);
+//            Engine.vkSMAAContext.init(ctxt.swapChain.width, ctxt.swapChain.height);
+        }
         try ( MemoryStack stack = stackPush() ) 
         {
             shadowSolid.destroyPipeLine(ctxt);
@@ -294,11 +305,36 @@ public class VkPipelines {
 
                 @Override
                 public void setPipeDef(int i, VkGraphicsPipelineCreateInfo subPipeline) {
-                    subPipeline.renderPass(VkRenderPasses.passFramebufferNoDepth.get());
+//                    if (i == 1) {
+//                        subPipeline.renderPass(VkRenderPasses.passFramebufferNoDepth.get());
+//                    }
+                    if (i == 1) {
+                        subPipeline.renderPass(VkRenderPasses.passFramebuffer.get());
+                        VkPipelineColorBlendAttachmentState.Buffer blendAttachmentState = VkPipelineGraphics.pipelineColorBlendAttachmentStateStack(VkRenderPasses.passFramebuffer.nColorAttachments);
+                        for (int j = 0; j < blendAttachmentState.limit(); j++) {
+                            blendAttachmentState.get(j)
+                                .blendEnable(false)
+                                .srcColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+                                .dstColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+                                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+                        }
+
+                        VkPipelineColorBlendStateCreateInfo colorBlendState = VkPipelineColorBlendStateCreateInfo.callocStack();
+                        colorBlendState.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
+                        colorBlendState.pNext(0L);
+                        colorBlendState.logicOpEnable(false);
+                        colorBlendState.logicOp(VK_LOGIC_OP_CLEAR);
+                        colorBlendState.pAttachments(blendAttachmentState);
+                        blendAttachmentState.limit(VkRenderPasses.passFramebuffer.nColorAttachments);
+                        colorBlendState.pAttachments(blendAttachmentState);
+                        subPipeline.pColorBlendState(colorBlendState);
+                    }
                 }
                 
             };
             textured2d.pipeline = buildPipeLine(ctxt, textured2d);
+            textured2d.setBlend(true);
             textured2d.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
             textured2d.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_SCISSOR));
 
@@ -869,7 +905,7 @@ public class VkPipelines {
         long pipeline = pipe.buildPipeline(vkContext);
         return pipeline;
     }
-    static long buildPipeLine(VKContext vkContext, VkPipelineGraphics pipe) {
+    public static long buildPipeLine(VKContext vkContext, VkPipelineGraphics pipe) {
         pipe.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
         pipe.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
 //        if (!Engine.INVERSE_Z_BUFFER) {

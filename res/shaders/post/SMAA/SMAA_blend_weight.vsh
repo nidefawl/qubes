@@ -1,6 +1,5 @@
 #version 150 core
 
-#pragma include "ubo_scene.glsl"
 #pragma include "SMAA_common.glsl"
 #define SMAA_INCLUDE_VS 1
 #define SMAA_INCLUDE_PS 0

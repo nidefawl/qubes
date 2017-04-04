@@ -1,28 +1,20 @@
 package nidefawl.qubes.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.VK10.*;
-
-import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
-public class VkRenderPassFrameBuffer extends VkRenderPass {
+public class VkRenderPassAA extends VkRenderPass {
 
-    public VkRenderPassFrameBuffer(boolean clearImage, boolean hasDepth) {
-        //TODO: try VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL here and remove imagebarrier in swapchains blit function
-        VkAttachmentDescription n = addColorAttachment(0, VK_FORMAT_R8G8B8A8_UNORM).finalLayout(VK_IMAGE_LAYOUT_GENERAL); 
-
-        if (hasDepth) {
-            VkAttachmentDescription d = addDepthAttachment(1, VK_FORMAT_D24_UNORM_S8_UINT);
+    public VkRenderPassAA(boolean isPost) {
+        VkAttachmentDescription c = addColorAttachment(0, VK_FORMAT_R8G8B8A8_UNORM);
+        VkAttachmentDescription d = addDepthAttachment(1, VK_FORMAT_D24_UNORM_S8_UINT);
+        if (isPost) {
+            d.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
         }
-//        n.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
-        if (!clearImage) {
-            n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-        }
+        c.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
     @Override
     public void build(VKContext ctxt) {

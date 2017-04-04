@@ -1,18 +1,13 @@
 package nidefawl.qubes.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.VK10.*;
-
-import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
 public class VkRenderPassTonemap extends VkRenderPass {
 
-    private Buffer subpassDependencies;
     public VkRenderPassTonemap(boolean isPost) {
         VkAttachmentDescription c = addColorAttachment(0, VK_FORMAT_R8G8B8A8_UNORM);
         VkAttachmentDescription d = addDepthAttachment(1, VK_FORMAT_D32_SFLOAT);
@@ -41,7 +36,7 @@ public class VkRenderPassTonemap extends VkRenderPass {
             }
             
 
-            this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
+            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)
                     .dstSubpass(0)

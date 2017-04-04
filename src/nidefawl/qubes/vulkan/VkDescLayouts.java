@@ -361,6 +361,9 @@ public class VkDescLayouts {
                         descSetLayoutUBOScene, descSetLayoutImagesCompute, descSetLayoutSSBOPointLights}, push_constant_ranges_compute_light);
 
             }
+            VkSMAA.pipelineLayoutEdgeDetect.build(ctxt, descSetLayoutSamplerImageSingle);
+            VkSMAA.pipelineLayoutBlendWeight.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageTriple);
+            VkSMAA.pipelineLayoutNeighborBlend.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle);
             
         }
 

@@ -1,14 +1,15 @@
 #version 150 core
 
-#pragma include "ubo_scene.glsl"
 #pragma include "SMAA_common.glsl"
 #define SMAA_INCLUDE_VS 0
 #define SMAA_INCLUDE_PS 1
 #pragma include "SMAA.hlsl"
 
-uniform sampler2D texColor;
-uniform sampler2D blendTex;
-uniform sampler2D velocityTex;
+layout (set = 0, binding = 0) uniform sampler2D texColor;
+layout (set = 1, binding = 0) uniform sampler2D blendTex;
+#if SMAA_REPROJECTION
+layout (set = 1, binding = 1) uniform sampler2D velocityTex;
+#endif
 
 in vec2 pass_texcoord;
 in vec4 offset;

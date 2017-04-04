@@ -60,10 +60,10 @@ public class SMAA {
     public final static int SMAA_PRESET_ULTRA = 3;
     final static String[] qualDefines = { "SMAA_PRESET_LOW", "SMAA_PRESET_MEDIUM", "SMAA_PRESET_HIGH", "SMAA_PRESET_ULTRA" };
     public static String[] qualDesc = { "Low", "Medium", "High", "Ultra" };
-    public SMAA(final int quality) {
-        this(quality, false, false, false);
+    public SMAA(final int quality, int w, int h) {
+        this(quality, false, false, false, w, h);
     }
-    public SMAA(final int quality, final boolean usePredTex, boolean srgb, final boolean reprojection) {
+    public SMAA(final int quality, final boolean usePredTex, boolean srgb, final boolean reprojection, final int w, final int h) {
         this.useReprojection = reprojection;
         this.srgb = srgb;
         this.usePredicatedThresholding = usePredTex;
@@ -84,6 +84,9 @@ public class SMAA {
                 }
                 if ("SMAA_REPROJECTION".equals(define)) {
                     return "#define SMAA_REPROJECTION "+(reprojection?"1":"0");
+                }
+                if ("SMAA_RT_METRICS".equals(define)) {
+                    return "#define SMAA_RT_METRICS float4(1.0 / "+w+".0, 1.0 / "+h+".0, "+w+".0, "+h+".0)";
                 }
                 return null;
             }
@@ -151,9 +154,10 @@ public class SMAA {
             System.out.println(e.getLog());
             throw new GameError(e);
         }
+        init(w, h);
     }
     
-    public void init(int displayWidth, int displayHeight) {
+    void init(int displayWidth, int displayHeight) {
 //        this.fbFlipInput = FrameBuffer.make(mgr, displayWidth, displayHeight, GL_RGBA8);
         int format = srgb?GL21.GL_SRGB8_ALPHA8:GL_RGBA8;
         this.fbFlipInput = new FrameBuffer(displayWidth, displayHeight);
@@ -285,7 +289,7 @@ public class SMAA {
                     tex = fbAAEdge.getTexture(0);
                     break;
                 case 3:
-                    Shaders.textured_to_srgb.enable();
+                    Shaders.textured.enable();
 //                    shaderDrawAlphaChannel.enable();
 //                    shaderDrawAlphaChannel.setProgramUniform1i("texColor", 0);
                     tex = fbAAWeightBlend.getTexture(0);

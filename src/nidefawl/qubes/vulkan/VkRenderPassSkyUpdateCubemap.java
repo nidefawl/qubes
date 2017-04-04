@@ -13,7 +13,6 @@ import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
 public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
 
-    private Buffer subpassDependencies;
     public VkRenderPassSkyUpdateCubemap() {
         for (int i = 0; i < 6; i++)
             addColorAttachment(i, VK_FORMAT_R16G16B16A16_SFLOAT)
@@ -44,7 +43,7 @@ public class VkRenderPassSkyUpdateCubemap extends VkRenderPass {
                 }
             }
 
-            this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
+            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)
                     .dstSubpass(0)

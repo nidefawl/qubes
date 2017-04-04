@@ -12,7 +12,6 @@ import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
 public class VkRenderPassDeferred extends VkRenderPass {
 
-    private Buffer subpassDependencies;
     public VkRenderPassDeferred(boolean clear) {
         VkAttachmentDescription n = addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
             n.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -29,7 +28,7 @@ public class VkRenderPassDeferred extends VkRenderPass {
                 colorReference.get(i).attachment(i)
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
-            this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
+            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)
                     .dstSubpass(0)

@@ -242,6 +242,22 @@ public class VkPipelineGraphics extends VkPipeline {
         }
         return pipelineColorBlendAttachmentState;
     }
+    public static VkPipelineColorBlendAttachmentState.Buffer pipelineColorBlendAttachmentStateStack(int size)
+    {
+        VkPipelineColorBlendAttachmentState.Buffer pipelineColorBlendAttachmentState = VkPipelineColorBlendAttachmentState.callocStack(size);
+        for (int i = 0; i < size; i++) {
+            pipelineColorBlendAttachmentState.get(i)
+                .colorWriteMask(0xf)
+                .srcAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .srcColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .dstColorBlendFactor(VK_BLEND_FACTOR_ZERO)
+                .blendEnable(false)
+                .alphaBlendOp(VK_BLEND_OP_ADD)
+                .colorBlendOp(VK_BLEND_OP_ADD);
+        }
+        return pipelineColorBlendAttachmentState;
+    }
 
     public static VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo(
             VkPipelineColorBlendAttachmentState.Buffer pAttachments)

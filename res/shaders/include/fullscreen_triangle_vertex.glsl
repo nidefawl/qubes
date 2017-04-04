@@ -20,4 +20,4 @@
 #endif
     vec4 verticeIdx = vertices[VERTEX_IDX];
     pass_texcoord.st = verticeIdx.zw;
-    gl_Position = vec4(verticeIdx.xy, 0, 1);
+    gl_Position = vec4(verticeIdx.xy, 0.5, 1);

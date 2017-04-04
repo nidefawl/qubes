@@ -1,7 +1,7 @@
 package nidefawl.qubes.vulkan;
 
 public class VkRenderPasses {
-    public static VkRenderPass[] passes = new VkRenderPass[16];
+    public static VkRenderPass[] passes = new VkRenderPass[32];
     static boolean isInit = false;
     
 
@@ -21,6 +21,8 @@ public class VkRenderPasses {
     public static VkRenderPass passFramebufferNoDepth = new VkRenderPassFrameBuffer(true, false);
     public static VkRenderPass passTonemap = new VkRenderPassTonemap(false);
     public static VkRenderPass passPostTonemapOverlays = new VkRenderPassTonemap(true);
+    public static VkRenderPass passAAEdge = new VkRenderPassAA(false);
+    public static VkRenderPass passAAWeight = new VkRenderPassAA(true);
 
     public static void init(VKContext ctxt) {
         isInit = true;

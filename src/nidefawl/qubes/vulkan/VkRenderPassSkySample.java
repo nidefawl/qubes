@@ -12,7 +12,6 @@ import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
 public class VkRenderPassSkySample extends VkRenderPass {
 
-    private Buffer subpassDependencies;
     public VkRenderPassSkySample() {
         addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
     }
@@ -26,7 +25,7 @@ public class VkRenderPassSkySample extends VkRenderPass {
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
             VkAttachmentReference depthReference = null;
-            this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
+            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)
                     .dstSubpass(0)

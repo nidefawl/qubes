@@ -464,7 +464,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
-        Engine.setDescriptorSet(VkDescLayouts.DESC2, descTextureSSROutput);
+        Engine.setDescriptorSet(VkDescLayouts.DESC2, blurred);
         Engine.bindPipeline(VkPipelines.ssrCombine);
         Engine.drawFSTri();  
         Engine.endRenderPass();
@@ -526,7 +526,6 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             
             
             Engine.clearAllDescriptorSets();
-
             
             this.frame++;
         } else {
@@ -542,6 +541,20 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     @Override
     public void onSSRSettingChanged() {
         Engine.vkContext.reinitSwapchain=true;
+    }
+
+    public VkDescriptor getOutputDesc() {
+        if (Engine.vkSMAAContext != null) {
+            return Engine.vkSMAAContext.descOutput;
+        }
+        return this.descTextureFinalOut;
+    }
+
+    public void renderAA(WorldClient world, float fTime) {
+        
+        if (Engine.vkSMAAContext != null) {
+            Engine.vkSMAAContext.render(this.descTextureFinalOut);
+        }
     }
 
 

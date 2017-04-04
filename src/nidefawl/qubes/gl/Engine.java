@@ -148,7 +148,9 @@ public class Engine {
     static boolean isVAOSupportingBindless=false;
     static boolean clientStateBindlessElement=false;
     static boolean clientStateBindlessAttrib=false;
-    
+
+    public static boolean autoBindDescSet = true;
+    public static VkSMAA vkSMAAContext;
     public static VkDescriptor descriptorSetUboScene;
     public static VkDescriptor descriptorSetUboConstants;
     public static VkDescriptor descriptorSetUboShadow;
@@ -1314,12 +1316,19 @@ public class Engine {
             Engine.bindPipeline(VkPipelines.colored2D);
         }
     }
-    
+
     public static void setPipeStateTextured2D() {
+        setPipeStateTextured2D(true);
+    }
+    public static void setPipeStateTextured2D(boolean blend) {
         if (!isVulkan) {
             Shaders.textured.enable();
         } else {
-            Engine.bindPipeline(VkPipelines.textured2d);
+            if (blend) {
+                Engine.bindPipeline(VkPipelines.textured2d);
+            } else {
+                Engine.bindPipeline(VkPipelines.textured2d, 1);
+            }
         }
     }
 
@@ -1327,6 +1336,7 @@ public class Engine {
     //single threaded!
     static CommandBuffer curCommandBuffer;
     static VkPipelineGraphics curPipeline;
+    static long curPipelineHandle = 0L;
     private static boolean rebindDescSet0;
     private static boolean rebindDescSet1;
     private static boolean rebindDescSet;
@@ -1336,19 +1346,20 @@ public class Engine {
         bindPipeline(pipe, 0);
     }
     public static void bindPipeline(VkPipelineGraphics pipe, int subpipe) {
-        if (curPipeline != pipe || subpipe > 0) {
+        long newPipeHandle;
+        if (subpipe > 0) {
+            newPipeHandle = pipe.getDerived(subpipe);
+        } else {
+            newPipeHandle = isScissors ? (pipe.pipelineScissors) : (pipe.pipeline);
+        }
+        if (newPipeHandle != curPipelineHandle) {
             curPipeline = pipe;
+            curPipelineHandle = newPipeHandle;
             if (isScissors && pipe.pipelineScissors==VK_NULL_HANDLE) {
                 System.err.println("MISSING SCISSORS PIPE VERSION");
             }
             Stats.callsBindPipeline++;
-            if (subpipe > 0) {
-//                System.out.println("Bind derived "+subpipe+", "+pipe.getDerived(subpipe));
-                vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipe.getDerived(subpipe));
-            } else {
-                vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                        isScissors ? (pipe.pipelineScissors) : (pipe.pipeline));
-            }
+            vkCmdBindPipeline(curCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, newPipeHandle);
             if (isScissors)
                 pxStack.vkUpdateLastScissors();
             if (curPipeline.useDynViewport) {
@@ -1401,7 +1412,6 @@ public class Engine {
                 pDescriptorSets, pOffsets);
     }
 
-    public static boolean autoBindDescSet = true;
 
     public static void disableAutoBindDesc() {
         autoBindDescSet = false;
@@ -1456,6 +1466,7 @@ public class Engine {
     }
     public static void beginRenderPass(VkRenderPass pass, nidefawl.qubes.vulkan.FrameBuffer framebuffer, int flags) {
         curPipeline = null;
+        curPipelineHandle = VK_NULL_HANDLE;
         curPass = pass;
         curFB = framebuffer;
         curFB.onBeginRenderPass();
@@ -1469,6 +1480,7 @@ public class Engine {
     public static void endRenderPass() {
         vkCmdEndRenderPass(curCommandBuffer);
         curFB.onEndRenderPass();
+        curPipelineHandle = VK_NULL_HANDLE;
         curPipeline = null;
         curPass = null;
     }

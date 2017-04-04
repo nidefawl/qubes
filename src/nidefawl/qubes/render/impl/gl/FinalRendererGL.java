@@ -296,7 +296,7 @@ public class FinalRendererGL extends FinalRenderer {
             this.smaa.render(inputTexture, 
                     Engine.getRenderMaterialBuffer()&&isWorld?fbDeferred.getTexture(getAttPointMaterial()):TMgr.getEmpty(), 
                     Engine.getRenderVelocityBuffer()&&isWorld?fbDeferred.getTexture(getAttPointVelocity()):TMgr.getEmpty(), 
-                            0, output);
+                            3, output);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         } else {
             if (output != null) output.bindAndClear();
@@ -649,8 +649,7 @@ public class FinalRendererGL extends FinalRenderer {
         Engine.TEMPORAL_OFFSET = false;
         smaa = null;
         if (GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.smaaMode > 0) {
-            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, Engine.RENDER_SETTINGS.smaaMode==2);
-            this.smaa.init(this.rendererWidth, this.rendererHeight);
+            smaa = new SMAA(Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, Engine.RENDER_SETTINGS.smaaMode==2, this.rendererWidth, this.rendererHeight);
         }
     }
 

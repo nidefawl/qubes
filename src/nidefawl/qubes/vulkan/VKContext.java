@@ -72,8 +72,9 @@ public class VKContext {
     public long                                renderCommandPool             = VK_NULL_HANDLE;
     public long                                copyCommandPool               = VK_NULL_HANDLE;
     public long                                descriptorPool                = VK_NULL_HANDLE;
-    public long                               samplerLinear                 = VK_NULL_HANDLE;
-    public long                               samplerNearest                = VK_NULL_HANDLE;
+    public long                               samplerLinear                  = VK_NULL_HANDLE;
+    public long                               samplerLinearClamp             = VK_NULL_HANDLE;
+    public long                               samplerNearest                 = VK_NULL_HANDLE;
     
     protected long                             debugCallbackHandle           = VK_NULL_HANDLE;
     protected int                              queueFamilyIndex;
@@ -239,6 +240,9 @@ public class VKContext {
                 sampler.minFilter(VK_FILTER_LINEAR);
                 sampler.magFilter(VK_FILTER_LINEAR);
                 sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+                sampler.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                sampler.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                sampler.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
                 int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
                 if (err != VK_SUCCESS) {
                     throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
@@ -246,9 +250,22 @@ public class VKContext {
                 samplerLinear = pSampler.get(0);
             }
             {
+                sampler.addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+                sampler.addressModeV(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+                sampler.addressModeW(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+                int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
+                }
+                samplerLinearClamp = pSampler.get(0);
+            }
+            {
                 sampler.minFilter(VK_FILTER_NEAREST);
                 sampler.magFilter(VK_FILTER_NEAREST);
                 sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+                sampler.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                sampler.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                sampler.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
                 int err = vkCreateSampler(vkContext.device, sampler, null, pSampler);
                 if (err != VK_SUCCESS) {
                     throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));

@@ -60,7 +60,7 @@ public class VulkanInit {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
                     String msg = VkDebugReportCallbackEXT.getString(pMessage);
                     System.err.println("ERROR OCCURED: " + msg);
-//                    Thread.dumpStack();
+                    Thread.dumpStack();
                     Matcher m = p.matcher(msg);
                     if (m.matches()) {
                         long l = Long.parseLong(m.group(1), 16);
@@ -501,6 +501,7 @@ public class VulkanInit {
         surfFormats.free();
 
         ctxt.colorFormat = colorFormat;
+        System.out.println("COLOR FORMAT "+ctxt.colorFormat);
         ctxt.colorSpace = colorSpace;
     }
     private static void getFirstPhysicalDevice(VKContext ctxt) {

@@ -11,7 +11,6 @@ import org.lwjgl.vulkan.*;
 
 public class VkRenderPassShadow extends VkRenderPass {
 
-    private VkSubpassDependency.Buffer subpassDependencies;
     public VkRenderPassShadow() {
         addDepthAttachment(0, VK_FORMAT_D32_SFLOAT)
             .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
@@ -31,7 +30,7 @@ public class VkRenderPassShadow extends VkRenderPass {
                     .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             
 
-            this.subpassDependencies = VkSubpassDependency.callocStack(2, stack);
+            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
             subpassDependencies.get(0)
                     .srcSubpass(VK_SUBPASS_EXTERNAL)
                     .dstSubpass(0)

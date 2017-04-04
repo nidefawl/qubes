@@ -1,14 +1,13 @@
 #version 150 core
 
-#pragma include "ubo_scene.glsl"
 #pragma include "SMAA_common.glsl"
 #define SMAA_INCLUDE_VS 0
 #define SMAA_INCLUDE_PS 1
 #pragma include "SMAA.hlsl"
 
-uniform sampler2D texColor;
+layout (set = 0, binding = 0) uniform sampler2D texColor;
 #if SMAA_PREDICATION
-uniform sampler2D texMaterial;
+layout (set = 0, binding = 1) uniform sampler2D texMaterial;
 #define TEXTURES_PARAM texColor, texMaterial
 #else
 #define TEXTURES_PARAM texColor

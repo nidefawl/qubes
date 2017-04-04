@@ -1,15 +1,19 @@
 #version 150 core
 
-#pragma include "ubo_scene.glsl"
 #pragma include "SMAA_common.glsl"
 #define SMAA_INCLUDE_VS 0
 #define SMAA_INCLUDE_PS 1
 #pragma include "SMAA.hlsl"
 
-uniform sampler2D edgesTex;
-uniform sampler2D areaTex;
-uniform sampler2D searchTex;
+layout (set = 1, binding = 0) uniform sampler2D edgesTex;
+layout (set = 1, binding = 1) uniform sampler2D areaTex;
+layout (set = 1, binding = 2) uniform sampler2D searchTex;
+
+#if SMAA_REPROJECTION
 uniform vec4 jitterOffset;
+#else
+const vec4 jitterOffset = vec4(0);
+#endif
 
 in vec2 pass_texcoord;
 in vec2 pixcoord;
