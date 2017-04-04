@@ -19,7 +19,7 @@ public abstract class HexBiomes extends HexagonGridStorage<HexBiome> implements 
     final World world;
 
     public HexBiomes(World world, long seed, IWorldSettings settings) {
-        super(128, 32);
+        super(512, 16);
         this.world = world;
     }
     

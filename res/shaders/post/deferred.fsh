@@ -600,7 +600,7 @@ void main() {
         float minAmb2 = 0.09;
          float diff = 1.5;
         // prop.roughness = 0.3;
-        float roughness = pow(2.0, 1.0+(prop.roughness)*24.0)-1.0;
+        float roughness = pow(2.0, 1.0+(prop.roughness)*3.0)-1.0;
         // out_Color = vec4(vec3(prop.roughness), 1);
         // return;
         // float glossy = 0.02;
@@ -630,7 +630,7 @@ void main() {
         // float specAmb2 = pow(max(dot(halfDir2, prop.normal), 0.0), roughness);
 
         vec3 reflectDir = (reflect(-SkyLight.lightDir.xyz, prop.normal));  
-        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*22.0;
+        float spec = clamp(pow(max(dot(prop.viewVector, reflectDir), 0.0), roughness), 0.0, 1.0)*4.0;
 
         // sceneColor.xyz = vec3(prop.worldposition.rgb*0.002);
 
