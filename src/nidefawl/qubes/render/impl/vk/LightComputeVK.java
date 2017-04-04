@@ -1,31 +1,55 @@
 package nidefawl.qubes.render.impl.vk;
+import static nidefawl.qubes.vulkan.VkConstants.MAX_NUM_SWAPCHAIN;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.LightCompute;
 import nidefawl.qubes.util.IRenderComponent;
 import nidefawl.qubes.vulkan.*;
+import nidefawl.qubes.world.WorldClient;
 
 public class LightComputeVK extends LightCompute implements IRenderComponent {
-
+    public static final int MAX_DRAWS_FRAME = 2;
+    final static int SSBO_DRAW_SIZE_LIGHT = Engine.MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT;
+    final static int SSBO_FRAME_SIZE_LIGHT = MAX_DRAWS_FRAME*SSBO_DRAW_SIZE_LIGHT;
+    final static int SSBO_SIZE_LIGHT = MAX_NUM_SWAPCHAIN*SSBO_FRAME_SIZE_LIGHT;
 
     private long image;
     private long view;
     private long sampler;
 
+    private VkSSBO vkSSBOLights;
+    private FloatBuffer bufferFloat;
+    private ByteBuffer bufferByte;
+    protected VkDescriptor descriptorSetSSBOLights;
+    protected VkDescriptor descriptorSetImages;
+
     @Override
     public void init() {
+        VKContext ctxt = Engine.vkContext;
+        this.vkSSBOLights = new VkSSBO(ctxt, SSBO_SIZE_LIGHT, SSBO_FRAME_SIZE_LIGHT).tag("ssbo_lights");
+
+        this.bufferByte = MemoryUtil.memCalloc(SSBO_SIZE_LIGHT);
+        this.bufferFloat = this.bufferByte.asFloatBuffer();
+        descriptorSetSSBOLights = ctxt.descLayouts.allocDescSetSSBOPointLights().tag("SSBOPointLights");
+        descriptorSetSSBOLights.setBindingSSBO(0, this.vkSSBOLights);
+        descriptorSetSSBOLights.update(ctxt);
+        descriptorSetImages = ctxt.descLayouts.allocDescSetImagesComputeLight().tag("ImagesComputeLight");
     }
 
     @Override
     public void resize(int displayWidth, int displayHeight) {
         release();
+        super.resize(displayWidth, displayHeight);
         VKContext ctxt = Engine.vkContext;
         try ( MemoryStack stack = stackPush() ) {
             LongBuffer pImage = stack.longs(0);
@@ -39,7 +63,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
                         .samples(VK_SAMPLE_COUNT_1_BIT)
                         .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
                         .tiling(VK_IMAGE_TILING_OPTIMAL)
-                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT)
                         .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
                 imageCreateInfo.extent().width(displayWidth).height(displayHeight).depth(1);
                 int err = vkCreateImage(ctxt.device, imageCreateInfo, null, pImage);
@@ -79,6 +103,13 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
         ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, 1, getLayout(), 0, 0, 0, 1);
 
     }
+
+    public void render(WorldClient world, float fTime, int pass) {
+
+        if (this.numLights > 0) {
+
+        }
+    }
     @Override
     public void release() {
         if (this.image != VK_NULL_HANDLE) {
@@ -102,7 +133,17 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
     }
 
     public int getLayout() {
-        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        return VK_IMAGE_LAYOUT_GENERAL;
+    }
+
+    @Override
+    public void updateLights(WorldClient world, float f) {
+        this.vkSSBOLights.markPos();
+        this.bufferFloat.clear();
+        updateAndStoreLights(world, f, this.bufferFloat);
+        this.bufferByte.position(0).limit(this.bufferFloat.remaining()*4);
+        this.vkSSBOLights.uploadData(this.bufferByte);
+        this.vkSSBOLights.seekPos(SSBO_FRAME_SIZE_LIGHT);
     }
 
 }

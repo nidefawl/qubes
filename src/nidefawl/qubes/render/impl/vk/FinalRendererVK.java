@@ -299,6 +299,16 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         coloratt = this.frameBufferTonemapped.getAtt(0);
         this.descTextureFinalOut.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
         this.descTextureFinalOut.update(ctxt);
+        
+        
+        VkDescriptor lightComputeImages = RenderersVulkan.lightCompute.descriptorSetImages;
+
+        coloratt = this.frameBufferScene.getAtt(1); //scene normals, pre water
+        lightComputeImages.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+        coloratt = this.frameBufferScene.getAtt(4); //scene depth, pre water
+        lightComputeImages.setBindingCombinedImageSampler(1, coloratt.getView(), samplerClamp, coloratt.finalLayout);
+        lightComputeImages.setBindingStorageImage(2, RenderersVulkan.lightCompute.getView(), RenderersVulkan.lightCompute.getLayout());
+        lightComputeImages.update(ctxt);
     }
     
     private void releaseFramebuffers() {

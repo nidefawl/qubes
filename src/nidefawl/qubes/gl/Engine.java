@@ -1326,16 +1326,16 @@ public class Engine {
     
     //single threaded!
     static CommandBuffer curCommandBuffer;
-    static VkPipeline curPipeline;
+    static VkPipelineGraphics curPipeline;
     private static boolean rebindDescSet0;
     private static boolean rebindDescSet1;
     private static boolean rebindDescSet;
     private static VkRenderPass curPass;
     private static nidefawl.qubes.vulkan.FrameBuffer curFB;
-    public static void bindPipeline(VkPipeline pipe) {
+    public static void bindPipeline(VkPipelineGraphics pipe) {
         bindPipeline(pipe, 0);
     }
-    public static void bindPipeline(VkPipeline pipe, int subpipe) {
+    public static void bindPipeline(VkPipelineGraphics pipe, int subpipe) {
         if (curPipeline != pipe || subpipe > 0) {
             curPipeline = pipe;
             if (isScissors && pipe.pipelineScissors==VK_NULL_HANDLE) {

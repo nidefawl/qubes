@@ -38,6 +38,8 @@ public class VkDescLayouts {
     public long descSetLayoutSSBOCubes = VK_NULL_HANDLE;
     public long descSetLayoutSSBOModelBatched = VK_NULL_HANDLE;
     public long descSetLayoutSSBOModelStatic = VK_NULL_HANDLE;
+    public long descSetLayoutSSBOPointLights = VK_NULL_HANDLE;
+    public long descSetLayoutImagesCompute = VK_NULL_HANDLE;
     
     public VkDescLayouts(VKContext ctxt) {
         this.ctxt = ctxt;
@@ -52,6 +54,7 @@ public class VkDescLayouts {
             VkDescriptorSetLayoutBinding.Buffer ssbo_cubes_bindings = VkDescriptorSetLayoutBinding.calloc(2);
             VkDescriptorSetLayoutBinding.Buffer ssbo_model_batched_bindings = VkDescriptorSetLayoutBinding.calloc(3);
             VkDescriptorSetLayoutBinding.Buffer ssbo_model_static_bindings = VkDescriptorSetLayoutBinding.calloc(2);
+            VkDescriptorSetLayoutBinding.Buffer ssbo_point_lights = VkDescriptorSetLayoutBinding.calloc(1);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_single = VkDescriptorSetLayoutBinding.calloc(1);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_double = VkDescriptorSetLayoutBinding.calloc(2);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_triple = VkDescriptorSetLayoutBinding.calloc(3);
@@ -59,6 +62,7 @@ public class VkDescLayouts {
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass0 = VkDescriptorSetLayoutBinding.calloc(7);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_deferred_pass1 = VkDescriptorSetLayoutBinding.calloc(9);
             VkDescriptorSetLayoutBinding.Buffer sampler_image_ssr = VkDescriptorSetLayoutBinding.calloc(5);
+            VkDescriptorSetLayoutBinding.Buffer sampler_images_compute_light = VkDescriptorSetLayoutBinding.calloc(3);
 
 
             
@@ -163,6 +167,12 @@ public class VkDescLayouts {
                 .binding(1)
                 .descriptorCount(1);
             
+            ssbo_point_lights.get(0)
+                .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+                .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+                .binding(0)
+                .descriptorCount(1);
+            
             for (int i = 0; i < sampler_image_deferred_pass0.limit(); i++) {
                 sampler_image_deferred_pass0.get(i)
                     .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
@@ -177,6 +187,21 @@ public class VkDescLayouts {
                     .binding(i)
                     .descriptorCount(1);
             }
+            sampler_images_compute_light.get(0)
+                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+                .binding(0)
+                .descriptorCount(1);
+            sampler_images_compute_light.get(1)
+                .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+                .binding(1)
+                .descriptorCount(1);
+            sampler_images_compute_light.get(2)
+                .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+                .binding(2)
+                .descriptorCount(1);
             descSetLayoutUBOScene = makeSet(ubo_scene_bindings);
             descSetLayoutUBOTransform = makeSet(ubo_transform_stack_bindings);
             descSetLayoutUBOConstants = makeSet(ubo_constants_bindings);
@@ -185,6 +210,7 @@ public class VkDescLayouts {
             descSetLayoutSSBOCubes = makeSet(ssbo_cubes_bindings);
             descSetLayoutSSBOModelBatched = makeSet(ssbo_model_batched_bindings);
             descSetLayoutSSBOModelStatic = makeSet(ssbo_model_static_bindings);
+            descSetLayoutSSBOPointLights = makeSet(ssbo_point_lights);
             descSetLayoutSamplerImageSingle = makeSet(sampler_image_single);
             descSetLayoutSamplerImageDouble = makeSet(sampler_image_double);
             descSetLayoutSamplerImageTriple = makeSet(sampler_image_triple);
@@ -192,7 +218,8 @@ public class VkDescLayouts {
             descSetLayoutSamplerImageSingleVertexStage = makeSet(sampler_image_single_vertex_stage);
             descSetLayoutSamplerImageDeferredPass0 = makeSet(sampler_image_deferred_pass0);
             descSetLayoutSamplerImageDeferredPass1 = makeSet(sampler_image_deferred_pass1);
-
+            descSetLayoutImagesCompute = makeSet(sampler_images_compute_light);
+            
             VkPushConstantRange.Buffer push_constant_ranges_gui = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_shadow_solid = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_single_block = VkPushConstantRange.calloc(1);
@@ -205,6 +232,7 @@ public class VkDescLayouts {
             VkPushConstantRange.Buffer push_constant_ranges_blur_kawase = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_colored_3d = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_wireframe = VkPushConstantRange.calloc(2);
+            VkPushConstantRange.Buffer push_constant_ranges_compute_light = VkPushConstantRange.calloc(1);
 
             push_constant_ranges_gui.get(0)
                 .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -260,6 +288,11 @@ public class VkDescLayouts {
                 .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .offset(84)
                 .size(8);
+            
+            push_constant_ranges_compute_light.get(0)
+                .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+                .offset(0)
+                .size(4);
             
             VkPipelines.pipelineLayoutTexturedFullscreen.build(ctxt, 
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
@@ -318,6 +351,8 @@ public class VkDescLayouts {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSSR, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutSSRCombine.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutSamplerImageSingle});
+            VkPipelines.pipelineLayoutComputeLight.build(ctxt, new long[] {
+                    descSetLayoutUBOScene, descSetLayoutImagesCompute, descSetLayoutSSBOPointLights}, push_constant_ranges_compute_light);
         }
 
 
@@ -364,6 +399,8 @@ public class VkDescLayouts {
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSSBOCubes, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSSBOModelBatched, null);
         vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSSBOModelStatic, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutSSBOPointLights, null);
+        vkDestroyDescriptorSetLayout(this.ctxt.device, this.descSetLayoutImagesCompute, null);
     }
 
     public void init(VKContext ctxt) {
@@ -387,6 +424,14 @@ public class VkDescLayouts {
     
     public VkDescriptor allocDescSetSSBOModelStatic() {
         return new VkDescriptor(allocDescSet(descSetLayoutSSBOModelStatic)).tag("SSBOModelStatic");
+    }
+    
+    public VkDescriptor allocDescSetSSBOPointLights() {
+        return new VkDescriptor(allocDescSet(descSetLayoutSSBOPointLights)).tag("SSBOPointLights");
+    }
+    
+    public VkDescriptor allocDescSetImagesComputeLight() {
+        return new VkDescriptor(allocDescSet(descSetLayoutImagesCompute)).tag("ImagesComputeLight");
     }
 
     public VkDescriptor allocDescSetUBOShadow() {

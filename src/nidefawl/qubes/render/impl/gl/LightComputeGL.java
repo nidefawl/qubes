@@ -12,7 +12,6 @@ import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 
 import org.lwjgl.opengl.*;
 
@@ -23,24 +22,18 @@ import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gl.Tess;
-import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.render.LightCompute;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.Stats;
-import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.world.WorldClient;
 
 public class LightComputeGL extends LightCompute {
 
-    public final static int SIZE_OF_STRUCT_LIGHT  = 16*4;
     public final static ShaderBuffer        ssbo_lights = new ShaderBuffer("PointLightStorageBuffer").setSize(Engine.MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT);
     public Shader       shaderComputerLight;
-    private int[]       lightTiles;
-    private int         lightTilesTex;
+
     private boolean     startup        = true;
-    private int[] debugResults;
-    private int numLights;
 
     @Override
     public void preinit() {
@@ -80,10 +73,7 @@ public class LightComputeGL extends LightCompute {
     }
 
     public void resize(int displayWidth, int displayHeight) {
-        int groupsX = displayWidth / 32 + (displayWidth % 32 != 0 ? 1 : 0);
-        int groupsY = displayHeight / 32 + (displayHeight % 32 != 0 ? 1 : 0);
-//        System.out.println("tilescover "+(groupsX*32)+"/"+(groupsY*32));
-        this.lightTiles = new int[] { groupsX, groupsY };
+        super.resize(displayWidth, displayHeight);
         GL.deleteTexture(this.lightTilesTex);
         this.lightTilesTex = GL.genStorage(displayWidth, displayHeight, GL_RGBA16F, GL_LINEAR, GL12.GL_CLAMP_TO_EDGE);
         Engine.checkGLError("lightTilesTex");
@@ -92,28 +82,9 @@ public class LightComputeGL extends LightCompute {
     }
 
     public void updateLights(WorldClient world, float fTime) {
-        ArrayList<DynamicLight> lights = world.lights;
         ssbo_lights.nextFrame();
         FloatBuffer lightBuf = ssbo_lights.getFloatBuffer();
-        int a = 0;
-        int nLights = 0;
-        for (; a < lights.size() && a < Engine.MAX_LIGHTS; a++) {
-            
-            DynamicLight light = lights.get(a);
-            
-            light.updatePreRender(world, fTime);
-            int n = Engine.camFrustum.sphereInFrustum(light.renderPos, light.radius*1.02f);
-            if (n >= Frustum.FRUSTUM_INSIDE) {
-                nLights++;
-                light.store(lightBuf);
-                while (lightBuf.position()%16!=0) {
-                    lightBuf.put(0);
-                }   
-            } else {
-//                System.out.println("outside!");
-            }
-        }
-        this.numLights = nLights;
+        updateAndStoreLights(world, fTime, lightBuf);
         ssbo_lights.update();
     }
     public void render(WorldClient world, float fTime, int pass) {

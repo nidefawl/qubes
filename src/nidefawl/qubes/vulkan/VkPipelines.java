@@ -50,52 +50,54 @@ public class VkPipelines {
     public static VkPipelineLayout pipelineLayoutModelFirstPerson = new VkPipelineLayout("pipelineLayoutModelFirstPerson");
     public static VkPipelineLayout pipelineLayoutSSR = new VkPipelineLayout("pipelineLayoutSSR");
     public static VkPipelineLayout pipelineLayoutSSRCombine = new VkPipelineLayout("pipelineLayoutSSRCombine");
+    public static VkPipelineLayout pipelineLayoutComputeLight = new VkPipelineLayout("pipelineLayoutComputeLight");
 
 
-    public static VkPipeline shadowSolid = new VkPipeline(VkPipelines.pipelineLayoutShadow);
-    public static VkPipeline shadowTextured = new VkPipeline(VkPipelines.pipelineLayoutShadow);
-    public static VkPipeline shadowDebug = new VkPipeline(VkPipelines.pipelineLayoutShadow);
-    public static VkPipeline main = new VkPipeline(VkPipelines.pipelineLayoutMain);
-    public static VkPipeline textured2d = new VkPipeline(VkPipelines.pipelineLayoutTextured);
-    public static VkPipeline debugShader = new VkPipeline(VkPipelines.pipelineLayoutTextured);
-    public static VkPipeline fontRender2D = new VkPipeline(VkPipelines.pipelineLayoutTextured);
-    public static VkPipeline colored2D = new VkPipeline(VkPipelines.pipelineLayoutColored);
-    public static VkPipeline gui = new VkPipeline(VkPipelines.pipelineLayoutGUI);
-    public static VkPipeline terrain = new VkPipeline(VkPipelines.pipelineLayoutTerrain);
-    public static VkPipeline water = new VkPipeline(VkPipelines.pipelineLayoutTerrain);
-    public static VkPipeline item = new VkPipeline(VkPipelines.pipelineLayoutTextured);
-    public static VkPipeline singleblock = new VkPipeline(VkPipelines.pipelineLayoutSingleBlock);
-    public static VkPipeline singleblock_3D = new VkPipeline(VkPipelines.pipelineLayoutSingleBlock3D);
-    public static VkPipeline model_firstperson = new VkPipeline(VkPipelines.pipelineLayoutModelFirstPerson);
-    public static VkPipeline deferred_pass0 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
-    public static VkPipeline deferred_pass1 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass1);
-    public static VkPipeline deferred_pass2 = new VkPipeline(VkPipelines.pipelineLayoutDeferredPass0);
-    public static VkPipeline post_bloom = new VkPipeline(VkPipelines.pipelineLayoutBloom);
-    public static VkPipeline post_bloom_combine = new VkPipeline(VkPipelines.pipelineLayoutBloomCombine);
-    public static VkPipeline post_downsample_pass0 = new VkPipeline(VkPipelines.pipelineLayoutPostDownsample);
-    public static VkPipeline post_downsample_pass1 = new VkPipeline(VkPipelines.pipelineLayoutPostDownsample);
-    public static VkPipeline post_lum_interp = new VkPipeline(VkPipelines.pipelineLayoutPostLumInterp);
-    public static VkPipeline filter_blur_kawase = new VkPipeline(VkPipelines.pipelineLayoutBlurKawase);
-    public static VkPipeline filter_blur_seperate= new VkPipeline(VkPipelines.pipelineLayoutBlurSeperate);
-    public static VkPipeline tonemapDynamic = new VkPipeline(VkPipelines.pipelineLayoutTonemapDynamic);
-    public static VkPipeline skybox_update_background = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
-    public static VkPipeline skybox_update_background_cubemap = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
-    public static VkPipeline skybox_update_sprites = new VkPipeline(VkPipelines.pipelineLayoutSkyboxSprites);
-    public static VkPipeline skybox_sample = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
-    public static VkPipeline skybox_sample_single = new VkPipeline(VkPipelines.pipelineLayoutSkybox);
-    public static VkPipeline cube_particle = new VkPipeline(VkPipelines.pipelineLayoutParticleCube);
-    public static VkPipeline texturedFullscreen = new VkPipeline(VkPipelines.pipelineLayoutTexturedFullscreen);
-    public static VkPipeline colored3DHighlight = new VkPipeline(VkPipelines.pipelineLayoutColored3D);
-    public static VkPipeline wireframe = new VkPipeline(VkPipelines.pipelineLayoutWireframe);
-    public static VkPipeline ssr = new VkPipeline(VkPipelines.pipelineLayoutSSR);
-    public static VkPipeline ssrCombine = new VkPipeline(VkPipelines.pipelineLayoutSSRCombine);
-    public static final VkPipeline model_static[] = new VkPipeline[] { 
-            new VkPipeline(VkPipelines.pipelineLayoutModelStaticGbuffer), 
-            new VkPipeline(VkPipelines.pipelineLayoutModelStaticShadow)
+    public static VkPipelineGraphics shadowSolid = new VkPipelineGraphics(VkPipelines.pipelineLayoutShadow);
+    public static VkPipelineGraphics shadowTextured = new VkPipelineGraphics(VkPipelines.pipelineLayoutShadow);
+    public static VkPipelineGraphics shadowDebug = new VkPipelineGraphics(VkPipelines.pipelineLayoutShadow);
+    public static VkPipelineGraphics main = new VkPipelineGraphics(VkPipelines.pipelineLayoutMain);
+    public static VkPipelineGraphics textured2d = new VkPipelineGraphics(VkPipelines.pipelineLayoutTextured);
+    public static VkPipelineGraphics debugShader = new VkPipelineGraphics(VkPipelines.pipelineLayoutTextured);
+    public static VkPipelineGraphics fontRender2D = new VkPipelineGraphics(VkPipelines.pipelineLayoutTextured);
+    public static VkPipelineGraphics colored2D = new VkPipelineGraphics(VkPipelines.pipelineLayoutColored);
+    public static VkPipelineGraphics gui = new VkPipelineGraphics(VkPipelines.pipelineLayoutGUI);
+    public static VkPipelineGraphics terrain = new VkPipelineGraphics(VkPipelines.pipelineLayoutTerrain);
+    public static VkPipelineGraphics water = new VkPipelineGraphics(VkPipelines.pipelineLayoutTerrain);
+    public static VkPipelineGraphics item = new VkPipelineGraphics(VkPipelines.pipelineLayoutTextured);
+    public static VkPipelineGraphics singleblock = new VkPipelineGraphics(VkPipelines.pipelineLayoutSingleBlock);
+    public static VkPipelineGraphics singleblock_3D = new VkPipelineGraphics(VkPipelines.pipelineLayoutSingleBlock3D);
+    public static VkPipelineGraphics model_firstperson = new VkPipelineGraphics(VkPipelines.pipelineLayoutModelFirstPerson);
+    public static VkPipelineGraphics deferred_pass0 = new VkPipelineGraphics(VkPipelines.pipelineLayoutDeferredPass0);
+    public static VkPipelineGraphics deferred_pass1 = new VkPipelineGraphics(VkPipelines.pipelineLayoutDeferredPass1);
+    public static VkPipelineGraphics deferred_pass2 = new VkPipelineGraphics(VkPipelines.pipelineLayoutDeferredPass0);
+    public static VkPipelineGraphics post_bloom = new VkPipelineGraphics(VkPipelines.pipelineLayoutBloom);
+    public static VkPipelineGraphics post_bloom_combine = new VkPipelineGraphics(VkPipelines.pipelineLayoutBloomCombine);
+    public static VkPipelineGraphics post_downsample_pass0 = new VkPipelineGraphics(VkPipelines.pipelineLayoutPostDownsample);
+    public static VkPipelineGraphics post_downsample_pass1 = new VkPipelineGraphics(VkPipelines.pipelineLayoutPostDownsample);
+    public static VkPipelineGraphics post_lum_interp = new VkPipelineGraphics(VkPipelines.pipelineLayoutPostLumInterp);
+    public static VkPipelineGraphics filter_blur_kawase = new VkPipelineGraphics(VkPipelines.pipelineLayoutBlurKawase);
+    public static VkPipelineGraphics filter_blur_seperate= new VkPipelineGraphics(VkPipelines.pipelineLayoutBlurSeperate);
+    public static VkPipelineGraphics tonemapDynamic = new VkPipelineGraphics(VkPipelines.pipelineLayoutTonemapDynamic);
+    public static VkPipelineGraphics skybox_update_background = new VkPipelineGraphics(VkPipelines.pipelineLayoutSkybox);
+    public static VkPipelineGraphics skybox_update_background_cubemap = new VkPipelineGraphics(VkPipelines.pipelineLayoutSkybox);
+    public static VkPipelineGraphics skybox_update_sprites = new VkPipelineGraphics(VkPipelines.pipelineLayoutSkyboxSprites);
+    public static VkPipelineGraphics skybox_sample = new VkPipelineGraphics(VkPipelines.pipelineLayoutSkybox);
+    public static VkPipelineGraphics skybox_sample_single = new VkPipelineGraphics(VkPipelines.pipelineLayoutSkybox);
+    public static VkPipelineGraphics cube_particle = new VkPipelineGraphics(VkPipelines.pipelineLayoutParticleCube);
+    public static VkPipelineGraphics texturedFullscreen = new VkPipelineGraphics(VkPipelines.pipelineLayoutTexturedFullscreen);
+    public static VkPipelineGraphics colored3DHighlight = new VkPipelineGraphics(VkPipelines.pipelineLayoutColored3D);
+    public static VkPipelineGraphics wireframe = new VkPipelineGraphics(VkPipelines.pipelineLayoutWireframe);
+    public static VkPipelineGraphics ssr = new VkPipelineGraphics(VkPipelines.pipelineLayoutSSR);
+    public static VkPipelineGraphics ssrCombine = new VkPipelineGraphics(VkPipelines.pipelineLayoutSSRCombine);
+    public static VKPipelineCompute computeLight = new VKPipelineCompute(VkPipelines.pipelineLayoutComputeLight);
+    public static final VkPipelineGraphics model_static[] = new VkPipelineGraphics[] { 
+            new VkPipelineGraphics(VkPipelines.pipelineLayoutModelStaticGbuffer), 
+            new VkPipelineGraphics(VkPipelines.pipelineLayoutModelStaticShadow)
     };
-    public static final VkPipeline model_skinned[] = new VkPipeline[] { 
-            new VkPipeline(VkPipelines.pipelineLayoutModelBatchedGbuffer), 
-            new VkPipeline(VkPipelines.pipelineLayoutModelBatchedShadow)
+    public static final VkPipelineGraphics model_skinned[] = new VkPipelineGraphics[] { 
+            new VkPipelineGraphics(VkPipelines.pipelineLayoutModelBatchedGbuffer), 
+            new VkPipelineGraphics(VkPipelines.pipelineLayoutModelBatchedShadow)
     };
 
     
@@ -565,6 +567,13 @@ public class VkPipelines {
         }
         try ( MemoryStack stack = stackPush() ) 
         {
+            computeLight.destroyPipeLine(ctxt);
+            VkShader computeShader = ctxt.loadCompileGLSL(assetManager, "post/light.csh", VK_SHADER_STAGE_COMPUTE_BIT, null);
+            computeLight.setShader(computeShader);
+            computeLight.pipeline = buildComputePipeLine(ctxt, computeLight);
+        }
+        try ( MemoryStack stack = stackPush() ) 
+        {
             post_bloom.destroyPipeLine(ctxt);
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/thresholdfilter.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             post_bloom.setShaders(shaderScreenTriangle, frag);
@@ -649,7 +658,7 @@ public class VkPipelines {
             VkRenderPass pass = i == 0 ? VkRenderPasses.passTerrain_Pass0 : VkRenderPasses.passShadow;
             try ( MemoryStack stack = stackPush() ) 
             {
-                VkPipeline pipe_model_static = model_static[i];
+                VkPipelineGraphics pipe_model_static = model_static[i];
                 pipe_model_static.setShaders(vert, frag);
                 pipe_model_static.setRenderPass(pass, 0);
                 pipe_model_static.setVertexDesc(desc);
@@ -664,7 +673,7 @@ public class VkPipelines {
             }
             try ( MemoryStack stack = stackPush() ) 
             {
-                VkPipeline pipe_model_skinned = model_skinned[i];
+                VkPipelineGraphics pipe_model_skinned = model_skinned[i];
                 pipe_model_skinned.setShaders(vertSkinned, frag);
                 pipe_model_skinned.setRenderPass(pass, 0);
                 pipe_model_skinned.setVertexDesc(desc);
@@ -831,7 +840,11 @@ public class VkPipelines {
         }
     }
 
-    static long buildPipeLine(VKContext vkContext, VkPipeline pipe) {
+    static long buildComputePipeLine(VKContext vkContext, VKPipelineCompute pipe) {
+        long pipeline = pipe.buildPipeline(vkContext);
+        return pipeline;
+    }
+    static long buildPipeLine(VKContext vkContext, VkPipelineGraphics pipe) {
         pipe.viewport.minDepth(Engine.INVERSE_Z_BUFFER ? 1.0f : 0.0f);
         pipe.viewport.maxDepth(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f);
 //        if (!Engine.INVERSE_Z_BUFFER) {

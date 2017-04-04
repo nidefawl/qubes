@@ -55,7 +55,7 @@ public class ShadowRendererVK extends ShadowRenderer {
         PushConstantBuffer buf = PushConstantBuffer.INST;
         int mapSize = Engine.getShadowMapTextureSize()/2;
         int requiredShadowMode = Game.instance.settings.renderSettings.shadowDrawMode;
-        VkPipeline pipe = requiredShadowMode > 0 ? VkPipelines.shadowTextured : VkPipelines.shadowSolid;
+        VkPipelineGraphics pipe = requiredShadowMode > 0 ? VkPipelines.shadowTextured : VkPipelines.shadowSolid;
         Engine.beginRenderPass(VkRenderPasses.passShadow, this.frameBufferShadow, VK_SUBPASS_CONTENTS_INLINE);
 
         Engine.clearAllDescriptorSets();

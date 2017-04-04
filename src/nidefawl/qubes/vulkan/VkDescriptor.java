@@ -91,6 +91,20 @@ public class VkDescriptor {
         bindings[i].descImgInfo = textureDescriptor;
     }
 
+    public void setBindingStorageImage(int i, long textureView, int imageLayout) {
+        this.numBindings = Math.max(this.numBindings, i + 1);
+        bindings[i].dynamicOffset = null;
+        if (bindings[i].descImgInfo != null) {
+            bindings[i].descImgInfo.free();
+        }
+        bindings[i].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        VkDescriptorImageInfo.Buffer textureDescriptor = VkDescriptorImageInfo.calloc(1);
+        textureDescriptor.imageView(textureView);
+        textureDescriptor.sampler(0L);
+        textureDescriptor.imageLayout(imageLayout);
+        bindings[i].descImgInfo = textureDescriptor;
+    }
+
     public long get() {
         return this.descriptorSet;
     }

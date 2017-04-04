@@ -46,7 +46,7 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
                 break;
             }
             QModelRenderSubList n = this.subLists.get(i);
-            VkPipeline pipe;
+            VkPipelineGraphics pipe;
             VkDescriptor descriptorSetSSBO;
             if (!n.isSkinned) {
                 pipe = VkPipelines.model_static[this.renderer];
