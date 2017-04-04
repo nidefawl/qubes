@@ -2,7 +2,7 @@
 
 #pragma include "ubo_scene.glsl"
 #pragma include "unproject.glsl"
-#pragma include "debug_buffer.glsl"
+
 
 #define WORK_GROUP_SIZE 32
 #define MAX_LIGHTS_PER_TILE 1024 
@@ -33,26 +33,36 @@ struct PointLight
     float padding4;
     float padding5;
 };
-#ifdef DEBUG_LIGHT
-layout (std430) buffer DebugOutputBuffer
-{
-    float debugVals[16];
-    int tileLights[];
-} debugBuf;
-#endif
 
-layout (std140) buffer PointLightStorageBuffer
+
+layout (set = 2, binding = 0, std140) buffer PointLightStorageBuffer
 {
     PointLight pointLights[];
 };
 layout (local_size_x = WORK_GROUP_SIZE, local_size_y = WORK_GROUP_SIZE, local_size_z = 1) in;
 
 
+
+#ifdef VULKAN_GLSL
+
+// layout (set = 1, binding = 0, rgba16f) readonly uniform highp image2D geometryNormal;
+layout (set = 1, binding = 0) uniform sampler2D geometryNormal;
+layout (set = 1, binding = 1) uniform sampler2D depthBuffer;
+layout (set = 1, binding = 2, rgba16f) writeonly uniform highp image2D finalImage;
+
+layout(push_constant) uniform PushConstantsLightCompute {
+  int numActiveLights;
+} pushCLightCompute;
+#define ACTIVE_LIGHTS pushCLightCompute.numActiveLights
+#else
+
 layout (binding = 0, rgba16f) readonly uniform highp image2D geometryNormal;
 layout (binding = 1) uniform sampler2D depthBuffer;
 layout (binding = 5, rgba16f) writeonly uniform highp image2D finalImage;
 
 uniform int numActiveLights;
+#define ACTIVE_LIGHTS numActiveLights
+#endif
 
 shared uint minDepth;
 shared uint maxDepth;
@@ -105,7 +115,8 @@ void main()
 
     ivec2 pixelPos = ivec2(resolution.x-1-gl_GlobalInvocationID.x, resolution.y-1-gl_GlobalInvocationID.y);
     vec2 pass_texcoord = pixelPos / resolution;
-    vec4 nl = imageLoad(geometryNormal, pixelPos);
+    // vec4 nl = imageLoad(geometryNormal, pixelPos);
+    vec4 nl = texelFetch(geometryNormal, pixelPos, 0);
     prop.normal = nl.rgb * 2.0f - 1.0f;
     prop.depth = texelFetch(depthBuffer, pixelPos, 0).r;
     vec4 curScreenPos = screencoord(pass_texcoord.st, prop.depth);
@@ -142,7 +153,7 @@ void main()
 
 
     uint lightIndex = gl_LocalInvocationIndex;
-    if (lightIndex < numActiveLights) {
+    if (lightIndex < ACTIVE_LIGHTS) {
         PointLight p = pointLights[lightIndex];
         vec4 pos = in_matrix_3D.mv * vec4(p.position.xyz, 1);
         float rad = p.radius*(EXTEND_RADIUS);
@@ -172,7 +183,7 @@ void main()
         for(int i = 0; i < pointLightCount; ++i)
         {
             uint idx = pointLightIndex[i];
-            if (idx >= numActiveLights) {
+            if (idx >= ACTIVE_LIGHTS) {
                 continue;
             }
             PointLight p = pointLights[idx];
