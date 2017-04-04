@@ -554,6 +554,8 @@ public class Game extends GameBase {
             tess.add(windowWidth, windowHeight, 0, 1, 1);
             tess.drawQuads();
             tess.setOffset(0, 0, 0);
+            
+//            RenderersVulkan.lightCompute.renderDebug();
 
             Engine.clearDepth();
             this.statsFB.render();

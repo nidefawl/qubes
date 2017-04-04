@@ -1,10 +1,8 @@
 package nidefawl.qubes.render.impl.gl;
 
-import static org.lwjgl.opengl.GL11.GL_LINEAR;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-import static org.lwjgl.opengl.GL15.GL_READ_ONLY;
-import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.GL_RGBA16F;
 import static org.lwjgl.opengl.GL42.glBindImageTexture;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
@@ -23,6 +21,7 @@ import nidefawl.qubes.gl.GL;
 import nidefawl.qubes.gl.GLDebugTextures;
 import nidefawl.qubes.gl.Tess;
 import nidefawl.qubes.render.LightCompute;
+import nidefawl.qubes.render.impl.vk.LightComputeVK;
 import nidefawl.qubes.shader.*;
 import nidefawl.qubes.texture.TMgr;
 import nidefawl.qubes.util.Stats;
@@ -31,7 +30,9 @@ import nidefawl.qubes.world.WorldClient;
 public class LightComputeGL extends LightCompute {
 
     public final static ShaderBuffer        ssbo_lights = new ShaderBuffer("PointLightStorageBuffer").setSize(Engine.MAX_LIGHTS * SIZE_OF_STRUCT_LIGHT);
-    public Shader       shaderComputerLight;
+    protected static final boolean DEBUG_LIGHTS = false;
+    
+    public Shader[]       shadersComputerLight;
 
     private boolean     startup        = true;
 
@@ -43,12 +44,31 @@ public class LightComputeGL extends LightCompute {
         try {
             pushCurrentShaders();
             AssetManager assetMgr = AssetManager.getInstance();
-            Shader new_shaderCSLight = assetMgr.loadShader(this, "post/light");
+            Shader[] new_shadersCSLight = new Shader[3];
+            for (int i = 0; i < 3; i++) {
+                final int pass = i;
+                new_shadersCSLight[i] = assetMgr.loadShader(this, "post/light", new IShaderDef() {
+                    
+                    @Override
+                    public String getDefinition(String define) {
+                        if ("RENDER_PASS".equals(define)) {
+                            return "#define RENDER_PASS "+pass;
+                        }
+                        if ("DEBUG_LIGHT".equals(define) && DEBUG_LIGHTS) {
+                            return "#define DEBUG_LIGHT";
+                        }
+                        return null;
+                    }
+                });
+            }
             popNewShaders();
-            this.shaderComputerLight = new_shaderCSLight;
+            this.shadersComputerLight = new_shadersCSLight;
             //
-            this.shaderComputerLight.enable();
-            this.shaderComputerLight.setProgramUniform1i("depthBuffer", 1);
+            for (int i = 0; i < 3; i++) {
+                this.shadersComputerLight[i].enable();
+                this.shadersComputerLight[i].setProgramUniform1i("geometryNormal", 0);
+                this.shadersComputerLight[i].setProgramUniform1i("depthBuffer", 1);
+            }
             Shader.disable();
             startup = false;
         } catch (ShaderCompileError e) {
@@ -90,12 +110,13 @@ public class LightComputeGL extends LightCompute {
     public void render(WorldClient world, float fTime, int pass) {
 
         if (this.numLights > 0) {
-            shaderComputerLight.enable();
-            glBindImageTexture(0, Engine.getSceneFB().getTexture(1), 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
+            shadersComputerLight[pass].enable();
+            shadersComputerLight[pass].setProgramUniform1i("numActiveLights", this.numLights);
+//            glBindImageTexture(0, Engine.getSceneFB().getTexture(1), 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
 
             glBindImageTexture(5, this.lightTilesTex, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+            GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(1));
             GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, Engine.getSceneFB().getDepthTex());
-            shaderComputerLight.setProgramUniform1i("numActiveLights", this.numLights);
             GL43.glDispatchCompute(this.lightTiles[0], this.lightTiles[1], 1);
             
             GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -121,6 +142,9 @@ public class LightComputeGL extends LightCompute {
     }
 
     public void renderDebug() {
+        if (!DEBUG_LIGHTS) {
+            return;
+        }
         try {
             Engine.debugOutput.bind();
             ByteBuffer buf = Engine.debugOutput.map(false);

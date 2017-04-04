@@ -70,6 +70,13 @@ public class VkSSBO implements IBufferDynamicOffset {
         System.out.println(this.tag+ " Uploaded " + this.bufferSize + " bytes at pos " + this.bufferPos + ", next " + this.bufferOffset);
     }
 
+    public void downloadData(ByteBuffer buf, int offset, int size) {
+        this.buffer.download(buf, offset, size);
+    }
+    public void setPosFromOffset() {
+        this.bufferPos = this.bufferOffset;
+    }
+
     public boolean isConstant() {
         return this.dynSize == size;
     }

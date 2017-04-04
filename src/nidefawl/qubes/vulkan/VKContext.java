@@ -369,8 +369,10 @@ public class VKContext {
         }
         this.currentCmdBuffer = this.renderCommandBuffers[currentBuffer];
         VkTess.beginFrame();
+        this.currentCmdBuffer.completeTasks();
         vkResetCommandBuffer(this.currentCmdBuffer, 0);
         updateOrphanedList();
+        
     }
     public void postRender() {
         if (begin) {

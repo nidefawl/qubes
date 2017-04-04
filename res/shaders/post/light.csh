@@ -2,6 +2,17 @@
 
 #pragma include "ubo_scene.glsl"
 #pragma include "unproject.glsl"
+#pragma define "RENDER_PASS"
+#pragma define "DEBUG_LIGHT"
+
+
+#ifdef DEBUG_LIGHT
+layout (set = 3, binding = 0, std430) buffer DebugOutputBuffer
+{
+    float debugVals[16];
+    int tileLights[];
+} debugBuf;
+#endif
 
 
 #define WORK_GROUP_SIZE 32
@@ -56,7 +67,7 @@ layout(push_constant) uniform PushConstantsLightCompute {
 #define ACTIVE_LIGHTS pushCLightCompute.numActiveLights
 #else
 
-layout (binding = 0, rgba16f) readonly uniform highp image2D geometryNormal;
+layout (binding = 0) uniform sampler2D geometryNormal;
 layout (binding = 1) uniform sampler2D depthBuffer;
 layout (binding = 5, rgba16f) writeonly uniform highp image2D finalImage;
 
@@ -138,15 +149,8 @@ void main()
     }
     barrier();
 
-        float minDepthZ = uintBitsToFloat(minDepth);
-        float maxDepthZ = uintBitsToFloat(maxDepth);
-    #ifdef DEBUG_LIGHT
-        if (IS_DEBUG_FRAG(vec2(pass_texcoord.x, 1.0-pass_texcoord.y))) {
-            debugBuf.debugVals[0] = minDepthZ;
-            debugBuf.debugVals[1] = maxDepthZ;
-
-        }
-    #endif
+    float minDepthZ = uintBitsToFloat(minDepth);
+    float maxDepthZ = uintBitsToFloat(maxDepth);
 
     vec4 frustumPlanes[6];
     buildFrustum(frustumPlanes, vec2(gl_WorkGroupID.xy), minDepthZ, maxDepthZ);
@@ -220,11 +224,13 @@ void main()
             }
         }
     }
+    #if RENDER_PASS == 0
     #ifdef DEBUG_LIGHT
 #define LT_IDX gl_WorkGroupID.y*gl_NumWorkGroups.x+(gl_NumWorkGroups.x-1-gl_WorkGroupID.x)
     if (gl_LocalInvocationID.x==0&&gl_LocalInvocationID.y==0) {
         atomicExchange(debugBuf.tileLights[LT_IDX], int(pointLightCount));
     }
+    #endif
     #endif
     barrier();
 

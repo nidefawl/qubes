@@ -47,6 +47,6 @@ public class BlockWater extends Block {
         return 2;
     }
     public float getRoughness(int texture) {
-        return 0.5f;
+        return 0.02f;
     }
 }

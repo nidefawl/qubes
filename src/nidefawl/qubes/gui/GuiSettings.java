@@ -126,7 +126,8 @@ public class GuiSettings extends Gui {
         list.add((this.normalMappingSetting = new Setting(this, "Normal Mapping", strAOSettings[renderSettings.normalMapping & 1], strAOSettings) {
             void callback(int id) {
                 renderSettings.normalMapping = id;
-                Engine.worldRenderer.initShaders();
+                Game.instance.saveSettings();
+                Engine.worldRenderer.onNormalMapSettingChanged();
             }
         }));
         final String[] smaa = new String[] { "Disabled", "SMAA 1x", "SMAA T2x" };

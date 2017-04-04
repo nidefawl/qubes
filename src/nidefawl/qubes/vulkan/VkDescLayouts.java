@@ -8,6 +8,8 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.render.impl.vk.LightComputeVK;
+
 public class VkDescLayouts {
 
     public static final int DESC0 = 0;
@@ -351,8 +353,15 @@ public class VkDescLayouts {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSSR, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutSSRCombine.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageDouble, descSetLayoutSamplerImageSingle});
-            VkPipelines.pipelineLayoutComputeLight.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutImagesCompute, descSetLayoutSSBOPointLights}, push_constant_ranges_compute_light);
+            if (LightComputeVK.DEBUG_LIGHTS) {
+                VkPipelines.pipelineLayoutComputeLight.build(ctxt, new long[] {
+                        descSetLayoutUBOScene, descSetLayoutImagesCompute, descSetLayoutSSBOPointLights, descSetLayoutSSBOPointLights}, push_constant_ranges_compute_light);
+            } else {
+                VkPipelines.pipelineLayoutComputeLight.build(ctxt, new long[] {
+                        descSetLayoutUBOScene, descSetLayoutImagesCompute, descSetLayoutSSBOPointLights}, push_constant_ranges_compute_light);
+
+            }
+            
         }
 
 

@@ -6,6 +6,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.Game;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetManagerClient;
 import nidefawl.qubes.gl.Engine;
@@ -13,6 +14,7 @@ import nidefawl.qubes.gl.GLVAO;
 import nidefawl.qubes.models.render.ModelConstants;
 import nidefawl.qubes.render.SkyRenderer;
 import nidefawl.qubes.render.gui.SingleBlockRenderAtlas;
+import nidefawl.qubes.render.impl.vk.LightComputeVK;
 import nidefawl.qubes.shader.IShaderDef;
 
 public class VkPipelines {
@@ -217,7 +219,18 @@ public class VkPipelines {
             terrain.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoBlocks.getVkVertexDesc();
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "terrain/terrain.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-            VkShader frag = ctxt.loadCompileGLSL(assetManager, "terrain/terrain.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "terrain/terrain.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("NORMAL_MAPPING".equals(define)) {
+                        if (Engine.RENDER_SETTINGS.normalMapping > 0 && !Game.VR_SUPPORT) {
+                            return "#define NORMAL_MAPPING";
+                        }
+                    }
+                    return null;
+                }
+            });
             terrain.setShaders(vert, frag);
             terrain.setRenderPass(VkRenderPasses.passTerrain_Pass0, 0);
             terrain.setVertexDesc(desc);
@@ -568,7 +581,19 @@ public class VkPipelines {
         try ( MemoryStack stack = stackPush() ) 
         {
             computeLight.destroyPipeLine(ctxt);
-            VkShader computeShader = ctxt.loadCompileGLSL(assetManager, "post/light.csh", VK_SHADER_STAGE_COMPUTE_BIT, null);
+            VkShader computeShader = ctxt.loadCompileGLSL(assetManager, "post/light.csh", VK_SHADER_STAGE_COMPUTE_BIT, new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("RENDER_PASS".equals(define)) {
+                        return "#define RENDER_PASS "+0;
+                    }
+                    if ("DEBUG_LIGHT".equals(define) && LightComputeVK.DEBUG_LIGHTS) {
+                        return "#define DEBUG_LIGHT";
+                    }
+                    return null;
+                }
+            });
             computeLight.setShader(computeShader);
             computeLight.pipeline = buildComputePipeLine(ctxt, computeLight);
         }

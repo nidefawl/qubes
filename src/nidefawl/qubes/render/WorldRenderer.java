@@ -117,4 +117,8 @@ public abstract class WorldRenderer extends AbstractRenderer {
 
         modelRender.upload(fTime);
     }
+
+
+    public void onNormalMapSettingChanged() {
+    }
 }

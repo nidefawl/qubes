@@ -12,7 +12,7 @@ public class BlockStone extends Block {
     
     @Override
     public float getRoughness(int texture) {
-        return 0.08f;
+        return 0.5f;
     }
 
 }

@@ -160,7 +160,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
             copyDepthBuffers();
 
-            
+            RenderersVulkan.lightCompute.render(world, fTime, 0);
             
             
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater, VK_SUBPASS_CONTENTS_INLINE);
@@ -391,6 +391,10 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
         
         
         
+    }
+    @Override
+    public void onNormalMapSettingChanged() {
+        Engine.vkContext.reinitSwapchain=true;
     }
 
 }

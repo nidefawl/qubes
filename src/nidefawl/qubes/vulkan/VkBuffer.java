@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.util.UnsafeHelper;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
@@ -91,6 +92,14 @@ public class VkBuffer implements IVkResource {
     }
     public void upload(ByteBuffer byteBuffer, int offset) {
         _upload(memAddress(byteBuffer), byteBuffer.remaining(), offset);
+    }
+    public void download(ByteBuffer byteBuffer, int offset, int size) {
+        if (isDeviceLocal) {
+            throw new GameLogicError("Cannot download from device local memory");
+        }
+        mapRange(offset, size);
+        memCopy(ptr, memAddress(byteBuffer), size);
+        unmap();
     }
 
     public void mapRange(long offset, long size) {
@@ -182,4 +191,5 @@ public class VkBuffer implements IVkResource {
     public String tag() {
         return this.tag;
     }
+
 }

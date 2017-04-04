@@ -521,4 +521,9 @@ public class WorldRendererGL extends WorldRenderer {
     @Override
     public void onResourceReload() {
     }
+    
+    @Override
+    public void onNormalMapSettingChanged() {
+        initShaders();
+    }
 }
