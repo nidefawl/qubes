@@ -141,6 +141,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
         this.vkSSBOLights.markPos();
         this.bufferFloat.clear();
         updateAndStoreLights(world, f, this.bufferFloat);
+        this.bufferFloat.flip();
         this.bufferByte.position(0).limit(this.bufferFloat.remaining()*4);
         this.vkSSBOLights.uploadData(this.bufferByte);
         this.vkSSBOLights.seekPos(SSBO_FRAME_SIZE_LIGHT);
