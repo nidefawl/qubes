@@ -235,6 +235,8 @@ public class VkDescLayouts {
             VkPushConstantRange.Buffer push_constant_ranges_colored_3d = VkPushConstantRange.calloc(1);
             VkPushConstantRange.Buffer push_constant_ranges_wireframe = VkPushConstantRange.calloc(2);
             VkPushConstantRange.Buffer push_constant_ranges_compute_light = VkPushConstantRange.calloc(1);
+            VkPushConstantRange.Buffer push_constant_ranges_deferred = VkPushConstantRange.calloc(1);
+            VkPushConstantRange.Buffer push_constant_ranges_smaa_jitter_offset = VkPushConstantRange.calloc(1);
 
             push_constant_ranges_gui.get(0)
                 .stageFlags(VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -290,11 +292,21 @@ public class VkDescLayouts {
                 .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .offset(84)
                 .size(8);
-            
+
             push_constant_ranges_compute_light.get(0)
                 .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
                 .offset(0)
                 .size(4);
+            
+            push_constant_ranges_deferred.get(0)
+                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                .offset(0)
+                .size(4*4*4);
+            
+            push_constant_ranges_smaa_jitter_offset.get(0)
+                .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT)
+                .offset(0)
+                .size(4*4);
             
             VkPipelines.pipelineLayoutTexturedFullscreen.build(ctxt, 
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSingle);
@@ -325,9 +337,9 @@ public class VkDescLayouts {
             VkPipelines.pipelineLayoutBloom.build(ctxt, new long[] {descSetLayoutSamplerImageTriple});
             VkPipelines.pipelineLayoutBloomCombine.build(ctxt, new long[] {descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutDeferredPass0.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutSamplerImageDeferredPass0, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDeferredPass0, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo}, push_constant_ranges_deferred);
             VkPipelines.pipelineLayoutDeferredPass1.build(ctxt, new long[] {
-                    descSetLayoutUBOScene, descSetLayoutSamplerImageDeferredPass1, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo});
+                    descSetLayoutUBOScene, descSetLayoutSamplerImageDeferredPass1, descSetLayoutUBOShadow, descSetLayoutUBOLightInfo}, push_constant_ranges_deferred);
             VkPipelines.pipelineLayoutTonemapDynamic.build(ctxt, new long[] {
                     descSetLayoutUBOScene, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle});
             VkPipelines.pipelineLayoutSkybox.build(ctxt, new long[] {
@@ -361,9 +373,10 @@ public class VkDescLayouts {
                         descSetLayoutUBOScene, descSetLayoutImagesCompute, descSetLayoutSSBOPointLights}, push_constant_ranges_compute_light);
 
             }
-            VkSMAA.pipelineLayoutEdgeDetect.build(ctxt, descSetLayoutSamplerImageSingle);
-            VkSMAA.pipelineLayoutBlendWeight.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageTriple);
-            VkSMAA.pipelineLayoutNeighborBlend.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle);
+            VkSMAA.pipelineLayoutEdgeDetect.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle);
+            VkSMAA.pipelineLayoutBlendWeight.build(ctxt, new long[] {descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageTriple}, push_constant_ranges_smaa_jitter_offset);
+            VkSMAA.pipelineLayoutNeighborBlend.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle);
+            VkSMAA.pipelineLayoutTemporalResolve.build(ctxt, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle, descSetLayoutSamplerImageSingle);
             
         }
 

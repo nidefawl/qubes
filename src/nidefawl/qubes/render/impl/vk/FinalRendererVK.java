@@ -25,6 +25,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public FrameBuffer frameBufferSceneWater;
     public FrameBuffer frameBufferSceneFirstPerson;
     public FrameBuffer frameBufferDeferred;
+    public FrameBuffer frameBufferDeferredColorOnly;
     public FrameBuffer frameBufferDeferredPass01;
     public FrameBuffer frameBufferBloom;
     public FrameBuffer frameBufferTonemapped;
@@ -52,14 +53,19 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public VkDescriptor[] descLumInterpOutputsVertexInput = new VkDescriptor[2];
     public VkDescriptor[] descLumInterpOutputsCalcd = new VkDescriptor[2];
     
+    public VkDescriptor descTextureVelocityBuffer;
+    public VkDescriptor descTextureMaterialBuffer;
+    
     public VkDescriptor descTextureFinalOut;
     
     public long samplerClamp;
-    
+    private long samplerNearest;
+
     public int frame;
     private int[] ssrSize;
-    private long samplerNearest;
-    
+    private VkDescriptor smaaOutput;
+
+
     @Override
     public void init() {
         VKContext ctxt = Engine.vkContext;
@@ -76,22 +82,19 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.frameBufferSceneFirstPerson.fromRenderpass(VkRenderPasses.passTerrain_Pass2, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 //        this.frameBufferSceneFirstPerson.copyAtt(this.frameBufferScene, 1);
         
-        this.frameBufferDeferred = new FrameBuffer(ctxt).tag("deferred");
-        this.frameBufferDeferred.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
-        this.frameBufferDeferredPass01 = new FrameBuffer(ctxt).tag("deferredPass01");
-        this.frameBufferDeferredPass01.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        makeDeferredFB(ctxt);
         this.frameBufferSSR = new FrameBuffer(ctxt).tag("ssr");
-        this.frameBufferSSR.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferSSR.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.frameBufferTonemapped = new FrameBuffer(ctxt).tag("tonemap");
         this.frameBufferTonemapped.fromRenderpass(VkRenderPasses.passTonemap, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 
         this.frameBufferBloom = new FrameBuffer(ctxt).tag("bloom");
-        this.frameBufferBloom.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferBloom.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
 
         this.fbLuminanceInterp = new FrameBuffer[2];
         for (int i = 0; i < 2; i++) {
             this.fbLuminanceInterp[i] = new FrameBuffer(ctxt).tag("fbLuminanceInterp");
-            this.fbLuminanceInterp[i].fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+            this.fbLuminanceInterp[i].fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         }
 
         for (int i = 0; i < descTextureDownsampleOutputs.length; i++) {
@@ -115,6 +118,8 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.descTextureSSRInput = ctxt.descLayouts.allocDescSetSampleSSR();
         this.descTextureSSROutput = ctxt.descLayouts.allocDescSetSampleSingle();
         this.descTextureSSRCombineInput = ctxt.descLayouts.allocDescSetSamplerDouble();
+        this.descTextureVelocityBuffer = ctxt.descLayouts.allocDescSetSampleSingle();
+        this.descTextureMaterialBuffer = ctxt.descLayouts.allocDescSetSampleSingle();
 
         try ( MemoryStack stack = stackPush() ) {
             VkSamplerCreateInfo sampler = VkInitializers.samplerCreateStack();
@@ -138,31 +143,28 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         }
     }
 
-    @Override
-    public void onAASettingChanged() {
-    }
+    private void makeDeferredFB(VKContext ctxt) {
+        this.frameBufferDeferredPass01 = new FrameBuffer(ctxt).tag("deferredPass01");
+        this.frameBufferDeferredPass01.fromRenderpass(VkRenderPasses.passPostDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-    @Override
-    public void setSSR(int id) {
-    }
+        this.frameBufferDeferred = new FrameBuffer(ctxt).tag("deferred");
+        this.frameBufferDeferred.fromRenderpass(VkRenderPasses.passPostDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        for (int i = 1; i < VkRenderPasses.passPostDeferred.nAttachments; i++) {
+            this.frameBufferDeferred.copyAtt(this.frameBufferDeferredPass01, i);
+        }
+        
+        this.frameBufferDeferredColorOnly = new FrameBuffer(ctxt).tag("deferred");
+        this.frameBufferDeferredColorOnly.copyAtt(this.frameBufferDeferred, 0);
 
-    @Override
-    public void onAOSettingUpdated() {
-    }
-
-    @Override
-    public void aoReinit() {
-    }
-
-    @Override
-    public void onVRModeChanged() {
     }
 
     @Override
     public void resize(int displayWidth, int displayHeight) {
+        this.smaaOutput = null;
         this.ssrSize = GameMath.downsample(displayWidth, displayHeight, Engine.RENDER_SETTINGS.ssr>2?1:2);
-        VKContext ctxt = Engine.vkContext;
         releaseFramebuffers();
+        VKContext ctxt = Engine.vkContext;
+        makeDeferredFB(ctxt);
         long shadowSampler = samplerNearest;//RenderersVulkan.shadowRenderer.getSampler();
         int[] lumSize = GameMath.downsample(displayWidth, displayHeight, 2);
 
@@ -172,8 +174,8 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         while (true) {
             int idx = list.size();
             FrameBuffer fbLuminance2 = new FrameBuffer(ctxt).tag("fbLuminanceDownsample_"+idx);
-            fbLuminance2.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
-            fbLuminance2.build(VkRenderPasses.passDeferred, lumW, lumH);
+            fbLuminance2.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+            fbLuminance2.build(VkRenderPasses.passPostRGBA16F, lumW, lumH);
             FramebufferAttachment coloratt = fbLuminance2.getAtt(0);
             this.descTextureDownsampleOutputs[idx].setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
             this.descTextureDownsampleOutputs[idx].update(ctxt);
@@ -193,7 +195,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         }
         this.fbLuminanceDownsample = list.toArray(new FrameBuffer[list.size()]);
         for (int i = 0; i < fbLuminanceInterp.length; i++) {
-            this.fbLuminanceInterp[i].build(VkRenderPasses.passDeferred, 1, 1);
+            this.fbLuminanceInterp[i].build(VkRenderPasses.passPostRGBA16F, 1, 1);
             FramebufferAttachment coloratt = this.fbLuminanceInterp[i].getAtt(0);
             this.descLumInterpOutputsVertexInput[i].setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
             this.descLumInterpOutputsVertexInput[i].update(ctxt);
@@ -206,11 +208,24 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         this.frameBufferScene.build(VkRenderPasses.passTerrain_Pass0, displayWidth, displayHeight);
         this.frameBufferSceneWater.build(VkRenderPasses.passTerrain_Pass1, displayWidth, displayHeight);
         this.frameBufferSceneFirstPerson.build(VkRenderPasses.passTerrain_Pass2, displayWidth, displayHeight);
-        this.frameBufferDeferred.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
-        this.frameBufferDeferredPass01.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
-        this.frameBufferSSR.build(VkRenderPasses.passDeferred, ssrSize[0], ssrSize[1]);
+        this.frameBufferDeferredPass01.build(VkRenderPasses.passPostDeferred, displayWidth, displayHeight);
+        this.frameBufferDeferred.build(VkRenderPasses.passPostDeferred, displayWidth, displayHeight);
+        this.frameBufferDeferredColorOnly.build(VkRenderPasses.passPostRGBA16F, displayWidth, displayHeight);
+        this.frameBufferSSR.build(VkRenderPasses.passPostRGBA16F, ssrSize[0], ssrSize[1]);
         this.frameBufferTonemapped.build(VkRenderPasses.passTonemap, displayWidth, displayHeight);
-        this.frameBufferBloom.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
+        this.frameBufferBloom.build(VkRenderPasses.passPostRGBA16F, displayWidth, displayHeight);
+        int idx = 1;
+        if (Engine.getRenderMaterialBuffer()) {
+            FramebufferAttachment att = this.frameBufferDeferred.getAtt(idx);
+            this.descTextureMaterialBuffer.setBindingCombinedImageSampler(0, att.getView(), samplerNearest, att.finalLayout);
+            this.descTextureMaterialBuffer.update(ctxt);
+            idx++;
+        }
+        if (Engine.getRenderVelocityBuffer()) {
+            FramebufferAttachment att = this.frameBufferDeferred.getAtt(idx);
+            this.descTextureVelocityBuffer.setBindingCombinedImageSampler(0, att.getView(), samplerNearest, att.finalLayout);
+            this.descTextureVelocityBuffer.update(ctxt);
+        }
         FramebufferAttachment coloratt;
         
         for (int i = 0; i < 5; i++)
@@ -324,6 +339,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (this.frameBufferDeferred != null) {
             this.frameBufferDeferred.destroy();
         }
+        if (this.frameBufferDeferredColorOnly != null) {
+            this.frameBufferDeferredColorOnly.destroy();
+        }
         if (this.frameBufferDeferredPass01 != null) {
             this.frameBufferDeferredPass01.destroy();
         }
@@ -362,13 +380,13 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public void renderBloom() {
         FrameBuffer fb = this.frameBufferBloom;
         Engine.clearAllDescriptorSets();
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fb, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureBloomInput);
             Engine.bindPipeline(VkPipelines.post_bloom);
             Engine.drawFSTri();
         Engine.endRenderPass();
         VkDescriptor blurredBloom = RenderersVulkan.blurRenderer.renderBlur1PassDownsample(this.descTextureBloomOut);
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fb, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureDeferredOut);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, blurredBloom);
             Engine.bindPipeline(VkPipelines.post_bloom_combine);
@@ -383,7 +401,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
         float twoPixelX = 2.0f/(float)frameBufferDeferred.getWidth();
         float twoPixelY = 2.0f/(float)frameBufferDeferred.getHeight();
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, top, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, top, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setViewport(0, 0, top.getWidth(), top.getHeight()); // 4x downsampled render resolutino
     //        System.out.println("0, 0, "+top.getWidth()+", "+top.getHeight());
             Engine.setDescriptorSet(VkDescLayouts.DESC0, inputBuffer);
@@ -408,7 +426,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             twoPixelX = 2.0f / (float) this.fbLuminanceDownsample[i].getWidth();
             twoPixelY = 2.0f / (float) this.fbLuminanceDownsample[i].getHeight();
             lastBound = this.fbLuminanceDownsample[i+1];
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, lastBound, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, lastBound, VK_SUBPASS_CONTENTS_INLINE);
 //          System.out.println("0, 0, "+lastBound.getWidth()+", "+lastBound.getHeight());
                 Engine.setViewport(0, 0, lastBound.getWidth(), lastBound.getHeight()); // 16x downsampled render resolutino
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureDownsampleOutputs[i]);
@@ -431,7 +449,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         vkCmdPipelineBarrier(Engine.getDrawCmdBuffer(),
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 
                 VK_DEPENDENCY_BY_REGION_BIT, VKContext.BARRIER_MEM_ATT_WRITE_SHADER_READ, null, null);
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, fblumInterp, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fblumInterp, VK_SUBPASS_CONTENTS_INLINE);
             Engine.setViewport(0, 0, 1, 1); 
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descLumInterpOutputsVertexInput[indexIn]);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDownsampleEnd);
@@ -447,7 +465,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     private void renderSSR() {
         Engine.clearAllDescriptorSets();
         Engine.setViewport(0, 0, this.ssrSize[0], this.ssrSize[1]);
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferSSR, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferSSR, VK_SUBPASS_CONTENTS_INLINE);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
         Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
@@ -461,7 +479,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
         VkDescriptor blurred = RenderersVulkan.blurRenderer.renderBlurSeperate(descTextureSSROutput, 8);
         
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, this.frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferDeferredColorOnly, VK_SUBPASS_CONTENTS_INLINE);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
         Engine.setDescriptorSet(VkDescLayouts.DESC2, blurred);
@@ -475,20 +493,32 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     }
     public void renderDeferred(float fTime) {
         boolean ssr = Engine.RENDER_SETTINGS.ssr>0;
+        boolean aa_reprojection = Engine.getRenderVelocityBuffer() ;
         FrameBuffer fb = ssr ? frameBufferDeferredPass01 : frameBufferDeferred;
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
             
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passPostDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred0);
             Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
             Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboLights);
             Engine.bindPipeline(VkPipelines.deferred_pass0);
+            if (aa_reprojection) {
+                PushConstantBuffer buf = PushConstantBuffer.INST;
+                buf.setMat4(0, Engine.getMatReproject());
+//                System.out.println(Engine.getMatReproject());
+                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.deferred_pass0.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*4*4));
+            }
             Engine.drawFSTri();            
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput1);
             Engine.bindPipeline(VkPipelines.deferred_pass1);
+            if (aa_reprojection) {
+                PushConstantBuffer buf = PushConstantBuffer.INST;
+                buf.setMat4(0, Engine.getMatReproject());
+                vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.deferred_pass0.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*4*4));
+            }
             Engine.drawFSTri();  
             Engine.endRenderPass();
             if (ssr){
@@ -499,12 +529,17 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDefaultViewport();
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
-                Engine.beginRenderPass(VkRenderPasses.passDeferredNoClear, frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.beginRenderPass(VkRenderPasses.passPostDeferredNoClear, frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput2);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
                 Engine.setDescriptorSet(VkDescLayouts.DESC3, Engine.descriptorSetUboLights);
                 Engine.bindPipeline(VkPipelines.deferred_pass2);
+                if (aa_reprojection) {
+                    PushConstantBuffer buf = PushConstantBuffer.INST;
+                    buf.setMat4(0, Engine.getMatReproject());
+                    vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.deferred_pass0.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*4*4));
+                }
                 Engine.drawFSTri();
                 Engine.endRenderPass();
                 Engine.clearAllDescriptorSets();
@@ -542,18 +577,40 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public void onSSRSettingChanged() {
         Engine.vkContext.reinitSwapchain=true;
     }
+    @Override
+    public void onAASettingChanged() {
+        Engine.vkContext.reinitSwapchain=true;
+    }
+
+
+    @Override
+    public void setSSR(int id) {
+    }
+
+    @Override
+    public void onAOSettingUpdated() {
+    }
+
+    @Override
+    public void aoReinit() {
+    }
+
+    @Override
+    public void onVRModeChanged() {
+    }
 
     public VkDescriptor getOutputDesc() {
         if (Engine.vkSMAAContext != null) {
-            return Engine.vkSMAAContext.descOutput;
+            return this.smaaOutput;
         }
         return this.descTextureFinalOut;
     }
 
     public void renderAA(WorldClient world, float fTime) {
-        
+
+        this.smaaOutput = null;
         if (Engine.vkSMAAContext != null) {
-            Engine.vkSMAAContext.render(this.descTextureFinalOut);
+            this.smaaOutput = Engine.vkSMAAContext.render(this.descTextureFinalOut, this.descTextureMaterialBuffer, this.descTextureVelocityBuffer);
         }
     }
 

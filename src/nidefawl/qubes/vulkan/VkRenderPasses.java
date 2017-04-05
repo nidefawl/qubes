@@ -14,8 +14,7 @@ public class VkRenderPasses {
     public static VkRenderPass passSkyGenerate = new VkRenderPassSkyUpdate();
     public static VkRenderPass passSkyGenerateCubemap = new VkRenderPassSkyUpdateCubemap();
     public static VkRenderPass passSkySample = new VkRenderPassSkySample();
-    public static VkRenderPass passDeferred = new VkRenderPassDeferred(true);
-    public static VkRenderPass passDeferredNoClear = new VkRenderPassDeferred(false);
+    public static VkRenderPass passPostRGBA16F = new VkRenderPassPost(true);
     public static VkRenderPass passFramebuffer = new VkRenderPassFrameBuffer(true, true);
     public static VkRenderPass passFramebufferNoClear = new VkRenderPassFrameBuffer(false, true);
     public static VkRenderPass passFramebufferNoDepth = new VkRenderPassFrameBuffer(true, false);
@@ -23,6 +22,8 @@ public class VkRenderPasses {
     public static VkRenderPass passPostTonemapOverlays = new VkRenderPassTonemap(true);
     public static VkRenderPass passAAEdge = new VkRenderPassAA(false);
     public static VkRenderPass passAAWeight = new VkRenderPassAA(true);
+    public static VkRenderPassDeferred passPostDeferred = new VkRenderPassDeferred(true);
+    public static VkRenderPassDeferred passPostDeferredNoClear = new VkRenderPassDeferred(false);
 
     public static void init(VKContext ctxt) {
         isInit = true;

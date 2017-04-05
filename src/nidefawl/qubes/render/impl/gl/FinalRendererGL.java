@@ -296,7 +296,7 @@ public class FinalRendererGL extends FinalRenderer {
             this.smaa.render(inputTexture, 
                     Engine.getRenderMaterialBuffer()&&isWorld?fbDeferred.getTexture(getAttPointMaterial()):TMgr.getEmpty(), 
                     Engine.getRenderVelocityBuffer()&&isWorld?fbDeferred.getTexture(getAttPointVelocity()):TMgr.getEmpty(), 
-                            3, output);
+                            0, output);
             if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         } else {
             if (output != null) output.bindAndClear();

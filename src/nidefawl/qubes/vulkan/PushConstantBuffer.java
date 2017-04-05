@@ -33,6 +33,12 @@ public class PushConstantBuffer {
         this.floatBuffer.position(pos>>2);
         vec.store(this.floatBuffer);
     }
+    public void setVec4(int pos, float x, float y, float z, float w) {
+        this.floatBuffer.put(pos++, x);
+        this.floatBuffer.put(pos++, y);
+        this.floatBuffer.put(pos++, z);
+        this.floatBuffer.put(pos++, w);
+    }
     public ByteBuffer getBuf(int len) {
         this.buffer.position(0).limit(len);
         return this.buffer;

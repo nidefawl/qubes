@@ -23,6 +23,7 @@ import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.shader.ShaderSource.ProcessMode;

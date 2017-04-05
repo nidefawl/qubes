@@ -544,21 +544,24 @@ public class Game extends GameBase {
             Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
             ITess tess = Engine.getTess();
-            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.getOutputDesc());
-//            Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
-//            Engine.setPipeStateTextured2D(false);
-            Engine.setPipeStateTextured2D(false);
-            tess.setColor(-1, 255);
-            tess.add(windowWidth, 0, 0, 1, 0);
-            tess.add(0, 0, 0, 0, 0);
-            tess.add(0, windowHeight, 0, 0, 1);
-            tess.add(windowWidth, windowHeight, 0, 1, 1);
-            tess.drawQuads();
-            tess.setOffset(0, 0, 0);
+            if (this.world != null) {
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.getOutputDesc());
+//                System.out.println(RenderersVulkan.outRenderer.getOutputDesc());
+//              Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
+//              Engine.setPipeStateTextured2D(false);
+              Engine.setPipeStateTextured2D(false);
+              tess.setColor(-1, 255);
+              tess.add(windowWidth, 0, 0, 1, 0);
+              tess.add(0, 0, 0, 0, 0);
+              tess.add(0, windowHeight, 0, 0, 1);
+              tess.add(windowWidth, windowHeight, 0, 1, 1);
+              tess.drawQuads();
+              tess.setOffset(0, 0, 0);
+              Engine.clearDepth();
+            }
 
 //            RenderersVulkan.lightCompute.renderDebug();
 
-            Engine.clearDepth();
             this.statsFB.render();
             Engine.clearDepth();
 

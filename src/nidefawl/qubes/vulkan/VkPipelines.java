@@ -145,11 +145,10 @@ public class VkPipelines {
                 return null;
             }
             if ("RENDER_VELOCITY_BUFFER".equals(define)) {
-//                return "#define RENDER_VELOCITY_BUFFER "+(Engine.getRenderVelocityBuffer() ? "1" : "0");
-                return null;
+                return "#define RENDER_VELOCITY_BUFFER "+(Engine.getRenderVelocityBuffer() ? "1" : "0");
             }
             if ("RENDER_MATERIAL_BUFFER".equals(define)) {
-//                return "#define RENDER_MATERIAL_BUFFER "+(Engine.getRenderMaterialBuffer() ? "1" : "0"); 
+                return "#define RENDER_MATERIAL_BUFFER "+(Engine.getRenderMaterialBuffer() ? "1" : "0"); 
             }
             if ("BLUE_NOISE".equals(define)) {
 //                return "#define BLUE_NOISE"; 
@@ -161,13 +160,17 @@ public class VkPipelines {
     public static void init(VKContext ctxt) {
         AssetManager assetManager = AssetManagerClient.getInstance();
         VkShader shaderScreenTriangle = ctxt.loadCompileGLSL(assetManager, "screen_triangle.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+        VkRenderPasses.passPostDeferred.init(ctxt);
+        VkRenderPasses.passPostDeferredNoClear.init(ctxt);
         if (Engine.vkSMAAContext != null) {
             Engine.vkSMAAContext.destroy(ctxt);
         }
+        Engine.TEMPORAL_OFFSET = false;
         Engine.vkSMAAContext = null;
         if (GameBase.baseInstance != null && GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.smaaMode > 0) {
-//            Engine.vkSMAAContext = new VkSMAA(ctxt, Engine.RENDER_SETTINGS.smaaQuality, /*Engine.RENDER_SETTINGS.smaaPredication*/false, false, /*Engine.RENDER_SETTINGS.smaaMode==2*/false);
-            Engine.vkSMAAContext = new VkSMAA(ctxt, SMAA.SMAA_PRESET_MEDIUM);
+            Engine.vkSMAAContext = new VkSMAA(ctxt, Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, Engine.RENDER_SETTINGS.smaaMode==2);
+            Engine.TEMPORAL_OFFSET = Engine.vkSMAAContext.useReprojection;
+//            Engine.vkSMAAContext = new VkSMAA(ctxt, SMAA.SMAA_PRESET_MEDIUM);
 //            Engine.vkSMAAContext.init(ctxt.swapChain.width, ctxt.swapChain.height);
         }
         try ( MemoryStack stack = stackPush() ) 
@@ -487,7 +490,7 @@ public class VkPipelines {
                 }
             });
             post_downsample_pass0.setShaders(vert, frag);
-            post_downsample_pass0.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_downsample_pass0.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             post_downsample_pass0.setScreenSpaceTriangle();
 //            post_downsample_pass0.depthStencilState.depthTestEnable(false);
 //            post_downsample_pass0.rasterizationState.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
@@ -506,7 +509,7 @@ public class VkPipelines {
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "filter/downsample4x.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/downsample4x.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             post_downsample_pass1.setShaders(vert, frag);
-            post_downsample_pass1.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_downsample_pass1.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             post_downsample_pass1.setScreenSpaceTriangle();
             post_downsample_pass1.useSwapChainViewport = false;
             post_downsample_pass1.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
@@ -520,7 +523,7 @@ public class VkPipelines {
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "filter/luminanceInterp.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/luminanceInterp.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             post_lum_interp.setShaders(vert, frag);
-            post_lum_interp.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_lum_interp.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             post_lum_interp.setScreenSpaceTriangle();
             post_lum_interp.useSwapChainViewport = false;
             post_lum_interp.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
@@ -533,7 +536,7 @@ public class VkPipelines {
             filter_blur_kawase.destroyPipeLine(ctxt);
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/blur_kawase.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             filter_blur_kawase.setShaders(shaderScreenTriangle, frag);
-            filter_blur_kawase.setRenderPass(VkRenderPasses.passDeferred, 0);
+            filter_blur_kawase.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             filter_blur_kawase.setScreenSpaceTriangle();
             filter_blur_kawase.useSwapChainViewport = false;
             filter_blur_kawase.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
@@ -545,7 +548,7 @@ public class VkPipelines {
             filter_blur_seperate.destroyPipeLine(ctxt);
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/blur_seperate.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             filter_blur_seperate.setShaders(shaderScreenTriangle, frag);
-            filter_blur_seperate.setRenderPass(VkRenderPasses.passDeferred, 0);
+            filter_blur_seperate.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             filter_blur_seperate.setScreenSpaceTriangle();
             filter_blur_seperate.pipeline = buildPipeLine(ctxt, filter_blur_seperate);
         }
@@ -556,7 +559,7 @@ public class VkPipelines {
 
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/deferred.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new DeferredDefs(0));
             deferred_pass0.setShaders(vert, frag);
-            deferred_pass0.setRenderPass(VkRenderPasses.passDeferred, 0);
+            deferred_pass0.setRenderPass(VkRenderPasses.passPostDeferred, 0);
             deferred_pass0.setScreenSpaceTriangle();
             deferred_pass0.pipeline = buildPipeLine(ctxt, deferred_pass0);
         }
@@ -567,7 +570,7 @@ public class VkPipelines {
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/deferred.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new DeferredDefs(1));
             deferred_pass1.setShaders(vert, frag);
             deferred_pass1.setBlend(true);
-            deferred_pass1.setRenderPass(VkRenderPasses.passDeferred, 0);
+            deferred_pass1.setRenderPass(VkRenderPasses.passPostDeferred, 0);
             deferred_pass1.setScreenSpaceTriangle();
             deferred_pass1.pipeline = buildPipeLine(ctxt, deferred_pass1);
         }
@@ -578,7 +581,7 @@ public class VkPipelines {
 
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/deferred.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new DeferredDefs(2));
             deferred_pass2.setShaders(vert, frag);
-            deferred_pass2.setRenderPass(VkRenderPasses.passDeferred, 0);
+            deferred_pass2.setRenderPass(VkRenderPasses.passPostDeferred, 0);
             deferred_pass2.setScreenSpaceTriangle();
             deferred_pass2.pipeline = buildPipeLine(ctxt, deferred_pass2);
         }
@@ -597,7 +600,7 @@ public class VkPipelines {
                 }
             });
             ssr.setShaders(shaderScreenTriangle, frag);
-            ssr.setRenderPass(VkRenderPasses.passDeferred, 0);
+            ssr.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             ssr.setScreenSpaceTriangle();
             ssr.useSwapChainViewport = false;
             ssr.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
@@ -610,7 +613,7 @@ public class VkPipelines {
             ssrCombine.destroyPipeLine(ctxt);
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "post/SSR/ssr_combine.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             ssrCombine.setShaders(shaderScreenTriangle, frag);
-            ssrCombine.setRenderPass(VkRenderPasses.passDeferred, 0);
+            ssrCombine.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             ssrCombine.setScreenSpaceTriangle();
             ssrCombine.pipeline = buildPipeLine(ctxt, ssrCombine);
         }
@@ -638,7 +641,7 @@ public class VkPipelines {
             post_bloom.destroyPipeLine(ctxt);
             VkShader frag = ctxt.loadCompileGLSL(assetManager, "filter/thresholdfilter.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
             post_bloom.setShaders(shaderScreenTriangle, frag);
-            post_bloom.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_bloom.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             post_bloom.setScreenSpaceTriangle();
             post_bloom.pipeline = buildPipeLine(ctxt, post_bloom);
         }
@@ -656,7 +659,7 @@ public class VkPipelines {
                 }
             });
             post_bloom_combine.setShaders(shaderScreenTriangle, frag);
-            post_bloom_combine.setRenderPass(VkRenderPasses.passDeferred, 0);
+            post_bloom_combine.setRenderPass(VkRenderPasses.passPostRGBA16F, 0);
             post_bloom_combine.setScreenSpaceTriangle();
             post_bloom_combine.pipeline = buildPipeLine(ctxt, post_bloom_combine);
         }

@@ -31,7 +31,7 @@ public class ShaderSource {
     static Pattern patternSet = Pattern.compile("#pragma set \"([^\"]*)\"( \"([^\"]*)\")?.*");
     static Pattern patternAttr = Pattern.compile("#pragma attributes \"([^\"]*)\"");
     static Pattern patternRemoveSetBindingBuffer = Pattern.compile("layout\\s*\\(\\s*set = [0-9]{1,2},\\s*binding = [0-9]{1,2},\\s*std(140|430)\\s*\\) (uniform|buffer) ([^\\s]*).*");
-    static Pattern patternOutputCustom = Pattern.compile("layout\\(location = ([0-9]{1,2})\\) out ([^\\s]*) ([^\\s]*);.*");
+    static Pattern patternOutputCustom = Pattern.compile("layout\\s*\\(location\\s*=\\s*([0-9]{1,2})\\s*\\)\\s+out\\s+([^\\s]*)\\s+([^\\s]*);.*");
     static Pattern patternStageOutput = Pattern.compile("(flat |noperspective )?out ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageInput = Pattern.compile("(flat |noperspective )?in ([^\\s]*) ([^\\s]*);.*");
     static Pattern patternStageSamplerInputRemoveSet = Pattern.compile("^\\s*layout\\s*\\(\\s*set = [0-9]{1,2},\\s*binding = [0-9]{1,2}\\s*\\)\\s+uniform\\s+(u)?sampler([^\\s]*)\\s+([^\\s]*)\\s*;.*");

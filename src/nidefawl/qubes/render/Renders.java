@@ -32,4 +32,6 @@ public class Renders {
     }
     public void preinit() {
     }
+    public void reinit() {
+    }
 }

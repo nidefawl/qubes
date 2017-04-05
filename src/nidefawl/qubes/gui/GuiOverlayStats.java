@@ -282,18 +282,21 @@ public class GuiOverlayStats extends Gui {
             int pw = 320;
             float aspect = Engine.fbHeight()/(float)Engine.fbWidth();
             int ph = (int) (pw*aspect);
-            TextureAtlas atlas = SingleBlockRenderAtlas.getInstance().getAtlasAtIdx(0);
-            if (atlas != null) {
-//                Engine.clearDepth();
+//            TextureAtlas atlas = SingleBlockRenderAtlas.getInstance().getAtlasAtIdx(0);
+//            if (atlas != null) {
+            if (Engine.getRenderMaterialBuffer()&&Game.instance.getWorld()!=null) {
+                
+                Engine.clearDepth();
 //                atlas.renderBuffer.bindTextureDescriptor();
 //                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descLumInterpOutputsCalcd[1]);
-//                Engine.setPipeStateTextured2D();
-//                tess.setColorF(-1, 1);
-//                tess.add(prX, prY+ph, 0, 0, 1);
-//                tess.add(prX+pw, prY+ph, 0, 1, 1);
-//                tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
-//                tess.add(prX, prY, 0, 0.0f, 0.0f);
-//                tess.drawQuads();
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descTextureMaterialBuffer);
+                Engine.setPipeStateTextured2D();
+                tess.setColorF(-1, 1);
+                tess.add(prX, prY+ph, 0, 0, 1);
+                tess.add(prX+pw, prY+ph, 0, 1, 1);
+                tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
+                tess.add(prX, prY, 0, 0.0f, 0.0f);
+                tess.drawQuads();
 //                prX+=pw+10;
 //                pw = 200;
 //                ph = (int) (pw*aspect);
@@ -309,19 +312,20 @@ public class GuiOverlayStats extends Gui {
 //                    tess.drawQuads();
 //                    prY += ph+10;
 //                }
-//                prY = 20;
-//                prX+=pw+10;
-//                pw = 200;
-//                ph = (int) (pw*aspect);
-//                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descTextureBloomOut);
-//                Engine.setPipeStateTextured2D();
-//                tess.setColorF(-1, 1);
-//                tess.add(prX, prY+ph, 0, 0, 1);
-//                tess.add(prX+pw, prY+ph, 0, 1, 1);
-//                tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
-//                tess.add(prX, prY, 0, 0.0f, 0.0f);
-//                tess.drawQuads();
-//                prY += ph+10;
+                prY = 20;
+                prX+=pw+10;
+                pw = 200;
+                ph = (int) (pw*aspect);
+                Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.descTextureVelocityBuffer);
+                Engine.setPipeStateTextured2D();
+                tess.setColorF(-1, 1);
+                tess.add(prX, prY+ph, 0, 0, 1);
+                tess.add(prX+pw, prY+ph, 0, 1, 1);
+                tess.add(prX+pw, prY, 0, 1.0f, 0.0f);
+                tess.add(prX, prY, 0, 0.0f, 0.0f);
+                tess.drawQuads();
+                prY += ph+10;
+//            }
             }
         }
 

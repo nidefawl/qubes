@@ -9,6 +9,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkAttachmentDescription;
 import org.lwjgl.vulkan.VkFramebufferCreateInfo;
 
+import nidefawl.qubes.util.GameLogicError;
+
 public class FrameBuffer implements RefTrackedResource {
     private final VKContext        ctxt;
     public long                    framebuffer;
@@ -25,7 +27,7 @@ public class FrameBuffer implements RefTrackedResource {
         this.attachments[i] = frameBufferScene.attachments[i];
         this.isReferencedAtt[i] = true;
     }
-    public void build(VkRenderPass passgbuffer, int width, int height) {
+    public void build(VkRenderPass pass, int width, int height) {
         this.ctxt.addResource(this);
         this.width = width;
         this.height = height;
@@ -39,12 +41,15 @@ public class FrameBuffer implements RefTrackedResource {
                 }
             }
             pAttachments.flip();
+            if (pAttachments.limit() != pass.nAttachments) {
+                throw new GameLogicError("Expected nAttachements == attachements.length");
+            }
                 
             LongBuffer pImage = stack.longs(0);
             VkFramebufferCreateInfo frameBufferCreateInfo = VkFramebufferCreateInfo.callocStack(stack)
                     .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                     .layers(1)
-                    .renderPass(passgbuffer.get())
+                    .renderPass(pass.get())
                     .width(width)
                     .height(height)
                     .pAttachments(pAttachments);

@@ -31,13 +31,13 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
     public void init() {
         VKContext ctxt = Engine.vkContext;
         this.frameBufferKawase1 = new FrameBuffer(ctxt).tag("Kawase1");
-        this.frameBufferKawase1.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferKawase1.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.frameBufferKawase2 = new FrameBuffer(ctxt).tag("Kawase2");
-        this.frameBufferKawase2.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.frameBufferKawase2.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.fbSSRBlurredX = new FrameBuffer(ctxt).tag("SSRBlurredX");
-        this.fbSSRBlurredX.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.fbSSRBlurredX.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.fbSSRBlurredY = new FrameBuffer(ctxt).tag("SSRBlurredY");
-        this.fbSSRBlurredY.fromRenderpass(VkRenderPasses.passDeferred, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
+        this.fbSSRBlurredY.fromRenderpass(VkRenderPasses.passPostRGBA16F, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.descTexture1 = ctxt.descLayouts.allocDescSetSampleSingle();
         this.descTexture2 = ctxt.descLayouts.allocDescSetSampleSingle();
         this.descTextureBlurredX = ctxt.descLayouts.allocDescSetSampleSingle();
@@ -64,8 +64,8 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
     public void initBlurSeperate(int displayWidth, int displayHeight, int blurDownSample) {
         if (this.fbSSRBlurredX != null) {
             VKContext ctxt = Engine.vkContext;
-            this.fbSSRBlurredX.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
-            this.fbSSRBlurredY.build(VkRenderPasses.passDeferred, displayWidth, displayHeight);
+            this.fbSSRBlurredX.build(VkRenderPasses.passPostRGBA16F, displayWidth, displayHeight);
+            this.fbSSRBlurredY.build(VkRenderPasses.passPostRGBA16F, displayWidth, displayHeight);
             FramebufferAttachment coloratt;
             coloratt = this.fbSSRBlurredX.getAtt(0);
             this.descTextureBlurredX.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
@@ -84,8 +84,8 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
             this.w1 = 1.0f/(float)inputWidth;
             this.h1 = 1.0f/(float)inputHeight;
             int[] blurSize = GameMath.downsample(inputWidth, inputHeight, blurDownSample);
-            this.frameBufferKawase1.build(VkRenderPasses.passDeferred, blurSize[0], blurSize[1]);
-            this.frameBufferKawase2.build(VkRenderPasses.passDeferred, blurSize[0], blurSize[1]);
+            this.frameBufferKawase1.build(VkRenderPasses.passPostRGBA16F, blurSize[0], blurSize[1]);
+            this.frameBufferKawase2.build(VkRenderPasses.passPostRGBA16F, blurSize[0], blurSize[1]);
             FramebufferAttachment coloratt;
             coloratt = this.frameBufferKawase1.getAtt(0);
             this.descTexture1.setBindingCombinedImageSampler(0, coloratt.getView(), samplerClamp, coloratt.finalLayout);
@@ -104,7 +104,7 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
         int kawaseKernSizeSetting = 2;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
         for (int p = 0; p < kawaseKernPasses.length; p++) {
-            Engine.beginRenderPass(VkRenderPasses.passDeferred, buffer, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, buffer, VK_SUBPASS_CONTENTS_INLINE);
                 Engine.setViewport(0, 0, buffer.getWidth(), buffer.getHeight());
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, descInput);
                 Engine.bindPipeline(VkPipelines.filter_blur_kawase);
@@ -125,7 +125,7 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
     public VkDescriptor renderBlurSeperate(VkDescriptor descInput, int i) {
         float maxBlurRadius = i;
         Engine.clearAllDescriptorSets();
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, fbSSRBlurredX, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fbSSRBlurredX, VK_SUBPASS_CONTENTS_INLINE);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, descInput);
         Engine.bindPipeline(VkPipelines.filter_blur_seperate);
         PushConstantBuffer buf = PushConstantBuffer.INST;
@@ -135,7 +135,7 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
         Engine.drawFSTri();
         Engine.endRenderPass();
         //TODO: pipeline barrier
-        Engine.beginRenderPass(VkRenderPasses.passDeferred, fbSSRBlurredY, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fbSSRBlurredY, VK_SUBPASS_CONTENTS_INLINE);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, descTextureBlurredX);
         Engine.bindPipeline(VkPipelines.filter_blur_seperate);
         buf.setFloat(0, 0f);

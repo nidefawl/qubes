@@ -108,7 +108,7 @@ public abstract class AbstractRenderer implements IResourceManager, IRenderCompo
     public void resize() {
         resize(this.rendererWidth, this.rendererHeight);
     }
-    
+
     @Override
     public void preinit() {
         

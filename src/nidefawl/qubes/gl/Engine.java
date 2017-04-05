@@ -1436,7 +1436,7 @@ public class Engine {
 
     public static void rebindTransformDescriptorSet() {
         if (curPipeline == null) {
-            System.err.println("No pipeline bound, cannot rebind");
+//            System.err.println("No pipeline bound, cannot rebind");
             return;
         }
         rebindDescSet1 = false;

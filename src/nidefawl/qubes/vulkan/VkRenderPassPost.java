@@ -10,50 +10,18 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
-import nidefawl.qubes.gl.Engine;
+public class VkRenderPassPost extends VkRenderPass {
 
-public class VkRenderPassDeferred extends VkRenderPass {
-    public boolean isClearPass = false;
-    public boolean useMaterial = false;
-    public boolean useVelocity = false;
-    public VkRenderPassDeferred(boolean clear) {
-        this.isClearPass = clear;
-    }
-    public void init(VKContext ctxt) {
-        reset();
-        this.useMaterial = Engine.getRenderMaterialBuffer();
-        this.useVelocity = Engine.getRenderVelocityBuffer();
-        int idx = 0;
-        VkAttachmentDescription col = addColorAttachment(idx, VK_FORMAT_R16G16B16A16_SFLOAT);
-        col.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        if (!this.isClearPass) {
-            col.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+    public VkRenderPassPost(boolean clear) {
+        VkAttachmentDescription n = addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
+            n.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        if (!clear) {
+            n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
         }
-        idx++;
-        if (useMaterial) {
-            VkAttachmentDescription mat = addColorAttachment(idx, VK_FORMAT_R16G16B16A16_SFLOAT);
-            mat.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            if (!this.isClearPass) {
-                mat.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            }
-            idx++;
-        }
-        if (useVelocity) {
-            VkAttachmentDescription vel = addColorAttachment(idx, VK_FORMAT_R16G16B16A16_SFLOAT);
-            vel.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            if (!this.isClearPass) {
-                vel.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            }
-            idx++;
-        }
-        buildPass(ctxt);
-        initClearValues(Engine.INVERSE_Z_BUFFER);
     }
     @Override
     public void build(VKContext ctxt) {
-    }
-    public void buildPass(VKContext ctxt) {
-        try ( MemoryStack stack = stackPush() )
+        try ( MemoryStack stack = stackPush() ) 
         {
             VkAttachmentReference.Buffer colorReference = VkAttachmentReference.callocStack(nColorAttachments, stack);
             for (int i = 0; i < nColorAttachments; i++) {
@@ -73,10 +41,10 @@ public class VkRenderPassDeferred extends VkRenderPass {
                     .srcSubpass(0)
                     .dstSubpass(VK_SUBPASS_EXTERNAL)
                     .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .dstStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
-                    .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                    .dstAccessMask(VK_ACCESS_MEMORY_READ_BIT)
-                    .dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
+                    .dstStageMask (VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+                    .srcAccessMask (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                    .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
             VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(1, stack)
                     .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
                     .flags(0)

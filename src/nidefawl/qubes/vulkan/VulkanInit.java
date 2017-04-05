@@ -59,6 +59,8 @@ public class VulkanInit {
             debugCallback = new VkDebugReportCallbackEXT() {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
                     String msg = VkDebugReportCallbackEXT.getString(pMessage);
+                    if (msg.equals("Debug Report callbacks not removed before DestroyInstance"))
+                        return 0;
                     System.err.println("ERROR OCCURED: " + msg);
                     Thread.dumpStack();
                     Matcher m = p.matcher(msg);

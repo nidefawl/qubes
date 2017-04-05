@@ -508,10 +508,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                     return;
                 }
             }
+            boolean forceResize = vkContext.reinitSwapchain;
             int[] size = vkContext.updateSwapchain(this, vsync);
             newWidth = size[0];
             newHeight = size[1];
-            resize = newWidth != windowWidth || newHeight != windowHeight;
+            resize = forceResize | newWidth != windowWidth || newHeight != windowHeight;
         }
         if (resize) {
             if (newWidth*newHeight <= 0) {
