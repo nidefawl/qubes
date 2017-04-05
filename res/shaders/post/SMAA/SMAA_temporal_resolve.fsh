@@ -5,16 +5,15 @@
 #define SMAA_INCLUDE_PS 1
 #pragma include "SMAA.hlsl"
 
-uniform sampler2D texColorCurrent;
-uniform sampler2D texColorPrev;
+layout (set = 0, binding = 0) uniform sampler2D texColorCurrent;
+layout (set = 1, binding = 0) uniform sampler2D texColorPrev;
 
 
 #if SMAA_REPROJECTION
-uniform sampler2D velocityTex;
+layout (set = 2, binding = 0) uniform sampler2D velocityTex;
 #endif
 
 in vec2 pass_texcoord;
-in vec4 offset;
  
 out vec4 out_Color;
 

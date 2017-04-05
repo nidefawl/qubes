@@ -68,7 +68,16 @@ layout (set = 1, binding = 9) uniform sampler2DArray texArrayNoise;
 
 
 #if RENDER_VELOCITY_BUFFER
+#ifdef VULKAN_GLSL
+layout(push_constant) uniform PushConstsDeferred {
+  mat4 mat_reproject;
+} pushCDeferred;
+#define REPROJECT_MATRIX pushCDeferred.mat_reproject
+#else
+//OpenGL 
 uniform mat4 mat_reproject;
+#define REPROJECT_MATRIX mat_reproject
+#endif
 #endif
 
 
@@ -80,12 +89,15 @@ in float dayLightIntens;
 in float lightAngleUp;
 in float moonSunFlip;
 
-out vec4 out_Color;
-#if RENDER_MATERIAL_BUFFER
-out vec4 out_FinalMaterial;
-#endif
-#if RENDER_VELOCITY_BUFFER
-out vec4 out_Velocity;
+layout (location = 0) out vec4 out_Color;
+
+#if RENDER_MATERIAL_BUFFER && RENDER_VELOCITY_BUFFER
+layout (location = 1) out vec4 out_FinalMaterial;
+layout (location = 2) out vec4 out_Velocity;
+#elif RENDER_MATERIAL_BUFFER
+layout (location = 1) out vec4 out_FinalMaterial;
+#elif RENDER_VELOCITY_BUFFER
+layout (location = 1) out vec4 out_Velocity;
 #endif
 
 // this needs to be included after sampler definition
@@ -758,7 +770,7 @@ void main() {
 #endif
 #if RENDER_VELOCITY_BUFFER
 
-    vec4 prevScreenPos = mat_reproject * curScreenPos;
+    vec4 prevScreenPos = REPROJECT_MATRIX * curScreenPos;
     vec2 scale = vec2(0.5, 0.5);
     curScreenPos.xy *= scale;
     prevScreenPos.xy *= scale;
