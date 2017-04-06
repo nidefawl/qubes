@@ -241,7 +241,7 @@ public class VkSMAA {
     }
     public VkDescriptor render(VkDescriptor descInput, VkDescriptor descTexMaterial, VkDescriptor descTextureVelocityBuffer) {
         this.frame = 1 - this.frame;
-        Engine.beginRenderPass(VkRenderPasses.passAAEdge, this.fbedgeDetect, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passAAEdge, this.fbedgeDetect);
         Engine.clearAllDescriptorSets();
         Engine.setDescriptorSet(VkDescLayouts.DESC0, descInput);
         if (this.usePredTex)
@@ -249,7 +249,7 @@ public class VkSMAA {
         Engine.bindPipeline(this.edgeDetect);
         Engine.drawFSTri();
         Engine.endRenderPass();
-        Engine.beginRenderPass(VkRenderPasses.passAAWeight, this.fbBlendWeight, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passAAWeight, this.fbBlendWeight);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descBlendWeight);
         Engine.bindPipeline(this.blendWeight);
         if (this.useReprojection) {
@@ -264,7 +264,7 @@ public class VkSMAA {
         Engine.drawFSTri();
         Engine.endRenderPass();
         FrameBuffer buffer = this.frame == 0 || !this.useReprojection ? this.fbOutput0 : this.fbOutput1;
-        Engine.beginRenderPass(VkRenderPasses.passFramebufferNoDepth, buffer, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passFramebufferNoDepth, buffer);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descNeighborBlend);
         if (this.useReprojection)
             Engine.setDescriptorSet(VkDescLayouts.DESC2, descTextureVelocityBuffer);
@@ -275,7 +275,7 @@ public class VkSMAA {
         {
             return this.descOutput0;
         }
-        Engine.beginRenderPass(VkRenderPasses.passFramebufferNoDepth, this.fbResolved, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passFramebufferNoDepth, this.fbResolved);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, this.frame == 0 ? this.descOutput0 : this.descOutput1);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.frame == 0 ? this.descOutput1 : this.descOutput0);
         Engine.setDescriptorSet(VkDescLayouts.DESC2, descTextureVelocityBuffer);

@@ -391,13 +391,13 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     public void renderBloom() {
         FrameBuffer fb = this.frameBufferBloom;
         Engine.clearAllDescriptorSets();
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fb, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fb);
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureBloomInput);
             Engine.bindPipeline(VkPipelines.post_bloom);
             Engine.drawFSTri();
         Engine.endRenderPass();
         VkDescriptor blurredBloom = RenderersVulkan.blurRenderer.renderBlur1PassDownsample(this.descTextureBloomOut);
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fb, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fb);
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureDeferredOut);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, blurredBloom);
             Engine.bindPipeline(VkPipelines.post_bloom_combine);
@@ -412,7 +412,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
         float twoPixelX = 2.0f/(float)frameBufferDeferred.getWidth();
         float twoPixelY = 2.0f/(float)frameBufferDeferred.getHeight();
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, top, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, top);
             Engine.setViewport(0, 0, top.getWidth(), top.getHeight()); // 4x downsampled render resolutino
     //        System.out.println("0, 0, "+top.getWidth()+", "+top.getHeight());
             Engine.setDescriptorSet(VkDescLayouts.DESC0, inputBuffer);
@@ -437,7 +437,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             twoPixelX = 2.0f / (float) this.fbLuminanceDownsample[i].getWidth();
             twoPixelY = 2.0f / (float) this.fbLuminanceDownsample[i].getHeight();
             lastBound = this.fbLuminanceDownsample[i+1];
-            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, lastBound, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, lastBound);
 //          System.out.println("0, 0, "+lastBound.getWidth()+", "+lastBound.getHeight());
                 Engine.setViewport(0, 0, lastBound.getWidth(), lastBound.getHeight()); // 16x downsampled render resolutino
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureDownsampleOutputs[i]);
@@ -460,7 +460,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         vkCmdPipelineBarrier(Engine.getDrawCmdBuffer(),
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 
                 VK_DEPENDENCY_BY_REGION_BIT, VKContext.BARRIER_MEM_ATT_WRITE_SHADER_READ, null, null);
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fblumInterp, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fblumInterp);
             Engine.setViewport(0, 0, 1, 1); 
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descLumInterpOutputsVertexInput[indexIn]);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDownsampleEnd);
@@ -476,7 +476,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
     private void renderSSR() {
         Engine.clearAllDescriptorSets();
         Engine.setViewport(0, 0, this.ssrSize[0], this.ssrSize[1]);
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferSSR, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferSSR);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
         Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
@@ -490,7 +490,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
         VkDescriptor blurred = RenderersVulkan.blurRenderer.renderBlurSeperate(descTextureSSROutput, 8);
         
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferDeferredColorOnly, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferDeferredColorOnly);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
         Engine.setDescriptorSet(VkDescLayouts.DESC2, blurred);
@@ -509,7 +509,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
             
-            Engine.beginRenderPass(VkRenderPasses.passPostDeferred, fb, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passPostDeferred, fb);
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred0);
@@ -540,7 +540,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDefaultViewport();
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
-                Engine.beginRenderPass(VkRenderPasses.passPostDeferredNoClear, frameBufferDeferred, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.beginRenderPass(VkRenderPasses.passPostDeferredNoClear, frameBufferDeferred);
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput2);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
@@ -558,7 +558,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             renderBloom();
 
             Engine.clearAllDescriptorSets();
-            Engine.beginRenderPass(VkRenderPasses.passTonemap, this.frameBufferTonemapped, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passTonemap, this.frameBufferTonemapped);
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureBloomOut);
             Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descLumInterpOutputsCalcd[(this.frame+1)%2]);

@@ -37,9 +37,7 @@ import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.input.Mouse;
 import nidefawl.qubes.logging.IErrorHandler;
 import nidefawl.qubes.logging.LogBufferStream;
-import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.perf.GPUTaskProfile;
-import nidefawl.qubes.perf.TimingHelper;
+import nidefawl.qubes.perf.*;
 import nidefawl.qubes.shader.ShaderCompileError;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.shader.UniformBuffer;
@@ -785,11 +783,11 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         UniformBuffer.printStats();
         if (GPUProfiler.PROFILING_ENABLED) {
             GPUProfiler.endFrame();
-            GPUTaskProfile tp;
+            GPUTaskProfileFrame tp;
             while ((tp = GPUProfiler.getFrameResults()) != null) {
                 glProfileResults.clear();
                 tp.dump(glProfileResults);
-                GPUProfiler.recycle(tp);
+                GPUProfiler.recycleFrame(tp);
             }
         }
     }

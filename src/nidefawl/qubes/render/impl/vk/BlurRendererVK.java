@@ -117,7 +117,7 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
         int kawaseKernSizeSetting = 2;
         int[] kawaseKernPasses = kawaseKernelSizePasses[kawaseKernSizeSetting];
         for (int p = 0; p < kawaseKernPasses.length; p++) {
-            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, buffer, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, buffer);
                 Engine.setViewport(0, 0, buffer.getWidth(), buffer.getHeight());
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, descInput);
                 Engine.bindPipeline(VkPipelines.filter_blur_kawase);
@@ -138,7 +138,7 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
     public VkDescriptor renderBlurSeperate(VkDescriptor descInput, int i) {
         float maxBlurRadius = i;
         Engine.clearAllDescriptorSets();
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fbSSRBlurredX, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fbSSRBlurredX);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, descInput);
         Engine.bindPipeline(VkPipelines.filter_blur_seperate);
         PushConstantBuffer buf = PushConstantBuffer.INST;
@@ -148,7 +148,7 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
         Engine.drawFSTri();
         Engine.endRenderPass();
         //TODO: pipeline barrier
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fbSSRBlurredY, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fbSSRBlurredY);
         Engine.setDescriptorSet(VkDescLayouts.DESC0, descTextureBlurredX);
         Engine.bindPipeline(VkPipelines.filter_blur_seperate);
         buf.setFloat(0, 0f);

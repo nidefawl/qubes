@@ -2,7 +2,6 @@ package nidefawl.qubes;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-import static org.lwjgl.vulkan.VK10.VK_SUBPASS_CONTENTS_INLINE;
 
 import java.io.File;
 
@@ -503,7 +502,9 @@ public class Game extends GameBase {
             this.statsFB.preRender(true);
             this.statsList.render(0, 0, 0);
             this.statsFB.postRender();
-//            this.statsFB.clearImage(Engine.getDrawCmdBuffer());
+            
+            
+//          this.statsFB.clearImage(Engine.getDrawCmdBuffer());
         }
         if (Engine.isVulkan) {
             renderVK(fTime);
@@ -541,14 +542,11 @@ public class Game extends GameBase {
             double my = Mouse.getY();
             setWindowViewport();
             
-            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer);
 
             ITess tess = Engine.getTess();
             if (this.world != null) {
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.outRenderer.getOutputDesc());
-//                System.out.println(RenderersVulkan.outRenderer.getOutputDesc());
-//              Engine.setDescriptorSet(VkDescLayouts.TEX_DESC_IDX, RenderersVulkan.skyRenderer.descTextureSkyboxSingle);
-//              Engine.setPipeStateTextured2D(false);
               Engine.setPipeStateTextured2D(false);
               tess.setColor(-1, 255);
               tess.add(windowWidth, 0, 0, 1, 0);
@@ -562,14 +560,17 @@ public class Game extends GameBase {
 
 //            RenderersVulkan.lightCompute.renderDebug();
 
+//            if (false)
             this.statsFB.render();
+//            if (false)
             Engine.clearDepth();
 
 
+//            if (false)
             if (!canRenderGui3d()) {
                 renderGui(fTime, mx, my);
             }
-
+//            if (false)
             if (this.gui == null && this.world != null && !canRenderGui3d()) {
 
                 if (showGrid) {
@@ -577,9 +578,7 @@ public class Game extends GameBase {
                 }
                 
                 if (!VR_SUPPORT) {
-//                    glEnable(GL_DEPTH_TEST);
                     GuiWindowManager.getInstance().render(fTime, mx, my);
-//                    glDisable(GL_DEPTH_TEST);
                 }
                 if (this.chatOverlay != null) {
                     this.chatOverlay.render(fTime, 0, 0);
@@ -1256,6 +1255,7 @@ public class Game extends GameBase {
             this.statsList.refresh();
         }
         if (System.currentTimeMillis()-lastShaderLoadTime >=2200/* && Keyboard.isKeyDown(GLFW.GLFW_KEY_F9)*/) {
+            System.out.println(Game.instance.lastFPS);
             int iw = Engine.getSceneFB() != null ? Engine.getSceneFB().getWidth() : 0;
             int ih = Engine.getSceneFB() != null ? Engine.getSceneFB().getHeight() : 0;
             String s = String.format("%s - Display %dx%d - Window %dx%d - SceneFB %dx%d - Gui %dx%d", 
@@ -1840,6 +1840,23 @@ public class Game extends GameBase {
             if (text.equals("/gui3d")) {
                 this.settings.gui3d = !settings.gui3d;
                 updateGui3dMode();
+                return;
+            }
+            if (text.equals("/reloadfonts")) {
+                if (Engine.isVulkan) {
+                    vkContext.syncAllFences();
+
+                }
+                for (int i = 0; i < Engine.fonts.size(); i++) {
+                    Engine.fonts.get(i).destroy(vkContext);
+                }
+                Engine.fonts.clear();
+                FontRenderer.destroy();
+                showGUI(null);
+                statsList = new GuiOverlayStats();
+                this.chatOverlay = new GuiOverlayChat();
+                this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
+                this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
                 return;
             }
             if (text.equals("/reloadshaders")) {

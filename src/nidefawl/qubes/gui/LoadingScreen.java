@@ -5,7 +5,6 @@ import static nidefawl.qubes.gl.Engine.vkContext;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-import static org.lwjgl.vulkan.VK10.VK_SUBPASS_CONTENTS_INLINE;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.vulkan.VkCommandBuffer;
@@ -64,7 +63,7 @@ public class LoadingScreen {
             CommandBuffer commandBuffer = vkContext.getCurrentCmdBuffer();
             Engine.beginCommandBuffer(commandBuffer);
             Engine.setViewport(0, 0, width, height);
-            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.frameBuffer);
             
         }
         boolean b = renderProgress(tw, th, step, f, string);

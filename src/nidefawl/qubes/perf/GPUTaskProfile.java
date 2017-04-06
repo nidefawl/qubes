@@ -13,13 +13,13 @@ import nidefawl.qubes.util.Poolable;
 
 public class GPUTaskProfile implements Poolable {
 
-    private GPUTaskProfile parent;
+    protected GPUTaskProfile parent;
 
-    private String name;
+    protected String name;
 
-    private int startQuery, endQuery;
+    protected int startQuery, endQuery;
 
-    private ArrayList<GPUTaskProfile> children = new ArrayList<>(100);
+    protected ArrayList<GPUTaskProfile> children = new ArrayList<>(100);
 
     public GPUTaskProfile() {
 

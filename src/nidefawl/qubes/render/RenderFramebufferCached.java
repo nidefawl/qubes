@@ -79,7 +79,7 @@ public class RenderFramebufferCached {
     }
     public void preRender(boolean blend) {
         if (Engine.isVulkan) {
-            Engine.beginRenderPass(clearOnUpdate?VkRenderPasses.passFramebuffer:VkRenderPasses.passFramebufferNoClear, this.fbVk, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(clearOnUpdate?VkRenderPasses.passFramebuffer:VkRenderPasses.passFramebufferNoClear, this.fbVk);
         } else {
             fbDbg.bind();
             if (clearOnUpdate)
@@ -116,7 +116,7 @@ public class RenderFramebufferCached {
     public void clear() {
         if (Engine.isVulkan) {
 
-            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.fbVk, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passFramebuffer, this.fbVk);
             Engine.endRenderPass();
         } else {
             fbDbg.bind();

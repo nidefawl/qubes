@@ -239,7 +239,7 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
         buf.setFloat(1, 5);
         storeSprites(fTime, 0);
 
-        Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passSkyGenerateCubemap, this.frameBufferCubemap);
         Engine.setDescriptorSet(1, this.descTextureCloudSingle);
         Engine.setDescriptorSet(2, Engine.descriptorSetUboLights);
         Engine.clearDescriptorSet(4);

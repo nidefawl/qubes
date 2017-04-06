@@ -13,9 +13,9 @@ public class VkRenderPassShadow extends VkRenderPass {
 
     public VkRenderPassShadow() {
         addDepthAttachment(0, VK_FORMAT_D32_SFLOAT)
-            .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+            .finalLayout(VK_IMAGE_LAYOUT_GENERAL).initialLayout(VK_IMAGE_LAYOUT_GENERAL);
         addColorAttachment(1, VK_FORMAT_R8G8B8A8_UNORM)
-            .finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            .finalLayout(VK_IMAGE_LAYOUT_GENERAL).initialLayout(VK_IMAGE_LAYOUT_GENERAL);
     }
     @Override
     public void build(VKContext ctxt) {
@@ -23,11 +23,25 @@ public class VkRenderPassShadow extends VkRenderPass {
         {
             VkAttachmentReference depthRefShadowPass = VkAttachmentReference.callocStack(stack)
                     .attachment(0)
-                    .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+                    .layout(VK_IMAGE_LAYOUT_GENERAL);
             VkAttachmentReference.Buffer colorRefShadowPass = VkAttachmentReference.callocStack(nColorAttachments, stack);
             colorRefShadowPass.get(0)
                     .attachment(1)
-                    .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                    .layout(VK_IMAGE_LAYOUT_GENERAL);
+            
+
+//            VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(1, stack);
+//            subpassDependencies.get(0)
+//                    .srcSubpass(0)
+//                    .dstSubpass(0)
+//                    .srcStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+//                    .dstStageMask (VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//                    .srcAccessMask (VK_ACCESS_MEMORY_READ_BIT)
+//                    .dstAccessMask (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT 
+//                            | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
+//                            | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT 
+//                            | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//                    .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
             
 
             VkSubpassDependency.Buffer subpassDependencies = VkSubpassDependency.callocStack(2, stack);
@@ -53,6 +67,7 @@ public class VkRenderPassShadow extends VkRenderPass {
                             | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
                     .dstAccessMask (VK_ACCESS_MEMORY_READ_BIT)
                     .dependencyFlags (VK_DEPENDENCY_BY_REGION_BIT);
+            
             VkSubpassDescription.Buffer subpasses = VkSubpassDescription.callocStack(1, stack);
             subpasses.get(0)
                     .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
@@ -63,7 +78,7 @@ public class VkRenderPassShadow extends VkRenderPass {
                     .pDepthStencilAttachment(depthRefShadowPass)
                     .pResolveAttachments(null)
                     .pPreserveAttachments(null);
-            buildRenderPass(ctxt, subpasses, subpassDependencies);
+            buildRenderPass(ctxt, subpasses, null);
         }
     }
 }

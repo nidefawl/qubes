@@ -14,13 +14,15 @@ public class GPUProfiler {
     public static final boolean PROFILING_ENABLED = false;
 
     private static Pool<GPUTaskProfile> taskPool;
+    private static Pool<GPUTaskProfileFrame> taskPoolFrame;
     private static ArrayList<Integer>   queryObjects;
 
     private static int frameCounter;
 
+    private static GPUTaskProfileFrame currentFrame;
     private static GPUTaskProfile currentTask;
 
-    private static ArrayList<GPUTaskProfile> completedFrames;
+    private static ArrayList<GPUTaskProfileFrame> completedFrames;
 
     private static int perFrame;
 
@@ -34,6 +36,12 @@ public class GPUProfiler {
                 return new GPUTaskProfile();
             }
         };
+        taskPoolFrame = new Pool<GPUTaskProfileFrame>(400) {
+            @Override
+            public GPUTaskProfileFrame create() {
+                return new GPUTaskProfileFrame();
+            }
+        };
         queryObjects = new ArrayList<>();
 
         frameCounter = 0;
@@ -42,20 +50,21 @@ public class GPUProfiler {
     }
 
     public static void startFrame() {
-        if (frameCount > 0 && frameCount > taskPool.getFree()) {
+        if (frameCount > 0 && frameCount > taskPoolFrame.getFree()) {
             System.err.println("pool has not enough slots free (free: " + taskPool.getFree() + ", required: " + frameCount + ")");
             DISABLE_FRAME = true;
             return;
         }
         DISABLE_FRAME = false;
 
-        if (currentTask != null) {
+        if (currentFrame != null) {
             throw new IllegalStateException("Previous frame not ended properly!");
         }
         if (PROFILING_ENABLED) {
 
             perFrame = 1;
-            currentTask = taskPool.get().init(null, "Frame " + (++frameCounter), getQuery());
+            currentFrame = taskPoolFrame.get().init("Frame " + (++frameCounter), getQuery());
+            currentTask = currentFrame;
         }
     }
 
@@ -84,25 +93,21 @@ public class GPUProfiler {
             frameCount = perFrame;
         }
         if (PROFILING_ENABLED) {
-            if (currentTask == null) {
+            if (currentFrame == null) {
                 throw new IllegalStateException("frame not started properly!");
             }
             if (currentTask.getParent() != null) {
                 throw new IllegalStateException("Error ending frame. Not all tasks finished (parent: " + currentTask.getParent() + ").");
             }
-            currentTask.end(getQuery());
+            currentFrame.end(getQuery());
 
-            if (completedFrames.size() < 55) {
-                completedFrames.add(currentTask);
-            } else {
-                recycle(currentTask);
-            }
-
+            completedFrames.add(currentFrame);
+            currentFrame = null;
             currentTask = null;
         }
     }
 
-    public static GPUTaskProfile getFrameResults() {
+    public static GPUTaskProfileFrame getFrameResults() {
         if (completedFrames.isEmpty()) {
             return null;
         }
@@ -113,6 +118,15 @@ public class GPUProfiler {
         } else {
             return null;
         }
+    }
+    public static void recycleFrame(GPUTaskProfileFrame task) {
+        queryObjects.add(task.getStartQuery());
+        queryObjects.add(task.getEndQuery());
+        ArrayList<GPUTaskProfile> children = task.getChildren();
+        for (int i = 0; i < children.size(); i++) {
+            recycle(children.get(i));
+        }
+        taskPoolFrame.recycle(task);
     }
 
     public static void recycle(GPUTaskProfile task) {

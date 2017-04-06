@@ -56,7 +56,7 @@ public class Engine {
     public static boolean SRGB_TEXTURES = false;
     public static boolean isInverseZ = false;
     static ArrayList<TrueTypeFont> newfonts = new ArrayList<>();
-    static ArrayList<TrueTypeFont> fonts = new ArrayList<>();
+    public static ArrayList<TrueTypeFont> fonts = new ArrayList<>();
 
     private static IntBuffer   viewportBuf;
     private static FloatBuffer position;
@@ -1464,6 +1464,9 @@ public class Engine {
                     pDescriptorSets, pOffsets);
         }
     }
+    public static void beginRenderPass(VkRenderPass pass, nidefawl.qubes.vulkan.FrameBuffer framebuffer) {
+        beginRenderPass(pass, framebuffer, 0);
+    }
     public static void beginRenderPass(VkRenderPass pass, nidefawl.qubes.vulkan.FrameBuffer framebuffer, int flags) {
         curPipeline = null;
         curPipelineHandle = VK_NULL_HANDLE;
@@ -1475,7 +1478,7 @@ public class Engine {
         renderPassBeginInfo.renderPass(curPass.get());
         renderPassBeginInfo.framebuffer(framebuffer.get());
         renderPassBeginInfo.pClearValues(pass.renderPassClearValues);
-        vkCmdBeginRenderPass(curCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(curCommandBuffer, renderPassBeginInfo, 0);
     }
     public static void endRenderPass() {
         vkCmdEndRenderPass(curCommandBuffer);

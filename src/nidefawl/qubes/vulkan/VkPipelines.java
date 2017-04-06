@@ -827,7 +827,16 @@ public class VkPipelines {
             fontRender2D.destroyPipeLine(ctxt);
             VkVertexDescriptors desc = GLVAO.vaoTesselator[2|4].getVkVertexDesc();
             VkShader vert = ctxt.loadCompileGLSL(assetManager, "textured.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef(desc));
-            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, null);
+            VkShader frag = ctxt.loadCompileGLSL(assetManager, "textured.fsh", VK_SHADER_STAGE_FRAGMENT_BIT, new IShaderDef() {
+                
+                @Override
+                public String getDefinition(String define) {
+                    if ("ALPHA_TEST".equals(define)) {
+//                        return "#define ALPHA_TEST 1";
+                    }
+                    return null;
+                }
+            });
             fontRender2D.setShaders(vert, frag);
             fontRender2D.setBlend(true);
             fontRender2D.setRenderPass(VkRenderPasses.passFramebuffer, 0);

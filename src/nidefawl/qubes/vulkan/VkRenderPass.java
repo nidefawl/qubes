@@ -75,7 +75,7 @@ public abstract class VkRenderPass {
           .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
           .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
           .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-          .stencilStoreOp(VK_ATTACHMENT_STORE_OP_STORE)
+          .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
           .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
           .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         this.definedClearValueDepth = definedClearValues.get(idx).depthStencil();
@@ -128,7 +128,7 @@ public abstract class VkRenderPass {
                     .pNext(NULL)
                     .pAttachments(attachments)
                     .pSubpasses(subpasses)
-                    .pDependencies(subpassDependencies);
+                    .pDependencies(null);
     
             LongBuffer pRenderPass = stack.longs(0);
             int err = vkCreateRenderPass(ctxt.device, renderPassInfo, null, pRenderPass);

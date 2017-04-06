@@ -40,6 +40,7 @@ public class VKContext {
     public static int currentBuffer = 0;
     public static boolean DUMP_SHADER_SRC = false;
     private static VkImageMemoryBarrier.Buffer BARRIER_MEM_IMG;
+    private static VkImageSubresourceRange BARRIER_MEM_IMG_SUBRESOURCE;
     public static VkMemoryBarrier.Buffer BARRIER_MEM_ATT_WRITE_SHADER_READ;
 
     private static VkClearColorValue CLEAR_COLOR;
@@ -509,6 +510,7 @@ public class VKContext {
 //                reallocRenderCommandBuffers();
             }
         }
+        
     }
     public VkShader loadShader(AssetManager assetManager, String string, int stage) {
         VkShader shader = assetManager.loadVkShaderBin(this, string, stage);
@@ -712,7 +714,7 @@ public class VKContext {
         BARRIER_MEM_IMG.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
         BARRIER_MEM_IMG.image(image);
 //        BARRIER_MEM_IMG.subresourceRange(subresourceRange);
-        BARRIER_MEM_IMG.subresourceRange()
+        BARRIER_MEM_IMG_SUBRESOURCE
             .aspectMask(aspectMask)
             .baseMipLevel(0)
             .levelCount(1)
@@ -794,6 +796,7 @@ public class VKContext {
         ZERO_OFFSET = memAllocLong(1);
         ZERO_OFFSET.put(0, 0);
         BARRIER_MEM_IMG = VkImageMemoryBarrier.calloc(1);
+        BARRIER_MEM_IMG_SUBRESOURCE = BARRIER_MEM_IMG.subresourceRange();
         BARRIER_MEM_ATT_WRITE_SHADER_READ = VkMemoryBarrier.calloc(1);
         BARRIER_MEM_ATT_WRITE_SHADER_READ.sType(VK_STRUCTURE_TYPE_MEMORY_BARRIER).pNext(0L);
         BARRIER_MEM_ATT_WRITE_SHADER_READ.srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT).dstAccessMask(VK_ACCESS_SHADER_READ_BIT);

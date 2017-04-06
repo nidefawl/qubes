@@ -176,8 +176,10 @@ public class GuiSettings extends Gui {
                 }
                 renderSettings.anisotropicFiltering = level;
                 Game.instance.saveSettings();
-                TextureArrays.blockTextureArray.setAnisotropicFiltering(level);
-                TextureArrays.blockTextureArray.reload();// make sync task?
+                if (!Engine.isVulkan) {
+                    TextureArrays.blockTextureArray.setAnisotropicFiltering(level);
+                    TextureArrays.blockTextureArray.reload();// make sync task?
+                }
             }
         }));
         int left = this.width / 2+15;

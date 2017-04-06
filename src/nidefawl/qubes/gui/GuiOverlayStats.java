@@ -257,23 +257,16 @@ public class GuiOverlayStats extends Gui {
         
         if (Game.instance.selBlock.getBlock()!=Block.air) {
             Engine.pxStack.push(0, 0, 10);
-//            Engine.clearDepth();
-            Engine.setPipeStateColored2D();
-            tess.setColorF(0x990000, 0.8f);
-            tess.add(0, y+totalHeight+8);
-            tess.add(maxW, y+totalHeight+8);
-            tess.add(maxW, y);
-            tess.add(0, y);
-            tess.drawQuads();
-            Engine.pxStack.push(0, 0, 10);
           Engine.itemRender.drawItem(Game.instance.selBlock, x, y+5, w, w);
-          Engine.pxStack.pop();
           Engine.pxStack.pop();
         }
         Block b = Game.instance.selBlock.getBlock();
         Engine.setPipeStateFontrenderer();
-        if (b != null)
+        if (b != null) {
+            Engine.pxStack.push(0, 0, 25);
             statsFontBig.drawString(b.getName(), 5, y+wBg+12, -1, true, 1.0f);
+            Engine.pxStack.pop();
+        }
 
         if (Engine.isVulkan&&false)
         {

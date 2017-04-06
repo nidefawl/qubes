@@ -137,7 +137,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
 
-            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboLights);
                 Engine.bindPipeline(VkPipelines.skybox_sample);
@@ -163,7 +163,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
             RenderersVulkan.lightCompute.render(world, fTime, 0);
             
             
-            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater, VK_SUBPASS_CONTENTS_INLINE);
+            Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass1, fbSceneWater);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureTerrainWater);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
                 Engine.bindPipeline(VkPipelines.water);
@@ -172,7 +172,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
-                Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass2, fbSceneFirstPerson, VK_SUBPASS_CONTENTS_INLINE);
+                Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass2, fbSceneFirstPerson);
                     renderFirstPerson(world, fTime);
                 Engine.endRenderPass();
             }
@@ -379,7 +379,7 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
         FrameBuffer fb = RenderersVulkan.outRenderer.frameBufferTonemapped;
         
-        Engine.beginRenderPass(VkRenderPasses.passPostTonemapOverlays, fb, VK_SUBPASS_CONTENTS_INLINE);
+        Engine.beginRenderPass(VkRenderPasses.passPostTonemapOverlays, fb);
         Engine.clearAllDescriptorSets();
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, Engine.descriptorSetUboTransform);
