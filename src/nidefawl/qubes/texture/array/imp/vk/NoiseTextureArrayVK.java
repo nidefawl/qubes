@@ -20,7 +20,6 @@ public class NoiseTextureArrayVK extends TextureArrayVK {
     @Override
     protected void uploadTextures() {
         int nBlock = 0;
-        int totalTex = this.blockIDToAssetList.size();
         TextureBinMips[] binMips = new TextureBinMips[this.numTextures];
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
         while (it.hasNext()) {
@@ -28,7 +27,7 @@ public class NoiseTextureArrayVK extends TextureArrayVK {
             AssetTexture tex = entry.getValue().get(0);
             binMips[entry.getKey()] = new TextureBinMips(tex.getData(), this.tileSize, this.tileSize); 
             Engine.checkGLError("GL12.glTexSubImage3D");
-            uploadprogress = ++nBlock / (float) totalTex;
+            this.numUploaded++;
         }
         this.totalSlots = nBlock;
         this.texture.build(this.internalFormat, binMips);
@@ -43,12 +42,13 @@ public class NoiseTextureArrayVK extends TextureArrayVK {
     @Override
     protected void collectTextures(AssetManager mgr) {
         int len = 64;
+        this.numTotalTextures = len;
         for (int i = 0; i < len; i++) {
             String path = "textures/noise/LDR_RGBA_" + i + ".png";
             AssetTexture tex = mgr.loadPNGAsset(path, false);
             blockIDToAssetList.put(i, Lists.newArrayList(tex));
             texNameToAssetMap.put(path, tex);
-            loadprogress = (i / (float) len);
+            this.numLoaded++;
         }
     }
 

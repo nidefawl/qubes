@@ -26,17 +26,19 @@ public class BlockModelManager {
      */
     public void init() {
     }
-    /**
-     * 
-     */
-    public void reload() {
-        AssetManager mgr = AssetManager.getInstance();
+    public void release() {
         if (!this.models.isEmpty()) {
             for (ModelQModel model : this.models.values()) {
                 model.release();
             }
             this.models.clear();
         }
+    }
+    /**
+     * 
+     */
+    public void reload() {
+        AssetManager mgr = AssetManager.getInstance();
         if (!this.textures.isEmpty()) {
             for (Integer texture : this.textures.values()) {
                 GL.deleteTexture(texture);

@@ -17,6 +17,7 @@ import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.util.GameLogicError;
 
 
 public class VulkanInit {
@@ -56,6 +57,7 @@ public class VulkanInit {
         enabledDeviceExtension.flip();
         if (installdebugcallback) {
             final Pattern p = Pattern.compile(".*image object 0x([0-9a-f]+).*");
+            final Pattern p2 = Pattern.compile(".*Sampler object 0x([0-9a-f]+).*");
             debugCallback = new VkDebugReportCallbackEXT() {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
                     String msg = VkDebugReportCallbackEXT.getString(pMessage);
@@ -67,6 +69,11 @@ public class VulkanInit {
                     if (m.matches()) {
                         long l = Long.parseLong(m.group(1), 16);
                         VkDebug.printStack(l);
+                    }
+                    m = p2.matcher(msg);
+                    if (m.matches()) {
+                        long l = Long.parseLong(m.group(1), 16);
+                        VkDebug.printStackSampler(l);
                     }
                     GameBase.baseInstance.setException(new GameError("ERROR OCCURED: " + msg));
                     return 0;
@@ -144,8 +151,9 @@ public class VulkanInit {
         ctxt.swapChain.height = windowHeight;
         getSurfaceColorFormatAndSpace(ctxt);
         ctxt.descriptorPool = createDescriptorPool(ctxt);
-        ctxt.copyCommandPool = createCommandPool(ctxt, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);;
-        ctxt.renderCommandPool = createCommandPool(ctxt, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+        ctxt.renderCommandPool = createCommandPool(ctxt, ctxt.queueFamilyIndexGraphics, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+        ctxt.copyCommandPoolGraphics = createCommandPool(ctxt, ctxt.queueFamilyIndexGraphics, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+        ctxt.copyCommandPoolTransfer = createCommandPool(ctxt, ctxt.queueFamilyIndexTransfer, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
         createDeviceQueue(ctxt);
         ctxt.descLayouts = new VkDescLayouts(ctxt);
         // Find a suitable depth format
@@ -208,17 +216,24 @@ public class VulkanInit {
     }
     private static void createDeviceQueue(VKContext ctxt) {
         PointerBuffer pQueue = memAllocPointer(1);
-        vkGetDeviceQueue(ctxt.device, ctxt.queueFamilyIndex, 0, pQueue);
-        long queue = pQueue.get(0);
+        vkGetDeviceQueue(ctxt.device, ctxt.queueFamilyIndexGraphics, 0, pQueue);
+        ctxt.vkQueue = new VkQueue(pQueue.get(0), ctxt.device);
+        if (ctxt.queueFamilyIndexCompute > -1) {
+            vkGetDeviceQueue(ctxt.device, ctxt.queueFamilyIndexCompute, 0, pQueue);
+            ctxt.vkQueueCompute = new VkQueue(pQueue.get(0), ctxt.device);
+        }
+        if (ctxt.queueFamilyIndexTransfer > -1) {
+            vkGetDeviceQueue(ctxt.device, ctxt.queueFamilyIndexTransfer, 0, pQueue);
+            ctxt.vkQueueTransfer = new VkQueue(pQueue.get(0), ctxt.device);
+        }
         memFree(pQueue);
-        ctxt.vkQueue = new VkQueue(queue, ctxt.device);
     }
 
-    static long createCommandPool(VKContext ctxt, int flags) {
+    static long createCommandPool(VKContext ctxt, int queueIdx, int flags) {
         VkCommandPoolCreateInfo cmdPoolInfo = VkCommandPoolCreateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO)
-                .queueFamilyIndex(ctxt.queueFamilyIndex)
-                .flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+                .queueFamilyIndex(queueIdx)
+                .flags(flags);
         LongBuffer pCmdPool = memAllocLong(1);
         int err = vkCreateCommandPool(ctxt.device, cmdPoolInfo, null, pCmdPool);
         long commandPool = pCmdPool.get(0);
@@ -538,18 +553,61 @@ public class VulkanInit {
         VkQueueFamilyProperties.Buffer queueProps = VkQueueFamilyProperties.calloc(queueCount);
         vkGetPhysicalDeviceQueueFamilyProperties(ctxt.getPhysicalDevice(), pQueueFamilyPropertyCount, queueProps);
         memFree(pQueueFamilyPropertyCount);
-        int graphicsQueueFamilyIndex;
-        for (graphicsQueueFamilyIndex = 0; graphicsQueueFamilyIndex < queueCount; graphicsQueueFamilyIndex++) {
-            if ((queueProps.get(graphicsQueueFamilyIndex).queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0)
+        int queueIdxGraphic = -1;
+        int queueIdxTransfer = -1;
+        int queueIdxCompute = -1;
+        for (int i = 0; i < queueCount; i++) {
+            if ((queueProps.get(i).queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                queueIdxGraphic = i;
                 break;
+            }
+        }
+        for (int i = 0; i < queueCount; i++) {
+            if (queueProps.get(i).queueFlags() == VK_QUEUE_TRANSFER_BIT) {
+                queueIdxTransfer = i;
+                break;
+            }
+        }
+        for (int i = 0; i < queueCount; i++) {
+            if (queueProps.get(i).queueFlags() == VK_QUEUE_COMPUTE_BIT) {
+                queueIdxCompute = i;
+                break;
+            }
         }
         queueProps.free();
-        FloatBuffer pQueuePriorities = memAllocFloat(1).put(0.0f);
-        pQueuePriorities.flip();
-        VkDeviceQueueCreateInfo.Buffer queueCreateInfo = VkDeviceQueueCreateInfo.calloc(1)
+        if (queueIdxGraphic < 0) {
+            throw new GameLogicError("Missing queue");
+        }
+        int nQueues = 1;
+        if (queueIdxCompute>-1)
+            nQueues++;
+        if (queueIdxTransfer>-1)
+            nQueues++;
+        VkDeviceQueueCreateInfo.Buffer queueCreateInfo = VkDeviceQueueCreateInfo.calloc(nQueues);
+        FloatBuffer pQueuePriorities = memAllocFloat(1);
+        pQueuePriorities.put(0, 1);
+        
+        queueCreateInfo.get(0)
+            .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+            .queueFamilyIndex(queueIdxGraphic)
+            .pQueuePriorities(pQueuePriorities);
+        int idx = 1;
+        if (queueIdxCompute > -1) {
+            pQueuePriorities = memAllocFloat(1);
+            pQueuePriorities.put(0, 0);
+            queueCreateInfo.get(idx++)
                 .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
-                .queueFamilyIndex(graphicsQueueFamilyIndex)
+                .queueFamilyIndex(queueIdxCompute)
                 .pQueuePriorities(pQueuePriorities);
+        }
+        if (queueIdxTransfer > -1) {
+            pQueuePriorities = memAllocFloat(1);
+            pQueuePriorities.put(0, 0);
+            queueCreateInfo.get(idx++)
+                .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                .queueFamilyIndex(queueIdxTransfer)
+                .pQueuePriorities(pQueuePriorities);
+        }
         VkPhysicalDeviceFeatures features = VkPhysicalDeviceFeatures.calloc();
         setupReqFeatures(features);
         VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.calloc()
@@ -572,7 +630,9 @@ public class VulkanInit {
 
 
         ctxt.device = new VkDevice(device, ctxt.getPhysicalDevice(), deviceCreateInfo);
-        ctxt.queueFamilyIndex = graphicsQueueFamilyIndex;
+        ctxt.queueFamilyIndexGraphics = queueIdxGraphic;
+        ctxt.queueFamilyIndexTransfer = queueIdxTransfer;
+        ctxt.queueFamilyIndexCompute = queueIdxCompute;
 
         deviceCreateInfo.free();
         memFree(pQueuePriorities);

@@ -165,7 +165,6 @@ public class VkPipelineGraphics extends VkPipeline {
             }
             if (this.allPipes == null&&this.derivedPipeDef != null) {
                 for (int i = 1; i < nPipelines; i++) {
-                    System.out.println(pipelineCreateInfoBuffer+"/"+nPipelines+"/"+i);
                     pipelineCreateInfoBuffer.put(i, mainPipe);
                     VkGraphicsPipelineCreateInfo subPipeline = pipelineCreateInfoBuffer.get(i);
                     subPipeline.flags(VK_PIPELINE_CREATE_DERIVATIVE_BIT);

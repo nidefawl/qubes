@@ -38,7 +38,7 @@ public class BufferPair implements RefTrackedResource {
         this.vert.upload(bufVert, offsetvert);
         this.idx.upload(bufIdx, offsetIdx);
         if (this.vert.isDeviceLocal()) {
-            flagUse(Engine.vkContext.getCopyCommandBuffer().frameIdx);
+            flagUse(Engine.vkContext.getTransferCopyCommandBuffer().frameIdx);
         }
     }
     public void setElementCount(int l) {

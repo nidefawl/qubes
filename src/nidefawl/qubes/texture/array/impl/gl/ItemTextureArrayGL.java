@@ -4,8 +4,7 @@ import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOT
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.lwjgl.opengl.GL11;
@@ -66,11 +65,11 @@ public class ItemTextureArrayGL extends TextureArrayGL {
                     slotTextureMap.put(slot, tex);
                     setTexture(blockId, i, slot);
                     slot++;
+                    this.numUploaded++;
                 } else {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            uploadprogress = ++nBlock / (float) totalBlocks;
         }
 
         this.totalSlots = slot;
@@ -80,6 +79,14 @@ public class ItemTextureArrayGL extends TextureArrayGL {
     protected void collectTextures(AssetManager mgr) {
         Item[] items = Item.item;
         int len = items.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Item itzem = items[i];
+            if (itzem != null) {
+                set.addAll(Arrays.asList(itzem.getTextures()));
+            }
+        }
+        this.numTotalTextures = set.size();
         for (int i = 0; i < len; i++) {
             Item itzem = items[i];
             if (itzem != null) {
@@ -88,6 +95,7 @@ public class ItemTextureArrayGL extends TextureArrayGL {
                     AssetTexture tex = texNameToAssetMap.get(s);
                     if (tex == null) {
                         tex = mgr.loadPNGAsset(s, false);
+                        this.numLoaded++;
                         if (tex.getWidth() != tex.getHeight()) {
                             if (tex.getHeight() > tex.getWidth()) {
                                 tex.cutH();
@@ -100,7 +108,6 @@ public class ItemTextureArrayGL extends TextureArrayGL {
                 }
                 blockIDToAssetList.put(itzem.id, list);
             }
-            loadprogress = (i / (float) len);
         }
     }
 

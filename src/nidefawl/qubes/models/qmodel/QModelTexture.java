@@ -29,38 +29,47 @@ public class QModelTexture {
         this.name = loader.readString(32);
         this.path = loader.readString(128);
 //        System.out.println(loader.getModelName()+" - texture "+idx+": name "+this.name+", path "+this.path);
-        if (Engine.isVulkan) {
-            AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
-            this.loaded = true;
-            this.vkTexture = new VkTexture(Engine.vkContext);
-            TextureBinMips binMips = new TextureBinMips(t);
-            this.vkTexture.build(VK_FORMAT_R8G8B8A8_UNORM, binMips);
-            this.vkTexture.genView();
-            
-//          vkContext.descLayouts.getDescriptorSets);
-            this.descriptorSetTex = Engine.vkContext.descLayouts.allocDescSetSampleSingle();
-            
-            this.descriptorSetTex.setBindingCombinedImageSampler(0, this.vkTexture.getView(), Engine.vkContext.samplerLinear, this.vkTexture.getImageLayout());
-            this.descriptorSetTex.update(Engine.vkContext);
-
-        }
     }
-    
-    public int get() {
-        //TODO: load textures in thread/dynamic, globally
+    public void load() {
         if (!this.loaded) {
-            this.loaded = true;
-            AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
-            int maxDim = Math.max(t.getWidth(), t.getHeight());
-            int mipmapLevel = 1+GameMath.log2(maxDim);
-            this.glid = TextureManager.getInstance().makeNewTexture(t, false, true, mipmapLevel);
+            if (Engine.isVulkan) {
+                AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
+                this.vkTexture = new VkTexture(Engine.vkContext);
+                TextureBinMips binMips = new TextureBinMips(t);
+                this.vkTexture.build(VK_FORMAT_R8G8B8A8_UNORM, binMips);
+                this.vkTexture.genView();
+                
+//              vkContext.descLayouts.getDescriptorSets);
+                this.descriptorSetTex = Engine.vkContext.descLayouts.allocDescSetSampleSingle();
+                
+                this.descriptorSetTex.setBindingCombinedImageSampler(0, this.vkTexture.getView(), Engine.vkContext.samplerLinear, this.vkTexture.getImageLayout());
+                this.descriptorSetTex.update(Engine.vkContext);
+
+            } else {
+                AssetTexture t = AssetManager.getInstance().loadPNGAsset("models/"+this.path.toLowerCase());
+                int maxDim = Math.max(t.getWidth(), t.getHeight());
+                int mipmapLevel = 1+GameMath.log2(maxDim);
+                this.glid = TextureManager.getInstance().makeNewTexture(t, false, true, mipmapLevel);
+            }
         }
+        this.loaded = true;
+    }
+    public int get() {
         return this.glid;
     }
 
     public void release() {
-        GL.deleteTexture(this.glid);
-        this.glid = 0;
+        if (this.loaded) {
+            if (this.glid > 0) {
+                GL.deleteTexture(this.glid);
+                this.glid = 0;
+            }
+            if (this.vkTexture != null) {
+                this.vkTexture.destroy();
+                this.vkTexture = null;
+            }
+            this.descriptorSetTex = null;
+        }
     }
 
 }

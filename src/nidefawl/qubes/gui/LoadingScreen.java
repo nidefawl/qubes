@@ -56,8 +56,8 @@ public class LoadingScreen {
                 this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
                 this.frameBuffer.build(VkRenderPasses.passFramebuffer, Engine.getGuiWidth(), Engine.getGuiHeight());
             }
-            vkContext.finishUpload();
             Engine.preRenderUpdateVK();
+            vkContext.finishUpload();
             vkContext.preRender();
             int width = tw = vkContext.swapChain.width;
             int height = th = vkContext.swapChain.height;

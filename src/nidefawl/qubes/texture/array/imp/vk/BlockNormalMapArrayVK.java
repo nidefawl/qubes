@@ -1,7 +1,6 @@
 package nidefawl.qubes.texture.array.imp.vk;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
@@ -38,6 +37,14 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
     protected void collectTextures(AssetManager mgr) {
         Block[] blocks = Block.block;
         int len = blocks.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
+            if (b != null) {
+                set.addAll(Arrays.asList(b.getNormalMaps()));
+            }
+        }
+        this.numTotalTextures = set.size();
         for (int i = 0; i < len; i++) {
             Block b = blocks[i];
             if (b != null) {
@@ -46,6 +53,7 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
                     AssetTexture tex = texNameToAssetMap.get(s);
                     if (tex == null) {
                         tex = mgr.loadPNGAsset(s, false);
+                        this.numLoaded++;
                         if (tex.getWidth() != tex.getHeight()) {
                             if (tex.getHeight()>tex.getWidth()) {
                                 tex.cutH();
@@ -58,7 +66,6 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
                 }
                 blockIDToAssetList.put(b.id, list);
             }
-            loadprogress = (i / (float) len);
         }
     
     }
@@ -94,6 +101,7 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
                 if (reuseslot < 0) {
                     byte[] data = tex.getData();
                     binMips[slot] = new TextureBinMips(data, this.tileSize, this.tileSize);
+                    this.numUploaded++;
                     
                     tex.setSlot(slot);
                     slotTextureMap.put(slot, tex);
@@ -103,7 +111,6 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            uploadprogress = ++nBlock/(float)totalBlocks;
         }
 
         this.totalSlots = slot;

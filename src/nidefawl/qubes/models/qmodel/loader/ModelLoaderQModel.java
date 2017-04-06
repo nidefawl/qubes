@@ -226,4 +226,11 @@ public class ModelLoaderQModel extends BinaryStreamReader {
         }
         return substr;
     }
+    public void loadTextures() {
+        for (int i = 0; i < this.listTextures.size(); i++) {
+            QModelTexture qmodeltexture = this.listTextures.get(i);
+            qmodeltexture.load();
+            
+        }
+    }
 }

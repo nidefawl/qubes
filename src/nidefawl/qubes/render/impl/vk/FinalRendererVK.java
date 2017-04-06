@@ -12,6 +12,7 @@ import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import com.google.common.collect.Lists;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.RenderersVulkan;
@@ -132,6 +133,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
             }
             this.samplerClamp = pSampler.get(0);
+            if (GameBase.DEBUG_LAYER) {
+                VkDebug.registerSampler(this.samplerClamp);
+            }
             sampler.magFilter(VK_FILTER_NEAREST);
             sampler.minFilter(VK_FILTER_NEAREST);
             sampler.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
@@ -140,6 +144,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
             }
             this.samplerNearest = pSampler.get(0);
+            if (GameBase.DEBUG_LAYER) {
+                VkDebug.registerSampler(this.samplerNearest);
+            }
         }
     }
 
@@ -375,6 +382,10 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         if (this.samplerClamp != VK_NULL_HANDLE) {
             vkDestroySampler(Engine.vkContext.device, this.samplerClamp, null);
             this.samplerClamp = VK_NULL_HANDLE;
+        }
+        if (this.samplerNearest != VK_NULL_HANDLE) {
+            vkDestroySampler(Engine.vkContext.device, this.samplerNearest, null);
+            this.samplerNearest = VK_NULL_HANDLE;
         }
     }
     public void renderBloom() {

@@ -17,15 +17,66 @@ import nidefawl.qubes.texture.array.*;
 public class RenderAssets {
 
     public static void load(RenderSettings renderSettings, LoadingScreen loadingScreen) {
-        if (loadingScreen != null) loadingScreen.setProgress(0, 0.8f, "Loading... Item Models");
-        ItemModelManager.getInstance().reload();
-        ItemModelManager.getInstance().redraw();
-        if (loadingScreen != null) loadingScreen.setProgress(0, 0.9f, "Loading... Block Models");
-        BlockModelManager.getInstance().reload();
-        if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Entity Models");
-        EntityModelManager.getInstance().reload();
-        EntityModelManager.getInstance().redraw();
-        if (loadingScreen != null) loadingScreen.setProgress(0, 1f, "Loading... Item Textures");
+        if (loadingScreen != null) loadingScreen.setProgress(0, 0.1f, "Loading...");
+        AsyncTasks.submit(new AsyncTask() {
+
+            @Override
+            public void pre() {
+                ItemModelManager.getInstance().release();
+            }
+            @Override
+            public void post() {
+                ItemModelManager.getInstance().redraw();
+            }
+            @Override
+            public Void call() throws Exception {
+                ItemModelManager.getInstance().reload();
+                return null;
+            }
+            @Override
+            public TaskType getType() {
+                return TaskType.LOAD_TEXTURES;
+            }  
+        });
+        AsyncTasks.submit(new AsyncTask() {
+
+            @Override
+            public void pre() {
+                BlockModelManager.getInstance().release();
+            }
+            @Override
+            public void post() {
+            }
+            @Override
+            public Void call() throws Exception {
+                BlockModelManager.getInstance().reload();
+                return null;
+            }
+            @Override
+            public TaskType getType() {
+                return TaskType.LOAD_TEXTURES;
+            }  
+        });
+        AsyncTasks.submit(new AsyncTask() {
+
+            @Override
+            public void pre() {
+                EntityModelManager.getInstance().release();
+            }
+            @Override
+            public void post() {
+                EntityModelManager.getInstance().redraw();
+            }
+            @Override
+            public Void call() throws Exception {
+                EntityModelManager.getInstance().reload();
+                return null;
+            }
+            @Override
+            public TaskType getType() {
+                return TaskType.LOAD_TEXTURES;
+            }  
+        });
         TextureArray[] arrays = TextureArrays.init();
         if (renderSettings != null)
             TextureArrays.blockTextureArray.setAnisotropicFiltering(renderSettings.anisotropicFiltering);
@@ -66,11 +117,15 @@ public class RenderAssets {
             });
         }
         while(!AsyncTasks.completeTasks()) {
-            float pr = 0;
+            int nToLoad = 0;
+            int nLoaded = 0;
             for (int i = 0; i < arrays.length; i++) {
-                pr+=arrays[i].getProgress();
+                nToLoad+=arrays[i].numTotalTextures;
+                nLoaded+=arrays[i].numLoaded;
+                nLoaded+=arrays[i].numUploaded;
+//                System.out.println(arrays[i].numLoaded+","+arrays[i].numUploaded+","+arrays[i].numTotalTextures);
             }
-            pr/=(float)arrays.length;
+            float pr = nLoaded / (float) nToLoad;
             if (loadingScreen != null) loadingScreen.setProgress(1, pr, "Loading...");
             try {
                 Thread.sleep(1);

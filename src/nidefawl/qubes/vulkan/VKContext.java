@@ -28,6 +28,7 @@ import nidefawl.qubes.shader.IShaderDef;
 import nidefawl.qubes.shader.ShaderSource;
 import nidefawl.qubes.shader.ShaderSource.ProcessMode;
 import nidefawl.qubes.util.GameLogicError;
+import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vulkan.spirvloader.SpirvCompiler;
 import nidefawl.qubes.vulkan.spirvloader.SpirvCompilerOutput;
 
@@ -47,11 +48,14 @@ public class VKContext {
 
     public boolean reinitSwapchain = false;
     private boolean isInit;
-    private boolean begin;
+    private boolean hasOpenCopyCommandTransfer;
+    private boolean hasOpenCopyCommandGraphics;
 
     public final VkInstance                    vk;
     public VkDevice                            device;
     public VkQueue                             vkQueue;
+    public VkQueue                             vkQueueTransfer;
+    public VkQueue                             vkQueueCompute;
     public SwapChain                           swapChain           = null;
     private VkPresentInfoKHR                   presentInfo;
     public VkSubmitInfo                        submitInfo;
@@ -71,14 +75,17 @@ public class VKContext {
     private long                               freeFence                     = VK_NULL_HANDLE;
     private long                               copyFence                     = VK_NULL_HANDLE;
     public long                                renderCommandPool             = VK_NULL_HANDLE;
-    public long                                copyCommandPool               = VK_NULL_HANDLE;
+    public long                                copyCommandPoolGraphics       = VK_NULL_HANDLE;
+    public long                                copyCommandPoolTransfer       = VK_NULL_HANDLE;
     public long                                descriptorPool                = VK_NULL_HANDLE;
     public long                               samplerLinear                  = VK_NULL_HANDLE;
     public long                               samplerLinearClamp             = VK_NULL_HANDLE;
     public long                               samplerNearest                 = VK_NULL_HANDLE;
     
     protected long                             debugCallbackHandle           = VK_NULL_HANDLE;
-    protected int                              queueFamilyIndex;
+    protected int                              queueFamilyIndexGraphics;
+    protected int                              queueFamilyIndexCompute;
+    protected int                              queueFamilyIndexTransfer;
     protected LongBuffer                       psemaphorePresentComplete;
     protected LongBuffer                       psemaphoreRenderComplete;
     protected IntBuffer                        pWaitDstStageMask;
@@ -86,7 +93,8 @@ public class VKContext {
     private IntBuffer                          pImageIndex;
     private LongBuffer                         pSwapchains;
 
-    CommandBuffer[]                            copyCommandBuffers            = null;
+    CommandBuffer[]                            copyCommandBuffersGraphics            = null;
+    CommandBuffer[]                            copyCommandBuffersTransfer            = null;
     private CommandBuffer[]                    renderCommandBuffers;
     private CommandBuffer                      currentCmdBuffer;
     
@@ -119,10 +127,12 @@ public class VKContext {
 //               vkWaitForFences(device, lFences, true, 1000000L*100L);
                freeFence = -1L; // signal that we have no fence in any queue submitted
             }
-            vkQueueWaitIdle(vkQueue);
-        } else {
-            vkQueueWaitIdle(vkQueue);
         }
+        vkQueueWaitIdle(vkQueue);
+        if (vkQueueCompute != null)
+            vkQueueWaitIdle(vkQueueCompute);
+        if (vkQueueTransfer != null)
+            vkQueueWaitIdle(vkQueueTransfer);
     }
     public void shutdown() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.shutdown");
@@ -158,14 +168,20 @@ public class VKContext {
         if (renderCommandPool != VK_NULL_HANDLE) {
             vkDestroyCommandPool(device, renderCommandPool, null);
         }
-        if (copyCommandPool != VK_NULL_HANDLE) {
-            vkDestroyCommandPool(device, copyCommandPool, null);
+        if (copyCommandPoolGraphics != VK_NULL_HANDLE) {
+            vkDestroyCommandPool(device, copyCommandPoolGraphics, null);
+        }
+        if (copyCommandPoolTransfer != VK_NULL_HANDLE) {
+            vkDestroyCommandPool(device, copyCommandPoolTransfer, null);
         }
         if (samplerLinear != VK_NULL_HANDLE) {
             vkDestroySampler(device, samplerLinear, null);
         }
         if (samplerNearest != VK_NULL_HANDLE) {
             vkDestroySampler(device, samplerNearest, null);
+        }
+        if (samplerLinearClamp != VK_NULL_HANDLE) {
+            vkDestroySampler(device, samplerLinearClamp, null);
         }
 
         this.descLayouts.destroy();
@@ -249,6 +265,9 @@ public class VKContext {
                     throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
                 }
                 samplerLinear = pSampler.get(0);
+                if (GameBase.DEBUG_LAYER) {
+                    VkDebug.registerSampler(this.samplerLinear);
+                }
             }
             {
                 sampler.addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -259,6 +278,9 @@ public class VKContext {
                     throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
                 }
                 samplerLinearClamp = pSampler.get(0);
+                if (GameBase.DEBUG_LAYER) {
+                    VkDebug.registerSampler(this.samplerLinearClamp);
+                }
             }
             {
                 sampler.minFilter(VK_FILTER_NEAREST);
@@ -272,6 +294,9 @@ public class VKContext {
                     throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
                 }
                 samplerNearest = pSampler.get(0);
+                if (GameBase.DEBUG_LAYER) {
+                    VkDebug.registerSampler(this.samplerNearest);
+                }
             }
         
         }
@@ -303,7 +328,8 @@ public class VKContext {
     }
 
     private void initCommandBuffers(int length) {
-        this.copyCommandBuffers = new CommandBuffer[length];
+        this.copyCommandBuffersTransfer = new CommandBuffer[length];
+        this.copyCommandBuffersGraphics = new CommandBuffer[length];
         this.renderCommandBuffers = new CommandBuffer[length];
         try ( MemoryStack stack = stackPush() ) {
             VkCommandBufferAllocateInfo cmdBufAllocInfo = VkCommandBufferAllocateInfo.callocStack()
@@ -311,10 +337,15 @@ public class VKContext {
                     .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
                     .commandBufferCount(length);
             PointerBuffer pCommandBuffer = stack.callocPointer(length);
-            cmdBufAllocInfo.commandPool(this.copyCommandPool);
+            cmdBufAllocInfo.commandPool(this.copyCommandPoolTransfer);
             vkAllocateCommandBuffers(this.device, cmdBufAllocInfo, pCommandBuffer);
             for (int i = 0; i < length; i++) {
-                this.copyCommandBuffers[i] = new CommandBuffer(pCommandBuffer.get(i), device, i);
+                this.copyCommandBuffersTransfer[i] = new CommandBuffer(pCommandBuffer.get(i), device, i);
+            }
+            cmdBufAllocInfo.commandPool(this.copyCommandPoolGraphics);
+            vkAllocateCommandBuffers(this.device, cmdBufAllocInfo, pCommandBuffer);
+            for (int i = 0; i < length; i++) {
+                this.copyCommandBuffersGraphics[i] = new CommandBuffer(pCommandBuffer.get(i), device, i);
             }
             cmdBufAllocInfo.commandPool(this.renderCommandPool);
             vkAllocateCommandBuffers(this.device, cmdBufAllocInfo, pCommandBuffer);
@@ -325,9 +356,14 @@ public class VKContext {
     }
     void freeCommandBuffers() {
         if (VK_DEBUG_CTXT) System.err.println("VKContext.freeCopyCommandBufferFrames");
-        if (copyCommandBuffers != null) {
-            for (int i = 0; i < copyCommandBuffers.length; i++) {
-                vkFreeCommandBuffers(device, copyCommandPool, copyCommandBuffers[i]);
+        if (copyCommandBuffersTransfer != null) {
+            for (int i = 0; i < copyCommandBuffersTransfer.length; i++) {
+                vkFreeCommandBuffers(device, copyCommandPoolTransfer, copyCommandBuffersTransfer[i]);
+            }
+        }
+        if (copyCommandBuffersGraphics != null) {
+            for (int i = 0; i < copyCommandBuffersGraphics.length; i++) {
+                vkFreeCommandBuffers(device, copyCommandPoolGraphics, copyCommandBuffersGraphics[i]);
             }
         }
         if (renderCommandBuffers != null) {
@@ -335,7 +371,9 @@ public class VKContext {
                 vkFreeCommandBuffers(device, renderCommandPool, renderCommandBuffers[i]);
             }
         }
-        copyCommandBuffers = null;
+        copyCommandBuffersGraphics = null;
+        copyCommandBuffersTransfer = null;
+        renderCommandBuffers = null;
     }
     
     private void initFences(int length) {
@@ -377,7 +415,7 @@ public class VKContext {
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkResetFences failed: " + VulkanErr.toString(err));
             }
-            if (begin) {
+            if (hasOpenCopyCommandGraphics) {
                 throw new GameLogicError("cpyCmdBuf is open, error");
             }
             freeFence = this.fences[currentBuffer];
@@ -393,7 +431,7 @@ public class VKContext {
         
     }
     public void postRender() {
-        if (begin) {
+        if (hasOpenCopyCommandGraphics) {
             throw new GameLogicError("cpyCmdBuf is open, error");
         }
         if (swapChain.swapChainAquired) {
@@ -576,44 +614,72 @@ public class VKContext {
     }
     public void finishUpload() {
         //TODO: create unsychronized upload handle using fences and non-blocking vkWaitForFences calls
-        if (begin) {
-            begin = false;
-            copyCommandBuffers[currentBuffer].inUse = true;
-            int err = vkEndCommandBuffer(copyCommandBuffers[currentBuffer]);
-            if (err != VK_SUCCESS) {
-                throw new AssertionError("vkEndCommandBuffer failed: " + VulkanErr.toString(err));
-            }
-//            System.out.println("SUBMIT COPY CMD "+currentBuffer);
-            try ( MemoryStack stack = stackPush() ) {
-                VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-                PointerBuffer pCommandBuffers = stack.pointers(copyCommandBuffers[currentBuffer]);
-                submitInfo.pCommandBuffers(pCommandBuffers);
+        for (int i = 0; i < 2; i++) {
+            boolean open = i == 0 ? hasOpenCopyCommandGraphics : hasOpenCopyCommandTransfer;
+            if (open) {
+                System.out.println("Submit queue "+i+ " - "+Stats.fpsCounter);
+                VkQueue queue = i == 0 ? vkQueue : vkQueueTransfer;
+                CommandBuffer[] buffers = i == 0 ? copyCommandBuffersGraphics : copyCommandBuffersTransfer;
+                buffers[currentBuffer].inUse = true;
+                int err = vkEndCommandBuffer(buffers[currentBuffer]);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkEndCommandBuffer failed: " + VulkanErr.toString(err));
+                }
+//                System.out.println("SUBMIT COPY CMD "+currentBuffer);
+                try ( MemoryStack stack = stackPush() ) {
+                    VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+                    PointerBuffer pCommandBuffers = stack.pointers(buffers[currentBuffer]);
+                    submitInfo.pCommandBuffers(pCommandBuffers);
 
-                err = vkResetFences(device, this.copyFence);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkResetFences failed: " + VulkanErr.toString(err));
+                    err = vkResetFences(device, this.copyFence);
+                    if (err != VK_SUCCESS) {
+                        throw new AssertionError("vkResetFences failed: " + VulkanErr.toString(err));
+                    }
+                    
+                    err = vkQueueSubmit(queue, submitInfo, copyFence);
+                    if (err != VK_SUCCESS) {
+                        throw new AssertionError("vkQueueSubmit failed: " + VulkanErr.toString(err));
+                    }
+                    //Wait for upload to complete!
+                    err = vkWaitForFences(device, this.copyFence, true, 1000L*1000L*6000L);
+                    if (err != VK_SUCCESS) {
+                        throw new AssertionError("vkWaitForFences failed: " + VulkanErr.toString(err));
+                    }
+                    buffers[currentBuffer].inUse = false;
+                    buffers[currentBuffer].completeTasks();
                 }
-                
-                err = vkQueueSubmit(this.vkQueue, submitInfo, copyFence);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkQueueSubmit failed: " + VulkanErr.toString(err));
-                }
-                //Wait for upload to complete!
-                err = vkWaitForFences(device, this.copyFence, true, 1000L*1000L*6000L);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkWaitForFences failed: " + VulkanErr.toString(err));
-                }
-                copyCommandBuffers[currentBuffer].inUse = false;
+            
             }
         }
+        hasOpenCopyCommandGraphics = false;
+        hasOpenCopyCommandTransfer = false;
     }
-    public CommandBuffer getCopyCommandBuffer() {
-        CommandBuffer commandBuffer = copyCommandBuffers[currentBuffer];
+    public CommandBuffer getGraphicsCopyCommandBuffer() {
+        CommandBuffer commandBuffer = copyCommandBuffersGraphics[currentBuffer];
         if (commandBuffer.inUse) {
             throw new GameLogicError("CANNOT START ANOTHER CPY BUFFER FOR THIS FRAME");
         }
-        if (!begin) {
-            begin = true;
+        if (!hasOpenCopyCommandGraphics) {
+            hasOpenCopyCommandGraphics = true;
+            try ( MemoryStack stack = stackPush() ) {
+                VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.callocStack(stack)
+                        .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                        .pNext(NULL).flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+                int err = vkBeginCommandBuffer(commandBuffer, cmdBufInfo);
+                if (err != VK_SUCCESS) {
+                    throw new AssertionError("vkBeginCommandBuffer failed: " + VulkanErr.toString(err));
+                }
+            }
+        }
+        return commandBuffer;
+    }
+    public CommandBuffer getTransferCopyCommandBuffer() {
+        CommandBuffer commandBuffer = copyCommandBuffersTransfer[currentBuffer];
+        if (commandBuffer.inUse) {
+            throw new GameLogicError("CANNOT START ANOTHER CPY BUFFER FOR THIS FRAME");
+        }
+        if (!hasOpenCopyCommandTransfer) {
+            hasOpenCopyCommandTransfer = true;
             try ( MemoryStack stack = stackPush() ) {
                 VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.callocStack(stack)
                         .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
@@ -181,9 +182,12 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
               this.sampler = pSampler.get(0);
               this.descTextureSkyboxCubemap.setBindingCombinedImageSampler(0, this.view, this.sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
               this.descTextureSkyboxCubemap.update(Engine.vkContext);
+              if (GameBase.DEBUG_LAYER) {
+                  VkDebug.registerSampler(this.sampler);
+              }
               
         }
-        ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, 6, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0, 0, 1);
+        ctxt.clearImage(ctxt.getGraphicsCopyCommandBuffer(), this.image, 6, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0, 0, 1);
         redraw();
     }
     @Override

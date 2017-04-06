@@ -11,6 +11,7 @@ import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import org.lwjgl.vulkan.VkViewport;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.models.render.QModelBatchedRender;
 import nidefawl.qubes.render.RenderersVulkan;
@@ -130,6 +131,9 @@ public class ShadowRendererVK extends ShadowRenderer {
                 throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
             }
             this.sampler = pSampler.get(0);
+            if (GameBase.DEBUG_LAYER) {
+                VkDebug.registerSampler(this.sampler);
+            }
         }
     }
     @Override

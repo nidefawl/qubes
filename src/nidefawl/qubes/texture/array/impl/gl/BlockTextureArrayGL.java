@@ -6,8 +6,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.lwjgl.opengl.*;
@@ -129,11 +128,11 @@ public class BlockTextureArrayGL extends TextureArrayGL {
                     slotTextureMap.put(slot, tex);
                     setTexture(blockId, i, slot);
                     slot++;
+                    this.numUploaded++;
                 } else {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            uploadprogress = ++nBlock / (float) totalBlocks;
         }
         this.totalSlots = slot;
     }
@@ -142,6 +141,14 @@ public class BlockTextureArrayGL extends TextureArrayGL {
     protected void collectTextures(AssetManager mgr) {
         Block[] blocks = Block.block;
         int len = blocks.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
+            if (b != null) {
+                set.addAll(Arrays.asList(b.getTextures()));
+            }
+        }
+        this.numTotalTextures = set.size();
         for (int i = 0; i < len; i++) {
             Block b = blocks[i];
             if (b != null) {
@@ -150,6 +157,7 @@ public class BlockTextureArrayGL extends TextureArrayGL {
                     AssetTexture tex = texNameToAssetMap.get(s);
                     if (tex == null) {
                         tex = mgr.loadPNGAsset(s, false);
+                        this.numLoaded++;
                         if (tex.getWidth() != tex.getHeight()) {
                             if (tex.getHeight() > tex.getWidth()) {
                                 tex.cutH();
@@ -162,7 +170,6 @@ public class BlockTextureArrayGL extends TextureArrayGL {
                 }
                 blockIDToAssetList.put(b.id, list);
             }
-            loadprogress = (i / (float) len);
         }
     }
 

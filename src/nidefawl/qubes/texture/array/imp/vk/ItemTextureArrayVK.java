@@ -1,7 +1,6 @@
 package nidefawl.qubes.texture.array.imp.vk;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
@@ -36,6 +35,7 @@ public class ItemTextureArrayVK extends TextureArrayVK {
                 AssetTexture tex = blockTexture.get(i);
                 int reuseslot = tex.getSlot();
                 if (reuseslot < 0) {
+                    this.numUploaded++;
                     byte[] data = tex.getData();
                     TextureUtil.clampAlpha(data, this.tileSize, this.tileSize);
                     int avg = TextureUtil.getAverageColor(data, this.tileSize, this.tileSize);
@@ -68,7 +68,6 @@ public class ItemTextureArrayVK extends TextureArrayVK {
                     setTexture(blockId, i, reuseslot);
                 }
             }
-            uploadprogress = ++nBlock / (float) totalBlocks;
         }
 
         this.totalSlots = slot;
@@ -79,6 +78,14 @@ public class ItemTextureArrayVK extends TextureArrayVK {
     protected void collectTextures(AssetManager mgr) {
         Item[] items = Item.item;
         int len = items.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Item itzem = items[i];
+            if (itzem != null) {
+                set.addAll(Arrays.asList(itzem.getTextures()));
+            }
+        }
+        this.numTotalTextures = set.size();
         for (int i = 0; i < len; i++) {
             Item itzem = items[i];
             if (itzem != null) {
@@ -87,6 +94,7 @@ public class ItemTextureArrayVK extends TextureArrayVK {
                     AssetTexture tex = texNameToAssetMap.get(s);
                     if (tex == null) {
                         tex = mgr.loadPNGAsset(s, false);
+                        this.numLoaded++;
                         if (tex.getWidth() != tex.getHeight()) {
                             if (tex.getHeight() > tex.getWidth()) {
                                 tex.cutH();
@@ -99,7 +107,6 @@ public class ItemTextureArrayVK extends TextureArrayVK {
                 }
                 blockIDToAssetList.put(itzem.id, list);
             }
-            loadprogress = (i / (float) len);
         }
     }
 

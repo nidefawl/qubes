@@ -112,7 +112,7 @@ public class FramebufferAttachment {
               currentLayout = this.initialLayout;
               if (this.initialLayout != VK_IMAGE_LAYOUT_UNDEFINED)
                   this.ctxt.setImageLayout(
-                          this.ctxt.getCopyCommandBuffer(),
+                          this.ctxt.getGraphicsCopyCommandBuffer(),
                           this.image,
                           this.aspectMask,
                           VK_IMAGE_LAYOUT_UNDEFINED,

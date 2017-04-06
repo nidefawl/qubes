@@ -448,7 +448,7 @@ public class VkMemoryManager {
             MemoryBlock block = allBlocks.get(i);
             long l = block.getAllocSum();
             System.out.println("--- Block["+i+"], device idx "+block.memType.idx+", "+VulkanErr.memFlagsToStr(block.flags)+", Usage "+(l/MB)+"/"+(block.blockSize/MB)+"MB");
-            block.dump();
+//            block.dump();
         }
     }
 

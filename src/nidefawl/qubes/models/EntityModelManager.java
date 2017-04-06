@@ -22,23 +22,31 @@ public class EntityModelManager {
     
     public void init() {
     }
+    public void release() {
+        for (int i = 0; i < EntityModel.HIGHEST_MODEL_ID+1; i++) {
+            EntityModel model = EntityModel.models[i];
+            if (model == null) {
+                continue;
+            }
+            if (model.model != null) {
+                model.model.release();
+            }
+            model.loader = null;
+            model.model = null;
+        }
+        this.models.clear();
+    }
     /**
      * 
      */
     public void reload() {
         AssetManager mgr = AssetManager.getInstance();
-        this.models.clear();
         
         HashSet<String> modelNames = new HashSet<>();
         for (int i = 0; i < EntityModel.HIGHEST_MODEL_ID+1; i++) {
             EntityModel model = EntityModel.models[i];
             if (model == null) {
                 continue;
-            }
-            model.loader = null;
-            model.model = null;
-            if (model.model != null) {
-                model.model.release();
             }
             modelNames.add(model.getModelFile());
         }
@@ -72,6 +80,7 @@ public class EntityModelManager {
             if (model == null) {
                 continue;
             }
+            model.getLoader().loadTextures();
             model.getModel().draw();
         }
     }

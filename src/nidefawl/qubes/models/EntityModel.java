@@ -148,4 +148,8 @@ public abstract class EntityModel {
     public QModelAction getIdle() {
         return null;
     }
+
+    public ModelLoaderQModel getLoader() {
+        return this.loader;
+    }
 }

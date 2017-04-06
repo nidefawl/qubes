@@ -27,18 +27,19 @@ public class ItemModelManager {
      */
     public void init() {
     }
-    /**
-     * 
-     */
-    public void reload() {
-        AssetManager mgr = AssetManager.getInstance();
+    public void release() {
         if (!this.models.isEmpty()) {
             for (ModelQModel model : this.models.values()) {
                 model.release();
             }
             this.models.clear();
         }
-        
+    }
+    /**
+     * 
+     */
+    public void reload() {
+        AssetManager mgr = AssetManager.getInstance();
         HashSet<String> modelNames = new HashSet<>();
         for (int i = 0; i < ItemModel.HIGHEST_MODEL_ID+1; i++) {
             ItemModel model = ItemModel.model[i];

@@ -68,43 +68,60 @@ public class VkTexture implements IVkResource {
             }
         }
         dataDirect.flip();
-//      for (int a = 0; a < texture2dData.data.length; a++) {
-//          System.out.printf("0x%02X, ",texture2dData.data[a]);
-//          if (a%16==0)
-//              System.out.println();
-//          if (a > 30)
-//              break;
-//      }
+        
         // Only use linear tiling if forced
         if (forceLinearTiling)
         {
             // Don't use linear if format is not supported for (linear) shader sampling
             useStaging = (formatProperties.linearTilingFeatures() & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) == 0;
         }
-
-
+        if (!useStaging)
+        {
+            throw new GameLogicError("Cannot use staging buffer");
+        }
+        LongBuffer pImage = stack.longs(0);
+        // Create optimal tiled target image
+        VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.callocStack(stack)
+                .sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+                .imageType(VK_IMAGE_TYPE_2D)
+                .format(vkFormat)
+                .mipLevels(this.mipLevels)
+                .arrayLayers(this.layers)
+                .samples(VK_SAMPLE_COUNT_1_BIT)
+                .tiling(VK_IMAGE_TILING_OPTIMAL)
+                .usage(VK_IMAGE_USAGE_SAMPLED_BIT)
+                .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
+                // Set initial layout of the image to undefined;
+                .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        imageCreateInfo.extent().width(this.width).height(this.height).depth(1);
+        int err = vkCreateImage(this.ctxt.device, imageCreateInfo, null, pImage);
+        if (err != VK_SUCCESS) {
+            throw new AssertionError("vkCreateImage failed: " + VulkanErr.toString(err));
+        }
+        this.ctxt.memoryManager.allocateImageMemory(pImage.get(0), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.TEXTURE_COLOR_MEMORY);
+        
             if (useStaging)
             {
-                LongBuffer stagingBuffer = stack.longs(0);
-                LongBuffer pImage = stack.longs(0);
+                LongBuffer stagingBufferPtr = stack.longs(0);
                 VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.callocStack(stack)
                         .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                         .usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-                        .size(totalSize);
+                        .size(totalSize+0x400);
                 bufferCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
-                int err = vkCreateBuffer(this.ctxt.device, bufferCreateInfo, null, stagingBuffer);
+                err = vkCreateBuffer(this.ctxt.device, bufferCreateInfo, null, stagingBufferPtr);
+                final long stagingBuffer = stagingBufferPtr.get(0);
                 if (err != VK_SUCCESS) {
                     throw new AssertionError("vkCreateBuffer failed: " + VulkanErr.toString(err));
                 }
 
-                MemoryChunk memChunk = this.ctxt.memoryManager.allocateBufferMemory(stagingBuffer.get(0), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+                MemoryChunk memChunk = this.ctxt.memoryManager.allocateBufferMemory(stagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
                 long ptr = memChunk.map();
                 System.out.println("copy from "+memAddress(dataDirect)+" to "+ptr+", size="+totalSize);
-                memCopy(memAddress(dataDirect), ptr, totalSize);
+                memCopy(memAddress(dataDirect), ptr+0x400, totalSize);
                 memChunk.unmap();
                 
                 int offset = 0;
-                System.out.println("ALLOC "+(this.mipLevels*this.layers));
                 VkBufferImageCopy.Buffer bufferCopyRegions = VkBufferImageCopy.calloc(this.mipLevels*this.layers);
                 for (int l = 0; l < this.layers; l++)
                 {
@@ -118,49 +135,14 @@ public class VkTexture implements IVkResource {
                         bufferCopyRegionSubresource.layerCount(1);
                         VkExtent3D imageExtend = bufferCopyRegion.imageExtent();
                         imageExtend.width(texture2dData[l].w[i]).height(texture2dData[l].h[i]).depth(1);
-                        bufferCopyRegion.bufferOffset(offset);
+                        bufferCopyRegion.bufferOffset(offset+0x400);
                         offset += texture2dData[l].sizes[i];
                     }
                 }
     
-                // Create optimal tiled target image
-                VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.callocStack(stack)
-                        .sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-                        .imageType(VK_IMAGE_TYPE_2D)
-                        .format(vkFormat)
-                        .mipLevels(this.mipLevels)
-                        .arrayLayers(this.layers)
-                        .samples(VK_SAMPLE_COUNT_1_BIT)
-                        .tiling(VK_IMAGE_TILING_OPTIMAL)
-                        .usage(VK_IMAGE_USAGE_SAMPLED_BIT)
-                        .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
-                        // Set initial layout of the image to undefined;
-                        .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-                imageCreateInfo.extent().width(this.width).height(this.height).depth(1);
-                err = vkCreateImage(this.ctxt.device, imageCreateInfo, null, pImage);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkCreateImage failed: " + VulkanErr.toString(err));
-                }
-                this.ctxt.memoryManager.allocateImageMemory(pImage.get(0), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkConstants.TEXTURE_COLOR_MEMORY);
-                VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkCommandBufferAllocateInfo.callocStack(stack)
-                        .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                        .commandPool(this.ctxt.copyCommandPool)
-                        .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                        .commandBufferCount(1);
-                PointerBuffer pCommandBuffer = stack.pointers(0);
-                err = vkAllocateCommandBuffers(this.ctxt.device, cmdBufAllocateInfo, pCommandBuffer);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("Failed to allocate command buffer: " + VulkanErr.toString(err));
-                }
-                VkCommandBuffer copyCmd = new VkCommandBuffer(pCommandBuffer.get(0), this.ctxt.device);
-                // Create the command buffer begin structure
-                VkCommandBufferBeginInfo cmdBufInfo = VkCommandBufferBeginInfo.callocStack(stack)
-                        .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-                        .pNext(NULL);
-                vkBeginCommandBuffer(copyCmd, cmdBufInfo);
-    
-                // Image barrier for optimal image
+
+                CommandBuffer copyCmd = this.ctxt.getTransferCopyCommandBuffer();
+
                 
                 // The sub resource range describes the regions of the image we will be transition
                 VkImageSubresourceRange subresourceRange = VkImageSubresourceRange.callocStack(stack)
@@ -180,12 +162,11 @@ public class VkTexture implements IVkResource {
                         VK_IMAGE_LAYOUT_UNDEFINED, 
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
                         subresourceRange);
-                // Clean up staging resources
     
                 // Copy mip levels from staging buffer
                 vkCmdCopyBufferToImage(
                     copyCmd,
-                    stagingBuffer.get(0),
+                    stagingBuffer,
                     pImage.get(0), 
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                     bufferCopyRegions);
@@ -200,24 +181,15 @@ public class VkTexture implements IVkResource {
                     subresourceRange);
                 this.image = pImage.get(0);
                 this.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                vkEndCommandBuffer(copyCmd);
-                VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-                
-                PointerBuffer pCommandBuffers = stack.pointers(copyCmd);
-                submitInfo.pCommandBuffers(pCommandBuffers);
-                err = vkQueueSubmit(this.ctxt.vkQueue, submitInfo, VK_NULL_HANDLE);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkQueueSubmit failed: " + VulkanErr.toString(err));
-                }
-                err = vkQueueWaitIdle(this.ctxt.vkQueue);
-                if (err != VK_SUCCESS) {
-                    throw new AssertionError("vkQueueWaitIdle failed: " + VulkanErr.toString(err));
-                }
-                vkFreeCommandBuffers(this.ctxt.device, this.ctxt.copyCommandPool, pCommandBuffers);
-                System.out.println("release staging buffer memory");
-                this.ctxt.memoryManager.releaseBufferMemory(stagingBuffer.get(0));
-                vkDestroyBuffer(this.ctxt.device, stagingBuffer.get(0), null);
                 bufferCopyRegions.free();
+                copyCmd.addPostRenderTask(new PostRenderTask() {
+                    
+                    @Override
+                    public void onComplete() {
+                        ctxt.memoryManager.releaseBufferMemory(stagingBuffer);
+                        vkDestroyBuffer(ctxt.device, stagingBuffer, null);
+                    }
+                });
             }
         }
     

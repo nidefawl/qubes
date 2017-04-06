@@ -7,7 +7,7 @@ public class CommandBuffer extends VkCommandBuffer {
 
     public boolean inUse;
     public int frameIdx;
-    PostRenderTask[] tasks = new PostRenderTask[16];
+    PostRenderTask[] tasks = new PostRenderTask[256];
     int nTasks = 0;
 
     public CommandBuffer(long handle, VkDevice device, int i) {

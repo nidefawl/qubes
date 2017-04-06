@@ -24,11 +24,12 @@ public abstract class TextureArray {
     protected int numMipmaps;
     private int   subtypeBits = 0;
     protected boolean report;
-    public float loadprogress;
-    public float uploadprogress;
     public int totalSlots;
     public float anisotropicFiltering = 0;
     public int internalFormat;
+    public int numTotalTextures = 1;
+    public int numUploaded;
+    public int numLoaded;
 
     public TextureArray(int maxTextures) {
         this.textures = new int[maxTextures];
@@ -36,6 +37,9 @@ public abstract class TextureArray {
 
 
     public void preUpdate() {
+        this.numTotalTextures = 1;
+        this.numLoaded = 0;
+        this.numUploaded = 0;
         unload();
         init();
     }
@@ -49,7 +53,6 @@ public abstract class TextureArray {
         if (!SKIP_LOAD_TEXTURES) {
             collectTextures(mgr);
         }
-        this.loadprogress = 1;
         findMaxTileWidth();
         upscaleTextures();
         calculateSubtypeBits();
@@ -72,7 +75,6 @@ public abstract class TextureArray {
     public void postUpdate() {
         initStorage();
         uploadTextures();
-        this.uploadprogress = 1;
         postUpload();
         free();
         this.firstInit = false;
@@ -163,8 +165,14 @@ public abstract class TextureArray {
     protected abstract void collectTextures(AssetManager mgr);
     protected abstract void postUpload();
 
-    public float getProgress() {
-        return (loadprogress+uploadprogress)/2.0f;
+    public int getNumTotaltextures() {
+        return this.numTotalTextures;
+    }
+    public int getNumUploaded() {
+        return this.numUploaded;
+    }
+    public int getNumLoaded() {
+        return this.numLoaded;
     }
     
     public int getNumMipmaps() {

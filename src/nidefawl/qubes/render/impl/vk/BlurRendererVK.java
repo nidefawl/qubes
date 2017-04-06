@@ -9,6 +9,7 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.BlurRenderer;
 import nidefawl.qubes.util.GameMath;
@@ -53,6 +54,18 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
                 throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
             }
             this.samplerClamp = pSampler.get(0);
+            if (GameBase.DEBUG_LAYER) {
+                VkDebug.registerSampler(this.samplerClamp);
+            }
+            
+        }
+    }
+    @Override
+    public void release() {
+        if (this.samplerClamp != VK_NULL_HANDLE) {
+            VKContext ctxt = Engine.vkContext;
+            vkDestroySampler(ctxt.device, this.samplerClamp, null);
+            this.samplerClamp = VK_NULL_HANDLE;
         }
     }
 

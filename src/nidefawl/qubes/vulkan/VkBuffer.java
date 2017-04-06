@@ -127,7 +127,7 @@ public class VkBuffer implements IVkResource {
     
     private void copy() {
         try ( MemoryStack stack = stackPush() ) {
-            VkCommandBuffer commandBuffer = ctxt.getCopyCommandBuffer();
+            VkCommandBuffer commandBuffer = ctxt.getTransferCopyCommandBuffer();
             VkBufferCopy.Buffer copyRegion = VkBufferCopy.callocStack(1, stack);
             copyRegion.srcOffset(0);
             copyRegion.dstOffset(0);

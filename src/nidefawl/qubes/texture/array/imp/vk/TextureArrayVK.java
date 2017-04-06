@@ -9,12 +9,11 @@ import java.util.Arrays;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.texture.array.TextureArray;
-import nidefawl.qubes.vulkan.VKContext;
-import nidefawl.qubes.vulkan.VkTexture;
-import nidefawl.qubes.vulkan.VulkanErr;
+import nidefawl.qubes.vulkan.*;
 
 public abstract class TextureArrayVK extends TextureArray {
     public VkTexture    texture;
@@ -89,6 +88,9 @@ public abstract class TextureArrayVK extends TextureArray {
                     throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
                 }
                 this.sampler = pSampler.get(0);
+                if (GameBase.DEBUG_LAYER) {
+                    VkDebug.registerSampler(this.sampler);
+                }
                 
                 VkImageViewCreateInfo view = VkImageViewCreateInfo.callocStack(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                         .viewType(VK_IMAGE_VIEW_TYPE_2D_ARRAY)

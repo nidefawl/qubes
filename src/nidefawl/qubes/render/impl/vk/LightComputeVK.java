@@ -12,6 +12,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.LightCompute;
@@ -142,8 +143,11 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
                   throw new AssertionError("vkCreateSampler failed: " + VulkanErr.toString(err));
               }
               this.sampler = pSampler.get(0);
+              if (GameBase.DEBUG_LAYER) {
+                  VkDebug.registerSampler(this.sampler);
+              }
         }
-        ctxt.clearImage(ctxt.getCopyCommandBuffer(), this.image, 1, getLayout(), 0, 0, 0, 1);
+        ctxt.clearImage(ctxt.getGraphicsCopyCommandBuffer(), this.image, 1, getLayout(), 0, 0, 0, 1);
 
     }
     

@@ -19,12 +19,23 @@ public class VkDebug {
         }
     }
     static HashMap<Long, ImageAllocDebugInfo> map = new HashMap<>();
+    static HashMap<Long, ImageAllocDebugInfo> mapSampler = new HashMap<>();
     public static void registerImage(long image) {
         map.put(image, new ImageAllocDebugInfo());
     }
 
+    public static void registerSampler(long image) {
+        mapSampler.put(image, new ImageAllocDebugInfo());
+    }
     public static void printStack(long l) {
         ImageAllocDebugInfo n = map.get(l);
+        if (n != null) {
+            System.err.println(n);
+        }
+    }
+
+    public static void printStackSampler(long l) {
+        ImageAllocDebugInfo n = mapSampler.get(l);
         if (n != null) {
             System.err.println(n);
         }

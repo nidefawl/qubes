@@ -101,7 +101,6 @@ public abstract class VkRenderPass {
     public void initClearValues(boolean inverseZ) {
         if (this.hasDepthAttachement) {
             definedClearValueDepth.set(Engine.INVERSE_Z_BUFFER ? 0.0f : 1.0f, 0);
-            System.out.println(""+this.name+" depth clear value "+definedClearValueDepth.depth());
         }
         int maxAttWithClear = 0;
         for (int i = 0; i < this.nAttachments; i++) {
@@ -115,7 +114,6 @@ public abstract class VkRenderPass {
             renderPassClearValues.put(this.definedClearValues.get(i));
         }
         renderPassClearValues.flip();
-        System.out.println(""+this.name+" has clear values "+renderPassClearValues);
     }
     public VkClearDepthStencilValue getClearValueDepth() {
         return definedClearValueDepth;
