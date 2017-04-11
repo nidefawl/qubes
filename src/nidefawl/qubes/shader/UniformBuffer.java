@@ -34,6 +34,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
     private int bindingPoint;
     private boolean autoBind;
     boolean isConstant = false;
+    private int lastUploadPos=0;
     
     boolean isConstantUploaded = false;
     private VkBuffer vkBuffers;
@@ -123,15 +124,23 @@ public class UniformBuffer implements IBufferDynamicOffset {
                 Engine.checkGLError("glBufferSubData GL_UNIFORM_BUFFER "+this.name+"/"+this.buffer+"/"+this.floatBuffer+"/"+this.len);
             GL15.glBindBuffer(GL_UNIFORM_BUFFER, 0);
         } else {
+//            if (this.offsetIdx > 0 && (this != uboMatrixShadow && this != uboMatrix3D))
+//                return;
             int offset = 0;
+            if (!isConstant) {
+                offset = this.stride*this.offsetIdx;
+//                offset = (int) Engine.vkContext.limits.minUniformBufferOffsetAlignment();
+            }
+            this.vkBuffers.upload(this.floatBuffer, offset);
+            this.lastUploadPos = offset;
+//            if (this == uboMatrixShadow) {
+//                System.out.println("write at "+this.lastUploadPos);
+//            }
             if (!isConstant) {
                 this.offsetIdx++;
                 if (this.offsetIdx >= this.frames)
                     this.offsetIdx = 0;
-                offset = this.stride*this.offsetIdx;
-                
             }
-            this.vkBuffers.upload(this.floatBuffer, offset);
         }
         statsUpdateCallsFrame++;
         isConstantUploaded = true;
@@ -192,7 +201,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
             .addVec4() //viewport (xyzw)
             .addVec4() //prev camera (xyz) 1.0f (w)
             .addVec4(); //scene settings (x = dither, yzw = unused)
-    public static UniformBuffer uboTransformStack = new UniformBuffer("uboTransformStack").setMaxFrameUpdates(2048)
+    public static UniformBuffer uboTransformStack = new UniformBuffer("uboTransformStack").setMaxFrameUpdates(256)
             .addVec4(); //viewport (xyzw)
     public static UniformBuffer LightInfo = new UniformBuffer("LightInfo").setMaxFrameUpdates(2)
             .addVec4() //dayLightTime
@@ -227,6 +236,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
     }
 
     private void initBuffers(int numImages) {
+//        numImages++;
         if (this.floatBuffer == null)
             this.floatBuffer = Memory.createFloatBufferAligned(64, this.len);
         if (this.vkBuffers != null) {
@@ -237,20 +247,27 @@ public class UniformBuffer implements IBufferDynamicOffset {
         VKContext vkContext = Engine.vkContext;//.limits.maxUniformBufferRange();
         this.frames = isConstant ? 0 : (numImages*this.maxFrameUpdates); 
         this.stride = Math.max((int) vkContext.limits.minUniformBufferOffsetAlignment(), ((this.len*4) + 0xff) & 0xffffff00);
-        System.out.println("Buffer "+this.name+" stride = "+(this.stride));
+        if (this.stride*this.frames > 512*1024) {
+            System.err.println("BUFFER TOO BIG FOR INTEL MESA "+this.name);
+        }
+        if (this.stride < 4096){
+            this.stride = 4096;
+        }
+//        System.out.println("Buffer "+this.name+" stride = "+(this.stride)+" minUniform "+vkContext.limits.minUniformBufferOffsetAlignment());
         int bufferSize = isConstant ? (this.len*4) : (this.stride*this.frames);
         this.vkBuffers = vkContext.createBuffer(
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                     bufferSize, 
                     isConstant, "UBO "+this.name);
         VkDescriptorBufferInfo.Buffer desc = this.vkBuffers.getDescriptorBuffer();
+        desc.offset(0L);
         if (isConstant) {
             desc.range(VK_WHOLE_SIZE);
         } else {
             desc.range(this.len*4);
         }
-        if (this.len*4 > Engine.vkContext.limits.maxUniformBufferRange()) {
-            throw new GameLogicError("Uniform buffer len exceeds maxUnifromBufferRange: "+(this.len*4)+" > "+(Engine.vkContext.limits.maxUniformBufferRange()));
+        if (this.stride > Engine.vkContext.limits.maxUniformBufferRange()) {
+            throw new GameLogicError("Uniform buffer len exceeds maxUnifromBufferRange: "+(this.stride)+" > "+(Engine.vkContext.limits.maxUniformBufferRange()));
         }
         isConstantUploaded = false;
     }
@@ -660,7 +677,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
         return n;
     }
     public int getDynamicOffset() {
-        return isConstant?0:(this.offsetIdx*this.stride);
+        return isConstant?0:this.lastUploadPos;
     }
     public boolean isConstant() {
         return this.isConstant;

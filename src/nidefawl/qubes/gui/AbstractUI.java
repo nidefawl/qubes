@@ -124,7 +124,7 @@ public abstract class AbstractUI implements Renderable {
             BoxGUI.setSigma(shadowSigma);
             BoxGUI.setRound(round);
             Engine.enableDepthMask(false);
-            BoxGUI.INST.drawQuad();
+//            BoxGUI.INST.drawQuad();
             Engine.enableDepthMask(true);
         } else {
             BoxGUI.setRound(round);

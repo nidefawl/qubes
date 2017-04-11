@@ -27,7 +27,12 @@ uniform int shadowSplit;
 
 out vec2 texcoord;
 flat out uvec2 blockinfo;
-
+#ifdef VULKAN_GLSL
+out gl_PerVertex 
+{
+    vec4 gl_Position;   
+};
+#endif 
 void main() {
 	blockinfo = in_blockinfo.xy;
 	texcoord = in_texcoord.st;

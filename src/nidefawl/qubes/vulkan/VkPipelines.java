@@ -185,8 +185,9 @@ public class VkPipelines {
             shadowSolid.setVertexDesc(desc);
             shadowSolid.dynamicState = VkPipelineDynamicStateCreateInfo.callocStack().sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
             shadowSolid.scissors.extent().width(Engine.getShadowMapTextureSize()).height(Engine.getShadowMapTextureSize());
-            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
-            shadowSolid.rasterizationState.depthBiasEnable(true);
+//            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_DEPTH_BIAS));
+            shadowSolid.dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+            shadowSolid.rasterizationState.depthBiasEnable(false);
             shadowSolid.rasterizationState.cullMode(VK_CULL_MODE_BACK_BIT);
             shadowSolid.pipeline = buildPipeLine(ctxt, shadowSolid);
         }

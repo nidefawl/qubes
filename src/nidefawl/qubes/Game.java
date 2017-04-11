@@ -39,6 +39,7 @@ import nidefawl.qubes.network.client.ThreadConnect;
 import nidefawl.qubes.network.packet.Packet;
 import nidefawl.qubes.network.packet.PacketChatMessage;
 import nidefawl.qubes.perf.GPUProfiler;
+import nidefawl.qubes.perf.GPUTaskProfileFrame;
 import nidefawl.qubes.render.RenderFramebufferCached;
 import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.RenderersVulkan;
@@ -159,7 +160,7 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
-        DEBUG_LAYER = true;
+        DEBUG_LAYER = false;
     }
 
     @Override
@@ -493,6 +494,8 @@ public class Game extends GameBase {
             CommandBuffer commandBuffer = vkContext.getCurrentCmdBuffer();
             Engine.beginCommandBuffer(commandBuffer);
         }
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.startFrame();
         Engine.blockDraw.processQueue();
         if (this.statsList.renderStats) {
             this.statsList.renderStats = false;
@@ -508,10 +511,22 @@ public class Game extends GameBase {
         }
         if (Engine.isVulkan) {
             renderVK(fTime);
-            Engine.endCommandBuffer();
-            this.vkContext.submitCommandBuffer();
         } else {
             renderGL(fTime);
+        }
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.endFrame();
+        if (GPUProfiler.PROFILING_ENABLED) {
+            GPUTaskProfileFrame tp;
+            while ((tp = GPUProfiler.getFrameResults()) != null) {
+                glProfileResults.clear();
+                tp.dump(glProfileResults);
+                GPUProfiler.recycleFrame(tp);
+            }
+        }
+        if (Engine.isVulkan) {
+            Engine.endCommandBuffer();
+            this.vkContext.submitCommandBuffer();
         }
     }
 
@@ -530,8 +545,16 @@ public class Game extends GameBase {
 
             Engine.disableAutoBindDesc();
             if (this.world != null) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("sky");
                 Engine.skyRenderer.renderSky(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("shadow");
                 Engine.shadowRenderer.renderShadowPass(this.world, fTime);
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
             }
             setSceneViewport();
             if (this.world != null) {
@@ -592,10 +615,26 @@ public class Game extends GameBase {
     }
     private void renderWorldVK(float fTime, int eye) {
 
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("World");
         RenderersVulkan.worldRenderer.renderWorld(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("deferred");
         RenderersVulkan.outRenderer.render(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("overlays");
         RenderersVulkan.worldRenderer.renderOverlays(this.world, this.leftSelection, this.rightSelection, this.dig, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.start("aa");
         RenderersVulkan.outRenderer.renderAA(this.world, fTime);
+        if (GPUProfiler.PROFILING_ENABLED)
+            GPUProfiler.end();
     }
     public void renderGL(float fTime) {
         if (canRenderGui3d()) {

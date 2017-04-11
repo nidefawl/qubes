@@ -1,5 +1,7 @@
 package nidefawl.qubes.util;
 
+import java.io.File;
+
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.async.AsyncTasks;
 import nidefawl.qubes.block.Block;
@@ -43,9 +45,12 @@ public class GameContext {
     }
 
     public static void setSideAndPath(Side s, String path) {
+        setSideAndPath(s, path, null);
+    }
+    public static void setSideAndPath(Side s, String path, String assetpath) {
         startBoot = System.currentTimeMillis();
         side = s;
-        WorkingEnv.init(path);
+        WorkingEnv.init(path, assetpath);
     }
     /**
      * @param server

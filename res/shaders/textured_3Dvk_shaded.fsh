@@ -94,6 +94,7 @@ void main()
         #else
             outFragColor = vec4(vec3(texture(texShadow, v3.xy).r), 1.0);
         #endif
+            outFragColor = vec4(vec3(in_matrix_shadow.shadow_split_mvp[2][3].xyz), 1.0);
     }
     // vec4 prevp = vec4(0, 480, 0, 320);
     // if (gl_FragCoord.x > prevp.x && gl_FragCoord.x < prevp.y && gl_FragCoord.y > prevp.z && gl_FragCoord.y < prevp.w) {

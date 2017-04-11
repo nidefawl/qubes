@@ -4,46 +4,69 @@ import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL15.GL_QUERY_RESULT;
 import static org.lwjgl.opengl.GL15.GL_QUERY_RESULT_AVAILABLE;
 import static org.lwjgl.opengl.GL15.glGetQueryObjectui;
+import static org.lwjgl.opengl.GL33.GL_TIMESTAMP;
 import static org.lwjgl.opengl.GL33.glGetQueryObjectui64;
+import static org.lwjgl.opengl.GL33.glQueryCounter;
+import static org.lwjgl.vulkan.VK10.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.util.Poolable;
+import nidefawl.qubes.vulkan.VkQueryPool;
 
 public class GPUTaskProfile implements Poolable {
 
     protected GPUTaskProfile parent;
 
     protected String name;
-
-    protected int startQuery, endQuery;
+    
+    protected int queries;
 
     protected ArrayList<GPUTaskProfile> children = new ArrayList<>(100);
+    public long resultStart;
+    public long resultEnd;
+
+    protected VkQueryPool pool;
 
     public GPUTaskProfile() {
 
     }
 
-    public GPUTaskProfile init(GPUTaskProfile parent, String name, int startQuery) {
+    public GPUTaskProfile init(GPUTaskProfile parent, String name) {
+        if (Engine.isVulkan) {
+            this.pool = GPUProfiler.currentPool;
+            this.queries = this.pool.getQueries(2);
+        } else {
+            this.queries = GPUProfiler.getQueries();
+        }
 
         this.parent = parent;
         this.name = name;
-        this.startQuery = startQuery;
 
         if (parent != null) {
             parent.addChild(this);
         }
-
+        query(0);
         return this;
     }
 
     private void addChild(GPUTaskProfile profilerTask) {
         children.add(profilerTask);
     }
+    
+    public void query(int idx) {
 
-    public GPUTaskProfile end(int endQuery) {
-        this.endQuery = endQuery;
+        if (!Engine.isVulkan) {
+            glQueryCounter(this.queries+idx, GL_TIMESTAMP);
+        } else {
+            this.pool.query(Engine.getDrawCmdBuffer(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, this.queries+idx);
+        }
+    }
+
+    public GPUTaskProfile end() {
+        query(1);
         return parent;
     }
 
@@ -52,27 +75,19 @@ public class GPUTaskProfile implements Poolable {
     }
 
     public boolean resultsAvailable() {
-        return glGetQueryObjectui(endQuery, GL_QUERY_RESULT_AVAILABLE) == GL_TRUE;
+        return glGetQueryObjectui(queries+1, GL_QUERY_RESULT_AVAILABLE) == GL_TRUE;
     }
 
     public String getName() {
         return name;
     }
 
-    public int getStartQuery() {
-        return startQuery;
-    }
-
-    public int getEndQuery() {
-        return endQuery;
-    }
-
     public long getStartTime() {
-        return glGetQueryObjectui64(startQuery, GL_QUERY_RESULT);
+        return this.resultStart;
     }
 
     public long getEndTime() {
-        return glGetQueryObjectui64(endQuery, GL_QUERY_RESULT);
+        return this.resultEnd;
     }
 
     public long getTimeTaken() {
@@ -85,8 +100,9 @@ public class GPUTaskProfile implements Poolable {
 
     @Override
     public void reset() {
-        startQuery = -1;
-        endQuery = -1;
+        this.pool = null;
+        queries = -1;
+        resultStart = resultEnd = -1L;
         children.clear();
     }
 
@@ -115,6 +131,7 @@ public class GPUTaskProfile implements Poolable {
         for (int i = 0; i < indentation; i++) {
             s+="  ";
         }
+        GPUProfiler.queryResult(this);
         float f = getTimeTaken() / 1000 / 1000f;
         s+= name + " : " + f + "ms";
         if (this.parent == null) {

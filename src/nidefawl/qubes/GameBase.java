@@ -671,8 +671,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         }
         
         
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.startFrame();
         Stats.resetDrawCalls();
         
         if (isCloseRequested()) {
@@ -751,8 +749,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
         if (Game.GL_ERROR_CHECKS)
             Engine.checkGLError("render");
         
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.start("updateDisplay");
         updateDisplay();
         float took = (System.nanoTime() - frameTime) / 1000000F;
         
@@ -760,8 +756,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
       //TODO: add second counter that calculates frame time len without vsync so we can use this one for frame time based calculation
         Stats.lastFrameTimeD = took;
         Stats.avgFrameTime = Stats.avgFrameTime * 0.95F + (took) * 0.05F;  
-        if (GPUProfiler.PROFILING_ENABLED)
-            GPUProfiler.end();
         frameTime = System.nanoTime();
         
         
@@ -781,15 +775,6 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             throw this.showError;
         }
         UniformBuffer.printStats();
-        if (GPUProfiler.PROFILING_ENABLED) {
-            GPUProfiler.endFrame();
-            GPUTaskProfileFrame tp;
-            while ((tp = GPUProfiler.getFrameResults()) != null) {
-                glProfileResults.clear();
-                tp.dump(glProfileResults);
-                GPUProfiler.recycleFrame(tp);
-            }
-        }
     }
 
     public boolean needsGrab() {
@@ -824,6 +809,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 Engine.preRenderUpdateVK();
                 vkContext.finishUpload();
             }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.initPool();
             isStarting = false;
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame lateInitGame");

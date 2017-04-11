@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkQueueFamilyProperties.Buffer;
 
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.util.GameError;
@@ -42,6 +43,7 @@ public class VulkanInit {
         enabledDeviceExtension = memAllocPointer(1+deviceextensions.length);
         for (int i = 0; i < activeLayers.length; i++) {
             enabledVulkanLayers.put(memUTF8(activeLayers[i]));
+            System.out.println(activeLayers[i]);
         }
         while (requiredExtensions.remaining() > 0) {
             enabledInstanceExtension.put(requiredExtensions.get());
@@ -56,13 +58,17 @@ public class VulkanInit {
         enabledInstanceExtension.flip();
         enabledDeviceExtension.flip();
         if (installdebugcallback) {
-            final Pattern p = Pattern.compile(".*image object 0x([0-9a-f]+).*");
+            final Pattern p = Pattern.compile(".*[Ii]mage object 0x([0-9a-f]+).*");
             final Pattern p2 = Pattern.compile(".*Sampler object 0x([0-9a-f]+).*");
+            final boolean[] debugEnabled = new boolean[] { true };
             debugCallback = new VkDebugReportCallbackEXT() {
                 public int invoke(int flags, int objectType, long object, long location, int messageCode, long pLayerPrefix, long pMessage, long pUserData) {
+                    if (!debugEnabled[0])
+                        return 0;
                     String msg = VkDebugReportCallbackEXT.getString(pMessage);
                     if (msg.equals("Debug Report callbacks not removed before DestroyInstance"))
                         return 0;
+                    debugEnabled[0] = false;
                     System.err.println("ERROR OCCURED: " + msg);
                     Thread.dumpStack();
                     Matcher m = p.matcher(msg);
@@ -151,9 +157,18 @@ public class VulkanInit {
         ctxt.swapChain.height = windowHeight;
         getSurfaceColorFormatAndSpace(ctxt);
         ctxt.descriptorPool = createDescriptorPool(ctxt);
+        if (ctxt.queueFamilyIndexGraphics > -1)
         ctxt.renderCommandPool = createCommandPool(ctxt, ctxt.queueFamilyIndexGraphics, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+        if (ctxt.queueFamilyIndexGraphics > -1)
         ctxt.copyCommandPoolGraphics = createCommandPool(ctxt, ctxt.queueFamilyIndexGraphics, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+        if (ctxt.queueFamilyIndexTransfer > -1)
         ctxt.copyCommandPoolTransfer = createCommandPool(ctxt, ctxt.queueFamilyIndexTransfer, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+        else 
+            ctxt.copyCommandPoolTransfer = createCommandPool(ctxt, ctxt.queueFamilyIndexGraphics, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+        
+        if (ctxt.renderCommandPool == VK_NULL_HANDLE || ctxt.copyCommandPoolGraphics == VK_NULL_HANDLE || ctxt.copyCommandPoolTransfer == VK_NULL_HANDLE) {
+            throw new AssertionError("Failed creating command pools");
+        }
         createDeviceQueue(ctxt);
         ctxt.descLayouts = new VkDescLayouts(ctxt);
         // Find a suitable depth format
@@ -225,6 +240,9 @@ public class VulkanInit {
         if (ctxt.queueFamilyIndexTransfer > -1) {
             vkGetDeviceQueue(ctxt.device, ctxt.queueFamilyIndexTransfer, 0, pQueue);
             ctxt.vkQueueTransfer = new VkQueue(pQueue.get(0), ctxt.device);
+        } else {
+            System.err.println("Using main queue as transfer queue");
+            ctxt.vkQueueTransfer = ctxt.vkQueue;
         }
         memFree(pQueue);
     }
@@ -448,7 +466,7 @@ public class VulkanInit {
             supportsPresent.position(i);
             int err = vkGetPhysicalDeviceSurfaceSupportKHR(ctxt.getPhysicalDevice(), i, ctxt.surface, supportsPresent);
             if (err != VK_SUCCESS) {
-                throw new AssertionError("Failed to physical device surface support: " + VulkanErr.toString(err));
+                throw new AssertionError("vkGetPhysicalDeviceSurfaceSupportKHR failed: " + VulkanErr.toString(err));
             }
         }
 
@@ -494,8 +512,7 @@ public class VulkanInit {
         IntBuffer pFormatCount = memAllocInt(1);
         int err = vkGetPhysicalDeviceSurfaceFormatsKHR(ctxt.getPhysicalDevice(), ctxt.surface, pFormatCount, null);
         int formatCount = pFormatCount.get(0);
-        memFree(pFormatCount);
-
+        System.out.println("Surface format count "+formatCount);
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to query number of physical device surface formats: " + VulkanErr.toString(err));
         }
@@ -505,6 +522,7 @@ public class VulkanInit {
         if (err != VK_SUCCESS) {
             throw new AssertionError("Failed to query physical device surface formats: " + VulkanErr.toString(err));
         }
+        memFree(pFormatCount);
 
         // If the format list includes just one entry of VK_FORMAT_UNDEFINED, the surface has no preferred format. Otherwise, at least one supported format will
         // be returned.
@@ -552,29 +570,33 @@ public class VulkanInit {
         int queueCount = pQueueFamilyPropertyCount.get(0);
         VkQueueFamilyProperties.Buffer queueProps = VkQueueFamilyProperties.calloc(queueCount);
         vkGetPhysicalDeviceQueueFamilyProperties(ctxt.getPhysicalDevice(), pQueueFamilyPropertyCount, queueProps);
+
+        ctxt.queueprops = new VkQueueFamilyProperties[queueCount];
+        for (int i = 0; i < ctxt.queueprops.length; i++) {
+            ctxt.queueprops[i] = queueProps.get(i);
+        }
         memFree(pQueueFamilyPropertyCount);
         int queueIdxGraphic = -1;
         int queueIdxTransfer = -1;
         int queueIdxCompute = -1;
         for (int i = 0; i < queueCount; i++) {
-            if ((queueProps.get(i).queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+            if ((ctxt.queueprops[i].queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
                 queueIdxGraphic = i;
                 break;
             }
         }
         for (int i = 0; i < queueCount; i++) {
-            if (queueProps.get(i).queueFlags() == VK_QUEUE_TRANSFER_BIT) {
+            if (ctxt.queueprops[i].queueFlags() == VK_QUEUE_TRANSFER_BIT) {
                 queueIdxTransfer = i;
                 break;
             }
         }
         for (int i = 0; i < queueCount; i++) {
-            if (queueProps.get(i).queueFlags() == VK_QUEUE_COMPUTE_BIT) {
+            if (ctxt.queueprops[i].queueFlags() == VK_QUEUE_COMPUTE_BIT) {
                 queueIdxCompute = i;
                 break;
             }
         }
-        queueProps.free();
         if (queueIdxGraphic < 0) {
             throw new GameLogicError("Missing queue");
         }
@@ -609,7 +631,7 @@ public class VulkanInit {
                 .pQueuePriorities(pQueuePriorities);
         }
         VkPhysicalDeviceFeatures features = VkPhysicalDeviceFeatures.calloc();
-        setupReqFeatures(features);
+        setupReqFeatures(ctxt, features);
         VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.calloc()
                 .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .pNext(NULL)
@@ -637,7 +659,7 @@ public class VulkanInit {
         deviceCreateInfo.free();
         memFree(pQueuePriorities);
     }
-    private static void setupReqFeatures(VkPhysicalDeviceFeatures features) {
+    private static void setupReqFeatures(VKContext ctxt, VkPhysicalDeviceFeatures features) {
         features.robustBufferAccess(false);
         features.fullDrawIndexUint32(false);
         features.imageCubeArray(false);
@@ -647,8 +669,8 @@ public class VulkanInit {
         features.sampleRateShading(false);
         features.dualSrcBlend(false);
         features.logicOp(false);
-        features.multiDrawIndirect(true);
-        features.drawIndirectFirstInstance(true);
+        features.multiDrawIndirect(false);
+        features.drawIndirectFirstInstance(false);
         features.depthClamp(false);
         features.depthBiasClamp(false);
         features.fillModeNonSolid(false);
@@ -657,7 +679,7 @@ public class VulkanInit {
         features.largePoints(false);
         features.alphaToOne(false);
         features.multiViewport(false);
-        features.samplerAnisotropy(true);
+        features.samplerAnisotropy(ctxt.features.samplerAnisotropy());
         features.textureCompressionETC2(false);
         features.textureCompressionASTC_LDR(false);
         features.textureCompressionBC(false);

@@ -107,7 +107,7 @@ public class VkTexture implements IVkResource {
                 VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.callocStack(stack)
                         .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                         .usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-                        .size(totalSize+0x400);
+                        .size(totalSize);
                 bufferCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
                 err = vkCreateBuffer(this.ctxt.device, bufferCreateInfo, null, stagingBufferPtr);
                 final long stagingBuffer = stagingBufferPtr.get(0);
@@ -118,7 +118,7 @@ public class VkTexture implements IVkResource {
                 MemoryChunk memChunk = this.ctxt.memoryManager.allocateBufferMemory(stagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
                 long ptr = memChunk.map();
                 System.out.println("copy from "+memAddress(dataDirect)+" to "+ptr+", size="+totalSize);
-                memCopy(memAddress(dataDirect), ptr+0x400, totalSize);
+                memCopy(memAddress(dataDirect), ptr, totalSize);
                 memChunk.unmap();
                 
                 int offset = 0;
@@ -135,7 +135,7 @@ public class VkTexture implements IVkResource {
                         bufferCopyRegionSubresource.layerCount(1);
                         VkExtent3D imageExtend = bufferCopyRegion.imageExtent();
                         imageExtend.width(texture2dData[l].w[i]).height(texture2dData[l].h[i]).depth(1);
-                        bufferCopyRegion.bufferOffset(offset+0x400);
+                        bufferCopyRegion.bufferOffset(offset);
                         offset += texture2dData[l].sizes[i];
                     }
                 }

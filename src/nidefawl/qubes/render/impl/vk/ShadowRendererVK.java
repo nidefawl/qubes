@@ -132,6 +132,8 @@ public class ShadowRendererVK extends ShadowRenderer {
                     .compareEnable(false)
                     .minLod(0.0f)
                     .maxLod(1.0f)
+                    .maxAnisotropy(1.0f)
+                    .anisotropyEnable(false)
                     .borderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
             LongBuffer pSampler = stack.longs(0);
             int err = vkCreateSampler(Engine.vkContext.device, sampler, null, pSampler);

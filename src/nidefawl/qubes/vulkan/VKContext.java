@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.GameBase;
@@ -87,6 +88,7 @@ public class VKContext {
     protected int                              queueFamilyIndexGraphics;
     protected int                              queueFamilyIndexCompute;
     protected int                              queueFamilyIndexTransfer;
+    public VkQueueFamilyProperties[] queueprops;
     protected LongBuffer                       psemaphorePresentComplete;
     protected LongBuffer                       psemaphoreRenderComplete;
     protected IntBuffer                        pWaitDstStageMask;
@@ -313,8 +315,7 @@ public class VKContext {
         int nFrameBuffers = swapChain.numImages;
         try (MemoryStack stack = stackPush()) {
 
-            VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkInitializers.
-                    commandBufferAllocInfo(this.renderCommandPool, nFrameBuffers);
+            VkCommandBufferAllocateInfo cmdBufAllocateInfo = VkInitializers.commandBufferAllocInfo(this.renderCommandPool, nFrameBuffers);
 
             PointerBuffer pCommandBuffer = stack.callocPointer(nFrameBuffers);
             int err = vkAllocateCommandBuffers(this.device, cmdBufAllocateInfo, pCommandBuffer);
@@ -904,5 +905,33 @@ public class VKContext {
                 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
                 VK_ACCESS_TRANSFER_WRITE_BIT,                   VK_ACCESS_MEMORY_READ_BIT);
 //        System.out.println(""+r+","+g+","+b+","+a);
+    }
+    ArrayList<VkQueryPool> pools = new ArrayList<>();
+    public VkQueryPool getFreeQueryPool() {
+//        System.out.println(pools.size());
+        for (int i = 0; i < pools.size(); i++) {
+            if (!pools.get(i).inUse) {
+                return pools.get(i);
+            }
+        }
+        
+        System.out.println("Making query pool #"+pools.size());
+        try (MemoryStack stack = stackPush()) {
+            VkQueryPoolCreateInfo pCreateInfo = VkQueryPoolCreateInfo.callocStack(stack);
+            pCreateInfo.sType(VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO);
+            pCreateInfo.pNext(0L);
+            pCreateInfo.flags(0);
+            pCreateInfo.queryType(VK_QUERY_TYPE_TIMESTAMP);
+            pCreateInfo.queryCount(1024);
+            pCreateInfo.pipelineStatistics(0);
+            LongBuffer pQueryPool = stack.callocLong(1);
+            int err = vkCreateQueryPool(Engine.vkContext.device, pCreateInfo, null, pQueryPool);
+            if (err != VK_SUCCESS) {
+                throw new AssertionError("vkCreateQueryPool failed: " + VulkanErr.toString(err));
+            }
+            VkQueryPool newPool = new VkQueryPool(pQueryPool.get(0), 1024);
+            pools.add(newPool);
+            return newPool;
+        }
     }
 }

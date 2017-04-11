@@ -119,8 +119,19 @@ public class VkDescriptor {
         } else {
             for (int i = 0; i < this.numBindings; i++) {
                 if (this.bindings[i].dynamicOffset != null) {
-                    if (Engine.debugflag)
-                    System.out.println("bind set "+i+": "+tag +" at offset "+this.bindings[i].dynamicOffset.getDynamicOffset());
+//                    if (Engine.debugflag)
+//                    System.out.println("bind set "+i+": "+tag +" at offset "+this.bindings[i].dynamicOffset.getDynamicOffset());
+//                    if (this.bindings[i].dynamicOffset == UniformBuffer.uboMatrixShadow) {
+//                        int offset = this.bindings[i].dynamicOffset.getDynamicOffset();
+//                        int alignRet = -1;
+//                        for (int z = 24; z >= 0; z--) {
+//                            if ((offset & ((1 << z) - 1)) == 0) {
+//                                alignRet = 1 << z;
+//                                break;
+//                            }
+//                        }
+//                        System.out.println("bind offset " + this.bindings[i].dynamicOffset.getDynamicOffset()+" align: "+alignRet);
+//                    }
                     pOffsets.put(this.bindings[i].dynamicOffset.getDynamicOffset());
                 }
             }

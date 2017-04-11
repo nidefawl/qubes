@@ -76,6 +76,8 @@ public class BlurRendererVK extends BlurRenderer implements IRenderComponent {
     }
     public void initBlurSeperate(int displayWidth, int displayHeight, int blurDownSample) {
         if (this.fbSSRBlurredX != null) {
+            this.fbSSRBlurredX.destroy();
+            this.fbSSRBlurredY.destroy();
             VKContext ctxt = Engine.vkContext;
             this.fbSSRBlurredX.build(VkRenderPasses.passPostRGBA16F, displayWidth, displayHeight);
             this.fbSSRBlurredY.build(VkRenderPasses.passPostRGBA16F, displayWidth, displayHeight);

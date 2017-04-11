@@ -22,7 +22,12 @@ uniform int shadowSplit;
 #define SPLIT_IDX shadowSplit
 
 #endif
-
+#ifdef VULKAN_GLSL
+out gl_PerVertex 
+{
+    vec4 gl_Position;   
+};
+#endif 
 
 void main() {
 	gl_Position = in_matrix_shadow.shadow_split_mvp[SPLIT_IDX] * MODEL_MATRIX * in_position;

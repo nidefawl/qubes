@@ -49,7 +49,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
 
     PostRenderDownload[] tasks = new PostRenderDownload[10];
     private boolean hasLights;
-    public static class PostRenderDownload extends PostRenderTask {
+    public static class PostRenderDownload implements PostRenderTask {
         public int frame;
         public int offset;
         public LightComputeVK lightCompute;
