@@ -35,7 +35,7 @@ public class AssetPackFolder extends AssetPack {
 
     @Override
     public String toString() {
-        return "Asset Pack "+this.directory;
+        return "Asset Pack Folder "+this.directory;
     }
 
     @Override

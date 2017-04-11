@@ -15,7 +15,7 @@ public class WorkingEnv {
     static File config;
     static File playerdata;
     
-	public static void init(String basePath) {
+	public static void init(String basePath, String assetpath) {
 	    Side side = GameContext.getSide();
         Locale.setDefault(Locale.US);
         workingDir = new File(basePath);
@@ -23,7 +23,7 @@ public class WorkingEnv {
         config = new File(workingDir, "config");
         worlds = new File(workingDir, "worlds");
         playerdata = new File(workingDir, "playerdata");
-        assetDir = new File(workingDir, "res");
+        assetDir = assetpath != null ? new File(assetpath) : new File(workingDir, "res");
         packsDir = new File(workingDir, "packs");
         if (side == Side.CLIENT) {
         }

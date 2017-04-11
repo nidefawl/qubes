@@ -4,6 +4,7 @@ import java.io.*;
 
 import org.lwjgl.system.Configuration;
 
+import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.logging.ErrorHandler;
 import nidefawl.qubes.util.*;
 
@@ -53,8 +54,13 @@ public class BootClient {
             System.setProperty("jna.nounpack", "true");
             System.setProperty("jna.boot.library.path", ".");
         }
-        GameContext.setSideAndPath(Side.CLIENT, ".");
+        String assetpath = System.getProperty("game.assetpath", null);
+        GameContext.setSideAndPath(Side.CLIENT, ".", assetpath);
         GameContext.earlyInit();
+        Exception e2  = GameContext.getInitError();
+        if (e2 != null) {
+            throw new RuntimeException(e2);
+        }
         GameBase.appName = "-";
         GameBase baseInstance = getInstance();
         baseInstance.setException(GameContext.getInitError());
@@ -112,7 +118,7 @@ public class BootClient {
                 instanceClass = "test.game.vr.VRApp";
                 break;
             case 3:
-                instanceClass = "test.game.streamingtest.TexturedMesh_VK";
+                instanceClass = "test.game.vulkan.TexturedMesh_VK";
                 break;
             case 4:
                 instanceClass = "test.game.streamingtest.TexturedMesh_GL";

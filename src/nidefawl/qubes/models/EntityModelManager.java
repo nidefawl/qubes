@@ -80,7 +80,7 @@ public class EntityModelManager {
             if (model == null) {
                 continue;
             }
-            model.getLoader().loadTextures();
+//            model.getLoader().loadTextures();
             model.getModel().draw();
         }
     }
