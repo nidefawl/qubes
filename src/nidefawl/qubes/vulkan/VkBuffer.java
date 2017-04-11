@@ -58,7 +58,9 @@ public class VkBuffer implements IVkResource {
                 throw new AssertionError("vkCreateBuffer failed: " + VulkanErr.toString(err));
             }
             int memoryPropertyFlags = isDeviceLocal ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            ctxt.memoryManager.wholeBlock = (usageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) != 0;
             this.memory = ctxt.memoryManager.allocateBufferMemory(pBuffer.get(0), memoryPropertyFlags, this.tag);
+            ctxt.memoryManager.wholeBlock  = false;
             bufferCreateInfo.free();
         }
         this.descriptorBuffer = VkDescriptorBufferInfo.calloc(1);
@@ -114,6 +116,17 @@ public class VkBuffer implements IVkResource {
             memCopy(addr, ptr+offset, size);
         } else {
             mapRange(offset, size);
+            long alignedLoc = ptr-offset;
+//            Thread.dumpStack();
+//            System.out.println(ptr-offset);
+//            int alignRet = -1;
+//            for (int i = 16; i >= 0; i--) {
+//                if ((alignedLoc&((1<<i)-1))==0) {
+//                    alignRet = 1<<i;
+//                    break;
+//                }
+//            }
+//            System.out.println("ALIGN REQ "+alignRet);
             memCopy(addr, ptr, size);
         }
         if (isDeviceLocal) {
@@ -123,6 +136,7 @@ public class VkBuffer implements IVkResource {
             unmap();
 //            Thread.dumpStack();
         }
+        Stats.uploadBytes+=size;
     }
     
     private void copy() {
@@ -132,7 +146,6 @@ public class VkBuffer implements IVkResource {
             copyRegion.srcOffset(0);
             copyRegion.dstOffset(0);
             copyRegion.size(this.size);
-            Stats.uploadBytes+=size;
             vkCmdCopyBuffer(commandBuffer, this.pStagingBuffer.get(0), this.pBuffer.get(0), copyRegion);
         }
 

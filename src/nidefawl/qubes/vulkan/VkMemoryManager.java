@@ -16,11 +16,14 @@ import nidefawl.qubes.util.GameMath;
 
 public class VkMemoryManager {
     private static VkMemoryAllocateInfo allocInfo;//not doing any funny thread allocation (yet)
-    private static VkMemoryRequirements memReqs;//not doing any funny thread allocation (yet)
+    private static VkMemoryRequirements memReqs;
+    private static VkMappedMemoryRange flushRanges;
     private static PointerBuffer ptrBuf;
 
     public static void allocStatic() {
         allocInfo = VkMemoryAllocateInfo.calloc().sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
+        flushRanges = VkMappedMemoryRange.calloc().sType(VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE);
+        flushRanges.pNext(0L);
         memReqs = VkMemoryRequirements.calloc();
         ptrBuf = memAllocPointer(1);
     }
@@ -67,13 +70,25 @@ public class VkMemoryManager {
                 throw new GameLogicError("cannot map twice");
             }
             block.isMapped = true;
+//            System.out.println("MAP "+size);
             int err = vkMapMemory(block.device, block.memory, this.offset+mapOffset, mapSize, 0, ptrBuf);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("vkAllocateMemory failed: " + VulkanErr.toString(err));
             }
+//            flushRanges.offset(this.offset+mapOffset);
+//            flushRanges.size(mapSize);
             return ptrBuf.get(0);
         }
         public void unmap() {
+//            System.err.println(this.size+","+this.offset+","+(this.offset+size));
+//            flushRanges.memory(block.memory);
+//            flushRanges.offset(this.offset);
+//            flushRanges.size(this.size);
+//            vkFlushMappedMemoryRanges(block.device, flushRanges);
+//            flushRanges.memory(block.memory);
+//            flushRanges.offset(block.offset);
+//            flushRanges.size(this.size);
+//            vkFlushMappedMemoryRanges(block.device, flushRanges);
             vkUnmapMemory(block.device, block.memory);
             block.isMapped = false;
         }
@@ -207,10 +222,21 @@ public class VkMemoryManager {
                         long newChunkSize = chunk.size-size;
                         long newChunkOffset = chunk.offset+size;
                         if (newChunkSize > chunk.align) {
-                            long shiftAlign = newChunkOffset%chunk.align;
-                            if (shiftAlign != 0) {
+                            long shiftAlign = (chunk.align-(newChunkOffset%chunk.align))%chunk.align;
+//                            System.out.println("shifting by "+shiftAlign+" so newchunkoffset "+newChunkOffset+" stis on "+(newChunkOffset+shiftAlign)+" and offers alignement "+chunk.align);
+                            if (shiftAlign != 0&&newChunkSize>shiftAlign) {
                                 newChunkOffset += shiftAlign;
                                 newChunkSize -= shiftAlign;
+                            }
+                            int alignRet = -1;
+                            for (int o = 24; o >= 0; o--) {
+                                if (((newChunkOffset)&((1<<o)-1))==0) {
+                                    alignRet = 1<<o;
+                                    break;
+                                }
+                            }
+                            if (chunk.align > alignRet) {
+                                throw new IllegalStateException("Alignment fucked up "+chunk.align+" is not "+alignRet);
                             }
                         } else {
                             chunk.align = 0;
@@ -221,6 +247,16 @@ public class VkMemoryManager {
                         unused.add(newChunk);
                         if (DEBUG_MEM_ALLOC) {
                             System.out.println("using splitted chunk entry, buffer now has "+(chunk.size-size)+" extra bytes claimed!");
+                            System.out.println("split is "+chunk);
+                            int alignRet = -1;
+                            for (int o = 24; o >= 0; o--) {
+                                if (((chunk.offset)&((1<<o)-1))==0) {
+                                    alignRet = 1<<o;
+                                    break;
+                                }
+                            }
+                            System.out.println("actual alignement of split is "+alignRet+", req was "+align+" chunk stored is "+chunk.align);
+
                         }
                     } else {
                         if (DEBUG_MEM_ALLOC) {
@@ -239,7 +275,9 @@ public class VkMemoryManager {
             }
             long chunkoffset = this.offset;
             if ((chunkoffset % align) != 0) {
-                System.out.println("aligning to "+align+", offsetIn "+offset +", offsetOut "+((chunkoffset/align+1)*align));
+                if (DEBUG_MEM_ALLOC) {
+                    System.out.println("aligning to "+align+", offsetIn "+offset +", offsetOut "+((chunkoffset/align+1)*align));
+                }
                 chunkoffset = (chunkoffset/align+1)*align;
             }
             if (this.blockSize-chunkoffset < size) {
@@ -367,6 +405,7 @@ public class VkMemoryManager {
     private long allocationBlockSize;
     private ArrayList<MemoryBlock> allBlocks = new ArrayList<>();
     private ArrayList<MemoryBlock> unshared = new ArrayList<>();
+    public boolean wholeBlock;
     
     public static int getMemoryType(VKContext vkContext, int typeBits, int properties) {
         for (int i = 0; i < vkContext.memoryProperties.memoryTypeCount(); i++)
@@ -519,18 +558,23 @@ public class VkMemoryManager {
     }
     public MemoryChunk allocChunk(int supportedTypes, long size, long align, int properties, boolean image, Object tag) {
         MemoryBlock block;
-        if (size > this.allocationBlockSize/2) {
-            System.out.println("Allocating full block for request of size "+size);
+        long alignSize = size;
+        if ((alignSize & align) != 0) {
+            alignSize = (alignSize/align+1)*align;
+        }
+                
+        if (alignSize > this.allocationBlockSize/2||this.wholeBlock) {
+            System.out.println("Allocating full block for request of size "+alignSize);
             VulkanMemoryType mem = getMemTypeByFlagsAndType(supportedTypes, properties);
             block = new MemoryBlock(false, image);
-            block.allocateBlock(ctxt.device, mem, size);
+            block.allocateBlock(ctxt.device, mem, alignSize);
             unshared.add(block);
             allBlocks.add(block);
         } else {
-            block = getMemBlockByFlags(supportedTypes, properties, image, size, align);
+            block = getMemBlockByFlags(supportedTypes, properties, image, alignSize, align);
         }
-        if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" requires "+(size)+" bytes");
-        MemoryChunk chunk = block.allocateChunk(align, size);
+        if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" requires "+(alignSize)+" bytes");
+        MemoryChunk chunk = block.allocateChunk(align, alignSize);
         if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" got chunk "+(chunk));
         SIZE_CHUNK_ALLOCD+=chunk.size;
         return chunk;
@@ -541,9 +585,22 @@ public class VkMemoryManager {
     public MemoryChunk allocateBufferMemory(long buffer, int properties, String tag) {
         vkGetBufferMemoryRequirements(ctxt.device, buffer, memReqs);
         long align = memReqs.alignment();
+        if (align < 16384)
+            align = 16384;
         long size = memReqs.size();
         MemoryChunk chunk = allocChunk(memReqs.memoryTypeBits(), size, align, properties, false, tag);
         chunk.tag(tag);
+        int alignRet = -1;
+        for (int i = 24; i >= 0; i--) {
+            if (((chunk.offset)&((1<<i)-1))==0) {
+                alignRet = 1<<i;
+                break;
+            }
+        }
+//        System.out.println("ALIGN REQ "+align+", ALIGN RETURNED "+alignRet+", chunk/block align "+chunk.align);
+        if (alignRet < align) {
+            throw new AssertionError("INVALID ALIGNMENT");
+        }
         int err = vkBindBufferMemory(ctxt.device, buffer, chunk.block.memory, chunk.offset);
         if (err != VK_SUCCESS) {
             throw new AssertionError("vkBindBufferMemoryvkBindBufferMemory failed: " + VulkanErr.toString(err));
