@@ -160,7 +160,7 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
-        DEBUG_LAYER = false;
+        DEBUG_LAYER = true;
     }
 
     @Override
@@ -1590,13 +1590,16 @@ public class Game extends GameBase {
     public void onWindowResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
             if (this.statsFB != null) {
+                System.out.println("this.statsFB.setSize");
                 this.statsFB.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
             }
             if (this.gui != null) {
                 this.gui.setPos(0, 0);
+                System.out.println("this.gui.setSize");
                 this.gui.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
                 this.gui.initGui(this.gui.firstOpen);
             }
+            System.out.println("new GuiOverlayChat");
             this.chatOverlay = new GuiOverlayChat();
             this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
             this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
@@ -1607,15 +1610,19 @@ public class Game extends GameBase {
     }
     @Override
     public void setRenderResolution(int displayWidth, int displayHeight) {
+        System.out.println("Engine.updateRenderResolution");
         Engine.updateRenderResolution(displayWidth, displayHeight);
         if (isRunning()) {
             if (isVulkan)
             {
                 if (this.frameBuffer != null) {
+                    System.out.println("this.frameBuffer.destroy");
                     this.frameBuffer.destroy();
                 }
+                System.out.println("this.frameBuffer.build");
                 this.frameBuffer.build(VkRenderPasses.passFramebuffer, displayWidth, displayHeight);
             }
+            System.out.println("Engine.resize");
             Engine.resize(displayWidth, displayHeight);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("onResize");

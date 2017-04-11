@@ -157,19 +157,27 @@ public class VkPipelines {
         }
     }
 
+    static int buildN = 0;
     public static void init(VKContext ctxt) {
+        buildN = 0;
         AssetManager assetManager = AssetManagerClient.getInstance();
         VkShader shaderScreenTriangle = ctxt.loadCompileGLSL(assetManager, "screen_triangle.vsh", VK_SHADER_STAGE_VERTEX_BIT, new VkShaderDef());
+        System.out.println("shaderScreenTriangle");
         VkRenderPasses.passPostDeferred.init(ctxt);
+        System.out.println("passPostDeferred");
+
         VkRenderPasses.passPostDeferredNoClear.init(ctxt);
+        System.out.println("passPostDeferredNoClear");
         if (Engine.vkSMAAContext != null) {
             Engine.vkSMAAContext.destroy(ctxt);
+            System.out.println("vkSMAAContext.destroy");
         }
         Engine.TEMPORAL_OFFSET = false;
         Engine.vkSMAAContext = null;
         if (GameBase.baseInstance != null && GameBase.baseInstance.getVendor() != GPUVendor.INTEL && Engine.RENDER_SETTINGS.smaaMode > 0) {
             Engine.vkSMAAContext = new VkSMAA(ctxt, Engine.RENDER_SETTINGS.smaaQuality, Engine.RENDER_SETTINGS.smaaPredication, false, Engine.RENDER_SETTINGS.smaaMode==2);
             Engine.TEMPORAL_OFFSET = Engine.vkSMAAContext.useReprojection;
+            System.out.println("new VkSMAA");
 //            Engine.vkSMAAContext = new VkSMAA(ctxt, SMAA.SMAA_PRESET_MEDIUM);
 //            Engine.vkSMAAContext.init(ctxt.swapChain.width, ctxt.swapChain.height);
         }
@@ -942,6 +950,7 @@ public class VkPipelines {
             }
         }
         long pipeline = pipe.buildPipeline(vkContext);
+        System.out.println("buildPipe "+(buildN++));
         return pipeline;
     }
 

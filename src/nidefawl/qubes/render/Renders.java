@@ -1,6 +1,8 @@
 package nidefawl.qubes.render;
 
 import nidefawl.qubes.gl.ShadowProjector;
+import nidefawl.qubes.models.render.impl.vk.QModelBatchedRenderVK;
+import nidefawl.qubes.render.impl.vk.*;
 import nidefawl.qubes.util.FastArrayList;
 import nidefawl.qubes.util.IRenderComponent;
 
@@ -13,7 +15,23 @@ public class Renders {
         for (int i = 0; i < components.size(); i++) {
             IRenderComponent r = components.get(i);
             if (r instanceof AbstractRenderer) {
-                System.out.println("Resize "+r.getClass());
+//                if (r instanceof BlurRendererVK)
+//                    continue;
+//                if (r instanceof LightComputeVK)
+//                    continue;
+//                if (r instanceof RegionRendererVK)
+//                    continue;
+//                if (r instanceof SkyRendererVK)
+//                    continue;
+//                if (r instanceof WorldRendererVK)
+//                    continue;
+//                if (r instanceof ShadowRendererVK)
+//                    continue;
+//                if (r instanceof QModelBatchedRenderVK)
+//                    continue;
+//                if (r instanceof CubeParticleRendererVK)
+//                    continue;
+                System.out.println("Resize "+r.getClass()+", "+System.currentTimeMillis());
                 ((AbstractRenderer) r).resizeRenderer(displayWidth, displayHeight);    
             }
         }

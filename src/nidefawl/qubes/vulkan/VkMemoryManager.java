@@ -154,6 +154,7 @@ public class VkMemoryManager {
             }
             this.memory = memPointer.get(0);
             SIZE_BLOCK_ALLOCD+=this.blockSize;
+            System.out.println((SIZE_BLOCK_ALLOCD/MB)+ " Block");
         }
 
         public MemoryChunk allocateChunk(long align, long size) {
@@ -577,6 +578,8 @@ public class VkMemoryManager {
         MemoryChunk chunk = block.allocateChunk(align, alignSize);
         if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" got chunk "+(chunk));
         SIZE_CHUNK_ALLOCD+=chunk.size;
+        System.out.println((SIZE_CHUNK_ALLOCD/MB)+ " Chunk "+chunk.size);
+//        Thread.dumpStack();
         return chunk;
     }
     public MemoryChunk allocateBufferMemory(long buffer, int properties) {

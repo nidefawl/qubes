@@ -371,7 +371,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         }
         if (this.fbLuminanceInterp != null) {
             for (int i = 0; i < fbLuminanceInterp.length; i++) {
-                this.fbLuminanceInterp[i].destroy();
+                if (this.fbLuminanceInterp[i] != null) {
+                    this.fbLuminanceInterp[i].destroy();
+                }
             }
         }
     }
@@ -405,7 +407,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         Engine.endRenderPass();
     }
 
-    public void calcLum() {
+    public void calcLum(boolean doRender) {
         Engine.clearAllDescriptorSets();
         VkDescriptor inputBuffer = this.descTextureDeferredOut;
         FrameBuffer top = this.fbLuminanceDownsample[0];
@@ -413,17 +415,20 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         float twoPixelX = 2.0f/(float)frameBufferDeferred.getWidth();
         float twoPixelY = 2.0f/(float)frameBufferDeferred.getHeight();
         Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, top);
+        PushConstantBuffer buf = PushConstantBuffer.INST;
+        if (doRender) {
+
             Engine.setViewport(0, 0, top.getWidth(), top.getHeight()); // 4x downsampled render resolutino
     //        System.out.println("0, 0, "+top.getWidth()+", "+top.getHeight());
             Engine.setDescriptorSet(VkDescLayouts.DESC0, inputBuffer);
             Engine.bindPipeline(VkPipelines.post_downsample_pass0);
     
-            PushConstantBuffer buf = PushConstantBuffer.INST;
             buf.setFloat(0, twoPixelX);
             buf.setFloat(1, twoPixelY);
             vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.post_downsample_pass0.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(8));
     
             Engine.drawFSTri();
+        }
         Engine.endRenderPass();
 
         vkCmdPipelineBarrier(Engine.getDrawCmdBuffer(),
@@ -438,6 +443,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             twoPixelY = 2.0f / (float) this.fbLuminanceDownsample[i].getHeight();
             lastBound = this.fbLuminanceDownsample[i+1];
             Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, lastBound);
+            if (doRender) {
 //          System.out.println("0, 0, "+lastBound.getWidth()+", "+lastBound.getHeight());
                 Engine.setViewport(0, 0, lastBound.getWidth(), lastBound.getHeight()); // 16x downsampled render resolutino
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descTextureDownsampleOutputs[i]);
@@ -446,6 +452,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 buf.setFloat(1, twoPixelY);
                 vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.post_downsample_pass1.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(8));
                 Engine.drawFSTri();
+            }
             Engine.endRenderPass();
 //            if (i == 0)
             vkCmdPipelineBarrier(Engine.getDrawCmdBuffer(),
@@ -461,6 +468,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 
                 VK_DEPENDENCY_BY_REGION_BIT, VKContext.BARRIER_MEM_ATT_WRITE_SHADER_READ, null, null);
         Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, fblumInterp);
+        if (doRender) {
             Engine.setViewport(0, 0, 1, 1); 
             Engine.setDescriptorSet(VkDescLayouts.DESC0, this.descLumInterpOutputsVertexInput[indexIn]);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDownsampleEnd);
@@ -469,33 +477,38 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.post_lum_interp.getLayoutHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, buf.getBuf(4));
     
             Engine.drawFSTri();
+        }
         Engine.endRenderPass();
 
         
     }
-    private void renderSSR() {
+    private void renderSSR(boolean doRender) {
         Engine.clearAllDescriptorSets();
-        Engine.setViewport(0, 0, this.ssrSize[0], this.ssrSize[1]);
-        Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferSSR);
-        Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
-        Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
-        Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
-        Engine.bindPipeline(VkPipelines.ssr);
-        Engine.drawFSTri();  
+        if (doRender) {
+            Engine.setViewport(0, 0, this.ssrSize[0], this.ssrSize[1]);
+            Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferSSR);
+            Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
+            Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRInput);
+            Engine.setDescriptorSet(VkDescLayouts.DESC2, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
+            Engine.bindPipeline(VkPipelines.ssr);
+            Engine.drawFSTri();
+        }  
         Engine.endRenderPass();
         
         
         Engine.setDefaultViewport();
         
 
-        VkDescriptor blurred = RenderersVulkan.blurRenderer.renderBlurSeperate(descTextureSSROutput, 8);
+        VkDescriptor blurred = !doRender ? descTextureSSROutput : RenderersVulkan.blurRenderer.renderBlurSeperate(descTextureSSROutput, 8);
         
         Engine.beginRenderPass(VkRenderPasses.passPostRGBA16F, this.frameBufferDeferredColorOnly);
+        if (doRender) {
         Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
         Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureSSRCombineInput);
         Engine.setDescriptorSet(VkDescLayouts.DESC2, blurred);
         Engine.bindPipeline(VkPipelines.ssrCombine);
         Engine.drawFSTri();  
+        }
         Engine.endRenderPass();
             
     }
@@ -506,10 +519,12 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         boolean ssr = Engine.RENDER_SETTINGS.ssr>0;
         boolean aa_reprojection = Engine.getRenderVelocityBuffer() ;
         FrameBuffer fb = ssr ? frameBufferDeferredPass01 : frameBufferDeferred;
+        boolean doRender = false;
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
             
             Engine.beginRenderPass(VkRenderPasses.passPostDeferred, fb);
+            if (doRender) {
             Engine.clearAllDescriptorSets();
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferred0);
@@ -531,16 +546,18 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.deferred_pass0.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*4*4));
             }
             Engine.drawFSTri();  
+            }
             Engine.endRenderPass();
             if (ssr){
-                renderSSR();   
+                renderSSR(doRender);   
             }
             
-            calcLum();
+            calcLum(doRender);
             Engine.setDefaultViewport();
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
                 Engine.beginRenderPass(VkRenderPasses.passPostDeferredNoClear, frameBufferDeferred);
+                if (doRender) {
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureDeferredInput2);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboShadow);
@@ -552,6 +569,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                     vkCmdPushConstants(Engine.getDrawCmdBuffer(), VkPipelines.deferred_pass0.getLayoutHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, buf.getBuf(4*4*4));
                 }
                 Engine.drawFSTri();
+                }
                 Engine.endRenderPass();
                 Engine.clearAllDescriptorSets();
             }
@@ -559,6 +577,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
 
             Engine.clearAllDescriptorSets();
             Engine.beginRenderPass(VkRenderPasses.passTonemap, this.frameBufferTonemapped);
+            if (doRender) {
             Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureBloomOut);
             Engine.setDescriptorSet(VkDescLayouts.DESC2, this.descLumInterpOutputsCalcd[(this.frame+1)%2]);
@@ -568,6 +587,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureFirstPersonOut);
             Engine.bindPipeline(VkPipelines.texturedFullscreen);
             Engine.drawFSTri();
+            }
             Engine.endRenderPass();
             
             

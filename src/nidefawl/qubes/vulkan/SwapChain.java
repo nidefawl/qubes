@@ -182,6 +182,7 @@ public final class SwapChain {
                     .height(this.height);
             LongBuffer pSwapChain = stack.callocLong(1);
             err = vkCreateSwapchainKHR(ctxt.device, this.swapchainCI, null, pSwapChain);
+            System.out.println("vkCreateSwapchainKHR");
             long swapChain = pSwapChain.get(0);
             if (err != VK_SUCCESS) {
                 throw new AssertionError("Failed to create swap chain: " + VulkanErr.toString(err));
@@ -192,10 +193,12 @@ public final class SwapChain {
             if (this.swapchainHandle != VK_NULL_HANDLE) {
                 vkDestroySwapchainKHR(ctxt.device, this.swapchainHandle, null);
                 this.swapchainHandle = VK_NULL_HANDLE;
+                System.out.println("vkDestroySwapchainKHR");
             }
 
             IntBuffer pImageCount = stack.callocInt(1);
             err = vkGetSwapchainImagesKHR(ctxt.device, swapChain, pImageCount, null);
+            System.out.println("vkGetSwapchainImagesKHR 0");
             this.numImages = pImageCount.get(0);
             
             if (err != VK_SUCCESS) {
@@ -213,6 +216,7 @@ public final class SwapChain {
             }
             long[] images = new long[this.numImages];
             pSwapchainImages.get(images, 0, this.numImages);
+            System.out.println("vkGetSwapchainImagesKHR 1");
 
             this.images = images;
             this.swapchainHandle = swapChain;
