@@ -519,7 +519,7 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         boolean ssr = Engine.RENDER_SETTINGS.ssr>0;
         boolean aa_reprojection = Engine.getRenderVelocityBuffer() ;
         FrameBuffer fb = ssr ? frameBufferDeferredPass01 : frameBufferDeferred;
-        boolean doRender = false;
+        boolean doRender = true;
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
             
