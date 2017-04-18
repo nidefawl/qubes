@@ -682,7 +682,7 @@ public class VulkanInit {
         features.samplerAnisotropy(ctxt.features.samplerAnisotropy());
         features.textureCompressionETC2(false);
         features.textureCompressionASTC_LDR(false);
-        features.textureCompressionBC(false);
+        features.textureCompressionBC(true);
         features.occlusionQueryPrecise(false);
         features.pipelineStatisticsQuery(false);
         features.vertexPipelineStoresAndAtomics(false);

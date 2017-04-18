@@ -1,7 +1,13 @@
 package nidefawl.qubes.texture.array.imp.vk;
 
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_BC3_UNORM_BLOCK;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import java.util.Map.Entry;
+
+import org.lwjgl.opengl.EXTTextureCompressionS3TC;
 
 import com.google.common.collect.Lists;
 
@@ -9,9 +15,11 @@ import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.block.Block;
+import nidefawl.qubes.texture.DXTCompressor;
 import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.vulkan.VkMemoryManager;
 
 public class BlockTextureArrayVK extends TextureArrayVK {
     public static final int        BLOCK_TEXTURE_BITS = 4;
@@ -21,6 +29,7 @@ public class BlockTextureArrayVK extends TextureArrayVK {
 
     public BlockTextureArrayVK() {
         super(Block.NUM_BLOCKS << BLOCK_TEXTURE_BITS);
+        this.internalFormat = VK_FORMAT_BC3_UNORM_BLOCK;
     }
 
     protected void postUpload() {
@@ -37,6 +46,7 @@ public class BlockTextureArrayVK extends TextureArrayVK {
         int slot = 0;
         TextureBinMips[] binMips = new TextureBinMips[this.numTextures];
         byte[] scratchpad = new byte[(512*512*4)*4];
+        ByteBuffer directBuf = null;
         while (it.hasNext()) {
             Entry<Integer, ArrayList<AssetTexture>> entry = it.next();
             int blockId = entry.getKey();
@@ -58,11 +68,26 @@ public class BlockTextureArrayVK extends TextureArrayVK {
                     slotTex.w = new int[numMipmaps];
                     slotTex.h = new int[numMipmaps];
                     for (int m = 0; m < numMipmaps; m++) {
-                        System.arraycopy(data, 0, scratchpad, offset, data.length);
-                        slotTex.sizes[m] = data.length;
+                        
+                        ByteBuffer rgba = ByteBuffer.wrap(data);
+                        int dlen = (int)VkMemoryManager.align(data.length, 16);
+                        if (directBuf == null || directBuf.capacity() < dlen) {
+                            directBuf = ByteBuffer.allocateDirect(dlen).order(ByteOrder.nativeOrder());
+                        }
+                        directBuf.clear();
+                        DXTCompressor.stbgl__compress(directBuf, rgba, mipmapSize, mipmapSize, EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, directBuf.capacity());
+                        int rem = directBuf.remaining();
+                        int len = (int)VkMemoryManager.align(rem, 16);
+                        directBuf.get(scratchpad, offset, rem);
+                        for (int o = rem; o < len; o++) {
+                            scratchpad[o] = 0;
+                        }
+                        
+//                        System.arraycopy(data, 0, scratchpad, offset, data.length);
+                        slotTex.sizes[m] = len;
                         slotTex.w[m] = mipmapSize;
                         slotTex.h[m] = mipmapSize;
-                        offset += data.length;
+                        offset += len;
                         mipmapSize /= 2;
                         if (mipmapSize > 0)
                             data = TextureUtil.makeMipMap(data, mipmapSize, mipmapSize, avg);

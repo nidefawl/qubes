@@ -10,11 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.texture.TextureBinMips;
+import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameLogicError;
 import nidefawl.qubes.vulkan.VkMemoryManager.MemoryChunk;
 
@@ -137,6 +137,9 @@ public class VkTexture implements IVkResource {
                         imageExtend.width(texture2dData[l].w[i]).height(texture2dData[l].h[i]).depth(1);
                         bufferCopyRegion.bufferOffset(offset);
                         offset += texture2dData[l].sizes[i];
+                        if (offset > totalSize) {
+                            throw new GameError("OUT OF BOUNDS "+offset+"/"+totalSize);
+                        }
                     }
                 }
     
