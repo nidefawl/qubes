@@ -219,9 +219,9 @@ public class GPUProfiler {
             if (gpuTaskProfile.queries>=gpuTaskProfile.pool.getPos()) {
                 throw new GameLogicError("Invalid pos "+gpuTaskProfile.pool.getPos()+" vs "+gpuTaskProfile.queries);
             }
-            vkGetQueryPoolResults(Engine.vkContext.device, gpuTaskProfile.pool.get(), gpuTaskProfile.queries, 2, buffer, 0L, VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
-            gpuTaskProfile.resultStart = buffer.get(0);
-            gpuTaskProfile.resultEnd = buffer.get(1);
+//            vkGetQueryPoolResults(Engine.vkContext.device, gpuTaskProfile.pool.get(), gpuTaskProfile.queries, 2, buffer, 0L, VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+            gpuTaskProfile.resultStart = buffer.get(gpuTaskProfile.queries+0);
+            gpuTaskProfile.resultEnd = buffer.get(gpuTaskProfile.queries+1);
         } else {
             gpuTaskProfile.resultStart = glGetQueryObjectui64(gpuTaskProfile.queries+0, GL_QUERY_RESULT);
             gpuTaskProfile.resultEnd = glGetQueryObjectui64(gpuTaskProfile.queries+1, GL_QUERY_RESULT);
