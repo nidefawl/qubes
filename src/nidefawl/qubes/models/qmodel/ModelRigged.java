@@ -197,7 +197,7 @@ public class ModelRigged extends ModelQModel {
                         }
                     }
                     rGroup.gpuBufRest = new GLTriBuffer(false);
-
+                    rGroup.gpuBufRest.tag(this.getName());
                     int bytes = rGroup.gpuBufRest.upload(vbuf);
 
                 }

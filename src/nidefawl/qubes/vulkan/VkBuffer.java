@@ -37,6 +37,9 @@ public class VkBuffer implements IVkResource {
         this.ctxt.addResource(this);
         this.size = size;
         this.isDeviceLocal = isDeviceLocal;
+        if (this.tag == null) {
+            Thread.dumpStack();
+        }
         if (this.isDeviceLocal)
         {
             pStagingBuffer = memAllocLong(1);
@@ -58,9 +61,9 @@ public class VkBuffer implements IVkResource {
                 throw new AssertionError("vkCreateBuffer failed: " + VulkanErr.toString(err));
             }
             int memoryPropertyFlags = isDeviceLocal ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-            ctxt.memoryManager.wholeBlock = (usageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) != 0;
+//            ctxt.memoryManager.wholeBlock = (usageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) != 0;
             this.memory = ctxt.memoryManager.allocateBufferMemory(pBuffer.get(0), memoryPropertyFlags, this.tag);
-            ctxt.memoryManager.wholeBlock  = false;
+//            ctxt.memoryManager.wholeBlock  = false;
             bufferCreateInfo.free();
         }
         this.descriptorBuffer = VkDescriptorBufferInfo.calloc(1);

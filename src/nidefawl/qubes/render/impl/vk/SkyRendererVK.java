@@ -63,9 +63,11 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
             this.numTexturesCloud = this.texClouds.length;
         }
         this.bufferInstanceData = new VkBuffer(ctxt);
+        this.bufferInstanceData.tag("bufferInstanceData");
         this.bufferInstanceData.create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, BUFFER_SIZE, false);
 
         this.quad = ctxt.getFreeBuffer();
+        this.quad.tag("cloudQuad");
         this.quad.create(4*4, 6*4, true);
         try ( MemoryStack stack = stackPush() ) {
             ByteBuffer vertexBufB = stack.calloc(4*4);

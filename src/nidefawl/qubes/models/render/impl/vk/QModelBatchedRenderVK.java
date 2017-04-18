@@ -118,9 +118,9 @@ public class QModelBatchedRenderVK extends QModelBatchedRender {
     @Override
     public void init() {
         VKContext ctxt = Engine.vkContext;
-        this.vkNormalMat = new VkSSBO(ctxt, SSBO_SIZE_NORMAL, SSBO_DRAW_SIZE_NORMAL).tag("ssbo_model_normal_mat");
-        this.vkModelMat = new VkSSBO(ctxt, SSBO_SIZE_MODEL, SSBO_DRAW_SIZE_MODEL).tag("ssbo_model_model_mat"); 
-        this.vkBones = new VkSSBO(ctxt, SSBO_SIZE_BONES, SSBO_DRAW_SIZE_BONES).tag("ssbo_model_bones");
+        this.vkNormalMat = new VkSSBO(ctxt, SSBO_SIZE_NORMAL, SSBO_DRAW_SIZE_NORMAL).tag("ssbo_model_normal_mat").init();
+        this.vkModelMat = new VkSSBO(ctxt, SSBO_SIZE_MODEL, SSBO_DRAW_SIZE_MODEL).tag("ssbo_model_model_mat").init(); 
+        this.vkBones = new VkSSBO(ctxt, SSBO_SIZE_BONES, SSBO_DRAW_SIZE_BONES).tag("ssbo_model_bones").init();
         descriptorSetSSBOBatched = ctxt.descLayouts.allocDescSetSSBOModelBatched();
         descriptorSetSSBOBatched.setBindingSSBO(0, this.vkModelMat);
         descriptorSetSSBOBatched.setBindingSSBO(1, this.vkNormalMat);

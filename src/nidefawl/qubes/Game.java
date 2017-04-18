@@ -160,11 +160,12 @@ public class Game extends GameBase {
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
         instance = this;
-        DEBUG_LAYER = true;
+        DEBUG_LAYER = false;
     }
 
     @Override
     public void initGame() {
+        DebugServer.getInstance().start();
         GameBase.loadingScreen = new LoadingScreen();
         loadProfile();
         loadSettings();
@@ -305,6 +306,7 @@ public class Game extends GameBase {
     
     @Override
     public void shutdown() {
+        DebugServer.getInstance().stop();
         if(DEBUG_LAYER) System.err.println("Game.shutdown");
         if (isVulkan)
             vkContext.syncAllFences();
@@ -1868,7 +1870,7 @@ public class Game extends GameBase {
                 return;
             }
             if (text.equals("/blockreset")) {
-                Shaders.initShaders();
+                if (!isVulkan)Shaders.initShaders();
                 SingleBlockRenderAtlas.getInstance().reset();
                 return;
             }
@@ -1903,6 +1905,10 @@ public class Game extends GameBase {
                 this.chatOverlay = new GuiOverlayChat();
                 this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
                 this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
+                return;
+            }
+            if (text.equals("/dump")) {
+                this.vkContext.memoryManager.dump();
                 return;
             }
             if (text.equals("/reloadshaders")) {

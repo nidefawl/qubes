@@ -65,7 +65,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
     @Override
     public void init() {
         VKContext ctxt = Engine.vkContext;
-        this.vkSSBOLights = new VkSSBO(ctxt, SSBO_SIZE_LIGHT, SSBO_FRAME_SIZE_LIGHT).tag("ssbo_lights");
+        this.vkSSBOLights = new VkSSBO(ctxt, SSBO_SIZE_LIGHT, SSBO_FRAME_SIZE_LIGHT).tag("ssbo_lights").init();
 
         this.bufferByte = MemoryUtil.memCalloc(SSBO_SIZE_LIGHT);
         this.bufferFloat = this.bufferByte.asFloatBuffer();
@@ -82,7 +82,7 @@ public class LightComputeVK extends LightCompute implements IRenderComponent {
             
             this.bufferByteDownload = MemoryUtil.memCalloc(SSBO_FRAME_SIZE_DBG);
             this.bufferInt = this.bufferByteDownload.asIntBuffer();
-            this.vkSSBOLightsDbg = new VkSSBO(ctxt, SSBO_SIZE_DBG, SSBO_FRAME_SIZE_DBG).tag("ssbo_lights_dbg");
+            this.vkSSBOLightsDbg = new VkSSBO(ctxt, SSBO_SIZE_DBG, SSBO_FRAME_SIZE_DBG).tag("ssbo_lights_dbg").init();
             descriptorSetSSBOLightsDbg = ctxt.descLayouts.allocDescSetSSBOPointLights().tag("SSBOPointLightsDbg");
             descriptorSetSSBOLightsDbg.setBindingSSBO(0, this.vkSSBOLightsDbg);
             descriptorSetSSBOLightsDbg.update(ctxt);

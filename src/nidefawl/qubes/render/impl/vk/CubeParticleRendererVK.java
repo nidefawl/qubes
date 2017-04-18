@@ -32,8 +32,8 @@ public class CubeParticleRendererVK extends CubeParticleRenderer implements IRen
     public void init() {
         super.init();
         VKContext ctxt = Engine.vkContext;
-        this.vkBlockInfo = new VkSSBO(ctxt, 10*32*MAX_PARTICLES, 32*MAX_PARTICLES).tag("ssbo_blockinfo"); 
-        this.vkMat = new VkSSBO(ctxt, 10*64*MAX_PARTICLES, 64*MAX_PARTICLES).tag("ssbo_mat");
+        this.vkBlockInfo = new VkSSBO(ctxt, 10*32*MAX_PARTICLES, 32*MAX_PARTICLES).tag("ssbo_blockinfo").init(); 
+        this.vkMat = new VkSSBO(ctxt, 10*64*MAX_PARTICLES, 64*MAX_PARTICLES).tag("ssbo_mat").init().init();
         this.cube = ctxt.getFreeBuffer();
         VertexBuffer buf = new VertexBuffer(1024*1024);
         ReallocIntBuffer bufIntV = new ReallocIntBuffer();
@@ -41,6 +41,7 @@ public class CubeParticleRendererVK extends CubeParticleRenderer implements IRen
         RenderUtil.makeCube(buf, 1.0f, GLVAO.vaoStaticModel);
         int intlen = buf.storeVertexData(bufIntV);
         int intlenIdx = buf.storeIndexData(bufIntI);
+        this.cube.tag("ParticleCube");
         this.cube.uploadDeviceLocal(bufIntV.getByteBuf(), intlen, bufIntI.getByteBuf(), intlenIdx);
         this.cube.setElementCount(intlenIdx);
         bufIntI.destroy();

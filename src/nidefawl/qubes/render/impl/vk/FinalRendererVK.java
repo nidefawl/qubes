@@ -14,6 +14,7 @@ import com.google.common.collect.Lists;
 import nidefawl.qubes.Game;
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
+import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.FinalRenderer;
 import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.util.*;
@@ -522,7 +523,9 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
         boolean doRender = true;
         if (fb.getWidth() == Engine.fbWidth() && fb.getHeight() == Engine.fbHeight())
         {
-            
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("deferred_01");
             Engine.beginRenderPass(VkRenderPasses.passPostDeferred, fb);
             if (doRender) {
             Engine.clearAllDescriptorSets();
@@ -548,14 +551,26 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.drawFSTri();  
             }
             Engine.endRenderPass();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
             if (ssr){
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("renderSSR");
                 renderSSR(doRender);   
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
             }
-            
+
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("calcLum");
             calcLum(doRender);
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
             Engine.setDefaultViewport();
             boolean firstPerson = !Game.instance.thirdPerson;
             if (firstPerson) {
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.start("deferred_2");
                 Engine.beginRenderPass(VkRenderPasses.passPostDeferredNoClear, frameBufferDeferred);
                 if (doRender) {
                 Engine.setDescriptorSet(VkDescLayouts.DESC0, Engine.descriptorSetUboScene);
@@ -572,9 +587,17 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
                 }
                 Engine.endRenderPass();
                 Engine.clearAllDescriptorSets();
+                if (GPUProfiler.PROFILING_ENABLED)
+                    GPUProfiler.end();
             }
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("renderBloom");
             renderBloom();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
 
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.start("tonemap");
             Engine.clearAllDescriptorSets();
             Engine.beginRenderPass(VkRenderPasses.passTonemap, this.frameBufferTonemapped);
             if (doRender) {
@@ -589,6 +612,8 @@ public class FinalRendererVK extends FinalRenderer implements IRenderComponent {
             Engine.drawFSTri();
             }
             Engine.endRenderPass();
+            if (GPUProfiler.PROFILING_ENABLED)
+                GPUProfiler.end();
             
             
             Engine.clearAllDescriptorSets();
