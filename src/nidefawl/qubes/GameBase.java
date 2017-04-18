@@ -528,17 +528,24 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                 windowHeight = 1;
             }
             if (!canRenderGui3d()) {
+                System.out.println("Engine.updateGuiResolution");
                 Engine.updateGuiResolution(windowWidth, windowHeight);
             }
             if (useWindowSizeAsRenderResolution) {
+                System.out.println("Engine.updateRenderResolution");
                 Engine.updateRenderResolution(windowWidth, windowHeight);
             }
             try {
+                System.out.println("onWindowResize");
                 onWindowResize(windowWidth, windowHeight);
                 if (isRunning()&&!isVulkan)
                     Engine.setDefaultViewport();
             } catch (Throwable t) {
                 setException(new GameError("GLFWWindowSizeCallback", t));
+            }
+            if (vkContext!=null){
+
+                vkContext.finishUpload();
             }
         }
     }
@@ -677,10 +684,10 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             shutdown();
             return;
         }
+        checkResize();
         if (vkContext != null) {
             vkContext.preRender();
         }
-        checkResize();
         if (!this.running) {
             return;
         }

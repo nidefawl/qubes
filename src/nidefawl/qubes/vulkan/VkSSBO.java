@@ -34,16 +34,19 @@ public class VkSSBO implements IBufferDynamicOffset {
         this.dynSize = dynSize;
         this.size = size;
         this.buffer = new VkBuffer(ctxt);
+    }
+    public VkSSBO init() {
         this.buffer.create(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, this.size, false);
         VkDescriptorBufferInfo.Buffer desc = this.buffer.getDescriptorBuffer();
         if (isConstant()) {
             desc.range(VK_WHOLE_SIZE);
         } else {
-            desc.range(dynSize);
+            desc.range(this.dynSize);
         }
         if (dynSize > Engine.vkContext.limits.maxStorageBufferRange()) {
             throw new GameLogicError("Uniform buffer len exceeds maxStorageBufferRange: "+(dynSize)+" > "+(Engine.vkContext.limits.maxStorageBufferRange()));
         }
+        return this;
     }
     public VkSSBO tag(String tag) {
         this.buffer.tag(tag);

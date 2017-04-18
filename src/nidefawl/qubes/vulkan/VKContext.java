@@ -469,6 +469,9 @@ public class VKContext {
 //        vkQueueWaitIdle(vkQueue);
         System.out.println("Reinit swap chain "+gameBase.windowWidth+","+gameBase.windowHeight+",vsync="+vsync);
         // Begin the setup command buffer (the one we will use for swapchain/framebuffer creation)
+        System.out.println("Current buffer "+currentBuffer);
+        System.out.println("Copy cmd "+this.hasOpenCopyCommandTransfer+","+this.hasOpenCopyCommandGraphics);
+        System.out.println(this.orphanedInUse);
         int images = this.swapChain.numImages;
         this.swapChain.setup(gameBase.windowWidth, gameBase.windowHeight, vsync);
         pSwapchains.put(0, swapChain.swapchainHandle);

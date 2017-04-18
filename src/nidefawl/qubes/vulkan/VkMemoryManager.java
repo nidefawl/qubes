@@ -33,6 +33,13 @@ public class VkMemoryManager {
         memReqs.free();
         MemoryUtil.memFree(ptrBuf);
     }
+    public static long align(long size, long align) {
+        long alignSize = size;
+        if (alignSize % align != 0) {
+            alignSize = (alignSize/align+1)*align;
+        }
+        return alignSize;
+    }
 
     static final boolean DEBUG_MEM_ALLOC = false;
     static boolean MEM_ALLOC_CRASH = false;
@@ -100,6 +107,9 @@ public class VkMemoryManager {
         public void tag(String tag) {
             this.tag = tag;
         }
+        public String tag() {
+            return this.tag;
+        }
     }
     public class MemoryBlock {
         public boolean isMapped;
@@ -111,7 +121,7 @@ public class VkMemoryManager {
         public long offset;
         ArrayList<MemoryChunk> unused = new ArrayList<>();
         ArrayList<MemoryChunk> list = new ArrayList<>();
-        private VulkanMemoryType memType;
+        VulkanMemoryType memType;
         private final boolean isImageMemory;
         private final boolean shared;
         public MemoryBlock(boolean shared, boolean optimal) {
@@ -154,6 +164,7 @@ public class VkMemoryManager {
             }
             this.memory = memPointer.get(0);
             SIZE_BLOCK_ALLOCD+=this.blockSize;
+            System.out.println((SIZE_BLOCK_ALLOCD/MB)+ " Block");
         }
 
         public MemoryChunk allocateChunk(long align, long size) {
@@ -164,9 +175,7 @@ public class VkMemoryManager {
                 dump();
                 throw new GameLogicError("size > this.blockSize");
             }
-            if ((size & align) != 0) {
-                size = (size/align+1)*align;
-            }
+            size = align(size, align);
             while (this.unused.size() > 1) {
                 if (DEBUG_MEM_ALLOC) {
                     for (int i = 0; i < unused.size(); i++) {
@@ -273,13 +282,7 @@ public class VkMemoryManager {
                 dump();
                 throw new GameLogicError("size > getLeft()");
             }
-            long chunkoffset = this.offset;
-            if ((chunkoffset % align) != 0) {
-                if (DEBUG_MEM_ALLOC) {
-                    System.out.println("aligning to "+align+", offsetIn "+offset +", offsetOut "+((chunkoffset/align+1)*align));
-                }
-                chunkoffset = (chunkoffset/align+1)*align;
-            }
+            long chunkoffset = align(this.offset, align);
             if (this.blockSize-chunkoffset < size) {
                 throw new GameLogicError("aligned size > getLeft()");
             }
@@ -375,14 +378,9 @@ public class VkMemoryManager {
                 dump();
                 throw new GameLogicError("size > this.blockSize "+size+" > "+this.blockSize);
             }
-            if ((size & align) != 0) {
-                size = (size/align+1)*align;
-            }
+            size = align(size, align);
             if (getLeft() >= size) {
-                long chunkoffset = this.offset;
-                if ((chunkoffset & align) != 0) {
-                    chunkoffset = (chunkoffset/align+1)*align;
-                }
+                long chunkoffset = align(this.offset, align);
                 if (this.blockSize-chunkoffset >= size) {
                     return true;
                 }
@@ -403,7 +401,7 @@ public class VkMemoryManager {
     private VulkanMemoryType[] memTypes;
     private long deviceLocalHeapSize;
     private long allocationBlockSize;
-    private ArrayList<MemoryBlock> allBlocks = new ArrayList<>();
+    ArrayList<MemoryBlock> allBlocks = new ArrayList<>();
     private ArrayList<MemoryBlock> unshared = new ArrayList<>();
     public boolean wholeBlock;
     
@@ -483,12 +481,15 @@ public class VkMemoryManager {
 		*/
     }
     public void dump() {
+        long l1 = 0L;
         for (int i = 0; i < allBlocks.size(); i++) {
             MemoryBlock block = allBlocks.get(i);
             long l = block.getAllocSum();
             System.out.println("--- Block["+i+"], device idx "+block.memType.idx+", "+VulkanErr.memFlagsToStr(block.flags)+", Usage "+(l/MB)+"/"+(block.blockSize/MB)+"MB");
-//            block.dump();
+            block.dump();
+            l1 += l;
         }
+        System.out.println(l1/MB);
     }
 
     private MemoryBlock allocateBlock(VkDevice device, int supportedTypes, int properties, boolean optimal) {
@@ -558,10 +559,7 @@ public class VkMemoryManager {
     }
     public MemoryChunk allocChunk(int supportedTypes, long size, long align, int properties, boolean image, Object tag) {
         MemoryBlock block;
-        long alignSize = size;
-        if ((alignSize & align) != 0) {
-            alignSize = (alignSize/align+1)*align;
-        }
+        long alignSize = align(size, align);
                 
         if (alignSize > this.allocationBlockSize/2||this.wholeBlock) {
             System.out.println("Allocating full block for request of size "+alignSize);
@@ -577,6 +575,8 @@ public class VkMemoryManager {
         MemoryChunk chunk = block.allocateChunk(align, alignSize);
         if (DEBUG_MEM_ALLOC) System.out.println("alloc "+(tag!=null?tag:"")+" got chunk "+(chunk));
         SIZE_CHUNK_ALLOCD+=chunk.size;
+//        System.out.println((SIZE_CHUNK_ALLOCD/MB)+ " Chunk "+chunk.size);
+//        Thread.dumpStack();
         return chunk;
     }
     public MemoryChunk allocateBufferMemory(long buffer, int properties) {

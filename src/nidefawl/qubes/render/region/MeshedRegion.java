@@ -10,9 +10,11 @@ import org.lwjgl.opengl.GL15;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.*;
+import nidefawl.qubes.meshing.MeshUpdateTask.VisibilityCache;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.AABBInt;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.vulkan.BufferPair;
 import nidefawl.qubes.vulkan.CommandBuffer;
@@ -144,6 +146,7 @@ public class MeshedRegion {
     }
     public static long totalBytes = 0;
     long alloc[] = new long[NUM_PASSES];
+    public VisibilityCache visCache;
     public static long totalBytesPass[] = new long[NUM_PASSES];
     static int nextBuffer = 0;
 
@@ -251,6 +254,13 @@ public class MeshedRegion {
     }
     public int getShadowDrawMode() {
         return this.shadowDrawMode;
+    }
+
+    public int frame = 0;
+    public int traverseDirs;
+    public int facing;
+    public void setFrame(int framecall) {
+        this.frame = framecall;
     }
 
 }

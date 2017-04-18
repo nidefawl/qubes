@@ -7,9 +7,10 @@ import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCKS_MAS
 import static nidefawl.qubes.render.region.RegionRenderer.REGION_SIZE_BLOCK_SIZE_BITS;
 import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MASK;
 
-import java.util.List;
+import java.util.*;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -17,6 +18,7 @@ import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
+import nidefawl.qubes.vec.Dir;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
@@ -34,7 +36,153 @@ public class MeshUpdateTask {
     final VertexBuffer[] vbuffer = new VertexBuffer[NUM_PASSES];
     
     private int shadowDrawMode;
-    
+    final static int VIS_LEN = RegionRenderer.REGION_SIZE_BLOCKS;
+    final static int VIS_BITS = VIS_LEN*VIS_LEN*VIS_LEN;
+    final static int[] EDGES = calcEdges();
+    public static class VisibilityCache {
+        public final BitSet bits = new BitSet(6*6);
+
+        public void setAll(boolean b) {
+            bits.set(0, 36, b);
+        }
+        public void set(int idx, boolean b) {
+            bits.set(idx, b);
+        }
+        public void setVisible(int edgeMask) {
+            for (int i = 0; i < 6; i++) {
+                if ((edgeMask & (1<<i)) != 0) {
+                    for (int j = 0; j < 6; j++) {
+                        if ((edgeMask & (1<<j)) != 0) {
+                            bits.set(j*6+i, true);
+                            bits.set(i*6+j, true);
+                        }
+                    }
+                }
+            }
+        }
+        public boolean isVisible(int d1, int d2) {
+            return this.bits.get(d1*6+d2);
+        }
+    }
+    static int idx(int x, int y, int z)
+    {
+        return y << 10 | z << 5 | x;
+    }
+    static class RegionFaceOpacityCache {
+        public final BitSet bits = new BitSet(VIS_BITS);
+        public int empty = 0;
+
+
+        public void setOpaque(int x, int y, int z) {
+            bits.set(idx(x, y, z), true);
+            empty--;
+        }
+        public void reset() {
+            bits.set(0, VIS_BITS, false);
+            empty = VIS_BITS;
+        }
+        public VisibilityCache fill() {
+            VisibilityCache cache = new VisibilityCache();
+
+            if (this.empty <= 0) {
+                cache.setAll(false);
+                return cache;
+            }
+//            System.out.println(this.empty);
+//            System.out.println(EDGES);
+            Queue<Integer> queue = new ArrayDeque<>();
+            for (int i = 0; i < EDGES.length; i++) {
+                int idx = EDGES[i];
+                if (!bits.get(idx)) {
+                    int edgeMask = 0;
+                    queue.clear();
+                    queue.add(idx);
+                    bits.set(idx, true);
+                    while (!queue.isEmpty()) {
+                        int qidx = queue.poll().intValue();
+                        edgeMask |= getEdge(qidx);
+                        if (edgeMask == 0x3F) {
+                            break;
+                        }
+                        for (int j = 0; j < 6; j++) {
+                            int nextIdx = getNeighbour(j, qidx);
+                            if (nextIdx >= 0 && !bits.get(nextIdx)) {
+                                bits.set(nextIdx, true);
+                                queue.add(nextIdx);
+                            }
+                        }
+                    }
+                    if (edgeMask == 0x3F) {
+                        cache.setAll(true);
+                        return cache;
+                    }
+                    cache.setVisible(edgeMask);
+                }
+            }
+            return cache;
+        }
+        private int getNeighbour(int j, int qidx) {
+            switch (j) {
+                case Dir.DIR_POS_X:
+                    if ((qidx & 31) == 31) {
+                        return -1;
+                    }
+                    return qidx + 1;
+                case Dir.DIR_NEG_X:
+                    if ((qidx & 31) == 0) {
+                        return -1;
+                    }
+                    return qidx - 1;
+                case Dir.DIR_POS_Y:
+                    if (((qidx>>10) & 31) == 31) {
+                        return -1;
+                    }
+                    return qidx + (1 << 10);
+                case Dir.DIR_NEG_Y:
+                    if (((qidx>>10) & 31) == 0) {
+                        return -1;
+                    }
+                    return qidx - (1 << 10);
+                case Dir.DIR_POS_Z:
+                    if (((qidx>>5) & 31) == 31) {
+                        return -1;
+                    }
+                    return qidx + (1 << 5);
+                case Dir.DIR_NEG_Z:
+                    if (((qidx>>5) & 31) == 0) {
+                        return -1;
+                    }
+                    return qidx - (1 << 5);
+            }
+            return -1;
+        }
+        private int getEdge(int qidx) {
+            int edgeMask = 0;
+            int xEdge = (qidx & 31);
+            qidx >>= 5;
+            int zEdge = (qidx & 31);
+            qidx >>= 5;
+            int yEdge = (qidx & 31);
+            if (xEdge == 0) {
+                edgeMask |= 2;
+            } else if (xEdge == 31) {
+                edgeMask |= 1;
+            }
+            if (yEdge == 0) {
+                edgeMask |= 8;
+            } else if (yEdge == 31) {
+                edgeMask |= 4;
+            }
+            if (zEdge == 0) {
+                edgeMask |= 32;
+            } else if (zEdge == 31) {
+                edgeMask |= 16;
+            }
+            return edgeMask;
+        }
+    }
+    RegionFaceOpacityCache vis = new RegionFaceOpacityCache();
+    private VisibilityCache visCache;
     public MeshUpdateTask() {
         for (int i = 0; i < this.vbuffer.length; i++) {
             this.vbuffer[i] = new VertexBuffer(1024*1024*2);
@@ -42,9 +190,28 @@ public class MeshUpdateTask {
         this.attr.setUseGlobalRenderOffset(true);
     }
 
+    private static int[] calcEdges() {
+        ArrayList<Integer> list = new ArrayList<>();
+        for (int x = 0; x < VIS_LEN; x++) {
+            for (int z = 0; z < VIS_LEN; z++) {
+                for (int y = 0; y < VIS_LEN; y++) {
+                    if (x == 0 || y == 0 || z == 0 || x == VIS_LEN-1 || y == VIS_LEN-1 || z == VIS_LEN-1) {
+                        list.add(idx(x, y, z));
+                    }
+                }
+            }
+        }
+        int[] arr = new int[list.size()];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = list.get(i);
+        }
+        return arr;
+    }
+
     public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
         this.ccache.flush();
         if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
+            this.visCache = null;
             this.mr = mr;
             this.shadowDrawMode = Game.instance.settings.renderSettings.shadowDrawMode;
             return true;
@@ -60,6 +227,8 @@ public class MeshUpdateTask {
             this.ccache.flush();
             return true;
         }
+
+        this.mr.visCache = this.visCache;
         if (this.meshed) {
             if (GPUProfiler.PROFILING_ENABLED) {
                 GPUProfiler.start("upload");
@@ -161,7 +330,19 @@ public class MeshUpdateTask {
                         blockRenderer.render(x, y, z);
                     }
                 }
-            
+                vis.reset();
+                for (int x = 0; x < VIS_LEN; x++) {
+                    for (int z = 0; z < VIS_LEN; z++) {
+                        for (int y = 0; y < VIS_LEN; y++) {
+                            int type = this.ccache.getType(x, y+yOff, z);
+                            if (type!=0) {
+                                vis.setOpaque(x, y, z);
+                            }
+                            
+                        }
+                    }
+                }
+                this.visCache = vis.fill();
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
                 this.meshed = true;
 //                System.out.println(Thread.currentThread().getName()+" done "+this.mr);

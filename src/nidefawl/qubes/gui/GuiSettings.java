@@ -119,8 +119,10 @@ public class GuiSettings extends Gui {
             void callback(int id) {
                 renderSettings.ao = id;
                 Engine.outRenderer.onAOSettingUpdated();
-                UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
-                ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
+                if (Engine.isVulkan) {
+                    UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
+                    ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
+                }
             }
         }));
         list.add((this.normalMappingSetting = new Setting(this, "Normal Mapping", strAOSettings[renderSettings.normalMapping & 1], strAOSettings) {

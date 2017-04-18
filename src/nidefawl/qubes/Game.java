@@ -165,6 +165,7 @@ public class Game extends GameBase {
 
     @Override
     public void initGame() {
+        DebugServer.getInstance().start();
         GameBase.loadingScreen = new LoadingScreen();
         loadProfile();
         loadSettings();
@@ -305,6 +306,7 @@ public class Game extends GameBase {
     
     @Override
     public void shutdown() {
+        DebugServer.getInstance().stop();
         if(DEBUG_LAYER) System.err.println("Game.shutdown");
         if (isVulkan)
             vkContext.syncAllFences();
@@ -1590,13 +1592,16 @@ public class Game extends GameBase {
     public void onWindowResize(int displayWidth, int displayHeight) {
         if (isRunning()) {
             if (this.statsFB != null) {
+                System.out.println("this.statsFB.setSize");
                 this.statsFB.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
             }
             if (this.gui != null) {
                 this.gui.setPos(0, 0);
+                System.out.println("this.gui.setSize");
                 this.gui.setSize(Engine.getGuiWidth(), Engine.getGuiHeight());
                 this.gui.initGui(this.gui.firstOpen);
             }
+            System.out.println("new GuiOverlayChat");
             this.chatOverlay = new GuiOverlayChat();
             this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
             this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
@@ -1607,15 +1612,19 @@ public class Game extends GameBase {
     }
     @Override
     public void setRenderResolution(int displayWidth, int displayHeight) {
+        System.out.println("Engine.updateRenderResolution");
         Engine.updateRenderResolution(displayWidth, displayHeight);
         if (isRunning()) {
             if (isVulkan)
             {
                 if (this.frameBuffer != null) {
+                    System.out.println("this.frameBuffer.destroy");
                     this.frameBuffer.destroy();
                 }
+                System.out.println("this.frameBuffer.build");
                 this.frameBuffer.build(VkRenderPasses.passFramebuffer, displayWidth, displayHeight);
             }
+            System.out.println("Engine.resize");
             Engine.resize(displayWidth, displayHeight);
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("onResize");
@@ -1861,7 +1870,7 @@ public class Game extends GameBase {
                 return;
             }
             if (text.equals("/blockreset")) {
-                Shaders.initShaders();
+                if (!isVulkan)Shaders.initShaders();
                 SingleBlockRenderAtlas.getInstance().reset();
                 return;
             }
@@ -1896,6 +1905,10 @@ public class Game extends GameBase {
                 this.chatOverlay = new GuiOverlayChat();
                 this.chatOverlay.setPos(8, Engine.getGuiHeight()-Engine.getGuiHeight()/3-8);
                 this.chatOverlay.setSize(Engine.getGuiWidth()/2, Engine.getGuiHeight()/3);
+                return;
+            }
+            if (text.equals("/dump")) {
+                this.vkContext.memoryManager.dump();
                 return;
             }
             if (text.equals("/reloadshaders")) {

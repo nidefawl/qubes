@@ -261,10 +261,10 @@ public class SingleBlockDraw {
 //        System.out.println("numInts2 "+numInts2);
         
         if (Engine.isVulkan) {
-            swapBuffers();
-            this.buffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);
-            this.buffer.setElementCount(numInts2);
-            this.buffer.draw(Engine.getDrawCmdBuffer());
+//            swapBuffers();
+//            this.buffer.uploadStreaming(this.vboBuf.getByteBuf(), numInts, this.vboIdxBuf.getByteBuf(), numInts2);
+//            this.buffer.setElementCount(numInts2);
+//            this.buffer.draw(Engine.getDrawCmdBuffer());
         } else {
             this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
             this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);

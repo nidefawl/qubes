@@ -23,6 +23,17 @@ public class GLTriBuffer {
     private int idxCount;
     private BufferPair bufferPair;
     private boolean isDynamic;
+    String tag;
+    public GLTriBuffer tag(String tag) {
+        this.tag = tag;
+        if (Engine.isVulkan) {
+            this.bufferPair.tag(tag);
+        }
+        return this;
+    }
+    public String tag() {
+        return this.tag;
+    }
     public GLTriBuffer(boolean isDynamic) {
         this.isDynamic = isDynamic;
         if (Engine.isVulkan) {

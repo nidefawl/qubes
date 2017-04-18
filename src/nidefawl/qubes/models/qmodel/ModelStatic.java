@@ -77,6 +77,7 @@ public class ModelStatic extends ModelQModel {
                 
                 if (rGroup.gpuBuf == null) {
                     rGroup.gpuBuf = new GLTriBuffer(true);
+                    rGroup.gpuBuf.tag(this.getName());
                 }
                 rGroup.gpuBuf.upload(vbuf);
             }
@@ -128,6 +129,7 @@ public class ModelStatic extends ModelQModel {
                         }
                     }
                     rGroup.gpuBufRest = new GLTriBuffer(false);
+                    rGroup.gpuBufRest.tag(this.getName());
 
                     int bytes = rGroup.gpuBufRest.upload(vbuf);
 

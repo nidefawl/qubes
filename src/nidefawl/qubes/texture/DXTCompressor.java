@@ -54,7 +54,7 @@ public class DXTCompressor {
                 block.clear();
                 p.position(output_pos);
 //                System.out.println("call "+p+","+block);
-                STBDXT.stb_compress_dxt_block(p, block, alpha, 0);
+                STBDXT.stb_compress_dxt_block(p, block, alpha, 2);
                 output_pos += alpha ? 16 : 8;
             }
         }
