@@ -292,9 +292,9 @@ public abstract class RegionRenderer extends AbstractRenderer implements IThread
         camY=lastCamY;
         camZ=lastCamZ;
 
-        rChunkX = GameMath.floor(lastCamX)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
-        rChunkY = GameMath.floor(lastCamY)>>(RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
-        rChunkZ = GameMath.floor(lastCamZ)>>(Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+        rChunkX = GameMath.floor(lastCamX) >> (Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
+        rChunkY = GameMath.floor(lastCamY) >> (RegionRenderer.SLICE_HEIGHT_BLOCK_BITS);
+        rChunkZ = GameMath.floor(lastCamZ) >> (Chunk.SIZE_BITS+RegionRenderer.REGION_SIZE_BITS);
         
         boolean reposition = false;
         //TODO: only move center every n regions

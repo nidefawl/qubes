@@ -139,14 +139,13 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
             Engine.beginRenderPass(VkRenderPasses.passTerrain_Pass0, fbScene);
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, RenderersVulkan.skyRenderer.descTextureSkyboxCubemap);
-                Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboLights);
                 Engine.bindPipeline(VkPipelines.skybox_sample);
                 Engine.drawFSTri();
 
                 Engine.setDescriptorSet(VkDescLayouts.DESC1, this.descTextureTerrainNormals);
                 Engine.setDescriptorSet(VkDescLayouts.DESC2, Engine.descriptorSetUboConstants);
                 Engine.bindPipeline(VkPipelines.terrain);
-                RenderersVulkan.regionRenderer.renderMain(Engine.getDrawCmdBuffer(), world, fTime);
+                RenderersVulkan.regionRenderer.renderMainTrav(Engine.getDrawCmdBuffer(), world, fTime);
                 rendered = Engine.regionRenderer.rendered;
         //        System.out.println("rendered " +rendered);
                 RenderersVulkan.particleRenderer.renderParticles(world, PASS_SOLID, fTime);
