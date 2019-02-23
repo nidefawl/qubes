@@ -7,18 +7,17 @@ vec3 Kr1 = vec3(0.09, 0.46, 0.7); // air
 vec3 Kr2 = vec3(0.3, 0.3, 0.14); // air
 // uniform float rayleigh_brightness, mie_brightness, spot_brightness, scatter_strength, rayleigh_strength, mie_strength;
 // uniform float rayleigh_collection_power, mie_collection_power, mie_distribution;
- float rayleigh_brightness = 1.0;
- float mie_brightness = 0.25;
- float spot_brightness = 16;
-float scatter_strength = 0.081;
- float rayleigh_strength = 3.639;
- float mie_strength = 0.57;
- float rayleigh_collection_power = 0.98;
- float mie_collection_power = 0.785;
- float mie_distribution = 0.75;
+ float spot_brightness = 1000;
+ float rayleigh_brightness = 0.8;
+float scatter_strength = 0.3;
+ float rayleigh_strength = 0.95;
+ float rayleigh_collection_power = 0.1;
+ float mie_brightness = 0.55;
+ float mie_strength = 0.27;
+ float mie_collection_power = 0.035;
+ float mie_distribution = 0.05;
 
-float surface_height = 0.96;
-const int step_count = 2;
+const int step_count = 4;
 
 
 
@@ -63,13 +62,15 @@ vec3 skyAtmoScat(vec3 eyedir, vec3 lightdir, float moon){
     return vec3(0);
 }
 #else
-vec3 skyAtmoScat(vec3 eyedir, vec3 lightdir, float moon, float miestr){
+vec3 skyAtmoScat(vec3 eyedir, vec3 lightdir, float moon, float miestr, float dayLightIntens, float dayNoon){
     float alpha = dot(eyedir, lightdir);
     Kr = mix(Kr1, Kr2, moon);
 float intensity = 0.85;
     intensity = mix(intensity, 0.2, moon);
+float surface_height = 0.7+0.27*clamp(dayLightIntens, 0, 1);
     mie_brightness = mix(mie_brightness, 0.05, moon)+miestr;
     rayleigh_brightness = mix(rayleigh_brightness, 0.4, moon);
+    // rayleigh_collection_power = rayleigh_collection_power+(1.0-dayLightIntens*dayNoon)*2.0;
     float rayleigh_factor = phase(alpha, -0.01)*rayleigh_brightness;
     float mie_factor = phase(alpha, mie_distribution*(1.0f-miestr*0.15f))*mie_brightness;
     float spot = smoothstep(0.0, 18.0, phase(alpha, 0.9998))*spot_brightness;
@@ -98,6 +99,6 @@ float intensity = 0.85;
     vec3 color = vec3(spot*mie_collected + mie_factor*mie_collected + rayleigh_factor*rayleigh_collected);
 
     // gl_FragColor = vec4(color, 1.0);
-    return color;
+    return pow(color, vec3(4.2-clamp(dayLightIntens, 0, 1)*2.2));
 }
 #endif

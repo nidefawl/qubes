@@ -1,6 +1,7 @@
 #version 150 core
 
 #pragma include "ubo_scene.glsl"
+#pragma include "ubo_transform.glsl"
 #pragma include "vertex_layout.glsl"
 
 out vec2 pass_texcoord;

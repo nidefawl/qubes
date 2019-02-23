@@ -18,6 +18,7 @@ out vec4 out_Color;
 uniform vec4 iMouse;
 
 #define iGlobalTime FRAME_TIME*0.01
+#define iTime iGlobalTime
 #define iResolution in_scene.viewport.xy
 #define texture2D lookupTex
 vec4 lookupTex(sampler2D sampler0, vec2 texcoord) {
@@ -35,7 +36,7 @@ vec3 GET_RO() {
     return ro;
 }
 
-#pragma include "st_lightcolumns.fsh"
+#pragma include "clouds2k18.fsh"
 
 void main() {
 	// out_Color=vec4(1);

@@ -56,7 +56,7 @@ void main() {
     sunTheta2 = max(1.0f-(sunTheta2*sunTheta2*2.0f), 0.0);
     float fNight = smoothstep(0.0f, 1.0f, clamp(nightNoon, 0.0, 1.0f));
     float sunSpotDens = pow(sunTheta, 4.0+fNight*12)*(1.8-fNight*1.7);
-    vec3 skySunScat = skyAtmoScat(-rayDir, SkyLight.lightDir.xyz, moonSunFlip, sunTheta2*1);
+    vec3 skySunScat = skyAtmoScat(-rayDir, SkyLight.lightDir.xyz, moonSunFlip, sunTheta2*1, dayLightIntens, dayNoon);
     float intens = mix(1, 0, moonSunFlip)*dayLightIntens;
 
     float yt =1-smoothstep(0, 1, abs(dot(rayDir, vec3(0, 1, 0))));

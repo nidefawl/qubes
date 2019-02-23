@@ -553,7 +553,7 @@ void main() {
 
     float fogDepth = length(prop.position);
     // vec3 fogColor = mix(vec3(0.5,0.6,0.8)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
-    vec3 fogColor = mix(vec3(0.55,0.6,0.66)*1.2, vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
+    vec3 fogColor = mix(vec3(0.55,0.68,0.96), vec3(0.5,0.6,1.4)*0.2, clamp(nightNoon, 0.0, 1.0));
     // float isFlower = float(blockid>=48u);
     // if (isBackface > 0) 
     //     discard;
@@ -609,10 +609,10 @@ void main() {
         // float minAmb = 0.25;
         // float minAmb2 = 0.1;
         float minAmb = 0.05;
-        float minAmb2 = 0.09;
-         float diff = 1.5;
+        float minAmb2 = 0.05;
+         float diff = 1.1;
         // prop.roughness = 0.3;
-        float roughness = pow(2.0, 1.0+(prop.roughness)*3.0)-1.0;
+        float roughness = pow(2.0, 1.0+(prop.roughness)*5.0)-1.0;
         // out_Color = vec4(vec3(prop.roughness), 1);
         // return;
         // float glossy = 0.02;
@@ -740,15 +740,15 @@ void main() {
     // float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
     // prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
 
-    fogDepth = min(fogDepth, 256.0);
-    fogDepth = max((fogDepth-16.0)*0.1f, 0.0);
+    fogDepth = min(fogDepth, 1066.0);
+    fogDepth = max((fogDepth-80.0), 0.0);
     float fogeye = clamp(1.0 - clamp(dot(-prop.viewVector, vec3(0,1,0)), 0.0, 1.0) / 0.8, 0, 1)*0.4;
     fogeye += fogeye*clamp(1.0 - clamp((
         dot(-prop.viewVector, vec3(0,-1,0))
         *dot(-prop.viewVector, vec3(0,1,0)))*3.2, 0.0, 1.0) -0.8, 0, 1)*1.4;
     float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
-    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.00005*(fIsSky*2.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
-    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0) );
+    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.0001*(fIsSky*2.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
+    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(0.1) );
 #endif
     // prop.albedo = vec3(fIsSky);
 
