@@ -25,7 +25,7 @@ import nidefawl.qubes.vulkan.*;
 @SuppressWarnings("unused")
 public class GPUProfiler {
 
-    public static final boolean PROFILING_ENABLED = false;
+    public static final boolean PROFILING_ENABLED = true;
 
     private static Pool<GPUTaskProfile> taskPool;
     private static Pool<GPUTaskProfileFrame> taskPoolFrame;

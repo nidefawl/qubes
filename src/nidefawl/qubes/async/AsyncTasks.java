@@ -56,6 +56,7 @@ public class AsyncTasks {
                 if (a.isDone()||a.isCancelled()) {
                     tasks.remove(i--);
                     try {
+                        a.checkException();
                         a.post();
                     } catch (Exception e) {
                         throw new GameError("Error while handling async tasks", e);

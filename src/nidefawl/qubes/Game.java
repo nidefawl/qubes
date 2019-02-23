@@ -73,7 +73,6 @@ public class Game extends GameBase {
     static final String buildIdentifier = String.format("%s %s.%s", buildName, buildVersion, BUILD_CODE);
     
     PlayerProfile         profile = new PlayerProfile();
-    public final ClientSettings          settings  = new ClientSettings();
 
     public GuiOverlayStats statsOverlay;
     public RenderFramebufferCached statsFB;
@@ -1322,6 +1321,13 @@ public class Game extends GameBase {
 //            Engine.outRenderer.initShaders();
 //            SingleBlockRenderAtlas.getInstance().reset();
 //            ItemModelManager.getInstance().reload();
+//          Engine.renderBatched.initShaders();
+//          Engine.shadowRenderer.initShaders();
+          RenderersGL.skyRenderer.initShaders();
+          Engine.worldRenderer.initShaders();
+//          Engine.skyRenderer.initShaders();
+          RenderersGL.outRenderer.initShaders();
+          RenderersGL.blurRenderer.initShaders();
 //            
         }
     }
@@ -1466,7 +1472,7 @@ public class Game extends GameBase {
               if (Engine.updateRenderOffset) {
                   Engine.regionRenderer.reRender();
               }
-              Engine.regionRenderer.update(this.world, vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
+              Engine.regionRenderer.update(this.world, this.world.getChunkManager(), vCam.x, vCam.y, vCam.z, xPosP, zPosP, f);
               Engine.lightCompute.updateLights(this.world, f);
               Engine.worldRenderer.prepareEntitiesBatched(this.world, f);
             }
@@ -1729,17 +1735,6 @@ public class Game extends GameBase {
         return this.profile;
     }
 
-    /**
-     * 
-     */
-    public void saveSettings() {
-        try {
-            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
-            settings.write(f);
-        } catch (InvalidConfigException e) {
-            e.printStackTrace();
-        }
-    }
     public void saveProfile() {
         try {
             File fProfile = new File(WorkingEnv.getConfigFolder(), "profile.yml");
@@ -1754,16 +1749,6 @@ public class Game extends GameBase {
             if (fProfile.exists()) {
                 profile.load(fProfile);
             }
-        } catch (InvalidConfigException e) {
-            e.printStackTrace();
-        }
-    }
-    public void loadSettings() {
-        try {
-            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
-            settings.load(f);
-            if (!f.exists())
-                settings.write(f);
         } catch (InvalidConfigException e) {
             e.printStackTrace();
         }

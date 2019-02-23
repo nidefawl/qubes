@@ -24,7 +24,7 @@ public class ChunkRenderCache implements IBlockWorld {
     public final static int WIDTH_EXTRA = WIDTH+2;
     public final static int WIDTH_BLOCKS = WIDTH_EXTRA*Chunk.SIZE;
     final public Chunk[] chunks = new Chunk[WIDTH_EXTRA*WIDTH_EXTRA]; //TODO: are corners required?
-    private WorldClient world;
+    private IBlockWorld world;
     private int baseX;
     private int baseZ;
 
@@ -91,7 +91,7 @@ public class ChunkRenderCache implements IBlockWorld {
         return region != null ? region.getBiome(i&0xF, k&0xF) : Biome.MEADOW_GREEN;
     }
 
-    public boolean cache(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
+    public boolean cache(IBlockWorld world, ChunkManager mgr, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
         this.world = world;
         int basechunkX = mr.rX<<RegionRenderer.REGION_SIZE_BITS;
         int basechunkZ = mr.rZ<<RegionRenderer.REGION_SIZE_BITS;
@@ -104,7 +104,6 @@ public class ChunkRenderCache implements IBlockWorld {
         boolean maxXReq = offsetX < RegionRenderer.RENDER_DISTANCE-1;
         boolean minZReq = offsetZ > 0;
         boolean maxZReq = offsetZ < RegionRenderer.RENDER_DISTANCE-1;
-        ChunkManager mgr = world.getChunkManager();
         for (int x = -1; x < WIDTH+1; x++) {
             for (int z = -1; z < WIDTH+1; z++) {
                 Chunk c = mgr.get(basechunkX+x, basechunkZ+z);
@@ -181,5 +180,9 @@ public class ChunkRenderCache implements IBlockWorld {
     @Override
     public int getBiomeFaceColor(int x, int y, int z, int faceDir, int pass, BiomeColor colorType) {
         return this.world.getBiomeFaceColor(this.baseX+x, y, this.baseZ+z, faceDir, pass, colorType);
+    }
+
+    public IBlockWorld getWorld() {
+        return this.world;
     }
 }

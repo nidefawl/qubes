@@ -4,20 +4,15 @@ import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOT
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
-
-import com.google.common.collect.Lists;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.util.GameError;
 
 public class BlockNormalMapArrayGL extends TextureArrayGL {
     
@@ -40,45 +35,10 @@ public class BlockNormalMapArrayGL extends TextureArrayGL {
         this.numTextures++;
     }
 
-
-    @Override
-    protected void collectTextures(AssetManager mgr) {
-        Block[] blocks = Block.block;
-        int len = blocks.length;
-        HashSet<String> set = new HashSet<>();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                set.addAll(Arrays.asList(b.getNormalMaps()));
-            }
-        }
-        this.numTotalTextures = set.size();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                ArrayList<AssetTexture> list = Lists.newArrayList();
-                for (String s : b.getNormalMaps()) {
-                    AssetTexture tex = texNameToAssetMap.get(s);
-                    if (tex == null) {
-                        tex = mgr.loadPNGAsset(s, false);
-                        this.numLoaded++;
-                        if (tex.getWidth() != tex.getHeight()) {
-                            if (tex.getHeight()>tex.getWidth()) {
-                                tex.cutH();
-                            }else 
-                            throw new GameError("Block tiles must be width == height");
-                        }
-                        texNameToAssetMap.put(s, tex);
-                    }
-                    list.add(tex);
-                }
-                blockIDToAssetList.put(b.id, list);
-            }
-        }
-    
-    }
     @Override
     protected void uploadTextures() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         int totalBlocks = blockIDToAssetList.size();
         int nBlock = 0;
         ByteBuffer directBuf = null;
@@ -138,6 +98,8 @@ public class BlockNormalMapArrayGL extends TextureArrayGL {
 
     @Override
     protected void postUpload() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         boolean useDefault = false;
         if (useDefault) {
 
@@ -159,8 +121,9 @@ public class BlockNormalMapArrayGL extends TextureArrayGL {
         }
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
     }
-    
 
-
-
+    @Override
+    protected void collectTextures(AssetManager mgr) {
+        collectNormalMapTextures(mgr);
+    }
 }

@@ -3,10 +3,10 @@ package nidefawl.qubes.chunk.client;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.chunk.ChunkTable;
-import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.IChunkWorld;
 
 public class ChunkManagerClient extends ChunkManager {
-    public ChunkManagerClient(World world) {
+    public ChunkManagerClient(IChunkWorld world) {
         super(world);
     }
 
@@ -18,7 +18,7 @@ public class ChunkManagerClient extends ChunkManager {
     public Chunk getOrMake(int x, int z) {
         Chunk c = this.table.get(x, z);
         if (c == null) {
-            c = new Chunk(this.world, x, z, this.world.worldHeightBits);
+            c = new Chunk(this.world, x, z);
             c.world = this.world;
             this.table.put(x, z, c);
         }

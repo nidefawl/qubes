@@ -8,7 +8,7 @@ import nidefawl.qubes.util.Half;
 import nidefawl.qubes.util.RenderUtil;
 import nidefawl.qubes.vec.Vector3f;
 
-public class BlockFaceAttr {
+public abstract class BlockFaceAttr {
     public final static int BLOCK_VERT_INT_SIZE = 9;
     public final static int BLOCK_VERT_BYTE_SIZE = BLOCK_VERT_INT_SIZE<<2;
     public final static int BLOCK_FACE_INT_SIZE = BLOCK_VERT_INT_SIZE*4;
@@ -35,17 +35,17 @@ public class BlockFaceAttr {
     public final BlockFaceVert[] v = new BlockFaceVert[] {
             v0, v1, v2, v3
     };
-    private boolean useGlobalRenderOffset = false;
-    private int tex;
+    protected boolean useGlobalRenderOffset = false;
+    protected int tex;
     float xOff, yOff, zOff;
-    private int aoMask;
-    private int lightMaskSky;
-    private int lightMaskBlock;
-    private int type;
-    private boolean reverse = false;
-    private int faceDir;
-    private int normalMap;
-    private int roughness;
+    protected int aoMask;
+    protected int lightMaskSky;
+    protected int lightMaskBlock;
+    protected int type;
+    protected boolean reverse = false;
+    protected int faceDir;
+    protected int normalMap;
+    protected int roughness;
     
     /**
      * @param useGlobalRenderOffset the useGlobalRenderOffset to set
@@ -189,6 +189,25 @@ public class BlockFaceAttr {
           vertexBuffer.putIdx(idxPos+3);
           vertexBuffer.putIdx(idxPos+0);
     }
+    public void putPos(VertexBuffer vertexBuffer) {
+    //      rotateUV(1);
+          int idxPos = vertexBuffer.getVertexCount();
+          for (int i = 0; i < 4; i++) {
+              int idx = this.reverse ? 3-(i % 4) : i % 4;
+              BlockFaceVert v = this.v[idx];
+              vertexBuffer.put(Float.floatToRawIntBits(this.xOff+v.x));
+              vertexBuffer.put(Float.floatToRawIntBits(this.yOff+v.y));
+              vertexBuffer.put(Float.floatToRawIntBits(this.zOff+v.z));
+              vertexBuffer.put(1);
+              vertexBuffer.increaseVert();
+          }
+          vertexBuffer.putIdx(idxPos+0);
+          vertexBuffer.putIdx(idxPos+1);
+          vertexBuffer.putIdx(idxPos+2);
+          vertexBuffer.putIdx(idxPos+2);
+          vertexBuffer.putIdx(idxPos+3);
+          vertexBuffer.putIdx(idxPos+0);
+    }
     
     public void putFaceAttr(VertexBuffer vertexBuffer) {
         for (int i = 0; i < 4; i++) {
@@ -232,6 +251,36 @@ public class BlockFaceAttr {
       vertexBuffer.putIdx(idxPos+0);
   }
 
+
+    public void putFaceVAttr(VertexBuffer vertexBuffer, int type) {
+        for (int i = 0; i < 4; i++) {
+            int idx = this.reverse ? 3-(i % 4) : i % 4;
+            BlockFaceVert v = this.v[idx];
+            switch (type) {
+                case 0:
+                    vertexBuffer.put(v.normal&0xFFFFFF|(this.roughness<<24));
+                    break;
+                case 1:
+                    int textureHalf2 = Half.fromFloat(v.v) << 16 | Half.fromFloat(v.u);
+                    vertexBuffer.put(textureHalf2);
+                    break;
+                case 2:
+                    vertexBuffer.put(v.rgba);
+                    break;
+                case 3:
+                    vertexBuffer.put(this.tex | this.normalMap << 12 | this.type << 16 | v.pass << (16+12)); //2x SHORT
+                    // BIT 0-7: 8 bit AO
+                    // BIT 16-18: 3 bit FACEDIR (aka blockside)
+                    // BIT 19-24: 6 bit VERTEXDIR 
+                    vertexBuffer.put(this.aoMask | this.faceDir << 16 | v.direction << 19);    
+                    break;
+                case 4:
+                    vertexBuffer.put(this.lightMaskBlock&0xFFFF | (this.lightMaskSky&0xFFFF)<<16); 
+                    break;
+            }
+        }
+        
+    }
     public void putFormat2(VertexBuffer vertexBuffer) {
         //      rotateUV(1);
         int idxPos = vertexBuffer.getVertexCount();

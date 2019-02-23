@@ -101,12 +101,12 @@ public class ChunkPopulator implements IChunkPopulator {
         list.add(4);
         list.add(4);
         list.add(4);
-        int nTrees = (int) (3+distScale*64);
+        int nTrees = (int) (3+distScale*64)+111;
         Block bush = Block.grassbush;
         if (rand.nextInt(44) > 22) {
             bush = Block.thingrass;
         }
-        int amt = 122;
+        int amt = 1222;
         for (int i = 0; i < amt; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);

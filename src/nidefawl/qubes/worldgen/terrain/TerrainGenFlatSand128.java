@@ -19,8 +19,7 @@ public class TerrainGenFlatSand128 implements ITerrainGen {
 
     @Override
     public Chunk generateChunk(int chunkX, int chunkZ) {
-        int heightBits = world.worldHeightBits;
-        Chunk c = new Chunk(this.world, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(this.world, chunkX, chunkZ);
         short[] blocks = c.getBlocks();
         generateTerrain(c, blocks);
         c.checkIsEmtpy();

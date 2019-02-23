@@ -8,6 +8,7 @@ import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.item.StackData;
 import nidefawl.qubes.meshing.BlockFaceAttr;
+import nidefawl.qubes.meshing.BlockFaceAttrUINT;
 import nidefawl.qubes.meshing.BlockRenderer;
 import nidefawl.qubes.util.SingleBlockWorld;
 import nidefawl.qubes.vec.BlockPos;
@@ -24,7 +25,7 @@ public class SingleBlockRenderer extends BlockRenderer {
         this.singleBlockWorld = new SingleBlockWorld();
         this.singleBlockBuffer = new VertexBuffer(1024);
         this.w = this.singleBlockWorld;
-        this.attr = new BlockFaceAttr();
+        this.attr = new BlockFaceAttrUINT();
     }
 
     public VertexBuffer renderSingleBlock(Block block, int data, StackData stackData) {

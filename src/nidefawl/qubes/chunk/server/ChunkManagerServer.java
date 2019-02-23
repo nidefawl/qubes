@@ -2,7 +2,9 @@ package nidefawl.qubes.chunk.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.chunk.ChunkManager;
@@ -28,7 +30,7 @@ public class ChunkManagerServer extends ChunkManager {
         this.regionFileCache = new RegionFileCache(new File(worldDirectory, "data"));
         this.thread = new ChunkLoadThread(this, world);
         this.unloadThread = new ChunkUnloadThread(this);
-        this.reader = new ChunkReader(this, this.regionFileCache);
+        this.reader = new ChunkReader(this.regionFileCache);
     }
     public void startThreads() {
         this.thread.startThreads();

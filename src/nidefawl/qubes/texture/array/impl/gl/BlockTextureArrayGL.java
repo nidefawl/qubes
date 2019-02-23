@@ -6,12 +6,11 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.lwjgl.opengl.*;
-
-import com.google.common.collect.Lists;
 
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
@@ -20,7 +19,6 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.texture.DXTCompressor;
 import nidefawl.qubes.texture.TextureUtil;
-import nidefawl.qubes.util.GameError;
 
 public class BlockTextureArrayGL extends TextureArrayGL {
     public static final int        BLOCK_TEXTURE_BITS = 4;
@@ -35,6 +33,7 @@ public class BlockTextureArrayGL extends TextureArrayGL {
     }
 
     protected void postUpload() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
 
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
@@ -57,6 +56,8 @@ public class BlockTextureArrayGL extends TextureArrayGL {
     }
 
     protected void uploadTextures() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         int totalBlocks = blockIDToAssetList.size();
         int nBlock = 0;
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
@@ -137,40 +138,8 @@ public class BlockTextureArrayGL extends TextureArrayGL {
         this.totalSlots = slot;
     }
 
-
+    @Override
     protected void collectTextures(AssetManager mgr) {
-        Block[] blocks = Block.block;
-        int len = blocks.length;
-        HashSet<String> set = new HashSet<>();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                set.addAll(Arrays.asList(b.getTextures()));
-            }
-        }
-        this.numTotalTextures = set.size();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                ArrayList<AssetTexture> list = Lists.newArrayList();
-                for (String s : b.getTextures()) {
-                    AssetTexture tex = texNameToAssetMap.get(s);
-                    if (tex == null) {
-                        tex = mgr.loadPNGAsset(s, false);
-                        this.numLoaded++;
-                        if (tex.getWidth() != tex.getHeight()) {
-                            if (tex.getHeight() > tex.getWidth()) {
-                                tex.cutH();
-                            } else
-                                throw new GameError("Block tiles must be width == height");
-                        }
-                        texNameToAssetMap.put(s, tex);
-                    }
-                    list.add(tex);
-                }
-                blockIDToAssetList.put(b.id, list);
-            }
-        }
+        collectBlockTextures(mgr);
     }
-
 }

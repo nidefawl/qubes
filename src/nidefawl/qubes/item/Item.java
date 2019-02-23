@@ -86,9 +86,6 @@ public class Item {
     }
 
     public Item setTextures(String... list) {
-        for (int a = 0; a < list.length; a++) {
-            list[a] = "textures/items/" + list[a] + ".png";
-        }
         this.textures = list;
         return this;
     }
@@ -105,15 +102,6 @@ public class Item {
      * 
      */
     public static void preInit() {
-        
-        for (int i = 0; i < Item.item.length; i++) {
-            Item b = Item.item[i];
-            if (b != null) {
-                if (b.textures == null) {
-                    b.textures = new String[] { "textures/blocks/"+b.name+".png" };
-                }
-            }
-        }
         
         ArrayList<Item> list = Lists.newArrayList();
         for (int i = 0; i < Item.item.length; i++) {

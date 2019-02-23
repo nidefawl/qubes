@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Lists;
-
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
@@ -41,15 +39,7 @@ public class NoiseTextureArrayVK extends TextureArrayVK {
 
     @Override
     protected void collectTextures(AssetManager mgr) {
-        int len = 64;
-        this.numTotalTextures = len;
-        for (int i = 0; i < len; i++) {
-            String path = "textures/noise/LDR_RGBA_" + i + ".png";
-            AssetTexture tex = mgr.loadPNGAsset(path, false);
-            blockIDToAssetList.put(i, Lists.newArrayList(tex));
-            texNameToAssetMap.put(path, tex);
-            this.numLoaded++;
-        }
+        collectNoiseTextures(mgr);
     }
 
 }

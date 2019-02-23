@@ -1,25 +1,25 @@
 package nidefawl.qubes.chunk.server;
 
 import java.io.IOException;
+
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
 import nidefawl.qubes.io.ByteArrIO;
 import nidefawl.qubes.nbt.Tag;
-import nidefawl.qubes.nbt.TagReader;
-import nidefawl.qubes.world.World;
 import nidefawl.qubes.nbt.Tag.Compound;
+import nidefawl.qubes.nbt.TagReader;
+import nidefawl.qubes.world.IChunkWorld;
 
 public class ChunkReader {
-    final ChunkManagerServer mgr;
     final RegionFileCache    fileCache;
 
-    public ChunkReader(ChunkManagerServer mgr, RegionFileCache fileCache) {
-        this.mgr = mgr;
+    public ChunkReader(RegionFileCache fileCache) {
         this.fileCache = fileCache;
     }
 
-    public Chunk loadChunk(World world, int x, int z) {
+    public Chunk loadChunk(IChunkWorld world, int x, int z) {
         RegionFile f = this.fileCache.getRegionFileChunk(x, z);
+        System.out.println("read chunk from "+x+","+z+" "+f.getFileName());
         try {
             byte[] data = f.readChunk(x, z);
             if (data.length > 0) {
@@ -72,13 +72,13 @@ public class ChunkReader {
         return cmp;
     }
 
-    private Chunk readChunk(World world, int x, int z, Compound t) throws IOException {
+    private Chunk readChunk(IChunkWorld world, int x, int z, Compound t) throws IOException {
         int version = t.getInt("version");
         if (version != 2) {
             System.err.println("Not loading version "+version+" chunk at "+x+"/"+z);
             return null;
         }
-        Chunk c = new Chunk(world, x, z, world.worldHeightBits);
+        Chunk c = new Chunk(world, x, z);
         Tag.ByteArray bytearray = t.getByteArray("blocks");
         byte[] byteBlocks = bytearray.getArray();
         readBlocks(byteBlocks, c.getBlocks());

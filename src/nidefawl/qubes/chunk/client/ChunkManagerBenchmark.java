@@ -4,7 +4,7 @@
 package nidefawl.qubes.chunk.client;
 
 import nidefawl.qubes.chunk.Chunk;
-import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.IChunkWorld;
 
 /**
  * @author Michael Hept 2015
@@ -13,7 +13,7 @@ import nidefawl.qubes.world.World;
 public class ChunkManagerBenchmark extends ChunkManagerClient {
 
     public Chunk testChunk;
-    public ChunkManagerBenchmark(World world) {
+    public ChunkManagerBenchmark(IChunkWorld world) {
         super(world);
     }
     

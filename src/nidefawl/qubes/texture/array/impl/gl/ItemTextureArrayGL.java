@@ -4,21 +4,16 @@ import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOT
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
-
-import com.google.common.collect.Lists;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
 import nidefawl.qubes.gl.Engine;
-import nidefawl.qubes.item.Item;
 import nidefawl.qubes.texture.TextureUtil;
-import nidefawl.qubes.util.GameError;
 
 public class ItemTextureArrayGL extends TextureArrayGL {
 
@@ -29,6 +24,8 @@ public class ItemTextureArrayGL extends TextureArrayGL {
 
     @Override
     protected void uploadTextures() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         int totalBlocks = blockIDToAssetList.size();
         int nBlock = 0;
         Iterator<Entry<Integer, ArrayList<AssetTexture>>> it = blockIDToAssetList.entrySet().iterator();
@@ -75,44 +72,14 @@ public class ItemTextureArrayGL extends TextureArrayGL {
         this.totalSlots = slot;
     }
 
-
+    @Override
     protected void collectTextures(AssetManager mgr) {
-        Item[] items = Item.item;
-        int len = items.length;
-        HashSet<String> set = new HashSet<>();
-        for (int i = 0; i < len; i++) {
-            Item itzem = items[i];
-            if (itzem != null) {
-                set.addAll(Arrays.asList(itzem.getTextures()));
-            }
-        }
-        this.numTotalTextures = set.size();
-        for (int i = 0; i < len; i++) {
-            Item itzem = items[i];
-            if (itzem != null) {
-                ArrayList<AssetTexture> list = Lists.newArrayList();
-                for (String s : itzem.getTextures()) {
-                    AssetTexture tex = texNameToAssetMap.get(s);
-                    if (tex == null) {
-                        tex = mgr.loadPNGAsset(s, false);
-                        this.numLoaded++;
-                        if (tex.getWidth() != tex.getHeight()) {
-                            if (tex.getHeight() > tex.getWidth()) {
-                                tex.cutH();
-                            } else
-                                throw new GameError("Item textures must be width == height");
-                        }
-                        texNameToAssetMap.put(s, tex);
-                    }
-                    list.add(tex);
-                }
-                blockIDToAssetList.put(itzem.id, list);
-            }
-        }
+        collectItemTextures(mgr);
     }
 
     @Override
     protected void postUpload() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         boolean useDefault = false;
         if (useDefault) {

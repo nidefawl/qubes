@@ -103,11 +103,7 @@ public class RenderAssets {
                 }
                 @Override
                 public Void call() throws Exception {
-                    try {
-                        arr.load();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    arr.load();
                     return null;
                 }
                 @Override
@@ -136,6 +132,8 @@ public class RenderAssets {
     }
 
     public static void reload() {
+        BlockModelManager.getInstance().release();
+        BlockModelManager.getInstance().reload();
         if (TextureArrays.blockTextureArrayGL != null)
         TextureArrays.blockTextureArrayGL.internalFormat = Engine.useSRGBTextures()?GL21.GL_SRGB8_ALPHA8:GL11.GL_RGBA8;
         TextureArray[] arrays = TextureArrays.allArrays;

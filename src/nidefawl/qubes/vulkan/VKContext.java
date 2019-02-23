@@ -623,7 +623,7 @@ public class VKContext {
         for (int i = 0; i < 2; i++) {
             boolean open = i == 0 ? hasOpenCopyCommandGraphics : hasOpenCopyCommandTransfer;
             if (open) {
-                System.out.println("Submit queue "+i+ " - "+Stats.fpsCounter);
+//                System.out.println("Submit queue "+i+ " - "+Stats.fpsCounter);
                 VkQueue queue = i == 0 ? vkQueue : vkQueueTransfer;
                 CommandBuffer[] buffers = i == 0 ? copyCommandBuffersGraphics : copyCommandBuffersTransfer;
                 buffers[currentBuffer].inUse = true;

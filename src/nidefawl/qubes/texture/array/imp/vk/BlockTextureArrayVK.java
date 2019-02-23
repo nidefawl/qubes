@@ -4,12 +4,11 @@ import static org.lwjgl.vulkan.VK10.VK_FORMAT_BC3_UNORM_BLOCK;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.lwjgl.opengl.EXTTextureCompressionS3TC;
-
-import com.google.common.collect.Lists;
 
 import nidefawl.qubes.GameBase;
 import nidefawl.qubes.assets.AssetManager;
@@ -18,7 +17,6 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.texture.DXTCompressor;
 import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.texture.TextureUtil;
-import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.vulkan.VkMemoryManager;
 
 public class BlockTextureArrayVK extends TextureArrayVK {
@@ -110,46 +108,15 @@ public class BlockTextureArrayVK extends TextureArrayVK {
         this.texture.build(this.internalFormat, binMips);
     }
 
-
-    protected void collectTextures(AssetManager mgr) {
-        Block[] blocks = Block.block;
-        int len = blocks.length;
-        HashSet<String> set = new HashSet<>();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                set.addAll(Arrays.asList(b.getTextures()));
-            }
-        }
-        this.numTotalTextures = set.size();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                ArrayList<AssetTexture> list = Lists.newArrayList();
-                for (String s : b.getTextures()) {
-                    AssetTexture tex = texNameToAssetMap.get(s);
-                    if (tex == null) {
-                        tex = mgr.loadPNGAsset(s, false);
-                        this.numLoaded++;
-                        if (tex.getWidth() != tex.getHeight()) {
-                            if (tex.getHeight() > tex.getWidth()) {
-                                tex.cutH();
-                            } else
-                                throw new GameError("Block tiles must be width == height");
-                        }
-                        texNameToAssetMap.put(s, tex);
-                    }
-                    list.add(tex);
-                }
-                blockIDToAssetList.put(b.id, list);
-            }
-        }
-    }
-
     public void setAnisotropicFiltering(int anisotropicFiltering) {
         this.anisotropicFiltering = anisotropicFiltering;
     }
     protected boolean isFilterNearest() {
         return true;
+    }
+
+    @Override
+    protected void collectTextures(AssetManager mgr) {
+        collectBlockTextures(mgr);
     }
 }

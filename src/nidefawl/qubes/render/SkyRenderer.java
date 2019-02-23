@@ -41,7 +41,9 @@ public abstract class SkyRenderer extends AbstractRenderer {
             this.mot = new Vector3f();
         }
         public int store(FloatBuffer bufMatFloat) {
-            for (PointSprite s : this.sprites) {
+            int len = this.sprites.size();
+            for (int i = 0; i < len; i++) {
+                PointSprite s = this.sprites.get(i);
                 tmp.set(this.renderPos);
                 tmp.addVec(s.renderPos);
                 tmp.store(bufMatFloat);

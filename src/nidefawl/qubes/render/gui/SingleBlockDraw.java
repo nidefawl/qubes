@@ -268,7 +268,7 @@ public class SingleBlockDraw {
         } else {
             this.vbo.upload(GL15.GL_ARRAY_BUFFER, this.vboBuf.getByteBuf(), numInts*4);
             this.vboIdx.upload(GL15.GL_ELEMENT_ARRAY_BUFFER, this.vboIdxBuf.getByteBuf(), numInts2*4);
-            Engine.bindVAO(GLVAO.vaoBlocks);
+            Engine.bindVAO(GLVAO.vaoBlocks, false);
             Engine.bindBuffer(vbo);
             Engine.bindIndexBuffer(vboIdx);
             GL11.glDrawElements(GL11.GL_TRIANGLES, numInts2, GL11.GL_UNSIGNED_INT, 0);

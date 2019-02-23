@@ -7,11 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
-
-import com.google.common.collect.Lists;
+import org.lwjgl.opengl.*;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
@@ -25,6 +21,8 @@ public class NoiseTextureArrayGL extends TextureArrayGL {
 
     @Override
     protected void uploadTextures() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         int nBlock = 0;
         int totalTex = this.blockIDToAssetList.size();
         ByteBuffer directBuf = null;
@@ -48,6 +46,8 @@ public class NoiseTextureArrayGL extends TextureArrayGL {
 
     @Override
     protected void postUpload() {
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, this.glid);
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -64,15 +64,7 @@ public class NoiseTextureArrayGL extends TextureArrayGL {
 
     @Override
     protected void collectTextures(AssetManager mgr) {
-        int len = 64;
-        this.numTotalTextures = len;
-        for (int i = 0; i < len; i++) {
-            String path = "textures/noise/LDR_RGBA_" + i + ".png";
-            AssetTexture tex = mgr.loadPNGAsset(path, false);
-            blockIDToAssetList.put(i, Lists.newArrayList(tex));
-            texNameToAssetMap.put(path, tex);
-            this.numLoaded++;
-        }
+        collectNoiseTextures(mgr);
     }
 
 }

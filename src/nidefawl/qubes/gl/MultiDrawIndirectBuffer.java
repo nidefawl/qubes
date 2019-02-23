@@ -8,9 +8,11 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.NVBindlessMultiDrawIndirect;
+import org.lwjgl.opengl.NVShaderBufferLoad;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.gl.GLVAO.VertexAttrib;
+import nidefawl.qubes.util.GameError;
 
 /**
  * @author Michael Hept 2015
@@ -81,6 +83,16 @@ public class MultiDrawIndirectBuffer {
         } DrawElementsIndirectBindlessCommandNV;
      */
     public void add(GLVBO vVBO, GLVBO iVBO, int elementcount) {
+        if (!NVShaderBufferLoad.glIsNamedBufferResidentNV(vVBO.vboId))
+            throw new GameError("INVA vbo");
+        if (!NVShaderBufferLoad.glIsNamedBufferResidentNV(iVBO.vboId))
+            throw new GameError("INVA ibo");
+        if (vVBO.size == 0L || vVBO.addr == 0L) {
+            throw new GameError("INVA vVBO");
+        }
+        if (iVBO.size == 0L || iVBO.addr == 0L) {
+            throw new GameError("INVA ibo");
+        }
         int pos = this.pos;
         int startpos = this.pos;
         final int[] heap = this.heapBuffer;

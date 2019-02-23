@@ -2,11 +2,14 @@ package nidefawl.qubes.texture.array;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
+
+import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
+import nidefawl.qubes.block.Block;
+import nidefawl.qubes.item.Item;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.GameMath;
 
@@ -188,5 +191,131 @@ public abstract class TextureArray {
     }
 
     public void destroy() {
+    }
+    
+    protected void collectNormalMapTextures(AssetManager mgr) {
+        Block[] blocks = Block.block;
+        int len = blocks.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
+            if (b != null) {
+                set.addAll(Arrays.asList(b.getNormalMaps()));
+            }
+        }
+        this.numTotalTextures = set.size();
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
+            if (b != null) {
+                ArrayList<AssetTexture> list = Lists.newArrayList();
+                for (String s : b.getNormalMaps()) {
+                    AssetTexture tex = texNameToAssetMap.get(s);
+                    if (tex == null) {
+                        String path = "textures/blocks_128/"+s+".png";
+                        tex = mgr.loadPNGAsset(path, false);
+                        this.numLoaded++;
+                        if (tex.getWidth() != tex.getHeight()) {
+                            if (tex.getHeight()>tex.getWidth()) {
+                                tex.cutH();
+                            }else 
+                            throw new GameError("Block tiles must be width == height");
+                        }
+                        texNameToAssetMap.put(s, tex);
+                    }
+                    list.add(tex);
+                }
+                blockIDToAssetList.put(b.id, list);
+            }
+        }
+    
+    }
+    
+    protected void collectNoiseTextures(AssetManager mgr) {
+        int len = 64;
+        this.numTotalTextures = len;
+        for (int i = 0; i < len; i++) {
+            String path = "textures/noise/LDR_RGBA_" + i + ".png";
+            AssetTexture tex = mgr.loadPNGAsset(path, false);
+            blockIDToAssetList.put(i, Lists.newArrayList(tex));
+            texNameToAssetMap.put(path, tex);
+            this.numLoaded++;
+        }
+    }
+
+
+    protected void collectItemTextures(AssetManager mgr) {
+        Item[] items = Item.item;
+        int len = items.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Item itzem = items[i];
+            if (itzem != null) {
+                set.addAll(Arrays.asList(itzem.getTextures()));
+            }
+        }
+        this.numTotalTextures = set.size();
+        for (int i = 0; i < len; i++) {
+            Item itzem = items[i];
+            if (itzem != null) {
+                ArrayList<AssetTexture> list = Lists.newArrayList();
+                for (String s : itzem.getTextures()) {
+                    AssetTexture tex = texNameToAssetMap.get(s);
+                    if (tex == null) {
+                        String path = "textures/items/"+s+".png";
+                        tex = mgr.loadPNGAsset(path, false);
+                        this.numLoaded++;
+                        if (tex.getWidth() != tex.getHeight()) {
+                            if (tex.getHeight() > tex.getWidth()) {
+                                tex.cutH();
+                            } else
+                                throw new GameError("Item textures must be width == height");
+                        }
+                        texNameToAssetMap.put(s, tex);
+                    }
+                    list.add(tex);
+                }
+                blockIDToAssetList.put(itzem.id, list);
+            }
+        }
+    }
+
+    protected void collectBlockTextures(AssetManager mgr) {
+        Block[] blocks = Block.block;
+        int len = blocks.length;
+        HashSet<String> set = new HashSet<>();
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
+            if (b != null) {
+                set.addAll(Arrays.asList(b.getTextures()));
+            }
+        }
+        this.numTotalTextures = set.size();
+        for (int i = 0; i < len; i++) {
+            Block b = blocks[i];
+            if (b != null) {
+                ArrayList<AssetTexture> list = Lists.newArrayList();
+                for (String s : b.getTextures()) {
+                    AssetTexture tex = texNameToAssetMap.get(s);
+                    if (tex == null) {
+                        String path = "textures/blocks_64/"+s+".png";
+                        try {
+                            tex = mgr.loadPNGAsset(path, false);
+                        } catch (Exception e) {
+                            throw new GameError("Missing texture "+path+" for block "+b, e);
+                        }
+                        this.numLoaded++;
+                        if (tex.getWidth() != tex.getHeight()) {
+                            if (tex.getHeight() > tex.getWidth()) {
+                                tex.cutH();
+                            } else
+                                throw new GameError("Block tiles must be width == height");
+                        }
+                        texNameToAssetMap.put(s, tex);
+                    }
+                    list.add(tex);
+                }
+                blockIDToAssetList.put(b.id, list);
+            }
+        }
     }
 }

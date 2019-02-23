@@ -242,7 +242,7 @@ public class ShaderSource {
                                 texure_descset_index = StringUtil.parseInt(defineDefault, 0);
                             }
                         } else {
-                            throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
+//                            throw new ShaderCompileError(line, name, "Preprocessor error: Failed to parse pragma directive");
                         }
                     } else {
                         if (i>0&&insertLine && !resolve) {

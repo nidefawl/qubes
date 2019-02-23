@@ -16,8 +16,6 @@ import nidefawl.qubes.meshing.BlockSurface;
 import nidefawl.qubes.models.qmodel.ModelBlock;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.texture.array.TextureArrays;
-import nidefawl.qubes.texture.array.impl.gl.BlockNormalMapArrayGL;
-import nidefawl.qubes.texture.array.impl.gl.BlockTextureArrayGL;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.RayTrace;
 import nidefawl.qubes.util.RayTrace.RayTraceIntersection;
@@ -121,8 +119,9 @@ public class Block {
 
     public final static Block pad = new BlockPlantFlat("pad").setTextures("plants/pad");
     public final static BlockGroup modelled = new BlockGroupModelledStones(stones, stonepath, cobblestones, smoothstones, stonebricks, bricks);
+    public final static BlockGroup modelled_hedge = new BlockGroupModelledHedge(leaves);
 //    public final static Block torch = new BlockTorch("torch").setTextures("torch/torch_on");
-    public final static Block test = new Block("test").setTextures("ground/test").setCategory(BlockCategory.GROUND);
+//    public final static Block test = new Block("test").setTextures("ground/test").setCategory(BlockCategory.GROUND);
 
     public static void preInit() {
         
@@ -146,7 +145,7 @@ public class Block {
             Block b = Block.block[i];
             if (b != null) {
                 if (b.textures == null) {
-                    b.textures = new String[] { "textures/blocks/"+b.name+".png" };
+                    b.textures = new String[] { b.name };
                 }
                 if (b.getLODPass() == WorldRenderer.PASS_LOD && b.getRenderType() == 0) {
                     throw new GameError("Block cannot be in LOD pass and be meshed (rendertype = 0): "+b.toString());
@@ -224,16 +223,10 @@ public class Block {
     }
 
     public Block setTextures(String...list) {
-        for (int a = 0; a < list.length; a++) {
-            list[a] = "textures/blocks/" + list[a] + ".png";
-       }
         this.textures = list;
         return this;
     }
     public Block setNormalMaps(String...list) {
-        for (int a = 0; a < list.length; a++) {
-            list[a] = "textures/blocks/" + list[a] + ".png";
-       }
         this.normalMaps = list;
         return this;
     }

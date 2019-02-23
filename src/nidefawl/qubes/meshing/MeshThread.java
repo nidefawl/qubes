@@ -4,9 +4,12 @@ import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
+import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.render.region.MeshedRegion;
 //import nidefawl.qubes.chunk.Region;
 import nidefawl.qubes.util.GameError;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.WorldClient;
 
 public class MeshThread implements Runnable {
@@ -50,7 +53,7 @@ public class MeshThread implements Runnable {
     @Override
     public void run() {
         try {
-            while (Game.instance.isRunning() && this.isRunning) {
+            while (GameBase.baseInstance.isRunning() && this.isRunning) {
                 boolean did = false;
                 try {
                     MeshUpdateTask task = this.queue.take();
@@ -66,7 +69,7 @@ public class MeshThread implements Runnable {
                 } catch (InterruptedException e1) {
                     break;
                 } catch (Exception e) {
-                    Game.instance.setException(new GameError("Exception in " + Thread.currentThread().getName(), e));
+                    GameBase.baseInstance.setException(new GameError("Exception in " + Thread.currentThread().getName(), e));
                     break;
                 }
                 if (Thread.interrupted()) {
@@ -109,10 +112,10 @@ public class MeshThread implements Runnable {
     }
 
 
-    public boolean offer(WorldClient world, MeshedRegion m, int renderChunkX, int renderChunkZ) {
+    public boolean offer(IBlockWorld world, ChunkManager mgr, MeshedRegion m, int renderChunkX, int renderChunkZ) {
         MeshUpdateTask task = getNextTask();
         if (task != null) {
-            if (task.prepare(world, m, renderChunkX, renderChunkZ)) {
+            if (task.prepare(world, mgr, m, renderChunkX, renderChunkZ)) {
                 task.worldInstance = this.id;
                 tasksRunning++;
                 this.queue.add(task);

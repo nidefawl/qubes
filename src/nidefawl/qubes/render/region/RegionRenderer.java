@@ -6,7 +6,9 @@ import java.util.*;
 
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.MeshThread;
 import nidefawl.qubes.perf.GPUProfiler;
@@ -14,8 +16,8 @@ import nidefawl.qubes.perf.TimingHelper;
 import nidefawl.qubes.render.AbstractRenderer;
 import nidefawl.qubes.util.*;
 import nidefawl.qubes.vec.Frustum;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
-import nidefawl.qubes.world.WorldClient;
 
 public abstract class RegionRenderer extends AbstractRenderer implements IThreadedWork {
     public static final int REGION_SIZE_BITS            = 1;
@@ -95,7 +97,7 @@ public abstract class RegionRenderer extends AbstractRenderer implements IThread
     public int occlCulled;
 
     public void init() {
-        setRenderDistance(Game.instance.settings.chunkLoadDistance>>(REGION_SIZE_BITS));
+        setRenderDistance(GameBase.getSettings().chunkLoadDistance>>(REGION_SIZE_BITS));
 
         worker = new ThreadedWorker(4);
         worker.init();
@@ -285,7 +287,7 @@ public abstract class RegionRenderer extends AbstractRenderer implements IThread
         shadowRenderList.clear();
     }
     
-    public final void update(WorldClient world, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
+    public final void update(IBlockWorld world, ChunkManager chunkManager, float lastCamX, float lastCamY, float lastCamZ, int xPosP, int zPosP, float fTime) {
         TimingHelper.startSilent(2);
         flushRegions();
         camX=lastCamX;
@@ -366,7 +368,7 @@ public abstract class RegionRenderer extends AbstractRenderer implements IThread
                 if (m.failedCached > 0) {
                     continue;
                 }
-                if (thread.offer(world, m, renderChunkX, renderChunkZ)) {
+                if (thread.offer(world, chunkManager, m, renderChunkX, renderChunkZ)) {
                     m.needsUpdate = false;
                     m.failedCached = 0;
                     regionsToUpdate.remove(i--);

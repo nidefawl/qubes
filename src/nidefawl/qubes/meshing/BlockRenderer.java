@@ -84,7 +84,7 @@ public class BlockRenderer {
      * @param w
      * @param ccache
      */
-    protected void preRender(World w, ChunkRenderCache ccache, BlockFaceAttr attr) {
+    protected void preRender(IBlockWorld w, ChunkRenderCache ccache, BlockFaceAttr attr) {
         this.w = w;
         this.attr = attr;
         this.extendFaces = true;
@@ -961,8 +961,8 @@ public class BlockRenderer {
         }
         return f;
     }
-    final int[] vPos_model = new int[64];
-    final int[] vIdx_model = new int[128];
+    final int[] vPos_model = new int[256];
+    final int[] vIdx_model = new int[256];
     private int renderBlockModel(Block block, int ix, int iy, int iz, int texturepass, int targetBuffer) {
         int f = 0;
         try {
@@ -976,6 +976,7 @@ public class BlockRenderer {
             int vIdx[] = vIdx_model;
             int iPos = 0;
             int iIdx = 0;
+            int vIdxReuses[] = new int[512];
             Arrays.fill(vPos, -1);
             for (int faceDir = 0; faceDir < 6; faceDir++) {
                 int axis = (faceDir)/2;
@@ -999,6 +1000,10 @@ public class BlockRenderer {
                                 attr.v[0].setPos(ix + vertex.x * vScale, iy + vertex.y * vScale, iz + vertex.z * vScale);
                                 attr.setFaceDir(-1);
                                 putSingleVert(block, targetBuffer, 0);
+                            } else {
+                                vIdxReuses[triVIdx]++;
+                                if (vIdxReuses[triVIdx]>1)
+                                System.out.println("reuse vidx "+triVIdx+", "+vIdxReuses[triVIdx]);
                             }
                             vIdx[iIdx++] = vPos[triVIdx];
                         }
@@ -1008,7 +1013,7 @@ public class BlockRenderer {
             putTriIndex(block, targetBuffer, vIdx, iIdx, iPos);
             f = iPos/4;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw e;
         }
         return f;
         

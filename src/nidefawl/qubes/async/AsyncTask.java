@@ -26,4 +26,7 @@ public abstract class AsyncTask implements Callable<Void> {
     public boolean isCancelled() {
         return this.future.isCancelled();
     }
+    public void checkException() throws Exception {
+        this.future.get();
+    }
 }

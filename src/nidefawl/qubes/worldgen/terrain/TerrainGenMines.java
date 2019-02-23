@@ -27,8 +27,7 @@ public class TerrainGenMines implements ITerrainGen {
         long rx = chunkX * 0x589638F52CL;
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);
-        int heightBits = world.worldHeightBits;
-        Chunk c = new Chunk(this.world, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(this.world, chunkX, chunkZ);
         short[] blocks = c.getBlocks();
         generateTerrain(c, blocks);
         c.checkIsEmtpy();

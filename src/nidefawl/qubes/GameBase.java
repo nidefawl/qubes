@@ -10,6 +10,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.glfw.GLFWVulkan.*;
 
+import java.io.File;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
@@ -26,6 +27,9 @@ import org.lwjgl.vulkan.NVGLSLShader;
 import org.lwjgl.vulkan.VkInstance;
 
 import nidefawl.qubes.async.AsyncTasks;
+import nidefawl.qubes.config.ClientSettings;
+import nidefawl.qubes.config.InvalidConfigException;
+import nidefawl.qubes.config.WorkingEnv;
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.gl.GL;
@@ -58,8 +62,8 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public static boolean DEBUG_LAYER = false;
     public static long    windowId        = 0;
     public static long    windowSurface   = 0;
-    protected static int            initWidth       = (int) (1920*0.66);
-    protected static int            initHeight      = (int) (1080*0.66);
+    protected static int            initWidth       = (int) (1920*0.8);
+    protected static int            initHeight      = (int) (1080*0.8);
     public static int TICKS_PER_SEC = 20;
 
     // We need to strongly reference callback instances.
@@ -111,6 +115,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public GLCapabilities caps;
     public final boolean isVulkan;
     public VKContext vkContext;
+    public final ClientSettings          settings  = new ClientSettings();
 
     public void startGame() {
         this.thread = new Thread(this, appName + " main thread");
@@ -428,7 +433,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
 //                    if (KHRDebug. != null) {
 //                        GLDebugLog.setup();
 //                        _checkGLError("GLDebugLog.setup()");
-////                    }
+//                    }
 //                    _checkGLError("Pre startup");
                 }
                 if (Game.GL_ERROR_CHECKS)
@@ -801,6 +806,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
             onWindowResize(windowWidth, windowHeight);
             if (!isVulkan) {
                 Engine.setDefaultViewport();
+                UniformBuffer.updatePxOffset();
             }
             if (Game.GL_ERROR_CHECKS)
                 Engine.checkGLError("initGame onResize");
@@ -1222,5 +1228,31 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     
     public boolean canRenderGui3d() {
         return this.renderGui3d;
+    }
+
+    public static ClientSettings getSettings() {
+        return baseInstance.settings;
+    }
+    
+    public void loadSettings() {
+        try {
+            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
+            settings.load(f);
+            if (!f.exists())
+                settings.write(f);
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
+    }
+    /**
+     * 
+     */
+    public void saveSettings() {
+        try {
+            File f = new File(WorkingEnv.getConfigFolder(), "settings.yml");
+            settings.write(f);
+        } catch (InvalidConfigException e) {
+            e.printStackTrace();
+        }
     }
 }

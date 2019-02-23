@@ -10,8 +10,10 @@ import static nidefawl.qubes.render.region.RegionRenderer.SLICE_HEIGHT_BLOCK_MAS
 import java.util.*;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.Chunk;
+import nidefawl.qubes.chunk.ChunkManager;
 import nidefawl.qubes.gl.VertexBuffer;
 import nidefawl.qubes.perf.GPUProfiler;
 import nidefawl.qubes.render.region.MeshedRegion;
@@ -19,6 +21,7 @@ import nidefawl.qubes.render.region.RegionRenderer;
 import nidefawl.qubes.util.GameError;
 import nidefawl.qubes.util.Stats;
 import nidefawl.qubes.vec.Dir;
+import nidefawl.qubes.world.IBlockWorld;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
@@ -27,7 +30,7 @@ public class MeshUpdateTask {
     public final BlockRenderer     blockRenderer = new BlockRenderer();
     public final ChunkRenderCache ccache = new ChunkRenderCache();
 //    final Tess[] tess  = new Tess[NUM_PASSES];
-    final BlockFaceAttr attr = new BlockFaceAttr();
+    final BlockFaceAttr attr = new BlockFaceAttrUINT();
 //    final ByteBuffer directBuffer = BufferUtils.createAlignedByteBuffer(1024*1024*10, 16);
 
     public int              worldInstance;
@@ -208,12 +211,12 @@ public class MeshUpdateTask {
         return arr;
     }
 
-    public boolean prepare(WorldClient world, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
+    public boolean prepare(IBlockWorld world, ChunkManager mgr, MeshedRegion mr, int renderChunkX, int renderChunkZ) {
         this.ccache.flush();
-        if (this.ccache.cache(world, mr, renderChunkX, renderChunkZ)) {
+        if (this.ccache.cache(world, mgr, mr, renderChunkX, renderChunkZ)) {
             this.visCache = null;
             this.mr = mr;
-            this.shadowDrawMode = Game.instance.settings.renderSettings.shadowDrawMode;
+            this.shadowDrawMode = GameBase.getSettings().renderSettings.shadowDrawMode;
             return true;
         } else {
 //            System.out.println("cannot render "+mr.rX+"/"+mr.rZ);
@@ -278,8 +281,8 @@ public class MeshUpdateTask {
 //        if (this.mr.isEmpty()) {
 //            return true;
 //        }
-        World w = Game.instance.getWorld();
-        
+
+        IBlockWorld w = this.ccache.getWorld();
         if (w != null) {
 //            System.out.println(Thread.currentThread().getName()+" on "+this.mr);
             try {
@@ -348,7 +351,7 @@ public class MeshUpdateTask {
 //                System.out.println(Thread.currentThread().getName()+" done "+this.mr);
                 return true;
             } catch (Exception e) {
-                Game.instance.setException(new GameError("Error while updating region", e));
+                GameBase.baseInstance.setException(new GameError("Error while updating region", e));
             }
             return false;
         }

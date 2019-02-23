@@ -27,10 +27,9 @@ public class TerrainGeneratorIsland implements ITerrainGen {
         long rx = chunkX * 0x589638F52CL;
         long rz = chunkZ * 0x3F94515BD5L;
         Random rand = new Random(rx + rz);
-        int heightBits = world.worldHeightBits;
         if (test2d == null)
         test2d = new TerrainNoiseMap2D("textures/brushes/mountainRange/mountainRange_4.png", 1.0D/2048.0D, 8);
-        Chunk c = new Chunk(this.world, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(this.world, chunkX, chunkZ);
         short[] blocks = c.getBlocks();
         byte[] water = c.getWaterMask();
         generateTerrain(c, blocks, water);

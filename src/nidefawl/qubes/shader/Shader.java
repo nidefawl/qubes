@@ -223,6 +223,9 @@ public abstract class Shader implements IManagedResource {
         }
     }
     static int lastBoundShader = -1;
+    public static void resetBoundState() {
+        lastBoundShader = -1;
+    }
     public static void disable() {
         if (lastBoundShader != 0)
             glUseProgram(0);

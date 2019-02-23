@@ -160,7 +160,7 @@ public class DigController {
     private int[] stageTex = new int[10];
     public void reloadTextures() {
         for (int i = 0; i < stageTex.length; i++) {
-            AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/blocks/destroy/destroy_stage_"+i+".png");
+            AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/blocks_512/destroy/destroy_stage_"+i+".png");
             if (!Engine.isVulkan)
             this.stageTex[i] = TextureManager.getInstance().makeNewTexture(tex, true, false,-1);
         }

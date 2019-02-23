@@ -95,8 +95,7 @@ public class TerrainGeneratorTest2 implements ITerrainGen {
 
     @Override
     public Chunk generateChunk(int chunkX, int chunkZ) {
-        int heightBits = world.worldHeightBits;
-        Chunk c = new Chunk(world, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(world, chunkX, chunkZ);
         short[] blocks = c.getBlocks();
         byte[] water = c.getWaterMask();
         generateTerrain(c, blocks, water);

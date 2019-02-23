@@ -139,6 +139,16 @@ public class WorldRendererGL extends WorldRenderer {
         AssetTexture tex = AssetManager.getInstance().loadPNGAsset("textures/water/noise.png");
         texWaterNoise = TextureManager.getInstance().makeNewTexture(tex, true, true, 10);
     }
+    public void renderTerrain(float fTime) {
+
+        GL.bindTexture(GL_TEXTURE0, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getBlocks());
+        GL.bindTexture(GL_TEXTURE1, GL_TEXTURE_2D, TMgr.getNoise());
+        GL.bindTexture(GL_TEXTURE2, GL30.GL_TEXTURE_2D_ARRAY, TMgr.getNormals());
+        terrainShader.enable();
+        RenderersGL.regionRenderer.renderMainTrav(fTime);
+//        RenderersGL.regionRenderer.renderMain(fTime);
+        rendered = Engine.regionRenderer.rendered;
+    }
 
     public void renderWorld(World world, float fTime) {
 
@@ -181,7 +191,7 @@ public class WorldRendererGL extends WorldRenderer {
 //            Engine.enableDepthMask(true);
 //        } else {
             terrainShader.enable();
-            RenderersGL.regionRenderer.renderMain(world, fTime);
+            RenderersGL.regionRenderer.renderMain(fTime);
 //        }
 //        Engine.regionRenderer.renderRegions(world, fTime, PASS_LOD, 0, Frustum.FRUSTUM_INSIDE);
         rendered = Engine.regionRenderer.rendered;

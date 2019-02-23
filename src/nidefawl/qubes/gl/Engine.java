@@ -175,6 +175,9 @@ public class Engine {
     public static void bindVAO(GLVAO vao) {
         bindVAO(vao, userSettingUseBindless);
     }
+    public static void resetVAOState() {
+        active = null;
+    }
     public static void bindVAO(GLVAO vao, boolean bindless) {
         if (active != vao) {
             disableBindless();
@@ -210,10 +213,10 @@ public class Engine {
     }
 
     public static void bindIndexBuffer(GLVBO vbo) {
-        if (isVAOSupportingBindless && !vbo.canUseBindless)
-        {
-            throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
-        }
+//        if (isVAOSupportingBindless && !vbo.canUseBindless)
+//        {
+//            throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
+//        }
         if (isVAOSupportingBindless && vbo.canUseBindless) {
             enableBindless();
             glBufferAddressRangeNV(GL_ELEMENT_ARRAY_ADDRESS_NV, 0, vbo.addr, vbo.size);
@@ -228,10 +231,10 @@ public class Engine {
         bindBuffer(vbo, 0, active.vertStride);
     }
     public static void bindBuffer(GLVBO vbo, int bindingPoint, int stride) {
-        if (isVAOSupportingBindless && !vbo.canUseBindless)
-        {
-            throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
-        }
+//        if (isVAOSupportingBindless && !vbo.canUseBindless)
+//        {
+//            throw new GameError("Invalid state isVAOSupportingBindless && !vbo.canUseBindless");
+//        }
         if (isVAOSupportingBindless && vbo.canUseBindless) {
             enableBindless();
             for (int i = 0; i < active.list.size(); i++) {
@@ -509,7 +512,6 @@ public class Engine {
 //                System.out.println("proj");
 //            }
         } else {
-
             if (!INVERSE_Z_BUFFER) {
                 Project.fovProjMat(fieldOfView, aspectRatio, znear, zfar, _projection);
             } else {

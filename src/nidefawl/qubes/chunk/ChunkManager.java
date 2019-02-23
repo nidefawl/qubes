@@ -2,15 +2,15 @@ package nidefawl.qubes.chunk;
 
 import java.util.Collection;
 
-import nidefawl.qubes.world.World;
+import nidefawl.qubes.world.IChunkWorld;
 
 public abstract class ChunkManager {
     public final static int MAX_CHUNK = 4000;
 
-    public final World world;
+    public final IChunkWorld world;
     public final ChunkTable table;
 
-    public ChunkManager(World world) {
+    public ChunkManager(IChunkWorld world) {
         this.world = world;
         this.table = makeChunkTable();
     }

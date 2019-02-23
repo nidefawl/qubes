@@ -31,7 +31,7 @@ public class WorldClientBenchmark extends WorldClient {
     public WorldClientBenchmark() {
         super(makeSettings(), new BiomeSettingsStatic());
         ChunkManagerBenchmark chMgr = (ChunkManagerBenchmark) this.getChunkManager();
-        chMgr.testChunk = new Chunk(this, 0, 0, 8);
+        chMgr.testChunk = new Chunk(this, 0, 0);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                for (int y = 0; y < 160; y++) {

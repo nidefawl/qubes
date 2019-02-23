@@ -49,6 +49,9 @@ public abstract class AbstractTesselatorState implements ITessState {
     static void drawVBO(int mode, int idxCount) {
         Stats.tessDrawCalls++;
 //        GL11.glDrawArrays(mode, 0, vertexcount);
+        if (mode == GL11.GL_LINES) {
+//            System.out.println("draw lines");
+        }
         GL11.glDrawElements(mode, idxCount, GL11.GL_UNSIGNED_INT, 0);
         
         

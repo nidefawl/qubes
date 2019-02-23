@@ -287,6 +287,14 @@ public class UniformBuffer implements IBufferDynamicOffset {
             }
         }
     }
+    public static void rebindBufferAtBindingPoint(int bindingpoint) {
+        for (int i = 0; i < buffers.length; i++) {
+            if (buffers[i].bindingPoint == bindingpoint) {
+                glBindBufferBase(GL_UNIFORM_BUFFER, buffers[i].bindingPoint, buffers[i].buffer); 
+            }
+        }
+
+    }
 
     public static void bindBuffers(Shader shader) {
         for (int i = 0; i < buffers.length; i++) {
@@ -447,8 +455,8 @@ public class UniformBuffer implements IBufferDynamicOffset {
 //        float diffIntens = 0.1f;
 //        float specIntens = 0.7F;
         float ambIntens = 0.08f;
-        float diffIntens = 0.3F;
-        float specIntens = 0.04F;
+        float diffIntens = 0.35F;
+        float specIntens = 0.17F;
 //        float ambIntens = 0.04f;
 //        float diffIntens = 0.07F;
 //        float specIntens = 0.08F;

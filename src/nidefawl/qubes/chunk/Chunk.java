@@ -7,6 +7,8 @@ import nidefawl.qubes.block.Block;
 import nidefawl.qubes.chunk.blockdata.BlockData;
 import nidefawl.qubes.chunk.blockdata.BlockDataSliced;
 import nidefawl.qubes.vec.BlockBoundingBox;
+import nidefawl.qubes.world.IBlockWorld;
+import nidefawl.qubes.world.IChunkWorld;
 import nidefawl.qubes.world.World;
 
 public class Chunk {
@@ -14,7 +16,7 @@ public class Chunk {
     public static final int SIZE            = 1 << SIZE_BITS;
     public static final int MASK            = SIZE - 1;
     public static final int DATA_BITS = (1<<8)-1;
-    public World                  world;
+    public IChunkWorld            world;
     public final int              x;
     public final int              z;
     public final int              worldHeightBits;
@@ -36,7 +38,9 @@ public class Chunk {
     public boolean                isUnloading     = false;
     public boolean                isPopulated     = false;
 
-    public Chunk(World world, int x, int z, int heightBits) {
+    public Chunk(IChunkWorld world, int x, int z) {
+        this.world = world;
+        int heightBits = world.getHeightBits();
         this.blockLight = new byte[1 << (heightBits + SIZE_BITS * 2)];
         this.waterMask = new byte[1 << (heightBits + SIZE_BITS * 2)];
         this.blocks = new short[1 << (heightBits + SIZE_BITS * 2)];
@@ -46,7 +50,6 @@ public class Chunk {
         this.z = z;
         this.blockMetadata = new ChunkDataSliced2();
         this.blockData = new BlockDataSliced();
-        this.world = world;
     }
 
     public void checkIsEmtpy() {

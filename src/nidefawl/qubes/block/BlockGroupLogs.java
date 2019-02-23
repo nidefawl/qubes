@@ -13,9 +13,6 @@ public class BlockGroupLogs extends BlockGroup {
     final public Block oak;
     public BlockGroupLogs() {
         ArrayList<String> list = Lists.newArrayList();
-        for (int i = 0; i < 10; i++) {
-            list.add("destroy/destroy_stage_"+i);
-        }
         int size = logNames.size();
         for (int i = 0; i < size; i++) {
             String s = logNames.get(i);

@@ -11,6 +11,7 @@ import java.util.List;
 import com.google.common.collect.Queues;
 
 import nidefawl.qubes.Game;
+import nidefawl.qubes.GameBase;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.render.region.MeshedRegion;
 import nidefawl.qubes.render.region.RegionRenderer;
@@ -181,7 +182,7 @@ public class RegionRendererVK extends RegionRenderer implements IRenderComponent
     }
 
     public void renderRegions(CommandBuffer commandBuffer, World world, float fTime, int pass, int nFrustum, int frustumState) {
-        int requiredShadowMode = Game.instance.settings.renderSettings.shadowDrawMode;
+        int requiredShadowMode = GameBase.getSettings().renderSettings.shadowDrawMode;
         List<MeshedRegion> list = pass == PASS_SHADOW_SOLID ? this.shadowRenderList : this.renderList;
         int size = list.size();
         for (int i = 0; i < size; i++) {

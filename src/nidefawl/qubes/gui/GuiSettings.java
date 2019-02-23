@@ -119,7 +119,7 @@ public class GuiSettings extends Gui {
             void callback(int id) {
                 renderSettings.ao = id;
                 Engine.outRenderer.onAOSettingUpdated();
-                if (Engine.isVulkan) {
+                if (!Engine.isVulkan) {
                     UniformBuffer.rebindShaders(); // For some stupid reason we have to rebind
                     ShaderBuffer.rebindShaders(); // For some stupid reason we have to rebind
                 }

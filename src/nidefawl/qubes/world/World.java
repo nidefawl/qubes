@@ -17,7 +17,7 @@ import nidefawl.qubes.vec.Vector3f;
 import nidefawl.qubes.world.biomes.HexBiome;
 import nidefawl.qubes.world.biomes.IBiomeManager;
 
-public abstract class World implements IBlockWorld {
+public abstract class World implements IChunkWorld {
     public static final float MAX_XZ     = ChunkManager.MAX_CHUNK * Chunk.SIZE;
     public static final float MIN_XZ     = -MAX_XZ;
     public ArrayList<DynamicLight>         lights = new ArrayList<>();                                           // use fast array list
@@ -467,5 +467,10 @@ public abstract class World implements IBlockWorld {
     }
 
     public void spawnParticles(int x, int y, int z, int type, int arg) {
+    }
+
+    @Override
+    public int getHeightBits() {
+        return this.worldHeightBits;
     }
 }

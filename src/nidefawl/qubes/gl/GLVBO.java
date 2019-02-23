@@ -56,6 +56,8 @@ public class GLVBO {
             System.err.println("buffer remaining ("+buffer.remaining()+") is not matching len " + len);
             throw new GameError("Fix your buffer");
         }
+        if (GameBase.GL_ERROR_CHECKS)
+            Engine.checkGLError("pre vbo update");
 
         boolean newBuffer = false;
         GL15.glBindBuffer(type, getVboId());
@@ -87,13 +89,19 @@ public class GLVBO {
     }
     public void makeResident(int type, boolean bindless, boolean newBuffer) {
         this.canUseBindless = false;
-
-        if (bindless && GL.isBindlessSuppported()) {
-            if (newBuffer) {
-                NVShaderBufferLoad.glMakeBufferResidentNV(type, GL15.GL_READ_ONLY);
+        this.addr=0L;
+        if (bindless && GL.isBindlessSuppported() && this.usage != GL15.GL_DYNAMIC_DRAW) {
+            if (!NVShaderBufferLoad.glIsNamedBufferResidentNV(this.vboId)) {
+                NVShaderBufferLoad.glMakeNamedBufferResidentNV(this.vboId, GL15.GL_READ_ONLY);
             }
+            if (GameBase.GL_ERROR_CHECKS)
+                Engine.checkGLError("make resident");
             this.addr = NVShaderBufferLoad.glGetBufferParameterui64NV(type, GL_BUFFER_GPU_ADDRESS_NV);
+            if (GameBase.GL_ERROR_CHECKS)
+                Engine.checkGLError("GL_BUFFER_GPU_ADDRESS_NV");
             this.size = GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
+            if (GameBase.GL_ERROR_CHECKS)
+                Engine.checkGLError("GL_BUFFER_SIZE");
             this.canUseBindless = true;
         }
     }
@@ -109,11 +117,6 @@ public class GLVBO {
                 ALLOC_VBOS_TERRAIN--;
             }
         }
-    }
-    public void makeBindless(int type) {
-        this.addr = NVShaderBufferLoad.glGetBufferParameterui64NV(type, GL_BUFFER_GPU_ADDRESS_NV);
-        this.size = GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);
-        this.canUseBindless = true;
     }
     public int getBufferSize(int type) {
         return GL15.glGetBufferParameteri(type, GL15.GL_BUFFER_SIZE);

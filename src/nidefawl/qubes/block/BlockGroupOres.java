@@ -10,9 +10,6 @@ public class BlockGroupOres  extends BlockGroup {
     public BlockGroupOres(BlockGroup blockgroup, Block ...blocks) {
         stoneNames.addAll(blockgroup.getNames());
         ArrayList<String> list = Lists.newArrayList();
-        for (int i = 0; i < 10; i++) {
-            list.add("destroy/destroy_stage_"+i);
-        }
         for (Block s : blockgroup.getBlocks()) {
             if (s.getName().contains("obsidian"))
                 continue;

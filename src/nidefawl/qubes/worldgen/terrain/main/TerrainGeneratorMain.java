@@ -75,8 +75,7 @@ public class TerrainGeneratorMain implements ITerrainGen {
     public Chunk generateChunk(int chunkX, int chunkZ) {
         long rx = chunkX * 0x589638F52CL;
         long rz = chunkZ * 0x3F94515BD5L;
-        int heightBits = world.worldHeightBits;
-        Chunk c = new Chunk(world, chunkX, chunkZ, heightBits);
+        Chunk c = new Chunk(world, chunkX, chunkZ);
         HexBiome[] hexs = new HexBiome[Chunk.SIZE*Chunk.SIZE];
         ArrayList<HexBiome> h = new ArrayList<>(); 
         for (int x = 0; x < 16; x++) {

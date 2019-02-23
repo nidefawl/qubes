@@ -1,16 +1,13 @@
 package nidefawl.qubes.texture.array.imp.vk;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
-
-import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.item.Item;
 import nidefawl.qubes.texture.TextureBinMips;
 import nidefawl.qubes.texture.TextureUtil;
-import nidefawl.qubes.util.GameError;
 
 public class ItemTextureArrayVK extends TextureArrayVK {
 
@@ -74,40 +71,9 @@ public class ItemTextureArrayVK extends TextureArrayVK {
         this.texture.build(this.internalFormat, binMips);
     }
 
-
+    @Override
     protected void collectTextures(AssetManager mgr) {
-        Item[] items = Item.item;
-        int len = items.length;
-        HashSet<String> set = new HashSet<>();
-        for (int i = 0; i < len; i++) {
-            Item itzem = items[i];
-            if (itzem != null) {
-                set.addAll(Arrays.asList(itzem.getTextures()));
-            }
-        }
-        this.numTotalTextures = set.size();
-        for (int i = 0; i < len; i++) {
-            Item itzem = items[i];
-            if (itzem != null) {
-                ArrayList<AssetTexture> list = Lists.newArrayList();
-                for (String s : itzem.getTextures()) {
-                    AssetTexture tex = texNameToAssetMap.get(s);
-                    if (tex == null) {
-                        tex = mgr.loadPNGAsset(s, false);
-                        this.numLoaded++;
-                        if (tex.getWidth() != tex.getHeight()) {
-                            if (tex.getHeight() > tex.getWidth()) {
-                                tex.cutH();
-                            } else
-                                throw new GameError("Item textures must be width == height");
-                        }
-                        texNameToAssetMap.put(s, tex);
-                    }
-                    list.add(tex);
-                }
-                blockIDToAssetList.put(itzem.id, list);
-            }
-        }
+        collectItemTextures(mgr);
     }
 
 }

@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL15;
 import nidefawl.qubes.assets.AssetVoxModel;
 import nidefawl.qubes.gl.*;
 import nidefawl.qubes.meshing.BlockFaceAttr;
+import nidefawl.qubes.meshing.BlockFaceAttrUINT;
 import nidefawl.qubes.render.WorldRenderer;
 import nidefawl.qubes.vec.BlockPos;
 import nidefawl.qubes.vec.Dir;
@@ -69,7 +70,7 @@ public class ModelVox {
             this.needsDraw = false;
             this.buf.reset();
             this.shadowBuf.reset();
-            BlockFaceAttr attr = new BlockFaceAttr();
+            BlockFaceAttr attr = new BlockFaceAttrUINT();
             attr.setUseGlobalRenderOffset(false);
             for (int x = 0; x < this.size.x; x++) {
                 for (int z = 0; z < this.size.z; z++) {

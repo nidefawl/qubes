@@ -1,15 +1,12 @@
 package nidefawl.qubes.texture.array.imp.vk;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
-
-import com.google.common.collect.Lists;
 
 import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.assets.AssetTexture;
-import nidefawl.qubes.block.Block;
 import nidefawl.qubes.texture.TextureBinMips;
-import nidefawl.qubes.util.GameError;
 
 public class BlockNormalMapArrayVK extends TextureArrayVK {
     
@@ -32,43 +29,6 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
         this.numTextures++;
     }
 
-
-    @Override
-    protected void collectTextures(AssetManager mgr) {
-        Block[] blocks = Block.block;
-        int len = blocks.length;
-        HashSet<String> set = new HashSet<>();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                set.addAll(Arrays.asList(b.getNormalMaps()));
-            }
-        }
-        this.numTotalTextures = set.size();
-        for (int i = 0; i < len; i++) {
-            Block b = blocks[i];
-            if (b != null) {
-                ArrayList<AssetTexture> list = Lists.newArrayList();
-                for (String s : b.getNormalMaps()) {
-                    AssetTexture tex = texNameToAssetMap.get(s);
-                    if (tex == null) {
-                        tex = mgr.loadPNGAsset(s, false);
-                        this.numLoaded++;
-                        if (tex.getWidth() != tex.getHeight()) {
-                            if (tex.getHeight()>tex.getWidth()) {
-                                tex.cutH();
-                            }else 
-                            throw new GameError("Block tiles must be width == height");
-                        }
-                        texNameToAssetMap.put(s, tex);
-                    }
-                    list.add(tex);
-                }
-                blockIDToAssetList.put(b.id, list);
-            }
-        }
-    
-    }
     @Override
     protected void uploadTextures() {
         int totalBlocks = blockIDToAssetList.size();
@@ -117,6 +77,9 @@ public class BlockNormalMapArrayVK extends TextureArrayVK {
         this.texture.build(this.internalFormat, binMips);
     }
 
-
+    @Override
+    protected void collectTextures(AssetManager mgr) {
+        collectNormalMapTextures(mgr);
+    }
 
 }

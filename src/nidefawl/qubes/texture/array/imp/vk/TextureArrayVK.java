@@ -10,7 +10,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import nidefawl.qubes.GameBase;
-import nidefawl.qubes.assets.AssetManager;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.texture.array.TextureArray;
 import nidefawl.qubes.vulkan.*;
@@ -39,10 +38,6 @@ public abstract class TextureArrayVK extends TextureArray {
 
     @Override
     protected void uploadTextures() {
-    }
-
-    @Override
-    protected void collectTextures(AssetManager mgr) {
     }
 
     @Override
