@@ -385,6 +385,12 @@ public class KeybindManager {
                 }
             }
         });
+        addKeyBinding(new Keybinding("dev_toggle_mouse_capture", -1) {
+            @Override
+            public void onDown() {
+                Game.instance.dev_toggleMouseCapture();
+            }
+        });
     }
 
     public static void load() {
