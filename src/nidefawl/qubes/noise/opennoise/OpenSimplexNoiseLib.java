@@ -8,36 +8,36 @@ package nidefawl.qubes.noise.opennoise;
  * Copyright: Michael Hept
  */
 public class OpenSimplexNoiseLib extends OpenSimplexNoise {
-    native public static long init(long seed);
-    native public static void free(long addr);
-    native public static double eval(long addr, double x, double y);
-    native public static double eval(long addr, double x, double y, double z);
-    native public static double eval(long addr, double x, double y, double z, double w);
-    native public static void generateChunk(long addr, int x, int z, long buffer);
+    native public static long noiselib_init(long seed);
+    native public static void noiselib_free(long addr);
+    native public static double noiselib_eval(long addr, double x, double y);
+    native public static double noiselib_eval(long addr, double x, double y, double z);
+    native public static double noiselib_eval(long addr, double x, double y, double z, double w);
+    native public static void noiselib_generateChunk(long addr, int x, int z, long buffer);
 
     private long ptr;
 
     public OpenSimplexNoiseLib(long seed) {
-        this.ptr = init(seed);
+        this.ptr = noiselib_init(seed);
     }
 
     @Override
     public double eval(double x, double y) {
-        return eval(ptr, x, y);
+        return noiselib_eval(ptr, x, y);
     }
 
     @Override
     public double eval(double x, double y, double z) {
-        return eval(ptr, x, y, z);
+        return noiselib_eval(ptr, x, y, z);
     }
 
     @Override
     public double eval(double x, double y, double z, double w) {
-        return eval(ptr, x, y, z, w);
+        return noiselib_eval(ptr, x, y, z, w);
     }
     @Override
     protected void finalize() throws Throwable {
-        free(ptr); //TODO: someone said this isn't good here (figure out if and why)
+        noiselib_free(ptr); //TODO: someone said this isn't good here (figure out if and why)
         super.finalize();
     }
 
