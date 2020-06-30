@@ -13,7 +13,6 @@ import nidefawl.qubes.shader.ShaderSource.ProcessMode;
 
 public class ShaderSourceBundle {
 
-    private static final boolean OPTIMIZER = false;
     private static final boolean SAVE_PROCESSED_SHADERS = false;
     ShaderSource computeCode = new ShaderSource(this, ProcessMode.OPENGL);
     ShaderSource vertCode = new ShaderSource(this, ProcessMode.OPENGL);
@@ -42,30 +41,6 @@ public class ShaderSourceBundle {
             }
             if (!vertCode.isEmpty()) {
                 writeShader(vertCode.getSource(), "processed_shaders/"+nameVsh[0]+"/"+nameVsh[1]+".vsh");
-            }
-        }
-        if (OPTIMIZER) {
-            if (!fragCode.isEmpty()) {
-                GLSLOptimizedSource result = GLSLOptimizer.optimize(fragCode.getSource(), GL_FRAGMENT_SHADER);
-                if (result != null && result.status == 0) {
-                    fragCode.setSource(result.source);
-                    if (SAVE_PROCESSED_SHADERS) {
-                        writeShader(fragCode.getSource(), "processed_shaders/"+nameFsh[0]+"/"+nameVsh[1]+".optimized.fsh");
-                    }
-                } else {
-                    System.out.println("failed optimizing frag "+name+""+(result!=null?" ("+result.status+") "+result.log:" - null"));
-                }
-            }
-            if (!vertCode.isEmpty()) {
-                GLSLOptimizedSource result = GLSLOptimizer.optimize(vertCode.getSource(), GL_VERTEX_SHADER);
-                if (result != null && result.status == 0) {
-                    vertCode.setSource(result.source);
-                    if (SAVE_PROCESSED_SHADERS) {
-                        writeShader(vertCode.getSource(), "processed_shaders/"+nameVsh[0]+"/"+nameVsh[1]+".optimized.vsh");
-                    }
-                }else {
-                    System.out.println("failed optimizing vert "+name+""+(result!=null?" ("+result.status+") "+result.log:" - null"));
-                }
             }
         }
     }
