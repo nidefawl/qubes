@@ -476,8 +476,8 @@ public class FinalRendererGL extends FinalRenderer {
                 
                 @Override
                 public String getDefinition(String define) {
-                    if ("DO_AUTOEXPOSURE".equals(define))
-                        return "#define DO_AUTOEXPOSURE";
+//                    if ("DO_AUTOEXPOSURE".equals(define))
+//                        return "#define DO_AUTOEXPOSURE";
                     return null;
                 }
             });
@@ -539,6 +539,7 @@ public class FinalRendererGL extends FinalRenderer {
             shaderFinal.enable();
             shaderFinal.setProgramUniform1i("texColor", 0);
             shaderFinal.setProgramUniform1i("texLum", 1);
+            shaderFinal.setProgramUniform1f("constexposure", 160 );
             shaderThreshold.enable();
             shaderThreshold.setProgramUniform1i("texColor", 0);
             shaderThreshold.setProgramUniform1i("texLight", 5);
