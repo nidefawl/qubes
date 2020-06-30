@@ -156,7 +156,7 @@ public class Game extends GameBase {
     
     public Game() {
         super();
-        appName = "Not Minecraft";
+        appName = "Qubes - Game";
         useWindowSizeAsRenderResolution = false;
         mustCaptureMouseInputCursor = true;
         instance = this;
