@@ -43,7 +43,7 @@ public class VkSSBO implements IBufferDynamicOffset {
         } else {
             desc.range(this.dynSize);
         }
-        if (dynSize > Engine.vkContext.limits.maxStorageBufferRange()) {
+        if (Engine.vkContext.limits.maxStorageBufferRange() != -1 && dynSize > Engine.vkContext.limits.maxStorageBufferRange()) {
             throw new GameLogicError("Uniform buffer len exceeds maxStorageBufferRange: "+(dynSize)+" > "+(Engine.vkContext.limits.maxStorageBufferRange()));
         }
         return this;

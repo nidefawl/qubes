@@ -649,7 +649,9 @@ public class VulkanInit {
             throw new AssertionError("Failed to create device: " + VulkanErr.toString(err));
         }
         ctxt.limits = ctxt.properties.limits();
-
+//        if (ctxt.limits.maxStorageBufferRange() <= 0) {
+//            throw new AssertionError("maxStorageBufferRange <= 0 ("+ctxt.limits.maxStorageBufferRange()+")");
+//        }
 
         ctxt.device = new VkDevice(device, ctxt.getPhysicalDevice(), deviceCreateInfo);
         ctxt.queueFamilyIndexGraphics = queueIdxGraphic;
