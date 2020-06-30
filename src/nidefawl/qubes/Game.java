@@ -1329,11 +1329,13 @@ public class Game extends GameBase {
 //            ItemModelManager.getInstance().reload();
 //          Engine.renderBatched.initShaders();
 //          Engine.shadowRenderer.initShaders();
-          RenderersGL.skyRenderer.initShaders();
-          Engine.worldRenderer.initShaders();
-//          Engine.skyRenderer.initShaders();
-          RenderersGL.outRenderer.initShaders();
-          RenderersGL.blurRenderer.initShaders();
+            if (!Engine.isVulkan) {
+                RenderersGL.skyRenderer.initShaders();
+                Engine.worldRenderer.initShaders();
+//                Engine.skyRenderer.initShaders();
+                RenderersGL.outRenderer.initShaders();
+                RenderersGL.blurRenderer.initShaders();
+            }
 //            
         }
     }
