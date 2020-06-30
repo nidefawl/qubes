@@ -608,11 +608,11 @@ void main() {
     if (!isSky) {
         // float minAmb = 0.25;
         // float minAmb2 = 0.1;
-        float minAmb = 0.05;
-        float minAmb2 = 0.05;
-         float diff = 1.1;
+        float minAmb = 0.2;
+        float minAmb2 = 0.2;
+         float diff = 1.0;
         // prop.roughness = 0.3;
-        float roughness = pow(2.0, 1.0+(prop.roughness)*5.0)-1.0;
+        float roughness = pow(2.0, 1.0+(prop.roughness)*4.0)-1.0;
         // out_Color = vec4(vec3(prop.roughness), 1);
         // return;
         // float glossy = 0.02;
@@ -654,7 +654,7 @@ void main() {
         // float occlusion = min(prop.blockLight.z, ssao.r);
         float occlusion = min(prop.blockLight.z, ssao.r);
         occlusion+=float(RENDER_PASS==1);
-        occlusion = min(1.0, occlusion*0.3+0.7);/**3.5*/
+        occlusion = min(1.0, occlusion);/**3.5*/
 
         float shadowRaw = getShadow2();
         float shadow = shadowRaw*(1.0-isBackface)*(1.0-isWater*0.8);
@@ -740,14 +740,14 @@ void main() {
     // float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
     // prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
 
-    fogDepth = min(fogDepth, 1066.0);
-    fogDepth = max((fogDepth-164.0), 0.0);
+    fogDepth = min(fogDepth, 812.0);
+    fogDepth = max((fogDepth-64.0), 0.0);
     float fogeye = clamp(1.0 - clamp(dot(-prop.viewVector, vec3(0,1,0)), 0.0, 1.0) / 0.8, 0, 1)*0.4;
     fogeye += fogeye*clamp(1.0 - clamp((
         dot(-prop.viewVector, vec3(0,-1,0))
         *dot(-prop.viewVector, vec3(0,1,0)))*3.2, 0.0, 1.0) -0.8, 0, 1)*1.4;
     float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
-    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.00005*(fIsSky*2.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
+    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.0002*(fIsSky*1.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
     prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(0.1) );
 #endif
     // prop.albedo = vec3(fIsSky);

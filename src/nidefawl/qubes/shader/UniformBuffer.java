@@ -454,7 +454,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
 //        float ambIntens = 0.1f;
 //        float diffIntens = 0.1f;
 //        float specIntens = 0.7F;
-        float ambIntens = 0.08f;
+        float ambIntens = 0.01f;
         float diffIntens = 0.35F;
         float specIntens = 0.17F;
 //        float ambIntens = 0.04f;
