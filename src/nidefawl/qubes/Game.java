@@ -158,6 +158,7 @@ public class Game extends GameBase {
         super();
         appName = "Not Minecraft";
         useWindowSizeAsRenderResolution = false;
+        mustCaptureMouseInputCursor = true;
         instance = this;
         DEBUG_LAYER = false;
     }
@@ -476,8 +477,13 @@ public class Game extends GameBase {
             this.dig.onGrabChange(this.movement.grabbed());
         }
     }
-
+    public void dev_toggleMouseCapture() {
+        this.mustCaptureMouseInputCursor = !this.mustCaptureMouseInputCursor;
+    }
     public boolean needsGrab() {
+        if (!this.mustCaptureMouseInputCursor) {
+            return false;
+        }
         if (canRenderGui3d()) {
             return true;
         }

@@ -790,7 +790,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     public boolean needsGrab() {
-        return this.needsGrab && this.hasWindowFocus;
+        return this.mustCaptureMouseInputCursor && this.hasWindowFocus;
     }
 
     public ArrayList<String> glProfileResults = new ArrayList<>();
@@ -1075,7 +1075,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     }
 
     int throttleClick=0;
-    boolean needsGrab = false; // for non-game impl. only
+    boolean mustCaptureMouseInputCursor = false; // for non-game impl. only
     public void onMouseClick(long window, int button, int action, int mods) {
         if (this.gui != null) {
 //            if (this.world == null) {
@@ -1107,7 +1107,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
                     break;
                 case 1:
                     if (isDown ) {
-                        this.needsGrab = !this.needsGrab;
+                        this.mustCaptureMouseInputCursor = !this.mustCaptureMouseInputCursor;
                     }
                     break;
                 case 2:
