@@ -297,7 +297,7 @@ public abstract class TextureArray {
                 for (String s : b.getTextures()) {
                     AssetTexture tex = texNameToAssetMap.get(s);
                     if (tex == null) {
-                        String path = "textures/blocks_64/"+s+".png";
+                        String path = "textures/blocks_512/"+s+".png";
                         try {
                             tex = mgr.loadPNGAsset(path, false);
                         } catch (Exception e) {

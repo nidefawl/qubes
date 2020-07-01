@@ -303,7 +303,7 @@ public abstract class World implements IChunkWorld {
     }
 
     public void spawnLights(BlockPos block) {
-        for (int i = 0; i < 80; i++) {
+        for (int i = 0; i < 4; i++) {
 
             int range = 12;
             int x = block.x+this.rand.nextInt(range*2)-range;

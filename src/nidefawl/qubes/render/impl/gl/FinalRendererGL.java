@@ -539,7 +539,7 @@ public class FinalRendererGL extends FinalRenderer {
             shaderFinal.enable();
             shaderFinal.setProgramUniform1i("texColor", 0);
             shaderFinal.setProgramUniform1i("texLum", 1);
-            shaderFinal.setProgramUniform1f("constexposure", 160 );
+            shaderFinal.setProgramUniform1f("constexposure", 120 );
             shaderThreshold.enable();
             shaderThreshold.setProgramUniform1i("texColor", 0);
             shaderThreshold.setProgramUniform1i("texLight", 5);
