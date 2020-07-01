@@ -1,0 +1,12 @@
+/bin/
+/config/
+/worlds/
+/server/
+/playerdata/
+/regions/
+/packs/
+/config/
+/preprocessed/
+commandhistory.txt
+game.log
+^hs_err_pid.*$
