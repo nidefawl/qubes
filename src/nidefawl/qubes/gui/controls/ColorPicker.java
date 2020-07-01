@@ -15,6 +15,12 @@ public abstract class ColorPicker extends AbstractUI {
     private int rgb;
     public ColorPicker(Gui parent) {
         this.parent = parent;
+        valH = 0.7f;
+        valS = 0.8f;
+        valL = 0.25f;
+        rgb = Color.HSBtoRGB(1f-valH, valS*(1-(Math.max(0, (valL-0.5f)*2))), Math.min(1, valL*2));
+
+        
     }
 
     @Override
