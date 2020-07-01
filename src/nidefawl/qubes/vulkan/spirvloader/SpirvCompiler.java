@@ -32,7 +32,6 @@ public class SpirvCompiler {
     public final static int OptionKeepUncalled = (1 << 22);
 
     native public static SpirvCompilerOutput compile(String s, int type, int options);
-    native public static SpirvCompilerOutput testshader();
     static {
         create();
     }

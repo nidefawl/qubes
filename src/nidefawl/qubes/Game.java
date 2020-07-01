@@ -160,7 +160,7 @@ public class Game extends GameBase {
         useWindowSizeAsRenderResolution = false;
         mustCaptureMouseInputCursor = true;
         instance = this;
-        DEBUG_LAYER = false;
+        DEBUG_LAYER = true;
     }
 
     @Override

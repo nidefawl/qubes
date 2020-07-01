@@ -583,7 +583,7 @@ public class VKContext {
             throw new GameLogicError("Shader source is empty for "+string);
         }
         String source = shaderSource.getSource();
-//        writeShader(source, "preprocessed/"+string);
+        writeShader(source, "preprocessed/"+string);
         int options = 0;
         options |= SpirvCompiler.OptionLinkProgram;
         options |= SpirvCompiler.OptionSpv;
@@ -595,15 +595,16 @@ public class VKContext {
         if (result == null) {
             throw new GameLogicError("Failed compiling spirv. Expected nonnull return value");
         }
+        result.log = result.log.replaceAll("Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.", "").trim();
+        if (!result.log.isEmpty())
+            System.err.println(result.log.trim());
         if (result.get(stage) == null) {
 //                System.err.println(source);
 
             System.err.println("MISSING BINARY "+string+": "+result.log+","+result.status+","+result);
             throw new GameLogicError("Missing shader binary module");
         }
-        result.log = result.log.replaceAll("Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.", "").trim();
-        if (!result.log.isEmpty())
-            System.err.println(result.log.trim());
+
         if (result.status != 0) {
             return null;
         }

@@ -59,7 +59,7 @@ public abstract class GameBase implements Runnable, IErrorHandler {
     public  int     windowHeight;
     public static boolean GL_ERROR_CHECKS = true;
     public static boolean VR_SUPPORT = false;
-    public static boolean DEBUG_LAYER = false;
+    public static boolean DEBUG_LAYER = true;
     public static long    windowId        = 0;
     public static long    windowSurface   = 0;
     protected static int            initWidth       = (int) (1920*0.8);
