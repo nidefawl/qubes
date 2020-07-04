@@ -387,7 +387,7 @@ public class Selection {
         }
         if (getMode() == GameMode.BUILD) {
             
-            if (timer<=0&&this.mouseDown) {
+            if (timer<=0&&this.mouseDown&&!GLDebugTextures.isShow()) {
                 if (rayTrace.hasHit()) {
                     timer += 5;
                     RayTraceIntersection intersect = rayTrace.getHit();
