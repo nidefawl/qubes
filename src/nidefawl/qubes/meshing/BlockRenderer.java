@@ -813,8 +813,11 @@ public class BlockRenderer {
         }
     }
     protected void putBuffer(Block block, int targetBuffer) {
+        putBuffer(block, targetBuffer, block.getRenderShadow());
+    }
+    protected void putBuffer(Block block, int targetBuffer, int writeToShadowBuffer) {
         attr.put(this.vbuffer[targetBuffer]);
-        if (block.getRenderShadow()>0) {
+        if (writeToShadowBuffer > 0) {
             if (this.shadowDrawMode == 1) {
                 attr.putShadowTextured(this.vbuffer[PASS_SHADOW_SOLID]);
             } else {
@@ -1192,7 +1195,7 @@ public class BlockRenderer {
         attr.maskLight(brNN, brPN, brPP, brNP, block.getLightValue());
         attr.setType(block.id);
         attr.setNormal(0, 1, 0); // set upward normal
-        attr.setPass(3);
+        attr.setPass(0);
 
 
         float x = ix;
@@ -1309,43 +1312,43 @@ public class BlockRenderer {
 //            setLight();
             
             attr.setReverse(false);
-//            float bendupper=232222.9f;
-//            float bendlower = 0222222.4f;
-//            {
-//                attr.calcNormal(plantNormal);
-//                plantNormal.y += bendupper;
-//                plantNormal.normaliseNull();
-//                int normal = attr.packNormal(plantNormal);
-//                attr.v1.normal = normal;
-//                attr.v2.normal = normal;
-//                attr.calcNormal(plantNormal);
-//                plantNormal.y += bendlower;
-//                plantNormal.normaliseNull();
-//                normal = attr.packNormal(plantNormal);
-//                attr.v0.normal = normal;
-//                attr.v3.normal = normal;
-//            }
-//            
-            putBuffer(block, targetBuffer);
+            float bendupper=0f;
+            float bendlower = 0f;
+            {
+                attr.calcNormal(plantNormal);
+                plantNormal.y += bendupper;
+                plantNormal.normaliseNull();
+                int normal = attr.packNormal(plantNormal);
+                attr.v1.normal = normal;
+                attr.v2.normal = normal;
+                attr.calcNormal(plantNormal);
+                plantNormal.y += bendlower;
+                plantNormal.normaliseNull();
+                normal = attr.packNormal(plantNormal);
+                attr.v0.normal = normal;
+                attr.v3.normal = normal;
+            }
+            
+            putBuffer(block, targetBuffer, 0);
             attr.setReverse(true);
-//            {
-//                attr.calcNormal(plantNormal);
-//                plantNormal.y += bendupper;
-//                plantNormal.normaliseNull();
-//                int normal = attr.packNormal(plantNormal);
-//                attr.v1.normal = normal;
-//                attr.v2.normal = normal;
-//                attr.calcNormal(plantNormal);
-//                plantNormal.y += bendlower;
-//                plantNormal.normaliseNull();
-//                normal = attr.packNormal(plantNormal);
-//                attr.v0.normal = normal;
-//                attr.v3.normal = normal;
-//            }
+            {
+                attr.calcNormal(plantNormal);
+                plantNormal.y += bendupper;
+                plantNormal.normaliseNull();
+                int normal = attr.packNormal(plantNormal);
+                attr.v1.normal = normal;
+                attr.v2.normal = normal;
+                attr.calcNormal(plantNormal);
+                plantNormal.y += bendlower;
+                plantNormal.normaliseNull();
+                normal = attr.packNormal(plantNormal);
+                attr.v0.normal = normal;
+                attr.v3.normal = normal;
+            }
 //            attr.flipNormal();
             
 
-            putBuffer(block, targetBuffer);
+            putBuffer(block, targetBuffer, 0);
             rot+=incr;
             nfaces+=2;
         }
@@ -1395,10 +1398,10 @@ public class BlockRenderer {
          for (int j = 0; j < 4; j++) {
              attr.v[j].normal = normal;
          }
-        putBuffer(block, targetBuffer);
+        putBuffer(block, targetBuffer, 0);
         attr.setReverse(true);
         attr.flipNormal();
-        putBuffer(block, targetBuffer);
+        putBuffer(block, targetBuffer, 0);
         nfaces+=2;
         return nfaces;
     
