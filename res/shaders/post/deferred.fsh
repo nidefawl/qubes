@@ -729,6 +729,11 @@ void main() {
         spec*=shadow;
         prop.albedo = mix (terr, spec*vec3(0.02), isWater*theta);
         prop.albedo=terr;
+        // debug leaves
+        // if (0<float(blockid==39u||blockid==40u)) {
+        //     prop.albedo.rgb=vec3(prop.worldposition.xyz-vec3(-378, 227, -107))*0.002;
+        //     prop.albedo.rgb=vec3(shadow);
+        // }
     } else {
         // prop.albedo.rgb = vec3(1,0,1);
     }
