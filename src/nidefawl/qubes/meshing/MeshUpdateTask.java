@@ -349,6 +349,9 @@ public class MeshUpdateTask {
                 Stats.timeRendering += (System.nanoTime()-l) / 1000000.0D;
                 this.meshed = true;
 //                System.out.println(Thread.currentThread().getName()+" done "+this.mr);
+//                for (int i = 0; i < NUM_PASSES; i++) {
+//                    System.out.println(this.mr+" num vertices PASS["+i+"] = "+(mr.getNumVertices(i)));
+//                }
                 return true;
             } catch (Exception e) {
                 GameBase.baseInstance.setException(new GameError("Error while updating region", e));

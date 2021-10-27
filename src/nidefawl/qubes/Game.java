@@ -160,7 +160,7 @@ public class Game extends GameBase {
         useWindowSizeAsRenderResolution = false;
         mustCaptureMouseInputCursor = true;
         instance = this;
-        DEBUG_LAYER = true;
+        DEBUG_LAYER = false;
     }
 
     @Override
@@ -1329,7 +1329,7 @@ public class Game extends GameBase {
 //            ItemModelManager.getInstance().reload();
 //          Engine.renderBatched.initShaders();
 //          Engine.shadowRenderer.initShaders();
-            if (!Engine.isVulkan) {
+            if (!Engine.isVulkan&&(true)) {
                 RenderersGL.skyRenderer.initShaders();
                 Engine.worldRenderer.initShaders();
 //                Engine.skyRenderer.initShaders();
@@ -1850,6 +1850,10 @@ public class Game extends GameBase {
             if (text.equals("/resize")) {
                 return;
             }
+//            if (text.equals("/reloadshaders")) {
+//                Shaders.initShaders();
+//                return;
+//            }
             if (text.equals("/inversez")&&!Engine.isVulkan) {
                 Engine.INVERSE_Z_BUFFER=!Engine.INVERSE_Z_BUFFER;
                 Engine.resizeProjection(Engine.displayWidth, Engine.displayHeight);

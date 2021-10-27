@@ -1,6 +1,8 @@
 package nidefawl.qubes.gui.controls;
 
 
+import nidefawl.qubes.font.FontRenderer;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.gui.AbstractUI;
 import nidefawl.qubes.gui.Gui;
 import nidefawl.qubes.input.Mouse;
@@ -13,28 +15,38 @@ public abstract class ColorPicker extends AbstractUI {
     float valS=1;
     float valL=0.5f;
     private int rgb;
+    final int btnWH = 16;
+    final int btnStep = btnWH+8;
+    int boxW = btnStep*3-10;
+    final int extendSize = 24;
+    int spacing = 20;
     public ColorPicker(Gui parent) {
         this.parent = parent;
         valH = 0.7f;
         valS = 0.8f;
         valL = 0.25f;
-        rgb = Color.HSBtoRGB(1f-valH, valS*(1-(Math.max(0, (valL-0.5f)*2))), Math.min(1, valL*2));
+        rgb = Color.HSLtoRGB(1-valH, valS, valL);
 
         
+    }
+    public void setRgb(int rgb2) {
+        float[] hsl = Color.RGBtoHSL((rgb2>>16)&0xFF, (rgb2>>8)&0xFF, rgb2&0xFF, null);
+        valH = 1-hsl[0];
+        valS = hsl[1];
+        valL = hsl[2];
+        rgb = Color.HSLtoRGB(1-valH, valS, valL);
     }
 
     @Override
     public void render(float fTime, double mX, double mY) {
-        final int extendSize = 32;
         int pickIdx = -1;
         for (int i = 0; i < 3; i++) {
             if (colorPick[i] == selectedButton) {
                 pickIdx = i; break;
             }
         }
-        int boxW = 40*3-10;
-        int wRight = this.width-boxW-20;
-        int xRight = this.posX+boxW+20;
+        int wRight = this.width-boxW-spacing;
+        int xRight = this.posX+boxW+spacing;
         double bWidth = colorPick[0].width;
         if (pickIdx > -1) {
             double pos = (mX-(xRight-extendSize/2)-bWidth/2.0f)/(double)(wRight+(extendSize)-bWidth);
@@ -61,18 +73,23 @@ public abstract class ColorPicker extends AbstractUI {
 
             BoxGUI.setColorwheel("colorwheel", 1+a);
             BoxGUI.setHSL("valueH", valH, valS, valL);
-            int m = this.posY+40*a+2;
-            renderRoundedBoxShadow(xRight, m, 3, wRight, 28, -1, 1, true);
+            int m = this.posY+btnStep*a+2;
+            renderRoundedBoxShadow(xRight, m, 3, wRight, btnWH-4, -1, 1, true);
         }
         BoxGUI.setColorwheel("colorwheel", 4);
-        int rgb = Color.HSBtoRGB(1f-valH, valS*(1-(Math.max(0, (valL-0.5f)*2))), Math.min(1, valL*2));
-        
+        int rgb = Color.HSLtoRGB(1-valH, valS, valL);
+
         renderRoundedBoxShadow(this.posX, this.posY+1, 3, boxW, boxW, rgb, 1, true);
         BoxGUI.setColorwheel("colorwheel", 0);
         if (this.rgb != rgb) {
             this.rgb = rgb;
             onColorChange(rgb);
         }
+
+        Engine.pxStack.push(0, 0, 4);
+        FontRenderer f = FontRenderer.get(0, Gui.FONT_SIZE_BUTTON, 0);
+        f.drawString(String.format("%08X", rgb), this.posX, this.posY+f.getLineHeight(), 0, true, 1.0f);
+        Engine.pxStack.pop();
         
     }
 
@@ -80,16 +97,14 @@ public abstract class ColorPicker extends AbstractUI {
     
     @Override
     public void initGui(boolean first) {
-        final int extendSize = 32;
         colorPick = new Button[3];
-        int boxW = 40*3-10;
-        int wRight = this.width-boxW-20;
-        int xRight = this.posX+boxW+20;
+        int wRight = this.width-boxW-spacing;
+        int xRight = this.posX+boxW+spacing;
         for (int i = 0; i < 3; i++) {
             colorPick[i] = new Button(-4, "");
             colorPick[i].parent = this.parent;
-            colorPick[i].setPos(xRight, this.posY+i*40);
-            colorPick[i].setSize(32, 32);
+            colorPick[i].setPos(xRight, this.posY+i*btnStep);
+            colorPick[i].setSize(btnWH, btnWH);
             colorPick[i].extendx=0;
             colorPick[i].extendy=0;
             colorPick[i].shadowSigma=0;
@@ -99,7 +114,7 @@ public abstract class ColorPicker extends AbstractUI {
         }
     }
     public int getPickerHeight() {
-        return Math.max(3*40, this.height);
+        return Math.max(3*btnStep, this.height);
     }
 
     @Override

@@ -357,15 +357,15 @@ public class FinalRendererGL extends FinalRenderer {
         FrameBuffer input = ssr > 0 ? fbSSRCombined : fbDeferred;
         FrameBuffer output = ssr > 0 ? fbDeferred : fbSSRCombined;
 
-        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Threshold");
-        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input.getTexture(0)); // Albedo
-        GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3)); // blocklight
-        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.getLightTexture());
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture(false, "Bloom", "texColor", input.getTexture(0), 1);
             GLDebugTextures.readTexture(false, "Bloom", "blocklight", Engine.getSceneFB().getTexture(3));
             GLDebugTextures.readTexture(false, "Bloom", "lightComputed", Engine.getLightTexture());
         }
+        if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Threshold");
+        GL.bindTexture(GL_TEXTURE0, GL_TEXTURE_2D, input.getTexture(0)); // Albedo
+        GL.bindTexture(GL_TEXTURE6, GL_TEXTURE_2D, Engine.getSceneFB().getTexture(3)); // blocklight
+        GL.bindTexture(GL_TEXTURE5, GL_TEXTURE_2D, Engine.getLightTexture());
         shaderThreshold.enable();
         output.bind();
         output.setDrawMask(1);
@@ -376,12 +376,11 @@ public class FinalRendererGL extends FinalRenderer {
         if (GLDebugTextures.isShow()) {
             GLDebugTextures.readTexture(true, "Bloom", "brightPixels", output.getTexture(0), 1);
         }
-
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.start("Blur");
         int blurTexture = RenderersGL.blurRenderer.renderBlur1PassDownsample(output.getTexture(0));
         if (GPUProfiler.PROFILING_ENABLED) GPUProfiler.end();
         if (GLDebugTextures.isShow()) {
-            GLDebugTextures.readTexture(true, "Bloom", "blurredTexture", blurTexture);
+            GLDebugTextures.readTexture(true, "Bloom", "blurredTexture", blurTexture, 1);
         }
         
 
@@ -476,8 +475,12 @@ public class FinalRendererGL extends FinalRenderer {
                 
                 @Override
                 public String getDefinition(String define) {
-//                    if ("DO_AUTOEXPOSURE".equals(define))
-//                        return "#define DO_AUTOEXPOSURE";
+                    if ("DO_AUTOEXPOSURE".equals(define)) {
+
+                      System.out.println("auto exposure");
+                        return "#define DO_AUTOEXPOSURE";
+                    }
+                    
                     return null;
                 }
             });

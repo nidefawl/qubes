@@ -179,11 +179,11 @@ public abstract class SkyRenderer extends AbstractRenderer {
         float rotRange = 0.0005f;
         float minBr=0.25f;
         float maxBr=1.0f;
-        float sizeScale = 0.5f;
+        float sizeScale = 1.3f;
         float minSize = 33*sizeScale;
         float maxSize = 100*sizeScale;
         float l2 = 0.5f;
-        float h2 = 0.2f;
+        float h2 = 0.0f;
         for (int i = 0; i < 12; i++) {
             Cloud cloud = new Cloud();
             cloud.texture = r.nextInt(this.numTexturesCloud);
@@ -194,7 +194,7 @@ public abstract class SkyRenderer extends AbstractRenderer {
 //          cloud.mot.x = (r.nextFloat()*2.0f-1.0f)*motRange;
 //          cloud.mot.y = 0;
 //          cloud.mot.z = (r.nextFloat()*2.0f-1.0f)*motRange;
-            for (int j = 0; j < 12; j++) {
+            for (int j = 0; j < 10; j++) {
                 PointSprite sprite = new PointSprite();
                 sprite.xoffset = r.nextFloat();
                 sprite.yoffset = r.nextFloat();
@@ -202,8 +202,8 @@ public abstract class SkyRenderer extends AbstractRenderer {
                 sprite.posOffset.y = r.nextFloat()*h2*2.0f-h2;
                 sprite.posOffset.z = r.nextFloat()*l2*2.0f-l2;
                 float size = minSize+(r.nextFloat()+fSize2)*(maxSize-minSize);
-//              sprite.setSize(size*0.5f+fSize2*(minSize));
-              sprite.setSize(53);
+              sprite.setSize(size*0.5f+fSize2*(minSize));
+//              sprite.setSize(53);
                 float f1 = (minBr+r.nextFloat()*(maxBr-minBr));
                 float f2 = f1*0.9f+0.1f*(minBr+r.nextFloat()*(maxBr-minBr));
                 sprite.setCol(f1, f1, f2);

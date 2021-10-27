@@ -12,13 +12,13 @@ import com.google.common.collect.Lists;
  * Copyright: Michael Hept
  */
 public class BlockGroupStones extends BlockGroup {
-    final List<String> stoneNames = Lists.newArrayList(new String[] { "granite", "basalt", "diorite", "marble", "obsidian", "sandstone", "sandstone_red" });
+    final List<String> stoneNames = Lists.newArrayList(new String[] { "granite", "basalt", "diorite", "marble", "sandstone", "sandstone_red" });
 
     final public Block granite;
     final public Block basalt;
     final public Block diorite;
     final public Block marble;
-    final public Block obsidian;
+//    final public Block obsidian;
     final public Block sandstone;
     final public Block sandstone_red;
     public BlockGroupStones() {
@@ -29,9 +29,9 @@ public class BlockGroupStones extends BlockGroup {
         basalt = getBlocks().get(1);
         diorite = getBlocks().get(2);
         marble = getBlocks().get(3);
-        obsidian = getBlocks().get(4);
-        sandstone = getBlocks().get(5);
-        sandstone_red = getBlocks().get(6);
+//        obsidian = getBlocks().get(4);
+        sandstone = getBlocks().get(4);
+        sandstone_red = getBlocks().get(5);
         granite.setNormalMaps("rocks/granite_normalmap");
         marble.setNormalMaps("rocks/granite_normalmap");
         sandstone.setNormalMaps("rocks/granite_normalmap");

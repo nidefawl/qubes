@@ -59,17 +59,19 @@ void main() {
     vec3 skySunScat = skyAtmoScat(-rayDir, SkyLight.lightDir.xyz, moonSunFlip, sunTheta2*1, dayLightIntens, dayNoon);
     float intens = mix(1, 0, moonSunFlip)*dayLightIntens;
 
-    float yt =1-smoothstep(0, 1, abs(dot(rayDir, vec3(0, 1, 0))));
+    float yt =1-smoothstep(0, 1, abs(dot(rayDir, vec3(0, 2, 0))));
+    float fade = clamp(pow(1.0f-abs(dot(rayDir, vec3(0, 1, 0))), 4.0f), 0.0f, 1.0f);
     vec3 fogColor=vec3(0.74f, 1.24f, 1.66f)*0.7;
-     fogColor=vec3(0.74f, 1.24f, 1.66f)*0.7;
+     fogColor=vec3(0.74f, 1.24f, 4.66f)*0.7;
     vec3 fogColor2=vec3(1.14f, 1.34f, 1.66f)*0.4;
-     fogColor=mix(fogColor, fogColor2, yt);
-    vec3 fogColorLit=mix(fogColor, vec3(fogColor*0.0001), fNight)*0.1;
+     fogColor2=vec3(14.f);
+     fogColor=mix(fogColor, fogColor2, fade);
+    vec3 fogColorLit=mix(fogColor, vec3(fogColor*0.001), fNight)*0.1;
     vec3 sky = vec3(fogColorLit);
     sunSpotDens*=(1-fNight*0.82);
     float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
     // sky = mix(sky, sky*skySunScat, clamp(0.14f+sunTheta, 0, 1));
-    sky += skySunScat*1.5f;
+    // sky += skySunScat*1.5f;
     // sky = mix(sky, sky*skySunScat, 0.3f-fNight*0.2f);
     // sky += skySunScat*sunSpotDens*1.2;
     // sky += sky*SkyLight.La.rgb*(1.0-sunSpotDens)*1.1f;
@@ -79,14 +81,14 @@ void main() {
 
     // float scatbr = clamp((skySunScat.r+skySunScat.b+skySunScat.g) / 2.0f, 0, 1);
     // sky = mix(sky, sky*skySunScat, clamp(0.14f+sunTheta, 0, 1));
-    // sky += skySunScat*0.5f;
+    sky += skySunScat*(0.2f+dayLightIntens);
     // float zfar = in_scene.viewport.w;
 
-
+    // vec4 cloudColor = vec4(vec3(fade), 1);
     vec4 cloudColor = vec4(sky, 1);
 
 
-    blendColor(cloudColor, fogColorLit, yt*0.9);
+    // blendColor(cloudColor, fogColorLit, fade*0.9);
 #if RENDER_TO_SCENE_FB
     out_Color = vec4(cloudColor.rgb*0.02, 1.0);
     out_Normal = vec4(0.5);

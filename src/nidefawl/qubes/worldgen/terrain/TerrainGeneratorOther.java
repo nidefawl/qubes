@@ -13,6 +13,7 @@ import nidefawl.qubes.world.WorldSettings;
 import nidefawl.qubes.world.biomes.EmptyBiomeManager;
 import nidefawl.qubes.worldgen.WorldGenInit;
 import nidefawl.qubes.worldgen.populator.ChunkPopulator;
+import nidefawl.qubes.worldgen.populator.EmptyChunkPopulator;
 
 public class TerrainGeneratorOther implements ITerrainGen {
     public final static String GENERATOR_NAME = "terrain_other";
@@ -189,6 +190,25 @@ public class TerrainGeneratorOther implements ITerrainGen {
 //                        if (dYH < 0.5)
 //                            dYH = 0.5;
                     }
+                    double dBase = dStr-dYH*dStr*2.0;
+                    double dN = noise2.get(cX|x, y, cZ|z)*2.4D;
+                    dN*=24D*clamp10(func2(128, y, 66)*0.8);
+                    dBase += dN;
+                    dNoise[y<<8|xz] = dBase;
+                }
+                if (false)
+                for (int y = 0; y < wh; y++) {
+                    double dYH = clamp10((y)/(double)df);
+                    if (dYH >= 0.5) {
+                        double dz = (dYH-0.5D)*2.0D;
+                        dz = 1-dz;
+                        dz*=dz*(0.98D+dh2*0.04D);
+                        dz = 1-dz;
+                        dz /=4;
+                        dYH+=dz;
+//                        if (dYH < 0.5)
+//                            dYH = 0.5;
+                    }
                     if (x+z==0) {
 //                        System.out.println(y+"/"+dYH);
                     }
@@ -207,7 +227,7 @@ public class TerrainGeneratorOther implements ITerrainGen {
 //                    }
 //                    if (dN7 < 0)
 //                        dN7*=0.01D;
-                    dN*=14D*clamp10(func2(128, y, 66)*0.8);
+                    dN*=24D*clamp10(func2(128, y, 66)*0.8);
                     dBase += dN;
                     double riverY = 110 -dBaseHeight*2;
                     double dRiverH = func2(riverY, y, 12);
@@ -312,7 +332,8 @@ public class TerrainGeneratorOther implements ITerrainGen {
         WorldGenInit init = new WorldGenInit();
         init.generator = this;
         init.biomeManager = new EmptyBiomeManager(world, seed, settings);
-        init.populator = new ChunkPopulator(world, seed, settings);
+//        init.populator = new ChunkPopulator(world, seed, settings);
+        init.populator = new EmptyChunkPopulator(world, seed, settings);
         return init;
     }
 }

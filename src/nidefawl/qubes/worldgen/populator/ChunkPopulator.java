@@ -101,12 +101,19 @@ public class ChunkPopulator implements IChunkPopulator {
         list.add(4);
         list.add(4);
         list.add(4);
+        list.add(5);
+//        list.add(5);
+//        list.add(5);
+//        list.add(5);
+//        list.add(5);
+//        list.add(5);
+        list.add(5);
         int nTrees = (int) (3+distScale*64)+111;
         Block bush = Block.grassbush;
         if (rand.nextInt(44) > 22) {
             bush = Block.thingrass;
         }
-        int amt = 1222;
+        int amt = 344;
         for (int i = 0; i < amt; i++) {
             int x = c.x<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
             int z = c.z<<Chunk.SIZE_BITS|rand.nextInt(Chunk.SIZE);
@@ -114,7 +121,7 @@ public class ChunkPopulator implements IChunkPopulator {
 
             int type = world.getType(x, h, z);
             if (isSoil(type)) {
-                if ( a <= nTrees && rand.nextInt(174) == 0) {
+                if ( a <= nTrees && h > 0 && h < 2120 && rand.nextInt(155) == 0) {
                     if (list != null && !list.isEmpty()) {
                         int treeType = list.get(rand.nextInt(list.size()));
                         TreeGeneratorLSystem g = TreeGenerators.get(treeType, rand);
@@ -126,7 +133,7 @@ public class ChunkPopulator implements IChunkPopulator {
                             Tree tree = g.getTree();
                             if (tree != null) {
                                 HexBiome hex2 = ((HexBiomesServer)world.biomeManager).blockToHex(x, z);
-                                hex2.registerTree(tree);
+//                                hex2.registerTree(tree);
                             }
                         }
                     }

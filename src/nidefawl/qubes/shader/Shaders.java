@@ -34,6 +34,7 @@ public class Shaders {
     public static Shader gui;
     public static Shader item;
     public static Shader tonemap;
+    public static Shader cubemap2dProjection;
 
 
     public static void initShaders() {
@@ -46,6 +47,7 @@ public class Shaders {
             }
             Shader new_wireframe = assetMgr.loadShader(newshaders, "debug/wireframe");
             Shader new_uint = assetMgr.loadShader(newshaders, "debug/render_uint_texture");
+            Shader new_cubemap2dProjection = assetMgr.loadShader(newshaders, "debug/cubemap2dproj");
             Shader new_textured_alpha_test = assetMgr.loadShader(newshaders, "textured", new IShaderDef() {
                 
                 @Override
@@ -130,6 +132,9 @@ public class Shaders {
             Shaders.tonemap = new_tonemap;
             Shaders.gui = new_gui;
             Shaders.item = new_item;
+            Shaders.cubemap2dProjection = new_cubemap2dProjection;
+            Shaders.cubemap2dProjection.enable();
+            Shaders.cubemap2dProjection.setProgramUniform1i("tex0", 0);
             Shaders.colored.enable();
             item.enable();
             item.setProgramUniform1i("itemTextures", 0);

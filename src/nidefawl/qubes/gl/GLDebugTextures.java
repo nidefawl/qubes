@@ -1,6 +1,8 @@
 package nidefawl.qubes.gl;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE4;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
 
 import java.util.*;
 
@@ -10,6 +12,7 @@ import com.google.common.collect.Maps;
 
 import nidefawl.qubes.font.FontRenderer;
 import nidefawl.qubes.input.Mouse;
+import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.shader.Shaders;
 
 public class GLDebugTextures {
@@ -19,20 +22,22 @@ public class GLDebugTextures {
     public String pass;
     public int h;
     public int w;
-    public int tex;
     public int d;
+    public int tex;
+    public int target;
     public int flags;
     public boolean valid;
     private boolean isOutput;
     public static boolean show    = false;
 
-    GLDebugTextures(String pass, String name, int format, int w, int h, int d, int flags, boolean isOutput) {
+    GLDebugTextures(String pass, String name, int format, int w, int h, int d, int target, int flags, boolean isOutput) {
         this.pass = pass;
         this.name = name;
         this.format = format;
         this.w = w;
         this.h = h;
         this.d = d;
+        this.target = target;
         this.flags = flags;
         this.valid = true;
         this.isOutput = isOutput;
@@ -84,19 +89,37 @@ public class GLDebugTextures {
         readTexture(isOutput, name, string, texture, 0);
     }
     public static int readTexture(boolean isOutput, String name, String string, int texture, int flags) {
+        return readTexture(isOutput, name, string, texture, flags, GL11.GL_TEXTURE_2D);
+    }
+    public static int readTexture(boolean isOutput, String name, String string, int texture, int flags, int target) {
         StageMap texMap = textures.get(name);
         if (texMap == null) {
             texMap = new StageMap();
             textures.put(name, texMap);
         }
+        Engine.checkGLError("pre readTexture "+name+":"+string);
         GLDebugTextures tex = texMap.get(string);
-        int target = GL11.GL_TEXTURE_2D;
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL.bindTexture(GL13.GL_TEXTURE0, target, texture);
-        int w = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_WIDTH);
-        int h = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_HEIGHT);
-        int d = GL11.glGetTexLevelParameteri(target, 0, GL12.GL_TEXTURE_DEPTH);
-        int int_format = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
+        Engine.checkGLError("bindTexture "+name+":"+string);
+        int w, h, d;
+        int int_format;
+        if (target == GL_TEXTURE_CUBE_MAP) {
+            w = GL11.glGetTexLevelParameteri(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL11.GL_TEXTURE_WIDTH);
+            h = GL11.glGetTexLevelParameteri(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL11.GL_TEXTURE_HEIGHT);
+            d = 6;
+            int_format = GL11.glGetTexLevelParameteri(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
+            Engine.checkGLError("glGetTexLevelParameteri "+name+":"+string);
+        } else {
+            w = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_WIDTH);
+            Engine.checkGLError("glGetTexLevelParameteri "+name+":"+string+ " GL_TEXTURE_WIDTH");
+            h = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_HEIGHT);
+            Engine.checkGLError("glGetTexLevelParameteri "+name+":"+string+ " GL_TEXTURE_HEIGHT");
+            d = GL11.glGetTexLevelParameteri(target, 0, GL12.GL_TEXTURE_DEPTH);
+            Engine.checkGLError("glGetTexLevelParameteri "+name+":"+string+ " GL_TEXTURE_DEPTH");
+            int_format = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
+            Engine.checkGLError("glGetTexLevelParameteri "+name+":"+string);
+        }
 //
         boolean realloc = false;
         if (tex != null && (tex.w != w || tex.h != h || tex.d != d || tex.flags != flags)) {
@@ -109,7 +132,7 @@ public class GLDebugTextures {
             realloc = true;
         }
         if (tex == null) {
-            tex = new GLDebugTextures(name, string, int_format, w, h, d, flags, isOutput);
+            tex = new GLDebugTextures(name, string, int_format, w, h, d, target, flags, isOutput);
             texMap.put(isOutput, string, tex);
             realloc = true;
         }
@@ -119,10 +142,13 @@ public class GLDebugTextures {
                 int_format = GL11.GL_RGBA8;
             }
             GL.bindTexture(GL13.GL_TEXTURE0, target, tex.tex);
+            Engine.checkGLError("bindTexture "+name+":"+string);
             GL.glTexStorage2D(target, 1, int_format, w, h);
+            Engine.checkGLError("glTexStorage2D "+name+":"+string);
             alltextures.put(tex.tex, tex);
         }
         ARBCopyImage.glCopyImageSubData(texture, target, 0, 0, 0, 0, tex.tex, target, 0, 0, 0, 0, w, h, d);
+        Engine.checkGLError("glCopyImageSubData "+name+":"+string);
         GL.bindTexture(GL13.GL_TEXTURE0, target, 0);
         Engine.checkGLError("readtexture "+name+":"+string);
         return tex.tex;
@@ -179,9 +205,10 @@ public class GLDebugTextures {
             titleY=w < 150 ? ((x%2)*16) : 0;
             FontRenderer.get(0, 18, 0).drawString(mapName, left, yposOffset-titleY, -1, true, 1);
             boolean isOutput = false;
+            Engine.checkGLError("pre draw debug textures");
             while (it.hasNext()) {
                 GLDebugTextures tex = map.get(it.next());
-                GL.bindTexture(GL13.GL_TEXTURE0, GL11.GL_TEXTURE_2D, tex.tex);
+                Engine.checkGLError("bindTexture");
                 float top = yposOffset+y*(h+gap);
                 float bottom = top+h;
                 if (bottom >= displayHeight-gap*2) {
@@ -222,6 +249,7 @@ public class GLDebugTextures {
                 Tess.instance.add(right, top, 0, 1, 0);
                 Tess.instance.add(left, top, 0, 0, 0);
                 Tess.instance.draw(GL11.GL_QUADS);
+                GL.bindTexture(GL13.GL_TEXTURE0, tex.target, tex.tex);
                 tex.bindShader();
                 Tess.instance.setColorF(-1, 1);
                 Tess.instance.add(left, bottom, 0, 0, 0);
@@ -257,10 +285,35 @@ public class GLDebugTextures {
                 if (!it.hasNext()) {
                     break;
                 }
+                Engine.checkGLError("post draw texture entry");
                 y++;
             }
             x++;
         }
+//        //draw skybox cubemap using Equirectangular projection
+//        {
+//
+//            float yposOffset = ypos;
+//            String mapName = itMaps.next();
+//            StageMap map = textures.get(mapName);
+//            Iterator<String> it = map.keysOrderedIterator();
+//            int y = 0;
+//
+//            w = displayWidth*2.0f/3.0f;
+//            h = displayWidth/4.0f;
+//            float left = displayWidth-w;
+//            float right = left+w;
+//            float top = displayHeight/2.0f;
+//            float bottom = displayHeight;
+//            titleY=w < 150 ? ((x%2)*16) : 0;
+//            GL.bindTexture(GL_TEXTURE4, GL_TEXTURE_CUBE_MAP, RenderersGL.skyRenderer.fbSkybox.getTexture(0));//SKYBOX CUBEMAP
+//            Tess.instance.setColorF(-1, 1);
+//            Tess.instance.add(left, bottom, 0, 0, 0);
+//            Tess.instance.add(right, bottom, 0, 1, 0);
+//            Tess.instance.add(right, top, 0, 1, 1);
+//            Tess.instance.add(left, top, 0, 0, 1);
+//            Tess.instance.draw(GL11.GL_QUADS);
+//        }
         if (Mouse.isButtonDown(0)) {
             if (!triggered) {
                 triggered = true;
@@ -275,6 +328,10 @@ public class GLDebugTextures {
     }
 
     public void bindShader() {
+        if ((this.flags & 0x10) != 0) {
+            Shaders.cubemap2dProjection.enable();
+            return;
+        }
         if ((this.flags & 0x8) != 0) {
             Shaders.textured.enable();
             return;
@@ -308,11 +365,14 @@ public class GLDebugTextures {
     public static void drawFullScreen(GLDebugTextures t) {
         try {
             t.bindShader();
-            GL.bindTexture(GL13.GL_TEXTURE0, GL_TEXTURE_2D, t.get());
+            GL.bindTexture(GL13.GL_TEXTURE0, t.getTarget(), t.get());
             Engine.drawFullscreenQuad();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    public int getTarget() {
+        return this.target;
     }
     public static boolean isShow() {
         return show || selTex != null;

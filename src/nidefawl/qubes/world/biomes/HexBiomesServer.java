@@ -95,7 +95,7 @@ public class HexBiomesServer extends HexBiomes {
         //This is really only for testing
         Random rand = new Random(gridX * 89153 ^ gridY * 33199 + 1);
         
-        int id = rand.nextInt(Biome.maxBiome);
+        int id = rand.nextInt(5);
         int subtype = rand.nextInt(16);
         System.out.println("biome at "+gridX+","+gridY+": "+id);
         b.biome = Biome.biomes[id];
@@ -126,7 +126,7 @@ public class HexBiomesServer extends HexBiomes {
      */
     private PacketSWorldBiomes makePacket(ArrayList<HexBiome> biomes) {
         int len = biomes.size();
-        PacketSWorldBiomes biomesPacket = new PacketSWorldBiomes();
+        PacketSWorldBiomes biomesPacket = new PacketSWorldBiomes(world.getId());
         biomesPacket.numBiomes = len;
         //maybe use relative coordinates and pack them into bytes (so we can write(byteArray)) 
         biomesPacket.coordsX = new int[len];

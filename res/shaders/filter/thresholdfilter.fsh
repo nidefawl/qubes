@@ -38,9 +38,9 @@ void main(void)
     // srgbToLin(tolum);
     float sum = max(dot(tolum, col), 1e-10);
     // float sum = colorsample.r + colorsample.g + colorsample.b;
-    sum -= 1.92f;
     sum += clamp(pow(blockLightLvl,4), 0.0, 1.0);
-    sum = clamp(exp(sum*4), 0.0, 1.0);
+    sum -= 0.02;
+    sum = clamp((sum*4.), 0.0, 1.0);
     // out_Color = vec4( vec3(skyLightLvl), 1.0 );
 
     out_Color = vec4( col.xyz*sum, 1.0 );

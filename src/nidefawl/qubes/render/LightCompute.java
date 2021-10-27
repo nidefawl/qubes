@@ -3,6 +3,8 @@ package nidefawl.qubes.render;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
+import nidefawl.qubes.Game;
+import nidefawl.qubes.entity.Player;
 import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.vec.Frustum;
@@ -18,9 +20,27 @@ public abstract class LightCompute extends AbstractRenderer {
     public abstract void updateLights(WorldClient world, float f);
 
     protected final void updateAndStoreLights(WorldClient world, float fTime, FloatBuffer lightBuf) {
-        ArrayList<DynamicLight> lights = world.lights;
+        Player p = Game.instance.getPlayer();
         int a = 0;
         int nLights = 0;
+        if (p != null) {
+            DynamicLight light = p.light;
+            
+            light.updatePreRender(world, fTime);
+//            int n = Engine.camFrustum.sphereInFrustum(light.renderPos, light.radius*1.02f);
+//            if (n >= Frustum.FRUSTUM_INSIDE) {
+                nLights++;
+                a++;
+                light.store(lightBuf);
+                while (lightBuf.position()%16!=0) {
+                    lightBuf.put(0);
+                }   
+//            } else {
+////                System.out.println("outside!");
+//            }
+        }
+        
+        ArrayList<DynamicLight> lights = world.lights;
         for (; a < lights.size() && a < Engine.MAX_LIGHTS; a++) {
             
             DynamicLight light = lights.get(a);

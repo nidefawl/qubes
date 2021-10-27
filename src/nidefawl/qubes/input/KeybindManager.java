@@ -309,6 +309,16 @@ public class KeybindManager {
                 game.setVSync(!game.getVSync());
             }
         });
+        addKeyBinding(new Keybinding("time_increase", GLFW.GLFW_KEY_PAGE_UP) {
+            public void onRepeat() {
+                Game.instance.processChatInput("/time increase 1000");
+            }
+        });
+        addKeyBinding(new Keybinding("time_decrease", GLFW.GLFW_KEY_PAGE_DOWN) {
+            public void onRepeat() {
+                Game.instance.processChatInput("/time decrease 1000");
+            }
+        });
         addKeyBinding(new Keybinding("wireframe", GLFW.GLFW_KEY_F9) {
             public void onDown() {
                 Engine.toggleWireFrame();
@@ -351,6 +361,11 @@ public class KeybindManager {
         addKeyBinding(new Keybinding("show_colorpicker", GLFW.GLFW_KEY_KP_8) {
             public void onDown() {
                 GuiWindowManager.openWindow(GuiColor.class);
+            }
+        });
+        addKeyBinding(new Keybinding("show_colorpalette_leaves", GLFW.GLFW_KEY_KP_7) {
+            public void onDown() {
+                GuiWindowManager.openWindow(GuiColorPaletteLeaves.class);
             }
         });
         addKeyBinding(new Keybinding("spawn_random_lights", -1) {

@@ -43,12 +43,12 @@ public class TerrainGeneratorMain implements ITerrainGen {
         this.biomes = new HexBiomesServer(world, seed, settings);
         this.gens = new SubTerrainGen[] {
                 new SubTerrainGenMeadow(this),
-                new SubTerrainGenDesert(this),
-                new SubTerrainGenSnowHills(this),
+//                new SubTerrainGenDesert(this),
+//                new SubTerrainGenSnowHills(this),
                 new SubTerrainGen4(this),
-                new SubTerrainGen5(this),
-                new SubTerrainGen6(this),
-                new SubTerrainGen7(this),
+//                new SubTerrainGen5(this),
+//                new SubTerrainGen6(this),
+//                new SubTerrainGen7(this),
         };
 //        this.map.put(Biome.MEADOW_GREEN, new SubTerrainGen1(this));
 //        this.map.put(Biome.MEADOW_BLUE, new SubTerrainGen1(this));
@@ -95,31 +95,32 @@ public class TerrainGeneratorMain implements ITerrainGen {
         return c;
     }
     private SubTerrainGen getTerrainGenInstance(HexBiome b) {
-        if (b.biome == Biome.DESERT) {
-            if (b.subtype%2 != 0) {
-                return this.gens[3];
-            }
-            return this.gens[1];
-        }
-        if (b.biome == Biome.DESERT_RED) {
-            if (b.subtype%2 != 0) {
-                return this.gens[3];
-            }
-            return this.gens[1];
-        }
-        if (b.biome == Biome.ICE) {
-            if (b.subtype%2 != 0) {
-                return this.gens[4];
-            }
-            return this.gens[2];
-        }
-        if (b.subtype%3 == 1) {
-            return this.gens[3];
-        }
-        if (b.subtype%3 == 2) {
-            return this.gens[6];
-        }
-        return this.gens[0];
+//        if (b.biome == Biome.DESERT) {
+//            if (b.subtype%2 != 0) {
+//                return this.gens[3];
+//            }
+//            return this.gens[1];
+//        }
+//        if (b.biome == Biome.DESERT_RED) {
+//            if (b.subtype%2 != 0) {
+//                return this.gens[3];
+//            }
+//            return this.gens[1];
+//        }
+//        if (b.biome == Biome.ICE) {
+//            if (b.subtype%2 != 0) {
+//                return this.gens[4];
+//            }
+//            return this.gens[2];
+//        }
+//        if (b.subtype%3 == 1) {
+//            return this.gens[3];
+//        }
+//        if (b.subtype%3 == 2) {
+//            return this.gens[6];
+//        }
+//        return this.gens[0];
+        return this.gens[b.biome.id%this.gens.length];
     }
 
     private void generateTerrain(Chunk c, short[] blocks, byte[] waterMask, HexBiome[] hexs, ArrayList<HexBiome> h) {

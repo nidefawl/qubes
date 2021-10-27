@@ -211,7 +211,7 @@ public abstract class TextureArray {
                 for (String s : b.getNormalMaps()) {
                     AssetTexture tex = texNameToAssetMap.get(s);
                     if (tex == null) {
-                        String path = "textures/blocks_128/"+s+".png";
+                        String path = "textures/blocks_512/"+s+".png";
                         tex = mgr.loadPNGAsset(path, false);
                         this.numLoaded++;
                         if (tex.getWidth() != tex.getHeight()) {

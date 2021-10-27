@@ -78,4 +78,7 @@ public class GameRegistry {
         terrainGenerators.put(name, implementingClass);
      
     }
+    public static Map<String, Class<? extends ITerrainGen>> getRegisteredTerrainGenerators() {
+        return terrainGenerators;
+    }
 }

@@ -121,7 +121,7 @@ public class TerrainGeneratorTest2 implements ITerrainGen {
         double[] dNoise = new double[wh*Chunk.SIZE*Chunk.SIZE];
         double[] dNoise2 = new double[wh*Chunk.SIZE*Chunk.SIZE];
 
-        double scaleMixXZ = 0.80D;
+        double scaleMixXZ = 0.10D;
         double scaleMixY = scaleMixXZ*1.7D;
         double scaleT1XZ = 0.8D;
         double scaleT1Y = scaleT1XZ*4.1D;
@@ -134,12 +134,15 @@ public class TerrainGeneratorTest2 implements ITerrainGen {
         this.noise5.setScale(scaleT5XZ, scaleT5Y, scaleT5XZ);
         this.noise3.setScale(scaleT2XZ, scaleT2Y, scaleT2XZ);
         NoiseData data = new NoiseData();
-        double dRScale = 1.43D;
+        double dRScale = 0.43D;
         this.r2D = new RiverNoise2D(214, dRScale, 8);
         data.r2Dn = r2D.generate(cX, cZ);
-         dRScale = 4.23D;
+         dRScale = 1.23D;
         this.r2D2 = new RiverNoise2D(144, dRScale, 8);
-        this.noise2D = new TerrainNoise2D(12412, 0.77, 0.77, 1);
+        double scaleMain = 1.6D;
+        this.noise2D = new TerrainNoise2D(12412, scaleMain, scaleMain, 2);
+        double scaleMix2XZ = scaleMain*1.75;
+        this.noiseM2 = new TerrainNoise2D(4231, scaleMix2XZ, scaleMix2XZ, 2);
         data.r2Dn2 = r2D2.generate(cX, cZ);
         data.dNoise2_ = noise2.gen(cX, cZ);
         data.dnoise5_ = noise5.gen(cX, cZ);
@@ -155,9 +158,9 @@ public class TerrainGeneratorTest2 implements ITerrainGen {
         double yBrr2 = 115;
         double brrrIntens = 0.8;
         double brrrIntens2 = 0.2;
-        double riverY = 87;
+        double riverY = 90;
         double riverY2 = riverY +1;
-        double riverStr = 0.0;
+        double riverStr = 25.0;
         double cavePos = 110;
         double caveStrength = 44;
         
@@ -170,14 +173,14 @@ public class TerrainGeneratorTest2 implements ITerrainGen {
                 double dh2 = noiseM2.get(cX|x, cZ|z);
                 double xd = 0.9D;
                 dh2 = 1-clamp10((1-clamp10((dh2-(1-xd))/xd))*0.7);
-                double dBlurred = clamp10(data.r2Dn.getBlur(x, z, 8)*4)*0.4;
+                double dBlurred = (data.r2Dn.getBlur(x, z, 8)*4)*0.01;
                 double dBlurredA = (clamp10(Math.pow(1+data.r2Dn2.getBlur(x, z, 4), 1.2)-1))*4;
-                double dBlurred2 = clamp10(data.r2Dn.getBlur(x, z, 2))*0.25;
+                double dBlurred2 = (data.r2Dn.getBlur(x, z, 2))*0.015;
                 double df = wh;
                 int idx_xz = (z * 16 + x) * (256);
-                double flattenScale = 0;
-                double coreScale = 0.7;
-                dStr = 12;
+                double flattenScale = 0; // 0 = no flattening, 1 = full flattening
+                double coreScale = 0.6;
+                dStr = 33; //controls overall tallness, lower value = more mountains, higher value = less mountains
                 
                 for (int y = 0; y < wh; y++) {
                     double dYH = clamp10((y + 0 + heightOffset * flattenScale) / (double) df);
@@ -205,8 +208,8 @@ public class TerrainGeneratorTest2 implements ITerrainGen {
                     double dRiverH = func2(riverY - dBaseHeight * 1.6D, y, 24);
                     double dRiverH2 = func2(riverY2, y, 23);
                     double xr = 0;
-                    xr += dRiverH * dBlurred2 * dStr * coreScale*1.2*riverStr;
-                    xr += dRiverH2 * dBlurred * dStr * coreScale*1.7*riverStr;
+                    xr += dRiverH * dBlurred2 * dStr * coreScale*0.2*riverStr;
+                    xr += dRiverH2 * dBlurred * dStr * coreScale*0.7*riverStr;
                     double dt = func2(cavePos + dN1, y, 4.4D) * 0.25;
                     dt *= clamp10((y-95.0D)/20.0D);
                     double cavestr = dt * dStr * dBlurredA * (0.5D + dN1 * 0.7D + 0.2 * dN2);

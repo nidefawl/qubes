@@ -9,11 +9,13 @@ import nidefawl.qubes.input.KeybindManager;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
 import nidefawl.qubes.item.BaseStack;
+import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.network.client.ClientHandler;
 import nidefawl.qubes.network.packet.PacketCMovement;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.Side;
 import nidefawl.qubes.util.SideOnly;
+import nidefawl.qubes.world.WorldClient;
 
 @SideOnly(value=Side.CLIENT)
 public class PlayerSelf extends Player {
@@ -195,6 +197,12 @@ public class PlayerSelf extends Player {
             flags |= 2;
         }
         this.clientHandler.sendPacket(new PacketCMovement(this.pos, this.yaw, this.pitch, flags));
+        DynamicLight e = this.light;
+        this.lightcolor.set(1, 1, 0.5f);
+        e.tickUpdate((WorldClient) this.world);
+//        e.pos.set(this.pos);
+//        e.pos.add(0, 4, 0);
+        e.intensity = 0.5f;
         
     }
     public boolean isDead() {

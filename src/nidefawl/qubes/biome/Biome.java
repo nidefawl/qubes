@@ -37,30 +37,36 @@ public class Biome {
             .setColor(BiomeColor.FOLIAGE, 0x93380f)
             .setColor(BiomeColor.FOLIAGE2, 0x660000)
             .setDebugColor(0x3232dd);
-    public final static Biome DESERT = new BiomeDesert(3)
-            .setColor(BiomeColor.GRASS, 0x486710)
-            .setColor(BiomeColor.LEAVES, 0x486710)
-            .setColor(BiomeColor.FOLIAGE, 0x486710)
-            .setColor(BiomeColor.FOLIAGE2, 0xd77007)
-            .setDebugColor(0xdd3232);
-    public final static Biome DESERT_RED = new BiomeDesertRed(4)
-            .setColor(BiomeColor.GRASS, 0x674b10)
-            .setColor(BiomeColor.LEAVES, 0x290600)
-            .setColor(BiomeColor.FOLIAGE, 0x674b10)
-            .setColor(BiomeColor.FOLIAGE2, 0xd77007)
-            .setDebugColor(0xdd32dd);
-    public final static Biome ICE = new BiomeIce(5)
-            .setColor(BiomeColor.GRASS, 0xd3702)
-            .setColor(BiomeColor.LEAVES, 0x112f02)
-            .setColor(BiomeColor.FOLIAGE, 0xd4001)
-            .setColor(BiomeColor.FOLIAGE2, 0x206e14)
-            .setDebugColor(0xaaaaaa);
-    public final static Biome MEADOW_GREEN2 = new BiomeMeadow(6)
+    public final static Biome MEADOW_GREEN2 = new BiomeMeadow(3)
             .setColor(BiomeColor.GRASS, 0xd3702)
             .setColor(BiomeColor.LEAVES, 0x112f02)
             .setColor(BiomeColor.FOLIAGE, 0xd4001)
             .setColor(BiomeColor.FOLIAGE2, 0x206e14)
             .setDebugColor(0x32dd32);
+    public final static Biome MEADOW_YE = new BiomeMeadow(4)
+            .setColor(BiomeColor.GRASS, 0x373102)
+            .setColor(BiomeColor.LEAVES, 0x112f02)
+            .setColor(BiomeColor.FOLIAGE, 0xd4001)
+            .setColor(BiomeColor.FOLIAGE2, 0x206e14)
+            .setDebugColor(0x32dd32);
+    public final static Biome DESERT = new BiomeDesert(5)
+            .setColor(BiomeColor.GRASS, 0x486710)
+            .setColor(BiomeColor.LEAVES, 0x486710)
+            .setColor(BiomeColor.FOLIAGE, 0x486710)
+            .setColor(BiomeColor.FOLIAGE2, 0xd77007)
+            .setDebugColor(0xdd3232);
+    public final static Biome DESERT_RED = new BiomeDesertRed(6)
+            .setColor(BiomeColor.GRASS, 0x674b10)
+            .setColor(BiomeColor.LEAVES, 0x290600)
+            .setColor(BiomeColor.FOLIAGE, 0x674b10)
+            .setColor(BiomeColor.FOLIAGE2, 0xd77007)
+            .setDebugColor(0xdd32dd);
+    public final static Biome ICE = new BiomeIce(7)
+            .setColor(BiomeColor.GRASS, 0xd3702)
+            .setColor(BiomeColor.LEAVES, 0x112f02)
+            .setColor(BiomeColor.FOLIAGE, 0xd4001)
+            .setColor(BiomeColor.FOLIAGE2, 0x206e14)
+            .setDebugColor(0xaaaaaa);
     public int color;
     public int colorFoliage;
     public int colorFoliage2;

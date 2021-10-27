@@ -3,8 +3,10 @@ package nidefawl.qubes.server;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import nidefawl.qubes.GameRegistry;
 import nidefawl.qubes.chat.ChannelManager;
 import nidefawl.qubes.config.InvalidConfigException;
 import nidefawl.qubes.config.ServerConfig;
@@ -19,8 +21,8 @@ import nidefawl.qubes.util.Side;
 import nidefawl.qubes.util.SideOnly;
 import nidefawl.qubes.world.WorldServer;
 import nidefawl.qubes.world.WorldSettings;
-import nidefawl.qubes.worldgen.terrain.TerrainGenBlockTest;
-import nidefawl.qubes.worldgen.terrain.TerrainGeneratorIsland;
+import nidefawl.qubes.worldgen.terrain.*;
+import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorLight;
 import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorMain;
 import nidefawl.qubes.worldgen.terrain.main.TerrainGeneratorTest2;
 
@@ -98,9 +100,9 @@ public class GameServer implements Runnable, IErrorHandler {
             WorldServer world = loadWorld(worldDirectory);
             worldsLoaded.add(world);
         }
-        if (worldsLoaded.isEmpty()) {
+//        if (worldsLoaded.isEmpty()) {
             tryCreateDefaultWorlds(worldsFolder, worldsLoaded);
-        }
+//        }
         this.worlds = worldsLoaded.toArray(new WorldServer[worldsLoaded.size()]);
         for (int i = 0; i < this.worlds.length; i++) {
             this.worlds[i].onLoad();
@@ -171,6 +173,36 @@ public class GameServer implements Runnable, IErrorHandler {
             WorldServer world = loadWorld(f1);
             if (world != null) {
                 worldsLoaded.add(world);
+            }
+        }
+        f1 = new File(worldsFolder, "world_experimental_generator");
+        if (!f1.exists() || !new File(f1, "world.yml").exists()) {
+            f1.mkdirs();
+            WorldSettings settings = new WorldSettings(f1);
+            settings.seed = r.nextLong();
+            settings.generatorName = TerrainGeneratorOther.GENERATOR_NAME;
+            settings.saveFile();
+            WorldServer world = loadWorld(f1);
+            if (world != null) {
+                worldsLoaded.add(world);
+            }
+        }
+
+        Map<String, Class<? extends ITerrainGen>> regGens = GameRegistry.getRegisteredTerrainGenerators();
+        for (Entry<String, Class<? extends ITerrainGen>> entry : regGens.entrySet()) {
+
+            String pathWorldRegGen = "worldgen_"+entry.getKey().toLowerCase();
+            f1 = new File(worldsFolder, pathWorldRegGen);
+            if (!f1.exists() || !new File(f1, "world.yml").exists()) {
+                f1.mkdirs();
+                WorldSettings settings = new WorldSettings(f1);
+                settings.seed = r.nextLong();
+                settings.generatorName = entry.getKey();
+                settings.saveFile();
+                WorldServer world = loadWorld(f1);
+                if (world != null) {
+                    worldsLoaded.add(world);
+                }
             }
         }
     }

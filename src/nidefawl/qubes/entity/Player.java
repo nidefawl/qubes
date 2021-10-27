@@ -7,7 +7,9 @@ import nidefawl.qubes.inventory.PlayerInventoryCrafting;
 import nidefawl.qubes.inventory.slots.Slots;
 import nidefawl.qubes.inventory.slots.SlotsCrafting;
 import nidefawl.qubes.inventory.slots.SlotsInventory;
+import nidefawl.qubes.lighting.DynamicLight;
 import nidefawl.qubes.models.EntityModel;
+import nidefawl.qubes.vec.Vector3f;
 
 public abstract class Player extends Entity {
 
@@ -21,6 +23,8 @@ public abstract class Player extends Entity {
     public float armOffsetYawPrev;
     public float armOffsetPitch;
     public float armOffsetYaw;
+    Vector3f lightcolor = new Vector3f(1, 1, 1);
+    public DynamicLight light = new DynamicLight(Vector3f.pool(0, 0, 0), lightcolor, 1.0f);
     
     public Player(boolean isServerEntity) {
         super(isServerEntity);

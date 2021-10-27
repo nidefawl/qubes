@@ -152,7 +152,7 @@ public class SubTerrainGenMeadow extends SubTerrainGen {
 //        double caveStrength = 2000D;
 
         double randomHeight = 0.0D;
-        double tallness = 24.8D;
+        double tallness = 4.8D;
         double tallnessBase = 0.25D;
         double heightOffset = 17.0D;
         double dStr = 44.0D;

@@ -303,9 +303,9 @@ float getShadow2() {
         return clamp(s, 0, 1);
 }
 // Mie scaterring approximated with Henyey-Greenstein phase function.
-#define G_SCATTERING 0.87f
-#define VOL_STRENGTH 0.05f
-#define NB_STEPS 5
+#define G_SCATTERING 0.37f
+#define VOL_STRENGTH 0.02f
+#define NB_STEPS 25
 // #define PI 10
 const float pi = 3.1415927;
 float ComputeScattering(float lightDotView)
@@ -687,7 +687,7 @@ void main() {
         finalLight += lum* (mix(1.0, occlusion, 0.19)) * blockLight*isLight*0.6;
         finalLight+=isIllum*4.0;
         finalLight += vec3(1.0, 0.9, 0.7) * pow(blockLightLvl/8.0,2.0)*((1.0-isLight*0.8)*blockLightConst);
-        float mixSSAO = 0.1;
+        float mixSSAO = 0.03;
         finalLight *= max(mixSSAO+ssao.r*(1.0-mixSSAO), isWater+isBackface*0.5);
         finalLight+=prop.light.rgb*(occlusion);
         // finalLight*=2;
@@ -745,15 +745,15 @@ void main() {
     // float fogAmount = clamp(1.0 - exp( -fogDepth*0.00001*hM ), 0.0, 1.0);
     // prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(1.0-fIsSky*0.97) );
 
-    fogDepth = min(fogDepth, 1066.0);
-    fogDepth = max((fogDepth-164.0), 0.0);
+    fogDepth = min(fogDepth, 166.0);
+    fogDepth = max((fogDepth-32.0), 0.0);
     float fogeye = clamp(1.0 - clamp(dot(-prop.viewVector, vec3(0,1,0)), 0.0, 1.0) / 0.8, 0, 1)*0.4;
     fogeye += fogeye*clamp(1.0 - clamp((
         dot(-prop.viewVector, vec3(0,-1,0))
         *dot(-prop.viewVector, vec3(0,1,0)))*3.2, 0.0, 1.0) -0.8, 0, 1)*1.4;
     float hM = clamp(prop.worldposition.y/100.0, 0.05, 0.9)+clamp((prop.worldposition.y-180)/80.0, 0.0, 1.0)*3;
-    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.00005*(fIsSky*2.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
-    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(0.1) );
+    float fogAmount = clamp(1.0 - exp( -(fogDepth+fIsSky)*0.00001*(fIsSky*2.9*fogeye+hM*(1-fIsSky)) ), 0.0, 1.0);
+    prop.albedo =  mix( prop.albedo, fogColor, fogAmount*(0.4) );
 #endif
     // prop.albedo = vec3(fIsSky);
 

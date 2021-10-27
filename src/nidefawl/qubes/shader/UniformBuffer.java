@@ -300,6 +300,7 @@ public class UniformBuffer implements IBufferDynamicOffset {
         for (int i = 0; i < buffers.length; i++) {
             final int blockIndex = glGetUniformBlockIndex(shader.shader, buffers[i].name);
             if (blockIndex != -1) {
+//                System.out.println("Shader "+shader.name+" uses buffer "+buffers[i].name);
                 buffers[i].addShader(shader);
                 glUniformBlockBinding(shader.shader, blockIndex, buffers[i].bindingPoint);
                 if (Game.GL_ERROR_CHECKS)

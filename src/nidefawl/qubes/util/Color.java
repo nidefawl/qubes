@@ -3,6 +3,50 @@ package nidefawl.qubes.util;
 import nidefawl.qubes.vec.Vector3f;
 
 public class Color {
+    public static int HSLtoRGB(double h,
+                                    double s,
+                                    double l) {
+        // Adapted from http://stackoverflow.com/a/9493060
+        double r;
+        double g;
+        double b;
+
+        if (s == 0) {
+            r = l;
+            g = l;
+            b = l;
+        } else {
+            double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            double p = 2 * l - q;
+            r = hue2Rgb(p, q, h + 1.0 / 3);
+            g = hue2Rgb(p, q, h);
+            b = hue2Rgb(p, q, h - 1.0 / 3);
+        }
+        return 0xff000000 | ((int)GameMath.clamp((float)r*255.0f, 0, 255) << 16) | ((int)GameMath.clamp((float)g*255.0f, 0, 255) << 8) | ((int)GameMath.clamp((float)b*255.0f, 0, 255) << 0);
+
+
+    }
+
+    private static double hue2Rgb(double p,
+                                  double q,
+                                  double t) {
+        if (t < 0)
+            t += 1;
+        if (t > 1)
+            t -= 1;
+        if (t < 1.0 / 6) {
+            return p + (q - p) * 6 * t;
+        }
+        if (t < 1.0 / 2) {
+            return q;
+        }
+        if (t < 2.0 / 3) {
+            return p + (q - p) * (2.0 / 3 - t) * 6;
+        }
+        return p;
+    }
+
+
     public static int HSBtoRGB(float hue, float saturation, float brightness) {
         int r = 0, g = 0, b = 0;
         if (saturation == 0) {
@@ -47,6 +91,28 @@ public class Color {
             }
         }
         return 0xff000000 | (r << 16) | (g << 8) | (b << 0);
+    }
+    public static float[] HSVtoHSL(float[] hsv_vals) {
+        // both hsv and hsl values are in [0, 1]
+        float h = hsv_vals[0];
+        float s = hsv_vals[1];
+        float v = hsv_vals[2];
+        float l = (2 - s) * v / 2;
+
+        if (l != 0) {
+            if (l == 1) {
+                s = 0;
+            } else if (l < 0.5) {
+                s = s * v / (l * 2);
+            } else {
+                s = s * v / (2 - l * 2);
+            }
+        }
+        return new float[]{h,s,l};
+    }
+    public static float[] RGBtoHSL(int r, int g, int b, float[] hsbvals) {
+        float[] HSB = RGBtoHSB(r, g, b, hsbvals);
+        return HSVtoHSL(HSB);
     }
     public static float[] RGBtoHSB(int r, int g, int b, float[] hsbvals) {
         float hue, saturation, brightness;

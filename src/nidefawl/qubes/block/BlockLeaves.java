@@ -15,22 +15,31 @@ import nidefawl.qubes.world.IBlockWorld;
  */
 public class BlockLeaves extends Block {
     
-    final int leavesColor;
+    final boolean hasOverrideColor;
+    int leavesColor;
     /**
      * @param id
      */
     public BlockLeaves(String id) {
-        this(id, -1);
+        this(id, false, -1);
         setCategory(BlockCategory.LEAVES);
     }
 
-    public BlockLeaves(String id, int rgb) {
+    public BlockLeaves(String id, boolean hasOverrideColor, int rgb) {
         super(id, true);
+        this.hasOverrideColor = hasOverrideColor;
+        this.leavesColor = rgb;
+    }
+
+    public void setOverrideColor(int rgb) {
         this.leavesColor = rgb;
     }
     
     @Override
     public int getFaceColor(IBlockWorld w, int x, int y, int z, int faceDir, int pass) {
+      if (hasOverrideColor) {
+          return leavesColor;
+      }
       return w.getBiomeFaceColor(x, y, z, faceDir, pass, BiomeColor.LEAVES);
     }
 

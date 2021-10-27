@@ -192,6 +192,10 @@ public class SkyRendererGL extends SkyRenderer {
         if (GPUProfiler.PROFILING_ENABLED) {
             GPUProfiler.end();
         }
+
+        if (GLDebugTextures.isShow()) {
+            GLDebugTextures.readTexture(true, "Skybox", "Output", this.fbSkybox.getTexture(0), 0x10, GL_TEXTURE_CUBE_MAP);
+        }
     }
 
     private void renderSkyBox(float f) {

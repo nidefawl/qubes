@@ -38,7 +38,7 @@ public class GuiColor extends GuiWindow {
                             hex.biome.colorGrass = rgb2;
                             hex.biome.colorFoliage = rgb2;
                             hex.biome.colorLeaves = rgb2;
-                            float[] hsb = Color.RGBtoHSB((rgb2>>8)&0xFF, (rgb2>>8)&0xFF, rgb2&0xFF, null);
+                            float[] hsb = Color.RGBtoHSB((rgb2>>16)&0xFF, (rgb2>>8)&0xFF, rgb2&0xFF, null);
                             int rgb3 = Color.HSBtoRGB(hsb[0], hsb[1]*0.7f, hsb[2]*0.9f);
                             hex.biome.colorFoliage2 = rgb3;
                             

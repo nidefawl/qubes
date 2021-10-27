@@ -1,5 +1,6 @@
 package nidefawl.qubes.server.commands;
 
+import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.StringUtil;
 import nidefawl.qubes.world.IWorldSettings;
 import nidefawl.qubes.world.WorldServer;
@@ -26,6 +27,14 @@ public class CommandSetTime extends Command {
             } else {
                 showTime(source);
             }
+        } else if (args.length > 0 && args[0].equals("increase")) {
+            long l = args.length > 1 ? StringUtil.parseLong(args[1], -1, 10) : 100;
+            settings.setTime(Math.max(0L, settings.getTime() + l));
+            w.resyncTime();
+        } else if (args.length > 0 && args[0].equals("decrease")) {
+            long l = args.length > 1 ? StringUtil.parseLong(args[1], -1, 10) : 100;
+            settings.setTime(Math.max(0L, settings.getTime() - l));
+            w.resyncTime();
         } else if (args.length > 0 && args[0].equals("len")) {
             if (args.length > 1) {
                 long l = StringUtil.parseLong(args[1], -1, 10);

@@ -47,8 +47,11 @@ public class BlockGrass extends Block {
     }
     @Override
     public int getNormalMap(int texture) {
+        //grass side normal map
         if (texture == TextureArrays.blockTextureArray.getTextureIdx(this.id, 1))
             return 1;
+
+        //grass bottom (dirt normal map)
         if (texture == TextureArrays.blockTextureArray.getTextureIdx(Block.dirt.id, 0)) {
             return Block.dirt.getNormalMap(texture);
         }
