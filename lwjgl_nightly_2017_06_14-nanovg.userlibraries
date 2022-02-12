@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<eclipse-userlibraries version="2">
+    <library name="lwjgl-nightly-2017-06-14-custom" systemlibrary="false">
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-vulkan-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-vulkan.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-vulkan-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opencl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opencl.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opencl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sources.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-natives-linux.jar"/>
+    </library>
+    <library name="lwjgl-nightly-2017-06-14-nanovg" systemlibrary="false">
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-vulkan-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-vulkan.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-vulkan-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opencl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opencl.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opencl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sources.jar"/>
+        <archive javadoc="jar:platform:/resource/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-nanovg-javadoc.jar!/" path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-nanovg.jar" source="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-nanovg-sources.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-openal-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-sse-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-natives-windows.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-stb-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-glfw-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-jemalloc-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-opengl-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-nanovg-natives-linux.jar"/>
+        <archive path="/Game/lib/lwjgl-nightly-2017-06-14-custom/lwjgl-nanovg-natives-windows.jar"/>
+    </library>
+</eclipse-userlibraries>
