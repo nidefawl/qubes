@@ -114,7 +114,7 @@ public class ShadowRendererVK extends ShadowRenderer {
 
     @Override
     public void init() {
-        this.frameBufferShadow = new FrameBuffer(Engine.vkContext);
+        this.frameBufferShadow = new FrameBuffer(Engine.vkContext).tag("shadow");
         this.frameBufferShadow.fromRenderpass(VkRenderPasses.passShadow, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 
         try ( MemoryStack stack = stackPush() ) {

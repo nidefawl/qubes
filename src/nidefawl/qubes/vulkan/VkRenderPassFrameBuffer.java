@@ -21,6 +21,8 @@ public class VkRenderPassFrameBuffer extends VkRenderPass {
         }
 //        n.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         if (!clearImage) {
+            n.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+            n.initialLayout(n.finalLayout());
             n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
         }
     }

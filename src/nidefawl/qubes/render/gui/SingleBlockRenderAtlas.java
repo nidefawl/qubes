@@ -138,7 +138,7 @@ public class SingleBlockRenderAtlas {
 
 
     public void setupTextureAtlas(TextureAtlas atlas) {
-        atlas.renderBuffer = new RenderFramebufferCached(false, true, false);
+        atlas.renderBuffer = new RenderFramebufferCached(false, true, false).tag("BlockSelect_UI_Cached");
         atlas.renderBuffer.init();
         atlas.renderBuffer.setSize(texSize, texSize);
         atlas.renderBuffer.clear();

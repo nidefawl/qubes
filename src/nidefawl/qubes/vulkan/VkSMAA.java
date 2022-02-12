@@ -180,21 +180,22 @@ public class VkSMAA {
                 temporalResolve.pipeline = temporalResolve.buildPipeline(ctxt);
             }
         }
-        this.fbedgeDetect = new FrameBuffer(ctxt);
+        this.fbedgeDetect = new FrameBuffer(ctxt).tag("SMAA_EdgeDetect");
         this.fbedgeDetect.fromRenderpass(VkRenderPasses.passAAEdge, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.fbedgeDetect.build(VkRenderPasses.passAAEdge, w, h);
-        this.fbBlendWeight = new FrameBuffer(ctxt);
+        this.fbBlendWeight = new FrameBuffer(ctxt).tag("SMAA_BlendWeight");
         this.fbBlendWeight.fromRenderpass(VkRenderPasses.passAAWeight, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.fbBlendWeight.copyAtt(this.fbedgeDetect, 1);
         this.fbBlendWeight.build(VkRenderPasses.passAAWeight, w, h);
-        this.fbOutput0 = new FrameBuffer(ctxt);
+        this.fbOutput0 = new FrameBuffer(ctxt).tag("SMAA_Output_A");
         this.fbOutput0.fromRenderpass(VkRenderPasses.passFramebufferNoDepth, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
         this.fbOutput0.build(VkRenderPasses.passFramebufferNoDepth, w, h);
         if (this.useReprojection) {
-            this.fbOutput1 = new FrameBuffer(ctxt);
+            this.fbOutput0.tag("SMAA_Temporal_A");
+            this.fbOutput1 = new FrameBuffer(ctxt).tag("SMAA_Temporal_B");
             this.fbOutput1.fromRenderpass(VkRenderPasses.passFramebufferNoDepth, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
             this.fbOutput1.build(VkRenderPasses.passFramebufferNoDepth, w, h);
-            this.fbResolved = new FrameBuffer(ctxt);
+            this.fbResolved = new FrameBuffer(ctxt).tag("SMAA_Temporal_Output");
             this.fbResolved.fromRenderpass(VkRenderPasses.passFramebufferNoDepth, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
             this.fbResolved.build(VkRenderPasses.passFramebufferNoDepth, w, h);
         }

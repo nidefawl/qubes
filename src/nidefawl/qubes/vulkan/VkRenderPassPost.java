@@ -14,8 +14,9 @@ public class VkRenderPassPost extends VkRenderPass {
 
     public VkRenderPassPost(boolean clear) {
         VkAttachmentDescription n = addColorAttachment(0, VK_FORMAT_R16G16B16A16_SFLOAT);
-            n.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        n.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         if (!clear) {
+            n.initialLayout(n.finalLayout());
             n.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
         }
     }

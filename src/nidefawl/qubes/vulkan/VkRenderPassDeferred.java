@@ -25,24 +25,34 @@ public class VkRenderPassDeferred extends VkRenderPass {
         this.useVelocity = Engine.getRenderVelocityBuffer();
         int idx = 0;
         VkAttachmentDescription col = addColorAttachment(idx, VK_FORMAT_R16G16B16A16_SFLOAT);
-        col.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         if (!this.isClearPass) {
+            col.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+            col.initialLayout(col.finalLayout());
             col.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+        } else {
+            col.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
         idx++;
         if (useMaterial) {
             VkAttachmentDescription mat = addColorAttachment(idx, VK_FORMAT_R16G16B16A16_SFLOAT);
-            mat.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            
             if (!this.isClearPass) {
+                mat.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+                mat.initialLayout(mat.finalLayout());
                 mat.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            } else {
+                mat.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);    
             }
             idx++;
         }
         if (useVelocity) {
             VkAttachmentDescription vel = addColorAttachment(idx, VK_FORMAT_R16G16B16A16_SFLOAT);
-            vel.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             if (!this.isClearPass) {
+                vel.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+                vel.initialLayout(vel.finalLayout());
                 vel.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
+            } else {
+                vel.finalLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
             idx++;
         }

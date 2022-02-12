@@ -8,16 +8,20 @@ import org.lwjgl.vulkan.*;
 
 public class VkRenderPassTonemap extends VkRenderPass {
 
-    public VkRenderPassTonemap(boolean isPost) {
+    public VkRenderPassTonemap(boolean isOverlay) {
         VkAttachmentDescription c = addColorAttachment(0, VK_FORMAT_R8G8B8A8_UNORM);
         VkAttachmentDescription d = addDepthAttachment(1, VK_FORMAT_D32_SFLOAT);
-        d.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-        if (isPost) {
+        if (isOverlay) {
+            c.initialLayout(c.finalLayout());
+            d.initialLayout(d.finalLayout());
+            d.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
             c.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            c.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
-            d.finalLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         } else {
-            d.initialLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+//            c.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+//            d.finalLayout(VK_IMAGE_LAYOUT_GENERAL);
+//            d.finalLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+//            d.initialLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+//            d.initialLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         }
     }
     @Override

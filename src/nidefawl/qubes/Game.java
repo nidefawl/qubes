@@ -191,14 +191,14 @@ public class Game extends GameBase {
 
 
         if (Engine.isVulkan) {
-            this.frameBuffer = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+            this.frameBuffer = new nidefawl.qubes.vulkan.FrameBuffer(vkContext).tag("root_UI");
             this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
         }
         
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 1");
         this.statsOverlay = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 2");
-        this.statsFB = new RenderFramebufferCached(true, false, true);
+        this.statsFB = new RenderFramebufferCached(true, false, true).tag("StatsFB");
         this.statsFB.init();
         statsList = new GuiOverlayStats();
         if (Game.GL_ERROR_CHECKS) Engine.checkGLError("initGame 3");

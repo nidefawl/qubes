@@ -1,14 +1,10 @@
 package nidefawl.qubes.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.VK10.*;
-
-import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.lwjgl.vulkan.VkSubpassDependency.Buffer;
 
 public class VkRenderPassGBuffer extends VkRenderPass {
 
@@ -22,17 +18,23 @@ public class VkRenderPassGBuffer extends VkRenderPass {
         depth.initialLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         depth.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
         if (pass == 0) {
+            // copy depth buffer before water is rendered 
             depth.finalLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         }
         if (pass == 1) {
             normal.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            normal.initialLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            normal.initialLayout(normal.finalLayout());
             material.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            material.initialLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            material.initialLayout(material.finalLayout());
             light.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            light.initialLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            light.initialLayout(light.finalLayout());
+            //TODO: set pass 1 depth initial layout to TRANSFER_DST_OPTIMAL 
+            // and do a single setImageLayout(from=UNDEFINED, to=TRANSFER_DST_OPTIMAL) on startup
+            // this way we don't have to do it manually after copying over the depth buffer from pass 0 to 1
+            // (or find a better way to preserve/restore depth buffer across render passes)
+            
             depth.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            depth.initialLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            depth.initialLayout(depth.finalLayout());
         }
     }
     @Override

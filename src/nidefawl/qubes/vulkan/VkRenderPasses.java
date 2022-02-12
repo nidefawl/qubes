@@ -44,6 +44,7 @@ public class VkRenderPasses {
         for (int i = 0; i < passes.length; i++) {
             if (passes[i] != null) {
                 passes[i].destroy(ctxt);
+                passes[i] = null;
             }
         }
     }
@@ -57,12 +58,11 @@ public class VkRenderPasses {
     }
     
     public static void registerPass(VkRenderPass vkRenderPass) {
-        int idx = -1;
         for (int i = 0; i < passes.length; i++) {
             if (passes[i] == null) {
-                idx = i;
+                passes[i] = vkRenderPass;
+                return;
             }
         }
-        passes[idx] = vkRenderPass;
     }
 }

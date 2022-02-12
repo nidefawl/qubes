@@ -7,30 +7,26 @@ import org.lwjgl.vulkan.VkImageCopy;
 
 import nidefawl.qubes.Game;
 import nidefawl.qubes.entity.Player;
-import nidefawl.qubes.gl.*;
+import nidefawl.qubes.gl.BufferedMatrix;
+import nidefawl.qubes.gl.Engine;
 import nidefawl.qubes.input.DigController;
 import nidefawl.qubes.input.Selection;
 import nidefawl.qubes.item.*;
 import nidefawl.qubes.models.ItemModel;
 import nidefawl.qubes.models.qmodel.QModelTexture;
 import nidefawl.qubes.models.render.QModelBatchedRender;
-import nidefawl.qubes.perf.GPUProfiler;
-import nidefawl.qubes.render.RenderersGL;
 import nidefawl.qubes.render.RenderersVulkan;
 import nidefawl.qubes.render.WorldRenderer;
-import nidefawl.qubes.shader.Shader;
-import nidefawl.qubes.shader.Shaders;
 import nidefawl.qubes.shader.UniformBuffer;
-import nidefawl.qubes.texture.*;
+import nidefawl.qubes.texture.TextureBinMips;
+import nidefawl.qubes.texture.TextureUtil;
 import nidefawl.qubes.texture.array.TextureArrays;
 import nidefawl.qubes.util.GameMath;
 import nidefawl.qubes.util.IRenderComponent;
-import nidefawl.qubes.util.ITess;
 import nidefawl.qubes.vec.Frustum;
 import nidefawl.qubes.vec.Matrix4f;
 import nidefawl.qubes.vr.VR;
 import nidefawl.qubes.vulkan.*;
-import nidefawl.qubes.vulkan.FrameBuffer;
 import nidefawl.qubes.world.World;
 import nidefawl.qubes.world.WorldClient;
 
@@ -86,31 +82,39 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
     private void copyDepthBuffers() {
 
+        // copy depth buffer before water is rendered 
 
         FramebufferAttachment imageDepthSrc = RenderersVulkan.outRenderer.frameBufferScene.getAtt(4);
         FramebufferAttachment imageDepthDst = RenderersVulkan.outRenderer.frameBufferSceneWater.getAtt(4);
         FramebufferAttachment imageDepthDst2 = RenderersVulkan.outRenderer.frameBufferTonemapped.getAtt(1);
 
-        
+
         if (imageDepthSrc.currentLayout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
             System.err.println("Image src isn't in correct layout "+imageDepthSrc.currentLayout+", expected "+VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
             
         }
-        if (imageDepthDst.currentLayout != imageDepthDst.initialLayout) {
+        //TODO: make the transition automatic
+//        if (imageDepthDst.initialLayout != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+//            System.err.println("incorrect initialLayout "+imageDepthDst.initialLayout+", expected "+VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+//        }
+        if (imageDepthDst.currentLayout != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
             if (imageDepthDst.currentLayout != VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL) {
                 System.err.println("Image dst isn't in correct layout "+imageDepthDst.currentLayout+", expected "+VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
                 
             }
             vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthDst.image,
                     VK_IMAGE_ASPECT_DEPTH_BIT, 
-                    imageDepthDst.currentLayout, imageDepthDst.initialLayout,
-                    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,    VK_PIPELINE_STAGE_TRANSFER_BIT, 
-                    VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+                    imageDepthDst.currentLayout, 
+                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                    VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+                    VK_ACCESS_TRANSFER_WRITE_BIT);
+            imageDepthDst.currentLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         } else {
 
-            System.err.println("First loop, dont transition dst image to initialLayout since renderpass didn't occur!");
+//            System.err.println("Renderpass occured, we don't have to manually setImageLayout before transfer");
         }
-        imageDepthDst.currentLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
         vkCmdCopyImage(Engine.getDrawCmdBuffer(), imageDepthSrc.image, 
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDepthDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, pRegions);
@@ -119,10 +123,13 @@ public class WorldRendererVK extends WorldRenderer implements IRenderComponent {
 
 
         vkContext.setImageLayout(Engine.getDrawCmdBuffer(), imageDepthSrc.image,
-                VK_IMAGE_ASPECT_DEPTH_BIT, 
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
-                VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_SHADER_READ_BIT);
+                VK_IMAGE_ASPECT_DEPTH_BIT,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, 
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
         imageDepthSrc.currentLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
     }
 

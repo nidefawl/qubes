@@ -26,6 +26,7 @@ public class RenderFramebufferCached {
     private boolean filterLinear;
     private boolean blendEnabled;
     private boolean clearOnUpdate;
+    private String tag;
 
     public RenderFramebufferCached(boolean color16Bit, boolean filterLinear, boolean clearOnUpdate) {
         this.color16Bit = color16Bit;
@@ -49,7 +50,7 @@ public class RenderFramebufferCached {
             if (fbVk == null || (fbVk.getWidth() != w || fbVk.getHeight() != h)) {
                 VKContext vkContext = Engine.vkContext;
                 vkContext.orphanResource(this.fbVk);
-                fbVk = new nidefawl.qubes.vulkan.FrameBuffer(vkContext);
+                fbVk = new nidefawl.qubes.vulkan.FrameBuffer(vkContext).tag(this.tag);
                 fbVk.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_SAMPLED_BIT);
                 fbVk.build(VkRenderPasses.passFramebuffer, w, h);
                 FramebufferAttachment coloratt = fbVk.getAtt(0);
@@ -133,6 +134,11 @@ public class RenderFramebufferCached {
             this.fbDbg.destroy();
             this.fbDbg = null;
         }
+    }
+
+    public RenderFramebufferCached tag(String tag) {
+        this.tag = tag;
+        return this;
     }
     
 }

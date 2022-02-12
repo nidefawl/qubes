@@ -145,8 +145,10 @@ public class SkyRendererVK extends SkyRenderer implements IRenderComponent {
                         throw new AssertionError("vkCreateImageView failed: " + VulkanErr.toString(err));
                     }
                     this.viewsFrameBuffer[i] = pView.get(0);
-                    this.frameBufferCubemap.attachments[i] = new FramebufferAttachment(ctxt, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                    this.frameBufferCubemap.attachments[i].setFromImage(this.image, this.viewsFrameBuffer[i], SKYBOX_RES, SKYBOX_RES);
+                    FramebufferAttachment fbAttCubemapSide = new FramebufferAttachment(ctxt, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    fbAttCubemapSide.tag(this.frameBufferCubemap.getTag()+"["+i+"] ("+fbAttCubemapSide.getTag()+")");
+                    fbAttCubemapSide.setFromImage(this.image, this.viewsFrameBuffer[i], SKYBOX_RES, SKYBOX_RES);
+                    this.frameBufferCubemap.attachments[i] = fbAttCubemapSide;
                     this.frameBufferCubemap.isReferencedAtt[i] = true;
                 }
                 this.frameBufferCubemap.build(VkRenderPasses.passSkyGenerateCubemap, SKYBOX_RES, SKYBOX_RES);

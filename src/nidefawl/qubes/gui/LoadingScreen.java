@@ -51,7 +51,7 @@ public class LoadingScreen {
         loadProgress[step] = f;
         if (isVulkan) {
             if (this.frameBuffer == null) {
-                this.frameBuffer = new FrameBuffer(vkContext);
+                this.frameBuffer = new FrameBuffer(vkContext).tag("ui_loading");
                 this.frameBuffer.fromRenderpass(VkRenderPasses.passFramebuffer, 0, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
                 this.frameBuffer.build(VkRenderPasses.passFramebuffer, Engine.getGuiWidth(), Engine.getGuiHeight());
             }

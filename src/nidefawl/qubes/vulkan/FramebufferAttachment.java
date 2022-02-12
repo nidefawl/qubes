@@ -31,6 +31,13 @@ public class FramebufferAttachment {
         this.finalLayout = finalLayout;
         this.format = format;
         this.aspectMask = aspectMask;
+        this.tag = "unknown_use";
+        if (aspectMask == VK_IMAGE_ASPECT_COLOR_BIT)
+            this.tag = "color";
+        else if (aspectMask == (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT))
+            this.tag = "depthstencil";
+        else if (aspectMask == VK_IMAGE_ASPECT_DEPTH_BIT)
+            this.tag = "depth";
     }
     
     public FramebufferAttachment(VKContext ctxt, VkAttachmentDescription n, int usage) {
@@ -39,16 +46,20 @@ public class FramebufferAttachment {
         this.initialLayout = n.initialLayout();
         this.usage = usage;
         this.finalLayout = n.finalLayout();
+        this.tag = "unknown_use";
         if ((usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0)
         {
+            this.tag = "color";
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 //            finalLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         }
         else if ((usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0)
         {
             if (this.format == VK_FORMAT_D32_SFLOAT || this.format == VK_FORMAT_D16_UNORM) {
+                this.tag = "depth";
                 aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;               
             } else {
+                this.tag = "depthstencil";
                 aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT; 
             }
 //            finalLayout = (usage & VK_IMAGE_USAGE_SAMPLED_BIT) != 0 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -137,10 +148,13 @@ public class FramebufferAttachment {
         this.tag = string;
         return this;
     }
+    public String getTag() {
+        return this.tag;
+    }
 
     @Override
     public String toString() {
-        return super.toString()+(this.tag!= null?" "+this.tag:"");
+        return super.toString()+(this.tag!= null?" "+this.tag:"<untagged>");
     }
 
     public static void allocStatic() {

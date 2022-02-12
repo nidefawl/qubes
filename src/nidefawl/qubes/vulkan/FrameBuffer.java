@@ -23,6 +23,9 @@ public class FrameBuffer implements RefTrackedResource {
     public FrameBuffer(VKContext ctxt) {
         this.ctxt = ctxt;
     }
+    public VKContext getCtxt() {
+        return this.ctxt;
+    }
     public void copyAtt(FrameBuffer frameBufferScene, int i) {
         this.attachments[i] = frameBufferScene.attachments[i];
         this.isReferencedAtt[i] = true;
@@ -94,7 +97,9 @@ public class FrameBuffer implements RefTrackedResource {
 
     }
     public void addAtt(int idx, VkAttachmentDescription n, int vkUsage) {
-        this.attachments[idx] = new FramebufferAttachment(this.ctxt, n, vkUsage);
+        final FramebufferAttachment att = new FramebufferAttachment(this.ctxt, n, vkUsage);
+        att.tag(this.tag +"["+idx+"] ("+att.getTag()+")");
+        this.attachments[idx] = att;
     }
     public long get() {
         return this.framebuffer;
@@ -142,11 +147,12 @@ public class FrameBuffer implements RefTrackedResource {
         }
         return true;
     }
+    int DEBUG_NUM_FRAMES = 5;
     public void onEndRenderPass() {
         for (int i = 0; i < this.attachments.length; i++) {
             if (this.attachments[i] != null) {
-                
-//                System.err.println(this.tag+" att["+i+"] goes from "+VulkanErr.imageLayoutToStr(this.attachments[i].currentLayout)+" to "+VulkanErr.imageLayoutToStr(this.attachments[i].finalLayout));
+                if (DEBUG_NUM_FRAMES-->0)
+                    System.err.println(this.attachments[i] +" goes from "+VulkanErr.imageLayoutToStr(this.attachments[i].currentLayout)+" to "+VulkanErr.imageLayoutToStr(this.attachments[i].finalLayout));
 
                 this.attachments[i].currentLayout = this.attachments[i].finalLayout;
             }
@@ -165,5 +171,8 @@ public class FrameBuffer implements RefTrackedResource {
 //                }
 //            }
 //        }
+    }
+    public String getTag() {
+        return this.tag;
     }
 }
